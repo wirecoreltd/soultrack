@@ -31,7 +31,10 @@ export default function LinkEglise() {
   // 🔹 Charger superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
       if (!user) return;
 
       const { data, error } = await supabase
@@ -47,7 +50,7 @@ export default function LinkEglise() {
         .eq("id", user.id)
         .single();
 
-      if (!error && data) {
+      if (!error) {
         setSuperviseur({
           prenom: data.prenom,
           nom: data.nom,
@@ -70,9 +73,9 @@ export default function LinkEglise() {
       .from("eglise_supervisions")
       .select("*")
       .eq("superviseur_eglise_id", superviseur.eglise_id)
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: false });
 
-    if (!error && data) setInvitations(data || []);
+    if (!error) setInvitations(data || []);
   };
 
   useEffect(() => {
@@ -82,7 +85,7 @@ export default function LinkEglise() {
   // 🔹 Style selon statut
   const getStatusStyle = (statut) => {
     switch (statut?.toLowerCase()) {
-      case "acceptee":
+      case "accepted":
         return { border: "border-l-4 border-green-600", button: null };
       case "refused":
         return { border: "border-l-4 border-red-600", button: "Renvoyer invitation" };
@@ -93,18 +96,59 @@ export default function LinkEglise() {
     }
   };
 
-  // 🔹 Grouper par superviseur
-  const groupedInvitations = invitations.reduce((acc, inv) => {
-    const key = inv.superviseur_nom || "Aucun superviseur";
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(inv);
-    return acc;
-  }, {});
+  // 🔹 Construire arbre hiérarchique
+  const buildHierarchy = (branches) => {
+    const map = {};
+    branches.forEach((b) => {
+      map[b.id] = { ...b, children: [] };
+    });
+
+    const roots = [];
+    branches.forEach((b) => {
+      if (b.superviseur_branche_id && map[b.superviseur_branche_id]) {
+        map[b.superviseur_branche_id].children.push(map[b.id]);
+      } else {
+        roots.push(map[b.id]);
+      }
+    });
+
+    return roots;
+  };
+
+  // 🔹 Rendu récursif de l'arbre
+  const renderTree = (nodes, level = 0) => {
+    return nodes.map((node) => {
+      const statusStyle = getStatusStyle(node.statut);
+
+      return (
+        <div key={node.id} className={`pl-${level * 6} mt-1`}>
+          <div className={`grid grid-cols-4 px-3 py-2 rounded-lg ${statusStyle.border} items-center`}>
+            <div>{node.eglise_nom}</div>
+            <div>{node.eglise_branche}</div>
+            <div>{node.responsable_prenom} {node.responsable_nom}</div>
+            <div className="flex items-center gap-3">
+              <span>{node.statut}</span>
+              {statusStyle.button && (
+                <button
+                  className="text-orange-500 font-semibold text-sm hover:opacity-80"
+                  onClick={() => alert(`${statusStyle.button}`)}
+                >
+                  {statusStyle.button}
+                </button>
+              )}
+            </div>
+          </div>
+          {node.children.length > 0 && renderTree(node.children, level + 1)}
+        </div>
+      );
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
+      {/* FORMULAIRE */}
       <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
         Envoyer une invitation pour relier une église
       </h4>
@@ -118,7 +162,6 @@ export default function LinkEglise() {
             onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
           />
         </div>
-
         <div>
           <label className="font-semibold">Nom du responsable</label>
           <input
@@ -127,7 +170,6 @@ export default function LinkEglise() {
             onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
           />
         </div>
-
         <div>
           <label className="font-semibold">Nom de l'Église</label>
           <input
@@ -136,7 +178,6 @@ export default function LinkEglise() {
             onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
           />
         </div>
-
         <div>
           <label className="font-semibold">Branche / Région</label>
           <input
@@ -145,7 +186,6 @@ export default function LinkEglise() {
             onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
           />
         </div>
-
         <select
           className="w-full border rounded-xl px-3 py-2"
           value={canal}
@@ -168,11 +208,13 @@ export default function LinkEglise() {
 
       <div className="h-10" />
 
+      {/* LISTE DES ÉGLISES SUPERVISÉES */}
       <h4 className="text-2xl font-bold mt-2 mb-10 text-center w-full max-w-5xl text-amber-300">
         Liste des églises supervisées
       </h4>
 
       <div className="w-full max-w-5xl">
+        {/* HEADER */}
         <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
           <div>Église</div>
           <div>Branche</div>
@@ -180,36 +222,8 @@ export default function LinkEglise() {
           <div>Statut</div>
         </div>
 
-        {/* 🔹 Affichage groupé */}
-        {Object.entries(groupedInvitations).map(([sup, invs]) => (
-          <div key={sup} className="mb-4">
-            <div className="text-amber-300 font-semibold text-sm pl-3">{sup}</div>
-            {invs.map((inv) => {
-              const statusStyle = getStatusStyle(inv.statut);
-              return (
-                <div
-                  key={inv.id}
-                  className={`grid grid-cols-4 px-6 py-2 mt-1 rounded-lg ${statusStyle.border} items-center`}
-                >
-                  <div>{inv.eglise_nom}</div>
-                  <div>{inv.eglise_branche}</div>
-                  <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
-                  <div className="flex items-center gap-3">
-                    <span>{inv.statut}</span>
-                    {statusStyle.button && (
-                      <button
-                        className="text-orange-500 font-semibold text-sm hover:opacity-80"
-                        onClick={() => alert(`${statusStyle.button}`)}
-                      >
-                        {statusStyle.button}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ))}
+        {/* ARBRE DES ÉGLISES */}
+        {renderTree(buildHierarchy(invitations))}
       </div>
     </div>
   );

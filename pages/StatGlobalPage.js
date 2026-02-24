@@ -18,7 +18,6 @@ function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [typeRapport, setTypeRapport] = useState("Tous");
-
   const [attendanceStats, setAttendanceStats] = useState(null);
   const [evanStats, setEvanStats] = useState(null);
   const [baptemeStats, setBaptemeStats] = useState(null);
@@ -26,63 +25,55 @@ function StatGlobalPage() {
   const [cellulesCount, setCellulesCount] = useState(0);
   const [serviteurStats, setServiteurStats] = useState(null);
 
-  const [egliseId, setEgliseId] = useState(null);
-  const [brancheId, setBrancheId] = useState(null);
+  const [userBrancheId, setUserBrancheId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Récupération profil utilisateur
+  // 🔹 Récupère l'utilisateur et sa branche
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("branche_id")
         .eq("id", user.id)
         .single();
 
-      if (data) {
-        setEgliseId(data.eglise_id);
-        setBrancheId(data.branche_id);
-      }
+      if (data) setUserBrancheId(data.branche_id);
     };
+
     fetchProfile();
   }, []);
 
   const fetchStats = async () => {
-    if (!brancheId) return;
+    if (!userBrancheId) return;
     setLoading(true);
 
-    // 🔹 Récupérer toutes les branches supervisées en cascade
-    const { data: supervisedBranches } = await supabase
-      .rpc("get_all_supervised_branches", { start_branch: brancheId });
+    // 🔹 Étape 1 : récupérer toutes les branches supervisées en cascade
+    const { data: supervisedBranches } = await supabase.rpc(
+      "get_all_supervised_branches",
+      { start_branche: userBrancheId }
+    );
 
-    const supervisedBranchIds = supervisedBranches.map(b => b.branch_id);
+    const branchIds = supervisedBranches?.map((b) => b.id) || [userBrancheId];
 
-    // ================= ATTENDANCE =================
-    let attendanceQuery = supabase
-      .from("attendance")
-      .select("*")
-      .in("branche_id", supervisedBranchIds);
+    // 🔹 Étape 2 : récupérer stats pour toutes les tables avec .in("branche_id", branchIds)
 
+    // -------- ATTENDANCE --------
+    let attendanceQuery = supabase.from("attendance").select("*").in("branche_id", branchIds);
     if (dateDebut) attendanceQuery = attendanceQuery.gte("date", dateDebut);
     if (dateFin) attendanceQuery = attendanceQuery.lte("date", dateFin);
-
     const { data: attendanceData } = await attendanceQuery;
 
     const attendanceTotals = {
-      hommes: 0,
-      femmes: 0,
-      jeunes: 0,
-      enfants: 0,
-      connectes: 0,
-      nouveauxVenus: 0,
-      nouveauxConvertis: 0,
+      hommes: 0, femmes: 0, jeunes: 0, enfants: 0,
+      connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0,
       moissonneurs: 0,
     };
-
-    attendanceData?.forEach(r => {
+    attendanceData?.forEach((r) => {
       attendanceTotals.hommes += Number(r.hommes) || 0;
       attendanceTotals.femmes += Number(r.femmes) || 0;
       attendanceTotals.jeunes += Number(r.jeunes) || 0;
@@ -92,38 +83,26 @@ function StatGlobalPage() {
       attendanceTotals.nouveauxConvertis += Number(r.nouveauxConvertis) || 0;
       attendanceTotals.moissonneurs += Number(r.moissonneurs) || 0;
     });
-
     setAttendanceStats(attendanceTotals);
 
-    // ================= EVANGELISATION =================
-    let evanQuery = supabase
-      .from("evangelises")
-      .select("*")
-      .in("branche_id", supervisedBranchIds);
-
+    // -------- EVANGELISATION --------
+    let evanQuery = supabase.from("evangelises").select("*").in("branche_id", branchIds);
     if (dateDebut) evanQuery = evanQuery.gte("created_at", dateDebut);
     if (dateFin) evanQuery = evanQuery.lte("created_at", dateFin);
-
     const { data: evanData } = await evanQuery;
 
-    const evanTotals = { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0, moissonneurs: 0 };
-    evanData?.forEach(r => {
+    const evanTotals = { hommes: 0, femmes: 0, nouveauxConvertis: 0 };
+    evanData?.forEach((r) => {
       if (r.sexe === "Homme") evanTotals.hommes++;
       if (r.sexe === "Femme") evanTotals.femmes++;
       if (r.type_conversion === "Nouveau converti") evanTotals.nouveauxConvertis++;
     });
-
     setEvanStats(evanTotals);
 
-    // ================= BAPTEME =================
-    let baptemeQuery = supabase
-      .from("baptemes")
-      .select("hommes, femmes")
-      .in("branche_id", supervisedBranchIds);
-
+    // -------- BAPTEME --------
+    let baptemeQuery = supabase.from("baptemes").select("hommes, femmes").in("branche_id", branchIds);
     if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
     if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
-
     const { data: baptemeData } = await baptemeQuery;
     const baptemeTotals = {
       hommes: baptemeData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
@@ -131,15 +110,10 @@ function StatGlobalPage() {
     };
     setBaptemeStats(baptemeTotals);
 
-    // ================= FORMATION =================
-    let formationQuery = supabase
-      .from("formations")
-      .select("hommes, femmes")
-      .in("branche_id", supervisedBranchIds);
-
+    // -------- FORMATION --------
+    let formationQuery = supabase.from("formations").select("hommes, femmes").in("branche_id", branchIds);
     if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
     if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
-
     const { data: formationData } = await formationQuery;
     const formationTotals = {
       hommes: formationData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
@@ -147,50 +121,34 @@ function StatGlobalPage() {
     };
     setFormationStats(formationTotals);
 
-    // ================= CELLULES =================
-    const { count: cellulesCount } = await supabase
-      .from("cellules")
-      .select("id", { count: "exact", head: true })
-      .in("branche_id", supervisedBranchIds);
+    // -------- CELLULES --------
+    const { count } = await supabase.from("cellules").select("id", { count: "exact", head: true }).in("branche_id", branchIds);
+    setCellulesCount(count || 0);
 
-    setCellulesCount(cellulesCount || 0);
-
-    // ================= SERVITEURS =================
-    let serviteurQuery = supabase
-      .from("stats_ministere_besoin")
-      .select("membre_id, valeur, date_action")
-      .in("branche_id", supervisedBranchIds)
-      .eq("type", "ministere");
-
-    if (dateDebut) serviteurQuery = serviteurQuery.gte("date_action", dateDebut);
-    if (dateFin) serviteurQuery = serviteurQuery.lte("date_action", dateFin);
-
-    const { data: serviteurData } = await serviteurQuery;
+    // -------- SERVITEURS --------
+    let servQuery = supabase.from("stats_ministere_besoin").select("membre_id, valeur").in("branche_id", branchIds).eq("type", "ministere");
+    if (dateDebut) servQuery = servQuery.gte("date_action", dateDebut);
+    if (dateFin) servQuery = servQuery.lte("date_action", dateFin);
+    const { data: servData } = await servQuery;
 
     const uniqueMembres = new Map();
-    serviteurData?.forEach(s => {
-      if (!s.membre_id) return;
-      if (!uniqueMembres.has(s.membre_id)) uniqueMembres.set(s.membre_id, s.valeur);
-    });
+    servData?.forEach((s) => { if (!uniqueMembres.has(s.membre_id)) uniqueMembres.set(s.membre_id, s.valeur); });
 
     let hommes = 0, femmes = 0;
     if (uniqueMembres.size > 0) {
       const ids = Array.from(uniqueMembres.keys());
-      const { data: membresSexe } = await supabase
-        .from("membres_complets")
-        .select("id, sexe")
-        .in("id", ids);
-
-      membresSexe?.forEach(m => {
+      const { data: membresSexe } = await supabase.from("membres_complets").select("id, sexe").in("id", ids);
+      membresSexe?.forEach((m) => {
         if (m.sexe === "Homme") hommes++;
         if (m.sexe === "Femme") femmes++;
       });
     }
-
     setServiteurStats({ hommes, femmes });
+
     setLoading(false);
   };
 
+  // 🔹 Préparer les rapports pour affichage
   const rapports = [
     { label: "Culte", data: attendanceStats, border: "border-l-orange-500" },
     { label: "Evangelisation", data: evanStats, border: "border-l-green-500" },
@@ -198,8 +156,9 @@ function StatGlobalPage() {
     { label: "Formation", data: formationStats, border: "border-l-blue-500" },
     { label: "Cellules", data: { total: cellulesCount }, border: "border-l-yellow-500" },
     { label: "Serviteur", data: serviteurStats, border: "border-l-pink-500" },
-  ].filter(r => typeRapport === "Tous" || r.label === typeRapport);
+  ].filter((r) => typeRapport === "Tous" || r.label === typeRapport);
 
+  // 🔹 Total général
   const totalGeneral = rapports.reduce((acc, r) => {
     acc.hommes += Number(r.data?.hommes) || 0;
     acc.femmes += Number(r.data?.femmes) || 0;
@@ -208,31 +167,32 @@ function StatGlobalPage() {
     acc.connectes += Number(r.data?.connectes) || 0;
     acc.nouveauxVenus += Number(r.data?.nouveauxVenus) || 0;
     acc.nouveauxConvertis += Number(r.data?.nouveauxConvertis) || 0;
-    acc.reconciliations += Number(r.data?.reconciliations) || 0;
     acc.moissonneurs += Number(r.data?.moissonneurs) || 0;
     return acc;
-  }, { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0, reconciliations: 0, moissonneurs: 0 });
+  }, { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0, moissonneurs: 0 });
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
-        <span className="text-white">Rapport </span>
-        <span className="text-amber-300">Statistiques Globales</span>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
+        Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
       {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
-        <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
-        <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
-        <select value={typeRapport} onChange={e => setTypeRapport(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white">
-          <option className="text-black" value="Tous">Tous</option>
-          <option className="text-black" value="Culte">Culte</option>
-          <option className="text-black" value="Evangelisation">Evangelisation</option>
-          <option className="text-black" value="Baptême">Baptême</option>
-          <option className="text-black" value="Formation">Formation</option>
-          <option className="text-black" value="Serviteur">Serviteur</option>
-          <option className="text-black" value="Cellules">Cellules</option>
+        <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
+        <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
+        <select value={typeRapport} onChange={(e) => setTypeRapport(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white">
+          <option value="Tous" className="text-black">Tous</option>
+          <option value="Culte" className="text-black">Culte</option>
+          <option value="Evangelisation" className="text-black">Evangelisation</option>
+          <option value="Baptême" className="text-black">Baptême</option>
+          <option value="Formation" className="text-black">Formation</option>
+          <option value="Serviteur" className="text-black">Serviteur</option>
+          <option value="Cellules" className="text-black">Cellules</option>
         </select>
         <button onClick={fetchStats} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
       </div>
@@ -251,7 +211,6 @@ function StatGlobalPage() {
               <div className="min-w-[140px] text-center">Connectés</div>
               <div className="min-w-[150px] text-center">Nouveaux Venus</div>
               <div className="min-w-[180px] text-center">Nouveau Converti</div>
-              <div className="min-w-[140px] text-center">Réconciliation</div>
               <div className="min-w-[160px] text-center">Moissonneurs</div>
             </div>
 
@@ -266,7 +225,6 @@ function StatGlobalPage() {
                 <div className="min-w-[140px] text-center text-white">{r.data?.connectes ?? "-"}</div>
                 <div className="min-w-[150px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
                 <div className="min-w-[180px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
-                <div className="min-w-[140px] text-center text-white">{r.data?.reconciliations ?? "-"}</div>
                 <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
               </div>
             ))}
@@ -281,7 +239,6 @@ function StatGlobalPage() {
               <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGeneral.connectes}</div>
               <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxVenus}</div>
               <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxConvertis}</div>
-              <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGeneral.reconciliations}</div>
               <div className="min-w-[160px] text-center text-orange-400 font-semibold">{totalGeneral.moissonneurs}</div>
             </div>
 

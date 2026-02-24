@@ -7,8 +7,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function StatGlobalPage() {
   const [stats, setStats] = useState([]);
-  const [eglisesMap, setEglisesMap] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [mois, setMois] = useState(new Date().getMonth() + 1);
   const [annee, setAnnee] = useState(new Date().getFullYear());
 
@@ -21,70 +20,36 @@ export default function StatGlobalPage() {
     return new Date(year, month, 0).getDate();
   };
 
-  // 🔥 CASCADE DES EGLISES
-  const getEglisesCascade = async (startId) => {
-    let all = [startId];
-
-    const { data } = await supabase
-      .from("eglise_supervisions")
-      .select("eglise_supervisee_id, superviseur_eglise_id, statut")
-      .eq("statut", "accepted");
-
-    let queue = [startId];
-
-    while (queue.length > 0) {
-      const parent = queue.shift();
-
-      const enfants = data
-        ?.filter((d) => d.superviseur_eglise_id === parent)
-        .map((d) => d.eglise_supervisee_id) || [];
-
-      all.push(...enfants);
-      queue.push(...enfants);
-    }
-
-    return Array.from(new Set(all));
-  };
-
   const loadStats = async () => {
-    if (!egliseId) return;
-
-    setLoading(true);
-
-    const egliseIds = await getEglisesCascade(egliseId);
-    const lastDay = getLastDayOfMonth(annee, mois);
-
-    // 🔥 Charger noms des églises
-    const { data: eglisesData } = await supabase
-      .from("eglises")
-      .select("id, nom")
-      .in("id", egliseIds);
-
-    const map = {};
-    eglisesData?.forEach((e) => {
-      map[e.id] = e.nom;
-    });
-
-    setEglisesMap(map);
-
-    // 🔥 Charger stats
-    const { data, error } = await supabase
-      .from("stats_ministere_besoin")
-      .select("*")
-      .in("eglise_id", egliseIds)
-      .gte("date_action", `${annee}-${String(mois).padStart(2, "0")}-01`)
-      .lte(
-        "date_action",
-        `${annee}-${String(mois).padStart(2, "0")}-${lastDay}`
-      );
-
-    if (error) {
-      console.error("Erreur stats :", error);
-      setLoading(false);
+    if (!egliseId) {
+      console.log("Pas d'eglise_id");
       return;
     }
 
-    setStats(data || []);
+    setLoading(true);
+
+    try {
+      const lastDay = getLastDayOfMonth(annee, mois);
+
+      const { data, error } = await supabase
+        .from("stats_ministere_besoin")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .gte("date_action", `${annee}-${String(mois).padStart(2, "0")}-01`)
+        .lte(
+          "date_action",
+          `${annee}-${String(mois).padStart(2, "0")}-${lastDay}`
+        );
+
+      if (error) {
+        console.error(error);
+      } else {
+        setStats(data || []);
+      }
+    } catch (err) {
+      console.error("Erreur catch :", err);
+    }
+
     setLoading(false);
   };
 
@@ -92,21 +57,13 @@ export default function StatGlobalPage() {
     loadStats();
   }, [mois, annee]);
 
-  // 🔥 GROUPER PAR EGLISE → PAR TYPE
   const grouped = stats.reduce((acc, item) => {
-    if (!acc[item.eglise_id]) {
-      acc[item.eglise_id] = {};
+    if (!acc[item.type]) {
+      acc[item.type] = { hommes: 0, femmes: 0 };
     }
 
-    if (!acc[item.eglise_id][item.type]) {
-      acc[item.eglise_id][item.type] = { hommes: 0, femmes: 0 };
-    }
-
-    if (item.valeur === "homme")
-      acc[item.eglise_id][item.type].hommes += 1;
-
-    if (item.valeur === "femme")
-      acc[item.eglise_id][item.type].femmes += 1;
+    if (item.valeur === "homme") acc[item.type].hommes++;
+    if (item.valeur === "femme") acc[item.type].femmes++;
 
     return acc;
   }, {});
@@ -115,9 +72,9 @@ export default function StatGlobalPage() {
     <ProtectedRoute>
       <HeaderPages title="📊 Stats Globales" />
 
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-6 max-w-5xl mx-auto">
 
-        {/* FILTRE */}
+        {/* FILTRES */}
         <div className="flex gap-4 mb-6">
           <select
             value={mois}
@@ -139,48 +96,37 @@ export default function StatGlobalPage() {
           />
         </div>
 
-        {loading ? (
-          <p>Chargement...</p>
-        ) : (
-          <div>
+        {loading && <p>Chargement...</p>}
 
-            <h2 className="text-2xl font-bold mb-6">
+        {!loading && (
+          <div className="bg-white shadow rounded-2xl p-6">
+
+            <h2 className="text-xl font-bold mb-4">
               ➕ {mois}/{annee}
             </h2>
 
-            {Object.entries(grouped).map(([egliseId, types]) => (
-              <div
-                key={egliseId}
-                className="bg-white shadow rounded-2xl p-6 mb-8"
-              >
-                <h3 className="text-xl font-bold mb-4 text-blue-600">
-                  {eglisesMap[egliseId] || "Église"}
-                </h3>
-
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="p-2">Ministère</th>
-                      <th className="p-2">Hommes</th>
-                      <th className="p-2">Femmes</th>
-                      <th className="p-2">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(types).map(([type, values]) => (
-                      <tr key={type} className="border-b">
-                        <td className="p-2 capitalize">{type}</td>
-                        <td className="p-2">{values.hommes}</td>
-                        <td className="p-2">{values.femmes}</td>
-                        <td className="p-2 font-semibold">
-                          {values.hommes + values.femmes}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))}
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="p-2">Ministère</th>
+                  <th className="p-2">Hommes</th>
+                  <th className="p-2">Femmes</th>
+                  <th className="p-2">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(grouped).map(([type, values]) => (
+                  <tr key={type} className="border-b">
+                    <td className="p-2 capitalize">{type}</td>
+                    <td className="p-2">{values.hommes}</td>
+                    <td className="p-2">{values.femmes}</td>
+                    <td className="p-2 font-semibold">
+                      {values.hommes + values.femmes}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
           </div>
         )}

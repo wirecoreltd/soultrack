@@ -14,6 +14,7 @@ export default function AcceptInvitation() {
   const [submitting, setSubmitting] = useState(false);
   const [choice, setChoice] = useState(""); // Préremplissage après fetch
   const [message, setMessage] = useState("");
+  const [alreadySupervised, setAlreadySupervised] = useState(false);
 
   useEffect(() => {
     if (!router.isReady || !token) return;
@@ -30,7 +31,22 @@ export default function AcceptInvitation() {
 
       if (data) {
         setInvitation(data);
-        setChoice(data.statut || ""); // préremplit le select avec le statut actuel
+        setChoice(data.statut || "");
+
+        // 🔎 Vérifier si cette église/branche est déjà supervisée
+        if (data.superviseur_nom) {
+          setAlreadySupervised(true);
+        } else {
+          // Vérification en base au cas où statut "acceptee" existe
+          const { data: existing } = await supabase
+            .from("eglise_supervisions")
+            .select("*")
+            .eq("supervisee_eglise_id", data.supervisee_eglise_id)
+            .eq("supervisee_branche_id", data.supervisee_branche_id)
+            .eq("statut", "acceptee")
+            .maybeSingle();
+          if (existing) setAlreadySupervised(true);
+        }
       }
 
       setLoading(false);
@@ -39,41 +55,40 @@ export default function AcceptInvitation() {
     fetchInvitation();
   }, [router.isReady, token]);
 
-
   const handleSubmit = async () => {
-  if (!choice) return;
+    if (!choice) return;
 
-  setSubmitting(true);
+    setSubmitting(true);
 
-  // 🔎 Vérifier si déjà supervisée
-  if (choice === "acceptee") {
-    const { data: existing } = await supabase
-      .from("eglise_supervisions")
-      .select("*")
-      .eq("supervisee_eglise_id", invitation.supervisee_eglise_id)
-      .eq("statut", "acceptee")
-      .maybeSingle();
+    // 🔎 Vérifier encore une fois côté serveur pour éviter doublons
+    if (choice === "acceptee") {
+      const { data: existing } = await supabase
+        .from("eglise_supervisions")
+        .select("*")
+        .eq("supervisee_eglise_id", invitation.supervisee_eglise_id)
+        .eq("supervisee_branche_id", invitation.supervisee_branche_id)
+        .eq("statut", "acceptee")
+        .maybeSingle();
 
-    if (existing && existing.id !== invitation.id) {
-      alert("Cette église est déjà sous supervision.");
-      setSubmitting(false);
-      return;
+      if (existing && existing.id !== invitation.id) {
+        alert("Cette église/branche est déjà sous supervision.");
+        setSubmitting(false);
+        return;
+      }
     }
-  }
 
-  await supabase
-    .from("eglise_supervisions")
-    .update({
-      statut: choice,
-      approved_at: choice === "acceptee" ? new Date().toISOString() : null,
-    })
-    .eq("invitation_token", token);
+    await supabase
+      .from("eglise_supervisions")
+      .update({
+        statut: choice,
+        approved_at: choice === "acceptee" ? new Date().toISOString() : null,
+      })
+      .eq("invitation_token", token);
 
-  setMessage("Décision enregistrée.");
+    setMessage("Décision enregistrée.");
 
-  setTimeout(() => router.push("/"), 3000);
-};
-
+    setTimeout(() => router.push("/"), 3000);
+  };
 
   if (loading) return <div className="p-10">Chargement…</div>;
   if (!invitation) return <div className="p-10">Invitation introuvable</div>;
@@ -103,7 +118,17 @@ export default function AcceptInvitation() {
           <span className="capitalize">{invitation.statut}</span>
         </p>
 
-        {!message && (
+        {/* ⚠️ Message si déjà supervisée */}
+        {alreadySupervised && (
+          <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-xl text-sm">
+            ⚠️ Cette église/branche est déjà supervisée par une autre église.
+            <br />
+            Veuillez contacter votre superviseur actuel si nécessaire.
+          </div>
+        )}
+
+        {/* Sélect et bouton seulement si pas déjà supervisée */}
+        {!message && !alreadySupervised && (
           <>
             <div className="mt-4">
               <label className="block font-semibold mb-1">Votre décision</label>

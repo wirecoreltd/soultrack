@@ -51,32 +51,34 @@ export default function HeaderPages() {
 
         // 🔹 Récupérer le superviseur de cette église
         if (profile?.eglise_id) {
-          const { data: supervisionData } = await supabase
+          // On cherche la supervision où cette église est supervisée
+          const { data: supervisionData, error: supervisionError } = await supabase
             .from("eglise_supervisions")
             .select("superviseur_eglise_id, superviseur_branche_id")
             .eq("supervisee_eglise_id", profile.eglise_id)
-            .eq("statut", "acceptee") // ✅ statut correct
+            .eq("statut", "acceptee")
             .single();
 
-          if (supervisionData) {
-            // Récupérer le nom de l'église du superviseur
+          if (!supervisionError && supervisionData) {
+            const { superviseur_eglise_id, superviseur_branche_id } = supervisionData;
+
+            // Récupérer le nom de l'église superviseur
             const { data: supEgliseData } = await supabase
               .from("eglises")
               .select("nom")
-              .eq("id", supervisionData.superviseur_eglise_id)
+              .eq("id", superviseur_eglise_id)
               .single();
 
-            // Récupérer le nom de la branche du superviseur
+            // Récupérer le nom de la branche superviseur
             const { data: supBrancheData } = await supabase
               .from("branches")
               .select("nom")
-              .eq("id", supervisionData.superviseur_branche_id)
+              .eq("id", superviseur_branche_id)
               .single();
 
-            const supEgliseNom = supEgliseData?.nom || "";
-            const supBrancheNom = supBrancheData?.nom || "";
-
-            setSuperviseur(`Superviseur : ${supEgliseNom} - ${supBrancheNom}`);
+            if (supEgliseData && supBrancheData) {
+              setSuperviseur(`Superviseur : ${supEgliseData.nom} - ${supBrancheData.nom}`);
+            }
           }
         }
 
@@ -132,9 +134,6 @@ export default function HeaderPages() {
           className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
           onClick={() => router.push("/index")}
         />
-        <p className="text-white text-sm font-semibold">
-          {loading ? "..." : `${eglise} - ${branche}`}
-        </p>
       </div>
     </div>
   );

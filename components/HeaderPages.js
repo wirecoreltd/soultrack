@@ -1,3 +1,6 @@
+corriger c'est bon.
+dans ce header sous connecte es ce que tu peux mettre
+Supervision : (l'eglise supervieur)
 "use client";
 
 import { useEffect, useState } from "react";
@@ -49,7 +52,7 @@ export default function HeaderPages() {
           if (!brancheError && brancheData) setBranche(brancheData.nom);
         }
 
-        // 🔹 Récupérer le superviseur actif de cette église
+        // 🔹 Récupérer le superviseur de cette église
         if (profile?.eglise_id) {
           const { data: supervisionData, error: supervisionError } = await supabase
             .from("eglise_supervisions")
@@ -60,13 +63,13 @@ export default function HeaderPages() {
               branches(nom)
             `)
             .eq("supervisee_eglise_id", profile.eglise_id)
-            .eq("statut", "acceptee")
-            .maybeSingle();
+            .eq("statut", "accepté")
+            .single();
 
-          if (!supervisionError && supervisionData && supervisionData.eglises) {
+          if (!supervisionError && supervisionData) {
             const supEglise = supervisionData.eglises?.nom || "";
             const supBranche = supervisionData.branches?.nom || "";
-            setSuperviseur(`${supEglise} - ${supBranche}`);
+            setSuperviseur(`Sous la supervision de ${supEglise} - ${supBranche}`);
           }
         }
 
@@ -110,9 +113,7 @@ export default function HeaderPages() {
           Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
         </p>
         {superviseur && (
-          <p className="text-white text-xs italic">
-            Supervision : {superviseur}
-          </p>
+          <p className="text-white text-xs italic">{superviseur}</p>
         )}
       </div>
 

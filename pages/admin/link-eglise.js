@@ -31,10 +31,7 @@ export default function LinkEglise() {
   // 🔹 Charger superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
@@ -82,13 +79,35 @@ export default function LinkEglise() {
     loadInvitations();
   }, [superviseur.eglise_id]);
 
+  // 🔹 Regrouper par branche superviseur
+  const groupBySuperviseur = (invitations) => {
+    const map = {};
+    invitations.forEach(inv => {
+      // On considère que les branches avec superviseur_branche_id sont les enfants
+      const parentKey = inv.superviseur_branche_id || inv.id;
+
+      if (!map[parentKey]) {
+        map[parentKey] = { parent: inv, enfants: [] };
+      }
+
+      // Si c'est un enfant (supervisee), on ajoute dans enfants
+      if (inv.superviseur_branche_id && inv.superviseur_branche_id !== inv.id) {
+        map[inv.superviseur_branche_id].enfants.push(inv);
+      }
+    });
+
+    return Object.values(map);
+  };
+
   // 🔹 Style selon statut
   const getStatusStyle = (statut) => {
     switch (statut?.toLowerCase()) {
       case "accepted":
+      case "acceptee":
         return { border: "border-l-4 border-green-600", button: null };
       case "refused":
         return { border: "border-l-4 border-red-600", button: "Renvoyer invitation" };
+      case "pending":
       case "pending":
         return { border: "border-l-4 border-gray-400", button: "Envoyer rappel" };
       default:
@@ -96,63 +115,16 @@ export default function LinkEglise() {
     }
   };
 
-  // 🔹 Construire arbre hiérarchique
-  const buildHierarchy = (branches) => {
-    const map = {};
-    branches.forEach((b) => {
-      map[b.id] = { ...b, children: [] };
-    });
-
-    const roots = [];
-    branches.forEach((b) => {
-      if (b.superviseur_branche_id && map[b.superviseur_branche_id]) {
-        map[b.superviseur_branche_id].children.push(map[b.id]);
-      } else {
-        roots.push(map[b.id]);
-      }
-    });
-
-    return roots;
-  };
-
-  // 🔹 Rendu récursif de l'arbre
-  const renderTree = (nodes, level = 0) => {
-    return nodes.map((node) => {
-      const statusStyle = getStatusStyle(node.statut);
-
-      return (
-        <div key={node.id} className={`pl-${level * 6} mt-1`}>
-          <div className={`grid grid-cols-4 px-3 py-2 rounded-lg ${statusStyle.border} items-center`}>
-            <div>{node.eglise_nom}</div>
-            <div>{node.eglise_branche}</div>
-            <div>{node.responsable_prenom} {node.responsable_nom}</div>
-            <div className="flex items-center gap-3">
-              <span>{node.statut}</span>
-              {statusStyle.button && (
-                <button
-                  className="text-orange-500 font-semibold text-sm hover:opacity-80"
-                  onClick={() => alert(`${statusStyle.button}`)}
-                >
-                  {statusStyle.button}
-                </button>
-              )}
-            </div>
-          </div>
-          {node.children.length > 0 && renderTree(node.children, level + 1)}
-        </div>
-      );
-    });
-  };
-
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
-      {/* FORMULAIRE */}
+      {/* TITRE FORMULAIRE */}
       <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
         Envoyer une invitation pour relier une église
       </h4>
 
+      {/* FORMULAIRE (vertical) */}
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4 mb-10">
         <div>
           <label className="font-semibold">Prénom du responsable</label>
@@ -162,6 +134,7 @@ export default function LinkEglise() {
             onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
           />
         </div>
+
         <div>
           <label className="font-semibold">Nom du responsable</label>
           <input
@@ -170,6 +143,7 @@ export default function LinkEglise() {
             onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
           />
         </div>
+
         <div>
           <label className="font-semibold">Nom de l'Église</label>
           <input
@@ -178,6 +152,7 @@ export default function LinkEglise() {
             onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
           />
         </div>
+
         <div>
           <label className="font-semibold">Branche / Région</label>
           <input
@@ -186,6 +161,7 @@ export default function LinkEglise() {
             onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
           />
         </div>
+
         <select
           className="w-full border rounded-xl px-3 py-2"
           value={canal}
@@ -208,22 +184,27 @@ export default function LinkEglise() {
 
       <div className="h-10" />
 
-      {/* LISTE DES ÉGLISES SUPERVISÉES */}
+      {/* TITRE TABLE */}
       <h4 className="text-2xl font-bold mt-2 mb-10 text-center w-full max-w-5xl text-amber-300">
         Liste des églises supervisées
       </h4>
 
       <div className="w-full max-w-5xl">
-        {/* HEADER */}
-        <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
-          <div>Église</div>
-          <div>Branche</div>
-          <div>Responsable</div>
-          <div>Statut</div>
-        </div>
+        {groupBySuperviseur(invitations).map(group => (
+          <div key={group.parent.id} className="mb-3">
+            {/* Branche parent */}
+            <div className="font-semibold">
+              {group.parent.eglise_nom} {group.parent.eglise_branche}
+            </div>
 
-        {/* ARBRE DES ÉGLISES */}
-        {renderTree(buildHierarchy(invitations))}
+            {/* Branches supervisées */}
+            {group.enfants.map(child => (
+              <div key={child.id} className="ml-6 text-sm">
+                - {child.eglise_nom} {child.eglise_branche}
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   );

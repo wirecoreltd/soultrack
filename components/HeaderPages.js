@@ -50,36 +50,34 @@ export default function HeaderPages() {
         }
 
         // 🔹 Récupérer le superviseur de cette église (superviseur réel)
-        if (profile?.eglise_id) {
-          const { data: supervisionData, error: supervisionError } = await supabase
-            .from("eglise_supervisions")
-            .select(`
-              superviseur_eglise_id,
-              superviseur_branche_id
-            `)
-            .eq("supervisee_eglise_id", profile.eglise_id)
-            .eq("statut", "acceptee")
-            .single();
+        // 🔹 Récupérer le superviseur de cette église (simple, juste avec IDs)
+if (profile?.eglise_id) {
+  const { data: supervisionData } = await supabase
+    .from("eglise_supervisions")
+    .select("superviseur_eglise_id, superviseur_branche_id")
+    .eq("supervisee_eglise_id", profile.eglise_id)
+    .eq("statut", "acceptee") // 🔹 correction ici
+    .single();
 
-          if (!supervisionError && supervisionData) {
-            // 🔹 Récupérer le nom de l'église et de la branche du superviseur
-            const { data: supEgliseData } = await supabase
-              .from("eglises")
-              .select("nom")
-              .eq("id", supervisionData.superviseur_eglise_id)
-              .single();
-            const { data: supBrancheData } = await supabase
-              .from("branches")
-              .select("nom")
-              .eq("id", supervisionData.superviseur_branche_id)
-              .single();
+  if (supervisionData) {
+    const { data: supEgliseData } = await supabase
+      .from("eglises")
+      .select("nom")
+      .eq("id", supervisionData.superviseur_eglise_id)
+      .single();
 
-            const supEgliseNom = supEgliseData?.nom || "";
-            const supBrancheNom = supBrancheData?.nom || "";
+    const { data: supBrancheData } = await supabase
+      .from("branches")
+      .select("nom")
+      .eq("id", supervisionData.superviseur_branche_id)
+      .single();
 
-            setSuperviseur(`Superviseur : ${supEgliseNom} - ${supBrancheNom}`);
-          }
-        }
+    const supEgliseNom = supEgliseData?.nom || "";
+    const supBrancheNom = supBrancheData?.nom || "";
+
+    setSuperviseur(`Superviseur : ${supEgliseNom} - ${supBrancheNom}`);
+  }
+}
 
       } catch (err) {
         console.error("Erreur récupération profil :", err);

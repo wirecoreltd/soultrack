@@ -4,6 +4,11 @@ import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 
+// 🔹 Fonction utilitaire pour obtenir le dernier jour du mois
+const getLastDayOfMonth = (year, month) => {
+  return new Date(year, month, 0).getDate(); // month = 1..12
+};
+
 export default function StatGlobalPage() {
   const [superviseur, setSuperviseur] = useState({ prenom: "", nom: "", eglise_id: null });
   const [mois, setMois] = useState("01"); // janvier par défaut
@@ -28,34 +33,30 @@ export default function StatGlobalPage() {
     loadSuperviseur();
   }, []);
 
-  // 🔹 Récupérer toutes les églises supervisées en cascade
+  // 🔹 Récupérer toutes les églises en cascade
   const getEglisesCascade = async (egliseId) => {
+    let allEglises = [egliseId];
     try {
       const { data, error } = await supabase
         .from("eglise_supervisions")
-        .select("eglise_nom, superviseur_eglise_id")
+        .select("eglise_nom, superviseur_eglise_nom, statut")
         .eq("statut", "accepted");
 
-      if (error) {
-        console.error("Erreur récupération églises :", error);
-        return [egliseId];
-      }
+      if (error) throw error;
+      if (!data) return allEglises;
 
-      let allEglises = [egliseId];
       let queue = [egliseId];
-
       while (queue.length > 0) {
         const parent = queue.shift();
         const enfants = data
-          .filter(d => d.superviseur_eglise_id === parent)
+          .filter(d => d.superviseur_eglise_nom === parent)
           .map(d => d.eglise_nom);
         allEglises.push(...enfants);
         queue.push(...enfants);
       }
-
       return Array.from(new Set(allEglises));
     } catch (err) {
-      console.error(err);
+      console.error("Erreur récupération églises :", err);
       return [egliseId];
     }
   };
@@ -65,47 +66,43 @@ export default function StatGlobalPage() {
     if (!superviseur.eglise_id) return;
 
     const egliseNoms = await getEglisesCascade(superviseur.eglise_id);
+    const lastDay = getLastDayOfMonth(annee, parseInt(mois));
 
     try {
       const { data, error } = await supabase
         .from("stats_ministere_besoin")
         .select("*")
-        .in("eglise_id", egliseNoms)
+        .in("eglise_nom", egliseNoms)
         .gte("date_action", `${annee}-${mois}-01`)
-        .lte("date_action", `${annee}-${mois}-31`);
+        .lte("date_action", `${annee}-${mois}-${lastDay}`);
 
-      if (error) {
-        console.error("Erreur stats :", error);
-        return;
-      }
+      if (error) throw error;
 
       const total = {};
       const parEglise = {};
 
       data.forEach(row => {
-        const vals = row.valeur || {};
-
-        // --- Total global
+        // total global
         if (!total[row.type]) total[row.type] = { hommes: 0, femmes: 0, enfants: 0, visiteurs: 0 };
-        total[row.type].hommes += vals.hommes || 0;
-        total[row.type].femmes += vals.femmes || 0;
-        total[row.type].enfants += vals.enfants || 0;
-        total[row.type].visiteurs += vals.visiteurs || 0;
+        total[row.type].hommes += row.valeur?.hommes || 0;
+        total[row.type].femmes += row.valeur?.femmes || 0;
+        total[row.type].enfants += row.valeur?.enfants || 0;
+        total[row.type].visiteurs += row.valeur?.visiteurs || 0;
 
-        // --- Par église
-        const egliseKey = row.eglise_id;
-        if (!parEglise[egliseKey]) parEglise[egliseKey] = {};
-        if (!parEglise[egliseKey][row.type]) parEglise[egliseKey][row.type] = { hommes: 0, femmes: 0, enfants: 0, visiteurs: 0 };
-        parEglise[egliseKey][row.type].hommes += vals.hommes || 0;
-        parEglise[egliseKey][row.type].femmes += vals.femmes || 0;
-        parEglise[egliseKey][row.type].enfants += vals.enfants || 0;
-        parEglise[egliseKey][row.type].visiteurs += vals.visiteurs || 0;
+        // stats par église
+        if (!parEglise[row.eglise_nom]) parEglise[row.eglise_nom] = {};
+        if (!parEglise[row.eglise_nom][row.type]) parEglise[row.eglise_nom][row.type] = { hommes: 0, femmes: 0, enfants: 0, visiteurs: 0 };
+        parEglise[row.eglise_nom][row.type].hommes += row.valeur?.hommes || 0;
+        parEglise[row.eglise_nom][row.type].femmes += row.valeur?.femmes || 0;
+        parEglise[row.eglise_nom][row.type].enfants += row.valeur?.enfants || 0;
+        parEglise[row.eglise_nom][row.type].visiteurs += row.valeur?.visiteurs || 0;
       });
 
       setTotalGlobal(total);
       setStatsParEglise(parEglise);
+
     } catch (err) {
-      console.error("Erreur loadStats :", err);
+      console.error("Erreur stats :", err);
     }
   };
 
@@ -177,9 +174,9 @@ export default function StatGlobalPage() {
       {/* DÉTAIL PAR ÉGLISE */}
       <div className="w-full max-w-5xl mb-10">
         <h4 className="text-xl font-bold text-amber-300 mb-3">DÉTAIL PAR ÉGLISE</h4>
-        {Object.entries(statsParEglise).map(([egliseId, types]) => (
-          <div key={egliseId} className="mb-8">
-            <h5 className="text-lg font-semibold mb-2">📍 {egliseId}</h5>
+        {Object.entries(statsParEglise).map(([egliseNom, types]) => (
+          <div key={egliseNom} className="mb-8">
+            <h5 className="text-lg font-semibold mb-2">📍 {egliseNom}</h5>
             <table className="w-full text-sm border bg-white text-black rounded-lg overflow-hidden">
               <thead className="bg-gray-100">
                 <tr>

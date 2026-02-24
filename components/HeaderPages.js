@@ -95,7 +95,9 @@ export default function HeaderPages() {
           Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
         </p>
         {superviseur && (
-          <p className="text-white text-xs italic">Superviseur : {superviseur}</p>
+         <p className="flex justify-end flex-col text-right space-y-1 mb-2">
+          <span className="text-amber-300">Superviseur :</span> <span className="text-white">{superviseur}</span>
+        </p>
         )}
       </div>
 

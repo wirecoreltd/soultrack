@@ -6,11 +6,12 @@ import HeaderPages from "../components/HeaderPages";
 
 export default function StatGlobalPage() {
   const [superviseur, setSuperviseur] = useState({ prenom: "", nom: "", eglise_id: null });
+  const [mois, setMois] = useState("01"); // janvier par défaut
   const [annee, setAnnee] = useState(new Date().getFullYear());
-  const [statsParMois, setStatsParMois] = useState({}); // stats regroupées par mois
-  const [moisOpen, setMoisOpen] = useState({}); // gérer expand/collapse
+  const [totalGlobal, setTotalGlobal] = useState({});
+  const [statsParEglise, setStatsParEglise] = useState({});
 
-  // 🔹 Charger superviseur
+  // 🔹 Charger superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -22,30 +23,39 @@ export default function StatGlobalPage() {
         .eq("id", user.id)
         .single();
 
-      if (!error) setSuperviseur({ prenom: data.prenom, nom: data.nom, eglise_id: data.eglise_id });
+      if (!error && data) setSuperviseur({ prenom: data.prenom, nom: data.nom, eglise_id: data.eglise_id });
     };
     loadSuperviseur();
   }, []);
 
-  // 🔹 Récupérer toutes les églises supervisées
+  // 🔹 Récupérer toutes les églises en cascade
   const getEglisesCascade = async (egliseId) => {
     let allEglises = [egliseId];
-    const { data } = await supabase
+
+    const { data, error } = await supabase
       .from("eglise_supervisions")
-      .select("eglise_supervisee_id")
+      .select("eglise_supervisee_id, superviseur_eglise_id")
       .eq("statut", "accepted");
+
+    if (error || !data) {
+      console.error("Erreur récupération églises :", error);
+      return [egliseId]; // retourner au moins l'église principale
+    }
 
     let queue = [egliseId];
     while (queue.length > 0) {
       const parent = queue.shift();
-      const enfants = data.filter(d => d.superviseur_eglise_id === parent).map(d => d.eglise_supervisee_id);
+      const enfants = data
+        .filter(d => d.superviseur_eglise_id === parent)
+        .map(d => d.eglise_supervisee_id);
       allEglises.push(...enfants);
       queue.push(...enfants);
     }
+
     return Array.from(new Set(allEglises));
   };
 
-  // 🔹 Charger stats pour toute l'année
+  // 🔹 Charger les stats
   const loadStats = async () => {
     if (!superviseur.eglise_id) return;
 
@@ -55,46 +65,59 @@ export default function StatGlobalPage() {
       .from("stats_ministere_besoin")
       .select("*")
       .in("eglise_id", egliseIds)
+      .eq("mois", mois)
       .eq("annee", annee);
 
     if (error) {
-      console.error(error);
+      console.error("Erreur stats :", error);
       return;
     }
 
-    const statsMois = {};
-    data.forEach(row => {
-      const moisKey = row.mois.padStart(2, "0");
-      if (!statsMois[moisKey]) statsMois[moisKey] = { totalGlobal: {}, parEglise: {} };
-
+    // Calcul total global
+    const total = {};
+    const parEglise = {};
+    (data || []).forEach(row => {
       // total global
-      if (!statsMois[moisKey].totalGlobal[row.type]) statsMois[moisKey].totalGlobal[row.type] = { hommes: 0, femmes: 0, enfants: 0, visiteurs: 0 };
-      statsMois[moisKey].totalGlobal[row.type].hommes += row.hommes;
-      statsMois[moisKey].totalGlobal[row.type].femmes += row.femmes;
-      statsMois[moisKey].totalGlobal[row.type].enfants += row.enfants;
-      statsMois[moisKey].totalGlobal[row.type].visiteurs += row.visiteurs;
+      if (!total[row.type]) total[row.type] = { hommes: 0, femmes: 0, enfants: 0, visiteurs: 0 };
+      total[row.type].hommes += row.hommes;
+      total[row.type].femmes += row.femmes;
+      total[row.type].enfants += row.enfants;
+      total[row.type].visiteurs += row.visiteurs;
 
       // stats par église
-      if (!statsMois[moisKey].parEglise[row.eglise_nom]) statsMois[moisKey].parEglise[row.eglise_nom] = {};
-      if (!statsMois[moisKey].parEglise[row.eglise_nom][row.type]) statsMois[moisKey].parEglise[row.eglise_nom][row.type] = { hommes: 0, femmes: 0, enfants: 0, visiteurs: 0 };
-      statsMois[moisKey].parEglise[row.eglise_nom][row.type].hommes += row.hommes;
-      statsMois[moisKey].parEglise[row.eglise_nom][row.type].femmes += row.femmes;
-      statsMois[moisKey].parEglise[row.eglise_nom][row.type].enfants += row.enfants;
-      statsMois[moisKey].parEglise[row.eglise_nom][row.type].visiteurs += row.visiteurs;
+      if (!parEglise[row.eglise_nom]) parEglise[row.eglise_nom] = {};
+      if (!parEglise[row.eglise_nom][row.type]) parEglise[row.eglise_nom][row.type] = { hommes: 0, femmes: 0, enfants: 0, visiteurs: 0 };
+      parEglise[row.eglise_nom][row.type].hommes += row.hommes;
+      parEglise[row.eglise_nom][row.type].femmes += row.femmes;
+      parEglise[row.eglise_nom][row.type].enfants += row.enfants;
+      parEglise[row.eglise_nom][row.type].visiteurs += row.visiteurs;
     });
 
-    setStatsParMois(statsMois);
+    setTotalGlobal(total);
+    setStatsParEglise(parEglise);
   };
 
-  useEffect(() => { loadStats(); }, [superviseur, annee]);
+  useEffect(() => {
+    loadStats();
+  }, [superviseur, mois, annee]);
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
       <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">Statistiques Globales</h4>
 
-      {/* Filtre année */}
+      {/* Filtres */}
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4 mb-10">
+        <div>
+          <label className="font-semibold">Mois</label>
+          <select className="w-full border rounded-xl px-3 py-2" value={mois} onChange={e => setMois(e.target.value)}>
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i} value={(i + 1).toString().padStart(2, "0")}>
+                {new Date(0, i).toLocaleString('fr-FR', { month: 'long' })}
+              </option>
+            ))}
+          </select>
+        </div>
         <div>
           <label className="font-semibold">Année</label>
           <input
@@ -112,88 +135,71 @@ export default function StatGlobalPage() {
         </button>
       </div>
 
-      {/* Stats par mois */}
-      <div className="w-full max-w-5xl space-y-6">
-        {Object.keys(statsParMois).sort().map(moisKey => {
-          const moisData = statsParMois[moisKey];
-          const moisName = new Date(0, parseInt(moisKey)-1).toLocaleString('fr-FR', { month: 'long' });
+      {/* TOTAL GLOBAL */}
+      <div className="w-full max-w-5xl mb-10">
+        <h4 className="text-xl font-bold text-amber-300 mb-3">
+          TOTAL GLOBAL — {new Date(0, parseInt(mois)-1).toLocaleString('fr-FR', { month: 'long' })} {annee}
+        </h4>
+        <table className="w-full text-sm border bg-white text-black rounded-lg overflow-hidden">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="px-3 py-2 border">Type</th>
+              <th className="px-3 py-2 border">Hommes</th>
+              <th className="px-3 py-2 border">Femmes</th>
+              <th className="px-3 py-2 border">Enfants</th>
+              <th className="px-3 py-2 border">Visiteurs</th>
+              <th className="px-3 py-2 border">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(totalGlobal).map(([type, vals]) => (
+              <tr key={type}>
+                <td className="px-3 py-2 border">{type}</td>
+                <td className="px-3 py-2 border">{vals.hommes}</td>
+                <td className="px-3 py-2 border">{vals.femmes}</td>
+                <td className="px-3 py-2 border">{vals.enfants}</td>
+                <td className="px-3 py-2 border">{vals.visiteurs}</td>
+                <td className="px-3 py-2 border">
+                  {vals.hommes + vals.femmes + vals.enfants + vals.visiteurs}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-          return (
-            <div key={moisKey} className="bg-white/10 rounded-2xl p-4">
-              <div
-                className="flex justify-between items-center cursor-pointer mb-2"
-                onClick={() => setMoisOpen(prev => ({ ...prev, [moisKey]: !prev[moisKey] }))}
-              >
-                <h5 className="text-lg font-bold">➕ {moisName} {annee}</h5>
-                <span className="text-xl">{moisOpen[moisKey] ? "➖" : "➕"}</span>
-              </div>
-
-              {moisOpen[moisKey] && (
-                <div className="space-y-4">
-                  {/* TOTAL GLOBAL */}
-                  <div>
-                    <h6 className="font-semibold text-amber-300 mb-2">TOTAL GLOBAL — {moisName} {annee}</h6>
-                    <table className="w-full text-sm border bg-white text-black rounded-lg overflow-hidden mb-4">
-                      <thead className="bg-gray-200">
-                        <tr>
-                          <th className="px-3 py-2 border">Type</th>
-                          <th className="px-3 py-2 border">Hommes</th>
-                          <th className="px-3 py-2 border">Femmes</th>
-                          <th className="px-3 py-2 border">Enfants</th>
-                          <th className="px-3 py-2 border">Visiteurs</th>
-                          <th className="px-3 py-2 border">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(moisData.totalGlobal).map(([type, vals]) => (
-                          <tr key={type}>
-                            <td className="px-3 py-2 border">{type}</td>
-                            <td className="px-3 py-2 border">{vals.hommes}</td>
-                            <td className="px-3 py-2 border">{vals.femmes}</td>
-                            <td className="px-3 py-2 border">{vals.enfants}</td>
-                            <td className="px-3 py-2 border">{vals.visiteurs}</td>
-                            <td className="px-3 py-2 border">{vals.hommes + vals.femmes + vals.enfants + vals.visiteurs}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* DÉTAIL PAR ÉGLISE */}
-                  {Object.entries(moisData.parEglise).map(([egliseNom, types]) => (
-                    <div key={egliseNom}>
-                      <h6 className="font-semibold mb-1">📍 {egliseNom}</h6>
-                      <table className="w-full text-sm border bg-white text-black rounded-lg overflow-hidden mb-4">
-                        <thead className="bg-gray-100">
-                          <tr>
-                            <th className="px-3 py-2 border">Type</th>
-                            <th className="px-3 py-2 border">Hommes</th>
-                            <th className="px-3 py-2 border">Femmes</th>
-                            <th className="px-3 py-2 border">Enfants</th>
-                            <th className="px-3 py-2 border">Visiteurs</th>
-                            <th className="px-3 py-2 border">Total</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {Object.entries(types).map(([type, vals]) => (
-                            <tr key={type}>
-                              <td className="px-3 py-2 border">{type}</td>
-                              <td className="px-3 py-2 border">{vals.hommes}</td>
-                              <td className="px-3 py-2 border">{vals.femmes}</td>
-                              <td className="px-3 py-2 border">{vals.enfants}</td>
-                              <td className="px-3 py-2 border">{vals.visiteurs}</td>
-                              <td className="px-3 py-2 border">{vals.hommes + vals.femmes + vals.enfants + vals.visiteurs}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+      {/* DÉTAIL PAR ÉGLISE */}
+      <div className="w-full max-w-5xl mb-10">
+        <h4 className="text-xl font-bold text-amber-300 mb-3">DÉTAIL PAR ÉGLISE</h4>
+        {Object.entries(statsParEglise).map(([egliseNom, types]) => (
+          <div key={egliseNom} className="mb-8">
+            <h5 className="text-lg font-semibold mb-2">📍 {egliseNom}</h5>
+            <table className="w-full text-sm border bg-white text-black rounded-lg overflow-hidden">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-3 py-2 border">Type</th>
+                  <th className="px-3 py-2 border">Hommes</th>
+                  <th className="px-3 py-2 border">Femmes</th>
+                  <th className="px-3 py-2 border">Enfants</th>
+                  <th className="px-3 py-2 border">Visiteurs</th>
+                  <th className="px-3 py-2 border">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(types).map(([type, vals]) => (
+                  <tr key={type}>
+                    <td className="px-3 py-2 border">{type}</td>
+                    <td className="px-3 py-2 border">{vals.hommes}</td>
+                    <td className="px-3 py-2 border">{vals.femmes}</td>
+                    <td className="px-3 py-2 border">{vals.enfants}</td>
+                    <td className="px-3 py-2 border">{vals.visiteurs}</td>
+                    <td className="px-3 py-2 border">{vals.hommes + vals.femmes + vals.enfants + vals.visiteurs}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
       </div>
     </div>
   );

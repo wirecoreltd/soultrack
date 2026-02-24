@@ -60,13 +60,13 @@ export default function HeaderPages() {
               branches(nom)
             `)
             .eq("supervisee_eglise_id", profile.eglise_id)
-            .eq("statut", "accepté")
+            .eq("statut", "acceptee")
             .single();
 
-          if (!supervisionError && supervisionData) {
+          if (!supervisionError && supervisionData && supervisionData.eglises && supervisionData.branches) {
             const supEglise = supervisionData.eglises?.nom || "";
             const supBranche = supervisionData.branches?.nom || "";
-            setSuperviseur(`Sous la supervision de ${supEglise} - ${supBranche}`);
+            setSuperviseur(`${supEglise} - ${supBranche}`);
           }
         }
 
@@ -110,17 +110,20 @@ export default function HeaderPages() {
           Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
         </p>
         {superviseur && (
-          <p className="text-white text-xs italic">{superviseur}</p>
+          <p className="text-white text-xs italic">
+            Superviseur : {superviseur}
+          </p>
         )}
       </div>
 
       {/* Logo centré */}
       <div className="flex flex-col items-center mb-4">
-        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-auto" />
-        {/* Église / Branche sous le logo */}
-        <p className="text-white font-semibold text-lg mt-2">
-          {eglise} <span className="text-amber-300">- {branche}</span>
-        </p>
+        <img
+          src="/logo.png"
+          alt="Logo SoulTrack"
+          className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
+          onClick={() => router.push("/index")}
+        />
       </div>
     </div>
   );

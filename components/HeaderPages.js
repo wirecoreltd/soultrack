@@ -90,13 +90,14 @@ export default function HeaderPages() {
       </div>
 
       {/* User info en haut à droite */}
-      <div className="flex justify-end flex-col text-right space-y-1 mb-2">
+      <div className="flex justify-end flex-col text-right space-y-1 mb-2 text-sm">
         <p className="text-white text-sm">
           Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
         </p>
         {superviseur && (
-         <p className="flex justify-end flex-col text-right space-y-1 mb-2">
-          <span className="text-amber-300">Superviseur :</span> <span className="text-white">{superviseur}</span>
+         <p className="flex justify-end space-x-1 text-right mb-2 text-sm">
+          <span style={{ color: "#c31850" }}>Superviseur :</span>
+          <span className="text-white">{superviseur}</span>
         </p>
         )}
       </div>

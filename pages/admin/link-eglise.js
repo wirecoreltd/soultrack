@@ -86,7 +86,6 @@ export default function LinkEglise() {
   const getStatusStyle = (statut) => {
     switch (statut?.toLowerCase()) {
       case "accepted":
-      case "acceptee":
         return { border: "border-l-4 border-green-600", button: null };
       case "refused":
         return { border: "border-l-4 border-red-600", button: "Renvoyer invitation" };
@@ -97,17 +96,6 @@ export default function LinkEglise() {
     }
   };
 
-  // 🔹 Grouper par église (branche principale)
-  const groupedInvitations = invitations.reduce((acc, inv) => {
-    const key = inv.eglise_nom; // Regroupement uniquement par église
-    if (!acc[key]) {
-      acc[key] = { parent: inv, children: [] };
-    } else {
-      acc[key].children.push(inv);
-    }
-    return acc;
-  }, {});
-
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
@@ -117,8 +105,9 @@ export default function LinkEglise() {
         Envoyer une invitation pour relier une église
       </h4>
 
-      {/* FORMULAIRE */}
+      {/* FORMULAIRE (vertical comme demandé) */}
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4 mb-10">
+
         <div>
           <label className="font-semibold">Prénom du responsable</label>
           <input
@@ -183,13 +172,18 @@ export default function LinkEglise() {
         />
       </div>
 
+      {/* ESPACE AU-DESSUS */}
+      <div className="h-10" />
+
       {/* TITRE TABLE */}
       <h4 className="text-2xl font-bold mt-2 mb-10 text-center w-full max-w-5xl text-amber-300">
         Liste des églises supervisées
       </h4>
 
-      {/* TABLE */}
+      {/* TABLE ALIGNÉE PARFAITEMENT */}
       <div className="w-full max-w-5xl">
+
+        {/* HEADER */}
         <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
           <div>Église</div>
           <div>Branche</div>
@@ -197,30 +191,32 @@ export default function LinkEglise() {
           <div>Statut</div>
         </div>
 
-        {Object.values(groupedInvitations).map(({ parent, children }) => (
-          <div key={parent.id}>
-            {/* Branche principale */}
-            <div className="grid grid-cols-4 px-3 py-2 mt-2 rounded-lg border-l-4 border-blue-500 items-center">
-              <div>{parent.eglise_nom}</div>
-              <div>{parent.eglise_branche}</div>
-              <div>{parent.responsable_prenom} {parent.responsable_nom}</div>
-              <div>{parent.statut}</div>
-            </div>
+        {/* LIGNES */}
+        {invitations.map((inv) => {
+          const statusStyle = getStatusStyle(inv.statut);
 
-            {/* Branches secondaires */}
-            {children.map((child) => (
-              <div
-                key={child.id}
-                className="grid grid-cols-4 px-3 py-1 ml-6 mt-1 rounded-lg border-l-2 border-gray-400 items-center text-sm"
-              >
-                <div>{child.eglise_nom}</div>
-                <div>{child.eglise_branche}</div>
-                <div>{child.responsable_prenom} {child.responsable_nom}</div>
-                <div>{child.statut}</div>
+          return (
+            <div
+              key={inv.id}
+              className={`grid grid-cols-4 px-3 py-2 mt-2 rounded-lg ${statusStyle.border} items-center`}
+            >
+              <div>{inv.eglise_nom}</div>
+              <div>{inv.eglise_branche}</div>
+              <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
+              <div className="flex items-center gap-3">
+                <span>{inv.statut}</span>
+                {statusStyle.button && (
+                  <button
+                    className="text-orange-500 font-semibold text-sm hover:opacity-80"
+                    onClick={() => alert(`${statusStyle.button}`)}
+                  >
+                    {statusStyle.button}
+                  </button>
+                )}
               </div>
-            ))}
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

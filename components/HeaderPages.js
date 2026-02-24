@@ -116,12 +116,11 @@ export default function HeaderPages() {
 
       {/* Logo centré */}
       <div className="flex flex-col items-center mb-4">
-        <img
-          src="/logo.png"
-          alt="Logo SoulTrack"
-          className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
-          onClick={() => router.push("/index")}
-        />
+        <img src="/logo.png" alt="Logo SoulTrack" className="w-20 h-auto" />
+        {/* Église / Branche sous le logo */}
+        <p className="text-white font-semibold text-lg mt-2">
+          {eglise} <span className="text-amber-300">- {branche}</span>
+        </p>
       </div>
     </div>
   );

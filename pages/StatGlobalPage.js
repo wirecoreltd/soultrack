@@ -14,34 +14,6 @@ export default function StatGlobalPageWrapper() {
   );
 }
 
-async function getAllSupervisedEglises(userBranchId) {
-  const allIds = new Set();
-  const queue = [userBranchId];
-
-  while (queue.length) {
-    const current = queue.shift();
-    if (!current) continue;
-
-    // Ajouter à la liste
-    allIds.add(current);
-
-    // Chercher les églises supervisées par cette branche
-    const { data } = await supabase
-      .from("eglise")
-      .select("id, superviseur_branche_id")
-      .eq("statut", "acceptee")
-      .eq("superviseur_branche_id", current);
-
-    if (data && data.length > 0) {
-      data.forEach((e) => {
-        if (!allIds.has(e.id)) queue.push(e.id);
-      });
-    }
-  }
-
-  return Array.from(allIds);
-}
-
 function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
@@ -56,8 +28,11 @@ function StatGlobalPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // 🔹 Récupérer branche_id de l'utilisateur
     const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data } = await supabase
@@ -76,22 +51,38 @@ function StatGlobalPage() {
     if (!egliseBranchId) return;
     setLoading(true);
 
-    const allEgliseIds = await getAllSupervisedEglises(egliseBranchId);
+    // 🔹 1️⃣ Récupérer toutes les églises supervisées (cascade)
+    let egliseIds = [egliseBranchId]; // inclut la branche principale
+    const { data: supervisedData, error: supervisedError } = await supabase
+      .rpc("get_all_supervised_eglises", { start_eglise: egliseBranchId });
+
+    if (!supervisedError && supervisedData?.length > 0) {
+      const ids = supervisedData
+        .filter((e) => e.superviseur_branche_id) // éviter null
+        .map((e) => e.superviseur_branche_id);
+      egliseIds = [...egliseIds, ...ids];
+    }
 
     // ================= ATTENDANCE =================
     const { data: attendanceData } = await supabase
       .from("attendance")
       .select("*")
-      .in("eglise_id", allEgliseIds)
-      .gte("date", dateDebut || "1900-01-01")
-      .lte("date", dateFin || "9999-12-31");
+      .in("eglise_id", egliseIds)
+      .gte(dateDebut ? "date" : "date", dateDebut || "1900-01-01")
+      .lte(dateFin ? "date" : "date", dateFin || "2100-01-01");
 
     const attendanceTotals = {
-      hommes: 0, femmes: 0, jeunes: 0, enfants: 0,
-      connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0, moissonneurs: 0
+      hommes: 0,
+      femmes: 0,
+      jeunes: 0,
+      enfants: 0,
+      connectes: 0,
+      nouveauxVenus: 0,
+      nouveauxConvertis: 0,
+      moissonneurs: 0,
     };
 
-    attendanceData?.forEach(r => {
+    attendanceData?.forEach((r) => {
       attendanceTotals.hommes += Number(r.hommes) || 0;
       attendanceTotals.femmes += Number(r.femmes) || 0;
       attendanceTotals.jeunes += Number(r.jeunes) || 0;
@@ -108,73 +99,68 @@ function StatGlobalPage() {
     const { data: evanData } = await supabase
       .from("evangelises")
       .select("*")
-      .in("eglise_id", allEgliseIds)
-      .gte("created_at", dateDebut || "1900-01-01")
-      .lte("created_at", dateFin || "9999-12-31");
+      .in("eglise_id", egliseIds)
+      .gte(dateDebut ? "created_at" : "created_at", dateDebut || "1900-01-01")
+      .lte(dateFin ? "created_at" : "created_at", dateFin || "2100-01-01");
 
     const evanTotals = { hommes: 0, femmes: 0, nouveauxConvertis: 0 };
-    evanData?.forEach(r => {
+    evanData?.forEach((r) => {
       if (r.sexe === "Homme") evanTotals.hommes++;
       if (r.sexe === "Femme") evanTotals.femmes++;
       if (r.type_conversion === "Nouveau converti") evanTotals.nouveauxConvertis++;
     });
     setEvanStats(evanTotals);
 
-    // ================= BAPTEME =================
+    // ================= BAPTÊME =================
     const { data: baptemeData } = await supabase
       .from("baptemes")
-      .select("hommes,femmes")
-      .in("eglise_id", allEgliseIds)
-      .gte("date", dateDebut || "1900-01-01")
-      .lte("date", dateFin || "9999-12-31");
+      .select("hommes, femmes")
+      .in("eglise_id", egliseIds)
+      .gte(dateDebut ? "date" : "date", dateDebut || "1900-01-01")
+      .lte(dateFin ? "date" : "date", dateFin || "2100-01-01");
 
     setBaptemeStats({
       hommes: baptemeData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
-      femmes: baptemeData?.reduce((s, r) => s + Number(r.femmes), 0) || 0
+      femmes: baptemeData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
     });
 
     // ================= FORMATION =================
     const { data: formationData } = await supabase
       .from("formations")
-      .select("hommes,femmes")
-      .in("eglise_id", allEgliseIds)
-      .gte("date_debut", dateDebut || "1900-01-01")
-      .lte("date_fin", dateFin || "9999-12-31");
+      .select("hommes, femmes")
+      .in("eglise_id", egliseIds)
+      .gte(dateDebut ? "date_debut" : "date_debut", dateDebut || "1900-01-01")
+      .lte(dateFin ? "date_fin" : "date_fin", dateFin || "2100-01-01");
 
     setFormationStats({
       hommes: formationData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
-      femmes: formationData?.reduce((s, r) => s + Number(r.femmes), 0) || 0
+      femmes: formationData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
     });
 
     // ================= CELLULES =================
-    const { count } = await supabase
+    const { count: cellulesCount } = await supabase
       .from("cellules")
       .select("id", { count: "exact", head: true })
-      .in("eglise_id", allEgliseIds);
+      .in("eglise_id", egliseIds);
 
-    setCellulesCount(count || 0);
+    setCellulesCount(cellulesCount || 0);
 
     // ================= SERVITEURS =================
     const { data: servData } = await supabase
       .from("stats_ministere_besoin")
-      .select("membre_id,valeur")
-      .in("eglise_id", allEgliseIds)
+      .select("membre_id, valeur")
+      .in("eglise_id", egliseIds)
       .eq("type", "ministere");
 
-    const uniqueMembres = new Map();
-    servData?.forEach(s => {
-      if (!uniqueMembres.has(s.membre_id)) uniqueMembres.set(s.membre_id, s.valeur);
-    });
-
-    let hommes = 0, femmes = 0;
-    if (uniqueMembres.size > 0) {
-      const ids = Array.from(uniqueMembres.keys());
-      const { data: membresSexe } = await supabase
+    let hommes = 0,
+      femmes = 0;
+    if (servData?.length > 0) {
+      const uniqueMembres = [...new Set(servData.map((s) => s.membre_id))];
+      const { data: membres } = await supabase
         .from("membres_complets")
-        .select("id,sexe")
-        .in("id", ids);
-
-      membresSexe?.forEach(m => {
+        .select("id, sexe")
+        .in("id", uniqueMembres);
+      membres?.forEach((m) => {
         if (m.sexe === "Homme") hommes++;
         if (m.sexe === "Femme") femmes++;
       });

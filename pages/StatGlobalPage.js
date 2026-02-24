@@ -14,254 +14,198 @@ export default function StatGlobalPageWrapper() {
   );
 }
 
+async function getAllSupervisedEglises(userBranchId) {
+  const allIds = new Set();
+  const queue = [userBranchId];
+
+  while (queue.length) {
+    const current = queue.shift();
+    if (!current) continue;
+
+    // Ajouter à la liste
+    allIds.add(current);
+
+    // Chercher les églises supervisées par cette branche
+    const { data } = await supabase
+      .from("eglise")
+      .select("id, superviseur_branche_id")
+      .eq("statut", "acceptee")
+      .eq("superviseur_branche_id", current);
+
+    if (data && data.length > 0) {
+      data.forEach((e) => {
+        if (!allIds.has(e.id)) queue.push(e.id);
+      });
+    }
+  }
+
+  return Array.from(allIds);
+}
+
 function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [typeRapport, setTypeRapport] = useState("Tous");
-
-  const [egliseId, setEgliseId] = useState(null);
-  const [brancheId, setBrancheId] = useState(null);
-
   const [attendanceStats, setAttendanceStats] = useState(null);
   const [evanStats, setEvanStats] = useState(null);
   const [baptemeStats, setBaptemeStats] = useState(null);
   const [formationStats, setFormationStats] = useState(null);
   const [cellulesCount, setCellulesCount] = useState(0);
   const [serviteurStats, setServiteurStats] = useState(null);
-
+  const [egliseBranchId, setEgliseBranchId] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("branche_id")
         .eq("id", user.id)
         .single();
 
-      if (data) {
-        setEgliseId(data.eglise_id);
-        setBrancheId(data.branche_id);
-      }
+      if (data) setEgliseBranchId(data.branche_id);
     };
 
     fetchProfile();
   }, []);
 
   const fetchStats = async () => {
-    if (!egliseId || !brancheId) return;
+    if (!egliseBranchId) return;
     setLoading(true);
 
-    try {
-      // 🔹 Récupérer toutes les églises supervisées
-      const { data: eglisesData, error: rpcError } = await supabase
-        .rpc("get_all_supervised_eglises", { start_eglise: egliseId });
+    const allEgliseIds = await getAllSupervisedEglises(egliseBranchId);
 
-      if (rpcError) throw rpcError;
+    // ================= ATTENDANCE =================
+    const { data: attendanceData } = await supabase
+      .from("attendance")
+      .select("*")
+      .in("eglise_id", allEgliseIds)
+      .gte("date", dateDebut || "1900-01-01")
+      .lte("date", dateFin || "9999-12-31");
 
-      const allEglises = [egliseId, ...eglisesData.map((e) => e.id)];
+    const attendanceTotals = {
+      hommes: 0, femmes: 0, jeunes: 0, enfants: 0,
+      connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0, moissonneurs: 0
+    };
 
-      // ================= ATTENDANCE =================
-      let attendanceQuery = supabase
-        .from("attendance")
-        .select("*")
-        .in("eglise_id", allEglises)
-        .eq("branche_id", brancheId);
+    attendanceData?.forEach(r => {
+      attendanceTotals.hommes += Number(r.hommes) || 0;
+      attendanceTotals.femmes += Number(r.femmes) || 0;
+      attendanceTotals.jeunes += Number(r.jeunes) || 0;
+      attendanceTotals.enfants += Number(r.enfants) || 0;
+      attendanceTotals.connectes += Number(r.connectes) || 0;
+      attendanceTotals.nouveauxVenus += Number(r.nouveauxVenus) || 0;
+      attendanceTotals.nouveauxConvertis += Number(r.nouveauxConvertis) || 0;
+      attendanceTotals.moissonneurs += Number(r.moissonneurs) || 0;
+    });
 
-      if (dateDebut) attendanceQuery = attendanceQuery.gte("date", dateDebut);
-      if (dateFin) attendanceQuery = attendanceQuery.lte("date", dateFin);
+    setAttendanceStats(attendanceTotals);
 
-      const { data: attendanceData } = await attendanceQuery;
+    // ================= EVANGELISATION =================
+    const { data: evanData } = await supabase
+      .from("evangelises")
+      .select("*")
+      .in("eglise_id", allEgliseIds)
+      .gte("created_at", dateDebut || "1900-01-01")
+      .lte("created_at", dateFin || "9999-12-31");
 
-      const attendanceTotals = {
-        hommes: 0,
-        femmes: 0,
-        jeunes: 0,
-        enfants: 0,
-        connectes: 0,
-        nouveauxVenus: 0,
-        nouveauxConvertis: 0,
-        moissonneurs: 0,
-      };
+    const evanTotals = { hommes: 0, femmes: 0, nouveauxConvertis: 0 };
+    evanData?.forEach(r => {
+      if (r.sexe === "Homme") evanTotals.hommes++;
+      if (r.sexe === "Femme") evanTotals.femmes++;
+      if (r.type_conversion === "Nouveau converti") evanTotals.nouveauxConvertis++;
+    });
+    setEvanStats(evanTotals);
 
-      attendanceData?.forEach((r) => {
-        attendanceTotals.hommes += Number(r.hommes) || 0;
-        attendanceTotals.femmes += Number(r.femmes) || 0;
-        attendanceTotals.jeunes += Number(r.jeunes) || 0;
-        attendanceTotals.enfants += Number(r.enfants) || 0;
-        attendanceTotals.connectes += Number(r.connectes) || 0;
-        attendanceTotals.nouveauxVenus += Number(r.nouveauxVenus) || 0;
-        attendanceTotals.nouveauxConvertis += Number(r.nouveauxConvertis) || 0;
-        attendanceTotals.moissonneurs += Number(r.moissonneurs) || 0;
+    // ================= BAPTEME =================
+    const { data: baptemeData } = await supabase
+      .from("baptemes")
+      .select("hommes,femmes")
+      .in("eglise_id", allEgliseIds)
+      .gte("date", dateDebut || "1900-01-01")
+      .lte("date", dateFin || "9999-12-31");
+
+    setBaptemeStats({
+      hommes: baptemeData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
+      femmes: baptemeData?.reduce((s, r) => s + Number(r.femmes), 0) || 0
+    });
+
+    // ================= FORMATION =================
+    const { data: formationData } = await supabase
+      .from("formations")
+      .select("hommes,femmes")
+      .in("eglise_id", allEgliseIds)
+      .gte("date_debut", dateDebut || "1900-01-01")
+      .lte("date_fin", dateFin || "9999-12-31");
+
+    setFormationStats({
+      hommes: formationData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
+      femmes: formationData?.reduce((s, r) => s + Number(r.femmes), 0) || 0
+    });
+
+    // ================= CELLULES =================
+    const { count } = await supabase
+      .from("cellules")
+      .select("id", { count: "exact", head: true })
+      .in("eglise_id", allEgliseIds);
+
+    setCellulesCount(count || 0);
+
+    // ================= SERVITEURS =================
+    const { data: servData } = await supabase
+      .from("stats_ministere_besoin")
+      .select("membre_id,valeur")
+      .in("eglise_id", allEgliseIds)
+      .eq("type", "ministere");
+
+    const uniqueMembres = new Map();
+    servData?.forEach(s => {
+      if (!uniqueMembres.has(s.membre_id)) uniqueMembres.set(s.membre_id, s.valeur);
+    });
+
+    let hommes = 0, femmes = 0;
+    if (uniqueMembres.size > 0) {
+      const ids = Array.from(uniqueMembres.keys());
+      const { data: membresSexe } = await supabase
+        .from("membres_complets")
+        .select("id,sexe")
+        .in("id", ids);
+
+      membresSexe?.forEach(m => {
+        if (m.sexe === "Homme") hommes++;
+        if (m.sexe === "Femme") femmes++;
       });
-
-      setAttendanceStats(attendanceTotals);
-
-      // ================= EVANGELISATION =================
-      let evanQuery = supabase
-        .from("evangelises")
-        .select("*")
-        .in("eglise_id", allEglises)
-        .eq("branche_id", brancheId);
-
-      if (dateDebut) evanQuery = evanQuery.gte("created_at", dateDebut);
-      if (dateFin) evanQuery = evanQuery.lte("created_at", dateFin);
-
-      const { data: evanData } = await evanQuery;
-
-      const evanTotals = {
-        hommes: 0,
-        femmes: 0,
-        jeunes: 0,
-        enfants: 0,
-        connectes: 0,
-        nouveauxVenus: 0,
-        nouveauxConvertis: 0,
-        moissonneurs: 0,
-      };
-
-      evanData?.forEach((r) => {
-        if (r.sexe === "Homme") evanTotals.hommes++;
-        if (r.sexe === "Femme") evanTotals.femmes++;
-        if (r.type_conversion === "Nouveau converti")
-          evanTotals.nouveauxConvertis++;
-      });
-
-      setEvanStats(evanTotals);
-
-      // ================= BAPTEME =================
-      let baptemeQuery = supabase
-        .from("baptemes")
-        .select("hommes, femmes")
-        .in("eglise_id", allEglises)
-        .eq("branche_id", brancheId);
-
-      if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
-      if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
-
-      const { data: baptemeData } = await baptemeQuery;
-
-      setBaptemeStats({
-        hommes: baptemeData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
-        femmes: baptemeData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
-      });
-
-      // ================= FORMATION =================
-      let formationQuery = supabase
-        .from("formations")
-        .select("hommes, femmes")
-        .in("eglise_id", allEglises)
-        .eq("branche_id", brancheId);
-
-      if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
-      if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
-
-      const { data: formationData } = await formationQuery;
-
-      setFormationStats({
-        hommes: formationData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
-        femmes: formationData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
-      });
-
-      // ================= CELLULES =================
-      const { count } = await supabase
-        .from("cellules")
-        .select("id", { count: "exact", head: true })
-        .in("eglise_id", allEglises)
-        .eq("branche_id", brancheId);
-
-      setCellulesCount(count || 0);
-
-      // ================= SERVITEURS =================
-      let serviteurQuery = supabase
-        .from("stats_ministere_besoin")
-        .select("membre_id, valeur, date_action")
-        .in("eglise_id", allEglises)
-        .eq("branche_id", brancheId)
-        .eq("type", "ministere");
-
-      if (dateDebut) serviteurQuery = serviteurQuery.gte("date_action", dateDebut);
-      if (dateFin) serviteurQuery = serviteurQuery.lte("date_action", dateFin);
-
-      const { data: serviteurData, error: serviteurError } = await serviteurQuery;
-
-      if (serviteurError) {
-        console.error("Erreur Serviteurs:", serviteurError);
-        setServiteurStats({ hommes: 0, femmes: 0 });
-      } else {
-        const uniqueMembres = new Map();
-        serviteurData?.forEach((s) => {
-          if (s.membre_id && !uniqueMembres.has(s.membre_id)) {
-            uniqueMembres.set(s.membre_id, s.valeur);
-          }
-        });
-
-        let hommes = 0;
-        let femmes = 0;
-
-        if (uniqueMembres.size > 0) {
-          const ids = Array.from(uniqueMembres.keys());
-
-          const { data: membresSexe } = await supabase
-            .from("membres_complets")
-            .select("id, sexe")
-            .in("id", ids);
-
-          membresSexe?.forEach((m) => {
-            if (m.sexe === "Homme") hommes++;
-            if (m.sexe === "Femme") femmes++;
-          });
-        }
-
-        setServiteurStats({ hommes, femmes });
-      }
-    } catch (err) {
-      console.error("Erreur fetchStats:", err);
     }
+    setServiteurStats({ hommes, femmes });
 
     setLoading(false);
   };
 
+  // ================= RAPPORTS =================
   const rapports = [
     { label: "Culte", data: attendanceStats, border: "border-l-orange-500" },
     { label: "Evangelisation", data: evanStats, border: "border-l-green-500" },
     { label: "Baptême", data: baptemeStats, border: "border-l-purple-500" },
     { label: "Formation", data: formationStats, border: "border-l-blue-500" },
     { label: "Cellules", data: { total: cellulesCount }, border: "border-l-yellow-500" },
-    { label: "Serviteur", data: serviteurStats, border: "border-l-pink-500" },
-  ].filter((r) => typeRapport === "Tous" || r.label === typeRapport);
+    { label: "Serviteur", data: serviteurStats, border: "border-l-pink-500" }
+  ].filter(r => typeRapport === "Tous" || r.label === typeRapport);
 
-  const totalGeneral = rapports.reduce(
-    (acc, r) => {
-      acc.hommes += Number(r.data?.hommes) || 0;
-      acc.femmes += Number(r.data?.femmes) || 0;
-      acc.jeunes += Number(r.data?.jeunes) || 0;
-      acc.enfants += Number(r.data?.enfants) || 0;
-      acc.connectes += Number(r.data?.connectes) || 0;
-      acc.nouveauxVenus += Number(r.data?.nouveauxVenus) || 0;
-      acc.nouveauxConvertis += Number(r.data?.nouveauxConvertis) || 0;
-      acc.reconciliations += Number(r.data?.reconciliations) || 0;
-      acc.moissonneurs += Number(r.data?.moissonneurs) || 0;
-      return acc;
-    },
-    {
-      hommes: 0,
-      femmes: 0,
-      jeunes: 0,
-      enfants: 0,
-      connectes: 0,
-      nouveauxVenus: 0,
-      nouveauxConvertis: 0,
-      reconciliations: 0,
-      moissonneurs: 0,
-    }
-  );
+  const totalGeneral = rapports.reduce((acc, r) => {
+    acc.hommes += Number(r.data?.hommes) || 0;
+    acc.femmes += Number(r.data?.femmes) || 0;
+    acc.jeunes += Number(r.data?.jeunes) || 0;
+    acc.enfants += Number(r.data?.enfants) || 0;
+    acc.connectes += Number(r.data?.connectes) || 0;
+    acc.nouveauxVenus += Number(r.data?.nouveauxVenus) || 0;
+    acc.nouveauxConvertis += Number(r.data?.nouveauxConvertis) || 0;
+    acc.reconciliations += Number(r.data?.reconciliations) || 0;
+    acc.moissonneurs += Number(r.data?.moissonneurs) || 0;
+    return acc;
+  }, { hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0,reconciliations:0,moissonneurs:0 });
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -273,52 +217,18 @@ function StatGlobalPage() {
 
       {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <select
-          value={typeRapport}
-          onChange={(e) => setTypeRapport(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        >
-          <option className="text-black" value="Tous">
-            Tous
-          </option>
-          <option className="text-black" value="Culte">
-            Culte
-          </option>
-          <option className="text-black" value="Evangelisation">
-            Evangelisation
-          </option>
-          <option className="text-black" value="Baptême">
-            Baptême
-          </option>
-          <option className="text-black" value="Formation">
-            Formation
-          </option>
-          <option className="text-black" value="Serviteur">
-            Serviteur
-          </option>
-          <option className="text-black" value="Cellules">
-            Cellules
-          </option>
+        <input type="date" value={dateDebut} onChange={e=>setDateDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+        <input type="date" value={dateFin} onChange={e=>setDateFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+        <select value={typeRapport} onChange={e=>setTypeRapport(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white">
+          <option value="Tous">Tous</option>
+          <option value="Culte">Culte</option>
+          <option value="Evangelisation">Evangelisation</option>
+          <option value="Baptême">Baptême</option>
+          <option value="Formation">Formation</option>
+          <option value="Serviteur">Serviteur</option>            
+          <option value="Cellules">Cellules</option>
         </select>
-
-        <button
-          onClick={fetchStats}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-        >
-          Générer
-        </button>
+        <button onClick={fetchStats} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
       </div>
 
       {/* TABLE */}
@@ -336,15 +246,12 @@ function StatGlobalPage() {
               <div className="min-w-[150px] text-center">Nouveaux Venus</div>
               <div className="min-w-[180px] text-center">Nouveau Converti</div>
               <div className="min-w-[140px] text-center">Réconciliation</div>
-              <div className="min-w-[160px] text-center">Moissonneurs</div>
+              <div className="min-w-[160px] text-center">Moissonneurs</div>              
             </div>
 
             {/* LIGNES */}
             {rapports.map((r, idx) => (
-              <div
-                key={idx}
-                className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}
-              >
+              <div key={idx} className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}>
                 <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
                 <div className="min-w-[120px] text-center text-white">{r.data?.hommes ?? "-"}</div>
                 <div className="min-w-[120px] text-center text-white">{r.data?.femmes ?? "-"}</div>
@@ -353,8 +260,8 @@ function StatGlobalPage() {
                 <div className="min-w-[140px] text-center text-white">{r.data?.connectes ?? "-"}</div>
                 <div className="min-w-[150px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
                 <div className="min-w-[180px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
-                <div className="min-w-[140px] text-center text-white">{r.data?.reconciliations ?? "-"}</div>
-                <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
+                <div className="min-w-[140px] text-center text-white">{r.data?.reconciliations ?? "-"}</div>         
+                <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>                 
               </div>
             ))}
 
@@ -369,8 +276,9 @@ function StatGlobalPage() {
               <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxVenus}</div>
               <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxConvertis}</div>
               <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGeneral.reconciliations}</div>
-              <div className="min-w-[160px] text-center text-orange-400 font-semibold">{totalGeneral.moissonneurs}</div>
+              <div className="min-w-[160px] text-center text-orange-400 font-semibold">{totalGeneral.moissonneurs}</div> 
             </div>
+
           </div>
         </div>
       )}

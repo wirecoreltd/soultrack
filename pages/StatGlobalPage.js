@@ -42,40 +42,28 @@ function StatGlobalPage() {
         .eq("id", user.id)
         .single();
 
-      if (data?.branche_id) setUserBrancheId(data.branche_id);
+      if (data?.branche_id) {
+        setUserBrancheId(data.branche_id);
+        setBranchIds([data.branche_id]); // on ne garde que sa branche
+      }
     };
     fetchProfile();
   }, []);
-
-  // 🔹 Récupérer toutes les branches supervisées
-  useEffect(() => {
-    const fetchBranches = async () => {
-      if (!userBrancheId) return;
-
-      const { data, error } = await supabase.rpc("get_all_supervised_branches", { start_branche: userBrancheId });
-      if (error) {
-        console.error("Erreur récupération branches :", error);
-        setBranchIds([userBrancheId]);
-      } else {
-        const ids = data?.map((b) => b.branche_id) || [];
-        setBranchIds([userBrancheId, ...ids]);
-      }
-    };
-    fetchBranches();
-  }, [userBrancheId]);
 
   const fetchStats = async () => {
     if (!branchIds.length) return;
     setLoading(true);
 
     // -------- ATTENDANCE --------
-    let attendanceQuery = supabase.from("attendance").select("*").in("branche_id", branchIds);
-    if (dateDebut) attendanceQuery = attendanceQuery.gte("date", dateDebut);
-    if (dateFin) attendanceQuery = attendanceQuery.lte("date", dateFin);
-    const { data: attendanceData } = await attendanceQuery;
+    const { data: attendanceData } = await supabase
+      .from("attendance")
+      .select("*")
+      .in("branche_id", branchIds)
+      .gte(dateDebut ? "date" : null, dateDebut || undefined)
+      .lte(dateFin ? "date" : null, dateFin || undefined);
 
     const attendanceTotals = { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0, moissonneurs: 0 };
-    attendanceData?.forEach((r) => {
+    attendanceData?.forEach(r => {
       attendanceTotals.hommes += Number(r.hommes) || 0;
       attendanceTotals.femmes += Number(r.femmes) || 0;
       attendanceTotals.jeunes += Number(r.jeunes) || 0;
@@ -88,13 +76,15 @@ function StatGlobalPage() {
     setAttendanceStats(attendanceTotals);
 
     // -------- EVANGELISATION --------
-    let evanQuery = supabase.from("evangelises").select("*").in("branche_id", branchIds);
-    if (dateDebut) evanQuery = evanQuery.gte("created_at", dateDebut);
-    if (dateFin) evanQuery = evanQuery.lte("created_at", dateFin);
-    const { data: evanData } = await evanQuery;
+    const { data: evanData } = await supabase
+      .from("evangelises")
+      .select("*")
+      .in("branche_id", branchIds)
+      .gte(dateDebut ? "created_at" : null, dateDebut || undefined)
+      .lte(dateFin ? "created_at" : null, dateFin || undefined);
 
     const evanTotals = { hommes: 0, femmes: 0, nouveauxConvertis: 0 };
-    evanData?.forEach((r) => {
+    evanData?.forEach(r => {
       if (r.sexe === "Homme") evanTotals.hommes++;
       if (r.sexe === "Femme") evanTotals.femmes++;
       if (r.type_conversion === "Nouveau converti") evanTotals.nouveauxConvertis++;
@@ -102,43 +92,58 @@ function StatGlobalPage() {
     setEvanStats(evanTotals);
 
     // -------- BAPTEME --------
-    let baptemeQuery = supabase.from("baptemes").select("hommes,femmes").in("branche_id", branchIds);
-    if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
-    if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
-    const { data: baptemeData } = await baptemeQuery;
+    const { data: baptemeData } = await supabase
+      .from("baptemes")
+      .select("hommes,femmes")
+      .in("branche_id", branchIds)
+      .gte(dateDebut ? "date" : null, dateDebut || undefined)
+      .lte(dateFin ? "date" : null, dateFin || undefined);
+
     setBaptemeStats({
       hommes: baptemeData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
       femmes: baptemeData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
     });
 
     // -------- FORMATION --------
-    let formationQuery = supabase.from("formations").select("hommes,femmes").in("branche_id", branchIds);
-    if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
-    if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
-    const { data: formationData } = await formationQuery;
+    const { data: formationData } = await supabase
+      .from("formations")
+      .select("hommes,femmes")
+      .in("branche_id", branchIds)
+      .gte(dateDebut ? "date_debut" : null, dateDebut || undefined)
+      .lte(dateFin ? "date_fin" : null, dateFin || undefined);
+
     setFormationStats({
       hommes: formationData?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
       femmes: formationData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
     });
 
     // -------- CELLULES --------
-    const { count } = await supabase.from("cellules").select("id", { count: "exact", head: true }).in("branche_id", branchIds);
+    const { count } = await supabase
+      .from("cellules")
+      .select("id", { count: "exact", head: true })
+      .in("branche_id", branchIds);
     setCellulesCount(count || 0);
 
     // -------- SERVITEURS --------
-    let servQuery = supabase.from("stats_ministere_besoin").select("membre_id,valeur").in("branche_id", branchIds).eq("type", "ministere");
-    if (dateDebut) servQuery = servQuery.gte("date_action", dateDebut);
-    if (dateFin) servQuery = servQuery.lte("date_action", dateFin);
-    const { data: servData } = await servQuery;
+    const { data: servData } = await supabase
+      .from("stats_ministere_besoin")
+      .select("membre_id,valeur")
+      .in("branche_id", branchIds)
+      .eq("type", "ministere")
+      .gte(dateDebut ? "date_action" : null, dateDebut || undefined)
+      .lte(dateFin ? "date_action" : null, dateFin || undefined);
 
     const uniqueMembres = new Map();
-    servData?.forEach((s) => { if (!uniqueMembres.has(s.membre_id)) uniqueMembres.set(s.membre_id, s.valeur); });
+    servData?.forEach(s => { if (!uniqueMembres.has(s.membre_id)) uniqueMembres.set(s.membre_id, s.valeur); });
 
     let hommes = 0, femmes = 0;
     if (uniqueMembres.size > 0) {
       const ids = Array.from(uniqueMembres.keys());
-      const { data: membresSexe } = await supabase.from("membres_complets").select("id,sexe").in("id", ids);
-      membresSexe?.forEach((m) => {
+      const { data: membresSexe } = await supabase
+        .from("membres_complets")
+        .select("id,sexe")
+        .in("id", ids);
+      membresSexe?.forEach(m => {
         if (m.sexe === "Homme") hommes++;
         if (m.sexe === "Femme") femmes++;
       });
@@ -148,27 +153,28 @@ function StatGlobalPage() {
     setLoading(false);
   };
 
-  // 🔹 Préparer les rapports pour affichage
+  // 🔹 Préparer les rapports pour l'affichage
   const rapports = [
-    { label: "Culte", data: attendanceStats, border: "border-l-orange-500" },
-    { label: "Evangelisation", data: evanStats, border: "border-l-green-500" },
-    { label: "Baptême", data: baptemeStats, border: "border-l-purple-500" },
-    { label: "Formation", data: formationStats, border: "border-l-blue-500" },
-    { label: "Cellules", data: { total: cellulesCount }, border: "border-l-yellow-500" },
-    { label: "Serviteur", data: serviteurStats, border: "border-l-pink-500" },
-  ].filter((r) => typeRapport === "Tous" || r.label === typeRapport);
+    { label: "Culte", data: attendanceStats, border: "border-blue-400" },
+    { label: "Evangelisation", data: evanStats, border: "border-green-400" },
+    { label: "Baptême", data: baptemeStats, border: "border-purple-400" },
+    { label: "Formation", data: formationStats, border: "border-yellow-400" },
+    { label: "Serviteur", data: serviteurStats, border: "border-pink-400" },
+    { label: "Cellules", data: { hommes: cellulesCount }, border: "border-orange-400" },
+  ];
 
-  // 🔹 Total général
-  const totalGeneral = rapports.reduce((acc, r) => {
-    acc.hommes += Number(r.data?.hommes) || 0;
-    acc.femmes += Number(r.data?.femmes) || 0;
-    acc.jeunes += Number(r.data?.jeunes) || 0;
-    acc.enfants += Number(r.data?.enfants) || 0;
-    acc.connectes += Number(r.data?.connectes) || 0;
-    acc.nouveauxVenus += Number(r.data?.nouveauxVenus) || 0;
-    acc.nouveauxConvertis += Number(r.data?.nouveauxConvertis) || 0;
-    acc.moissonneurs += Number(r.data?.moissonneurs) || 0;
-    return acc;
+  const totalGeneral = rapports.reduce((tot, r) => {
+    if (!r.data) return tot;
+    return {
+      hommes: tot.hommes + (r.data.hommes || 0),
+      femmes: tot.femmes + (r.data.femmes || 0),
+      jeunes: tot.jeunes + (r.data.jeunes || 0),
+      enfants: tot.enfants + (r.data.enfants || 0),
+      connectes: tot.connectes + (r.data.connectes || 0),
+      nouveauxVenus: tot.nouveauxVenus + (r.data.nouveauxVenus || 0),
+      nouveauxConvertis: tot.nouveauxConvertis + (r.data.nouveauxConvertis || 0),
+      moissonneurs: tot.moissonneurs + (r.data.moissonneurs || 0),
+    };
   }, { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0, moissonneurs: 0 });
 
   return (

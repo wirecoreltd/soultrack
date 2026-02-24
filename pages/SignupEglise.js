@@ -99,10 +99,11 @@ export default function SignupEglise() {
           />
           <input
             name="localisation"
-            placeholder="Localisation (optionnel)"
+            placeholder="Pays"
             value={formData.localisation}
             onChange={handleChange}
             className="input"
+            required  
           />
 
           <hr className="my-2 border-gray-300" />

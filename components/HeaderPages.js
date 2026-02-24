@@ -29,7 +29,7 @@ export default function HeaderPages() {
 
         setPrenom(profile?.prenom || "Utilisateur");
 
-        // 🔹 Garde l'église et branche de l'utilisateur comme avant
+        // Récupère le nom de l'église si eglise_id existe
         if (profile?.eglise_id) {
           const { data: egliseData, error: egliseError } = await supabase
             .from("eglises")
@@ -39,6 +39,7 @@ export default function HeaderPages() {
           if (!egliseError && egliseData) setEglise(egliseData.nom);
         }
 
+        // Récupère le nom de la branche si branche_id existe
         if (profile?.branche_id) {
           const { data: brancheData, error: brancheError } = await supabase
             .from("branches")
@@ -48,33 +49,24 @@ export default function HeaderPages() {
           if (!brancheError && brancheData) setBranche(brancheData.nom);
         }
 
-        // 🔹 Récupérer le superviseur de cette église, seulement si supervisee existe
-        if (profile?.eglise_id) {
+        // 🔹 Récupérer le superviseur de cette branche
+        if (profile?.branche_id) {
           const { data: supervisionData, error: supervisionError } = await supabase
             .from("eglise_supervisions")
-            .select("superviseur_eglise_id, superviseur_branche_id")
-            .eq("supervisee_eglise_id", profile.eglise_id)
+            .select(`
+              superviseur_eglise_id,
+              superviseur_branche_id,
+              eglises(nom),
+              branches(nom)
+            `)
+            .eq("supervisee_branche_id", profile.branche_id)
             .eq("statut", "acceptee")
             .single();
 
           if (!supervisionError && supervisionData) {
-            const { superviseur_eglise_id, superviseur_branche_id } = supervisionData;
-
-            const { data: supEgliseData } = await supabase
-              .from("eglises")
-              .select("nom")
-              .eq("id", superviseur_eglise_id)
-              .single();
-
-            const { data: supBrancheData } = await supabase
-              .from("branches")
-              .select("nom")
-              .eq("id", superviseur_branche_id)
-              .single();
-
-            if (supEgliseData && supBrancheData) {
-              setSuperviseur(`Superviseur : ${supEgliseData.nom} - ${supBrancheData.nom}`);
-            }
+            const supEglise = supervisionData.eglises?.nom || "Église";
+            const supBranche = supervisionData.branches?.nom || "";
+            setSuperviseur(`${supEglise} - ${supBranche}`);
           }
         }
 
@@ -117,9 +109,8 @@ export default function HeaderPages() {
         <p className="text-white text-sm">
           Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
         </p>
-        {/* 🔹 Affiche le superviseur sous connecté, seulement si existe */}
         {superviseur && (
-          <p className="text-white text-xs italic">{superviseur}</p>
+          <p className="text-white text-xs italic">Superviseur : {superviseur}</p>
         )}
       </div>
 
@@ -131,8 +122,10 @@ export default function HeaderPages() {
           className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
           onClick={() => router.push("/index")}
         />
-        {/* 🔹 Affiche le nom et branche de l'église connectée comme avant */}
-        <p className="text-white text-sm mt-2">{eglise} - {branche}</p>
+             {/* Église / Branche sous le logo */}
+        <p className="text-white font-semibold text-lg mt-2">
+          {eglise} <span className="text-amber-300">- {branche}</span>
+        </p>
       </div>
     </div>
   );

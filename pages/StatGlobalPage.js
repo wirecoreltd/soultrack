@@ -17,111 +17,57 @@ export default function StatGlobalPageWrapper() {
 function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [stats, setStats] = useState([]);
+  const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchStats = async () => {
-    if (!dateDebut || !dateFin) return;
+  // Récupérer l’utilisateur et sa branche
+  const [userBrancheId, setUserBrancheId] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("branche_id")
+        .eq("id", user.id)
+        .single();
+
+      if (data?.branche_id) setUserBrancheId(data.branche_id);
+    };
+    fetchProfile();
+  }, []);
+
+  const fetchAttendance = async () => {
+    if (!userBrancheId) return;
     setLoading(true);
 
+    // ⚠️ Assure-toi d’avoir créé la view `attendance_stats` avec toutes les colonnes
     const { data, error } = await supabase
       .from("attendance_stats")
       .select("*")
-      .gte("mois", dateDebut)
-      .lte("mois", dateFin);
+      .gte("mois", dateDebut || undefined)
+      .lte("mois", dateFin || undefined)
+      .order("branche_nom", { ascending: true });
 
     if (error) console.error(error);
-    else setStats(data || []);
+    else setAttendanceData(data);
 
     setLoading(false);
   };
 
-  const renderHierarchy = (stats) => {
-    // Organiser par hiérarchie : superviseur -> branche
-    const hierarchy = {};
-
-    stats.forEach((s) => {
-      const superv = s.superviseur_id || s.branche_nom; // si pas de superviseur, prend le nom
-      if (!hierarchy[superv]) hierarchy[superv] = [];
-      hierarchy[superv].push(s);
-    });
-
-    return Object.entries(hierarchy).map(([superviseur, branches]) => (
-      <div key={superviseur} className="mb-6">
-        <h2 className="text-xl font-bold text-white mb-2">{superviseur}</h2>
-        {branches.map((b) => (
-          <div key={b.branche_id || b.branche_nom} className="mb-3">
-            <div className="text-white font-semibold mb-1">{b.branche_nom}</div>
-            <div className="flex flex-wrap text-white text-sm">
-              <div className="w-32 font-bold">Culte :</div>
-              <div className="w-20">{b.hommes}</div>
-              <div className="w-20">{b.femmes}</div>
-              <div className="w-20">{b.jeunes}</div>
-              <div className="w-20">{b.total_hfj}</div>
-              <div className="w-20">{b.enfants}</div>
-              <div className="w-20">{b.connectes}</div>
-              <div className="w-20">{b.nouveauxVenus}</div>
-              <div className="w-20">{b.nouveauxConvertis}</div>
-              <div className="w-20">{b.moissonneurs}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    ));
-  };
-
-  const renderTotals = () => {
-    const total = stats.reduce(
-      (acc, s) => ({
-        hommes: acc.hommes + (s.hommes || 0),
-        femmes: acc.femmes + (s.femmes || 0),
-        jeunes: acc.jeunes + (s.jeunes || 0),
-        total_hfj: acc.total_hfj + (s.total_hfj || 0),
-        enfants: acc.enfants + (s.enfants || 0),
-        connectes: acc.connectes + (s.connectes || 0),
-        nouveauxVenus: acc.nouveauxVenus + (s.nouveauxVenus || 0),
-        nouveauxConvertis: acc.nouveauxConvertis + (s.nouveauxConvertis || 0),
-        moissonneurs: acc.moissonneurs + (s.moissonneurs || 0),
-      }),
-      {
-        hommes: 0,
-        femmes: 0,
-        jeunes: 0,
-        total_hfj: 0,
-        enfants: 0,
-        connectes: 0,
-        nouveauxVenus: 0,
-        nouveauxConvertis: 0,
-        moissonneurs: 0,
-      }
-    );
-
-    return (
-      <div className="mt-4 text-white font-bold">
-        <div>Total :</div>
-        <div className="flex flex-wrap text-white text-sm">
-          <div className="w-32">Hommes : {total.hommes}</div>
-          <div className="w-32">Femmes : {total.femmes}</div>
-          <div className="w-32">Jeunes : {total.jeunes}</div>
-          <div className="w-32">Total H+F+J : {total.total_hfj}</div>
-          <div className="w-32">Enfants : {total.enfants}</div>
-          <div className="w-32">Connectés : {total.connectes}</div>
-          <div className="w-32">NouveauxVenus : {total.nouveauxVenus}</div>
-          <div className="w-32">NouveauConverti : {total.nouveauxConvertis}</div>
-          <div className="w-32">Moissonneurs : {total.moissonneurs}</div>
-        </div>
-      </div>
-    );
-  };
+  // Fonction pour calculer le total Hommes + Femmes + Jeunes
+  const calcTotalHFJ = (r) => (Number(r.hommes || 0) + Number(r.femmes || 0) + Number(r.jeunes || 0));
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        Rapport <span className="text-amber-300">Attendance</span>
+        Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
-      {/* FILTRE */}
+      {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
         <input
           type="date"
@@ -136,7 +82,7 @@ function StatGlobalPage() {
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
-          onClick={fetchStats}
+          onClick={fetchAttendance}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
           Filtrer
@@ -144,13 +90,47 @@ function StatGlobalPage() {
       </div>
 
       {/* TABLEAU */}
-      {!loading && stats.length > 0 ? (
+      {!loading && attendanceData.length > 0 && (
         <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
-          {renderHierarchy(stats)}
-          {renderTotals()}
+          <div className="w-max space-y-4">
+
+            {attendanceData.map((r, idx) => (
+              <div key={idx} className="bg-white/10 rounded-xl p-4">
+                <div className="text-xl font-bold text-white mb-2">{r.branche_nom}</div>
+                <div className="flex font-semibold uppercase text-white border-b border-white/30 pb-2">
+                  <div className="min-w-[140px]">Ministère</div>
+                  <div className="min-w-[80px] text-center">Hommes</div>
+                  <div className="min-w-[80px] text-center">Femmes</div>
+                  <div className="min-w-[80px] text-center">Jeunes</div>
+                  <div className="min-w-[100px] text-center">Total HFJ</div>
+                  <div className="min-w-[80px] text-center">Enfants</div>
+                  <div className="min-w-[100px] text-center">Connectés</div>
+                  <div className="min-w-[120px] text-center">Nouveaux Venus</div>
+                  <div className="min-w-[140px] text-center">Nouveau Converti</div>
+                  <div className="min-w-[120px] text-center">Moissonneurs</div>
+                </div>
+
+                <div className="flex items-center px-0 py-2 text-white">
+                  <div className="min-w-[140px] font-semibold">Culte</div>
+                  <div className="min-w-[80px] text-center">{r.hommes || 0}</div>
+                  <div className="min-w-[80px] text-center">{r.femmes || 0}</div>
+                  <div className="min-w-[80px] text-center">{r.jeunes || 0}</div>
+                  <div className="min-w-[100px] text-center">{calcTotalHFJ(r)}</div>
+                  <div className="min-w-[80px] text-center">{r.enfants || 0}</div>
+                  <div className="min-w-[100px] text-center">{r.connectes || 0}</div>
+                  <div className="min-w-[120px] text-center">{r.nouveauxVenus || 0}</div>
+                  <div className="min-w-[140px] text-center">{r.nouveauxConvertis || 0}</div>
+                  <div className="min-w-[120px] text-center">{r.moissonneurs || 0}</div>
+                </div>
+              </div>
+            ))}
+
+          </div>
         </div>
-      ) : (
-        <div className="text-white mt-6">Aucune donnée trouvée pour cette période.</div>
+      )}
+
+      {attendanceData.length === 0 && !loading && (
+        <div className="mt-6 text-white font-semibold">Aucune donnée trouvée pour cette période.</div>
       )}
 
       <Footer />

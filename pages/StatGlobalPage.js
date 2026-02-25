@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
-import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function StatGlobalPageWrapper() {
   return (
@@ -17,90 +17,99 @@ export default function StatGlobalPageWrapper() {
 function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
+  const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [attendanceData, setAttendanceData] = useState([]);
 
-  // 🔹 Récupérer les stats
   const fetchStats = async () => {
+    if (!dateDebut || !dateFin) return;
     setLoading(true);
-    try {
-      const { data, error } = await supabase.rpc("get_attendance_stats", {
-        date_start: dateDebut,
-        date_end: dateFin,
-      });
 
-      if (error) throw error;
+    const { data, error } = await supabase
+      .from("attendance_stats")
+      .select("*")
+      .gte("mois", dateDebut)
+      .lte("mois", dateFin);
 
-      setAttendanceData(data || []);
-    } catch (err) {
-      console.error(err);
-      setAttendanceData([]);
-    }
+    if (error) console.error(error);
+    else setStats(data || []);
+
     setLoading(false);
   };
 
-  // 🔹 Transformer la liste en hiérarchie
-  const buildHierarchy = (data) => {
-    const map = {};
-    const roots = [];
+  const renderHierarchy = (stats) => {
+    // Organiser par hiérarchie : superviseur -> branche
+    const hierarchy = {};
 
-    // Créer une map id → objet
-    data.forEach((item) => {
-      map[item.branche_id] = { ...item, children: [] };
+    stats.forEach((s) => {
+      const superv = s.superviseur_id || s.branche_nom; // si pas de superviseur, prend le nom
+      if (!hierarchy[superv]) hierarchy[superv] = [];
+      hierarchy[superv].push(s);
     });
 
-    // Imbriquer les sous-branches
-    data.forEach((item) => {
-      if (item.superviseur_id && map[item.superviseur_id]) {
-        map[item.superviseur_id].children.push(map[item.branche_id]);
-      } else {
-        roots.push(map[item.branche_id]);
-      }
-    });
-
-    return roots;
+    return Object.entries(hierarchy).map(([superviseur, branches]) => (
+      <div key={superviseur} className="mb-6">
+        <h2 className="text-xl font-bold text-white mb-2">{superviseur}</h2>
+        {branches.map((b) => (
+          <div key={b.branche_id || b.branche_nom} className="mb-3">
+            <div className="text-white font-semibold mb-1">{b.branche_nom}</div>
+            <div className="flex flex-wrap text-white text-sm">
+              <div className="w-32 font-bold">Culte :</div>
+              <div className="w-20">{b.hommes}</div>
+              <div className="w-20">{b.femmes}</div>
+              <div className="w-20">{b.jeunes}</div>
+              <div className="w-20">{b.total_hfj}</div>
+              <div className="w-20">{b.enfants}</div>
+              <div className="w-20">{b.connectes}</div>
+              <div className="w-20">{b.nouveauxVenus}</div>
+              <div className="w-20">{b.nouveauxConvertis}</div>
+              <div className="w-20">{b.moissonneurs}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    ));
   };
 
-  const hierarchyData = buildHierarchy(attendanceData);
+  const renderTotals = () => {
+    const total = stats.reduce(
+      (acc, s) => ({
+        hommes: acc.hommes + (s.hommes || 0),
+        femmes: acc.femmes + (s.femmes || 0),
+        jeunes: acc.jeunes + (s.jeunes || 0),
+        total_hfj: acc.total_hfj + (s.total_hfj || 0),
+        enfants: acc.enfants + (s.enfants || 0),
+        connectes: acc.connectes + (s.connectes || 0),
+        nouveauxVenus: acc.nouveauxVenus + (s.nouveauxVenus || 0),
+        nouveauxConvertis: acc.nouveauxConvertis + (s.nouveauxConvertis || 0),
+        moissonneurs: acc.moissonneurs + (s.moissonneurs || 0),
+      }),
+      {
+        hommes: 0,
+        femmes: 0,
+        jeunes: 0,
+        total_hfj: 0,
+        enfants: 0,
+        connectes: 0,
+        nouveauxVenus: 0,
+        nouveauxConvertis: 0,
+        moissonneurs: 0,
+      }
+    );
 
-  // 🔹 Calcul total
-  const total = attendanceData.reduce(
-    (acc, r) => {
-      acc.hommes += r.hommes || 0;
-      acc.femmes += r.femmes || 0;
-      acc.jeunes += r.jeunes || 0;
-      acc.enfants += r.enfants || 0;
-      acc.connectes += r.connectes || 0;
-      acc.nouveauxVenus += r.nouveauxVenus || 0;
-      acc.nouveauxConvertis += r.nouveauxConvertis || 0;
-      acc.moissonneurs += r.moissonneurs || 0;
-      return acc;
-    },
-    { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0, moissonneurs: 0 }
-  );
-
-  // 🔹 Composant récursif pour afficher les branches et leurs sous-branches
-  const RenderBranch = ({ branch, level = 0 }) => {
     return (
-      <div className="space-y-1 ml-[calc(20px*level)]">
-        <div className="text-white text-lg font-bold">{branch.branche_nom}</div>
-        <div className="text-white font-semibold">Culte :</div>
-        <div className="flex gap-4 text-white font-medium flex-wrap">
-          <div>Hommes: {branch.hommes}</div>
-          <div>Femmes: {branch.femmes}</div>
-          <div>Jeunes: {branch.jeunes}</div>
-          <div>Total: {branch.hommes + branch.femmes + branch.jeunes}</div>
-          <div>Enfants: {branch.enfants}</div>
-          <div>Connectés: {branch.connectes}</div>
-          <div>Nouveaux Venus: {branch.nouveauxVenus}</div>
-          <div>Nouveau Converti: {branch.nouveauxConvertis}</div>
-          <div>Moissonneurs: {branch.moissonneurs || 0}</div>
+      <div className="mt-4 text-white font-bold">
+        <div>Total :</div>
+        <div className="flex flex-wrap text-white text-sm">
+          <div className="w-32">Hommes : {total.hommes}</div>
+          <div className="w-32">Femmes : {total.femmes}</div>
+          <div className="w-32">Jeunes : {total.jeunes}</div>
+          <div className="w-32">Total H+F+J : {total.total_hfj}</div>
+          <div className="w-32">Enfants : {total.enfants}</div>
+          <div className="w-32">Connectés : {total.connectes}</div>
+          <div className="w-32">NouveauxVenus : {total.nouveauxVenus}</div>
+          <div className="w-32">NouveauConverti : {total.nouveauxConvertis}</div>
+          <div className="w-32">Moissonneurs : {total.moissonneurs}</div>
         </div>
-
-        {branch.children.length > 0 &&
-          branch.children.map((child) => (
-            <RenderBranch key={child.branche_id} branch={child} level={level + 1} />
-          ))}
       </div>
     );
   };
@@ -109,10 +118,10 @@ function StatGlobalPage() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        Rapport <span className="text-amber-300">Statistiques Globales</span>
+        Rapport <span className="text-amber-300">Attendance</span>
       </h1>
 
-      {/* FILTRES */}
+      {/* FILTRE */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
         <input
           type="date"
@@ -135,34 +144,12 @@ function StatGlobalPage() {
       </div>
 
       {/* TABLEAU */}
-      {!loading && hierarchyData.length > 0 && (
+      {!loading && stats.length > 0 ? (
         <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
-          <div className="w-max space-y-4">
-            {hierarchyData.map((branch) => (
-              <RenderBranch key={branch.branche_id} branch={branch} />
-            ))}
-
-            {/* TOTAL */}
-            <div className="mt-6 border-t border-white/40 pt-3 text-white font-bold">
-              TOTAL :
-              <div className="flex gap-4 mt-1 flex-wrap">
-                <div>Hommes: {total.hommes}</div>
-                <div>Femmes: {total.femmes}</div>
-                <div>Jeunes: {total.jeunes}</div>
-                <div>Total: {total.hommes + total.femmes + total.jeunes}</div>
-                <div>Enfants: {total.enfants}</div>
-                <div>Connectés: {total.connectes}</div>
-                <div>Nouveaux Venus: {total.nouveauxVenus}</div>
-                <div>Nouveau Converti: {total.nouveauxConvertis}</div>
-                <div>Moissonneurs: {total.moissonneurs}</div>
-              </div>
-            </div>
-          </div>
+          {renderHierarchy(stats)}
+          {renderTotals()}
         </div>
-      )}
-
-      {loading && <div className="text-white mt-6">Chargement...</div>}
-      {!loading && hierarchyData.length === 0 && (
+      ) : (
         <div className="text-white mt-6">Aucune donnée trouvée pour cette période.</div>
       )}
 

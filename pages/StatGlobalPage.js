@@ -6,12 +6,8 @@ import dayjs from "dayjs";
 
 export default function GlobalStats() {
   const [stats, setStats] = useState([]);
-  const [startDate, setStartDate] = useState(
-    dayjs().startOf("month").format("YYYY-MM-DD")
-  );
-  const [endDate, setEndDate] = useState(
-    dayjs().endOf("month").format("YYYY-MM-DD")
-  );
+  const [startDate, setStartDate] = useState(dayjs().startOf("month").format("YYYY-MM-DD"));
+  const [endDate, setEndDate] = useState(dayjs().endOf("month").format("YYYY-MM-DD"));
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -20,12 +16,12 @@ export default function GlobalStats() {
 
   async function fetchStats() {
     setLoading(true);
-
     const { data, error } = await supabase
       .from("attendance_stats")
       .select("*")
       .gte("mois", startDate)
       .lte("mois", endDate)
+      .order("superviseur_nom", { ascending: true })
       .order("branche_nom", { ascending: true });
 
     if (error) {
@@ -35,7 +31,7 @@ export default function GlobalStats() {
       return;
     }
 
-    // Filtrer uniquement les branches avec un parent valide
+    // Filtrer les branches vides ou "Eglise Principale"
     const filtered = data.filter(
       (b) =>
         b.branche_nom &&
@@ -50,8 +46,8 @@ export default function GlobalStats() {
       if (!hierarchy[parentId]) {
         hierarchy[parentId] = {
           nom: item.superviseur_nom || item.branche_nom,
-          values: !item.superviseur_id ? item : null,
           enfants: [],
+          values: !item.superviseur_id ? item : null,
         };
       }
       if (item.branche_id !== parentId) {
@@ -64,8 +60,7 @@ export default function GlobalStats() {
   }
 
   return (
-    <div className="p-4 text-white">
-      {/* Filtre de date */}
+    <div className="p-4 bg-gray-900 min-h-screen">
       <div className="flex gap-4 mb-6">
         <input
           type="date"
@@ -88,18 +83,20 @@ export default function GlobalStats() {
       </div>
 
       {loading ? (
-        <div>Chargement...</div>
+        <div className="text-white">Chargement...</div>
       ) : stats.length === 0 ? (
-        <div>Aucune donnée trouvée pour cette période.</div>
+        <div className="text-white">Aucune donnée trouvée pour cette période.</div>
       ) : (
-        <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+        <div className="overflow-x-auto w-full scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
           <div className="w-max space-y-6">
             {stats.map((parent) => (
               <div key={parent.nom} className="space-y-2">
                 {/* Nom du parent */}
-                <div className="font-bold text-xl">{parent.nom}</div>
+                <div className="font-bold text-xl text-white border-b border-white/30 pb-1">
+                  {parent.nom}
+                </div>
 
-                {/* Header fixe */}
+                {/* Header */}
                 <div className="grid grid-cols-10 gap-2 text-sm font-semibold uppercase bg-white/10 rounded-xl px-4 py-2">
                   <div>Ministère</div>
                   <div>Hommes</div>
@@ -113,7 +110,7 @@ export default function GlobalStats() {
                   <div>Moissonneurs</div>
                 </div>
 
-                {/* Valeurs du parent (si c'est un vrai parent) */}
+                {/* Valeurs parent si applicable */}
                 {parent.values && (
                   <div className="grid grid-cols-10 gap-2 text-sm bg-white/5 rounded-xl px-4 py-2">
                     <div>Culte</div>
@@ -132,7 +129,7 @@ export default function GlobalStats() {
                 {/* Enfants */}
                 {parent.enfants.map((branch) => (
                   <div key={branch.branche_id} className="pl-6 space-y-1">
-                    <div className="font-semibold">
+                    <div className="font-semibold text-white">
                       {branch.branche_nom}{" "}
                       {branch.superviseur_nom && `(${branch.superviseur_nom})`}
                     </div>

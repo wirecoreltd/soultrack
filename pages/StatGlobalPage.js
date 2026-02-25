@@ -35,24 +35,27 @@ export default function GlobalStats() {
       return;
     }
 
-    // Construire la hiérarchie
+    // Filtrer uniquement les branches avec un parent valide
+    const filtered = data.filter(
+      (b) =>
+        b.branche_nom &&
+        b.branche_nom.trim() !== "" &&
+        b.branche_nom.toLowerCase() !== "eglise principale"
+    );
+
+    // Construire la hiérarchie parent → enfants
     const hierarchy = {};
-
-    // Récupérer seulement les branches avec superviseur ou qui sont parents réels
-    const parents = data.filter((b) => !b.superviseur_id);
-
-    parents.forEach((parent) => {
-      hierarchy[parent.branche_id] = {
-        nom: parent.branche_nom,
-        enfants: [],
-        values: parent,
-      };
-    });
-
-    // Ajouter les enfants sous leur parent
-    data.forEach((branch) => {
-      if (branch.superviseur_id && hierarchy[branch.superviseur_id]) {
-        hierarchy[branch.superviseur_id].enfants.push(branch);
+    filtered.forEach((item) => {
+      const parentId = item.superviseur_id || item.branche_id;
+      if (!hierarchy[parentId]) {
+        hierarchy[parentId] = {
+          nom: item.superviseur_nom || item.branche_nom,
+          values: !item.superviseur_id ? item : null,
+          enfants: [],
+        };
+      }
+      if (item.branche_id !== parentId) {
+        hierarchy[parentId].enfants.push(item);
       }
     });
 
@@ -93,9 +96,10 @@ export default function GlobalStats() {
           <div className="w-max space-y-6">
             {stats.map((parent) => (
               <div key={parent.nom} className="space-y-2">
-                {/* Parent */}
+                {/* Nom du parent */}
                 <div className="font-bold text-xl">{parent.nom}</div>
-                {/* Header fixe pour les colonnes */}
+
+                {/* Header fixe */}
                 <div className="grid grid-cols-10 gap-2 text-sm font-semibold uppercase bg-white/10 rounded-xl px-4 py-2">
                   <div>Ministère</div>
                   <div>Hommes</div>
@@ -108,19 +112,23 @@ export default function GlobalStats() {
                   <div>Nouveau Converti</div>
                   <div>Moissonneurs</div>
                 </div>
-                {/* Parent values */}
-                <div className="grid grid-cols-10 gap-2 text-sm bg-white/5 rounded-xl px-4 py-2">
-                  <div>Culte</div>
-                  <div>{parent.values.hommes}</div>
-                  <div>{parent.values.femmes}</div>
-                  <div>{parent.values.jeunes}</div>
-                  <div>{parent.values.total_hfj}</div>
-                  <div>{parent.values.enfants}</div>
-                  <div>{parent.values.connectes}</div>
-                  <div>{parent.values.nouveauxVenus}</div>
-                  <div>{parent.values.nouveauxConvertis}</div>
-                  <div>{parent.values.moissonneurs || 0}</div>
-                </div>
+
+                {/* Valeurs du parent (si c'est un vrai parent) */}
+                {parent.values && (
+                  <div className="grid grid-cols-10 gap-2 text-sm bg-white/5 rounded-xl px-4 py-2">
+                    <div>Culte</div>
+                    <div>{parent.values.hommes}</div>
+                    <div>{parent.values.femmes}</div>
+                    <div>{parent.values.jeunes}</div>
+                    <div>{parent.values.total_hfj}</div>
+                    <div>{parent.values.enfants}</div>
+                    <div>{parent.values.connectes}</div>
+                    <div>{parent.values.nouveauxVenus}</div>
+                    <div>{parent.values.nouveauxConvertis}</div>
+                    <div>{parent.values.moissonneurs || 0}</div>
+                  </div>
+                )}
+
                 {/* Enfants */}
                 {parent.enfants.map((branch) => (
                   <div key={branch.branche_id} className="pl-6 space-y-1">

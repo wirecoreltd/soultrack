@@ -102,8 +102,8 @@ export default function GlobalStats() {
       });
 
       branches.sort((a, b) =>
-        a.branche_nom.localeCompare(b.branche_nom)
-      );
+  (a.branche_nom || "").localeCompare(b.branche_nom || "")
+);;
 
       setStats(branches);
     } catch (err) {

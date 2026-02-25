@@ -1,31 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
-import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
-import ProtectedRoute from "../components/ProtectedRoute";
 
-export default function StatGlobalPageWrapper() {
-  return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
-      <StatGlobalPage />
-    </ProtectedRoute>
-  );
-}
-
-function StatGlobalPage() {
+export default function StatsGlobales() {
+  const [data, setData] = useState([]);
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [stats, setStats] = useState([]);
 
-  // Récupérer les stats depuis la view
-  const fetchStats = async () => {
+  // fetch data
+  const fetchData = async () => {
     if (!dateDebut || !dateFin) return;
-    setLoading(true);
-
-    const { data, error } = await supabase
+    const { data: stats, error } = await supabase
       .from("attendance_stats")
       .select("*")
       .gte("mois", dateDebut)
@@ -33,163 +19,87 @@ function StatGlobalPage() {
       .order("branche_nom", { ascending: true });
 
     if (error) {
-      console.error("Erreur fetch stats:", error);
-      setStats([]);
-    } else {
-      // filtrer branches null ou indésirables
-      const filtered = data.filter(
-        (d) => d.branche_nom && d.branche_nom !== "Eglise Principale"
-      );
-      setStats(filtered);
+      console.error(error);
+      return;
     }
-
-    setLoading(false);
+    setData(stats);
   };
 
-  // Calcul total général
-  const totalGeneral = stats.reduce(
-    (tot, r) => ({
-      hommes: tot.hommes + (r.hommes || 0),
-      femmes: tot.femmes + (r.femmes || 0),
-      jeunes: tot.jeunes + (r.jeunes || 0),
-      total_hfj: tot.total_hfj + (r.total_hfj || 0),
-      enfants: tot.enfants + (r.enfants || 0),
-      connectes: tot.connectes + (r.connectes || 0),
-      nouveauxVenus: tot.nouveauxVenus + (r.nouveauxVenus || 0),
-      nouveauxConvertis: tot.nouveauxConvertis + (r.nouveauxConvertis || 0),
-      moissonneurs: tot.moissonneurs + (r.moissonneurs || 0),
-    }),
-    {
-      hommes: 0,
-      femmes: 0,
-      jeunes: 0,
-      total_hfj: 0,
-      enfants: 0,
-      connectes: 0,
-      nouveauxVenus: 0,
-      nouveauxConvertis: 0,
-      moissonneurs: 0,
-    }
+  useEffect(() => {
+    fetchData();
+  }, [dateDebut, dateFin]);
+
+  // construire hiérarchie
+  const buildHierarchy = (branches) => {
+    const map = {};
+    branches.forEach((b) => (map[b.branche_id] = { ...b, children: [] }));
+    const roots = [];
+    branches.forEach((b) => {
+      if (b.superviseur_id && map[b.superviseur_id]) {
+        map[b.superviseur_id].children.push(map[b.branche_id]);
+      } else {
+        roots.push(map[b.branche_id]);
+      }
+    });
+    return roots;
+  };
+
+  const hierarchy = buildHierarchy(data);
+
+  const renderBranch = (branch, level = 0) => (
+    <div key={branch.branche_id} className="ml-[${level * 20}px] space-y-1">
+      <div className="font-semibold text-white">{branch.branche_nom}{level > 0 ? ` (superviseur)` : ""}</div>
+      <div className="flex text-sm text-white bg-white/5 px-2 py-1 rounded-lg gap-2">
+        <div className="w-24">Culte</div>
+        <div className="w-12">{branch.hommes}</div>
+        <div className="w-12">{branch.femmes}</div>
+        <div className="w-12">{branch.jeunes}</div>
+        <div className="w-16">{branch.total_hfj}</div>
+        <div className="w-12">{branch.enfants}</div>
+        <div className="w-16">{branch.connectes}</div>
+        <div className="w-16">{branch.nouveauxVenus}</div>
+        <div className="w-20">{branch.nouveauxConvertis}</div>
+        <div className="w-16">{branch.moissonneurs}</div>
+      </div>
+      {branch.children.map((child) => renderBranch(child, level + 1))}
+    </div>
   );
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
-      <HeaderPages />
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        Rapport <span className="text-amber-300">Statistiques Globales</span>
-      </h1>
+    <div className="w-full p-4 text-white">
+      <h2 className="text-xl font-bold mb-4">Rapport Attendance</h2>
 
-      {/* FILTRE */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <button
-          onClick={fetchStats}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-        >
-          Filtrer
-        </button>
+      {/* Filtre date */}
+      <div className="flex gap-2 mb-4">
+        <input type="date" className="p-2 rounded text-black" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} />
+        <input type="date" className="p-2 rounded text-black" value={dateFin} onChange={(e) => setDateFin(e.target.value)} />
+        <button className="bg-blue-600 px-4 py-2 rounded" onClick={fetchData}>Filtrer</button>
       </div>
 
-      {/* TABLE */}
-      {!loading && stats.length > 0 && (
-        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
-          <div className="w-max space-y-4">
-            {stats.map((r, idx) => (
-              <div key={idx} className="space-y-1">
-                {/* Branche */}
-                <div className="text-lg font-bold text-white">
-                  {r.branche_nom}
-                </div>
-
-                {/* Table Header */}
-                <div className="flex font-semibold uppercase text-white px-4 py-2 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-                  <div className="min-w-[180px]">Ministère</div>
-                  <div className="min-w-[100px] text-center">Hommes</div>
-                  <div className="min-w-[100px] text-center">Femmes</div>
-                  <div className="min-w-[100px] text-center">Jeunes</div>
-                  <div className="min-w-[120px] text-center">Total HFJ</div>
-                  <div className="min-w-[100px] text-center">Enfants</div>
-                  <div className="min-w-[120px] text-center">Connectés</div>
-                  <div className="min-w-[140px] text-center">Nouveaux Venus</div>
-                  <div className="min-w-[140px] text-center">Nouveau Converti</div>
-                  <div className="min-w-[120px] text-center">Moissonneurs</div>
-                </div>
-
-                {/* Ligne Culte */}
-                <div className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition">
-                  <div className="min-w-[180px] font-semibold text-white">Culte</div>
-                  <div className="min-w-[100px] text-center text-white">{r.hommes}</div>
-                  <div className="min-w-[100px] text-center text-white">{r.femmes}</div>
-                  <div className="min-w-[100px] text-center text-white">{r.jeunes}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.total_hfj}</div>
-                  <div className="min-w-[100px] text-center text-white">{r.enfants}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.connectes}</div>
-                  <div className="min-w-[140px] text-center text-white">{r.nouveauxVenus}</div>
-                  <div className="min-w-[140px] text-center text-white">{r.nouveauxConvertis}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.moissonneurs}</div>
-                </div>
-              </div>
-            ))}
-
-            {/* TOTAL GENERAL */}
-            <div className="flex items-center px-4 py-4 mt-4 rounded-xl bg-white/20 border-t border-white/40 font-bold">
-              <div className="min-w-[180px] text-orange-400 font-semibold uppercase">
-                TOTAL
-              </div>
-              <div className="min-w-[100px] text-center text-orange-400 font-semibold">
-                {totalGeneral.hommes}
-              </div>
-              <div className="min-w-[100px] text-center text-orange-400 font-semibold">
-                {totalGeneral.femmes}
-              </div>
-              <div className="min-w-[100px] text-center text-orange-400 font-semibold">
-                {totalGeneral.jeunes}
-              </div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">
-                {totalGeneral.total_hfj}
-              </div>
-              <div className="min-w-[100px] text-center text-orange-400 font-semibold">
-                {totalGeneral.enfants}
-              </div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">
-                {totalGeneral.connectes}
-              </div>
-              <div className="min-w-[140px] text-center text-orange-400 font-semibold">
-                {totalGeneral.nouveauxVenus}
-              </div>
-              <div className="min-w-[140px] text-center text-orange-400 font-semibold">
-                {totalGeneral.nouveauxConvertis}
-              </div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">
-                {totalGeneral.moissonneurs}
-              </div>
-            </div>
+      <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+        <div className="w-max space-y-2">
+          {/* HEADER */}
+          <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap gap-2">
+            <div className="w-24">Ministère</div>
+            <div className="w-12">Hommes</div>
+            <div className="w-12">Femmes</div>
+            <div className="w-12">Jeunes</div>
+            <div className="w-16">Total HFJ</div>
+            <div className="w-12">Enfants</div>
+            <div className="w-16">Connectés</div>
+            <div className="w-16">Nouveaux Venus</div>
+            <div className="w-20">Nouveau Converti</div>
+            <div className="w-16">Moissonneurs</div>
           </div>
+
+          {/* DATA */}
+          {hierarchy.length === 0 ? (
+            <div className="p-4 text-white">Aucune donnée trouvée pour cette période.</div>
+          ) : (
+            hierarchy.map((branch) => renderBranch(branch))
+          )}
         </div>
-      )}
-
-      {!loading && stats.length === 0 && (
-        <div className="text-white mt-8 text-center">
-          Aucune donnée trouvée pour cette période.
-        </div>
-      )}
-
-      {loading && (
-        <div className="text-white mt-8 text-center">Chargement...</div>
-      )}
-
-      <Footer />
+      </div>
     </div>
   );
 }

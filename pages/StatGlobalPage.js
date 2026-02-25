@@ -3,127 +3,92 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
-// Helper pour construire la hiérarchie
-const buildHierarchy = (eglises, parentId = null) => {
-  return eglises
-    .filter(e => e.parent_eglise_id === parentId)
-    .map(e => ({
-      ...e,
-      children: buildHierarchy(eglises, e.id)
-    }));
-};
-
-// Helper pour calculer le total d'une église pour un mois donné
-const calculateTotals = (attendance, egliseId, month, year) => {
-  const filtered = attendance.filter(a => {
-    const date = new Date(a.date);
-    return (
-      a.eglise_id === egliseId &&
-      date.getMonth() === month &&
-      date.getFullYear() === year
-    );
-  });
-
-  const hommes = filtered.reduce((sum, a) => sum + Number(a.hommes), 0);
-  const femmes = filtered.reduce((sum, a) => sum + Number(a.femmes), 0);
-  const total = hommes + femmes;
-
-  return { hommes, femmes, total };
-};
-
-// Composant récursif pour afficher chaque église et ses enfants
-const EgliseTable = ({ eglise, attendance, month, year }) => {
-  const totals = calculateTotals(attendance, eglise.id, month, year);
-
-  return (
-    <div style={{ marginLeft: eglise.parent_eglise_id ? 30 : 0, marginTop: 20 }}>
-      <h3>{eglise.nom}</h3>
-      <table border="1" cellPadding="5" cellSpacing="0">
-        <thead>
-          <tr>
-            <th>Ministère</th>
-            <th>Hommes</th>
-            <th>Femmes</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Culte</td>
-            <td>{totals.hommes}</td>
-            <td>{totals.femmes}</td>
-            <td>{totals.total}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      {eglise.children && eglise.children.length > 0 && (
-        <div>
-          {eglise.children.map(child => (
-            <EgliseTable
-              key={child.id}
-              eglise={child}
-              attendance={attendance}
-              month={month}
-              year={year}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default function RapportCulte() {
+export default function RapportCulte({ parentEgliseNom }) {
   const [attendance, setAttendance] = useState([]);
   const [eglises, setEglises] = useState([]);
-  const [month, setMonth] = useState(new Date().getMonth()); // 0 = Janvier
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [loading, setLoading] = useState(true);
+
+  // Mapping parent → enfants visibles
+  const parentChildrenMap = {
+    "Cité Royale": ["Cité Royale", "Antioche", "Port Louis"],
+    "Antioche": ["Antioche"],
+    "Port Louis": ["Port Louis"],
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: attData } = await supabase.from("attendance").select("*");
-      const { data: egliseData } = await supabase.from("eglises").select("*");
-      setAttendance(attData || []);
-      setEglises(buildHierarchy(egliseData || []));
-    };
+    async function fetchData() {
+      setLoading(true);
+      const { data: attendanceData } = await supabase
+        .from("attendance")
+        .select("*");
+
+      const { data: eglisesData } = await supabase
+        .from("branches")
+        .select("*");
+
+      setAttendance(attendanceData);
+      setEglises(eglisesData);
+      setLoading(false);
+    }
     fetchData();
   }, []);
 
+  if (loading) return <p>Loading...</p>;
+
+  // Églises filtrées selon le parent
+  const eglisesVisibles = parentChildrenMap[parentEgliseNom] || [parentEgliseNom];
+  const filteredEglises = eglises.filter(e => eglisesVisibles.includes(e.nom));
+
+  // Regroupement par église
+  const getAttendanceByEglise = (eglise) => {
+    const data = attendance.filter(a => a.branche_id === eglise.id);
+    const totalHommes = data.reduce((sum, a) => sum + Number(a.hommes), 0);
+    const totalFemmes = data.reduce((sum, a) => sum + Number(a.femmes), 0);
+    const total = totalHommes + totalFemmes;
+    return { totalHommes, totalFemmes, total };
+  };
+
+  // Obtenir mois/année du premier attendance
+  const monthYear = attendance.length > 0 
+    ? new Date(attendance[0].date).toLocaleString("fr-FR", { month: "long", year: "numeric" })
+    : "";
+
   return (
-    <div style={{ padding: 20, backgroundColor: "#f0f2f5" }}>
-      <h2>Rapport Culte - {new Date(year, month).toLocaleString("fr-FR", { month: "long", year: "numeric" })}</h2>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <header className="mb-6">
+        <h1 className="text-2xl font-bold">{monthYear}</h1>
+        <h2 className="text-xl mt-2">Rapport pour {parentEgliseNom}</h2>
+      </header>
 
-      {/* Filter */}
-      <div style={{ marginBottom: 20 }}>
-        <label>
-          Mois:
-          <select value={month} onChange={e => setMonth(Number(e.target.value))}>
-            {[...Array(12)].map((_, i) => (
-              <option key={i} value={i}>
-                {new Date(0, i).toLocaleString("fr-FR", { month: "long" })}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label style={{ marginLeft: 10 }}>
-          Année:
-          <input
-            type="number"
-            value={year}
-            onChange={e => setYear(Number(e.target.value))}
-            style={{ width: 80 }}
-          />
-        </label>
-      </div>
+      {filteredEglises.map(eglise => {
+        const { totalHommes, totalFemmes, total } = getAttendanceByEglise(eglise);
+        return (
+          <div key={eglise.id} className="mb-6 bg-white rounded-xl shadow p-4">
+            <h3 className="font-semibold mb-2">{eglise.nom}</h3>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="px-2 py-1">Ministère</th>
+                  <th className="px-2 py-1">Hommes</th>
+                  <th className="px-2 py-1">Femmes</th>
+                  <th className="px-2 py-1">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="px-2 py-1">Culte</td>
+                  <td className="px-2 py-1">{totalHommes}</td>
+                  <td className="px-2 py-1">{totalFemmes}</td>
+                  <td className="px-2 py-1">{total}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        );
+      })}
 
-      {/* Display */}
-      {eglises.map(e => (
-        <EgliseTable key={e.id} eglise={e} attendance={attendance} month={month} year={year} />
-      ))}
-
-      <footer style={{ marginTop: 50, textAlign: "center" }}>
-        © 2026 - Rapport Culte
+      <footer className="mt-6 text-center text-gray-500">
+        Rapport généré automatiquement
       </footer>
     </div>
   );

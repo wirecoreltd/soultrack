@@ -17,48 +17,60 @@ export default function StatGlobalPageWrapper() {
 function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState([]);
 
-  // Récupérer l’utilisateur et sa branche
-  const [userBrancheId, setUserBrancheId] = useState(null);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data } = await supabase
-        .from("profiles")
-        .select("branche_id")
-        .eq("id", user.id)
-        .single();
-
-      if (data?.branche_id) setUserBrancheId(data.branche_id);
-    };
-    fetchProfile();
-  }, []);
-
-  const fetchAttendance = async () => {
-    if (!userBrancheId) return;
+  // Récupérer les stats depuis la view
+  const fetchStats = async () => {
+    if (!dateDebut || !dateFin) return;
     setLoading(true);
 
-    // ⚠️ Assure-toi d’avoir créé la view `attendance_stats` avec toutes les colonnes
     const { data, error } = await supabase
       .from("attendance_stats")
       .select("*")
-      .gte("mois", dateDebut || undefined)
-      .lte("mois", dateFin || undefined)
+      .gte("mois", dateDebut)
+      .lte("mois", dateFin)
       .order("branche_nom", { ascending: true });
 
-    if (error) console.error(error);
-    else setAttendanceData(data);
+    if (error) {
+      console.error("Erreur fetch stats:", error);
+      setStats([]);
+    } else {
+      // filtrer branches null ou indésirables
+      const filtered = data.filter(
+        (d) => d.branche_nom && d.branche_nom !== "Eglise Principale"
+      );
+      setStats(filtered);
+    }
 
     setLoading(false);
   };
 
-  // Fonction pour calculer le total Hommes + Femmes + Jeunes
-  const calcTotalHFJ = (r) => (Number(r.hommes || 0) + Number(r.femmes || 0) + Number(r.jeunes || 0));
+  // Calcul total général
+  const totalGeneral = stats.reduce(
+    (tot, r) => ({
+      hommes: tot.hommes + (r.hommes || 0),
+      femmes: tot.femmes + (r.femmes || 0),
+      jeunes: tot.jeunes + (r.jeunes || 0),
+      total_hfj: tot.total_hfj + (r.total_hfj || 0),
+      enfants: tot.enfants + (r.enfants || 0),
+      connectes: tot.connectes + (r.connectes || 0),
+      nouveauxVenus: tot.nouveauxVenus + (r.nouveauxVenus || 0),
+      nouveauxConvertis: tot.nouveauxConvertis + (r.nouveauxConvertis || 0),
+      moissonneurs: tot.moissonneurs + (r.moissonneurs || 0),
+    }),
+    {
+      hommes: 0,
+      femmes: 0,
+      jeunes: 0,
+      total_hfj: 0,
+      enfants: 0,
+      connectes: 0,
+      nouveauxVenus: 0,
+      nouveauxConvertis: 0,
+      moissonneurs: 0,
+    }
+  );
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -67,7 +79,7 @@ function StatGlobalPage() {
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
-      {/* FILTRES */}
+      {/* FILTRE */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
         <input
           type="date"
@@ -82,55 +94,99 @@ function StatGlobalPage() {
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
-          onClick={fetchAttendance}
+          onClick={fetchStats}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
           Filtrer
         </button>
       </div>
 
-      {/* TABLEAU */}
-      {!loading && attendanceData.length > 0 && (
+      {/* TABLE */}
+      {!loading && stats.length > 0 && (
         <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
           <div className="w-max space-y-4">
+            {stats.map((r, idx) => (
+              <div key={idx} className="space-y-1">
+                {/* Branche */}
+                <div className="text-lg font-bold text-white">
+                  {r.branche_nom}
+                </div>
 
-            {attendanceData.map((r, idx) => (
-              <div key={idx} className="bg-white/10 rounded-xl p-4">
-                <div className="text-xl font-bold text-white mb-2">{r.branche_nom}</div>
-                <div className="flex font-semibold uppercase text-white border-b border-white/30 pb-2">
-                  <div className="min-w-[140px]">Ministère</div>
-                  <div className="min-w-[80px] text-center">Hommes</div>
-                  <div className="min-w-[80px] text-center">Femmes</div>
-                  <div className="min-w-[80px] text-center">Jeunes</div>
-                  <div className="min-w-[100px] text-center">Total HFJ</div>
-                  <div className="min-w-[80px] text-center">Enfants</div>
-                  <div className="min-w-[100px] text-center">Connectés</div>
-                  <div className="min-w-[120px] text-center">Nouveaux Venus</div>
+                {/* Table Header */}
+                <div className="flex font-semibold uppercase text-white px-4 py-2 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+                  <div className="min-w-[180px]">Ministère</div>
+                  <div className="min-w-[100px] text-center">Hommes</div>
+                  <div className="min-w-[100px] text-center">Femmes</div>
+                  <div className="min-w-[100px] text-center">Jeunes</div>
+                  <div className="min-w-[120px] text-center">Total HFJ</div>
+                  <div className="min-w-[100px] text-center">Enfants</div>
+                  <div className="min-w-[120px] text-center">Connectés</div>
+                  <div className="min-w-[140px] text-center">Nouveaux Venus</div>
                   <div className="min-w-[140px] text-center">Nouveau Converti</div>
                   <div className="min-w-[120px] text-center">Moissonneurs</div>
                 </div>
 
-                <div className="flex items-center px-0 py-2 text-white">
-                  <div className="min-w-[140px] font-semibold">Culte</div>
-                  <div className="min-w-[80px] text-center">{r.hommes || 0}</div>
-                  <div className="min-w-[80px] text-center">{r.femmes || 0}</div>
-                  <div className="min-w-[80px] text-center">{r.jeunes || 0}</div>
-                  <div className="min-w-[100px] text-center">{calcTotalHFJ(r)}</div>
-                  <div className="min-w-[80px] text-center">{r.enfants || 0}</div>
-                  <div className="min-w-[100px] text-center">{r.connectes || 0}</div>
-                  <div className="min-w-[120px] text-center">{r.nouveauxVenus || 0}</div>
-                  <div className="min-w-[140px] text-center">{r.nouveauxConvertis || 0}</div>
-                  <div className="min-w-[120px] text-center">{r.moissonneurs || 0}</div>
+                {/* Ligne Culte */}
+                <div className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition">
+                  <div className="min-w-[180px] font-semibold text-white">Culte</div>
+                  <div className="min-w-[100px] text-center text-white">{r.hommes}</div>
+                  <div className="min-w-[100px] text-center text-white">{r.femmes}</div>
+                  <div className="min-w-[100px] text-center text-white">{r.jeunes}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.total_hfj}</div>
+                  <div className="min-w-[100px] text-center text-white">{r.enfants}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.connectes}</div>
+                  <div className="min-w-[140px] text-center text-white">{r.nouveauxVenus}</div>
+                  <div className="min-w-[140px] text-center text-white">{r.nouveauxConvertis}</div>
+                  <div className="min-w-[120px] text-center text-white">{r.moissonneurs}</div>
                 </div>
               </div>
             ))}
 
+            {/* TOTAL GENERAL */}
+            <div className="flex items-center px-4 py-4 mt-4 rounded-xl bg-white/20 border-t border-white/40 font-bold">
+              <div className="min-w-[180px] text-orange-400 font-semibold uppercase">
+                TOTAL
+              </div>
+              <div className="min-w-[100px] text-center text-orange-400 font-semibold">
+                {totalGeneral.hommes}
+              </div>
+              <div className="min-w-[100px] text-center text-orange-400 font-semibold">
+                {totalGeneral.femmes}
+              </div>
+              <div className="min-w-[100px] text-center text-orange-400 font-semibold">
+                {totalGeneral.jeunes}
+              </div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">
+                {totalGeneral.total_hfj}
+              </div>
+              <div className="min-w-[100px] text-center text-orange-400 font-semibold">
+                {totalGeneral.enfants}
+              </div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">
+                {totalGeneral.connectes}
+              </div>
+              <div className="min-w-[140px] text-center text-orange-400 font-semibold">
+                {totalGeneral.nouveauxVenus}
+              </div>
+              <div className="min-w-[140px] text-center text-orange-400 font-semibold">
+                {totalGeneral.nouveauxConvertis}
+              </div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">
+                {totalGeneral.moissonneurs}
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {attendanceData.length === 0 && !loading && (
-        <div className="mt-6 text-white font-semibold">Aucune donnée trouvée pour cette période.</div>
+      {!loading && stats.length === 0 && (
+        <div className="text-white mt-8 text-center">
+          Aucune donnée trouvée pour cette période.
+        </div>
+      )}
+
+      {loading && (
+        <div className="text-white mt-8 text-center">Chargement...</div>
       )}
 
       <Footer />

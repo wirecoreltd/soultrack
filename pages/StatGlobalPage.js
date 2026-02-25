@@ -3,193 +3,164 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
+import Footer from "../components/Footer";
+import ProtectedRoute from "../components/ProtectedRoute";
 
-export default function GlobalStatsPage() {
+export default function StatGlobalPageWrapper() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
+      <StatGlobalPage />
+    </ProtectedRoute>
+  );
+}
+
+function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [attendanceData, setAttendanceData] = useState([]);
 
+  const [userBrancheId, setUserBrancheId] = useState(null);
+
+  // 🔹 Récupérer la branche de l'utilisateur
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("branche_id")
+        .eq("id", user.id)
+        .single();
+
+      if (data?.branche_id) setUserBrancheId(data.branche_id);
+    };
+    fetchProfile();
+  }, []);
+
+  // 🔹 Récupérer les stats
   const fetchStats = async () => {
-    if (!dateDebut || !dateFin) return;
-
+    if (!userBrancheId) return;
     setLoading(true);
 
     const { data, error } = await supabase
       .from("attendance_stats")
       .select("*")
-      .gte("mois", dateDebut)
-      .lte("mois", dateFin);
+      .gte(dateDebut ? "mois" : null, dateDebut || undefined)
+      .lte(dateFin ? "mois" : null, dateFin || undefined)
+      .order("branche_nom", { ascending: true });
 
-    if (error) {
-      console.error(error);
-      setLoading(false);
-      return;
-    }
+    if (error) console.error(error);
+    else setAttendanceData(data || []);
 
-    // 🔹 Filtrer branches valides (pas vide et pas "Eglise Principale")
-    const filtered = data.filter(
-      (row) =>
-        row.branche_nom &&
-        row.branche_nom.trim() !== "" &&
-        row.branche_nom !== "Eglise Principale"
-    );
-
-    // 🔹 Grouper par branche
-    const grouped = {};
-
-    filtered.forEach((row) => {
-      if (!grouped[row.branche_nom]) {
-        grouped[row.branche_nom] = {
-          branche: row.branche_nom,
-          hommes: 0,
-          femmes: 0,
-          enfants: 0,
-          nouveaux: 0,
-          total: 0,
-        };
-      }
-
-      grouped[row.branche_nom].hommes += row.hommes || 0;
-      grouped[row.branche_nom].femmes += row.femmes || 0;
-      grouped[row.branche_nom].enfants += row.enfants || 0;
-      grouped[row.branche_nom].nouveaux += row.nouveaux || 0;
-      grouped[row.branche_nom].total += row.total || 0;
-    });
-
-    setStats(Object.values(grouped));
     setLoading(false);
   };
 
-  const getPeriodeLabel = () => {
-    if (!dateDebut || !dateFin) return "";
-
-    const debut = new Date(dateDebut);
-    const fin = new Date(dateFin);
-
-    const mois = [
-      "Janvier",
-      "Février",
-      "Mars",
-      "Avril",
-      "Mai",
-      "Juin",
-      "Juillet",
-      "Août",
-      "Septembre",
-      "Octobre",
-      "Novembre",
-      "Décembre",
-    ];
-
-    if (
-      debut.getMonth() === fin.getMonth() &&
-      debut.getFullYear() === fin.getFullYear()
-    ) {
-      return `${mois[debut.getMonth()]} ${debut.getFullYear()}`;
+  // 🔹 Grouper par branche
+  const groupedData = {};
+  attendanceData.forEach(a => {
+    if (!a.branche_nom) return; // ignorer les null
+    if (!groupedData[a.branche_nom]) groupedData[a.branche_nom] = a;
+    else {
+      // cumuler si plusieurs lignes pour la même branche
+      groupedData[a.branche_nom].hommes += a.hommes || 0;
+      groupedData[a.branche_nom].femmes += a.femmes || 0;
+      groupedData[a.branche_nom].jeunes += a.jeunes || 0;
+      groupedData[a.branche_nom].enfants += a.enfants || 0;
+      groupedData[a.branche_nom].connectes += a.connectes || 0;
+      groupedData[a.branche_nom].nouveauxVenus += a.nouveauxVenus || 0;
+      groupedData[a.branche_nom].nouveauxConvertis += a.nouveauxConvertis || 0;
+      groupedData[a.branche_nom].moissonneurs += a.moissonneurs || 0;
     }
-
-    return `Du ${debut.getDate()} ${
-      mois[debut.getMonth()]
-    } ${debut.getFullYear()} au ${fin.getDate()} ${
-      mois[fin.getMonth()]
-    } ${fin.getFullYear()}`;
-  };
+  });
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <div className="max-w-6xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
+        Rapport <span className="text-amber-300">Statistiques Globales</span>
+      </h1>
 
-        {/* FILTRE DATE */}
-        <div className="bg-white rounded-2xl shadow p-6 mb-8">
-          <div className="flex flex-wrap gap-4 items-end">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Date début
-              </label>
-              <input
-                type="date"
-                value={dateDebut}
-                onChange={(e) => setDateDebut(e.target.value)}
-                className="border rounded-lg px-3 py-2"
-              />
-            </div>
+      {/* FILTRES */}
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
+        <input
+          type="date"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <input
+          type="date"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <button
+          onClick={fetchStats}
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+        >
+          Filtrer
+        </button>
+      </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Date fin
-              </label>
-              <input
-                type="date"
-                value={dateFin}
-                onChange={(e) => setDateFin(e.target.value)}
-                className="border rounded-lg px-3 py-2"
-              />
-            </div>
+      {/* TABLEAU */}
+      {!loading && Object.keys(groupedData).length > 0 && (
+        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+          <div className="w-max space-y-10">
 
-            <button
-              onClick={fetchStats}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-            >
-              Filtrer
-            </button>
+            {Object.entries(groupedData).map(([branche, stats]) => {
+              const totalHFJ = (stats.hommes || 0) + (stats.femmes || 0) + (stats.jeunes || 0);
+              return (
+                <div key={branche} className="space-y-3">
+                  {/* NOM BRANCHE */}
+                  <h2 className="text-2xl font-bold text-white tracking-wide">{branche.toUpperCase()}</h2>
+
+                  {/* TABLE */}
+                  <div className="bg-white/5 rounded-2xl border border-white/10">
+                    {/* HEADER */}
+                    <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/20 bg-white/10 whitespace-nowrap text-sm">
+                      <div className="w-40">Ministère</div>
+                      <div className="w-24 text-center">Hommes</div>
+                      <div className="w-24 text-center">Femmes</div>
+                      <div className="w-24 text-center">Jeunes</div>
+                      <div className="w-28 text-center">Total</div>
+                      <div className="w-24 text-center">Enfants</div>
+                      <div className="w-28 text-center">Connectés</div>
+                      <div className="w-32 text-center">Nouveaux Venus</div>
+                      <div className="w-36 text-center">Nouveaux Convertis</div>
+                      <div className="w-28 text-center">Moissonneurs</div>
+                    </div>
+
+                    {/* ROW */}
+                    <div className="flex text-white px-4 py-4 whitespace-nowrap text-base">
+                      <div className="w-40 font-medium">Culte</div>
+                      <div className="w-24 text-center">{stats.hommes}</div>
+                      <div className="w-24 text-center">{stats.femmes}</div>
+                      <div className="w-24 text-center">{stats.jeunes}</div>
+                      <div className="w-28 text-center font-bold text-yellow-400">{totalHFJ}</div>
+                      <div className="w-24 text-center">{stats.enfants}</div>
+                      <div className="w-28 text-center">{stats.connectes}</div>
+                      <div className="w-32 text-center">{stats.nouveauxVenus}</div>
+                      <div className="w-36 text-center">{stats.nouveauxConvertis}</div>
+                      <div className="w-28 text-center">{stats.moissonneurs}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
           </div>
         </div>
+      )}
 
-        {/* TITRE PERIODE */}
-        {stats.length > 0 && (
-          <h2 className="text-2xl font-bold mb-6 text-center">
-            {getPeriodeLabel()}
-          </h2>
-        )}
+      {/* MESSAGE SI AUCUNE DONNÉE */}
+      {!loading && Object.keys(groupedData).length === 0 && (
+        <p className="text-white mt-10 text-xl">Aucune donnée trouvée pour cette période.</p>
+      )}
 
-        {loading && <p>Chargement...</p>}
-
-        {!loading && stats.length === 0 && (
-          <p className="text-center text-gray-500">
-            Aucune donnée trouvée pour cette période.
-          </p>
-        )}
-
-        {/* TABLEAUX PAR BRANCHE */}
-        {stats.map((branche, index) => (
-          <div
-            key={index}
-            className="bg-white rounded-2xl shadow mb-8 p-6"
-          >
-            <h3 className="text-xl font-semibold mb-4 text-blue-700">
-              {branche.branche}
-            </h3>
-
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="p-3 border">Ministère</th>
-                  <th className="p-3 border">Hommes</th>
-                  <th className="p-3 border">Femmes</th>
-                  <th className="p-3 border">Enfants</th>
-                  <th className="p-3 border">Nouveaux</th>
-                  <th className="p-3 border">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="p-3 border font-medium">Culte</td>
-                  <td className="p-3 border">{branche.hommes}</td>
-                  <td className="p-3 border">{branche.femmes}</td>
-                  <td className="p-3 border">{branche.enfants}</td>
-                  <td className="p-3 border">{branche.nouveaux}</td>
-                  <td className="p-3 border font-bold">
-                    {branche.total}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        ))}
-      </div>
+      <Footer />
     </div>
   );
 }

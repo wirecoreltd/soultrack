@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+import Footer from "../components/Footer";
 
 export default function StatGlobalPageWrapper() {
   return (
@@ -17,53 +17,47 @@ export default function StatGlobalPageWrapper() {
 function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
+  const [branches, setBranches] = useState([]);
+  const [statsParBranche, setStatsParBranche] = useState({});
   const [loading, setLoading] = useState(false);
 
-  const [userBrancheId, setUserBrancheId] = useState(null);
-  const [branches, setBranches] = useState([]);
-  const [statsByBranche, setStatsByBranche] = useState({});
-
-  // 🔹 Récupérer la branche de l’utilisateur
+  // 🔹 Récupérer la branche de l'utilisateur + enfants
   useEffect(() => {
-    const fetchUserBranche = async () => {
+    const fetchBranches = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profile } = await supabase
+      const { data: userProfile } = await supabase
         .from("profiles")
         .select("branche_id")
         .eq("id", user.id)
         .single();
 
-      if (profile?.branche_id) setUserBrancheId(profile.branche_id);
-    };
-    fetchUserBranche();
-  }, []);
+      if (!userProfile?.branche_id) return;
 
-  // 🔹 Récupérer la branche + enfants
-  useEffect(() => {
-    if (!userBrancheId) return;
+      const parentId = userProfile.branche_id;
 
-    const fetchBranches = async () => {
+      // Parent
       const { data: parent } = await supabase
         .from("branches")
         .select("id,nom")
-        .eq("id", userBrancheId)
+        .eq("id", parentId)
         .single();
 
+      // Enfants directs
       const { data: enfants } = await supabase
         .from("branches")
         .select("id,nom")
-        .eq("parent_id", userBrancheId);
+        .eq("parent_id", parentId);
 
       const allBranches = [parent, ...(enfants || [])];
       setBranches(allBranches);
     };
 
     fetchBranches();
-  }, [userBrancheId]);
+  }, []);
 
-  // 🔹 Récupérer les stats par branche
+  // 🔹 Fonction pour récupérer les stats par branche
   const fetchStats = async () => {
     if (!branches.length) return;
     setLoading(true);
@@ -71,7 +65,7 @@ function StatGlobalPage() {
     const newStats = {};
 
     for (const branche of branches) {
-      // Attendance
+      // -------- ATTENDANCE --------
       const { data: attendanceData } = await supabase
         .from("attendance")
         .select("*")
@@ -79,21 +73,21 @@ function StatGlobalPage() {
         .gte(dateDebut ? "date" : null, dateDebut || undefined)
         .lte(dateFin ? "date" : null, dateFin || undefined);
 
-      const attendanceTotals = { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0 };
+      const totals = { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0 };
       attendanceData?.forEach(r => {
-        attendanceTotals.hommes += Number(r.hommes) || 0;
-        attendanceTotals.femmes += Number(r.femmes) || 0;
-        attendanceTotals.jeunes += Number(r.jeunes) || 0;
-        attendanceTotals.enfants += Number(r.enfants) || 0;
-        attendanceTotals.connectes += Number(r.connectes) || 0;
-        attendanceTotals.nouveauxVenus += Number(r.nouveauxVenus) || 0;
-        attendanceTotals.nouveauxConvertis += Number(r.nouveauxConvertis) || 0;
+        totals.hommes += Number(r.hommes) || 0;
+        totals.femmes += Number(r.femmes) || 0;
+        totals.jeunes += Number(r.jeunes) || 0;
+        totals.enfants += Number(r.enfants) || 0;
+        totals.connectes += Number(r.connectes) || 0;
+        totals.nouveauxVenus += Number(r.nouveauxVenus) || 0;
+        totals.nouveauxConvertis += Number(r.nouveauxConvertis) || 0;
       });
 
-      newStats[branche.id] = { attendanceTotals };
+      newStats[branche.id] = totals;
     }
 
-    setStatsByBranche(newStats);
+    setStatsParBranche(newStats);
     setLoading(false);
   };
 
@@ -104,47 +98,44 @@ function StatGlobalPage() {
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
-      {/* FILTRE */}
+      {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
         <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
         <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
         <button onClick={fetchStats} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
       </div>
 
-      {/* TABLES */}
-      {!loading && branches.length > 0 && (
-        <div className="w-full max-w-full overflow-x-auto mt-6 space-y-8">
-          {branches.map((branche) => {
-            const stats = statsByBranche[branche.id];
-            if (!stats) return null;
-            const r = stats.attendanceTotals;
-
-            return (
-              <div key={branche.id} className="bg-white/5 rounded-2xl p-4">
-                <h2 className="text-xl font-bold text-white mb-2">{branche.nom}</h2>
-                <div className="flex font-semibold text-white px-4 py-2 border-b border-white/30">
-                  <div className="min-w-[180px]">Type</div>
+      {/* TABLE */}
+      {!loading && Object.keys(statsParBranche).length > 0 && (
+        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+          <div className="w-max space-y-4">
+            {branches.map((branche) => (
+              <div key={branche.id} className="space-y-2">
+                <h2 className="text-xl font-semibold text-white">{branche.nom}</h2>
+                <div className="flex font-semibold uppercase text-white px-4 py-2 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+                  <div className="min-w-[180px] ml-1">Type</div>
                   <div className="min-w-[120px] text-center">Hommes</div>
                   <div className="min-w-[120px] text-center">Femmes</div>
                   <div className="min-w-[120px] text-center">Jeunes</div>
                   <div className="min-w-[120px] text-center">Enfants</div>
                   <div className="min-w-[140px] text-center">Connectés</div>
                   <div className="min-w-[150px] text-center">Nouveaux Venus</div>
-                  <div className="min-w-[180px] text-center">Nouveau Converti</div>
+                  <div className="min-w-[160px] text-center">Nouveau Converti</div>
                 </div>
-                <div className="flex text-white px-4 py-2 bg-white/10 rounded-b-lg">
-                  <div className="min-w-[180px] font-semibold">Culte</div>
-                  <div className="min-w-[120px] text-center">{r.hommes}</div>
-                  <div className="min-w-[120px] text-center">{r.femmes}</div>
-                  <div className="min-w-[120px] text-center">{r.jeunes}</div>
-                  <div className="min-w-[120px] text-center">{r.enfants}</div>
-                  <div className="min-w-[140px] text-center">{r.connectes}</div>
-                  <div className="min-w-[150px] text-center">{r.nouveauxVenus}</div>
-                  <div className="min-w-[180px] text-center">{r.nouveauxConvertis}</div>
+
+                <div className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400">
+                  <div className="min-w-[180px] text-white font-semibold">Culte</div>
+                  <div className="min-w-[120px] text-center text-white">{statsParBranche[branche.id]?.hommes ?? 0}</div>
+                  <div className="min-w-[120px] text-center text-white">{statsParBranche[branche.id]?.femmes ?? 0}</div>
+                  <div className="min-w-[120px] text-center text-white">{statsParBranche[branche.id]?.jeunes ?? 0}</div>
+                  <div className="min-w-[120px] text-center text-white">{statsParBranche[branche.id]?.enfants ?? 0}</div>
+                  <div className="min-w-[140px] text-center text-white">{statsParBranche[branche.id]?.connectes ?? 0}</div>
+                  <div className="min-w-[150px] text-center text-white">{statsParBranche[branche.id]?.nouveauxVenus ?? 0}</div>
+                  <div className="min-w-[160px] text-center text-white">{statsParBranche[branche.id]?.nouveauxConvertis ?? 0}</div>
                 </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       )}
 

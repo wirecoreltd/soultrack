@@ -20,7 +20,7 @@ function StatGlobalPage() {
   const [loading, setLoading] = useState(false);
   const [attendanceData, setAttendanceData] = useState([]);
 
-  // Récupérer les stats
+  // 🔹 Récupérer les stats
   const fetchStats = async () => {
     setLoading(true);
     try {
@@ -39,7 +39,31 @@ function StatGlobalPage() {
     setLoading(false);
   };
 
-  // Calcul total
+  // 🔹 Transformer la liste en hiérarchie
+  const buildHierarchy = (data) => {
+    const map = {};
+    const roots = [];
+
+    // Créer une map id → objet
+    data.forEach((item) => {
+      map[item.branche_id] = { ...item, children: [] };
+    });
+
+    // Imbriquer les sous-branches
+    data.forEach((item) => {
+      if (item.superviseur_id && map[item.superviseur_id]) {
+        map[item.superviseur_id].children.push(map[item.branche_id]);
+      } else {
+        roots.push(map[item.branche_id]);
+      }
+    });
+
+    return roots;
+  };
+
+  const hierarchyData = buildHierarchy(attendanceData);
+
+  // 🔹 Calcul total
   const total = attendanceData.reduce(
     (acc, r) => {
       acc.hommes += r.hommes || 0;
@@ -54,6 +78,32 @@ function StatGlobalPage() {
     },
     { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0, moissonneurs: 0 }
   );
+
+  // 🔹 Composant récursif pour afficher les branches et leurs sous-branches
+  const RenderBranch = ({ branch, level = 0 }) => {
+    return (
+      <div className="space-y-1 ml-[calc(20px*level)]">
+        <div className="text-white text-lg font-bold">{branch.branche_nom}</div>
+        <div className="text-white font-semibold">Culte :</div>
+        <div className="flex gap-4 text-white font-medium flex-wrap">
+          <div>Hommes: {branch.hommes}</div>
+          <div>Femmes: {branch.femmes}</div>
+          <div>Jeunes: {branch.jeunes}</div>
+          <div>Total: {branch.hommes + branch.femmes + branch.jeunes}</div>
+          <div>Enfants: {branch.enfants}</div>
+          <div>Connectés: {branch.connectes}</div>
+          <div>Nouveaux Venus: {branch.nouveauxVenus}</div>
+          <div>Nouveau Converti: {branch.nouveauxConvertis}</div>
+          <div>Moissonneurs: {branch.moissonneurs || 0}</div>
+        </div>
+
+        {branch.children.length > 0 &&
+          branch.children.map((child) => (
+            <RenderBranch key={child.branche_id} branch={child} level={level + 1} />
+          ))}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -85,32 +135,17 @@ function StatGlobalPage() {
       </div>
 
       {/* TABLEAU */}
-      {!loading && attendanceData.length > 0 && (
+      {!loading && hierarchyData.length > 0 && (
         <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
           <div className="w-max space-y-4">
-            {/* Parcourir les branches */}
-            {attendanceData.map((r, idx) => (
-              <div key={idx} className="space-y-1">
-                <div className="text-white text-xl font-bold">{r.branche_nom}</div>
-                <div className="text-white font-semibold">Culte :</div>
-                <div className="flex gap-4 text-white font-medium">
-                  <div>Hommes: {r.hommes}</div>
-                  <div>Femmes: {r.femmes}</div>
-                  <div>Jeunes: {r.jeunes}</div>
-                  <div>Total: {r.hommes + r.femmes + r.jeunes}</div>
-                  <div>Enfants: {r.enfants}</div>
-                  <div>Connectés: {r.connectes}</div>
-                  <div>Nouveaux Venus: {r.nouveauxVenus}</div>
-                  <div>Nouveau Converti: {r.nouveauxConvertis}</div>
-                  <div>Moissonneurs: {r.moissonneurs || 0}</div>
-                </div>
-              </div>
+            {hierarchyData.map((branch) => (
+              <RenderBranch key={branch.branche_id} branch={branch} />
             ))}
 
             {/* TOTAL */}
             <div className="mt-6 border-t border-white/40 pt-3 text-white font-bold">
               TOTAL :
-              <div className="flex gap-4 mt-1">
+              <div className="flex gap-4 mt-1 flex-wrap">
                 <div>Hommes: {total.hommes}</div>
                 <div>Femmes: {total.femmes}</div>
                 <div>Jeunes: {total.jeunes}</div>
@@ -127,7 +162,7 @@ function StatGlobalPage() {
       )}
 
       {loading && <div className="text-white mt-6">Chargement...</div>}
-      {!loading && attendanceData.length === 0 && (
+      {!loading && hierarchyData.length === 0 && (
         <div className="text-white mt-6">Aucune donnée trouvée pour cette période.</div>
       )}
 

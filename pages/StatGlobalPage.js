@@ -6,12 +6,8 @@ import dayjs from "dayjs";
 
 export default function GlobalStats() {
   const [stats, setStats] = useState([]);
-  const [startDate, setStartDate] = useState(
-    dayjs().startOf("month").format("YYYY-MM-DD")
-  );
-  const [endDate, setEndDate] = useState(
-    dayjs().endOf("month").format("YYYY-MM-DD")
-  );
+  const [startDate, setStartDate] = useState(dayjs().startOf("month").format("YYYY-MM-DD"));
+  const [endDate, setEndDate] = useState(dayjs().endOf("month").format("YYYY-MM-DD"));
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -35,32 +31,42 @@ export default function GlobalStats() {
       return;
     }
 
-    // Organiser par parent (superviseur) → enfants
+    // Créer hiérarchie parent → enfants
     const hierarchy = {};
 
-    data.forEach((item) => {
-      // Parent = superviseur ou branche si pas de superviseur
+    // 1️⃣ Filtrer d’abord les branches vides ou Eglise Principale non supervisée
+    const filtered = data.filter(
+      (item) =>
+        item.branche_nom &&
+        item.branche_nom.toLowerCase() !== "eglise principale"
+    );
+
+    filtered.forEach((item) => {
       const parentId = item.superviseur_id || item.branche_id;
+
+      // Créer parent si inexistant
       if (!hierarchy[parentId]) {
         hierarchy[parentId] = {
+          id: parentId,
           nom: item.superviseur_nom || item.branche_nom,
           enfants: [],
         };
       }
 
-      // On ajoute seulement si ce n’est pas une branche vide ou "Eglise Principale"
-      if (
-        item.branche_id !== parentId &&
-        item.branche_nom &&
-        item.branche_nom.toLowerCase() !== "eglise principale"
-      ) {
+      // Ajouter uniquement si ce n’est pas un parent lui-même
+      if (item.branche_id !== parentId) {
         hierarchy[parentId].enfants.push(item);
       } else if (!item.superviseur_id) {
         hierarchy[parentId].enfants.push(item);
       }
     });
 
-    setStats(Object.values(hierarchy));
+    // Supprimer les parents sans enfants pour éviter affichage vide
+    const finalStats = Object.values(hierarchy).filter(
+      (p) => p.enfants.length > 0
+    );
+
+    setStats(finalStats);
     setLoading(false);
   }
 
@@ -72,13 +78,13 @@ export default function GlobalStats() {
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
-          className="px-3 py-2 rounded border border-gray-300"
+          className="px-3 py-2 rounded border border-gray-400"
         />
         <input
           type="date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
-          className="px-3 py-2 rounded border border-gray-300"
+          className="px-3 py-2 rounded border border-gray-400"
         />
         <button
           onClick={fetchStats}
@@ -94,15 +100,15 @@ export default function GlobalStats() {
       ) : stats.length === 0 ? (
         <div className="text-white">Aucune donnée trouvée pour cette période.</div>
       ) : (
-        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-300">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-700">
           <div className="min-w-max space-y-6">
             {stats.map((parent) => (
-              <div key={parent.nom} className="space-y-2">
+              <div key={parent.id} className="space-y-2">
                 {/* Parent */}
                 <div className="text-2xl font-bold text-yellow-400">{parent.nom}</div>
 
                 {parent.enfants.map((branch) => (
-                  <div key={branch.branche_nom} className="space-y-1 pl-6">
+                  <div key={branch.branche_id} className="space-y-1 pl-6">
                     {/* Branche */}
                     <div className="text-lg font-semibold text-white mb-1">
                       {branch.branche_nom}{" "}
@@ -111,7 +117,6 @@ export default function GlobalStats() {
 
                     {/* Tableau stats */}
                     <div className="grid grid-cols-10 gap-2 text-sm text-gray-100 bg-gray-800 rounded-xl px-4 py-2">
-                      {/* Header */}
                       <div className="font-semibold">Culte</div>
                       <div className="font-semibold">Hommes</div>
                       <div className="font-semibold">Femmes</div>
@@ -123,7 +128,6 @@ export default function GlobalStats() {
                       <div className="font-semibold">Nouveau Converti</div>
                       <div className="font-semibold">Moissonneurs</div>
 
-                      {/* Valeurs */}
                       <div>{branch.culte || 0}</div>
                       <div>{branch.hommes || 0}</div>
                       <div>{branch.femmes || 0}</div>

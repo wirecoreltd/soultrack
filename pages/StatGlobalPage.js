@@ -3,186 +3,178 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
-import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
 
-export default function StatGlobalPageWrapper() {
-  return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
-      <StatGlobalPage />
-    </ProtectedRoute>
-  );
-}
+export default function StatGlobalPage() {
+  const [statsGrouped, setStatsGrouped] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [mois, setMois] = useState(new Date().getMonth() + 1);
+  const [annee, setAnnee] = useState(new Date().getFullYear());
 
-function StatGlobalPage() {
-  const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const [eglises, setEglises] = useState([]);
-  const [statsParEglise, setStatsParEglise] = useState({});
-
-  // 🔹 Charger toutes les églises supervisées
   useEffect(() => {
-    const fetchEglises = async () => {
-      const { data, error } = await supabase
-        .from("eglises")
-        .select("id, nom");
-
-      if (!error && data) {
-        setEglises(data);
-      }
-    };
-
-    fetchEglises();
-  }, []);
+    fetchStats();
+  }, [mois, annee]);
 
   const fetchStats = async () => {
-    if (!eglises.length) return;
-
     setLoading(true);
-    let resultats = {};
 
-    for (const eglise of eglises) {
+    try {
+      const startDate = `${annee}-${String(mois).padStart(2, "0")}-01`;
+      const endDate = new Date(annee, mois, 0)
+        .toISOString()
+        .split("T")[0];
 
-      // 🔹 Récupérer toutes les branches de cette église
-      const { data: branches } = await supabase
-        .from("branches")
-        .select("id")
-        .eq("eglise_id", eglise.id);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      const branchIds = branches?.map(b => b.id) || [];
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-      if (!branchIds.length) continue;
+      // 🔥 Récupère toutes les stats avec jointure
+      const { data, error } = await supabase
+        .from("stats_ministere_besoin")
+        .select(`
+          type,
+          valeur,
+          date_action,
+          membres_complets (
+            sexe,
+            eglise_id,
+            branche_id,
+            eglises ( nom ),
+            branches ( nom )
+          )
+        `)
+        .gte("date_action", startDate)
+        .lte("date_action", endDate);
 
-      // 🔹 Attendance
-      let attendanceQuery = supabase
-        .from("attendance")
-        .select("*")
-        .in("branche_id", branchIds);
+      if (error) {
+        console.error("Erreur stats :", error);
+        setLoading(false);
+        return;
+      }
 
-      if (dateDebut) attendanceQuery = attendanceQuery.gte("date", dateDebut);
-      if (dateFin) attendanceQuery = attendanceQuery.lte("date", dateFin);
+      // 🔥 Regroupement Église + Branche
+      const grouped = {};
 
-      const { data: attendance } = await attendanceQuery;
+      data.forEach((stat) => {
+        const membre = stat.membres_complets;
+        if (!membre) return;
 
-      let hommes = 0;
-      let femmes = 0;
+        const egliseNom = membre.eglises?.nom || "Sans église";
+        const brancheNom = membre.branches?.nom || "Sans branche";
+        const sexe = membre.sexe;
+        const type = stat.type;
+        const valeur = Number(stat.valeur || 0);
 
-      attendance?.forEach(r => {
-        hommes += Number(r.hommes) || 0;
-        femmes += Number(r.femmes) || 0;
+        const key = `${egliseNom}|||${brancheNom}`;
+
+        if (!grouped[key]) grouped[key] = {};
+        if (!grouped[key][type])
+          grouped[key][type] = { hommes: 0, femmes: 0 };
+
+        if (sexe === "Homme")
+          grouped[key][type].hommes += valeur;
+
+        if (sexe === "Femme")
+          grouped[key][type].femmes += valeur;
       });
 
-      // 🔹 Baptêmes
-      let baptemeQuery = supabase
-        .from("baptemes")
-        .select("hommes,femmes")
-        .in("branche_id", branchIds);
-
-      if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
-      if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
-
-      const { data: baptemes } = await baptemeQuery;
-
-      let baptemeHommes = 0;
-      let baptemeFemmes = 0;
-
-      baptemes?.forEach(r => {
-        baptemeHommes += Number(r.hommes) || 0;
-        baptemeFemmes += Number(r.femmes) || 0;
-      });
-
-      resultats[eglise.nom] = {
-        culte: { hommes, femmes },
-        bapteme: { hommes: baptemeHommes, femmes: baptemeFemmes }
-      };
+      setStatsGrouped(grouped);
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
     }
-
-    setStatsParEglise(resultats);
-    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
-      <HeaderPages />
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 to-purple-900 text-white">
+      <HeaderPages title="Stats Globales" />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-white">
-        Rapport <span className="text-amber-300">Statistiques Globales</span>
-      </h1>
+      <div className="p-6 max-w-6xl mx-auto">
 
-      {/* FILTRES */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
+        {/* 🔥 FILTRE MOIS */}
+        <div className="flex gap-4 mb-8">
+          <select
+            value={mois}
+            onChange={(e) => setMois(Number(e.target.value))}
+            className="text-black px-4 py-2 rounded-lg"
+          >
+            {[...Array(12)].map((_, i) => (
+              <option key={i} value={i + 1}>
+                Mois {i + 1}
+              </option>
+            ))}
+          </select>
 
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-
-        <button
-          onClick={fetchStats}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-        >
-          Générer
-        </button>
-      </div>
-
-      {/* RAPPORT */}
-      {loading && (
-        <div className="text-white mt-6">Chargement...</div>
-      )}
-
-      {!loading && Object.keys(statsParEglise).length > 0 && (
-        <div className="w-full max-w-5xl mt-8 space-y-8">
-          {Object.entries(statsParEglise).map(([egliseNom, stats]) => (
-            <div key={egliseNom} className="bg-white/10 p-6 rounded-2xl">
-
-              <h2 className="text-xl font-bold text-amber-300 mb-4">
-                {egliseNom}
-              </h2>
-
-              <table className="w-full text-white">
-                <thead>
-                  <tr className="border-b border-white/30">
-                    <th className="text-left py-2">Ministère</th>
-                    <th className="text-center">Hommes</th>
-                    <th className="text-center">Femmes</th>
-                    <th className="text-center">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="py-2">Culte</td>
-                    <td className="text-center">{stats.culte.hommes}</td>
-                    <td className="text-center">{stats.culte.femmes}</td>
-                    <td className="text-center">
-                      {stats.culte.hommes + stats.culte.femmes}
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="py-2">Baptême</td>
-                    <td className="text-center">{stats.bapteme.hommes}</td>
-                    <td className="text-center">{stats.bapteme.femmes}</td>
-                    <td className="text-center">
-                      {stats.bapteme.hommes + stats.bapteme.femmes}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-
-            </div>
-          ))}
+          <input
+            type="number"
+            value={annee}
+            onChange={(e) => setAnnee(Number(e.target.value))}
+            className="text-black px-4 py-2 rounded-lg"
+          />
         </div>
-      )}
+
+        {loading && (
+          <div className="text-center text-xl animate-pulse">
+            Chargement...
+          </div>
+        )}
+
+        {!loading &&
+          Object.entries(statsGrouped).map(([key, ministeres]) => {
+            const [egliseNom, brancheNom] = key.split("|||");
+
+            return (
+              <div
+                key={key}
+                className="mb-10 bg-white/10 p-6 rounded-3xl shadow-lg"
+              >
+                <h2 className="text-2xl font-bold mb-2">
+                  {egliseNom}
+                </h2>
+                <p className="mb-4 text-sm opacity-80">
+                  Branche : {brancheNom}
+                </p>
+
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-white/30">
+                      <th className="py-2">Ministère</th>
+                      <th>Hommes</th>
+                      <th>Femmes</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(ministeres).map(
+                      ([type, values]) => (
+                        <tr key={type} className="border-b border-white/10">
+                          <td className="py-2 capitalize">{type}</td>
+                          <td>{values.hommes}</td>
+                          <td>{values.femmes}</td>
+                          <td>
+                            {values.hommes + values.femmes}
+                          </td>
+                        </tr>
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+
+        {!loading && Object.keys(statsGrouped).length === 0 && (
+          <div className="text-center text-lg opacity-70">
+            Aucune donnée pour cette période
+          </div>
+        )}
+      </div>
 
       <Footer />
     </div>

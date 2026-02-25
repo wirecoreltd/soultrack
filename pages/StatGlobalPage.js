@@ -18,8 +18,8 @@ export default function GlobalStatsPage() {
     const { data, error } = await supabase
       .from("attendance_stats")
       .select("*")
-      .gte("date", dateDebut)
-      .lte("date", dateFin);
+      .gte("mois", dateDebut)
+      .lte("mois", dateFin);
 
     if (error) {
       console.error(error);

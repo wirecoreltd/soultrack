@@ -17,159 +17,170 @@ export default function StatGlobalPageWrapper() {
 function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [typeRapport, setTypeRapport] = useState("Tous");
-
-  const [userBrancheId, setUserBrancheId] = useState(null);
-  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [statsByBranche, setStatsByBranche] = useState([]);
+  const [eglises, setEglises] = useState([]);
+  const [statsParEglise, setStatsParEglise] = useState({});
 
-  // 🔹 Récupérer la branche de l'utilisateur et ses enfants
+  // 🔹 Charger toutes les églises supervisées
   useEffect(() => {
-    const fetchBranches = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("branche_id")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile?.branche_id) return;
-      setUserBrancheId(profile.branche_id);
-
-      // Récupérer toutes les branches enfants
-      const { data: allBranches } = await supabase
+    const fetchEglises = async () => {
+      const { data, error } = await supabase
         .from("eglises")
-        .select("id,nom,pays,parent_eglise_id")
-        .or(`id.eq.${profile.branche_id},parent_eglise_id.eq.${profile.branche_id}`);
+        .select("id, nom");
 
-      setBranches(allBranches || []);
+      if (!error && data) {
+        setEglises(data);
+      }
     };
-    fetchBranches();
+
+    fetchEglises();
   }, []);
 
   const fetchStats = async () => {
-    if (!branches.length) return;
+    if (!eglises.length) return;
+
     setLoading(true);
+    let resultats = {};
 
-    const results = [];
+    for (const eglise of eglises) {
 
-    for (const b of branches) {
-      // Attendance
-      const { data: attendance } = await supabase
+      // 🔹 Récupérer toutes les branches de cette église
+      const { data: branches } = await supabase
+        .from("branches")
+        .select("id")
+        .eq("eglise_id", eglise.id);
+
+      const branchIds = branches?.map(b => b.id) || [];
+
+      if (!branchIds.length) continue;
+
+      // 🔹 Attendance
+      let attendanceQuery = supabase
         .from("attendance")
         .select("*")
-        .eq("branche_id", b.id)
-        .gte(dateDebut ? "date" : null, dateDebut || undefined)
-        .lte(dateFin ? "date" : null, dateFin || undefined);
+        .in("branche_id", branchIds);
 
-      const attendanceTotals = { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0, moissonneurs: 0 };
+      if (dateDebut) attendanceQuery = attendanceQuery.gte("date", dateDebut);
+      if (dateFin) attendanceQuery = attendanceQuery.lte("date", dateFin);
+
+      const { data: attendance } = await attendanceQuery;
+
+      let hommes = 0;
+      let femmes = 0;
+
       attendance?.forEach(r => {
-        attendanceTotals.hommes += Number(r.hommes) || 0;
-        attendanceTotals.femmes += Number(r.femmes) || 0;
-        attendanceTotals.jeunes += Number(r.jeunes) || 0;
-        attendanceTotals.enfants += Number(r.enfants) || 0;
-        attendanceTotals.connectes += Number(r.connectes) || 0;
-        attendanceTotals.nouveauxVenus += Number(r.nouveauxVenus) || 0;
-        attendanceTotals.nouveauxConvertis += Number(r.nouveauxConvertis) || 0;
-        attendanceTotals.moissonneurs += Number(r.moissonneurs) || 0;
+        hommes += Number(r.hommes) || 0;
+        femmes += Number(r.femmes) || 0;
       });
 
-      // Evangelisation
-      const { data: evan } = await supabase
-        .from("evangelises")
-        .select("*")
-        .eq("branche_id", b.id)
-        .gte(dateDebut ? "created_at" : null, dateDebut || undefined)
-        .lte(dateFin ? "created_at" : null, dateFin || undefined);
-
-      const evanTotals = { hommes: 0, femmes: 0, nouveauxConvertis: 0 };
-      evan?.forEach(r => {
-        if (r.sexe === "Homme") evanTotals.hommes++;
-        if (r.sexe === "Femme") evanTotals.femmes++;
-        if (r.type_conversion === "Nouveau converti") evanTotals.nouveauxConvertis++;
-      });
-
-      // Baptême
-      const { data: bapteme } = await supabase
+      // 🔹 Baptêmes
+      let baptemeQuery = supabase
         .from("baptemes")
         .select("hommes,femmes")
-        .eq("branche_id", b.id)
-        .gte(dateDebut ? "date" : null, dateDebut || undefined)
-        .lte(dateFin ? "date" : null, dateFin || undefined);
+        .in("branche_id", branchIds);
 
-      const baptemeTotals = {
-        hommes: bapteme?.reduce((s, r) => s + Number(r.hommes), 0) || 0,
-        femmes: bapteme?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
-      };
+      if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
+      if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
 
-      results.push({
-        branche: `${b.nom} - ${b.pays || ""}`,
-        attendance: attendanceTotals,
-        evangelisation: evanTotals,
-        bapteme: baptemeTotals,
+      const { data: baptemes } = await baptemeQuery;
+
+      let baptemeHommes = 0;
+      let baptemeFemmes = 0;
+
+      baptemes?.forEach(r => {
+        baptemeHommes += Number(r.hommes) || 0;
+        baptemeFemmes += Number(r.femmes) || 0;
       });
+
+      resultats[eglise.nom] = {
+        culte: { hommes, femmes },
+        bapteme: { hommes: baptemeHommes, femmes: baptemeFemmes }
+      };
     }
 
-    setStatsByBranche(results);
+    setStatsParEglise(resultats);
     setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
+
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-white">
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
       {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
-        <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
-        <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
-        <button 
-  onClick={fetchStats} 
-  className={`bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
->
-  {loading ? "Chargement..." : "Générer"}
-</button>
+        <input
+          type="date"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+
+        <input
+          type="date"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+
+        <button
+          onClick={fetchStats}
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+        >
+          Générer
+        </button>
       </div>
 
-      {/* TABLE */}
-      {!loading && statsByBranche.length > 0 && (
-        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
-          <div className="w-max space-y-2">
-            {/* HEADER */}
-            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[200px]">Branche</div>
-              <div className="min-w-[120px] text-center">Hommes</div>
-              <div className="min-w-[120px] text-center">Femmes</div>
-              <div className="min-w-[120px] text-center">Jeunes</div>
-              <div className="min-w-[120px] text-center">Enfants</div>
-              <div className="min-w-[140px] text-center">Connectés</div>
-              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
-              <div className="min-w-[180px] text-center">Nouveau Converti</div>
-              <div className="min-w-[160px] text-center">Moissonneurs</div>
+      {/* RAPPORT */}
+      {loading && (
+        <div className="text-white mt-6">Chargement...</div>
+      )}
+
+      {!loading && Object.keys(statsParEglise).length > 0 && (
+        <div className="w-full max-w-5xl mt-8 space-y-8">
+          {Object.entries(statsParEglise).map(([egliseNom, stats]) => (
+            <div key={egliseNom} className="bg-white/10 p-6 rounded-2xl">
+
+              <h2 className="text-xl font-bold text-amber-300 mb-4">
+                {egliseNom}
+              </h2>
+
+              <table className="w-full text-white">
+                <thead>
+                  <tr className="border-b border-white/30">
+                    <th className="text-left py-2">Ministère</th>
+                    <th className="text-center">Hommes</th>
+                    <th className="text-center">Femmes</th>
+                    <th className="text-center">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="py-2">Culte</td>
+                    <td className="text-center">{stats.culte.hommes}</td>
+                    <td className="text-center">{stats.culte.femmes}</td>
+                    <td className="text-center">
+                      {stats.culte.hommes + stats.culte.femmes}
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td className="py-2">Baptême</td>
+                    <td className="text-center">{stats.bapteme.hommes}</td>
+                    <td className="text-center">{stats.bapteme.femmes}</td>
+                    <td className="text-center">
+                      {stats.bapteme.hommes + stats.bapteme.femmes}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
             </div>
-
-            {/* LIGNES PAR BRANCHE */}
-            {statsByBranche.map((b, idx) => (
-              <div key={idx} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400">
-                <div className="min-w-[200px] text-white font-semibold">{b.branche}</div>
-                <div className="min-w-[120px] text-center text-white">{b.attendance?.hommes ?? "-"}</div>
-                <div className="min-w-[120px] text-center text-white">{b.attendance?.femmes ?? "-"}</div>
-                <div className="min-w-[120px] text-center text-white">{b.attendance?.jeunes ?? "-"}</div>
-                <div className="min-w-[120px] text-center text-white">{b.attendance?.enfants ?? "-"}</div>
-                <div className="min-w-[140px] text-center text-white">{b.attendance?.connectes ?? "-"}</div>
-                <div className="min-w-[150px] text-center text-white">{b.attendance?.nouveauxVenus ?? "-"}</div>
-                <div className="min-w-[180px] text-center text-white">{b.evangelisation?.nouveauxConvertis ?? "-"}</div>
-                <div className="min-w-[160px] text-center text-white">{b.attendance?.moissonneurs ?? "-"}</div>
-              </div>
-            ))}
-
-          </div>
+          ))}
         </div>
       )}
 

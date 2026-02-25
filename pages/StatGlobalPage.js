@@ -6,6 +6,7 @@ import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 
+// 🔹 Page wrapper pour sécuriser
 export default function StatGlobalPageWrapper() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
@@ -17,53 +18,70 @@ export default function StatGlobalPageWrapper() {
 function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [typeRapport, setTypeRapport] = useState("Tous");
   const [loading, setLoading] = useState(false);
+  const [userBrancheId, setUserBrancheId] = useState(null);
+  const [branches, setBranches] = useState([]); // tableau de toutes les branches à afficher
+  const [statsByBranche, setStatsByBranche] = useState({}); // stats par branche
 
-  const [branches, setBranches] = useState([]);
-
-  // 🔹 Récupérer la branche de l'utilisateur et son nom
+  // 🔹 Récupérer la branche de l’utilisateur
   useEffect(() => {
     const fetchUserBranche = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profileData } = await supabase
+      const { data: profile } = await supabase
         .from("profiles")
         .select("branche_id")
         .eq("id", user.id)
         .single();
 
-      if (!profileData?.branche_id) return;
-
-      const { data: brancheData } = await supabase
-        .from("branches")
-        .select("id, nom")
-        .eq("id", profileData.branche_id)
-        .single();
-
-      if (brancheData) {
-        setBranches([{ id: brancheData.id, nom: brancheData.nom, rapports: null }]);
-      }
+      if (profile?.branche_id) setUserBrancheId(profile.branche_id);
     };
-
     fetchUserBranche();
   }, []);
 
+  // 🔹 Récupérer toutes les branches enfants
+  useEffect(() => {
+    if (!userBrancheId) return;
+
+    const fetchBranches = async () => {
+      // Récupérer la branche de l'utilisateur
+      const { data: parentBranche } = await supabase
+        .from("branches")
+        .select("id, nom")
+        .eq("id", userBrancheId)
+        .single();
+
+      if (!parentBranche) return;
+
+      // Récupérer les branches enfants (ou vide si pas d'enfants)
+      const { data: enfants } = await supabase
+        .from("branches")
+        .select("id, nom")
+        .eq("parent_id", userBrancheId);
+
+      const allBranches = [parentBranche, ...(enfants || [])];
+      setBranches(allBranches);
+    };
+
+    fetchBranches();
+  }, [userBrancheId]);
+
+  // 🔹 Fonction pour récupérer les stats par branche
   const fetchStats = async () => {
     if (!branches.length) return;
     setLoading(true);
 
-    const updatedBranches = [];
+    const newStats = {};
 
-    for (const b of branches) {
-      const branchId = b.id;
+    for (const branche of branches) {
+      const brancheId = branche.id;
 
-      // -------- ATTENDANCE --------
+      // --- ATTENDANCE ---
       const { data: attendanceData } = await supabase
         .from("attendance")
         .select("*")
-        .eq("branche_id", branchId)
+        .eq("branche_id", brancheId)
         .gte(dateDebut ? "date" : null, dateDebut || undefined)
         .lte(dateFin ? "date" : null, dateFin || undefined);
 
@@ -79,11 +97,11 @@ function StatGlobalPage() {
         attendanceTotals.moissonneurs += Number(r.moissonneurs) || 0;
       });
 
-      // -------- EVANGELISATION --------
+      // --- EVANGELISATION ---
       const { data: evanData } = await supabase
         .from("evangelises")
         .select("*")
-        .eq("branche_id", branchId)
+        .eq("branche_id", brancheId)
         .gte(dateDebut ? "created_at" : null, dateDebut || undefined)
         .lte(dateFin ? "created_at" : null, dateFin || undefined);
 
@@ -94,11 +112,11 @@ function StatGlobalPage() {
         if (r.type_conversion === "Nouveau converti") evanTotals.nouveauxConvertis++;
       });
 
-      // -------- BAPTEME --------
+      // --- BAPTÊME ---
       const { data: baptemeData } = await supabase
         .from("baptemes")
         .select("hommes,femmes")
-        .eq("branche_id", branchId)
+        .eq("branche_id", brancheId)
         .gte(dateDebut ? "date" : null, dateDebut || undefined)
         .lte(dateFin ? "date" : null, dateFin || undefined);
 
@@ -107,11 +125,11 @@ function StatGlobalPage() {
         femmes: baptemeData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
       };
 
-      // -------- FORMATION --------
+      // --- FORMATION ---
       const { data: formationData } = await supabase
         .from("formations")
         .select("hommes,femmes")
-        .eq("branche_id", branchId)
+        .eq("branche_id", brancheId)
         .gte(dateDebut ? "date_debut" : null, dateDebut || undefined)
         .lte(dateFin ? "date_fin" : null, dateFin || undefined);
 
@@ -120,17 +138,17 @@ function StatGlobalPage() {
         femmes: formationData?.reduce((s, r) => s + Number(r.femmes), 0) || 0,
       };
 
-      // -------- CELLULES --------
+      // --- CELLULES ---
       const { count: cellulesCount } = await supabase
         .from("cellules")
         .select("id", { count: "exact", head: true })
-        .eq("branche_id", branchId);
+        .eq("branche_id", brancheId);
 
-      // -------- SERVITEURS --------
+      // --- SERVITEURS ---
       const { data: servData } = await supabase
         .from("stats_ministere_besoin")
         .select("membre_id,valeur")
-        .eq("branche_id", branchId)
+        .eq("branche_id", brancheId)
         .eq("type", "ministere")
         .gte(dateDebut ? "date_action" : null, dateDebut || undefined)
         .lte(dateFin ? "date_action" : null, dateFin || undefined);
@@ -151,19 +169,17 @@ function StatGlobalPage() {
         });
       }
 
-      const rapports = [
-        { label: "Culte", data: attendanceTotals, border: "border-blue-400" },
-        { label: "Evangelisation", data: evanTotals, border: "border-green-400" },
-        { label: "Baptême", data: baptemeTotals, border: "border-purple-400" },
-        { label: "Formation", data: formationTotals, border: "border-yellow-400" },
-        { label: "Serviteur", data: { hommes: hommesServ, femmes: femmesServ }, border: "border-pink-400" },
-        { label: "Cellules", data: { hommes: cellulesCount }, border: "border-orange-400" },
-      ];
-
-      updatedBranches.push({ ...b, rapports });
+      newStats[brancheId] = {
+        attendanceTotals,
+        evanTotals,
+        baptemeTotals,
+        formationTotals,
+        cellulesCount,
+        serviteurStats: { hommes: hommesServ, femmes: femmesServ },
+      };
     }
 
-    setBranches(updatedBranches);
+    setStatsByBranche(newStats);
     setLoading(false);
   };
 
@@ -178,57 +194,62 @@ function StatGlobalPage() {
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
         <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
         <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
-        <select value={typeRapport} onChange={(e) => setTypeRapport(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white">
-          <option value="Tous" className="text-black">Tous</option>
-          <option value="Culte" className="text-black">Culte</option>
-          <option value="Evangelisation" className="text-black">Evangelisation</option>
-          <option value="Baptême" className="text-black">Baptême</option>
-          <option value="Formation" className="text-black">Formation</option>
-          <option value="Serviteur" className="text-black">Serviteur</option>
-          <option value="Cellules" className="text-black">Cellules</option>
-        </select>
         <button onClick={fetchStats} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
       </div>
 
-      {/* TABLES PAR BRANCHE */}
-      {branches.map((b, idx) => (
-        b.rapports && (
-          <div key={idx} className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
-            <h2 className="text-xl font-bold text-white mb-2">{b.nom}</h2>
-            <div className="w-max space-y-2">
+      {/* TABLE PAR BRANCHE */}
+      {!loading && branches.length > 0 && (
+        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent space-y-8">
+          {branches.map((branche) => {
+            const stats = statsByBranche[branche.id];
+            if (!stats) return null;
 
-              {/* HEADER */}
-              <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-                <div className="min-w-[180px] ml-1">Type</div>
-                <div className="min-w-[120px] text-center">Hommes</div>
-                <div className="min-w-[120px] text-center">Femmes</div>
-                <div className="min-w-[120px] text-center">Jeunes</div>
-                <div className="min-w-[120px] text-center">Enfants</div>
-                <div className="min-w-[140px] text-center">Connectés</div>
-                <div className="min-w-[150px] text-center">Nouveaux Venus</div>
-                <div className="min-w-[180px] text-center">Nouveau Converti</div>
-                <div className="min-w-[160px] text-center">Moissonneurs</div>
-              </div>
+            const rapports = [
+              { label: "Culte", data: stats.attendanceTotals, border: "border-blue-400" },
+              { label: "Evangelisation", data: stats.evanTotals, border: "border-green-400" },
+              { label: "Baptême", data: stats.baptemeTotals, border: "border-purple-400" },
+              { label: "Formation", data: stats.formationTotals, border: "border-yellow-400" },
+              { label: "Serviteur", data: stats.serviteurStats, border: "border-pink-400" },
+              { label: "Cellules", data: { hommes: stats.cellulesCount }, border: "border-orange-400" },
+            ];
 
-              {/* LIGNES */}
-              {b.rapports.map((r, idx2) => (
-                <div key={idx2} className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}>
-                  <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.data?.hommes ?? "-"}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.data?.femmes ?? "-"}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.data?.jeunes ?? "-"}</div>
-                  <div className="min-w-[120px] text-center text-white">{r.data?.enfants ?? "-"}</div>
-                  <div className="min-w-[140px] text-center text-white">{r.data?.connectes ?? "-"}</div>
-                  <div className="min-w-[150px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
-                  <div className="min-w-[180px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
-                  <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
+            return (
+              <div key={branche.id} className="bg-white/5 rounded-2xl p-4">
+                <h2 className="text-xl font-bold text-white mb-2">{branche.nom}</h2>
+                <div className="w-max space-y-2">
+                  {/* HEADER TABLE */}
+                  <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/10 rounded-t-xl whitespace-nowrap">
+                    <div className="min-w-[180px] ml-1">Type</div>
+                    <div className="min-w-[120px] text-center">Hommes</div>
+                    <div className="min-w-[120px] text-center">Femmes</div>
+                    <div className="min-w-[120px] text-center">Jeunes</div>
+                    <div className="min-w-[120px] text-center">Enfants</div>
+                    <div className="min-w-[140px] text-center">Connectés</div>
+                    <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+                    <div className="min-w-[180px] text-center">Nouveau Converti</div>
+                    <div className="min-w-[160px] text-center">Moissonneurs</div>
+                  </div>
+
+                  {/* LIGNES */}
+                  {rapports.map((r, idx) => (
+                    <div key={idx} className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}>
+                      <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.data?.hommes ?? "-"}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.data?.femmes ?? "-"}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.data?.jeunes ?? "-"}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.data?.enfants ?? "-"}</div>
+                      <div className="min-w-[140px] text-center text-white">{r.data?.connectes ?? "-"}</div>
+                      <div className="min-w-[150px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
+                      <div className="min-w-[180px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
+                      <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-
-            </div>
-          </div>
-        )
-      ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <Footer />
     </div>

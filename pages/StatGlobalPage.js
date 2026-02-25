@@ -6,8 +6,12 @@ import dayjs from "dayjs";
 
 export default function GlobalStats() {
   const [stats, setStats] = useState([]);
-  const [startDate, setStartDate] = useState(dayjs().startOf("month").format("YYYY-MM-DD"));
-  const [endDate, setEndDate] = useState(dayjs().endOf("month").format("YYYY-MM-DD"));
+  const [startDate, setStartDate] = useState(
+    dayjs().startOf("month").format("YYYY-MM-DD")
+  );
+  const [endDate, setEndDate] = useState(
+    dayjs().endOf("month").format("YYYY-MM-DD")
+  );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -16,7 +20,6 @@ export default function GlobalStats() {
 
   async function fetchStats() {
     setLoading(true);
-
     const { data, error } = await supabase
       .from("attendance_stats")
       .select("*")
@@ -27,106 +30,99 @@ export default function GlobalStats() {
     if (error) {
       console.error(error);
       setStats([]);
-      setLoading(false);
-      return;
+    } else {
+      // Construire la hiérarchie parent → enfants
+      const hierarchy = {};
+      const branchMap = {};
+
+      // On stocke toutes les branches dans une map pour référence
+      data.forEach((item) => {
+        branchMap[item.branche_id] = item;
+      });
+
+      data.forEach((item) => {
+        // Si superviseur_id existe et correspond à une branche existante
+        if (item.superviseur_id && branchMap[item.superviseur_id]) {
+          const parentId = item.superviseur_id;
+          if (!hierarchy[parentId]) {
+            hierarchy[parentId] = {
+              parent: branchMap[parentId],
+              enfants: [],
+            };
+          }
+          hierarchy[parentId].enfants.push(item);
+        } else {
+          // Branches sans superviseur deviennent "racines"
+          if (!hierarchy[item.branche_id]) {
+            hierarchy[item.branche_id] = { parent: item, enfants: [] };
+          }
+        }
+      });
+
+      setStats(Object.values(hierarchy));
     }
-
-    // Créer hiérarchie parent → enfants
-    const hierarchy = {};
-
-    // 1️⃣ Filtrer d’abord les branches vides ou Eglise Principale non supervisée
-    const filtered = data.filter(
-      (item) =>
-        item.branche_nom &&
-        item.branche_nom.toLowerCase() !== "eglise principale"
-    );
-
-    filtered.forEach((item) => {
-      const parentId = item.superviseur_id || item.branche_id;
-
-      // Créer parent si inexistant
-      if (!hierarchy[parentId]) {
-        hierarchy[parentId] = {
-          id: parentId,
-          nom: item.superviseur_nom || item.branche_nom,
-          enfants: [],
-        };
-      }
-
-      // Ajouter uniquement si ce n’est pas un parent lui-même
-      if (item.branche_id !== parentId) {
-        hierarchy[parentId].enfants.push(item);
-      } else if (!item.superviseur_id) {
-        hierarchy[parentId].enfants.push(item);
-      }
-    });
-
-    // Supprimer les parents sans enfants pour éviter affichage vide
-    const finalStats = Object.values(hierarchy).filter(
-      (p) => p.enfants.length > 0
-    );
-
-    setStats(finalStats);
     setLoading(false);
   }
 
   return (
-    <div className="p-6 bg-gray-900 min-h-screen">
+    <div className="p-4 bg-gray-900 min-h-screen text-gray-100">
       {/* Filtre dates */}
-      <div className="flex gap-4 mb-6">
+      <div className="flex gap-4 mb-4">
         <input
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
-          className="px-3 py-2 rounded border border-gray-400"
+          className="px-2 py-1 rounded"
         />
         <input
           type="date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
-          className="px-3 py-2 rounded border border-gray-400"
+          className="px-2 py-1 rounded"
         />
         <button
           onClick={fetchStats}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded"
         >
           Filtrer
         </button>
       </div>
 
-      {/* Contenu */}
       {loading ? (
-        <div className="text-white">Chargement...</div>
+        <div>Chargement...</div>
       ) : stats.length === 0 ? (
-        <div className="text-white">Aucune donnée trouvée pour cette période.</div>
+        <div>Aucune donnée trouvée pour cette période.</div>
       ) : (
-        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-700">
-          <div className="min-w-max space-y-6">
-            {stats.map((parent) => (
-              <div key={parent.id} className="space-y-2">
+        <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-700">
+          <div className="space-y-6">
+            {stats.map(({ parent, enfants }) => (
+              <div key={parent.branche_id} className="space-y-2">
                 {/* Parent */}
-                <div className="text-2xl font-bold text-yellow-400">{parent.nom}</div>
+                <div className="font-bold text-xl border-b border-gray-600 pb-1">
+                  {parent.branche_nom}
+                </div>
 
-                {parent.enfants.map((branch) => (
-                  <div key={branch.branche_id} className="space-y-1 pl-6">
-                    {/* Branche */}
-                    <div className="text-lg font-semibold text-white mb-1">
+                {/* Enfants */}
+                {enfants.map((branch) => (
+                  <div
+                    key={branch.branche_id}
+                    className="ml-6 bg-gray-800/30 rounded-xl px-4 py-2 space-y-1"
+                  >
+                    <div className="font-semibold">
                       {branch.branche_nom}{" "}
                       {branch.superviseur_nom && `(${branch.superviseur_nom})`}
                     </div>
-
-                    {/* Tableau stats */}
-                    <div className="grid grid-cols-10 gap-2 text-sm text-gray-100 bg-gray-800 rounded-xl px-4 py-2">
-                      <div className="font-semibold">Culte</div>
-                      <div className="font-semibold">Hommes</div>
-                      <div className="font-semibold">Femmes</div>
-                      <div className="font-semibold">Jeunes</div>
-                      <div className="font-semibold">Total HFJ</div>
-                      <div className="font-semibold">Enfants</div>
-                      <div className="font-semibold">Connectés</div>
-                      <div className="font-semibold">Nouveaux Venus</div>
-                      <div className="font-semibold">Nouveau Converti</div>
-                      <div className="font-semibold">Moissonneurs</div>
+                    <div className="grid grid-cols-10 gap-2 text-sm text-gray-100">
+                      <div>Culte</div>
+                      <div>Hommes</div>
+                      <div>Femmes</div>
+                      <div>Jeunes</div>
+                      <div>Total HFJ</div>
+                      <div>Enfants</div>
+                      <div>Connectés</div>
+                      <div>Nouveaux Venus</div>
+                      <div>Nouveau Converti</div>
+                      <div>Moissonneurs</div>
 
                       <div>{branch.culte || 0}</div>
                       <div>{branch.hommes || 0}</div>
@@ -141,6 +137,11 @@ export default function GlobalStats() {
                     </div>
                   </div>
                 ))}
+
+                {/* Si pas d’enfants */}
+                {enfants.length === 0 && (
+                  <div className="ml-6 text-gray-400 italic">Aucune branche enfant</div>
+                )}
               </div>
             ))}
           </div>

@@ -129,9 +129,12 @@ function StatGlobalPage() {
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
         <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
         <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
-        <button onClick={fetchStats} disabled={loading || !branches.length} className={`bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] ${loading || !branches.length ? "opacity-50 cursor-not-allowed" : ""}`}>
-          {loading ? "Chargement..." : "Générer"}
-        </button>
+        <button 
+  onClick={fetchStats} 
+  className={`bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+>
+  {loading ? "Chargement..." : "Générer"}
+</button>
       </div>
 
       {/* TABLE */}

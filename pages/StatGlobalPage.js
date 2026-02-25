@@ -1,136 +1,130 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
-import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
 
-export default function RapportFormationPage() {
-  const [mois, setMois] = useState(new Date().getMonth() + 1);
-  const [annee, setAnnee] = useState(new Date().getFullYear());
-  const [stats, setStats] = useState([]);
+// Helper pour construire la hiérarchie
+const buildHierarchy = (eglises, parentId = null) => {
+  return eglises
+    .filter(e => e.parent_eglise_id === parentId)
+    .map(e => ({
+      ...e,
+      children: buildHierarchy(eglises, e.id)
+    }));
+};
 
-  useEffect(() => {
-    fetchStats();
-  }, [mois, annee]);
+// Helper pour calculer le total d'une église pour un mois donné
+const calculateTotals = (attendance, egliseId, month, year) => {
+  const filtered = attendance.filter(a => {
+    const date = new Date(a.date);
+    return (
+      a.eglise_id === egliseId &&
+      date.getMonth() === month &&
+      date.getFullYear() === year
+    );
+  });
 
-  const fetchStats = async () => {
-    const monthNum = parseInt(mois, 10);
-    const yearNum = parseInt(annee, 10);
+  const hommes = filtered.reduce((sum, a) => sum + Number(a.hommes), 0);
+  const femmes = filtered.reduce((sum, a) => sum + Number(a.femmes), 0);
+  const total = hommes + femmes;
 
-    const { data: attendances } = await supabase
-      .from("attendance")
-      .select("*")
-      .gte("date", `${yearNum}-${monthNum}-01`)
-      .lte("date", `${yearNum}-${monthNum}-31`);
+  return { hommes, femmes, total };
+};
 
-    // 🔹 Ici tu peux traiter branches/eglises comme dans l’exemple précédent
-    // Pour simplifier, on fait un mock pour test
-    setStats([
-      {
-        parentNom: "Cité Royale",
-        totalParentHommes: 25,
-        totalParentFemmes: 40,
-        totalParent: 65,
-        enfants: [
-          { id: 1, nom: "Culte", totalHommes: 25, totalFemmes: 40, total: 65 },
-        ],
-      },
-      {
-        parentNom: "Antioche",
-        totalParentHommes: 18,
-        totalParentFemmes: 22,
-        totalParent: 40,
-        enfants: [
-          { id: 2, nom: "Culte", totalHommes: 18, totalFemmes: 22, total: 40 },
-        ],
-      },
-    ]);
-  };
-
-  const monthNum = parseInt(mois, 10);
-  const yearNum = parseInt(annee, 10);
+// Composant récursif pour afficher chaque église et ses enfants
+const EgliseTable = ({ eglise, attendance, month, year }) => {
+  const totals = calculateTotals(attendance, eglise.id, month, year);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <HeaderPages />
+    <div style={{ marginLeft: eglise.parent_eglise_id ? 30 : 0, marginTop: 20 }}>
+      <h3>{eglise.nom}</h3>
+      <table border="1" cellPadding="5" cellSpacing="0">
+        <thead>
+          <tr>
+            <th>Ministère</th>
+            <th>Hommes</th>
+            <th>Femmes</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Culte</td>
+            <td>{totals.hommes}</td>
+            <td>{totals.femmes}</td>
+            <td>{totals.total}</td>
+          </tr>
+        </tbody>
+      </table>
 
-      <div className="p-6 max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-4">
-          {new Date(yearNum, monthNum - 1).toLocaleString("fr-FR", { month: "long", year: "numeric" })}
-        </h2>
-
-        {/* 🔹 Filtre date */}
-        <div className="mb-6 flex gap-4">
-          <input
-            type="number"
-            value={mois}
-            min="1"
-            max="12"
-            onChange={(e) => setMois(e.target.value)}
-            className="border p-2 rounded"
-          />
-          <input
-            type="number"
-            value={annee}
-            min="2000"
-            max="2100"
-            onChange={(e) => setAnnee(e.target.value)}
-            className="border p-2 rounded"
-          />
+      {eglise.children && eglise.children.length > 0 && (
+        <div>
+          {eglise.children.map(child => (
+            <EgliseTable
+              key={child.id}
+              eglise={child}
+              attendance={attendance}
+              month={month}
+              year={year}
+            />
+          ))}
         </div>
+      )}
+    </div>
+  );
+};
 
-        {/* 🔹 Stats */}
-        {stats.map(parent => (
-          <div key={parent.parentNom} className="mb-6">
-            <h3 className="text-lg font-semibold">{parent.parentNom}</h3>
-            <table className="w-full border mb-2">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="p-2">Ministère</th>
-                  <th className="p-2">Hommes</th>
-                  <th className="p-2">Femmes</th>
-                  <th className="p-2">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="p-2">Culte</td>
-                  <td className="p-2">{parent.totalParentHommes}</td>
-                  <td className="p-2">{parent.totalParentFemmes}</td>
-                  <td className="p-2">{parent.totalParent}</td>
-                </tr>
-              </tbody>
-            </table>
+export default function RapportCulte() {
+  const [attendance, setAttendance] = useState([]);
+  const [eglises, setEglises] = useState([]);
+  const [month, setMonth] = useState(new Date().getMonth()); // 0 = Janvier
+  const [year, setYear] = useState(new Date().getFullYear());
 
-            {parent.enfants.map(enfant => (
-              <div key={enfant.id} className="ml-6 mb-4">
-                <h4 className="font-medium">{enfant.nom}</h4>
-                <table className="w-full border">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="p-2">Ministère</th>
-                      <th className="p-2">Hommes</th>
-                      <th className="p-2">Femmes</th>
-                      <th className="p-2">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="p-2">{enfant.nom}</td>
-                      <td className="p-2">{enfant.totalHommes}</td>
-                      <td className="p-2">{enfant.totalFemmes}</td>
-                      <td className="p-2">{enfant.total}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: attData } = await supabase.from("attendance").select("*");
+      const { data: egliseData } = await supabase.from("eglises").select("*");
+      setAttendance(attData || []);
+      setEglises(buildHierarchy(egliseData || []));
+    };
+    fetchData();
+  }, []);
+
+  return (
+    <div style={{ padding: 20, backgroundColor: "#f0f2f5" }}>
+      <h2>Rapport Culte - {new Date(year, month).toLocaleString("fr-FR", { month: "long", year: "numeric" })}</h2>
+
+      {/* Filter */}
+      <div style={{ marginBottom: 20 }}>
+        <label>
+          Mois:
+          <select value={month} onChange={e => setMonth(Number(e.target.value))}>
+            {[...Array(12)].map((_, i) => (
+              <option key={i} value={i}>
+                {new Date(0, i).toLocaleString("fr-FR", { month: "long" })}
+              </option>
             ))}
-          </div>
-        ))}
+          </select>
+        </label>
+        <label style={{ marginLeft: 10 }}>
+          Année:
+          <input
+            type="number"
+            value={year}
+            onChange={e => setYear(Number(e.target.value))}
+            style={{ width: 80 }}
+          />
+        </label>
       </div>
 
-      <Footer />
+      {/* Display */}
+      {eglises.map(e => (
+        <EgliseTable key={e.id} eglise={e} attendance={attendance} month={month} year={year} />
+      ))}
+
+      <footer style={{ marginTop: 50, textAlign: "center" }}>
+        © 2026 - Rapport Culte
+      </footer>
     </div>
   );
 }

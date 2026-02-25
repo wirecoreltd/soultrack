@@ -16,22 +16,70 @@ export default function StatGlobalPage() {
   }, [mois, annee]);
 
   const fetchStats = async () => {
-    setLoading(true);
+  if (!dateDebut || !dateFin) {
+    alert("Sélectionne une date de début et de fin");
+    return;
+  }
 
-    try {
-      const startDate = `${annee}-${String(mois).padStart(2, "0")}-01`;
-      const endDate = new Date(annee, mois, 0)
-        .toISOString()
-        .split("T")[0];
+  setLoading(true);
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+  // 🔹 Récupérer toutes les églises liées aux branches
+  const { data: eglises } = await supabase
+    .from("attendance")
+    .select("eglise_id")
+    .gte("date", dateDebut)
+    .lte("date", dateFin)
+    .in("branche_id", branchIds);
 
-      if (!user) {
-        setLoading(false);
-        return;
-      }
+  if (!eglises || eglises.length === 0) {
+    setAttendanceStats([]);
+    setLoading(false);
+    return;
+  }
+
+  const uniqueEglises = [...new Set(eglises.map(e => e.eglise_id))];
+
+  // 🔹 Récupérer les noms des églises
+  const { data: eglisesData } = await supabase
+    .from("eglises")
+    .select("id, nom")
+    .in("id", uniqueEglises);
+
+  // 🔹 Récupérer toutes les présences
+  const { data: attendanceData } = await supabase
+    .from("attendance")
+    .select("*")
+    .gte("date", dateDebut)
+    .lte("date", dateFin)
+    .in("branche_id", branchIds);
+
+  // 🔹 Regroupement par église
+  const grouped = {};
+
+  attendanceData?.forEach(r => {
+    if (!grouped[r.eglise_id]) {
+      grouped[r.eglise_id] = { hommes: 0, femmes: 0 };
+    }
+    grouped[r.eglise_id].hommes += Number(r.hommes) || 0;
+    grouped[r.eglise_id].femmes += Number(r.femmes) || 0;
+  });
+
+  // 🔹 Fusion avec noms
+  const result = uniqueEglises.map(id => {
+    const egliseInfo = eglisesData?.find(e => e.id === id);
+    const stats = grouped[id] || { hommes: 0, femmes: 0 };
+
+    return {
+      eglise: egliseInfo?.nom || "Église inconnue",
+      hommes: stats.hommes,
+      femmes: stats.femmes,
+      total: stats.hommes + stats.femmes,
+    };
+  });
+
+  setAttendanceStats(result);
+  setLoading(false);
+};
 
       // 🔥 Récupère toutes les stats avec jointure
       const { data, error } = await supabase
@@ -169,11 +217,58 @@ export default function StatGlobalPage() {
             );
           })}
 
-        {!loading && Object.keys(statsGrouped).length === 0 && (
-          <div className="text-center text-lg opacity-70">
-            Aucune donnée pour cette période
-          </div>
-        )}
+        
+  // 🔹 Fusion avec noms
+  const result = uniqueEglises.map(id => {
+    const egliseInfo = eglisesData?.find(e => e.id === id);
+    const stats = grouped[id] || { hommes: 0, femmes: 0 };
+
+    return {
+      eglise: egliseInfo?.nom || "Église inconnue",
+      hommes: stats.hommes,
+      femmes: stats.femmes,
+      total: stats.hommes + stats.femmes,
+    };
+  });
+
+  setAttendanceStats(result);
+  setLoading(false);
+};
+✅ MODIFIE L’AFFICHAGE
+
+Remplace la partie table par :
+
+{!loading && attendanceStats?.map((eglise, index) => (
+  <div key={index} className="mt-8 w-full max-w-4xl bg-white/10 p-6 rounded-2xl shadow-lg">
+
+    <h2 className="text-xl font-bold text-amber-300 mb-4">
+      {eglise.eglise}
+    </h2>
+
+    <div className="overflow-x-auto">
+      <table className="w-full text-white">
+        <thead>
+          <tr className="border-b border-white/30 text-left">
+            <th className="py-2">Ministère</th>
+            <th className="py-2 text-center">Hommes</th>
+            <th className="py-2 text-center">Femmes</th>
+            <th className="py-2 text-center">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr className="border-b border-white/20">
+            <td className="py-2 font-semibold">Culte</td>
+            <td className="py-2 text-center">{eglise.hommes}</td>
+            <td className="py-2 text-center">{eglise.femmes}</td>
+            <td className="py-2 text-center font-bold">
+              {eglise.total}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+))}
       </div>
 
       <Footer />

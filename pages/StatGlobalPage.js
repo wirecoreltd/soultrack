@@ -20,6 +20,7 @@ export default function GlobalStats() {
 
   async function fetchStats() {
     setLoading(true);
+
     const { data, error } = await supabase
       .from("attendance_stats")
       .select("*")
@@ -30,100 +31,99 @@ export default function GlobalStats() {
     if (error) {
       console.error(error);
       setStats([]);
-    } else {
-      // Construire la hiérarchie parent → enfants
-      const hierarchy = {};
-      const branchMap = {};
-
-      // On stocke toutes les branches dans une map pour référence
-      data.forEach((item) => {
-        branchMap[item.branche_id] = item;
-      });
-
-      data.forEach((item) => {
-        // Si superviseur_id existe et correspond à une branche existante
-        if (item.superviseur_id && branchMap[item.superviseur_id]) {
-          const parentId = item.superviseur_id;
-          if (!hierarchy[parentId]) {
-            hierarchy[parentId] = {
-              parent: branchMap[parentId],
-              enfants: [],
-            };
-          }
-          hierarchy[parentId].enfants.push(item);
-        } else {
-          // Branches sans superviseur deviennent "racines"
-          if (!hierarchy[item.branche_id]) {
-            hierarchy[item.branche_id] = { parent: item, enfants: [] };
-          }
-        }
-      });
-
-      setStats(Object.values(hierarchy));
+      setLoading(false);
+      return;
     }
+
+    // Organiser par parent (superviseur) → enfants
+    const hierarchy = {};
+
+    data.forEach((item) => {
+      // Parent = superviseur ou branche si pas de superviseur
+      const parentId = item.superviseur_id || item.branche_id;
+      if (!hierarchy[parentId]) {
+        hierarchy[parentId] = {
+          nom: item.superviseur_nom || item.branche_nom,
+          enfants: [],
+        };
+      }
+
+      // On ajoute seulement si ce n’est pas une branche vide ou "Eglise Principale"
+      if (
+        item.branche_id !== parentId &&
+        item.branche_nom &&
+        item.branche_nom.toLowerCase() !== "eglise principale"
+      ) {
+        hierarchy[parentId].enfants.push(item);
+      } else if (!item.superviseur_id) {
+        hierarchy[parentId].enfants.push(item);
+      }
+    });
+
+    setStats(Object.values(hierarchy));
     setLoading(false);
   }
 
   return (
-    <div className="p-4 bg-gray-900 min-h-screen text-gray-100">
+    <div className="p-6 bg-gray-900 min-h-screen">
       {/* Filtre dates */}
-      <div className="flex gap-4 mb-4">
+      <div className="flex gap-4 mb-6">
         <input
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
-          className="px-2 py-1 rounded"
+          className="px-3 py-2 rounded border border-gray-300"
         />
         <input
           type="date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
-          className="px-2 py-1 rounded"
+          className="px-3 py-2 rounded border border-gray-300"
         />
         <button
           onClick={fetchStats}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           Filtrer
         </button>
       </div>
 
+      {/* Contenu */}
       {loading ? (
-        <div>Chargement...</div>
+        <div className="text-white">Chargement...</div>
       ) : stats.length === 0 ? (
-        <div>Aucune donnée trouvée pour cette période.</div>
+        <div className="text-white">Aucune donnée trouvée pour cette période.</div>
       ) : (
-        <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-700">
-          <div className="space-y-6">
-            {stats.map(({ parent, enfants }) => (
-              <div key={parent.branche_id} className="space-y-2">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-300">
+          <div className="min-w-max space-y-6">
+            {stats.map((parent) => (
+              <div key={parent.nom} className="space-y-2">
                 {/* Parent */}
-                <div className="font-bold text-xl border-b border-gray-600 pb-1">
-                  {parent.branche_nom}
-                </div>
+                <div className="text-2xl font-bold text-yellow-400">{parent.nom}</div>
 
-                {/* Enfants */}
-                {enfants.map((branch) => (
-                  <div
-                    key={branch.branche_id}
-                    className="ml-6 bg-gray-800/30 rounded-xl px-4 py-2 space-y-1"
-                  >
-                    <div className="font-semibold">
+                {parent.enfants.map((branch) => (
+                  <div key={branch.branche_nom} className="space-y-1 pl-6">
+                    {/* Branche */}
+                    <div className="text-lg font-semibold text-white mb-1">
                       {branch.branche_nom}{" "}
                       {branch.superviseur_nom && `(${branch.superviseur_nom})`}
                     </div>
-                    <div className="grid grid-cols-10 gap-2 text-sm text-gray-100">
-                      <div>Culte</div>
-                      <div>Hommes</div>
-                      <div>Femmes</div>
-                      <div>Jeunes</div>
-                      <div>Total HFJ</div>
-                      <div>Enfants</div>
-                      <div>Connectés</div>
-                      <div>Nouveaux Venus</div>
-                      <div>Nouveau Converti</div>
-                      <div>Moissonneurs</div>
 
+                    {/* Tableau stats */}
+                    <div className="grid grid-cols-10 gap-2 text-sm text-gray-100 bg-gray-800 rounded-xl px-4 py-2">
+                      {/* Header */}
+                      <div className="font-semibold">Culte</div>
+                      <div className="font-semibold">Hommes</div>
+                      <div className="font-semibold">Femmes</div>
+                      <div className="font-semibold">Jeunes</div>
+                      <div className="font-semibold">Total HFJ</div>
+                      <div className="font-semibold">Enfants</div>
+                      <div className="font-semibold">Connectés</div>
+                      <div className="font-semibold">Nouveaux Venus</div>
+                      <div className="font-semibold">Nouveau Converti</div>
+                      <div className="font-semibold">Moissonneurs</div>
+
+                      {/* Valeurs */}
                       <div>{branch.culte || 0}</div>
                       <div>{branch.hommes || 0}</div>
                       <div>{branch.femmes || 0}</div>
@@ -137,11 +137,6 @@ export default function GlobalStats() {
                     </div>
                   </div>
                 ))}
-
-                {/* Si pas d’enfants */}
-                {enfants.length === 0 && (
-                  <div className="ml-6 text-gray-400 italic">Aucune branche enfant</div>
-                )}
               </div>
             ))}
           </div>

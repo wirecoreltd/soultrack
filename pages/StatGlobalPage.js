@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
-import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function StatGlobalPageWrapper() {
   return (
@@ -18,122 +18,100 @@ function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [branchIds, setBranchIds] = useState([]);
-  const [attendanceStats, setAttendanceStats] = useState([]);
+  const [eglisesData, setEglisesData] = useState([]);
+  const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Récupérer branche utilisateur
+  // 🔹 Récupérer la branche de l'utilisateur
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data } = await supabase
+      const { data: profile } = await supabase
         .from("profiles")
         .select("branche_id")
         .eq("id", user.id)
         .single();
 
-      if (data?.branche_id) {
-        setBranchIds([data.branche_id]);
-      }
+      if (profile?.branche_id) setBranchIds([profile.branche_id]);
     };
-
     fetchProfile();
   }, []);
 
+  // 🔹 Récupérer les stats CULTE
   const fetchStats = async () => {
-    if (!dateDebut || !dateFin) {
-      alert("Sélectionne une date de début et de fin");
-      return;
-    }
-
-    if (!branchIds.length) {
-      alert("Branche introuvable");
-      return;
-    }
-
+    if (!branchIds.length) return;
     setLoading(true);
 
-    // 🔹 1️⃣ Récupérer toutes les présences
-    const { data: attendanceData, error } = await supabase
-      .from("attendance")
-      .select("eglise_id, hommes, femmes")
-      .in("branche_id", branchIds)
-      .gte("date", dateDebut)
-      .lte("date", dateFin);
-
-    if (error) {
-      console.error("Erreur attendance:", error);
-      setLoading(false);
-      return;
-    }
-
-    if (!attendanceData || attendanceData.length === 0) {
-      setAttendanceStats([]);
-      setLoading(false);
-      return;
-    }
-
-    // 🔹 2️⃣ Regrouper par église
-    const grouped = {};
-
-    attendanceData.forEach(r => {
-      if (!grouped[r.eglise_id]) {
-        grouped[r.eglise_id] = { hommes: 0, femmes: 0 };
-      }
-
-      grouped[r.eglise_id].hommes += Number(r.hommes) || 0;
-      grouped[r.eglise_id].femmes += Number(r.femmes) || 0;
-    });
-
-    const egliseIds = Object.keys(grouped);
-
-    // 🔹 3️⃣ Récupérer noms des églises
-    const { data: eglisesData } = await supabase
+    // ✅ 1. Récupérer toutes les églises de la branche
+    const { data: eglises } = await supabase
       .from("eglises")
       .select("id, nom")
-      .in("id", egliseIds);
+      .in("branche_id", branchIds);
 
-    // 🔹 4️⃣ Construire résultat final
-    const result = egliseIds.map(id => {
-      const egliseInfo = eglisesData?.find(e => e.id === id);
+    setEglisesData(eglises || []);
 
+    const egliseIds = eglises?.map(e => e.id) || [];
+
+    if (!egliseIds.length) {
+      setStats([]);
+      setLoading(false);
+      return;
+    }
+
+    // ✅ 2. Récupérer les attendance pour ces églises et dates
+    let query = supabase.from("attendance").select("*").in("eglise_id", egliseIds);
+
+    if (dateDebut) query = query.gte("date", dateDebut);
+    if (dateFin) query = query.lte("date", dateFin);
+
+    const { data: attendanceData } = await query;
+
+    // ✅ 3. Grouper par église
+    const grouped = {};
+    attendanceData?.forEach(a => {
+      if (!grouped[a.eglise_id]) grouped[a.eglise_id] = { hommes: 0, femmes: 0 };
+      grouped[a.eglise_id].hommes += Number(a.hommes) || 0;
+      grouped[a.eglise_id].femmes += Number(a.femmes) || 0;
+    });
+
+    // ✅ 4. Construire résultat final
+    const result = Object.entries(grouped).map(([egliseId, s]) => {
+      const egliseInfo = eglises.find(e => e.id === egliseId);
       return {
-        eglise: egliseInfo?.nom || "Église inconnue",
-        hommes: grouped[id].hommes,
-        femmes: grouped[id].femmes,
-        total: grouped[id].hommes + grouped[id].femmes,
+        eglise: egliseInfo?.nom || `Église ${egliseId?.slice(0, 6)}`,
+        hommes: s.hommes,
+        femmes: s.femmes,
+        total: s.hommes + s.femmes,
       };
     });
 
-    setAttendanceStats(result);
+    setStats(result);
     setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-white">
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
         Rapport <span className="text-amber-300">CULTE</span>
       </h1>
 
       {/* FILTRES */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg flex gap-4 flex-wrap text-white">
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
         <input
           type="date"
           value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
+          onChange={e => setDateDebut(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
-
         <input
           type="date"
           value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
+          onChange={e => setDateFin(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
-
         <button
           onClick={fetchStats}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
@@ -142,47 +120,34 @@ function StatGlobalPage() {
         </button>
       </div>
 
-      {/* LOADING */}
-      {loading && (
-        <div className="text-white mt-6 text-lg animate-pulse">
-          Chargement...
+      {/* TABLE */}
+      {loading && <p className="text-white mt-6">Chargement...</p>}
+
+      {!loading && stats.length > 0 && (
+        <div className="w-full max-w-4xl mt-6 space-y-6">
+          {stats.map((s, idx) => (
+            <div key={idx} className="bg-white/10 rounded-xl p-4">
+              <h2 className="text-xl text-white font-semibold mb-2">{s.eglise}</h2>
+              <div className="grid grid-cols-4 gap-4 text-white font-semibold">
+                <div>Ministère</div>
+                <div className="text-center">Hommes</div>
+                <div className="text-center">Femmes</div>
+                <div className="text-center">Total</div>
+              </div>
+              <div className="grid grid-cols-4 gap-4 text-white mt-1">
+                <div>Culte</div>
+                <div className="text-center">{s.hommes}</div>
+                <div className="text-center">{s.femmes}</div>
+                <div className="text-center">{s.total}</div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* RESULTATS */}
-      {!loading && attendanceStats.map((eglise, index) => (
-        <div
-          key={index}
-          className="mt-8 w-full max-w-4xl bg-white/10 p-6 rounded-2xl shadow-lg"
-        >
-          <h2 className="text-xl font-bold text-amber-300 mb-4">
-            {eglise.eglise}
-          </h2>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-white">
-              <thead>
-                <tr className="border-b border-white/30 text-left">
-                  <th className="py-2">Ministère</th>
-                  <th className="py-2 text-center">Hommes</th>
-                  <th className="py-2 text-center">Femmes</th>
-                  <th className="py-2 text-center">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-white/20">
-                  <td className="py-2 font-semibold">Culte</td>
-                  <td className="py-2 text-center">{eglise.hommes}</td>
-                  <td className="py-2 text-center">{eglise.femmes}</td>
-                  <td className="py-2 text-center font-bold">
-                    {eglise.total}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ))}
+      {!loading && stats.length === 0 && (
+        <p className="text-white mt-6">Aucune donnée pour cette période.</p>
+      )}
 
       <Footer />
     </div>

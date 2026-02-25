@@ -19,128 +19,102 @@ export default function GlobalStats() {
   }, []);
 
   async function fetchStats() {
-  try {
-    setLoading(true);
-    console.log("Fetching data...");
+    try {
+      setLoading(true);
 
-    const { data, error } = await supabase
-      .from("attendance_stats")
-      .select("*")
-      .gte("mois", startDate)
-      .lte("mois", endDate);
+      const { data, error } = await supabase
+        .from("attendance_stats")
+        .select("*")
+        .gte("mois", startDate)
+        .lte("mois", endDate);
 
-    console.log("Response:", data, error);
-
-    if (error) {
-      console.error("Supabase error:", error);
-      setStats([]);
-      setLoading(false);
-      return;
-    }
-
-    if (!data) {
-      console.log("No data returned");
-      setStats([]);
-      setLoading(false);
-      return;
-    }
-
-    // TEMPORAIRE : juste afficher data brute
-    setStats(data);
-
-  } catch (err) {
-    console.error("Unexpected error:", err);
-  } finally {
-    setLoading(false);
-  }
-}
-    const { data, error } = await supabase
-      .from("attendance_stats")
-      .select("*")
-      .gte("mois", startDate)
-      .lte("mois", endDate);
-
-    if (error) {
-      console.error(error);
-      setStats([]);
-      setLoading(false);
-      return;
-    }
-
-    // ✅ 1. CUMUL PAR BRANCHE
-    const grouped = {};
-
-    data.forEach((item) => {
-      if (!grouped[item.branche_id]) {
-        grouped[item.branche_id] = {
-          branche_id: item.branche_id,
-          branche_nom: item.branche_nom,
-          superviseur_id: item.superviseur_id,
-          superviseur_nom: item.superviseur_nom,
-          culte: 0,
-          hommes: 0,
-          femmes: 0,
-          jeunes: 0,
-          total_hfj: 0,
-          enfants: 0,
-          connectes: 0,
-          nouveaux_venus: 0,
-          nouveau_converti: 0,
-          moissonneurs: 0,
-        };
+      if (error) {
+        console.error(error);
+        setStats([]);
+        return;
       }
 
-      grouped[item.branche_id].culte += item.culte || 0;
-      grouped[item.branche_id].hommes += item.hommes || 0;
-      grouped[item.branche_id].femmes += item.femmes || 0;
-      grouped[item.branche_id].jeunes += item.jeunes || 0;
-      grouped[item.branche_id].total_hfj += item.total_hfj || 0;
-      grouped[item.branche_id].enfants += item.enfants || 0;
-      grouped[item.branche_id].connectes += item.connectes || 0;
-      grouped[item.branche_id].nouveaux_venus += item.nouveaux_venus || 0;
-      grouped[item.branche_id].nouveau_converti += item.nouveau_converti || 0;
-      grouped[item.branche_id].moissonneurs += item.moissonneurs || 0;
-    });
+      if (!data) {
+        setStats([]);
+        return;
+      }
 
-    let branches = Object.values(grouped);
+      // ✅ CUMUL PAR BRANCHE
+      const grouped = {};
 
-    // ✅ 2. SUPPRIMER BRANCHES VIDES
-    branches = branches.filter((b) => {
-      const total =
-        b.culte +
-        b.hommes +
-        b.femmes +
-        b.jeunes +
-        b.total_hfj +
-        b.enfants +
-        b.connectes +
-        b.nouveaux_venus +
-        b.nouveau_converti +
-        b.moissonneurs;
+      data.forEach((item) => {
+        if (!grouped[item.branche_id]) {
+          grouped[item.branche_id] = {
+            branche_id: item.branche_id,
+            branche_nom: item.branche_nom,
+            superviseur_id: item.superviseur_id,
+            superviseur_nom: item.superviseur_nom,
+            culte: 0,
+            hommes: 0,
+            femmes: 0,
+            jeunes: 0,
+            total_hfj: 0,
+            enfants: 0,
+            connectes: 0,
+            nouveaux_venus: 0,
+            nouveau_converti: 0,
+            moissonneurs: 0,
+          };
+        }
 
-      if (total === 0) return false;
+        grouped[item.branche_id].culte += item.culte || 0;
+        grouped[item.branche_id].hommes += item.hommes || 0;
+        grouped[item.branche_id].femmes += item.femmes || 0;
+        grouped[item.branche_id].jeunes += item.jeunes || 0;
+        grouped[item.branche_id].total_hfj += item.total_hfj || 0;
+        grouped[item.branche_id].enfants += item.enfants || 0;
+        grouped[item.branche_id].connectes += item.connectes || 0;
+        grouped[item.branche_id].nouveaux_venus += item.nouveaux_venus || 0;
+        grouped[item.branche_id].nouveau_converti += item.nouveau_converti || 0;
+        grouped[item.branche_id].moissonneurs += item.moissonneurs || 0;
+      });
 
-      if (
-        b.branche_nom?.toLowerCase() === "eglise principale" &&
-        !b.superviseur_id
-      )
-        return false;
+      let branches = Object.values(grouped);
 
-      return true;
-    });
+      // ✅ SUPPRIMER BRANCHES VIDES
+      branches = branches.filter((b) => {
+        const total =
+          b.culte +
+          b.hommes +
+          b.femmes +
+          b.jeunes +
+          b.total_hfj +
+          b.enfants +
+          b.connectes +
+          b.nouveaux_venus +
+          b.nouveau_converti +
+          b.moissonneurs;
 
-    // ✅ 3. TRI PAR NOM
-    branches.sort((a, b) =>
-      a.branche_nom.localeCompare(b.branche_nom)
-    );
+        if (total === 0) return false;
 
-    setStats(branches);
-    setLoading(false);
+        if (
+          b.branche_nom?.toLowerCase() === "eglise principale" &&
+          !b.superviseur_id
+        )
+          return false;
+
+        return true;
+      });
+
+      branches.sort((a, b) =>
+        a.branche_nom.localeCompare(b.branche_nom)
+      );
+
+      setStats(branches);
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="p-6 bg-gray-900 min-h-screen text-white">
-      {/* FILTRE */}
       <div className="flex gap-4 mb-6">
         <input
           type="date"
@@ -168,14 +142,12 @@ export default function GlobalStats() {
         <div>Aucune donnée trouvée.</div>
       ) : (
         <div className="space-y-10">
-          {/* DATE */}
           <div className="text-xl font-bold text-yellow-400">
             Date : {startDate} – {endDate}
           </div>
 
           {stats.map((branch) => (
             <div key={branch.branche_id} className="space-y-2">
-              {/* NOM BRANCHE */}
               <div className="text-2xl font-bold text-blue-400">
                 {branch.branche_nom}
               </div>
@@ -195,10 +167,9 @@ export default function GlobalStats() {
                     <th className="text-right px-4">Moissonneurs</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   <tr className="border-b border-gray-700">
-                    <td className="py-2 font-semibold"></td>
+                    <td></td>
                     <td className="text-right px-4">{branch.hommes}</td>
                     <td className="text-right px-4">{branch.femmes}</td>
                     <td className="text-right px-4">{branch.jeunes}</td>
@@ -211,7 +182,9 @@ export default function GlobalStats() {
                     <td className="text-right px-4">
                       {branch.nouveau_converti}
                     </td>
-                    <td className="text-right px-4">{branch.moissonneurs}</td>
+                    <td className="text-right px-4">
+                      {branch.moissonneurs}
+                    </td>
                   </tr>
                 </tbody>
               </table>

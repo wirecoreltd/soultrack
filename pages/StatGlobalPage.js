@@ -19,8 +19,41 @@ export default function GlobalStats() {
   }, []);
 
   async function fetchStats() {
+  try {
     setLoading(true);
+    console.log("Fetching data...");
 
+    const { data, error } = await supabase
+      .from("attendance_stats")
+      .select("*")
+      .gte("mois", startDate)
+      .lte("mois", endDate);
+
+    console.log("Response:", data, error);
+
+    if (error) {
+      console.error("Supabase error:", error);
+      setStats([]);
+      setLoading(false);
+      return;
+    }
+
+    if (!data) {
+      console.log("No data returned");
+      setStats([]);
+      setLoading(false);
+      return;
+    }
+
+    // TEMPORAIRE : juste afficher data brute
+    setStats(data);
+
+  } catch (err) {
+    console.error("Unexpected error:", err);
+  } finally {
+    setLoading(false);
+  }
+}
     const { data, error } = await supabase
       .from("attendance_stats")
       .select("*")

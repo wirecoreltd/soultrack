@@ -22,74 +22,45 @@ function StatGlobalPage() {
   const [superviseurId, setSuperviseurId] = useState(null); // superviseur connecté
 
   useEffect(() => {
-    // ici tu peux récupérer l'ID du superviseur connecté depuis le contexte ou supabase.auth
-    // setSuperviseurId("ID_DU_SUPERVISEUR_CONNECTE");
+    // 🔹 Ici récupérer l'ID du superviseur connecté depuis supabase.auth ou contexte
+    setSuperviseurId("ID_TEST"); // temporaire pour test
   }, []);
 
   const fetchStats = async () => {
-  if (!superviseurId) return;
+    if (!superviseurId) return;
 
-  setLoading(true);
+    setLoading(true);
 
-  // 🔹 Récupère toutes les branches sous ce superviseur
-  const { data: branchesData, error: branchesError } = await supabase
-    .from("branches")
-    .select("id, nom")
-    .eq("superviseur_id", superviseurId);
+    // 🔹 Récupérer toutes les branches sous ce superviseur
+    const { data: branchesData, error: branchesError } = await supabase
+      .from("branches")
+      .select("id, nom")
+      .eq("superviseur_id", superviseurId);
 
-  if (branchesError || !branchesData) {
-    setBranches([]);
-    setLoading(false);
-    return;
-  }
-
-  // 🔹 Récupère toutes les stats
-  const { data: statsData, error: statsError } = await supabase
-    .from("attendance_stats")
-    .select("*")
-    .gte(dateDebut ? "mois" : null, dateDebut || undefined)
-    .lte(dateFin ? "mois" : null, dateFin || undefined);
-
-  if (statsError || !statsData) {
-    setBranches([]);
-    setLoading(false);
-    return;
-  }
-
-  // 🔹 Filtre uniquement les stats des branches sous ce superviseur
-  const branchIds = branchesData.map((b) => b.id);
-  const filteredStats = statsData.filter((s) => branchIds.includes(s.branche_id));
-
-  // 🔹 Regroupe par branche_nom
-  const grouped = {};
-  filteredStats.forEach((item) => {
-    const key = item.branche_nom?.trim();
-    if (!key) return;
-
-    if (!grouped[key]) {
-      grouped[key] = {
-        branche_nom: item.branche_nom,
-        culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0 },
-      };
+    if (branchesError || !branchesData) {
+      setBranches([]);
+      setLoading(false);
+      return;
     }
 
-    grouped[key].culte.hommes += Number(item.hommes) || 0;
-    grouped[key].culte.femmes += Number(item.femmes) || 0;
-    grouped[key].culte.jeunes += Number(item.jeunes) || 0;
-    grouped[key].culte.enfants += Number(item.enfants) || 0;
-  });
+    // 🔹 Récupérer toutes les stats
+    const { data: statsData, error: statsError } = await supabase
+      .from("attendance_stats")
+      .select("*")
+      .gte(dateDebut ? "mois" : null, dateDebut || undefined)
+      .lte(dateFin ? "mois" : null, dateFin || undefined);
 
-  setBranches(Object.values(grouped));
-  setLoading(false);
-};
+    if (statsError || !statsData) {
+      setBranches([]);
+      setLoading(false);
+      return;
     }
 
-    // 🔹 On filtre uniquement les stats correspondant aux branches sous ce superviseur
-    const filteredStats = statsData.filter((s) =>
-      branchesData.some((b) => b.id === s.branche_id)
-    );
+    // 🔹 Filtrer uniquement les stats des branches sous ce superviseur
+    const branchIds = branchesData.map((b) => b.id);
+    const filteredStats = statsData.filter((s) => branchIds.includes(s.branche_id));
 
-    // 🔹 On regroupe par branche
+    // 🔹 Regrouper par branche
     const grouped = {};
     filteredStats.forEach((item) => {
       const key = item.branche_nom?.trim();
@@ -116,8 +87,8 @@ function StatGlobalPage() {
       grouped[key].culte.jeunes += Number(item.jeunes) || 0;
       grouped[key].culte.enfants += Number(item.enfants) || 0;
       grouped[key].culte.connectes += Number(item.connectes) || 0;
-      grouped[key].culte.nouveaux_venus += Number(item.nouveauxvenus) || 0;
-      grouped[key].culte.nouveau_converti += Number(item.nouveauxconvertis) || 0;
+      grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
+      grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
       grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
     });
 

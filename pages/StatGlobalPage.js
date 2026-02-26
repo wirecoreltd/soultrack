@@ -6,8 +6,12 @@ import dayjs from "dayjs";
 
 export default function StatGlobalPage() {
   const [stats, setStats] = useState([]);
-  const [startDate, setStartDate] = useState(dayjs().startOf("month").format("YYYY-MM-DD"));
-  const [endDate, setEndDate] = useState(dayjs().endOf("month").format("YYYY-MM-DD"));
+  const [startDate, setStartDate] = useState(
+    dayjs().startOf("month").format("YYYY-MM-DD")
+  );
+  const [endDate, setEndDate] = useState(
+    dayjs().endOf("month").format("YYYY-MM-DD")
+  );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -18,7 +22,6 @@ export default function StatGlobalPage() {
     try {
       setLoading(true);
 
-      // 1️⃣ Récupérer toutes les stats pour la période
       const { data, error } = await supabase
         .from("attendance_stats")
         .select("*")
@@ -28,25 +31,24 @@ export default function StatGlobalPage() {
       if (error) {
         console.error("Supabase error:", error);
         setStats([]);
-        setLoading(false);
         return;
       }
 
-      if (!data) {
+      if (!data || data.length === 0) {
         setStats([]);
-        setLoading(false);
         return;
       }
 
-      // 2️⃣ Cumuler les stats par branche + id pour éviter les doublons
+      // 1️⃣ Cumuler les stats par nom de branche (fusion des doublons)
       const grouped = {};
       data.forEach((item) => {
-        const key = `${item.branche_id}`; // branche_id unique
+        const key = item.branche_nom.trim().toLowerCase(); // clé unique par nom de branche
+
         if (!grouped[key]) {
           grouped[key] = {
             branche_id: item.branche_id,
             branche_nom: item.branche_nom,
-            eglise_nom: item.eglis_nom || "", // pour différencier même nom de branche
+            eglise_nom: item.eglis_nom || "",
             superviseur_id: item.superviseur_id,
             superviseur_nom: item.superviseur_nom,
             culte: 0,
@@ -74,10 +76,8 @@ export default function StatGlobalPage() {
         grouped[key].moissonneurs += item.moissonneurs || 0;
       });
 
-      let branches = Object.values(grouped);
-
-      // 3️⃣ Supprimer les branches vides et Eglise Principale non supervisée
-      branches = branches.filter((b) => {
+      // 2️⃣ Filtrer les branches vides et "Eglise Principale" si pas de superviseur
+      let branches = Object.values(grouped).filter((b) => {
         const total =
           b.culte +
           b.hommes +
@@ -91,27 +91,19 @@ export default function StatGlobalPage() {
           b.moissonneurs;
 
         if (total === 0) return false;
-        if (b.branche_nom?.toLowerCase() === "eglise principale" && !b.superviseur_id) return false;
+        if (
+          b.branche_nom?.toLowerCase() === "eglise principale" &&
+          !b.superviseur_id
+        )
+          return false;
+
         return true;
       });
 
-      // 4️⃣ Construire la hiérarchie parent → enfants
-      const hierarchy = {};
-      const roots = [];
+      // 3️⃣ Tri alphabétique (pour l'instant)
+      branches.sort((a, b) => a.branche_nom.localeCompare(b.branche_nom));
 
-      branches.forEach((b) => {
-        hierarchy[b.branche_id] = { ...b, enfants: [] };
-      });
-
-      branches.forEach((b) => {
-        if (b.superviseur_id && hierarchy[b.superviseur_id]) {
-          hierarchy[b.superviseur_id].enfants.push(hierarchy[b.branche_id]);
-        } else {
-          roots.push(hierarchy[b.branche_id]);
-        }
-      });
-
-      setStats(roots);
+      setStats(branches);
     } catch (err) {
       console.error("Unexpected error:", err);
       setStats([]);
@@ -120,54 +112,9 @@ export default function StatGlobalPage() {
     }
   }
 
-  // 5️⃣ Fonction récursive pour afficher hiérarchie
-  const renderBranch = (branch, level = 0) => {
-    return (
-      <div key={branch.branche_id} className="mb-6">
-        <div className={`font-bold ${level === 0 ? "text-2xl text-yellow-400" : "text-lg text-white"} ml-${level * 6}`}>
-          {branch.branche_nom} {branch.eglise_nom && `(${branch.eglise_nom})`}
-        </div>
-
-        <table className={`w-full text-sm border-collapse ml-${level * 6} mt-1`}>
-          <thead>
-            <tr className="border-b border-gray-600 text-gray-300">
-              <th className="text-left py-2 w-20">Culte</th>
-              <th className="text-right px-4">Hommes</th>
-              <th className="text-right px-4">Femmes</th>
-              <th className="text-right px-4">Jeunes</th>
-              <th className="text-right px-4">Total HFJ</th>
-              <th className="text-right px-4">Enfants</th>
-              <th className="text-right px-4">Connectés</th>
-              <th className="text-right px-4">Nouveaux</th>
-              <th className="text-right px-4">Convertis</th>
-              <th className="text-right px-4">Moissonneurs</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-b border-gray-700">
-              <td className="py-2 font-semibold">{branch.culte}</td>
-              <td className="text-right px-4">{branch.hommes}</td>
-              <td className="text-right px-4">{branch.femmes}</td>
-              <td className="text-right px-4">{branch.jeunes}</td>
-              <td className="text-right px-4 font-bold">{branch.total_hfj}</td>
-              <td className="text-right px-4">{branch.enfants}</td>
-              <td className="text-right px-4">{branch.connectes}</td>
-              <td className="text-right px-4">{branch.nouveaux_venus}</td>
-              <td className="text-right px-4">{branch.nouveau_converti}</td>
-              <td className="text-right px-4">{branch.moissonneurs}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        {branch.enfants.length > 0 &&
-          branch.enfants.map((child) => renderBranch(child, level + 1))}
-      </div>
-    );
-  };
-
   return (
     <div className="p-6 bg-gray-900 min-h-screen text-white">
-      {/* Filtre dates */}
+      {/* FILTRE DATES */}
       <div className="flex gap-4 mb-6">
         <input
           type="date"
@@ -181,22 +128,65 @@ export default function StatGlobalPage() {
           onChange={(e) => setEndDate(e.target.value)}
           className="px-3 py-2 rounded border border-gray-400 text-black"
         />
-        <button onClick={fetchStats} className="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">
+        <button
+          onClick={fetchStats}
+          className="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700"
+        >
           Filtrer
         </button>
       </div>
 
-      {/* Contenu */}
       {loading ? (
         <div>Chargement...</div>
       ) : stats.length === 0 ? (
         <div>Aucune donnée trouvée.</div>
       ) : (
         <div className="space-y-10">
+          {/* DATE */}
           <div className="text-xl font-bold text-yellow-400">
             Date : {startDate} – {endDate}
           </div>
-          {stats.map((branch) => renderBranch(branch))}
+
+          {stats.map((branch) => (
+            <div key={branch.branche_id} className="space-y-2">
+              {/* NOM BRANCHE */}
+              <div className="text-2xl font-bold text-blue-400">
+                {branch.branche_nom} {branch.eglis_nom && `(${branch.eglis_nom})`}
+              </div>
+
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-600 text-gray-300">
+                    <th className="text-left py-2 w-20">Culte</th>
+                    <th className="text-right px-4">Hommes</th>
+                    <th className="text-right px-4">Femmes</th>
+                    <th className="text-right px-4">Jeunes</th>
+                    <th className="text-right px-4">Total HFJ</th>
+                    <th className="text-right px-4">Enfants</th>
+                    <th className="text-right px-4">Connectés</th>
+                    <th className="text-right px-4">Nouveaux</th>
+                    <th className="text-right px-4">Convertis</th>
+                    <th className="text-right px-4">Moissonneurs</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr className="border-b border-gray-700">
+                    <td className="py-2 font-semibold">{branch.culte}</td>
+                    <td className="text-right px-4">{branch.hommes}</td>
+                    <td className="text-right px-4">{branch.femmes}</td>
+                    <td className="text-right px-4">{branch.jeunes}</td>
+                    <td className="text-right px-4 font-bold">{branch.total_hfj}</td>
+                    <td className="text-right px-4">{branch.enfants}</td>
+                    <td className="text-right px-4">{branch.connectes}</td>
+                    <td className="text-right px-4">{branch.nouveaux_venus}</td>
+                    <td className="text-right px-4">{branch.nouveau_converti}</td>
+                    <td className="text-right px-4">{branch.moissonneurs}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          ))}
         </div>
       )}
     </div>

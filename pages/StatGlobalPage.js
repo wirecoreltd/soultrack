@@ -19,15 +19,18 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
-  const [superviseurId, setSuperviseurId] = useState(null); // superviseur connecté
+  const [superviseurId, setSuperviseurId] = useState(null);
 
   useEffect(() => {
-    // 🔹 Ici récupérer l'ID du superviseur connecté depuis supabase.auth ou contexte
-    setSuperviseurId("ID_TEST"); // temporaire pour test
+    // 🔹 Récupérer l'ID du superviseur connecté ici
+    // Exemple : setSuperviseurId("ID_DU_SUPERVISEUR_CONNECTE");
   }, []);
 
   const fetchStats = async () => {
-    if (!superviseurId) return;
+    if (!superviseurId) {
+      console.log("Superviseur non défini !");
+      return;
+    }
 
     setLoading(true);
 

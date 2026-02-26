@@ -41,7 +41,7 @@ export default function StatGlobalPage() {
         return;
       }
 
-      // 1️⃣ CUMULER les stats par branche_id
+      // 1️⃣ CUMUL PAR BRANCHE_ID
       const grouped = {};
       data.forEach((item) => {
         const id = item.branche_id;
@@ -49,7 +49,7 @@ export default function StatGlobalPage() {
           grouped[id] = {
             branche_id: id,
             branche_nom: item.branche_nom,
-            eglise: item.eglis_nom || "", // si tu veux afficher l'église
+            eglise: item.eglis_nom || "",
             superviseur_id: item.superviseur_id,
             enfants: [],
             culte: 0,
@@ -99,7 +99,7 @@ export default function StatGlobalPage() {
         return true;
       });
 
-      // 3️⃣ Construire hiérarchie
+      // 3️⃣ Construire hiérarchie correctement
       const branchMap = {};
       branches.forEach((b) => (branchMap[b.branche_id] = b));
 
@@ -121,7 +121,6 @@ export default function StatGlobalPage() {
     }
   }
 
-  // 4️⃣ Fonction récursive pour afficher hiérarchie
   const renderBranch = (branch, level = 0) => (
     <div key={branch.branche_id} className="space-y-2">
       <div className={`text-lg font-bold`} style={{ marginLeft: level * 20 }}>
@@ -168,7 +167,6 @@ export default function StatGlobalPage() {
 
   return (
     <div className="p-6 bg-gray-900 min-h-screen text-white">
-      {/* Filtre */}
       <div className="flex gap-4 mb-6">
         <input
           type="date"

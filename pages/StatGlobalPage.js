@@ -40,41 +40,43 @@ export default function GlobalStats() {
       }
 
       // ✅ CUMUL PAR BRANCHE
-      const grouped = {};
+     // ✅ CUMUL PAR NOM DE BRANCHE (ANTI-DOUBLONS)
+const grouped = {};
 
-      data.forEach((item) => {
-        if (!grouped[item.branche_id]) {
-          grouped[item.branche_id] = {
-            branche_id: item.branche_id,
-            branche_nom: item.branche_nom,
-            superviseur_id: item.superviseur_id,
-            superviseur_nom: item.superviseur_nom,
-            culte: 0,
-            hommes: 0,
-            femmes: 0,
-            jeunes: 0,
-            total_hfj: 0,
-            enfants: 0,
-            connectes: 0,
-            nouveaux_venus: 0,
-            nouveau_converti: 0,
-            moissonneurs: 0,
-          };
-        }
+data.forEach((item) => {
+  const key = item.branche_nom?.trim();
 
-        grouped[item.branche_id].culte += item.culte || 0;
-        grouped[item.branche_id].hommes += item.hommes || 0;
-        grouped[item.branche_id].femmes += item.femmes || 0;
-        grouped[item.branche_id].jeunes += item.jeunes || 0;
-        grouped[item.branche_id].total_hfj += item.total_hfj || 0;
-        grouped[item.branche_id].enfants += item.enfants || 0;
-        grouped[item.branche_id].connectes += item.connectes || 0;
-        grouped[item.branche_id].nouveaux_venus += item.nouveaux_venus || 0;
-        grouped[item.branche_id].nouveau_converti += item.nouveau_converti || 0;
-        grouped[item.branche_id].moissonneurs += item.moissonneurs || 0;
-      });
+  if (!key) return;
 
-      let branches = Object.values(grouped);
+  if (!grouped[key]) {
+    grouped[key] = {
+      branche_nom: key,
+      culte: 0,
+      hommes: 0,
+      femmes: 0,
+      jeunes: 0,
+      total_hfj: 0,
+      enfants: 0,
+      connectes: 0,
+      nouveaux_venus: 0,
+      nouveau_converti: 0,
+      moissonneurs: 0,
+    };
+  }
+
+  grouped[key].culte += item.culte || 0;
+  grouped[key].hommes += item.hommes || 0;
+  grouped[key].femmes += item.femmes || 0;
+  grouped[key].jeunes += item.jeunes || 0;
+  grouped[key].total_hfj += item.total_hfj || 0;
+  grouped[key].enfants += item.enfants || 0;
+  grouped[key].connectes += item.connectes || 0;
+  grouped[key].nouveaux_venus += item.nouveaux_venus || 0;
+  grouped[key].nouveau_converti += item.nouveau_converti || 0;
+  grouped[key].moissonneurs += item.moissonneurs || 0;
+});
+
+let branches = Object.values(grouped);
 
       // ✅ SUPPRIMER BRANCHES VIDES
       branches = branches.filter((b) => {

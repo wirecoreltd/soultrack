@@ -19,67 +19,75 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
-  const [superviseurId, setSuperviseurId] = useState(null); // superviseur connecté
+  const [superviseurId, setSuperviseurId] = useState(null);
 
-  // 🔹 Récupération du superviseur connecté
+  // 🔹 Récupérer l'utilisateur connecté et son superviseur_id
   useEffect(() => {
     const fetchSuperviseur = async () => {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) return;
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.log("Erreur Auth:", authError);
+        return;
+      }
 
-      // Remplace 'profiles' par ta table où chaque user a un superviseur_id
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from("profiles")
         .select("superviseur_id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle(); // évite 400 si aucun résultat
 
-      if (profile?.superviseur_id) {
+      if (error) {
+        console.log("Erreur récupération profile:", error);
+      } else if (profile?.superviseur_id) {
         setSuperviseurId(profile.superviseur_id);
+      } else {
+        console.log("Superviseur non défini !");
       }
     };
+
     fetchSuperviseur();
   }, []);
 
   const fetchStats = async () => {
     if (!superviseurId) {
-      console.log("Superviseur non défini !");
+      alert("Superviseur non défini !");
       return;
     }
 
     setLoading(true);
 
-    // 🔹 Récupère toutes les branches sous ce superviseur
+    // 🔹 Récupérer les branches sous ce superviseur
     const { data: branchesData, error: branchesError } = await supabase
       .from("branches")
       .select("id, nom")
       .eq("superviseur_id", superviseurId);
 
-    if (branchesError || !branchesData) {
+    if (branchesError || !branchesData?.length) {
+      console.log("Branches non trouvées ou erreur :", branchesError);
       setBranches([]);
       setLoading(false);
       return;
     }
 
-    const branchIds = branchesData.map((b) => b.id);
-
-    // 🔹 Récupère toutes les stats filtrées par date
+    // 🔹 Récupérer les statistiques dans la plage de dates
     const { data: statsData, error: statsError } = await supabase
       .from("attendance_stats")
       .select("*")
       .gte(dateDebut ? "mois" : null, dateDebut || undefined)
       .lte(dateFin ? "mois" : null, dateFin || undefined);
 
-    if (statsError || !statsData) {
+    if (statsError || !statsData?.length) {
+      console.log("Stats non trouvées ou erreur :", statsError);
       setBranches([]);
       setLoading(false);
       return;
     }
 
-    // 🔹 Filtre uniquement les stats des branches sous ce superviseur
+    // 🔹 Filtrer uniquement les stats des branches sous ce superviseur
+    const branchIds = branchesData.map((b) => b.id);
     const filteredStats = statsData.filter((s) => branchIds.includes(s.branche_id));
 
-    // 🔹 Regroupe par branche
+    // 🔹 Regrouper par branche_nom
     const grouped = {};
     filteredStats.forEach((item) => {
       const key = item.branche_nom?.trim();
@@ -151,9 +159,7 @@ function StatGlobalPage() {
           {branches.map((b, idx) => (
             <div key={idx} className="w-full">
               {/* TITRE BRANCHE */}
-              <div className="text-xl font-bold text-amber-300 mb-3">
-                {b.branche_nom}
-              </div>
+              <div className="text-xl font-bold text-amber-300 mb-3">{b.branche_nom}</div>
 
               {/* HEADER COLONNES */}
               <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
@@ -162,17 +168,23 @@ function StatGlobalPage() {
                 <div className="min-w-[120px] text-center">Femmes</div>
                 <div className="min-w-[120px] text-center">Jeunes</div>
                 <div className="min-w-[120px] text-center">Enfants</div>
+                <div className="min-w-[140px] text-center">Connectés</div>
+                <div className="min-w-[150px] text-center">Nouveaux</div>
+                <div className="min-w-[180px] text-center">Convertis</div>
+                <div className="min-w-[160px] text-center">Moissonneurs</div>
               </div>
 
               {/* LIGNE CULTE */}
               <div className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400 whitespace-nowrap">
-                <div className="min-w-[180px] text-white font-semibold">
-                  Culte
-                </div>
+                <div className="min-w-[180px] text-white font-semibold">Culte</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.hommes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.femmes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.jeunes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.enfants}</div>
+                <div className="min-w-[140px] text-center text-white">{b.culte.connectes}</div>
+                <div className="min-w-[150px] text-center text-white">{b.culte.nouveaux_venus}</div>
+                <div className="min-w-[180px] text-center text-white">{b.culte.nouveau_converti}</div>
+                <div className="min-w-[160px] text-center text-white">{b.culte.moissonneurs}</div>
               </div>
             </div>
           ))}

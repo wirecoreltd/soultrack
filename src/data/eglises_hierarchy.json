@@ -1,0 +1,159 @@
+[
+  {
+    "superviseur_id": "814c735d-80cc-4ee2-a34a-ad41710ced61",
+    "superviseur_nom": "Impact Centre Chretien - Cite Royale",
+    "couleur": "#FF8C00",
+    "eglises": [
+      {
+        "eglise_id": "814c735d-80cc-4ee2-a34a-ad41710ced61",
+        "eglise_nom": "Impact Centre Chretien",
+        "branches": [
+          {
+            "branche_id": "07b804a5-fef6-41be-b907-8aa3b1f924f0",
+            "branche_nom": "Antioche",
+            "attendance": [
+              {
+                "date": "2026-02-08",
+                "hommes": 70,
+                "femmes": 85,
+                "jeunes": 60,
+                "enfants": 32
+              }
+            ]
+          },
+          {
+            "branche_id": "0f73f5ca-dd25-4a65-a064-679f3e7fd39d",
+            "branche_nom": "Port Louis",
+            "attendance": [
+              {
+                "date": "2026-02-08",
+                "hommes": 33,
+                "femmes": 22,
+                "jeunes": 55,
+                "enfants": 10
+              },
+              {
+                "date": "2026-02-22",
+                "hommes": 60,
+                "femmes": 50,
+                "jeunes": 40,
+                "enfants": 45
+              }
+            ]
+          },
+          {
+            "branche_id": "b35ecaae-6037-473e-97e5-007617a1a5c5",
+            "branche_nom": "Rose Hill",
+            "attendance": [
+              {
+                "date": "2026-02-08",
+                "hommes": 56,
+                "femmes": 45,
+                "jeunes": 26,
+                "enfants": 14
+              }
+            ]
+          },
+          {
+            "branche_id": "f70c7676-7504-43ba-bd24-9008ba4c1540",
+            "branche_nom": "Rodrigues",
+            "attendance": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "superviseur_id": "9a3d99dc-532f-4776-8d75-fda98e11e1b1",
+    "superviseur_nom": "Assemble de Dieu",
+    "couleur": "#1E90FF",
+    "eglises": [
+      {
+        "eglise_id": "54a22d61-a791-4073-9a05-565a62bb0327",
+        "eglise_nom": "Assemblé de Dieu",
+        "branches": [
+          {
+            "branche_id": "9a3d99dc-532f-4776-8d75-fda98e11e1b1",
+            "branche_nom": "Eglise Principale",
+            "attendance": [
+              {
+                "date": "2026-01-01",
+                "hommes": 140,
+                "femmes": 131,
+                "jeunes": 26,
+                "enfants": 58
+              },
+              {
+                "date": "2026-02-01",
+                "hommes": 207,
+                "femmes": 242,
+                "jeunes": 186,
+                "enfants": 172
+              }
+            ]
+          },
+          {
+            "branche_id": "9a3d99dc-532f-4776-8d75-fda98e11e1b1",
+            "branche_nom": "Sud",
+            "attendance": [
+              {
+                "date": "2026-02-01",
+                "hommes": 60,
+                "femmes": 90,
+                "jeunes": 54,
+                "enfants": 56
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "superviseur_id": "688459b9-114b-43ea-bcda-4beab5a239cb",
+    "superviseur_nom": "Impact Centre Chretien - Port Louis",
+    "couleur": "#32CD32",
+    "eglises": [
+      {
+        "eglise_id": "10285f75-71e5-47fe-91db-94cdcb81b3a7",
+        "eglise_nom": "Impact Centre Chretien",
+        "branches": [
+          {
+            "branche_id": "688459b9-114b-43ea-bcda-4beab5a239cb",
+            "branche_nom": "Port Louis",
+            "attendance": [
+              {
+                "date": "2026-01-04",
+                "hommes": 20,
+                "femmes": 15,
+                "jeunes": 15,
+                "enfants": 5
+              },
+              {
+                "date": "2026-01-11",
+                "hommes": 25,
+                "femmes": 5,
+                "jeunes": 25,
+                "enfants": 1
+              },
+              {
+                "date": "2026-02-01",
+                "hommes": 45,
+                "femmes": 20,
+                "jeunes": 40,
+                "enfants": 6
+              },
+              {
+                "date": "2026-02-08",
+                "hommes": 12,
+                "femmes": 15,
+                "jeunes": 20,
+                "enfants": 4
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

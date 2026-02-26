@@ -6,9 +6,6 @@ import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
 
-// Ici on simule le superviseur connecté
-const SUPERVISEUR_COURANT = "Impact Centre Chretien - Cite Royale";
-
 export default function StatGlobalPageWrapper() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
@@ -22,31 +19,45 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
+  const [superviseurId, setSuperviseurId] = useState(null); // superviseur connecté
+
+  useEffect(() => {
+    // ici tu peux récupérer l'ID du superviseur connecté depuis le contexte ou supabase.auth
+    // setSuperviseurId("ID_DU_SUPERVISEUR_CONNECTE");
+  }, []);
 
   const fetchStats = async () => {
+    if (!superviseurId) return;
+
     setLoading(true);
 
-    const { data, error } = await supabase
+    // 🔹 On récupère toutes les branches et stats sous ce superviseur
+    const { data: statsData, error: statsError } = await supabase
       .from("attendance_stats")
       .select("*")
       .gte(dateDebut ? "mois" : null, dateDebut || undefined)
       .lte(dateFin ? "mois" : null, dateFin || undefined);
 
-    if (error || !data) {
+    const { data: branchesData, error: branchesError } = await supabase
+      .from("branches")
+      .select("*")
+      .eq("superviseur_id", superviseurId); // filtre par superviseur
+
+    if (statsError || branchesError) {
       setBranches([]);
       setLoading(false);
       return;
     }
 
-    // 🔹 Filtrer selon le superviseur courant
-    const filtered = data.filter(
-      (item) => item.superviseur_id === SUPERVISEUR_COURANT || item.superviseur_id === null
+    // 🔹 On filtre uniquement les stats correspondant aux branches sous ce superviseur
+    const filteredStats = statsData.filter((s) =>
+      branchesData.some((b) => b.id === s.branche_id)
     );
 
-    // 🔹 Fusion par branche
+    // 🔹 On regroupe par branche
     const grouped = {};
-    filtered.forEach((item) => {
-      const key = item.branche_nom?.trim().toLowerCase();
+    filteredStats.forEach((item) => {
+      const key = item.branche_nom?.trim();
       if (!key) return;
 
       if (!grouped[key]) {
@@ -75,19 +86,9 @@ function StatGlobalPage() {
       grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
     });
 
-    // 🔹 Trier par nom
-    const result = Object.values(grouped).sort((a, b) =>
-      a.branche_nom.localeCompare(b.branche_nom)
-    );
-
-    setBranches(result);
+    setBranches(Object.values(grouped));
     setLoading(false);
   };
-
-  // Option : fetch auto au chargement
-  useEffect(() => {
-    fetchStats();
-  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -122,10 +123,8 @@ function StatGlobalPage() {
       {/* AFFICHAGE */}
       {!loading && branches.length > 0 && (
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
-
           {branches.map((b, idx) => (
             <div key={idx} className="w-full">
-
               {/* TITRE BRANCHE */}
               <div className="text-xl font-bold text-amber-300 mb-3">
                 {b.branche_nom}
@@ -138,10 +137,6 @@ function StatGlobalPage() {
                 <div className="min-w-[120px] text-center">Femmes</div>
                 <div className="min-w-[120px] text-center">Jeunes</div>
                 <div className="min-w-[120px] text-center">Enfants</div>
-                <div className="min-w-[140px] text-center">Connectés</div>
-                <div className="min-w-[150px] text-center">Nouveaux</div>
-                <div className="min-w-[180px] text-center">Convertis</div>
-                <div className="min-w-[160px] text-center">Moissonneurs</div>
               </div>
 
               {/* LIGNE CULTE */}
@@ -153,15 +148,9 @@ function StatGlobalPage() {
                 <div className="min-w-[120px] text-center text-white">{b.culte.femmes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.jeunes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.enfants}</div>
-                <div className="min-w-[140px] text-center text-white">{b.culte.connectes}</div>
-                <div className="min-w-[150px] text-center text-white">{b.culte.nouveaux_venus}</div>
-                <div className="min-w-[180px] text-center text-white">{b.culte.nouveau_converti}</div>
-                <div className="min-w-[160px] text-center text-white">{b.culte.moissonneurs}</div>
               </div>
-
             </div>
           ))}
-
         </div>
       )}
 

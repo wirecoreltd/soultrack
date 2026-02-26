@@ -2,55 +2,54 @@
 
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-import dayjs from "dayjs";
+import HeaderPages from "../components/HeaderPages";
+import ProtectedRoute from "../components/ProtectedRoute";
+import Footer from "../components/Footer";
 
-export default function StatGlobalPage() {
-  const [stats, setStats] = useState([]);
-  const [startDate, setStartDate] = useState(
-    dayjs().startOf("month").format("YYYY-MM-DD")
+export default function StatGlobalPageWrapper() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
+      <StatGlobalPage />
+    </ProtectedRoute>
   );
-  const [endDate, setEndDate] = useState(
-    dayjs().endOf("month").format("YYYY-MM-DD")
-  );
+}
+
+function StatGlobalPage() {
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
+  const [branches, setBranches] = useState([]);
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  async function fetchStats() {
+  const fetchStats = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-
       const { data, error } = await supabase
         .from("attendance_stats")
         .select("*")
-        .gte("mois", startDate)
-        .lte("mois", endDate);
+        .gte("mois", startDate || undefined)
+        .lte("mois", endDate || undefined);
 
       if (error) {
-        console.error("Supabase error:", error);
-        setStats([]);
+        console.error(error);
+        setBranches([]);
         return;
       }
 
-      if (!data || data.length === 0) {
-        setStats([]);
+      if (!data) {
+        setBranches([]);
         return;
       }
 
-      // 1️⃣ Cumuler les stats par nom de branche (fusion des doublons)
+      // Fusion des doublons par nom de branche
       const grouped = {};
       data.forEach((item) => {
-        const key = item.branche_nom.trim().toLowerCase(); // clé unique par nom de branche
-
+        const key = item.branche_nom.trim().toLowerCase();
         if (!grouped[key]) {
           grouped[key] = {
             branche_id: item.branche_id,
             branche_nom: item.branche_nom,
             eglise_nom: item.eglis_nom || "",
             superviseur_id: item.superviseur_id,
-            superviseur_nom: item.superviseur_nom,
             culte: 0,
             hommes: 0,
             femmes: 0,
@@ -63,7 +62,6 @@ export default function StatGlobalPage() {
             moissonneurs: 0,
           };
         }
-
         grouped[key].culte += item.culte || 0;
         grouped[key].hommes += item.hommes || 0;
         grouped[key].femmes += item.femmes || 0;
@@ -76,8 +74,7 @@ export default function StatGlobalPage() {
         grouped[key].moissonneurs += item.moissonneurs || 0;
       });
 
-      // 2️⃣ Filtrer les branches vides et "Eglise Principale" si pas de superviseur
-      let branches = Object.values(grouped).filter((b) => {
+      const filtered = Object.values(grouped).filter((b) => {
         const total =
           b.culte +
           b.hommes +
@@ -89,106 +86,92 @@ export default function StatGlobalPage() {
           b.nouveaux_venus +
           b.nouveau_converti +
           b.moissonneurs;
-
         if (total === 0) return false;
-        if (
-          b.branche_nom?.toLowerCase() === "eglise principale" &&
-          !b.superviseur_id
-        )
+        if (b.branche_nom.toLowerCase() === "eglise principale" && !b.superviseur_id)
           return false;
-
         return true;
       });
 
-      // 3️⃣ Tri alphabétique (pour l'instant)
-      branches.sort((a, b) => a.branche_nom.localeCompare(b.branche_nom));
-
-      setStats(branches);
+      setBranches(filtered.sort((a, b) => a.branche_nom.localeCompare(b.branche_nom)));
     } catch (err) {
-      console.error("Unexpected error:", err);
-      setStats([]);
+      console.error(err);
+      setBranches([]);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="p-6 bg-gray-900 min-h-screen text-white">
-      {/* FILTRE DATES */}
-      <div className="flex gap-4 mb-6">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+      <HeaderPages />
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
+        Rapport <span className="text-amber-300">Statistiques Globales</span>
+      </h1>
+
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
         <input
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
-          className="px-3 py-2 rounded border border-gray-400 text-black"
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <input
           type="date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
-          className="px-3 py-2 rounded border border-gray-400 text-black"
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
           onClick={fetchStats}
-          className="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
-          Filtrer
+          Générer
         </button>
       </div>
 
-      {loading ? (
-        <div>Chargement...</div>
-      ) : stats.length === 0 ? (
-        <div>Aucune donnée trouvée.</div>
-      ) : (
-        <div className="space-y-10">
-          {/* DATE */}
-          <div className="text-xl font-bold text-yellow-400">
-            Date : {startDate} – {endDate}
-          </div>
-
-          {stats.map((branch) => (
-            <div key={branch.branche_id} className="space-y-2">
-              {/* NOM BRANCHE */}
-              <div className="text-2xl font-bold text-blue-400">
-                {branch.branche_nom} {branch.eglis_nom && `(${branch.eglis_nom})`}
-              </div>
-
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="border-b border-gray-600 text-gray-300">
-                    <th className="text-left py-2 w-20">Culte</th>
-                    <th className="text-right px-4">Hommes</th>
-                    <th className="text-right px-4">Femmes</th>
-                    <th className="text-right px-4">Jeunes</th>
-                    <th className="text-right px-4">Total HFJ</th>
-                    <th className="text-right px-4">Enfants</th>
-                    <th className="text-right px-4">Connectés</th>
-                    <th className="text-right px-4">Nouveaux</th>
-                    <th className="text-right px-4">Convertis</th>
-                    <th className="text-right px-4">Moissonneurs</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  <tr className="border-b border-gray-700">
-                    <td className="py-2 font-semibold">{branch.culte}</td>
-                    <td className="text-right px-4">{branch.hommes}</td>
-                    <td className="text-right px-4">{branch.femmes}</td>
-                    <td className="text-right px-4">{branch.jeunes}</td>
-                    <td className="text-right px-4 font-bold">{branch.total_hfj}</td>
-                    <td className="text-right px-4">{branch.enfants}</td>
-                    <td className="text-right px-4">{branch.connectes}</td>
-                    <td className="text-right px-4">{branch.nouveaux_venus}</td>
-                    <td className="text-right px-4">{branch.nouveau_converti}</td>
-                    <td className="text-right px-4">{branch.moissonneurs}</td>
-                  </tr>
-                </tbody>
-              </table>
+      {!loading && branches.length > 0 && (
+        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+          <div className="w-max space-y-2">
+            {/* HEADER */}
+            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[200px]">Branche</div>
+              <div className="min-w-[120px] text-center">Culte</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center">Jeunes</div>
+              <div className="min-w-[120px] text-center">Total HFJ</div>
+              <div className="min-w-[120px] text-center">Enfants</div>
+              <div className="min-w-[140px] text-center">Connectés</div>
+              <div className="min-w-[150px] text-center">Nouveaux</div>
+              <div className="min-w-[180px] text-center">Convertis</div>
+              <div className="min-w-[160px] text-center">Moissonneurs</div>
             </div>
-          ))}
+
+            {branches.map((b) => (
+              <div
+                key={b.branche_id}
+                className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400"
+              >
+                <div className="min-w-[200px] text-white font-semibold">
+                  {b.branche_nom} {b.eglis_nom && `(${b.eglis_nom})`}
+                </div>
+                <div className="min-w-[120px] text-center text-white">{b.culte}</div>
+                <div className="min-w-[120px] text-center text-white">{b.hommes}</div>
+                <div className="min-w-[120px] text-center text-white">{b.femmes}</div>
+                <div className="min-w-[120px] text-center text-white">{b.jeunes}</div>
+                <div className="min-w-[120px] text-center text-white">{b.total_hfj}</div>
+                <div className="min-w-[120px] text-center text-white">{b.enfants}</div>
+                <div className="min-w-[140px] text-center text-white">{b.connectes}</div>
+                <div className="min-w-[150px] text-center text-white">{b.nouveaux_venus}</div>
+                <div className="min-w-[180px] text-center text-white">{b.nouveau_converti}</div>
+                <div className="min-w-[160px] text-center text-white">{b.moissonneurs}</div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
+
+      <Footer />
     </div>
   );
 }

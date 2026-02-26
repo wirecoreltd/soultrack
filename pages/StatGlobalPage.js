@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
+
+// Ici on simule le superviseur connecté
+const SUPERVISEUR_COURANT = "Impact Centre Chretien - Cite Royale";
 
 export default function StatGlobalPageWrapper() {
   return (
@@ -35,10 +38,14 @@ function StatGlobalPage() {
       return;
     }
 
-    // 🔹 Fusion par nom de branche
-    const grouped = {};
+    // 🔹 Filtrer selon le superviseur courant
+    const filtered = data.filter(
+      (item) => item.superviseur_id === SUPERVISEUR_COURANT || item.superviseur_id === null
+    );
 
-    data.forEach((item) => {
+    // 🔹 Fusion par branche
+    const grouped = {};
+    filtered.forEach((item) => {
       const key = item.branche_nom?.trim().toLowerCase();
       if (!key) return;
 
@@ -63,11 +70,12 @@ function StatGlobalPage() {
       grouped[key].culte.jeunes += Number(item.jeunes) || 0;
       grouped[key].culte.enfants += Number(item.enfants) || 0;
       grouped[key].culte.connectes += Number(item.connectes) || 0;
-      grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
-      grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
+      grouped[key].culte.nouveaux_venus += Number(item.nouveauxvenus) || 0;
+      grouped[key].culte.nouveau_converti += Number(item.nouveauxconvertis) || 0;
       grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
     });
 
+    // 🔹 Trier par nom
     const result = Object.values(grouped).sort((a, b) =>
       a.branche_nom.localeCompare(b.branche_nom)
     );
@@ -75,6 +83,11 @@ function StatGlobalPage() {
     setBranches(result);
     setLoading(false);
   };
+
+  // Option : fetch auto au chargement
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">

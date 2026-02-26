@@ -27,26 +27,61 @@ function StatGlobalPage() {
   }, []);
 
   const fetchStats = async () => {
-    if (!superviseurId) return;
+  if (!superviseurId) return;
 
-    setLoading(true);
+  setLoading(true);
 
-    // 🔹 On récupère toutes les branches et stats sous ce superviseur
-    const { data: statsData, error: statsError } = await supabase
-      .from("attendance_stats")
-      .select("*")
-      .gte(dateDebut ? "mois" : null, dateDebut || undefined)
-      .lte(dateFin ? "mois" : null, dateFin || undefined);
+  // 🔹 Récupère toutes les branches sous ce superviseur
+  const { data: branchesData, error: branchesError } = await supabase
+    .from("branches")
+    .select("id, nom")
+    .eq("superviseur_id", superviseurId);
 
-    const { data: branchesData, error: branchesError } = await supabase
-      .from("branches")
-      .select("*")
-      .eq("superviseur_id", superviseurId); // filtre par superviseur
+  if (branchesError || !branchesData) {
+    setBranches([]);
+    setLoading(false);
+    return;
+  }
 
-    if (statsError || branchesError) {
-      setBranches([]);
-      setLoading(false);
-      return;
+  // 🔹 Récupère toutes les stats
+  const { data: statsData, error: statsError } = await supabase
+    .from("attendance_stats")
+    .select("*")
+    .gte(dateDebut ? "mois" : null, dateDebut || undefined)
+    .lte(dateFin ? "mois" : null, dateFin || undefined);
+
+  if (statsError || !statsData) {
+    setBranches([]);
+    setLoading(false);
+    return;
+  }
+
+  // 🔹 Filtre uniquement les stats des branches sous ce superviseur
+  const branchIds = branchesData.map((b) => b.id);
+  const filteredStats = statsData.filter((s) => branchIds.includes(s.branche_id));
+
+  // 🔹 Regroupe par branche_nom
+  const grouped = {};
+  filteredStats.forEach((item) => {
+    const key = item.branche_nom?.trim();
+    if (!key) return;
+
+    if (!grouped[key]) {
+      grouped[key] = {
+        branche_nom: item.branche_nom,
+        culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0 },
+      };
+    }
+
+    grouped[key].culte.hommes += Number(item.hommes) || 0;
+    grouped[key].culte.femmes += Number(item.femmes) || 0;
+    grouped[key].culte.jeunes += Number(item.jeunes) || 0;
+    grouped[key].culte.enfants += Number(item.enfants) || 0;
+  });
+
+  setBranches(Object.values(grouped));
+  setLoading(false);
+};
     }
 
     // 🔹 On filtre uniquement les stats correspondant aux branches sous ce superviseur

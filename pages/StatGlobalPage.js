@@ -34,89 +34,140 @@ export default function GlobalStats() {
         return;
       }
 
-      if (!data) {
+      if (!data || data.length === 0) {
         setStats([]);
         return;
       }
 
-      // ✅ CUMUL PAR BRANCHE
-     // ✅ CUMUL PAR NOM DE BRANCHE (ANTI-DOUBLONS)
-const grouped = {};
+      // 1️⃣ CUMUL PAR BRANCHE_ID
+      const grouped = {};
 
-data.forEach((item) => {
-  const key = item.branche_nom?.trim();
+      data.forEach((item) => {
+        if (!grouped[item.branche_id]) {
+          grouped[item.branche_id] = {
+            branche_id: item.branche_id,
+            branche_nom: item.branche_nom,
+            superviseur_id: item.superviseur_id,
+            enfants: [],
+            culte: 0,
+            hommes: 0,
+            femmes: 0,
+            jeunes: 0,
+            total_hfj: 0,
+            enfants_stats: 0,
+            connectes: 0,
+            nouveaux_venus: 0,
+            nouveau_converti: 0,
+            moissonneurs: 0,
+          };
+        }
 
-  if (!key) return;
-
-  if (!grouped[key]) {
-    grouped[key] = {
-      branche_nom: key,
-      culte: 0,
-      hommes: 0,
-      femmes: 0,
-      jeunes: 0,
-      total_hfj: 0,
-      enfants: 0,
-      connectes: 0,
-      nouveaux_venus: 0,
-      nouveau_converti: 0,
-      moissonneurs: 0,
-    };
-  }
-
-  grouped[key].culte += item.culte || 0;
-  grouped[key].hommes += item.hommes || 0;
-  grouped[key].femmes += item.femmes || 0;
-  grouped[key].jeunes += item.jeunes || 0;
-  grouped[key].total_hfj += item.total_hfj || 0;
-  grouped[key].enfants += item.enfants || 0;
-  grouped[key].connectes += item.connectes || 0;
-  grouped[key].nouveaux_venus += item.nouveaux_venus || 0;
-  grouped[key].nouveau_converti += item.nouveau_converti || 0;
-  grouped[key].moissonneurs += item.moissonneurs || 0;
-});
-
-let branches = Object.values(grouped);
-
-      // ✅ SUPPRIMER BRANCHES VIDES
-      branches = branches.filter((b) => {
-        const total =
-          b.culte +
-          b.hommes +
-          b.femmes +
-          b.jeunes +
-          b.total_hfj +
-          b.enfants +
-          b.connectes +
-          b.nouveaux_venus +
-          b.nouveau_converti +
-          b.moissonneurs;
-
-        if (total === 0) return false;
-
-        if (
-          b.branche_nom?.toLowerCase() === "eglise principale" &&
-          !b.superviseur_id
-        )
-          return false;
-
-        return true;
+        grouped[item.branche_id].culte += item.culte || 0;
+        grouped[item.branche_id].hommes += item.hommes || 0;
+        grouped[item.branche_id].femmes += item.femmes || 0;
+        grouped[item.branche_id].jeunes += item.jeunes || 0;
+        grouped[item.branche_id].total_hfj += item.total_hfj || 0;
+        grouped[item.branche_id].enfants_stats += item.enfants || 0;
+        grouped[item.branche_id].connectes += item.connectes || 0;
+        grouped[item.branche_id].nouveaux_venus += item.nouveaux_venus || 0;
+        grouped[item.branche_id].nouveau_converti += item.nouveau_converti || 0;
+        grouped[item.branche_id].moissonneurs += item.moissonneurs || 0;
       });
 
-      branches.sort((a, b) =>
-  (a.branche_nom || "").localeCompare(b.branche_nom || "")
-);;
+      const branches = Object.values(grouped);
 
-      setStats(branches);
+      // 2️⃣ CONSTRUCTION DE L’ARBRE HIÉRARCHIQUE
+      const map = {};
+      branches.forEach((b) => (map[b.branche_id] = b));
+
+      const tree = [];
+
+      branches.forEach((branch) => {
+        if (branch.superviseur_id && map[branch.superviseur_id]) {
+          map[branch.superviseur_id].enfants.push(branch);
+        } else if (!branch.superviseur_id) {
+          tree.push(branch);
+        }
+      });
+
+      setStats(tree);
     } catch (err) {
-      console.error("Unexpected error:", err);
+      console.error(err);
+      setStats([]);
     } finally {
       setLoading(false);
     }
   }
 
+  function renderBranch(branch, level = 0) {
+    return (
+      <div key={branch.branche_id} className="mb-8">
+        {/* Nom de la branche */}
+        <div
+          className="text-xl font-bold text-yellow-400"
+          style={{ marginLeft: level * 25 }}
+        >
+          {branch.branche_nom}
+        </div>
+
+        {/* Tableau */}
+        <div
+          className="overflow-x-auto mt-2"
+          style={{ marginLeft: level * 25 }}
+        >
+          <table className="min-w-full text-sm border border-gray-700 bg-gray-800 rounded-lg">
+            <thead>
+              <tr className="bg-gray-700 text-gray-200">
+                <th className="px-4 py-2 text-right">Culte</th>
+                <th className="px-4 py-2 text-right">Hommes</th>
+                <th className="px-4 py-2 text-right">Femmes</th>
+                <th className="px-4 py-2 text-right">Jeunes</th>
+                <th className="px-4 py-2 text-right">Total HFJ</th>
+                <th className="px-4 py-2 text-right">Enfants</th>
+                <th className="px-4 py-2 text-right">Connectés</th>
+                <th className="px-4 py-2 text-right">Nouveaux</th>
+                <th className="px-4 py-2 text-right">Convertis</th>
+                <th className="px-4 py-2 text-right">Moissonneurs</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-t border-gray-700 text-white">
+                <td className="px-4 py-2 text-right">{branch.culte}</td>
+                <td className="px-4 py-2 text-right">{branch.hommes}</td>
+                <td className="px-4 py-2 text-right">{branch.femmes}</td>
+                <td className="px-4 py-2 text-right">{branch.jeunes}</td>
+                <td className="px-4 py-2 text-right font-bold">
+                  {branch.total_hfj}
+                </td>
+                <td className="px-4 py-2 text-right">
+                  {branch.enfants_stats}
+                </td>
+                <td className="px-4 py-2 text-right">{branch.connectes}</td>
+                <td className="px-4 py-2 text-right">
+                  {branch.nouveaux_venus}
+                </td>
+                <td className="px-4 py-2 text-right">
+                  {branch.nouveau_converti}
+                </td>
+                <td className="px-4 py-2 text-right">
+                  {branch.moissonneurs}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Enfants */}
+        {branch.enfants.map((child) =>
+          renderBranch(child, level + 1)
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 bg-gray-900 min-h-screen text-white">
+      {/* Filtres */}
       <div className="flex gap-4 mb-6">
         <input
           type="date"
@@ -138,60 +189,18 @@ let branches = Object.values(grouped);
         </button>
       </div>
 
+      {/* Affichage */}
       {loading ? (
         <div>Chargement...</div>
       ) : stats.length === 0 ? (
         <div>Aucune donnée trouvée.</div>
       ) : (
-        <div className="space-y-10">
-          <div className="text-xl font-bold text-yellow-400">
-            Date : {startDate} – {endDate}
+        <div>
+          <div className="text-2xl font-bold mb-6 text-green-400">
+            Période : {startDate} → {endDate}
           </div>
 
-          {stats.map((branch) => (
-            <div key={branch.branche_id} className="space-y-2">
-              <div className="text-2xl font-bold text-blue-400">
-                {branch.branche_nom}
-              </div>
-
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="border-b border-gray-600 text-gray-300">
-                    <th className="text-left py-2 w-20">Culte</th>
-                    <th className="text-right px-4">Hommes</th>
-                    <th className="text-right px-4">Femmes</th>
-                    <th className="text-right px-4">Jeunes</th>
-                    <th className="text-right px-4">Total HFJ</th>
-                    <th className="text-right px-4">Enfants</th>
-                    <th className="text-right px-4">Connectés</th>
-                    <th className="text-right px-4">Nouveaux</th>
-                    <th className="text-right px-4">Convertis</th>
-                    <th className="text-right px-4">Moissonneurs</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-gray-700">
-                    <td></td>
-                    <td className="text-right px-4">{branch.hommes}</td>
-                    <td className="text-right px-4">{branch.femmes}</td>
-                    <td className="text-right px-4">{branch.jeunes}</td>
-                    <td className="text-right px-4 font-bold">
-                      {branch.total_hfj}
-                    </td>
-                    <td className="text-right px-4">{branch.enfants}</td>
-                    <td className="text-right px-4">{branch.connectes}</td>
-                    <td className="text-right px-4">{branch.nouveaux_venus}</td>
-                    <td className="text-right px-4">
-                      {branch.nouveau_converti}
-                    </td>
-                    <td className="text-right px-4">
-                      {branch.moissonneurs}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          ))}
+          {stats.map((branch) => renderBranch(branch))}
         </div>
       )}
     </div>

@@ -19,11 +19,26 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
-  const [superviseurId, setSuperviseurId] = useState(null);
+  const [superviseurId, setSuperviseurId] = useState(null); // superviseur connecté
 
+  // 🔹 Récupération du superviseur connecté
   useEffect(() => {
-    // 🔹 Récupérer l'ID du superviseur connecté ici
-    // Exemple : setSuperviseurId("ID_DU_SUPERVISEUR_CONNECTE");
+    const fetchSuperviseur = async () => {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) return;
+
+      // Remplace 'profiles' par ta table où chaque user a un superviseur_id
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("superviseur_id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profile?.superviseur_id) {
+        setSuperviseurId(profile.superviseur_id);
+      }
+    };
+    fetchSuperviseur();
   }, []);
 
   const fetchStats = async () => {
@@ -34,7 +49,7 @@ function StatGlobalPage() {
 
     setLoading(true);
 
-    // 🔹 Récupérer toutes les branches sous ce superviseur
+    // 🔹 Récupère toutes les branches sous ce superviseur
     const { data: branchesData, error: branchesError } = await supabase
       .from("branches")
       .select("id, nom")
@@ -46,7 +61,9 @@ function StatGlobalPage() {
       return;
     }
 
-    // 🔹 Récupérer toutes les stats
+    const branchIds = branchesData.map((b) => b.id);
+
+    // 🔹 Récupère toutes les stats filtrées par date
     const { data: statsData, error: statsError } = await supabase
       .from("attendance_stats")
       .select("*")
@@ -59,11 +76,10 @@ function StatGlobalPage() {
       return;
     }
 
-    // 🔹 Filtrer uniquement les stats des branches sous ce superviseur
-    const branchIds = branchesData.map((b) => b.id);
+    // 🔹 Filtre uniquement les stats des branches sous ce superviseur
     const filteredStats = statsData.filter((s) => branchIds.includes(s.branche_id));
 
-    // 🔹 Regrouper par branche
+    // 🔹 Regroupe par branche
     const grouped = {};
     filteredStats.forEach((item) => {
       const key = item.branche_nom?.trim();

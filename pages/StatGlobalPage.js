@@ -23,11 +23,11 @@ function StatGlobalPage() {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      // Récupérer l'utilisateur connecté
+      // 🔹 Récupérer le user connecté
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Utilisateur non connecté");
 
-      // Récupérer la branche racine du user
+      // 🔹 Récupérer branche racine du user
       const { data: profile } = await supabase
         .from("profiles")
         .select("branche_id")
@@ -36,7 +36,7 @@ function StatGlobalPage() {
 
       const rootBranchId = profile.branche_id;
 
-      // Récupérer toutes les branches descendantes
+      // 🔹 Récupérer toutes les branches descendantes
       const { data: branchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootBranchId });
       if (!branchesData || branchesData.length === 0) {
         setRapports([]);
@@ -46,13 +46,13 @@ function StatGlobalPage() {
 
       const branchIds = branchesData.map(b => b.id);
 
-      // Récupérer les stats cumulées
+      // 🔹 Récupérer stats cumulées
       let statsQuery = supabase.from("attendance_stats").select("*").in("branche_id", branchIds);
       if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
       if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
       const { data: statsData } = await statsQuery;
 
-      // Cumuler stats par branche
+      // 🔹 Cumuler stats par branche
       const statsMap = {};
       statsData.forEach(stat => {
         if (!statsMap[stat.branche_id]) {
@@ -72,7 +72,7 @@ function StatGlobalPage() {
         s.moissonneurs += Number(stat.moissonneurs) || 0;
       });
 
-      // Construire arbre pour hiérarchie
+      // 🔹 Construire arbre
       const mapBranches = {};
       branchesData.forEach(b => {
         mapBranches[b.id] = {
@@ -94,7 +94,7 @@ function StatGlobalPage() {
         }
       });
 
-      // Aplatir arbre pour table avec couleurs bordure
+      // 🔹 Aplatir arbre pour table avec couleurs bordure
       const flattened = [];
       const traverse = (branch, color = "border-green-400") => {
         flattened.push({
@@ -102,9 +102,10 @@ function StatGlobalPage() {
           data: branch.stats,
           border: color
         });
-        branch.enfants.forEach(child => traverse(child, "border-orange-400")); // même couleur pour tous les enfants
+        branch.enfants.forEach(child => traverse(child, "border-orange-400"));
       };
       tree.forEach(b => traverse(b));
+
       setRapports(flattened);
     } catch (err) {
       console.error("Erreur fetch stats:", err);
@@ -161,7 +162,7 @@ function StatGlobalPage() {
             {/* LIGNES */}
             {rapports.map((r, idx) => (
               <div key={idx} className={`flex items-center px-4 py-3 border-l-4 ${r.border} bg-white/10`}>
-                <div className="min-w-[180px] font-semibold">{r.label}</div>
+                <div className="min-w-[180px] font-semibold">Culte</div>
                 <div className="min-w-[80px] text-center">{r.data.hommes}</div>
                 <div className="min-w-[80px] text-center">{r.data.femmes}</div>
                 <div className="min-w-[80px] text-center">{r.data.jeunes}</div>

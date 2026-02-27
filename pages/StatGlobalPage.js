@@ -19,70 +19,45 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
-  const [userBrancheId, setUserBrancheId] = useState(null);
-
-  // 🔹 Récupérer l'utilisateur connecté
-  const fetchUser = async () => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("branche_id")
-      .single();
-
-    if (profile?.branche_id) setUserBrancheId(profile.branche_id);
-  };
-
-  useEffect(() => {
-    fetchUser();
-  }, []);
-
-  // 🔹 Construire l'arbre des branches sous supervision
-  const fetchBranchesUnderSupervision = async () => {
-    if (!userBrancheId) return [];
-
-    const { data: allBranches } = await supabase
-      .from("branches")
-      .select("id, superviseur_id, nom");
-
-    if (!allBranches) return [];
-
-    // Fonction récursive pour trouver toutes les sous-branches
-    const collectSubBranches = (parentId, branchesList) => {
-      const children = branchesList.filter(
-        (b) => b.superviseur_id === parentId
-      );
-      let ids = children.map((c) => c.id);
-      children.forEach((c) => {
-        ids = [...ids, ...collectSubBranches(c.id, branchesList)];
-      });
-      return ids;
-    };
-
-    const allowedBranchIds = [userBrancheId, ...collectSubBranches(userBrancheId, allBranches)];
-    return allowedBranchIds;
-  };
+  const [superviseurId, setSuperviseurId] = useState(null);
 
   const fetchStats = async () => {
     setLoading(true);
 
-    const allowedBranchIds = await fetchBranchesUnderSupervision();
+    // 🔹 Récupération de toutes les branches supervisées (y compris enfants)
+    let { data: allBranches, error: branchesError } = await supabase
+      .from("branches")
+      .select("*")
+      .eq("superviseur_id", superviseurId);
 
-    let query = supabase.from("attendance_stats").select("*");
-
-    if (dateDebut) query = query.gte("mois", dateDebut);
-    if (dateFin) query = query.lte("mois", dateFin);
-    if (allowedBranchIds.length > 0) query = query.in("branche_id", allowedBranchIds);
-
-    const { data, error } = await query;
-
-    if (error || !data) {
+    if (branchesError) {
       setBranches([]);
       setLoading(false);
       return;
     }
 
-    // 🔹 Fusionner les stats par branche
+    const supervisedBranchIds = allBranches.map(b => b.id);
+
+    // 🔹 Récupération stats filtrées par supervision
+    let query = supabase.from("attendance_stats").select("*");
+
+    if (dateDebut) query = query.gte("mois", dateDebut);
+    if (dateFin) query = query.lte("mois", dateFin);
+
+    // Filtrage des branches supervisées
+    if (superviseurId) query = query.in("branche_id", supervisedBranchIds);
+
+    const { data: statsData, error: statsError } = await query;
+
+    if (statsError || !statsData) {
+      setBranches([]);
+      setLoading(false);
+      return;
+    }
+
+    // 🔹 Fusion par branche
     const grouped = {};
-    data.forEach((item) => {
+    statsData.forEach((item) => {
       const key = item.branche_nom?.trim().toLowerCase();
       if (!key) return;
 
@@ -142,6 +117,13 @@ function StatGlobalPage() {
           onChange={(e) => setDateFin(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
+        <input
+          type="text"
+          placeholder="ID Superviseur"
+          value={superviseurId || ""}
+          onChange={(e) => setSuperviseurId(e.target.value || null)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
         <button
           onClick={fetchStats}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
@@ -155,6 +137,7 @@ function StatGlobalPage() {
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
           {branches.map((b, idx) => (
             <div key={idx} className="w-full">
+
               {/* TITRE BRANCHE */}
               <div className="text-xl font-bold text-amber-300 mb-3">
                 {b.branche_nom}
@@ -187,6 +170,7 @@ function StatGlobalPage() {
                 <div className="min-w-[180px] text-center text-white">{b.culte.nouveau_converti}</div>
                 <div className="min-w-[160px] text-center text-white">{b.culte.moissonneurs}</div>
               </div>
+
             </div>
           ))}
         </div>

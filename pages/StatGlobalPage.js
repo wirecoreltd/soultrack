@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -30,7 +30,7 @@ function StatGlobalPage() {
     setLoading(true);
 
     try {
-      // 1️⃣ Récupérer la hiérarchie via RPC
+      // 1️⃣ Récupérer la hiérarchie
       const { data: branchesData, error: branchError } = await supabase
         .rpc("get_descendant_branches", { root_id: superviseurId });
 
@@ -43,7 +43,7 @@ function StatGlobalPage() {
 
       const branchIds = branchesData.map(b => b.id);
 
-      // 2️⃣ Récupérer et cumuler les stats
+      // 2️⃣ Récupérer les stats
       const { data: statsData, error: statsError } = await supabase
         .from("attendance_stats")
         .select("*")
@@ -53,6 +53,7 @@ function StatGlobalPage() {
 
       if (statsError) throw statsError;
 
+      // 3️⃣ Cumuler les stats
       const statsMap = {};
       statsData.forEach(stat => {
         if (!statsMap[stat.branche_id]) {
@@ -77,7 +78,7 @@ function StatGlobalPage() {
         statsMap[stat.branche_id].moissonneurs += Number(stat.moissonneurs) || 0;
       });
 
-      // 3️⃣ Construire arbre hiérarchique
+      // 4️⃣ Construire arbre hiérarchique
       const map = {};
       branchesData.forEach(b => {
         map[b.id] = {
@@ -114,26 +115,44 @@ function StatGlobalPage() {
     setLoading(false);
   };
 
-  // 4️⃣ Affichage hiérarchique avec labels corrects et Total
+  // ✅ Rendu avec tableau aligné
   const renderBranch = (branch, level = 0) => {
     const total = branch.stats.hommes + branch.stats.femmes + branch.stats.jeunes;
 
     return (
       <div key={branch.id} style={{ marginLeft: level * 30 }} className="mb-6">
-        <div className="text-xl font-bold text-amber-300">{branch.nom}</div>
+        <div className="text-xl font-bold text-amber-300 mb-2">{branch.nom}</div>
 
-        <div className="grid grid-cols-9 gap-2 bg-white/10 p-2 rounded-xl text-white font-semibold">
-          <div>Culte</div>
-          <div className="text-center">Hommes: {branch.stats.hommes}</div>
-          <div className="text-center">Femmes: {branch.stats.femmes}</div>
-          <div className="text-center">Jeunes: {branch.stats.jeunes}</div>
-          <div className="text-center">Total: {total}</div>
-          <div className="text-center">Enfants: {branch.stats.enfants}</div>
-          <div className="text-center">Connectés: {branch.stats.connectes}</div>
-          <div className="text-center">Nouveaux: {branch.stats.nouveaux_venus}</div>
-          <div className="text-center">Convertis: {branch.stats.nouveau_converti}</div>
-          <div className="text-center">Moissonneurs: {branch.stats.moissonneurs}</div>
-        </div>
+        <table className="w-full table-auto border-collapse text-white mb-2">
+          <thead>
+            <tr className="border-b border-white/30">
+              <th className="text-left px-2 py-1">Type</th>
+              <th className="px-2 py-1 text-center">Hommes</th>
+              <th className="px-2 py-1 text-center">Femmes</th>
+              <th className="px-2 py-1 text-center">Jeunes</th>
+              <th className="px-2 py-1 text-center">Total</th>
+              <th className="px-2 py-1 text-center">Enfants</th>
+              <th className="px-2 py-1 text-center">Connectés</th>
+              <th className="px-2 py-1 text-center">Nouveaux</th>
+              <th className="px-2 py-1 text-center">Convertis</th>
+              <th className="px-2 py-1 text-center">Moissonneurs</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="bg-white/10">
+              <td className="px-2 py-1 font-semibold">Culte</td>
+              <td className="px-2 py-1 text-center">{branch.stats.hommes}</td>
+              <td className="px-2 py-1 text-center">{branch.stats.femmes}</td>
+              <td className="px-2 py-1 text-center">{branch.stats.jeunes}</td>
+              <td className="px-2 py-1 text-center">{total}</td>
+              <td className="px-2 py-1 text-center">{branch.stats.enfants}</td>
+              <td className="px-2 py-1 text-center">{branch.stats.connectes}</td>
+              <td className="px-2 py-1 text-center">{branch.stats.nouveaux_venus}</td>
+              <td className="px-2 py-1 text-center">{branch.stats.nouveau_converti}</td>
+              <td className="px-2 py-1 text-center">{branch.stats.moissonneurs}</td>
+            </tr>
+          </tbody>
+        </table>
 
         {branch.enfants.map(child => renderBranch(child, level + 1))}
       </div>

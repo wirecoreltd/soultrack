@@ -21,48 +21,56 @@ function StatGlobalPage() {
   const [branches, setBranches] = useState([]);
   const [error, setError] = useState("");
 
+  // Récupérer le superviseur de l'utilisateur connecté
+  const getSuperviseurId = () => {
+    try {
+      const profile = JSON.parse(localStorage.getItem("profile"));
+      return profile?.superviseur_id || null;
+    } catch {
+      return null;
+    }
+  };
+
   const fetchStats = async () => {
     setLoading(true);
     setError("");
 
+    const superviseurId = getSuperviseurId();
+    if (!superviseurId) {
+      setError("❌ Superviseur non défini. Impossible de récupérer les stats !");
+      setBranches([]);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const profile = JSON.parse(localStorage.getItem("profile"));
-      if (!profile) {
-        setError("❌ Profil non trouvé");
-        setLoading(false);
-        return;
-      }
+      // Construire les filtres de date
+      const filters = [];
+      if (dateDebut) filters.push(`mois=gte.${dateDebut}`);
+      if (dateFin) filters.push(`mois=lte.${dateFin}`);
 
-      const userSuperviseurId = profile.superviseur_id;
-
-      let query = supabase.from("attendance_stats").select("*");
-
-      if (dateDebut) query = query.gte("mois", dateDebut);
-      if (dateFin) query = query.lte("mois", dateFin);
-
-      // Si pas admin, filtrer par superviseur
-      if (!profile.roles?.includes("Administrateur")) {
-        if (!userSuperviseurId) {
-          setError("❌ Superviseur non défini. Impossible de récupérer les stats !");
-          setLoading(false);
-          return;
-        }
-        query = query.eq("superviseur_id", userSuperviseurId);
-      }
-
-      const { data, error: fetchError } = await query;
+      // Récupérer les stats depuis Supabase
+      const { data, error: fetchError } = await supabase
+        .from("attendance_stats")
+        .select("*")
+        .in("superviseur_id", [superviseurId]); // 🔹 Filtrer par superviseur
 
       if (fetchError || !data) {
-        setBranches([]);
         setError("❌ Erreur lors de la récupération des stats");
+        setBranches([]);
         setLoading(false);
         return;
       }
 
-      // 🔹 Fusion par nom de branche
+      // Filtrer les branches pour ne pas afficher Eglise Principale si non supervisée
+      const filtered = data.filter(
+        (b) => b.superviseur_id === superviseurId && b.branche_nom !== "Eglise Principale"
+      );
+
+      // Grouper par branche
       const grouped = {};
-      data.forEach((item) => {
-        const key = item.branche_nom?.trim().toLowerCase();
+      filtered.forEach((item) => {
+        const key = item.branche_nom?.trim();
         if (!key) return;
 
         if (!grouped[key]) {
@@ -99,6 +107,7 @@ function StatGlobalPage() {
     } catch (err) {
       console.error(err);
       setError("❌ Erreur lors de la récupération des stats");
+      setBranches([]);
     } finally {
       setLoading(false);
     }
@@ -107,7 +116,6 @@ function StatGlobalPage() {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
@@ -134,19 +142,20 @@ function StatGlobalPage() {
         </button>
       </div>
 
-      {error && <p className="text-red-400 mt-4">{error}</p>}
+      {error && (
+        <p className="mt-4 text-red-400 font-semibold text-center">{error}</p>
+      )}
 
       {/* AFFICHAGE */}
       {!loading && branches.length > 0 && (
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
           {branches.map((b, idx) => (
             <div key={idx} className="w-full">
-              {/* TITRE BRANCHE */}
               <div className="text-xl font-bold text-amber-300 mb-3">
                 {b.branche_nom}
               </div>
 
-              {/* HEADER COLONNES */}
+              {/* HEADER */}
               <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
                 <div className="min-w-[180px] ml-1">Type</div>
                 <div className="min-w-[120px] text-center">Hommes</div>

@@ -96,6 +96,7 @@ function StatGlobalPage() {
   setBranches(result);
   setLoading(false);
 };
+}
 
     // 🔹 Construire l'arbre hiérarchique
     const mapBranches = {};

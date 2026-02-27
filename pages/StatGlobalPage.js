@@ -23,6 +23,7 @@ function StatGlobalPage() {
   const [superviseurFilter, setSuperviseurFilter] = useState("");
   const [allBranches, setAllBranches] = useState([]);
   const [rootId, setRootId] = useState(null);
+  const [expandedBranches, setExpandedBranches] = useState([]);
 
   // Fonction pour récupérer toutes les descendants d'une branche
   const getAllDescendants = (branch) => {
@@ -31,6 +32,15 @@ function StatGlobalPage() {
       descendants = descendants.concat(getAllDescendants(child));
     });
     return descendants;
+  };
+
+  // Toggle expand/collapse
+  const toggleExpand = (branchId) => {
+    setExpandedBranches((prev) =>
+      prev.includes(branchId)
+        ? prev.filter((id) => id !== branchId)
+        : [...prev, branchId]
+    );
   };
 
   const fetchStats = async () => {
@@ -44,7 +54,7 @@ function StatGlobalPage() {
       } = await supabase.auth.getUser();
       if (userError) throw userError;
 
-      // 🔹 Récupérer branche racine de l'utilisateur
+      // 🔹 Récupérer branche racine
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("branche_id")
@@ -157,8 +167,16 @@ function StatGlobalPage() {
 
     return (
       <div key={branch.id} className="mt-8">
-        {/* TITRE avec rectangle coloré */}
+        {/* TITRE avec rectangle coloré et [+]/[-] */}
         <div className="flex items-center mb-3">
+          {level === 1 && branch.enfants.length > 0 && (
+            <button
+              onClick={() => toggleExpand(branch.id)}
+              className="mr-2 w-6 h-6 flex items-center justify-center rounded-full bg-white/20 text-black font-bold"
+            >
+              {expandedBranches.includes(branch.id) ? "-" : "+"}
+            </button>
+          )}
           <div
             className={`w-4 h-4 rounded-l-xl mr-2 ${
               level === 0 ? "bg-green-400" : level === 1 ? "bg-orange-400" : "bg-purple-400"
@@ -200,16 +218,16 @@ function StatGlobalPage() {
           </div>
         </div>
 
-        {/* ENFANTS */}
-        {branch.enfants.map((child) => renderBranch(child, level + 1))}
+        {/* ENFANTS (expand si niveau 1) */}
+        {level !== 1 || expandedBranches.includes(branch.id)
+          ? branch.enfants.map((child) => renderBranch(child, level + 1))
+          : null}
       </div>
     );
   };
 
-  // Récupérer branches enfants directs de la racine pour le select
-  const superviseurOptions = allBranches.filter(
-    (b) => b.superviseur_id === rootId
-  );
+  // Options de filtre: enfants directs de la racine
+  const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
 
   // Filtrage selon superviseur + tous ses descendants
   const filteredBranches =

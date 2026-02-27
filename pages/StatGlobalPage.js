@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -24,32 +24,21 @@ function StatGlobalPage() {
   const fetchStats = async () => {
     setLoading(true);
 
-    // 🔹 Récupération de toutes les branches supervisées (y compris enfants)
-    let { data: allBranches, error: branchesError } = await supabase
-      .from("branches")
-      .select("*")
-      .eq("superviseur_id", superviseurId);
-
-    if (branchesError) {
-      setBranches([]);
-      setLoading(false);
-      return;
-    }
-
-    const supervisedBranchIds = allBranches.map(b => b.id);
-
-    // 🔹 Récupération stats filtrées par supervision
     let query = supabase.from("attendance_stats").select("*");
 
     if (dateDebut) query = query.gte("mois", dateDebut);
     if (dateFin) query = query.lte("mois", dateFin);
 
-    // Filtrage des branches supervisées
-    if (superviseurId) query = query.in("branche_id", supervisedBranchIds);
+    // 🔹 Gestion superviseurId null correctement
+    if (superviseurId) {
+      query = query.eq("superviseur_id", superviseurId);
+    } else {
+      query = query.is("superviseur_id", null); // récupère uniquement les églises sans superviseur
+    }
 
-    const { data: statsData, error: statsError } = await query;
+    const { data, error } = await query;
 
-    if (statsError || !statsData) {
+    if (error || !data) {
       setBranches([]);
       setLoading(false);
       return;
@@ -57,7 +46,7 @@ function StatGlobalPage() {
 
     // 🔹 Fusion par branche
     const grouped = {};
-    statsData.forEach((item) => {
+    data.forEach((item) => {
       const key = item.branche_nom?.trim().toLowerCase();
       if (!key) return;
 

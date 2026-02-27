@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -18,71 +18,124 @@ function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
-  const [branches, setBranches] = useState([]);
+  const [branchesTree, setBranchesTree] = useState([]);
   const [superviseurId, setSuperviseurId] = useState(null);
 
   const fetchStats = async () => {
     setLoading(true);
 
-    let query = supabase.from("attendance_stats").select("*");
+    // 🔹 Récupérer toutes les branches et églises
+    let { data: branchesData, error: branchesError } = await supabase
+      .from("branches")
+      .select("*");
 
-    if (dateDebut) query = query.gte("mois", dateDebut);
-    if (dateFin) query = query.lte("mois", dateFin);
-
-    // 🔹 Gestion superviseurId null correctement
-    if (superviseurId) {
-      query = query.eq("superviseur_id", superviseurId);
-    } else {
-      query = query.is("superviseur_id", null); // récupère uniquement les églises sans superviseur
-    }
-
-    const { data, error } = await query;
-
-    if (error || !data) {
-      setBranches([]);
+    if (branchesError || !branchesData) {
+      setBranchesTree([]);
       setLoading(false);
       return;
     }
 
-    // 🔹 Fusion par branche
-    const grouped = {};
-    data.forEach((item) => {
-      const key = item.branche_nom?.trim().toLowerCase();
-      if (!key) return;
+    // 🔹 Récupérer toutes les stats
+    let statsQuery = supabase.from("attendance_stats").select("*");
+    if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
+    if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
+    const { data: statsData, error: statsError } = await statsQuery;
 
-      if (!grouped[key]) {
-        grouped[key] = {
-          branche_nom: item.branche_nom,
-          culte: {
-            hommes: 0,
-            femmes: 0,
-            jeunes: 0,
-            enfants: 0,
-            connectes: 0,
-            nouveaux_venus: 0,
-            nouveau_converti: 0,
-            moissonneurs: 0,
-          },
-        };
-      }
+    if (statsError || !statsData) {
+      setBranchesTree([]);
+      setLoading(false);
+      return;
+    }
 
-      grouped[key].culte.hommes += Number(item.hommes) || 0;
-      grouped[key].culte.femmes += Number(item.femmes) || 0;
-      grouped[key].culte.jeunes += Number(item.jeunes) || 0;
-      grouped[key].culte.enfants += Number(item.enfants) || 0;
-      grouped[key].culte.connectes += Number(item.connectes) || 0;
-      grouped[key].culte.nouveaux_venus += Number(item.nouveauxvenus || item.nouveaux_venus) || 0;
-      grouped[key].culte.nouveau_converti += Number(item.nouveauxconvertis || item.nouveau_converti) || 0;
-      grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
+    // 🔹 Construire un map de stats par branche_id
+    const statsMap = {};
+    statsData.forEach((item) => {
+      statsMap[item.branche_id] = {
+        hommes: Number(item.hommes) || 0,
+        femmes: Number(item.femmes) || 0,
+        jeunes: Number(item.jeunes) || 0,
+        enfants: Number(item.enfants) || 0,
+        connectes: Number(item.connectes) || 0,
+        nouveaux_venus: Number(item.nouveauxvenus || item.nouveaux_venus) || 0,
+        nouveau_converti: Number(item.nouveauxconvertis || item.nouveau_converti) || 0,
+        moissonneurs: Number(item.moissonneurs) || 0,
+      };
     });
 
-    const result = Object.values(grouped).sort((a, b) =>
-      a.branche_nom.localeCompare(b.branche_nom)
-    );
+    // 🔹 Construire l'arbre hiérarchique
+    const mapBranches = {};
+    branchesData.forEach((b) => {
+      mapBranches[b.id] = {
+        id: b.id,
+        nom: b.nom,
+        superviseur_id: b.superviseur_id,
+        stats: statsMap[b.id] || {
+          hommes: 0,
+          femmes: 0,
+          jeunes: 0,
+          enfants: 0,
+          connectes: 0,
+          nouveaux_venus: 0,
+          nouveau_converti: 0,
+          moissonneurs: 0,
+        },
+        enfants: [],
+      };
+    });
 
-    setBranches(result);
+    const tree = [];
+    Object.values(mapBranches).forEach((b) => {
+      // 🔹 Filtrer si on est sous un superviseur spécifique
+      if (superviseurId && b.superviseur_id !== superviseurId && b.id !== superviseurId) {
+        return;
+      }
+
+      if (b.superviseur_id && mapBranches[b.superviseur_id]) {
+        mapBranches[b.superviseur_id].enfants.push(b);
+      } else {
+        tree.push(b); // branche racine
+      }
+    });
+
+    setBranchesTree(tree);
     setLoading(false);
   };
+
+  const renderBranch = (b) => (
+    <div key={b.id} className="w-full">
+      <div className="text-xl font-bold text-amber-300 mb-3">{b.nom}</div>
+
+      <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+        <div className="min-w-[180px] ml-1">Type</div>
+        <div className="min-w-[120px] text-center">Hommes</div>
+        <div className="min-w-[120px] text-center">Femmes</div>
+        <div className="min-w-[120px] text-center">Jeunes</div>
+        <div className="min-w-[120px] text-center">Enfants</div>
+        <div className="min-w-[140px] text-center">Connectés</div>
+        <div className="min-w-[150px] text-center">Nouveaux</div>
+        <div className="min-w-[180px] text-center">Convertis</div>
+        <div className="min-w-[160px] text-center">Moissonneurs</div>
+      </div>
+
+      <div className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400 whitespace-nowrap">
+        <div className="min-w-[180px] text-white font-semibold">Culte</div>
+        <div className="min-w-[120px] text-center text-white">{b.stats.hommes}</div>
+        <div className="min-w-[120px] text-center text-white">{b.stats.femmes}</div>
+        <div className="min-w-[120px] text-center text-white">{b.stats.jeunes}</div>
+        <div className="min-w-[120px] text-center text-white">{b.stats.enfants}</div>
+        <div className="min-w-[140px] text-center text-white">{b.stats.connectes}</div>
+        <div className="min-w-[150px] text-center text-white">{b.stats.nouveaux_venus}</div>
+        <div className="min-w-[180px] text-center text-white">{b.stats.nouveau_converti}</div>
+        <div className="min-w-[160px] text-center text-white">{b.stats.moissonneurs}</div>
+      </div>
+
+      {b.enfants.length > 0 && (
+        <div className="pl-8 mt-4 space-y-4">
+          {b.enfants.map((child) => renderBranch(child))}
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -122,46 +175,9 @@ function StatGlobalPage() {
       </div>
 
       {/* AFFICHAGE */}
-      {!loading && branches.length > 0 && (
+      {!loading && branchesTree.length > 0 && (
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
-          {branches.map((b, idx) => (
-            <div key={idx} className="w-full">
-
-              {/* TITRE BRANCHE */}
-              <div className="text-xl font-bold text-amber-300 mb-3">
-                {b.branche_nom}
-              </div>
-
-              {/* HEADER COLONNES */}
-              <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-                <div className="min-w-[180px] ml-1">Type</div>
-                <div className="min-w-[120px] text-center">Hommes</div>
-                <div className="min-w-[120px] text-center">Femmes</div>
-                <div className="min-w-[120px] text-center">Jeunes</div>
-                <div className="min-w-[120px] text-center">Enfants</div>
-                <div className="min-w-[140px] text-center">Connectés</div>
-                <div className="min-w-[150px] text-center">Nouveaux</div>
-                <div className="min-w-[180px] text-center">Convertis</div>
-                <div className="min-w-[160px] text-center">Moissonneurs</div>
-              </div>
-
-              {/* LIGNE CULTE */}
-              <div className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400 whitespace-nowrap">
-                <div className="min-w-[180px] text-white font-semibold">
-                  Culte
-                </div>
-                <div className="min-w-[120px] text-center text-white">{b.culte.hommes}</div>
-                <div className="min-w-[120px] text-center text-white">{b.culte.femmes}</div>
-                <div className="min-w-[120px] text-center text-white">{b.culte.jeunes}</div>
-                <div className="min-w-[120px] text-center text-white">{b.culte.enfants}</div>
-                <div className="min-w-[140px] text-center text-white">{b.culte.connectes}</div>
-                <div className="min-w-[150px] text-center text-white">{b.culte.nouveaux_venus}</div>
-                <div className="min-w-[180px] text-center text-white">{b.culte.nouveau_converti}</div>
-                <div className="min-w-[160px] text-center text-white">{b.culte.moissonneurs}</div>
-              </div>
-
-            </div>
-          ))}
+          {branchesTree.map((b) => renderBranch(b))}
         </div>
       )}
 

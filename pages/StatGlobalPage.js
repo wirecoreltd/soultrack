@@ -63,49 +63,59 @@ function StatGlobalPage() {
   }, []);
 
   const fetchStats = async () => {
-    console.log("fetchStats appelé ! SuperviseurId =", superviseurId);
+  if (!superviseurId) {
+    alert("Superviseur non défini !");
+    return;
+  }
 
-    if (!superviseurId) {
-      alert("Superviseur non défini !");
-      return;
-    }
+  console.log("fetchStats appelé ! SuperviseurId =", superviseurId);
+  setLoading(true);
 
-    setLoading(true);
-
-    // 🔹 Récupérer toutes les branches sous cette supervision
+  try {
+    // 🔹 1️⃣ Récupérer toutes les branches sous ce superviseur
     const { data: branchesData, error: branchesError } = await supabase
       .from("branches")
       .select("id, nom")
-      .or(`id.eq.${superviseurId},superviseur_id.eq.${superviseurId}`);
+      .or(`(id.eq.${superviseurId},superviseur_id.eq.${superviseurId})`);
+
+    console.log("Branches récupérées:", branchesData, branchesError);
 
     if (branchesError || !branchesData?.length) {
-      console.log("Branches non trouvées ou erreur :", branchesError);
       setBranches([]);
+      console.log("Aucune branche trouvée !");
       setLoading(false);
       return;
     }
 
-    // 🔹 Récupérer les stats avec filtre date
+    // 🔹 2️⃣ Récupérer les statistiques
     let statsQuery = supabase.from("attendance_stats").select("*");
+
     if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
     if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
 
     const { data: statsData, error: statsError } = await statsQuery;
+    console.log("Stats récupérées:", statsData, statsError);
 
     if (statsError || !statsData?.length) {
-      console.log("Stats non trouvées ou erreur :", statsError);
       setBranches([]);
+      console.log("Aucune stats trouvée !");
       setLoading(false);
       return;
     }
 
-    // 🔹 Filtrer stats selon les branches du superviseur
+    // 🔹 3️⃣ Filtrer uniquement les stats des branches sous ce superviseur
     const branchIds = branchesData.map((b) => b.id);
-    const filteredStats = statsData.filter((s) =>
-      branchIds.includes(s.branche_id)
-    );
+    const filteredStats = statsData.filter((s) => branchIds.includes(s.branche_id));
+    console.log("Stats filtrées:", filteredStats);
 
-    // 🔹 Regrouper par branche
+    if (!filteredStats.length) {
+      setBranches([]);
+      console.log("Aucune stats correspondante aux branches !");
+      setLoading(false);
+      return;
+    }
+
+    // 🔹 4️⃣ Regrouper par branche_nom
     const grouped = {};
     filteredStats.forEach((item) => {
       const key = item.branche_nom?.trim();
@@ -138,8 +148,13 @@ function StatGlobalPage() {
     });
 
     setBranches(Object.values(grouped));
+    console.log("Branches finales:", Object.values(grouped));
+  } catch (err) {
+    console.error("Erreur fetchStats:", err);
+  } finally {
     setLoading(false);
-  };
+  }
+};
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">

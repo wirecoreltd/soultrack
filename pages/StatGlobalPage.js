@@ -31,87 +31,81 @@ function StatGlobalPage() {
     }
   };
 
-  const fetchStats = async () => {
-    setLoading(true);
-    setError("");
+  // Dans StatGlobalPage
+const fetchStats = async () => {
+  setLoading(true);
 
-    const superviseurId = getSuperviseurId();
-    if (!superviseurId) {
-      setError("❌ Superviseur non défini. Impossible de récupérer les stats !");
+  try {
+    // Récupérer le profil local
+    const profile = JSON.parse(localStorage.getItem("profile"));
+    const superviseurId = profile?.superviseur_id;
+
+    let query = supabase.from("attendance_stats").select("*");
+
+    // Filtrage par dates
+    if (dateDebut) query = query.gte("mois", dateDebut);
+    if (dateFin) query = query.lte("mois", dateFin);
+
+    // Filtrer par superviseur si défini
+    if (superviseurId) {
+      query = query.eq("superviseur_id", superviseurId);
+    } else {
+      console.warn("⚠️ Superviseur non défini. On récupère toutes les églises.");
+      // Aucun filtre sur le superviseur → récupère tout
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("❌ Erreur lors de la récupération des stats", error);
       setBranches([]);
       setLoading(false);
       return;
     }
 
-    try {
-      // Construire les filtres de date
-      const filters = [];
-      if (dateDebut) filters.push(`mois=gte.${dateDebut}`);
-      if (dateFin) filters.push(`mois=lte.${dateFin}`);
+    // 🔹 Grouper par branche comme tu avais
+    const grouped = {};
+    data.forEach((item) => {
+      const key = item.branche_nom?.trim().toLowerCase();
+      if (!key) return;
 
-      // Récupérer les stats depuis Supabase
-      const { data, error: fetchError } = await supabase
-        .from("attendance_stats")
-        .select("*")
-        .in("superviseur_id", [superviseurId]); // 🔹 Filtrer par superviseur
-
-      if (fetchError || !data) {
-        setError("❌ Erreur lors de la récupération des stats");
-        setBranches([]);
-        setLoading(false);
-        return;
+      if (!grouped[key]) {
+        grouped[key] = {
+          branche_nom: item.branche_nom,
+          culte: {
+            hommes: 0,
+            femmes: 0,
+            jeunes: 0,
+            enfants: 0,
+            connectes: 0,
+            nouveaux_venus: 0,
+            nouveau_converti: 0,
+            moissonneurs: 0,
+          },
+        };
       }
 
-      // Filtrer les branches pour ne pas afficher Eglise Principale si non supervisée
-      const filtered = data.filter(
-        (b) => b.superviseur_id === superviseurId && b.branche_nom !== "Eglise Principale"
-      );
+      grouped[key].culte.hommes += Number(item.hommes) || 0;
+      grouped[key].culte.femmes += Number(item.femmes) || 0;
+      grouped[key].culte.jeunes += Number(item.jeunes) || 0;
+      grouped[key].culte.enfants += Number(item.enfants) || 0;
+      grouped[key].culte.connectes += Number(item.connectes) || 0;
+      grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
+      grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
+      grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
+    });
 
-      // Grouper par branche
-      const grouped = {};
-      filtered.forEach((item) => {
-        const key = item.branche_nom?.trim();
-        if (!key) return;
+    setBranches(Object.values(grouped).sort((a, b) =>
+      a.branche_nom.localeCompare(b.branche_nom)
+    ));
 
-        if (!grouped[key]) {
-          grouped[key] = {
-            branche_nom: item.branche_nom,
-            culte: {
-              hommes: 0,
-              femmes: 0,
-              jeunes: 0,
-              enfants: 0,
-              connectes: 0,
-              nouveaux_venus: 0,
-              nouveau_converti: 0,
-              moissonneurs: 0,
-            },
-          };
-        }
-
-        grouped[key].culte.hommes += Number(item.hommes) || 0;
-        grouped[key].culte.femmes += Number(item.femmes) || 0;
-        grouped[key].culte.jeunes += Number(item.jeunes) || 0;
-        grouped[key].culte.enfants += Number(item.enfants) || 0;
-        grouped[key].culte.connectes += Number(item.connectes) || 0;
-        grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
-        grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
-        grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
-      });
-
-      const result = Object.values(grouped).sort((a, b) =>
-        a.branche_nom.localeCompare(b.branche_nom)
-      );
-
-      setBranches(result);
-    } catch (err) {
-      console.error(err);
-      setError("❌ Erreur lors de la récupération des stats");
-      setBranches([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (err) {
+    console.error("❌ Erreur lors de la récupération des stats", err);
+    setBranches([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">

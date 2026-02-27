@@ -22,45 +22,80 @@ function StatGlobalPage() {
   const [superviseurId, setSuperviseurId] = useState(null);
 
   const fetchStats = async () => {
-    setLoading(true);
+  setLoading(true);
 
-    // 🔹 Récupérer toutes les branches et églises
-    let { data: branchesData, error: branchesError } = await supabase
-      .from("branches")
-      .select("*");
+  if (!superviseurId) {
+    setBranches([]);
+    setLoading(false);
+    return;
+  }
 
-    if (branchesError || !branchesData) {
-      setBranchesTree([]);
-      setLoading(false);
-      return;
-    }
+  // 🔹 Étape 1 : récupérer toutes les branches supervisées par cet utilisateur
+  const { data: branchesData, error: branchesError } = await supabase
+    .from("branches")
+    .select("id, nom, superviseur_id")
+    .eq("superviseur_id", superviseurId);
 
-    // 🔹 Récupérer toutes les stats
-    let statsQuery = supabase.from("attendance_stats").select("*");
-    if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
-    if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
-    const { data: statsData, error: statsError } = await statsQuery;
+  if (branchesError) {
+    console.error("Erreur fetch branches:", branchesError);
+    setBranches([]);
+    setLoading(false);
+    return;
+  }
 
-    if (statsError || !statsData) {
-      setBranchesTree([]);
-      setLoading(false);
-      return;
-    }
+  const superviseurBranchIds = branchesData.map(b => b.id);
 
-    // 🔹 Construire un map de stats par branche_id
-    const statsMap = {};
-    statsData.forEach((item) => {
-      statsMap[item.branche_id] = {
-        hommes: Number(item.hommes) || 0,
-        femmes: Number(item.femmes) || 0,
-        jeunes: Number(item.jeunes) || 0,
-        enfants: Number(item.enfants) || 0,
-        connectes: Number(item.connectes) || 0,
-        nouveaux_venus: Number(item.nouveauxvenus || item.nouveaux_venus) || 0,
-        nouveau_converti: Number(item.nouveauxconvertis || item.nouveau_converti) || 0,
-        moissonneurs: Number(item.moissonneurs) || 0,
+  // 🔹 Étape 2 : récupérer toutes les stats des branches filtrées
+  const { data, error } = await supabase
+    .from("attendance_stats")
+    .select("*")
+    .in("branche_id", superviseurBranchIds);
+
+  if (error || !data) {
+    setBranches([]);
+    setLoading(false);
+    return;
+  }
+
+  // 🔹 Étape 3 : fusionner les stats par branche
+  const grouped = {};
+  data.forEach((item) => {
+    const key = item.branche_nom?.trim().toLowerCase();
+    if (!key) return;
+
+    if (!grouped[key]) {
+      grouped[key] = {
+        branche_nom: item.branche_nom,
+        culte: {
+          hommes: 0,
+          femmes: 0,
+          jeunes: 0,
+          enfants: 0,
+          connectes: 0,
+          nouveaux_venus: 0,
+          nouveau_converti: 0,
+          moissonneurs: 0,
+        },
       };
-    });
+    }
+
+    grouped[key].culte.hommes += Number(item.hommes) || 0;
+    grouped[key].culte.femmes += Number(item.femmes) || 0;
+    grouped[key].culte.jeunes += Number(item.jeunes) || 0;
+    grouped[key].culte.enfants += Number(item.enfants) || 0;
+    grouped[key].culte.connectes += Number(item.connectes) || 0;
+    grouped[key].culte.nouveaux_venus += Number(item.nouveauxvenus || item.nouveaux_venus) || 0;
+    grouped[key].culte.nouveau_converti += Number(item.nouveauxconvertis || item.nouveau_converti) || 0;
+    grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
+  });
+
+  const result = Object.values(grouped).sort((a, b) =>
+    a.branche_nom.localeCompare(b.branche_nom)
+  );
+
+  setBranches(result);
+  setLoading(false);
+};
 
     // 🔹 Construire l'arbre hiérarchique
     const mapBranches = {};

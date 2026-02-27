@@ -21,96 +21,108 @@ function StatGlobalPage() {
   const [branches, setBranches] = useState([]);
   const [error, setError] = useState("");
 
+  // 1️⃣ Récupérer le superviseur de l'utilisateur connecté
+  const getSuperviseurId = () => {
+    try {
+      const profile = JSON.parse(localStorage.getItem("profile"));
+      return profile?.superviseur_id || null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  // 2️⃣ Fonction pour récupérer toutes les branches sous supervision
+  const fetchBranchesSousSupervision = async (superviseurId) => {
+    if (!superviseurId) return [];
+
+    // Récupère toutes les églises où superviseur_id = superviseurId
+    // Note: si tu veux une hiérarchie complète, il faudra gérer récursivement côté API ou JS
+    const { data, error } = await supabase
+      .from("branches")
+      .select("id, nom")
+      .or(`id.eq.${superviseurId},superviseur_id.eq.${superviseurId}`);
+
+    if (error) {
+      console.error(error);
+      return [];
+    }
+
+    return data || [];
+  };
+
   const fetchStats = async () => {
     setLoading(true);
     setError("");
     setBranches([]);
 
-    try {
-      const userProfile = JSON.parse(localStorage.getItem("profile"));
-
-      if (!userProfile) {
-        setError("❌ Impossible de récupérer le profil");
-        setLoading(false);
-        return;
-      }
-
-      const superviseurId = userProfile.superviseur_id;
-      const role = userProfile.role;
-
-      let query = supabase.from("attendance_stats").select("*");
-
-      // Filtre par dates si définies
-      if (dateDebut) query = query.gte("mois", dateDebut);
-      if (dateFin) query = query.lte("mois", dateFin);
-
-      // Si responsable avec superviseur_id → filtrer par églises sous sa supervision
-      if (superviseurId) {
-        query = query.eq("superviseur_id", superviseurId);
-      }
-      // Si administrateur principal sans superviseur → toutes les églises
-      else if (role !== "Administrateur") {
-        setError("❌ Superviseur non défini pour cet utilisateur !");
-        setLoading(false);
-        return;
-      }
-
-      const { data, error: statsError } = await query;
-
-      if (statsError) {
-        console.error(statsError);
-        setError("❌ Erreur lors de la récupération des stats");
-        setLoading(false);
-        return;
-      }
-
-      // 🔹 Grouper par branche
-      const grouped = {};
-      data.forEach((item) => {
-        const key = item.branche_nom?.trim().toLowerCase();
-        if (!key) return;
-
-        if (!grouped[key]) {
-          grouped[key] = {
-            branche_nom: item.branche_nom,
-            culte: {
-              hommes: 0,
-              femmes: 0,
-              jeunes: 0,
-              enfants: 0,
-              connectes: 0,
-              nouveaux_venus: 0,
-              nouveau_converti: 0,
-              moissonneurs: 0,
-            },
-          };
-        }
-
-        grouped[key].culte.hommes += Number(item.hommes) || 0;
-        grouped[key].culte.femmes += Number(item.femmes) || 0;
-        grouped[key].culte.jeunes += Number(item.jeunes) || 0;
-        grouped[key].culte.enfants += Number(item.enfants) || 0;
-        grouped[key].culte.connectes += Number(item.connectes) || 0;
-        grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
-        grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
-        grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
-      });
-
-      setBranches(Object.values(grouped).sort((a, b) =>
-        a.branche_nom.localeCompare(b.branche_nom)
-      ));
-
-    } catch (err) {
-      console.error(err);
-      setError("❌ Erreur lors de la récupération des stats");
-    } finally {
+    const superviseurId = getSuperviseurId();
+    if (!superviseurId) {
+      setError("❌ Superviseur non défini pour cet utilisateur !");
       setLoading(false);
+      return;
     }
-  };
 
-  useEffect(() => {
-    fetchStats(); // charge automatiquement au chargement de la page
-  }, []);
+    // Récupérer toutes les branches sous supervision
+    const branchesSousSupervision = await fetchBranchesSousSupervision(superviseurId);
+    const branchIds = branchesSousSupervision.map((b) => b.id);
+
+    if (!branchIds.length) {
+      setError("❌ Aucune branche sous votre supervision !");
+      setLoading(false);
+      return;
+    }
+
+    // Construire les filtres de date
+    let query = supabase.from("attendance_stats").select("*").in("branche_id", branchIds);
+    if (dateDebut) query = query.gte("mois", dateDebut);
+    if (dateFin) query = query.lte("mois", dateFin);
+
+    const { data, error: statsError } = await query;
+
+    if (statsError || !data) {
+      console.error(statsError);
+      setError("❌ Erreur lors de la récupération des stats");
+      setLoading(false);
+      return;
+    }
+
+    // 3️⃣ Grouper par branche
+    const grouped = {};
+    data.forEach((item) => {
+      const key = item.branche_id;
+      if (!grouped[key]) {
+        grouped[key] = {
+          branche_nom: item.branche_nom,
+          culte: {
+            hommes: 0,
+            femmes: 0,
+            jeunes: 0,
+            enfants: 0,
+            connectes: 0,
+            nouveaux_venus: 0,
+            nouveau_converti: 0,
+            moissonneurs: 0,
+          },
+        };
+      }
+
+      grouped[key].culte.hommes += Number(item.hommes) || 0;
+      grouped[key].culte.femmes += Number(item.femmes) || 0;
+      grouped[key].culte.jeunes += Number(item.jeunes) || 0;
+      grouped[key].culte.enfants += Number(item.enfants) || 0;
+      grouped[key].culte.connectes += Number(item.connectes) || 0;
+      grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
+      grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
+      grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
+    });
+
+    const result = Object.values(grouped).sort((a, b) =>
+      a.branche_nom.localeCompare(b.branche_nom)
+    );
+
+    setBranches(result);
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -142,6 +154,7 @@ function StatGlobalPage() {
         </button>
       </div>
 
+      {/* ERREURS */}
       {error && <p className="text-red-500 mt-4">{error}</p>}
 
       {/* AFFICHAGE */}
@@ -153,6 +166,7 @@ function StatGlobalPage() {
                 {b.branche_nom}
               </div>
 
+              {/* HEADER */}
               <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
                 <div className="min-w-[180px] ml-1">Type</div>
                 <div className="min-w-[120px] text-center">Hommes</div>
@@ -165,6 +179,7 @@ function StatGlobalPage() {
                 <div className="min-w-[160px] text-center">Moissonneurs</div>
               </div>
 
+              {/* LIGNE CULTE */}
               <div className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400 whitespace-nowrap">
                 <div className="min-w-[180px] text-white font-semibold">Culte</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.hommes}</div>

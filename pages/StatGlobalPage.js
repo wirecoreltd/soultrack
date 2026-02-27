@@ -19,87 +19,95 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
-  const [userSuperviseurId, setUserSuperviseurId] = useState(null);
+  const [error, setError] = useState("");
 
-  // 🔹 Récupérer le superviseur de l'utilisateur connecté
-  useEffect(() => {
-    const profile = JSON.parse(localStorage.getItem("profile"));
-    if (!profile) return;
-    if (!profile.superviseur_id && profile.role !== "Administrateur") {
-      console.warn("Superviseur non défini !");
-    }
-    setUserSuperviseurId(profile.superviseur_id || null);
-  }, []);
+  // Récupérer le superviseur connecté
+  const profile = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("profile") || "{}") : {};
+  const userSuperviseurId = profile.superviseur_id || null;
 
   const fetchStats = async () => {
-    if (!userSuperviseurId) {
-      alert("❌ Superviseur non défini. Impossible de récupérer les stats !");
-      return;
-    }
-
     setLoading(true);
+    setError("");
 
-    let query = supabase
-      .from("attendance_stats")
-      .select("*")
-      .eq("superviseur_id", userSuperviseurId);
-
-    if (dateDebut) query = query.gte("mois", dateDebut);
-    if (dateFin) query = query.lte("mois", dateFin);
-
-    const { data, error } = await query;
-
-    if (error || !data) {
-      console.error(error);
-      setBranches([]);
+    if (!userSuperviseurId && profile.role !== "Administrateur") {
+      setError("❌ Superviseur non défini. Impossible de récupérer les stats !");
       setLoading(false);
       return;
     }
 
-    // 🔹 Grouper par branche
-    const grouped = {};
-    data.forEach((item) => {
-      const key = item.branche_nom?.trim().toLowerCase();
-      if (!key) return;
+    try {
+      // Filtrage par superviseur
+      const { data, error } = await supabase
+        .from("attendance_stats")
+        .select("*")
+        .gte(dateDebut ? "mois" : null, dateDebut || undefined)
+        .lte(dateFin ? "mois" : null, dateFin || undefined)
+        .or(
+          profile.role === "Administrateur"
+            ? "" // Admin voit tout
+            : `superviseur_id.eq.${userSuperviseurId}` // Sinon on filtre par superviseur
+        );
 
-      if (!grouped[key]) {
-        grouped[key] = {
-          branche_nom: item.branche_nom,
-          culte: {
-            hommes: 0,
-            femmes: 0,
-            jeunes: 0,
-            enfants: 0,
-            connectes: 0,
-            nouveaux_venus: 0,
-            nouveau_converti: 0,
-            moissonneurs: 0,
-          },
-        };
+      if (error) throw error;
+      if (!data) {
+        setBranches([]);
+        setLoading(false);
+        return;
       }
 
-      grouped[key].culte.hommes += Number(item.hommes) || 0;
-      grouped[key].culte.femmes += Number(item.femmes) || 0;
-      grouped[key].culte.jeunes += Number(item.jeunes) || 0;
-      grouped[key].culte.enfants += Number(item.enfants) || 0;
-      grouped[key].culte.connectes += Number(item.connectes) || 0;
-      grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
-      grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
-      grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
-    });
+      // Fusion par branche
+      const grouped = {};
+      data.forEach((item) => {
+        const key = item.branche_nom?.trim().toLowerCase();
+        if (!key) return;
 
-    const result = Object.values(grouped).sort((a, b) =>
-      a.branche_nom.localeCompare(b.branche_nom)
-    );
+        if (!grouped[key]) {
+          grouped[key] = {
+            branche_nom: item.branche_nom,
+            culte: {
+              hommes: 0,
+              femmes: 0,
+              jeunes: 0,
+              enfants: 0,
+              connectes: 0,
+              nouveaux_venus: 0,
+              nouveau_converti: 0,
+              moissonneurs: 0,
+            },
+          };
+        }
 
-    setBranches(result);
-    setLoading(false);
+        grouped[key].culte.hommes += Number(item.hommes) || 0;
+        grouped[key].culte.femmes += Number(item.femmes) || 0;
+        grouped[key].culte.jeunes += Number(item.jeunes) || 0;
+        grouped[key].culte.enfants += Number(item.enfants) || 0;
+        grouped[key].culte.connectes += Number(item.connectes) || 0;
+        grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
+        grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
+        grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
+      });
+
+      const result = Object.values(grouped).sort((a, b) =>
+        a.branche_nom.localeCompare(b.branche_nom)
+      );
+
+      setBranches(result);
+    } catch (err) {
+      console.error(err);
+      setError("❌ Erreur lors de la récupération des stats");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Recharger automatiquement les stats si l'utilisateur est admin
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
@@ -126,6 +134,9 @@ function StatGlobalPage() {
         </button>
       </div>
 
+      {/* ERREUR */}
+      {error && <p className="text-red-500 mt-4">{error}</p>}
+
       {/* AFFICHAGE */}
       {!loading && branches.length > 0 && (
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
@@ -135,7 +146,6 @@ function StatGlobalPage() {
                 {b.branche_nom}
               </div>
 
-              {/* HEADER COLONNES */}
               <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
                 <div className="min-w-[180px] ml-1">Type</div>
                 <div className="min-w-[120px] text-center">Hommes</div>
@@ -148,11 +158,8 @@ function StatGlobalPage() {
                 <div className="min-w-[160px] text-center">Moissonneurs</div>
               </div>
 
-              {/* LIGNE CULTE */}
               <div className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400 whitespace-nowrap">
-                <div className="min-w-[180px] text-white font-semibold">
-                  Culte
-                </div>
+                <div className="min-w-[180px] text-white font-semibold">Culte</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.hommes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.femmes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.jeunes}</div>

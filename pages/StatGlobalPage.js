@@ -6,7 +6,9 @@ import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
 
-// ✅ Wrapper avec ProtectedRoute
+// Palette aléatoire pour les bordures
+const colors = ["border-red-500", "border-green-500", "border-blue-500", "border-yellow-500", "border-purple-500"];
+
 export default function StatGlobalPageWrapper() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
@@ -20,77 +22,87 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
-  const [superviseurId, setSuperviseurId] = useState(null); // 👈 id du superviseur connecté
+  const [superviseurId, setSuperviseurId] = useState(null); // récupéré depuis session ou login
 
-  // Exemple : récupérer l'id du superviseur depuis session (adapter selon ton auth)
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData?.session?.user?.id) {
-        setSuperviseurId(sessionData.session.user.id);
-      }
-    };
-    fetchUser();
-  }, []);
+  // Couleur par superviseur
+  const [supervisionColors, setSupervisionColors] = useState({});
 
   const fetchStats = async () => {
-    if (!superviseurId) return; // 🔹 on ne fait rien si on ne connait pas le superviseur
-    setLoading(true);
-
-    // ✅ Récupération des stats filtrées par superviseur et dates
-    const { data, error } = await supabase
-      .from("attendance_stats")
-      .select("*")
-      .eq("superviseur_id", superviseurId)
-      .gte(dateDebut ? "mois" : undefined, dateDebut || undefined)
-      .lte(dateFin ? "mois" : undefined, dateFin || undefined);
-
-    if (error || !data) {
-      setBranches([]);
-      setLoading(false);
-      console.error(error);
+    if (!superviseurId) {
+      alert("Superviseur non défini !");
       return;
     }
 
-    // 🔹 Fusion des stats par branche
-    const grouped = {};
+    setLoading(true);
 
-    data.forEach((item) => {
-      const key = item.branche_nom?.trim().toLowerCase();
-      if (!key) return;
+    try {
+      let query = supabase.from("attendance_stats").select("*").eq("superviseur_id", superviseurId);
 
-      if (!grouped[key]) {
-        grouped[key] = {
-          branche_nom: item.branche_nom,
-          culte: {
-            hommes: 0,
-            femmes: 0,
-            jeunes: 0,
-            enfants: 0,
-            connectes: 0,
-            nouveaux_venus: 0,
-            nouveau_converti: 0,
-            moissonneurs: 0,
-          },
-        };
+      if (dateDebut) query = query.gte("mois", dateDebut);
+      if (dateFin) query = query.lte("mois", dateFin);
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      if (!data) {
+        setBranches([]);
+        setLoading(false);
+        return;
       }
 
-      grouped[key].culte.hommes += Number(item.hommes) || 0;
-      grouped[key].culte.femmes += Number(item.femmes) || 0;
-      grouped[key].culte.jeunes += Number(item.jeunes) || 0;
-      grouped[key].culte.enfants += Number(item.enfants) || 0;
-      grouped[key].culte.connectes += Number(item.connectes) || 0;
-      grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
-      grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
-      grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
-    });
+      // 🔹 Fusion par branche
+      const grouped = {};
+      data.forEach((item) => {
+        const key = item.branche_nom?.trim();
+        if (!key) return;
 
-    const result = Object.values(grouped).sort((a, b) =>
-      a.branche_nom.localeCompare(b.branche_nom)
-    );
+        // Masquer Eglise Principale si pas sous la supervision
+        if (key.toLowerCase().includes("eglise principale")) return;
 
-    setBranches(result);
-    setLoading(false);
+        if (!grouped[key]) {
+          grouped[key] = {
+            branche_nom: key,
+            culte: {
+              hommes: 0,
+              femmes: 0,
+              jeunes: 0,
+              enfants: 0,
+              connectes: 0,
+              nouveaux_venus: 0,
+              nouveau_converti: 0,
+              moissonneurs: 0,
+            },
+          };
+        }
+
+        grouped[key].culte.hommes += Number(item.hommes) || 0;
+        grouped[key].culte.femmes += Number(item.femmes) || 0;
+        grouped[key].culte.jeunes += Number(item.jeunes) || 0;
+        grouped[key].culte.enfants += Number(item.enfants) || 0;
+        grouped[key].culte.connectes += Number(item.connectes) || 0;
+        grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
+        grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
+        grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
+      });
+
+      const result = Object.values(grouped).sort((a, b) =>
+        a.branche_nom.localeCompare(b.branche_nom)
+      );
+
+      // Attribution de couleurs aléatoires par branche
+      const newColors = {};
+      result.forEach((b) => {
+        newColors[b.branche_nom] = colors[Math.floor(Math.random() * colors.length)];
+      });
+
+      setSupervisionColors(newColors);
+      setBranches(result);
+    } catch (err) {
+      console.error(err);
+      setBranches([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -128,6 +140,7 @@ function StatGlobalPage() {
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
           {branches.map((b, idx) => (
             <div key={idx} className="w-full">
+
               {/* TITRE BRANCHE */}
               <div className="text-xl font-bold text-amber-300 mb-3">
                 {b.branche_nom}
@@ -140,26 +153,27 @@ function StatGlobalPage() {
                 <div className="min-w-[120px] text-center">Femmes</div>
                 <div className="min-w-[120px] text-center">Jeunes</div>
                 <div className="min-w-[120px] text-center">Enfants</div>
+                <div className="min-w-[140px] text-center">Connectés</div>
+                <div className="min-w-[150px] text-center">Nouveaux</div>
+                <div className="min-w-[180px] text-center">Convertis</div>
+                <div className="min-w-[160px] text-center">Moissonneurs</div>
               </div>
 
               {/* LIGNE CULTE */}
-              <div className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400 whitespace-nowrap">
+              <div className={`flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition ${supervisionColors[b.branche_nom] || 'border-blue-400'} border-l-4 whitespace-nowrap`}>
                 <div className="min-w-[180px] text-white font-semibold">
                   Culte
                 </div>
-                <div className="min-w-[120px] text-center text-white">
-                  {b.culte.hommes}
-                </div>
-                <div className="min-w-[120px] text-center text-white">
-                  {b.culte.femmes}
-                </div>
-                <div className="min-w-[120px] text-center text-white">
-                  {b.culte.jeunes}
-                </div>
-                <div className="min-w-[120px] text-center text-white">
-                  {b.culte.enfants}
-                </div>
+                <div className="min-w-[120px] text-center text-white">{b.culte.hommes}</div>
+                <div className="min-w-[120px] text-center text-white">{b.culte.femmes}</div>
+                <div className="min-w-[120px] text-center text-white">{b.culte.jeunes}</div>
+                <div className="min-w-[120px] text-center text-white">{b.culte.enfants}</div>
+                <div className="min-w-[140px] text-center text-white">{b.culte.connectes}</div>
+                <div className="min-w-[150px] text-center text-white">{b.culte.nouveaux_venus}</div>
+                <div className="min-w-[180px] text-center text-white">{b.culte.nouveau_converti}</div>
+                <div className="min-w-[160px] text-center text-white">{b.culte.moissonneurs}</div>
               </div>
+
             </div>
           ))}
         </div>

@@ -21,29 +21,41 @@ function StatGlobalPage() {
   const [branches, setBranches] = useState([]);
   const [superviseurId, setSuperviseurId] = useState(null);
 
-  // 🔹 Récupération du superviseur racine du user
+  // 🔹 Récupérer le superviseur de l'utilisateur connecté
   useEffect(() => {
     const fetchSuperviseur = async () => {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) return;
+      if (authError || !user) {
+        console.log("Erreur Auth:", authError);
+        return;
+      }
 
-      const { data: profile } = await supabase
+      // ✅ Récupérer le profil via email pour éviter mismatch ID
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("branche_id")
-        .eq("id", user.id)
+        .eq("email", user.email)
         .single();
 
-      if (!profile?.branche_id) return;
+      if (profileError || !profile) {
+        console.log("Erreur récupération profile:", profileError);
+        return;
+      }
 
-      const { data: branch } = await supabase
+      // ✅ Trouver la branche et son superviseur racine
+      const { data: branch, error: branchError } = await supabase
         .from("branches")
         .select("id, superviseur_id")
         .eq("id", profile.branche_id)
         .single();
 
-      if (!branch) return;
+      if (branchError || !branch) {
+        console.log("Erreur récupération branche:", branchError);
+        return;
+      }
 
       const rootSuperviseur = branch.superviseur_id || branch.id;
+      console.log("Superviseur défini:", rootSuperviseur);
       setSuperviseurId(rootSuperviseur);
     };
 
@@ -51,6 +63,8 @@ function StatGlobalPage() {
   }, []);
 
   const fetchStats = async () => {
+    console.log("fetchStats appelé ! SuperviseurId =", superviseurId);
+
     if (!superviseurId) {
       alert("Superviseur non défini !");
       return;
@@ -65,12 +79,13 @@ function StatGlobalPage() {
       .or(`id.eq.${superviseurId},superviseur_id.eq.${superviseurId}`);
 
     if (branchesError || !branchesData?.length) {
+      console.log("Branches non trouvées ou erreur :", branchesError);
       setBranches([]);
       setLoading(false);
       return;
     }
 
-    // 🔹 Récupérer les statistiques avec filtres de date
+    // 🔹 Récupérer les stats avec filtre date
     let statsQuery = supabase.from("attendance_stats").select("*");
     if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
     if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
@@ -78,16 +93,19 @@ function StatGlobalPage() {
     const { data: statsData, error: statsError } = await statsQuery;
 
     if (statsError || !statsData?.length) {
+      console.log("Stats non trouvées ou erreur :", statsError);
       setBranches([]);
       setLoading(false);
       return;
     }
 
-    // 🔹 Filtrer uniquement les stats des branches sous ce superviseur
+    // 🔹 Filtrer stats selon les branches du superviseur
     const branchIds = branchesData.map((b) => b.id);
-    const filteredStats = statsData.filter((s) => branchIds.includes(s.branche_id));
+    const filteredStats = statsData.filter((s) =>
+      branchIds.includes(s.branche_id)
+    );
 
-    // 🔹 Grouper par branche_nom
+    // 🔹 Regrouper par branche
     const grouped = {};
     filteredStats.forEach((item) => {
       const key = item.branche_nom?.trim();

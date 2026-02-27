@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -15,24 +15,55 @@ export default function StatGlobalPageWrapper() {
 }
 
 function StatGlobalPage() {
-  const [superviseurId, setSuperviseurId] = useState("");
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [branchesTree, setBranchesTree] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [userEgliseId, setUserEgliseId] = useState(null);
+
+  // 🔹 Récupérer automatiquement l'église du user connecté
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+        error
+      } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        console.error("Impossible de récupérer l'utilisateur :", error);
+        return;
+      }
+
+      // Récupérer la branche/église de l'utilisateur
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("branche_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        console.error("Impossible de récupérer l'église de l'utilisateur :", profileError);
+        return;
+      }
+
+      setUserEgliseId(profileData.branche_id);
+    };
+
+    fetchUser();
+  }, []);
 
   const fetchStats = async () => {
-    if (!superviseurId) {
-      alert("Veuillez entrer un ID d'église.");
+    if (!userEgliseId) {
+      alert("Impossible de récupérer votre église.");
       return;
     }
 
     setLoading(true);
 
     try {
-      // 1️⃣ Récupérer la hiérarchie
+      // 1️⃣ Récupérer toute la hiérarchie
       const { data: branchesData, error: branchError } = await supabase
-        .rpc("get_descendant_branches", { root_id: superviseurId });
+        .rpc("get_descendant_branches", { root_id: userEgliseId });
 
       if (branchError) throw branchError;
       if (!branchesData || branchesData.length === 0) {
@@ -43,7 +74,7 @@ function StatGlobalPage() {
 
       const branchIds = branchesData.map(b => b.id);
 
-      // 2️⃣ Récupérer les stats
+      // 2️⃣ Récupérer les stats cumulées
       const { data: statsData, error: statsError } = await supabase
         .from("attendance_stats")
         .select("*")
@@ -53,7 +84,6 @@ function StatGlobalPage() {
 
       if (statsError) throw statsError;
 
-      // 3️⃣ Cumuler les stats
       const statsMap = {};
       statsData.forEach(stat => {
         if (!statsMap[stat.branche_id]) {
@@ -78,7 +108,7 @@ function StatGlobalPage() {
         statsMap[stat.branche_id].moissonneurs += Number(stat.moissonneurs) || 0;
       });
 
-      // 4️⃣ Construire arbre hiérarchique
+      // 3️⃣ Construire arbre hiérarchique
       const map = {};
       branchesData.forEach(b => {
         map[b.id] = {
@@ -115,7 +145,6 @@ function StatGlobalPage() {
     setLoading(false);
   };
 
-  // ✅ Rendu avec tableau aligné
   const renderBranch = (branch, level = 0) => {
     const total = branch.stats.hommes + branch.stats.femmes + branch.stats.jeunes;
 
@@ -167,29 +196,19 @@ function StatGlobalPage() {
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
-      <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap text-black">
-        <input
-          type="text"
-          placeholder="ID Église"
-          value={superviseurId}
-          onChange={e => setSuperviseurId(e.target.value)}
-          className="px-3 py-2 rounded-lg"
-        />
-
+      <div className="mb-6">
         <input
           type="date"
           value={dateDebut}
           onChange={e => setDateDebut(e.target.value)}
-          className="px-3 py-2 rounded-lg"
+          className="px-3 py-2 rounded-lg text-black mr-2"
         />
-
         <input
           type="date"
           value={dateFin}
           onChange={e => setDateFin(e.target.value)}
-          className="px-3 py-2 rounded-lg"
+          className="px-3 py-2 rounded-lg text-black mr-2"
         />
-
         <button
           onClick={fetchStats}
           className="bg-[#2a2f85] px-5 py-2 rounded-lg text-white"

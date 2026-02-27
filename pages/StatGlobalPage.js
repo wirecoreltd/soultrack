@@ -172,17 +172,15 @@ function StatGlobalPage() {
           {level === 1 && branch.enfants.length > 0 && (
             <button
               onClick={() => toggleExpand(branch.id)}
-              className="mr-2 w-6 h-6 flex items-center justify-center rounded-full bg-white/20 text-black font-bold"
+              className="mr-2 text-xl"
             >
-              {expandedBranches.includes(branch.id) ? "-" : "+"}
+              {expandedBranches.includes(branch.id) ? "➖" : "➕"}
             </button>
           )}
-          <div
-            className={`w-4 h-4 rounded-l-xl mr-2 ${
-              level === 0 ? "bg-green-400" : level === 1 ? "bg-orange-400" : "bg-purple-400"
-            }`}
-          ></div>
-          <div className="text-xl font-bold text-amber-300">{branch.nom}</div>
+        
+          <div className="text-xl font-bold text-amber-300">
+            {branch.nom}
+          </div>
         </div>
 
         {/* TABLE */}

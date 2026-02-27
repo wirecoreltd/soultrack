@@ -19,45 +19,53 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branchesTree, setBranchesTree] = useState([]);
-  const [superviseurId, setSuperviseurId] = useState(null);
+  const [superviseurId, setSuperviseurId] = useState("");
 
-  // 🔹 Fonction récursive pour récupérer tous les enfants d'une branche
+  // 🔹 Récupérer récursivement tous les enfants d'une branche
   const getAllChildBranchIds = (parentId, allBranches) => {
     const children = allBranches.filter(b => b.superviseur_id === parentId);
-    let ids = [];
+    let ids = children.map(c => c.id);
     children.forEach(c => {
-      ids.push(c.id);
-      ids.push(...getAllChildBranchIds(c.id, allBranches));
+      ids = ids.concat(getAllChildBranchIds(c.id, allBranches));
     });
     return ids;
   };
 
   const fetchStats = async () => {
+    if (!superviseurId) {
+      setBranchesTree([]);
+      return;
+    }
+
     setLoading(true);
 
-    // 🔹 Récupérer toutes les branches
-    const { data: allBranches, error: branchError } = await supabase
+    // 🔹 Étape 1 : récupérer toutes les branches
+    const { data: allBranches, error: branchesError } = await supabase
       .from("branches")
       .select("id, nom, superviseur_id");
 
-    if (branchError || !allBranches) {
-      console.error("Erreur fetch branches:", branchError);
+    if (branchesError || !allBranches) {
+      console.error("Erreur fetch branches:", branchesError);
       setBranchesTree([]);
       setLoading(false);
       return;
     }
 
-    // 🔹 Calculer les IDs autorisés : superviseur + tous ses enfants
-    const allowedIds = superviseurId
-      ? [superviseurId, ...getAllChildBranchIds(superviseurId, allBranches)]
-      : allBranches.map(b => b.id);
+    // 🔹 Étape 2 : calculer les IDs autorisés (superviseur + tous ses enfants)
+    const allowedIds = [superviseurId, ...getAllChildBranchIds(superviseurId, allBranches)];
 
-    // 🔹 Récupérer les stats pour ces branches
-    const { data: statsData, error: statsError } = await supabase
-      .from("attendance_stats")
-      .select("*")
-      .in("branche_id", allowedIds);
+    if (allowedIds.length === 0) {
+      setBranchesTree([]);
+      setLoading(false);
+      return;
+    }
 
+    // 🔹 Étape 3 : récupérer les stats pour ces branches
+    let query = supabase.from("attendance_stats").select("*").in("branche_id", allowedIds);
+    if (dateDebut) query = query.gte("mois", dateDebut);
+    if (dateFin) query = query.lte("mois", dateFin);
+
+    const { data: statsData, error: statsError } = await query;
     if (statsError || !statsData) {
       console.error("Erreur fetch stats:", statsError);
       setBranchesTree([]);
@@ -65,7 +73,7 @@ function StatGlobalPage() {
       return;
     }
 
-    // 🔹 Map pour les stats
+    // 🔹 Étape 4 : créer map des stats par branche_id
     const statsMap = {};
     statsData.forEach(item => {
       statsMap[item.branche_id] = {
@@ -80,18 +88,16 @@ function StatGlobalPage() {
       };
     });
 
-    // 🔹 Construire l'arbre hiérarchique filtré
+    // 🔹 Étape 5 : construire l'arbre hiérarchique
     const mapBranches = {};
     allBranches.forEach(b => {
-      if (!allowedIds.includes(b.id)) return; // Ignorer les branches non autorisées
       mapBranches[b.id] = {
         id: b.id,
         nom: b.nom,
         superviseur_id: b.superviseur_id,
         stats: statsMap[b.id] || {
           hommes: 0, femmes: 0, jeunes: 0, enfants: 0,
-          connectes: 0, nouveaux_venus: 0, nouveau_converti: 0,
-          moissonneurs: 0
+          connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0,
         },
         enfants: [],
       };
@@ -101,8 +107,8 @@ function StatGlobalPage() {
     Object.values(mapBranches).forEach(b => {
       if (b.superviseur_id && mapBranches[b.superviseur_id]) {
         mapBranches[b.superviseur_id].enfants.push(b);
-      } else if (allowedIds.includes(b.id)) {
-        tree.push(b); // branche racine autorisée
+      } else if (b.id === superviseurId || allowedIds.includes(b.id)) {
+        tree.push(b);
       }
     });
 
@@ -110,6 +116,7 @@ function StatGlobalPage() {
     setLoading(false);
   };
 
+  // 🔹 Rendu récursif
   const renderBranch = (b) => (
     <div key={b.id} className="w-full">
       <div className="text-xl font-bold text-amber-300 mb-3">{b.nom}</div>
@@ -172,7 +179,7 @@ function StatGlobalPage() {
           type="text"
           placeholder="ID Superviseur"
           value={superviseurId || ""}
-          onChange={(e) => setSuperviseurId(e.target.value || null)}
+          onChange={(e) => setSuperviseurId(e.target.value || "")}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -22,83 +22,57 @@ function StatGlobalPage() {
   const [superviseurId, setSuperviseurId] = useState(null);
 
   const fetchStats = async () => {
-  setLoading(true);
+    setLoading(true);
 
-  if (!superviseurId) {
-    setBranches([]);
-    setLoading(false);
-    return;
-  }
-
-  // 🔹 Étape 1 : récupérer toutes les branches supervisées par cet utilisateur
-  const { data: branchesData, error: branchesError } = await supabase
-    .from("branches")
-    .select("id, nom, superviseur_id")
-    .eq("superviseur_id", superviseurId);
-
-  if (branchesError) {
-    console.error("Erreur fetch branches:", branchesError);
-    setBranches([]);
-    setLoading(false);
-    return;
-  }
-
-  const superviseurBranchIds = branchesData.map(b => b.id);
-
-  // 🔹 Étape 2 : récupérer toutes les stats des branches filtrées
-  const { data, error } = await supabase
-    .from("attendance_stats")
-    .select("*")
-    .in("branche_id", superviseurBranchIds);
-
-  if (error || !data) {
-    setBranches([]);
-    setLoading(false);
-    return;
-  }
-
-  // 🔹 Étape 3 : fusionner les stats par branche
-  const grouped = {};
-  data.forEach((item) => {
-    const key = item.branche_nom?.trim().toLowerCase();
-    if (!key) return;
-
-    if (!grouped[key]) {
-      grouped[key] = {
-        branche_nom: item.branche_nom,
-        culte: {
-          hommes: 0,
-          femmes: 0,
-          jeunes: 0,
-          enfants: 0,
-          connectes: 0,
-          nouveaux_venus: 0,
-          nouveau_converti: 0,
-          moissonneurs: 0,
-        },
-      };
+    if (!superviseurId) {
+      setBranchesTree([]);
+      setLoading(false);
+      return;
     }
 
-    grouped[key].culte.hommes += Number(item.hommes) || 0;
-    grouped[key].culte.femmes += Number(item.femmes) || 0;
-    grouped[key].culte.jeunes += Number(item.jeunes) || 0;
-    grouped[key].culte.enfants += Number(item.enfants) || 0;
-    grouped[key].culte.connectes += Number(item.connectes) || 0;
-    grouped[key].culte.nouveaux_venus += Number(item.nouveauxvenus || item.nouveaux_venus) || 0;
-    grouped[key].culte.nouveau_converti += Number(item.nouveauxconvertis || item.nouveau_converti) || 0;
-    grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
-  });
+    // 🔹 Étape 1 : récupérer toutes les branches supervisées par cet utilisateur
+    const { data: branchesData, error: branchesError } = await supabase
+      .from("branches")
+      .select("id, nom, superviseur_id")
+      .eq("superviseur_id", superviseurId);
 
-  const result = Object.values(grouped).sort((a, b) =>
-    a.branche_nom.localeCompare(b.branche_nom)
-  );
+    if (branchesError) {
+      console.error("Erreur fetch branches:", branchesError);
+      setBranchesTree([]);
+      setLoading(false);
+      return;
+    }
 
-  setBranches(result);
-  setLoading(false);
-};
-}
+    const superviseurBranchIds = branchesData.map((b) => b.id);
 
-    // 🔹 Construire l'arbre hiérarchique
+    // 🔹 Étape 2 : récupérer toutes les stats des branches filtrées
+    const { data: statsData, error: statsError } = await supabase
+      .from("attendance_stats")
+      .select("*")
+      .in("branche_id", superviseurBranchIds);
+
+    if (statsError || !statsData) {
+      setBranchesTree([]);
+      setLoading(false);
+      return;
+    }
+
+    // 🔹 Étape 3 : créer une map des stats par branche
+    const statsMap = {};
+    statsData.forEach((item) => {
+      statsMap[item.branche_id] = {
+        hommes: Number(item.hommes) || 0,
+        femmes: Number(item.femmes) || 0,
+        jeunes: Number(item.jeunes) || 0,
+        enfants: Number(item.enfants) || 0,
+        connectes: Number(item.connectes) || 0,
+        nouveaux_venus: Number(item.nouveauxvenus || item.nouveaux_venus) || 0,
+        nouveau_converti: Number(item.nouveauxconvertis || item.nouveau_converti) || 0,
+        moissonneurs: Number(item.moissonneurs) || 0,
+      };
+    });
+
+    // 🔹 Étape 4 : construire l'arbre des branches avec stats
     const mapBranches = {};
     branchesData.forEach((b) => {
       mapBranches[b.id] = {
@@ -121,15 +95,10 @@ function StatGlobalPage() {
 
     const tree = [];
     Object.values(mapBranches).forEach((b) => {
-      // 🔹 Filtrer si on est sous un superviseur spécifique
-      if (superviseurId && b.superviseur_id !== superviseurId && b.id !== superviseurId) {
-        return;
-      }
-
       if (b.superviseur_id && mapBranches[b.superviseur_id]) {
         mapBranches[b.superviseur_id].enfants.push(b);
       } else {
-        tree.push(b); // branche racine
+        tree.push(b);
       }
     });
 
@@ -167,7 +136,7 @@ function StatGlobalPage() {
 
       {b.enfants.length > 0 && (
         <div className="pl-8 mt-4 space-y-4">
-          {b.enfants.map((child) => renderBranch(child))}
+          {b.enfants.map(renderBranch)}
         </div>
       )}
     </div>
@@ -176,12 +145,10 @@ function StatGlobalPage() {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
-      {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
         <input
           type="date"
@@ -210,13 +177,11 @@ function StatGlobalPage() {
         </button>
       </div>
 
-      {/* AFFICHAGE */}
       {!loading && branchesTree.length > 0 && (
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
-          {branchesTree.map((b) => renderBranch(b))}
+          {branchesTree.map(renderBranch)}
         </div>
       )}
-
       {loading && <div className="text-white mt-4">Chargement...</div>}
 
       <Footer />

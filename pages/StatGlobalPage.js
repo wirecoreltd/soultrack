@@ -226,20 +226,37 @@ function StatGlobalPage() {
       </h1>
 
       {/* FILTRE DATE */}
-      <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap">
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="px-3 py-2 rounded-lg text-black"
-        />
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="px-3 py-2 rounded-lg text-black"
-        />
-      </div>
+      <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap items-end">
+
+  <div className="flex flex-col">
+    <label className="text-sm mb-1">Date début</label>
+    <input
+      type="date"
+      value={dateDebut}
+      onChange={(e) => setDateDebut(e.target.value)}
+      className="px-3 py-2 rounded-lg text-black"
+    />
+  </div>
+
+  <div className="flex flex-col">
+    <label className="text-sm mb-1">Date fin</label>
+    <input
+      type="date"
+      value={dateFin}
+      onChange={(e) => setDateFin(e.target.value)}
+      className="px-3 py-2 rounded-lg text-black"
+    />
+  </div>
+
+  <button
+    onClick={fetchStats}
+    disabled={loading}
+    className="px-6 py-2 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition disabled:opacity-50"
+  >
+    {loading ? "Génération..." : "Générer"}
+  </button>
+
+</div>
 
       {loading && <p>Chargement...</p>}
 

@@ -256,8 +256,7 @@ function StatGlobalPage() {
             className="px-3 py-2 rounded-lg text-black"
           >
             <option value="">Tous</option>
-            {allBranches
-              .filter((b) => !b.superviseur_id)
+            allBranches.filter((b) => b.superviseur_id === rootId)
               .map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.nom}

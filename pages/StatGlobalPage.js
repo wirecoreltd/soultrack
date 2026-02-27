@@ -19,16 +19,36 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
-  const [superviseurId, setSuperviseurId] = useState(null);
+  const [userId, setUserId] = useState(null); // ID du superviseur connecté
+
+  // 🔹 Récupérer l'ID du superviseur connecté
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, superviseur_id, branche_id")
+        .single();
+      if (profile) setUserId(profile.branche_id);
+    };
+    fetchUser();
+  }, []);
 
   const fetchStats = async () => {
     setLoading(true);
 
-    let query = supabase.from("attendance_stats").select("*");
+    // 🔹 Récupérer toutes les branches sous la hiérarchie de l'utilisateur
+    let { data: userBranches } = await supabase
+      .from("branches")
+      .select("id, nom, superviseur_id")
+      .or(`id.eq.${userId},superviseur_id.eq.${userId}`);
 
+    const allowedBranchIds = userBranches?.map((b) => b.id) || [];
+
+    // 🔹 Récupérer les stats pour ces branches uniquement
+    let query = supabase.from("attendance_stats").select("*");
     if (dateDebut) query = query.gte("mois", dateDebut);
     if (dateFin) query = query.lte("mois", dateFin);
-    if (superviseurId) query = query.eq("superviseur_id", superviseurId);
+    if (allowedBranchIds.length) query = query.in("branche_id", allowedBranchIds);
 
     const { data, error } = await query;
 
@@ -98,13 +118,6 @@ function StatGlobalPage() {
           type="date"
           value={dateFin}
           onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <input
-          type="text"
-          placeholder="ID Superviseur"
-          value={superviseurId || ""}
-          onChange={(e) => setSuperviseurId(e.target.value || null)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button

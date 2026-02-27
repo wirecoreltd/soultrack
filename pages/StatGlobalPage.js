@@ -6,9 +6,6 @@ import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
 
-// Ici on simule le superviseur connecté
-const SUPERVISEUR_COURANT = "Impact Centre Chretien - Cite Royale";
-
 export default function StatGlobalPageWrapper() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
@@ -22,15 +19,18 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
+  const [superviseurId, setSuperviseurId] = useState(null);
 
   const fetchStats = async () => {
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from("attendance_stats")
-      .select("*")
-      .gte(dateDebut ? "mois" : null, dateDebut || undefined)
-      .lte(dateFin ? "mois" : null, dateFin || undefined);
+    let query = supabase.from("attendance_stats").select("*");
+
+    if (dateDebut) query = query.gte("mois", dateDebut);
+    if (dateFin) query = query.lte("mois", dateFin);
+    if (superviseurId) query = query.eq("superviseur_id", superviseurId);
+
+    const { data, error } = await query;
 
     if (error || !data) {
       setBranches([]);
@@ -38,14 +38,9 @@ function StatGlobalPage() {
       return;
     }
 
-    // 🔹 Filtrer selon le superviseur courant
-    const filtered = data.filter(
-      (item) => item.superviseur_id === SUPERVISEUR_COURANT || item.superviseur_id === null
-    );
-
     // 🔹 Fusion par branche
     const grouped = {};
-    filtered.forEach((item) => {
+    data.forEach((item) => {
       const key = item.branche_nom?.trim().toLowerCase();
       if (!key) return;
 
@@ -70,12 +65,11 @@ function StatGlobalPage() {
       grouped[key].culte.jeunes += Number(item.jeunes) || 0;
       grouped[key].culte.enfants += Number(item.enfants) || 0;
       grouped[key].culte.connectes += Number(item.connectes) || 0;
-      grouped[key].culte.nouveaux_venus += Number(item.nouveauxvenus) || 0;
-      grouped[key].culte.nouveau_converti += Number(item.nouveauxconvertis) || 0;
+      grouped[key].culte.nouveaux_venus += Number(item.nouveauxvenus || item.nouveaux_venus) || 0;
+      grouped[key].culte.nouveau_converti += Number(item.nouveauxconvertis || item.nouveau_converti) || 0;
       grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
     });
 
-    // 🔹 Trier par nom
     const result = Object.values(grouped).sort((a, b) =>
       a.branche_nom.localeCompare(b.branche_nom)
     );
@@ -83,11 +77,6 @@ function StatGlobalPage() {
     setBranches(result);
     setLoading(false);
   };
-
-  // Option : fetch auto au chargement
-  useEffect(() => {
-    fetchStats();
-  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -111,6 +100,13 @@ function StatGlobalPage() {
           onChange={(e) => setDateFin(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
+        <input
+          type="text"
+          placeholder="ID Superviseur"
+          value={superviseurId || ""}
+          onChange={(e) => setSuperviseurId(e.target.value || null)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
         <button
           onClick={fetchStats}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
@@ -122,7 +118,6 @@ function StatGlobalPage() {
       {/* AFFICHAGE */}
       {!loading && branches.length > 0 && (
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
-
           {branches.map((b, idx) => (
             <div key={idx} className="w-full">
 
@@ -161,9 +156,10 @@ function StatGlobalPage() {
 
             </div>
           ))}
-
         </div>
       )}
+
+      {loading && <div className="text-white mt-4">Chargement...</div>}
 
       <Footer />
     </div>

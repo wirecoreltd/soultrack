@@ -19,36 +19,58 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
-  const [userId, setUserId] = useState(null); // ID du superviseur connecté
+  const [userBrancheId, setUserBrancheId] = useState(null);
 
-  // 🔹 Récupérer l'ID du superviseur connecté
+  // 🔹 Récupérer l'utilisateur connecté
+  const fetchUser = async () => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("branche_id")
+      .single();
+
+    if (profile?.branche_id) setUserBrancheId(profile.branche_id);
+  };
+
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, superviseur_id, branche_id")
-        .single();
-      if (profile) setUserId(profile.branche_id);
-    };
     fetchUser();
   }, []);
+
+  // 🔹 Construire l'arbre des branches sous supervision
+  const fetchBranchesUnderSupervision = async () => {
+    if (!userBrancheId) return [];
+
+    const { data: allBranches } = await supabase
+      .from("branches")
+      .select("id, superviseur_id, nom");
+
+    if (!allBranches) return [];
+
+    // Fonction récursive pour trouver toutes les sous-branches
+    const collectSubBranches = (parentId, branchesList) => {
+      const children = branchesList.filter(
+        (b) => b.superviseur_id === parentId
+      );
+      let ids = children.map((c) => c.id);
+      children.forEach((c) => {
+        ids = [...ids, ...collectSubBranches(c.id, branchesList)];
+      });
+      return ids;
+    };
+
+    const allowedBranchIds = [userBrancheId, ...collectSubBranches(userBrancheId, allBranches)];
+    return allowedBranchIds;
+  };
 
   const fetchStats = async () => {
     setLoading(true);
 
-    // 🔹 Récupérer toutes les branches sous la hiérarchie de l'utilisateur
-    let { data: userBranches } = await supabase
-      .from("branches")
-      .select("id, nom, superviseur_id")
-      .or(`id.eq.${userId},superviseur_id.eq.${userId}`);
+    const allowedBranchIds = await fetchBranchesUnderSupervision();
 
-    const allowedBranchIds = userBranches?.map((b) => b.id) || [];
-
-    // 🔹 Récupérer les stats pour ces branches uniquement
     let query = supabase.from("attendance_stats").select("*");
+
     if (dateDebut) query = query.gte("mois", dateDebut);
     if (dateFin) query = query.lte("mois", dateFin);
-    if (allowedBranchIds.length) query = query.in("branche_id", allowedBranchIds);
+    if (allowedBranchIds.length > 0) query = query.in("branche_id", allowedBranchIds);
 
     const { data, error } = await query;
 
@@ -58,7 +80,7 @@ function StatGlobalPage() {
       return;
     }
 
-    // 🔹 Fusion par branche
+    // 🔹 Fusionner les stats par branche
     const grouped = {};
     data.forEach((item) => {
       const key = item.branche_nom?.trim().toLowerCase();
@@ -133,7 +155,6 @@ function StatGlobalPage() {
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
           {branches.map((b, idx) => (
             <div key={idx} className="w-full">
-
               {/* TITRE BRANCHE */}
               <div className="text-xl font-bold text-amber-300 mb-3">
                 {b.branche_nom}
@@ -166,7 +187,6 @@ function StatGlobalPage() {
                 <div className="min-w-[180px] text-center text-white">{b.culte.nouveau_converti}</div>
                 <div className="min-w-[160px] text-center text-white">{b.culte.moissonneurs}</div>
               </div>
-
             </div>
           ))}
         </div>

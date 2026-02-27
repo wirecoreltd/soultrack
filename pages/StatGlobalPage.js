@@ -21,118 +21,93 @@ function StatGlobalPage() {
   const [branchesTree, setBranchesTree] = useState([]);
   const [superviseurId, setSuperviseurId] = useState(null);
 
-  // Fonction récursive pour récupérer toutes les branches enfants
+  // 🔹 Fonction récursive pour récupérer tous les enfants d'une branche
   const getAllChildBranchIds = (parentId, allBranches) => {
     const children = allBranches.filter(b => b.superviseur_id === parentId);
-    let ids = children.map(c => c.id);
+    let ids = [];
     children.forEach(c => {
-      ids = ids.concat(getAllChildBranchIds(c.id, allBranches));
+      ids.push(c.id);
+      ids.push(...getAllChildBranchIds(c.id, allBranches));
     });
     return ids;
   };
 
   const fetchStats = async () => {
     setLoading(true);
-    try {
-      // 🔹 Étape 0 : récupérer l'utilisateur connecté
-      const { data: userProfile, error: userError } = await supabase.auth.getUser();
-      if (userError || !userProfile) {
-        console.error("Erreur récupération user:", userError);
-        setBranchesTree([]);
-        setLoading(false);
-        return;
-      }
 
-      // 🔹 Étape 1 : récupérer toutes les branches
-      const { data: allBranches, error: branchesError } = await supabase
-        .from("branches")
-        .select("id, nom, superviseur_id");
-      if (branchesError || !allBranches) {
-        console.error("Erreur fetch branches:", branchesError);
-        setBranchesTree([]);
-        setLoading(false);
-        return;
-      }
+    // 🔹 Récupérer toutes les branches
+    const { data: allBranches, error: branchError } = await supabase
+      .from("branches")
+      .select("id, nom, superviseur_id");
 
-      // 🔹 Étape 2 : récupérer toutes les branches sous le superviseur
-      const superviseurBranchIds = superviseurId
-        ? [superviseurId, ...getAllChildBranchIds(superviseurId, allBranches)]
-        : allBranches.map(b => b.id); // si pas de superviseur, prendre tout
-
-      // 🔹 Étape 3 : récupérer les stats filtrées par branche + date
-      let query = supabase.from("attendance_stats").select("*").in("branche_id", superviseurBranchIds);
-      if (dateDebut) query = query.gte("mois", dateDebut);
-      if (dateFin) query = query.lte("mois", dateFin);
-      const { data: statsData, error: statsError } = await query;
-      if (statsError || !statsData) {
-        console.error("Erreur fetch stats:", statsError);
-        setBranchesTree([]);
-        setLoading(false);
-        return;
-      }
-
-      // 🔹 Étape 4 : créer map des stats par branche
-      const statsMap = {};
-      statsData.forEach(item => {
-        const id = item.branche_id;
-        if (!statsMap[id]) statsMap[id] = {
-          hommes: 0,
-          femmes: 0,
-          jeunes: 0,
-          enfants: 0,
-          connectes: 0,
-          nouveaux_venus: 0,
-          nouveau_converti: 0,
-          moissonneurs: 0,
-        };
-        statsMap[id].hommes += Number(item.hommes) || 0;
-        statsMap[id].femmes += Number(item.femmes) || 0;
-        statsMap[id].jeunes += Number(item.jeunes) || 0;
-        statsMap[id].enfants += Number(item.enfants) || 0;
-        statsMap[id].connectes += Number(item.connectes) || 0;
-        statsMap[id].nouveaux_venus += Number(item.nouveauxvenus || item.nouveaux_venus) || 0;
-        statsMap[id].nouveau_converti += Number(item.nouveauxconvertis || item.nouveau_converti) || 0;
-        statsMap[id].moissonneurs += Number(item.moissonneurs) || 0;
-      });
-
-      // 🔹 Étape 5 : construire l'arbre hiérarchique
-      const mapBranches = {};
-      allBranches.forEach(b => {
-        mapBranches[b.id] = {
-          id: b.id,
-          nom: b.nom,
-          superviseur_id: b.superviseur_id,
-          stats: statsMap[b.id] || {
-            hommes: 0,
-            femmes: 0,
-            jeunes: 0,
-            enfants: 0,
-            connectes: 0,
-            nouveaux_venus: 0,
-            nouveau_converti: 0,
-            moissonneurs: 0,
-          },
-          enfants: [],
-        };
-      });
-
-      const tree = [];
-      Object.values(mapBranches).forEach(b => {
-        if (b.superviseur_id && mapBranches[b.superviseur_id]) {
-          mapBranches[b.superviseur_id].enfants.push(b);
-        } else {
-          tree.push(b);
-        }
-      });
-
-      setBranchesTree(tree);
-      setLoading(false);
-
-    } catch (err) {
-      console.error("Erreur fetch stats:", err);
+    if (branchError || !allBranches) {
+      console.error("Erreur fetch branches:", branchError);
       setBranchesTree([]);
       setLoading(false);
+      return;
     }
+
+    // 🔹 Calculer les IDs autorisés : superviseur + tous ses enfants
+    const allowedIds = superviseurId
+      ? [superviseurId, ...getAllChildBranchIds(superviseurId, allBranches)]
+      : allBranches.map(b => b.id);
+
+    // 🔹 Récupérer les stats pour ces branches
+    const { data: statsData, error: statsError } = await supabase
+      .from("attendance_stats")
+      .select("*")
+      .in("branche_id", allowedIds);
+
+    if (statsError || !statsData) {
+      console.error("Erreur fetch stats:", statsError);
+      setBranchesTree([]);
+      setLoading(false);
+      return;
+    }
+
+    // 🔹 Map pour les stats
+    const statsMap = {};
+    statsData.forEach(item => {
+      statsMap[item.branche_id] = {
+        hommes: Number(item.hommes) || 0,
+        femmes: Number(item.femmes) || 0,
+        jeunes: Number(item.jeunes) || 0,
+        enfants: Number(item.enfants) || 0,
+        connectes: Number(item.connectes) || 0,
+        nouveaux_venus: Number(item.nouveauxvenus || item.nouveaux_venus) || 0,
+        nouveau_converti: Number(item.nouveauxconvertis || item.nouveau_converti) || 0,
+        moissonneurs: Number(item.moissonneurs) || 0,
+      };
+    });
+
+    // 🔹 Construire l'arbre hiérarchique filtré
+    const mapBranches = {};
+    allBranches.forEach(b => {
+      if (!allowedIds.includes(b.id)) return; // Ignorer les branches non autorisées
+      mapBranches[b.id] = {
+        id: b.id,
+        nom: b.nom,
+        superviseur_id: b.superviseur_id,
+        stats: statsMap[b.id] || {
+          hommes: 0, femmes: 0, jeunes: 0, enfants: 0,
+          connectes: 0, nouveaux_venus: 0, nouveau_converti: 0,
+          moissonneurs: 0
+        },
+        enfants: [],
+      };
+    });
+
+    const tree = [];
+    Object.values(mapBranches).forEach(b => {
+      if (b.superviseur_id && mapBranches[b.superviseur_id]) {
+        mapBranches[b.superviseur_id].enfants.push(b);
+      } else if (allowedIds.includes(b.id)) {
+        tree.push(b); // branche racine autorisée
+      }
+    });
+
+    setBranchesTree(tree);
+    setLoading(false);
   };
 
   const renderBranch = (b) => (

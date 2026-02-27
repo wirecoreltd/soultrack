@@ -129,6 +129,21 @@ function StatGlobalPage() {
     setLoading(false);
   };
 
+  // Récupérer tous les descendants d'une branche
+    const getAllDescendants = (branch) => {
+      let descendants = [branch.id];
+      branch.enfants.forEach((child) => {
+        descendants = descendants.concat(getAllDescendants(child));
+      });
+      return descendants;
+    };
+
+  const filteredBranches = superviseurFilter
+  ? branchesTree.filter((branch) =>
+      getAllDescendants(branch).includes(superviseurFilter)
+    )
+  : branchesTree;
+
   const renderBranch = (branch, level = 0) => {
     const total = branch.stats.hommes + branch.stats.femmes + branch.stats.jeunes;
 
@@ -142,7 +157,15 @@ function StatGlobalPage() {
     return (
       <div key={branch.id} className="mt-8">
         {/* TITRE */}
-        <div className="text-xl font-bold text-amber-300 mb-3">{branch.nom}</div>
+        <div className="flex items-center mb-3">
+          {/* RECTANGLE COLORÉ */}
+          <div
+            className={`w-4 h-4 rounded-l-xl mr-2 ${
+              level === 0 ? "bg-green-400" : level === 1 ? "bg-orange-400" : "bg-purple-400"
+            }`}
+          ></div>
+          <div className="text-xl font-bold text-amber-300">{branch.nom}</div>
+        </div>
 
         <div className="w-full max-w-full overflow-x-auto">
           <div className="w-max space-y-2">
@@ -250,14 +273,9 @@ function StatGlobalPage() {
         </p>
       )}
 
-      {hasGenerated &&
-        !loading &&
-        branchesTree
-          .filter(
-            (branch) =>
-              !superviseurFilter || branch.id === superviseurFilter
-          )
-          .map((branch) => renderBranch(branch))}
+     {hasGenerated &&
+ !loading &&
+ filteredBranches.map((branch) => renderBranch(branch))}
 
       <Footer />
     </div>

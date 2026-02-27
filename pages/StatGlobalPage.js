@@ -21,7 +21,7 @@ function StatGlobalPage() {
   const [loading, setLoading] = useState(false);
   const [userEgliseId, setUserEgliseId] = useState(null);
 
-  // 🔹 Récupérer automatiquement l'église du user connecté
+  // Récupérer automatiquement l'église du user connecté
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -29,24 +29,15 @@ function StatGlobalPage() {
         error
       } = await supabase.auth.getUser();
 
-      if (error || !user) {
-        console.error("Impossible de récupérer l'utilisateur :", error);
-        return;
-      }
+      if (error || !user) return;
 
-      // Récupérer la branche/église de l'utilisateur
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("branche_id")
         .eq("id", user.id)
         .single();
 
-      if (profileError || !profileData) {
-        console.error("Impossible de récupérer l'église de l'utilisateur :", profileError);
-        return;
-      }
-
-      setUserEgliseId(profileData.branche_id);
+      if (!profileError && profileData) setUserEgliseId(profileData.branche_id);
     };
 
     fetchUser();
@@ -61,7 +52,6 @@ function StatGlobalPage() {
     setLoading(true);
 
     try {
-      // 1️⃣ Récupérer toute la hiérarchie
       const { data: branchesData, error: branchError } = await supabase
         .rpc("get_descendant_branches", { root_id: userEgliseId });
 
@@ -74,7 +64,6 @@ function StatGlobalPage() {
 
       const branchIds = branchesData.map(b => b.id);
 
-      // 2️⃣ Récupérer les stats cumulées
       const { data: statsData, error: statsError } = await supabase
         .from("attendance_stats")
         .select("*")
@@ -108,7 +97,6 @@ function StatGlobalPage() {
         statsMap[stat.branche_id].moissonneurs += Number(stat.moissonneurs) || 0;
       });
 
-      // 3️⃣ Construire arbre hiérarchique
       const map = {};
       branchesData.forEach(b => {
         map[b.id] = {
@@ -145,11 +133,17 @@ function StatGlobalPage() {
     setLoading(false);
   };
 
+  const getBorderColor = level => {
+    if (level === 0) return "border-l-4 border-green-500";
+    if (level === 1) return "border-l-4 border-orange-500";
+    return "border-l-4 border-blue-500";
+  };
+
   const renderBranch = (branch, level = 0) => {
     const total = branch.stats.hommes + branch.stats.femmes + branch.stats.jeunes;
 
     return (
-      <div key={branch.id} style={{ marginLeft: level * 30 }} className="mb-6">
+      <div key={branch.id} className={`mb-6 pl-4 ${getBorderColor(level)}`}>
         <div className="text-xl font-bold text-amber-300 mb-2">{branch.nom}</div>
 
         <table className="w-full table-auto border-collapse text-white mb-2">
@@ -191,7 +185,6 @@ function StatGlobalPage() {
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">
       <HeaderPages />
-
       <h1 className="text-2xl font-bold mb-6">
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>

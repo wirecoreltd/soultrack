@@ -19,90 +19,86 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
-  const [userSupervisorId, setUserSupervisorId] = useState(null);
+  const [superviseurId, setSuperviseurId] = useState(null);
 
-  // Liste de couleurs aléatoires pour les bordures
-  const colors = ["#FF7F50","#1E90FF","#32CD32","#FFA500","#BA55D3","#00CED1","#FFD700"];
-
-  // Récupérer le superviseur de l'utilisateur connecté
   useEffect(() => {
-    const profile = JSON.parse(localStorage.getItem("profile") || "{}");
+    // On récupère le superviseur de l'utilisateur depuis le localStorage
+    const profile = JSON.parse(localStorage.getItem("profile"));
     if (profile?.superviseur_id) {
-      setUserSupervisorId(profile.superviseur_id);
+      setSuperviseurId(profile.superviseur_id);
+    } else {
+      console.warn("⚠️ Superviseur non défini !");
     }
   }, []);
 
   const fetchStats = async () => {
-    setLoading(true);
-
-    const { data, error } = await supabase
-      .from("attendance_stats")
-      .select("*")
-      .gte(dateDebut ? "mois" : null, dateDebut || undefined)
-      .lte(dateFin ? "mois" : null, dateFin || undefined);
-
-    if (error || !data) {
-      setBranches([]);
-      setLoading(false);
-      console.error("Erreur fetchStats:", error);
+    if (!superviseurId) {
+      alert("Superviseur non défini. Impossible de récupérer les stats !");
       return;
     }
 
-    // 🔹 Filtrer par superviseur
-    const filtered = data.filter(item => {
-      if (!userSupervisorId) return true; // si non défini, montrer tout
-      if (!item.superviseur_id) return false; // eglise sans superviseur : exclue
-      return item.superviseur_id === userSupervisorId;
-    });
+    setLoading(true);
 
-    if (!filtered.length) {
-      console.warn("⚠️ Superviseur non défini ou aucune branche sous ce superviseur !");
+    try {
+      // On récupère toutes les stats entre les dates
+      const { data, error } = await supabase
+        .from("attendance_stats")
+        .select("*")
+        .gte(dateDebut ? "mois" : null, dateDebut || undefined)
+        .lte(dateFin ? "mois" : null, dateFin || undefined);
+
+      if (error || !data) {
+        setBranches([]);
+        setLoading(false);
+        return;
+      }
+
+      // 🔹 Filtrer selon le superviseur
+      const filtered = data.filter(item => item.superviseur_id === superviseurId);
+
+      // 🔹 Fusion par nom de branche
+      const grouped = {};
+      filtered.forEach(item => {
+        const key = item.branche_nom?.trim().toLowerCase();
+        if (!key) return;
+
+        if (!grouped[key]) {
+          grouped[key] = {
+            branche_nom: item.branche_nom,
+            culte: {
+              hommes: 0,
+              femmes: 0,
+              jeunes: 0,
+              enfants: 0,
+              connectes: 0,
+              nouveaux_venus: 0,
+              nouveau_converti: 0,
+              moissonneurs: 0,
+            },
+          };
+        }
+
+        grouped[key].culte.hommes += Number(item.hommes) || 0;
+        grouped[key].culte.femmes += Number(item.femmes) || 0;
+        grouped[key].culte.jeunes += Number(item.jeunes) || 0;
+        grouped[key].culte.enfants += Number(item.enfants) || 0;
+        grouped[key].culte.connectes += Number(item.connectes) || 0;
+        grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
+        grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
+        grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
+      });
+
+      const result = Object.values(grouped).sort((a, b) =>
+        a.branche_nom.localeCompare(b.branche_nom)
+      );
+
+      setBranches(result);
+    } catch (err) {
+      console.error(err);
+      setBranches([]);
+    } finally {
+      setLoading(false);
     }
-
-    // 🔹 Fusion par nom de branche
-    const grouped = {};
-    filtered.forEach(item => {
-      const key = item.branche_nom?.trim().toLowerCase();
-      if (!key) return;
-
-      if (!grouped[key]) {
-        grouped[key] = {
-          branche_nom: item.branche_nom,
-          superviseur_id: item.superviseur_id,
-          culte: {
-            hommes: 0,
-            femmes: 0,
-            jeunes: 0,
-            enfants: 0,
-            connectes: 0,
-            nouveaux_venus: 0,
-            nouveau_converti: 0,
-            moissonneurs: 0,
-          },
-        };
-      }
-
-      grouped[key].culte.hommes += Number(item.hommes) || 0;
-      grouped[key].culte.femmes += Number(item.femmes) || 0;
-      grouped[key].culte.jeunes += Number(item.jeunes) || 0;
-      grouped[key].culte.enfants += Number(item.enfants) || 0;
-      grouped[key].culte.connectes += Number(item.connectes) || 0;
-      grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
-      grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
-      grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
-    });
-
-    // 🔹 Ajouter une couleur aléatoire par superviseur
-    const supervisorColors = {};
-    Object.values(grouped).forEach(g => {
-      if (!supervisorColors[g.superviseur_id]) {
-        supervisorColors[g.superviseur_id] = colors[Math.floor(Math.random() * colors.length)];
-      }
-      g.borderColor = supervisorColors[g.superviseur_id];
-    });
-
-    setBranches(Object.values(grouped).sort((a, b) => a.branche_nom.localeCompare(b.branche_nom)));
-    setLoading(false);
   };
 
   return (
@@ -140,7 +136,6 @@ function StatGlobalPage() {
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
           {branches.map((b, idx) => (
             <div key={idx} className="w-full">
-              {/* TITRE BRANCHE */}
               <div className="text-xl font-bold text-amber-300 mb-3">
                 {b.branche_nom}
               </div>
@@ -159,10 +154,7 @@ function StatGlobalPage() {
               </div>
 
               {/* LIGNE CULTE */}
-              <div
-                className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition border-l-4 whitespace-nowrap"
-                style={{ borderColor: b.borderColor }}
-              >
+              <div className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400 whitespace-nowrap">
                 <div className="min-w-[180px] text-white font-semibold">Culte</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.hommes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.femmes}</div>

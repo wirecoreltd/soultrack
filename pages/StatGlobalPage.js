@@ -25,14 +25,11 @@ function StatGlobalPage() {
 
   const fetchStats = async () => {
     setLoading(true);
-    
-  const allBranchesFlat = Object.values(map);
-  setAllBranches(allBranchesFlat);
-    
+
     try {
       const {
         data: { user },
-        error: userError
+        error: userError,
       } = await supabase.auth.getUser();
       if (userError) throw userError;
 
@@ -51,6 +48,7 @@ function StatGlobalPage() {
 
       if (!branchesData || branchesData.length === 0) {
         setBranchesTree([]);
+        setAllBranches([]);
         setLoading(false);
         return;
       }
@@ -79,10 +77,9 @@ function StatGlobalPage() {
             connectes: 0,
             nouveaux_venus: 0,
             nouveau_converti: 0,
-            moissonneurs: 0
+            moissonneurs: 0,
           };
         }
-
         statsMap[stat.branche_id].hommes += Number(stat.hommes) || 0;
         statsMap[stat.branche_id].femmes += Number(stat.femmes) || 0;
         statsMap[stat.branche_id].jeunes += Number(stat.jeunes) || 0;
@@ -105,12 +102,13 @@ function StatGlobalPage() {
             connectes: 0,
             nouveaux_venus: 0,
             nouveau_converti: 0,
-            moissonneurs: 0
+            moissonneurs: 0,
           },
-          enfants: []
+          enfants: [],
         };
       });
 
+      // Construction de l'arbre
       const tree = [];
       Object.values(map).forEach((b) => {
         if (b.superviseur_id && map[b.superviseur_id]) {
@@ -121,79 +119,70 @@ function StatGlobalPage() {
       });
 
       setBranchesTree(tree);
+      setAllBranches(Object.values(map)); // Pour le select superviseur
     } catch (err) {
       console.error("Erreur fetch stats:", err);
       setBranchesTree([]);
+      setAllBranches([]);
     }
 
     setLoading(false);
   };
 
   const renderBranch = (branch, level = 0) => {
-  const total =
-    branch.stats.hommes +
-    branch.stats.femmes +
-    branch.stats.jeunes;
+    const total = branch.stats.hommes + branch.stats.femmes + branch.stats.jeunes;
 
-  const borderColor =
-    level === 0
-      ? "border-green-400"
-      : level === 1
-      ? "border-orange-400"
-      : "border-purple-400";
+    const borderColor =
+      level === 0
+        ? "border-green-400"
+        : level === 1
+        ? "border-orange-400"
+        : "border-purple-400";
 
-  return (
-    <div key={branch.id} className="mt-8">
-      {/* TITRE */}
-      <div className="text-xl font-bold text-amber-300 mb-3">
-        {branch.nom}
-      </div>
+    return (
+      <div key={branch.id} className="mt-8">
+        {/* TITRE */}
+        <div className="text-xl font-bold text-amber-300 mb-3">{branch.nom}</div>
 
-      <div className="w-full max-w-full overflow-x-auto">
-        <div className="w-max space-y-2">
-
-          {/* HEADER */}
-          <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[180px]">Type</div>
-            <div className="min-w-[120px] text-center">Hommes</div>
-            <div className="min-w-[120px] text-center">Femmes</div>
-            <div className="min-w-[120px] text-center">Jeunes</div>
-            <div className="min-w-[120px] text-center">Total</div>
-            <div className="min-w-[120px] text-center">Enfants</div>
-            <div className="min-w-[140px] text-center">Connectés</div>
-            <div className="min-w-[150px] text-center">Nouveaux Venus</div>
-            <div className="min-w-[180px] text-center">Nouveau Converti</div>
-            <div className="min-w-[160px] text-center">Moissonneurs</div>
-          </div>
-
-          {/* LIGNE DATA AVEC BORDURE ARRONDIE */}
-          <div
-            className={`flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition whitespace-nowrap border-l-4 ${borderColor}`}
-          >
-            <div className="min-w-[180px] text-white font-semibold">
-              Culte
+        <div className="w-full max-w-full overflow-x-auto">
+          <div className="w-max space-y-2">
+            {/* HEADER */}
+            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[180px]">Type</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center">Jeunes</div>
+              <div className="min-w-[120px] text-center">Total</div>
+              <div className="min-w-[120px] text-center">Enfants</div>
+              <div className="min-w-[140px] text-center">Connectés</div>
+              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+              <div className="min-w-[180px] text-center">Nouveau Converti</div>
+              <div className="min-w-[160px] text-center">Moissonneurs</div>
             </div>
-            <div className="min-w-[120px] text-center text-white">{branch.stats.hommes}</div>
-            <div className="min-w-[120px] text-center text-white">{branch.stats.femmes}</div>
-            <div className="min-w-[120px] text-center text-white">{branch.stats.jeunes}</div>
-            <div className="min-w-[120px] text-center text-white">{total}</div>
-            <div className="min-w-[120px] text-center text-white">{branch.stats.enfants}</div>
-            <div className="min-w-[140px] text-center text-white">{branch.stats.connectes}</div>
-            <div className="min-w-[150px] text-center text-white">{branch.stats.nouveaux_venus}</div>
-            <div className="min-w-[180px] text-center text-white">{branch.stats.nouveau_converti}</div>
-            <div className="min-w-[160px] text-center text-white">{branch.stats.moissonneurs}</div>
+
+            {/* DATA */}
+            <div
+              className={`flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition whitespace-nowrap border-l-4 ${borderColor}`}
+            >
+              <div className="min-w-[180px] text-white font-semibold">Culte</div>
+              <div className="min-w-[120px] text-center text-white">{branch.stats.hommes}</div>
+              <div className="min-w-[120px] text-center text-white">{branch.stats.femmes}</div>
+              <div className="min-w-[120px] text-center text-white">{branch.stats.jeunes}</div>
+              <div className="min-w-[120px] text-center text-white">{total}</div>
+              <div className="min-w-[120px] text-center text-white">{branch.stats.enfants}</div>
+              <div className="min-w-[140px] text-center text-white">{branch.stats.connectes}</div>
+              <div className="min-w-[150px] text-center text-white">{branch.stats.nouveaux_venus}</div>
+              <div className="min-w-[180px] text-center text-white">{branch.stats.nouveau_converti}</div>
+              <div className="min-w-[160px] text-center text-white">{branch.stats.moissonneurs}</div>
+            </div>
           </div>
-
         </div>
-      </div>
 
-      {/* ENFANTS (SANS INDENTATION) */}
-      {branch.enfants.map((child) =>
-        renderBranch(child, level + 1)
-      )}
-    </div>
-  );
-};
+        {/* ENFANTS */}
+        {branch.enfants.map((child) => renderBranch(child, level + 1))}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">
@@ -235,24 +224,25 @@ function StatGlobalPage() {
         >
           {loading ? "Génération..." : "Générer"}
         </button>
+
+        <div className="flex flex-col">
+          <label className="text-sm mb-1">Superviseur</label>
+          <select
+            value={superviseurFilter}
+            onChange={(e) => setSuperviseurFilter(e.target.value)}
+            className="px-3 py-2 rounded-lg text-black"
+          >
+            <option value="">Tous</option>
+            {allBranches
+              .filter((b) => !b.superviseur_id)
+              .map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.nom}
+                </option>
+              ))}
+          </select>
+        </div>
       </div>
-<div className="flex flex-col">
-  <label className="text-sm mb-1">Superviseur</label>
-  <select
-    value={superviseurFilter}
-    onChange={(e) => setSuperviseurFilter(e.target.value)}
-    className="px-3 py-2 rounded-lg text-black"
-  >
-    <option value="">Tous</option>
-    {allBranches
-      .filter((b) => !b.superviseur_id)
-      .map((b) => (
-        <option key={b.id} value={b.id}>
-          {b.nom}
-        </option>
-      ))}
-  </select>
-</div>
 
       {!hasGenerated && (
         <p className="text-white/60 mt-6">
@@ -260,13 +250,14 @@ function StatGlobalPage() {
         </p>
       )}
 
-      {hasGenerated && !loading &&
-  branchesTree
-    .filter((branch) =>
-      !superviseurFilter || branch.id === superviseurFilter
-    )
-    .map((branch) => renderBranch(branch))
-}
+      {hasGenerated &&
+        !loading &&
+        branchesTree
+          .filter(
+            (branch) =>
+              !superviseurFilter || branch.id === superviseurFilter
+          )
+          .map((branch) => renderBranch(branch))}
 
       <Footer />
     </div>

@@ -6,6 +6,7 @@ import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
 
+// ✅ Wrapper avec ProtectedRoute
 export default function StatGlobalPageWrapper() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
@@ -19,27 +20,41 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
-  const [superviseurId, setSuperviseurId] = useState(null);
+  const [superviseurId, setSuperviseurId] = useState(null); // 👈 id du superviseur connecté
+
+  // Exemple : récupérer l'id du superviseur depuis session (adapter selon ton auth)
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session?.user?.id) {
+        setSuperviseurId(sessionData.session.user.id);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const fetchStats = async () => {
+    if (!superviseurId) return; // 🔹 on ne fait rien si on ne connait pas le superviseur
     setLoading(true);
 
-    let query = supabase.from("attendance_stats").select("*");
-
-    if (dateDebut) query = query.gte("mois", dateDebut);
-    if (dateFin) query = query.lte("mois", dateFin);
-    if (superviseurId) query = query.eq("superviseur_id", superviseurId);
-
-    const { data, error } = await query;
+    // ✅ Récupération des stats filtrées par superviseur et dates
+    const { data, error } = await supabase
+      .from("attendance_stats")
+      .select("*")
+      .eq("superviseur_id", superviseurId)
+      .gte(dateDebut ? "mois" : undefined, dateDebut || undefined)
+      .lte(dateFin ? "mois" : undefined, dateFin || undefined);
 
     if (error || !data) {
       setBranches([]);
       setLoading(false);
+      console.error(error);
       return;
     }
 
-    // 🔹 Fusion par branche
+    // 🔹 Fusion des stats par branche
     const grouped = {};
+
     data.forEach((item) => {
       const key = item.branche_nom?.trim().toLowerCase();
       if (!key) return;
@@ -65,8 +80,8 @@ function StatGlobalPage() {
       grouped[key].culte.jeunes += Number(item.jeunes) || 0;
       grouped[key].culte.enfants += Number(item.enfants) || 0;
       grouped[key].culte.connectes += Number(item.connectes) || 0;
-      grouped[key].culte.nouveaux_venus += Number(item.nouveauxvenus || item.nouveaux_venus) || 0;
-      grouped[key].culte.nouveau_converti += Number(item.nouveauxconvertis || item.nouveau_converti) || 0;
+      grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
+      grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
       grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
     });
 
@@ -100,13 +115,6 @@ function StatGlobalPage() {
           onChange={(e) => setDateFin(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
-        <input
-          type="text"
-          placeholder="ID Superviseur"
-          value={superviseurId || ""}
-          onChange={(e) => setSuperviseurId(e.target.value || null)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
         <button
           onClick={fetchStats}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
@@ -120,7 +128,6 @@ function StatGlobalPage() {
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
           {branches.map((b, idx) => (
             <div key={idx} className="w-full">
-
               {/* TITRE BRANCHE */}
               <div className="text-xl font-bold text-amber-300 mb-3">
                 {b.branche_nom}
@@ -133,10 +140,6 @@ function StatGlobalPage() {
                 <div className="min-w-[120px] text-center">Femmes</div>
                 <div className="min-w-[120px] text-center">Jeunes</div>
                 <div className="min-w-[120px] text-center">Enfants</div>
-                <div className="min-w-[140px] text-center">Connectés</div>
-                <div className="min-w-[150px] text-center">Nouveaux</div>
-                <div className="min-w-[180px] text-center">Convertis</div>
-                <div className="min-w-[160px] text-center">Moissonneurs</div>
               </div>
 
               {/* LIGNE CULTE */}
@@ -144,22 +147,23 @@ function StatGlobalPage() {
                 <div className="min-w-[180px] text-white font-semibold">
                   Culte
                 </div>
-                <div className="min-w-[120px] text-center text-white">{b.culte.hommes}</div>
-                <div className="min-w-[120px] text-center text-white">{b.culte.femmes}</div>
-                <div className="min-w-[120px] text-center text-white">{b.culte.jeunes}</div>
-                <div className="min-w-[120px] text-center text-white">{b.culte.enfants}</div>
-                <div className="min-w-[140px] text-center text-white">{b.culte.connectes}</div>
-                <div className="min-w-[150px] text-center text-white">{b.culte.nouveaux_venus}</div>
-                <div className="min-w-[180px] text-center text-white">{b.culte.nouveau_converti}</div>
-                <div className="min-w-[160px] text-center text-white">{b.culte.moissonneurs}</div>
+                <div className="min-w-[120px] text-center text-white">
+                  {b.culte.hommes}
+                </div>
+                <div className="min-w-[120px] text-center text-white">
+                  {b.culte.femmes}
+                </div>
+                <div className="min-w-[120px] text-center text-white">
+                  {b.culte.jeunes}
+                </div>
+                <div className="min-w-[120px] text-center text-white">
+                  {b.culte.enfants}
+                </div>
               </div>
-
             </div>
           ))}
         </div>
       )}
-
-      {loading && <div className="text-white mt-4">Chargement...</div>}
 
       <Footer />
     </div>

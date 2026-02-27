@@ -15,41 +15,48 @@ export default function StatGlobalPageWrapper() {
 }
 
 function StatGlobalPage() {
-  const [branches, setBranches] = useState([]);
+  const [dateDebut, setDateDebut] = useState("");
+  const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
-  const [superviseurId, setSuperviseurId] = useState(null);
+  const [branches, setBranches] = useState([]);
+  const [userSuperviseurId, setUserSuperviseurId] = useState(null);
 
-  // Récupérer le superviseur depuis localStorage
+  // 🔹 Récupérer le superviseur de l'utilisateur connecté
   useEffect(() => {
     const profile = JSON.parse(localStorage.getItem("profile"));
-    if (profile?.superviseur_id) {
-      setSuperviseurId(profile.superviseur_id);
-    } else {
-      console.warn("⚠️ Superviseur non défini !");
+    if (!profile) return;
+    if (!profile.superviseur_id && profile.role !== "Administrateur") {
+      console.warn("Superviseur non défini !");
     }
+    setUserSuperviseurId(profile.superviseur_id || null);
   }, []);
 
   const fetchStats = async () => {
-    if (!superviseurId) {
-      console.warn("Impossible de récupérer les stats : superviseur non défini !");
+    if (!userSuperviseurId) {
+      alert("❌ Superviseur non défini. Impossible de récupérer les stats !");
       return;
     }
 
     setLoading(true);
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("attendance_stats")
       .select("*")
-      .eq("superviseur_id", superviseurId);
+      .eq("superviseur_id", userSuperviseurId);
+
+    if (dateDebut) query = query.gte("mois", dateDebut);
+    if (dateFin) query = query.lte("mois", dateFin);
+
+    const { data, error } = await query;
 
     if (error || !data) {
+      console.error(error);
       setBranches([]);
       setLoading(false);
-      console.error("Erreur fetch stats:", error);
       return;
     }
 
-    // Regroupement par branche
+    // 🔹 Grouper par branche
     const grouped = {};
     data.forEach((item) => {
       const key = item.branche_nom?.trim().toLowerCase();
@@ -92,22 +99,43 @@ function StatGlobalPage() {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
+
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
-      <button
-        onClick={fetchStats}
-        className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] text-white"
-      >
-        Générer les stats
-      </button>
+      {/* FILTRES */}
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
+        <input
+          type="date"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <input
+          type="date"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <button
+          onClick={fetchStats}
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+        >
+          Générer
+        </button>
+      </div>
 
+      {/* AFFICHAGE */}
       {!loading && branches.length > 0 && (
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
           {branches.map((b, idx) => (
             <div key={idx} className="w-full">
-              <div className="text-xl font-bold text-amber-300 mb-3">{b.branche_nom}</div>
+              <div className="text-xl font-bold text-amber-300 mb-3">
+                {b.branche_nom}
+              </div>
+
+              {/* HEADER COLONNES */}
               <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
                 <div className="min-w-[180px] ml-1">Type</div>
                 <div className="min-w-[120px] text-center">Hommes</div>
@@ -120,8 +148,11 @@ function StatGlobalPage() {
                 <div className="min-w-[160px] text-center">Moissonneurs</div>
               </div>
 
+              {/* LIGNE CULTE */}
               <div className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400 whitespace-nowrap">
-                <div className="min-w-[180px] text-white font-semibold">Culte</div>
+                <div className="min-w-[180px] text-white font-semibold">
+                  Culte
+                </div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.hommes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.femmes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.jeunes}</div>

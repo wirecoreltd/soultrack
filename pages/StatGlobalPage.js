@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -30,12 +30,11 @@ function StatGlobalPage() {
     setLoading(true);
 
     try {
-      // 1️⃣ Récupérer toute la hiérarchie (récursif)
+      // 1️⃣ Récupérer toute la hiérarchie via la fonction RPC
       const { data: branchesData, error: branchError } = await supabase
         .rpc("get_descendant_branches", { root_id: superviseurId });
 
       if (branchError) throw branchError;
-
       if (!branchesData || branchesData.length === 0) {
         setBranchesTree([]);
         setLoading(false);
@@ -44,22 +43,18 @@ function StatGlobalPage() {
 
       const branchIds = branchesData.map(b => b.id);
 
-      // 2️⃣ Récupérer les stats
-      let statsQuery = supabase
+      // 2️⃣ Récupérer et cumuler les stats
+      const { data: statsData, error: statsError } = await supabase
         .from("attendance_stats")
         .select("*")
-        .in("branche_id", branchIds);
-
-      if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
-      if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
-
-      const { data: statsData, error: statsError } = await statsQuery;
+        .in("branche_id", branchIds)
+        .gte("mois", dateDebut || "1900-01-01")
+        .lte("mois", dateFin || "2999-12-31");
 
       if (statsError) throw statsError;
 
-      // 3️⃣ Regrouper stats par branche (cumul)
+      // Cumuler les stats par branche
       const statsMap = {};
-
       statsData.forEach(stat => {
         if (!statsMap[stat.branche_id]) {
           statsMap[stat.branche_id] = {
@@ -73,20 +68,18 @@ function StatGlobalPage() {
             moissonneurs: 0
           };
         }
-
         statsMap[stat.branche_id].hommes += Number(stat.hommes) || 0;
         statsMap[stat.branche_id].femmes += Number(stat.femmes) || 0;
         statsMap[stat.branche_id].jeunes += Number(stat.jeunes) || 0;
         statsMap[stat.branche_id].enfants += Number(stat.enfants) || 0;
         statsMap[stat.branche_id].connectes += Number(stat.connectes) || 0;
-        statsMap[stat.branche_id].nouveaux_venus += Number(stat.nouveaux_venus) || 0;
-        statsMap[stat.branche_id].nouveau_converti += Number(stat.nouveau_converti) || 0;
+        statsMap[stat.branche_id].nouveaux_venus += Number(stat.nouveaux_venus || stat.nouveauxvenus) || 0;
+        statsMap[stat.branche_id].nouveau_converti += Number(stat.nouveau_converti || stat.nouveauxconvertis) || 0;
         statsMap[stat.branche_id].moissonneurs += Number(stat.moissonneurs) || 0;
       });
 
-      // 4️⃣ Construire arbre
+      // 3️⃣ Construire arbre hiérarchique
       const map = {};
-
       branchesData.forEach(b => {
         map[b.id] = {
           ...b,
@@ -105,7 +98,6 @@ function StatGlobalPage() {
       });
 
       const tree = [];
-
       Object.values(map).forEach(b => {
         if (b.superviseur_id && map[b.superviseur_id]) {
           map[b.superviseur_id].enfants.push(b);
@@ -123,21 +115,21 @@ function StatGlobalPage() {
     setLoading(false);
   };
 
+  // 4️⃣ Affichage hiérarchique propre
   const renderBranch = (branch, level = 0) => (
-    <div key={branch.id} className="mb-6" style={{ marginLeft: level * 30 }}>
-      <div className="text-xl font-bold text-amber-300 mb-2">
-        {branch.nom}
-      </div>
+    <div key={branch.id} style={{ marginLeft: level * 30 }} className="mb-6">
+      <div className="text-xl font-bold text-amber-300">{branch.nom}</div>
 
-      <div className="bg-white/10 p-3 rounded-xl text-white">
-        Hommes: {branch.stats.hommes} |
-        Femmes: {branch.stats.femmes} |
-        Jeunes: {branch.stats.jeunes} |
-        Enfants: {branch.stats.enfants} |
-        Connectés: {branch.stats.connectes} |
-        Nouveaux: {branch.stats.nouveaux_venus} |
-        Convertis: {branch.stats.nouveau_converti} |
-        Moissonneurs: {branch.stats.moissonneurs}
+      <div className="grid grid-cols-9 gap-2 bg-white/10 p-2 rounded-xl text-white font-semibold">
+        <div>Culte</div>
+        <div className="text-center">{branch.stats.hommes}</div>
+        <div className="text-center">{branch.stats.femmes}</div>
+        <div className="text-center">{branch.stats.jeunes}</div>
+        <div className="text-center">{branch.stats.enfants}</div>
+        <div className="text-center">{branch.stats.connectes}</div>
+        <div className="text-center">{branch.stats.nouveaux_venus}</div>
+        <div className="text-center">{branch.stats.nouveau_converti}</div>
+        <div className="text-center">{branch.stats.moissonneurs}</div>
       </div>
 
       {branch.enfants.map(child => renderBranch(child, level + 1))}
@@ -152,32 +144,32 @@ function StatGlobalPage() {
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
-      <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap">
+      <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap text-black">
         <input
           type="text"
           placeholder="ID Église"
           value={superviseurId}
-          onChange={(e) => setSuperviseurId(e.target.value)}
-          className="px-3 py-2 rounded-lg text-black"
+          onChange={e => setSuperviseurId(e.target.value)}
+          className="px-3 py-2 rounded-lg"
         />
 
         <input
           type="date"
           value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="px-3 py-2 rounded-lg text-black"
+          onChange={e => setDateDebut(e.target.value)}
+          className="px-3 py-2 rounded-lg"
         />
 
         <input
           type="date"
           value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="px-3 py-2 rounded-lg text-black"
+          onChange={e => setDateFin(e.target.value)}
+          className="px-3 py-2 rounded-lg"
         />
 
         <button
           onClick={fetchStats}
-          className="bg-[#2a2f85] px-5 py-2 rounded-lg"
+          className="bg-[#2a2f85] px-5 py-2 rounded-lg text-white"
         >
           Générer
         </button>

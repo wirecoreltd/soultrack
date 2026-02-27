@@ -15,11 +15,10 @@ export default function StatGlobalPageWrapper() {
 }
 
 function StatGlobalPage() {
-  const [rapports, setRapports] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [totalGeneral, setTotalGeneral] = useState({});
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
+  const [branchesTree, setBranchesTree] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -29,34 +28,40 @@ function StatGlobalPage() {
     setLoading(true);
 
     try {
-      // 🔹 1️⃣ Utilisateur connecté
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Utilisateur non connecté");
+      // 🔹 Récupérer le user connecté
+      const {
+        data: { user },
+        error: userError
+      } = await supabase.auth.getUser();
+      if (userError) throw userError;
 
-      const { data: profile } = await supabase
+      // 🔹 Récupérer l'église principale de l'utilisateur
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("branche_id")
         .eq("id", user.id)
         .single();
+      if (profileError) throw profileError;
+      const rootId = profileData.branche_id;
 
-      if (!profile?.branche_id) throw new Error("Pas de branche assignée à l'utilisateur");
-      const superviseurId = profile.branche_id;
+      // 🔹 Récupérer toutes les branches descendants via RPC
+      const { data: branchesData, error: branchesError } = await supabase
+        .rpc("get_descendant_branches", { root_id: rootId });
+      if (branchesError) throw branchesError;
 
-      // 🔹 2️⃣ Récupérer toute la hiérarchie
-      const { data: branchesData, error: branchError } = await supabase
-        .rpc("get_descendant_branches", { root_id: superviseurId });
-
-      if (branchError) throw branchError;
       if (!branchesData || branchesData.length === 0) {
-        setRapports([]);
+        setBranchesTree([]);
         setLoading(false);
         return;
       }
 
       const branchIds = branchesData.map(b => b.id);
 
-      // 🔹 3️⃣ Récupérer les stats avec filtre date
-      let statsQuery = supabase.from("attendance_stats").select("*").in("branche_id", branchIds);
+      // 🔹 Récupérer les stats
+      let statsQuery = supabase
+        .from("attendance_stats")
+        .select("*")
+        .in("branche_id", branchIds);
 
       if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
       if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
@@ -64,7 +69,7 @@ function StatGlobalPage() {
       const { data: statsData, error: statsError } = await statsQuery;
       if (statsError) throw statsError;
 
-      // 🔹 4️⃣ Cumuler les stats par branche
+      // 🔹 Cumul des stats par branche
       const statsMap = {};
       statsData.forEach(stat => {
         if (!statsMap[stat.branche_id]) {
@@ -74,26 +79,25 @@ function StatGlobalPage() {
             jeunes: 0,
             enfants: 0,
             connectes: 0,
-            nouveauxVenus: 0,
-            nouveauxConvertis: 0,
+            nouveaux_venus: 0,
+            nouveau_converti: 0,
             moissonneurs: 0
           };
         }
-
         statsMap[stat.branche_id].hommes += Number(stat.hommes) || 0;
         statsMap[stat.branche_id].femmes += Number(stat.femmes) || 0;
         statsMap[stat.branche_id].jeunes += Number(stat.jeunes) || 0;
         statsMap[stat.branche_id].enfants += Number(stat.enfants) || 0;
         statsMap[stat.branche_id].connectes += Number(stat.connectes) || 0;
-        statsMap[stat.branche_id].nouveauxVenus += Number(stat.nouveaux_venus || stat.nouveauxVenus) || 0;
-        statsMap[stat.branche_id].nouveauxConvertis += Number(stat.nouveau_converti || stat.nouveauxConvertis) || 0;
-        statsMap[stat.branche_id].moissonneurs += Number(stat.moissonneurs) || 0;
+        statsMap[stat.branche_id].nouveaux_venus += Number(stat.nouveaux_venus || 0);
+        statsMap[stat.branche_id].nouveau_converti += Number(stat.nouveau_converti || 0);
+        statsMap[stat.branche_id].moissonneurs += Number(stat.moissonneurs || 0);
       });
 
-      // 🔹 5️⃣ Construire arbre hiérarchique
-      const mapBranches = {};
+      // 🔹 Construire arbre hiérarchique
+      const map = {};
       branchesData.forEach(b => {
-        mapBranches[b.id] = {
+        map[b.id] = {
           ...b,
           stats: statsMap[b.id] || {
             hommes: 0,
@@ -101,8 +105,8 @@ function StatGlobalPage() {
             jeunes: 0,
             enfants: 0,
             connectes: 0,
-            nouveauxVenus: 0,
-            nouveauxConvertis: 0,
+            nouveaux_venus: 0,
+            nouveau_converti: 0,
             moissonneurs: 0
           },
           enfants: []
@@ -110,60 +114,64 @@ function StatGlobalPage() {
       });
 
       const tree = [];
-      Object.values(mapBranches).forEach(b => {
-        if (b.superviseur_id && mapBranches[b.superviseur_id]) {
-          mapBranches[b.superviseur_id].enfants.push(b);
+      Object.values(map).forEach(b => {
+        if (b.superviseur_id && map[b.superviseur_id]) {
+          map[b.superviseur_id].enfants.push(b);
         } else {
           tree.push(b);
         }
       });
 
-      // 🔹 6️⃣ Aplatir pour table avec couleurs
-      const flattened = [];
-      const total = {
-        hommes: 0,
-        femmes: 0,
-        jeunes: 0,
-        enfants: 0,
-        connectes: 0,
-        nouveauxVenus: 0,
-        nouveauxConvertis: 0,
-        moissonneurs: 0
-      };
-
-      const traverse = (branch, color = "border-green-400") => {
-        const s = branch.stats;
-
-        total.hommes += s.hommes;
-        total.femmes += s.femmes;
-        total.jeunes += s.jeunes;
-        total.enfants += s.enfants;
-        total.connectes += s.connectes;
-        total.nouveauxVenus += s.nouveauxVenus;
-        total.nouveauxConvertis += s.nouveauxConvertis;
-        total.moissonneurs += s.moissonneurs;
-
-        flattened.push({
-          label: branch.nom,
-          data: s,
-          border: color
-        });
-
-        const childColor = color === "border-green-400" ? "border-orange-400" : "border-yellow-400";
-        branch.enfants.forEach(child => traverse(child, childColor));
-      };
-
-      tree.forEach(b => traverse(b));
-
-      setRapports(flattened);
-      setTotalGeneral(total);
-
+      setBranchesTree(tree);
     } catch (err) {
       console.error("Erreur fetch stats:", err);
-      setRapports([]);
+      setBranchesTree([]);
     }
 
     setLoading(false);
+  };
+
+  // 🔹 Rendu d'une branche avec bordure hiérarchique
+  const renderBranch = (branch, level = 0) => {
+    const borderColor = level === 0 ? "border-l-4 border-green-400" : "border-l-4 border-orange-400";
+    const total = branch.stats.hommes + branch.stats.femmes + branch.stats.jeunes;
+
+    return (
+      <div key={branch.id} className={`mb-6 pl-2 ${borderColor}`}>
+        <div className="text-xl font-bold text-amber-300 mb-2">{branch.nom}</div>
+
+        <div className="w-full overflow-x-auto">
+          <div className="flex font-semibold uppercase text-white bg-white/5 rounded-t-xl px-4 py-2">
+            <div className="min-w-[120px]">Type</div>
+            <div className="min-w-[80px] text-center">Hommes</div>
+            <div className="min-w-[80px] text-center">Femmes</div>
+            <div className="min-w-[80px] text-center">Jeunes</div>
+            <div className="min-w-[80px] text-center">Total</div>
+            <div className="min-w-[80px] text-center">Enfants</div>
+            <div className="min-w-[100px] text-center">Connectés</div>
+            <div className="min-w-[100px] text-center">Nouveaux</div>
+            <div className="min-w-[100px] text-center">Convertis</div>
+            <div className="min-w-[100px] text-center">Moissonneurs</div>
+          </div>
+
+          <div className="flex bg-white/10 px-4 py-2 rounded-b-xl">
+            <div className="min-w-[120px] font-semibold text-white">Culte</div>
+            <div className="min-w-[80px] text-center text-white">{branch.stats.hommes}</div>
+            <div className="min-w-[80px] text-center text-white">{branch.stats.femmes}</div>
+            <div className="min-w-[80px] text-center text-white">{branch.stats.jeunes}</div>
+            <div className="min-w-[80px] text-center text-white">{total}</div>
+            <div className="min-w-[80px] text-center text-white">{branch.stats.enfants}</div>
+            <div className="min-w-[100px] text-center text-white">{branch.stats.connectes}</div>
+            <div className="min-w-[100px] text-center text-white">{branch.stats.nouveaux_venus}</div>
+            <div className="min-w-[100px] text-center text-white">{branch.stats.nouveau_converti}</div>
+            <div className="min-w-[100px] text-center text-white">{branch.stats.moissonneurs}</div>
+          </div>
+        </div>
+
+        {/* Enfants */}
+        {branch.enfants.map(child => renderBranch(child, level + 1))}
+      </div>
+    );
   };
 
   return (
@@ -175,73 +183,24 @@ function StatGlobalPage() {
       </h1>
 
       {/* FILTRE DATE */}
-      <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap text-black">
+      <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap">
         <input
           type="date"
           value={dateDebut}
           onChange={(e) => setDateDebut(e.target.value)}
-          className="px-3 py-2 rounded-lg"
+          className="px-3 py-2 rounded-lg text-black"
         />
         <input
           type="date"
           value={dateFin}
           onChange={(e) => setDateFin(e.target.value)}
-          className="px-3 py-2 rounded-lg"
+          className="px-3 py-2 rounded-lg text-black"
         />
       </div>
 
       {loading && <p>Chargement...</p>}
 
-      {/* TABLEAU */}
-      {!loading && rapports.length > 0 && (
-        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
-          <div className="w-max space-y-2">
-            {/* HEADER */}
-            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[180px] ml-1">Type</div>
-              <div className="min-w-[120px] text-center">Hommes</div>
-              <div className="min-w-[120px] text-center">Femmes</div>
-              <div className="min-w-[120px] text-center">Jeunes</div>
-              <div className="min-w-[120px] text-center">Total</div>
-              <div className="min-w-[120px] text-center">Enfants</div>
-              <div className="min-w-[140px] text-center">Connectés</div>
-              <div className="min-w-[150px] text-center">Nouveaux</div>
-              <div className="min-w-[180px] text-center">Convertis</div>
-              <div className="min-w-[160px] text-center">Moissonneurs</div>
-            </div>
-
-            {/* LIGNES */}
-            {rapports.map((r, idx) => (
-              <div key={idx} className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}>
-                <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
-                <div className="min-w-[120px] text-center">{r.data.hommes}</div>
-                <div className="min-w-[120px] text-center">{r.data.femmes}</div>
-                <div className="min-w-[120px] text-center">{r.data.jeunes}</div>
-                <div className="min-w-[120px] text-center">{r.data.hommes + r.data.femmes + r.data.jeunes}</div>
-                <div className="min-w-[120px] text-center">{r.data.enfants}</div>
-                <div className="min-w-[140px] text-center">{r.data.connectes}</div>
-                <div className="min-w-[150px] text-center">{r.data.nouveauxVenus}</div>
-                <div className="min-w-[180px] text-center">{r.data.nouveauxConvertis}</div>
-                <div className="min-w-[160px] text-center">{r.data.moissonneurs}</div>
-              </div>
-            ))}
-
-            {/* TOTAL GENERAL */}
-            <div className="flex items-center px-4 py-4 mt-3 rounded-xl bg-white/20 border-t border-white/40 font-bold">
-              <div className="min-w-[180px] text-orange-400 font-semibold uppercase ml-1">TOTAL</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.hommes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.femmes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.jeunes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{(totalGeneral.hommes || 0) + (totalGeneral.femmes || 0) + (totalGeneral.jeunes || 0)}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.enfants}</div>
-              <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGeneral.connectes}</div>
-              <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxVenus}</div>
-              <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxConvertis}</div>
-              <div className="min-w-[160px] text-center text-orange-400 font-semibold">{totalGeneral.moissonneurs}</div>
-            </div>
-          </div>
-        </div>
-      )}
+      {!loading && branchesTree.map(branch => renderBranch(branch))}
 
       <Footer />
     </div>

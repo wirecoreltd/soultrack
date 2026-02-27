@@ -20,26 +20,41 @@ function StatGlobalPage() {
   const [loading, setLoading] = useState(false);
   const [branchesTree, setBranchesTree] = useState([]);
 
-  // 🔹 Récupérer tous les enfants récursivement
-  const getAllChildBranchIds = (parentId, allBranches) => {
-    const children = allBranches.filter(b => b.superviseur_id === parentId);
-    let ids = children.map(c => c.id);
-    children.forEach(c => {
-      ids = ids.concat(getAllChildBranchIds(c.id, allBranches));
+  // 🔹 Fonction pour construire l'arbre à partir des branches
+  const buildTree = (branches, statsMap) => {
+    const mapBranches = {};
+    branches.forEach(b => {
+      mapBranches[b.id] = {
+        ...b,
+        stats: statsMap[b.id] || {
+          hommes: 0, femmes: 0, jeunes: 0, enfants: 0,
+          connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0
+        },
+        enfants: []
+      };
     });
-    return ids;
+
+    const tree = [];
+    Object.values(mapBranches).forEach(b => {
+      if (b.superviseur_id && mapBranches[b.superviseur_id]) {
+        mapBranches[b.superviseur_id].enfants.push(b);
+      } else {
+        tree.push(b);
+      }
+    });
+
+    return tree;
   };
 
   const fetchStats = async () => {
     setLoading(true);
-
     try {
-      // 🔹 Étape 1 : récupérer session et email de l'utilisateur
+      // 🔹 1. Récupérer l'utilisateur connecté
       const { data: { session } } = await supabase.auth.getSession();
       const userEmail = session?.user?.email;
       if (!userEmail) throw new Error("Utilisateur non connecté");
 
-      // 🔹 Étape 2 : récupérer profile
+      // 🔹 2. Récupérer le profile
       const { data: profile } = await supabase
         .from("profiles")
         .select("id, superviseur_id")
@@ -49,63 +64,39 @@ function StatGlobalPage() {
 
       const superviseurId = profile.superviseur_id || profile.id;
 
-      // 🔹 Étape 3 : récupérer toutes les branches
-      const { data: allBranches } = await supabase
-        .from("branches")
-        .select("id, nom, superviseur_id");
+      // 🔹 3. Récupérer branches et stats en une seule requête
+      const { data, error } = await supabase.rpc("get_branches_stats", {
+        supervisor_id_input: superviseurId,
+        date_debut_input: dateDebut || null,
+        date_fin_input: dateFin || null
+      });
 
-      if (!allBranches) throw new Error("Branches introuvables");
+      if (error) throw error;
 
-      // 🔹 Étape 4 : récupérer les IDs autorisés
-      const allowedIds = [superviseurId, ...getAllChildBranchIds(superviseurId, allBranches)];
-
-      // 🔹 Étape 5 : récupérer les stats filtrées
-      let query = supabase.from("attendance_stats").select("*").in("branche_id", allowedIds);
-      if (dateDebut) query = query.gte("mois", dateDebut);
-      if (dateFin) query = query.lte("mois", dateFin);
-
-      const { data: statsData } = await query;
-
-      // 🔹 Étape 6 : créer map des stats par branche
+      // 🔹 4. Séparer stats et branches
+      const branches = data.map(d => ({
+        id: d.id,
+        nom: d.nom,
+        superviseur_id: d.superviseur_id
+      }));
       const statsMap = {};
-      statsData?.forEach(item => {
-        statsMap[item.branche_id] = {
-          hommes: Number(item.hommes) || 0,
-          femmes: Number(item.femmes) || 0,
-          jeunes: Number(item.jeunes) || 0,
-          enfants: Number(item.enfants) || 0,
-          connectes: Number(item.connectes) || 0,
-          nouveaux_venus: Number(item.nouveauxvenus || item.nouveaux_venus) || 0,
-          nouveau_converti: Number(item.nouveauxconvertis || item.nouveau_converti) || 0,
-          moissonneurs: Number(item.moissonneurs) || 0,
+      data.forEach(d => {
+        statsMap[d.id] = {
+          hommes: d.hommes || 0,
+          femmes: d.femmes || 0,
+          jeunes: d.jeunes || 0,
+          enfants: d.enfants || 0,
+          connectes: d.connectes || 0,
+          nouveaux_venus: d.nouveaux_venus || 0,
+          nouveau_converti: d.nouveau_converti || 0,
+          moissonneurs: d.moissonneurs || 0
         };
       });
 
-      // 🔹 Étape 7 : construire arbre hiérarchique
-      const mapBranches = {};
-      allBranches.forEach(b => {
-        mapBranches[b.id] = {
-          id: b.id,
-          nom: b.nom,
-          superviseur_id: b.superviseur_id,
-          stats: statsMap[b.id] || {
-            hommes: 0, femmes: 0, jeunes: 0, enfants: 0,
-            connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0,
-          },
-          enfants: [],
-        };
-      });
-
-      const tree = [];
-      Object.values(mapBranches).forEach(b => {
-        if (b.superviseur_id && mapBranches[b.superviseur_id]) {
-          mapBranches[b.superviseur_id].enfants.push(b);
-        } else if (allowedIds.includes(b.id)) {
-          tree.push(b);
-        }
-      });
-
+      // 🔹 5. Construire l'arbre
+      const tree = buildTree(branches, statsMap);
       setBranchesTree(tree);
+
     } catch (err) {
       console.error("Erreur fetch stats:", err);
       setBranchesTree([]);
@@ -117,7 +108,6 @@ function StatGlobalPage() {
   const renderBranch = (b) => (
     <div key={b.id} className="w-full">
       <div className="text-xl font-bold text-amber-300 mb-3">{b.nom}</div>
-
       <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
         <div className="min-w-[180px] ml-1">Type</div>
         <div className="min-w-[120px] text-center">Hommes</div>
@@ -129,7 +119,6 @@ function StatGlobalPage() {
         <div className="min-w-[180px] text-center">Convertis</div>
         <div className="min-w-[160px] text-center">Moissonneurs</div>
       </div>
-
       <div className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400 whitespace-nowrap">
         <div className="min-w-[180px] text-white font-semibold">Culte</div>
         <div className="min-w-[120px] text-center text-white">{b.stats.hommes}</div>
@@ -141,7 +130,6 @@ function StatGlobalPage() {
         <div className="min-w-[180px] text-center text-white">{b.stats.nouveau_converti}</div>
         <div className="min-w-[160px] text-center text-white">{b.stats.moissonneurs}</div>
       </div>
-
       {b.enfants.length > 0 && (
         <div className="pl-8 mt-4 space-y-4">
           {b.enfants.map(child => renderBranch(child))}
@@ -153,7 +141,6 @@ function StatGlobalPage() {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
@@ -186,7 +173,6 @@ function StatGlobalPage() {
       )}
 
       {loading && <div className="text-white mt-4">Chargement...</div>}
-
       <Footer />
     </div>
   );

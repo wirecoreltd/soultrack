@@ -25,7 +25,6 @@ function StatGlobalPage() {
   const [rootId, setRootId] = useState(null);
   const [expandedBranches, setExpandedBranches] = useState([]);
 
-  // Fonction pour récupérer toutes les descendants d'une branche
   const getAllDescendants = (branch) => {
     let descendants = [branch.id];
     branch.enfants.forEach((child) => {
@@ -34,7 +33,6 @@ function StatGlobalPage() {
     return descendants;
   };
 
-  // Toggle expand/collapse
   const toggleExpand = (branchId) => {
     setExpandedBranches((prev) =>
       prev.includes(branchId)
@@ -45,16 +43,13 @@ function StatGlobalPage() {
 
   const fetchStats = async () => {
     setLoading(true);
-
     try {
-      // 🔹 Récupérer user
       const {
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
       if (userError) throw userError;
 
-      // 🔹 Récupérer branche racine
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("branche_id")
@@ -65,7 +60,6 @@ function StatGlobalPage() {
       const rootIdValue = profileData.branche_id;
       setRootId(rootIdValue);
 
-      // 🔹 Récupérer toutes les branches descendants
       const { data: branchesData, error: branchesError } = await supabase
         .rpc("get_descendant_branches", { root_id: rootIdValue });
       if (branchesError) throw branchesError;
@@ -79,7 +73,7 @@ function StatGlobalPage() {
 
       const branchIds = branchesData.map((b) => b.id);
 
-      // 🔹 Récupérer les stats
+      // 🔹 Récupérer les stats attendance (Culte)
       let statsQuery = supabase
         .from("attendance_stats")
         .select("*")
@@ -88,32 +82,47 @@ function StatGlobalPage() {
       if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
       if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
 
-      const { data: statsData, error: statsError } = await statsQuery;
-      if (statsError) throw statsError;
+      const { data: attendanceData, error: attendanceError } = await statsQuery;
+      if (attendanceError) throw attendanceError;
 
-      // 🔹 Construire map des stats
+      // 🔹 Récupérer les stats formations
+      let formationQuery = supabase
+        .from("formations")
+        .select("*")
+        .in("branche_id", branchIds);
+      if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
+      if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
+
+      const { data: formationData, error: formationError } = await formationQuery;
+      if (formationError) throw formationError;
+
+      // 🔹 Map des stats par branche
       const statsMap = {};
-      statsData.forEach((stat) => {
-        if (!statsMap[stat.branche_id]) {
-          statsMap[stat.branche_id] = {
-            hommes: 0,
-            femmes: 0,
-            jeunes: 0,
-            enfants: 0,
-            connectes: 0,
-            nouveaux_venus: 0,
-            nouveau_converti: 0,
-            moissonneurs: 0,
-          };
-        }
-        statsMap[stat.branche_id].hommes += Number(stat.hommes) || 0;
-        statsMap[stat.branche_id].femmes += Number(stat.femmes) || 0;
-        statsMap[stat.branche_id].jeunes += Number(stat.jeunes) || 0;
-        statsMap[stat.branche_id].enfants += Number(stat.enfants) || 0;
-        statsMap[stat.branche_id].connectes += Number(stat.connectes) || 0;
-        statsMap[stat.branche_id].nouveaux_venus += Number(stat.nouveaux_venus) || 0;
-        statsMap[stat.branche_id].nouveau_converti += Number(stat.nouveau_converti) || 0;
-        statsMap[stat.branche_id].moissonneurs += Number(stat.moissonneurs) || 0;
+      branchIds.forEach((id) => {
+        statsMap[id] = {
+          culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0 },
+          formation: { hommes: 0, femmes: 0 },
+        };
+      });
+
+      // ➤ Culte
+      attendanceData.forEach((stat) => {
+        const s = statsMap[stat.branche_id].culte;
+        s.hommes += Number(stat.hommes) || 0;
+        s.femmes += Number(stat.femmes) || 0;
+        s.jeunes += Number(stat.jeunes) || 0;
+        s.enfants += Number(stat.enfants) || 0;
+        s.connectes += Number(stat.connectes) || 0;
+        s.nouveaux_venus += Number(stat.nouveaux_venus) || 0;
+        s.nouveau_converti += Number(stat.nouveau_converti) || 0;
+        s.moissonneurs += Number(stat.moissonneurs) || 0;
+      });
+
+      // ➤ Formation
+      formationData.forEach((f) => {
+        const s = statsMap[f.branche_id].formation;
+        s.hommes += Number(f.hommes) || 0;
+        s.femmes += Number(f.femmes) || 0;
       });
 
       // 🔹 Construire arbre hiérarchique
@@ -121,16 +130,7 @@ function StatGlobalPage() {
       branchesData.forEach((b) => {
         map[b.id] = {
           ...b,
-          stats: statsMap[b.id] || {
-            hommes: 0,
-            femmes: 0,
-            jeunes: 0,
-            enfants: 0,
-            connectes: 0,
-            nouveaux_venus: 0,
-            nouveau_converti: 0,
-            moissonneurs: 0,
-          },
+          stats: statsMap[b.id],
           enfants: [],
         };
       });
@@ -151,23 +151,15 @@ function StatGlobalPage() {
       setBranchesTree([]);
       setAllBranches([]);
     }
-
     setLoading(false);
   };
 
   const renderBranch = (branch, level = 0) => {
-    const total = branch.stats.hommes + branch.stats.femmes + branch.stats.jeunes;
-
-    const borderColor =
-      level === 0
-        ? "border-green-400"
-        : level === 1
-        ? "border-orange-400"
-        : "border-purple-400";
+    const culteTotal = branch.stats.culte.hommes + branch.stats.culte.femmes + branch.stats.culte.jeunes;
 
     return (
       <div key={branch.id} className="mt-8">
-        {/* TITRE avec rectangle coloré et [+]/[-] */}
+        {/* TITRE et expand/collapse */}
         <div className="flex items-center mb-3">
           {level === 1 && branch.enfants.length > 0 && (
             <button
@@ -177,13 +169,10 @@ function StatGlobalPage() {
               {expandedBranches.includes(branch.id) ? "➖" : "➕"}
             </button>
           )}
-        
-          <div className="text-xl font-bold text-amber-300">
-            {branch.nom}
-          </div>
+          <div className="text-xl font-bold text-amber-300">{branch.nom}</div>
         </div>
 
-        {/* TABLE */}
+        {/* Culte */}
         <div className="w-full max-w-full overflow-x-auto">
           <div className="w-max space-y-2">
             <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
@@ -199,19 +188,31 @@ function StatGlobalPage() {
               <div className="min-w-[160px] text-center">Moissonneurs</div>
             </div>
 
-            <div
-              className={`flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition whitespace-nowrap border-l-4 ${borderColor}`}
-            >
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition whitespace-nowrap border-l-4 border-green-400">
               <div className="min-w-[180px] text-white font-semibold">Culte</div>
-              <div className="min-w-[120px] text-center text-white">{branch.stats.hommes}</div>
-              <div className="min-w-[120px] text-center text-white">{branch.stats.femmes}</div>
-              <div className="min-w-[120px] text-center text-white">{branch.stats.jeunes}</div>
-              <div className="min-w-[120px] text-center text-white">{total}</div>
-              <div className="min-w-[120px] text-center text-white">{branch.stats.enfants}</div>
-              <div className="min-w-[140px] text-center text-white">{branch.stats.connectes}</div>
-              <div className="min-w-[150px] text-center text-white">{branch.stats.nouveaux_venus}</div>
-              <div className="min-w-[180px] text-center text-white">{branch.stats.nouveau_converti}</div>
-              <div className="min-w-[160px] text-center text-white">{branch.stats.moissonneurs}</div>
+              <div className="min-w-[120px] text-center text-white">{branch.stats.culte.hommes}</div>
+              <div className="min-w-[120px] text-center text-white">{branch.stats.culte.femmes}</div>
+              <div className="min-w-[120px] text-center text-white">{branch.stats.culte.jeunes}</div>
+              <div className="min-w-[120px] text-center text-white">{culteTotal}</div>
+              <div className="min-w-[120px] text-center text-white">{branch.stats.culte.enfants}</div>
+              <div className="min-w-[140px] text-center text-white">{branch.stats.culte.connectes}</div>
+              <div className="min-w-[150px] text-center text-white">{branch.stats.culte.nouveaux_venus}</div>
+              <div className="min-w-[180px] text-center text-white">{branch.stats.culte.nouveau_converti}</div>
+              <div className="min-w-[160px] text-center text-white">{branch.stats.culte.moissonneurs}</div>
+            </div>
+
+            {/* Formation */}
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition whitespace-nowrap border-l-4 border-blue-400">
+              <div className="min-w-[180px] text-white font-semibold">Formation</div>
+              <div className="min-w-[120px] text-center text-white">{branch.stats.formation.hommes}</div>
+              <div className="min-w-[120px] text-center text-white">{branch.stats.formation.femmes}</div>
+              <div className="min-w-[120px] text-center text-white">-</div>
+              <div className="min-w-[120px] text-center text-white">-</div>
+              <div className="min-w-[120px] text-center text-white">-</div>
+              <div className="min-w-[140px] text-center text-white">-</div>
+              <div className="min-w-[150px] text-center text-white">-</div>
+              <div className="min-w-[180px] text-center text-white">-</div>
+              <div className="min-w-[160px] text-center text-white">-</div>
             </div>
           </div>
         </div>
@@ -224,10 +225,7 @@ function StatGlobalPage() {
     );
   };
 
-  // Options de filtre: enfants directs de la racine
   const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
-
-  // Filtrage selon superviseur + tous ses descendants
   const filteredBranches =
     superviseurFilter && rootId
       ? branchesTree.filter((branch) =>

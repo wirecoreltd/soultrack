@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -15,59 +15,38 @@ export default function StatGlobalPageWrapper() {
 }
 
 function StatGlobalPage() {
+  const [superviseurId, setSuperviseurId] = useState("");
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [branchesTree, setBranchesTree] = useState([]);
+  const [rapports, setRapports] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [userEgliseId, setUserEgliseId] = useState(null);
-
-  // 🔹 Récupérer automatiquement l'église du user connecté
-  useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { user },
-        error
-      } = await supabase.auth.getUser();
-
-      if (error || !user) {
-        console.error("Impossible de récupérer l'utilisateur :", error);
-        return;
-      }
-
-      // Récupérer la branche/église de l'utilisateur
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("branche_id")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError || !profileData) {
-        console.error("Impossible de récupérer l'église de l'utilisateur :", profileError);
-        return;
-      }
-
-      setUserEgliseId(profileData.branche_id);
-    };
-
-    fetchUser();
-  }, []);
+  const [totalGeneral, setTotalGeneral] = useState({
+    hommes: 0,
+    femmes: 0,
+    jeunes: 0,
+    enfants: 0,
+    connectes: 0,
+    nouveauxVenus: 0,
+    nouveauxConvertis: 0,
+    moissonneurs: 0
+  });
 
   const fetchStats = async () => {
-    if (!userEgliseId) {
-      alert("Impossible de récupérer votre église.");
+    if (!superviseurId) {
+      alert("Veuillez entrer un ID d'église.");
       return;
     }
 
     setLoading(true);
 
     try {
-      // 1️⃣ Récupérer toute la hiérarchie
+      // 1️⃣ Récupérer toute la hiérarchie récursive
       const { data: branchesData, error: branchError } = await supabase
-        .rpc("get_descendant_branches", { root_id: userEgliseId });
+        .rpc("get_descendant_branches", { root_id: superviseurId });
 
       if (branchError) throw branchError;
       if (!branchesData || branchesData.length === 0) {
-        setBranchesTree([]);
+        setRapports([]);
         setLoading(false);
         return;
       }
@@ -75,15 +54,18 @@ function StatGlobalPage() {
       const branchIds = branchesData.map(b => b.id);
 
       // 2️⃣ Récupérer les stats cumulées
-      const { data: statsData, error: statsError } = await supabase
+      let statsQuery = supabase
         .from("attendance_stats")
         .select("*")
-        .in("branche_id", branchIds)
-        .gte("mois", dateDebut || "1900-01-01")
-        .lte("mois", dateFin || "2999-12-31");
+        .in("branche_id", branchIds);
 
+      if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
+      if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
+
+      const { data: statsData, error: statsError } = await statsQuery;
       if (statsError) throw statsError;
 
+      // 3️⃣ Construire map des stats cumulées par branche
       const statsMap = {};
       statsData.forEach(stat => {
         if (!statsMap[stat.branche_id]) {
@@ -93,25 +75,26 @@ function StatGlobalPage() {
             jeunes: 0,
             enfants: 0,
             connectes: 0,
-            nouveaux_venus: 0,
-            nouveau_converti: 0,
+            nouveauxVenus: 0,
+            nouveauxConvertis: 0,
             moissonneurs: 0
           };
         }
+
         statsMap[stat.branche_id].hommes += Number(stat.hommes) || 0;
         statsMap[stat.branche_id].femmes += Number(stat.femmes) || 0;
         statsMap[stat.branche_id].jeunes += Number(stat.jeunes) || 0;
         statsMap[stat.branche_id].enfants += Number(stat.enfants) || 0;
         statsMap[stat.branche_id].connectes += Number(stat.connectes) || 0;
-        statsMap[stat.branche_id].nouveaux_venus += Number(stat.nouveaux_venus || stat.nouveauxvenus) || 0;
-        statsMap[stat.branche_id].nouveau_converti += Number(stat.nouveau_converti || stat.nouveauxconvertis) || 0;
+        statsMap[stat.branche_id].nouveauxVenus += Number(stat.nouveaux_venus || stat.nouveauxVenus) || 0;
+        statsMap[stat.branche_id].nouveauxConvertis += Number(stat.nouveau_converti || stat.nouveauxConvertis) || 0;
         statsMap[stat.branche_id].moissonneurs += Number(stat.moissonneurs) || 0;
       });
 
-      // 3️⃣ Construire arbre hiérarchique
-      const map = {};
+      // 4️⃣ Construire arbre et cumul parent
+      const mapBranches = {};
       branchesData.forEach(b => {
-        map[b.id] = {
+        mapBranches[b.id] = {
           ...b,
           stats: statsMap[b.id] || {
             hommes: 0,
@@ -119,73 +102,81 @@ function StatGlobalPage() {
             jeunes: 0,
             enfants: 0,
             connectes: 0,
-            nouveaux_venus: 0,
-            nouveau_converti: 0,
+            nouveauxVenus: 0,
+            nouveauxConvertis: 0,
             moissonneurs: 0
           },
           enfants: []
         };
       });
 
+      // assigner enfants
       const tree = [];
-      Object.values(map).forEach(b => {
-        if (b.superviseur_id && map[b.superviseur_id]) {
-          map[b.superviseur_id].enfants.push(b);
+      Object.values(mapBranches).forEach(b => {
+        if (b.superviseur_id && mapBranches[b.superviseur_id]) {
+          mapBranches[b.superviseur_id].enfants.push(b);
         } else {
           tree.push(b);
         }
       });
 
-      setBranchesTree(tree);
+      // 5️⃣ Aplatir pour la table et calculer bordures
+      const flattened = [];
+      const total = {
+        hommes: 0,
+        femmes: 0,
+        jeunes: 0,
+        enfants: 0,
+        connectes: 0,
+        nouveauxVenus: 0,
+        nouveauxConvertis: 0,
+        moissonneurs: 0
+      };
+
+      const traverse = (branch, level = 0, color = "border-green-400") => {
+        // cumul total
+        total.hommes += branch.stats.hommes;
+        total.femmes += branch.stats.femmes;
+        total.jeunes += branch.stats.jeunes;
+        total.enfants += branch.stats.enfants;
+        total.connectes += branch.stats.connectes;
+        total.nouveauxVenus += branch.stats.nouveauxVenus;
+        total.nouveauxConvertis += branch.stats.nouveauxConvertis;
+        total.moissonneurs += branch.stats.moissonneurs;
+
+        flattened.push({
+          label: branch.nom,
+          data: branch.stats,
+          border: color,
+          level
+        });
+
+        // choisir couleur enfants
+        const childColor = level === 0 ? "border-orange-400" : "border-yellow-400";
+        branch.enfants.forEach(child => traverse(child, level + 1, childColor));
+      };
+
+      tree.forEach(b => traverse(b));
+
+      setRapports(flattened);
+      setTotalGeneral(total);
+
     } catch (err) {
       console.error("Erreur fetch stats:", err);
-      setBranchesTree([]);
+      setRapports([]);
+      setTotalGeneral({
+        hommes: 0,
+        femmes: 0,
+        jeunes: 0,
+        enfants: 0,
+        connectes: 0,
+        nouveauxVenus: 0,
+        nouveauxConvertis: 0,
+        moissonneurs: 0
+      });
     }
 
     setLoading(false);
-  };
-
-  const renderBranch = (branch, level = 0) => {
-    const total = branch.stats.hommes + branch.stats.femmes + branch.stats.jeunes;
-
-    return (
-      <div key={branch.id} style={{ marginLeft: level * 30 }} className="mb-6">
-        <div className="text-xl font-bold text-amber-300 mb-2">{branch.nom}</div>
-
-        <table className="w-full table-auto border-collapse text-white mb-2">
-          <thead>
-            <tr className="border-b border-white/30">
-              <th className="text-left px-2 py-1">Type</th>
-              <th className="px-2 py-1 text-center">Hommes</th>
-              <th className="px-2 py-1 text-center">Femmes</th>
-              <th className="px-2 py-1 text-center">Jeunes</th>
-              <th className="px-2 py-1 text-center">Total</th>
-              <th className="px-2 py-1 text-center">Enfants</th>
-              <th className="px-2 py-1 text-center">Connectés</th>
-              <th className="px-2 py-1 text-center">Nouveaux</th>
-              <th className="px-2 py-1 text-center">Convertis</th>
-              <th className="px-2 py-1 text-center">Moissonneurs</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="bg-white/10">
-              <td className="px-2 py-1 font-semibold">Culte</td>
-              <td className="px-2 py-1 text-center">{branch.stats.hommes}</td>
-              <td className="px-2 py-1 text-center">{branch.stats.femmes}</td>
-              <td className="px-2 py-1 text-center">{branch.stats.jeunes}</td>
-              <td className="px-2 py-1 text-center">{total}</td>
-              <td className="px-2 py-1 text-center">{branch.stats.enfants}</td>
-              <td className="px-2 py-1 text-center">{branch.stats.connectes}</td>
-              <td className="px-2 py-1 text-center">{branch.stats.nouveaux_venus}</td>
-              <td className="px-2 py-1 text-center">{branch.stats.nouveau_converti}</td>
-              <td className="px-2 py-1 text-center">{branch.stats.moissonneurs}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        {branch.enfants.map(child => renderBranch(child, level + 1))}
-      </div>
-    );
   };
 
   return (
@@ -196,30 +187,90 @@ function StatGlobalPage() {
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
-      <div className="mb-6">
+      {/* FILTRES */}
+      <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap">
+        <input
+          type="text"
+          placeholder="ID Église"
+          value={superviseurId}
+          onChange={e => setSuperviseurId(e.target.value)}
+          className="px-3 py-2 rounded-lg text-black"
+        />
+
         <input
           type="date"
           value={dateDebut}
           onChange={e => setDateDebut(e.target.value)}
-          className="px-3 py-2 rounded-lg text-black mr-2"
+          className="px-3 py-2 rounded-lg text-black"
         />
+
         <input
           type="date"
           value={dateFin}
           onChange={e => setDateFin(e.target.value)}
-          className="px-3 py-2 rounded-lg text-black mr-2"
+          className="px-3 py-2 rounded-lg text-black"
         />
+
         <button
           onClick={fetchStats}
-          className="bg-[#2a2f85] px-5 py-2 rounded-lg text-white"
+          className="bg-[#2a2f85] px-5 py-2 rounded-lg"
         >
           Générer
         </button>
       </div>
 
-      {loading && <p>Chargement...</p>}
+      {/* TABLE */}
+      {!loading && rapports.length > 0 && (
+        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+          <div className="w-max space-y-2">
+            {/* HEADER */}
+            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[180px] ml-1">Type</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center">Jeunes</div>
+              <div className="min-w-[120px] text-center">Total</div>
+              <div className="min-w-[120px] text-center">Enfants</div>
+              <div className="min-w-[140px] text-center">Connectés</div>
+              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+              <div className="min-w-[180px] text-center">Nouveau Converti</div>
+              <div className="min-w-[160px] text-center">Moissonneurs</div>
+            </div>
 
-      {!loading && branchesTree.map(branch => renderBranch(branch))}
+            {/* LIGNES */}
+            {rapports.map((r, idx) => (
+              <div key={idx} className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${r.border}`}>
+                <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
+                <div className="min-w-[120px] text-center text-white">{r.data?.hommes ?? "-"}</div>
+                <div className="min-w-[120px] text-center text-white">{r.data?.femmes ?? "-"}</div>
+                <div className="min-w-[120px] text-center text-white">{r.data?.jeunes ?? "-"}</div>
+                <div className="min-w-[120px] text-center text-white">{(r.data?.hommes || 0) + (r.data?.femmes || 0) + (r.data?.jeunes || 0)}</div>
+                <div className="min-w-[120px] text-center text-white">{r.data?.enfants ?? "-"}</div>
+                <div className="min-w-[140px] text-center text-white">{r.data?.connectes ?? "-"}</div>
+                <div className="min-w-[150px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
+                <div className="min-w-[180px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
+                <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
+              </div>
+            ))}
+
+            {/* TOTAL GENERAL */}
+            <div className="flex items-center px-4 py-4 mt-3 rounded-xl bg-white/20 border-t border-white/40 font-bold">
+              <div className="min-w-[180px] text-orange-400 font-semibold uppercase ml-1">TOTAL</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.hommes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.femmes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.jeunes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.hommes + totalGeneral.femmes + totalGeneral.jeunes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGeneral.enfants}</div>
+              <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalGeneral.connectes}</div>
+              <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxVenus}</div>
+              <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGeneral.nouveauxConvertis}</div>
+              <div className="min-w-[160px] text-center text-orange-400 font-semibold">{totalGeneral.moissonneurs}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loading && <p>Chargement...</p>}
 
       <Footer />
     </div>

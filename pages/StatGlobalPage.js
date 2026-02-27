@@ -21,42 +21,42 @@ function StatGlobalPage() {
   const [branches, setBranches] = useState([]);
   const [superviseurId, setSuperviseurId] = useState(null);
 
-  // 🔹 Récupération du superviseur depuis le profil
+  // 🔹 Récupérer le superviseur de l'utilisateur
   useEffect(() => {
     const profile = JSON.parse(localStorage.getItem("profile"));
-    if (profile?.superviseur_id) {
-      setSuperviseurId(profile.superviseur_id);
-    } else {
-      console.warn("⚠️ Superviseur non défini !");
+    if (!profile) {
+      console.warn("Profil non trouvé !");
+      return;
     }
+    setSuperviseurId(profile.superviseur_id || null); // null si église principale
   }, []);
 
   const fetchStats = async () => {
-    if (!superviseurId) {
-      console.error("Superviseur non défini. Impossible de récupérer les stats !");
-      return;
-    }
-
     setLoading(true);
 
-    let query = supabase
-      .from("attendance_stats")
-      .select("*")
-      .eq("superviseur_id", superviseurId); // 🔹 Filtre par superviseur
+    let query = supabase.from("attendance_stats").select("*");
 
     if (dateDebut) query = query.gte("mois", dateDebut);
     if (dateFin) query = query.lte("mois", dateFin);
 
+    // 🔹 Filtrage par superviseur
+    if (superviseurId) {
+      query = query.eq("superviseur_id", superviseurId);
+    } else {
+      // si pas de superviseur → église principale
+      query = query.is("superviseur_id", null);
+    }
+
     const { data, error } = await query;
 
-    if (error) {
-      console.error(error);
+    if (error || !data) {
+      console.error("Erreur récupération stats :", error);
       setBranches([]);
       setLoading(false);
       return;
     }
 
-    // 🔹 Fusionner par branche
+    // 🔹 Grouper par nom de branche
     const grouped = {};
     data.forEach((item) => {
       const key = item.branche_nom?.trim().toLowerCase();
@@ -129,42 +129,29 @@ function StatGlobalPage() {
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
           {branches.map((b, idx) => (
             <div key={idx} className="w-full">
-              {/* TITRE BRANCHE */}
               <div className="text-xl font-bold text-amber-300 mb-3">
                 {b.branche_nom}
               </div>
 
-              {/* HEADER COLONNES */}
               <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
                 <div className="min-w-[180px] ml-1">Type</div>
                 <div className="min-w-[120px] text-center">Hommes</div>
                 <div className="min-w-[120px] text-center">Femmes</div>
                 <div className="min-w-[120px] text-center">Jeunes</div>
                 <div className="min-w-[120px] text-center">Enfants</div>
-                <div className="min-w-[140px] text-center">Connectés</div>
-                <div className="min-w-[150px] text-center">Nouveaux</div>
-                <div className="min-w-[180px] text-center">Convertis</div>
-                <div className="min-w-[160px] text-center">Moissonneurs</div>
               </div>
 
-              {/* LIGNE CULTE */}
               <div className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400 whitespace-nowrap">
                 <div className="min-w-[180px] text-white font-semibold">Culte</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.hommes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.femmes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.jeunes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.enfants}</div>
-                <div className="min-w-[140px] text-center text-white">{b.culte.connectes}</div>
-                <div className="min-w-[150px] text-center text-white">{b.culte.nouveaux_venus}</div>
-                <div className="min-w-[180px] text-center text-white">{b.culte.nouveau_converti}</div>
-                <div className="min-w-[160px] text-center text-white">{b.culte.moissonneurs}</div>
               </div>
             </div>
           ))}
         </div>
       )}
-
-      {loading && <p className="text-white mt-4">Chargement des statistiques...</p>}
 
       <Footer />
     </div>

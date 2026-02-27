@@ -20,10 +20,15 @@ function StatGlobalPage() {
   const [branchesTree, setBranchesTree] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
+  const [superviseurFilter, setSuperviseurFilter] = useState("");
+  const [allBranches, setAllBranches] = useState([]);
 
   const fetchStats = async () => {
     setLoading(true);
-
+    
+  const allBranchesFlat = Object.values(map);
+  setAllBranches(allBranchesFlat);
+    
     try {
       const {
         data: { user },
@@ -231,6 +236,23 @@ function StatGlobalPage() {
           {loading ? "Génération..." : "Générer"}
         </button>
       </div>
+<div className="flex flex-col">
+  <label className="text-sm mb-1">Superviseur</label>
+  <select
+    value={superviseurFilter}
+    onChange={(e) => setSuperviseurFilter(e.target.value)}
+    className="px-3 py-2 rounded-lg text-black"
+  >
+    <option value="">Tous</option>
+    {allBranches
+      .filter((b) => !b.superviseur_id)
+      .map((b) => (
+        <option key={b.id} value={b.id}>
+          {b.nom}
+        </option>
+      ))}
+  </select>
+</div>
 
       {!hasGenerated && (
         <p className="text-white/60 mt-6">
@@ -238,10 +260,13 @@ function StatGlobalPage() {
         </p>
       )}
 
-      {loading && <p>Chargement...</p>}
-
       {hasGenerated && !loading &&
-        branchesTree.map((branch) => renderBranch(branch))}
+  branchesTree
+    .filter((branch) =>
+      !superviseurFilter || branch.id === superviseurFilter
+    )
+    .map((branch) => renderBranch(branch))
+}
 
       <Footer />
     </div>

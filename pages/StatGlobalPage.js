@@ -64,6 +64,108 @@ export default function StatGlobalPage() {
       return;
     }
 
+    const fetchStats = async () => {
+  if (!superviseurId) {
+    alert("Superviseur non défini !");
+    return;
+  }
+
+  console.log("fetchStats appelé ! SuperviseurId =", superviseurId);
+  setLoading(true);
+
+  try {
+    // 🔹 Récupérer toutes les branches sous cette supervision
+    // ✅ Encodage correct de l'UUID pour REST
+    const uuidQuoted = `'${superviseurId}'`;
+    const { data: branchesData, error: branchesError } = await supabase
+      .from("branches")
+      .select("id, nom")
+      .or(`id.eq.${uuidQuoted},superviseur_id.eq.${uuidQuoted}`);
+
+    if (branchesError) {
+      console.log("Erreur branches:", branchesError);
+      setBranches([]);
+      setLoading(false);
+      return;
+    }
+
+    const safeBranches = branchesData || [];
+    if (safeBranches.length === 0) {
+      console.log("Aucune branche trouvée !");
+      setBranches([]);
+      setLoading(false);
+      return;
+    }
+
+    console.log("Branches récupérées:", safeBranches);
+
+    // 🔹 Récupérer les stats avec les dates filtrées
+    let statsQuery = supabase.from("attendance_stats").select("*");
+
+    if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
+    if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
+
+    const { data: statsData, error: statsError } = await statsQuery;
+
+    if (statsError) {
+      console.log("Erreur stats:", statsError);
+      setBranches([]);
+      setLoading(false);
+      return;
+    }
+
+    const safeStats = statsData || [];
+    if (safeStats.length === 0) {
+      console.log("Aucune stat trouvée !");
+      setBranches([]);
+      setLoading(false);
+      return;
+    }
+
+    // 🔹 Filtrer uniquement les stats des branches sous ce superviseur
+    const branchIds = safeBranches.map((b) => b.id);
+    const filteredStats = safeStats.filter((s) => branchIds.includes(s.branche_id));
+
+    const grouped = {};
+    filteredStats.forEach((item) => {
+      const key = item.branche_nom?.trim();
+      if (!key) return;
+
+      if (!grouped[key]) {
+        grouped[key] = {
+          branche_nom: key,
+          culte: {
+            hommes: 0,
+            femmes: 0,
+            jeunes: 0,
+            enfants: 0,
+            connectes: 0,
+            nouveaux_venus: 0,
+            nouveau_converti: 0,
+            moissonneurs: 0,
+          },
+        };
+      }
+
+      grouped[key].culte.hommes += Number(item.hommes) || 0;
+      grouped[key].culte.femmes += Number(item.femmes) || 0;
+      grouped[key].culte.jeunes += Number(item.jeunes) || 0;
+      grouped[key].culte.enfants += Number(item.enfants) || 0;
+      grouped[key].culte.connectes += Number(item.connectes) || 0;
+      grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
+      grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
+      grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
+    });
+
+    setBranches(Object.values(grouped));
+  } catch (err) {
+    console.log("Erreur fetchStats catch:", err);
+    setBranches([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
     // Calcul total global
     const total = {};
     const parEglise = {};

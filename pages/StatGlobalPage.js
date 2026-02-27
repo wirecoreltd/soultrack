@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -19,77 +19,93 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
+  const [superviseurId, setSuperviseurId] = useState(null);
+
+  // ⚡ Récupérer superviseur de l'utilisateur connecté
+  useEffect(() => {
+    const profile = JSON.parse(localStorage.getItem("profile") || "{}");
+    if (!profile || !profile.superviseur_id) {
+      console.warn("Superviseur non défini !");
+      setSuperviseurId(null);
+    } else {
+      setSuperviseurId(profile.superviseur_id);
+    }
+  }, []);
 
   const fetchStats = async () => {
     setLoading(true);
 
-    // 🔹 Récupérer l'utilisateur connecté et son superviseur
-    const profile = JSON.parse(localStorage.getItem("profile") || "{}");
-    const superviseurId = profile?.superviseur_id || null;
+    try {
+      const { data, error } = await supabase
+        .from("attendance_stats")
+        .select("*")
+        .gte(dateDebut ? "mois" : undefined, dateDebut || undefined)
+        .lte(dateFin ? "mois" : undefined, dateFin || undefined);
 
-    const { data, error } = await supabase
-      .from("attendance_stats")
-      .select("*")
-      .gte(dateDebut ? "mois" : null, dateDebut || undefined)
-      .lte(dateFin ? "mois" : null, dateFin || undefined);
+      if (error) {
+        console.error("Erreur fetchStats:", error);
+        setBranches([]);
+        setLoading(false);
+        return;
+      }
 
-    if (error || !data) {
-      setBranches([]);
-      setLoading(false);
-      return;
-    }
+      if (!data || data.length === 0) {
+        setBranches([]);
+        setLoading(false);
+        return;
+      }
 
-    // 🔹 Filtrer selon le superviseur
-    const filteredData = data.filter((item) => {
-      const isEglisePrincipale = item.superviseur_id === null;
-      if (superviseurId) {
-        // Utilisateur sous supervision : cacher église principale
-        if (isEglisePrincipale) return false;
-        return item.superviseur_id === superviseurId;
-      } else {
-        // Admin principal : tout visible
+      // 🔹 Filtrer selon superviseur
+      const filtered = data.filter((item) => {
+        // cacher Église Principale si superviseurId défini
+        if (superviseurId && !item.superviseur_id) return false;
+        if (superviseurId) return item.superviseur_id === superviseurId;
         return true;
-      }
-    });
+      });
 
-    // 🔹 Fusion par nom de branche
-    const grouped = {};
-    filteredData.forEach((item) => {
-      const key = item.branche_nom?.trim().toLowerCase();
-      if (!key) return;
+      // 🔹 Fusionner par branche
+      const grouped = {};
+      filtered.forEach((item) => {
+        const key = item.branche_nom?.trim().toLowerCase();
+        if (!key) return;
 
-      if (!grouped[key]) {
-        grouped[key] = {
-          branche_nom: item.branche_nom,
-          culte: {
-            hommes: 0,
-            femmes: 0,
-            jeunes: 0,
-            enfants: 0,
-            connectes: 0,
-            nouveaux_venus: 0,
-            nouveau_converti: 0,
-            moissonneurs: 0,
-          },
-        };
-      }
+        if (!grouped[key]) {
+          grouped[key] = {
+            branche_nom: item.branche_nom,
+            culte: {
+              hommes: 0,
+              femmes: 0,
+              jeunes: 0,
+              enfants: 0,
+              connectes: 0,
+              nouveaux_venus: 0,
+              nouveau_converti: 0,
+              moissonneurs: 0,
+            },
+          };
+        }
 
-      grouped[key].culte.hommes += Number(item.hommes) || 0;
-      grouped[key].culte.femmes += Number(item.femmes) || 0;
-      grouped[key].culte.jeunes += Number(item.jeunes) || 0;
-      grouped[key].culte.enfants += Number(item.enfants) || 0;
-      grouped[key].culte.connectes += Number(item.connectes) || 0;
-      grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
-      grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
-      grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
-    });
+        grouped[key].culte.hommes += Number(item.hommes) || 0;
+        grouped[key].culte.femmes += Number(item.femmes) || 0;
+        grouped[key].culte.jeunes += Number(item.jeunes) || 0;
+        grouped[key].culte.enfants += Number(item.enfants) || 0;
+        grouped[key].culte.connectes += Number(item.connectes) || 0;
+        grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
+        grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
+        grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
+      });
 
-    const result = Object.values(grouped).sort((a, b) =>
-      a.branche_nom.localeCompare(b.branche_nom)
-    );
+      const result = Object.values(grouped).sort((a, b) =>
+        a.branche_nom.localeCompare(b.branche_nom)
+      );
 
-    setBranches(result);
-    setLoading(false);
+      setBranches(result);
+    } catch (err) {
+      console.error("Erreur fetchStats catch:", err);
+      setBranches([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -127,7 +143,6 @@ function StatGlobalPage() {
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
           {branches.map((b, idx) => (
             <div key={idx} className="w-full">
-
               {/* TITRE BRANCHE */}
               <div className="text-xl font-bold text-amber-300 mb-3">
                 {b.branche_nom}
@@ -148,9 +163,7 @@ function StatGlobalPage() {
 
               {/* LIGNE CULTE */}
               <div className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400 whitespace-nowrap">
-                <div className="min-w-[180px] text-white font-semibold">
-                  Culte
-                </div>
+                <div className="min-w-[180px] text-white font-semibold">Culte</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.hommes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.femmes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.jeunes}</div>
@@ -160,7 +173,6 @@ function StatGlobalPage() {
                 <div className="min-w-[180px] text-center text-white">{b.culte.nouveau_converti}</div>
                 <div className="min-w-[160px] text-center text-white">{b.culte.moissonneurs}</div>
               </div>
-
             </div>
           ))}
         </div>

@@ -30,37 +30,32 @@ function StatGlobalPage() {
     setLoading(true);
 
     try {
-      // 🔹 1️⃣ Récupérer toutes les branches sous ce superviseur
+      // 🔹 Étape 1 : récupérer la branche principale ET toutes les sous-branches
       const { data: branchesData, error: branchesError } = await supabase
         .from("branches")
         .select("id, nom, superviseur_id")
-        .eq("superviseur_id", superviseurId);
+        .or(`id.eq.${superviseurId},superviseur_id.eq.${superviseurId}`);
 
       if (branchesError) throw branchesError;
 
-      console.log("Branches récupérées:", branchesData);
-
-      const superviseurBranchIds = branchesData.map((b) => b.id);
-
-      if (superviseurBranchIds.length === 0) {
+      if (!branchesData || branchesData.length === 0) {
         setBranchesTree([]);
         setLoading(false);
         return;
       }
 
-      // 🔹 2️⃣ Récupérer les stats pour ces branches
-      let statsQuery = supabase.from("attendance_stats").select("*").in("branche_id", superviseurBranchIds);
+      const branchIds = branchesData.map((b) => b.id);
 
-      if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
-      if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
+      // 🔹 Étape 2 : récupérer les stats pour toutes ces branches
+      let query = supabase.from("attendance_stats").select("*").in("branche_id", branchIds);
 
-      const { data: statsData, error: statsError } = await statsQuery;
+      if (dateDebut) query = query.gte("mois", dateDebut);
+      if (dateFin) query = query.lte("mois", dateFin);
 
+      const { data: statsData, error: statsError } = await query;
       if (statsError) throw statsError;
 
-      console.log("Stats récupérées:", statsData);
-
-      // 🔹 3️⃣ Map stats par branche
+      // 🔹 Étape 3 : map stats par branche
       const statsMap = {};
       statsData.forEach((item) => {
         statsMap[item.branche_id] = {
@@ -75,7 +70,7 @@ function StatGlobalPage() {
         };
       });
 
-      // 🔹 4️⃣ Construire arbre hiérarchique
+      // 🔹 Étape 4 : construire l'arbre hiérarchique
       const mapBranches = {};
       branchesData.forEach((b) => {
         mapBranches[b.id] = {
@@ -106,10 +101,10 @@ function StatGlobalPage() {
       });
 
       setBranchesTree(tree);
+      setLoading(false);
     } catch (err) {
       console.error("Erreur fetch stats:", err);
       setBranchesTree([]);
-    } finally {
       setLoading(false);
     }
   };
@@ -175,7 +170,7 @@ function StatGlobalPage() {
         <input
           type="text"
           placeholder="ID Superviseur"
-          value={superviseurId || ""}
+          value={superviseurId}
           onChange={(e) => setSuperviseurId(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />

@@ -124,21 +124,27 @@ function StatGlobalPage() {
     setLoading(false);
   };
 
-  const renderBranch = (branch) => {
+  const renderBranch = (branch, level = 0) => {
   const total =
     branch.stats.hommes +
     branch.stats.femmes +
     branch.stats.jeunes;
 
+  const borderColor =
+    level === 0
+      ? "border-green-400"
+      : level === 1
+      ? "border-orange-400"
+      : "border-purple-400";
+
   return (
     <div key={branch.id} className="mt-8">
-      {/* TITRE BRANCHE - SANS INDENTATION */}
+      {/* TITRE */}
       <div className="text-xl font-bold text-amber-300 mb-3">
         {branch.nom}
       </div>
 
-      {/* TABLE */}
-      <div className="w-full max-w-full overflow-x-auto scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+      <div className="w-full max-w-full overflow-x-auto">
         <div className="w-max space-y-2">
 
           {/* HEADER */}
@@ -155,46 +161,30 @@ function StatGlobalPage() {
             <div className="min-w-[160px] text-center">Moissonneurs</div>
           </div>
 
-          {/* LIGNE DATA - ARRONDI COMME CULTE */}
-          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition whitespace-nowrap">
+          {/* LIGNE DATA AVEC BORDURE ARRONDIE */}
+          <div
+            className={`flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition whitespace-nowrap border-l-4 ${borderColor}`}
+          >
             <div className="min-w-[180px] text-white font-semibold">
               Culte
             </div>
-            <div className="min-w-[120px] text-center text-white">
-              {branch.stats.hommes}
-            </div>
-            <div className="min-w-[120px] text-center text-white">
-              {branch.stats.femmes}
-            </div>
-            <div className="min-w-[120px] text-center text-white">
-              {branch.stats.jeunes}
-            </div>
-            <div className="min-w-[120px] text-center text-white">
-              {total}
-            </div>
-            <div className="min-w-[120px] text-center text-white">
-              {branch.stats.enfants}
-            </div>
-            <div className="min-w-[140px] text-center text-white">
-              {branch.stats.connectes}
-            </div>
-            <div className="min-w-[150px] text-center text-white">
-              {branch.stats.nouveaux_venus}
-            </div>
-            <div className="min-w-[180px] text-center text-white">
-              {branch.stats.nouveau_converti}
-            </div>
-            <div className="min-w-[160px] text-center text-white">
-              {branch.stats.moissonneurs}
-            </div>
+            <div className="min-w-[120px] text-center text-white">{branch.stats.hommes}</div>
+            <div className="min-w-[120px] text-center text-white">{branch.stats.femmes}</div>
+            <div className="min-w-[120px] text-center text-white">{branch.stats.jeunes}</div>
+            <div className="min-w-[120px] text-center text-white">{total}</div>
+            <div className="min-w-[120px] text-center text-white">{branch.stats.enfants}</div>
+            <div className="min-w-[140px] text-center text-white">{branch.stats.connectes}</div>
+            <div className="min-w-[150px] text-center text-white">{branch.stats.nouveaux_venus}</div>
+            <div className="min-w-[180px] text-center text-white">{branch.stats.nouveau_converti}</div>
+            <div className="min-w-[160px] text-center text-white">{branch.stats.moissonneurs}</div>
           </div>
 
         </div>
       </div>
 
-      {/* ENFANTS SANS MARGIN LEFT */}
+      {/* ENFANTS (SANS INDENTATION) */}
       {branch.enfants.map((child) =>
-        renderBranch(child)
+        renderBranch(child, level + 1)
       )}
     </div>
   );

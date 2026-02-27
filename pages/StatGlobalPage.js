@@ -15,14 +15,12 @@ export default function StatGlobalPageWrapper() {
 }
 
 function StatGlobalPage() {
-  const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
-  const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [superviseurId, setSuperviseurId] = useState(null);
 
+  // Récupérer le superviseur depuis localStorage
   useEffect(() => {
-    // On récupère le superviseur de l'utilisateur depuis le localStorage
     const profile = JSON.parse(localStorage.getItem("profile"));
     if (profile?.superviseur_id) {
       setSuperviseurId(profile.superviseur_id);
@@ -33,114 +31,83 @@ function StatGlobalPage() {
 
   const fetchStats = async () => {
     if (!superviseurId) {
-      alert("Superviseur non défini. Impossible de récupérer les stats !");
+      console.warn("Impossible de récupérer les stats : superviseur non défini !");
       return;
     }
 
     setLoading(true);
 
-    try {
-      // On récupère toutes les stats entre les dates
-      const { data, error } = await supabase
-        .from("attendance_stats")
-        .select("*")
-        .gte(dateDebut ? "mois" : null, dateDebut || undefined)
-        .lte(dateFin ? "mois" : null, dateFin || undefined);
+    const { data, error } = await supabase
+      .from("attendance_stats")
+      .select("*")
+      .eq("superviseur_id", superviseurId);
 
-      if (error || !data) {
-        setBranches([]);
-        setLoading(false);
-        return;
+    if (error || !data) {
+      setBranches([]);
+      setLoading(false);
+      console.error("Erreur fetch stats:", error);
+      return;
+    }
+
+    // Regroupement par branche
+    const grouped = {};
+    data.forEach((item) => {
+      const key = item.branche_nom?.trim().toLowerCase();
+      if (!key) return;
+
+      if (!grouped[key]) {
+        grouped[key] = {
+          branche_nom: item.branche_nom,
+          culte: {
+            hommes: 0,
+            femmes: 0,
+            jeunes: 0,
+            enfants: 0,
+            connectes: 0,
+            nouveaux_venus: 0,
+            nouveau_converti: 0,
+            moissonneurs: 0,
+          },
+        };
       }
 
-      // 🔹 Filtrer selon le superviseur
-      const filtered = data.filter(item => item.superviseur_id === superviseurId);
+      grouped[key].culte.hommes += Number(item.hommes) || 0;
+      grouped[key].culte.femmes += Number(item.femmes) || 0;
+      grouped[key].culte.jeunes += Number(item.jeunes) || 0;
+      grouped[key].culte.enfants += Number(item.enfants) || 0;
+      grouped[key].culte.connectes += Number(item.connectes) || 0;
+      grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
+      grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
+      grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
+    });
 
-      // 🔹 Fusion par nom de branche
-      const grouped = {};
-      filtered.forEach(item => {
-        const key = item.branche_nom?.trim().toLowerCase();
-        if (!key) return;
+    const result = Object.values(grouped).sort((a, b) =>
+      a.branche_nom.localeCompare(b.branche_nom)
+    );
 
-        if (!grouped[key]) {
-          grouped[key] = {
-            branche_nom: item.branche_nom,
-            culte: {
-              hommes: 0,
-              femmes: 0,
-              jeunes: 0,
-              enfants: 0,
-              connectes: 0,
-              nouveaux_venus: 0,
-              nouveau_converti: 0,
-              moissonneurs: 0,
-            },
-          };
-        }
-
-        grouped[key].culte.hommes += Number(item.hommes) || 0;
-        grouped[key].culte.femmes += Number(item.femmes) || 0;
-        grouped[key].culte.jeunes += Number(item.jeunes) || 0;
-        grouped[key].culte.enfants += Number(item.enfants) || 0;
-        grouped[key].culte.connectes += Number(item.connectes) || 0;
-        grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
-        grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
-        grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
-      });
-
-      const result = Object.values(grouped).sort((a, b) =>
-        a.branche_nom.localeCompare(b.branche_nom)
-      );
-
-      setBranches(result);
-    } catch (err) {
-      console.error(err);
-      setBranches([]);
-    } finally {
-      setLoading(false);
-    }
+    setBranches(result);
+    setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
-      {/* FILTRES */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <button
-          onClick={fetchStats}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-        >
-          Générer
-        </button>
-      </div>
+      <button
+        onClick={fetchStats}
+        className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] text-white"
+      >
+        Générer les stats
+      </button>
 
-      {/* AFFICHAGE */}
       {!loading && branches.length > 0 && (
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
           {branches.map((b, idx) => (
             <div key={idx} className="w-full">
-              <div className="text-xl font-bold text-amber-300 mb-3">
-                {b.branche_nom}
-              </div>
-
-              {/* HEADER COLONNES */}
+              <div className="text-xl font-bold text-amber-300 mb-3">{b.branche_nom}</div>
               <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
                 <div className="min-w-[180px] ml-1">Type</div>
                 <div className="min-w-[120px] text-center">Hommes</div>
@@ -153,7 +120,6 @@ function StatGlobalPage() {
                 <div className="min-w-[160px] text-center">Moissonneurs</div>
               </div>
 
-              {/* LIGNE CULTE */}
               <div className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400 whitespace-nowrap">
                 <div className="min-w-[180px] text-white font-semibold">Culte</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.hommes}</div>

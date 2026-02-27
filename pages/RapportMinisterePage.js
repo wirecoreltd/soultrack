@@ -1,124 +1,131 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+import Footer from "../components/Footer";
 
-export default function RapportMinisterePage() {
+export default function StatGlobalPageWrapper() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
-      <RapportMinistere />
+    <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
+      <StatGlobalPage />
     </ProtectedRoute>
   );
 }
 
-function RapportMinistere() {
+function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [rapports, setRapports] = useState([]);
-  const [egliseId, setEgliseId] = useState(null);
-  const [brancheId, setBrancheId] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [totalServiteurs, setTotalServiteurs] = useState(0);
-  const [totalMembres, setTotalMembres] = useState(0);
-  const [message, setMessage] = useState("");
+  const [branches, setBranches] = useState([]);
+  const [superviseurId, setSuperviseurId] = useState(null);
 
-  // 🔹 Charger profil utilisateur
+  // ✅ Récupération hiérarchie correcte
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData?.session?.user;
-      if (!user) return;
+    const fetchSuperviseur = async () => {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) return;
 
-      const { data: profile, error } = await supabase
+      // 1️⃣ Branche du user
+      const { data: profile } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("branche_id")
         .eq("id", user.id)
         .single();
 
-      if (!error && profile) {
-        setEgliseId(profile.eglise_id);
-        setBrancheId(profile.branche_id);
-      }
+      if (!profile?.branche_id) return;
+
+      // 2️⃣ Trouver son superviseur racine
+      const { data: branch } = await supabase
+        .from("branches")
+        .select("id, superviseur_id")
+        .eq("id", profile.branche_id)
+        .single();
+
+      if (!branch) return;
+
+      const rootSuperviseur = branch.superviseur_id || branch.id;
+      setSuperviseurId(rootSuperviseur);
     };
 
-    fetchUser();
+    fetchSuperviseur();
   }, []);
 
-  // 🔹 Générer rapport
-  const fetchRapport = async () => {
-    setLoading(true);
-    setRapports([]);
-    setTotalServiteurs(0);
-    setTotalMembres(0);
-    setMessage("⏳ Chargement...");
+  const fetchStats = async () => {
+    if (!superviseurId) {
+      alert("Superviseur non défini !");
+      return;
+    }
 
-    if (!egliseId || !brancheId) {
-      setMessage("❌ ID de l'église ou branche manquant");
+    setLoading(true);
+
+    // 🔹 Récupérer toutes les branches sous cette supervision
+    const { data: branchesData, error: branchesError } = await supabase
+      .from("branches")
+      .select("id, nom")
+      .or(`id.eq.${superviseurId},superviseur_id.eq.${superviseurId}`);
+
+    if (branchesError || !branchesData?.length) {
+      setBranches([]);
       setLoading(false);
       return;
     }
 
-    try {
-      // 🔹 1️⃣ Total membres (tous, pas filtré par date)
-      const { data: membresData, error: membresError } = await supabase
-        .from("membres_complets")
-        .select("id, etat_contact")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+    // 🔹 Stats avec filtres date propres
+    let statsQuery = supabase
+      .from("attendance_stats")
+      .select("*");
 
-      if (membresError) throw membresError;
+    if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
+    if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
 
-      const totalMembresLocal = membresData.filter((m) =>
-        ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
-      ).length;
-      setTotalMembres(totalMembresLocal);
+    const { data: statsData, error: statsError } = await statsQuery;
 
-      // 🔹 2️⃣ Récupérer stats_ministere_besoin pour la période
-      let queryStats = supabase
-        .from("stats_ministere_besoin")
-        .select("membre_id, valeur, date_action")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .eq("type", "ministere");
-
-      if (dateDebut) queryStats = queryStats.gte("date_action", dateDebut);
-      if (dateFin) queryStats = queryStats.lte("date_action", dateFin);
-
-      const { data: statsData, error: statsError } = await queryStats;
-      if (statsError) throw statsError;
-
-      // 🔹 3️⃣ Total serviteurs = membre_id distinct
-      const serviteursSet = new Set();
-      const counts = {}; // par ministère
-
-      statsData.forEach((s) => {
-        if (!s.membre_id) return;
-        serviteursSet.add(s.membre_id); // déduplication
-
-        if (!s.valeur) return;
-        if (!counts[s.valeur]) counts[s.valeur] = 0;
-        counts[s.valeur]++;
-      });
-
-      setTotalServiteurs(serviteursSet.size);
-
-      // 🔹 4️⃣ Rapport par ministère
-      setRapports(
-        Object.entries(counts).map(([ministere, total]) => ({
-          ministere,
-          total,
-        }))
-      );
-
-      setMessage("");
-    } catch (err) {
-      console.error(err);
-      setMessage("❌ " + err.message);
+    if (statsError || !statsData?.length) {
+      setBranches([]);
+      setLoading(false);
+      return;
     }
 
+    const branchIds = branchesData.map((b) => b.id);
+    const filteredStats = statsData.filter((s) =>
+      branchIds.includes(s.branche_id)
+    );
+
+    const grouped = {};
+
+    filteredStats.forEach((item) => {
+      const key = item.branche_nom?.trim();
+      if (!key) return;
+
+      if (!grouped[key]) {
+        grouped[key] = {
+          branche_nom: key,
+          culte: {
+            hommes: 0,
+            femmes: 0,
+            jeunes: 0,
+            enfants: 0,
+            connectes: 0,
+            nouveaux_venus: 0,
+            nouveau_converti: 0,
+            moissonneurs: 0,
+          },
+        };
+      }
+
+      grouped[key].culte.hommes += Number(item.hommes) || 0;
+      grouped[key].culte.femmes += Number(item.femmes) || 0;
+      grouped[key].culte.jeunes += Number(item.jeunes) || 0;
+      grouped[key].culte.enfants += Number(item.enfants) || 0;
+      grouped[key].culte.connectes += Number(item.connectes) || 0;
+      grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
+      grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
+      grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
+    });
+
+    setBranches(Object.values(grouped));
     setLoading(false);
   };
 
@@ -126,13 +133,11 @@ function RapportMinistere() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-            <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
-        <span className="text-white">Rapport </span>
-        <span className="text-amber-300">Ministère</span>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
+        Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
-      {/* 🔹 Filtres */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex gap-4 flex-wrap text-white">
         <input
           type="date"
           value={dateDebut}
@@ -146,65 +151,50 @@ function RapportMinistere() {
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
-          onClick={fetchRapport}
+          onClick={fetchStats}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
           Générer
         </button>
       </div>
 
-      {/* 🔹 Résumé */}
-      <div className="flex gap-4 mt-6 flex-wrap justify-center">
-        <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
-          <div className="text-sm uppercase font-semibold mb-1">
-            Nombre total de serviteurs
-          </div>
-          <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
-        </div>
-
-        <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
-          <div className="text-sm uppercase font-semibold mb-1">
-            % de serviteurs / membres
-          </div>
-          <div className="text-2xl font-bold text-orange-400">
-            {totalMembres > 0
-              ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
-              : 0} %
-          </div>
-        </div>
-      </div>
-
-      {/* 🔹 Tableau des ministères */}
-      <div className="w-full flex justify-center mt-6 mb-6">
-        <div className="w-max overflow-x-auto space-y-2">
-          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[250px]">Ministère</div>
-            <div className="min-w-[150px] text-center text-orange-400">
-              Nombre de serviteurs
-            </div>
-          </div>
-
-          {loading && (
-            <div className="text-white text-center py-4">Chargement...</div>
-          )}
-
-          {rapports.map((r, index) => (
-            <div
-              key={index}
-              className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
-            >
-              <div className="min-w-[250px] text-white font-semibold">
-                {r.ministere}
+      {!loading && branches.length > 0 && (
+        <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
+          {branches.map((b, idx) => (
+            <div key={idx} className="w-full">
+              <div className="text-xl font-bold text-amber-300 mb-3">
+                {b.branche_nom}
               </div>
-              <div className="min-w-[150px] text-center text-orange-400 font-bold">
-                {r.total}
+
+              <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+                <div className="min-w-[180px]">Type</div>
+                <div className="min-w-[120px] text-center">Hommes</div>
+                <div className="min-w-[120px] text-center">Femmes</div>
+                <div className="min-w-[120px] text-center">Jeunes</div>
+                <div className="min-w-[120px] text-center">Enfants</div>
+                <div className="min-w-[140px] text-center">Connectés</div>
+                <div className="min-w-[150px] text-center">Nouveaux</div>
+                <div className="min-w-[180px] text-center">Convertis</div>
+                <div className="min-w-[160px] text-center">Moissonneurs</div>
+              </div>
+
+              <div className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 border-l-4 border-blue-400 whitespace-nowrap">
+                <div className="min-w-[180px] text-white font-semibold">
+                  Culte
+                </div>
+                <div className="min-w-[120px] text-center text-white">{b.culte.hommes}</div>
+                <div className="min-w-[120px] text-center text-white">{b.culte.femmes}</div>
+                <div className="min-w-[120px] text-center text-white">{b.culte.jeunes}</div>
+                <div className="min-w-[120px] text-center text-white">{b.culte.enfants}</div>
+                <div className="min-w-[140px] text-center text-white">{b.culte.connectes}</div>
+                <div className="min-w-[150px] text-center text-white">{b.culte.nouveaux_venus}</div>
+                <div className="min-w-[180px] text-center text-white">{b.culte.nouveau_converti}</div>
+                <div className="min-w-[160px] text-center text-white">{b.culte.moissonneurs}</div>
               </div>
             </div>
           ))}
         </div>
-      </div>
-
-      {message && <p className="text-white text-center">{message}</p>}
+      )}
 
       <Footer />
     </div>

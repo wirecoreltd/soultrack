@@ -30,7 +30,7 @@ function StatGlobalPage() {
     setLoading(true);
 
     try {
-      // 1️⃣ Récupérer toute la hiérarchie via la fonction RPC
+      // 1️⃣ Récupérer la hiérarchie via RPC
       const { data: branchesData, error: branchError } = await supabase
         .rpc("get_descendant_branches", { root_id: superviseurId });
 
@@ -53,7 +53,6 @@ function StatGlobalPage() {
 
       if (statsError) throw statsError;
 
-      // Cumuler les stats par branche
       const statsMap = {};
       statsData.forEach(stat => {
         if (!statsMap[stat.branche_id]) {
@@ -115,26 +114,31 @@ function StatGlobalPage() {
     setLoading(false);
   };
 
-  // 4️⃣ Affichage hiérarchique propre
-  const renderBranch = (branch, level = 0) => (
-    <div key={branch.id} style={{ marginLeft: level * 30 }} className="mb-6">
-      <div className="text-xl font-bold text-amber-300">{branch.nom}</div>
+  // 4️⃣ Affichage hiérarchique avec labels corrects et Total
+  const renderBranch = (branch, level = 0) => {
+    const total = branch.stats.hommes + branch.stats.femmes + branch.stats.jeunes;
 
-      <div className="grid grid-cols-9 gap-2 bg-white/10 p-2 rounded-xl text-white font-semibold">
-        <div>Culte</div>
-        <div className="text-center">{branch.stats.hommes}</div>
-        <div className="text-center">{branch.stats.femmes}</div>
-        <div className="text-center">{branch.stats.jeunes}</div>
-        <div className="text-center">{branch.stats.enfants}</div>
-        <div className="text-center">{branch.stats.connectes}</div>
-        <div className="text-center">{branch.stats.nouveaux_venus}</div>
-        <div className="text-center">{branch.stats.nouveau_converti}</div>
-        <div className="text-center">{branch.stats.moissonneurs}</div>
+    return (
+      <div key={branch.id} style={{ marginLeft: level * 30 }} className="mb-6">
+        <div className="text-xl font-bold text-amber-300">{branch.nom}</div>
+
+        <div className="grid grid-cols-9 gap-2 bg-white/10 p-2 rounded-xl text-white font-semibold">
+          <div>Culte</div>
+          <div className="text-center">Hommes: {branch.stats.hommes}</div>
+          <div className="text-center">Femmes: {branch.stats.femmes}</div>
+          <div className="text-center">Jeunes: {branch.stats.jeunes}</div>
+          <div className="text-center">Total: {total}</div>
+          <div className="text-center">Enfants: {branch.stats.enfants}</div>
+          <div className="text-center">Connectés: {branch.stats.connectes}</div>
+          <div className="text-center">Nouveaux: {branch.stats.nouveaux_venus}</div>
+          <div className="text-center">Convertis: {branch.stats.nouveau_converti}</div>
+          <div className="text-center">Moissonneurs: {branch.stats.moissonneurs}</div>
+        </div>
+
+        {branch.enfants.map(child => renderBranch(child, level + 1))}
       </div>
-
-      {branch.enfants.map(child => renderBranch(child, level + 1))}
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">

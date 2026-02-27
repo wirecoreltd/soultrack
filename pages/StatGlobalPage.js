@@ -19,77 +19,31 @@ function StatGlobalPage() {
   const [dateFin, setDateFin] = useState("");
   const [loading, setLoading] = useState(false);
   const [branches, setBranches] = useState([]);
-  const [error, setError] = useState("");
-
-  // 1️⃣ Récupérer le superviseur de l'utilisateur connecté
-  const getSuperviseurId = () => {
-    try {
-      const profile = JSON.parse(localStorage.getItem("profile"));
-      return profile?.superviseur_id || null;
-    } catch (e) {
-      return null;
-    }
-  };
-
-  // 2️⃣ Fonction pour récupérer toutes les branches sous supervision
-  const fetchBranchesSousSupervision = async (superviseurId) => {
-    if (!superviseurId) return [];
-
-    // Récupère toutes les églises où superviseur_id = superviseurId
-    // Note: si tu veux une hiérarchie complète, il faudra gérer récursivement côté API ou JS
-    const { data, error } = await supabase
-      .from("branches")
-      .select("id, nom")
-      .or(`id.eq.${superviseurId},superviseur_id.eq.${superviseurId}`);
-
-    if (error) {
-      console.error(error);
-      return [];
-    }
-
-    return data || [];
-  };
+  const [superviseurId, setSuperviseurId] = useState(null);
 
   const fetchStats = async () => {
     setLoading(true);
-    setError("");
-    setBranches([]);
 
-    const superviseurId = getSuperviseurId();
-    if (!superviseurId) {
-      setError("❌ Superviseur non défini pour cet utilisateur !");
-      setLoading(false);
-      return;
-    }
+    let query = supabase.from("attendance_stats").select("*");
 
-    // Récupérer toutes les branches sous supervision
-    const branchesSousSupervision = await fetchBranchesSousSupervision(superviseurId);
-    const branchIds = branchesSousSupervision.map((b) => b.id);
-
-    if (!branchIds.length) {
-      setError("❌ Aucune branche sous votre supervision !");
-      setLoading(false);
-      return;
-    }
-
-    // Construire les filtres de date
-    let query = supabase.from("attendance_stats").select("*").in("branche_id", branchIds);
     if (dateDebut) query = query.gte("mois", dateDebut);
     if (dateFin) query = query.lte("mois", dateFin);
+    if (superviseurId) query = query.eq("superviseur_id", superviseurId);
 
-    const { data, error: statsError } = await query;
+    const { data, error } = await query;
 
-    if (statsError || !data) {
-      console.error(statsError);
-      setError("❌ Erreur lors de la récupération des stats");
+    if (error || !data) {
+      setBranches([]);
       setLoading(false);
       return;
     }
 
-    // 3️⃣ Grouper par branche
+    // 🔹 Fusion par branche
     const grouped = {};
     data.forEach((item) => {
-      const key = item.branche_id;
+      const key = item.branche_nom?.trim().toLowerCase();
+      if (!key) return;
+
       if (!grouped[key]) {
         grouped[key] = {
           branche_nom: item.branche_nom,
@@ -111,8 +65,8 @@ function StatGlobalPage() {
       grouped[key].culte.jeunes += Number(item.jeunes) || 0;
       grouped[key].culte.enfants += Number(item.enfants) || 0;
       grouped[key].culte.connectes += Number(item.connectes) || 0;
-      grouped[key].culte.nouveaux_venus += Number(item.nouveaux_venus) || 0;
-      grouped[key].culte.nouveau_converti += Number(item.nouveau_converti) || 0;
+      grouped[key].culte.nouveaux_venus += Number(item.nouveauxvenus || item.nouveaux_venus) || 0;
+      grouped[key].culte.nouveau_converti += Number(item.nouveauxconvertis || item.nouveau_converti) || 0;
       grouped[key].culte.moissonneurs += Number(item.moissonneurs) || 0;
     });
 
@@ -146,6 +100,13 @@ function StatGlobalPage() {
           onChange={(e) => setDateFin(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
+        <input
+          type="text"
+          placeholder="ID Superviseur"
+          value={superviseurId || ""}
+          onChange={(e) => setSuperviseurId(e.target.value || null)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
         <button
           onClick={fetchStats}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
@@ -154,19 +115,18 @@ function StatGlobalPage() {
         </button>
       </div>
 
-      {/* ERREURS */}
-      {error && <p className="text-red-500 mt-4">{error}</p>}
-
       {/* AFFICHAGE */}
       {!loading && branches.length > 0 && (
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
           {branches.map((b, idx) => (
             <div key={idx} className="w-full">
+
+              {/* TITRE BRANCHE */}
               <div className="text-xl font-bold text-amber-300 mb-3">
                 {b.branche_nom}
               </div>
 
-              {/* HEADER */}
+              {/* HEADER COLONNES */}
               <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
                 <div className="min-w-[180px] ml-1">Type</div>
                 <div className="min-w-[120px] text-center">Hommes</div>
@@ -181,7 +141,9 @@ function StatGlobalPage() {
 
               {/* LIGNE CULTE */}
               <div className="flex items-center px-4 py-3 rounded-b-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-400 whitespace-nowrap">
-                <div className="min-w-[180px] text-white font-semibold">Culte</div>
+                <div className="min-w-[180px] text-white font-semibold">
+                  Culte
+                </div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.hommes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.femmes}</div>
                 <div className="min-w-[120px] text-center text-white">{b.culte.jeunes}</div>
@@ -191,10 +153,13 @@ function StatGlobalPage() {
                 <div className="min-w-[180px] text-center text-white">{b.culte.nouveau_converti}</div>
                 <div className="min-w-[160px] text-center text-white">{b.culte.moissonneurs}</div>
               </div>
+
             </div>
           ))}
         </div>
       )}
+
+      {loading && <div className="text-white mt-4">Chargement...</div>}
 
       <Footer />
     </div>

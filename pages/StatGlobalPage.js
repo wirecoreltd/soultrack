@@ -70,6 +70,9 @@ function StatGlobalPage() {
         };
       });
 
+      const { data: branchesData } = await supabase
+  .rpc("get_descendant_branches", { root_id: superviseurId });
+
       // 🔹 Étape 4 : construire l'arbre hiérarchique
       const mapBranches = {};
       branchesData.forEach((b) => {

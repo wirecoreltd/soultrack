@@ -17,7 +17,6 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // 1️⃣ Connexion à Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -31,10 +30,10 @@ export default function LoginPage() {
 
       const user = authData.user;
 
-      // 2️⃣ Récupérer le profil complet avec roles[]
+      // Récupérer le profil complet, incluant superviseur_id
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, role, roles, prenom, nom, telephone")
+        .select("id, role, roles, prenom, nom, superviseur_id")
         .eq("id", user.id)
         .single();
 
@@ -44,16 +43,17 @@ export default function LoginPage() {
         return;
       }
 
-      // 3️⃣ Stocker les rôles et le profil
-      const roles = profile.roles || [];
-      localStorage.setItem("userRole", JSON.stringify(roles));
+      // Avertissement si superviseur non défini
+      if (!profile.superviseur_id) {
+        console.warn("⚠️ Superviseur non défini pour cet utilisateur !");
+      }
+
+      // Stocker dans localStorage
       localStorage.setItem("profile", JSON.stringify(profile));
-      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userRole", JSON.stringify(profile.roles || []));
       localStorage.setItem("userId", user.id);
 
-      // 4️⃣ Redirection unique vers index
       router.push("/");
-
     } catch (err) {
       console.error(err);
       setError("❌ Erreur lors de la connexion");
@@ -69,9 +69,6 @@ export default function LoginPage() {
           <img src="/logo.png" alt="Logo SoulTrack" className="w-12 h-12 object-contain" />
           SoulTrack
         </h1>
-        <p className="text-center text-gray-700 mb-6">
-          Bienvenue sur SoulTrack ! Une plateforme pour garder le contact et suivre chaque membre.
-        </p>
 
         <form onSubmit={handleLogin} className="flex flex-col w-full gap-4">
           <input
@@ -101,20 +98,6 @@ export default function LoginPage() {
             {loading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
-
-        <button
-          onClick={() => router.push("/reset-password")}
-          className="mt-4 text-blue-600 underline hover:text-blue-800"
-        >
-          Mot de passe oublié ?
-        </button>
-
-        <button
-          onClick={() => router.push("/SignupEglise")}
-          className="mt-4 text-orange-400 underline hover:text-orange-400"
-        >
-          Création de compte
-        </button>
       </div>
     </div>
   );

@@ -20,59 +20,51 @@ function StatGlobalPage() {
   const [loading, setLoading] = useState(false);
   const [branchesTree, setBranchesTree] = useState([]);
 
-  // 🔹 Supposons que tu récupères l'utilisateur connecté depuis Supabase auth
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    getUser();
-  }, []);
-
   const fetchStats = async () => {
-    if (!user) return;
-
     setLoading(true);
 
-    const superviseurId = user?.user_metadata?.superviseur_id; // depuis la session
-
-    if (!superviseurId) {
-      setBranchesTree([]);
-      setLoading(false);
-      return;
-    }
-
     try {
-      // 🔹 1️⃣ Récupérer toutes les branches supervisées
+      // 🔹 Étape 0 : récupérer l'utilisateur connecté et son profil
+      const {
+        data: profileData,
+        error: profileError,
+      } = await supabase
+        .from("profiles")
+        .select("id, superviseur_id, branche_id")
+        .eq("id", supabase.auth.user()?.id)
+        .single();
+
+      if (profileError || !profileData) throw profileError || new Error("Profil non trouvé");
+
+      const superviseurId = profileData.superviseur_id || profileData.branche_id;
+
+      // 🔹 Étape 1 : récupérer toutes les branches accessibles par l'utilisateur
       const { data: branchesData, error: branchesError } = await supabase
         .from("branches")
-        .select("id, nom, superviseur_id");
+        .select("id, nom, superviseur_id")
+        .or(`id.eq.${superviseurId},superviseur_id.eq.${superviseurId}`);
 
       if (branchesError) throw branchesError;
 
-      const superviseurBranchIds = branchesData
-        .filter(b => b.superviseur_id === superviseurId)
-        .map(b => b.id);
+      const branchesIds = branchesData.map((b) => b.id);
 
-      if (superviseurBranchIds.length === 0) {
+      if (branchesIds.length === 0) {
         setBranchesTree([]);
         setLoading(false);
         return;
       }
 
-      // 🔹 2️⃣ Récupérer les stats
-      let query = supabase.from("attendance_stats").select("*").in("branche_id", superviseurBranchIds);
+      // 🔹 Étape 2 : récupérer les stats de ces branches
+      let query = supabase.from("attendance_stats").select("*").in("branche_id", branchesIds);
       if (dateDebut) query = query.gte("mois", dateDebut);
       if (dateFin) query = query.lte("mois", dateFin);
 
       const { data: statsData, error: statsError } = await query;
       if (statsError) throw statsError;
 
-      // 🔹 3️⃣ Fusionner les stats par branche
+      // 🔹 Étape 3 : fusionner les stats par branche
       const statsMap = {};
-      statsData.forEach(item => {
+      statsData.forEach((item) => {
         statsMap[item.branche_id] = {
           hommes: Number(item.hommes) || 0,
           femmes: Number(item.femmes) || 0,
@@ -85,33 +77,38 @@ function StatGlobalPage() {
         };
       });
 
-      // 🔹 4️⃣ Construire l'arbre hiérarchique
+      // 🔹 Étape 4 : construire l'arbre hiérarchique
       const mapBranches = {};
-      branchesData.forEach(b => {
+      branchesData.forEach((b) => {
         mapBranches[b.id] = {
           id: b.id,
           nom: b.nom,
           superviseur_id: b.superviseur_id,
           stats: statsMap[b.id] || {
-            hommes: 0, femmes: 0, jeunes: 0, enfants: 0,
-            connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0,
+            hommes: 0,
+            femmes: 0,
+            jeunes: 0,
+            enfants: 0,
+            connectes: 0,
+            nouveaux_venus: 0,
+            nouveau_converti: 0,
+            moissonneurs: 0,
           },
           enfants: [],
         };
       });
 
       const tree = [];
-      Object.values(mapBranches).forEach(b => {
+      Object.values(mapBranches).forEach((b) => {
         if (b.superviseur_id && mapBranches[b.superviseur_id]) {
           mapBranches[b.superviseur_id].enfants.push(b);
         } else {
-          tree.push(b); // branche racine
+          tree.push(b); // racine
         }
       });
 
       setBranchesTree(tree);
       setLoading(false);
-
     } catch (err) {
       console.error("Erreur fetch stats:", err);
       setBranchesTree([]);
@@ -149,7 +146,7 @@ function StatGlobalPage() {
 
       {b.enfants.length > 0 && (
         <div className="pl-8 mt-4 space-y-4">
-          {b.enfants.map(child => renderBranch(child))}
+          {b.enfants.map((child) => renderBranch(child))}
         </div>
       )}
     </div>
@@ -168,13 +165,13 @@ function StatGlobalPage() {
         <input
           type="date"
           value={dateDebut}
-          onChange={e => setDateDebut(e.target.value)}
+          onChange={(e) => setDateDebut(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <input
           type="date"
           value={dateFin}
-          onChange={e => setDateFin(e.target.value)}
+          onChange={(e) => setDateFin(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
@@ -188,7 +185,7 @@ function StatGlobalPage() {
       {/* AFFICHAGE */}
       {!loading && branchesTree.length > 0 && (
         <div className="w-full max-w-full overflow-x-auto mt-8 space-y-8">
-          {branchesTree.map(b => renderBranch(b))}
+          {branchesTree.map((b) => renderBranch(b))}
         </div>
       )}
 

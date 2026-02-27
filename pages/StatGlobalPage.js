@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -17,22 +17,25 @@ export default function StatGlobalPageWrapper() {
 function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [branchesTree, setBranchesTree] = useState([]);
+  const [rapports, setRapports] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [hasGenerated, setHasGenerated] = useState(false);
-  const [superviseurFilter, setSuperviseurFilter] = useState("");
-  const [allBranches, setAllBranches] = useState([]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [dateDebut, dateFin]);
 
   const fetchStats = async () => {
     setLoading(true);
 
     try {
+      // 🔹 Récupérer le user connecté
       const {
         data: { user },
-        error: userError,
+        error: userError
       } = await supabase.auth.getUser();
       if (userError) throw userError;
 
+      // 🔹 Récupérer l'église principale du user
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("branche_id")
@@ -42,19 +45,20 @@ function StatGlobalPage() {
 
       const rootId = profileData.branche_id;
 
+      // 🔹 Récupérer toutes les branches descendants
       const { data: branchesData, error: branchesError } = await supabase
         .rpc("get_descendant_branches", { root_id: rootId });
       if (branchesError) throw branchesError;
 
       if (!branchesData || branchesData.length === 0) {
-        setBranchesTree([]);
-        setAllBranches([]);
+        setRapports([]);
         setLoading(false);
         return;
       }
 
-      const branchIds = branchesData.map((b) => b.id);
+      const branchIds = branchesData.map(b => b.id);
 
+      // 🔹 Récupérer les stats
       let statsQuery = supabase
         .from("attendance_stats")
         .select("*")
@@ -66,8 +70,9 @@ function StatGlobalPage() {
       const { data: statsData, error: statsError } = await statsQuery;
       if (statsError) throw statsError;
 
+      // 🔹 Cumuler stats par branche
       const statsMap = {};
-      statsData.forEach((stat) => {
+      statsData.forEach(stat => {
         if (!statsMap[stat.branche_id]) {
           statsMap[stat.branche_id] = {
             hommes: 0,
@@ -75,9 +80,9 @@ function StatGlobalPage() {
             jeunes: 0,
             enfants: 0,
             connectes: 0,
-            nouveaux_venus: 0,
-            nouveau_converti: 0,
-            moissonneurs: 0,
+            nouveauxVenus: 0,
+            nouveauxConvertis: 0,
+            moissonneurs: 0
           };
         }
         statsMap[stat.branche_id].hommes += Number(stat.hommes) || 0;
@@ -85,14 +90,15 @@ function StatGlobalPage() {
         statsMap[stat.branche_id].jeunes += Number(stat.jeunes) || 0;
         statsMap[stat.branche_id].enfants += Number(stat.enfants) || 0;
         statsMap[stat.branche_id].connectes += Number(stat.connectes) || 0;
-        statsMap[stat.branche_id].nouveaux_venus += Number(stat.nouveaux_venus) || 0;
-        statsMap[stat.branche_id].nouveau_converti += Number(stat.nouveau_converti) || 0;
-        statsMap[stat.branche_id].moissonneurs += Number(stat.moissonneurs) || 0;
+        statsMap[stat.branche_id].nouveauxVenus += Number(stat.nouveaux_venus || 0);
+        statsMap[stat.branche_id].nouveauxConvertis += Number(stat.nouveau_converti || 0);
+        statsMap[stat.branche_id].moissonneurs += Number(stat.moissonneurs || 0);
       });
 
-      const map = {};
-      branchesData.forEach((b) => {
-        map[b.id] = {
+      // 🔹 Construire arbre hiérarchique
+      const mapBranches = {};
+      branchesData.forEach(b => {
+        mapBranches[b.id] = {
           ...b,
           stats: statsMap[b.id] || {
             hommes: 0,
@@ -100,113 +106,63 @@ function StatGlobalPage() {
             jeunes: 0,
             enfants: 0,
             connectes: 0,
-            nouveaux_venus: 0,
-            nouveau_converti: 0,
-            moissonneurs: 0,
+            nouveauxVenus: 0,
+            nouveauxConvertis: 0,
+            moissonneurs: 0
           },
-          enfants: [],
+          enfants: []
         };
       });
 
-      // Construction de l'arbre
       const tree = [];
-      Object.values(map).forEach((b) => {
-        if (b.superviseur_id && map[b.superviseur_id]) {
-          map[b.superviseur_id].enfants.push(b);
+      Object.values(mapBranches).forEach(b => {
+        if (b.superviseur_id && mapBranches[b.superviseur_id]) {
+          mapBranches[b.superviseur_id].enfants.push(b);
         } else {
           tree.push(b);
         }
       });
 
-      setBranchesTree(tree);
-      setAllBranches(Object.values(map)); // Pour le select superviseur
+      // 🔹 Convertir l'arbre en liste pour le display table
+      const buildRapports = (nodes, level = 0, parentColor = "border-green-400") => {
+        const rows = [];
+        nodes.forEach(node => {
+          const total = node.stats.hommes + node.stats.femmes + node.stats.jeunes;
+          const borderColor = level === 0 ? "border-green-400" : "border-orange-400";
+
+          rows.push({
+            label: node.nom,
+            border: borderColor,
+            data: {
+              hommes: node.stats.hommes,
+              femmes: node.stats.femmes,
+              jeunes: node.stats.jeunes,
+              total,
+              enfants: node.stats.enfants,
+              connectes: node.stats.connectes,
+              nouveauxVenus: node.stats.nouveauxVenus,
+              nouveauxConvertis: node.stats.nouveauxConvertis,
+              moissonneurs: node.stats.moissonneurs
+            }
+          });
+
+          if (node.enfants.length > 0) {
+            rows.push(...buildRapports(node.enfants, level + 1, borderColor));
+          }
+        });
+        return rows;
+      };
+
+      setRapports(buildRapports(tree));
     } catch (err) {
       console.error("Erreur fetch stats:", err);
-      setBranchesTree([]);
-      setAllBranches([]);
+      setRapports([]);
     }
 
     setLoading(false);
   };
 
-  // Récupérer tous les descendants d'une branche
-    const getAllDescendants = (branch) => {
-      let descendants = [branch.id];
-      branch.enfants.forEach((child) => {
-        descendants = descendants.concat(getAllDescendants(child));
-      });
-      return descendants;
-    };
-
-  const filteredBranches = superviseurFilter
-  ? branchesTree.filter((branch) =>
-      getAllDescendants(branch).includes(superviseurFilter)
-    )
-  : branchesTree;
-
-  const renderBranch = (branch, level = 0) => {
-    const total = branch.stats.hommes + branch.stats.femmes + branch.stats.jeunes;
-
-    const borderColor =
-      level === 0
-        ? "border-green-400"
-        : level === 1
-        ? "border-orange-400"
-        : "border-purple-400";
-
-    return (
-      <div key={branch.id} className="mt-8">
-        {/* TITRE */}
-        <div className="flex items-center mb-3">
-          {/* RECTANGLE COLORÉ */}
-          <div
-            className={`w-4 h-4 rounded-l-xl mr-2 ${
-              level === 0 ? "bg-green-400" : level === 1 ? "bg-orange-400" : "bg-purple-400"
-            }`}
-          ></div>
-          <div className="text-xl font-bold text-amber-300">{branch.nom}</div>
-        </div>
-
-        <div className="w-full max-w-full overflow-x-auto">
-          <div className="w-max space-y-2">
-            {/* HEADER */}
-            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[180px]">Type</div>
-              <div className="min-w-[120px] text-center">Hommes</div>
-              <div className="min-w-[120px] text-center">Femmes</div>
-              <div className="min-w-[120px] text-center">Jeunes</div>
-              <div className="min-w-[120px] text-center">Total</div>
-              <div className="min-w-[120px] text-center">Enfants</div>
-              <div className="min-w-[140px] text-center">Connectés</div>
-              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
-              <div className="min-w-[180px] text-center">Nouveau Converti</div>
-              <div className="min-w-[160px] text-center">Moissonneurs</div>
-            </div>
-
-            {/* DATA */}
-            <div
-              className={`flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition whitespace-nowrap border-l-4 ${borderColor}`}
-            >
-              <div className="min-w-[180px] text-white font-semibold">Culte</div>
-              <div className="min-w-[120px] text-center text-white">{branch.stats.hommes}</div>
-              <div className="min-w-[120px] text-center text-white">{branch.stats.femmes}</div>
-              <div className="min-w-[120px] text-center text-white">{branch.stats.jeunes}</div>
-              <div className="min-w-[120px] text-center text-white">{total}</div>
-              <div className="min-w-[120px] text-center text-white">{branch.stats.enfants}</div>
-              <div className="min-w-[140px] text-center text-white">{branch.stats.connectes}</div>
-              <div className="min-w-[150px] text-center text-white">{branch.stats.nouveaux_venus}</div>
-              <div className="min-w-[180px] text-center text-white">{branch.stats.nouveau_converti}</div>
-              <div className="min-w-[160px] text-center text-white">{branch.stats.moissonneurs}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* ENFANTS */}
-        {branch.enfants.map((child) => renderBranch(child, level + 1))}
-      </div>
-    );
-  };
-
+  // 🔹 Render table
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">
       <HeaderPages />
@@ -215,66 +171,60 @@ function StatGlobalPage() {
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
-      {/* FILTRE */}
-      <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap items-end">
-        <div className="flex flex-col">
-          <label className="text-sm mb-1">Date début</label>
-          <input
-            type="date"
-            value={dateDebut}
-            onChange={(e) => setDateDebut(e.target.value)}
-            className="px-3 py-2 rounded-lg text-black"
-          />
-        </div>
-
-        <div className="flex flex-col">
-          <label className="text-sm mb-1">Date fin</label>
-          <input
-            type="date"
-            value={dateFin}
-            onChange={(e) => setDateFin(e.target.value)}
-            className="px-3 py-2 rounded-lg text-black"
-          />
-        </div>
-
-        <button
-          onClick={() => {
-            setHasGenerated(true);
-            fetchStats();
-          }}
-          disabled={loading}
-          className="px-6 py-2 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition disabled:opacity-50"
-        >
-          {loading ? "Génération..." : "Générer"}
-        </button>
-
-        <div className="flex flex-col">
-          <label className="text-sm mb-1">Superviseur</label>
-          <select
-            value={superviseurFilter}
-            onChange={(e) => setSuperviseurFilter(e.target.value)}
-            className="px-3 py-2 rounded-lg text-black"
-          >
-            <option value="">Tous</option>
-            allBranches.filter((b) => b.superviseur_id === rootId)
-              .map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.nom}
-                </option>
-              ))}
-          </select>
-        </div>
+      {/* FILTRE DATE */}
+      <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap">
+        <input
+          type="date"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+          className="px-3 py-2 rounded-lg text-black"
+        />
+        <input
+          type="date"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+          className="px-3 py-2 rounded-lg text-black"
+        />
       </div>
 
-      {!hasGenerated && (
-        <p className="text-white/60 mt-6">
-          Veuillez sélectionner une période puis cliquer sur Générer.
-        </p>
+      {/* TABLE */}
+      {!loading && rapports.length > 0 && (
+        <div className="w-full max-w-full overflow-x-auto mt-6 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
+          <div className="w-max space-y-2">
+            {/* HEADER */}
+            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[180px] ml-1">Type</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center">Jeunes</div>
+              <div className="min-w-[120px] text-center">Total</div>
+              <div className="min-w-[120px] text-center">Enfants</div>
+              <div className="min-w-[140px] text-center">Connectés</div>
+              <div className="min-w-[150px] text-center">Nouveaux</div>
+              <div className="min-w-[180px] text-center">Convertis</div>
+              <div className="min-w-[160px] text-center">Moissonneurs</div>
+            </div>
+
+            {/* LIGNES */}
+            {rapports.map((r, idx) => (
+              <div key={idx} className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition ${r.border}`}>
+                <div className="min-w-[180px] text-white font-semibold">{r.label}</div>
+                <div className="min-w-[120px] text-center text-white">{r.data?.hommes ?? "-"}</div>
+                <div className="min-w-[120px] text-center text-white">{r.data?.femmes ?? "-"}</div>
+                <div className="min-w-[120px] text-center text-white">{r.data?.jeunes ?? "-"}</div>
+                <div className="min-w-[120px] text-center text-white">{r.data?.total ?? "-"}</div>
+                <div className="min-w-[120px] text-center text-white">{r.data?.enfants ?? "-"}</div>
+                <div className="min-w-[140px] text-center text-white">{r.data?.connectes ?? "-"}</div>
+                <div className="min-w-[150px] text-center text-white">{r.data?.nouveauxVenus ?? "-"}</div>
+                <div className="min-w-[180px] text-center text-white">{r.data?.nouveauxConvertis ?? "-"}</div>
+                <div className="min-w-[160px] text-center text-white">{r.data?.moissonneurs ?? "-"}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
-     {hasGenerated &&
- !loading &&
- filteredBranches.map((branch) => renderBranch(branch))}
+      {loading && <p>Chargement...</p>}
 
       <Footer />
     </div>

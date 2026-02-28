@@ -43,12 +43,12 @@ function StatGlobalPage() {
 
   const fetchStats = async () => {
     setLoading(true);
+
     try {
-      // 1️⃣ Récupérer l'utilisateur
+      // 🔹 Récupérer l'utilisateur
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
-      // 2️⃣ Profil de l'utilisateur pour déterminer la branche racine
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("branche_id")
@@ -59,7 +59,7 @@ function StatGlobalPage() {
       const rootIdValue = profileData.branche_id;
       setRootId(rootIdValue);
 
-      // 3️⃣ Récupérer toutes les branches descendants
+      // 🔹 Récupérer l'arbre de branches
       const { data: branchesData, error: branchesError } = await supabase.rpc(
         "get_descendant_branches",
         { root_id: rootIdValue }
@@ -75,56 +75,50 @@ function StatGlobalPage() {
 
       const branchIds = branchesData.map((b) => b.id);
 
-      // 4️⃣ Récupérer toutes les stats
-      // 🔹 CULTE
-      let culteQuery = supabase.from("attendance_stats").select("*").in("branche_id", branchIds);
-      if (dateDebut) culteQuery = culteQuery.gte("mois", dateDebut);
-      if (dateFin) culteQuery = culteQuery.lte("mois", dateFin);
-      const { data: culteData, error: culteError } = await culteQuery;
-      if (culteError) throw culteError;
+      // ======== CULTE ========
+      let attendanceQuery = supabase.from("attendance_stats").select("*").in("branche_id", branchIds);
+      if (dateDebut) attendanceQuery = attendanceQuery.gte("mois", dateDebut + "T00:00:00");
+      if (dateFin) attendanceQuery = attendanceQuery.lte("mois", dateFin + "T23:59:59");
+      const { data: attendanceData } = await attendanceQuery;
 
-      // 🔹 FORMATION
+      // ======== FORMATION ========
       let formationQuery = supabase.from("formations").select("*").in("branche_id", branchIds);
-      if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
-      if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
-      const { data: formationData, error: formationError } = await formationQuery;
-      if (formationError) throw formationError;
+      if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut + "T00:00:00");
+      if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin + "T23:59:59");
+      const { data: formationData } = await formationQuery;
 
-      // 🔹 BAPTÊME
+      // ======== BAPTÊME ========
       let baptemeQuery = supabase.from("baptemes").select("*").in("branche_id", branchIds);
-      if (dateDebut) baptemeQuery = baptemeQuery.gte("date_bapteme", dateDebut);
-      if (dateFin) baptemeQuery = baptemeQuery.lte("date_bapteme", dateFin);
-      const { data: baptemeData, error: baptemeError } = await baptemeQuery;
-      if (baptemeError) throw baptemeError;
+      if (dateDebut) baptemeQuery = baptemeQuery.gte("date_bapteme", dateDebut + "T00:00:00");
+      if (dateFin) baptemeQuery = baptemeQuery.lte("date_bapteme", dateFin + "T23:59:59");
+      const { data: baptemeData } = await baptemeQuery;
 
-      // 🔹 ÉVANGÉLISATION
+      // ======== ÉVANGÉLISATION ========
       let evangQuery = supabase.from("rapport_evangelisation").select("*").in("branche_id", branchIds);
-      if (dateDebut) evangQuery = evangQuery.gte("date", dateDebut);
-      if (dateFin) evangQuery = evangQuery.lte("date", dateFin);
-      const { data: evangData, error: evangError } = await evangQuery;
-      if (evangError) throw evangError;
+      if (dateDebut) evangQuery = evangQuery.gte("date", dateDebut + "T00:00:00");
+      if (dateFin) evangQuery = evangQuery.lte("date", dateFin + "T23:59:59");
+      const { data: evangelisationData } = await evangQuery;
 
-      // 🔹 MINISTÈRE / SERVITEURS
+      // ======== MINISTÈRE ========
       let minQuery = supabase.from("stats_ministere_besoin").select("*").in("branche_id", branchIds);
-      if (dateDebut) minQuery = minQuery.gte("date", dateDebut);
-      if (dateFin) minQuery = minQuery.lte("date", dateFin);
-      const { data: minData, error: minError } = await minQuery;
-      if (minError) throw minError;
+      if (dateDebut) minQuery = minQuery.gte("date", dateDebut + "T00:00:00");
+      if (dateFin) minQuery = minQuery.lte("date", dateFin + "T23:59:59");
+      const { data: ministereData } = await minQuery;
 
-      // 5️⃣ Construire map par branche
+      // ======== Construction map ========
       const statsMap = {};
       branchIds.forEach((id) => {
         statsMap[id] = {
-          culte: { hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveaux_venus:0,nouveau_converti:0,moissonneurs:0 },
-          formation: { hommes:0,femmes:0 },
-          bapteme: { hommes:0,femmes:0 },
-          evangelisation: { hommes:0,femmes:0,priere:0,nouveau_converti:0,reconciliation:0,moissonneurs:0 },
-          ministere: { hommes:0,femmes:0 },
+          culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0 },
+          formation: { hommes: 0, femmes: 0 },
+          bapteme: { hommes: 0, femmes: 0 },
+          evangelisation: { hommes: 0, femmes: 0, prieres: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 },
+          ministere: { hommes: 0, femmes: 0 }
         };
       });
 
-      // ➤ Remplir stats
-      culteData?.forEach(stat => {
+      // ➤ Remplir CULTE
+      attendanceData?.forEach(stat => {
         const s = statsMap[stat.branche_id].culte;
         s.hommes += Number(stat.hommes) || 0;
         s.femmes += Number(stat.femmes) || 0;
@@ -136,35 +130,39 @@ function StatGlobalPage() {
         s.moissonneurs += Number(stat.moissonneurs) || 0;
       });
 
+      // ➤ Remplir FORMATION
       formationData?.forEach(f => {
         const s = statsMap[f.branche_id].formation;
         s.hommes += Number(f.hommes) || 0;
         s.femmes += Number(f.femmes) || 0;
       });
 
+      // ➤ Remplir BAPTÊME
       baptemeData?.forEach(b => {
         const s = statsMap[b.branche_id].bapteme;
         s.hommes += Number(b.hommes) || 0;
         s.femmes += Number(b.femmes) || 0;
       });
 
-      evangData?.forEach(e => {
+      // ➤ Remplir ÉVANGÉLISATION
+      evangelisationData?.forEach(e => {
         const s = statsMap[e.branche_id].evangelisation;
         s.hommes += Number(e.hommes) || 0;
         s.femmes += Number(e.femmes) || 0;
-        s.priere += Number(e.priere) || 0;
+        s.prieres += Number(e.priere) || 0;
         s.nouveau_converti += Number(e.nouveau_converti) || 0;
         s.reconciliation += Number(e.reconciliation) || 0;
         s.moissonneurs += Number(e.moissonneurs) || 0;
       });
 
-      minData?.forEach(m => {
+      // ➤ Remplir MINISTÈRE
+      ministereData?.forEach(m => {
         const s = statsMap[m.branche_id].ministere;
         s.hommes += Number(m.hommes) || 0;
         s.femmes += Number(m.femmes) || 0;
       });
 
-      // 6️⃣ Construire arbre
+      // ======== Construction arbre ========
       const map = {};
       branchesData.forEach(b => {
         map[b.id] = { ...b, stats: statsMap[b.id], enfants: [] };
@@ -179,28 +177,31 @@ function StatGlobalPage() {
       setBranchesTree(tree);
       setAllBranches(Object.values(map));
 
-    } catch(err) {
+    } catch (err) {
       console.error("Erreur fetch stats:", err);
       setBranchesTree([]);
       setAllBranches([]);
     }
+
     setLoading(false);
   };
 
-  // 🔹 Render branche avec tous types de stats
-  const renderBranch = (branch, level=0) => {
+  const renderBranch = (branch, level = 0) => {
     const culteTotal = branch.stats.culte.hommes + branch.stats.culte.femmes + branch.stats.culte.jeunes;
+
     return (
       <div key={branch.id} className="mt-8">
+        {/* TITRE */}
         <div className="flex items-center mb-3">
           {level === 1 && branch.enfants.length > 0 && (
-            <button onClick={()=>toggleExpand(branch.id)} className="mr-2 text-xl">
+            <button onClick={() => toggleExpand(branch.id)} className="mr-2 text-xl">
               {expandedBranches.includes(branch.id) ? "➖" : "➕"}
             </button>
           )}
           <div className="text-xl font-bold text-amber-300">{branch.nom}</div>
         </div>
 
+        {/* TABLEAU STATS */}
         <div className="w-full overflow-x-auto">
           <div className="w-max space-y-2">
 
@@ -247,21 +248,20 @@ function StatGlobalPage() {
             </div>
 
             {/* ÉVANGÉLISATION */}
-            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-yellow-500 whitespace-nowrap">
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-yellow-400 whitespace-nowrap">
               <div className="min-w-[180px] font-semibold">Évangélisation</div>
               <div className="min-w-[120px] text-center">{branch.stats.evangelisation.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.evangelisation.femmes}</div>
-              <div className="min-w-[120px] text-center">{branch.stats.evangelisation.priere}</div>
+              <div className="min-w-[120px] text-center">{branch.stats.evangelisation.prieres}</div>
               <div className="min-w-[120px] text-center">-</div>
               <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[140px] text-center">{branch.stats.evangelisation.reconciliation}</div>
-              <div className="min-w-[150px] text-center">-</div>
-              <div className="min-w-[180px] text-center">{branch.stats.evangelisation.nouveau_converti}</div>
-              <div className="min-w-[160px] text-center">{branch.stats.evangelisation.moissonneurs}</div>
+              <div className="min-w-[140px] text-center">{branch.stats.evangelisation.nouveau_converti}</div>
+              <div className="min-w-[150px] text-center">{branch.stats.evangelisation.reconciliation}</div>
+              <div className="min-w-[180px] text-center">{branch.stats.evangelisation.moissonneurs}</div>
             </div>
 
-            {/* MINISTÈRE / SERVITEURS */}
-            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-pink-500 whitespace-nowrap">
+            {/* MINISTÈRE */}
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-pink-400 whitespace-nowrap">
               <div className="min-w-[180px] font-semibold">Ministère</div>
               <div className="min-w-[120px] text-center">{branch.stats.ministere.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.ministere.femmes}</div>
@@ -270,6 +270,7 @@ function StatGlobalPage() {
           </div>
         </div>
 
+        {/* ENFANTS */}
         {level !== 1 || expandedBranches.includes(branch.id)
           ? branch.enfants.map(child => renderBranch(child, level + 1))
           : null}
@@ -278,14 +279,14 @@ function StatGlobalPage() {
   };
 
   const superviseurOptions = allBranches.filter(b => b.superviseur_id === rootId);
-  const filteredBranches = superviseurFilter && rootId
-    ? branchesTree.filter(branch => getAllDescendants(branch).includes(superviseurFilter))
-    : branchesTree;
+  const filteredBranches =
+    superviseurFilter && rootId
+      ? branchesTree.filter(branch => getAllDescendants(branch).includes(superviseurFilter))
+      : branchesTree;
 
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">
       <HeaderPages />
-
       <h1 className="text-2xl font-bold mb-6">
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
@@ -294,39 +295,32 @@ function StatGlobalPage() {
       <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap items-end">
         <div className="flex flex-col">
           <label className="text-sm mb-1">Date début</label>
-          <input type="date" value={dateDebut} onChange={(e)=>setDateDebut(e.target.value)} className="px-3 py-2 rounded-lg text-black"/>
+          <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} className="px-3 py-2 rounded-lg text-black"/>
         </div>
+
         <div className="flex flex-col">
           <label className="text-sm mb-1">Date fin</label>
-          <input type="date" value={dateFin} onChange={(e)=>setDateFin(e.target.value)} className="px-3 py-2 rounded-lg text-black"/>
+          <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} className="px-3 py-2 rounded-lg text-black"/>
         </div>
+
         <button
           onClick={() => { setHasGenerated(true); fetchStats(); }}
           disabled={loading}
           className="px-6 py-2 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition disabled:opacity-50"
         >
-          {loading ? "Génération..." : "Générer"}
+          {loading ? "Générer..." : "Générer"}
         </button>
+
         <div className="flex flex-col">
           <label className="text-sm mb-1">Superviseur</label>
-          <select
-            value={superviseurFilter}
-            onChange={(e)=>setSuperviseurFilter(e.target.value)}
-            className="px-3 py-2 rounded-lg text-black"
-          >
+          <select value={superviseurFilter} onChange={e => setSuperviseurFilter(e.target.value)} className="px-3 py-2 rounded-lg text-black">
             <option value="">Tous</option>
-            {superviseurOptions.map(b=>(
-              <option key={b.id} value={b.id}>{b.nom}</option>
-            ))}
+            {superviseurOptions.map(b => <option key={b.id} value={b.id}>{b.nom}</option>)}
           </select>
         </div>
       </div>
 
-      {!hasGenerated && (
-        <p className="text-white/60 mt-6">
-          Veuillez sélectionner une période puis cliquer sur Générer.
-        </p>
-      )}
+      {!hasGenerated && <p className="text-white/60 mt-6">Veuillez sélectionner une période puis cliquer sur Générer.</p>}
 
       {hasGenerated && !loading && filteredBranches.map(branch => renderBranch(branch))}
 

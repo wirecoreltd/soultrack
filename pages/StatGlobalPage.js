@@ -43,12 +43,8 @@ function StatGlobalPage() {
 
   const fetchStats = async () => {
     setLoading(true);
-
     try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
       const { data: profileData, error: profileError } = await supabase
@@ -61,10 +57,8 @@ function StatGlobalPage() {
       const rootIdValue = profileData.branche_id;
       setRootId(rootIdValue);
 
-      const { data: branchesData, error: branchesError } = await supabase.rpc(
-        "get_descendant_branches",
-        { root_id: rootIdValue }
-      );
+      const { data: branchesData, error: branchesError } = await supabase
+        .rpc("get_descendant_branches", { root_id: rootIdValue });
       if (branchesError) throw branchesError;
 
       if (!branchesData?.length) {
@@ -77,11 +71,11 @@ function StatGlobalPage() {
       const branchIds = branchesData.map((b) => b.id);
 
       /* ================= CULTE ================= */
-      let statsQuery = supabase.from("attendance_stats").select("*").in("branche_id", branchIds);
-      if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
-      if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
-      const { data: attendanceData, error: attendanceError } = await statsQuery;
-      if (attendanceError) throw attendanceError;
+      let culteQuery = supabase.from("attendance_stats").select("*").in("branche_id", branchIds);
+      if (dateDebut) culteQuery = culteQuery.gte("mois", dateDebut);
+      if (dateFin) culteQuery = culteQuery.lte("mois", dateFin);
+      const { data: culteData, error: culteError } = await culteQuery;
+      if (culteError) throw culteError;
 
       /* ================= FORMATION ================= */
       let formationQuery = supabase.from("formations").select("*").in("branche_id", branchIds);
@@ -97,58 +91,83 @@ function StatGlobalPage() {
       const { data: baptemeData, error: baptemeError } = await baptemeQuery;
       if (baptemeError) throw baptemeError;
 
-      /* ================= EVANGÉLISATION ================= */
-      let evangQuery = supabase.from("rapport_evangelisation").select("*").in("branche_id", branchIds);
-      if (dateDebut) evangQuery = evangQuery.gte("date", dateDebut);
-      if (dateFin) evangQuery = evangQuery.lte("date", dateFin);
-      const { data: evangData, error: evangError } = await evangQuery;
-      if (evangError) throw evangError;
+      /* ================= EVANGELISATION ================= */
+      let evangeQuery = supabase.from("rapport_evangelisation").select("*").in("branche_id", branchIds);
+      if (dateDebut) evangeQuery = evangeQuery.gte("date", dateDebut);
+      if (dateFin) evangeQuery = evangeQuery.lte("date", dateFin);
+      const { data: evangeData, error: evangeError } = await evangeQuery;
+      if (evangeError) throw evangeError;
 
-      /* ================= STATS MAP ================= */
+      /* ================= MINISTERE ================= */
+      let ministereQuery = supabase.from("stats_ministere_besoin").select("*").in("branche_id", branchIds);
+      if (dateDebut) ministereQuery = ministereQuery.gte("date", dateDebut);
+      if (dateFin) ministereQuery = ministereQuery.lte("date", dateFin);
+      const { data: ministereData, error: ministereError } = await ministereQuery;
+      if (ministereError) throw ministereError;
+
+      /* ================= MAP ================= */
       const statsMap = {};
       branchIds.forEach((id) => {
         statsMap[id] = {
           culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0 },
           formation: { hommes: 0, femmes: 0 },
           bapteme: { hommes: 0, femmes: 0 },
-          evangelisation: { hommes: 0, femmes: 0, priere: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 },
+          evangelisation: { hommes: 0, femmes: 0, prieres: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 },
+          ministere: { hommes: 0, femmes: 0, enfants: 0, connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0 },
         };
       });
 
-      attendanceData?.forEach((stat) => {
-        const s = statsMap[stat.branche_id].culte;
-        s.hommes += Number(stat.hommes) || 0;
-        s.femmes += Number(stat.femmes) || 0;
-        s.jeunes += Number(stat.jeunes) || 0;
-        s.enfants += Number(stat.enfants) || 0;
-        s.connectes += Number(stat.connectes) || 0;
-        s.nouveaux_venus += Number(stat.nouveaux_venus) || 0;
-        s.nouveau_converti += Number(stat.nouveau_converti) || 0;
-        s.moissonneurs += Number(stat.moissonneurs) || 0;
+      // remplir CULTE
+      culteData?.forEach((s) => {
+        const c = statsMap[s.branche_id].culte;
+        c.hommes += Number(s.hommes) || 0;
+        c.femmes += Number(s.femmes) || 0;
+        c.jeunes += Number(s.jeunes) || 0;
+        c.enfants += Number(s.enfants) || 0;
+        c.connectes += Number(s.connectes) || 0;
+        c.nouveaux_venus += Number(s.nouveaux_venus) || 0;
+        c.nouveau_converti += Number(s.nouveau_converti) || 0;
+        c.moissonneurs += Number(s.moissonneurs) || 0;
       });
 
-      formationData?.forEach((f) => {
-        const s = statsMap[f.branche_id].formation;
-        s.hommes += Number(f.hommes) || 0;
-        s.femmes += Number(f.femmes) || 0;
+      // remplir FORMATION
+      formationData?.forEach((s) => {
+        const f = statsMap[s.branche_id].formation;
+        f.hommes += Number(s.hommes) || 0;
+        f.femmes += Number(s.femmes) || 0;
       });
 
-      baptemeData?.forEach((b) => {
-        const s = statsMap[b.branche_id].bapteme;
-        s.hommes += Number(b.hommes) || 0;
-        s.femmes += Number(b.femmes) || 0;
+      // remplir BAPTÊME
+      baptemeData?.forEach((s) => {
+        const b = statsMap[s.branche_id].bapteme;
+        b.hommes += Number(s.hommes) || 0;
+        b.femmes += Number(s.femmes) || 0;
       });
 
-      evangData?.forEach((e) => {
-        const s = statsMap[e.branche_id].evangelisation;
-        s.hommes += Number(e.hommes) || 0;
-        s.femmes += Number(e.femmes) || 0;
-        s.priere += Number(e.priere) || 0;
-        s.nouveau_converti += Number(e.nouveau_converti) || 0;
-        s.reconciliation += Number(e.reconciliation) || 0;
-        s.moissonneurs += Number(e.moissonneurs) || 0;
+      // remplir EVANGELISATION
+      evangeData?.forEach((s) => {
+        const e = statsMap[s.branche_id].evangelisation;
+        e.hommes += Number(s.hommes) || 0;
+        e.femmes += Number(s.femmes) || 0;
+        e.prieres += Number(s.priere) || 0;
+        e.nouveau_converti += Number(s.nouveau_converti) || 0;
+        e.reconciliation += Number(s.reconciliation) || 0;
+        e.moissonneurs += Number(s.moissonneurs) || 0;
       });
 
+      // remplir MINISTERE
+      ministereData?.forEach((s) => {
+        const m = statsMap[s.branche_id].ministere;
+        m.hommes += Number(s.hommes) || 0;
+        m.femmes += Number(s.femmes) || 0;
+        m.enfants += Number(s.enfants) || 0;
+        m.connectes += Number(s.connectes) || 0;
+        m.nouveaux_venus += Number(s.nouveaux_venus) || 0;
+        m.nouveau_converti += Number(s.nouveau_converti) || 0;
+        m.moissonneurs += Number(s.moissonneurs) || 0;
+      });
+
+      // construire arbre
       const map = {};
       branchesData.forEach((b) => {
         map[b.id] = { ...b, stats: statsMap[b.id], enfants: [] };
@@ -156,11 +175,8 @@ function StatGlobalPage() {
 
       const tree = [];
       Object.values(map).forEach((b) => {
-        if (b.superviseur_id && map[b.superviseur_id]) {
-          map[b.superviseur_id].enfants.push(b);
-        } else {
-          tree.push(b);
-        }
+        if (b.superviseur_id && map[b.superviseur_id]) map[b.superviseur_id].enfants.push(b);
+        else tree.push(b);
       });
 
       setBranchesTree(tree);
@@ -175,6 +191,7 @@ function StatGlobalPage() {
 
   const renderBranch = (branch, level = 0) => {
     const culteTotal = branch.stats.culte.hommes + branch.stats.culte.femmes + branch.stats.culte.jeunes;
+
     return (
       <div key={branch.id} className="mt-8">
         <div className="flex items-center mb-3">
@@ -188,7 +205,6 @@ function StatGlobalPage() {
 
         <div className="w-full overflow-x-auto">
           <div className="w-max space-y-2">
-
             {/* HEADER */}
             <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[180px]">Type</div>
@@ -201,8 +217,6 @@ function StatGlobalPage() {
               <div className="min-w-[150px] text-center">Nouveaux Venus</div>
               <div className="min-w-[180px] text-center">Nouveau Converti</div>
               <div className="min-w-[160px] text-center">Moissonneurs</div>
-              <div className="min-w-[120px] text-center">Prière</div>
-              <div className="min-w-[120px] text-center">Réconciliation</div>
             </div>
 
             {/* CULTE */}
@@ -217,8 +231,6 @@ function StatGlobalPage() {
               <div className="min-w-[150px] text-center">{branch.stats.culte.nouveaux_venus}</div>
               <div className="min-w-[180px] text-center">{branch.stats.culte.nouveau_converti}</div>
               <div className="min-w-[160px] text-center">{branch.stats.culte.moissonneurs}</div>
-              <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[120px] text-center">-</div>
             </div>
 
             {/* FORMATION */}
@@ -235,20 +247,32 @@ function StatGlobalPage() {
               <div className="min-w-[120px] text-center">{branch.stats.bapteme.femmes}</div>
             </div>
 
-            {/* ÉVANGÉLISATION */}
+            {/* EVANGELISATION */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-yellow-400 whitespace-nowrap">
               <div className="min-w-[180px] font-semibold">Évangélisation</div>
               <div className="min-w-[120px] text-center">{branch.stats.evangelisation.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.evangelisation.femmes}</div>
+              <div className="min-w-[120px] text-center">{branch.stats.evangelisation.prieres}</div>
+              <div className="min-w-[120px] text-center">{branch.stats.evangelisation.hommes + branch.stats.evangelisation.femmes}</div>
               <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[140px] text-center">{branch.stats.evangelisation.moissonneurs}</div>
+              <div className="min-w-[140px] text-center">{branch.stats.evangelisation.connectes}</div>
               <div className="min-w-[150px] text-center">-</div>
               <div className="min-w-[180px] text-center">{branch.stats.evangelisation.nouveau_converti}</div>
               <div className="min-w-[160px] text-center">{branch.stats.evangelisation.moissonneurs}</div>
-              <div className="min-w-[120px] text-center">{branch.stats.evangelisation.priere}</div>
-              <div className="min-w-[120px] text-center">{branch.stats.evangelisation.reconciliation}</div>
+            </div>
+
+            {/* MINISTERE */}
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-pink-400 whitespace-nowrap">
+              <div className="min-w-[180px] font-semibold">Ministère</div>
+              <div className="min-w-[120px] text-center">{branch.stats.ministere.hommes}</div>
+              <div className="min-w-[120px] text-center">{branch.stats.ministere.femmes}</div>
+              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[120px] text-center">{branch.stats.ministere.enfants}</div>
+              <div className="min-w-[140px] text-center">{branch.stats.ministere.connectes}</div>
+              <div className="min-w-[150px] text-center">{branch.stats.ministere.nouveaux_venus}</div>
+              <div className="min-w-[180px] text-center">{branch.stats.ministere.nouveau_converti}</div>
+              <div className="min-w-[160px] text-center">{branch.stats.ministere.moissonneurs}</div>
             </div>
 
           </div>
@@ -262,10 +286,10 @@ function StatGlobalPage() {
   };
 
   const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
-  const filteredBranches =
-    superviseurFilter && rootId
-      ? branchesTree.filter((branch) => getAllDescendants(branch).includes(superviseurFilter))
-      : branchesTree;
+
+  const filteredBranches = superviseurFilter && rootId
+    ? branchesTree.filter(branch => getAllDescendants(branch).includes(superviseurFilter))
+    : branchesTree;
 
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">
@@ -275,43 +299,31 @@ function StatGlobalPage() {
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
+      {/* FILTRE */}
       <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap items-end">
         <div className="flex flex-col">
           <label className="text-sm mb-1">Date début</label>
-          <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} className="px-3 py-2 rounded-lg text-black" />
+          <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} className="px-3 py-2 rounded-lg text-black"/>
         </div>
-
         <div className="flex flex-col">
           <label className="text-sm mb-1">Date fin</label>
-          <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} className="px-3 py-2 rounded-lg text-black" />
+          <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} className="px-3 py-2 rounded-lg text-black"/>
         </div>
-
-        <button
-          onClick={() => { setHasGenerated(true); fetchStats(); }}
-          disabled={loading}
-          className="px-6 py-2 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition disabled:opacity-50"
-        >
+        <button onClick={() => { setHasGenerated(true); fetchStats(); }} disabled={loading}
+          className="px-6 py-2 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition disabled:opacity-50">
           {loading ? "Génération..." : "Générer"}
         </button>
-
         <div className="flex flex-col">
           <label className="text-sm mb-1">Superviseur</label>
-          <select value={superviseurFilter} onChange={(e) => setSuperviseurFilter(e.target.value)} className="px-3 py-2 rounded-lg text-black">
+          <select value={superviseurFilter} onChange={e => setSuperviseurFilter(e.target.value)} className="px-3 py-2 rounded-lg text-black">
             <option value="">Tous</option>
-            {superviseurOptions.map((b) => (
-              <option key={b.id} value={b.id}>{b.nom}</option>
-            ))}
+            {superviseurOptions.map(b => <option key={b.id} value={b.id}>{b.nom}</option>)}
           </select>
         </div>
       </div>
 
-      {!hasGenerated && (
-        <p className="text-white/60 mt-6">
-          Veuillez sélectionner une période puis cliquer sur Générer.
-        </p>
-      )}
-
-      {hasGenerated && !loading && filteredBranches.map((branch) => renderBranch(branch))}
+      {!hasGenerated && <p className="text-white/60 mt-6">Veuillez sélectionner une période puis cliquer sur Générer.</p>}
+      {hasGenerated && !loading && filteredBranches.map(branch => renderBranch(branch))}
 
       <Footer />
     </div>

@@ -96,12 +96,40 @@ function StatGlobalPage() {
       const { data: formationData, error: formationError } = await formationQuery;
       if (formationError) throw formationError;
 
+      // 🔹 Récupérer les stats baptêmes
+          let baptemeQuery = supabase
+            .from("baptemes")
+            .select("*")
+            .in("branche_id", branchIds);
+          
+          if (dateDebut) baptemeQuery = baptemeQuery.gte("date_bapteme", dateDebut);
+          if (dateFin) baptemeQuery = baptemeQuery.lte("date_bapteme", dateFin);
+          
+          const { data: baptemeData, error: baptemeError } = await baptemeQuery;
+          if (baptemeError) throw baptemeError;
+
       // 🔹 Map des stats par branche
       const statsMap = {};
       branchIds.forEach((id) => {
         statsMap[id] = {
-          culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0 },
-          formation: { hommes: 0, femmes: 0 },
+          culte: {
+            hommes: 0,
+            femmes: 0,
+            jeunes: 0,
+            enfants: 0,
+            connectes: 0,
+            nouveaux_venus: 0,
+            nouveau_converti: 0,
+            moissonneurs: 0,
+          },
+          formation: {
+            hommes: 0,
+            femmes: 0,
+          },
+          bapteme: {
+            hommes: 0,
+            femmes: 0,
+          },
         };
       });
 
@@ -125,6 +153,13 @@ function StatGlobalPage() {
         s.femmes += Number(f.femmes) || 0;
       });
 
+      // ➤ Baptême
+        baptemeData.forEach((b) => {
+          const s = statsMap[b.branche_id].bapteme;
+          s.hommes += Number(b.hommes) || 0;
+          s.femmes += Number(b.femmes) || 0;
+        });
+              
       // 🔹 Construire arbre hiérarchique
       const map = {};
       branchesData.forEach((b) => {
@@ -206,6 +241,23 @@ function StatGlobalPage() {
               <div className="min-w-[180px] text-white font-semibold">Formation</div>
               <div className="min-w-[120px] text-center text-white">{branch.stats.formation.hommes}</div>
               <div className="min-w-[120px] text-center text-white">{branch.stats.formation.femmes}</div>
+              <div className="min-w-[120px] text-center text-white">-</div>
+              <div className="min-w-[120px] text-center text-white">-</div>
+              <div className="min-w-[120px] text-center text-white">-</div>
+              <div className="min-w-[140px] text-center text-white">-</div>
+              <div className="min-w-[150px] text-center text-white">-</div>
+              <div className="min-w-[180px] text-center text-white">-</div>
+              <div className="min-w-[160px] text-center text-white">-</div>
+            </div>
+              {/* Baptême */}
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition whitespace-nowrap border-l-4 border-purple-400">
+              <div className="min-w-[180px] text-white font-semibold">Baptême</div>
+              <div className="min-w-[120px] text-center text-white">
+                {branch.stats.bapteme.hommes}
+              </div>
+              <div className="min-w-[120px] text-center text-white">
+                {branch.stats.bapteme.femmes}
+              </div>
               <div className="min-w-[120px] text-center text-white">-</div>
               <div className="min-w-[120px] text-center text-white">-</div>
               <div className="min-w-[120px] text-center text-white">-</div>

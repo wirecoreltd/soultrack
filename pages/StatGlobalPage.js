@@ -45,6 +45,7 @@ function StatGlobalPage() {
   const fetchStats = async () => {
     setLoading(true);
     try {
+      // Récupération user et profil
       const { data: { user } } = await supabase.auth.getUser();
       const { data: profileData } = await supabase
         .from("profiles")
@@ -55,6 +56,7 @@ function StatGlobalPage() {
       const rootIdValue = profileData.branche_id;
       setRootId(rootIdValue);
 
+      // Récupération branches descendants
       const { data: branchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
       if (!branchesData?.length) {
         setBranchesTree([]);
@@ -93,12 +95,12 @@ function StatGlobalPage() {
           bapteme: { hommes: 0, femmes: 0 },
           evangelisation: { hommes: 0, femmes: 0, priere: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 },
           serviteurs: { hommes: 0, femmes: 0 },
-          cellules: { total: 0 },  // ✅ Ajout cellules
+          cellules: { total: 0 },
         };
       });
 
       // ================= FETCH STATS TABLES =================
-      const tableFetch = async (table, branchField, dateField, dataField = null) => {
+      const tableFetch = async (table, branchField, dateField) => {
         let query = supabase.from(table).select("*").in(branchField, branchIds);
         if (dateDebut) query = query.gte(dateField, dateDebut);
         if (dateFin) query = query.lte(dateField, dateFin);
@@ -162,6 +164,7 @@ function StatGlobalPage() {
 
       const { data: serviteurData } = await serviteurQuery;
 
+      // Dédupliquer par membre_id ET par branche
       const uniqueMap = {};
       serviteurData?.forEach((s) => {
         if (!uniqueMap[s.eglise_id]) uniqueMap[s.eglise_id] = new Set();
@@ -169,6 +172,7 @@ function StatGlobalPage() {
       });
 
       const allMembreIds = [...new Set(serviteurData?.map(s => s.membre_id) || [])];
+
       if (allMembreIds.length > 0) {
         const { data: membresData } = await supabase
           .from("membres_complets")
@@ -188,9 +192,9 @@ function StatGlobalPage() {
       }
 
       // ================= CELLULES =================
-      cellulesData.forEach((c) => {
+      cellulesData.forEach(c => {
         if (c.branche_id && statsMap[c.branche_id]) {
-          statsMap[c.branche_id].cellules.total += 1;
+          statsMap[c.branche_id].cellules.total++;
         }
       });
 
@@ -223,7 +227,10 @@ function StatGlobalPage() {
       <div key={branch.id} className="mt-8">
         <div className="flex items-center mb-3">
           {level >= 1 && branch.enfants.length > 0 && (
-            <button onClick={() => toggleExpand(branch.id)} className="mr-2 text-xl">
+            <button
+              onClick={() => toggleExpand(branch.id)}
+              className="mr-2 text-xl"
+            >
               {expandedBranches.includes(branch.id) ? "➖" : "➕"}
             </button>
           )}
@@ -237,7 +244,8 @@ function StatGlobalPage() {
 
             {/* HEADER */}
             <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[120px]">Nombre</div> {/* ✅ Nouvelle colonne */}
+              <div className="min-w-[180px]">Type</div>
+              <div className="min-w-[120px] text-center">Nombre</div>
               <div className="min-w-[120px] text-center">Hommes</div>
               <div className="min-w-[120px] text-center">Femmes</div>
               <div className="min-w-[120px] text-center">Jeunes</div>
@@ -251,7 +259,8 @@ function StatGlobalPage() {
 
             {/* CULTE */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-green-400 whitespace-nowrap">
-              <div className="min-w-[120px]">-</div>
+              <div className="min-w-[180px] font-semibold">Culte</div>
+              <div className="min-w-[120px] text-center">-</div>
               <div className="min-w-[120px] text-center">{branch.stats.culte.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.culte.femmes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.culte.jeunes}</div>
@@ -265,21 +274,24 @@ function StatGlobalPage() {
 
             {/* FORMATION */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-blue-400 whitespace-nowrap">
-              <div className="min-w-[120px]">-</div>
+              <div className="min-w-[180px] font-semibold">Formation</div>
+              <div className="min-w-[120px] text-center">-</div>
               <div className="min-w-[120px] text-center">{branch.stats.formation.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.formation.femmes}</div>
             </div>
 
             {/* BAPTÊME */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-purple-400 whitespace-nowrap">
-              <div className="min-w-[120px]">-</div>
+              <div className="min-w-[180px] font-semibold">Baptême</div>
+              <div className="min-w-[120px] text-center">-</div>
               <div className="min-w-[120px] text-center">{branch.stats.bapteme.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.bapteme.femmes}</div>
             </div>
 
             {/* EVANGÉLISATION */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-pink-400 whitespace-nowrap">
-              <div className="min-w-[120px]">-</div>
+              <div className="min-w-[180px] font-semibold">Évangélisation</div>
+              <div className="min-w-[120px] text-center">-</div>
               <div className="min-w-[120px] text-center">{branch.stats.evangelisation.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.evangelisation.femmes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.evangelisation.priere}</div>
@@ -293,7 +305,8 @@ function StatGlobalPage() {
 
             {/* SERVITEURS */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-yellow-400 whitespace-nowrap">
-              <div className="min-w-[120px]">-</div>
+              <div className="min-w-[180px] font-semibold">Serviteurs</div>
+              <div className="min-w-[120px] text-center">-</div>
               <div className="min-w-[120px] text-center">{branch.stats.serviteurs.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.serviteurs.femmes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.serviteurs.hommes + branch.stats.serviteurs.femmes}</div>
@@ -301,9 +314,17 @@ function StatGlobalPage() {
 
             {/* CELLULES */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-amber-400 whitespace-nowrap">
+              <div className="min-w-[180px] font-semibold">Cellules</div>
               <div className="min-w-[120px] text-center">{branch.stats.cellules.total}</div>
               <div className="min-w-[120px] text-center">-</div>
               <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[140px] text-center">-</div>
+              <div className="min-w-[150px] text-center">-</div>
+              <div className="min-w-[180px] text-center">-</div>
+              <div className="min-w-[160px] text-center">-</div>
             </div>
 
           </div>
@@ -328,49 +349,29 @@ function StatGlobalPage() {
 
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">
-      <HeaderPages />
-
-      <h1 className="text-2xl font-bold mb-6">
-        Rapport <span className="text-amber-300">Statistiques Globales</span>
-      </h1>
-
-      <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap items-end">
-        <div className="flex flex-col">
-          <label className="text-sm mb-1">Date début</label>
-          <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} className="px-3 py-2 rounded-lg text-black"/>
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm mb-1">Date fin</label>
-          <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} className="px-3 py-2 rounded-lg text-black"/>
-        </div>
+      <HeaderPages title="Statistiques Globales" />
+      <div className="flex gap-4 mb-6">
+        <input
+          type="date"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+          className="p-2 rounded"
+        />
+        <input
+          type="date"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+          className="p-2 rounded"
+        />
         <button
-          onClick={() => { setHasGenerated(true); fetchStats(); }}
-          disabled={loading}
-          className="px-6 py-2 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition disabled:opacity-50"
+          onClick={fetchStats}
+          className="bg-amber-400 text-black px-4 py-2 rounded font-semibold"
         >
-          {loading ? "Génération..." : "Générer"}
+          {loading ? "Chargement..." : "Générer"}
         </button>
-
-        <div className="flex flex-col">
-          <label className="text-sm mb-1">Superviseur</label>
-          <select value={superviseurFilter} onChange={(e) => setSuperviseurFilter(e.target.value)} className="px-3 py-2 rounded-lg text-black">
-            <option value="">Tous</option>
-            {superviseurOptions.map((b) => (
-              <option key={b.id} value={b.id}>{b.nom}</option>
-            ))}
-          </select>
-        </div>
       </div>
 
-      {!hasGenerated && (
-        <p className="text-white/60 mt-6">
-          Veuillez sélectionner une période puis cliquer sur Générer.
-        </p>
-      )}
-
-      {hasGenerated && !loading &&
-        filteredBranches.map((branch) => renderBranch(branch))
-      }
+      {filteredBranches.map((branch) => renderBranch(branch))}
 
       <Footer />
     </div>

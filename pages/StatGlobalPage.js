@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -24,7 +24,7 @@ function StatGlobalPage() {
   const [allBranches, setAllBranches] = useState([]);
   const [rootId, setRootId] = useState(null);
   const [expandedBranches, setExpandedBranches] = useState([]);
-  const [ministereMap, setMinistereMap] = useState({}); // pour stocker les ministères
+  const [ministereMap, setMinistereMap] = useState({});
 
   const getAllDescendants = (branch) => {
     let descendants = [branch.id];
@@ -45,28 +45,19 @@ function StatGlobalPage() {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-      if (userError) throw userError;
-
-      const { data: profileData, error: profileError } = await supabase
+      // Récupération user et profil
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profileData } = await supabase
         .from("profiles")
         .select("branche_id")
         .eq("id", user.id)
         .single();
-      if (profileError) throw profileError;
 
       const rootIdValue = profileData.branche_id;
       setRootId(rootIdValue);
 
-      const { data: branchesData, error: branchesError } = await supabase.rpc(
-        "get_descendant_branches",
-        { root_id: rootIdValue }
-      );
-      if (branchesError) throw branchesError;
-
+      // Récupération branches descendants
+      const { data: branchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
       if (!branchesData?.length) {
         setBranchesTree([]);
         setAllBranches([]);
@@ -74,47 +65,28 @@ function StatGlobalPage() {
         setLoading(false);
         return;
       }
-
       const branchIds = branchesData.map((b) => b.id);
-
-      // ================= CULTE =================
-      let attendanceQuery = supabase
-        .from("attendance_stats")
-        .select("*")
-        .in("branche_id", branchIds);
-      if (dateDebut) attendanceQuery = attendanceQuery.gte("mois", dateDebut);
-      if (dateFin) attendanceQuery = attendanceQuery.lte("mois", dateFin);
-      const { data: attendanceData } = await attendanceQuery;
-
-      // ================= FORMATION =================
-      let formationQuery = supabase.from("formations").select("*").in("branche_id", branchIds);
-      if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
-      if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
-      const { data: formationData } = await formationQuery;
-
-      // ================= BAPTÊME =================
-      let baptemeQuery = supabase.from("baptemes").select("*").in("branche_id", branchIds);
-      if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
-      if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
-      const { data: baptemeData } = await baptemeQuery;
-
-      // ================= EVANGÉLISATION =================
-      let evangeQuery = supabase.from("rapport_evangelisation").select("*").in("branche_id", branchIds);
-      if (dateDebut) evangeQuery = evangeQuery.gte("date", dateDebut);
-      if (dateFin) evangeQuery = evangeQuery.lte("date", dateFin);
-      const { data: evangeData } = await evangeQuery;
 
       // ================= MINISTÈRE =================
       let ministereQuery = supabase
-        .from("stats_ministere_besoin")
-        .select("*")
+        .from("membres_complets")
+        .select("id, branche_id")
         .in("branche_id", branchIds)
-        .eq("type", "ministere");
-      if (dateDebut) ministereQuery = ministereQuery.gte("date_action", dateDebut);
-      if (dateFin) ministereQuery = ministereQuery.lte("date_action", dateFin);
+        .eq("star", true);
+
+      if (dateDebut) ministereQuery = ministereQuery.gte("created_at", dateDebut);
+      if (dateFin) ministereQuery = ministereQuery.lte("created_at", dateFin);
+
       const { data: ministereData } = await ministereQuery;
 
-      // ================= INIT STATS MAP =================
+      const minMap = {};
+      branchIds.forEach((id) => { minMap[id] = []; });
+      ministereData?.forEach((m) => {
+        minMap[m.branche_id].push(m.id);
+      });
+      setMinistereMap(minMap);
+
+      // ================= AUTRES STATS =================
       const statsMap = {};
       branchIds.forEach((id) => {
         statsMap[id] = {
@@ -125,8 +97,24 @@ function StatGlobalPage() {
         };
       });
 
+      // ================= FETCH STATS TABLES =================
+      const tableFetch = async (table, branchField, dateField, dataField = null) => {
+        let query = supabase.from(table).select("*").in(branchField, branchIds);
+        if (dateDebut) query = query.gte(dateField, dateDebut);
+        if (dateFin) query = query.lte(dateField, dateFin);
+        const { data } = await query;
+        return data || [];
+      };
+
+      const [attendanceData, formationData, baptemeData, evangeData] = await Promise.all([
+        tableFetch("attendance_stats", "branche_id", "mois"),
+        tableFetch("formations", "branche_id", "date_debut"),
+        tableFetch("baptemes", "branche_id", "date"),
+        tableFetch("rapport_evangelisation", "branche_id", "date")
+      ]);
+
       // ================= REMPLISSAGE STATS =================
-      attendanceData?.forEach((s) => {
+      attendanceData.forEach((s) => {
         const a = statsMap[s.branche_id].culte;
         a.hommes += Number(s.hommes) || 0;
         a.femmes += Number(s.femmes) || 0;
@@ -138,19 +126,19 @@ function StatGlobalPage() {
         a.moissonneurs += Number(s.moissonneurs) || 0;
       });
 
-      formationData?.forEach((f) => {
+      formationData.forEach((f) => {
         const form = statsMap[f.branche_id].formation;
         form.hommes += Number(f.hommes) || 0;
         form.femmes += Number(f.femmes) || 0;
       });
 
-      baptemeData?.forEach((b) => {
+      baptemeData.forEach((b) => {
         const bap = statsMap[b.branche_id].bapteme;
         bap.hommes += Number(b.hommes) || 0;
         bap.femmes += Number(b.femmes) || 0;
       });
 
-      evangeData?.forEach((e) => {
+      evangeData.forEach((e) => {
         const ev = statsMap[e.branche_id].evangelisation;
         ev.hommes += Number(e.hommes) || 0;
         ev.femmes += Number(e.femmes) || 0;
@@ -159,14 +147,6 @@ function StatGlobalPage() {
         ev.reconciliation += Number(e.reconciliation) || 0;
         ev.moissonneurs += Number(e.moissonneurs) || 0;
       });
-
-      // ================= MINISTÈRE MAP =================
-      const minMap = {};
-      branchIds.forEach((id) => { minMap[id] = []; });
-      ministereData?.forEach((m) => {
-        minMap[m.branche_id].push(m.valeur);
-      });
-      setMinistereMap(minMap);
 
       // ================= ARBRE =================
       const map = {};
@@ -196,7 +176,7 @@ function StatGlobalPage() {
     return (
       <div key={branch.id} className="mt-8">
         <div className="flex items-center mb-3">
-          {level === 1 && branch.enfants.length > 0 && (
+          {branch.enfants.length > 0 && (
             <button onClick={() => toggleExpand(branch.id)} className="mr-2 text-xl">
               {expandedBranches.includes(branch.id) ? "➖" : "➕"}
             </button>
@@ -206,7 +186,6 @@ function StatGlobalPage() {
 
         <div className="w-full overflow-x-auto">
           <div className="w-max space-y-2">
-
             {/* HEADER */}
             <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[180px]">Type</div>
@@ -266,13 +245,12 @@ function StatGlobalPage() {
             {/* MINISTÈRE */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-yellow-400 whitespace-nowrap">
               <div className="min-w-[180px] font-semibold">Ministères</div>
-              <div className="min-w-[600px] text-white">{ministereMap[branch.id]?.join(", ")}</div>
+              <div className="min-w-[600px] text-white">{ministereMap[branch.id]?.length || 0}</div>
             </div>
-
           </div>
         </div>
 
-        {level !== 1 || expandedBranches.includes(branch.id)
+        {expandedBranches.includes(branch.id)
           ? branch.enfants.map((child) => renderBranch(child, level + 1))
           : null}
       </div>
@@ -280,7 +258,6 @@ function StatGlobalPage() {
   };
 
   const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
-
   const filteredBranches =
     superviseurFilter && rootId
       ? branchesTree.filter((branch) =>

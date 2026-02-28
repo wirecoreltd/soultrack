@@ -92,11 +92,13 @@ function StatGlobalPage() {
           formation: { hommes: 0, femmes: 0 },
           bapteme: { hommes: 0, femmes: 0 },
           evangelisation: { hommes: 0, femmes: 0, priere: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 },
-          serviteurs: { hommes: 0, femmes: 0 },   // ✅ Serviteurs ajouté
+          serviteurs: { hommes: 0, femmes: 0 },
+          cellules: { total: 0 },  // ✅ Ajout cellules
         };
       });
 
-      const tableFetch = async (table, branchField, dateField) => {
+      // ================= FETCH STATS TABLES =================
+      const tableFetch = async (table, branchField, dateField, dataField = null) => {
         let query = supabase.from(table).select("*").in(branchField, branchIds);
         if (dateDebut) query = query.gte(dateField, dateDebut);
         if (dateFin) query = query.lte(dateField, dateFin);
@@ -104,13 +106,15 @@ function StatGlobalPage() {
         return data || [];
       };
 
-      const [attendanceData, formationData, baptemeData, evangeData] = await Promise.all([
+      const [attendanceData, formationData, baptemeData, evangeData, cellulesData] = await Promise.all([
         tableFetch("attendance_stats", "branche_id", "mois"),
         tableFetch("formations", "branche_id", "date_debut"),
         tableFetch("baptemes", "branche_id", "date"),
-        tableFetch("rapport_evangelisation", "branche_id", "date")
+        tableFetch("rapport_evangelisation", "branche_id", "date"),
+        tableFetch("cellules", "branche_id", "created_at"),
       ]);
 
+      // ================= REMPLISSAGE STATS =================
       attendanceData.forEach((s) => {
         const a = statsMap[s.branche_id].culte;
         a.hommes += Number(s.hommes) || 0;
@@ -146,62 +150,49 @@ function StatGlobalPage() {
       });
 
       // ================= SERVITEURS =================
-      const { data: serviteurData } = await supabase
+      let serviteurQuery = supabase
         .from("stats_ministere_besoin")
-        .select("membre_id, branche_id")
-        .in("branche_id", branchIds)
-        .eq("type", "serviteur")
-        .not("valeur", "is", null)
-        .gte("date_action", dateDebut || "1900-01-01")
-        .lte("date_action", dateFin || "2100-12-31");
+        .select("membre_id, eglise_id")
+        .in("eglise_id", branchIds)
+        .in("type", ["serviteur", "ministere"])
+        .not("valeur", "is", null);
 
-      // Déduplication par membre_id + branche_id
-      const uniqueServiteurs = {};
-      serviteurData?.forEach(s => {
-        if (!uniqueServiteurs[s.branche_id]) uniqueServiteurs[s.branche_id] = new Set();
-        uniqueServiteurs[s.branche_id].add(s.membre_id);
+      if (dateDebut) serviteurQuery = serviteurQuery.gte("date_action", dateDebut);
+      if (dateFin) serviteurQuery = serviteurQuery.lte("date_action", dateFin);
+
+      const { data: serviteurData } = await serviteurQuery;
+
+      const uniqueMap = {};
+      serviteurData?.forEach((s) => {
+        if (!uniqueMap[s.eglise_id]) uniqueMap[s.eglise_id] = new Set();
+        uniqueMap[s.eglise_id].add(s.membre_id);
       });
 
-      // Récupération sexe des serviteurs
-      const allServIds = [...new Set(serviteurData?.map(s => s.membre_id) || [])];
-      let sexeMap = {};
-      if (allServIds.length > 0) {
+      const allMembreIds = [...new Set(serviteurData?.map(s => s.membre_id) || [])];
+      if (allMembreIds.length > 0) {
         const { data: membresData } = await supabase
           .from("membres_complets")
           .select("id, sexe")
-          .in("id", allServIds);
+          .in("id", allMembreIds);
+
+        const sexeMap = {};
         membresData?.forEach(m => { sexeMap[m.id] = m.sexe; });
+
+        Object.keys(uniqueMap).forEach((egliseId) => {
+          uniqueMap[egliseId].forEach((membreId) => {
+            const sexe = sexeMap[membreId];
+            if (sexe === "Homme") statsMap[egliseId].serviteurs.hommes++;
+            if (sexe === "Femme") statsMap[egliseId].serviteurs.femmes++;
+          });
+        });
       }
 
-      Object.keys(uniqueServiteurs).forEach(branchId => {
-        uniqueServiteurs[branchId].forEach(mId => {
-          const sexe = sexeMap[mId];
-          if (sexe === "Homme") statsMap[branchId].serviteurs.hommes++;
-          if (sexe === "Femme") statsMap[branchId].serviteurs.femmes++;
-        });
-      });
-
       // ================= CELLULES =================
-const { data: cellulesData } = await supabase
-  .from("cellules")
-  .select("id, branche_id")
-  .in("branche_id", branchIds)
-  .gte("created_at", dateDebut || "1900-01-01")
-  .lte("created_at", dateFin || "2100-12-31");
-
-// Initialiser compteur cellules
-const cellulesCountMap = {};
-branchIds.forEach((id) => {
-  cellulesCountMap[id] = 0;
-});
-cellulesData?.forEach((c) => {
-  if (c.branche_id) cellulesCountMap[c.branche_id]++;
-});
-
-// Ajouter au statsMap
-branchIds.forEach((id) => {
-  statsMap[id].cellules = { total: cellulesCountMap[id] || 0 };
-});
+      cellulesData.forEach((c) => {
+        if (c.branche_id && statsMap[c.branche_id]) {
+          statsMap[c.branche_id].cellules.total += 1;
+        }
+      });
 
       // ================= ARBRE =================
       const map = {};
@@ -243,9 +234,10 @@ branchIds.forEach((id) => {
 
         <div className="w-full overflow-x-auto">
           <div className="w-max space-y-2">
+
             {/* HEADER */}
             <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[180px]">Type</div>
+              <div className="min-w-[120px]">Nombre</div> {/* ✅ Nouvelle colonne */}
               <div className="min-w-[120px] text-center">Hommes</div>
               <div className="min-w-[120px] text-center">Femmes</div>
               <div className="min-w-[120px] text-center">Jeunes</div>
@@ -259,7 +251,7 @@ branchIds.forEach((id) => {
 
             {/* CULTE */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-green-400 whitespace-nowrap">
-              <div className="min-w-[180px] font-semibold">Culte</div>
+              <div className="min-w-[120px]">-</div>
               <div className="min-w-[120px] text-center">{branch.stats.culte.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.culte.femmes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.culte.jeunes}</div>
@@ -273,21 +265,21 @@ branchIds.forEach((id) => {
 
             {/* FORMATION */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-blue-400 whitespace-nowrap">
-              <div className="min-w-[180px] font-semibold">Formation</div>
+              <div className="min-w-[120px]">-</div>
               <div className="min-w-[120px] text-center">{branch.stats.formation.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.formation.femmes}</div>
             </div>
 
             {/* BAPTÊME */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-purple-400 whitespace-nowrap">
-              <div className="min-w-[180px] font-semibold">Baptême</div>
+              <div className="min-w-[120px]">-</div>
               <div className="min-w-[120px] text-center">{branch.stats.bapteme.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.bapteme.femmes}</div>
             </div>
 
             {/* EVANGÉLISATION */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-pink-400 whitespace-nowrap">
-              <div className="min-w-[180px] font-semibold">Évangélisation</div>
+              <div className="min-w-[120px]">-</div>
               <div className="min-w-[120px] text-center">{branch.stats.evangelisation.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.evangelisation.femmes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.evangelisation.priere}</div>
@@ -301,22 +293,18 @@ branchIds.forEach((id) => {
 
             {/* SERVITEURS */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-yellow-400 whitespace-nowrap">
-              <div className="min-w-[180px] font-semibold">Serviteurs</div>
+              <div className="min-w-[120px]">-</div>
               <div className="min-w-[120px] text-center">{branch.stats.serviteurs.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.serviteurs.femmes}</div>
-              <div className="min-w-[120px] text-center">
-                {branch.stats.serviteurs.hommes + branch.stats.serviteurs.femmes}
-              </div>
+              <div className="min-w-[120px] text-center">{branch.stats.serviteurs.hommes + branch.stats.serviteurs.femmes}</div>
             </div>
 
-                {/* CELLULES */}
-<div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-teal-400 whitespace-nowrap">
-  <div className="min-w-[180px] font-semibold">Cellules</div>
-  <div className="min-w-[120px] text-center">-</div>
-  <div className="min-w-[120px] text-center">-</div>
-  <div className="min-w-[120px] text-center">-</div>
-  <div className="min-w-[120px] text-center">{branch.stats.cellules.total}</div>
-</div>
+            {/* CELLULES */}
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-amber-400 whitespace-nowrap">
+              <div className="min-w-[120px] text-center">{branch.stats.cellules.total}</div>
+              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[120px] text-center">-</div>
+            </div>
 
           </div>
         </div>

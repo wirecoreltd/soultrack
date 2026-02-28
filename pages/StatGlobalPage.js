@@ -25,14 +25,6 @@ function StatGlobalPage() {
   const [rootId, setRootId] = useState(null);
   const [expandedBranches, setExpandedBranches] = useState([]);
 
-  const toggleExpand = (branchId) => {
-    setExpandedBranches((prev) =>
-      prev.includes(branchId)
-        ? prev.filter((id) => id !== branchId)
-        : [...prev, branchId]
-    );
-  };
-
   const getAllDescendants = (branch) => {
     let descendants = [branch.id];
     branch.enfants.forEach((child) => {
@@ -41,27 +33,39 @@ function StatGlobalPage() {
     return descendants;
   };
 
+  const toggleExpand = (branchId) => {
+    setExpandedBranches((prev) =>
+      prev.includes(branchId)
+        ? prev.filter((id) => id !== branchId)
+        : [...prev, branchId]
+    );
+  };
+
   const fetchStats = async () => {
     setLoading(true);
 
     try {
       const {
         data: { user },
+        error: userError,
       } = await supabase.auth.getUser();
+      if (userError) throw userError;
 
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("branche_id")
         .eq("id", user.id)
         .single();
+      if (profileError) throw profileError;
 
       const rootIdValue = profileData.branche_id;
       setRootId(rootIdValue);
 
-      const { data: branchesData } = await supabase.rpc(
+      const { data: branchesData, error: branchesError } = await supabase.rpc(
         "get_descendant_branches",
         { root_id: rootIdValue }
       );
+      if (branchesError) throw branchesError;
 
       if (!branchesData?.length) {
         setBranchesTree([]);
@@ -73,15 +77,17 @@ function StatGlobalPage() {
       const branchIds = branchesData.map((b) => b.id);
 
       /* ================= CULTE ================= */
-      let attendanceQuery = supabase
+      let statsQuery = supabase
         .from("attendance_stats")
         .select("*")
         .in("branche_id", branchIds);
 
-      if (dateDebut) attendanceQuery = attendanceQuery.gte("mois", dateDebut);
-      if (dateFin) attendanceQuery = attendanceQuery.lte("mois", dateFin);
+      if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
+      if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
 
-      const { data: attendanceData } = await attendanceQuery;
+      const { data: attendanceData, error: attendanceError } =
+        await statsQuery;
+      if (attendanceError) throw attendanceError;
 
       /* ================= FORMATION ================= */
       let formationQuery = supabase
@@ -94,7 +100,9 @@ function StatGlobalPage() {
       if (dateFin)
         formationQuery = formationQuery.lte("date_fin", dateFin);
 
-      const { data: formationData } = await formationQuery;
+      const { data: formationData, error: formationError } =
+        await formationQuery;
+      if (formationError) throw formationError;
 
       /* ================= BAPTEME ================= */
       let baptemeQuery = supabase
@@ -105,10 +113,13 @@ function StatGlobalPage() {
       if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
       if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
 
-      const { data: baptemeData } = await baptemeQuery;
+      const { data: baptemeData, error: baptemeError } =
+        await baptemeQuery;
+      if (baptemeError) throw baptemeError;
 
-      /* ================= INITIAL MAP ================= */
+      /* ================= MAP ================= */
       const statsMap = {};
+
       branchIds.forEach((id) => {
         statsMap[id] = {
           culte: {
@@ -152,7 +163,11 @@ function StatGlobalPage() {
 
       const map = {};
       branchesData.forEach((b) => {
-        map[b.id] = { ...b, stats: statsMap[b.id], enfants: [] };
+        map[b.id] = {
+          ...b,
+          stats: statsMap[b.id],
+          enfants: [],
+        };
       });
 
       const tree = [];
@@ -167,7 +182,9 @@ function StatGlobalPage() {
       setBranchesTree(tree);
       setAllBranches(Object.values(map));
     } catch (err) {
-      console.error("Erreur:", err);
+      console.error("Erreur fetch stats:", err);
+      setBranchesTree([]);
+      setAllBranches([]);
     }
 
     setLoading(false);
@@ -195,31 +212,52 @@ function StatGlobalPage() {
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="w-full overflow-x-auto">
+          <div className="w-max space-y-2">
 
-          {/* CULTE */}
-          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-green-400">
-            <div className="min-w-[180px] font-semibold">Culte</div>
-            <div className="min-w-[120px] text-center">{branch.stats.culte.hommes}</div>
-            <div className="min-w-[120px] text-center">{branch.stats.culte.femmes}</div>
-            <div className="min-w-[120px] text-center">{branch.stats.culte.jeunes}</div>
-            <div className="min-w-[120px] text-center">{culteTotal}</div>
+            {/* HEADER */}
+            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[180px]">Type</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center">Jeunes</div>
+              <div className="min-w-[120px] text-center">Total</div>
+              <div className="min-w-[120px] text-center">Enfants</div>
+              <div className="min-w-[140px] text-center">Connectés</div>
+              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+              <div className="min-w-[180px] text-center">Nouveau Converti</div>
+              <div className="min-w-[160px] text-center">Moissonneurs</div>
+            </div>
+
+            {/* CULTE */}
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-green-400 whitespace-nowrap">
+              <div className="min-w-[180px] font-semibold">Culte</div>
+              <div className="min-w-[120px] text-center">{branch.stats.culte.hommes}</div>
+              <div className="min-w-[120px] text-center">{branch.stats.culte.femmes}</div>
+              <div className="min-w-[120px] text-center">{branch.stats.culte.jeunes}</div>
+              <div className="min-w-[120px] text-center">{culteTotal}</div>
+              <div className="min-w-[120px] text-center">{branch.stats.culte.enfants}</div>
+              <div className="min-w-[140px] text-center">{branch.stats.culte.connectes}</div>
+              <div className="min-w-[150px] text-center">{branch.stats.culte.nouveaux_venus}</div>
+              <div className="min-w-[180px] text-center">{branch.stats.culte.nouveau_converti}</div>
+              <div className="min-w-[160px] text-center">{branch.stats.culte.moissonneurs}</div>
+            </div>
+
+            {/* FORMATION */}
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-blue-400 whitespace-nowrap">
+              <div className="min-w-[180px] font-semibold">Formation</div>
+              <div className="min-w-[120px] text-center">{branch.stats.formation.hommes}</div>
+              <div className="min-w-[120px] text-center">{branch.stats.formation.femmes}</div>
+            </div>
+
+            {/* BAPTÊME */}
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-purple-400 whitespace-nowrap">
+              <div className="min-w-[180px] font-semibold">Baptême</div>
+              <div className="min-w-[120px] text-center">{branch.stats.bapteme.hommes}</div>
+              <div className="min-w-[120px] text-center">{branch.stats.bapteme.femmes}</div>
+            </div>
+
           </div>
-
-          {/* FORMATION */}
-          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-blue-400">
-            <div className="min-w-[180px] font-semibold">Formation</div>
-            <div className="min-w-[120px] text-center">{branch.stats.formation.hommes}</div>
-            <div className="min-w-[120px] text-center">{branch.stats.formation.femmes}</div>
-          </div>
-
-          {/* BAPTÊME */}
-          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-purple-400">
-            <div className="min-w-[180px] font-semibold">Baptême</div>
-            <div className="min-w-[120px] text-center">{branch.stats.bapteme.hommes}</div>
-            <div className="min-w-[120px] text-center">{branch.stats.bapteme.femmes}</div>
-          </div>
-
         </div>
 
         {level !== 1 || expandedBranches.includes(branch.id)
@@ -250,14 +288,14 @@ function StatGlobalPage() {
 
       <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap items-end">
         <div className="flex flex-col">
-          <label>Date début</label>
+          <label className="text-sm mb-1">Date début</label>
           <input type="date" value={dateDebut}
             onChange={(e) => setDateDebut(e.target.value)}
             className="px-3 py-2 rounded-lg text-black" />
         </div>
 
         <div className="flex flex-col">
-          <label>Date fin</label>
+          <label className="text-sm mb-1">Date fin</label>
           <input type="date" value={dateFin}
             onChange={(e) => setDateFin(e.target.value)}
             className="px-3 py-2 rounded-lg text-black" />
@@ -269,15 +307,31 @@ function StatGlobalPage() {
             fetchStats();
           }}
           disabled={loading}
-          className="px-6 py-2 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg"
+          className="px-6 py-2 bg-amber-400 hover:bg-amber-500 text-black font-semibold rounded-lg transition disabled:opacity-50"
         >
           {loading ? "Génération..." : "Générer"}
         </button>
+
+        <div className="flex flex-col">
+          <label className="text-sm mb-1">Superviseur</label>
+          <select
+            value={superviseurFilter}
+            onChange={(e) => setSuperviseurFilter(e.target.value)}
+            className="px-3 py-2 rounded-lg text-black"
+          >
+            <option value="">Tous</option>
+            {superviseurOptions.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.nom}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {!hasGenerated && (
-        <p className="text-white/60">
-          Sélectionnez une période puis cliquez sur Générer.
+        <p className="text-white/60 mt-6">
+          Veuillez sélectionner une période puis cliquer sur Générer.
         </p>
       )}
 

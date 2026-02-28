@@ -89,13 +89,14 @@ function StatGlobalPage() {
       // ================= AUTRES STATS =================
       const statsMap = {};
       branchIds.forEach((id) => {
-        statsMap[id] = {
-          culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0 },
-          formation: { hommes: 0, femmes: 0 },
-          bapteme: { hommes: 0, femmes: 0 },
-          evangelisation: { hommes: 0, femmes: 0, priere: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 },
-        };
-      });
+  statsMap[id] = {
+    culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0 },
+    formation: { hommes: 0, femmes: 0 },
+    bapteme: { hommes: 0, femmes: 0 },
+    evangelisation: { hommes: 0, femmes: 0, priere: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 },
+    serviteurs: { hommes: 0, femmes: 0 },   // ✅ AJOUTÉ
+  };
+});
 
       // ================= FETCH STATS TABLES =================
       const tableFetch = async (table, branchField, dateField, dataField = null) => {
@@ -147,6 +148,53 @@ function StatGlobalPage() {
         ev.reconciliation += Number(e.reconciliation) || 0;
         ev.moissonneurs += Number(e.moissonneurs) || 0;
       });
+
+      // ================= SERVITEURS =================
+let serviteurQuery = supabase
+  .from("stats_ministere_besoin")
+  .select("membre_id, eglise_id")
+  .in("eglise_id", branchIds)
+  .eq("type", "serviteur")
+  .eq("valeur", "true");
+
+if (dateDebut) serviteurQuery = serviteurQuery.gte("date_action", dateDebut);
+if (dateFin) serviteurQuery = serviteurQuery.lte("date_action", dateFin);
+
+const { data: serviteurData } = await serviteurQuery;
+
+// Déduplication membre_id
+const uniqueServiteurs = {};
+serviteurData?.forEach((s) => {
+  if (!uniqueServiteurs[s.eglise_id]) {
+    uniqueServiteurs[s.eglise_id] = new Set();
+  }
+  uniqueServiteurs[s.eglise_id].add(s.membre_id);
+});
+
+// Récupérer sexe des membres
+const membreIds = [
+  ...new Set(serviteurData?.map((s) => s.membre_id) || []),
+];
+
+if (membreIds.length > 0) {
+  const { data: membresData } = await supabase
+    .from("membres_complets")
+    .select("id, sexe")
+    .in("id", membreIds);
+
+  const sexeMap = {};
+  membresData?.forEach((m) => {
+    sexeMap[m.id] = m.sexe;
+  });
+
+  Object.keys(uniqueServiteurs).forEach((egliseId) => {
+    uniqueServiteurs[egliseId].forEach((membreId) => {
+      const sexe = sexeMap[membreId];
+      if (sexe === "Homme") statsMap[egliseId].serviteurs.hommes++;
+      if (sexe === "Femme") statsMap[egliseId].serviteurs.femmes++;
+    });
+  });
+}
 
       // ================= ARBRE =================
       const map = {};
@@ -250,10 +298,15 @@ function StatGlobalPage() {
           </div>
 
           {/* MINISTÈRE */}
-          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-yellow-400 whitespace-nowrap">
-            <div className="min-w-[180px] font-semibold">Ministères</div>
-            <div className="min-w-[600px] text-white">{ministereMap[branch.id]?.join(", ")}</div>
-          </div>
+          {/* SERVITEURS */}
+<div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-yellow-400 whitespace-nowrap">
+  <div className="min-w-[180px] font-semibold">Serviteurs</div>
+  <div className="min-w-[120px] text-center">{branch.stats.serviteurs.hommes}</div>
+  <div className="min-w-[120px] text-center">{branch.stats.serviteurs.femmes}</div>
+  <div className="min-w-[120px] text-center">
+    {branch.stats.serviteurs.hommes + branch.stats.serviteurs.femmes}
+  </div>
+</div>
 
         </div>
       </div>

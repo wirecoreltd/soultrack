@@ -45,7 +45,6 @@ function StatGlobalPage() {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      // Récupération user et profil
       const { data: { user } } = await supabase.auth.getUser();
       const { data: profileData } = await supabase
         .from("profiles")
@@ -56,7 +55,6 @@ function StatGlobalPage() {
       const rootIdValue = profileData.branche_id;
       setRootId(rootIdValue);
 
-      // Récupération branches descendants
       const { data: branchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
       if (!branchesData?.length) {
         setBranchesTree([]);
@@ -65,6 +63,7 @@ function StatGlobalPage() {
         setLoading(false);
         return;
       }
+
       const branchIds = branchesData.map((b) => b.id);
 
       // ================= MINISTÈRE =================
@@ -95,11 +94,10 @@ function StatGlobalPage() {
           bapteme: { hommes: 0, femmes: 0 },
           evangelisation: { hommes: 0, femmes: 0, priere: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 },
           serviteurs: { hommes: 0, femmes: 0 },
-          cellules: { total: 0 },
+          cellules: { total: 0 },  // ✅ Nombre de cellules
         };
       });
 
-      // ================= FETCH STATS TABLES =================
       const tableFetch = async (table, branchField, dateField) => {
         let query = supabase.from(table).select("*").in(branchField, branchIds);
         if (dateDebut) query = query.gte(dateField, dateDebut);
@@ -113,7 +111,7 @@ function StatGlobalPage() {
         tableFetch("formations", "branche_id", "date_debut"),
         tableFetch("baptemes", "branche_id", "date"),
         tableFetch("rapport_evangelisation", "branche_id", "date"),
-        tableFetch("cellules", "branche_id", "created_at"),
+        tableFetch("cellules", "branche_id", "created_at")
       ]);
 
       // ================= REMPLISSAGE STATS =================
@@ -164,7 +162,6 @@ function StatGlobalPage() {
 
       const { data: serviteurData } = await serviteurQuery;
 
-      // Dédupliquer par membre_id ET par branche
       const uniqueMap = {};
       serviteurData?.forEach((s) => {
         if (!uniqueMap[s.eglise_id]) uniqueMap[s.eglise_id] = new Set();
@@ -172,7 +169,6 @@ function StatGlobalPage() {
       });
 
       const allMembreIds = [...new Set(serviteurData?.map(s => s.membre_id) || [])];
-
       if (allMembreIds.length > 0) {
         const { data: membresData } = await supabase
           .from("membres_complets")
@@ -193,9 +189,8 @@ function StatGlobalPage() {
 
       // ================= CELLULES =================
       cellulesData.forEach(c => {
-        if (c.branche_id && statsMap[c.branche_id]) {
-          statsMap[c.branche_id].cellules.total++;
-        }
+        const id = c.branche_id || c.eglise_id;
+        if (id && statsMap[id]) statsMap[id].cellules.total++;
       });
 
       // ================= ARBRE =================
@@ -244,8 +239,8 @@ function StatGlobalPage() {
 
             {/* HEADER */}
             <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[180px]">Type</div>
               <div className="min-w-[120px] text-center">Nombre</div>
+              <div className="min-w-[180px]">Type</div>
               <div className="min-w-[120px] text-center">Hommes</div>
               <div className="min-w-[120px] text-center">Femmes</div>
               <div className="min-w-[120px] text-center">Jeunes</div>
@@ -259,8 +254,8 @@ function StatGlobalPage() {
 
             {/* CULTE */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-green-400 whitespace-nowrap">
-              <div className="min-w-[180px] font-semibold">Culte</div>
               <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[180px] font-semibold">Culte</div>
               <div className="min-w-[120px] text-center">{branch.stats.culte.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.culte.femmes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.culte.jeunes}</div>
@@ -274,24 +269,24 @@ function StatGlobalPage() {
 
             {/* FORMATION */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-blue-400 whitespace-nowrap">
-              <div className="min-w-[180px] font-semibold">Formation</div>
               <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[180px] font-semibold">Formation</div>
               <div className="min-w-[120px] text-center">{branch.stats.formation.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.formation.femmes}</div>
             </div>
 
             {/* BAPTÊME */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-purple-400 whitespace-nowrap">
-              <div className="min-w-[180px] font-semibold">Baptême</div>
               <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[180px] font-semibold">Baptême</div>
               <div className="min-w-[120px] text-center">{branch.stats.bapteme.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.bapteme.femmes}</div>
             </div>
 
             {/* EVANGÉLISATION */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-pink-400 whitespace-nowrap">
-              <div className="min-w-[180px] font-semibold">Évangélisation</div>
               <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[180px] font-semibold">Évangélisation</div>
               <div className="min-w-[120px] text-center">{branch.stats.evangelisation.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.evangelisation.femmes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.evangelisation.priere}</div>
@@ -305,26 +300,19 @@ function StatGlobalPage() {
 
             {/* SERVITEURS */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-yellow-400 whitespace-nowrap">
-              <div className="min-w-[180px] font-semibold">Serviteurs</div>
               <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[180px] font-semibold">Serviteurs</div>
               <div className="min-w-[120px] text-center">{branch.stats.serviteurs.hommes}</div>
               <div className="min-w-[120px] text-center">{branch.stats.serviteurs.femmes}</div>
-              <div className="min-w-[120px] text-center">{branch.stats.serviteurs.hommes + branch.stats.serviteurs.femmes}</div>
+              <div className="min-w-[120px] text-center">
+                {branch.stats.serviteurs.hommes + branch.stats.serviteurs.femmes}
+              </div>
             </div>
 
             {/* CELLULES */}
-            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-amber-400 whitespace-nowrap">
-              <div className="min-w-[180px] font-semibold">Cellules</div>
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-cyan-400 whitespace-nowrap">
               <div className="min-w-[120px] text-center">{branch.stats.cellules.total}</div>
-              <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[140px] text-center">-</div>
-              <div className="min-w-[150px] text-center">-</div>
-              <div className="min-w-[180px] text-center">-</div>
-              <div className="min-w-[160px] text-center">-</div>
+              <div className="min-w-[180px] font-semibold">Cellules</div>
             </div>
 
           </div>
@@ -349,24 +337,31 @@ function StatGlobalPage() {
 
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">
-      <HeaderPages title="Statistiques Globales" />
-      <div className="flex gap-4 mb-6">
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="p-2 rounded"
-        />
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="p-2 rounded"
-        />
-        <button
-          onClick={fetchStats}
-          className="bg-amber-400 text-black px-4 py-2 rounded font-semibold"
-        >
+      <HeaderPages />
+
+      <h1 className="text-2xl font-bold mb-6">
+        Rapport <span className="text-amber-300">Statistiques Globales</span>
+      </h1>
+
+      <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap items-end">
+        <div className="flex flex-col">
+          <label className="text-sm mb-1">Date début</label>
+          <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} className="px-3 py-2 rounded-lg text-black"/>
+        </div>
+        <div className="flex flex-col">
+          <label className="text-sm mb-1">Date fin</label>
+          <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} className="px-3 py-2 rounded-lg text-black"/>
+        </div>
+        <div className="flex flex-col">
+          <label className="text-sm mb-1">Superviseur</label>
+          <select value={superviseurFilter} onChange={(e) => setSuperviseurFilter(e.target.value)} className="px-3 py-2 rounded-lg text-black">
+            <option value="">Tous</option>
+            {superviseurOptions.map((s) => (
+              <option key={s.id} value={s.id}>{s.nom}</option>
+            ))}
+          </select>
+        </div>
+        <button onClick={fetchStats} className="bg-amber-300 text-black px-4 py-2 rounded-lg font-semibold">
           {loading ? "Chargement..." : "Générer"}
         </button>
       </div>

@@ -24,6 +24,14 @@ function StatGlobalPage() {
   const [allBranches, setAllBranches] = useState([]);
   const [rootId, setRootId] = useState(null);
   const [expandedBranches, setExpandedBranches] = useState([]);
+  const [evangelisationTotals, setEvangelisationTotals] = useState({
+    hommes: 0,
+    femmes: 0,
+    priere: 0,
+    nouveau_converti: 0,
+    reconciliation: 0,
+    moissonneurs: 0,
+  });
 
   const getAllDescendants = (branch) => {
     let descendants = [branch.id];
@@ -41,9 +49,56 @@ function StatGlobalPage() {
     );
   };
 
+  const fetchEvangelisation = async (branchIds, startDate, endDate) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("rapport_evangelisation")
+        .select("*")
+        .gte("date", startDate)
+        .lte("date", endDate)
+        .or(`branche_id.in.(${branchIds.join(",")}),branche_id.is.null`);
+
+      if (error) throw error;
+
+      const totals = data.reduce(
+        (acc, row) => {
+          acc.hommes += Number(row.hommes) || 0;
+          acc.femmes += Number(row.femmes) || 0;
+          acc.priere += Number(row.priere) || 0;
+          acc.nouveau_converti += Number(row.nouveau_converti) || 0;
+          acc.reconciliation += Number(row.reconciliation) || 0;
+          acc.moissonneurs += Number(row.moissonneurs) || 0;
+          return acc;
+        },
+        {
+          hommes: 0,
+          femmes: 0,
+          priere: 0,
+          nouveau_converti: 0,
+          reconciliation: 0,
+          moissonneurs: 0,
+        }
+      );
+
+      setEvangelisationTotals(totals);
+    } catch (err) {
+      console.error("Erreur fetchEvangelisation:", err);
+      setEvangelisationTotals({
+        hommes: 0,
+        femmes: 0,
+        priere: 0,
+        nouveau_converti: 0,
+        reconciliation: 0,
+        moissonneurs: 0,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchStats = async () => {
     setLoading(true);
-
     try {
       const {
         data: { user },
@@ -81,10 +136,8 @@ function StatGlobalPage() {
         .from("attendance_stats")
         .select("*")
         .in("branche_id", branchIds);
-
       if (dateDebut) statsQuery = statsQuery.gte("mois", dateDebut);
       if (dateFin) statsQuery = statsQuery.lte("mois", dateFin);
-
       const { data: attendanceData, error: attendanceError } =
         await statsQuery;
       if (attendanceError) throw attendanceError;
@@ -94,44 +147,27 @@ function StatGlobalPage() {
         .from("formations")
         .select("*")
         .in("branche_id", branchIds);
-
-      if (dateDebut)
-        formationQuery = formationQuery.gte("date_debut", dateDebut);
-      if (dateFin)
-        formationQuery = formationQuery.lte("date_fin", dateFin);
-
+      if (dateDebut) formationQuery = formationQuery.gte("date_debut", dateDebut);
+      if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
       const { data: formationData, error: formationError } =
         await formationQuery;
       if (formationError) throw formationError;
 
-      /* ================= BAPTEME ================= */
+      /* ================= BAPTÊME ================= */
       let baptemeQuery = supabase
         .from("baptemes")
         .select("*")
         .in("branche_id", branchIds);
-
       if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
       if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
-
-      const { data: baptemeData, error: baptemeError } =
-        await baptemeQuery;
+      const { data: baptemeData, error: baptemeError } = await baptemeQuery;
       if (baptemeError) throw baptemeError;
 
       /* ================= MAP ================= */
       const statsMap = {};
-
       branchIds.forEach((id) => {
         statsMap[id] = {
-          culte: {
-            hommes: 0,
-            femmes: 0,
-            jeunes: 0,
-            enfants: 0,
-            connectes: 0,
-            nouveaux_venus: 0,
-            nouveau_converti: 0,
-            moissonneurs: 0,
-          },
+          culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0 },
           formation: { hommes: 0, femmes: 0 },
           bapteme: { hommes: 0, femmes: 0 },
         };
@@ -163,13 +199,8 @@ function StatGlobalPage() {
 
       const map = {};
       branchesData.forEach((b) => {
-        map[b.id] = {
-          ...b,
-          stats: statsMap[b.id],
-          enfants: [],
-        };
+        map[b.id] = { ...b, stats: statsMap[b.id], enfants: [] };
       });
-
       const tree = [];
       Object.values(map).forEach((b) => {
         if (b.superviseur_id && map[b.superviseur_id]) {
@@ -181,12 +212,14 @@ function StatGlobalPage() {
 
       setBranchesTree(tree);
       setAllBranches(Object.values(map));
+
+      /* ================= EVANGELISATION ================= */
+      await fetchEvangelisation(branchIds, dateDebut || "1900-01-01", dateFin || "2100-12-31");
     } catch (err) {
       console.error("Erreur fetch stats:", err);
       setBranchesTree([]);
       setAllBranches([]);
     }
-
     setLoading(false);
   };
 
@@ -200,16 +233,11 @@ function StatGlobalPage() {
       <div key={branch.id} className="mt-8">
         <div className="flex items-center mb-3">
           {level === 1 && branch.enfants.length > 0 && (
-            <button
-              onClick={() => toggleExpand(branch.id)}
-              className="mr-2 text-xl"
-            >
+            <button onClick={() => toggleExpand(branch.id)} className="mr-2 text-xl">
               {expandedBranches.includes(branch.id) ? "➖" : "➕"}
             </button>
           )}
-          <div className="text-xl font-bold text-amber-300">
-            {branch.nom}
-          </div>
+          <div className="text-xl font-bold text-amber-300">{branch.nom}</div>
         </div>
 
         <div className="w-full overflow-x-auto">
@@ -267,15 +295,10 @@ function StatGlobalPage() {
     );
   };
 
-  const superviseurOptions = allBranches.filter(
-    (b) => b.superviseur_id === rootId
-  );
-
+  const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
   const filteredBranches =
     superviseurFilter && rootId
-      ? branchesTree.filter((branch) =>
-          getAllDescendants(branch).includes(superviseurFilter)
-        )
+      ? branchesTree.filter((branch) => getAllDescendants(branch).includes(superviseurFilter))
       : branchesTree;
 
   return (
@@ -335,8 +358,40 @@ function StatGlobalPage() {
         </p>
       )}
 
-      {hasGenerated && !loading &&
-        filteredBranches.map((branch) => renderBranch(branch))}
+      {hasGenerated && !loading && (
+        <>
+          {filteredBranches.map((branch) => renderBranch(branch))}
+
+          {/* ================= EVANGELISATION ================= */}
+          <h3 className="text-lg font-bold mt-10 mb-3">Évangélisation</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            <div className="p-4 bg-white rounded-lg shadow">
+              <p className="text-sm text-gray-500">Hommes</p>
+              <p className="text-xl font-bold">{evangelisationTotals.hommes}</p>
+            </div>
+            <div className="p-4 bg-white rounded-lg shadow">
+              <p className="text-sm text-gray-500">Femmes</p>
+              <p className="text-xl font-bold">{evangelisationTotals.femmes}</p>
+            </div>
+            <div className="p-4 bg-white rounded-lg shadow">
+              <p className="text-sm text-gray-500">Prière</p>
+              <p className="text-xl font-bold">{evangelisationTotals.priere}</p>
+            </div>
+            <div className="p-4 bg-white rounded-lg shadow">
+              <p className="text-sm text-gray-500">Nouveaux Convertis</p>
+              <p className="text-xl font-bold">{evangelisationTotals.nouveau_converti}</p>
+            </div>
+            <div className="p-4 bg-white rounded-lg shadow">
+              <p className="text-sm text-gray-500">Réconciliation</p>
+              <p className="text-xl font-bold">{evangelisationTotals.reconciliation}</p>
+            </div>
+            <div className="p-4 bg-white rounded-lg shadow">
+              <p className="text-sm text-gray-500">Moissonneurs</p>
+              <p className="text-xl font-bold">{evangelisationTotals.moissonneurs}</p>
+            </div>
+          </div>
+        </>
+      )}
 
       <Footer />
     </div>

@@ -43,6 +43,7 @@ function StatGlobalPage() {
 
   const fetchStats = async () => {
     setLoading(true);
+
     try {
       const {
         data: { user },
@@ -71,7 +72,7 @@ function StatGlobalPage() {
 
       const branchIds = branchesData.map((b) => b.id);
 
-      // ================== CULTE ==================
+      /* ================= CULTE ================= */
       let attendanceQuery = supabase
         .from("attendance_stats")
         .select("*")
@@ -82,7 +83,7 @@ function StatGlobalPage() {
 
       const { data: attendanceData } = await attendanceQuery;
 
-      // ================== FORMATION ==================
+      /* ================= FORMATION ================= */
       let formationQuery = supabase
         .from("formations")
         .select("*")
@@ -94,19 +95,18 @@ function StatGlobalPage() {
 
       const { data: formationData } = await formationQuery;
 
-      // ================== BAPTEME ==================
+      /* ================= BAPTEME (CORRIGÉ) ================= */
       let baptemeQuery = supabase
         .from("baptemes")
         .select("*")
         .in("branche_id", branchIds);
 
-      if (dateDebut)
-        baptemeQuery = baptemeQuery.gte("date_bapteme", dateDebut);
-      if (dateFin) baptemeQuery = baptemeQuery.lte("date_bapteme", dateFin);
+      if (dateDebut) baptemeQuery = baptemeQuery.gte("date", dateDebut);
+      if (dateFin) baptemeQuery = baptemeQuery.lte("date", dateFin);
 
       const { data: baptemeData } = await baptemeQuery;
 
-      // ================== MAP ==================
+      /* ================= MAP ================= */
       const statsMap = {};
 
       branchIds.forEach((id) => {
@@ -121,14 +121,8 @@ function StatGlobalPage() {
             nouveau_converti: 0,
             moissonneurs: 0,
           },
-          formation: {
-            hommes: 0,
-            femmes: 0,
-          },
-          bapteme: {
-            hommes: 0,
-            femmes: 0,
-          },
+          formation: { hommes: 0, femmes: 0 },
+          bapteme: { hommes: 0, femmes: 0 },
         };
       });
 
@@ -158,11 +152,7 @@ function StatGlobalPage() {
 
       const map = {};
       branchesData.forEach((b) => {
-        map[b.id] = {
-          ...b,
-          stats: statsMap[b.id],
-          enfants: [],
-        };
+        map[b.id] = { ...b, stats: statsMap[b.id], enfants: [] };
       });
 
       const tree = [];
@@ -179,6 +169,7 @@ function StatGlobalPage() {
     } catch (err) {
       console.error("Erreur:", err);
     }
+
     setLoading(false);
   };
 
@@ -199,55 +190,23 @@ function StatGlobalPage() {
               {expandedBranches.includes(branch.id) ? "➖" : "➕"}
             </button>
           )}
-          <div className="text-xl font-bold text-amber-300">{branch.nom}</div>
+          <div className="text-xl font-bold text-amber-300">
+            {branch.nom}
+          </div>
         </div>
 
-        <div className="w-full overflow-x-auto">
-          <div className="w-max space-y-2">
-
-            {/* HEADER */}
-            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[180px]">Type</div>
-              <div className="min-w-[120px] text-center">Hommes</div>
-              <div className="min-w-[120px] text-center">Femmes</div>
-              <div className="min-w-[120px] text-center">Jeunes</div>
-              <div className="min-w-[120px] text-center">Total</div>
-              <div className="min-w-[120px] text-center">Enfants</div>
-              <div className="min-w-[140px] text-center">Connectés</div>
-              <div className="min-w-[150px] text-center">Nouveaux</div>
-              <div className="min-w-[180px] text-center">Convertis</div>
-              <div className="min-w-[160px] text-center">Moissonneurs</div>
-            </div>
-
-            {/* CULTE */}
-            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-green-400 whitespace-nowrap">
-              <div className="min-w-[180px] font-semibold">Culte</div>
-              <div className="min-w-[120px] text-center">{branch.stats.culte.hommes}</div>
-              <div className="min-w-[120px] text-center">{branch.stats.culte.femmes}</div>
-              <div className="min-w-[120px] text-center">{branch.stats.culte.jeunes}</div>
-              <div className="min-w-[120px] text-center">{culteTotal}</div>
-              <div className="min-w-[120px] text-center">{branch.stats.culte.enfants}</div>
-              <div className="min-w-[140px] text-center">{branch.stats.culte.connectes}</div>
-              <div className="min-w-[150px] text-center">{branch.stats.culte.nouveaux_venus}</div>
-              <div className="min-w-[180px] text-center">{branch.stats.culte.nouveau_converti}</div>
-              <div className="min-w-[160px] text-center">{branch.stats.culte.moissonneurs}</div>
-            </div>
-
-            {/* FORMATION */}
-            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-blue-400 whitespace-nowrap">
-              <div className="min-w-[180px] font-semibold">Formation</div>
-              <div className="min-w-[120px] text-center">{branch.stats.formation.hommes}</div>
-              <div className="min-w-[120px] text-center">{branch.stats.formation.femmes}</div>
-            </div>
-
-            {/* BAPTEME */}
-            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-purple-400 whitespace-nowrap">
-              <div className="min-w-[180px] font-semibold">Baptême</div>
-              <div className="min-w-[120px] text-center">{branch.stats.bapteme.hommes}</div>
-              <div className="min-w-[120px] text-center">{branch.stats.bapteme.femmes}</div>
-            </div>
-
+        <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-green-400">
+          <div className="min-w-[180px] font-semibold">Culte</div>
+          <div className="min-w-[120px] text-center">
+            {branch.stats.culte.hommes}
           </div>
+          <div className="min-w-[120px] text-center">
+            {branch.stats.culte.femmes}
+          </div>
+          <div className="min-w-[120px] text-center">
+            {branch.stats.culte.jeunes}
+          </div>
+          <div className="min-w-[120px] text-center">{culteTotal}</div>
         </div>
 
         {level !== 1 || expandedBranches.includes(branch.id)
@@ -276,18 +235,17 @@ function StatGlobalPage() {
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
-      {/* FILTRE */}
       <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap items-end">
 
         <div className="flex flex-col">
-          <label className="text-sm mb-1">Date début</label>
+          <label>Date début</label>
           <input type="date" value={dateDebut}
             onChange={(e) => setDateDebut(e.target.value)}
             className="px-3 py-2 rounded-lg text-black" />
         </div>
 
         <div className="flex flex-col">
-          <label className="text-sm mb-1">Date fin</label>
+          <label>Date fin</label>
           <input type="date" value={dateFin}
             onChange={(e) => setDateFin(e.target.value)}
             className="px-3 py-2 rounded-lg text-black" />
@@ -305,7 +263,7 @@ function StatGlobalPage() {
         </button>
 
         <div className="flex flex-col">
-          <label className="text-sm mb-1">Superviseur</label>
+          <label>Superviseur</label>
           <select
             value={superviseurFilter}
             onChange={(e) => setSuperviseurFilter(e.target.value)}

@@ -186,12 +186,17 @@ function StatGlobalPage() {
         });
       }
 
-     // ================= CELLULES =================
+    // ================= CELLULES =================
 cellulesData.forEach(c => {
-  // Assurer que l'id correspond aux branches existantes
-  const id = c.branche_id;
+  // Utilise d'abord branche_id si présent, sinon eglise_id
+  const id = c.branche_id || c.eglise_id;
+
+  // Si id n’existe pas dans statsMap, essaie de retrouver la branche par superviseur
   if (id && statsMap[id]) {
     statsMap[id].cellules.total++;
+  } else {
+    // Debug : affiche les cellules qui ne correspondent pas
+    console.warn("Cellule non comptée (id non trouvé dans statsMap):", c);
   }
 });
 

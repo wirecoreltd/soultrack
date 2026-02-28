@@ -181,6 +181,28 @@ function StatGlobalPage() {
         });
       });
 
+      // ================= CELLULES =================
+const { data: cellulesData } = await supabase
+  .from("cellules")
+  .select("id, branche_id")
+  .in("branche_id", branchIds)
+  .gte("created_at", dateDebut || "1900-01-01")
+  .lte("created_at", dateFin || "2100-12-31");
+
+// Initialiser compteur cellules
+const cellulesCountMap = {};
+branchIds.forEach((id) => {
+  cellulesCountMap[id] = 0;
+});
+cellulesData?.forEach((c) => {
+  if (c.branche_id) cellulesCountMap[c.branche_id]++;
+});
+
+// Ajouter au statsMap
+branchIds.forEach((id) => {
+  statsMap[id].cellules = { total: cellulesCountMap[id] || 0 };
+});
+
       // ================= ARBRE =================
       const map = {};
       branchesData.forEach((b) => {
@@ -286,6 +308,15 @@ function StatGlobalPage() {
                 {branch.stats.serviteurs.hommes + branch.stats.serviteurs.femmes}
               </div>
             </div>
+
+                {/* CELLULES */}
+<div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-teal-400 whitespace-nowrap">
+  <div className="min-w-[180px] font-semibold">Cellules</div>
+  <div className="min-w-[120px] text-center">-</div>
+  <div className="min-w-[120px] text-center">-</div>
+  <div className="min-w-[120px] text-center">-</div>
+  <div className="min-w-[120px] text-center">{branch.stats.cellules.total}</div>
+</div>
 
           </div>
         </div>

@@ -186,11 +186,14 @@ function StatGlobalPage() {
         });
       }
 
-      // ================= CELLULES =================
-      cellulesData.forEach(c => {
-        const id = c.branche_id || c.eglise_id;
-        if (id && statsMap[id]) statsMap[id].cellules.total++;
-      });
+     // ================= CELLULES =================
+cellulesData.forEach(c => {
+  // Assurer que l'id correspond aux branches existantes
+  const id = c.branche_id;
+  if (id && statsMap[id]) {
+    statsMap[id].cellules.total++;
+  }
+});
 
       // ================= ARBRE =================
       const map = {};

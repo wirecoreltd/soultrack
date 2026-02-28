@@ -63,7 +63,7 @@ function StatGlobalPage() {
         { root_id: rootIdValue }
       );
 
-      if (!branchesData || branchesData.length === 0) {
+      if (!branchesData?.length) {
         setBranchesTree([]);
         setAllBranches([]);
         setLoading(false);
@@ -91,11 +91,12 @@ function StatGlobalPage() {
 
       if (dateDebut)
         formationQuery = formationQuery.gte("date_debut", dateDebut);
-      if (dateFin) formationQuery = formationQuery.lte("date_fin", dateFin);
+      if (dateFin)
+        formationQuery = formationQuery.lte("date_fin", dateFin);
 
       const { data: formationData } = await formationQuery;
 
-      /* ================= BAPTEME (CORRIGÉ) ================= */
+      /* ================= BAPTEME ================= */
       let baptemeQuery = supabase
         .from("baptemes")
         .select("*")
@@ -106,9 +107,8 @@ function StatGlobalPage() {
 
       const { data: baptemeData } = await baptemeQuery;
 
-      /* ================= MAP ================= */
+      /* ================= INITIAL MAP ================= */
       const statsMap = {};
-
       branchIds.forEach((id) => {
         statsMap[id] = {
           culte: {
@@ -195,18 +195,31 @@ function StatGlobalPage() {
           </div>
         </div>
 
-        <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-green-400">
-          <div className="min-w-[180px] font-semibold">Culte</div>
-          <div className="min-w-[120px] text-center">
-            {branch.stats.culte.hommes}
+        <div className="space-y-2">
+
+          {/* CULTE */}
+          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-green-400">
+            <div className="min-w-[180px] font-semibold">Culte</div>
+            <div className="min-w-[120px] text-center">{branch.stats.culte.hommes}</div>
+            <div className="min-w-[120px] text-center">{branch.stats.culte.femmes}</div>
+            <div className="min-w-[120px] text-center">{branch.stats.culte.jeunes}</div>
+            <div className="min-w-[120px] text-center">{culteTotal}</div>
           </div>
-          <div className="min-w-[120px] text-center">
-            {branch.stats.culte.femmes}
+
+          {/* FORMATION */}
+          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-blue-400">
+            <div className="min-w-[180px] font-semibold">Formation</div>
+            <div className="min-w-[120px] text-center">{branch.stats.formation.hommes}</div>
+            <div className="min-w-[120px] text-center">{branch.stats.formation.femmes}</div>
           </div>
-          <div className="min-w-[120px] text-center">
-            {branch.stats.culte.jeunes}
+
+          {/* BAPTÊME */}
+          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-purple-400">
+            <div className="min-w-[180px] font-semibold">Baptême</div>
+            <div className="min-w-[120px] text-center">{branch.stats.bapteme.hommes}</div>
+            <div className="min-w-[120px] text-center">{branch.stats.bapteme.femmes}</div>
           </div>
-          <div className="min-w-[120px] text-center">{culteTotal}</div>
+
         </div>
 
         {level !== 1 || expandedBranches.includes(branch.id)
@@ -236,7 +249,6 @@ function StatGlobalPage() {
       </h1>
 
       <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap items-end">
-
         <div className="flex flex-col">
           <label>Date début</label>
           <input type="date" value={dateDebut}
@@ -261,22 +273,6 @@ function StatGlobalPage() {
         >
           {loading ? "Génération..." : "Générer"}
         </button>
-
-        <div className="flex flex-col">
-          <label>Superviseur</label>
-          <select
-            value={superviseurFilter}
-            onChange={(e) => setSuperviseurFilter(e.target.value)}
-            className="px-3 py-2 rounded-lg text-black"
-          >
-            <option value="">Tous</option>
-            {superviseurOptions.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.nom}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
 
       {!hasGenerated && (

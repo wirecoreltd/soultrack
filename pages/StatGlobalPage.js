@@ -353,32 +353,58 @@ cellulesData.forEach(c => {
     <div className="min-h-screen bg-[#333699] p-6 text-white">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mb-6">
+      <h1 className="text-2xl font-bold text-center mb-8">
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
-      <div className="bg-white/10 p-4 rounded-xl mb-6 flex gap-4 flex-wrap items-end">
-        <div className="flex flex-col">
-          <label className="text-sm mb-1">Date début</label>
-          <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} className="px-3 py-2 rounded-lg text-black"/>
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm mb-1">Date fin</label>
-          <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} className="px-3 py-2 rounded-lg text-black"/>
-        </div>
-        <div className="flex flex-col">
-          <label className="text-sm mb-1">Superviseur</label>
-          <select value={superviseurFilter} onChange={(e) => setSuperviseurFilter(e.target.value)} className="px-3 py-2 rounded-lg text-black">
-            <option value="">Tous</option>
-            {superviseurOptions.map((s) => (
-              <option key={s.id} value={s.id}>{s.nom}</option>
-            ))}
-          </select>
-        </div>
-        <button onClick={fetchStats} className="bg-amber-300 text-black px-4 py-2 rounded-lg font-semibold">
-          {loading ? "Chargement..." : "Générer"}
-        </button>
-      </div>
+      <div className="flex justify-center mb-8">
+  <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl flex gap-6 flex-wrap items-end w-fit shadow-lg">
+    
+    <div className="flex flex-col">
+      <label className="text-sm mb-1">Date début</label>
+      <input
+        type="date"
+        value={dateDebut}
+        onChange={(e) => setDateDebut(e.target.value)}
+        className="px-3 py-2 rounded-lg text-black"
+      />
+    </div>
+
+    <div className="flex flex-col">
+      <label className="text-sm mb-1">Date fin</label>
+      <input
+        type="date"
+        value={dateFin}
+        onChange={(e) => setDateFin(e.target.value)}
+        className="px-3 py-2 rounded-lg text-black"
+      />
+    </div>
+
+    <div className="flex flex-col">
+      <label className="text-sm mb-1">Superviseur</label>
+      <select
+        value={superviseurFilter}
+        onChange={(e) => setSuperviseurFilter(e.target.value)}
+        className="px-3 py-2 rounded-lg text-black"
+      >
+        <option value="">Tous</option>
+        {superviseurOptions.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.nom}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <button
+      onClick={fetchStats}
+      className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition text-white"
+          >
+      {loading ? "Générer..." : "Générer"}
+    </button>
+
+  </div>
+</div>
 
       {filteredBranches.map((branch) => renderBranch(branch))}
 

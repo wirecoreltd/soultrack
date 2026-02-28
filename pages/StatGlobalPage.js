@@ -150,52 +150,53 @@ function StatGlobalPage() {
       });
 
       // ================= SERVITEURS =================
+// ================= SERVITEURS =================
 let serviteurQuery = supabase
   .from("stats_ministere_besoin")
   .select("membre_id, eglise_id")
   .in("eglise_id", branchIds)
-  .eq("type", "serviteur")
-  .eq("valeur", "true");
+  .in("type", ["serviteur", "ministere"])
+  .not("valeur", "is", null);
 
 if (dateDebut) serviteurQuery = serviteurQuery.gte("date_action", dateDebut);
 if (dateFin) serviteurQuery = serviteurQuery.lte("date_action", dateFin);
 
 const { data: serviteurData } = await serviteurQuery;
 
-// Déduplication membre_id
-const uniqueServiteurs = {};
+// Dédupliquer par membre_id ET par branche
+const uniqueMap = {};
+
 serviteurData?.forEach((s) => {
-  if (!uniqueServiteurs[s.eglise_id]) {
-    uniqueServiteurs[s.eglise_id] = new Set();
+  if (!uniqueMap[s.eglise_id]) {
+    uniqueMap[s.eglise_id] = new Set();
   }
-  uniqueServiteurs[s.eglise_id].add(s.membre_id);
+  uniqueMap[s.eglise_id].add(s.membre_id);
 });
 
-// Récupérer sexe des membres
-const membreIds = [
-  ...new Set(serviteurData?.map((s) => s.membre_id) || []),
+// Récupérer sexe
+const allMembreIds = [
+  ...new Set(serviteurData?.map(s => s.membre_id) || [])
 ];
 
-if (membreIds.length > 0) {
+if (allMembreIds.length > 0) {
   const { data: membresData } = await supabase
     .from("membres_complets")
     .select("id, sexe")
-    .in("id", membreIds);
+    .in("id", allMembreIds);
 
   const sexeMap = {};
-  membresData?.forEach((m) => {
+  membresData?.forEach(m => {
     sexeMap[m.id] = m.sexe;
   });
 
-  Object.keys(uniqueServiteurs).forEach((egliseId) => {
-    uniqueServiteurs[egliseId].forEach((membreId) => {
+  Object.keys(uniqueMap).forEach((egliseId) => {
+    uniqueMap[egliseId].forEach((membreId) => {
       const sexe = sexeMap[membreId];
       if (sexe === "Homme") statsMap[egliseId].serviteurs.hommes++;
       if (sexe === "Femme") statsMap[egliseId].serviteurs.femmes++;
     });
   });
 }
-
       // ================= ARBRE =================
       const map = {};
       branchesData.forEach((b) => {

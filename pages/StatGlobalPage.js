@@ -54,8 +54,15 @@ function StatGlobalPage() {
       const rootIdValue = profileData.branche_id;
       setRootId(rootIdValue);
 
-      const { data: branchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
-      if (!branchesData?.length) {
+      const { data: filteredBranchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
+      let filteredfilteredBranchesData = filteredBranchesData;
+
+if (superviseurFilter) {
+  filteredfilteredBranchesData = filteredBranchesData.filter(
+    (b) => b.id === superviseurFilter
+  );
+}
+      if (!filteredBranchesData?.length) {
         setBranchesTree([]);
         setAllBranches([]);
         setMinistereMap({});
@@ -63,7 +70,7 @@ function StatGlobalPage() {
         return;
       }
 
-      const branchIds = branchesData.map((b) => b.id);
+      const branchIds = filteredBranchesData.map((b) => b.id);
 
       // ================= MINISTÈRE =================
       let ministereQuery = supabase
@@ -202,7 +209,7 @@ cellulesData.forEach(c => {
 
       // ================= ARBRE =================
       const map = {};
-      branchesData.forEach((b) => {
+      filteredBranchesData.forEach((b) => {
         map[b.id] = { ...b, stats: statsMap[b.id], enfants: [] };
       });
       const tree = [];

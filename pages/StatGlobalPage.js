@@ -24,6 +24,7 @@ function StatGlobalPage() {
   const [rootId, setRootId] = useState(null);
   const [expandedBranches, setExpandedBranches] = useState([]);
   const [ministereMap, setMinistereMap] = useState({});
+  const [filteredBranches, setFilteredBranches] = useState([]);
 
   const getAllDescendants = (branch) => {
     let descendants = [branch.id];
@@ -71,6 +72,51 @@ function StatGlobalPage() {
         setLoading(false);
         return;
       }
+
+      useEffect(() => {
+  if (!superviseurFilter) {
+    setFilteredBranches(branchesTree);
+    return;
+  }
+
+  // Trouver la branche superviseur
+  const supervisorBranch = allBranches.find(
+    (b) => b.id === superviseurFilter
+  );
+
+  if (!supervisorBranch) {
+    setFilteredBranches([]);
+    return;
+  }
+
+  // Fonction récursive pour récupérer les descendants
+  const getDescendants = (branch) => {
+    let ids = [branch.id];
+    branch.enfants.forEach((child) => {
+      ids = ids.concat(getDescendants(child));
+    });
+    return ids;
+  };
+
+  const descendantIds = getDescendants(supervisorBranch);
+
+  // Filtrer l’arbre en conservant uniquement le superviseur et ses enfants
+  const filterTree = (tree) => {
+    return tree
+      .map((branch) => {
+        if (descendantIds.includes(branch.id)) {
+          return {
+            ...branch,
+            enfants: filterTree(branch.enfants),
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+  };
+
+  {filteredBranches.map((branch) => renderBranch(branch))}
+}, [superviseurFilter, branchesTree, allBranches]);
 
       const branchIds = filteredfilteredBranchesData.map((b) => b.id);
 

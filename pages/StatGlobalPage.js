@@ -54,9 +54,9 @@ function StatGlobalPage() {
       const rootIdValue = profileData.branche_id;
       setRootId(rootIdValue);
 
-      const { data: filteredBranchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
+      const { data: workingBranchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
 
-      let workingBranches = filteredBranchesData;
+      let workingBranches = workingBranchesData;
 
 if (superviseurFilter) {
   const getDescendantsFlat = (branchId, branches) => {
@@ -74,21 +74,21 @@ if (superviseurFilter) {
     );
   };
 
-  const selectedBranch = filteredBranchesData.find(
+  const selectedBranch = workingBranchesData.find(
     (b) => b.id === superviseurFilter
   );
 
   if (selectedBranch) {
     const descendants = getDescendantsFlat(
       superviseurFilter,
-      filteredBranchesData
+      workingBranchesData
     );
 
     workingBranches = [selectedBranch, ...descendants];
   }
 }
       
-      if (!filteredBranchesData?.length) {
+      if (!workingBranchesData?.length) {
         setBranchesTree([]);
         setAllBranches([]);
         setMinistereMap({});
@@ -239,7 +239,7 @@ cellulesData.forEach(c => {
 
       // ================= ARBRE =================
       const map = {};
-      filteredBranchesData.forEach((b) => {
+      workingBranchesData.forEach((b) => {
         map[b.id] = { ...b, stats: statsMap[b.id], enfants: [] };
       });
       const tree = [];
@@ -437,7 +437,7 @@ cellulesData.forEach(c => {
   </div>
 </div>
 
-      {filteredBranches.map((branch) => renderBranch(branch))}
+      {workingBranches.map((branch) => renderBranch(branch))}
 
       <Footer />
     </div>

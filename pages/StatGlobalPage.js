@@ -55,13 +55,39 @@ function StatGlobalPage() {
       setRootId(rootIdValue);
 
       const { data: filteredBranchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
-      let filteredfilteredBranchesData = filteredBranchesData;
+
+      let workingBranches = filteredBranchesData;
 
 if (superviseurFilter) {
-  filteredfilteredBranchesData = filteredBranchesData.filter(
+  const getDescendantsFlat = (branchId, branches) => {
+    const children = branches.filter(
+      (b) => b.superviseur_id === branchId
+    );
+
+    return children.reduce(
+      (acc, child) => [
+        ...acc,
+        child,
+        ...getDescendantsFlat(child.id, branches),
+      ],
+      []
+    );
+  };
+
+  const selectedBranch = filteredBranchesData.find(
     (b) => b.id === superviseurFilter
   );
+
+  if (selectedBranch) {
+    const descendants = getDescendantsFlat(
+      superviseurFilter,
+      filteredBranchesData
+    );
+
+    workingBranches = [selectedBranch, ...descendants];
+  }
 }
+      
       if (!filteredBranchesData?.length) {
         setBranchesTree([]);
         setAllBranches([]);
@@ -70,7 +96,11 @@ if (superviseurFilter) {
         return;
       }
 
-      const branchIds = filteredBranchesData.map((b) => b.id);
+      const branchIds = workingBranches.map((b) => b.id);
+
+      workingBranches.forEach((b) => {
+  map[b.id] = { ...b, stats: statsMap[b.id], enfants: [] };
+});
 
       // ================= MINISTÈRE =================
       let ministereQuery = supabase
@@ -349,13 +379,7 @@ cellulesData.forEach(c => {
   };
 
   const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
-  const filteredBranches =
-    superviseurFilter && rootId
-      ? branchesTree.filter((branch) =>
-          getAllDescendants(branch).includes(superviseurFilter)
-        )
-      : branchesTree;
-
+  
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">
       <HeaderPages />

@@ -354,13 +354,20 @@ cellulesData.forEach(c => {
 
   const selectedId = Number(superviseurFilter);
 
-  const supervisorBranch = allBranches.find(
-    (b) => b.id === selectedId
-  );
+  const findBranchInTree = (tree) => {
+    for (let branch of tree) {
+      if (branch.id === selectedId) {
+        return branch;
+      }
+      const foundInChildren = findBranchInTree(branch.enfants || []);
+      if (foundInChildren) return foundInChildren;
+    }
+    return null;
+  };
 
-  if (!supervisorBranch) return [];
+  const foundBranch = findBranchInTree(branchesTree);
 
-  return [supervisorBranch];
+  return foundBranch ? [foundBranch] : [];
 })();
 
   return (

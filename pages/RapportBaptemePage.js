@@ -1,327 +1,216 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
+import SendEgliseLinkPopup from "../components/SendEgliseLinkPopup";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
-import ProtectedRoute from "../components/ProtectedRoute";
 
-export default function RapportBaptemePage() {
-  return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
-      <RapportBapteme />
-    </ProtectedRoute>
-  );
-}
-
-function RapportBapteme() {
-  const [formData, setFormData] = useState({
-    date: "",
-    hommes: 0,
-    femmes: 0,
-    baptise_par: "",
+export default function LinkEglise() {
+  const [superviseur, setSuperviseur] = useState({
+    prenom: "",
+    nom: "",
     eglise_id: null,
     branche_id: null,
+    eglise_nom: "",
+    branche_nom: ""
   });
 
-  const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
-  const [rapports, setRapports] = useState([]);
-  const [editId, setEditId] = useState(null);
-  const [message, setMessage] = useState("");
-  const [expandedMonths, setExpandedMonths] = useState({});
-  const [showTable, setShowTable] = useState(false);
+  const [responsable, setResponsable] = useState({
+    prenom: "",
+    nom: ""
+  });
 
+  const [eglise, setEglise] = useState({
+    nom: "",
+    branche: "",
+    pays: ""
+  });
+
+  const [canal, setCanal] = useState("");
+  const [invitations, setInvitations] = useState([]);
+  const [actionContext, setActionContext] = useState({type: "send", label: "Envoyer l'invitation", currentId: null});
+
+  // 🔹 Charger superviseur connecté
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) return;
+    const loadSuperviseur = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-      const { data: profile } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
-        .eq("id", session.session.user.id)
+        .select(`prenom, nom, eglise_id, branche_id, eglises(nom), branches(nom)`)
+        .eq("id", user.id)
         .single();
 
-      if (profile) {
-        setFormData((prev) => ({
-          ...prev,
-          eglise_id: profile.eglise_id,
-          branche_id: profile.branche_id,
-        }));
+      if (!error) {
+        setSuperviseur({
+          prenom: data.prenom,
+          nom: data.nom,
+          eglise_id: data.eglise_id,
+          branche_id: data.branche_id,
+          eglise_nom: data.eglises?.nom || "",
+          branche_nom: data.branches?.nom || ""
+        });
       }
     };
-    fetchUser();
+
+    loadSuperviseur();
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setMessage("⏳ Enregistrement en cours...");
-    try {
-      const dataToSave = { ...formData };
-      if (editId) {
-        const { error } = await supabase
-          .from("baptemes")
-          .update(dataToSave)
-          .eq("id", editId);
-        if (error) throw error;
-        setMessage("✅ Rapport mis à jour !");
-      } else {
-        const { error } = await supabase
-          .from("baptemes")
-          .insert([dataToSave]);
-        if (error) throw error;
-        setMessage("✅ Rapport ajouté !");
-      }
-      setTimeout(() => setMessage(""), 3000);
-      setEditId(null);
-      setFormData({ ...formData, date: "", hommes: 0, femmes: 0, baptise_par: "" });
-      fetchRapports();
-    } catch (err) {
-      console.error(err);
-      setMessage("❌ " + err.message);
+  // 🔹 Charger invitations
+  const loadInvitations = async () => {
+    if (!superviseur.eglise_id) return;
+    const { data, error } = await supabase
+      .from("eglise_supervisions")
+      .select("*")
+      .eq("superviseur_eglise_id", superviseur.eglise_id)
+      .order("created_at", { ascending: false });
+    if (!error) setInvitations(data || []);
+  };
+
+  useEffect(() => { loadInvitations(); }, [superviseur.eglise_id]);
+
+  // 🔹 Style selon statut
+  const getStatusStyle = (statut) => {
+    switch (statut?.toLowerCase()) {
+      case "acceptee": return { border: "border-l-4 border-green-500", color: "text-green-500" };
+      case "refusee": return { border: "border-l-4 border-red-500", color: "text-red-500" };
+      case "pending": return { border: "border-l-4 border-yellow-500", color: "text-yellow-400" };
+      default: return { border: "border-l-4 border-gray-300", color: "text-gray-300" };
     }
   };
 
-  const fetchRapports = async () => {
-    if (!formData.eglise_id || !formData.branche_id) return;
-
-    setShowTable(false);
-
-    let query = supabase
-      .from("baptemes")
-      .select("*")
-      .eq("eglise_id", formData.eglise_id)
-      .eq("branche_id", formData.branche_id)
-      .order("date", { ascending: true });
-
-    if (dateDebut) query = query.gte("date", dateDebut);
-    if (dateFin) query = query.lte("date", dateFin);
-
-    const { data } = await query;
-    setRapports(data || []);
-    setShowTable(true);
-  };
-
-  const handleEdit = (r) => {
-    setEditId(r.id);
-    setFormData({ ...r });
+  // 🔹 Pré-remplissage formulaire pour Rappel ou Supprimer
+  const handleActionClick = (invitation, type) => {
+    setResponsable({ prenom: invitation.responsable_prenom, nom: invitation.responsable_nom });
+    setEglise({ nom: invitation.eglise_nom, branche: invitation.eglise_branche, pays: invitation.eglise_pays });
+    setActionContext({
+      type,
+      label: type === "reminder" ? "Envoyer un rappel" : "Supprimer l'envoi",
+      currentId: invitation.id
+    });
+    setCanal(""); // reset le mode d'envoi
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Voulez-vous vraiment supprimer ce rapport ?")) return;
-    const { error } = await supabase.from("baptemes").delete().eq("id", id);
-    if (error) console.error(error);
-    else fetchRapports();
-  };
-
-  const toggleMonth = (monthKey) => {
-    setExpandedMonths((prev) => ({
-      ...prev,
-      [monthKey]: !prev[monthKey],
-    }));
-  };
-
-  const getMonthNameFR = (monthIndex) => {
-    const months = [
-      "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-      "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
-    ];
-    return months[monthIndex] || "";
-  };
-
-  const groupByMonth = (data) => {
-    const map = {};
-    data.forEach((r) => {
-      const d = new Date(r.date);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (!map[key]) map[key] = [];
-      map[key].push(r);
-    });
-    return map;
-  };
-
-  const groupedReports = groupByMonth(rapports);
-  const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500","border-pink-500","border-indigo-500"];
-
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+    <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
-            <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
-        <span className="text-white">Rapport </span>
-        <span className="text-amber-300">Baptême</span>
-      </h1>
-      {/* Formulaire */}
-      <div className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-          <div className="flex flex-col items-center">
-            <label className="text-white font-medium mb-1">Date</label>
-            <input
-              type="date"
-              required
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="input bg-white/20 text-white placeholder-white max-w-[200px] py-1"
-            />
-          </div>
+      {/* TITRE FORMULAIRE */}
+      <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
+        {actionContext.label}
+      </h4>
 
-          <div className="flex gap-4 w-full">
-            <div className="flex flex-col flex-1">
-              <label className="text-white font-medium mb-1">Hommes</label>
-              <input
-                type="number"
-                value={formData.hommes}
-                onChange={(e) => setFormData({ ...formData, hommes: e.target.value })}
-                className="input bg-white/20 text-white placeholder-white w-full py-1"
-              />
-            </div>
-            <div className="flex flex-col flex-1">
-              <label className="text-white font-medium mb-1">Femmes</label>
-              <input
-                type="number"
-                value={formData.femmes}
-                onChange={(e) => setFormData({ ...formData, femmes: e.target.value })}
-                className="input bg-white/20 text-white placeholder-white w-full py-1"
-              />
-            </div>
-          </div>
+      {/* FORMULAIRE */}
+      <div className="w-full max-w-md rounded-2xl p-6 space-y-4 mb-10 bg-white/10">
 
-          <div className="flex flex-col">
-            <label className="text-white font-medium mb-1">Baptisé par</label>
-            <input
-              type="text"
-              value={formData.baptise_par}
-              onChange={(e) => setFormData({ ...formData, baptise_par: e.target.value })}
-              className="input bg-white/20 text-white placeholder-white w-full py-1"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
-          >
-            {editId ? "Mettre à jour" : "Ajouter le rapport"}
-          </button>
-
-          {message && <p className="mt-4 text-center font-medium text-white">{message}</p>}
-        </form>
-      </div>
-
-      {/* Filtres */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <button
-          onClick={fetchRapports}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-        >
-          Générer
-        </button>
-      </div>
-
-      {/* Tableau Groupé par mois */}
-      {showTable && (
-        <div className="w-full flex justify-center mt-6 mb-6">
-          <div className="w-max overflow-x-auto space-y-2">
-            {/* Header */}
-            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[150px]">Date</div>
-              <div className="min-w-[120px] text-center">Hommes</div>
-              <div className="min-w-[120px] text-center">Femmes</div>
-              <div className="min-w-[130px] text-center text-orange-400 font-semibold">Total</div>
-              <div className="min-w-[180px] text-center">Baptisé par</div>
-              <div className="min-w-[140px] text-center text-orange-400 font-semibold">Actions</div>
-            </div>
-
-            {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
-              const [year, monthIndex] = monthKey.split("-").map(Number);
-              const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-
-              const totalMonth = monthReports.reduce((acc,r)=>{
-                acc.hommes += Number(r.hommes||0);
-                acc.femmes += Number(r.femmes||0);
-                acc.total += (Number(r.hommes||0) + Number(r.femmes||0));
-                return acc;
-              }, {hommes:0,femmes:0,total:0});
-
-              const isExpanded = expandedMonths[monthKey] || false;
-              const borderColor = borderColors[idx % borderColors.length];
-
-              return (
-                <div key={monthKey} className="space-y-1">
-                  {/* Header mois */}
-                  <div className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer ${borderColor}`}
-                       onClick={()=>toggleMonth(monthKey)}>
-                    <div className="min-w-[150px] text-white font-semibold">{isExpanded ? "➖ " : "➕ "} {monthLabel}</div>
-                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
-                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
-                    <div className="min-w-[130px] text-center text-orange-400 font-semibold">{totalMonth.total}</div>
-                    <div className="min-w-[180px]"></div>
-                    <div className="min-w-[140px]"></div>
-                  </div>
-
-                  {/* Lignes */}
-                  {isExpanded && monthReports.map((r)=>{
-                    const total = Number(r.hommes) + Number(r.femmes);
-                    return (
-                      <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500">
-                        <div className="min-w-[150px] text-white font-semibold">{r.date}</div>
-                        <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                        <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                        <div className="min-w-[130px] text-center text-orange-400 font-semibold">{total}</div>
-                        <div className="min-w-[180px] text-center text-white">{r.baptise_par}</div>
-                        <div className="min-w-[140px] text-center flex justify-center gap-2">
-                          <button onClick={()=>handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
-                          <button onClick={()=>handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )
-            })}
-
-            {/* TOTAL GENERAL */}
-            <div className="flex items-center px-4 py-4 mt-6 rounded-lg bg-white/30 text-white font-bold whitespace-nowrap border-t-2 border-white">
-              <div className="min-w-[150px] font-bold text-orange-500">TOTAL</div>
-              <div className="min-w-[120px] text-center text-orange-500 font-semibold">{rapports.reduce((s,r)=>s+Number(r.hommes||0),0)}</div>
-              <div className="min-w-[120px] text-center text-orange-500 font-semibold">{rapports.reduce((s,r)=>s+Number(r.femmes||0),0)}</div>
-              <div className="min-w-[130px] text-center text-orange-500 font-semibold">{rapports.reduce((s,r)=>(s+Number(r.hommes||0)+Number(r.femmes||0)),0)}</div>
-              <div className="min-w-[180px]"></div>
-              <div className="min-w-[140px]"></div>
-            </div>
-
-            {rapports.length === 0 && (
-              <div className="text-white/70 px-4 py-6 text-center">Aucun rapport trouvé</div>
-            )}
-
-          </div>
+        <div>
+          <label className="font-semibold">Prénom du responsable</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            value={responsable.prenom}
+            onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
+            required
+          />
         </div>
-      )}
+
+        <div>
+          <label className="font-semibold">Nom du responsable</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            value={responsable.nom}
+            onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="font-semibold">Nom de l'Église</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            value={eglise.nom}
+            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="font-semibold">Branche</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            value={eglise.branche}
+            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="font-semibold">Pays</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            value={eglise.pays}
+            onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
+            required
+          />
+        </div>
+
+        <select
+          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+          value={canal}
+          onChange={(e) => setCanal(e.target.value)}
+          required
+        >
+          <option value="">-- Sélectionnez le mode d’envoi --</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="email">Email</option>
+        </select>
+
+        <SendEgliseLinkPopup
+          label={actionContext.label}
+          type={canal}
+          superviseur={superviseur}
+          responsable={responsable}
+          eglise={eglise}
+          actionContext={actionContext}
+          onSuccess={loadInvitations}
+        />
+      </div>
+
+      {/* TABLE */}
+      <div className="w-full max-w-5xl overflow-x-auto">
+        <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
+          <div>Église</div>
+          <div>Branche</div>
+          <div>Responsable</div>
+          <div>Statut / Actions</div>
+        </div>
+
+        {invitations.map((inv) => {
+          const statusStyle = getStatusStyle(inv.statut);
+          return (
+            <div key={inv.id} className={`flex flex-col md:flex-row md:items-center px-4 py-2 mt-2 hover:bg-white/20 transition ${statusStyle.border}`}>
+              <div className="flex-1">{inv.eglise_nom}</div>
+              <div className="flex-1">{inv.eglise_branche}</div>
+              <div className="flex-1">{inv.responsable_prenom} {inv.responsable_nom}</div>
+              <div className="flex flex-col md:flex-row md:items-center gap-2">
+                <span className={`${statusStyle.color} font-semibold`}>{inv.statut.toLowerCase()}</span>
+                <button
+                  className="text-yellow-400 hover:text-yellow-600 font-semibold"
+                  onClick={() => handleActionClick(inv, "reminder")}
+                >⏳ Rappel</button>
+                <button
+                  className="text-red-400 hover:text-red-600 font-semibold"
+                  onClick={() => handleActionClick(inv, "delete")}
+                >❌ Supprimer</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
       <Footer />
-
-      <style jsx>{`
-        .input {
-          width: 100%;
-          border: 1px solid #ccc;
-          border-radius: 12px;
-          padding: 10px;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-      `}</style>
     </div>
   );
 }

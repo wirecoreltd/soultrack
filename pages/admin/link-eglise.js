@@ -7,23 +7,33 @@ import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 
 export default function LinkEglise() {
-  const [superviseur, setSuperviseur] = useState({ prenom: "", nom: "", eglise_id: null, branche_id: null, eglise_nom: "", branche_nom: "" });
+  const [superviseur, setSuperviseur] = useState({
+    prenom: "",
+    nom: "",
+    eglise_id: null,
+    branche_id: null,
+    eglise_nom: "",
+    branche_nom: ""
+  });
+
   const [responsable, setResponsable] = useState({ prenom: "", nom: "" });
   const [eglise, setEglise] = useState({ nom: "", branche: "", pays: "" });
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
   const [actionContext, setActionContext] = useState({ type: "send", label: "Envoyer l'invitation", currentId: null });
 
-  // Charger superviseur connecté
+  // 🔹 Charger superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
       const { data, error } = await supabase
         .from("profiles")
         .select(`prenom, nom, eglise_id, branche_id, eglises(nom), branches(nom)`)
         .eq("id", user.id)
         .single();
+
       if (!error) {
         setSuperviseur({
           prenom: data.prenom,
@@ -38,7 +48,7 @@ export default function LinkEglise() {
     loadSuperviseur();
   }, []);
 
-  // Charger invitations
+  // 🔹 Charger invitations
   const loadInvitations = async () => {
     if (!superviseur.eglise_id) return;
     const { data, error } = await supabase
@@ -48,9 +58,10 @@ export default function LinkEglise() {
       .order("created_at", { ascending: false });
     if (!error) setInvitations(data || []);
   };
+
   useEffect(() => { loadInvitations(); }, [superviseur.eglise_id]);
 
-  // Style selon statut
+  // 🔹 Style selon statut
   const getStatusStyle = (statut) => {
     switch (statut?.toLowerCase()) {
       case "acceptee": return { border: "border-l-4 border-green-500", color: "text-green-500" };
@@ -61,31 +72,53 @@ export default function LinkEglise() {
     }
   };
 
-  // Pré-remplissage formulaire et action
+  // 🔹 Pré-remplissage formulaire pour Rappel / Supprimer / Renvoyer
   const handleActionClick = (invitation, type) => {
     setResponsable({ prenom: invitation.responsable_prenom, nom: invitation.responsable_nom });
     setEglise({ nom: invitation.eglise_nom, branche: invitation.eglise_branche, pays: invitation.eglise_pays });
-    let label = "Envoyer l'invitation";
-    if (type === "reminder") label = "Envoyer un rappel";
-    if (type === "delete") label = "Supprimer l'envoi";
-    if (type === "resend") label = "Renvoyer le lien";
-    setActionContext({ type, label, currentId: invitation.id });
-    setCanal("");
+    setActionContext({
+      type,
+      label:
+        type === "reminder" ? "Envoyer un rappel" :
+        type === "delete" ? "Supprimer l'envoi" :
+        "Renvoyer le lien",
+      currentId: invitation.id
+    });
+    setCanal(""); // reset le mode d'envoi
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Déterminer actions selon statut
-  const getActionsForStatut = (statut, invitation) => {
-    switch(statut.toLowerCase()) {
-      case "acceptee": return [];
-      case "pending": return [{ label: "⏳ Rappel", type: "reminder" }];
-      case "refusee":
-      case "supprimee": return [
-        { label: "🔄 Renvoyer le lien", type: "resend" },
-        { label: "❌ Supprimer l'envoi", type: "delete" }
-      ];
-      default: return [];
+  // 🔹 Envoi / Renvoyer invitation (UPSERT)
+  const sendOrResendInvitation = async () => {
+    if (!responsable.prenom || !responsable.nom || !eglise.nom || !eglise.branche || !eglise.pays || !canal) {
+      alert("Veuillez remplir tous les champs obligatoires");
+      return;
     }
+
+    const newToken = crypto.randomUUID();
+    const { error } = await supabase
+      .from("eglise_supervisions")
+      .upsert({
+        superviseur_eglise_id: superviseur.eglise_id,
+        supervisee_eglise_id: eglise.id, // assumes eglise.id exists
+        supervisee_branche_id: eglise.branche_id || null,
+        responsable_prenom: responsable.prenom,
+        responsable_nom: responsable.nom,
+        eglise_nom: eglise.nom,
+        eglise_branche: eglise.branche,
+        eglise_pays: eglise.pays,
+        invitation_token: newToken,
+        statut: "pending",
+        created_at: new Date(),
+        last_sent_at: new Date()
+      }, { onConflict: ['superviseur_eglise_id','supervisee_eglise_id','supervisee_branche_id'] });
+
+    if (error) {
+      console.error("Erreur UPSERT :", error);
+      return;
+    }
+
+    loadInvitations();
   };
 
   return (
@@ -95,67 +128,103 @@ export default function LinkEglise() {
       {/* FORMULAIRE */}
       <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">{actionContext.label}</h4>
       <div className="w-full max-w-md rounded-2xl p-6 space-y-4 mb-10 bg-white/10">
+
         <div>
           <label className="font-semibold">Prénom du responsable</label>
-          <input className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={responsable.prenom} onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })} required />
+          <input
+            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            value={responsable.prenom}
+            onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
+          />
         </div>
+
         <div>
           <label className="font-semibold">Nom du responsable</label>
-          <input className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={responsable.nom} onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })} required />
+          <input
+            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            value={responsable.nom}
+            onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
+          />
         </div>
+
         <div>
           <label className="font-semibold">Nom de l'Église</label>
-          <input className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={eglise.nom} onChange={(e) => setEglise({ ...eglise, nom: e.target.value })} required />
+          <input
+            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            value={eglise.nom}
+            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
+          />
         </div>
+
         <div>
           <label className="font-semibold">Branche</label>
-          <input className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={eglise.branche} onChange={(e) => setEglise({ ...eglise, branche: e.target.value })} required />
+          <input
+            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            value={eglise.branche}
+            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+          />
         </div>
+
         <div>
           <label className="font-semibold">Pays</label>
-          <input className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={eglise.pays} onChange={(e) => setEglise({ ...eglise, pays: e.target.value })} required />
+          <input
+            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            value={eglise.pays}
+            onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
+          />
         </div>
-        <select className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-          value={canal} onChange={(e) => setCanal(e.target.value)} required>
+
+        <select
+          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+          value={canal}
+          onChange={(e) => setCanal(e.target.value)}
+        >
           <option value="">-- Sélectionnez le mode d’envoi --</option>
           <option value="whatsapp">WhatsApp</option>
           <option value="email">Email</option>
         </select>
-        <SendEgliseLinkPopup
-          label={actionContext.label} type={canal} superviseur={superviseur}
-          responsable={responsable} eglise={eglise} actionContext={actionContext}
-          onSuccess={loadInvitations} />
+
+        <button
+          className="w-full bg-yellow-400 text-black font-semibold px-4 py-2 rounded-xl hover:bg-yellow-500"
+          onClick={sendOrResendInvitation}
+        >
+          {actionContext.type === "resend" ? "🔄 Renvoyer le lien" : "Envoyer l'invitation"}
+        </button>
       </div>
 
-      {/* TABLE */}
+      {/* TABLE DES INVITATIONS */}
       <div className="w-full max-w-5xl overflow-x-auto">
         <div className="grid grid-cols-6 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
-          <div>Église</div><div>Branche</div><div>Pays</div><div>Responsable</div>
-          <div>Statut</div><div>Action</div>
+          <div>Église</div>
+          <div>Branche</div>
+          <div>Pays</div>
+          <div>Responsable</div>
+          <div>Statut</div>
+          <div>Action</div>
         </div>
 
         {invitations.map((inv) => {
           const statusStyle = getStatusStyle(inv.statut);
-          const actions = getActionsForStatut(inv.statut, inv);
           return (
-            <div key={inv.id} className="flex flex-col md:flex-row md:items-center px-4 py-2 mt-2 hover:bg-white/20 transition">
+            <div key={inv.id} className={`flex flex-col md:flex-row md:items-center px-4 py-2 mt-2 hover:bg-white/20 transition`}>
               <div className="flex-1">{inv.eglise_nom}</div>
               <div className="flex-1">{inv.eglise_branche}</div>
               <div className="flex-1">{inv.eglise_pays}</div>
               <div className="flex-1">{inv.responsable_prenom} {inv.responsable_nom}</div>
               <div className={`flex-1 font-semibold ${statusStyle.color} border-l-4 border-l-transparent md:border-l-0`}>{inv.statut.toLowerCase()}</div>
               <div className="flex-1 flex flex-col md:flex-row md:items-center gap-2">
-                {actions.map((a, idx) => (
-                  <button key={idx} className={`font-semibold ${a.type === "reminder" ? "text-yellow-400 hover:text-yellow-600" : ""}${a.type === "resend" ? "text-blue-400 hover:text-blue-600" : ""}${a.type === "delete" ? "text-red-400 hover:text-red-600" : ""}`}
-                    onClick={() => handleActionClick(inv, a.type)}>
-                    {a.label}
-                  </button>
-                ))}
+                {inv.statut.toLowerCase() === "pending" && (
+                  <>
+                    <button className="text-yellow-400 hover:text-yellow-600 font-semibold" onClick={() => handleActionClick(inv,"reminder")}>⏳ Rappel</button>
+                    <button className="text-red-400 hover:text-red-600 font-semibold" onClick={() => handleActionClick(inv,"delete")}>❌ Supprimer l'envoi</button>
+                  </>
+                )}
+                {["refusee","supprimee"].includes(inv.statut.toLowerCase()) && (
+                  <>
+                    <button className="text-blue-400 hover:text-blue-600 font-semibold" onClick={() => handleActionClick(inv,"resend")}>🔄 Renvoyer le lien</button>
+                    <button className="text-red-400 hover:text-red-600 font-semibold" onClick={() => handleActionClick(inv,"delete")}>❌ Supprimer l'envoi</button>
+                  </>
+                )}
               </div>
             </div>
           );

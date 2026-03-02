@@ -36,7 +36,7 @@ export default function LinkEglise() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
         .select(`
           prenom,
@@ -49,7 +49,7 @@ export default function LinkEglise() {
         .eq("id", user.id)
         .single();
 
-      if (!error) {
+      if (data) {
         setSuperviseur({
           prenom: data.prenom,
           nom: data.nom,
@@ -67,30 +67,42 @@ export default function LinkEglise() {
   // 🔹 Charger invitations
   const loadInvitations = async () => {
     if (!superviseur.eglise_id) return;
-    const { data, error } = await supabase
+
+    const { data } = await supabase
       .from("eglise_supervisions")
       .select("*")
       .eq("superviseur_eglise_id", superviseur.eglise_id)
       .order("created_at", { ascending: false });
-    if (!error) setInvitations(data || []);
+
+    setInvitations(data || []);
   };
 
   useEffect(() => {
     loadInvitations();
   }, [superviseur.eglise_id]);
 
-  // 🔹 Style selon statut
-  const getStatusStyle = (statut) => {
-    switch (statut?.toLowerCase()) {
-      case "acceptee": return { border: "border-l-4 border-green-600" };
-      case "refusee": return { border: "border-l-4 border-red-600" };
-      case "pending": return { border: "border-l-4 border-gray-400" };
-      case "supprimee": return { border: "border-l-4 border-orange-500" };
-      default: return { border: "border-l-4 border-gray-300" };
+  // 🔹 BADGE STYLE
+  const getStatusBadge = (statut) => {
+    const s = statut?.toLowerCase();
+    switch (s) {
+      case "acceptee":
+        return { style: "bg-green-100 text-green-700", icon: "✔" };
+      case "refusee":
+        return { style: "bg-red-100 text-red-700", icon: "✖" };
+      case "pending":
+        return { style: "bg-gray-100 text-gray-700", icon: "⏳" };
+      case "supprimee":
+        return { style: "bg-orange-100 text-orange-700", icon: "🗑" };
+      default:
+        return { style: "bg-gray-100 text-gray-700", icon: "" };
     }
   };
 
-  // 🔹 Envoyer rappel
+  const pendingCount = invitations.filter(
+    (inv) => inv.statut?.toLowerCase() === "pending"
+  ).length;
+
+  // 🔔 RAPPEL
   const handleRappel = (inv) => {
     const message = `
 🙏 Bonjour ${inv.responsable_prenom} ${inv.responsable_nom},
@@ -107,24 +119,40 @@ https://soultrack-three.vercel.app/accept-invitation?token=${inv.invitation_toke
 Que Dieu vous bénisse 🙏
 `;
 
-    if (inv.canal === "whatsapp") window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-    else window.location.href = `mailto:?subject=Rappel Invitation SoulTrack&body=${encodeURIComponent(message)}`;
-    alert("Rappel envoyé !");
+    if (inv.canal === "whatsapp") {
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    } else if (inv.canal === "email") {
+      window.location.href = `mailto:?subject=Rappel Invitation SoulTrack&body=${encodeURIComponent(message)}`;
+    }
   };
 
-  // 🔹 Supprimer / annuler invitation
-  const handleSupprimer = (inv) => {
-    const customMessage = prompt("Écrivez un message avant de supprimer l'invitation :", `⚠️ Votre invitation à ${inv.eglise_nom} a été annulée.`);
-    if (!customMessage) return;
+  // ❌ SUPPRESSION
+  const handleSupprimer = async (inv) => {
+    const message = `
+🙏 Bonjour ${inv.responsable_prenom} ${inv.responsable_nom},
 
-    if (inv.canal === "whatsapp") window.open(`https://wa.me/?text=${encodeURIComponent(customMessage)}`, "_blank");
-    else window.location.href = `mailto:?subject=Annulation Invitation SoulTrack&body=${encodeURIComponent(customMessage)}`;
+L’invitation concernant l’église ${inv.eglise_nom}
+(${inv.eglise_branche} - ${inv.eglise_pays})
+a été supprimée.
 
-    supabase
+Veuillez contacter ${superviseur.prenom} ${superviseur.nom}
+pour de plus amples informations.
+
+Que Dieu vous bénisse 🙏
+`;
+
+    if (inv.canal === "whatsapp") {
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    } else if (inv.canal === "email") {
+      window.location.href = `mailto:?subject=Annulation Invitation SoulTrack&body=${encodeURIComponent(message)}`;
+    }
+
+    await supabase
       .from("eglise_supervisions")
       .update({ statut: "supprimee" })
-      .eq("id", inv.id)
-      .then(() => loadInvitations());
+      .eq("id", inv.id);
+
+    loadInvitations();
   };
 
   return (
@@ -137,46 +165,47 @@ Que Dieu vous bénisse 🙏
       </h4>
 
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4 mb-10">
+        <input
+          className="w-full border rounded-xl px-3 py-2"
+          placeholder="Prénom du responsable"
+          value={responsable.prenom}
+          onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
+        />
 
-        <div>
-          <label className="font-semibold">Prénom du responsable</label>
-          <input className="w-full border rounded-xl px-3 py-2"
-            value={responsable.prenom}
-            onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })} />
-        </div>
+        <input
+          className="w-full border rounded-xl px-3 py-2"
+          placeholder="Nom du responsable"
+          value={responsable.nom}
+          onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
+        />
 
-        <div>
-          <label className="font-semibold">Nom du responsable</label>
-          <input className="w-full border rounded-xl px-3 py-2"
-            value={responsable.nom}
-            onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })} />
-        </div>
+        <input
+          className="w-full border rounded-xl px-3 py-2"
+          placeholder="Nom de l'église"
+          value={eglise.nom}
+          onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
+        />
 
-        <div>
-          <label className="font-semibold">Nom de l'Église</label>
-          <input className="w-full border rounded-xl px-3 py-2"
-            value={eglise.nom}
-            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })} />
-        </div>
+        <input
+          className="w-full border rounded-xl px-3 py-2"
+          placeholder="Branche"
+          value={eglise.branche}
+          onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+        />
 
-        <div>
-          <label className="font-semibold">Branche *</label>
-          <input className="w-full border rounded-xl px-3 py-2"
-            value={eglise.branche}
-            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })} />
-        </div>
+        <input
+          className="w-full border rounded-xl px-3 py-2"
+          placeholder="Pays"
+          value={eglise.pays}
+          onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
+        />
 
-        <div>
-          <label className="font-semibold">Pays *</label>
-          <input className="w-full border rounded-xl px-3 py-2"
-            value={eglise.pays}
-            onChange={(e) => setEglise({ ...eglise, pays: e.target.value })} />
-        </div>
-
-        <select className="w-full border rounded-xl px-3 py-2"
+        <select
+          className="w-full border rounded-xl px-3 py-2"
           value={canal}
-          onChange={(e) => setCanal(e.target.value)}>
-          <option value="">-- Sélectionnez le mode d’envoi --</option>
+          onChange={(e) => setCanal(e.target.value)}
+        >
+          <option value="">-- Mode d’envoi --</option>
           <option value="whatsapp">WhatsApp</option>
           <option value="email">Email</option>
         </select>
@@ -187,47 +216,71 @@ Que Dieu vous bénisse 🙏
           superviseur={superviseur}
           responsable={responsable}
           eglise={eglise}
-          onSuccess={loadInvitations} />
-
+          onSuccess={loadInvitations}
+        />
       </div>
 
-      {/* TABLE DES INVITATIONS */}
-      <h4 className="text-2xl font-bold mt-2 mb-10 text-center w-full max-w-5xl text-amber-300">
+      {/* TABLE */}
+      <h4 className="text-2xl font-bold mb-4 text-amber-300">
         Liste des églises supervisées
       </h4>
 
-      <div className="w-full max-w-5xl">
+      {pendingCount > 0 && (
+        <div className="mb-4 bg-white text-black px-4 py-2 rounded-full text-sm font-semibold">
+          ⏳ {pendingCount} invitation(s) en attente
+        </div>
+      )}
 
-        {/* HEADER */}
+      <div className="w-full max-w-5xl">
         <div className="grid grid-cols-5 gap-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
           <div>Église</div>
           <div>Branche</div>
           <div>Pays</div>
           <div>Responsable</div>
-          <div>Actions / Statut</div>
+          <div>Statut / Actions</div>
         </div>
 
-        {/* LIGNES */}
         {invitations.map((inv) => {
-          const statusStyle = getStatusStyle(inv.statut);
+          const badge = getStatusBadge(inv.statut);
 
           return (
-            <div key={inv.id} className={`grid grid-cols-5 gap-4 px-3 py-2 mt-2 rounded-lg ${statusStyle.border} items-center`}>
+            <div
+              key={inv.id}
+              className="grid grid-cols-5 gap-4 px-3 py-3 mt-2 bg-white text-black rounded-xl shadow items-center"
+            >
               <div>{inv.eglise_nom}</div>
               <div>{inv.eglise_branche}</div>
               <div>{inv.eglise_pays}</div>
               <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
+
               <div className="flex gap-2 items-center">
-                <span>{inv.statut}</span>
-                <button className="text-orange-500 text-sm font-semibold hover:opacity-80"
-                  onClick={() => handleRappel(inv)}>Envoyer rappel</button>
-                <button className="text-red-500 text-sm font-semibold hover:opacity-80"
-                  onClick={() => handleSupprimer(inv)}>Supprimer</button>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${badge.style}`}
+                >
+                  {badge.icon} {inv.statut}
+                </span>
+
+                {inv.statut?.toLowerCase() === "pending" && (
+                  <>
+                    <button
+                      onClick={() => handleRappel(inv)}
+                      className="text-orange-500 text-sm font-semibold hover:opacity-80"
+                    >
+                      Rappel
+                    </button>
+
+                    <button
+                      onClick={() => handleSupprimer(inv)}
+                      className="text-red-500 text-sm font-semibold hover:opacity-80"
+                    >
+                      Supprimer
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           );
         })}
-
       </div>
 
       <Footer />

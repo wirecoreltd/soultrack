@@ -354,8 +354,11 @@ cellulesData.forEach(c => {
   };
 
   const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
-  const filteredBranches = (() => {
-  if (!superviseurFilter) return branchesTree;
+  const filteredBranches = !superviseurFilter
+  ? branchesTree
+  : branchesTree.filter((branch) =>
+      getAllDescendants(branch).includes(superviseurFilter)
+    );
 
   const selectedId = superviseurFilter; // 🔥 PAS Number()
 

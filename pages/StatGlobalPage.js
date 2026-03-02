@@ -290,7 +290,7 @@ cellulesData.forEach(c => {
 
         <div className="flex items-center gap-2">
           {/* Nom du superviseur */}
-          <span className={`text-xl font-semibold ${branch.enfants.length > 0 && level === 0 ? "text-amber-300" : "text-white"}`}>
+          <span className={`text-xl font-semibold ${branch.enfants.length > 0 ? "text-amber-300" : "text-white"}`}>
             {branch.nom}
           </span>
         

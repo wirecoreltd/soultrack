@@ -231,88 +231,28 @@ cellulesData.forEach(c => {
   console.log(branchesTree)
 
   const renderBranch = (branch, level = 0) => {
-  // Calcul du total culte de la branche seule
-  const culteTotal = branch.stats.culte.hommes + branch.stats.culte.femmes + branch.stats.culte.jeunes;
+    const culteTotal = branch.stats.culte.hommes + branch.stats.culte.femmes + branch.stats.culte.jeunes;
 
-  // Calcul du total cumulatif si la branche a des enfants
-  const getCumulativeStats = (b) => {
-    const total = JSON.parse(JSON.stringify(b.stats)); // clone pour ne pas modifier l’original
-    b.enfants.forEach((child) => {
-      const childTotal = getCumulativeStats(child);
-      // addition des valeurs de culte
-      total.culte.hommes += childTotal.culte.hommes;
-      total.culte.femmes += childTotal.culte.femmes;
-      total.culte.jeunes += childTotal.culte.jeunes;
-      total.culte.enfants += childTotal.culte.enfants;
-      total.culte.connectes += childTotal.culte.connectes;
-      total.culte.nouveaux_venus += childTotal.culte.nouveaux_venus;
-      total.culte.nouveau_converti += childTotal.culte.nouveau_converti;
-      total.culte.moissonneurs += childTotal.culte.moissonneurs;
-
-      // addition des autres sections (formation, bapteme, evangelisation, serviteurs, cellules)
-      ["formation", "bapteme", "evangelisation", "serviteurs", "cellules"].forEach((section) => {
-        Object.keys(total[section]).forEach((key) => {
-          total[section][key] += childTotal[section][key] || 0;
-        });
-      });
-    });
-    return total;
-  };
-
-  // Stats à afficher : si collapse et a des enfants, prendre cumulative
-  const displayStats =
-    branch.enfants.length > 0 && !expandedBranches.includes(branch.id)
-      ? getCumulativeStats(branch)
-      : branch.stats;
-
-  return (
-    <div key={branch.id} className="mt-8">
-      <div className="flex items-center mb-3">
-        {branch.enfants.length > 0 && (
-          <button
-            onClick={() => toggleExpand(branch.id)}
-            className="mr-2 text-xl"
-          >
-            {expandedBranches.includes(branch.id) ? "➖" : "➕"}
-          </button>
-        )}
-        <div className={`text-xl font-bold ${level === 0 ? "text-amber-300" : "text-white"}`}>
-          {branch.nom}
-          {branch.enfants.length > 0 && ` (Supervision de ${branch.enfants.length} église${branch.enfants.length > 1 ? "s" : ""})`}
-        </div>
-      </div>
-
-      {/* Ici on utilise displayStats au lieu de branch.stats */}
-      <div className="w-full overflow-x-auto">
-        <div className="w-max space-y-2">
-          {/* Culte */}
-          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-green-400 whitespace-nowrap">
-            <div className="min-w-[180px] font-semibold">Culte</div>
-            <div className="min-w-[100px] text-center">-</div>
-            <div className="min-w-[120px] text-center">{displayStats.culte.hommes}</div>
-            <div className="min-w-[120px] text-center">{displayStats.culte.femmes}</div>
-            <div className="min-w-[120px] text-center">{displayStats.culte.jeunes}</div>
-            <div className="min-w-[120px] text-center">
-              {displayStats.culte.hommes + displayStats.culte.femmes + displayStats.culte.jeunes}
-            </div>
-            <div className="min-w-[120px] text-center">{displayStats.culte.enfants}</div>
-            <div className="min-w-[140px] text-center">{displayStats.culte.connectes}</div>
-            <div className="min-w-[150px] text-center">{displayStats.culte.nouveaux_venus}</div>
-            <div className="min-w-[180px] text-center">{displayStats.culte.nouveau_converti}</div>
-            <div className="min-w-[160px] text-center">{displayStats.culte.moissonneurs}</div>
+    return (
+      <div key={branch.id} className="mt-8">
+        <div className="flex items-center mb-3">
+          {level >= 1 && branch.enfants.length > 0 && (
+            <button
+              onClick={() => toggleExpand(branch.id)}
+              className="mr-2 text-xl"
+            >
+              {expandedBranches.includes(branch.id) ? "➖" : "➕"}
+            </button>
+          )}
+          
+          <div className={`text-xl font-semibold ${level === 0 ? "text-amber-300" : "text-white"}`}>
+            {branch.nom}
+            {branch.enfants.length > 0 && (
+              <span className="text-sm text-gray-300 ml-2">
+                (Supervision de {branch.enfants.length} église{branch.enfants.length > 1 ? "s" : ""})
+              </span>
+            )}
           </div>
-
-          {/* … répéter pour les autres sections en utilisant displayStats … */}
-        </div>
-      </div>
-
-      {/* Render children seulement si expand */}
-      {branch.enfants.map((child) =>
-        expandedBranches.includes(branch.id) ? renderBranch(child, level + 1) : null
-      )}
-    </div>
-  );
-};
 
         <div className="w-full overflow-x-auto">
           <div className="w-max space-y-2">

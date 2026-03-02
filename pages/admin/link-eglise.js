@@ -16,20 +16,15 @@ export default function LinkEglise() {
     branche_nom: ""
   });
 
-  const [responsable, setResponsable] = useState({
-    prenom: "",
-    nom: ""
-  });
-
-  const [eglise, setEglise] = useState({
-    nom: "",
-    branche: "",
-    pays: ""
-  });
-
+  const [responsable, setResponsable] = useState({ prenom: "", nom: "" });
+  const [eglise, setEglise] = useState({ nom: "", branche: "", pays: "" });
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
-  const [actionContext, setActionContext] = useState({type: "send", label: "Envoyer l'invitation", currentId: null});
+  const [actionContext, setActionContext] = useState({
+    type: "send",
+    label: "Envoyer l'invitation",
+    currentId: null
+  });
 
   // 🔹 Charger superviseur connecté
   useEffect(() => {
@@ -54,7 +49,6 @@ export default function LinkEglise() {
         });
       }
     };
-
     loadSuperviseur();
   }, []);
 
@@ -77,45 +71,24 @@ export default function LinkEglise() {
       case "acceptee": return { border: "border-l-4 border-green-500", color: "text-green-500" };
       case "refusee": return { border: "border-l-4 border-red-500", color: "text-red-500" };
       case "pending": return { border: "border-l-4 border-yellow-500", color: "text-yellow-400" };
+      case "supprimee": return { border: "border-l-4 border-orange-500", color: "text-orange-500" };
       default: return { border: "border-l-4 border-gray-300", color: "text-gray-300" };
     }
   };
 
-  // 🔹 Pré-remplissage formulaire pour Rappel
+  // 🔹 Pré-remplissage formulaire pour Rappel ou Supprimer
   const handleActionClick = (invitation, type) => {
     setResponsable({ prenom: invitation.responsable_prenom, nom: invitation.responsable_nom });
     setEglise({ nom: invitation.eglise_nom, branche: invitation.eglise_branche, pays: invitation.eglise_pays });
     setActionContext({
       type,
-      label: type === "reminder" ? "Envoyer un rappel" : "Renvoyer le lien",
+      label: type === "reminder" ? "Envoyer un rappel" :
+             type === "delete" ? "Supprimer l'envoi" :
+             type === "resend" ? "Renvoyer le lien" : "Envoyer l'invitation",
       currentId: invitation.id
     });
     setCanal(""); // reset le mode d'envoi
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  // 🔹 Renvoyer le lien (évite duplicate key)
-  const resendLink = async (invitation) => {
-    try {
-      const newToken = crypto.randomUUID();
-
-      const { error } = await supabase
-        .from("eglise_supervisions")
-        .update({
-          invitation_token: newToken,
-          created_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 7*24*60*60*1000).toISOString()
-        })
-        .eq("id", invitation.id);
-
-      if (error) throw error;
-
-      alert("✅ Lien renvoyé avec succès !");
-      loadInvitations();
-    } catch (err) {
-      console.error(err);
-      alert("❌ Erreur lors du renvoi du lien : " + err.message);
-    }
   };
 
   return (
@@ -129,7 +102,6 @@ export default function LinkEglise() {
 
       {/* FORMULAIRE */}
       <div className="w-full max-w-md rounded-2xl p-6 space-y-4 mb-10 bg-white/10">
-
         <div>
           <label className="font-semibold">Prénom du responsable</label>
           <input
@@ -139,7 +111,6 @@ export default function LinkEglise() {
             required
           />
         </div>
-
         <div>
           <label className="font-semibold">Nom du responsable</label>
           <input
@@ -149,7 +120,6 @@ export default function LinkEglise() {
             required
           />
         </div>
-
         <div>
           <label className="font-semibold">Nom de l'Église</label>
           <input
@@ -159,7 +129,6 @@ export default function LinkEglise() {
             required
           />
         </div>
-
         <div>
           <label className="font-semibold">Branche</label>
           <input
@@ -169,7 +138,6 @@ export default function LinkEglise() {
             required
           />
         </div>
-
         <div>
           <label className="font-semibold">Pays</label>
           <input
@@ -203,59 +171,41 @@ export default function LinkEglise() {
       </div>
 
       {/* TABLE */}
-<div className="w-full max-w-5xl overflow-x-auto">
-  {/* Header */}
-  <div className="grid grid-cols-5 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
-    <div>Église</div>
-    <div>Branche</div>
-    <div>Pays</div>
-    <div>Statut</div>
-    <div>Actions</div>
-  </div>
-
-  {invitations.map((inv) => {
-    const statusStyle = getStatusStyle(inv.statut);
-    const statutLower = inv.statut.toLowerCase();
-
-    return (
-      <div
-        key={inv.id}
-        className={`flex flex-col md:flex-row md:items-center px-4 py-2 mt-2 hover:bg-white/20 transition ${statusStyle.border}`}
-      >
-        <div className="flex-1">{inv.eglise_nom}</div>
-        <div className="flex-1">{inv.eglise_branche}</div>
-        <div className="flex-1">{inv.eglise_pays}</div>
-        <div className="flex-1">
-          <span className={`${statusStyle.color} font-semibold`}>
-            {statutLower}
-          </span>
+      <div className="w-full max-w-5xl overflow-x-auto">
+        <div className="grid grid-cols-5 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
+          <div>Église</div>
+          <div>Branche</div>
+          <div>Pays</div>
+          <div>Statut</div>
+          <div>Actions</div>
         </div>
-        <div className="flex flex-1 gap-2">
-          {(statutLower === "pending" || statutLower === "refusee") && (
-            <>
-              <button
-                className="text-yellow-400 hover:text-yellow-600 font-semibold"
-                onClick={() => handleActionClick(inv, "reminder")}
-              >
-                ⏳ Rappel
-              </button>
-              <button
-                className="text-red-400 hover:text-red-600 font-semibold"
-                onClick={() => handleActionClick(inv, "delete")}
-              >
-                ❌ Supprimer / Renvoyer le lien
-              </button>
-            </>
-          )}
-          {statutLower === "acceptee" && (
-            // Colonne Actions vide pour accepté
-            <span className="text-gray-400">—</span>
-          )}
-        </div>
+
+        {invitations.map((inv) => {
+          const statusStyle = getStatusStyle(inv.statut);
+          return (
+            <div key={inv.id} className={`flex flex-col md:flex-row md:items-center px-4 py-2 mt-2 hover:bg-white/20 transition`}>
+              <div className="flex-1">{inv.eglise_nom}</div>
+              <div className="flex-1">{inv.eglise_branche}</div>
+              <div className="flex-1">{inv.eglise_pays}</div>
+              <div className="flex-1 font-semibold ${statusStyle.color}">{inv.statut.toLowerCase()}</div>
+              <div className="flex flex-1 gap-2">
+                {inv.statut.toLowerCase() === "pending" && (
+                  <>
+                    <button className="text-yellow-400 hover:text-yellow-600 font-semibold" onClick={() => handleActionClick(inv, "reminder")}>⏳ Rappel</button>
+                    <button className="text-red-400 hover:text-red-600 font-semibold" onClick={() => handleActionClick(inv, "delete")}>❌ Supprimer</button>
+                  </>
+                )}
+                {inv.statut.toLowerCase() === "refusee" && (
+                  <button className="text-yellow-400 hover:text-yellow-600 font-semibold" onClick={() => handleActionClick(inv, "reminder")}>⏳ Rappel</button>
+                )}
+                {inv.statut.toLowerCase() === "supprimee" && (
+                  <button className="text-blue-400 hover:text-blue-600 font-semibold" onClick={() => handleActionClick(inv, "resend")}>🔄 Renvoyer le lien</button>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
-    );
-  })}
-</div>
 
       <Footer />
     </div>

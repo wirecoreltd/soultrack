@@ -54,7 +54,6 @@ export default function LinkEglise() {
         });
       }
     };
-
     loadSuperviseur();
   }, []);
 
@@ -77,7 +76,7 @@ export default function LinkEglise() {
       case "acceptee": return { border: "border-l-4 border-green-500", color: "text-green-500" };
       case "refusee": return { border: "border-l-4 border-red-500", color: "text-red-500" };
       case "pending": return { border: "border-l-4 border-yellow-500", color: "text-yellow-400" };
-      case "supprimee": return { border: "border-l-4 border-orange-500", color: "text-orange-500" };
+      case "supprimee": return { border: "border-l-4 border-gray-400", color: "text-gray-400" };
       default: return { border: "border-l-4 border-gray-300", color: "text-gray-300" };
     }
   };
@@ -88,7 +87,7 @@ export default function LinkEglise() {
     setEglise({ nom: invitation.eglise_nom, branche: invitation.eglise_branche, pays: invitation.eglise_pays });
     setActionContext({
       type,
-      label: type === "reminder" ? "Envoyer un rappel" : "Supprimer l'envoi / Renvoyer le lien",
+      label: type === "reminder" ? "Envoyer un rappel" : "Supprimer l'envoi",
       currentId: invitation.id
     });
     setCanal(""); // reset le mode d'envoi
@@ -181,10 +180,11 @@ export default function LinkEglise() {
 
       {/* TABLE */}
       <div className="w-full max-w-5xl overflow-x-auto">
-        <div className="grid grid-cols-5 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
+        <div className="grid grid-cols-6 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
           <div>Église</div>
           <div>Branche</div>
           <div>Pays</div>
+          <div>Responsable</div>
           <div>Statut</div>
           <div>Action</div>
         </div>
@@ -192,34 +192,23 @@ export default function LinkEglise() {
         {invitations.map((inv) => {
           const statusStyle = getStatusStyle(inv.statut);
           return (
-            <div key={inv.id} className="flex flex-col md:flex-row md:items-center mt-2 hover:bg-white/20 transition">
-              <div className={`flex-1 px-4 py-2 ${statusStyle.border}`}>{inv.eglise_nom}</div>
-              <div className="flex-1 px-4 py-2">{inv.eglise_branche}</div>
-              <div className="flex-1 px-4 py-2">{inv.eglise_pays}</div>
-              <div className={`flex-1 px-4 py-2 ${statusStyle.color} font-semibold`}>{inv.statut.toLowerCase()}</div>
-              <div className="flex-1 px-4 py-2 flex flex-wrap gap-2">
-                {(inv.statut.toLowerCase() === "pending") && (
+            <div key={inv.id} className={`flex flex-col md:flex-row md:items-center px-4 py-2 mt-2 hover:bg-white/20 transition`}>
+              <div className="flex-1">{inv.eglise_nom}</div>
+              <div className="flex-1">{inv.eglise_branche}</div>
+              <div className="flex-1">{inv.eglise_pays}</div>
+              <div className="flex-1">{inv.responsable_prenom} {inv.responsable_nom}</div>
+              <div className={`flex-1 font-semibold ${statusStyle.color} border-l-4 border-l-transparent md:border-l-0`}>{inv.statut.toLowerCase()}</div>
+              <div className="flex-1 flex flex-col md:flex-row md:items-center gap-2">
+                {inv.statut.toLowerCase() === "pending" && (
                   <>
-                    <button
-                      className="text-yellow-400 hover:text-yellow-600 font-semibold"
-                      onClick={() => handleActionClick(inv, "reminder")}
-                    >⏳ Rappel</button>
-                    <button
-                      className="text-red-400 hover:text-red-600 font-semibold"
-                      onClick={() => handleActionClick(inv, "delete")}
-                    >❌ Supprimer l'envoi</button>
+                    <button className="text-yellow-400 hover:text-yellow-600 font-semibold" onClick={() => handleActionClick(inv,"reminder")}>⏳ Rappel</button>
+                    <button className="text-red-400 hover:text-red-600 font-semibold" onClick={() => handleActionClick(inv,"delete")}>❌ Supprimer l'envoi</button>
                   </>
                 )}
-                {(inv.statut.toLowerCase() === "supprimee" || inv.statut.toLowerCase() === "refusee") && (
+                {["refusee","supprimee"].includes(inv.statut.toLowerCase()) && (
                   <>
-                    <button
-                      className="text-blue-400 hover:text-blue-600 font-semibold"
-                      onClick={() => handleActionClick(inv, "resend")}
-                    >🔄 Renvoyer le lien</button>
-                    <button
-                      className="text-red-400 hover:text-red-600 font-semibold"
-                      onClick={() => handleActionClick(inv, "delete")}
-                    >❌ Supprimer l'envoi</button>
+                    <button className="text-blue-400 hover:text-blue-600 font-semibold" onClick={() => handleActionClick(inv,"resend")}>🔄 Renvoyer le lien</button>
+                    <button className="text-red-400 hover:text-red-600 font-semibold" onClick={() => handleActionClick(inv,"delete")}>❌ Supprimer l'envoi</button>
                   </>
                 )}
               </div>

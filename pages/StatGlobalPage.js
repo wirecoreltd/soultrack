@@ -353,15 +353,15 @@ cellulesData.forEach(c => {
   const filteredBranches = (() => {
   if (!superviseurFilter) return branchesTree;
 
-  const selectedId = Number(superviseurFilter);
+  const selectedId = superviseurFilter; // 🔥 PAS Number()
 
   const findBranchInTree = (tree) => {
     for (let branch of tree) {
       if (branch.id === selectedId) {
         return branch;
       }
-      const foundInChildren = findBranchInTree(branch.enfants || []);
-      if (foundInChildren) return foundInChildren;
+      const found = findBranchInTree(branch.enfants || []);
+      if (found) return found;
     }
     return null;
   };

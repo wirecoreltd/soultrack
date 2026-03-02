@@ -231,47 +231,72 @@ cellulesData.forEach(c => {
   console.log(branchesTree)
 
  const renderBranch = (branch, level = 0) => {
-  // Fonction pour sommer les stats de tous les descendants
-  const aggregateStats = (b) => {
-    const stats = JSON.parse(JSON.stringify(b.stats)); // copie profonde
-    b.enfants.forEach((child) => {
-      const childStats = aggregateStats(child);
-      Object.keys(stats).forEach((key) => {
-        Object.keys(stats[key]).forEach((subKey) => {
-          stats[key][subKey] += childStats[key][subKey] || 0;
-        });
-      });
-    });
-    return stats;
-  };
-
   const isExpanded = expandedBranches.includes(branch.id);
-  const displayStats = branch.enfants.length > 0 && !isExpanded ? aggregateStats(branch) : branch.stats;
 
-  const culteTotal = displayStats.culte.hommes + displayStats.culte.femmes + displayStats.culte.jeunes;
-  const formationTotal = displayStats.formation.hommes + displayStats.formation.femmes;
-  const baptemeTotal = displayStats.bapteme.hommes + displayStats.bapteme.femmes;
-  const serviteursTotal = displayStats.serviteurs.hommes + displayStats.serviteurs.femmes;
-  const evangelisationTotal = displayStats.evangelisation.hommes + displayStats.evangelisation.femmes;
+  // Calcul des totaux généraux si superviseur collapsed
+  const totalStats = branch.enfants.length > 0 && !isExpanded
+    ? branch.enfants.reduce((acc, child) => {
+        // Culte
+        acc.culte.hommes += child.stats.culte.hommes;
+        acc.culte.femmes += child.stats.culte.femmes;
+        acc.culte.jeunes += child.stats.culte.jeunes;
+        acc.culte.enfants += child.stats.culte.enfants;
+        acc.culte.connectes += child.stats.culte.connectes;
+        acc.culte.nouveaux_venus += child.stats.culte.nouveaux_venus;
+        acc.culte.nouveau_converti += child.stats.culte.nouveau_converti;
+        acc.culte.moissonneurs += child.stats.culte.moissonneurs;
+
+        // Formation
+        acc.formation.hommes += child.stats.formation.hommes;
+        acc.formation.femmes += child.stats.formation.femmes;
+
+        // Baptême
+        acc.bapteme.hommes += child.stats.bapteme.hommes;
+        acc.bapteme.femmes += child.stats.bapteme.femmes;
+
+        // Évangélisation
+        acc.evangelisation.hommes += child.stats.evangelisation.hommes;
+        acc.evangelisation.femmes += child.stats.evangelisation.femmes;
+        acc.evangelisation.priere += child.stats.evangelisation.priere;
+        acc.evangelisation.nouveau_converti += child.stats.evangelisation.nouveau_converti;
+        acc.evangelisation.moissonneurs += child.stats.evangelisation.moissonneurs;
+
+        // Serviteurs
+        acc.serviteurs.hommes += child.stats.serviteurs.hommes;
+        acc.serviteurs.femmes += child.stats.serviteurs.femmes;
+
+        // Cellules
+        acc.cellules.total += child.stats.cellules.total;
+
+        return acc;
+      }, {
+        culte: { ...branch.stats.culte },
+        formation: { ...branch.stats.formation },
+        bapteme: { ...branch.stats.bapteme },
+        evangelisation: { ...branch.stats.evangelisation },
+        serviteurs: { ...branch.stats.serviteurs },
+        cellules: { ...branch.stats.cellules },
+      })
+    : branch.stats;
 
   return (
     <div key={branch.id} className="mt-8">
       <div className="flex items-center mb-3">
-        {branch.enfants.length > 0 && (
-          <button
-            onClick={() => toggleExpand(branch.id)}
-            className="mr-2 text-xl"
-          >
+        {level >= 1 && branch.enfants.length > 0 && (
+          <button onClick={() => toggleExpand(branch.id)} className="mr-2 text-xl">
             {isExpanded ? "➖" : "➕"}
           </button>
         )}
 
-        <div className={`text-xl font-semibold ${level === 0 && branch.enfants.length > 0 ? "text-amber-300" : "text-white"}`}>
+        <div className={`text-xl font-semibold ${branch.enfants.length > 0 && level === 0 ? "text-amber-300" : "text-white"}`}>
           {branch.nom}
           {branch.enfants.length > 0 && (
             <span className="text-sm text-gray-300 ml-2">
               (Supervision de {branch.enfants.length} église{branch.enfants.length > 1 ? "s" : ""})
             </span>
+          )}
+          {branch.enfants.length > 0 && !isExpanded && (
+            <span className="text-sm text-amber-200 ml-2">(Total général)</span>
           )}
         </div>
       </div>
@@ -298,63 +323,61 @@ cellulesData.forEach(c => {
           <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-green-400 whitespace-nowrap">
             <div className="min-w-[180px] font-semibold">Culte</div>
             <div className="min-w-[100px] text-center">-</div>
-            <div className="min-w-[120px] text-center">{displayStats.culte.hommes}</div>
-            <div className="min-w-[120px] text-center">{displayStats.culte.femmes}</div>
-            <div className="min-w-[120px] text-center">{displayStats.culte.jeunes}</div>
-            <div className="min-w-[120px] text-center">{culteTotal}</div>
-            <div className="min-w-[120px] text-center">{displayStats.culte.enfants}</div>
-            <div className="min-w-[140px] text-center">{displayStats.culte.connectes}</div>
-            <div className="min-w-[150px] text-center">{displayStats.culte.nouveaux_venus}</div>
-            <div className="min-w-[180px] text-center">{displayStats.culte.nouveau_converti}</div>
-            <div className="min-w-[160px] text-center">{displayStats.culte.moissonneurs}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.culte.hommes}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.culte.femmes}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.culte.jeunes}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.culte.hommes + totalStats.culte.femmes + totalStats.culte.jeunes}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.culte.enfants}</div>
+            <div className="min-w-[140px] text-center font-bold">{totalStats.culte.connectes}</div>
+            <div className="min-w-[150px] text-center font-bold">{totalStats.culte.nouveaux_venus}</div>
+            <div className="min-w-[180px] text-center font-bold">{totalStats.culte.nouveau_converti}</div>
+            <div className="min-w-[160px] text-center font-bold">{totalStats.culte.moissonneurs}</div>
           </div>
 
           {/* FORMATION */}
           <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-blue-400 whitespace-nowrap">
             <div className="min-w-[180px] font-semibold">Formation</div>
             <div className="min-w-[100px] text-center">-</div>
-            <div className="min-w-[120px] text-center">{displayStats.formation.hommes}</div>
-            <div className="min-w-[120px] text-center">{displayStats.formation.femmes}</div>
-            <div className="min-w-[120px] text-center font-bold">{formationTotal}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.formation.hommes}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.formation.femmes}</div>
           </div>
 
           {/* BAPTÊME */}
           <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-purple-400 whitespace-nowrap">
             <div className="min-w-[180px] font-semibold">Baptême</div>
             <div className="min-w-[100px] text-center">-</div>
-            <div className="min-w-[120px] text-center">{displayStats.bapteme.hommes}</div>
-            <div className="min-w-[120px] text-center">{displayStats.bapteme.femmes}</div>
-            <div className="min-w-[120px] text-center font-bold">{baptemeTotal}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.bapteme.hommes}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.bapteme.femmes}</div>
           </div>
 
           {/* ÉVANGÉLISATION */}
           <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-pink-400 whitespace-nowrap">
             <div className="min-w-[180px] font-semibold">Évangélisation</div>
             <div className="min-w-[100px] text-center">-</div>
-            <div className="min-w-[120px] text-center">{displayStats.evangelisation.hommes}</div>
-            <div className="min-w-[120px] text-center">{displayStats.evangelisation.femmes}</div>
-            <div className="min-w-[120px] text-center">{displayStats.evangelisation.priere}</div>
-            <div className="min-w-[120px] text-center">{evangelisationTotal}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.hommes}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.femmes}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.priere}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.hommes + totalStats.evangelisation.femmes}</div>
             <div className="min-w-[120px] text-center">-</div>
             <div className="min-w-[140px] text-center">-</div>
             <div className="min-w-[150px] text-center">-</div>
-            <div className="min-w-[180px] text-center">{displayStats.evangelisation.nouveau_converti}</div>
-            <div className="min-w-[160px] text-center">{displayStats.evangelisation.moissonneurs}</div>
+            <div className="min-w-[180px] text-center font-bold">{totalStats.evangelisation.nouveau_converti}</div>
+            <div className="min-w-[160px] text-center font-bold">{totalStats.evangelisation.moissonneurs}</div>
           </div>
 
           {/* SERVITEURS */}
           <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-yellow-400 whitespace-nowrap">
             <div className="min-w-[180px] font-semibold">Serviteurs</div>
             <div className="min-w-[100px] text-center">-</div>
-            <div className="min-w-[120px] text-center">{displayStats.serviteurs.hommes}</div>
-            <div className="min-w-[120px] text-center">{displayStats.serviteurs.femmes}</div>
-            <div className="min-w-[120px] text-center font-bold">{serviteursTotal}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.serviteurs.hommes}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.serviteurs.femmes}</div>
+            <div className="min-w-[120px] text-center font-bold">{totalStats.serviteurs.hommes + totalStats.serviteurs.femmes}</div>
           </div>
 
           {/* CELLULES */}
           <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-orange-400 whitespace-nowrap">
             <div className="min-w-[180px] font-semibold">Cellules</div>
-            <div className="min-w-[100px] text-center font-bold">{displayStats.cellules.total}</div>
+            <div className="min-w-[100px] text-center font-bold">{totalStats.cellules.total}</div>
             <div className="min-w-[120px] text-center">-</div>
             <div className="min-w-[120px] text-center">-</div>
             <div className="min-w-[120px] text-center">-</div>
@@ -371,7 +394,7 @@ cellulesData.forEach(c => {
 
       {/* RENDER CHILDREN */}
       {branch.enfants.map((child) =>
-        isExpanded ? renderBranch(child, level + 1) : null
+        level === 0 || isExpanded ? renderBranch(child, level + 1) : null
       )}
     </div>
   );

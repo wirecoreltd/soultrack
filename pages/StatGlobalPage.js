@@ -228,6 +228,7 @@ cellulesData.forEach(c => {
     }
     setLoading(false);
   };
+  console.log(branchesTree)
 
   const renderBranch = (branch, level = 0) => {
     const culteTotal = branch.stats.culte.hommes + branch.stats.culte.femmes + branch.stats.culte.jeunes;

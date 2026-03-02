@@ -7,6 +7,10 @@ import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 
 export default function LinkEglise() {
+
+  const [mode, setMode] = useState("create"); // create | rappel | supprimer
+  const [selectedInvitation, setSelectedInvitation] = useState(null);
+
   const [superviseur, setSuperviseur] = useState({
     prenom: "",
     nom: "",
@@ -30,6 +34,7 @@ export default function LinkEglise() {
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
 
+  // ================= LOAD USER =================
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -63,6 +68,7 @@ export default function LinkEglise() {
     loadSuperviseur();
   }, []);
 
+  // ================= LOAD INVITATIONS =================
   const loadInvitations = async () => {
     if (!superviseur.eglise_id) return;
 
@@ -79,40 +85,33 @@ export default function LinkEglise() {
     loadInvitations();
   }, [superviseur.eglise_id]);
 
-  // 🎨 Badge propre sans icône
-  const getStatusBadge = (statut) => {
-    const s = statut?.toLowerCase();
-
-    switch (s) {
+  // ================= STATUS STYLE =================
+  const getStatusStyle = (statut) => {
+    switch (statut?.toLowerCase()) {
       case "acceptee":
-        return "bg-green-500/20 text-green-300";
+        return { border: "border-l-4 border-green-500" };
       case "refusee":
-        return "bg-red-500/20 text-red-300";
+        return { border: "border-l-4 border-red-500" };
       case "pending":
-        return "bg-gray-500/20 text-gray-200";
+        return { border: "border-l-4 border-gray-400" };
       case "supprimee":
-        return "bg-orange-500/20 text-orange-300";
+        return { border: "border-l-4 border-orange-500" };
       default:
-        return "bg-gray-500/20 text-gray-200";
+        return { border: "border-l-4 border-gray-300" };
     }
   };
 
-  const pendingCount = invitations.filter(
-    (inv) => inv.statut?.toLowerCase() === "pending"
-  ).length;
-
-  // 🔔 RAPPEL
+  // ================= RAPPEL =================
   const handleRappel = (inv) => {
     const message = `
 🙏 Bonjour ${inv.responsable_prenom} ${inv.responsable_nom},
 
-${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} 
+${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom}
 vous a envoyé une invitation pour que votre église soit placée sous sa supervision.
 
 ⚠️ Ceci est un rappel ! 🔔
 
 Cliquez sur le lien ci-dessous :
-
 https://soultrack-three.vercel.app/accept-invitation?token=${inv.invitation_token}
 
 Que Dieu vous bénisse 🙏
@@ -125,7 +124,7 @@ Que Dieu vous bénisse 🙏
     }
   };
 
-  // ❌ SUPPRESSION
+  // ================= SUPPRESSION =================
   const handleSupprimer = async (inv) => {
     const message = `
 🙏 Bonjour ${inv.responsable_prenom} ${inv.responsable_nom},
@@ -154,119 +153,161 @@ Que Dieu vous bénisse 🙏
     loadInvitations();
   };
 
+  // ================= ACTION BUTTON =================
+  const handleMainAction = () => {
+    if (mode === "rappel" && selectedInvitation) {
+      handleRappel(selectedInvitation);
+      setMode("create");
+    }
+
+    if (mode === "supprimer" && selectedInvitation) {
+      handleSupprimer(selectedInvitation);
+      setMode("create");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#333699] text-white p-4 md:p-8 flex flex-col items-center">
+
       <HeaderPages />
 
-      <h4 className="text-xl md:text-2xl font-bold mb-6 text-center">
-        Envoyer une invitation
+      {/* ================= TITLE ================= */}
+      <h4 className="text-2xl font-bold mb-6 text-center">
+        {mode === "create" && "Envoyer une invitation"}
+        {mode === "rappel" && "Envoyer un rappel"}
+        {mode === "supprimer" && "Supprimer une invitation"}
       </h4>
 
+      {/* ================= FORM ================= */}
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4 mb-12">
-        <input className="w-full border rounded-xl px-3 py-2"
+
+        <input
+          className="w-full border rounded-xl px-3 py-2"
           placeholder="Prénom responsable"
           value={responsable.prenom}
-          onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })} />
+          onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
+        />
 
-        <input className="w-full border rounded-xl px-3 py-2"
+        <input
+          className="w-full border rounded-xl px-3 py-2"
           placeholder="Nom responsable"
           value={responsable.nom}
-          onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })} />
+          onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
+        />
 
-        <input className="w-full border rounded-xl px-3 py-2"
+        <input
+          className="w-full border rounded-xl px-3 py-2"
           placeholder="Nom église"
           value={eglise.nom}
-          onChange={(e) => setEglise({ ...eglise, nom: e.target.value })} />
+          onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
+        />
 
-        <input className="w-full border rounded-xl px-3 py-2"
+        <input
+          className="w-full border rounded-xl px-3 py-2"
           placeholder="Branche"
           value={eglise.branche}
-          onChange={(e) => setEglise({ ...eglise, branche: e.target.value })} />
+          onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+        />
 
-        <input className="w-full border rounded-xl px-3 py-2"
+        <input
+          className="w-full border rounded-xl px-3 py-2"
           placeholder="Pays"
           value={eglise.pays}
-          onChange={(e) => setEglise({ ...eglise, pays: e.target.value })} />
-
-        <select className="w-full border rounded-xl px-3 py-2"
-          value={canal}
-          onChange={(e) => setCanal(e.target.value)}>
-          <option value="">Mode d’envoi</option>
-          <option value="whatsapp">WhatsApp</option>
-          <option value="email">Email</option>
-        </select>
-
-        <SendEgliseLinkPopup
-          label="Envoyer l'invitation"
-          type={canal}
-          superviseur={superviseur}
-          responsable={responsable}
-          eglise={eglise}
-          onSuccess={loadInvitations}
+          onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
         />
+
+        <button
+          onClick={handleMainAction}
+          className={`w-full py-2 rounded-xl font-semibold ${
+            mode === "supprimer"
+              ? "bg-red-600 text-white"
+              : "bg-[#333699] text-white"
+          }`}
+        >
+          {mode === "create" && "Envoyer l'invitation"}
+          {mode === "rappel" && "Envoyer le rappel"}
+          {mode === "supprimer" && "Confirmer la suppression"}
+        </button>
+
       </div>
 
-      <h4 className="text-xl md:text-2xl font-bold mb-4 text-amber-300 text-center">
-        Liste des églises supervisées
-      </h4>
+      {/* ================= TABLE ================= */}
+      <div className="w-full max-w-6xl">
 
-      {pendingCount > 0 && (
-        <div className="mb-6 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm">
-          {pendingCount} invitation(s) en attente
+        <div className="grid grid-cols-6 gap-4 text-sm font-semibold uppercase border-b border-white/30 pb-3">
+          <div>Église</div>
+          <div>Branche</div>
+          <div>Pays</div>
+          <div>Responsable</div>
+          <div>Statut</div>
+          <div>Actions</div>
         </div>
-      )}
 
-      {/* TABLE RESPONSIVE */}
-      <div className="w-full max-w-6xl overflow-x-auto">
-        <div className="min-w-[800px]">
+        {invitations.map((inv) => {
+          const statusStyle = getStatusStyle(inv.statut);
 
-          <div className="grid grid-cols-6 gap-4 text-sm font-semibold uppercase border-b border-white/30 pb-3">
-            <div>Église</div>
-            <div>Branche</div>
-            <div>Pays</div>
-            <div>Responsable</div>
-            <div>Statut</div>
-            <div>Actions</div>
-          </div>
-
-          {invitations.map((inv) => (
-            <div key={inv.id}
-              className="grid grid-cols-6 gap-4 py-4 border-b border-white/10 items-center">
-
+          return (
+            <div
+              key={inv.id}
+              className={`grid grid-cols-6 gap-4 px-3 py-2 mt-2 ${statusStyle.border} items-center`}
+            >
               <div>{inv.eglise_nom}</div>
               <div>{inv.eglise_branche}</div>
               <div>{inv.eglise_pays}</div>
               <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
 
-              <div>
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(inv.statut)}`}>
-                  {inv.statut === "refusee" ? "refus" : inv.statut}
-                </span>
+              <div className="text-sm">
+                {inv.statut === "refusee" ? "refus" : inv.statut}
               </div>
 
-              <div className="flex flex-col md:flex-row gap-2">
+              <div className="flex gap-3">
                 {inv.statut?.toLowerCase() === "pending" && (
                   <>
                     <button
-                      onClick={() => handleRappel(inv)}
-                      className="text-orange-400 hover:opacity-80 text-sm"
+                      className="text-orange-500 font-semibold text-sm hover:opacity-80"
+                      onClick={() => {
+                        setMode("rappel");
+                        setSelectedInvitation(inv);
+                        setResponsable({
+                          prenom: inv.responsable_prenom,
+                          nom: inv.responsable_nom
+                        });
+                        setEglise({
+                          nom: inv.eglise_nom,
+                          branche: inv.eglise_branche,
+                          pays: inv.eglise_pays
+                        });
+                        setCanal(inv.canal);
+                      }}
                     >
                       Rappel
                     </button>
 
                     <button
-                      onClick={() => handleSupprimer(inv)}
-                      className="text-red-400 hover:opacity-80 text-sm"
+                      className="text-red-500 font-semibold text-sm hover:opacity-80"
+                      onClick={() => {
+                        setMode("supprimer");
+                        setSelectedInvitation(inv);
+                        setResponsable({
+                          prenom: inv.responsable_prenom,
+                          nom: inv.responsable_nom
+                        });
+                        setEglise({
+                          nom: inv.eglise_nom,
+                          branche: inv.eglise_branche,
+                          pays: inv.eglise_pays
+                        });
+                        setCanal(inv.canal);
+                      }}
                     >
                       Supprimer
                     </button>
                   </>
                 )}
               </div>
-
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
       <Footer />

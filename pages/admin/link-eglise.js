@@ -173,7 +173,7 @@ export default function LinkEglise() {
 
       {/* Table */}
       <div className="w-full max-w-5xl overflow-x-auto">
-        <div className="grid grid-cols-6 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
+        <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
           <div>Église</div>
           <div>Branche</div>
           <div>Pays</div>

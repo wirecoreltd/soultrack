@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -25,6 +25,14 @@ function StatGlobalPage() {
   const [expandedBranches, setExpandedBranches] = useState([]);
   const [ministereMap, setMinistereMap] = useState({});
 
+  const getAllDescendants = (branch) => {
+    let descendants = [branch.id];
+    branch.enfants.forEach((child) => {
+      descendants = descendants.concat(getAllDescendants(child));
+    });
+    return descendants;
+  };
+
   const toggleExpand = (branchId) => {
     setExpandedBranches((prev) =>
       prev.includes(branchId)
@@ -47,14 +55,13 @@ function StatGlobalPage() {
       setRootId(rootIdValue);
 
       const { data: filteredBranchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
-
       let filteredfilteredBranchesData = filteredBranchesData;
-      if (superviseurFilter) {
-        filteredfilteredBranchesData = filteredBranchesData.filter(
-          (b) => b.id === superviseurFilter
-        );
-      }
 
+if (superviseurFilter) {
+  filteredfilteredBranchesData = filteredBranchesData.filter(
+    (b) => b.id === superviseurFilter
+  );
+}
       if (!filteredBranchesData?.length) {
         setBranchesTree([]);
         setAllBranches([]);
@@ -113,6 +120,7 @@ function StatGlobalPage() {
         tableFetch("cellules", "branche_id", "created_at")
       ]);
 
+      // ================= REMPLISSAGE STATS =================
       attendanceData.forEach((s) => {
         const a = statsMap[s.branche_id].culte;
         a.hommes += Number(s.hommes) || 0;
@@ -147,6 +155,7 @@ function StatGlobalPage() {
         ev.moissonneurs += Number(e.moissonneurs) || 0;
       });
 
+      // ================= SERVITEURS =================
       let serviteurQuery = supabase
         .from("stats_ministere_besoin")
         .select("membre_id, eglise_id")
@@ -184,11 +193,21 @@ function StatGlobalPage() {
         });
       }
 
-      cellulesData.forEach(c => {
-        const id = c.branche_id || c.eglise_id;
-        if (id && statsMap[id]) statsMap[id].cellules.total++;
-      });
+    // ================= CELLULES =================
+cellulesData.forEach(c => {
+  // Utilise d'abord branche_id si présent, sinon eglise_id
+  const id = c.branche_id || c.eglise_id;
 
+  // Si id n’existe pas dans statsMap, essaie de retrouver la branche par superviseur
+  if (id && statsMap[id]) {
+    statsMap[id].cellules.total++;
+  } else {
+    // Debug : affiche les cellules qui ne correspondent pas
+    console.warn("Cellule non comptée (id non trouvé dans statsMap):", c);
+  }
+});
+
+      // ================= ARBRE =================
       const map = {};
       filteredBranchesData.forEach((b) => {
         map[b.id] = { ...b, stats: statsMap[b.id], enfants: [] };
@@ -209,25 +228,26 @@ function StatGlobalPage() {
     }
     setLoading(false);
   };
+  console.log(branchesTree)
 
-  // ================= BRANCH ITEM =================
-  const BranchItem = ({ branch }) => {
-    const hasChildren = branch.enfants && branch.enfants.length > 0;
+  const renderBranch = (branch, level = 0) => {
     const culteTotal = branch.stats.culte.hommes + branch.stats.culte.femmes + branch.stats.culte.jeunes;
 
     return (
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold mb-3">
-          {branch.nom}
-          {hasChildren && (
+      <div key={branch.id} className="mt-8">
+        <div className="flex items-center mb-3">
+          {level >= 1 && branch.enfants.length > 0 && (
             <button
-              className="ml-4 text-sm text-blue-400"
               onClick={() => toggleExpand(branch.id)}
+              className="mr-2 text-xl"
             >
-              {expandedBranches.includes(branch.id) ? "[-]" : "[+]"}
+              {expandedBranches.includes(branch.id) ? "➖" : "➕"}
             </button>
           )}
-        </h3>
+          <div className={`text-xl font-bold ${level === 0 ? "text-amber-300" : "text-white"}`}>
+            {branch.nom}
+          </div>
+        </div>
 
         <div className="w-full overflow-x-auto">
           <div className="w-max space-y-2">
@@ -316,33 +336,40 @@ function StatGlobalPage() {
               <div className="min-w-[180px] text-center">-</div>
               <div className="min-w-[160px] text-center">-</div>
             </div>
-
           </div>
         </div>
 
-        {hasChildren && expandedBranches.includes(branch.id) &&
-          branch.enfants.map((child) => <BranchItem key={child.id} branch={child} />)
-        }
+        {/* RENDER CHILDREN */}
+        {branch.enfants.map((child) =>
+          level === 0 || expandedBranches.includes(branch.id)
+            ? renderBranch(child, level + 1)
+            : null
+        )}
       </div>
     );
   };
 
   const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
-
   const filteredBranches = (() => {
-    if (!superviseurFilter) return branchesTree;
-    const selectedId = superviseurFilter;
-    const findBranchInTree = (tree) => {
-      for (let branch of tree) {
-        if (branch.id === selectedId) return branch;
-        const found = findBranchInTree(branch.enfants || []);
-        if (found) return found;
+  if (!superviseurFilter) return branchesTree;
+
+  const selectedId = superviseurFilter; // 🔥 PAS Number()
+
+  const findBranchInTree = (tree) => {
+    for (let branch of tree) {
+      if (branch.id === selectedId) {
+        return branch;
       }
-      return null;
-    };
-    const foundBranch = findBranchInTree(branchesTree);
-    return foundBranch ? [foundBranch] : [];
-  })();
+      const found = findBranchInTree(branch.enfants || []);
+      if (found) return found;
+    }
+    return null;
+  };
+
+  const foundBranch = findBranchInTree(branchesTree);
+
+  return foundBranch ? [foundBranch] : [];
+})();
 
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">
@@ -353,53 +380,55 @@ function StatGlobalPage() {
       </h1>
 
       <div className="flex justify-center mb-8">
-        <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl flex gap-6 flex-wrap items-end w-fit shadow-lg">
-          <div className="flex flex-col">
-            <label className="text-sm mb-1">Date début</label>
-            <input
-              type="date"
-              value={dateDebut}
-              onChange={(e) => setDateDebut(e.target.value)}
-              className="px-3 py-2 rounded-lg text-black"
-            />
-          </div>
+  <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl flex gap-6 flex-wrap items-end w-fit shadow-lg">
+    
+    <div className="flex flex-col">
+      <label className="text-sm mb-1">Date début</label>
+      <input
+        type="date"
+        value={dateDebut}
+        onChange={(e) => setDateDebut(e.target.value)}
+        className="px-3 py-2 rounded-lg text-black"
+      />
+    </div>
 
-          <div className="flex flex-col">
-            <label className="text-sm mb-1">Date fin</label>
-            <input
-              type="date"
-              value={dateFin}
-              onChange={(e) => setDateFin(e.target.value)}
-              className="px-3 py-2 rounded-lg text-black"
-            />
-          </div>
+    <div className="flex flex-col">
+      <label className="text-sm mb-1">Date fin</label>
+      <input
+        type="date"
+        value={dateFin}
+        onChange={(e) => setDateFin(e.target.value)}
+        className="px-3 py-2 rounded-lg text-black"
+      />
+    </div>
 
-          <div className="flex flex-col">
-            <label className="text-sm mb-1">Superviseur</label>
-            <select
-              value={superviseurFilter}
-              onChange={(e) => setSuperviseurFilter(e.target.value)}
-              className="px-3 py-2 rounded-lg text-black"
-            >
-              <option value="">Tous</option>
-              {superviseurOptions.map((s) => (
-                <option key={s.id} value={s.id}>{s.nom}</option>
-              ))}
-            </select>
-          </div>
+    <div className="flex flex-col">
+      <label className="text-sm mb-1">Superviseur</label>
+      <select
+        value={superviseurFilter}
+        onChange={(e) => setSuperviseurFilter(e.target.value)}
+        className="px-3 py-2 rounded-lg text-black"
+      >
+        <option value="">Tous</option>
+        {superviseurOptions.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.nom}
+          </option>
+        ))}
+      </select>
+    </div>
 
-          <button
-            onClick={fetchStats}
-            className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition text-white"
+    <button
+      onClick={fetchStats}
+      className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition text-white"
           >
-            {loading ? "Générer..." : "Générer"}
-          </button>
-        </div>
-      </div>
+      {loading ? "Générer..." : "Générer"}
+    </button>
 
-      {filteredBranches.map((branch) => (
-        <BranchItem key={branch.id} branch={branch} />
-      ))}
+  </div>
+</div>
+
+      {filteredBranches.map((branch) => renderBranch(branch))}
 
       <Footer />
     </div>

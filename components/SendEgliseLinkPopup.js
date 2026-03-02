@@ -12,13 +12,14 @@ export default function SendEgliseLinkPopup({
 }) {
 
   const handleSend = async () => {
-    if (!type) {
-      alert("Veuillez sélectionner un mode d’envoi.");
+    // 🔹 Vérification de tous les champs obligatoires
+    if (!responsable.prenom || !responsable.nom || !eglise.nom || !eglise.branche || !eglise.pays) {
+      alert("Veuillez remplir tous les champs obligatoires (Prénom, Nom, Église, Branche, Pays).");
       return;
     }
 
-    if (!responsable.prenom || !responsable.nom || !eglise.nom || !eglise.branche || !eglise.pays) {
-      alert("Veuillez remplir tous les champs obligatoires.");
+    if (!type) {
+      alert("Veuillez sélectionner un mode d’envoi.");
       return;
     }
 
@@ -34,7 +35,7 @@ export default function SendEgliseLinkPopup({
             responsable_nom: responsable.nom,
             eglise_nom: eglise.nom,
             eglise_branche: eglise.branche,
-            eglise_pays: eglise.pays,       // 🔹 nouveau champ
+            eglise_pays: eglise.pays, // nouveau champ obligatoire
             statut: "pending"
           }
         ])
@@ -54,10 +55,6 @@ export default function SendEgliseLinkPopup({
 
 ${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} 
 vous a envoyé une invitation pour que votre église soit placée sous sa supervision.
-
-Église: ${eglise.nom}
-Branche: ${eglise.branche}
-Pays: ${eglise.pays}
 
 Cliquez sur le lien ci-dessous pour accepter, refuser ou laisser l’invitation en attente :
 
@@ -91,7 +88,6 @@ Que Dieu vous bénisse 🙏
   return (
     <button
       onClick={handleSend}
-      disabled={!type}
       className={`w-full py-2 rounded-xl text-white font-semibold ${
         !type
           ? "bg-gray-400 cursor-not-allowed"

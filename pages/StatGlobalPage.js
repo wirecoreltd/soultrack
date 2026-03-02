@@ -244,14 +244,11 @@ cellulesData.forEach(c => {
               {expandedBranches.includes(branch.id) ? "➖" : "➕"}
             </button>
           )}
+          
           <div className={`text-xl font-bold ${level === 0 ? "text-amber-300" : "text-white"}`}>
-  {branch.nom}
-  {branch.enfants.length > 0 && (
-    <span className="ml-2 text-sm text-gray-300">
-      (Supervision de …)
-    </span>
-  )}
-</div>
+            {branch.nom}
+            {branch.enfants.length > 0 && ` (Supervision de ${branch.enfants.length} église${branch.enfants.length > 1 ? "s" : ""})`}
+          </div>
         </div>
 
         <div className="w-full overflow-x-auto">

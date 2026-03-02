@@ -7,6 +7,7 @@ import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 
 export default function LinkEglise() {
+
   const [superviseur, setSuperviseur] = useState({
     prenom: "",
     nom: "",
@@ -16,83 +17,32 @@ export default function LinkEglise() {
     branche_nom: ""
   });
 
-  const sendInvitation = async () => {
-  const { data: existing } = await supabase
-    .from("eglise_supervisions")
-    .select("*")
-    .eq("superviseur_eglise_id", superviseur.eglise_id)
-    .eq("supervisee_eglise_id", egliseId)
-    .eq("supervisee_branche_id", brancheId)
-    .single();
-
-  const newToken = crypto.randomUUID();
-
-  if (existing) {
-    // ✅ UPDATE (pas d'insert)
-    const { error } = await supabase
-      .from("eglise_supervisions")
-      .update({
-        invitation_token: newToken,
-        statut: "pending",
-        last_sent_at: new Date()
-      })
-      .eq("id", existing.id);
-
-    if (error) {
-      console.error("Erreur update :", error);
-      return;
-    }
-
-  } else {
-    // ✅ INSERT seulement si ça n'existe pas
-    const { error } = await supabase
-      .from("eglise_supervisions")
-      .insert({
-        superviseur_eglise_id: superviseur.eglise_id,
-        supervisee_eglise_id: egliseId,
-        supervisee_branche_id: brancheId,
-        invitation_token: newToken,
-        statut: "pending",
-        created_at: new Date(),
-        last_sent_at: new Date()
-      });
-
-    if (error) {
-      console.error("Erreur insert :", error);
-      return;
-    }
-  }
-
-  // Ensuite tu envoies ton WhatsApp / Email ici
-};
-  const [responsable, setResponsable] = useState({
-    prenom: "",
-    nom: ""
-  });
-
-  const [eglise, setEglise] = useState({
-    nom: "",
-    branche: "",
-    pays: ""
-  });
-
+  const [responsable, setResponsable] = useState({ prenom: "", nom: "" });
+  const [eglise, setEglise] = useState({ nom: "", branche: "", pays: "" });
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
-  const [actionContext, setActionContext] = useState({type: "send", label: "Envoyer l'invitation", currentId: null});
 
+  const [actionContext, setActionContext] = useState({
+    type: "send",
+    label: "Envoyer l'invitation",
+    currentId: null
+  });
+
+  // ===============================
   // 🔹 Charger superviseur connecté
+  // ===============================
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
         .select(`prenom, nom, eglise_id, branche_id, eglises(nom), branches(nom)`)
         .eq("id", user.id)
         .single();
 
-      if (!error) {
+      if (data) {
         setSuperviseur({
           prenom: data.prenom,
           nom: data.nom,
@@ -103,51 +53,107 @@ export default function LinkEglise() {
         });
       }
     };
+
     loadSuperviseur();
   }, []);
 
+  // ===============================
   // 🔹 Charger invitations
+  // ===============================
   const loadInvitations = async () => {
     if (!superviseur.eglise_id) return;
-    const { data, error } = await supabase
+
+    const { data } = await supabase
       .from("eglise_supervisions")
       .select("*")
       .eq("superviseur_eglise_id", superviseur.eglise_id)
       .order("created_at", { ascending: false });
-    if (!error) setInvitations(data || []);
+
+    if (data) setInvitations(data);
   };
 
-  useEffect(() => { loadInvitations(); }, [superviseur.eglise_id]);
+  useEffect(() => {
+    loadInvitations();
+  }, [superviseur.eglise_id]);
 
-  // 🔹 Style selon statut
-  const getStatusStyle = (statut) => {
-    switch (statut?.toLowerCase()) {
-      case "acceptee": return { border: "border-l-4 border-green-500", color: "text-green-500" };
-      case "refusee": return { border: "border-l-4 border-red-500", color: "text-red-500" };
-      case "pending": return { border: "border-l-4 border-yellow-500", color: "text-yellow-400" };
-      case "supprimee": return { border: "border-l-4 border-gray-400", color: "text-gray-400" };
-      default: return { border: "border-l-4 border-gray-300", color: "text-gray-300" };
-    }
-  };
-
-  // 🔹 Pré-remplissage formulaire pour Rappel ou Supprimer
+  // ===============================
+  // 🔹 Gestion des actions
+  // ===============================
   const handleActionClick = (invitation, type) => {
-    setResponsable({ prenom: invitation.responsable_prenom, nom: invitation.responsable_nom });
-    setEglise({ nom: invitation.eglise_nom, branche: invitation.eglise_branche, pays: invitation.eglise_pays });
+
+    setResponsable({
+      prenom: invitation.responsable_prenom,
+      nom: invitation.responsable_nom
+    });
+
+    setEglise({
+      nom: invitation.eglise_nom,
+      branche: invitation.eglise_branche,
+      pays: invitation.eglise_pays
+    });
+
+    let label = "";
+
+    if (type === "reminder") label = "Envoyer un rappel";
+    if (type === "resend") label = "Renvoyer le lien";
+    if (type === "delete") label = "Supprimer l'envoi";
+
     setActionContext({
       type,
-      label: type === "reminder" ? "Envoyer un rappel" : "Supprimer l'envoi",
+      label,
       currentId: invitation.id
     });
-    setCanal(""); // reset le mode d'envoi
+
+    setCanal("");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // ===============================
+  // 🔹 Menu déroulant des actions
+  // ===============================
+  const getActionsForStatus = (inv) => {
+    const statut = inv.statut?.toLowerCase();
+
+    if (statut === "acceptee") return null;
+
+    if (statut === "pending") {
+      return (
+        <select
+          className="bg-white/20 text-black px-2 py-1 rounded-lg"
+          onChange={(e) => {
+            if (e.target.value === "reminder") handleActionClick(inv, "reminder");
+          }}
+        >
+          <option value="">-- Action --</option>
+          <option value="reminder">⏳ Rappel</option>
+        </select>
+      );
+    }
+
+    if (statut === "refusee" || statut === "supprimee") {
+      return (
+        <select
+          className="bg-white/20 text-black px-2 py-1 rounded-lg"
+          onChange={(e) => {
+            if (e.target.value === "resend") handleActionClick(inv, "resend");
+            if (e.target.value === "delete") handleActionClick(inv, "delete");
+          }}
+        >
+          <option value="">-- Action --</option>
+          <option value="resend">🔄 Renvoyer le lien</option>
+          <option value="delete">❌ Supprimer l'envoi</option>
+        </select>
+      );
+    }
+
+    return null;
   };
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
+
       <HeaderPages />
 
-      {/* TITRE FORMULAIRE */}
       <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
         {actionContext.label}
       </h4>
@@ -155,63 +161,47 @@ export default function LinkEglise() {
       {/* FORMULAIRE */}
       <div className="w-full max-w-md rounded-2xl p-6 space-y-4 mb-10 bg-white/10">
 
-        <div>
-          <label className="font-semibold">Prénom du responsable</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={responsable.prenom}
-            onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
-            required
-          />
-        </div>
+        <input
+          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+          placeholder="Prénom du responsable"
+          value={responsable.prenom}
+          onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
+        />
 
-        <div>
-          <label className="font-semibold">Nom du responsable</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={responsable.nom}
-            onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
-            required
-          />
-        </div>
+        <input
+          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+          placeholder="Nom du responsable"
+          value={responsable.nom}
+          onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
+        />
 
-        <div>
-          <label className="font-semibold">Nom de l'Église</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={eglise.nom}
-            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
-            required
-          />
-        </div>
+        <input
+          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+          placeholder="Nom de l'Église"
+          value={eglise.nom}
+          onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
+        />
 
-        <div>
-          <label className="font-semibold">Branche</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={eglise.branche}
-            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
-            required
-          />
-        </div>
+        <input
+          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+          placeholder="Branche"
+          value={eglise.branche}
+          onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+        />
 
-        <div>
-          <label className="font-semibold">Pays</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={eglise.pays}
-            onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
-            required
-          />
-        </div>
+        <input
+          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+          placeholder="Pays"
+          value={eglise.pays}
+          onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
+        />
 
         <select
           className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
           value={canal}
           onChange={(e) => setCanal(e.target.value)}
-          required
         >
-          <option value="">-- Sélectionnez le mode d’envoi --</option>
+          <option value="">-- Mode d’envoi --</option>
           <option value="whatsapp">WhatsApp</option>
           <option value="email">Email</option>
         </select>
@@ -225,11 +215,13 @@ export default function LinkEglise() {
           actionContext={actionContext}
           onSuccess={loadInvitations}
         />
+
       </div>
 
-      {/* TABLE */}
-      <div className="w-full max-w-5xl overflow-x-auto">
-        <div className="grid grid-cols-6 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
+      {/* TABLEAU */}
+      <div className="w-full max-w-5xl">
+
+        <div className="grid grid-cols-6 font-semibold border-b border-white/40 pb-2">
           <div>Église</div>
           <div>Branche</div>
           <div>Pays</div>
@@ -238,32 +230,19 @@ export default function LinkEglise() {
           <div>Action</div>
         </div>
 
-        {invitations.map((inv) => {
-          const statusStyle = getStatusStyle(inv.statut);
-          return (
-            <div key={inv.id} className={`flex flex-col md:flex-row md:items-center px-4 py-2 mt-2 hover:bg-white/20 transition`}>
-              <div className="flex-1">{inv.eglise_nom}</div>
-              <div className="flex-1">{inv.eglise_branche}</div>
-              <div className="flex-1">{inv.eglise_pays}</div>
-              <div className="flex-1">{inv.responsable_prenom} {inv.responsable_nom}</div>
-              <div className={`flex-1 font-semibold ${statusStyle.color} border-l-4 border-l-transparent md:border-l-0`}>{inv.statut.toLowerCase()}</div>
-              <div className="flex-1 flex flex-col md:flex-row md:items-center gap-2">
-                {inv.statut.toLowerCase() === "pending" && (
-                  <>
-                    <button className="text-yellow-400 hover:text-yellow-600 font-semibold" onClick={() => handleActionClick(inv,"reminder")}>⏳ Rappel</button>
-                    <button className="text-red-400 hover:text-red-600 font-semibold" onClick={() => handleActionClick(inv,"delete")}>❌ Supprimer l'envoi</button>
-                  </>
-                )}
-                {["refusee","supprimee"].includes(inv.statut.toLowerCase()) && (
-                  <>
-                    <button className="text-blue-400 hover:text-blue-600 font-semibold" onClick={() => handleActionClick(inv,"resend")}>🔄 Renvoyer le lien</button>
-                    <button className="text-red-400 hover:text-red-600 font-semibold" onClick={() => handleActionClick(inv,"delete")}>❌ Supprimer l'envoi</button>
-                  </>
-                )}
-              </div>
-            </div>
-          );
-        })}
+        {invitations.map((inv) => (
+          <div key={inv.id} className="grid grid-cols-6 py-3 border-b border-white/10">
+
+            <div>{inv.eglise_nom}</div>
+            <div>{inv.eglise_branche}</div>
+            <div>{inv.eglise_pays}</div>
+            <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
+            <div className="capitalize">{inv.statut}</div>
+            <div>{getActionsForStatus(inv)}</div>
+
+          </div>
+        ))}
+
       </div>
 
       <Footer />

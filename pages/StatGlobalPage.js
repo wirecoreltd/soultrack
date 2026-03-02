@@ -245,8 +245,10 @@ cellulesData.forEach(c => {
             </button>
           )}
           <div className={`text-xl font-bold ${level === 0 ? "text-amber-300" : "text-white"}`}>
-            {branch.nom}
-          </div>
+  {level === 0 && branch.enfants.length > 0 && !expandedBranches.includes(branch.id)
+    ? `Supervision de ${branch.nom}`
+    : branch.nom}
+</div>
         </div>
 
         <div className="w-full overflow-x-auto">
@@ -342,7 +344,7 @@ cellulesData.forEach(c => {
         {/* RENDER CHILDREN */}
         {branch.enfants.map((child) =>
           level === 0 || expandedBranches.includes(branch.id)
-            ? renderBranch(child, level + 1)
+            ? (child, level + 1)
             : null
         )}
       </div>
@@ -428,7 +430,7 @@ cellulesData.forEach(c => {
   </div>
 </div>
 
-      {filteredBranches.map((branch) => renderBranch(branch))}
+      {filteredBranches.map((branch) => (branch))}
 
       <Footer />
     </div>

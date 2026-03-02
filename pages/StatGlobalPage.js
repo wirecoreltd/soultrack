@@ -350,11 +350,11 @@ cellulesData.forEach(c => {
 
   const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
   const filteredBranches =
-    superviseurFilter && rootId
-      ? branchesTree.filter((branch) =>
-          getAllDescendants(branch).includes(superviseurFilter)
-        )
-      : branchesTree;
+  superviseurFilter && rootId
+    ? branchesTree.filter((branch) =>
+        getAllDescendants(branch).includes(Number(superviseurFilter))
+      )
+    : branchesTree;
 
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">

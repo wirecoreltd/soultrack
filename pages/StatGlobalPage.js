@@ -288,15 +288,22 @@ cellulesData.forEach(c => {
           </button>
         )}
 
-        <div className={`text-xl font-semibold ${branch.enfants.length > 0 && level === 0 ? "text-amber-300" : "text-white"}`}>
-          {branch.nom}
+        <div className="flex items-center gap-2">
+          {/* Nom du superviseur */}
+          <span className={`text-xl font-semibold ${branch.enfants.length > 0 && level === 0 ? "text-amber-300" : "text-white"}`}>
+            {branch.nom}
+          </span>
+        
+          {/* Supervision de X église(s) */}
           {branch.enfants.length > 0 && (
-            <span className="text-sm text-gray-300 ml-2">
+            <span className="text-sm text-white">
               (Supervision de {branch.enfants.length} église{branch.enfants.length > 1 ? "s" : ""})
             </span>
           )}
+        
+          {/* Total général */}
           {branch.enfants.length > 0 && !isExpanded && (
-            <span className="text-sm text-amber-200 ml-2">(Total général)</span>
+            <span className="text-sm text-amber-300">• Total général</span>
           )}
         </div>
       </div>

@@ -213,35 +213,41 @@ export default function LinkEglise() {
         </div>
 
         {/* LIGNES */}
-        {invitations.map((inv) => {
-          const statusStyle = getStatusStyle(inv.statut);
+{invitations.map((inv) => {
+  const statusStyle = getStatusStyle(inv.statut);
 
-          return (
-            <div
-              key={inv.id}
-              className={`grid grid-cols-5 px-3 py-2 mt-2 items-center gap-2`}
+  return (
+    <div
+      key={inv.id}
+      className={`grid grid-cols-5 px-3 py-2 mt-2 items-center gap-2`}
+    >
+      <div>{inv.eglise_nom}</div>
+      <div>{inv.eglise_branche}</div>
+      <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
+      <div className="capitalize">{statusStyle.label}</div>
+      <div className="flex justify-center gap-2">
+        {/* 🔹 Action vide si statut = acceptee */}
+        {statusStyle.label !== "acceptee" && (
+          <>
+            <button
+              className="text-orange-500 font-semibold text-sm hover:opacity-80"
+              onClick={() => startAction(inv, "rappel")}
             >
-              <div>{inv.eglise_nom}</div>
-              <div>{inv.eglise_branche}</div>
-              <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
-              <div className="capitalize">{statusStyle.label}</div>
-              <div className="flex gap-2">
-                <button
-                  className="text-orange-500 font-semibold text-sm hover:opacity-80"
-                  onClick={() => startAction(inv, "rappel")}
-                >
-                  Rappeler
-                </button>
-                <button
-                  className="text-red-500 font-semibold text-sm hover:opacity-80"
-                  onClick={() => startAction(inv, "supprimer")}
-                >
-                  Supprimer
-                </button>
-              </div>
-            </div>
-          );
-        })}
+              Rappel
+            </button>
+            <span>|</span>
+            <button
+              className="text-red-500 font-semibold text-sm hover:opacity-80"
+              onClick={() => startAction(inv, "supprimer")}
+            >
+              🗑️
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+})}
       </div>
 
       <Footer />

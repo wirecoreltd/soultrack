@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import supabase from "../../lib/supabaseClient";
 import SendEgliseLinkPopup from "../../components/SendEgliseLinkPopup";
 import HeaderPages from "../../components/HeaderPages";
+import Footer from "../../components/Footer";
 
 export default function LinkEglise() {
   const [superviseur, setSuperviseur] = useState({
@@ -22,7 +23,8 @@ export default function LinkEglise() {
 
   const [eglise, setEglise] = useState({
     nom: "",
-    branche: ""
+    branche: "",
+    pays: ""
   });
 
   const [canal, setCanal] = useState("");
@@ -31,10 +33,7 @@ export default function LinkEglise() {
   // 🔹 Charger superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
@@ -44,8 +43,8 @@ export default function LinkEglise() {
           nom,
           eglise_id,
           branche_id,
-          eglises ( nom ),
-          branches ( nom )
+          eglises(nom),
+          branches(nom)
         `)
         .eq("id", user.id)
         .single();
@@ -97,15 +96,13 @@ export default function LinkEglise() {
   };
 
   return (
-    <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
+    <div className="min-h-screen bg-[#333699] text-white flex flex-col items-center p-6">
       <HeaderPages />
 
-      {/* TITRE FORMULAIRE */}
       <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
         Envoyer une invitation pour relier une église
       </h4>
 
-      {/* FORMULAIRE (vertical comme demandé) */}
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4 mb-10">
 
         <div>
@@ -113,9 +110,7 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={responsable.prenom}
-            onChange={(e) =>
-              setResponsable({ ...responsable, prenom: e.target.value })
-            }
+            onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
           />
         </div>
 
@@ -124,9 +119,7 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={responsable.nom}
-            onChange={(e) =>
-              setResponsable({ ...responsable, nom: e.target.value })
-            }
+            onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
           />
         </div>
 
@@ -135,20 +128,25 @@ export default function LinkEglise() {
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={eglise.nom}
-            onChange={(e) =>
-              setEglise({ ...eglise, nom: e.target.value })
-            }
+            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
           />
         </div>
 
         <div>
-          <label className="font-semibold">Branche / Région</label>
+          <label className="font-semibold">Branche *</label>
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={eglise.branche}
-            onChange={(e) =>
-              setEglise({ ...eglise, branche: e.target.value })
-            }
+            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="font-semibold">Pays *</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2"
+            value={eglise.pays}
+            onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
           />
         </div>
 
@@ -172,18 +170,13 @@ export default function LinkEglise() {
         />
       </div>
 
-      {/* ESPACE AU-DESSUS */}
       <div className="h-10" />
 
-      {/* TITRE TABLE */}
       <h4 className="text-2xl font-bold mt-2 mb-10 text-center w-full max-w-5xl text-amber-300">
         Liste des églises supervisées
       </h4>
 
-      {/* TABLE ALIGNÉE PARFAITEMENT */}
       <div className="w-full max-w-5xl">
-
-        {/* HEADER */}
         <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
           <div>Église</div>
           <div>Branche</div>
@@ -191,7 +184,6 @@ export default function LinkEglise() {
           <div>Statut</div>
         </div>
 
-        {/* LIGNES */}
         {invitations.map((inv) => {
           const statusStyle = getStatusStyle(inv.statut);
 
@@ -218,6 +210,8 @@ export default function LinkEglise() {
           );
         })}
       </div>
+
+      <Footer />
     </div>
   );
 }

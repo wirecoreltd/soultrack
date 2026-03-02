@@ -16,6 +16,55 @@ export default function LinkEglise() {
     branche_nom: ""
   });
 
+  const sendInvitation = async () => {
+  const { data: existing } = await supabase
+    .from("eglise_supervisions")
+    .select("*")
+    .eq("superviseur_eglise_id", superviseur.eglise_id)
+    .eq("supervisee_eglise_id", egliseId)
+    .eq("supervisee_branche_id", brancheId)
+    .single();
+
+  const newToken = crypto.randomUUID();
+
+  if (existing) {
+    // ✅ UPDATE (pas d'insert)
+    const { error } = await supabase
+      .from("eglise_supervisions")
+      .update({
+        invitation_token: newToken,
+        statut: "pending",
+        last_sent_at: new Date()
+      })
+      .eq("id", existing.id);
+
+    if (error) {
+      console.error("Erreur update :", error);
+      return;
+    }
+
+  } else {
+    // ✅ INSERT seulement si ça n'existe pas
+    const { error } = await supabase
+      .from("eglise_supervisions")
+      .insert({
+        superviseur_eglise_id: superviseur.eglise_id,
+        supervisee_eglise_id: egliseId,
+        supervisee_branche_id: brancheId,
+        invitation_token: newToken,
+        statut: "pending",
+        created_at: new Date(),
+        last_sent_at: new Date()
+      });
+
+    if (error) {
+      console.error("Erreur insert :", error);
+      return;
+    }
+  }
+
+  // Ensuite tu envoies ton WhatsApp / Email ici
+};
   const [responsable, setResponsable] = useState({
     prenom: "",
     nom: ""

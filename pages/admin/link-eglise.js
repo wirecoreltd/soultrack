@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
-import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
+import supabase from "../../lib/supabaseClient";
+import HeaderPages from "../../components/HeaderPages";
+import Footer from "../../components/Footer";
 
 export default function LinkEglisePage() {
   const [invitations, setInvitations] = useState([]);

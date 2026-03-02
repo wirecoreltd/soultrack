@@ -29,8 +29,8 @@ export default function LinkEglise() {
 
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
-  const [modeAction, setModeAction] = useState(null); // null, "rappel", "supprimer"
-  const [actionInvitation, setActionInvitation] = useState(null);
+  const [actionMode, setActionMode] = useState(""); // "rappel" ou "supprimer"
+  const [selectedInvitation, setSelectedInvitation] = useState(null);
 
   // 🔹 Charger superviseur connecté
   useEffect(() => {
@@ -45,8 +45,8 @@ export default function LinkEglise() {
           nom,
           eglise_id,
           branche_id,
-          eglises ( nom ),
-          branches ( nom )
+          eglises(nom),
+          branches(nom)
         `)
         .eq("id", user.id)
         .single();
@@ -79,132 +79,154 @@ export default function LinkEglise() {
     if (!error) setInvitations(data || []);
   };
 
-  useEffect(() => { loadInvitations(); }, [superviseur.eglise_id]);
+  useEffect(() => {
+    loadInvitations();
+  }, [superviseur.eglise_id]);
 
-  // 🔹 Style selon statut
+  // 🔹 Style des statuts
   const getStatusStyle = (statut) => {
     switch (statut?.toLowerCase()) {
-      case "accepted":
       case "acceptee":
         return { border: "border-l-4 border-green-600", label: "acceptee" };
-      case "refused":
-      case "refus":
+      case "refuse":
+      case "refusee":
         return { border: "border-l-4 border-red-600", label: "refus" };
       case "pending":
-      case "en attente":
         return { border: "border-l-4 border-gray-400", label: "pending" };
+      case "lien_casse":
+        return { border: "border-l-4 border-orange-600", label: "lien cassé" };
       default:
-        return { border: "border-l-4 border-gray-300", label: statut };
+        return { border: "border-l-4 border-gray-300", label: statut || "" };
     }
   };
 
-  // 🔹 Préparer action (rappel ou supprimer)
-  const startAction = (inv, type) => {
-    setModeAction(type);
-    setActionInvitation(inv);
-    setResponsable({ prenom: inv.responsable_prenom, nom: inv.responsable_nom });
-    setEglise({ nom: inv.eglise_nom, branche: inv.eglise_branche, pays: inv.eglise_pays });
-    setCanal("");
+  // 🔹 Préparer message rappel / suppression
+  const prepareMessage = (inv, type) => {
+    if(type === "rappel") {
+      return `🙏 Rappel : Bonjour ${inv.responsable_prenom} ${inv.responsable_nom},
+
+${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom}
+vous a envoyé une invitation pour que votre église soit supervisée.
+
+Cliquez ici pour accepter, refuser ou laisser en attente :
+https://soultrack-three.vercel.app/accept-invitation?token=${inv.invitation_token}
+
+⏳ Ceci est un rappel.`;
+    }
+    if(type === "supprimer") {
+      return `📌 L’invitation de votre église a été annulée. 
+Vous n’êtes plus supervisé(e) par : 
+${superviseur.prenom} ${superviseur.nom} - ${superviseur.eglise_nom} - ${superviseur.branche_nom} - ${superviseur.branche_nom}.
+Pour plus d’informations, contactez votre superviseur.`;
+    }
   };
 
-  // 🔹 Réinitialiser formulaire
-  const resetForm = () => {
-    setModeAction(null);
-    setActionInvitation(null);
-    setResponsable({ prenom: "", nom: "" });
-    setEglise({ nom: "", branche: "", pays: "" });
-    setCanal("");
+  const handleAction = (inv, type) => {
+    setSelectedInvitation(inv);
+    setActionMode(type);
+  };
+
+  // 🔹 Confirmer rappel ou suppression
+  const handleConfirmAction = async (message) => {
+    if(actionMode === "rappel") {
+      // Envoi message
+      sendMessage(message);
+      alert("Rappel envoyé !");
+    }
+    if(actionMode === "supprimer") {
+      // Update base
+      await supabase
+        .from("eglise_supervisions")
+        .update({
+          superviseur_eglise_id: null,
+          superviseur_branche_id: null,
+          statut: "lien_casse"
+        })
+        .eq("id", selectedInvitation.id);
+      sendMessage(message);
+      alert("Lien cassé et notification envoyée !");
+      loadInvitations();
+    }
+
+    // Reset formulaire
+    setActionMode("");
+    setSelectedInvitation(null);
+  };
+
+  // 🔹 Envoi WhatsApp ou Email
+  const sendMessage = (message) => {
+    if(canal === "whatsapp") {
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    }
+    if(canal === "email") {
+      window.location.href = `mailto:?subject=Notification SoulTrack&body=${encodeURIComponent(message)}`;
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
+      {/* TITRE FORMULAIRE */}
       <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
-        {modeAction === "rappel" ? "Envoyer un rappel" :
-         modeAction === "supprimer" ? "Supprimer une invitation" :
-         "Envoyer une invitation pour relier une église"}
+        {actionMode === "rappel" ? "Envoyer un rappel" : actionMode === "supprimer" ? "Supprimer l'invitation" : "Envoyer une invitation pour relier une église"}
       </h4>
 
       {/* FORMULAIRE */}
-      <div className="w-full max-w-md bg-white/10 text-black rounded-2xl shadow-lg p-6 space-y-4 mb-10">
-
+      <div className="w-full max-w-md text-black rounded-2xl p-6 space-y-4 mb-10">
         <div>
           <label className="font-semibold">Prénom du responsable</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
-            value={responsable.prenom}
-            onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
-          />
+          <input className="w-full border rounded-xl px-3 py-2" value={responsable.prenom} onChange={e => setResponsable({...responsable, prenom:e.target.value})} />
         </div>
-
         <div>
           <label className="font-semibold">Nom du responsable</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
-            value={responsable.nom}
-            onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
-          />
+          <input className="w-full border rounded-xl px-3 py-2" value={responsable.nom} onChange={e => setResponsable({...responsable, nom:e.target.value})} />
         </div>
-
         <div>
           <label className="font-semibold">Nom de l'Église</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
-            value={eglise.nom}
-            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
-          />
+          <input className="w-full border rounded-xl px-3 py-2" value={eglise.nom} onChange={e => setEglise({...eglise, nom:e.target.value})} />
         </div>
-
         <div>
-          <label className="font-semibold">Branche / Région</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
-            value={eglise.branche}
-            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
-          />
+          <label className="font-semibold">Branche *</label>
+          <input className="w-full border rounded-xl px-3 py-2" value={eglise.branche} onChange={e => setEglise({...eglise, branche:e.target.value})} />
         </div>
-
         <div>
-          <label className="font-semibold">Pays</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
-            value={eglise.pays}
-            onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
-          />
+          <label className="font-semibold">Pays *</label>
+          <input className="w-full border rounded-xl px-3 py-2" value={eglise.pays} onChange={e => setEglise({...eglise, pays:e.target.value})} />
         </div>
-
-        <select
-          className="w-full border rounded-xl px-3 py-2"
-          value={canal}
-          onChange={(e) => setCanal(e.target.value)}
-        >
+        <select className="w-full border rounded-xl px-3 py-2" value={canal} onChange={e=>setCanal(e.target.value)}>
           <option value="">-- Sélectionnez le mode d’envoi --</option>
           <option value="whatsapp">WhatsApp</option>
           <option value="email">Email</option>
         </select>
 
-        {/* 🔹 BOUTON ENVOYER LORSQUE FORMULAIRE VIERGE */}
-        {!modeAction && (
+        {/* Bouton envoyer si pas action */}
+        {!actionMode && (
           <SendEgliseLinkPopup
-            label="Envoyer"
+            label="Envoyer l'invitation"
             type={canal}
             superviseur={superviseur}
             responsable={responsable}
             eglise={eglise}
-            onSuccess={() => { loadInvitations(); resetForm(); }}
+            onSuccess={loadInvitations}
           />
         )}
 
-        {/* Ici viendra le composant pour rappel/supprimer dans les prochaines étapes */}
-
+        {/* Formulaire action rappel/supprimer */}
+        {actionMode && selectedInvitation && (
+          <button
+            onClick={() => handleConfirmAction(prepareMessage(selectedInvitation, actionMode))}
+            disabled={!canal}
+            className={`w-full py-2 rounded-xl text-white font-semibold ${!canal ? "bg-gray-400 cursor-not-allowed" : "bg-[#333699] hover:bg-[#2a2f85]"}`}
+          >
+            {actionMode === "rappel" ? "Envoyer le rappel" : "Envoyer notification de suppression"}
+          </button>
+        )}
       </div>
 
-      {/* TABLE INVITATIONS */}
-      <div className="w-full max-w-5xl overflow-x-auto">
-
-        {/* HEADER */}
-        <div className="grid grid-cols-5 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3 gap-2">
+      {/* TABLE DES INVITATIONS */}
+      <div className="w-full max-w-5xl">
+        <div className="grid grid-cols-5 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3 text-center">
           <div>Église</div>
           <div>Branche</div>
           <div>Responsable</div>
@@ -212,42 +234,26 @@ export default function LinkEglise() {
           <div>Action</div>
         </div>
 
-        {/* LIGNES */}
-{invitations.map((inv) => {
-  const statusStyle = getStatusStyle(inv.statut);
+        {invitations.map((inv) => {
+          const statusStyle = getStatusStyle(inv.statut);
 
-  return (
-    <div
-      key={inv.id}
-      className={`grid grid-cols-5 px-3 py-2 mt-2 items-center gap-2`}
-    >
-      <div>{inv.eglise_nom}</div>
-      <div>{inv.eglise_branche}</div>
-      <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
-      <div className="capitalize">{statusStyle.label}</div>
-      <div className="flex justify-center gap-2">
-        {/* 🔹 Action vide si statut = acceptee */}
-        {statusStyle.label !== "acceptee" && (
-          <>
-            <button
-              className="text-orange-500 font-semibold text-sm hover:opacity-80"
-              onClick={() => startAction(inv, "rappel")}
-            >
-              Rappel
-            </button>
-            <span>|</span>
-            <button
-              className="text-red-500 font-semibold text-sm hover:opacity-80"
-              onClick={() => startAction(inv, "supprimer")}
-            >
-              🗑️
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-})}
+          return (
+            <div key={inv.id} className={`grid grid-cols-5 px-3 py-2 mt-2 ${statusStyle.border} items-center`}>
+              <div className="text-center">{inv.eglise_nom}</div>
+              <div className="text-center">{inv.eglise_branche}</div>
+              <div className="text-center">{inv.responsable_prenom} {inv.responsable_nom}</div>
+              <div className="text-center">{statusStyle.label}</div>
+              <div className="text-center flex justify-center gap-2">
+                {inv.statut.toLowerCase() === "pending" && (
+                  <>
+                    <button className="text-orange-500 font-semibold text-sm hover:opacity-80" onClick={()=>handleAction(inv,"rappel")}>Rappel</button>
+                    <button className="text-red-500 font-semibold text-sm hover:opacity-80" onClick={()=>handleAction(inv,"supprimer")}>🗑️</button>
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <Footer />

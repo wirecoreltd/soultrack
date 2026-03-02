@@ -94,6 +94,17 @@ export default function LinkEglise() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // 🔹 Déterminer actions disponibles selon le statut
+  const getActions = (inv) => {
+    const statut = inv.statut?.toLowerCase();
+    if (statut === "acceptee") return [];
+    if (statut === "pending" || statut === "refusee") return [
+      { label: "⏳ Rappel", type: "reminder" },
+      { label: "❌ Supprimer", type: "delete" }
+    ];
+    return [];
+  };
+
   return (
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
@@ -105,7 +116,6 @@ export default function LinkEglise() {
 
       {/* FORMULAIRE */}
       <div className="w-full max-w-md rounded-2xl p-6 space-y-4 mb-10 bg-white/10">
-
         <div>
           <label className="font-semibold">Prénom du responsable</label>
           <input
@@ -115,7 +125,6 @@ export default function LinkEglise() {
             required
           />
         </div>
-
         <div>
           <label className="font-semibold">Nom du responsable</label>
           <input
@@ -125,7 +134,6 @@ export default function LinkEglise() {
             required
           />
         </div>
-
         <div>
           <label className="font-semibold">Nom de l'Église</label>
           <input
@@ -135,7 +143,6 @@ export default function LinkEglise() {
             required
           />
         </div>
-
         <div>
           <label className="font-semibold">Branche</label>
           <input
@@ -145,7 +152,6 @@ export default function LinkEglise() {
             required
           />
         </div>
-
         <div>
           <label className="font-semibold">Pays</label>
           <input
@@ -155,7 +161,6 @@ export default function LinkEglise() {
             required
           />
         </div>
-
         <select
           className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
           value={canal}
@@ -180,30 +185,36 @@ export default function LinkEglise() {
 
       {/* TABLE */}
       <div className="w-full max-w-5xl overflow-x-auto">
-        <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
+        {/* Header */}
+        <div className="grid grid-cols-5 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
           <div>Église</div>
           <div>Branche</div>
+          <div>Pays</div>
           <div>Responsable</div>
-          <div>Statut / Actions</div>
+          <div>Statut</div>
+          <div>Actions</div>
         </div>
 
         {invitations.map((inv) => {
           const statusStyle = getStatusStyle(inv.statut);
+          const actions = getActions(inv);
           return (
             <div key={inv.id} className={`flex flex-col md:flex-row md:items-center px-4 py-2 mt-2 hover:bg-white/20 transition ${statusStyle.border}`}>
               <div className="flex-1">{inv.eglise_nom}</div>
               <div className="flex-1">{inv.eglise_branche}</div>
+              <div className="flex-1">{inv.eglise_pays}</div>
               <div className="flex-1">{inv.responsable_prenom} {inv.responsable_nom}</div>
-              <div className="flex flex-col md:flex-row md:items-center gap-2">
-                <span className={`${statusStyle.color} font-semibold`}>{inv.statut.toLowerCase()}</span>
-                <button
-                  className="text-yellow-400 hover:text-yellow-600 font-semibold"
-                  onClick={() => handleActionClick(inv, "reminder")}
-                >⏳ Rappel</button>
-                <button
-                  className="text-red-400 hover:text-red-600 font-semibold"
-                  onClick={() => handleActionClick(inv, "delete")}
-                >❌ Supprimer</button>
+              <div className={`${statusStyle.color} font-semibold flex-1`}>{inv.statut.toLowerCase()}</div>
+              <div className="flex-1 flex flex-wrap gap-2">
+                {actions.map((a) => (
+                  <button
+                    key={a.type}
+                    className={`font-semibold ${a.type === "reminder" ? "text-yellow-400 hover:text-yellow-600" : "text-red-400 hover:text-red-600"}`}
+                    onClick={() => handleActionClick(inv, a.type)}
+                  >
+                    {a.label}
+                  </button>
+                ))}
               </div>
             </div>
           );

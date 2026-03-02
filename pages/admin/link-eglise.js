@@ -252,52 +252,39 @@ Que Dieu vous bénisse.
           <div>Action</div>
         </div>
 
-        {/* LIGNES */}
+       {/* LIGNES */}
 {invitations.map((inv) => {
   const statusStyle = getStatusStyle(inv.statut);
 
   return (
     <div
       key={inv.id}
-      className={`grid grid-cols-5 px-3 py-2 mt-2 items-center gap-2`}
+      className="grid grid-cols-5 px-3 py-2 mt-2 items-center gap-2"
     >
       <div>{inv.eglise_nom}</div>
       <div>{inv.eglise_branche}</div>
       <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
       <div className="capitalize">{statusStyle.label}</div>
+
       <div className="flex justify-center gap-2">
-        <div className="flex justify-center gap-2">
-
-  {/* 🔹 Si statut = acceptee → Casser le lien */}
-  {statusStyle.label === "acceptee" && (
-    <button
-      className="text-purple-500 font-semibold text-sm hover:opacity-80"
-      onClick={() => breakLink(inv)}
-    >
-      Casser le lien
-    </button>
-  )}
-
-  {/* 🔹 Si pas acceptee → Rappel | 🗑️ */}
-  {statusStyle.label !== "acceptee" && (
-    <>
-      <button
-        className="text-orange-500 font-semibold text-sm hover:opacity-80"
-        onClick={() => startAction(inv, "rappel")}
-      >
-        Rappel
-      </button>
-      <span>|</span>
-      <button
-        className="text-red-500 font-semibold text-sm hover:opacity-80"
-        onClick={() => startAction(inv, "supprimer")}
-      >
-        🗑️
-      </button>
-    </>
-  )}
-
-</div>
+        {statusStyle.label !== "acceptee" && (
+          <>
+            <button
+              className="text-orange-500 font-semibold text-sm hover:opacity-80"
+              onClick={() => startAction(inv, "rappel")}
+            >
+              Rappel
+            </button>
+            <span>|</span>
+            <button
+              className="text-red-500 font-semibold text-sm hover:opacity-80"
+              onClick={() => startAction(inv, "supprimer")}
+            >
+              🗑️
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 })}

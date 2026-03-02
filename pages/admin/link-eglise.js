@@ -202,12 +202,12 @@ export default function LinkEglise() {
   <div className={`${statusStyle.border} w-1 rounded-l-lg`}></div>
 
   {/* Contenu de la ligne */}
-  <div className="flex-1 flex items-center px-4 py-2">
-    <div className="flex-1">{inv.eglise_nom}</div>
-    <div className="flex-1">{inv.eglise_branche}</div>
-    <div className="flex-1">{inv.eglise_pays}</div>
-    <div className="flex-1"><span className={`${statusStyle.color} font-semibold`}>{inv.statut.toLowerCase()}</span></div>
-    <div className="flex-1 flex gap-2">
+              <div className="flex-1 flex items-center px-4 py-2">
+                <div className="flex-1">{inv.eglise_nom}</div>
+                <div className="flex-1">{inv.eglise_branche}</div>
+                <div className="flex-1">{inv.eglise_pays}</div>
+                <div className="flex-1"><span className={`${statusStyle.color} font-semibold`}>{inv.statut.toLowerCase()}</span></div>
+                <div className="flex-1 flex gap-2">
                 {inv.statut.toLowerCase() === "pending" || inv.statut.toLowerCase() === "refusee" ? (
                   <>
                     <button
@@ -226,6 +226,7 @@ export default function LinkEglise() {
                   >❌ Renvoyer le lien</button>
                 ) : null }
               </div>
+                </div>
             </div>
           );
         })}

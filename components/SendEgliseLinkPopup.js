@@ -27,18 +27,18 @@ export default function SendEgliseLinkPopup({
       // 🔹 Création de l'invitation en base
       const { data, error } = await supabase
         .from("eglise_supervisions")
-        .insert([
-          {
-            superviseur_eglise_id: superviseur.eglise_id,
-            superviseur_branche_id: superviseur.branche_id,
-            responsable_prenom: responsable.prenom,
-            responsable_nom: responsable.nom,
-            eglise_nom: eglise.nom,
-            eglise_branche: eglise.branche,
-            eglise_pays: eglise.pays, // nouveau champ obligatoire
-            statut: "pending"
-          }
-        ])
+          .insert([
+            {
+              superviseur_eglise_id: superviseur.eglise_id,
+              superviseur_branche_id: superviseur.branche_id,
+              responsable_prenom: responsable.prenom,
+              responsable_nom: responsable.nom,
+              eglise_nom: eglise.nom,
+              eglise_branche: eglise.branche,
+              eglise_pays: eglise.pays,
+              statut: "pending"
+            }
+          ])
         .select()
         .single();
 

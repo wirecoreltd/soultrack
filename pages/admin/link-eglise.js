@@ -28,9 +28,9 @@ export default function LinkEglise() {
     currentId: null
   });
 
-  // ===============================
-  // 🔹 Charger superviseur connecté
-  // ===============================
+  // =========================
+  // Charger superviseur
+  // =========================
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -57,9 +57,9 @@ export default function LinkEglise() {
     loadSuperviseur();
   }, []);
 
-  // ===============================
-  // 🔹 Charger invitations
-  // ===============================
+  // =========================
+  // Charger invitations
+  // =========================
   const loadInvitations = async () => {
     if (!superviseur.eglise_id) return;
 
@@ -76,42 +76,79 @@ export default function LinkEglise() {
     loadInvitations();
   }, [superviseur.eglise_id]);
 
-  // ===============================
-  // 🔹 Gestion des actions
-  // ===============================
-  const handleActionClick = (invitation, type) => {
+  // =========================
+  // UPSERT (ANTI-DOUBLON)
+  // =========================
+  const sendInvitation = async () => {
 
-    setResponsable({
-      prenom: invitation.responsable_prenom,
-      nom: invitation.responsable_nom
-    });
+    const newToken = crypto.randomUUID();
 
-    setEglise({
-      nom: invitation.eglise_nom,
-      branche: invitation.eglise_branche,
-      pays: invitation.eglise_pays
-    });
+    const { error } = await supabase
+      .from("eglise_supervisions")
+      .upsert(
+        {
+          superviseur_eglise_id: superviseur.eglise_id,
+          supervisee_eglise_id: eglise.nom, 
+          supervisee_branche_id: eglise.branche,
+          responsable_prenom: responsable.prenom,
+          responsable_nom: responsable.nom,
+          eglise_nom: eglise.nom,
+          eglise_branche: eglise.branche,
+          eglise_pays: eglise.pays,
+          invitation_token: newToken,
+          statut: "pending",
+          last_sent_at: new Date()
+        },
+        {
+          onConflict:
+            "superviseur_eglise_id,supervisee_eglise_id,supervisee_branche_id"
+        }
+      );
 
-    let label = "";
+    if (error) {
+      console.error("Erreur UPSERT :", error);
+      return;
+    }
 
-    if (type === "reminder") label = "Envoyer un rappel";
-    if (type === "resend") label = "Renvoyer le lien";
-    if (type === "delete") label = "Supprimer l'envoi";
-
-    setActionContext({
-      type,
-      label,
-      currentId: invitation.id
-    });
-
-    setCanal("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    loadInvitations();
   };
 
-  // ===============================
-  // 🔹 Menu déroulant des actions
-  // ===============================
-  const getActionsForStatus = (inv) => {
+  // =========================
+  // Gestion actions
+  // =========================
+  const handleActionClick = async (inv, type) => {
+
+    if (type === "delete") {
+      await supabase
+        .from("eglise_supervisions")
+        .update({ statut: "supprimee" })
+        .eq("id", inv.id);
+
+      loadInvitations();
+      return;
+    }
+
+    if (type === "resend" || type === "reminder") {
+
+      const newToken = crypto.randomUUID();
+
+      await supabase
+        .from("eglise_supervisions")
+        .update({
+          invitation_token: newToken,
+          statut: "pending",
+          last_sent_at: new Date()
+        })
+        .eq("id", inv.id);
+
+      loadInvitations();
+    }
+  };
+
+  // =========================
+  // Menu dynamique
+  // =========================
+  const getActions = (inv) => {
     const statut = inv.statut?.toLowerCase();
 
     if (statut === "acceptee") return null;
@@ -121,7 +158,8 @@ export default function LinkEglise() {
         <select
           className="bg-white/20 text-black px-2 py-1 rounded-lg"
           onChange={(e) => {
-            if (e.target.value === "reminder") handleActionClick(inv, "reminder");
+            if (e.target.value === "reminder")
+              handleActionClick(inv, "reminder");
           }}
         >
           <option value="">-- Action --</option>
@@ -135,8 +173,10 @@ export default function LinkEglise() {
         <select
           className="bg-white/20 text-black px-2 py-1 rounded-lg"
           onChange={(e) => {
-            if (e.target.value === "resend") handleActionClick(inv, "resend");
-            if (e.target.value === "delete") handleActionClick(inv, "delete");
+            if (e.target.value === "resend")
+              handleActionClick(inv, "resend");
+            if (e.target.value === "delete")
+              handleActionClick(inv, "delete");
           }}
         >
           <option value="">-- Action --</option>
@@ -154,74 +194,13 @@ export default function LinkEglise() {
 
       <HeaderPages />
 
-      <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
-        {actionContext.label}
-      </h4>
+      <h2 className="text-2xl font-bold mb-6">
+        Invitations envoyées
+      </h2>
 
-      {/* FORMULAIRE */}
-      <div className="w-full max-w-md rounded-2xl p-6 space-y-4 mb-10 bg-white/10">
-
-        <input
-          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-          placeholder="Prénom du responsable"
-          value={responsable.prenom}
-          onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
-        />
-
-        <input
-          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-          placeholder="Nom du responsable"
-          value={responsable.nom}
-          onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
-        />
-
-        <input
-          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-          placeholder="Nom de l'Église"
-          value={eglise.nom}
-          onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
-        />
-
-        <input
-          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-          placeholder="Branche"
-          value={eglise.branche}
-          onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
-        />
-
-        <input
-          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-          placeholder="Pays"
-          value={eglise.pays}
-          onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
-        />
-
-        <select
-          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-          value={canal}
-          onChange={(e) => setCanal(e.target.value)}
-        >
-          <option value="">-- Mode d’envoi --</option>
-          <option value="whatsapp">WhatsApp</option>
-          <option value="email">Email</option>
-        </select>
-
-        <SendEgliseLinkPopup
-          label={actionContext.label}
-          type={canal}
-          superviseur={superviseur}
-          responsable={responsable}
-          eglise={eglise}
-          actionContext={actionContext}
-          onSuccess={loadInvitations}
-        />
-
-      </div>
-
-      {/* TABLEAU */}
       <div className="w-full max-w-5xl">
 
-        <div className="grid grid-cols-6 font-semibold border-b border-white/40 pb-2">
+        <div className="grid grid-cols-6 font-semibold border-b pb-2">
           <div>Église</div>
           <div>Branche</div>
           <div>Pays</div>
@@ -238,7 +217,7 @@ export default function LinkEglise() {
             <div>{inv.eglise_pays}</div>
             <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
             <div className="capitalize">{inv.statut}</div>
-            <div>{getActionsForStatus(inv)}</div>
+            <div>{getActions(inv)}</div>
 
           </div>
         ))}

@@ -203,41 +203,59 @@ export default function LinkEglise() {
       </div>
 
       {/* TABLE */}
-      <div className="w-full max-w-5xl overflow-x-auto">
-        <div className="grid grid-cols-5 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
-          <div>Église</div>
-          <div>Branche</div>
-          <div>Pays</div>
-          <div>Statut</div>
-          <div>Actions</div>
-        </div>
+<div className="w-full max-w-5xl overflow-x-auto">
+  {/* Header */}
+  <div className="grid grid-cols-5 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
+    <div>Église</div>
+    <div>Branche</div>
+    <div>Pays</div>
+    <div>Statut</div>
+    <div>Actions</div>
+  </div>
 
-        {invitations.map((inv) => {
-          const statusStyle = getStatusStyle(inv.statut);
-          return (
-            <div key={inv.id} className={`flex flex-col md:flex-row md:items-center px-4 py-2 mt-2 hover:bg-white/20 transition`}>
-              <div className="flex-1">{inv.eglise_nom}</div>
-              <div className="flex-1">{inv.eglise_branche}</div>
-              <div className="flex-1">{inv.eglise_pays}</div>
-              <div className="flex-1"><span className={`${statusStyle.color} font-semibold`}>{inv.statut.toLowerCase()}</span></div>
-              <div className="flex flex-1 flex-col md:flex-row md:items-center gap-2">
-  {(inv.statut.toLowerCase() === "pending" || inv.statut.toLowerCase() === "refusee") && (
-    <>
-      <button
-        className="text-yellow-400 hover:text-yellow-600 font-semibold"
-        onClick={() => handleActionClick(inv, "reminder")}
-      >⏳ Rappel</button>
-      <button
-        className="text-red-400 hover:text-red-600 font-semibold"
-        onClick={() => resendLink(inv)}
-      >❌ Renvoyer le lien</button>
-    </>
-                )}
-              </div>
-            </div>
-          );
-        })}
+  {invitations.map((inv) => {
+    const statusStyle = getStatusStyle(inv.statut);
+    const statutLower = inv.statut.toLowerCase();
+
+    return (
+      <div
+        key={inv.id}
+        className={`flex flex-col md:flex-row md:items-center px-4 py-2 mt-2 hover:bg-white/20 transition ${statusStyle.border}`}
+      >
+        <div className="flex-1">{inv.eglise_nom}</div>
+        <div className="flex-1">{inv.eglise_branche}</div>
+        <div className="flex-1">{inv.eglise_pays}</div>
+        <div className="flex-1">
+          <span className={`${statusStyle.color} font-semibold`}>
+            {statutLower}
+          </span>
+        </div>
+        <div className="flex flex-1 gap-2">
+          {(statutLower === "pending" || statutLower === "refusee") && (
+            <>
+              <button
+                className="text-yellow-400 hover:text-yellow-600 font-semibold"
+                onClick={() => handleActionClick(inv, "reminder")}
+              >
+                ⏳ Rappel
+              </button>
+              <button
+                className="text-red-400 hover:text-red-600 font-semibold"
+                onClick={() => handleActionClick(inv, "delete")}
+              >
+                ❌ Supprimer / Renvoyer le lien
+              </button>
+            </>
+          )}
+          {statutLower === "acceptee" && (
+            // Colonne Actions vide pour accepté
+            <span className="text-gray-400">—</span>
+          )}
+        </div>
       </div>
+    );
+  })}
+</div>
 
       <Footer />
     </div>

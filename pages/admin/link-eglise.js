@@ -33,10 +33,7 @@ export default function LinkEglise() {
   // 🔹 Charger superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
@@ -46,8 +43,8 @@ export default function LinkEglise() {
           nom,
           eglise_id,
           branche_id,
-          eglises ( nom ),
-          branches ( nom )
+          eglises(nom),
+          branches(nom)
         `)
         .eq("id", user.id)
         .single();
@@ -70,13 +67,11 @@ export default function LinkEglise() {
   // 🔹 Charger invitations
   const loadInvitations = async () => {
     if (!superviseur.eglise_id) return;
-
     const { data, error } = await supabase
       .from("eglise_supervisions")
       .select("*")
       .eq("superviseur_eglise_id", superviseur.eglise_id)
       .order("created_at", { ascending: false });
-
     if (!error) setInvitations(data || []);
   };
 
@@ -87,56 +82,49 @@ export default function LinkEglise() {
   // 🔹 Style selon statut
   const getStatusStyle = (statut) => {
     switch (statut?.toLowerCase()) {
-      case "accepted":
-        return { border: "border-l-4 border-green-600", button: null };
-      case "refused":
-        return { border: "border-l-4 border-red-600", button: "Renvoyer invitation" };
-      case "pending":
-        return { border: "border-l-4 border-gray-400", button: "Envoyer rappel" };
-      default:
-        return { border: "border-l-4 border-gray-300", button: null };
+      case "acceptee": return { border: "border-l-4 border-green-600" };
+      case "refusee": return { border: "border-l-4 border-red-600" };
+      case "pending": return { border: "border-l-4 border-gray-400" };
+      case "supprimee": return { border: "border-l-4 border-orange-500" };
+      default: return { border: "border-l-4 border-gray-300" };
     }
   };
 
-  // 🔹 Envoyer rappel WhatsApp
-  const sendReminder = (inv) => {
+  // 🔹 Envoyer rappel
+  const handleRappel = (inv) => {
     const message = `
-Bonjour ${inv.responsable_prenom} ${inv.responsable_nom},
+🙏 Bonjour ${inv.responsable_prenom} ${inv.responsable_nom},
 
-Ceci est un rappel pour accepter l’invitation de ${superviseur.prenom} ${superviseur.nom} afin que votre église (${inv.eglise_nom}) soit sous supervision.
+${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} 
+vous a envoyé une invitation pour que votre église soit placée sous sa supervision.
 
-Lien : https://soultrack-three.vercel.app/accept-invitation?token=${inv.invitation_token}
-    `.trim();
+⚠️ Ceci est un rappel ! 🔔
 
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+Cliquez sur le lien ci-dessous pour accepter, refuser ou laisser l’invitation en attente :
+
+https://soultrack-three.vercel.app/accept-invitation?token=${inv.invitation_token}
+
+Que Dieu vous bénisse 🙏
+`;
+
+    if (inv.canal === "whatsapp") window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    else window.location.href = `mailto:?subject=Rappel Invitation SoulTrack&body=${encodeURIComponent(message)}`;
+    alert("Rappel envoyé !");
   };
 
-  // 🔹 Supprimer invitation avec message personnalisé
-  const deleteInvitation = async (inv) => {
-    const defaultMessage = `
-Bonjour ${inv.responsable_prenom} ${inv.responsable_nom},
+  // 🔹 Supprimer / annuler invitation
+  const handleSupprimer = (inv) => {
+    const customMessage = prompt("Écrivez un message avant de supprimer l'invitation :", `⚠️ Votre invitation à ${inv.eglise_nom} a été annulée.`);
+    if (!customMessage) return;
 
-Votre invitation pour que l’église ${inv.eglise_nom} soit sous supervision de ${superviseur.prenom} ${superviseur.nom} a été annulée.
-    `.trim();
+    if (inv.canal === "whatsapp") window.open(`https://wa.me/?text=${encodeURIComponent(customMessage)}`, "_blank");
+    else window.location.href = `mailto:?subject=Annulation Invitation SoulTrack&body=${encodeURIComponent(customMessage)}`;
 
-    const userMessage = prompt(
-      "Écrivez votre message d'annulation pour le responsable :",
-      defaultMessage
-    );
-
-    if (!userMessage) return;
-
-    await supabase
+    supabase
       .from("eglise_supervisions")
-      .delete()
-      .eq("id", inv.id);
-
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent(userMessage)}`,
-      "_blank"
-    );
-
-    loadInvitations();
+      .update({ statut: "supprimee" })
+      .eq("id", inv.id)
+      .then(() => loadInvitations());
   };
 
   return (
@@ -151,65 +139,43 @@ Votre invitation pour que l’église ${inv.eglise_nom} soit sous supervision de
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4 mb-10">
 
         <div>
-          <label className="font-semibold">Prénom du responsable *</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
+          <label className="font-semibold">Prénom du responsable</label>
+          <input className="w-full border rounded-xl px-3 py-2"
             value={responsable.prenom}
-            onChange={(e) =>
-              setResponsable({ ...responsable, prenom: e.target.value })
-            }
-          />
+            onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })} />
         </div>
 
         <div>
-          <label className="font-semibold">Nom du responsable *</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
+          <label className="font-semibold">Nom du responsable</label>
+          <input className="w-full border rounded-xl px-3 py-2"
             value={responsable.nom}
-            onChange={(e) =>
-              setResponsable({ ...responsable, nom: e.target.value })
-            }
-          />
+            onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })} />
         </div>
 
         <div>
-          <label className="font-semibold">Nom de l'Église *</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
+          <label className="font-semibold">Nom de l'Église</label>
+          <input className="w-full border rounded-xl px-3 py-2"
             value={eglise.nom}
-            onChange={(e) =>
-              setEglise({ ...eglise, nom: e.target.value })
-            }
-          />
+            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })} />
         </div>
 
         <div>
-          <label className="font-semibold">Branche / Région *</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
+          <label className="font-semibold">Branche *</label>
+          <input className="w-full border rounded-xl px-3 py-2"
             value={eglise.branche}
-            onChange={(e) =>
-              setEglise({ ...eglise, branche: e.target.value })
-            }
-          />
+            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })} />
         </div>
 
         <div>
           <label className="font-semibold">Pays *</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2"
+          <input className="w-full border rounded-xl px-3 py-2"
             value={eglise.pays}
-            onChange={(e) =>
-              setEglise({ ...eglise, pays: e.target.value })
-            }
-          />
+            onChange={(e) => setEglise({ ...eglise, pays: e.target.value })} />
         </div>
 
-        <select
-          className="w-full border rounded-xl px-3 py-2"
+        <select className="w-full border rounded-xl px-3 py-2"
           value={canal}
-          onChange={(e) => setCanal(e.target.value)}
-        >
+          onChange={(e) => setCanal(e.target.value)}>
           <option value="">-- Sélectionnez le mode d’envoi --</option>
           <option value="whatsapp">WhatsApp</option>
           <option value="email">Email</option>
@@ -221,8 +187,8 @@ Votre invitation pour que l’église ${inv.eglise_nom} soit sous supervision de
           superviseur={superviseur}
           responsable={responsable}
           eglise={eglise}
-          onSuccess={loadInvitations}
-        />
+          onSuccess={loadInvitations} />
+
       </div>
 
       {/* TABLE DES INVITATIONS */}
@@ -231,47 +197,37 @@ Votre invitation pour que l’église ${inv.eglise_nom} soit sous supervision de
       </h4>
 
       <div className="w-full max-w-5xl">
-        <div className="grid grid-cols-6 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
+
+        {/* HEADER */}
+        <div className="grid grid-cols-5 gap-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
           <div>Église</div>
           <div>Branche</div>
           <div>Pays</div>
           <div>Responsable</div>
-          <div>Statut</div>
-          <div>Actions</div>
+          <div>Actions / Statut</div>
         </div>
 
+        {/* LIGNES */}
         {invitations.map((inv) => {
           const statusStyle = getStatusStyle(inv.statut);
 
           return (
-            <div
-              key={inv.id}
-              className={`grid grid-cols-6 px-3 py-2 mt-2 rounded-lg ${statusStyle.border} items-center`}
-            >
+            <div key={inv.id} className={`grid grid-cols-5 gap-4 px-3 py-2 mt-2 rounded-lg ${statusStyle.border} items-center`}>
               <div>{inv.eglise_nom}</div>
               <div>{inv.eglise_branche}</div>
               <div>{inv.eglise_pays}</div>
               <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
-              <div>{inv.statut}</div>
-              <div className="flex items-center gap-2">
-                {statusStyle.button === "Envoyer rappel" && (
-                  <button
-                    className="text-orange-500 font-semibold text-sm hover:opacity-80"
-                    onClick={() => sendReminder(inv)}
-                  >
-                    Renvoyer invitation
-                  </button>
-                )}
-                <button
-                  className="text-red-500 font-semibold text-sm hover:opacity-80"
-                  onClick={() => deleteInvitation(inv)}
-                >
-                  Supprimer
-                </button>
+              <div className="flex gap-2 items-center">
+                <span>{inv.statut}</span>
+                <button className="text-orange-500 text-sm font-semibold hover:opacity-80"
+                  onClick={() => handleRappel(inv)}>Envoyer rappel</button>
+                <button className="text-red-500 text-sm font-semibold hover:opacity-80"
+                  onClick={() => handleSupprimer(inv)}>Supprimer</button>
               </div>
             </div>
           );
         })}
+
       </div>
 
       <Footer />

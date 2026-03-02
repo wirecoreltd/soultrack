@@ -244,14 +244,15 @@ cellulesData.forEach(c => {
               {expandedBranches.includes(branch.id) ? "➖" : "➕"}
             </button>
           )}
-          <div className={`text-xl font-bold flex items-center gap-2 ${level === 0 ? "text-amber-300" : "text-white"}`}>
-  <span>{branch.nom}</span>
+          <div className={`text-xl font-bold ${level === 0 ? "text-amber-300" : "text-white"}`}>
+  {branch.nom}
   {branch.enfants.length > 0 && (
-    <span className="text-sm text-blue-300 italic">
-      (Supervision)
+    <span className="ml-2 text-sm text-gray-300">
+      (Supervision de …)
     </span>
   )}
 </div>
+        </div>
 
         <div className="w-full overflow-x-auto">
           <div className="w-max space-y-2">
@@ -354,11 +355,8 @@ cellulesData.forEach(c => {
   };
 
   const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
-  const filteredBranches = !superviseurFilter
-  ? branchesTree
-  : branchesTree.filter((branch) =>
-      getAllDescendants(branch).includes(superviseurFilter)
-    );
+  const filteredBranches = (() => {
+  if (!superviseurFilter) return branchesTree;
 
   const selectedId = superviseurFilter; // 🔥 PAS Number()
 

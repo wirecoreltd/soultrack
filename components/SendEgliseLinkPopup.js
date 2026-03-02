@@ -17,8 +17,8 @@ export default function SendEgliseLinkPopup({
       return;
     }
 
-    if (!responsable.prenom || !responsable.nom || !eglise.nom) {
-      alert("Veuillez remplir tous les champs.");
+    if (!responsable.prenom || !responsable.nom || !eglise.nom || !eglise.branche || !eglise.pays) {
+      alert("Veuillez remplir tous les champs obligatoires.");
       return;
     }
 
@@ -34,6 +34,7 @@ export default function SendEgliseLinkPopup({
             responsable_nom: responsable.nom,
             eglise_nom: eglise.nom,
             eglise_branche: eglise.branche,
+            eglise_pays: eglise.pays,       // 🔹 nouveau champ
             statut: "pending"
           }
         ])
@@ -53,6 +54,10 @@ export default function SendEgliseLinkPopup({
 
 ${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} 
 vous a envoyé une invitation pour que votre église soit placée sous sa supervision.
+
+Église: ${eglise.nom}
+Branche: ${eglise.branche}
+Pays: ${eglise.pays}
 
 Cliquez sur le lien ci-dessous pour accepter, refuser ou laisser l’invitation en attente :
 

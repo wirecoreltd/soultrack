@@ -354,30 +354,13 @@ cellulesData.forEach(c => {
 
   const selectedId = Number(superviseurFilter);
 
-  // Trouve la branche superviseur
   const supervisorBranch = allBranches.find(
     (b) => b.id === selectedId
   );
 
   if (!supervisorBranch) return [];
 
-  const descendantIds = getAllDescendants(supervisorBranch);
-
-  // Reconstruit un arbre filtré
-  const filterTree = (tree) =>
-    tree
-      .map((branch) => {
-        if (descendantIds.includes(branch.id)) {
-          return {
-            ...branch,
-            enfants: filterTree(branch.enfants),
-          };
-        }
-        return null;
-      })
-      .filter(Boolean);
-
-  return filterTree(branchesTree);
+  return [supervisorBranch];
 })();
 
   return (

@@ -32,6 +32,46 @@ export default function LinkEglise() {
   const [modeAction, setModeAction] = useState(null); // null, "rappel", "supprimer"
   const [actionInvitation, setActionInvitation] = useState(null);
 
+  const breakLink = async (inv) => {
+  if (!inv) return;
+
+  const confirmation = confirm("Voulez-vous vraiment casser le lien de supervision ?");
+  if (!confirmation) return;
+
+  const { error } = await supabase
+    .from("eglise_supervisions")
+    .update({
+      superviseur_eglise_id: null,
+      statut: "lien_casse"
+    })
+    .eq("id", inv.id);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  const message = `
+Bonjour ${inv.responsable_prenom} ${inv.responsable_nom},
+
+Votre église ${inv.eglise_nom} - ${inv.eglise_branche}, ${inv.eglise_pays}
+n'est plus supervisée par ${superviseur.prenom} ${superviseur.nom}.
+
+Pour plus d'informations, veuillez le contacter.
+
+Que Dieu vous bénisse.
+  `;
+
+  if (canal === "whatsapp") {
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+  } else if (canal === "email") {
+    window.location.href = `mailto:?subject=Fin de supervision SoulTrack&body=${encodeURIComponent(message)}`;
+  }
+
+  alert("Lien de supervision cassé.");
+  loadInvitations();
+};
+
   // 🔹 Charger superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
@@ -226,25 +266,38 @@ export default function LinkEglise() {
       <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
       <div className="capitalize">{statusStyle.label}</div>
       <div className="flex justify-center gap-2">
-        {/* 🔹 Action vide si statut = acceptee */}
-        {statusStyle.label !== "acceptee" && (
-          <>
-            <button
-              className="text-orange-500 font-semibold text-sm hover:opacity-80"
-              onClick={() => startAction(inv, "rappel")}
-            >
-              Rappel
-            </button>
-            <span>|</span>
-            <button
-              className="text-red-500 font-semibold text-sm hover:opacity-80"
-              onClick={() => startAction(inv, "supprimer")}
-            >
-              🗑️
-            </button>
-          </>
-        )}
-      </div>
+        <div className="flex justify-center gap-2">
+
+  {/* 🔹 Si statut = acceptee → Casser le lien */}
+  {statusStyle.label === "acceptee" && (
+    <button
+      className="text-purple-500 font-semibold text-sm hover:opacity-80"
+      onClick={() => breakLink(inv)}
+    >
+      Casser le lien
+    </button>
+  )}
+
+  {/* 🔹 Si pas acceptee → Rappel | 🗑️ */}
+  {statusStyle.label !== "acceptee" && (
+    <>
+      <button
+        className="text-orange-500 font-semibold text-sm hover:opacity-80"
+        onClick={() => startAction(inv, "rappel")}
+      >
+        Rappel
+      </button>
+      <span>|</span>
+      <button
+        className="text-red-500 font-semibold text-sm hover:opacity-80"
+        onClick={() => startAction(inv, "supprimer")}
+      >
+        🗑️
+      </button>
+    </>
+  )}
+
+</div>
     </div>
   );
 })}

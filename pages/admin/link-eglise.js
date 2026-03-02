@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import supabase from "../../lib/supabaseClient";
-import SendEgliseLinkPopup from "../../components/SendEgliseLinkPopup";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 
@@ -11,22 +10,13 @@ export default function LinkEglise() {
   const [superviseur, setSuperviseur] = useState({
     prenom: "",
     nom: "",
-    eglise_id: null,
-    branche_id: null,
-    eglise_nom: "",
-    branche_nom: ""
+    eglise_id: null
   });
 
   const [responsable, setResponsable] = useState({ prenom: "", nom: "" });
   const [eglise, setEglise] = useState({ nom: "", branche: "", pays: "" });
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
-
-  const [actionContext, setActionContext] = useState({
-    type: "send",
-    label: "Envoyer l'invitation",
-    currentId: null
-  });
 
   // =========================
   // Charger superviseur
@@ -38,20 +28,11 @@ export default function LinkEglise() {
 
       const { data } = await supabase
         .from("profiles")
-        .select(`prenom, nom, eglise_id, branche_id, eglises(nom), branches(nom)`)
+        .select("prenom, nom, eglise_id")
         .eq("id", user.id)
         .single();
 
-      if (data) {
-        setSuperviseur({
-          prenom: data.prenom,
-          nom: data.nom,
-          eglise_id: data.eglise_id,
-          branche_id: data.branche_id,
-          eglise_nom: data.eglises?.nom || "",
-          branche_nom: data.branches?.nom || ""
-        });
-      }
+      if (data) setSuperviseur(data);
     };
 
     loadSuperviseur();
@@ -77,25 +58,30 @@ export default function LinkEglise() {
   }, [superviseur.eglise_id]);
 
   // =========================
-  // UPSERT (ANTI-DOUBLON)
+  // ENVOI INVITATION (UPSERT)
   // =========================
   const sendInvitation = async () => {
 
-    const newToken = crypto.randomUUID();
+    if (!responsable.prenom || !responsable.nom || !eglise.nom || !eglise.branche || !eglise.pays || !canal) {
+      alert("Veuillez remplir tous les champs");
+      return;
+    }
+
+    const token = crypto.randomUUID();
 
     const { error } = await supabase
       .from("eglise_supervisions")
       .upsert(
         {
           superviseur_eglise_id: superviseur.eglise_id,
-          supervisee_eglise_id: eglise.nom, 
+          supervisee_eglise_id: eglise.nom,
           supervisee_branche_id: eglise.branche,
           responsable_prenom: responsable.prenom,
           responsable_nom: responsable.nom,
           eglise_nom: eglise.nom,
           eglise_branche: eglise.branche,
           eglise_pays: eglise.pays,
-          invitation_token: newToken,
+          invitation_token: token,
           statut: "pending",
           last_sent_at: new Date()
         },
@@ -106,82 +92,64 @@ export default function LinkEglise() {
       );
 
     if (error) {
-      console.error("Erreur UPSERT :", error);
+      console.error(error);
       return;
     }
+
+    alert("Invitation envoyée !");
+    setResponsable({ prenom: "", nom: "" });
+    setEglise({ nom: "", branche: "", pays: "" });
+    setCanal("");
 
     loadInvitations();
   };
 
   // =========================
-  // Gestion actions
+  // ACTIONS
   // =========================
-  const handleActionClick = async (inv, type) => {
+  const handleAction = async (inv, type) => {
 
     if (type === "delete") {
       await supabase
         .from("eglise_supervisions")
         .update({ statut: "supprimee" })
         .eq("id", inv.id);
-
-      loadInvitations();
-      return;
     }
 
     if (type === "resend" || type === "reminder") {
-
-      const newToken = crypto.randomUUID();
-
       await supabase
         .from("eglise_supervisions")
         .update({
-          invitation_token: newToken,
           statut: "pending",
-          last_sent_at: new Date()
+          last_sent_at: new Date(),
+          invitation_token: crypto.randomUUID()
         })
         .eq("id", inv.id);
-
-      loadInvitations();
     }
+
+    loadInvitations();
   };
 
-  // =========================
-  // Menu dynamique
-  // =========================
   const getActions = (inv) => {
-    const statut = inv.statut?.toLowerCase();
+    const s = inv.statut?.toLowerCase();
 
-    if (statut === "acceptee") return null;
+    if (s === "acceptee") return null;
 
-    if (statut === "pending") {
+    if (s === "pending") {
       return (
-        <select
-          className="bg-white/20 text-black px-2 py-1 rounded-lg"
-          onChange={(e) => {
-            if (e.target.value === "reminder")
-              handleActionClick(inv, "reminder");
-          }}
-        >
+        <select onChange={(e) => handleAction(inv, e.target.value)}>
           <option value="">-- Action --</option>
           <option value="reminder">⏳ Rappel</option>
         </select>
       );
     }
 
-    if (statut === "refusee" || statut === "supprimee") {
+    if (s === "refusee" || s === "supprimee") {
       return (
-        <select
-          className="bg-white/20 text-black px-2 py-1 rounded-lg"
-          onChange={(e) => {
-            if (e.target.value === "resend")
-              handleActionClick(inv, "resend");
-            if (e.target.value === "delete")
-              handleActionClick(inv, "delete");
-          }}
-        >
+        <select onChange={(e) => handleAction(inv, e.target.value)}>
           <option value="">-- Action --</option>
-          <option value="resend">🔄 Renvoyer le lien</option>
-          <option value="delete">❌ Supprimer l'envoi</option>
+          <option value="resend">🔄 Renvoyer</option>
+          <option value="delete">❌ Supprimer</option>
         </select>
       );
     }
@@ -190,33 +158,77 @@ export default function LinkEglise() {
   };
 
   return (
-    <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
+    <div className="min-h-screen bg-[#333699] text-white p-6">
 
       <HeaderPages />
 
-      <h2 className="text-2xl font-bold mb-6">
-        Invitations envoyées
-      </h2>
+      {/* FORMULAIRE */}
+      <div className="max-w-md mx-auto bg-white/10 p-6 rounded-2xl space-y-3 mb-10">
 
-      <div className="w-full max-w-5xl">
+        <input
+          placeholder="Prénom responsable"
+          value={responsable.prenom}
+          onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
+          className="w-full px-3 py-2 rounded text-black"
+        />
 
-        <div className="grid grid-cols-6 font-semibold border-b pb-2">
-          <div>Église</div>
-          <div>Branche</div>
-          <div>Pays</div>
-          <div>Responsable</div>
-          <div>Statut</div>
-          <div>Action</div>
-        </div>
+        <input
+          placeholder="Nom responsable"
+          value={responsable.nom}
+          onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
+          className="w-full px-3 py-2 rounded text-black"
+        />
+
+        <input
+          placeholder="Nom Église"
+          value={eglise.nom}
+          onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
+          className="w-full px-3 py-2 rounded text-black"
+        />
+
+        <input
+          placeholder="Branche"
+          value={eglise.branche}
+          onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+          className="w-full px-3 py-2 rounded text-black"
+        />
+
+        <input
+          placeholder="Pays"
+          value={eglise.pays}
+          onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
+          className="w-full px-3 py-2 rounded text-black"
+        />
+
+        <select
+          value={canal}
+          onChange={(e) => setCanal(e.target.value)}
+          className="w-full px-3 py-2 rounded text-black"
+        >
+          <option value="">-- Mode d'envoi --</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="email">Email</option>
+        </select>
+
+        <button
+          onClick={sendInvitation}
+          className="w-full bg-green-500 py-2 rounded font-bold"
+        >
+          Envoyer le lien
+        </button>
+      </div>
+
+      {/* TABLE */}
+      <div className="max-w-5xl mx-auto">
 
         {invitations.map((inv) => (
-          <div key={inv.id} className="grid grid-cols-6 py-3 border-b border-white/10">
+          <div key={inv.id} className="grid grid-cols-6 py-3 border-b border-white/20">
 
             <div>{inv.eglise_nom}</div>
             <div>{inv.eglise_branche}</div>
             <div>{inv.eglise_pays}</div>
             <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
-            <div className="capitalize">{inv.statut}</div>
+            <div>{inv.statut}</div>
             <div>{getActions(inv)}</div>
 
           </div>

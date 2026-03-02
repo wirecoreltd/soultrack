@@ -349,12 +349,36 @@ cellulesData.forEach(c => {
   };
 
   const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
-  const filteredBranches =
-  superviseurFilter && rootId
-    ? branchesTree.filter((branch) =>
-        getAllDescendants(branch).includes(Number(superviseurFilter))
-      )
-    : branchesTree;
+  const filteredBranches = (() => {
+  if (!superviseurFilter) return branchesTree;
+
+  const selectedId = Number(superviseurFilter);
+
+  // Trouve la branche superviseur
+  const supervisorBranch = allBranches.find(
+    (b) => b.id === selectedId
+  );
+
+  if (!supervisorBranch) return [];
+
+  const descendantIds = getAllDescendants(supervisorBranch);
+
+  // Reconstruit un arbre filtré
+  const filterTree = (tree) =>
+    tree
+      .map((branch) => {
+        if (descendantIds.includes(branch.id)) {
+          return {
+            ...branch,
+            enfants: filterTree(branch.enfants),
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+  return filterTree(branchesTree);
+})();
 
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">

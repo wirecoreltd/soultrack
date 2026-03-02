@@ -221,17 +221,17 @@ export default function LinkEglise() {
               <div className="flex-1">{inv.eglise_pays}</div>
               <div className="flex-1"><span className={`${statusStyle.color} font-semibold`}>{inv.statut.toLowerCase()}</span></div>
               <div className="flex flex-1 flex-col md:flex-row md:items-center gap-2">
-                {(inv.statut.toLowerCase() === "pending" || inv.statut.toLowerCase() === "refusee") && (
-                  <>
-                    <button
-                      className="text-yellow-400 hover:text-yellow-600 font-semibold"
-                      onClick={() => handleActionClick(inv, "reminder")}
-                    >⏳ Rappel</button>
-                    <button
-                      className="text-red-400 hover:text-red-600 font-semibold"
-                      onClick={() => resendLink(inv)}
-                    >❌ Renvoyer le lien</button>
-                  </>
+  {(inv.statut.toLowerCase() === "pending" || inv.statut.toLowerCase() === "refusee") && (
+    <>
+      <button
+        className="text-yellow-400 hover:text-yellow-600 font-semibold"
+        onClick={() => handleActionClick(inv, "reminder")}
+      >⏳ Rappel</button>
+      <button
+        className="text-red-400 hover:text-red-600 font-semibold"
+        onClick={() => resendLink(inv)}
+      >❌ Renvoyer le lien</button>
+    </>
                 )}
               </div>
             </div>

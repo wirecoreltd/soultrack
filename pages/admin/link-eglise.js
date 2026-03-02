@@ -20,7 +20,7 @@ export default function LinkEglise() {
   const [eglise, setEglise] = useState({ nom: "", branche: "", pays: "" });
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
-  const [actionContext, setActionContext] = useState({ type: "send", label: "Envoyer l'invitation", currentId: null });
+  const [actionContext, setActionContext] = useState({type: "send", label: "Envoyer l'invitation", currentId: null});
 
   // 🔹 Charger superviseur connecté
   useEffect(() => {
@@ -80,44 +80,48 @@ export default function LinkEglise() {
       type,
       label:
         type === "reminder" ? "Envoyer un rappel" :
-        type === "delete" ? "Supprimer l'envoi" :
-        "Renvoyer le lien",
+        type === "resend" ? "🔄 Renvoyer le lien" :
+        "Supprimer l'envoi",
       currentId: invitation.id
     });
     setCanal(""); // reset le mode d'envoi
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // 🔹 Envoi / Renvoyer invitation (UPSERT)
-  const sendOrResendInvitation = async () => {
-    if (!responsable.prenom || !responsable.nom || !eglise.nom || !eglise.branche || !eglise.pays || !canal) {
-      alert("Veuillez remplir tous les champs obligatoires");
+  // 🔹 Envoyer ou renvoyer l'invitation (UPSERT)
+  const sendInvitation = async () => {
+    if (!responsable.prenom || !responsable.nom || !eglise.nom || !eglise.branche || !eglise.pays) {
+      alert("Veuillez remplir tous les champs obligatoires (Prénom, Nom, Église, Branche, Pays).");
       return;
     }
 
     const newToken = crypto.randomUUID();
+
     const { error } = await supabase
       .from("eglise_supervisions")
       .upsert({
         superviseur_eglise_id: superviseur.eglise_id,
-        supervisee_eglise_id: eglise.id, // assumes eglise.id exists
-        supervisee_branche_id: eglise.branche_id || null,
+        supervisee_eglise_nom: eglise.nom,
+        supervisee_branche_nom: eglise.branche,
+        supervisee_pays: eglise.pays,
         responsable_prenom: responsable.prenom,
         responsable_nom: responsable.nom,
-        eglise_nom: eglise.nom,
-        eglise_branche: eglise.branche,
-        eglise_pays: eglise.pays,
         invitation_token: newToken,
         statut: "pending",
         created_at: new Date(),
         last_sent_at: new Date()
-      }, { onConflict: ['superviseur_eglise_id','supervisee_eglise_id','supervisee_branche_id'] });
+      }, { onConflict: "unique_superviseur_eglise_branch" });
 
     if (error) {
       console.error("Erreur UPSERT :", error);
+      alert("Erreur lors de l'envoi de l'invitation.");
       return;
     }
 
+    // Réinitialiser le formulaire
+    setResponsable({ prenom: "", nom: "" });
+    setEglise({ nom: "", branche: "", pays: "" });
+    setCanal("");
     loadInvitations();
   };
 
@@ -125,14 +129,18 @@ export default function LinkEglise() {
     <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
+      {/* TITRE FORMULAIRE */}
+      <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
+        {actionContext.label}
+      </h4>
+
       {/* FORMULAIRE */}
-      <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">{actionContext.label}</h4>
       <div className="w-full max-w-md rounded-2xl p-6 space-y-4 mb-10 bg-white/10">
 
         <div>
           <label className="font-semibold">Prénom du responsable</label>
           <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            className="w-full border px-3 py-2 bg-white/20 text-black"
             value={responsable.prenom}
             onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
           />
@@ -141,7 +149,7 @@ export default function LinkEglise() {
         <div>
           <label className="font-semibold">Nom du responsable</label>
           <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            className="w-full border px-3 py-2 bg-white/20 text-black"
             value={responsable.nom}
             onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
           />
@@ -150,7 +158,7 @@ export default function LinkEglise() {
         <div>
           <label className="font-semibold">Nom de l'Église</label>
           <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            className="w-full border px-3 py-2 bg-white/20 text-black"
             value={eglise.nom}
             onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
           />
@@ -159,7 +167,7 @@ export default function LinkEglise() {
         <div>
           <label className="font-semibold">Branche</label>
           <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            className="w-full border px-3 py-2 bg-white/20 text-black"
             value={eglise.branche}
             onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
           />
@@ -168,14 +176,14 @@ export default function LinkEglise() {
         <div>
           <label className="font-semibold">Pays</label>
           <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+            className="w-full border px-3 py-2 bg-white/20 text-black"
             value={eglise.pays}
             onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
           />
         </div>
 
         <select
-          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
+          className="w-full border px-3 py-2 bg-white/20 text-black"
           value={canal}
           onChange={(e) => setCanal(e.target.value)}
         >
@@ -185,14 +193,14 @@ export default function LinkEglise() {
         </select>
 
         <button
-          className="w-full bg-yellow-400 text-black font-semibold px-4 py-2 rounded-xl hover:bg-yellow-500"
-          onClick={sendOrResendInvitation}
+          className="w-full bg-blue-500 hover:bg-blue-600 px-3 py-2 rounded font-semibold"
+          onClick={sendInvitation}
         >
-          {actionContext.type === "resend" ? "🔄 Renvoyer le lien" : "Envoyer l'invitation"}
+          {actionContext.label}
         </button>
       </div>
 
-      {/* TABLE DES INVITATIONS */}
+      {/* TABLE */}
       <div className="w-full max-w-5xl overflow-x-auto">
         <div className="grid grid-cols-6 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
           <div>Église</div>
@@ -213,15 +221,23 @@ export default function LinkEglise() {
               <div className="flex-1">{inv.responsable_prenom} {inv.responsable_nom}</div>
               <div className={`flex-1 font-semibold ${statusStyle.color} border-l-4 border-l-transparent md:border-l-0`}>{inv.statut.toLowerCase()}</div>
               <div className="flex-1 flex flex-col md:flex-row md:items-center gap-2">
-                {inv.statut.toLowerCase() === "pending" && (
+                {/* Logique actions */}
+                {inv.statut.toLowerCase() === "acceptee" && null}
+                {inv.statut.toLowerCase() === "supprimee" && (
                   <>
-                    <button className="text-yellow-400 hover:text-yellow-600 font-semibold" onClick={() => handleActionClick(inv,"reminder")}>⏳ Rappel</button>
+                    <button className="text-blue-400 hover:text-blue-600 font-semibold" onClick={() => handleActionClick(inv,"resend")}>🔄 Renvoyer le lien</button>
                     <button className="text-red-400 hover:text-red-600 font-semibold" onClick={() => handleActionClick(inv,"delete")}>❌ Supprimer l'envoi</button>
                   </>
                 )}
-                {["refusee","supprimee"].includes(inv.statut.toLowerCase()) && (
+                {inv.statut.toLowerCase() === "refusee" && (
                   <>
                     <button className="text-blue-400 hover:text-blue-600 font-semibold" onClick={() => handleActionClick(inv,"resend")}>🔄 Renvoyer le lien</button>
+                    <button className="text-red-400 hover:text-red-600 font-semibold" onClick={() => handleActionClick(inv,"delete")}>❌ Supprimer l'envoi</button>
+                  </>
+                )}
+                {inv.statut.toLowerCase() === "pending" && (
+                  <>
+                    <button className="text-yellow-400 hover:text-yellow-600 font-semibold" onClick={() => handleActionClick(inv,"reminder")}>⏳ Rappel</button>
                     <button className="text-red-400 hover:text-red-600 font-semibold" onClick={() => handleActionClick(inv,"delete")}>❌ Supprimer l'envoi</button>
                   </>
                 )}

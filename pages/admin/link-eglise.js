@@ -197,12 +197,17 @@ export default function LinkEglise() {
         {invitations.map((inv) => {
           const statusStyle = getStatusStyle(inv.statut);
           return (
-            <div key={inv.id} className={`flex flex-col md:flex-row md:items-center px-4 py-2 mt-2 hover:bg-white/20 transition ${statusStyle.border}`}>
-              <div className="flex-1">{inv.eglise_nom}</div>
-              <div className="flex-1">{inv.eglise_branche}</div>
-              <div className="flex-1">{inv.eglise_pays}</div>
-              <div className="flex-1"><span className={`${statusStyle.color} font-semibold`}>{inv.statut.toLowerCase()}</span></div>
-              <div className="flex flex-1 flex-col md:flex-row md:items-center gap-2">
+            <div key={inv.id} className="flex mt-2 hover:bg-white/20 transition">
+  {/* Bordure colorée à gauche avec coin arrondi */}
+  <div className={`${statusStyle.border} w-1 rounded-l-lg`}></div>
+
+  {/* Contenu de la ligne */}
+  <div className="flex-1 flex items-center px-4 py-2">
+    <div className="flex-1">{inv.eglise_nom}</div>
+    <div className="flex-1">{inv.eglise_branche}</div>
+    <div className="flex-1">{inv.eglise_pays}</div>
+    <div className="flex-1"><span className={`${statusStyle.color} font-semibold`}>{inv.statut.toLowerCase()}</span></div>
+    <div className="flex-1 flex gap-2">
                 {inv.statut.toLowerCase() === "pending" || inv.statut.toLowerCase() === "refusee" ? (
                   <>
                     <button

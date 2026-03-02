@@ -54,14 +54,19 @@ function StatGlobalPage() {
       const rootIdValue = profileData.branche_id;
       setRootId(rootIdValue);
 
-      const { data: filteredBranchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
+      const { data: filteredBranchesData } = await supabase.rpc(
+        "get_descendant_branches",
+        { root_id: rootIdValue }
+      );
+
       let filteredfilteredBranchesData = filteredBranchesData;
 
-if (superviseurFilter) {
-  filteredfilteredBranchesData = filteredBranchesData.filter(
-    (b) => b.id === superviseurFilter
-  );
-}
+      if (superviseurFilter) {
+        filteredfilteredBranchesData = filteredBranchesData.filter(
+          (b) => b.id === superviseurFilter
+        );
+      }
+
       if (!filteredBranchesData?.length) {
         setBranchesTree([]);
         setAllBranches([]);
@@ -193,19 +198,15 @@ if (superviseurFilter) {
         });
       }
 
-    // ================= CELLULES =================
-cellulesData.forEach(c => {
-  // Utilise d'abord branche_id si présent, sinon eglise_id
-  const id = c.branche_id || c.eglise_id;
-
-  // Si id n’existe pas dans statsMap, essaie de retrouver la branche par superviseur
-  if (id && statsMap[id]) {
-    statsMap[id].cellules.total++;
-  } else {
-    // Debug : affiche les cellules qui ne correspondent pas
-    console.warn("Cellule non comptée (id non trouvé dans statsMap):", c);
-  }
-});
+      // ================= CELLULES =================
+      cellulesData.forEach(c => {
+        const id = c.branche_id || c.eglise_id;
+        if (id && statsMap[id]) {
+          statsMap[id].cellules.total++;
+        } else {
+          console.warn("Cellule non comptée (id non trouvé dans statsMap):", c);
+        }
+      });
 
       // ================= ARBRE =================
       const map = {};
@@ -220,6 +221,7 @@ cellulesData.forEach(c => {
 
       setBranchesTree(tree);
       setAllBranches(Object.values(map));
+
     } catch (err) {
       console.error("Erreur fetch stats:", err);
       setBranchesTree([]);
@@ -228,70 +230,19 @@ cellulesData.forEach(c => {
     }
     setLoading(false);
   };
-  console.log(branchesTree)
 
-  const renderBranch = (branch, level = 0) => {
+  const BranchItem = ({ branch }) => {
+    const hasChildren = branch.enfants && branch.enfants.length > 0;
     const culteTotal = branch.stats.culte.hommes + branch.stats.culte.femmes + branch.stats.culte.jeunes;
 
     return (
-      <div key={branch.id} className="mt-8">
-        <div className="flex items-center mb-3">
-          {level >= 1 && branch.enfants.length > 0 && (
-            <button
-              onClick={() => toggleExpand(branch.id)}
-              className="mr-2 text-xl"
-            >
-              {expandedBranches.includes(branch.id) ? "➖" : "➕"}
-            </button>
-          )}
-          
-        // Exemple de fonction pour afficher une branche
-function BranchItem({ branch }) {
-  const hasChildren = branch.enfants && branch.enfants.length > 0;
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold">
+          {hasChildren ? `Supervision de ${branch.nom}` : branch.nom}
+        </h3>
 
-  return (
-    <div className="branch-item">
-      {/* Titre principal */}
-      <h3>
-        {hasChildren ? `Supervision de ${branch.nom}` : branch.nom}
-      </h3>
-
-      {/* Stats si besoin */}
-      {branch.stats && (
-        <div className="stats">
-          Hommes: {branch.stats.hommes || 0}, Femmes: {branch.stats.femmes || 0}
-        </div>
-      )}
-
-      {/* Liste des enfants si elle existe */}
-      {hasChildren && (
-        <ul>
-          {branch.enfants.map((child) => (
-            <li key={child.id}>
-              {child.nom} {/* On n’affiche que le nom pour éviter l’erreur */}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-// Exemple d’utilisation
-function BranchList({ branches }) {
-  return (
-    <div>
-      {branches.map((branch) => (
-        <BranchItem key={branch.id} branch={branch} />
-      ))}
-    </div>
-  );
-}
-        </div>
-
-        <div className="w-full overflow-x-auto">
+        <div className="w-full overflow-x-auto mt-2">
           <div className="w-max space-y-2">
-
             {/* HEADER */}
             <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[180px]">Type</div>
@@ -382,7 +333,7 @@ function BranchList({ branches }) {
         {/* RENDER CHILDREN */}
         {branch.enfants.map((child) =>
           level === 0 || expandedBranches.includes(branch.id)
-            ? (child, level + 1)
+            ? <BranchItem key={child.id} branch={child} />
             : null
         )}
       </div>
@@ -390,85 +341,67 @@ function BranchList({ branches }) {
   };
 
   const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
+
   const filteredBranches = (() => {
-  if (!superviseurFilter) return branchesTree;
+    if (!superviseurFilter) return branchesTree;
 
-  const selectedId = superviseurFilter; // 🔥 PAS Number()
+    const selectedId = superviseurFilter;
 
-  const findBranchInTree = (tree) => {
-    for (let branch of tree) {
-      if (branch.id === selectedId) {
-        return branch;
+    const findBranchInTree = (tree) => {
+      for (const node of tree) {
+        if (node.id === selectedId) return [node];
+        const res = findBranchInTree(node.enfants);
+        if (res) return res;
       }
-      const found = findBranchInTree(branch.enfants || []);
-      if (found) return found;
-    }
-    return null;
-  };
+      return null;
+    };
+    return findBranchInTree(branchesTree) || [];
+  })();
 
-  const foundBranch = findBranchInTree(branchesTree);
-
-  return foundBranch ? [foundBranch] : [];
-})();
+  useEffect(() => {
+    fetchStats();
+  }, [dateDebut, dateFin, superviseurFilter]);
 
   return (
-    <div className="min-h-screen bg-[#333699] p-6 text-white">
-      <HeaderPages />
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <HeaderPages title="Statistiques Globales" />
 
-      <h1 className="text-2xl font-bold text-center mb-8">
-        Rapport <span className="text-amber-300">Statistiques Globales</span>
-      </h1>
-
-      <div className="flex justify-center mb-8">
-  <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl flex gap-6 flex-wrap items-end w-fit shadow-lg">
-    
-    <div className="flex flex-col">
-      <label className="text-sm mb-1">Date début</label>
-      <input
-        type="date"
-        value={dateDebut}
-        onChange={(e) => setDateDebut(e.target.value)}
-        className="px-3 py-2 rounded-lg text-black"
-      />
-    </div>
-
-    <div className="flex flex-col">
-      <label className="text-sm mb-1">Date fin</label>
-      <input
-        type="date"
-        value={dateFin}
-        onChange={(e) => setDateFin(e.target.value)}
-        className="px-3 py-2 rounded-lg text-black"
-      />
-    </div>
-
-    <div className="flex flex-col">
-      <label className="text-sm mb-1">Superviseur</label>
-      <select
-        value={superviseurFilter}
-        onChange={(e) => setSuperviseurFilter(e.target.value)}
-        className="px-3 py-2 rounded-lg text-black"
-      >
-        <option value="">Tous</option>
-        {superviseurOptions.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.nom}
-          </option>
-        ))}
-      </select>
-    </div>
-
-    <button
-      onClick={fetchStats}
-      className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition text-white"
+      <main className="flex-1 p-6">
+        <div className="flex flex-wrap gap-4 mb-4">
+          <input
+            type="date"
+            value={dateDebut}
+            onChange={(e) => setDateDebut(e.target.value)}
+            className="p-2 border rounded"
+          />
+          <input
+            type="date"
+            value={dateFin}
+            onChange={(e) => setDateFin(e.target.value)}
+            className="p-2 border rounded"
+          />
+          <select
+            value={superviseurFilter}
+            onChange={(e) => setSuperviseurFilter(e.target.value)}
+            className="p-2 border rounded"
           >
-      {loading ? "Générer..." : "Générer"}
-    </button>
+            <option value="">Toutes les branches</option>
+            {superviseurOptions.map((b) => (
+              <option key={b.id} value={b.id}>{b.nom}</option>
+            ))}
+          </select>
+        </div>
 
-  </div>
-</div>
-
-      {filteredBranches.map((branch) => (branch))}
+        {loading ? (
+          <p>Chargement...</p>
+        ) : filteredBranches.length ? (
+          filteredBranches.map((branch) => (
+            <BranchItem key={branch.id} branch={branch} />
+          ))
+        ) : (
+          <p>Aucune donnée trouvée.</p>
+        )}
+      </main>
 
       <Footer />
     </div>

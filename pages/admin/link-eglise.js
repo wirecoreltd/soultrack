@@ -16,15 +16,20 @@ export default function LinkEglise() {
     branche_nom: ""
   });
 
-  const [responsable, setResponsable] = useState({ prenom: "", nom: "" });
-  const [eglise, setEglise] = useState({ nom: "", branche: "", pays: "" });
+  const [responsable, setResponsable] = useState({
+    prenom: "",
+    nom: ""
+  });
+
+  const [eglise, setEglise] = useState({
+    nom: "",
+    branche: "",
+    pays: ""
+  });
+
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
-  const [actionContext, setActionContext] = useState({
-    type: "send",
-    label: "Envoyer l'invitation",
-    currentId: null
-  });
+  const [actionContext, setActionContext] = useState({type: "send", label: "Envoyer l'invitation", currentId: null});
 
   // 🔹 Charger superviseur connecté
   useEffect(() => {
@@ -38,7 +43,7 @@ export default function LinkEglise() {
         .eq("id", user.id)
         .single();
 
-      if (!error && data) {
+      if (!error) {
         setSuperviseur({
           prenom: data.prenom,
           nom: data.nom,
@@ -49,6 +54,7 @@ export default function LinkEglise() {
         });
       }
     };
+
     loadSuperviseur();
   }, []);
 
@@ -68,20 +74,21 @@ export default function LinkEglise() {
   // 🔹 Style selon statut
   const getStatusStyle = (statut) => {
     switch (statut?.toLowerCase()) {
-      case "acceptee": return { border: "border-l-4 border-green-500 rounded-l-md", color: "text-green-500" };
-      case "refusee": return { border: "border-l-4 border-red-500 rounded-l-md", color: "text-red-500" };
-      case "pending": return { border: "border-l-4 border-yellow-500 rounded-l-md", color: "text-yellow-400" };
-      default: return { border: "border-l-4 border-gray-300 rounded-l-md", color: "text-gray-300" };
+      case "acceptee": return { border: "border-l-4 border-green-500", color: "text-green-500" };
+      case "refusee": return { border: "border-l-4 border-red-500", color: "text-red-500" };
+      case "pending": return { border: "border-l-4 border-yellow-500", color: "text-yellow-400" };
+      case "supprimee": return { border: "border-l-4 border-orange-500", color: "text-orange-500" };
+      default: return { border: "border-l-4 border-gray-300", color: "text-gray-300" };
     }
   };
 
-  // 🔹 Pré-remplissage formulaire pour Rappel/Supprimer/Renvoyer
+  // 🔹 Pré-remplissage formulaire pour Rappel ou Supprimer
   const handleActionClick = (invitation, type) => {
     setResponsable({ prenom: invitation.responsable_prenom, nom: invitation.responsable_nom });
     setEglise({ nom: invitation.eglise_nom, branche: invitation.eglise_branche, pays: invitation.eglise_pays });
     setActionContext({
       type,
-      label: type === "reminder" ? "Envoyer un rappel" : type === "resend" ? "Renvoyer le lien" : "Supprimer l'envoi",
+      label: type === "reminder" ? "Envoyer un rappel" : "Supprimer l'envoi / Renvoyer le lien",
       currentId: invitation.id
     });
     setCanal(""); // reset le mode d'envoi
@@ -99,6 +106,7 @@ export default function LinkEglise() {
 
       {/* FORMULAIRE */}
       <div className="w-full max-w-md rounded-2xl p-6 space-y-4 mb-10 bg-white/10">
+
         <div>
           <label className="font-semibold">Prénom du responsable</label>
           <input
@@ -108,6 +116,7 @@ export default function LinkEglise() {
             required
           />
         </div>
+
         <div>
           <label className="font-semibold">Nom du responsable</label>
           <input
@@ -117,6 +126,7 @@ export default function LinkEglise() {
             required
           />
         </div>
+
         <div>
           <label className="font-semibold">Nom de l'Église</label>
           <input
@@ -126,6 +136,7 @@ export default function LinkEglise() {
             required
           />
         </div>
+
         <div>
           <label className="font-semibold">Branche</label>
           <input
@@ -135,6 +146,7 @@ export default function LinkEglise() {
             required
           />
         </div>
+
         <div>
           <label className="font-semibold">Pays</label>
           <input
@@ -180,13 +192,13 @@ export default function LinkEglise() {
         {invitations.map((inv) => {
           const statusStyle = getStatusStyle(inv.statut);
           return (
-            <div key={inv.id} className="flex flex-col md:flex-row md:items-center px-0 py-2 mt-2 hover:bg-white/20 transition">
+            <div key={inv.id} className="flex flex-col md:flex-row md:items-center mt-2 hover:bg-white/20 transition">
               <div className={`flex-1 px-4 py-2 ${statusStyle.border}`}>{inv.eglise_nom}</div>
               <div className="flex-1 px-4 py-2">{inv.eglise_branche}</div>
               <div className="flex-1 px-4 py-2">{inv.eglise_pays}</div>
-              <div className="flex-1 px-4 py-2"><span className={`${statusStyle.color} font-semibold`}>{inv.statut.toLowerCase()}</span></div>
-              <div className="flex-1 flex gap-2 px-4 py-2">
-                {inv.statut.toLowerCase() === "pending" || inv.statut.toLowerCase() === "refusee" ? (
+              <div className={`flex-1 px-4 py-2 ${statusStyle.color} font-semibold`}>{inv.statut.toLowerCase()}</div>
+              <div className="flex-1 px-4 py-2 flex flex-wrap gap-2">
+                {(inv.statut.toLowerCase() === "pending") && (
                   <>
                     <button
                       className="text-yellow-400 hover:text-yellow-600 font-semibold"
@@ -195,14 +207,21 @@ export default function LinkEglise() {
                     <button
                       className="text-red-400 hover:text-red-600 font-semibold"
                       onClick={() => handleActionClick(inv, "delete")}
-                    >❌ Supprimer</button>
+                    >❌ Supprimer l'envoi</button>
                   </>
-                ) : inv.statut.toLowerCase() === "acceptee" ? (
-                  <button
-                    className="text-red-400 hover:text-red-600 font-semibold"
-                    onClick={() => handleActionClick(inv, "resend")}
-                  >❌ Renvoyer le lien</button>
-                ) : null}
+                )}
+                {(inv.statut.toLowerCase() === "supprimee" || inv.statut.toLowerCase() === "refusee") && (
+                  <>
+                    <button
+                      className="text-blue-400 hover:text-blue-600 font-semibold"
+                      onClick={() => handleActionClick(inv, "resend")}
+                    >🔄 Renvoyer le lien</button>
+                    <button
+                      className="text-red-400 hover:text-red-600 font-semibold"
+                      onClick={() => handleActionClick(inv, "delete")}
+                    >❌ Supprimer l'envoi</button>
+                  </>
+                )}
               </div>
             </div>
           );

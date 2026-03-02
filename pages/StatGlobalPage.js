@@ -245,7 +245,7 @@ cellulesData.forEach(c => {
             </button>
           )}
           
-          <div className={`text-xl font-semibold ${level === 0 ? "text-amber-300" : "text-white"}`}>
+          <div className={`text-xl font-bold ${level === 0 ? "text-amber-300" : "text-white"}`}>
             {branch.nom}
             {branch.enfants.length > 0 && (
               <span className="text-sm text-gray-300 ml-2">
@@ -253,6 +253,7 @@ cellulesData.forEach(c => {
               </span>
             )}
           </div>
+        </div>
 
         <div className="w-full overflow-x-auto">
           <div className="w-max space-y-2">

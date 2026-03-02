@@ -245,11 +245,48 @@ cellulesData.forEach(c => {
             </button>
           )}
           
-        <div className={`text-xl font-bold ${level === 0 ? "text-amber-300" : "text-white"}`}>
-          {level === 0 && branch.enfants.length > 0 && !expandedBranches.includes(branch.id)
-            ? `Supervision de ${branch.nom ? branch.nom : "Inconnu"}`
-            : branch.nom ? branch.nom : "Inconnu"}
+        // Exemple de fonction pour afficher une branche
+function BranchItem({ branch }) {
+  const hasChildren = branch.enfants && branch.enfants.length > 0;
+
+  return (
+    <div className="branch-item">
+      {/* Titre principal */}
+      <h3>
+        {hasChildren ? `Supervision de ${branch.nom}` : branch.nom}
+      </h3>
+
+      {/* Stats si besoin */}
+      {branch.stats && (
+        <div className="stats">
+          Hommes: {branch.stats.hommes || 0}, Femmes: {branch.stats.femmes || 0}
         </div>
+      )}
+
+      {/* Liste des enfants si elle existe */}
+      {hasChildren && (
+        <ul>
+          {branch.enfants.map((child) => (
+            <li key={child.id}>
+              {child.nom} {/* On n’affiche que le nom pour éviter l’erreur */}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// Exemple d’utilisation
+function BranchList({ branches }) {
+  return (
+    <div>
+      {branches.map((branch) => (
+        <BranchItem key={branch.id} branch={branch} />
+      ))}
+    </div>
+  );
+}
         </div>
 
         <div className="w-full overflow-x-auto">

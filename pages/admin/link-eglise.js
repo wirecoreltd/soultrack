@@ -87,9 +87,9 @@ export default function LinkEglise() {
   // 🔹 Style selon statut
   const getStatusStyle = (statut) => {
     switch (statut?.toLowerCase()) {
-      case "acceptee":
+      case "accepted":
         return { border: "border-l-4 border-green-600", button: null };
-      case "refusee":
+      case "refused":
         return { border: "border-l-4 border-red-600", button: "Renvoyer invitation" };
       case "pending":
         return { border: "border-l-4 border-gray-400", button: "Envoyer rappel" };
@@ -98,19 +98,60 @@ export default function LinkEglise() {
     }
   };
 
+  // 🔹 Envoyer rappel WhatsApp
+  const sendReminder = (inv) => {
+    const message = `
+Bonjour ${inv.responsable_prenom} ${inv.responsable_nom},
+
+Ceci est un rappel pour accepter l’invitation de ${superviseur.prenom} ${superviseur.nom} afin que votre église (${inv.eglise_nom}) soit sous supervision.
+
+Lien : https://soultrack-three.vercel.app/accept-invitation?token=${inv.invitation_token}
+    `.trim();
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+  };
+
+  // 🔹 Supprimer invitation avec message personnalisé
+  const deleteInvitation = async (inv) => {
+    const defaultMessage = `
+Bonjour ${inv.responsable_prenom} ${inv.responsable_nom},
+
+Votre invitation pour que l’église ${inv.eglise_nom} soit sous supervision de ${superviseur.prenom} ${superviseur.nom} a été annulée.
+    `.trim();
+
+    const userMessage = prompt(
+      "Écrivez votre message d'annulation pour le responsable :",
+      defaultMessage
+    );
+
+    if (!userMessage) return;
+
+    await supabase
+      .from("eglise_supervisions")
+      .delete()
+      .eq("id", inv.id);
+
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(userMessage)}`,
+      "_blank"
+    );
+
+    loadInvitations();
+  };
+
   return (
-    <div className="min-h-screen bg-[#333699] text-white flex flex-col items-center p-6">
+    <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
       <HeaderPages />
 
-      {/* TITRE FORMULAIRE */}
+      {/* FORMULAIRE */}
       <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
         Envoyer une invitation pour relier une église
       </h4>
 
-      {/* FORMULAIRE */}
       <div className="w-full max-w-md bg-white text-black rounded-2xl shadow-lg p-6 space-y-4 mb-10">
+
         <div>
-          <label className="font-semibold">Prénom du responsable</label>
+          <label className="font-semibold">Prénom du responsable *</label>
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={responsable.prenom}
@@ -121,7 +162,7 @@ export default function LinkEglise() {
         </div>
 
         <div>
-          <label className="font-semibold">Nom du responsable</label>
+          <label className="font-semibold">Nom du responsable *</label>
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={responsable.nom}
@@ -132,7 +173,7 @@ export default function LinkEglise() {
         </div>
 
         <div>
-          <label className="font-semibold">Nom de l'Église</label>
+          <label className="font-semibold">Nom de l'Église *</label>
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={eglise.nom}
@@ -143,7 +184,7 @@ export default function LinkEglise() {
         </div>
 
         <div>
-          <label className="font-semibold">Branche *</label>
+          <label className="font-semibold">Branche / Région *</label>
           <input
             className="w-full border rounded-xl px-3 py-2"
             value={eglise.branche}
@@ -184,21 +225,19 @@ export default function LinkEglise() {
         />
       </div>
 
-      {/* ESPACE TABLE */}
-      <div className="h-10" />
-
-      {/* TITRE TABLE */}
+      {/* TABLE DES INVITATIONS */}
       <h4 className="text-2xl font-bold mt-2 mb-10 text-center w-full max-w-5xl text-amber-300">
         Liste des églises supervisées
       </h4>
 
-      {/* TABLE */}
       <div className="w-full max-w-5xl">
-        <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
+        <div className="grid grid-cols-6 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
           <div>Église</div>
           <div>Branche</div>
+          <div>Pays</div>
           <div>Responsable</div>
           <div>Statut</div>
+          <div>Actions</div>
         </div>
 
         {invitations.map((inv) => {
@@ -207,28 +246,34 @@ export default function LinkEglise() {
           return (
             <div
               key={inv.id}
-              className={`grid grid-cols-4 px-3 py-2 mt-2 rounded-lg ${statusStyle.border} items-center`}
+              className={`grid grid-cols-6 px-3 py-2 mt-2 rounded-lg ${statusStyle.border} items-center`}
             >
               <div>{inv.eglise_nom}</div>
               <div>{inv.eglise_branche}</div>
+              <div>{inv.eglise_pays}</div>
               <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
-              <div className="flex items-center gap-3">
-                <span>{inv.statut}</span>
-                {statusStyle.button && (
+              <div>{inv.statut}</div>
+              <div className="flex items-center gap-2">
+                {statusStyle.button === "Envoyer rappel" && (
                   <button
                     className="text-orange-500 font-semibold text-sm hover:opacity-80"
-                    onClick={() => alert(`${statusStyle.button}`)}
+                    onClick={() => sendReminder(inv)}
                   >
-                    {statusStyle.button}
+                    Renvoyer invitation
                   </button>
                 )}
+                <button
+                  className="text-red-500 font-semibold text-sm hover:opacity-80"
+                  onClick={() => deleteInvitation(inv)}
+                >
+                  Supprimer
+                </button>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* FOOTER */}
       <Footer />
     </div>
   );

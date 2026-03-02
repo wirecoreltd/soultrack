@@ -225,7 +225,7 @@ export default function LinkEglise() {
       <div>{inv.eglise_branche}</div>
       <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
       <div className="capitalize">{statusStyle.label}</div>
-      <div className="flex gap-2">
+      <div className="flex justify-center gap-2">
         {/* 🔹 Action vide si statut = acceptee */}
         {statusStyle.label !== "acceptee" && (
           <>
@@ -233,13 +233,14 @@ export default function LinkEglise() {
               className="text-orange-500 font-semibold text-sm hover:opacity-80"
               onClick={() => startAction(inv, "rappel")}
             >
-              Rappeler
+              Rappel
             </button>
+            <span>|</span>
             <button
               className="text-red-500 font-semibold text-sm hover:opacity-80"
               onClick={() => startAction(inv, "supprimer")}
             >
-              Supprimer
+              🗑️
             </button>
           </>
         )}

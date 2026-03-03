@@ -29,7 +29,7 @@ export default function LinkEglise() {
       if (!user) return;
       const { data, error } = await supabase
         .from("profiles")
-        .select(`prenom, nom, eglise_id, branche_id, eglises ( nom ), branches ( nom )`)
+        .select(`prenom, nom, eglise_id, branche_id, eglises(nom), branches(nom)`)
         .eq("id", user.id)
         .single();
       if (!error && data) {
@@ -68,7 +68,7 @@ export default function LinkEglise() {
     }
   };
 
-  // 🔹 Sélectionner une invitation pour une action
+  // 🔹 Sélectionner invitation pour action
   const handleSelectInvitation = (inv, action) => {
     setSelectedInvitation(inv);
     setModeAction(action);
@@ -76,16 +76,16 @@ export default function LinkEglise() {
     setEglise({ nom: inv.eglise_nom, branche: inv.eglise_branche, pays: inv.eglise_pays });
   };
 
-  // 🔹 Exécuter l'action (rappel, supprimer, casser)
+  // 🔹 Exécuter l'action (nouveau / rappel / supprimer / casser)
   const handleAction = async () => {
-  if (!canal) return;
+    if (!canal) return;
 
-  let message = "";
-  let token = selectedInvitation?.invitation_token || crypto.randomUUID();
+    let message = "";
+    let token = selectedInvitation?.invitation_token || crypto.randomUUID();
 
-  // 🔹 Nouveau formulaire
-  if (!selectedInvitation && !modeAction) {
-    message = `
+    // 🔹 Nouveau formulaire
+    if (!selectedInvitation && !modeAction) {
+      message = `
 🙏 Bonjour ${responsable.prenom} ${responsable.nom},
 
 ${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} vous a envoyé une invitation pour que votre église soit placée sous sa supervision.
@@ -96,11 +96,7 @@ https://soultrack-three.vercel.app/accept-invitation?token=${token}
 
 Que Dieu vous bénisse 🙏
 `;
-
-    // Enregistrer en base
-    const { data, error } = await supabase
-      .from("eglise_supervisions")
-      .insert([{
+      const { error } = await supabase.from("eglise_supervisions").insert([{
         superviseur_eglise_id: superviseur.eglise_id,
         responsable_prenom: responsable.prenom,
         responsable_nom: responsable.nom,
@@ -110,12 +106,12 @@ Que Dieu vous bénisse 🙏
         statut: "pending",
         invitation_token: token
       }]);
-    if (error) { alert("Erreur lors de l'envoi de l'invitation"); return; }
-  }
+      if (error) { alert("Erreur lors de l'envoi de l'invitation"); return; }
+    }
 
-  // 🔹 Rappel
-  if (modeAction === "rappel") {
-    message = `
+    // 🔹 Rappel
+    if (modeAction === "rappel") {
+      message = `
 🙏 Bonjour ${selectedInvitation.responsable_prenom} ${selectedInvitation.responsable_nom},
 
 Ceci est un rappel : ${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} vous a envoyé une invitation pour que votre église soit placée sous sa supervision.
@@ -124,61 +120,45 @@ Lien : https://soultrack-three.vercel.app/accept-invitation?token=${selectedInvi
 
 Que Dieu vous bénisse 🙏
 `;
-  }
+    }
 
-  // 🔹 Supprimer
-  if (modeAction === "supprimer") {
-    message = `
+    // 🔹 Supprimer
+    if (modeAction === "supprimer") {
+      message = `
 ❌ L'invitation de votre église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche}, ${selectedInvitation.eglise_pays} a été supprimée.
 
 Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informations.
 `;
-    await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
-  }
+      await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
+    }
 
-  // 🔹 Casser le lien
-  if (modeAction === "casser") {
-    message = `
+    // 🔹 Casser le lien
+    if (modeAction === "casser") {
+      message = `
 💔 Le lien avec l'église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche} a été cassé.
 `;
-    await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
-  }
+      await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
+    }
 
-  // 🔹 Envoi WhatsApp / Email
-  if (canal === "whatsapp") {
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-  } else if (canal === "email") {
-    window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
-  }
+    // 🔹 Envoi WhatsApp / Email
+    if (canal === "whatsapp") {
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    } else if (canal === "email") {
+      window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
+    }
 
-  alert("Message envoyé !");
-  setModeAction(null);
-  setSelectedInvitation(null);
-  setResponsable({ prenom: "", nom: "" });
-  setEglise({ nom: "", branche: "", pays: "" });
-  setCanal("");
-  loadInvitations();
-};
-
-  // 🔹 Envoi
-  if (canal === "whatsapp") {
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-  } else if (canal === "email") {
-    window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
-  }
-
-  alert("Message envoyé !");
-  setModeAction(null);
-  setSelectedInvitation(null);
-  setResponsable({ prenom: "", nom: "" });
-  setEglise({ nom: "", branche: "", pays: "" });
-  setCanal("");
-};
+    alert("Message envoyé !");
+    setModeAction(null);
+    setSelectedInvitation(null);
+    setResponsable({ prenom: "", nom: "" });
+    setEglise({ nom: "", branche: "", pays: "" });
+    setCanal("");
+    loadInvitations();
+  };
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-4 flex flex-col items-center">
       <HeaderPages />
-
       <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
         {modeAction === "rappel" ? "Envoyer un rappel" :
          modeAction === "supprimer" ? "Supprimer une invitation" :
@@ -209,7 +189,7 @@ Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informat
           <input
             className="w-full border rounded-xl px-3 py-2 text-black"
             value={eglise.nom}
-            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
+            onChange={(e) => setEglise({ ...eglise, nom: eglise.nom })}
           />
         </div>
         <div>
@@ -217,7 +197,7 @@ Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informat
           <input
             className="w-full border rounded-xl px-3 py-2 text-black"
             value={eglise.branche}
-            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+            onChange={(e) => setEglise({ ...eglise, branche: eglise.branche })}
           />
         </div>
         <div>
@@ -225,7 +205,7 @@ Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informat
           <input
             className="w-full border rounded-xl px-3 py-2 text-black"
             value={eglise.pays}
-            onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
+            onChange={(e) => setEglise({ ...eglise, pays: eglise.pays })}
           />
         </div>
         <select
@@ -238,21 +218,19 @@ Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informat
           <option value="email">Email</option>
         </select>
 
-        {/* 🔹 BOUTON ENVOYER / ACTION */}
-{(modeAction || modeAction === null) && (
-  <button
-    onClick={handleAction} // ou handleSend selon l'action
-    disabled={!canal && modeAction !== null} // canal obligatoire pour actions
-    className={`w-full py-2 rounded-xl text-white font-semibold ${
-      !canal && modeAction !== null ? "bg-gray-400 cursor-not-allowed" : "bg-[#333699] hover:bg-[#2a2f85]"
-    }`}
-  >
-    {modeAction === "rappel" && "Envoyer le rappel"}
-    {modeAction === "supprimer" && "Envoyer notification de suppression"}
-    {modeAction === "casser" && "Confirmer le cassage"}
-    {modeAction === null && "Envoyer l'invitation"}
-  </button>
-)}
+        {/* BOUTON ENVOYER / ACTION */}
+        <button
+          onClick={handleAction}
+          disabled={!canal}
+          className={`w-full py-2 rounded-xl text-white font-semibold ${
+            !canal ? "bg-gray-400 cursor-not-allowed" : "bg-[#333699] hover:bg-[#2a2f85]"
+          }`}
+        >
+          {modeAction === "rappel" && "Envoyer le rappel"}
+          {modeAction === "supprimer" && "Envoyer notification de suppression"}
+          {modeAction === "casser" && "Confirmer le cassage"}
+          {modeAction === null && "Envoyer l'invitation"}
+        </button>
       </div>
 
       {/* TABLE INVITATIONS */}
@@ -268,10 +246,7 @@ Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informat
         {invitations.map((inv) => {
           const statusStyle = getStatusStyle(inv.statut);
           return (
-            <div
-              key={inv.id}
-              className="grid grid-cols-5 px-3 py-2 mt-2 items-center border-b border-white/20"
-            >
+            <div key={inv.id} className="grid grid-cols-5 px-3 py-2 mt-2 items-center border-b border-white/20">
               <div>{inv.eglise_nom}</div>
               <div>{inv.eglise_branche}</div>
               <div>{inv.responsable_prenom} {inv.responsable_nom}</div>

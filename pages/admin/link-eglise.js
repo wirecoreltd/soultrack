@@ -15,20 +15,11 @@ export default function LinkEglise() {
     branche_nom: ""
   });
 
-  const [responsable, setResponsable] = useState({
-    prenom: "",
-    nom: ""
-  });
-
-  const [eglise, setEglise] = useState({
-    nom: "",
-    branche: "",
-    pays: ""
-  });
-
+  const [responsable, setResponsable] = useState({ prenom: "", nom: "" });
+  const [eglise, setEglise] = useState({ nom: "", branche: "", pays: "" });
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
-  const [modeAction, setModeAction] = useState(null); // "rappel" ou "supprimer"
+  const [modeAction, setModeAction] = useState(null); // null, "rappel", "supprimer", "casser"
   const [selectedInvitation, setSelectedInvitation] = useState(null);
 
   // 🔹 Charger superviseur connecté
@@ -36,20 +27,11 @@ export default function LinkEglise() {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
       const { data, error } = await supabase
         .from("profiles")
-        .select(`
-          prenom,
-          nom,
-          eglise_id,
-          branche_id,
-          eglises ( nom ),
-          branches ( nom )
-        `)
+        .select(`prenom, nom, eglise_id, branche_id, eglises ( nom ), branches ( nom )`)
         .eq("id", user.id)
         .single();
-
       if (!error && data) {
         setSuperviseur({
           prenom: data.prenom,
@@ -74,10 +56,7 @@ export default function LinkEglise() {
       .order("created_at", { ascending: false });
     if (!error) setInvitations(data || []);
   };
-
-  useEffect(() => {
-    loadInvitations();
-  }, [superviseur.eglise_id]);
+  useEffect(() => { loadInvitations(); }, [superviseur.eglise_id]);
 
   // 🔹 Styles statut
   const getStatusStyle = (statut) => {
@@ -89,13 +68,20 @@ export default function LinkEglise() {
     }
   };
 
-  // 🔹 Fonction pour envoyer message rappel ou suppression
+  // 🔹 Sélectionner une invitation pour une action
+  const handleSelectInvitation = (inv, action) => {
+    setSelectedInvitation(inv);
+    setModeAction(action);
+    setResponsable({ prenom: inv.responsable_prenom, nom: inv.responsable_nom });
+    setEglise({ nom: inv.eglise_nom, branche: inv.eglise_branche, pays: inv.eglise_pays });
+  };
+
+  // 🔹 Exécuter l'action (rappel, supprimer, casser)
   const handleAction = async () => {
     if (!selectedInvitation || !modeAction) return;
-    let message = "";
 
     if (modeAction === "rappel") {
-      message = `
+      const message = `
 🙏 Bonjour ${selectedInvitation.responsable_prenom} ${selectedInvitation.responsable_nom},
 
 Ceci est un rappel : ${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} 
@@ -104,42 +90,26 @@ vous a envoyé une invitation pour que votre église soit supervisée.
 Lien : https://soultrack-three.vercel.app/accept-invitation?token=${selectedInvitation.invitation_token} 
 📌
 `;
-    } else if (modeAction === "supprimer") {
-      message = `
-❌ L'invitation de votre église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche}, ${selectedInvitation.eglise_pays} 
-a été supprimée. Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informations.
-`;
-      // Supprimer l'invitation en base
+      if (canal === "whatsapp") window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+      if (canal === "email") window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
+      alert("Rappel envoyé !");
+    }
+
+    else if (modeAction === "supprimer" || modeAction === "casser") {
       await supabase
         .from("eglise_supervisions")
         .delete()
         .eq("id", selectedInvitation.id);
+      alert(modeAction === "supprimer" ? "Invitation supprimée !" : "Lien cassé !");
       loadInvitations();
     }
 
-    if (canal === "whatsapp") {
-      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-    } else if (canal === "email") {
-      window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
-    }
-
-    alert(`${modeAction === "rappel" ? "Rappel envoyé !" : "Suppression notifiée !"}`);
+    // Reset form
     setModeAction(null);
     setSelectedInvitation(null);
-  };
-
-  const handleSelectInvitation = (inv, action) => {
-    setSelectedInvitation(inv);
-    setModeAction(action);
-    setResponsable({
-      prenom: inv.responsable_prenom,
-      nom: inv.responsable_nom
-    });
-    setEglise({
-      nom: inv.eglise_nom,
-      branche: inv.eglise_branche,
-      pays: inv.eglise_pays
-    });
+    setResponsable({ prenom: "", nom: "" });
+    setEglise({ nom: "", branche: "", pays: "" });
+    setCanal("");
   };
 
   return (
@@ -147,12 +117,14 @@ a été supprimée. Veuillez contacter ${superviseur.prenom} ${superviseur.nom} 
       <HeaderPages />
 
       <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
-        {modeAction === "rappel" ? "Envoyer un rappel" : modeAction === "supprimer" ? "Supprimer une invitation" : "Envoyer une invitation pour relier une église"}
+        {modeAction === "rappel" ? "Envoyer un rappel" :
+         modeAction === "supprimer" ? "Supprimer une invitation" :
+         modeAction === "casser" ? "Casser le lien" :
+         "Envoyer une invitation pour relier une église"}
       </h4>
 
       {/* FORMULAIRE */}
       <div className="w-full max-w-md rounded-2xl shadow-lg p-6 space-y-4 mb-10 bg-white/10">
-
         <div>
           <label className="font-semibold">Prénom du responsable</label>
           <input
@@ -161,7 +133,6 @@ a été supprimée. Veuillez contacter ${superviseur.prenom} ${superviseur.nom} 
             onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
           />
         </div>
-
         <div>
           <label className="font-semibold">Nom du responsable</label>
           <input
@@ -170,7 +141,6 @@ a été supprimée. Veuillez contacter ${superviseur.prenom} ${superviseur.nom} 
             onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
           />
         </div>
-
         <div>
           <label className="font-semibold">Nom de l'Église</label>
           <input
@@ -179,25 +149,22 @@ a été supprimée. Veuillez contacter ${superviseur.prenom} ${superviseur.nom} 
             onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
           />
         </div>
-
         <div>
-          <label className="font-semibold">Branche *</label>
+          <label className="font-semibold">Branche / Région</label>
           <input
             className="w-full border rounded-xl px-3 py-2 text-black"
             value={eglise.branche}
             onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
           />
         </div>
-
         <div>
-          <label className="font-semibold">Pays *</label>
+          <label className="font-semibold">Pays</label>
           <input
             className="w-full border rounded-xl px-3 py-2 text-black"
             value={eglise.pays}
             onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
           />
         </div>
-
         <select
           className="w-full border rounded-xl px-3 py-2 text-black"
           value={canal}
@@ -208,13 +175,16 @@ a été supprimée. Veuillez contacter ${superviseur.prenom} ${superviseur.nom} 
           <option value="email">Email</option>
         </select>
 
-        {modeAction && (
+        {/* BOUTON D’ACTION */}
+        {(modeAction === "rappel" || modeAction === "supprimer" || modeAction === "casser") && (
           <button
             onClick={handleAction}
-            disabled={!canal}
-            className={`w-full py-2 rounded-xl text-white font-semibold ${!canal ? "bg-gray-400 cursor-not-allowed" : "bg-[#333699] hover:bg-[#2a2f85]"}`}
+            disabled={modeAction === "rappel" && !canal}
+            className={`w-full py-2 rounded-xl text-white font-semibold ${modeAction === "rappel" && !canal ? "bg-gray-400 cursor-not-allowed" : "bg-[#333699] hover:bg-[#2a2f85]"}`}
           >
-            {modeAction === "rappel" ? "Envoyer le rappel" : "Envoyer notification de suppression"}
+            {modeAction === "rappel" ? "Envoyer le rappel" :
+             modeAction === "supprimer" ? "Envoyer notification de suppression" :
+             "Casser le lien"}
           </button>
         )}
       </div>
@@ -241,18 +211,30 @@ a été supprimée. Veuillez contacter ${superviseur.prenom} ${superviseur.nom} 
               <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
               <div className={`${statusStyle.color}`}>{inv.statut.toLowerCase()}</div>
               <div className="flex gap-2">
-                <button
-                  onClick={() => handleSelectInvitation(inv, "rappel")}
-                  className="text-orange-500 font-semibold text-sm hover:opacity-80"
-                >
-                  Rappel
-                </button>
-                <button
-                  onClick={() => handleSelectInvitation(inv, "supprimer")}
-                  className="text-red-500 font-semibold text-sm hover:opacity-80"
-                >
-                  Supprimer
-                </button>
+                {inv.statut.toLowerCase() === "acceptee" && (
+                  <button
+                    onClick={() => handleSelectInvitation(inv, "casser")}
+                    className="text-purple-600 font-semibold text-sm hover:opacity-80"
+                  >
+                    Casser le lien
+                  </button>
+                )}
+                {inv.statut.toLowerCase() !== "acceptee" && (
+                  <>
+                    <button
+                      onClick={() => handleSelectInvitation(inv, "rappel")}
+                      className="text-orange-500 font-semibold text-sm hover:opacity-80"
+                    >
+                      Rappel
+                    </button>
+                    <button
+                      onClick={() => handleSelectInvitation(inv, "supprimer")}
+                      className="text-red-500 font-semibold text-sm hover:opacity-80"
+                    >
+                      Supprimer
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           );

@@ -105,6 +105,9 @@ if (choice === "acceptee") {
     })
     .eq("invitation_token", token);
 
+  console.log("UPDATE RESULT:", updateData);
+console.log("UPDATE ERROR:", updateError);
+
   // 🔹 Mettre à jour la branche supervisée
   await supabase
     .from("branches")

@@ -107,18 +107,43 @@ https://soultrack-three.vercel.app/accept-invitation?token=${token}
 
 Que Dieu vous bénisse 🙏
 `;
-      const { error } = await supabase.from("eglise_supervisions").insert([{
-        superviseur_eglise_id: superviseur.eglise_id,
-        responsable_prenom: responsable.prenom,
-        responsable_nom: responsable.nom,
-        eglise_nom: eglise.nom,
-        eglise_branche: eglise.branche,
-        eglise_pays: eglise.pays,
-        statut: "pending",
-        invitation_token: token
-      }]);
-      if (error) { alert("Erreur lors de l'envoi de l'invitation"); return; }
-    }
+      // 1️⃣ Créer la branche supervisée
+const { data: brancheData, error: brancheError } = await supabase
+  .from("branches")
+  .insert({
+    eglise_id: null, // car nouvelle église pas encore liée
+    nom: eglise.branche,
+    localisation: eglise.pays,
+  })
+  .select()
+  .single();
+
+if (brancheError) {
+  alert("Erreur création branche");
+  return;
+}
+
+const superviseeBrancheId = brancheData.id;
+
+// 2️⃣ Créer l’invitation AVEC le branche_id
+const { error } = await supabase
+  .from("eglise_supervisions")
+  .insert([{
+    superviseur_eglise_id: superviseur.eglise_id,
+    supervisee_branche_id: superviseeBrancheId, // 🔥 IMPORTANT
+    responsable_prenom: responsable.prenom,
+    responsable_nom: responsable.nom,
+    eglise_nom: eglise.nom,
+    eglise_branche: eglise.branche,
+    eglise_pays: eglise.pays,
+    statut: "pending",
+    invitation_token: token
+  }]);
+
+if (error) {
+  alert("Erreur lors de l'envoi de l'invitation");
+  return;
+}
 
     // 🔹 Rappel
     if (modeAction === "rappel") {

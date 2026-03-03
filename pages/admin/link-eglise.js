@@ -32,46 +32,6 @@ export default function LinkEglise() {
   const [modeAction, setModeAction] = useState(null); // null, "rappel", "supprimer"
   const [actionInvitation, setActionInvitation] = useState(null);
 
-  const breakLink = async (inv) => {
-  if (!inv) return;
-
-  const confirmation = confirm("Voulez-vous vraiment casser le lien de supervision ?");
-  if (!confirmation) return;
-
-  const { error } = await supabase
-    .from("eglise_supervisions")
-    .update({
-      superviseur_eglise_id: null,
-      statut: "supervision_terminee"
-    })
-    .eq("id", inv.id);
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  const message = `
-Bonjour ${inv.responsable_prenom} ${inv.responsable_nom},
-
-Votre église ${inv.eglise_nom} - ${inv.eglise_branche}, ${inv.eglise_pays}
-n'est plus supervisée par ${superviseur.prenom} ${superviseur.nom}.
-
-Pour plus d'informations, veuillez le contacter.
-
-Que Dieu vous bénisse.
-  `;
-
-  if (canal === "whatsapp") {
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-  } else if (canal === "email") {
-    window.location.href = `mailto:?subject=Fin de supervision SoulTrack&body=${encodeURIComponent(message)}`;
-  }
-
-  alert("Lien de supervision terminé.");
-  loadInvitations();
-};
-
   // 🔹 Charger superviseur connecté
   useEffect(() => {
     const loadSuperviseur = async () => {
@@ -235,55 +195,38 @@ Que Dieu vous bénisse.
             onSuccess={() => { loadInvitations(); resetForm(); }}
           />
         )}
-        </div>
+
+        {/* Ici viendra le composant pour rappel/supprimer dans les prochaines étapes */}
+
+      </div>
 
       {/* TABLE INVITATIONS */}
       <div className="w-full max-w-5xl overflow-x-auto">
 
-       {/* TABLE HEADER */}
-<div className="grid grid-cols-5 font-semibold px-3 py-2 border-b">
-  <div>Église</div>
-  <div>Branche</div>
-  <div>Responsable</div>
-  <div>Status</div>
-  <div className="text-center">Action</div>
-</div>
+        {/* HEADER */}
+        <div className="grid grid-cols-5 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3 gap-2">
+          <div>Église</div>
+          <div>Branche</div>
+          <div>Responsable</div>
+          <div>Statut</div>
+          <div>Action</div>
+        </div>
 
-{/* LIGNES */}
+        {/* LIGNES */}
 {invitations.map((inv) => {
   const statusStyle = getStatusStyle(inv.statut);
 
   return (
     <div
       key={inv.id}
-      className="grid grid-cols-5 px-3 py-2 mt-2 items-center gap-2"
+      className={`grid grid-cols-5 px-3 py-2 mt-2 items-center gap-2`}
     >
       <div>{inv.eglise_nom}</div>
-
       <div>{inv.eglise_branche}</div>
-
-      <div>
-        {inv.responsable_prenom} {inv.responsable_nom}
-      </div>
-
-      <div className="capitalize">
-        {statusStyle.label}
-      </div>
-
-      {/* ACTION */}
+      <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
+      <div className="capitalize">{statusStyle.label}</div>
       <div className="flex justify-center gap-2">
-
-        {/* CAS ACCEPTEE */}
-        {statusStyle.label === "acceptee" && (
-          <button
-            className="text-purple-600 font-semibold text-sm hover:opacity-80"
-            onClick={() => startAction(inv, "casser")}
-          >
-            Casser le lien
-          </button>
-        )}
-
-        {/* AUTRES STATUS */}
+        {/* 🔹 Action vide si statut = acceptee */}
         {statusStyle.label !== "acceptee" && (
           <>
             <button
@@ -292,9 +235,7 @@ Que Dieu vous bénisse.
             >
               Rappel
             </button>
-
             <span>|</span>
-
             <button
               className="text-red-500 font-semibold text-sm hover:opacity-80"
               onClick={() => startAction(inv, "supprimer")}
@@ -303,7 +244,6 @@ Que Dieu vous bénisse.
             </button>
           </>
         )}
-
       </div>
     </div>
   );

@@ -174,7 +174,6 @@ Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informat
   setEglise({ nom: "", branche: "", pays: "" });
   setCanal("");
 };
-}
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-4 flex flex-col items-center">

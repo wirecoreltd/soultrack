@@ -143,7 +143,7 @@ const { error } = await supabase
 if (error) {
   alert("Erreur lors de l'envoi de l'invitation");
   return;
-}
+
 
     // 🔹 Rappel
     if (modeAction === "rappel") {

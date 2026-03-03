@@ -77,36 +77,43 @@ Vous ne pouvez pas accepter une autre supervision.`);
 
   let superviseur_branche_id = null;
 
-  if (choice === "acceptee") {
-    // 1️⃣ Chercher la branche du superviseur
-    const { data: brancheExist, error } = await supabase
-      .from("branches")
-      .select("id")
-      .eq("eglise_id", invitation.superviseur_eglise_id)
-      .eq("nom", invitation.eglise_branche)
-      .single();
+if (choice === "acceptee") {
 
-    if (brancheExist) {
-      superviseur_branche_id = brancheExist.id;
-    } else {
-      // 2️⃣ Créer la branche si elle n'existe pas
-      const { data: newBranche, error: insertError } = await supabase
-        .from("branches")
-        .insert([{
-          nom: invitation.eglise_branche,
-          eglise_id: invitation.superviseur_eglise_id,
-        }])
-        .select()
-        .single();
+  // 🔹 Trouver UNE branche du superviseur
+  const { data: brancheSup, error: brancheError } = await supabase
+    .from("branches")
+    .select("id, nom")
+    .eq("eglise_id", invitation.superviseur_eglise_id)
+    .limit(1)
+    .single();
 
-      if (newBranche) superviseur_branche_id = newBranche.id;
-      if (insertError) {
-        console.error("Erreur création branche superviseur", insertError);
-        setSubmitting(false);
-        return;
-      }
-    }
+  if (brancheError || !brancheSup) {
+    console.error("Impossible de trouver la branche du superviseur");
+    setSubmitting(false);
+    return;
   }
+
+  superviseur_branche_id = brancheSup.id;
+
+  // 🔹 Mettre à jour la supervision
+  await supabase
+    .from("eglise_supervisions")
+    .update({
+      statut: "acceptee",
+      approved_at: new Date().toISOString(),
+      superviseur_branche_id: superviseur_branche_id
+    })
+    .eq("invitation_token", token);
+
+  // 🔹 Mettre à jour la branche supervisée
+  await supabase
+    .from("branches")
+    .update({
+      superviseur_id: invitation.superviseur_eglise_id,
+      superviseur_nom: brancheSup.nom
+    })
+    .eq("id", invitation.supervisee_branche_id);
+}
 
   // 3️⃣ Préparer l'objet de mise à jour
   const updates = {

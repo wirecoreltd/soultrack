@@ -42,7 +42,7 @@ export default function LinkEglise() {
     .from("eglise_supervisions")
     .update({
       superviseur_eglise_id: null,
-      statut: "lien_casse"
+      statut: "supervision_terminee"
     })
     .eq("id", inv.id);
 
@@ -68,7 +68,7 @@ Que Dieu vous bénisse.
     window.location.href = `mailto:?subject=Fin de supervision SoulTrack&body=${encodeURIComponent(message)}`;
   }
 
-  alert("Lien de supervision cassé.");
+  alert("Lien de supervision terminé.");
   loadInvitations();
 };
 
@@ -235,9 +235,7 @@ Que Dieu vous bénisse.
             onSuccess={() => { loadInvitations(); resetForm(); }}
           />
         )}
-
-        {/* Ici viendra le composant pour rappel/supprimer dans les prochaines étapes */}
-
+        }
       </div>
 
       {/* TABLE INVITATIONS */}
@@ -267,24 +265,46 @@ Que Dieu vous bénisse.
       <div className="capitalize">{statusStyle.label}</div>
 
       <div className="flex justify-center gap-2">
-        {statusStyle.label !== "acceptee" && (
-          <>
-            <button
-              className="text-orange-500 font-semibold text-sm hover:opacity-80"
-              onClick={() => startAction(inv, "rappel")}
-            >
-              Rappel
-            </button>
-            <span>|</span>
-            <button
-              className="text-red-500 font-semibold text-sm hover:opacity-80"
-              onClick={() => startAction(inv, "supprimer")}
-            >
-              🗑️
-            </button>
-          </>
-        )}
-      </div>
+
+  {/* CAS ACCEPTEE */}
+  {statusStyle.label === "acceptee" && (
+    <>
+      <button
+        className="text-purple-600 font-semibold text-sm hover:opacity-80"
+        onClick={() => startAction(inv, "casser")}
+      >
+        Casser le lien
+      </button>
+      <span>|</span>
+      <button
+        className="text-red-500 font-semibold text-sm hover:opacity-80"
+        onClick={() => startAction(inv, "supprimer")}
+      >
+        🗑️
+      </button>
+    </>
+  )}
+
+  {/* AUTRES STATUS */}
+  {statusStyle.label !== "acceptee" && (
+    <>
+      <button
+        className="text-orange-500 font-semibold text-sm hover:opacity-80"
+        onClick={() => startAction(inv, "rappel")}
+      >
+        Rappel
+      </button>
+      <span>|</span>
+      <button
+        className="text-red-500 font-semibold text-sm hover:opacity-80"
+        onClick={() => startAction(inv, "supprimer")}
+      >
+        🗑️
+      </button>
+    </>
+  )}
+
+</div>
     </div>
   );
 })}

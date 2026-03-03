@@ -241,16 +241,16 @@ Que Dieu vous bénisse.
       {/* TABLE INVITATIONS */}
       <div className="w-full max-w-5xl overflow-x-auto">
 
-        {/* HEADER */}
-        <div className="grid grid-cols-5 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3 gap-2">
-          <div>Église</div>
-          <div>Branche</div>
-          <div>Responsable</div>
-          <div>Statut</div>
-          <div>Action</div>
-        </div>
+       {/* TABLE HEADER */}
+<div className="grid grid-cols-5 font-semibold px-3 py-2 border-b">
+  <div>Église</div>
+  <div>Branche</div>
+  <div>Responsable</div>
+  <div>Status</div>
+  <div className="text-center">Action</div>
+</div>
 
-       {/* LIGNES */}
+{/* LIGNES */}
 {invitations.map((inv) => {
   const statusStyle = getStatusStyle(inv.statut);
 
@@ -260,42 +260,52 @@ Que Dieu vous bénisse.
       className="grid grid-cols-5 px-3 py-2 mt-2 items-center gap-2"
     >
       <div>{inv.eglise_nom}</div>
-      <div>{inv.eglise_branche}</div>
-      <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
-      <div className="capitalize">{statusStyle.label}</div>
 
+      <div>{inv.eglise_branche}</div>
+
+      <div>
+        {inv.responsable_prenom} {inv.responsable_nom}
+      </div>
+
+      <div className="capitalize">
+        {statusStyle.label}
+      </div>
+
+      {/* ACTION */}
       <div className="flex justify-center gap-2">
 
-  {/* CAS ACCEPTEE */}
-  {statusStyle.label === "acceptee" && (
-    <button
-      className="text-purple-600 font-semibold text-sm hover:opacity-80"
-      onClick={() => startAction(inv, "casser")}
-    >
-      Casser le lien
-    </button>
-  )}
+        {/* CAS ACCEPTEE */}
+        {statusStyle.label === "acceptee" && (
+          <button
+            className="text-purple-600 font-semibold text-sm hover:opacity-80"
+            onClick={() => startAction(inv, "casser")}
+          >
+            Casser le lien
+          </button>
+        )}
 
-  {/* AUTRES STATUS */}
-  {statusStyle.label !== "acceptee" && (
-    <>
-      <button
-        className="text-orange-500 font-semibold text-sm hover:opacity-80"
-        onClick={() => startAction(inv, "rappel")}
-      >
-        Rappel
-      </button>
-      <span>|</span>
-      <button
-        className="text-red-500 font-semibold text-sm hover:opacity-80"
-        onClick={() => startAction(inv, "supprimer")}
-      >
-        🗑️
-      </button>
-    </>
-  )}
+        {/* AUTRES STATUS */}
+        {statusStyle.label !== "acceptee" && (
+          <>
+            <button
+              className="text-orange-500 font-semibold text-sm hover:opacity-80"
+              onClick={() => startAction(inv, "rappel")}
+            >
+              Rappel
+            </button>
 
-</div>
+            <span>|</span>
+
+            <button
+              className="text-red-500 font-semibold text-sm hover:opacity-80"
+              onClick={() => startAction(inv, "supprimer")}
+            >
+              🗑️
+            </button>
+          </>
+        )}
+
+      </div>
     </div>
   );
 })}

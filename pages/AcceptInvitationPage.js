@@ -64,36 +64,60 @@ export default function AcceptInvitation() {
   }, [router.isReady, token]);
 
   const handleSubmit = async () => {
-    if (!choice) return;
-    setSubmitting(true);
+  if (!choice) return;
+  setSubmitting(true);
 
-    // 🔹 Empêcher l'acceptation si déjà supervisée
-    if (choice === "acceptee" && alreadySupervised) {
-  alert(`⚠️ Cette église/branche est déjà supervisée par ${currentSupervisor}.
+  // 🔹 Empêcher l'acceptation si déjà supervisée
+  if (choice === "acceptee" && alreadySupervised) {
+    alert(`⚠️ Cette église/branche est déjà supervisée par ${currentSupervisor}.
 Vous ne pouvez pas accepter une autre supervision. Veuillez contacter votre superviseur actuel.`);
-  setSubmitting(false);
-  return;
-}
-    // 🔹 Préparer l'objet de mise à jour
-    const updates = {
-      statut: choice,
-      approved_at: choice === "acceptee" ? new Date().toISOString() : null,
-    };
+    setSubmitting(false);
+    return;
+  }
 
-    if (choice === "acceptee") {
-      updates.superviseur_eglise_id = invitation.superviseur_eglise_id;
+  let superviseur_branche_id = null;
+
+  if (choice === "acceptee") {
+    // Chercher la branche du superviseur
+    const { data: brancheExist } = await supabase
+      .from("branches")
+      .select("id")
+      .eq("eglise_id", invitation.superviseur_eglise_id)
+      .eq("nom", invitation.eglise_branche)
+      .single();
+
+    if (brancheExist) {
+      superviseur_branche_id = brancheExist.id;
+    } else {
+      // Créer la branche si elle n'existe pas
+      const { data: newBranche } = await supabase
+        .from("branches")
+        .insert([{ nom: invitation.eglise_branche, eglise_id: invitation.superviseur_eglise_id }])
+        .select()
+        .single();
+
+      if (newBranche) superviseur_branche_id = newBranche.id;
     }
+  }
 
-    await supabase
-      .from("eglise_supervisions")
-      .update(updates)
-      .eq("invitation_token", token);
-
-    setMessage("Décision enregistrée.");
-
-    // Redirection après 3 secondes
-    setTimeout(() => router.push("/"), 3000);
+  // 🔹 Préparer l'objet de mise à jour
+  const updates = {
+    statut: choice,
+    approved_at: choice === "acceptee" ? new Date().toISOString() : null,
+    superviseur_branche_id: superviseur_branche_id || null, // ✅ Ajouté
+    superviseur_eglise_id: invitation.superviseur_eglise_id
   };
+
+  await supabase
+    .from("eglise_supervisions")
+    .update(updates)
+    .eq("invitation_token", token);
+
+  setMessage("Décision enregistrée.");
+
+  // Redirection après 3 secondes
+  setTimeout(() => router.push("/"), 3000);
+};
 
   if (loading) return <div className="p-10">Chargement…</div>;
   if (!invitation) return <div className="p-10">Invitation introuvable</div>;

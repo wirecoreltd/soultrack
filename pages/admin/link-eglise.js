@@ -118,7 +118,30 @@ const handleAcceptInvitation = async (invitation) => {
     .eq("nom", eglise.branche)
     .single();
 
-  let superviseur_branche_id = brancheData?.data?.id || null;
+  // 🔹 Obtenir ou créer la branche pour superviseur_branche_id
+let superviseur_branche_id = null;
+if (eglise.branche) {
+  // Chercher la branche
+  const { data: brancheExist, error: err1 } = await supabase
+    .from("branches")
+    .select("id")
+    .eq("eglise_id", superviseur.eglise_id)
+    .eq("nom", eglise.branche)
+    .single();
+
+  if (brancheExist) {
+    superviseur_branche_id = brancheExist.id;
+  } else {
+    // Créer la branche si elle n'existe pas
+    const { data: newBranche, error: err2 } = await supabase
+      .from("branches")
+      .insert([{ nom: eglise.branche, eglise_id: superviseur.eglise_id }])
+      .select()
+      .single();
+
+    if (newBranche) superviseur_branche_id = newBranche.id;
+  }
+}
 
   // 🔹 Nouveau formulaire
   if (!selectedInvitation && !modeAction) {

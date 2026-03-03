@@ -185,19 +185,24 @@ export default function LinkEglise() {
         </select>
 
         {/* 🔹 BOUTON ENVOYER LORSQUE FORMULAIRE VIERGE */}
-        {!modeAction && (
+        {modeAction && (
           <SendEgliseLinkPopup
-            label="Envoyer"
+            label={
+              modeAction === "rappel"
+                ? "Confirmer le rappel"
+                : modeAction === "supprimer"
+                ? "Confirmer la suppression"
+                : "Confirmer la rupture"
+            }
             type={canal}
             superviseur={superviseur}
             responsable={responsable}
             eglise={eglise}
+            modeAction={modeAction}
+            actionInvitation={actionInvitation}
             onSuccess={() => { loadInvitations(); resetForm(); }}
           />
-        )}
-
-        {/* Ici viendra le composant pour rappel/supprimer dans les prochaines étapes */}
-
+        )}      
       </div>
 
       {/* TABLE INVITATIONS */}

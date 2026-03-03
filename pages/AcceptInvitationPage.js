@@ -179,19 +179,13 @@ export default function AcceptInvitation() {
             </div>
 
             <button
-              onClick={handleSubmit}
-              disabled={submitting || !choice}
-              className="w-full mt-4 bg-[#333699] text-white py-2 rounded-xl font-semibold disabled:opacity-50"
-            >
-              Confirmer
-            </button>
-                <button
   onClick={() => {
     console.log("BOUTON CLIQUÉ");
   }}
 >
   Tester
 </button>
+                
           </>
         )}
 

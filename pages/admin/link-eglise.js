@@ -268,21 +268,12 @@ Que Dieu vous bénisse.
 
   {/* CAS ACCEPTEE */}
   {statusStyle.label === "acceptee" && (
-    <>
-      <button
-        className="text-purple-600 font-semibold text-sm hover:opacity-80"
-        onClick={() => startAction(inv, "casser")}
-      >
-        Casser le lien
-      </button>
-      <span>|</span>
-      <button
-        className="text-red-500 font-semibold text-sm hover:opacity-80"
-        onClick={() => startAction(inv, "supprimer")}
-      >
-        🗑️
-      </button>
-    </>
+    <button
+      className="text-purple-600 font-semibold text-sm hover:opacity-80"
+      onClick={() => startAction(inv, "casser")}
+    >
+      Casser le lien
+    </button>
   )}
 
   {/* AUTRES STATUS */}

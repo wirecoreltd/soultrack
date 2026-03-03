@@ -87,65 +87,16 @@ export default function LinkEglise() {
   });
 };
 
-  // Après qu'une invitation est acceptée
-const handleAcceptInvitation = async (invitation) => {
-  // Mettre à jour la branche du superviseur
-  const { data, error } = await supabase
-    .from("profiles")
-    .update({ branche_id: invitation.branche_id }) // ici on prend la branche de l'église acceptée
-    .eq("eglise_id", invitation.superviseur_eglise_id);
-
-  if (error) {
-    console.error("Erreur mise à jour superviseur_brache_id :", error);
-    return;
-  }
-
-  alert("La branche du superviseur a été mise à jour automatiquement !");
-};
-
   // 🔹 Exécuter l'action (nouveau / rappel / supprimer / casser)
   const handleAction = async () => {
-  if (!canal) return;
+    if (!canal) return;
 
-  let message = "";
-  let token = selectedInvitation?.invitation_token || crypto.randomUUID();
+    let message = "";
+    let token = selectedInvitation?.invitation_token || crypto.randomUUID();
 
-  // 🔹 Chercher l'ID de la branche correspondante
-  let brancheData = await supabase
-    .from("branches")
-    .select("id")
-    .eq("eglise_id", superviseur.eglise_id)
-    .eq("nom", eglise.branche)
-    .single();
-
-  // 🔹 Obtenir ou créer la branche pour superviseur_branche_id
-let superviseur_branche_id = null;
-if (eglise.branche) {
-  // Chercher la branche
-  const { data: brancheExist, error: err1 } = await supabase
-    .from("branches")
-    .select("id")
-    .eq("eglise_id", superviseur.eglise_id)
-    .eq("nom", eglise.branche)
-    .single();
-
-  if (brancheExist) {
-    superviseur_branche_id = brancheExist.id;
-  } else {
-    // Créer la branche si elle n'existe pas
-    const { data: newBranche, error: err2 } = await supabase
-      .from("branches")
-      .insert([{ nom: eglise.branche, eglise_id: superviseur.eglise_id }])
-      .select()
-      .single();
-
-    if (newBranche) superviseur_branche_id = newBranche.id;
-  }
-}
-
-  // 🔹 Nouveau formulaire
-  if (!selectedInvitation && !modeAction) {
-    message = `
+    // 🔹 Nouveau formulaire
+    if (!selectedInvitation && !modeAction) {
+      message = `
 🙏 Bonjour ${responsable.prenom} ${responsable.nom},
 
 ${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} vous a envoyé une invitation pour que votre église soit placée sous sa supervision.
@@ -156,13 +107,8 @@ https://soultrack-three.vercel.app/accept-invitation?token=${token}
 
 Que Dieu vous bénisse 🙏
 `;
-
-    // Enregistrer en base avec superviseur_branche_id
-    const { data, error } = await supabase
-      .from("eglise_supervisions")
-      .insert([{
+      const { error } = await supabase.from("eglise_supervisions").insert([{
         superviseur_eglise_id: superviseur.eglise_id,
-        superviseur_branche_id: superviseur_branche_id,
         responsable_prenom: responsable.prenom,
         responsable_nom: responsable.nom,
         eglise_nom: eglise.nom,
@@ -171,12 +117,12 @@ Que Dieu vous bénisse 🙏
         statut: "pending",
         invitation_token: token
       }]);
-    if (error) { alert("Erreur lors de l'envoi de l'invitation"); return; }
-  }
+      if (error) { alert("Erreur lors de l'envoi de l'invitation"); return; }
+    }
 
-  // 🔹 Rappel
-  if (modeAction === "rappel") {
-    message = `
+    // 🔹 Rappel
+    if (modeAction === "rappel") {
+      message = `
 🙏 Bonjour ${selectedInvitation.responsable_prenom} ${selectedInvitation.responsable_nom},
 
 Ceci est un rappel : ${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} vous a envoyé une invitation pour que votre église soit placée sous sa supervision.
@@ -185,49 +131,41 @@ Lien : https://soultrack-three.vercel.app/accept-invitation?token=${selectedInvi
 
 Que Dieu vous bénisse 🙏
 `;
-  }
+    }
 
-  // 🔹 Supprimer
-  if (modeAction === "supprimer") {
-    message = `
+    // 🔹 Supprimer
+    if (modeAction === "supprimer") {
+      message = `
 ❌ L'invitation de votre église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche}, ${selectedInvitation.eglise_pays} a été supprimée.
 
 Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informations.
 `;
-    await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
-  }
+      await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
+    }
 
-  // 🔹 Casser le lien
-  if (modeAction === "casser") {
-    message = `
+    // 🔹 Casser le lien
+    if (modeAction === "casser") {
+      message = `
 💔 Le lien avec l'église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche} a été cassé.
 `;
-    await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
-  }
+      await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
+    }
 
-  // 🔹 Si l'invitation est acceptée, mettre à jour superviseur_branche_id
-  if (selectedInvitation?.statut?.toLowerCase() === "acceptee" && superviseur_branche_id) {
-    await supabase
-      .from("eglise_supervisions")
-      .update({ superviseur_branche_id })
-      .eq("id", selectedInvitation.id);
-  }
+    // 🔹 Envoi WhatsApp / Email
+    if (canal === "whatsapp") {
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    } else if (canal === "email") {
+      window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
+    }
 
-  // 🔹 Envoi WhatsApp / Email
-  if (canal === "whatsapp") {
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-  } else if (canal === "email") {
-    window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
-  }
-
-  alert("Message envoyé !");
-  setModeAction(null);
-  setSelectedInvitation(null);
-  setResponsable({ prenom: "", nom: "" });
-  setEglise({ nom: "", branche: "", pays: "" });
-  setCanal("");
-  loadInvitations();
-};
+    alert("Message envoyé !");
+    setModeAction(null);
+    setSelectedInvitation(null);
+    setResponsable({ prenom: "", nom: "" });
+    setEglise({ nom: "", branche: "", pays: "" });
+    setCanal("");
+    loadInvitations();
+  };
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-4 flex flex-col items-center">

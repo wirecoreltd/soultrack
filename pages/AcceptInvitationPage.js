@@ -221,6 +221,7 @@ if (choice === "acceptee") {
   </option>
   <option value="refusee">Refuser</option>
   <option value="pending">En attente</option>
+  <option value="acceptee">TEST ACCEPTER</option>  
 </select>
             </div>
 

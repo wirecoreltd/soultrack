@@ -185,6 +185,13 @@ export default function AcceptInvitation() {
             >
               Confirmer
             </button>
+                <button
+  onClick={() => {
+    console.log("BOUTON CLIQUÉ");
+  }}
+>
+  Tester
+</button>
           </>
         )}
 

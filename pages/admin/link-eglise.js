@@ -70,11 +70,22 @@ export default function LinkEglise() {
 
   // 🔹 Sélectionner invitation pour action
   const handleSelectInvitation = (inv, action) => {
-    setSelectedInvitation(inv);
-    setModeAction(action);
-    setResponsable({ prenom: inv.responsable_prenom, nom: inv.responsable_nom });
-    setEglise({ nom: inv.eglise_nom, branche: inv.eglise_branche, pays: inv.eglise_pays });
-  };
+  setSelectedInvitation(inv);
+  setModeAction(action);
+
+  // Pré-remplir le responsable
+  setResponsable({
+    prenom: inv.responsable_prenom,
+    nom: inv.responsable_nom
+  });
+
+  // Pré-remplir les informations de l'église
+  setEglise({
+    nom: inv.eglise_nom,
+    branche: inv.eglise_branche,
+    pays: inv.eglise_pays
+  });
+};
 
   // 🔹 Exécuter l'action (nouveau / rappel / supprimer / casser)
   const handleAction = async () => {
@@ -167,71 +178,76 @@ Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informat
       </h4>
 
       {/* FORMULAIRE */}
-      <div className="w-full max-w-md rounded-2xl shadow-lg p-6 space-y-4 mb-10 bg-white/10">
-        <div>
-          <label className="font-semibold">Prénom du responsable</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 text-black"
-            value={responsable.prenom}
-            onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
-          />
-        </div>
-        <div>
-          <label className="font-semibold">Nom du responsable</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 text-black"
-            value={responsable.nom}
-            onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
-          />
-        </div>
-        <div>
-          <label className="font-semibold">Nom de l'Église</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 text-black"
-            value={eglise.nom}
-            onChange={(e) => setEglise({ ...eglise, nom: eglise.nom })}
-          />
-        </div>
-        <div>
-          <label className="font-semibold">Branche / Région</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 text-black"
-            value={eglise.branche}
-            onChange={(e) => setEglise({ ...eglise, branche: eglise.branche })}
-          />
-        </div>
-        <div>
-          <label className="font-semibold">Pays</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 text-black"
-            value={eglise.pays}
-            onChange={(e) => setEglise({ ...eglise, pays: eglise.pays })}
-          />
-        </div>
-        <select
-          className="w-full border rounded-xl px-3 py-2 text-black"
-          value={canal}
-          onChange={(e) => setCanal(e.target.value)}
-        >
-          <option value="">-- Sélectionnez le mode d’envoi --</option>
-          <option value="whatsapp">WhatsApp</option>
-          <option value="email">Email</option>
-        </select>
+<div className="w-full max-w-md rounded-2xl shadow-lg p-6 space-y-4 mb-10 bg-white/10">
+  <div>
+    <label className="font-semibold">Prénom du responsable</label>
+    <input
+      className="w-full border rounded-xl px-3 py-2 text-black"
+      value={responsable.prenom}
+      onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
+    />
+  </div>
+  <div>
+    <label className="font-semibold">Nom du responsable</label>
+    <input
+      className="w-full border rounded-xl px-3 py-2 text-black"
+      value={responsable.nom}
+      onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
+    />
+  </div>
+  <div>
+    <label className="font-semibold">Nom de l'Église *</label>
+    <input
+      className="w-full border rounded-xl px-3 py-2 text-black"
+      value={eglise.nom}
+      onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
+    />
+  </div>
+  <div>
+    <label className="font-semibold">Branche / Région *</label>
+    <input
+      className="w-full border rounded-xl px-3 py-2 text-black"
+      value={eglise.branche}
+      onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+    />
+  </div>
+  <div>
+    <label className="font-semibold">Pays *</label>
+    <input
+      className="w-full border rounded-xl px-3 py-2 text-black"
+      value={eglise.pays}
+      onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
+    />
+  </div>
+  <select
+    className="w-full border rounded-xl px-3 py-2 text-black"
+    value={canal}
+    onChange={(e) => setCanal(e.target.value)}
+  >
+    <option value="">-- Sélectionnez le mode d’envoi --</option>
+    <option value="whatsapp">WhatsApp</option>
+    <option value="email">Email</option>
+  </select>
 
-        {/* BOUTON ENVOYER / ACTION */}
-        <button
-          onClick={handleAction}
-          disabled={!canal}
-          className={`w-full py-2 rounded-xl text-white font-semibold ${
-            !canal ? "bg-gray-400 cursor-not-allowed" : "bg-[#333699] hover:bg-[#2a2f85]"
-          }`}
-        >
-          {modeAction === "rappel" && "Envoyer le rappel"}
-          {modeAction === "supprimer" && "Envoyer notification de suppression"}
-          {modeAction === "casser" && "Confirmer le cassage"}
-          {modeAction === null && "Envoyer l'invitation"}
-        </button>
-      </div>
+  {/* BOUTON ENVOYER / ACTION */}
+  <button
+    onClick={handleAction}
+    disabled={
+      !canal || 
+      (!selectedInvitation && (!eglise.nom || !eglise.branche || !eglise.pays))
+    } // canal + champs obligatoires
+    className={`w-full py-2 rounded-xl text-white font-semibold ${
+      !canal || (!selectedInvitation && (!eglise.nom || !eglise.branche || !eglise.pays))
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-[#333699] hover:bg-[#2a2f85]"
+    }`}
+  >
+    {modeAction === "rappel" && "Envoyer le rappel"}
+    {modeAction === "supprimer" && "Envoyer notification de suppression"}
+    {modeAction === "casser" && "Confirmer le cassage"}
+    {modeAction === null && "Envoyer l'invitation"}
+  </button>
+</div>
 
       {/* TABLE INVITATIONS */}
       <div className="w-full max-w-5xl overflow-x-auto">

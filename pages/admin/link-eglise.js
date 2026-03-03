@@ -235,8 +235,7 @@ Que Dieu vous bénisse.
             onSuccess={() => { loadInvitations(); resetForm(); }}
           />
         )}
-        }
-      </div>
+        </div>
 
       {/* TABLE INVITATIONS */}
       <div className="w-full max-w-5xl overflow-x-auto">

@@ -63,13 +63,13 @@ export default function AcceptInvitation() {
     fetchInvitation();
   }, [router.isReady, token]);
 
-  const handleSubmit = async () => {
+    const handleSubmit = async () => {
   if (!choice) return;
   setSubmitting(true);
 
   // Empêcher l'acceptation si déjà supervisée
   if (choice === "acceptee" && alreadySupervised) {
-    alert(`⚠️ Cette église/branche est déjà supervisée par ${currentSupervisor}.
+  alert(`⚠️ Cette église/branche est déjà supervisée par ${currentSupervisor}.
 Vous ne pouvez pas accepter une autre supervision.`);
     setSubmitting(false);
     return;
@@ -78,7 +78,8 @@ Vous ne pouvez pas accepter une autre supervision.`);
   let superviseur_branche_id = null;
 
 if (choice === "acceptee") {
-
+console.log("branche superviseur id :", superviseur_branche_id);
+console.log("branche à mettre à jour :", invitation.supervisee_branche_id);
   // 🔹 Trouver UNE branche du superviseur
   const { data: brancheSup, error: brancheError } = await supabase
     .from("branches")

@@ -69,11 +69,11 @@ export default function AcceptInvitation() {
 
     // 🔹 Empêcher l'acceptation si déjà supervisée
     if (choice === "acceptee" && alreadySupervised) {
-      alert(`⚠️ Cette église/branche est déjà supervisée par ${currentSupervisor}.\nVous ne pouvez pas accepter une autre supervision. Veuillez contacter votre superviseur actuel.`);
-      setSubmitting(false);
-      return;
-    }
-
+  alert(`⚠️ Cette église/branche est déjà supervisée par ${currentSupervisor}.
+Vous ne pouvez pas accepter une autre supervision. Veuillez contacter votre superviseur actuel.`);
+  setSubmitting(false);
+  return;
+}
     // 🔹 Préparer l'objet de mise à jour
     const updates = {
       statut: choice,
@@ -137,15 +137,17 @@ export default function AcceptInvitation() {
             <div className="mt-4">
               <label className="block font-semibold mb-1">Votre décision</label>
               <select
-                value={choice}
-                onChange={(e) => setChoice(e.target.value)}
-                className="w-full border rounded-xl p-2"
-              >
-                <option value="">-- Choisir --</option>
-                {!alreadySupervised && <option value="acceptee">Accepter</option>}
-                <option value="refusee">Refuser</option>
-                <option value="pending">En attente</option>
-              </select>
+  value={choice}
+  onChange={(e) => setChoice(e.target.value)}
+  className="w-full border rounded-xl p-2"
+>
+  <option value="">-- Choisir --</option>
+  <option value="acceptee" disabled={alreadySupervised}>
+    Accepter
+  </option>
+  <option value="refusee">Refuser</option>
+  <option value="pending">En attente</option>
+</select>
             </div>
 
             <button

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 import HeaderInvitation from "../components/HeaderInvitation";
+import Footer from "../components/Footer";
 
 export default function AcceptInvitation() {
   const router = useRouter();
@@ -12,14 +13,16 @@ export default function AcceptInvitation() {
   const [invitation, setInvitation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [choice, setChoice] = useState(""); // Préremplissage après fetch
+  const [choice, setChoice] = useState("");
   const [message, setMessage] = useState("");
   const [alreadySupervised, setAlreadySupervised] = useState(false);
+  const [currentSupervisor, setCurrentSupervisor] = useState(null);
 
   useEffect(() => {
     if (!router.isReady || !token) return;
 
     const fetchInvitation = async () => {
+      // Récupérer l'invitation
       const { data } = await supabase
         .from("eglise_supervisions")
         .select(`
@@ -29,24 +32,29 @@ export default function AcceptInvitation() {
         .eq("invitation_token", token)
         .single();
 
-      if (data) {
-        setInvitation(data);
-        setChoice(data.statut || "");
+      if (!data) {
+        setLoading(false);
+        return;
+      }
 
-        // 🔎 Vérifier si cette église/branche est déjà supervisée
-        if (data.superviseur_nom) {
-          setAlreadySupervised(true);
-        } else {
-          // Vérification en base au cas où statut "acceptee" existe
-          const { data: existing } = await supabase
-            .from("eglise_supervisions")
-            .select("*")
-            .eq("supervisee_eglise_id", data.supervisee_eglise_id)
-            .eq("supervisee_branche_id", data.supervisee_branche_id)
-            .eq("statut", "acceptee")
-            .maybeSingle();
-          if (existing) setAlreadySupervised(true);
-        }
+      setInvitation(data);
+      setChoice(data.statut || "");
+
+      // Vérifier si cette église/branche est déjà supervisée
+      const { data: existing } = await supabase
+        .from("eglise_supervisions")
+        .select(`
+          *,
+          superviseur_eglise:eglises(nom)
+        `)
+        .eq("supervisee_eglise_id", data.supervisee_eglise_id)
+        .eq("supervisee_branche_id", data.supervisee_branche_id)
+        .eq("statut", "acceptee")
+        .maybeSingle();
+
+      if (existing) {
+        setAlreadySupervised(true);
+        setCurrentSupervisor(existing.superviseur_eglise?.nom || "un autre superviseur");
       }
 
       setLoading(false);
@@ -57,36 +65,33 @@ export default function AcceptInvitation() {
 
   const handleSubmit = async () => {
     if (!choice) return;
-
     setSubmitting(true);
 
-    // 🔎 Vérifier encore une fois côté serveur pour éviter doublons
-    if (choice === "acceptee") {
-      const { data: existing } = await supabase
-        .from("eglise_supervisions")
-        .select("*")
-        .eq("supervisee_eglise_id", invitation.supervisee_eglise_id)
-        .eq("supervisee_branche_id", invitation.supervisee_branche_id)
-        .eq("statut", "acceptee")
-        .maybeSingle();
+    // 🔹 Empêcher l'acceptation si déjà supervisée
+    if (choice === "acceptee" && alreadySupervised) {
+      alert(`⚠️ Cette église/branche est déjà supervisée par ${currentSupervisor}.\nVous ne pouvez pas accepter une autre supervision. Veuillez contacter votre superviseur actuel.`);
+      setSubmitting(false);
+      return;
+    }
 
-      if (existing && existing.id !== invitation.id) {
-        alert("Cette église/branche est déjà sous supervision.");
-        setSubmitting(false);
-        return;
-      }
+    // 🔹 Préparer l'objet de mise à jour
+    const updates = {
+      statut: choice,
+      approved_at: choice === "acceptee" ? new Date().toISOString() : null,
+    };
+
+    if (choice === "acceptee") {
+      updates.superviseur_eglise_id = invitation.superviseur_eglise_id;
     }
 
     await supabase
       .from("eglise_supervisions")
-      .update({
-        statut: choice,
-        approved_at: choice === "acceptee" ? new Date().toISOString() : null,
-      })
+      .update(updates)
       .eq("invitation_token", token);
 
     setMessage("Décision enregistrée.");
 
+    // Redirection après 3 secondes
     setTimeout(() => router.push("/"), 3000);
   };
 
@@ -121,14 +126,13 @@ export default function AcceptInvitation() {
         {/* ⚠️ Message si déjà supervisée */}
         {alreadySupervised && (
           <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-xl text-sm">
-            ⚠️ Cette église/branche est déjà supervisée par une autre église.
-            <br />
-            Veuillez contacter votre superviseur actuel si nécessaire.
+            ⚠️ Cette église/branche est déjà supervisée par <b>{currentSupervisor}</b>.<br />
+            Vous ne pouvez pas accepter une autre supervision. Veuillez contacter votre superviseur actuel.
           </div>
         )}
 
-        {/* Sélect et bouton seulement si pas déjà supervisée */}
-        {!message && !alreadySupervised && (
+        {/* Sélect et bouton */}
+        {!message && (
           <>
             <div className="mt-4">
               <label className="block font-semibold mb-1">Votre décision</label>
@@ -138,7 +142,7 @@ export default function AcceptInvitation() {
                 className="w-full border rounded-xl p-2"
               >
                 <option value="">-- Choisir --</option>
-                <option value="acceptee">Accepter</option>
+                {!alreadySupervised && <option value="acceptee">Accepter</option>}
                 <option value="refusee">Refuser</option>
                 <option value="pending">En attente</option>
               </select>
@@ -163,6 +167,7 @@ export default function AcceptInvitation() {
           </div>
         )}
       </div>
+         <Footer />
     </div>
   );
 }

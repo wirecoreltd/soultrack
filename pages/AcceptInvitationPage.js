@@ -128,6 +128,7 @@ export default function AcceptInvitation() {
   // Redirection après 3 secondes
   setTimeout(() => router.push("/"), 3000);
 };     
+}
 
       const superviseur_branche_id = brancheSup.id;
 

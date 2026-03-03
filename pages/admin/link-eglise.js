@@ -78,39 +78,75 @@ export default function LinkEglise() {
 
   // 🔹 Exécuter l'action (rappel, supprimer, casser)
   const handleAction = async () => {
-    if (!selectedInvitation || !modeAction) return;
+  // 🔹 Vérifications
+  if (!responsable.prenom || !responsable.nom || !eglise.nom || !eglise.branche || !eglise.pays) {
+    alert("Merci de remplir tous les champs !");
+    return;
+  }
 
-    if (modeAction === "rappel") {
-      const message = `
-🙏 Bonjour ${selectedInvitation.responsable_prenom} ${selectedInvitation.responsable_nom},
+  let message = "";
 
-Ceci est un rappel : ${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} 
-vous a envoyé une invitation pour que votre église soit supervisée.
+  if (modeAction === null) {
+    // Nouveau formulaire → envoyer invitation
+    const { data, error } = await supabase.from("eglise_supervisions").insert([{
+      superviseur_eglise_id: superviseur.eglise_id,
+      responsable_prenom: responsable.prenom,
+      responsable_nom: responsable.nom,
+      eglise_nom: eglise.nom,
+      eglise_branche: eglise.branche,
+      eglise_pays: eglise.pays,
+      statut: "pending",
+      invitation_token: crypto.randomUUID()
+    }]);
 
-Lien : https://soultrack-three.vercel.app/accept-invitation?token=${selectedInvitation.invitation_token} 
+    if (error) { alert("Erreur lors de l'envoi de l'invitation"); return; }
+
+    message = `
+🙏 Bonjour ${responsable.prenom} ${responsable.nom},
+Vous avez reçu une invitation pour que votre église soit supervisée.
+Lien : https://soultrack-three.vercel.app/accept-invitation?token=${data[0].invitation_token}
 📌
 `;
-      if (canal === "whatsapp") window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-      if (canal === "email") window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
-      alert("Rappel envoyé !");
-    }
+    loadInvitations();
 
-    else if (modeAction === "supprimer" || modeAction === "casser") {
-      await supabase
-        .from("eglise_supervisions")
-        .delete()
-        .eq("id", selectedInvitation.id);
-      alert(modeAction === "supprimer" ? "Invitation supprimée !" : "Lien cassé !");
-      loadInvitations();
-    }
+  } else if (modeAction === "rappel") {
+    message = `
+🙏 Bonjour ${selectedInvitation.responsable_prenom} ${selectedInvitation.responsable_nom},
+Ceci est un rappel de l'invitation envoyée par ${superviseur.prenom} ${superviseur.nom}.
+Lien : https://soultrack-three.vercel.app/accept-invitation?token=${selectedInvitation.invitation_token}
+📌
+`;
 
-    // Reset form
-    setModeAction(null);
-    setSelectedInvitation(null);
-    setResponsable({ prenom: "", nom: "" });
-    setEglise({ nom: "", branche: "", pays: "" });
-    setCanal("");
-  };
+  } else if (modeAction === "supprimer") {
+    message = `
+❌ L'invitation de votre église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche} a été supprimée.
+`;
+    await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
+    loadInvitations();
+
+  } else if (modeAction === "casser") {
+    message = `
+💔 Le lien avec l'église ${selectedInvitation.eglise_nom} a été cassé.
+`;
+    // Supprimer ou mettre à jour le statut selon la logique
+    await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
+    loadInvitations();
+  }
+
+  // 🔹 Envoi
+  if (canal === "whatsapp") {
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+  } else if (canal === "email") {
+    window.location.href = `mailto:?subject=SoulTrack&body=${encodeURIComponent(message)}`;
+  }
+
+  alert("Message envoyé !");
+  setModeAction(null);
+  setSelectedInvitation(null);
+  setResponsable({ prenom: "", nom: "" });
+  setEglise({ nom: "", branche: "", pays: "" });
+  setCanal("");
+};
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-4 flex flex-col items-center">

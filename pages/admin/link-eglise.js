@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import supabase from "../../lib/supabaseClient";
-import SendEgliseLinkPopup from "../../components/SendEgliseLinkPopup";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 
@@ -16,17 +15,8 @@ export default function LinkEglise() {
     branche_nom: ""
   });
 
-  const [responsable, setResponsable] = useState({
-    prenom: "",
-    nom: ""
-  });
-
-  const [eglise, setEglise] = useState({
-    nom: "",
-    branche: "",
-    pays: ""
-  });
-
+  const [responsable, setResponsable] = useState({ prenom: "", nom: "" });
+  const [eglise, setEglise] = useState({ nom: "", branche: "", pays: "" });
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
   const [modeAction, setModeAction] = useState(null); // null, "rappel", "supprimer", "casser"
@@ -37,20 +27,11 @@ export default function LinkEglise() {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
       const { data, error } = await supabase
         .from("profiles")
-        .select(`
-          prenom,
-          nom,
-          eglise_id,
-          branche_id,
-          eglises ( nom ),
-          branches ( nom )
-        `)
+        .select(`prenom, nom, eglise_id, branche_id, eglises ( nom ), branches ( nom )`)
         .eq("id", user.id)
         .single();
-
       if (!error && data) {
         setSuperviseur({
           prenom: data.prenom,
@@ -75,10 +56,7 @@ export default function LinkEglise() {
       .order("created_at", { ascending: false });
     if (!error) setInvitations(data || []);
   };
-
-  useEffect(() => {
-    loadInvitations();
-  }, [superviseur.eglise_id]);
+  useEffect(() => { loadInvitations(); }, [superviseur.eglise_id]);
 
   // 🔹 Styles statut
   const getStatusStyle = (statut) => {
@@ -90,38 +68,107 @@ export default function LinkEglise() {
     }
   };
 
-  // 🔹 Sélectionner une invitation pour rappel / supprimer / casser
+  // 🔹 Sélectionner une invitation pour une action
   const handleSelectInvitation = (inv, action) => {
     setSelectedInvitation(inv);
     setModeAction(action);
-    setResponsable({
-      prenom: inv.responsable_prenom,
-      nom: inv.responsable_nom
-    });
-    setEglise({
-      nom: inv.eglise_nom,
-      branche: inv.eglise_branche,
-      pays: inv.eglise_pays
-    });
+    setResponsable({ prenom: inv.responsable_prenom, nom: inv.responsable_nom });
+    setEglise({ nom: inv.eglise_nom, branche: inv.eglise_branche, pays: inv.eglise_pays });
   };
+
+  // 🔹 Exécuter l'action (rappel, supprimer, casser)
+  const handleAction = async () => {
+  if (!canal) return;
+
+  let message = "";
+
+  if (modeAction === null) {
+    // 🔹 Nouveau formulaire
+    const { data, error } = await supabase.from("eglise_supervisions").insert([{
+      superviseur_eglise_id: superviseur.eglise_id,
+      responsable_prenom: responsable.prenom,
+      responsable_nom: responsable.nom,
+      eglise_nom: eglise.nom,
+      eglise_branche: eglise.branche,
+      eglise_pays: eglise.pays,
+      statut: "pending",
+      invitation_token: crypto.randomUUID()
+    }]);
+    if (error) { alert("Erreur lors de l'envoi de l'invitation"); return; }
+
+    const token = data[0].invitation_token;
+    message = `
+🙏 Bonjour ${responsable.prenom} ${responsable.nom},
+
+${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} vous a envoyé une invitation pour que votre église soit placée sous sa supervision.
+
+Cliquez sur le lien ci-dessous pour accepter, refuser ou laisser l’invitation en attente :
+
+https://soultrack-three.vercel.app/accept-invitation?token=${token}
+
+Que Dieu vous bénisse 🙏
+`;
+    loadInvitations();
+
+  } else if (modeAction === "rappel") {
+    const inv = selectedInvitation;
+    message = `
+🙏 Bonjour ${inv.responsable_prenom} ${inv.responsable_nom},
+
+Ceci est un rappel : ${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} vous a envoyé une invitation pour que votre église soit placée sous sa supervision.
+
+Lien : https://soultrack-three.vercel.app/accept-invitation?token=${inv.invitation_token}
+
+Que Dieu vous bénisse 🙏
+`;
+
+  } else if (modeAction === "supprimer") {
+    const inv = selectedInvitation;
+    message = `
+❌ L'invitation de votre église ${inv.eglise_nom} - ${inv.eglise_branche}, ${inv.eglise_pays} a été supprimée.
+
+Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informations.
+`;
+    await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
+    loadInvitations();
+
+  } else if (modeAction === "casser") {
+    const inv = selectedInvitation;
+    message = `
+💔 Le lien avec l'église ${inv.eglise_nom} - ${inv.eglise_branche} a été cassé.
+`;
+    await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
+    loadInvitations();
+  }
+
+  // 🔹 Envoi
+  if (canal === "whatsapp") {
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+  } else if (canal === "email") {
+    window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
+  }
+
+  alert("Message envoyé !");
+  setModeAction(null);
+  setSelectedInvitation(null);
+  setResponsable({ prenom: "", nom: "" });
+  setEglise({ nom: "", branche: "", pays: "" });
+  setCanal("");
+};
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-4 flex flex-col items-center">
       <HeaderPages />
 
       <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
-        {modeAction === "rappel"
-          ? "Envoyer un rappel"
-          : modeAction === "supprimer"
-          ? "Supprimer une invitation"
-          : modeAction === "casser"
-          ? "Casser le lien"
-          : "Envoyer une invitation pour relier une église"}
+        {modeAction === "rappel" ? "Envoyer un rappel" :
+         modeAction === "supprimer" ? "Supprimer une invitation" :
+         modeAction === "casser" ? "Casser le lien" :
+         "Envoyer une invitation pour relier une église"}
       </h4>
 
       {/* FORMULAIRE */}
       <div className="w-full max-w-md rounded-2xl shadow-lg p-6 space-y-4 mb-10 bg-white/10">
-
         <div>
           <label className="font-semibold">Prénom du responsable</label>
           <input
@@ -130,7 +177,6 @@ export default function LinkEglise() {
             onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
           />
         </div>
-
         <div>
           <label className="font-semibold">Nom du responsable</label>
           <input
@@ -139,7 +185,6 @@ export default function LinkEglise() {
             onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
           />
         </div>
-
         <div>
           <label className="font-semibold">Nom de l'Église</label>
           <input
@@ -148,7 +193,6 @@ export default function LinkEglise() {
             onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
           />
         </div>
-
         <div>
           <label className="font-semibold">Branche / Région</label>
           <input
@@ -157,7 +201,6 @@ export default function LinkEglise() {
             onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
           />
         </div>
-
         <div>
           <label className="font-semibold">Pays</label>
           <input
@@ -166,7 +209,6 @@ export default function LinkEglise() {
             onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
           />
         </div>
-
         <select
           className="w-full border rounded-xl px-3 py-2 text-black"
           value={canal}
@@ -178,33 +220,20 @@ export default function LinkEglise() {
         </select>
 
         {/* 🔹 BOUTON ENVOYER / ACTION */}
-        {(!modeAction || modeAction === "rappel" || modeAction === "supprimer" || modeAction === "casser") && (
-          <SendEgliseLinkPopup
-            label={
-              modeAction === "rappel"
-                ? "Envoyer le rappel"
-                : modeAction === "supprimer"
-                ? "Envoyer notification de suppression"
-                : modeAction === "casser"
-                ? "Confirmer cassage du lien"
-                : "Envoyer l’invitation"
-            }
-            type={canal}
-            superviseur={superviseur}
-            responsable={responsable}
-            eglise={eglise}
-            invitation={selectedInvitation} // null si nouveau formulaire
-            modeAction={modeAction}
-            onSuccess={() => {
-              loadInvitations();
-              setModeAction(null);
-              setSelectedInvitation(null);
-              setResponsable({ prenom: "", nom: "" });
-              setEglise({ nom: "", branche: "", pays: "" });
-              setCanal("");
-            }}
-          />
-        )}
+{(modeAction || modeAction === null) && (
+  <button
+    onClick={handleAction} // ou handleSend selon l'action
+    disabled={!canal && modeAction !== null} // canal obligatoire pour actions
+    className={`w-full py-2 rounded-xl text-white font-semibold ${
+      !canal && modeAction !== null ? "bg-gray-400 cursor-not-allowed" : "bg-[#333699] hover:bg-[#2a2f85]"
+    }`}
+  >
+    {modeAction === "rappel" && "Envoyer le rappel"}
+    {modeAction === "supprimer" && "Envoyer notification de suppression"}
+    {modeAction === "casser" && "Confirmer le cassage"}
+    {modeAction === null && "Envoyer l'invitation"}
+  </button>
+)}
       </div>
 
       {/* TABLE INVITATIONS */}
@@ -229,7 +258,15 @@ export default function LinkEglise() {
               <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
               <div className={`${statusStyle.color}`}>{inv.statut.toLowerCase()}</div>
               <div className="flex gap-2">
-                {statusStyle.color !== "text-green-600" && (
+                {inv.statut.toLowerCase() === "acceptee" && (
+                  <button
+                    onClick={() => handleSelectInvitation(inv, "casser")}
+                    className="text-purple-600 font-semibold text-sm hover:opacity-80"
+                  >
+                    Casser le lien
+                  </button>
+                )}
+                {inv.statut.toLowerCase() !== "acceptee" && (
                   <>
                     <button
                       onClick={() => handleSelectInvitation(inv, "rappel")}
@@ -244,14 +281,6 @@ export default function LinkEglise() {
                       Supprimer
                     </button>
                   </>
-                )}
-                {statusStyle.color === "text-green-600" && (
-                  <button
-                    onClick={() => handleSelectInvitation(inv, "casser")}
-                    className="text-purple-600 font-semibold text-sm hover:opacity-80"
-                  >
-                    Casser le lien
-                  </button>
                 )}
               </div>
             </div>

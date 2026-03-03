@@ -91,6 +91,9 @@ export default function AcceptInvitation() {
       console.log("💡 Branche superviseur trouvée :", superviseur_branche_id, superviseur_nom);
       console.log("💡 Branche supervisée :", invitation.supervisee_branche_id);
 
+      console.log("ID invitation :", invitation.id);
+      console.log("supervisee_branche_id :", invitation.supervisee_branche_id);
+
       // 2️⃣ Mettre à jour l'invitation
       const { error: updateInvitationError } = await supabase
         .from("eglise_supervisions")

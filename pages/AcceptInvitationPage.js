@@ -72,9 +72,9 @@ export default function AcceptInvitation() {
     .update({
       statut: "acceptee",
       approved_at: new Date().toISOString(),
-      superviseur_branche_id: "0f73f5ca-dd25-4a65-a064-679f3e7fd39d" // branche superviseur
+      superviseur_branche_id: superviseur_branche_id
     })
-    .eq("id", "b8f0fcd5-3b70-42e9-ba48-799d60deb6bc");
+    .eq("id", invitation.id);
 
   if (updateInvitationError) {
     console.error("Erreur update invitation :", updateInvitationError);
@@ -82,16 +82,36 @@ export default function AcceptInvitation() {
     return;
   }
 
-  // 2️⃣ Récupérer le nom de la branche superviseur
+  // 2️⃣ Mettre à jour la branche supervisée
   const { data: superviseurBranche, error: brancheError } = await supabase
     .from("branches")
     .select("nom")
-    .eq("id", "0f73f5ca-dd25-4a65-a064-679f3e7fd39d")
+    .eq("id", superviseur_branche_id)
     .single();
 
   if (brancheError || !superviseurBranche) {
     console.error("Impossible de récupérer le nom de la branche superviseur :", brancheError);
     setSubmitting(false);
+    return;
+  }
+
+  const { error: updateBrancheError } = await supabase
+    .from("branches")
+    .update({
+      superviseur_id: superviseur_branche_id,
+      superviseur_nom: superviseurBranche.nom
+    })
+    .eq("id", invitation.supervisee_branche_id);
+
+  if (updateBrancheError) {
+    console.error("Erreur update branche supervisée :", updateBrancheError);
+    setSubmitting(false);
+    return;
+  }
+
+  console.log("Supervision acceptée !");
+  setSubmitting(false);
+};
     return;
   }
 

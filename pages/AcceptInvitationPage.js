@@ -67,20 +67,19 @@ export default function AcceptInvitation() {
   if (!choice) return;
   setSubmitting(true);
 
-  // 🔹 Empêcher l'acceptation si déjà supervisée
+  // Empêcher l'acceptation si déjà supervisée
   if (choice === "acceptee" && alreadySupervised) {
     alert(`⚠️ Cette église/branche est déjà supervisée par ${currentSupervisor}.
-Vous ne pouvez pas accepter une autre supervision. Veuillez contacter votre superviseur actuel.`);
+Vous ne pouvez pas accepter une autre supervision.`);
     setSubmitting(false);
     return;
   }
 
   let superviseur_branche_id = null;
-  let supervisee_branche_id = invitation.supervisee_branche_id || null;
 
   if (choice === "acceptee") {
-    // Chercher la branche du superviseur
-    const { data: brancheExist } = await supabase
+    // 1️⃣ Chercher la branche du superviseur
+    const { data: brancheExist, error } = await supabase
       .from("branches")
       .select("id")
       .eq("eglise_id", invitation.superviseur_eglise_id)
@@ -90,8 +89,8 @@ Vous ne pouvez pas accepter une autre supervision. Veuillez contacter votre supe
     if (brancheExist) {
       superviseur_branche_id = brancheExist.id;
     } else {
-      // Créer la branche si elle n'existe pas
-      const { data: newBranche } = await supabase
+      // 2️⃣ Créer la branche si elle n'existe pas
+      const { data: newBranche, error: insertError } = await supabase
         .from("branches")
         .insert([{
           nom: invitation.eglise_branche,
@@ -101,38 +100,35 @@ Vous ne pouvez pas accepter une autre supervision. Veuillez contacter votre supe
         .single();
 
       if (newBranche) superviseur_branche_id = newBranche.id;
-    }
-
-    // Mettre à jour supervisee_branche_id si l'invitation concerne une nouvelle branche
-    if (!supervisee_branche_id) {
-      const { data: newSuperviseeBranch } = await supabase
-        .from("branches")
-        .select("id")
-        .eq("eglise_id", invitation.supervisee_eglise_id)
-        .eq("nom", invitation.eglise_branche) // Ici tu peux adapter si tu as un nom différent pour la branche supervisée
-        .single();
-
-      supervisee_branche_id = newSuperviseeBranch?.id || null;
+      if (insertError) {
+        console.error("Erreur création branche superviseur", insertError);
+        setSubmitting(false);
+        return;
+      }
     }
   }
 
-  // 🔹 Préparer l'objet de mise à jour
+  // 3️⃣ Préparer l'objet de mise à jour
   const updates = {
     statut: choice,
     approved_at: choice === "acceptee" ? new Date().toISOString() : null,
-    superviseur_branche_id: superviseur_branche_id,
-    supervisee_branche_id: supervisee_branche_id,
+    superviseur_branche_id: superviseur_branche_id, // ✅ maintenant rempli
     superviseur_eglise_id: invitation.superviseur_eglise_id,
   };
 
-  // 🔹 Mise à jour automatique
-  await supabase
+  // 4️⃣ Mettre à jour l'invitation
+  const { error: updateError } = await supabase
     .from("eglise_supervisions")
     .update(updates)
     .eq("invitation_token", token);
 
-  setMessage("Décision enregistrée.");
+  if (updateError) {
+    console.error("Erreur update invitation", updateError);
+    setSubmitting(false);
+    return;
+  }
 
+  setMessage("Décision enregistrée.");
   setTimeout(() => router.push("/"), 3000);
 };
 

@@ -148,7 +148,7 @@ if (choice === "acceptee") {
   const { error: brancheUpdateError } = await supabase
     .from("branches")
     .update({
-      superviseur_id: invitation.superviseur_eglise_id,
+      superviseur_id: superviseur_branche_id,
       superviseur_nom: superviseur_nom
     })
     .eq("id", invitation.supervisee_branche_id);

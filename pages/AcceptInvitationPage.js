@@ -122,6 +122,32 @@ Vous ne pouvez pas accepter une autre supervision.`);
     .update(updates)
     .eq("invitation_token", token);
 
+    // 🔹 Si accepté → mettre à jour la branche supervisée
+if (choice === "acceptee") {
+
+  // 1️⃣ Récupérer le nom de l’église superviseur
+  const { data: supEglise } = await supabase
+    .from("eglises")
+    .select("nom")
+    .eq("id", invitation.superviseur_eglise_id)
+    .single();
+
+  const superviseur_nom = supEglise?.nom || null;
+
+  // 2️⃣ Mettre à jour la branche supervisée
+  const { error: brancheUpdateError } = await supabase
+    .from("branches")
+    .update({
+      superviseur_id: invitation.superviseur_eglise_id,
+      superviseur_nom: superviseur_nom
+    })
+    .eq("id", invitation.supervisee_branche_id);
+
+  if (brancheUpdateError) {
+    console.error("Erreur mise à jour superviseur branche :", brancheUpdateError);
+  }
+}
+
   if (updateError) {
     console.error("Erreur update invitation", updateError);
     setSubmitting(false);

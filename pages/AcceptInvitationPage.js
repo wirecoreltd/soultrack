@@ -70,9 +70,26 @@ export default function AcceptInvitation() {
 
   try {
     if (choice === "acceptee") {
-      // 1️⃣ Branche superviseur connue d'après tes infos
-      const superviseur_branche_id = "0f73f5ca-dd25-4a65-a064-679f3e7fd39d";
-      const superviseur_nom = "Port Louis";
+      // 1️⃣ Récupérer automatiquement la branche superviseur
+      const { data: brancheSup, error: brancheError } = await supabase
+        .from("branches")
+        .select("id, nom")
+        .eq("eglise_id", invitation.superviseur_eglise_id)
+        .limit(1)
+        .single();
+
+      if (brancheError || !brancheSup) {
+        console.error("Impossible de récupérer la branche superviseur :", brancheError);
+        setMessage("❌ Erreur : impossible de récupérer la branche superviseur");
+        setSubmitting(false);
+        return;
+      }
+
+      const superviseur_branche_id = brancheSup.id;
+      const superviseur_nom = brancheSup.nom;
+
+      console.log("💡 Branche superviseur trouvée :", superviseur_branche_id, superviseur_nom);
+      console.log("💡 Branche supervisée :", invitation.supervisee_branche_id);
 
       // 2️⃣ Mettre à jour l'invitation
       const { error: updateInvitationError } = await supabase

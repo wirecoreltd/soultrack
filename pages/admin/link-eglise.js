@@ -87,6 +87,22 @@ export default function LinkEglise() {
   });
 };
 
+  // Après qu'une invitation est acceptée
+const handleAcceptInvitation = async (invitation) => {
+  // Mettre à jour la branche du superviseur
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ branche_id: invitation.branche_id }) // ici on prend la branche de l'église acceptée
+    .eq("eglise_id", invitation.superviseur_eglise_id);
+
+  if (error) {
+    console.error("Erreur mise à jour superviseur_brache_id :", error);
+    return;
+  }
+
+  alert("La branche du superviseur a été mise à jour automatiquement !");
+};
+
   // 🔹 Exécuter l'action (nouveau / rappel / supprimer / casser)
   const handleAction = async () => {
     if (!canal) return;

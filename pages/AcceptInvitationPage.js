@@ -78,27 +78,32 @@ Vous ne pouvez pas accepter une autre supervision. Veuillez contacter votre supe
   let superviseur_branche_id = null;
 
   if (choice === "acceptee") {
-    // Chercher la branche du superviseur
-    const { data: brancheExist } = await supabase
+  let superviseur_branche_id = null;
+
+  // Chercher la branche
+  const { data: brancheExist } = await supabase
+    .from("branches")
+    .select("id")
+    .eq("eglise_id", invitation.superviseur_eglise_id)
+    .eq("nom", invitation.eglise_branche)
+    .single();
+
+  if (brancheExist) {
+    superviseur_branche_id = brancheExist.id;
+  } else {
+    // Créer la branche si elle n'existe pas
+    const { data: newBranche } = await supabase
       .from("branches")
-      .select("id")
-      .eq("eglise_id", invitation.superviseur_eglise_id)
-      .eq("nom", invitation.eglise_branche)
+      .insert([{ nom: invitation.eglise_branche, eglise_id: invitation.superviseur_eglise_id }])
+      .select()
       .single();
 
-    if (brancheExist) {
-      superviseur_branche_id = brancheExist.id;
-    } else {
-      // Créer la branche si elle n'existe pas
-      const { data: newBranche } = await supabase
-        .from("branches")
-        .insert([{ nom: invitation.eglise_branche, eglise_id: invitation.superviseur_eglise_id }])
-        .select()
-        .single();
-
-      if (newBranche) superviseur_branche_id = newBranche.id;
-    }
+    if (newBranche) superviseur_branche_id = newBranche.id;
   }
+
+  updates.superviseur_branche_id = superviseur_branche_id; // ✅ obligatoire
+  updates.superviseur_eglise_id = invitation.superviseur_eglise_id;
+}
 
   // 🔹 Préparer l'objet de mise à jour
   const updates = {

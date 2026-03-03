@@ -103,7 +103,7 @@ if (choice === "acceptee") {
       approved_at: new Date().toISOString(),
       superviseur_branche_id: superviseur_branche_id
     })
-    .eq("invitation_token", token);
+    .eq("id", invitation.id);
 
   console.log("UPDATE RESULT:", updateData);
 console.log("UPDATE ERROR:", updateError);
@@ -130,7 +130,7 @@ console.log("UPDATE ERROR:", updateError);
   const { error: updateError } = await supabase
     .from("eglise_supervisions")
     .update(updates)
-    .eq("invitation_token", token);
+    .eq("id", invitation.id);
 
     // 🔹 Si accepté → mettre à jour la branche supervisée
 if (choice === "acceptee") {

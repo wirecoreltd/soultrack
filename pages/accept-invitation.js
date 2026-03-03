@@ -79,7 +79,7 @@ export default function AcceptInvitation() {
 
       <div className="w-full max-w-md flex justify-between items-center mt-4 mb-6">
         <h1 className="text-2xl font-bold text-white">
-          Invitation de l'église superviseur
+          Invitation de l'église superviseur ZZZ
         </h1>       
       </div>
 

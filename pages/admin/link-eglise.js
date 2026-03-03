@@ -175,18 +175,21 @@ Lien : https://soultrack-three.vercel.app/accept-invitation?token=${selectedInvi
           <option value="email">Email</option>
         </select>
 
-        {/* BOUTON D’ACTION */}
-        {(modeAction === "rappel" || modeAction === "supprimer" || modeAction === "casser") && (
-          <button
-            onClick={handleAction}
-            disabled={modeAction === "rappel" && !canal}
-            className={`w-full py-2 rounded-xl text-white font-semibold ${modeAction === "rappel" && !canal ? "bg-gray-400 cursor-not-allowed" : "bg-[#333699] hover:bg-[#2a2f85]"}`}
-          >
-            {modeAction === "rappel" ? "Envoyer le rappel" :
-             modeAction === "supprimer" ? "Envoyer notification de suppression" :
-             "Casser le lien"}
-          </button>
-        )}
+        {/* 🔹 BOUTON ENVOYER / ACTION */}
+{(modeAction || modeAction === null) && (
+  <button
+    onClick={handleAction} // ou handleSend selon l'action
+    disabled={!canal && modeAction !== null} // canal obligatoire pour actions
+    className={`w-full py-2 rounded-xl text-white font-semibold ${
+      !canal && modeAction !== null ? "bg-gray-400 cursor-not-allowed" : "bg-[#333699] hover:bg-[#2a2f85]"
+    }`}
+  >
+    {modeAction === "rappel" && "Envoyer le rappel"}
+    {modeAction === "supprimer" && "Envoyer notification de suppression"}
+    {modeAction === "casser" && "Confirmer le cassage"}
+    {modeAction === null && "Envoyer l'invitation"}
+  </button>
+)}
       </div>
 
       {/* TABLE INVITATIONS */}

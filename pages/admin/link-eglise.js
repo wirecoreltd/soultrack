@@ -184,31 +184,28 @@ if (modeAction === "casser") {
 💔 Le lien avec l'église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche} a été cassé.
 `;
 
-  // 🔎 Récupérer la branche ID directement depuis la supervision
-  const { data: supervisionData } = await supabase
-    .from("eglise_supervisions")
-    .select("supervisee_branche_id")
-    .eq("id", selectedInvitation.id)
-    .single();
+  // 1️⃣ Forcer suppression superviseur dans branches
+  const { error: branchError } = await supabase
+    .from("branches")
+    .update({
+      superviseur_id: null,
+      superviseur_nom: null
+    })
+    .eq("id", selectedInvitation.supervisee_branche_id);
 
-  const brancheId = supervisionData?.supervisee_branche_id;
-
-  // 1️⃣ Supprimer superviseur dans branches
-  if (brancheId) {
-    await supabase
-      .from("branches")
-      .update({
-        superviseur_id: null,
-        superviseur_nom: null
-      })
-      .eq("id", brancheId);
+  if (branchError) {
+    console.error("Erreur update branche :", branchError);
   }
 
-  // 2️⃣ Supprimer la ligne de supervision
-  await supabase
+  // 2️⃣ Supprimer la supervision
+  const { error: deleteError } = await supabase
     .from("eglise_supervisions")
     .delete()
     .eq("id", selectedInvitation.id);
+
+  if (deleteError) {
+    console.error("Erreur delete supervision :", deleteError);
+  }
 }
     
     // 🔹 Envoi WhatsApp / Email

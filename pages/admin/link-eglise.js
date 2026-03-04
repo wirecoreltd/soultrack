@@ -218,24 +218,21 @@ Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informat
           <label className="font-semibold">Nom de l'Église *</label>
           <input
             className="w-full border rounded-xl px-3 py-2 text-black"
-            value={eglise.nom}
-            readOnly
+            value={eglise.nom}           
           />
         </div>
         <div>
           <label className="font-semibold">Branche / Région *</label>
           <input
             className="w-full border rounded-xl px-3 py-2 text-black"
-            value={eglise.branche}
-            readOnly
+            value={eglise.branche}          
           />
         </div>
         <div>
           <label className="font-semibold">Pays *</label>
           <input
             className="w-full border rounded-xl px-3 py-2 text-black"
-            value={eglise.pays}
-            readOnly
+            value={eglise.pays}            
           />
         </div>
         <select

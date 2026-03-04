@@ -59,14 +59,15 @@ export default function LinkEglise() {
   useEffect(() => { loadInvitations(); }, [superviseur.eglise_id]);
 
   // 🔹 Styles statut
-  const getStatusStyle = (statut) => {
-    switch (statut?.toLowerCase()) {
-      case "acceptee": return { color: "text-green-600" };
-      case "refusee": return { color: "text-red-600" };
-      case "pending": return { color: "text-gray-400" };
-      default: return { color: "text-gray-300" };
-    }
-  };
+    const getStatusStyle = (statut) => {
+      switch (statut?.toLowerCase()) {
+        case "acceptee": return { color: "text-green-600" };
+        case "refusee": return { color: "text-red-600" };
+        case "pending": return { color: "text-orange-500" }; // 🔹 orange pour pending
+        case "lien_casse": return { color: "text-gray-400" };
+        default: return { color: "text-gray-300" };
+      }
+    };
 
   // 🔹 Sélectionner invitation pour action
   const handleSelectInvitation = (inv, action) => {
@@ -343,6 +344,7 @@ if (modeAction === "casser") {
               <div className="flex gap-2">
                 {(inv.statut.toLowerCase() === "acceptee" ||
                   <div className="flex justify-center gap-4">
+                    <div className="flex justify-center gap-4">
                     {inv.statut.toLowerCase() === "lien_casse" ? (
                       <>
                         <button
@@ -365,13 +367,28 @@ if (modeAction === "casser") {
                       >
                         Casser le lien
                       </button>
+                    ) : inv.statut.toLowerCase() === "pending" ? (
+                      <>
+                        <button
+                          onClick={() => handleSelectInvitation(inv, "rappel")} // 🔹 pending → rappel
+                          className="text-orange-500 font-semibold text-sm hover:opacity-80"
+                        >
+                          Envoyer un rappel
+                        </button>
+                        <button
+                          onClick={() => handleSelectInvitation(inv, "supprimer")}
+                          className="text-red-500 font-semibold text-sm hover:opacity-80"
+                        >
+                          🗑️
+                        </button>
+                      </>
                     ) : (
                       <>
                         <button
-                          onClick={() => handleSelectInvitation(inv, "renvoyer")}
+                          onClick={() => handleSelectInvitation(inv, "rappel")}
                           className="text-blue-500 font-semibold text-sm hover:opacity-80"
                         >
-                          Renvoyer le lien
+                          Envoyer un rappel
                         </button>
                         <button
                           onClick={() => handleSelectInvitation(inv, "supprimer")}

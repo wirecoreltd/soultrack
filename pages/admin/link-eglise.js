@@ -70,11 +70,11 @@ export default function LinkEglise() {
   // 🔹 Styles statut mis à jour
 const getStatusStyle = (statut) => {
   switch (statut?.toLowerCase()) {
-    case "acceptee": return { color: "text-green-600" };
-    case "lien casse": return { color: "text-gray-400" };
-    case "pending": return { color: "text-orange-500" };
-    case "refusee": return { color: "text-red-600" };
-    default: return { color: "text-gray-300" };
+    case "acceptee": return { text: "text-green-600", border: "border-green-600" };
+    case "refusee": return { text: "text-red-600", border: "border-red-600" };
+    case "lien_casse": return { text: "text-gray-400", border: "border-gray-400" };
+    case "pending": return { text: "text-orange-500", border: "border-orange-500" };
+    default: return { text: "text-white", border: "border-white/20" };
   }
 };
 
@@ -353,17 +353,22 @@ if (modeAction === "casser") {
       </div>
     
       {invitations.map((inv) => {
-        const statusStyle = getStatusStyle(inv.statut);
-        return (
-          <div key={inv.id} className={`grid grid-cols-5 px-3 py-2 mt-2 items-center 
-              border-b border-white/20 
-              border-l-4 ${getBorderColor(inv.statut)} 
-              rounded-md`}
-            >
-            <div className="text-left">{inv.eglise_nom}</div>
-            <div className="text-left">{inv.eglise_branche}</div>
-            <div className="text-left">{inv.responsable_prenom} {inv.responsable_nom}</div>
-            <div className={`text-left ${statusStyle.color} font-semibold`}>{getStatusLabel(inv.statut)}</div>
+  const statusStyle = getStatusStyle(inv.statut);
+
+  return (
+    <div
+      key={inv.id}
+      className={`grid grid-cols-5 px-3 py-2 mt-2 items-center
+      border-b border-white/20
+      border-l-4 ${statusStyle.border}
+      rounded-md`}
+    >
+      <div className="text-left">{inv.eglise_nom}</div>
+      <div className="text-left">{inv.eglise_branche}</div>
+      <div className="text-left">{inv.responsable_prenom} {inv.responsable_nom}</div>
+      <div className={`text-left ${statusStyle.text} font-semibold`}>
+        {getStatusLabel(inv.statut)}
+      </div>
             <div className="flex justify-center gap-2 text-white font-semibold text-sm items-center">
               {inv.statut.toLowerCase() === "acceptee" && (
                 <button

@@ -70,7 +70,7 @@ export default function AcceptInvitation() {
       const { data: egliseSup, error: egliseError } = await supabase
         .from("eglises")
         .select("nom")
-        .eq("id", brancheSup.egise_id)
+        .eq("id", brancheSup.eglise_id)
         .single();
 
       if (!egliseSup || egliseError) {

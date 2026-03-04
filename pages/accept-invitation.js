@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 import HeaderInvitation from "../components/HeaderInvitation";
-import Footer from "../components/Footer";
 
 export default function AcceptInvitation() {
   const router = useRouter();
@@ -45,43 +44,30 @@ export default function AcceptInvitation() {
     setSubmitting(true);
 
     try {
+      // Mettre à jour la table eglise_supervisions
+      await supabase
+        .from("eglise_supervisions")
+        .update({
+          statut: choice,
+          approved_at: choice === "acceptee" ? new Date().toISOString() : null
+        })
+        .eq("invitation_token", token);
+
+      // Si accepté → mettre à jour la branche du supervisee pour renseigner le superviseur
       if (choice === "acceptee") {
-        // Vérifier que le supervisee a une branche
-        if (!invitation.supervisee_branche_id || !invitation.supervisee_eglise_id) {
-          setMessage("Impossible de récupérer votre profil ou votre branche. Redirection…");
-          setTimeout(() => router.push("/"), 3000);
-          return;
+        if (invitation.supervisee_branche_id && invitation.superviseur_branche_id) {
+          await supabase
+            .from("branches")
+            .update({
+              superviseur_id: invitation.superviseur_branche_id,
+              superviseur_nom: invitation.eglise_nom
+            })
+            .eq("id", invitation.supervisee_branche_id);
         }
-
-        // Mettre à jour la table eglise_supervisions
-        await supabase
-          .from("eglise_supervisions")
-          .update({
-            statut: "acceptee",
-            supervisee_eglise_id: invitation.supervisee_eglise_id,
-            supervisee_branche_id: invitation.supervisee_branche_id,
-            approved_at: new Date().toISOString(),
-          })
-          .eq("invitation_token", token);
-
-        // Mettre à jour la branche du supervisee pour indiquer son superviseur
-        await supabase
-          .from("branches")
-          .update({
-            superviseur_id: invitation.superviseur_branche_id,
-            superviseur_nom: invitation.eglise_nom
-          })
-          .eq("id", invitation.supervisee_branche_id);
-
         setMessage(`Vous êtes maintenant sous la supervision de ${invitation.eglise_nom}`);
       }
 
       if (choice === "refusee") {
-        await supabase
-          .from("eglise_supervisions")
-          .update({ statut: "refusee" })
-          .eq("invitation_token", token);
-
         setMessage(`Vous avez refusé l’invitation de ${invitation.eglise_nom}`);
       }
 
@@ -89,7 +75,6 @@ export default function AcceptInvitation() {
         setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
       }
 
-      // Redirection après 3 secondes
       setTimeout(() => router.push("/"), 3000);
 
     } catch (error) {
@@ -154,7 +139,6 @@ export default function AcceptInvitation() {
           </div>
         )}
       </div>
-     <Footer />   
     </div>
   );
 }

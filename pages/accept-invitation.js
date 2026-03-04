@@ -33,19 +33,65 @@ export default function AcceptInvitation() {
   }, [router.isReady, token]);
 
   const handleSubmit = async () => {
-    if (!choice) return;
+  if (!choice || !invitation) return;
 
-    setSubmitting(true);
+  setSubmitting(true);
 
+  try {
+    // 🔹 Mettre à jour le statut de l'invitation
     await supabase
       .from("eglise_supervisions")
       .update({
         statut: choice,
-        approved_at: choice === "acceptee" ? new Date().toISOString() : null,
+        approved_at: choice === "acceptee" ? new Date().toISOString() : null
       })
-      .eq("invitation_token", token);
+      .eq("id", invitation.id);
 
     if (choice === "acceptee") {
+      // 🔹 Récupérer la branche du superviseur (l'église qui envoie l'invitation)
+      const { data: brancheSup, error: errSup } = await supabase
+        .from("branches")
+        .select("id, nom")
+        .eq("id", invitation.superviseur_branche_id)
+        .single();
+
+      if (errSup || !brancheSup) {
+        console.error("Erreur récupération branche superviseur", errSup);
+        setMessage("Impossible de récupérer la branche du superviseur.");
+        return;
+      }
+
+      // 🔹 Récupérer la branche existante du supervisee
+      const { data: brancheSupervisee, error: errSupv } = await supabase
+        .from("branches")
+        .select("id, nom")
+        .eq("id", invitation.supervisee_branche_id)
+        .single();
+
+      if (errSupv || !brancheSupervisee) {
+        console.error("Erreur récupération branche supervisee", errSupv);
+        setMessage("Impossible de récupérer la branche de votre église.");
+        return;
+      }
+
+      // 🔹 Mettre à jour la branche du supervisee pour indiquer son superviseur
+      await supabase
+        .from("branches")
+        .update({
+          superviseur_id: brancheSup.id,
+          superviseur_nom: brancheSup.nom
+        })
+        .eq("id", brancheSupervisee.id);
+
+      // 🔹 Mettre à jour eglise_supervisions avec les bonnes références
+      await supabase
+        .from("eglise_supervisions")
+        .update({
+          superviseur_branche_id: brancheSup.id,
+          supervisee_branche_id: brancheSupervisee.id
+        })
+        .eq("id", invitation.id);
+
       setMessage(
         `Vous êtes maintenant sous la supervision de ${invitation.eglise_nom}`
       );
@@ -66,7 +112,13 @@ export default function AcceptInvitation() {
     setTimeout(() => {
       router.push("/");
     }, 3000);
-  };
+  } catch (error) {
+    console.error("Erreur :", error);
+    setMessage("Une erreur est survenue.");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (loading) return <div className="p-10">Chargement…</div>;
   if (!invitation) return <div className="p-10">Invitation introuvable</div>;

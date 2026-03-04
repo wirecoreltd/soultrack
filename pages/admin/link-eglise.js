@@ -218,69 +218,78 @@ Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informat
       </h4>
 
       {/* FORMULAIRE */}
-      <div className="w-full max-w-md rounded-2xl shadow-lg p-6 space-y-4 mb-10 bg-white/10">
-        <div>
-          <label className="font-semibold">Prénom du responsable</label>
-          <input
+        <div className="w-full max-w-md rounded-2xl shadow-lg p-6 space-y-4 mb-10 bg-white/10">
+          <div>
+            <label className="font-semibold">Prénom du responsable</label>
+            <input
+              className="w-full border rounded-xl px-3 py-2 text-black"
+              value={responsable.prenom}
+              onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
+              placeholder="Entrez le prénom"
+            />
+          </div>
+          <div>
+            <label className="font-semibold">Nom du responsable</label>
+            <input
+              className="w-full border rounded-xl px-3 py-2 text-black"
+              value={responsable.nom}
+              onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
+              placeholder="Entrez le nom"
+            />
+          </div>
+          <div>
+            <label className="font-semibold">Nom de l'Église *</label>
+            <input
+              className="w-full border rounded-xl px-3 py-2 text-black"
+              value={eglise.nom}            // 🔹 Contrôlé par le state
+              onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
+              placeholder="Entrez le nom de l'église"
+            />
+          </div>
+          <div>
+            <label className="font-semibold">Branche / Région *</label>
+            <input
+              className="w-full border rounded-xl px-3 py-2 text-black"
+              value={eglise.branche}       // 🔹 Contrôlé par le state
+              onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+              placeholder="Entrez la branche / région"
+            />
+          </div>
+          <div>
+            <label className="font-semibold">Pays *</label>
+            <input
+              className="w-full border rounded-xl px-3 py-2 text-black"
+              value={eglise.pays}          // 🔹 Contrôlé par le state
+              onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
+              placeholder="Entrez le pays"
+            />
+          </div>
+        
+          <select
             className="w-full border rounded-xl px-3 py-2 text-black"
-            value={responsable.prenom}
-            onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
-          />
+            value={canal}
+            onChange={(e) => setCanal(e.target.value)}
+          >
+            <option value="">-- Sélectionnez le mode d’envoi --</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="email">Email</option>
+          </select>
+        
+          <button
+            onClick={handleAction}
+            disabled={!canal || (!selectedInvitation && (!eglise.nom || !eglise.branche || !eglise.pays))}
+            className={`w-full py-2 rounded-xl text-white font-semibold ${
+              !canal || (!selectedInvitation && (!eglise.nom || !eglise.branche || !eglise.pays))
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#333699] hover:bg-[#2a2f85]"
+            }`}
+          >
+            {modeAction === "rappel" && "Envoyer le rappel"}
+            {modeAction === "supprimer" && "Envoyer notification de suppression"}
+            {modeAction === "casser" && "Confirmer le cassage"}
+            {modeAction === null && "Envoyer l'invitation"}
+          </button>
         </div>
-        <div>
-          <label className="font-semibold">Nom du responsable</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 text-black"
-            value={responsable.nom}
-            onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
-          />
-        </div>
-        <div>
-          <label className="font-semibold">Nom de l'Église *</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 text-black"
-            value={eglise.nom}           
-          />
-        </div>
-        <div>
-          <label className="font-semibold">Branche / Région *</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 text-black"
-            value={eglise.branche}          
-          />
-        </div>
-        <div>
-          <label className="font-semibold">Pays *</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 text-black"
-            value={eglise.pays}            
-          />
-        </div>
-        <select
-          className="w-full border rounded-xl px-3 py-2 text-black"
-          value={canal}
-          onChange={(e) => setCanal(e.target.value)}
-        >
-          <option value="">-- Sélectionnez le mode d’envoi --</option>
-          <option value="whatsapp">WhatsApp</option>
-          <option value="email">Email</option>
-        </select>
-
-        <button
-          onClick={handleAction}
-          disabled={!canal || !eglise.id || !eglise.branche_id}
-          className={`w-full py-2 rounded-xl text-white font-semibold ${
-            !canal || !eglise.id || !eglise.branche_id
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-[#333699] hover:bg-[#2a2f85]"
-          }`}
-        >
-          {modeAction === "rappel" && "Envoyer le rappel"}
-          {modeAction === "supprimer" && "Envoyer notification de suppression"}
-          {modeAction === "casser" && "Confirmer le cassage"}
-          {modeAction === null && "Envoyer l'invitation"}
-        </button>
-      </div>
 
       {/* TABLE INVITATIONS */}
       <div className="w-full max-w-5xl overflow-x-auto">

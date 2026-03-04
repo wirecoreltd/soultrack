@@ -342,13 +342,13 @@ if (modeAction === "casser") {
           </button>
         </div>
 
-      <h3 className="w-full max-w-5xl text-left text-xl font-bold mb-4">
+      <h3 className="w-full max-w-5xl text-center text-2xl font-bold text-amber-300 mb-8">
   Liste des églises supervisées
 </h3>
 
       {/* TABLE INVITATIONS */}
       <div className="w-full max-w-5xl overflow-x-auto">
-      <div className="grid grid-cols-5 text-sm font-semibold uppercase border-b border-white/40 pb-2">
+      <div className="hidden md:grid md:grid-cols-[1.3fr_1.2fr_1.2fr_0.8fr_1fr] text-sm font-semibold uppercase border-b border-white/40 pb-2 gap-x-3">
         <div className="text-left">Église</div>
         <div className="text-left">Branche</div>
         <div className="text-left">Responsable</div>

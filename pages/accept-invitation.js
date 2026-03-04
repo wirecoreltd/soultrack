@@ -42,54 +42,52 @@ export default function AcceptInvitation() {
   setSubmitting(true);
 
   try {
-    // 1️⃣ Mettre à jour le statut de l'invitation
+    // 1️⃣ Mettre à jour le statut dans eglise_supervisions
     await supabase
       .from("eglise_supervisions")
       .update({
         statut: choice,
         approved_at: choice === "acceptee" ? new Date().toISOString() : null,
-        accepted_at: choice === "acceptee" ? new Date().toISOString() : null,
       })
       .eq("invitation_token", token);
 
-    // 2️⃣ Si acceptée → mettre à jour la branche supervisée avec le superviseur
     if (choice === "acceptee") {
-      if (!invitation.superviseur_branche_id || !invitation.supervisee_branche_id) {
-        setMessage(
-          "Impossible de lier les branches : informations superviseur ou supervisee manquantes."
-        );
-        return;
-      }
-
-      // 🔹 Récupérer le nom du superviseur depuis la branche du superviseur
-      const { data: superviseurBranche, error: supError } = await supabase
+      // 2️⃣ Récupérer la branche du superviseur
+      const { data: brancheSup, error: errSup } = await supabase
         .from("branches")
-        .select("nom")
-        .eq("id", invitation.superviseur_branche_id)
+        .select("id, nom")
+        .eq("eglise_id", invitation.superviseur_eglise_id)
         .single();
 
-      if (supError || !superviseurBranche) {
-        setMessage("Impossible de récupérer la branche du superviseur.");
-        return;
-      }
+      if (errSup || !brancheSup) throw new Error("Impossible de récupérer la branche du superviseur");
 
-      // 🔹 Mettre à jour la branche du supervisee
-      const { error: updateError } = await supabase
+      // 3️⃣ Récupérer la branche du supervisee (utilisateur connecté)
+      const { data: profileSupv, error: errProfile } = await supabase
+        .from("profiles")
+        .select("branche_id")
+        .eq("id", supabase.auth.user()?.id) // ou user.id selon ton hook auth
+        .single();
+
+      if (errProfile || !profileSupv?.branche_id) throw new Error("Impossible de récupérer la branche du supervisee");
+
+      const superviseeBrancheId = profileSupv.branche_id;
+
+      // 4️⃣ Mettre à jour supervisee_branche_id dans eglise_supervisions
+      await supabase
+        .from("eglise_supervisions")
+        .update({ supervisee_branche_id: superviseeBrancheId })
+        .eq("invitation_token", token);
+
+      // 5️⃣ Mettre à jour la branche du supervisee avec le superviseur
+      await supabase
         .from("branches")
         .update({
-          superviseur_id: invitation.superviseur_branche_id,
-          superviseur_nom: superviseurBranche.nom,
+          superviseur_id: brancheSup.id,
+          superviseur_nom: brancheSup.nom
         })
-        .eq("id", invitation.supervisee_branche_id);
+        .eq("id", superviseeBrancheId);
 
-      if (updateError) {
-        setMessage("Erreur lors de la mise à jour de la branche supervisée.");
-        return;
-      }
-
-      setMessage(
-        `Vous êtes maintenant sous la supervision de ${superviseurBranche.nom}`
-      );
+      setMessage(`Vous êtes maintenant sous la supervision de ${invitation.eglise_nom}`);
     }
 
     if (choice === "refusee") {
@@ -97,9 +95,7 @@ export default function AcceptInvitation() {
     }
 
     if (choice === "pending") {
-      setMessage(
-        "Invitation laissée en attente. Vous pourrez décider plus tard."
-      );
+      setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
     }
 
     setTimeout(() => {
@@ -108,7 +104,7 @@ export default function AcceptInvitation() {
 
   } catch (error) {
     console.error("Erreur :", error);
-    setMessage("Une erreur est survenue.");
+    setMessage("Une erreur est survenue lors du traitement de l'invitation.");
   } finally {
     setSubmitting(false);
   }

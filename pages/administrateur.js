@@ -65,9 +65,9 @@ export default function Administrateur() {
           </div>
         ))}
 
-      {/* 🔹 Cartes principales du dashboard (inchangées) */}
+      {/* 🔹 Cartes principales du dashboard */}
       <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl flex-wrap mb-6">
-        {/* Exemple : Liste des utilisateurs */}
+        {/* Liste des utilisateurs */}
         <Link
           href="/admin/list-users"
           className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
@@ -115,7 +115,7 @@ export default function Administrateur() {
           </div>
         </Link>
 
-        {/* Créer un Utilisateur interne */}
+        {/* Créer un Utilisateur */}
         <Link
           href="/admin/create-internal-user"
           className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"

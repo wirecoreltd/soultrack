@@ -130,8 +130,9 @@ const { error } = await supabase
   .from("eglise_supervisions")
   .insert([{
     superviseur_eglise_id: superviseur.eglise_id,
-    supervisee_eglise_id: existingEgliseId,  // 🔥 obligatoire
-    supervisee_branche_id: brancheData.id,
+    superviseur_branche_id: superviseur.branche_id,
+    supervisee_eglise_id: null,
+    supervisee_branche_id: null,
     responsable_prenom: responsable.prenom,
     responsable_nom: responsable.nom,
     eglise_nom: eglise.nom,

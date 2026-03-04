@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 import HeaderInvitation from "../components/HeaderInvitation";
-import Footer from "../components/Footer";
 
 export default function AcceptInvitation() {
   const router = useRouter();
@@ -20,13 +19,17 @@ export default function AcceptInvitation() {
     if (!router.isReady || !token) return;
 
     const fetchInvitation = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("eglise_supervisions")
         .select("*")
         .eq("invitation_token", token)
         .single();
 
-      setInvitation(data || null);
+      if (error || !data) {
+        setInvitation(null);
+      } else {
+        setInvitation(data);
+      }
       setLoading(false);
     };
 
@@ -39,48 +42,58 @@ export default function AcceptInvitation() {
     setSubmitting(true);
 
     try {
-      // 1️⃣ Mettre à jour la table eglise_supervisions
+      // 🔹 Mettre à jour le statut dans eglise_supervisions
       await supabase
         .from("eglise_supervisions")
         .update({
           statut: choice,
-          approved_at: choice === "acceptee" ? new Date().toISOString() : null,
+          approved_at: choice === "acceptee" ? new Date().toISOString() : null
         })
         .eq("invitation_token", token);
 
-      // 2️⃣ Si accepté → mettre à jour la branche du supervisee
-      if (choice === "acceptee" && invitation.supervisee_branche_id) {
-        // 🔹 Récupérer la branche du superviseur
-        const { data: supBranche, error: supBrancheError } = await supabase
-          .from("branches")
-          .select("id, nom")
-          .eq("id", invitation.superviseur_branche_id)
-          .single();
-
-        if (supBranche && !supBrancheError) {
-          // 🔹 Mettre à jour la branche du supervisee
-          await supabase
+      // 🔹 Si accepté → mettre à jour branche du supervisee
+      if (choice === "acceptee") {
+        if (!invitation.superviseur_branche_id || !invitation.supervisee_branche_id) {
+          console.error("IDs de branche manquants, impossible de mettre à jour la branche");
+        } else {
+          const { data: supBranche, error: supError } = await supabase
             .from("branches")
-            .update({
-              superviseur_id: supBranche.id,
-              superviseur_nom: supBranche.nom,
-            })
-            .eq("id", invitation.supervisee_branche_id);
+            .select("id, nom")
+            .eq("id", invitation.superviseur_branche_id)
+            .single();
+
+          if (supError || !supBranche) {
+            console.error("Erreur récupération branche superviseur :", supError);
+          } else {
+            const { error: updateError } = await supabase
+              .from("branches")
+              .update({
+                superviseur_id: supBranche.id,
+                superviseur_nom: supBranche.nom
+              })
+              .eq("id", invitation.supervisee_branche_id);
+
+            if (updateError) {
+              console.error("Erreur mise à jour branche supervisee :", updateError);
+            }
+          }
         }
+
+        setMessage(`Vous êtes maintenant sous la supervision de ${invitation.eglise_nom}`);
       }
 
-      // 3️⃣ Affichage message
-      if (choice === "acceptee") {
-        setMessage(`Vous êtes maintenant sous la supervision de ${invitation.eglise_nom}`);
-      } else if (choice === "refusee") {
+      if (choice === "refusee") {
         setMessage(`Vous avez refusé l’invitation de ${invitation.eglise_nom}`);
-      } else if (choice === "pending") {
+      }
+
+      if (choice === "pending") {
         setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
       }
 
       setTimeout(() => router.push("/"), 3000);
+
     } catch (error) {
-      console.error("Erreur :", error);
+      console.error("Erreur lors de l'action :", error);
       setMessage("Une erreur est survenue.");
     } finally {
       setSubmitting(false);
@@ -95,7 +108,9 @@ export default function AcceptInvitation() {
       <HeaderInvitation />
 
       <div className="w-full max-w-md flex justify-between items-center mt-4 mb-6">
-        <h1 className="text-2xl font-bold text-white">Invitation de l'église superviseur</h1>
+        <h1 className="text-2xl font-bold text-white">
+          Invitation de l'église superviseur
+        </h1>
       </div>
 
       <div className="bg-white rounded-3xl shadow-xl p-6 max-w-md w-full space-y-4">
@@ -106,7 +121,10 @@ export default function AcceptInvitation() {
 
         <hr />
 
-        <p><b>Statut actuel :</b> <span className="capitalize">{invitation.statut}</span></p>
+        <p>
+          <b>Statut actuel :</b>{" "}
+          <span className="capitalize">{invitation.statut}</span>
+        </p>
 
         {!message && (
           <>
@@ -137,11 +155,12 @@ export default function AcceptInvitation() {
         {message && (
           <div className="mt-6 text-center font-semibold text-lg text-[#333699]">
             {message}
-            <p className="text-sm mt-2 text-gray-500">Redirection vers le dashboard…</p>
+            <p className="text-sm mt-2 text-gray-500">
+              Redirection vers le dashboard…
+            </p>
           </div>
         )}
       </div>
-        <Footer />
     </div>
   );
 }

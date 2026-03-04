@@ -69,7 +69,7 @@ export default function Administrateur() {
           {invitation && (
             <Link
               href={`/accept-invitation?token=${invitation.invitation_token}`}
-              className="flex-1 min-w-[250px] w-full h-32 bg-yellow-300 rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
               style={{ borderTopColor: "#F59E0B" }}
             >
               <div className="text-4xl mb-1">📩</div>

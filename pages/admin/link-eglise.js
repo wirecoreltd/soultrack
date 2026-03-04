@@ -344,20 +344,6 @@ if (modeAction === "casser") {
                 {(inv.statut.toLowerCase() === "acceptee" ||
                   <div className="flex justify-center gap-4">
   {inv.statut.toLowerCase() === "lien_casse" ? (
-    <>
-      <button
-        onClick={() => handleSelectInvitation(inv, "renvoyer")}
-        className="text-blue-500 font-semibold text-sm hover:opacity-80"
-      >
-        Renvoyer le lien
-      </button>
-      <button
-        onClick={() => handleSelectInvitation(inv, "supprimer")}
-        className="text-red-500 font-semibold text-sm hover:opacity-80"
-      >
-        🗑️
-      </button>
-    </>
   ) : inv.statut.toLowerCase() === "acceptee" ? (
     <button
       onClick={() => handleSelectInvitation(inv, "casser")}

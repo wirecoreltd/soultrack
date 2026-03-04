@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
-import HeaderInvitation from "../components/Footer";
 import HeaderInvitation from "../components/HeaderInvitation";
 
 export default function AcceptInvitation() {
@@ -177,8 +176,7 @@ export default function AcceptInvitation() {
             </p>
           </div>
         )}
-      </div>
-        <Footer />
+      </div>     
     </div>
   );
 }

@@ -343,31 +343,45 @@ if (modeAction === "casser") {
               <div className="flex gap-2">
                 {(inv.statut.toLowerCase() === "acceptee" ||
                   <div className="flex justify-center gap-4">
-  {inv.statut.toLowerCase() === "lien_casse" ? (
-  ) : inv.statut.toLowerCase() === "acceptee" ? (
-    <button
-      onClick={() => handleSelectInvitation(inv, "casser")}
-      className="text-purple-600 font-semibold text-sm hover:opacity-80"
-    >
-      Casser le lien
-    </button>
-  ) : (
-    <>
-      <button
-        onClick={() => handleSelectInvitation(inv, "renvoyer")}
-        className="text-blue-500 font-semibold text-sm hover:opacity-80"
-      >
-        Renvoyer le lien
-      </button>
-      <button
-        onClick={() => handleSelectInvitation(inv, "supprimer")}
-        className="text-red-500 font-semibold text-sm hover:opacity-80"
-      >
-        🗑️
-      </button>
-    </>
-  )}
-</div>
+                    {inv.statut.toLowerCase() === "lien_casse" ? (
+                      <>
+                        <button
+                          onClick={() => handleSelectInvitation(inv, "renvoyer")}
+                          className="text-blue-500 font-semibold text-sm hover:opacity-80"
+                        >
+                          Renvoyer le lien
+                        </button>
+                        <button
+                          onClick={() => handleSelectInvitation(inv, "supprimer")}
+                          className="text-red-500 font-semibold text-sm hover:opacity-80"
+                        >
+                          🗑️
+                        </button>
+                      </>
+                    ) : inv.statut.toLowerCase() === "acceptee" ? (
+                      <button
+                        onClick={() => handleSelectInvitation(inv, "casser")}
+                        className="text-purple-600 font-semibold text-sm hover:opacity-80"
+                      >
+                        Casser le lien
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleSelectInvitation(inv, "renvoyer")}
+                          className="text-blue-500 font-semibold text-sm hover:opacity-80"
+                        >
+                          Renvoyer le lien
+                        </button>
+                        <button
+                          onClick={() => handleSelectInvitation(inv, "supprimer")}
+                          className="text-red-500 font-semibold text-sm hover:opacity-80"
+                        >
+                          🗑️
+                        </button>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

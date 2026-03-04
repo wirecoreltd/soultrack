@@ -342,6 +342,10 @@ if (modeAction === "casser") {
           </button>
         </div>
 
+      <h3 className="w-full max-w-5xl text-left text-xl font-bold mb-4">
+  Liste des églises supervisées
+</h3>
+
       {/* TABLE INVITATIONS */}
       <div className="w-full max-w-5xl overflow-x-auto">
       <div className="grid grid-cols-5 text-sm font-semibold uppercase border-b border-white/40 pb-2">
@@ -358,11 +362,41 @@ if (modeAction === "casser") {
   return (
     <div
       key={inv.id}
-      className={`grid grid-cols-5 px-3 py-2 mt-2 items-center border-b border-b-white/20 border-l-4 ${statusStyle.border} rounded-md`}>
-      <div className="text-left">{inv.eglise_nom}</div>
-      <div className="text-left">{inv.eglise_branche}</div>
-      <div className="text-left">{inv.responsable_prenom} {inv.responsable_nom}</div>
-      <div className={`text-left ${statusStyle.text} font-semibold`}>
+      className={`
+        grid 
+        grid-cols-1 
+        md:grid-cols-[1.3fr_1.2fr_1.2fr_0.8fr_1fr]
+        gap-y-2 md:gap-y-0 gap-x-3
+        px-4 py-3 mt-3
+        items-center
+        border-b border-b-white/20
+        border-l-4 ${statusStyle.border}
+        rounded-lg
+        bg-white/5
+      `}
+    >
+
+      {/* Église */}
+      <div className="text-left">
+        <span className="md:hidden font-semibold">Église : </span>
+        {inv.eglise_nom}
+      </div>
+
+      {/* Branche */}
+      <div className="text-left">
+        <span className="md:hidden font-semibold">Branche : </span>
+        {inv.eglise_branche}
+      </div>
+
+      {/* Responsable */}
+      <div className="text-left">
+        <span className="md:hidden font-semibold">Responsable : </span>
+        {inv.responsable_prenom} {inv.responsable_nom}
+      </div>
+
+      {/* Statut */}
+      <div className={`text-left font-semibold ${statusStyle.text}`}>
+        <span className="md:hidden font-semibold text-white">Statut : </span>
         {getStatusLabel(inv.statut)}
       </div>
             <div className="flex justify-center gap-2 text-white font-semibold text-sm items-center">

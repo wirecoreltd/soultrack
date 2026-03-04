@@ -51,28 +51,41 @@ export default function AcceptInvitation() {
       // 2️⃣ SI ACCEPTEE → mettre à jour la branche supervisée
       if (choice === "acceptee") {
 
-        // 🔥 récupérer la branche du superviseur
-        const { data: brancheSup } = await supabase
-          .from("branches")
-          .select("id, nom")
-          .eq("eglise_id", invitation.superviseur_eglise_id)
-          .single();
+  // 🔥 récupérer UNE branche du superviseur (la première trouvée)
+  const { data: brancheSup, error: supError } = await supabase
+    .from("branches")
+    .select("id, nom")
+    .eq("eglise_id", invitation.superviseur_eglise_id)
+    .limit(1)
+    .single();
 
-        if (brancheSup) {
-          // 🔥 mettre à jour la branche supervisée
-          await supabase
-            .from("branches")
-            .update({
-              superviseur_id: brancheSup.id,
-              superviseur_nom: brancheSup.nom,
-            })
-            .eq("id", invitation.supervisee_branche_id);
-        }
+  if (supError || !brancheSup) {
+    console.error("Branche superviseur introuvable");
+    setMessage("Erreur : branche superviseur introuvable.");
+    setSubmitting(false);
+    return;
+  }
 
-        setMessage(
-          `Vous êtes maintenant sous la supervision de ${invitation.eglise_nom}`
-        );
-      }
+  // 🔥 lier la branche supervisée au superviseur
+  const { error: updateError } = await supabase
+    .from("branches")
+    .update({
+      superviseur_id: brancheSup.id,
+      superviseur_nom: brancheSup.nom,
+    })
+    .eq("id", invitation.supervisee_branche_id);
+
+  if (updateError) {
+    console.error("Erreur mise à jour branche :", updateError);
+    setMessage("Erreur lors de la liaison.");
+    setSubmitting(false);
+    return;
+  }
+
+  setMessage(
+    `Vous êtes maintenant sous la supervision de l’église ID ${invitation.superviseur_eglise_id}`
+  );
+}
 
       if (choice === "refusee") {
         setMessage(

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 import HeaderInvitation from "../components/HeaderInvitation";
-import HeaderInvitation from "../components/Footer";
+import Footer from "../components/Footer";
 
 export default function AcceptInvitation() {
   const router = useRouter();

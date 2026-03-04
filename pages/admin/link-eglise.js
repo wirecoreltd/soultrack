@@ -59,15 +59,14 @@ export default function LinkEglise() {
   useEffect(() => { loadInvitations(); }, [superviseur.eglise_id]);
 
   // 🔹 Styles statut
-    const getStatusStyle = (statut) => {
-      switch (statut?.toLowerCase()) {
-        case "acceptee": return { color: "text-green-600" };
-        case "refusee": return { color: "text-red-600" };
-        case "pending": return { color: "text-orange-500" }; // 🔹 orange pour pending
-        case "lien_casse": return { color: "text-gray-400" };
-        default: return { color: "text-gray-300" };
-      }
-    };
+  const getStatusStyle = (statut) => {
+    switch (statut?.toLowerCase()) {
+      case "acceptee": return { color: "text-green-600" };
+      case "refusee": return { color: "text-red-600" };
+      case "pending": return { color: "text-gray-400" };
+      default: return { color: "text-gray-300" };
+    }
+  };
 
   // 🔹 Sélectionner invitation pour action
   const handleSelectInvitation = (inv, action) => {
@@ -334,77 +333,62 @@ if (modeAction === "casser") {
         </div>
 
         {invitations.map((inv) => {
-          const statusLower = inv.statut.toLowerCase();
-        
-          // Texte à afficher
-          const displayStatus = {
-            pending: "En Attente",
-            lien_casse: "Lien cassé",
-            accepte: "Acceptée",
-            refus: "Refusée"
-          }[statusLower] || inv.statut;
-        
-          // Couleur du statut
-          const statusColor = {
-            pending: "text-orange-500",
-            lien_casse: "text-gray-500",
-            accepte: "text-green-500",
-            refus: "text-red-500"
-          }[statusLower] || "text-gray-300";
-        
+          const statusStyle = getStatusStyle(inv.statut);
           return (
-            <div
-              key={inv.id}
-              className="grid grid-cols-5 px-3 py-2 mt-2 items-center border-b border-white/20"
-            >
+            <div key={inv.id} className="grid grid-cols-5 px-3 py-2 mt-2 items-center border-b border-white/20">
               <div>{inv.eglise_nom}</div>
               <div>{inv.eglise_branche}</div>
               <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
-              <div className={`${statusColor} font-semibold`}>{displayStatus}</div>
-              <div className="flex justify-center gap-4">
-                {statusLower === "accepte" ? (
-                  <button
-                    onClick={() => handleSelectInvitation(inv, "casser")}
-                    className="text-purple-600 font-semibold text-sm hover:opacity-80"
-                  >
-                    Casser le lien
-                  </button>
-                ) : statusLower === "pending" ? (
-                  <>
-                    <button
-                      onClick={() => handleSelectInvitation(inv, "rappel")}
-                      className="text-orange-500 font-semibold text-sm hover:opacity-80"
-                    >
-                      Envoyer un rappel
-                    </button>
-                    <button
-                      onClick={() => handleSelectInvitation(inv, "supprimer")}
-                      className="text-red-500 font-semibold text-sm hover:opacity-80"
-                    >
-                      🗑️
-                    </button>
-                  </>
-                ) : statusLower === "lien_casse" || statusLower === "refus" ? (
-                  <>
-                    <button
-                      onClick={() => handleSelectInvitation(inv, "renvoyer")}
-                      className="text-blue-500 font-semibold text-sm hover:opacity-80"
-                    >
-                      Renvoyer le lien
-                    </button>
-                    <button
-                      onClick={() => handleSelectInvitation(inv, "supprimer")}
-                      className="text-red-500 font-semibold text-sm hover:opacity-80"
-                    >
-                      🗑️
-                    </button>
-                  </>
-                ) : null}
+              <div className={`${statusStyle.color}`}>{inv.statut.toLowerCase()}</div>
+              <div className="flex gap-2">
+                {(inv.statut.toLowerCase() === "acceptee" ||
+                  <div className="flex justify-center gap-4">
+  {inv.statut.toLowerCase() === "lien_casse" ? (
+    <>
+      <button
+        onClick={() => handleSelectInvitation(inv, "renvoyer")}
+        className="text-blue-500 font-semibold text-sm hover:opacity-80"
+      >
+        Renvoyer le lien
+      </button>
+      <button
+        onClick={() => handleSelectInvitation(inv, "supprimer")}
+        className="text-red-500 font-semibold text-sm hover:opacity-80"
+      >
+        🗑️
+      </button>
+    </>
+  ) : inv.statut.toLowerCase() === "acceptee" ? (
+    <button
+      onClick={() => handleSelectInvitation(inv, "casser")}
+      className="text-purple-600 font-semibold text-sm hover:opacity-80"
+    >
+      Casser le lien
+    </button>
+  ) : (
+    <>
+      <button
+        onClick={() => handleSelectInvitation(inv, "renvoyer")}
+        className="text-blue-500 font-semibold text-sm hover:opacity-80"
+      >
+        Renvoyer le lien
+      </button>
+      <button
+        onClick={() => handleSelectInvitation(inv, "supprimer")}
+        className="text-red-500 font-semibold text-sm hover:opacity-80"
+      >
+        🗑️
+      </button>
+    </>
+  )}
+</div>
+                )}
               </div>
             </div>
           );
-        })}       
+        })}
       </div>
+
       <Footer />
     </div>
   );

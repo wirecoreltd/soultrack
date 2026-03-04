@@ -91,41 +91,35 @@ export default function LinkEglise() {
 
   // 🔹 Exécuter l'action
   const handleAction = async () => {
-    if (!canal) return;
+  if (!canal) return;
 
-    let message = "";
-    let token = selectedInvitation?.invitation_token || crypto.randomUUID();
+  let message = "";
+  let token = selectedInvitation?.invitation_token || crypto.randomUUID();
 
-    // 🔹 Nouveau formulaire (invitation)
+  try {
+    // 🔹 Vérifier si l'église + branche existe déjà
+    let superviseeEgliseId = null;
+    let superviseeBrancheId = null;
+
+    const { data: existingEglise } = await supabase
+      .from("eglises")
+      .select("id")
+      .ilike("nom", eglise.nom)
+      .single();
+
+    if (existingEglise) superviseeEgliseId = existingEglise.id;
+
+    const { data: existingBranche } = await supabase
+      .from("branches")
+      .select("id")
+      .eq("eglise_id", superviseeEgliseId)
+      .ilike("nom", eglise.branche)
+      .single();
+
+    if (existingBranche) superviseeBrancheId = existingBranche.id;
+
+    // 🔹 Nouveau formulaire → créer seulement l'invitation
     if (!selectedInvitation && !modeAction) {
-      if (!eglise.id || !eglise.branche_id) {
-        alert("Église ou branche introuvable !");
-        return;
-      }
-
-      // Créer l’invitation
-      const { error } = await supabase
-        .from("eglise_supervisions")
-        .insert([{
-          superviseur_eglise_id: superviseur.eglise_id,
-          superviseur_branche_id: superviseur.branche_id,
-          supervisee_eglise_id: eglise.id,
-          supervisee_branche_id: eglise.branche_id,
-          responsable_prenom: responsable.prenom,
-          responsable_nom: responsable.nom,
-          eglise_nom: eglise.nom,
-          eglise_branche: eglise.branche,
-          eglise_pays: eglise.pays,
-          statut: "pending",
-          invitation_token: token
-        }]);
-
-      if (error) {
-        console.error(error);
-        alert("Erreur envoi invitation !");
-        return;
-      }
-
       message = `
 🙏 Bonjour ${responsable.prenom} ${responsable.nom},
 
@@ -137,6 +131,28 @@ https://soultrack-three.vercel.app/accept-invitation?token=${token}
 
 Que Dieu vous bénisse 🙏
 `;
+
+      const { error } = await supabase
+        .from("eglise_supervisions")
+        .insert([{
+          superviseur_eglise_id: superviseur.eglise_id,
+          superviseur_branche_id: superviseur.branche_id,
+          supervisee_eglise_id: superviseeEgliseId,      // null si pas trouvé
+          supervisee_branche_id: superviseeBrancheId,    // null si pas trouvé
+          responsable_prenom: responsable.prenom,
+          responsable_nom: responsable.nom,
+          eglise_nom: eglise.nom,
+          eglise_branche: eglise.branche,
+          eglise_pays: eglise.pays,
+          statut: "pending",
+          invitation_token: token
+        }]);
+
+      if (error) {
+        console.error(error);
+        alert("Erreur envoi invitation");
+        return;
+      }
     }
 
     // 🔹 Rappel
@@ -181,10 +197,15 @@ Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informat
     setModeAction(null);
     setSelectedInvitation(null);
     setResponsable({ prenom: "", nom: "" });
-    setEglise({ id: null, branche_id: null, nom: "", branche: "", pays: "" });
+    setEglise({ nom: "", branche: "", pays: "" });
     setCanal("");
     loadInvitations();
-  };
+
+  } catch (err) {
+    console.error("Erreur handleAction:", err);
+    alert("Une erreur est survenue lors de l'envoi.");
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-4 flex flex-col items-center">

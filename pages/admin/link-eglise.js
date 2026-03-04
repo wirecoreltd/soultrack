@@ -81,10 +81,12 @@ export default function LinkEglise() {
 
   // Pré-remplir les informations de l'église
   setEglise({
-    nom: inv.eglise_nom,
-    branche: inv.eglise_branche,
-    pays: inv.eglise_pays
-  });
+  id: inv.supervisee_eglise_id,
+  branche_id: inv.supervisee_branche_id,
+  nom: inv.eglise_nom,
+  branche: inv.eglise_branche,
+  pays: inv.eglise_pays
+});
 };
 
   // 🔹 Exécuter l'action (nouveau / rappel / supprimer / casser)
@@ -100,7 +102,7 @@ export default function LinkEglise() {
       // Vérifier que l'église existe déjà
       const { data: existingEglise, error: egliseError } = await supabase
         .from("eglises")
-        .select("id, branches(id)")
+        .select("id")
         .eq("id", eglise.id) // id de l'église existante
         .single();
 

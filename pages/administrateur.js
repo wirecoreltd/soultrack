@@ -1,39 +1,93 @@
-/* ✅ pages/administrateur.js */
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import LogoutLink from "../components/LogoutLink";
-import SendLinkPopup from "../components/SendLinkPopup";
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
-import ProtectedRoute from "../components/ProtectedRoute";
+import SendLinkPopup from "../components/SendLinkPopup";
+import { useEffect, useState } from "react";
+import supabase from "../lib/supabaseClient";
 
-function AdministrateurContent() {
-  const router = useRouter();
-  const [userName, setUserName] = useState("Utilisateur");
+export default function Administrateur() {
+  const [invitations, setInvitations] = useState([]);
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedName = localStorage.getItem("userName");
-    if (storedName) setUserName(storedName.split(" ")[0]);
+    const loadUserAndInvitations = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+
+      // 🔹 Récupérer invitations en pending ou refusee
+      const { data: invites } = await supabase
+        .from("eglise_supervisions")
+        .select("*")
+        .eq("supervisee_id", user.id)
+        .in("statut", ["pending", "refusee"]);
+
+      setInvitations(invites || []);
+      setLoading(false);
+    };
+
+    loadUserAndInvitations();
   }, []);
 
-  return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}>
-  
-     <HeaderPages />
+  if (loading) return <div className="p-10 text-white">Chargement…</div>;
 
-      {/* 🔹 Titre */}
-      <h1 className="text-3xl font-bold text-white mb-6">
-        Espace Admin
+  return (
+    <div className="min-h-screen flex flex-col items-center p-6 bg-gradient-to-tr from-[#2E3192] to-[#92EFFD]">
+      <HeaderPages />
+
+      <h1 className="text-3xl font-bold text-amber-300 text-center mb-10">
+        Tableau de bord
       </h1>
 
-      {/* 🔹 Cartes principales */}
-      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6 flex-wrap">
+      {/* 🔹 Carte invitation si existante */}
+      {invitations.length > 0 &&
+        invitations.map((inv) => (
+          <div
+            key={inv.id}
+            className="w-full max-w-5xl bg-white rounded-2xl shadow-lg p-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+          >
+            <div className="flex-1 text-left space-y-1">
+              <p><b>Église superviseuse :</b> {inv.eglise_nom}</p>
+              <p><b>Branche :</b> {inv.eglise_branche}</p>
+              <p>
+                <b>Statut :</b>{" "}
+                <span
+                  className={`font-semibold ${
+                    inv.statut === "pending"
+                      ? "text-orange-500"
+                      : "text-red-500"
+                  }`}
+                >
+                  {inv.statut === "pending" ? "En attente" : "Refusée"}
+                </span>
+              </p>
+            </div>
+
+            <div className="flex gap-3 mt-3 md:mt-0">
+              {inv.statut === "pending" && (
+                <>
+                  <button className="bg-green-500 text-white px-4 py-2 rounded-xl font-semibold hover:opacity-80">
+                    Accepter
+                  </button>
+                  <button className="bg-red-500 text-white px-4 py-2 rounded-xl font-semibold hover:opacity-80">
+                    Refuser
+                  </button>
+                </>
+              )}
+              {inv.statut === "refusee" && (
+                <button className="bg-green-500 text-white px-4 py-2 rounded-xl font-semibold hover:opacity-80">
+                  Accepter
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+      {/* 🔹 Cartes principales du dashboard */}
+      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl flex-wrap mb-6">
         {/* Liste des utilisateurs */}
         <Link
           href="/admin/list-users"
@@ -45,18 +99,18 @@ function AdministrateurContent() {
             Liste des Utilisateurs
           </div>
         </Link>
-          
-          {/* Relier une Eglise */}
-          <Link
-            href="/admin/link-eglise"
-            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-            style={{ borderTopColor: "#8B5CF6" }}
-          >
-            <div className="text-4xl mb-1">🔗</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Relier une Église
-            </div>
-          </Link>
+
+        {/* Relier une Église */}
+        <Link
+          href="/admin/link-eglise"
+          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+          style={{ borderTopColor: "#8B5CF6" }}
+        >
+          <div className="text-4xl mb-1">🔗</div>
+          <div className="text-lg font-bold text-gray-800 text-center">
+            Relier une Église
+          </div>
+        </Link>
 
         {/* Liste des Cellules */}
         <Link
@@ -82,7 +136,7 @@ function AdministrateurContent() {
           </div>
         </Link>
 
-        {/* Créer un Responsable */}
+        {/* Créer un Utilisateur interne */}
         <Link
           href="/admin/create-internal-user"
           className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
@@ -104,20 +158,7 @@ function AdministrateurContent() {
         />
       </div>
 
-      {/* 🔹 Verset biblique */}
-      <div className="mt-auto mb-4 text-center text-white text-lg italic max-w-2xl leading-relaxed tracking-wide font-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
-        1 Corinthiens 12:14 ❤️
-      </div>
-        <Footer />
+      <Footer />
     </div>
-  );
-}
-
-export default function Administrateur() {
-  return (
-    <ProtectedRoute allowedRoles={["Administrateur"]}>
-      <AdministrateurContent />
-    </ProtectedRoute>
   );
 }

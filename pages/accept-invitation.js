@@ -33,83 +33,81 @@ export default function AcceptInvitation() {
   }, [router.isReady, token]);
 
   const handleSubmit = async () => {
-    if (!choice || !invitation) return;
+  if (!choice || !invitation) return;
 
-    setSubmitting(true);
+  setSubmitting(true);
 
-    try {
-      // 1️⃣ Mettre à jour la table eglise_supervisions
-      await supabase
-        .from("eglise_supervisions")
-        .update({
-          statut: choice,
-          approved_at:
-            choice === "acceptee" ? new Date().toISOString() : null,
-        })
-        .eq("invitation_token", token);
+  try {
 
-      // 2️⃣ SI ACCEPTEE → mettre à jour la branche supervisée
-      if (choice === "acceptee") {
-
-  // 🔥 récupérer UNE branche du superviseur (la première trouvée)
-  const { data: brancheSup, error: supError } = await supabase
-    .from("branches")
-    .select("id, nom")
-    .eq("eglise_id", invitation.superviseur_eglise_id)
-    .limit(1)
-    .single();
-
-  if (supError || !brancheSup) {
-    console.error("Branche superviseur introuvable");
-    setMessage("Erreur : branche superviseur introuvable.");
-    setSubmitting(false);
-    return;
-  }
-
-  // 🔥 lier la branche supervisée au superviseur
-  const { error: updateError } = await supabase
-    .from("branches")
-    .update({
-      superviseur_id: brancheSup.id,
-      superviseur_nom: brancheSup.nom,
-    })
-    .eq("id", invitation.supervisee_branche_id);
-
-  if (updateError) {
-    console.error("Erreur mise à jour branche :", updateError);
-    setMessage("Erreur lors de la liaison.");
-    setSubmitting(false);
-    return;
-  }
-
-  setMessage(
-    `Vous êtes maintenant sous la supervision de l’église ID ${invitation.superviseur_eglise_id}`
-  );
-}
-
-      if (choice === "refusee") {
-        setMessage(
-          `Vous avez refusé l’invitation de ${invitation.eglise_nom}`
-        );
-      }
-
-      if (choice === "pending") {
-        setMessage(
-          "Invitation laissée en attente. Vous pourrez décider plus tard."
-        );
-      }
-
-      setTimeout(() => {
-        router.push("/");
-      }, 3000);
-
-    } catch (error) {
-      console.error("Erreur :", error);
-      setMessage("Une erreur est survenue.");
-    } finally {
+    // 🔹 Récupérer utilisateur connecté
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setMessage("Vous devez être connecté.");
       setSubmitting(false);
+      return;
     }
-  };
+
+    // 🔹 Récupérer son église et sa branche
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("eglise_id, branche_id")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || !profile) {
+      setMessage("Profil introuvable.");
+      setSubmitting(false);
+      return;
+    }
+
+    // 🔹 Mettre à jour eglise_supervisions
+    await supabase
+      .from("eglise_supervisions")
+      .update({
+        statut: choice,
+        supervisee_eglise_id:
+          choice === "acceptee" ? profile.eglise_id : null,
+        supervisee_branche_id:
+          choice === "acceptee" ? profile.branche_id : null,
+        approved_at:
+          choice === "acceptee"
+            ? new Date().toISOString()
+            : null
+      })
+      .eq("invitation_token", token);
+
+    // 🔹 Si acceptée → mettre à jour branches
+    if (choice === "acceptee") {
+
+      await supabase
+        .from("branches")
+        .update({
+          superviseur_id: invitation.superviseur_branche_id
+        })
+        .eq("id", profile.branche_id);
+
+      setMessage("Supervision activée avec succès.");
+    }
+
+    if (choice === "refusee") {
+      setMessage("Invitation refusée.");
+    }
+
+    if (choice === "pending") {
+      setMessage("Invitation laissée en attente.");
+    }
+
+    setTimeout(() => {
+      router.push("/");
+    }, 3000);
+
+  } catch (error) {
+    console.error(error);
+    setMessage("Une erreur est survenue.");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (loading) return <div className="p-10">Chargement…</div>;
   if (!invitation) return <div className="p-10">Invitation introuvable</div>;

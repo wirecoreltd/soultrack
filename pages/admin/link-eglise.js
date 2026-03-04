@@ -88,20 +88,16 @@ export default function LinkEglise() {
 };
 
   // 🔹 Exécuter l'action (nouveau / rappel / supprimer / casser)
- const handleAction = async () => {
-  if (!canal) return;
+  const handleAction = async () => {
+    if (!canal) return;
 
-  let message = "";
-  const token = selectedInvitation?.invitation_token || crypto.randomUUID();
+    let message = "";    
 
-  // 🔹 Nouveau formulaire (envoi d'une invitation)
-  if (!selectedInvitation && !modeAction) {
-    if (!eglise.nom || !eglise.branche || !eglise.pays) {
-      alert("Veuillez remplir tous les champs obligatoires !");
-      return;
-    }
+    // 🔹 Nouveau formulaire
+    if (!selectedInvitation && !modeAction) {
+  const token = crypto.randomUUID();
 
-    message = `
+  message = `
 🙏 Bonjour ${responsable.prenom} ${responsable.nom},
 
 ${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} vous a envoyé une invitation pour que votre église soit placée sous sa supervision.
@@ -113,33 +109,53 @@ https://soultrack-three.vercel.app/accept-invitation?token=${token}
 Que Dieu vous bénisse 🙏
 `;
 
-    // 🔹 Créer l'invitation dans eglise_supervisions
-    const { error } = await supabase
-      .from("eglise_supervisions")
-      .insert([{
-        superviseur_eglise_id: superviseur.eglise_id,
-        superviseur_branche_id: superviseur.branche_id,
-        supervisee_eglise_id: eglise.id,          // l'église cible déjà existante
-        supervisee_branche_id: eglise.branche_id, // sa branche existante
-        responsable_prenom: responsable.prenom,
-        responsable_nom: responsable.nom,
-        eglise_nom: eglise.nom,
-        eglise_branche: eglise.branche,
-        eglise_pays: eglise.pays,
-        statut: "pending",
-        invitation_token: token
-      }]);
+  // 🔹 Récupérer l'église et sa branche déjà existante
+  const { data: existingEglise, error: egliseError } = await supabase
+    .from("eglises")
+    .select("id, branches(id)")
+    .eq("nom", eglise.nom)
+    .single();
 
-    if (error) {
-      console.error(error);
-      alert("Erreur lors de l'envoi de l'invitation");
-      return;
-    }
+  if (egliseError || !existingEglise) {
+    alert("Église non trouvée !");
+    return;
   }
 
-  // 🔹 Rappel
-  if (modeAction === "rappel" && selectedInvitation) {
-    message = `
+  const superviseeEgliseId = existingEglise.id;
+  const superviseeBrancheId = existingEglise.branches[0]?.id;
+
+  if (!superviseeBrancheId) {
+    alert("Branche de l'église non trouvée !");
+    return;
+  }
+
+  // 🔹 Créer l'invitation dans eglise_supervisions
+  const { error: invitationError } = await supabase
+    .from("eglise_supervisions")
+    .insert([{
+      superviseur_eglise_id: superviseur.eglise_id,
+      superviseur_branche_id: superviseur.branche_id,
+      supervisee_eglise_id: superviseeEgliseId,
+      supervisee_branche_id: superviseeBrancheId,
+      responsable_prenom: responsable.prenom,
+      responsable_nom: responsable.nom,
+      eglise_nom: eglise.nom,
+      eglise_branche: eglise.branche,
+      eglise_pays: eglise.pays,
+      statut: "pending",
+      invitation_token: token
+    }]);
+
+  if (invitationError) {
+    console.error(invitationError);
+    alert("Erreur envoi invitation");
+    return;
+  }
+}
+
+    // 🔹 Rappel
+    if (modeAction === "rappel") {
+      message = `
 🙏 Bonjour ${selectedInvitation.responsable_prenom} ${selectedInvitation.responsable_nom},
 
 Ceci est un rappel : ${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} vous a envoyé une invitation pour que votre église soit placée sous sa supervision.
@@ -148,41 +164,41 @@ Lien : https://soultrack-three.vercel.app/accept-invitation?token=${selectedInvi
 
 Que Dieu vous bénisse 🙏
 `;
-  }
+    }
 
-  // 🔹 Supprimer
-  if (modeAction === "supprimer" && selectedInvitation) {
-    message = `
+    // 🔹 Supprimer
+    if (modeAction === "supprimer") {
+      message = `
 ❌ L'invitation de votre église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche}, ${selectedInvitation.eglise_pays} a été supprimée.
 
 Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informations.
 `;
-    await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
-  }
+      await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
+    }
 
-  // 🔹 Casser le lien
-  if (modeAction === "casser" && selectedInvitation) {
-    message = `
+    // 🔹 Casser le lien
+    if (modeAction === "casser") {
+      message = `
 💔 Le lien avec l'église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche} a été cassé.
 `;
-    await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
-  }
+      await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
+    }
 
-  // 🔹 Envoi WhatsApp / Email
-  if (canal === "whatsapp") {
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-  } else if (canal === "email") {
-    window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
-  }
+    // 🔹 Envoi WhatsApp / Email
+    if (canal === "whatsapp") {
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    } else if (canal === "email") {
+      window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
+    }
 
-  alert("Message envoyé !");
-  setModeAction(null);
-  setSelectedInvitation(null);
-  setResponsable({ prenom: "", nom: "" });
-  setEglise({ nom: "", branche: "", pays: "" });
-  setCanal("");
-  loadInvitations();
-};
+    alert("Message envoyé !");
+    setModeAction(null);
+    setSelectedInvitation(null);
+    setResponsable({ prenom: "", nom: "" });
+    setEglise({ nom: "", branche: "", pays: "" });
+    setCanal("");
+    loadInvitations();
+  };
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-4 flex flex-col items-center">

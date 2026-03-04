@@ -336,18 +336,18 @@ if (modeAction === "casser") {
         {invitations.map((inv) => {
           const statusLower = inv.statut.toLowerCase();
         
-          // 🔹 Texte affiché pour le statut
+          // Texte à afficher
           const displayStatus = {
             pending: "En Attente",
-            acceptee: "Lien cassé",
+            lien_casse: "Lien cassé",
             accepte: "Acceptée",
             refus: "Refusée"
           }[statusLower] || inv.statut;
         
-          // 🔹 Couleur directe dans JSX
+          // Couleur du statut
           const statusColor = {
             pending: "text-orange-500",
-            acceptee: "text-gray-500",
+            lien_casse: "text-gray-500",
             accepte: "text-green-500",
             refus: "text-red-500"
           }[statusLower] || "text-gray-300";
@@ -384,7 +384,7 @@ if (modeAction === "casser") {
                       🗑️
                     </button>
                   </>
-                ) : statusLower === "acceptee" || statusLower === "refus" ? (
+                ) : statusLower === "lien_casse" || statusLower === "refus" ? (
                   <>
                     <button
                       onClick={() => handleSelectInvitation(inv, "renvoyer")}
@@ -403,7 +403,7 @@ if (modeAction === "casser") {
               </div>
             </div>
           );
-        })}         
+        })}       
       </div>
       <Footer />
     </div>

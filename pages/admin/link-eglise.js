@@ -16,7 +16,7 @@ export default function LinkEglise() {
   });
 
   const [responsable, setResponsable] = useState({ prenom: "", nom: "" });
-  const [eglise, setEglise] = useState({ nom: "", branche: "", pays: "" });
+  const [eglise, setEglise] = useState({ id: null, branche_id: null, nom: "", branche: "", pays: "" });
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
   const [modeAction, setModeAction] = useState(null); // null, "rappel", "supprimer", "casser"
@@ -62,7 +62,7 @@ export default function LinkEglise() {
   const getStatusStyle = (statut) => {
     switch (statut?.toLowerCase()) {
       case "acceptee": return { color: "text-green-600" };
-      case "refus": return { color: "text-red-600" };
+      case "refusee": return { color: "text-red-600" };
       case "pending": return { color: "text-gray-400" };
       default: return { color: "text-gray-300" };
     }
@@ -70,55 +70,47 @@ export default function LinkEglise() {
 
   // 🔹 Sélectionner invitation pour action
   const handleSelectInvitation = (inv, action) => {
-  setSelectedInvitation(inv);
-  setModeAction(action);
+    setSelectedInvitation(inv);
+    setModeAction(action);
 
-  // Pré-remplir le responsable
-  setResponsable({
-    prenom: inv.responsable_prenom,
-    nom: inv.responsable_nom
-  });
+    // Pré-remplir le responsable
+    setResponsable({
+      prenom: inv.responsable_prenom,
+      nom: inv.responsable_nom
+    });
 
-  // Pré-remplir les informations de l'église
-  setEglise({
-  id: inv.supervisee_eglise_id,
-  branche_id: inv.supervisee_branche_id,
-  nom: inv.eglise_nom,
-  branche: inv.eglise_branche,
-  pays: inv.eglise_pays
-});
-};
+    // Pré-remplir les informations de l'église existante
+    setEglise({
+      id: inv.supervisee_eglise_id,
+      branche_id: inv.supervisee_branche_id,
+      nom: inv.eglise_nom,
+      branche: inv.eglise_branche,
+      pays: inv.eglise_pays
+    });
+  };
 
-  // 🔹 Exécuter l'action (nouveau / rappel / supprimer / casser)
+  // 🔹 Exécuter l'action
   const handleAction = async () => {
-  if (!canal) return;
+    if (!canal) return;
 
-  let message = "";
-  const token = selectedInvitation?.invitation_token || crypto.randomUUID();
+    let message = "";
+    let token = selectedInvitation?.invitation_token || crypto.randomUUID();
 
-  try {
-    // 🔹 Nouveau formulaire : envoyer une invitation
+    // 🔹 Nouveau formulaire (invitation)
     if (!selectedInvitation && !modeAction) {
-      // Vérifier que l'église existe déjà
-      const { data: existingEglise, error: egliseError } = await supabase
-        .from("eglises")
-        .select("id")
-        .eq("id", eglise.id) // id de l'église existante
-        .single();
-
-      if (egliseError || !existingEglise) {
-        alert("Église non trouvée !");
+      if (!eglise.id || !eglise.branche_id) {
+        alert("Église ou branche introuvable !");
         return;
       }
 
-      // Créer l'invitation dans eglise_supervisions
-      const { error: invitationError } = await supabase
+      // Créer l’invitation
+      const { error } = await supabase
         .from("eglise_supervisions")
         .insert([{
           superviseur_eglise_id: superviseur.eglise_id,
           superviseur_branche_id: superviseur.branche_id,
-          supervisee_eglise_id: existingEglise.id,
-          supervisee_branche_id: existingEglise.branches?.id || null,
+          supervisee_eglise_id: eglise.id,
+          supervisee_branche_id: eglise.branche_id,
           responsable_prenom: responsable.prenom,
           responsable_nom: responsable.nom,
           eglise_nom: eglise.nom,
@@ -128,8 +120,8 @@ export default function LinkEglise() {
           invitation_token: token
         }]);
 
-      if (invitationError) {
-        console.error(invitationError);
+      if (error) {
+        console.error(error);
         alert("Erreur envoi invitation !");
         return;
       }
@@ -189,15 +181,10 @@ Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informat
     setModeAction(null);
     setSelectedInvitation(null);
     setResponsable({ prenom: "", nom: "" });
-    setEglise({ nom: "", branche: "", pays: "" });
+    setEglise({ id: null, branche_id: null, nom: "", branche: "", pays: "" });
     setCanal("");
     loadInvitations();
-
-  } catch (error) {
-    console.error("Erreur handleAction :", error);
-    alert("Une erreur est survenue !");
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-4 flex flex-col items-center">
@@ -210,76 +197,72 @@ Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informat
       </h4>
 
       {/* FORMULAIRE */}
-<div className="w-full max-w-md rounded-2xl shadow-lg p-6 space-y-4 mb-10 bg-white/10">
-  <div>
-    <label className="font-semibold">Prénom du responsable</label>
-    <input
-      className="w-full border rounded-xl px-3 py-2 text-black"
-      value={responsable.prenom}
-      onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
-    />
-  </div>
-  <div>
-    <label className="font-semibold">Nom du responsable</label>
-    <input
-      className="w-full border rounded-xl px-3 py-2 text-black"
-      value={responsable.nom}
-      onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
-    />
-  </div>
-  <div>
-    <label className="font-semibold">Nom de l'Église *</label>
-    <input
-      className="w-full border rounded-xl px-3 py-2 text-black"
-      value={eglise.nom}
-      onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
-    />
-  </div>
-  <div>
-    <label className="font-semibold">Branche / Région *</label>
-    <input
-      className="w-full border rounded-xl px-3 py-2 text-black"
-      value={eglise.branche}
-      onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
-    />
-  </div>
-  <div>
-    <label className="font-semibold">Pays *</label>
-    <input
-      className="w-full border rounded-xl px-3 py-2 text-black"
-      value={eglise.pays}
-      onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
-    />
-  </div>
-  <select
-    className="w-full border rounded-xl px-3 py-2 text-black"
-    value={canal}
-    onChange={(e) => setCanal(e.target.value)}
-  >
-    <option value="">-- Sélectionnez le mode d’envoi --</option>
-    <option value="whatsapp">WhatsApp</option>
-    <option value="email">Email</option>
-  </select>
+      <div className="w-full max-w-md rounded-2xl shadow-lg p-6 space-y-4 mb-10 bg-white/10">
+        <div>
+          <label className="font-semibold">Prénom du responsable</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2 text-black"
+            value={responsable.prenom}
+            onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className="font-semibold">Nom du responsable</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2 text-black"
+            value={responsable.nom}
+            onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className="font-semibold">Nom de l'Église *</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2 text-black"
+            value={eglise.nom}
+            readOnly
+          />
+        </div>
+        <div>
+          <label className="font-semibold">Branche / Région *</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2 text-black"
+            value={eglise.branche}
+            readOnly
+          />
+        </div>
+        <div>
+          <label className="font-semibold">Pays *</label>
+          <input
+            className="w-full border rounded-xl px-3 py-2 text-black"
+            value={eglise.pays}
+            readOnly
+          />
+        </div>
+        <select
+          className="w-full border rounded-xl px-3 py-2 text-black"
+          value={canal}
+          onChange={(e) => setCanal(e.target.value)}
+        >
+          <option value="">-- Sélectionnez le mode d’envoi --</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="email">Email</option>
+        </select>
 
-  {/* BOUTON ENVOYER / ACTION */}
-  <button
-    onClick={handleAction}
-    disabled={
-      !canal || 
-      (!selectedInvitation && (!eglise.nom || !eglise.branche || !eglise.pays))
-    } // canal + champs obligatoires
-    className={`w-full py-2 rounded-xl text-white font-semibold ${
-      !canal || (!selectedInvitation && (!eglise.nom || !eglise.branche || !eglise.pays))
-        ? "bg-gray-400 cursor-not-allowed"
-        : "bg-[#333699] hover:bg-[#2a2f85]"
-    }`}
-  >
-    {modeAction === "rappel" && "Envoyer le rappel"}
-    {modeAction === "supprimer" && "Envoyer notification de suppression"}
-    {modeAction === "casser" && "Confirmer le cassage"}
-    {modeAction === null && "Envoyer l'invitation"}
-  </button>
-</div>
+        <button
+          onClick={handleAction}
+          disabled={!canal || !eglise.id || !eglise.branche_id}
+          className={`w-full py-2 rounded-xl text-white font-semibold ${
+            !canal || !eglise.id || !eglise.branche_id
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-[#333699] hover:bg-[#2a2f85]"
+          }`}
+        >
+          {modeAction === "rappel" && "Envoyer le rappel"}
+          {modeAction === "supprimer" && "Envoyer notification de suppression"}
+          {modeAction === "casser" && "Confirmer le cassage"}
+          {modeAction === null && "Envoyer l'invitation"}
+        </button>
+      </div>
 
       {/* TABLE INVITATIONS */}
       <div className="w-full max-w-5xl overflow-x-auto">

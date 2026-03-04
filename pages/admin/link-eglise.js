@@ -355,17 +355,17 @@ if (modeAction === "casser") {
                 {inv.statut.toLowerCase() !== "acceptee" && (
                   <>
                     <button
-                      onClick={() => handleSelectInvitation(inv, "rappel")}
-                      className="text-orange-500 font-semibold text-sm hover:opacity-80"
-                    >
-                      Rappel
-                    </button>
-                    <button
                       onClick={() => handleSelectInvitation(inv, "supprimer")}
                       className="text-red-500 font-semibold text-sm hover:opacity-80"
                     >
-                      Supprimer
+                      🗑️
                     </button>
+                    <button
+                      onClick={() => handleSelectInvitation(inv, "rappel")}
+                      className="text-blue-500 font-semibold text-sm hover:opacity-80"
+                    >
+                      Renvoyer le lien
+                    </button>  
                   </>
                 )}
               </div>

@@ -184,30 +184,32 @@ if (modeAction === "casser") {
 💔 Le lien avec l'église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche} a été cassé.
 `;
 
-  // 🔎 Retrouver l'église
-  const { data: foundEglise } = await supabase
+  // 🔎 Retrouver l'église (sans .single())
+  const { data: eglisesFound } = await supabase
     .from("eglises")
     .select("id")
-    .ilike("nom", selectedInvitation.eglise_nom)
-    .single();
+    .ilike("nom", selectedInvitation.eglise_nom);
 
-  if (foundEglise) {
-    // 🔎 Retrouver la branche
-    const { data: foundBranche } = await supabase
+  const egliseId = eglisesFound?.[0]?.id;
+
+  if (egliseId) {
+    // 🔎 Retrouver la branche (sans .single())
+    const { data: branchesFound } = await supabase
       .from("branches")
       .select("id")
-      .eq("eglise_id", foundEglise.id)
-      .ilike("nom", selectedInvitation.eglise_branche)
-      .single();
+      .eq("eglise_id", egliseId)
+      .ilike("nom", selectedInvitation.eglise_branche);
 
-    if (foundBranche) {
+    const brancheId = branchesFound?.[0]?.id;
+
+    if (brancheId) {
       await supabase
         .from("branches")
         .update({
           superviseur_id: null,
           superviseur_nom: null
         })
-        .eq("id", foundBranche.id);
+        .eq("id", brancheId);
     }
   }
 

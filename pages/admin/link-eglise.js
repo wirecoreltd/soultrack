@@ -212,10 +212,10 @@ if (modeAction === "casser") {
   }
 
   await supabase
-    .from("eglise_supervisions")
-    .delete()
-    .eq("id", selectedInvitation.id);
-}
+  .from("eglise_supervisions")
+  .update({ statut: "lien_casse" })
+  .eq("id", selectedInvitation.id);
+  }
     
     // 🔹 Envoi WhatsApp / Email
     if (canal === "whatsapp") {
@@ -341,12 +341,15 @@ if (modeAction === "casser") {
               <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
               <div className={`${statusStyle.color}`}>{inv.statut.toLowerCase()}</div>
               <div className="flex gap-2">
-                {inv.statut.toLowerCase() === "acceptee" && (
+                {(inv.statut.toLowerCase() === "acceptee" ||
+                  inv.statut.toLowerCase() === "lien_casse") && (
                   <button
                     onClick={() => handleSelectInvitation(inv, "casser")}
                     className="text-purple-600 font-semibold text-sm hover:opacity-80"
                   >
-                    Casser le lien
+                    {inv.statut.toLowerCase() === "lien_casse"
+                      ? "Renvoyer le lien"
+                      : "Casser le lien"}
                   </button>
                 )}
                 {inv.statut.toLowerCase() !== "acceptee" && (

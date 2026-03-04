@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
+import HeaderInvitation from "../components/Footer";
 import HeaderInvitation from "../components/HeaderInvitation";
 
 export default function AcceptInvitation() {
@@ -14,6 +15,7 @@ export default function AcceptInvitation() {
   const [submitting, setSubmitting] = useState(false);
   const [choice, setChoice] = useState("");
   const [message, setMessage] = useState("");
+  const [superviseur, setSuperviseur] = useState({ eglise_nom: "", branche_nom: "" });
 
   useEffect(() => {
     if (!router.isReady || !token) return;
@@ -26,6 +28,31 @@ export default function AcceptInvitation() {
         .single();
 
       setInvitation(data || null);
+
+      if (data) {
+        // Récupérer le nom et branche du superviseur pour l'affichage et mise à jour
+        const { data: supData } = await supabase
+          .from("branches")
+          .select("id, nom, eglise_id")
+          .eq("id", data.superviseur_branche_id)
+          .single();
+
+        if (supData) {
+          const { data: supProfile } = await supabase
+            .from("profiles")
+            .select("eglise_id, branche_id, prenom, nom")
+            .eq("eglise_id", supData.eglise_id)
+            .single();
+
+          if (supProfile) {
+            setSuperviseur({
+              eglise_nom: supProfile.eglise_id ? supProfile.eglise_id : "",
+              branche_nom: supData.nom
+            });
+          }
+        }
+      }
+
       setLoading(false);
     };
 
@@ -33,88 +60,71 @@ export default function AcceptInvitation() {
   }, [router.isReady, token]);
 
   const handleSubmit = async () => {
-  if (!choice || !invitation) return;
+    if (!choice || !invitation) return;
 
-  setSubmitting(true);
+    setSubmitting(true);
 
-  try {
-
-    // 🔹 Récupérer utilisateur connecté
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setMessage("Vous devez être connecté.");
-      setSubmitting(false);
-      return;
-    }
-
-    // 🔹 Récupérer son église et sa branche
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("eglise_id, branche_id")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError || !profile) {
-      setMessage("Profil introuvable.");
-      setSubmitting(false);
-      return;
-    }
-
-    // 🔹 Mettre à jour eglise_supervisions
-    await supabase
-      .from("eglise_supervisions")
-      .update({
-        statut: choice,
-        supervisee_eglise_id:
-          choice === "acceptee" ? profile.eglise_id : null,
-        supervisee_branche_id:
-          choice === "acceptee" ? profile.branche_id : null,
-        approved_at:
-          choice === "acceptee"
-            ? new Date().toISOString()
-            : null
-      })
-      .eq("invitation_token", token);
-
-    // 🔹 Si acceptée → mettre à jour branches
-    if (choice === "acceptee") {
-
+    try {
+      // 1️⃣ Mettre à jour la table eglise_supervisions
       await supabase
-        .from("branches")
+        .from("eglise_supervisions")
         .update({
-          superviseur_id: invitation.superviseur_branche_id
+          statut: choice,
+          approved_at: choice === "acceptee" ? new Date().toISOString() : null,
+          supervisee_eglise_id: invitation.supervisee_eglise_id,
+          supervisee_branche_id: invitation.supervisee_branche_id
         })
-        .eq("id", profile.branche_id);
+        .eq("invitation_token", token);
 
-      setMessage("Supervision activée avec succès.");
+      // 2️⃣ SI ACCEPTEE → mettre à jour la branche supervisée
+      if (choice === "acceptee") {
+        // 🔹 récupérer la branche du superviseur
+        const { data: brancheSup } = await supabase
+          .from("branches")
+          .select("id, nom")
+          .eq("id", invitation.superviseur_branche_id)
+          .single();
+
+        if (brancheSup) {
+          // 🔹 mettre à jour la branche du supervisee
+          await supabase
+            .from("branches")
+            .update({
+              superviseur_id: brancheSup.id,
+              superviseur_nom: `${superviseur.eglise_nom} - ${superviseur.branche_nom}`
+            })
+            .eq("id", invitation.supervisee_branche_id);
+        }
+
+        setMessage(
+          `Vous êtes maintenant sous la supervision de ${superviseur.eglise_nom} - ${superviseur.branche_nom}`
+        );
+      }
+
+      if (choice === "refusee") {
+        setMessage(`Vous avez refusé l’invitation de ${superviseur.eglise_nom} - ${superviseur.branche_nom}`);
+      }
+
+      if (choice === "pending") {
+        setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
+      }
+
+      // Redirection après 3s
+      setTimeout(() => router.push("/"), 3000);
+
+    } catch (error) {
+      console.error("Erreur :", error);
+      setMessage("Une erreur est survenue.");
+    } finally {
+      setSubmitting(false);
     }
-
-    if (choice === "refusee") {
-      setMessage("Invitation refusée.");
-    }
-
-    if (choice === "pending") {
-      setMessage("Invitation laissée en attente.");
-    }
-
-    setTimeout(() => {
-      router.push("/");
-    }, 3000);
-
-  } catch (error) {
-    console.error(error);
-    setMessage("Une erreur est survenue.");
-  } finally {
-    setSubmitting(false);
-  }
-};
+  };
 
   if (loading) return <div className="p-10">Chargement…</div>;
   if (!invitation) return <div className="p-10">Invitation introuvable</div>;
 
   return (
     <div className="min-h-screen bg-[#333699] flex flex-col items-center p-6">
-
       <HeaderInvitation />
 
       <div className="w-full max-w-md flex justify-between items-center mt-4 mb-6">
@@ -124,25 +134,19 @@ export default function AcceptInvitation() {
       </div>
 
       <div className="bg-white rounded-3xl shadow-xl p-6 max-w-md w-full space-y-4">
-
         <div className="space-y-1">
-          <p><b>Église superviseuse :</b> {invitation.eglise_nom}</p>
-          <p><b>Branche :</b> {invitation.eglise_branche}</p>
+          <p><b>Église superviseuse :</b> {superviseur.eglise_nom}</p>
+          <p><b>Branche :</b> {superviseur.branche_nom}</p>
         </div>
 
         <hr />
 
-        <p>
-          <b>Statut actuel :</b>{" "}
-          <span className="capitalize">{invitation.statut}</span>
-        </p>
+        <p><b>Statut actuel :</b> <span className="capitalize">{invitation.statut}</span></p>
 
         {!message && (
           <>
             <div className="mt-4">
-              <label className="block font-semibold mb-1">
-                Votre décision
-              </label>
+              <label className="block font-semibold mb-1">Votre décision</label>
               <select
                 value={choice}
                 onChange={(e) => setChoice(e.target.value)}
@@ -174,6 +178,7 @@ export default function AcceptInvitation() {
           </div>
         )}
       </div>
+        <Footer />
     </div>
   );
 }

@@ -107,13 +107,15 @@ https://soultrack-three.vercel.app/accept-invitation?token=${token}
 
 Que Dieu vous bénisse 🙏
 `;
-      // 1️⃣ Créer la branche supervisée
+      // 1️⃣ Créer la branche (si nécessaire)
 const { data: brancheData, error: brancheError } = await supabase
   .from("branches")
   .insert({
-    eglise_id: null, // car nouvelle église pas encore liée
+    eglise_id: existingEgliseId, // 🔥 ID de l'église qui existe déjà
     nom: eglise.branche,
     localisation: eglise.pays,
+    superviseur_nom: superviseur.prenom + " " + superviseur.nom,
+    superviseur_id: superviseur.id
   })
   .select()
   .single();
@@ -123,14 +125,13 @@ if (brancheError) {
   return;
 }
 
-const superviseeBrancheId = brancheData.id;
-
-// 2️⃣ Créer l’invitation AVEC le branche_id
+// 2️⃣ Créer l'invitation
 const { error } = await supabase
   .from("eglise_supervisions")
   .insert([{
     superviseur_eglise_id: superviseur.eglise_id,
-    supervisee_branche_id: superviseeBrancheId, // 🔥 IMPORTANT
+    supervisee_eglise_id: existingEgliseId,  // 🔥 obligatoire
+    supervisee_branche_id: brancheData.id,
     responsable_prenom: responsable.prenom,
     responsable_nom: responsable.nom,
     eglise_nom: eglise.nom,

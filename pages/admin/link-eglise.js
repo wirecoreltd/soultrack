@@ -126,6 +126,8 @@ if (brancheError) {
 }
 
 // 2️⃣ Créer l'invitation
+const token = crypto.randomUUID();
+
 const { error } = await supabase
   .from("eglise_supervisions")
   .insert([{
@@ -143,7 +145,8 @@ const { error } = await supabase
   }]);
 
 if (error) {
-  alert("Erreur lors de l'envoi de l'invitation");
+  console.error(error);
+  alert("Erreur envoi invitation");
   return;
 }
     }

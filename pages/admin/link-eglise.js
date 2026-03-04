@@ -333,38 +333,77 @@ if (modeAction === "casser") {
         </div>
 
         {invitations.map((inv) => {
-          const statusStyle = getStatusStyle(inv.statut);
+          let statusStyle = { color: "text-gray-300" };
+          let actions = [];
+        
+          const statutLower = inv.statut.toLowerCase();
+        
+          // 🔹 Couleur du statut
+          switch (statutLower) {
+            case "acceptee":
+              statusStyle = { color: "text-green-600" };
+              actions = [
+                <button
+                  key="casser"
+                  onClick={() => handleSelectInvitation(inv, "casser")}
+                  className="font-semibold text-sm hover:opacity-80"
+                >
+                  Casser le lien
+                </button>
+              ];
+              break;
+            case "refusee":
+            case "lien casse":
+              statusStyle = { color: "text-red-600" };
+              actions = [
+                <button
+                  key="renvoyer"
+                  onClick={() => handleSelectInvitation(inv, null)}
+                  className="text-green-600 font-semibold text-sm hover:opacity-80"
+                >
+                  Renvoyer le lien
+                </button>,
+                <button
+                  key="supprimer"
+                  onClick={() => handleSelectInvitation(inv, "supprimer")}
+                  className="text-red-500 font-semibold text-sm hover:opacity-80"
+                >
+                  🗑️
+                </button>
+              ];
+              break;
+            case "pending":
+              statusStyle = { color: "text-orange-500" };
+              actions = [
+                <button
+                  key="rappel"
+                  onClick={() => handleSelectInvitation(inv, "rappel")}
+                  className="text-orange-500 font-semibold text-sm hover:opacity-80"
+                >
+                  Envoyer un rappel
+                </button>,
+                <button
+                  key="supprimer"
+                  onClick={() => handleSelectInvitation(inv, "supprimer")}
+                  className="text-red-500 font-semibold text-sm hover:opacity-80"
+                >
+                  🗑️
+                </button>
+              ];
+              break;
+            default:
+              statusStyle = { color: "text-gray-300" };
+              actions = [];
+          }
+        
           return (
             <div key={inv.id} className="grid grid-cols-5 px-3 py-2 mt-2 items-center border-b border-white/20">
               <div>{inv.eglise_nom}</div>
               <div>{inv.eglise_branche}</div>
               <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
-              <div className={`${statusStyle.color}`}>{inv.statut.toLowerCase()}</div>
-              <div className="flex gap-2">
-                {inv.statut.toLowerCase() === "acceptee" && (
-                  <button
-                    onClick={() => handleSelectInvitation(inv, "casser")}
-                    className="text-purple-600 font-semibold text-sm hover:opacity-80"
-                  >
-                    Casser le lien
-                  </button>
-                )}
-                {inv.statut.toLowerCase() !== "acceptee" && (
-                  <>
-                    <button
-                      onClick={() => handleSelectInvitation(inv, "rappel")}
-                      className="text-orange-500 font-semibold text-sm hover:opacity-80"
-                    >
-                      Rappel
-                    </button>
-                    <button
-                      onClick={() => handleSelectInvitation(inv, "supprimer")}
-                      className="text-red-500 font-semibold text-sm hover:opacity-80"
-                    >
-                      Supprimer
-                    </button>
-                  </>
-                )}
+              <div className={`${statusStyle.color}`}>{inv.statut}</div>
+              <div className="flex justify-center gap-2">
+                {actions}
               </div>
             </div>
           );

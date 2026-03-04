@@ -99,6 +99,16 @@ const getStatusStyle = (statut) => {
     });
   };
 
+  const getBorderColor = (statut) => {
+  switch (statut?.toLowerCase()) {
+    case "acceptee": return "border-green-500";
+    case "refusee": return "border-red-500";
+    case "lien_casse": return "border-gray-400";
+    case "pending": return "border-orange-500";
+    default: return "border-white/20";
+  }
+};
+
   // 🔹 Exécuter l'action
   const handleAction = async () => {
   if (!canal) return;
@@ -345,7 +355,11 @@ if (modeAction === "casser") {
       {invitations.map((inv) => {
         const statusStyle = getStatusStyle(inv.statut);
         return (
-          <div key={inv.id} className="grid grid-cols-5 px-3 py-2 mt-2 items-center border-b border-white/20">
+          <div key={inv.id} className={`grid grid-cols-5 px-3 py-2 mt-2 items-center 
+              border-b border-white/20 
+              border-l-4 ${getBorderColor(inv.statut)} 
+              rounded-md`}
+            >
             <div className="text-left">{inv.eglise_nom}</div>
             <div className="text-left">{inv.eglise_branche}</div>
             <div className="text-left">{inv.responsable_prenom} {inv.responsable_nom}</div>

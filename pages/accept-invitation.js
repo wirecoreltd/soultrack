@@ -37,68 +37,82 @@ export default function AcceptInvitation() {
   }, [router.isReady, token]);
 
   const handleSubmit = async () => {
-    if (!choice || !invitation) return;
+  if (!choice || !invitation) return;
 
-    setSubmitting(true);
+  setSubmitting(true);
 
-    try {
-      // 🔹 Mettre à jour le statut dans eglise_supervisions
-      await supabase
-        .from("eglise_supervisions")
+  try {
+    // 1️⃣ Mettre à jour le statut de l'invitation
+    await supabase
+      .from("eglise_supervisions")
+      .update({
+        statut: choice,
+        approved_at: choice === "acceptee" ? new Date().toISOString() : null,
+        accepted_at: choice === "acceptee" ? new Date().toISOString() : null,
+      })
+      .eq("invitation_token", token);
+
+    // 2️⃣ Si acceptée → mettre à jour la branche supervisée avec le superviseur
+    if (choice === "acceptee") {
+      if (!invitation.superviseur_branche_id || !invitation.supervisee_branche_id) {
+        setMessage(
+          "Impossible de lier les branches : informations superviseur ou supervisee manquantes."
+        );
+        return;
+      }
+
+      // 🔹 Récupérer le nom du superviseur depuis la branche du superviseur
+      const { data: superviseurBranche, error: supError } = await supabase
+        .from("branches")
+        .select("nom")
+        .eq("id", invitation.superviseur_branche_id)
+        .single();
+
+      if (supError || !superviseurBranche) {
+        setMessage("Impossible de récupérer la branche du superviseur.");
+        return;
+      }
+
+      // 🔹 Mettre à jour la branche du supervisee
+      const { error: updateError } = await supabase
+        .from("branches")
         .update({
-          statut: choice,
-          approved_at: choice === "acceptee" ? new Date().toISOString() : null
+          superviseur_id: invitation.superviseur_branche_id,
+          superviseur_nom: superviseurBranche.nom,
         })
-        .eq("invitation_token", token);
+        .eq("id", invitation.supervisee_branche_id);
 
-      // 🔹 Si accepté → mettre à jour branche du supervisee
-      if (choice === "acceptee") {
-        if (!invitation.superviseur_branche_id || !invitation.supervisee_branche_id) {
-          console.error("IDs de branche manquants, impossible de mettre à jour la branche");
-        } else {
-          const { data: supBranche, error: supError } = await supabase
-            .from("branches")
-            .select("id, nom")
-            .eq("id", invitation.superviseur_branche_id)
-            .single();
-
-          if (supError || !supBranche) {
-            console.error("Erreur récupération branche superviseur :", supError);
-          } else {
-            const { error: updateError } = await supabase
-              .from("branches")
-              .update({
-                superviseur_id: supBranche.id,
-                superviseur_nom: supBranche.nom
-              })
-              .eq("id", invitation.supervisee_branche_id);
-
-            if (updateError) {
-              console.error("Erreur mise à jour branche supervisee :", updateError);
-            }
-          }
-        }
-
-        setMessage(`Vous êtes maintenant sous la supervision de ${invitation.eglise_nom}`);
+      if (updateError) {
+        setMessage("Erreur lors de la mise à jour de la branche supervisée.");
+        return;
       }
 
-      if (choice === "refusee") {
-        setMessage(`Vous avez refusé l’invitation de ${invitation.eglise_nom}`);
-      }
-
-      if (choice === "pending") {
-        setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
-      }
-
-      setTimeout(() => router.push("/"), 3000);
-
-    } catch (error) {
-      console.error("Erreur lors de l'action :", error);
-      setMessage("Une erreur est survenue.");
-    } finally {
-      setSubmitting(false);
+      setMessage(
+        `Vous êtes maintenant sous la supervision de ${superviseurBranche.nom}`
+      );
     }
-  };
+
+    if (choice === "refusee") {
+      setMessage(`Vous avez refusé l’invitation de ${invitation.eglise_nom}`);
+    }
+
+    if (choice === "pending") {
+      setMessage(
+        "Invitation laissée en attente. Vous pourrez décider plus tard."
+      );
+    }
+
+    setTimeout(() => {
+      router.push("/");
+    }, 3000);
+
+  } catch (error) {
+    console.error("Erreur :", error);
+    setMessage("Une erreur est survenue.");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (loading) return <div className="p-10">Chargement…</div>;
   if (!invitation) return <div className="p-10">Invitation introuvable</div>;

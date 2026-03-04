@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 import HeaderInvitation from "../components/HeaderInvitation";
+import HeaderInvitation from "../components/Footer";
 
 export default function AcceptInvitation() {
   const router = useRouter();
@@ -19,13 +20,20 @@ export default function AcceptInvitation() {
     if (!router.isReady || !token) return;
 
     const fetchInvitation = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("eglise_supervisions")
         .select("*")
         .eq("invitation_token", token)
         .single();
 
-      setInvitation(data || null);
+      if (error || !data) {
+        setMessage("Invitation introuvable ou expirée. Redirection…");
+        setLoading(false);
+        setTimeout(() => router.push("/"), 3000);
+        return;
+      }
+
+      setInvitation(data);
       setLoading(false);
     };
 
@@ -34,73 +42,46 @@ export default function AcceptInvitation() {
 
   const handleSubmit = async () => {
     if (!choice || !invitation) return;
-
     setSubmitting(true);
 
     try {
-      // 1️⃣ Mettre à jour le statut de l'invitation
-      await supabase
-        .from("eglise_supervisions")
-        .update({
-          statut: choice,
-          approved_at: choice === "acceptee" ? new Date().toISOString() : null,
-        })
-        .eq("invitation_token", token);
-
-      // 2️⃣ Si l'invitation est acceptée
       if (choice === "acceptee") {
-        // 🔹 Vérifier que supervisee_eglise_id est défini
-        if (!invitation.supervisee_eglise_id) {
-          setMessage(
-            "Impossible de récupérer votre profil, ID d'église supervisee manquant. Redirection…"
-          );
-          console.error("Erreur récupération profil supervisee : supervisee_eglise_id null");
+        // Vérifier que le supervisee a une branche
+        if (!invitation.supervisee_branche_id || !invitation.supervisee_eglise_id) {
+          setMessage("Impossible de récupérer votre profil ou votre branche. Redirection…");
           setTimeout(() => router.push("/"), 3000);
           return;
         }
 
-        // 🔹 Récupérer le profil du supervisee pour sa branche
-        const { data: profileSupervisee, error: profileError } = await supabase
-          .from("profiles")
-          .select("eglise_id, branche_id")
-          .eq("eglise_id", invitation.supervisee_eglise_id)
-          .single();
+        // Mettre à jour la table eglise_supervisions
+        await supabase
+          .from("eglise_supervisions")
+          .update({
+            statut: "acceptee",
+            supervisee_eglise_id: invitation.supervisee_eglise_id,
+            supervisee_branche_id: invitation.supervisee_branche_id,
+            approved_at: new Date().toISOString(),
+          })
+          .eq("invitation_token", token);
 
-        if (profileError || !profileSupervisee) {
-          setMessage("Impossible de récupérer la branche de votre église. Redirection…");
-          console.error("Erreur récupération profil supervisee", profileError);
-          setTimeout(() => router.push("/"), 3000);
-          return;
-        }
-
-        const superviseeBrancheId = profileSupervisee.branche_id;
-
-        // 🔹 Récupérer la branche du superviseur
-        const { data: brancheSup } = await supabase
-          .from("branches")
-          .select("id, nom")
-          .eq("id", invitation.superviseur_branche_id)
-          .single();
-
-        if (!brancheSup) {
-          setMessage("Impossible de récupérer la branche du superviseur. Redirection…");
-          setTimeout(() => router.push("/"), 3000);
-          return;
-        }
-
-        // 🔹 Mettre à jour la branche du supervisee avec le superviseur
+        // Mettre à jour la branche du supervisee pour indiquer son superviseur
         await supabase
           .from("branches")
           .update({
-            superviseur_id: brancheSup.id,
-            superviseur_nom: invitation.eglise_nom,
+            superviseur_id: invitation.superviseur_branche_id,
+            superviseur_nom: invitation.eglise_nom
           })
-          .eq("id", superviseeBrancheId);
+          .eq("id", invitation.supervisee_branche_id);
 
         setMessage(`Vous êtes maintenant sous la supervision de ${invitation.eglise_nom}`);
       }
 
       if (choice === "refusee") {
+        await supabase
+          .from("eglise_supervisions")
+          .update({ statut: "refusee" })
+          .eq("invitation_token", token);
+
         setMessage(`Vous avez refusé l’invitation de ${invitation.eglise_nom}`);
       }
 
@@ -108,7 +89,9 @@ export default function AcceptInvitation() {
         setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
       }
 
+      // Redirection après 3 secondes
       setTimeout(() => router.push("/"), 3000);
+
     } catch (error) {
       console.error("Erreur :", error);
       setMessage("Une erreur est survenue.");
@@ -118,26 +101,25 @@ export default function AcceptInvitation() {
   };
 
   if (loading) return <div className="p-10">Chargement…</div>;
-  if (!invitation) return <div className="p-10">Invitation introuvable</div>;
+  if (!invitation) return <div className="p-10">{message}</div>;
 
   return (
     <div className="min-h-screen bg-[#333699] flex flex-col items-center p-6">
       <HeaderInvitation />
+
       <div className="w-full max-w-md flex justify-between items-center mt-4 mb-6">
-        <h1 className="text-2xl font-bold text-white">
-          Invitation de l'église superviseur
-        </h1>
+        <h1 className="text-2xl font-bold text-white">Invitation de l'église superviseur</h1>
       </div>
+
       <div className="bg-white rounded-3xl shadow-xl p-6 max-w-md w-full space-y-4">
         <div className="space-y-1">
           <p><b>Église superviseuse :</b> {invitation.eglise_nom}</p>
           <p><b>Branche :</b> {invitation.eglise_branche}</p>
         </div>
+
         <hr />
-        <p>
-          <b>Statut actuel :</b>{" "}
-          <span className="capitalize">{invitation.statut}</span>
-        </p>
+
+        <p><b>Statut actuel :</b> <span className="capitalize">{invitation.statut}</span></p>
 
         {!message && (
           <>
@@ -154,6 +136,7 @@ export default function AcceptInvitation() {
                 <option value="pending">En attente</option>
               </select>
             </div>
+
             <button
               onClick={handleSubmit}
               disabled={submitting || !choice}
@@ -171,6 +154,7 @@ export default function AcceptInvitation() {
           </div>
         )}
       </div>
+     <Footer />   
     </div>
   );
 }

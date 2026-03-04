@@ -42,60 +42,80 @@ export default function AcceptInvitation() {
   setSubmitting(true);
 
   try {
-    // 1️⃣ Mettre à jour le statut dans eglise_supervisions
+    // 🔹 1. Récupérer utilisateur connecté (Supabase v2)
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      throw new Error("Utilisateur non connecté");
+    }
+
+    // 🔹 2. Récupérer la branche du supervisee (celui qui accepte)
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("branche_id")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || !profile?.branche_id) {
+      throw new Error("Branche du supervisee introuvable");
+    }
+
+    const superviseeBrancheId = profile.branche_id;
+
+    // 🔹 3. Mettre à jour le statut de l'invitation
     await supabase
       .from("eglise_supervisions")
       .update({
         statut: choice,
+        supervisee_branche_id: superviseeBrancheId,
         approved_at: choice === "acceptee" ? new Date().toISOString() : null,
       })
       .eq("invitation_token", token);
 
+    // 🔹 4. Si accepté → lier les branches
     if (choice === "acceptee") {
-      // 2️⃣ Récupérer la branche du superviseur
-      const { data: brancheSup, error: errSup } = await supabase
+      // Récupérer la branche du superviseur
+      const { data: brancheSup, error: supError } = await supabase
         .from("branches")
         .select("id, nom")
-        .eq("eglise_id", invitation.superviseur_eglise_id)
+        .eq("id", invitation.superviseur_branche_id)
         .single();
 
-      if (errSup || !brancheSup) throw new Error("Impossible de récupérer la branche du superviseur");
+      if (supError || !brancheSup) {
+        throw new Error("Branche du superviseur introuvable");
+      }
 
-      // 3️⃣ Récupérer la branche du supervisee (utilisateur connecté)
-      const { data: profileSupv, error: errProfile } = await supabase
-        .from("profiles")
-        .select("branche_id")
-        .eq("id", supabase.auth.user()?.id) // ou user.id selon ton hook auth
-        .single();
-
-      if (errProfile || !profileSupv?.branche_id) throw new Error("Impossible de récupérer la branche du supervisee");
-
-      const superviseeBrancheId = profileSupv.branche_id;
-
-      // 4️⃣ Mettre à jour supervisee_branche_id dans eglise_supervisions
-      await supabase
-        .from("eglise_supervisions")
-        .update({ supervisee_branche_id: superviseeBrancheId })
-        .eq("invitation_token", token);
-
-      // 5️⃣ Mettre à jour la branche du supervisee avec le superviseur
-      await supabase
+      // 🔹 Mettre à jour la branche du supervisee
+      const { error: updateError } = await supabase
         .from("branches")
         .update({
           superviseur_id: brancheSup.id,
-          superviseur_nom: brancheSup.nom
+          superviseur_nom: brancheSup.nom,
         })
         .eq("id", superviseeBrancheId);
 
-      setMessage(`Vous êtes maintenant sous la supervision de ${invitation.eglise_nom}`);
+      if (updateError) {
+        throw new Error("Erreur mise à jour branche supervisee");
+      }
+
+      setMessage(
+        `Vous êtes maintenant sous la supervision de ${brancheSup.nom}`
+      );
     }
 
     if (choice === "refusee") {
-      setMessage(`Vous avez refusé l’invitation de ${invitation.eglise_nom}`);
+      setMessage(
+        `Vous avez refusé l’invitation de ${invitation.eglise_nom}`
+      );
     }
 
     if (choice === "pending") {
-      setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
+      setMessage(
+        "Invitation laissée en attente. Vous pourrez décider plus tard."
+      );
     }
 
     setTimeout(() => {
@@ -103,7 +123,7 @@ export default function AcceptInvitation() {
     }, 3000);
 
   } catch (error) {
-    console.error("Erreur :", error);
+    console.error("Erreur :", error.message);
     setMessage("Une erreur est survenue lors du traitement de l'invitation.");
   } finally {
     setSubmitting(false);

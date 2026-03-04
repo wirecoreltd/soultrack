@@ -38,7 +38,7 @@ export default function AcceptInvitation() {
     setSubmitting(true);
 
     try {
-      // 1️⃣ Mettre à jour la table eglise_supervisions
+      // 1️⃣ Mettre à jour le statut de l'invitation
       await supabase
         .from("eglise_supervisions")
         .update({
@@ -47,8 +47,19 @@ export default function AcceptInvitation() {
         })
         .eq("invitation_token", token);
 
+      // 2️⃣ Si l'invitation est acceptée
       if (choice === "acceptee") {
-        // 🔹 Récupérer le profil du supervisee pour connaître sa branche existante
+        // 🔹 Vérifier que supervisee_eglise_id est défini
+        if (!invitation.supervisee_eglise_id) {
+          setMessage(
+            "Impossible de récupérer votre profil, ID d'église supervisee manquant. Redirection…"
+          );
+          console.error("Erreur récupération profil supervisee : supervisee_eglise_id null");
+          setTimeout(() => router.push("/"), 3000);
+          return;
+        }
+
+        // 🔹 Récupérer le profil du supervisee pour sa branche
         const { data: profileSupervisee, error: profileError } = await supabase
           .from("profiles")
           .select("eglise_id, branche_id")
@@ -56,7 +67,7 @@ export default function AcceptInvitation() {
           .single();
 
         if (profileError || !profileSupervisee) {
-          setMessage("Impossible de récupérer la branche de votre église.");
+          setMessage("Impossible de récupérer la branche de votre église. Redirection…");
           console.error("Erreur récupération profil supervisee", profileError);
           setTimeout(() => router.push("/"), 3000);
           return;
@@ -64,12 +75,25 @@ export default function AcceptInvitation() {
 
         const superviseeBrancheId = profileSupervisee.branche_id;
 
+        // 🔹 Récupérer la branche du superviseur
+        const { data: brancheSup } = await supabase
+          .from("branches")
+          .select("id, nom")
+          .eq("id", invitation.superviseur_branche_id)
+          .single();
+
+        if (!brancheSup) {
+          setMessage("Impossible de récupérer la branche du superviseur. Redirection…");
+          setTimeout(() => router.push("/"), 3000);
+          return;
+        }
+
         // 🔹 Mettre à jour la branche du supervisee avec le superviseur
         await supabase
           .from("branches")
           .update({
-            superviseur_id: invitation.superviseur_branche_id, // branche du superviseur
-            superviseur_nom: invitation.eglise_nom
+            superviseur_id: brancheSup.id,
+            superviseur_nom: invitation.eglise_nom,
           })
           .eq("id", superviseeBrancheId);
 
@@ -85,7 +109,6 @@ export default function AcceptInvitation() {
       }
 
       setTimeout(() => router.push("/"), 3000);
-
     } catch (error) {
       console.error("Erreur :", error);
       setMessage("Une erreur est survenue.");
@@ -100,22 +123,21 @@ export default function AcceptInvitation() {
   return (
     <div className="min-h-screen bg-[#333699] flex flex-col items-center p-6">
       <HeaderInvitation />
-
       <div className="w-full max-w-md flex justify-between items-center mt-4 mb-6">
         <h1 className="text-2xl font-bold text-white">
           Invitation de l'église superviseur
         </h1>
       </div>
-
       <div className="bg-white rounded-3xl shadow-xl p-6 max-w-md w-full space-y-4">
         <div className="space-y-1">
           <p><b>Église superviseuse :</b> {invitation.eglise_nom}</p>
           <p><b>Branche :</b> {invitation.eglise_branche}</p>
         </div>
-
         <hr />
-
-        <p><b>Statut actuel :</b>{" "}<span className="capitalize">{invitation.statut}</span></p>
+        <p>
+          <b>Statut actuel :</b>{" "}
+          <span className="capitalize">{invitation.statut}</span>
+        </p>
 
         {!message && (
           <>
@@ -132,7 +154,6 @@ export default function AcceptInvitation() {
                 <option value="pending">En attente</option>
               </select>
             </div>
-
             <button
               onClick={handleSubmit}
               disabled={submitting || !choice}

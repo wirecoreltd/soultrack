@@ -46,6 +46,15 @@ export default function LinkEglise() {
     loadSuperviseur();
   }, []);
 
+  const getStatusLabel = (statut) => {
+  switch (statut?.toLowerCase()) {
+    case "acceptee": return "Accepté";
+    case "refusee": return "Refusée";
+    case "lien_casse": return "Lien Cassé";
+    case "pending": return "En attente";
+    default: return statut;
+  }
+};
   // 🔹 Charger invitations
   const loadInvitations = async () => {
     if (!superviseur.eglise_id) return;
@@ -325,88 +334,72 @@ if (modeAction === "casser") {
 
       {/* TABLE INVITATIONS */}
       <div className="w-full max-w-5xl overflow-x-auto">
-        <div className="grid grid-cols-5 text-sm font-semibold uppercase border-b border-white/40 pb-2 text-center">
-          <div>Église</div>
-          <div>Branche</div>
-          <div>Responsable</div>
-          <div>Statut</div>
-          <div>Action</div>
-        </div>
-
-        {invitations.map((inv) => {
-            const statusStyle = getStatusStyle(inv.statut);
-            return (
-              <div key={inv.id} className="grid grid-cols-5 px-3 py-2 mt-2 items-center border-b border-white/20 text-center">
-                <div>{inv.eglise_nom}</div>
-                <div>{inv.eglise_branche}</div>
-                <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
-                <div className={`${statusStyle.color} font-semibold`}>{inv.statut.toLowerCase()}</div>
-                <div className="flex justify-center gap-2 text-white font-semibold text-sm">
-                  {inv.statut.toLowerCase() === "acceptee" && (
-                    <button
-                      onClick={() => handleSelectInvitation(inv, "casser")}
-                      className="hover:opacity-80"
-                    >
-                      Casser le lien
-                    </button>
-                  )}
-                  {inv.statut.toLowerCase() === "lien casse" && (
-                    <>
-                      <button
-                        onClick={() => handleSelectInvitation(inv, null)}
-                        className="hover:opacity-80"
-                      >
-                        Renvoyer le lien
-                      </button>
-                      <span>|</span>
-                      <button
-                        onClick={() => handleSelectInvitation(inv, "supprimer")}
-                        className="hover:opacity-80"
-                      >
-                        🗑️
-                      </button>
-                    </>
-                  )}
-                  {inv.statut.toLowerCase() === "refusee" && (
-                    <>
-                      <button
-                        onClick={() => handleSelectInvitation(inv, null)}
-                        className="hover:opacity-80"
-                      >
-                        Renvoyer le lien
-                      </button>
-                      <span>|</span>
-                      <button
-                        onClick={() => handleSelectInvitation(inv, "supprimer")}
-                        className="hover:opacity-80"
-                      >
-                        🗑️
-                      </button>
-                    </>
-                  )}
-                  {inv.statut.toLowerCase() === "pending" && (
-                    <>
-                      <button
-                        onClick={() => handleSelectInvitation(inv, "rappel")}
-                        className="hover:opacity-80"
-                      >
-                        Envoyer un rappel
-                      </button>
-                      <span>|</span>
-                      <button
-                        onClick={() => handleSelectInvitation(inv, "supprimer")}
-                        className="hover:opacity-80"
-                      >
-                        🗑️
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        
+      <div className="grid grid-cols-5 text-sm font-semibold uppercase border-b border-white/40 pb-2">
+        <div className="text-left">Église</div>
+        <div className="text-left">Branche</div>
+        <div className="text-left">Responsable</div>
+        <div className="text-left">Statut</div>
+        <div className="text-center">Action</div>
+      </div>
+    
+      {invitations.map((inv) => {
+        const statusStyle = getStatusStyle(inv.statut);
+        return (
+          <div key={inv.id} className="grid grid-cols-5 px-3 py-2 mt-2 items-center border-b border-white/20">
+            <div className="text-left">{inv.eglise_nom}</div>
+            <div className="text-left">{inv.eglise_branche}</div>
+            <div className="text-left">{inv.responsable_prenom} {inv.responsable_nom}</div>
+            <div className={`text-left ${statusStyle.color} font-semibold`}>{getStatusLabel(inv.statut)}</div>
+            <div className="flex justify-center gap-2 text-white font-semibold text-sm items-center">
+              {inv.statut.toLowerCase() === "acceptee" && (
+                <button
+                  onClick={() => handleSelectInvitation(inv, "casser")}
+                  className="hover:opacity-80"
+                >
+                  Casser le lien
+                </button>
+              )}
+    
+              {(inv.statut.toLowerCase() === "lien_casse" || inv.statut.toLowerCase() === "refusee") && (
+                <>
+                  <button
+                    onClick={() => handleSelectInvitation(inv, null)}
+                    className="hover:opacity-80"
+                  >
+                    Renvoyer le lien
+                  </button>
+                  <span>|</span>
+                  <button
+                    onClick={() => handleSelectInvitation(inv, "supprimer")}
+                    className="text-red-600 hover:opacity-80"
+                  >
+                    🗑️
+                  </button>
+                </>
+              )}
+    
+              {inv.statut.toLowerCase() === "pending" && (
+                <>
+                  <button
+                    onClick={() => handleSelectInvitation(inv, "rappel")}
+                    className="hover:opacity-80"
+                  >
+                    Envoyer un rappel
+                  </button>
+                  <span>|</span>
+                  <button
+                    onClick={() => handleSelectInvitation(inv, "supprimer")}
+                    className="text-red-600 hover:opacity-80"
+                  >
+                    🗑️
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>        
 
       <Footer />
     </div>

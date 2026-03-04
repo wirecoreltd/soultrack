@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 import HeaderInvitation from "../components/HeaderInvitation";
+import Footer from "../components/Footer";
 
 export default function AcceptInvitation() {
   const router = useRouter();
@@ -19,20 +20,13 @@ export default function AcceptInvitation() {
     if (!router.isReady || !token) return;
 
     const fetchInvitation = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("eglise_supervisions")
         .select("*")
         .eq("invitation_token", token)
         .single();
 
-      if (error || !data) {
-        setMessage("Invitation introuvable ou expirée. Redirection…");
-        setLoading(false);
-        setTimeout(() => router.push("/"), 3000);
-        return;
-      }
-
-      setInvitation(data);
+      setInvitation(data || null);
       setLoading(false);
     };
 
@@ -41,42 +35,50 @@ export default function AcceptInvitation() {
 
   const handleSubmit = async () => {
     if (!choice || !invitation) return;
+
     setSubmitting(true);
 
     try {
-      // Mettre à jour la table eglise_supervisions
+      // 1️⃣ Mettre à jour la table eglise_supervisions
       await supabase
         .from("eglise_supervisions")
         .update({
           statut: choice,
-          approved_at: choice === "acceptee" ? new Date().toISOString() : null
+          approved_at: choice === "acceptee" ? new Date().toISOString() : null,
         })
         .eq("invitation_token", token);
 
-      // Si accepté → mettre à jour la branche du supervisee pour renseigner le superviseur
-      if (choice === "acceptee") {
-        if (invitation.supervisee_branche_id && invitation.superviseur_branche_id) {
+      // 2️⃣ Si accepté → mettre à jour la branche du supervisee
+      if (choice === "acceptee" && invitation.supervisee_branche_id) {
+        // 🔹 Récupérer la branche du superviseur
+        const { data: supBranche, error: supBrancheError } = await supabase
+          .from("branches")
+          .select("id, nom")
+          .eq("id", invitation.superviseur_branche_id)
+          .single();
+
+        if (supBranche && !supBrancheError) {
+          // 🔹 Mettre à jour la branche du supervisee
           await supabase
             .from("branches")
             .update({
-              superviseur_id: invitation.superviseur_branche_id,
-              superviseur_nom: invitation.eglise_nom
+              superviseur_id: supBranche.id,
+              superviseur_nom: supBranche.nom,
             })
             .eq("id", invitation.supervisee_branche_id);
         }
+      }
+
+      // 3️⃣ Affichage message
+      if (choice === "acceptee") {
         setMessage(`Vous êtes maintenant sous la supervision de ${invitation.eglise_nom}`);
-      }
-
-      if (choice === "refusee") {
+      } else if (choice === "refusee") {
         setMessage(`Vous avez refusé l’invitation de ${invitation.eglise_nom}`);
-      }
-
-      if (choice === "pending") {
+      } else if (choice === "pending") {
         setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
       }
 
       setTimeout(() => router.push("/"), 3000);
-
     } catch (error) {
       console.error("Erreur :", error);
       setMessage("Une erreur est survenue.");
@@ -86,7 +88,7 @@ export default function AcceptInvitation() {
   };
 
   if (loading) return <div className="p-10">Chargement…</div>;
-  if (!invitation) return <div className="p-10">{message}</div>;
+  if (!invitation) return <div className="p-10">Invitation introuvable</div>;
 
   return (
     <div className="min-h-screen bg-[#333699] flex flex-col items-center p-6">
@@ -139,6 +141,7 @@ export default function AcceptInvitation() {
           </div>
         )}
       </div>
+        <Footer />
     </div>
   );
 }

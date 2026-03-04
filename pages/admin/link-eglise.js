@@ -334,80 +334,77 @@ if (modeAction === "casser") {
         </div>
 
         {invitations.map((inv) => {
-  const statusLower = inv.statut.toLowerCase();
-
-  // 🔹 Texte affiché pour le statut
-  const displayStatus = {
-    pending: "En Attente",
-    acceptee: "Lien cassé",
-    accepte: "Acceptée",
-    refus: "Refusée"
-  }[statusLower] || inv.statut;
-
-  // 🔹 Styles couleur
-  const statusStyle = {
-    pending: "text-orange-500",
-    acceptee: "text-gray-500",
-    accepte: "text-green-500",
-    refus: "text-red-500"
-  }[statusLower] || "text-gray-300";
-
-  return (
-    <div
-      key={inv.id}
-      className="grid grid-cols-5 px-3 py-2 mt-2 items-center border-b border-white/20"
-    >
-      <div>{inv.eglise_nom}</div>
-      <div>{inv.eglise_branche}</div>
-      <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
-      <div className={`${statusStyle} font-semibold`}>{displayStatus}</div>
-      <div className="flex justify-center gap-4">
-        {statusLower === "accepte" ? (
-          <button
-            onClick={() => handleSelectInvitation(inv, "casser")}
-            className="text-purple-600 font-semibold text-sm hover:opacity-80"
-          >
-            Casser le lien
-          </button>
-        ) : statusLower === "pending" ? (
-          <>
-            <button
-              onClick={() => handleSelectInvitation(inv, "rappel")}
-              className="text-orange-500 font-semibold text-sm hover:opacity-80"
+          const statusLower = inv.statut.toLowerCase();
+        
+          // 🔹 Texte affiché pour le statut
+          const displayStatus = {
+            pending: "En Attente",
+            acceptee: "Lien cassé",
+            accepte: "Acceptée",
+            refus: "Refusée"
+          }[statusLower] || inv.statut;
+        
+          // 🔹 Couleur directe dans JSX
+          const statusColor = {
+            pending: "text-orange-500",
+            acceptee: "text-gray-500",
+            accepte: "text-green-500",
+            refus: "text-red-500"
+          }[statusLower] || "text-gray-300";
+        
+          return (
+            <div
+              key={inv.id}
+              className="grid grid-cols-5 px-3 py-2 mt-2 items-center border-b border-white/20"
             >
-              Envoyer un rappel
-            </button>
-            <button
-              onClick={() => handleSelectInvitation(inv, "supprimer")}
-              className="text-red-500 font-semibold text-sm hover:opacity-80"
-            >
-              🗑️
-            </button>
-          </>
-        ) : statusLower === "acceptee" || statusLower === "refus" ? (
-          <>
-            <button
-              onClick={() => handleSelectInvitation(inv, "renvoyer")}
-              className="text-blue-500 font-semibold text-sm hover:opacity-80"
-            >
-              Renvoyer le lien
-            </button>
-            <button
-              onClick={() => handleSelectInvitation(inv, "supprimer")}
-              className="text-red-500 font-semibold text-sm hover:opacity-80"
-            >
-              🗑️
-            </button>
-          </>
-        ) : null}
-      </div>
-    </div>
-  );
-})}
+              <div>{inv.eglise_nom}</div>
+              <div>{inv.eglise_branche}</div>
+              <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
+              <div className={`${statusColor} font-semibold`}>{displayStatus}</div>
+              <div className="flex justify-center gap-4">
+                {statusLower === "accepte" ? (
+                  <button
+                    onClick={() => handleSelectInvitation(inv, "casser")}
+                    className="text-purple-600 font-semibold text-sm hover:opacity-80"
+                  >
+                    Casser le lien
+                  </button>
+                ) : statusLower === "pending" ? (
+                  <>
+                    <button
+                      onClick={() => handleSelectInvitation(inv, "rappel")}
+                      className="text-orange-500 font-semibold text-sm hover:opacity-80"
+                    >
+                      Envoyer un rappel
+                    </button>
+                    <button
+                      onClick={() => handleSelectInvitation(inv, "supprimer")}
+                      className="text-red-500 font-semibold text-sm hover:opacity-80"
+                    >
+                      🗑️
+                    </button>
+                  </>
+                ) : statusLower === "acceptee" || statusLower === "refus" ? (
+                  <>
+                    <button
+                      onClick={() => handleSelectInvitation(inv, "renvoyer")}
+                      className="text-blue-500 font-semibold text-sm hover:opacity-80"
+                    >
+                      Renvoyer le lien
+                    </button>
+                    <button
+                      onClick={() => handleSelectInvitation(inv, "supprimer")}
+                      className="text-red-500 font-semibold text-sm hover:opacity-80"
+                    >
+                      🗑️
+                    </button>
+                  </>
+                ) : null}
+              </div>
+            </div>
           );
-        })}
+        })}         
       </div>
-
       <Footer />
     </div>
   );

@@ -179,13 +179,29 @@ Veuillez contacter ${superviseur.prenom} ${superviseur.nom} pour plus d'informat
     }
 
     // 🔹 Casser le lien
-    if (modeAction === "casser") {
-      message = `
-💔 Le lien avec l'église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche} a été cassé.
-`;
-      await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
-    }
-
+      if (modeAction === "casser") {
+        message = `
+      💔 Le lien avec l'église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche} a été cassé.
+      `;
+      
+        // 1️⃣ Supprimer superviseur dans branches
+        if (selectedInvitation.supervisee_branche_id) {
+          await supabase
+            .from("branches")
+            .update({
+              superviseur_id: null,
+              superviseur_nom: null
+            })
+            .eq("id", selectedInvitation.supervisee_branche_id);
+        }
+      
+        // 2️⃣ Supprimer la ligne de supervision
+        await supabase
+          .from("eglise_supervisions")
+          .delete()
+          .eq("id", selectedInvitation.id);
+      }
+    
     // 🔹 Envoi WhatsApp / Email
     if (canal === "whatsapp") {
       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");

@@ -212,10 +212,10 @@ if (modeAction === "casser") {
   }
 
   await supabase
-  .from("eglise_supervisions")
-  .update({ statut: "lien_casse" })
-  .eq("id", selectedInvitation.id);
-  }
+    .from("eglise_supervisions")
+    .delete()
+    .eq("id", selectedInvitation.id);
+}
     
     // 🔹 Envoi WhatsApp / Email
     if (canal === "whatsapp") {
@@ -341,47 +341,29 @@ if (modeAction === "casser") {
               <div>{inv.responsable_prenom} {inv.responsable_nom}</div>
               <div className={`${statusStyle.color}`}>{inv.statut.toLowerCase()}</div>
               <div className="flex gap-2">
-                {(inv.statut.toLowerCase() === "acceptee" ||
-                  <div className="flex justify-center gap-4">
-                    {inv.statut.toLowerCase() === "lien_casse" ? (
-                      <>
-                        <button
-                          onClick={() => handleSelectInvitation(inv, "renvoyer")}
-                          className="text-blue-500 font-semibold text-sm hover:opacity-80"
-                        >
-                          Renvoyer le lien
-                        </button>
-                        <button
-                          onClick={() => handleSelectInvitation(inv, "supprimer")}
-                          className="text-red-500 font-semibold text-sm hover:opacity-80"
-                        >
-                          🗑️
-                        </button>
-                      </>
-                    ) : inv.statut.toLowerCase() === "acceptee" ? (
-                      <button
-                        onClick={() => handleSelectInvitation(inv, "casser")}
-                        className="text-purple-600 font-semibold text-sm hover:opacity-80"
-                      >
-                        Casser le lien
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => handleSelectInvitation(inv, "renvoyer")}
-                          className="text-blue-500 font-semibold text-sm hover:opacity-80"
-                        >
-                          Renvoyer le lien
-                        </button>
-                        <button
-                          onClick={() => handleSelectInvitation(inv, "supprimer")}
-                          className="text-red-500 font-semibold text-sm hover:opacity-80"
-                        >
-                          🗑️
-                        </button>
-                      </>
-                    )}
-                  </div>
+                {inv.statut.toLowerCase() === "acceptee" && (
+                  <button
+                    onClick={() => handleSelectInvitation(inv, "casser")}
+                    className="text-purple-600 font-semibold text-sm hover:opacity-80"
+                  >
+                    Casser le lien
+                  </button>
+                )}
+                {inv.statut.toLowerCase() !== "acceptee" && (
+                  <>
+                    <button
+                      onClick={() => handleSelectInvitation(inv, "rappel")}
+                      className="text-orange-500 font-semibold text-sm hover:opacity-80"
+                    >
+                      Rappel
+                    </button>
+                    <button
+                      onClick={() => handleSelectInvitation(inv, "supprimer")}
+                      className="text-red-500 font-semibold text-sm hover:opacity-80"
+                    >
+                      Supprimer
+                    </button>
+                  </>
                 )}
               </div>
             </div>

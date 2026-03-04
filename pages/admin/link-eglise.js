@@ -358,11 +358,7 @@ if (modeAction === "casser") {
   return (
     <div
       key={inv.id}
-      className={`grid grid-cols-5 px-3 py-2 mt-2 items-center
-      border-b border-white/20
-      border-l-4 ${statusStyle.border}
-      rounded-md`}
-    >
+      className={`grid grid-cols-5 px-3 py-2 mt-2 items-center border-b border-b-white/20 border-l-4 ${statusStyle.border} rounded-md`}>
       <div className="text-left">{inv.eglise_nom}</div>
       <div className="text-left">{inv.eglise_branche}</div>
       <div className="text-left">{inv.responsable_prenom} {inv.responsable_nom}</div>

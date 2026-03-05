@@ -434,12 +434,17 @@ Que Dieu vous bénisse 🙏
                 )}
 
                 {inv.statut.toLowerCase() === "pending" && (
+                  <button onClick={() => handleSelectInvitation(inv, "rappel")}>
+                    Envoyer un rappel
+                  </button>
+                )}
+                
+                {inv.statut.toLowerCase() === "expired" && (
                   <>
-                    <button onClick={() => handleSelectInvitation(inv, "rappel")} className="hover:opacity-80">
-                      Envoyer un rappel
+                    <button onClick={() => handleSelectInvitation(inv, "renvoyer")}>
+                      Envoyer un nouveau lien
                     </button>
-                    <span>|</span>
-                    <button onClick={() => handleSelectInvitation(inv, "supprimer")} className="text-red-600 hover:opacity-80">
+                    <button onClick={() => handleSelectInvitation(inv, "supprimer")} className="text-red-600">
                       🗑️
                     </button>
                   </>

@@ -103,12 +103,12 @@ export default function HeaderPages() {
           {userRole === "Administrateur" && invitationPending && (
             <button
               onClick={handleClickInvitation}
-              className="text-amber-300 text-xl hover:text-gray-200 transition relative mr-3"
+              className="relative text-amber-300 text-lg hover:text-gray-200 transition relative mr-2"
               title="Invitation en attente"
             >
               🔔
-              {/* 🔴 Point rouge */}
-              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full transform translate-x-1/4 -translate-y-1/4"></span>
+              {/* 🔹 Petit point rouge sur la cloche */}
+              <span className="absolute top-0 right-0 transform translate-x-1/17 -translate-y-1/10 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
           )}
 

@@ -442,7 +442,7 @@ Que Dieu vous bénisse 🙏
                 {inv.statut.toLowerCase() === "expired" && (
                   <>
                     <button onClick={() => handleSelectInvitation(inv, "renvoyer")}>
-                      Envoyer un nouveau lien
+                      Renvoyer un lien |
                     </button>
                     <button onClick={() => handleSelectInvitation(inv, "supprimer")} className="text-red-600">
                       🗑️

@@ -104,20 +104,18 @@ export default function HeaderPages() {
         <div className="flex items-center space-x-4">
           {/* 🔔 Cloche pour admin si invitation pending */}
           {userRole === "Administrateur" && invitationPending && (
-            <div className="relative">
-              <button               
-                  onClick={() => router.push("/accept-invitation")}
-                  className="text-amber-300 text-lg hover:text-gray-200 transition"
-                  title="Invitation en attente"
-                >
-                  🔔
-                </button>
-              {/* Badge rouge */}
-              <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
-                1
-              </span>
-            </div>
-          )}
+  <button
+    onClick={() => router.push(`/accept-invitation?token=${invitationToken}`)} // 🔹 redirection avec token
+    className="relative text-amber-300 text-lg hover:text-gray-200 transition"
+    title="Invitation en attente"
+  >
+    🔔
+    {/* 🔹 Petit point rouge / chiffre 1 pour notification */}
+    <span className="absolute -top-1 -right-1 bg-red-500 text-xs text-white w-4 h-4 flex items-center justify-center rounded-full">
+      1
+    </span>
+  </button>
+)}
 
           <button
             onClick={handleLogout}

@@ -110,43 +110,61 @@ export default function LinkEglise() {
     try {
       if (!selectedInvitation && modeAction === null && (!eglise.nom || !eglise.branche || !eglise.pays)) return;
 
-      // 🔹 SUPPRIMER
-      if (modeAction === "supprimer" && selectedInvitation) {
-        await supabase.from("eglise_supervisions").delete().eq("id", selectedInvitation.id);
-        await supabase
-          .from("branches")
-          .update({ superviseur_branche_id: null, superviseur_nom: null })
-          .eq("id", selectedInvitation.supervisee_branche_id);
-      }
+     if (modeAction === "supprimer" && selectedInvitation) {
 
-      // 🔹 CASSE LE LIEN
-      if (modeAction === "casser" && selectedInvitation) {
-        await supabase
-          .from("eglise_supervisions")
-          .update({ statut: "lien_casse" })
-          .eq("id", selectedInvitation.id);
-        await supabase
-          .from("branches")
-          .update({ superviseur_branche_id: null, superviseur_nom: null })
-          .eq("id", selectedInvitation.supervisee_branche_id);
+  // 1️⃣ Mettre superviseur_branche_id à null
+  await supabase
+    .from("eglise_supervisions")
+    .update({
+      statut: "supprimee",
+      superviseur_branche_id: null
+    })
+    .eq("id", selectedInvitation.id);
 
-        if (canal === "whatsapp") {
-          const message = `💔 Le lien avec l'église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche} a été cassé.`;
-          window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-        }
-      }
+  // 2️⃣ Nettoyer la branche
+  await supabase
+    .from("branches")
+    .update({
+      superviseur_nom: null,
+      superviseur_id: null
+    })
+    .eq("id", selectedInvitation.supervisee_branche_id);
 
-      // 🔹 REFUSÉE
-      if (modeAction === "refusee" && selectedInvitation) {
-        await supabase
-          .from("eglise_supervisions")
-          .update({ statut: "refusee" })
-          .eq("id", selectedInvitation.id);
-        await supabase
-          .from("branches")
-          .update({ superviseur_branche_id: null, superviseur_nom: null })
-          .eq("id", selectedInvitation.supervisee_branche_id);
-      }
+  // 🚫 AUCUN envoi WhatsApp ou Email
+}
+
+      // 🔹 CASSE LE LIEN (statut acceptee)
+if (modeAction === "casser" && selectedInvitation) {
+
+  // 1️⃣ Mettre superviseur_branche_id à null
+  await supabase
+    .from("eglise_supervisions")
+    .update({
+      statut: "lien_casse",
+      superviseur_branche_id: null
+    })
+    .eq("id", selectedInvitation.id);
+
+  // 2️⃣ Nettoyer la branche
+  await supabase
+    .from("branches")
+    .update({
+      superviseur_nom: null,
+      superviseur_id: null
+    })
+    .eq("id", selectedInvitation.supervisee_branche_id);
+
+  // 3️⃣ Envoi message (SEULEMENT ici)
+  const message = `💔 Le lien avec l'église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche} a été cassé.`;
+
+  if (canal === "whatsapp") {
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+  } else if (canal === "email") {
+    window.location.href = `mailto:?subject=Lien cassé&body=${encodeURIComponent(message)}`;
+  }
+}
+
+      //----//
 
       // 🔹 NOUVELLE INVITATION
         if (!selectedInvitation && modeAction === null) {

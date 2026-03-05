@@ -19,119 +19,104 @@ export default function AcceptInvitation() {
     if (!router.isReady || !token) return;
 
     const fetchInvitation = async () => {
-      const { data, error } = await supabase
-        .from("eglise_supervisions")
-        .select("*")
-        .eq("invitation_token", token)
-        .single();
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("eglise_supervisions")
+          .select("*")
+          .eq("invitation_token", token)
+          .single();
 
-      if (error || !data) {
+        if (error || !data) {
+          setInvitation(null);
+        } else {
+          setInvitation(data);
+        }
+      } catch (err) {
+        console.error(err);
         setInvitation(null);
-      } else {
-        setInvitation(data);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchInvitation();
   }, [router.isReady, token]);
 
   const handleSubmit = async () => {
-  if (!choice || !invitation) return;
+    if (!choice || !invitation) return;
 
-  setSubmitting(true);
+    setSubmitting(true);
 
-  try {
-    // 🔹 1. Récupérer utilisateur connecté (Supabase v2)
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    try {
+      // 🔹 1. Récupérer utilisateur connecté
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error("Utilisateur non connecté");
 
-    if (userError || !user) {
-      throw new Error("Utilisateur non connecté");
-    }
-
-    // 🔹 2. Récupérer la branche du supervisee (celui qui accepte)
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("branche_id")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError || !profile?.branche_id) {
-      throw new Error("Branche du supervisee introuvable");
-    }
-
-    const superviseeBrancheId = profile.branche_id;
-
-    // 🔹 3. Mettre à jour le statut de l'invitation
-    await supabase
-      .from("eglise_supervisions")
-      .update({
-        statut: choice,
-        supervisee_branche_id: superviseeBrancheId,
-        approved_at: choice === "acceptee" ? new Date().toISOString() : null,
-      })
-      .eq("invitation_token", token);
-
-    // 🔹 4. Si accepté → lier les branches
-    if (choice === "acceptee") {
-      // Récupérer la branche du superviseur
-      const { data: brancheSup, error: supError } = await supabase
-        .from("branches")
-        .select("id, nom")
-        .eq("id", invitation.superviseur_branche_id)
+      // 🔹 2. Récupérer la branche du supervisee
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("branche_id")
+        .eq("id", user.id)
         .single();
 
-      if (supError || !brancheSup) {
-        throw new Error("Branche du superviseur introuvable");
-      }
+      if (profileError || !profile?.branche_id) throw new Error("Branche du supervisee introuvable");
+      const superviseeBrancheId = profile.branche_id;
 
-      // 🔹 Mettre à jour la branche du supervisee
-      const { error: updateError } = await supabase
-        .from("branches")
+      // 🔹 3. Mettre à jour le statut de l'invitation
+      await supabase
+        .from("eglise_supervisions")
         .update({
-          superviseur_id: brancheSup.id,
-          superviseur_nom: brancheSup.nom,
+          statut: choice,
+          supervisee_branche_id: superviseeBrancheId,
+          approved_at: choice === "acceptee" ? new Date().toISOString() : null,
         })
-        .eq("id", superviseeBrancheId);
+        .eq("invitation_token", token);
 
-      if (updateError) {
-        throw new Error("Erreur mise à jour branche supervisee");
+      // 🔹 4. Si accepté → lier les branches
+      if (choice === "acceptee") {
+        const { data: brancheSup, error: supError } = await supabase
+          .from("branches")
+          .select("id, nom")
+          .eq("id", invitation.superviseur_branche_id)
+          .single();
+
+        if (supError || !brancheSup) throw new Error("Branche du superviseur introuvable");
+
+        const { error: updateError } = await supabase
+          .from("branches")
+          .update({
+            superviseur_id: brancheSup.id,
+            superviseur_nom: brancheSup.nom,
+          })
+          .eq("id", superviseeBrancheId);
+
+        if (updateError) throw new Error("Erreur mise à jour branche supervisee");
+
+        setMessage(`Vous êtes maintenant sous la supervision de ${brancheSup.nom}`);
       }
 
-      setMessage(
-        `Vous êtes maintenant sous la supervision de ${brancheSup.nom}`
-      );
+      if (choice === "refusee") {
+        setMessage(`Vous avez refusé l’invitation de ${invitation.eglise_nom}`);
+      }
+
+      if (choice === "pending") {
+        setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
+      }
+
+      // 🔹 Redirection après 3 secondes
+      setTimeout(() => router.push("/"), 3000);
+
+    } catch (error) {
+      console.error("Erreur :", error.message);
+      setMessage("Une erreur est survenue lors du traitement de l'invitation.");
+    } finally {
+      setSubmitting(false);
     }
-
-    if (choice === "refusee") {
-      setMessage(
-        `Vous avez refusé l’invitation de ${invitation.eglise_nom}`
-      );
-    }
-
-    if (choice === "pending") {
-      setMessage(
-        "Invitation laissée en attente. Vous pourrez décider plus tard."
-      );
-    }
-
-    setTimeout(() => {
-      router.push("/");
-    }, 3000);
-
-  } catch (error) {
-    console.error("Erreur :", error.message);
-    setMessage("Une erreur est survenue lors du traitement de l'invitation.");
-  } finally {
-    setSubmitting(false);
-  }
-};
+  };
 
   if (loading) return <div className="p-10">Chargement…</div>;
-  if (!invitation) return <div className="p-10">Invitation introuvable</div>;
+  if (!invitation) return <div className="p-10 text-red-600">Invitation introuvable</div>;
 
   return (
     <div className="min-h-screen bg-[#333699] flex flex-col items-center p-6">

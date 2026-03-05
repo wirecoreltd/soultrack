@@ -6,24 +6,21 @@ import supabase from "../lib/supabaseClient";
 
 export default function HeaderPages() {
   const router = useRouter();
+
   const [prenom, setPrenom] = useState("Utilisateur");
   const [eglise, setEglise] = useState("Église Principale");
   const [branche, setBranche] = useState("Maurice");
-  const [superviseur, setSuperviseur] = useState(""); // 🔹 superviseur affiché
+  const [superviseur, setSuperviseur] = useState("");
   const [loading, setLoading] = useState(true);
-  const [pendingInvitations, setPendingInvitations] = useState([]);
-  const [isAdmin, setIsAdmin] = useState(false); // 🔹 à adapter selon ton système
+  const [userRole, setUserRole] = useState(null);
+  const [invitationPending, setInvitationPending] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) return;
 
-        // Récupère le profil
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("prenom, eglise_id, branche_id, role")
@@ -32,9 +29,8 @@ export default function HeaderPages() {
         if (profileError) throw profileError;
 
         setPrenom(profile?.prenom || "Utilisateur");
-        setIsAdmin(profile?.role === "admin"); // 🔹 marque si l'utilisateur est admin
+        setUserRole(profile?.role || null);
 
-        // Récupère le nom de l'église
         if (profile?.eglise_id) {
           const { data: egliseData, error: egliseError } = await supabase
             .from("eglises")
@@ -44,28 +40,28 @@ export default function HeaderPages() {
           if (!egliseError && egliseData) setEglise(egliseData.nom);
         }
 
-        // Récupère la branche et le superviseur
         if (profile?.branche_id) {
           const { data: brancheData, error: brancheError } = await supabase
             .from("branches")
             .select("nom, superviseur_nom")
             .eq("id", profile.branche_id)
             .single();
+
           if (!brancheError && brancheData) {
             setBranche(brancheData.nom);
             if (brancheData.superviseur_nom) setSuperviseur(brancheData.superviseur_nom);
           }
-        }
 
-        // 🔹 Récupérer les invitations pending pour cet utilisateur
-        if (profile?.eglise_id) {
-          const { data: invitations } = await supabase
-            .from("eglise_supervisions")
-            .select("*")
-            .eq("superviseur_eglise_id", profile.eglise_id)
-            .eq("statut", "pending");
+          if (profile?.role === "Administrateur") {
+            const { data: invites } = await supabase
+              .from("eglise_supervisions")
+              .select("*")
+              .eq("supervisee_branche_id", profile.branche_id)
+              .eq("statut", "pending")
+              .limit(1);
 
-          setPendingInvitations(invitations || []);
+            if (invites && invites.length > 0) setInvitationPending(true);
+          }
         }
 
       } catch (err) {
@@ -83,7 +79,9 @@ export default function HeaderPages() {
     router.push("/login");
   };
 
-  const hasPendingInvitations = pendingInvitations.length > 0;
+  const handleClickInvitation = () => {
+    router.push("/accept-invitation");
+  };
 
   return (
     <div className="w-full max-w-5xl mx-auto mt-4">
@@ -96,12 +94,13 @@ export default function HeaderPages() {
           ← Retour
         </button>
 
-        <div className="flex items-center gap-3">
-          {isAdmin && hasPendingInvitations && (
+        <div className="flex items-center space-x-2"> {/* 🔹 réduction de l'espace */}
+          {/* 🔔 Cloche pour admin si invitation pending */}
+          {userRole === "Administrateur" && invitationPending && (
             <button
-              onClick={() => router.push("/accept-invitation")}
-              className="text-amber-300 hover:text-gray-200 transition relative"
-              style={{ fontSize: "1rem" }} // 🔹 cloche plus petite
+              onClick={handleClickInvitation}
+              className="text-amber-300 text-lg hover:text-gray-200 transition" {/* 🔹 cloche plus petite */}
+              title="Invitation en attente"
             >
               🔔
             </button>
@@ -116,7 +115,7 @@ export default function HeaderPages() {
         </div>
       </div>
 
-      {/* User info en haut à droite */}
+      {/* User info */}
       <div className="flex justify-end flex-col text-right space-y-1 mb-2 text-sm">
         <p className="text-white text-sm">
           Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
@@ -137,7 +136,6 @@ export default function HeaderPages() {
           className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
           onClick={() => router.push("/index")}
         />
-        {/* Église / Branche sous le logo */}
         <p className="text-white font-semibold text-lg mt-2">
           {eglise} <span className="text-amber-300">- {branche}</span>
         </p>

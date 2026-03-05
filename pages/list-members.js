@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useSearchParams } from "next/navigation";
 import { useMembers } from "../context/MembersContext";
-import Header from "../components/Header";
+import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -853,7 +853,7 @@ useEffect(() => {
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       {/* Top Bar */}
-      <Header />
+      <HeaderPages />
       <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-2">Liste des Membres</h1>
 
       {/* Barre de recherche */}

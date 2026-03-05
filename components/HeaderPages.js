@@ -98,18 +98,19 @@ export default function HeaderPages() {
           ← Retour
         </button>
 
-        <div className="flex items-center space-x-4">
-          {/* 🔔 Cloche pour admin si invitation pending */}
-          {userRole === "Administrateur" && invitationPending && (
+        <div className="flex justify-end items-center space-x-3">
+          {/* Cloche */}
+          {hasPendingInvitations && isAdmin && (
             <button
-              onClick={handleClickInvitation}
-              className="text-amber-300 text-xl hover:text-gray-200 transition"
-              title="Invitation en attente"
+              onClick={() => router.push("/accept-invitation")}
+              className="text-amber-300 hover:text-gray-200 transition relative"
+              style={{ fontSize: "1.2rem" }} // réduire légèrement la taille
             >
               🔔
             </button>
           )}
-
+        
+          {/* Déconnexion */}
           <button
             onClick={handleLogout}
             className="text-amber-300 text-sm hover:text-gray-200 transition"

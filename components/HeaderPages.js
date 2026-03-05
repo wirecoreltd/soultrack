@@ -52,18 +52,18 @@ export default function HeaderPages() {
             if (brancheData.superviseur_nom) setSuperviseur(brancheData.superviseur_nom);
           }
 
+          // 🔹 Vérifier invitations pending pour admin
           if (profile?.role === "Administrateur") {
             const { data: invites } = await supabase
               .from("eglise_supervisions")
               .select("*")
               .eq("supervisee_branche_id", profile.branche_id)
               .eq("statut", "pending")
-              .limit(1);
+              .limit(1); 
 
             if (invites && invites.length > 0) setInvitationPending(true);
           }
         }
-
       } catch (err) {
         console.error("Erreur récupération profil :", err);
       } finally {
@@ -80,6 +80,7 @@ export default function HeaderPages() {
   };
 
   const handleClickInvitation = () => {
+    setInvitationPending(false); // retire le badge
     router.push("/accept-invitation");
   };
 
@@ -94,16 +95,23 @@ export default function HeaderPages() {
           ← Retour
         </button>
 
-        <div className="flex items-center space-x-2"> {/* 🔹 réduction de l'espace */}
+        <div className="flex items-center space-x-4">
           {/* 🔔 Cloche pour admin si invitation pending */}
-          {userRole === "Administrateur" && invitationPending && (
-            <button
-              onClick={handleClickInvitation}
-              className="text-amber-300 text-lg hover:text-gray-200 transition"
-              title="Invitation en attente"
-            >
-              🔔
-            </button>
+          {userRole === "Administrateur" && (
+            <div className="relative">
+              <button
+                onClick={handleClickInvitation}
+                className="text-amber-300 text-lg hover:text-gray-200 transition"
+                title="Invitation en attente"
+              >
+                🔔
+              </button>
+              {invitationPending && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 text-white text-[10px] font-bold flex items-center justify-center rounded-full">
+                  1
+                </span>
+              )}
+            </div>
           )}
 
           <button

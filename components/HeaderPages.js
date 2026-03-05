@@ -106,12 +106,13 @@ export default function HeaderPages() {
           {userRole === "Administrateur" && invitationPending && (
             <div className="relative">
               <button
-                onClick={handleClickInvitation}
-                className="text-amber-300 text-lg hover:text-gray-200 transition"
-                title="Invitation en attente"
-              >
-                🔔
-              </button>
+                <button
+                  onClick={() => router.push("/accept-invitation")}
+                  className="text-amber-300 text-lg hover:text-gray-200 transition"
+                  title="Invitation en attente"
+                >
+                  🔔
+                </button>
               {/* Badge rouge */}
               <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
                 1

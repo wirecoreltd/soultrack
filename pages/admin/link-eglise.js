@@ -173,33 +173,42 @@ export default function LinkEglise() {
       );
     }
 
-    // ===============================
-    // CASSER (acceptee uniquement)
-    // ===============================
-    if (modeAction === "casser" && selectedInvitation) {
+// CASSER LE LIEN (acceptee)
+// ===============================
+if (modeAction === "casser" && selectedInvitation) {
+  if (selectedInvitation.statut.toLowerCase() !== "acceptee") return;
 
-      if (selectedInvitation.statut.toLowerCase() !== "acceptee") return;
+  // 🔹 Mise à jour eglise_supervisions
+  await supabase
+    .from("eglise_supervisions")
+    .update({
+      statut: "lien_casse",
+      superviseur_branche_id: null
+    })
+    .eq("id", selectedInvitation.id);
 
-      await supabase
-        .from("eglise_supervisions")
-        .update({
-          statut: "lien_casse",
-          superviseur_branche_id: null
-        })
-        .eq("id", selectedInvitation.id);
+  // 🔹 Mise à jour branches
+  if (selectedInvitation.supervisee_branche_id) {
+    await supabase
+      .from("branches")
+      .update({
+        superviseur_nom: null,
+        superviseur_id: null
+      })
+      .eq("id", selectedInvitation.supervisee_branche_id);
+  }
 
-      if (selectedInvitation.supervisee_branche_id) {
-        await supabase
-          .from("branches")
-          .update({
-            superviseur_nom: null,
-            superviseur_id: null
-          })
-          .eq("id", selectedInvitation.supervisee_branche_id);
-      }
+  // 🔹 Envoi notification WhatsApp / Email
+  const message = `
+💔 Le lien avec l'église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche} a été cassé.
+`;
 
-      sendSimpleMessage("Lien cassé");
-    }
+  if (canal === "whatsapp") {
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+  } else if (canal === "email") {
+    window.location.href = `mailto:?subject=Lien cassé&body=${encodeURIComponent(message)}`;
+  }
+}
 
     // ===============================
     // SUPPRIMER

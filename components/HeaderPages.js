@@ -99,7 +99,7 @@ export default function HeaderPages() {
           {userRole === "Administrateur" && invitationPending && (
             <button
               onClick={handleClickInvitation}
-              className="text-amber-300 text-lg hover:text-gray-200 transition" {/* 🔹 cloche plus petite */}
+              className="text-amber-300 text-lg hover:text-gray-200 transition"
               title="Invitation en attente"
             >
               🔔

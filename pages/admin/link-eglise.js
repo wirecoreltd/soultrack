@@ -52,6 +52,7 @@ export default function LinkEglise() {
       case "refusee": return "Refusée";
       case "lien_casse": return "Lien Cassé";
       case "pending": return "En Attente";
+      case "expired": return "Lien Expiré";
       default: return statut;
     }
   };

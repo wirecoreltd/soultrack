@@ -14,6 +14,7 @@ export default function HeaderPages() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [invitationPending, setInvitationPending] = useState(false);
+  const [pendingToken, setPendingToken] = useState(null); // 🔹 token pour redirection
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -32,34 +33,38 @@ export default function HeaderPages() {
         setUserRole(profile?.role || null);
 
         if (profile?.eglise_id) {
-          const { data: egliseData, error: egliseError } = await supabase
+          const { data: egliseData } = await supabase
             .from("eglises")
             .select("nom")
             .eq("id", profile.eglise_id)
             .single();
-          if (!egliseError && egliseData) setEglise(egliseData.nom);
+          if (egliseData) setEglise(egliseData.nom);
         }
 
         if (profile?.branche_id) {
-          const { data: brancheData, error: brancheError } = await supabase
+          const { data: brancheData } = await supabase
             .from("branches")
             .select("nom, superviseur_nom")
             .eq("id", profile.branche_id)
             .single();
 
-          if (!brancheError && brancheData) {
+          if (brancheData) {
             setBranche(brancheData.nom);
             if (brancheData.superviseur_nom) setSuperviseur(brancheData.superviseur_nom);
           }
 
-          if (profile?.role === "Administrateur") {
+          if (profile.role === "Administrateur") {
             const { data: invites } = await supabase
               .from("eglise_supervisions")
-              .select("*")
+              .select("invitation_token")
               .eq("supervisee_branche_id", profile.branche_id)
               .eq("statut", "pending")
               .limit(1);
-            if (invites && invites.length > 0) setInvitationPending(true);
+
+            if (invites && invites.length > 0) {
+              setInvitationPending(true);
+              setPendingToken(invites[0].invitation_token); // 🔹 token de l’invitation
+            }
           }
         }
 
@@ -79,20 +84,13 @@ export default function HeaderPages() {
   };
 
   const handleClickInvitation = () => {
-    setInvitationPending(false); // retire le badge
-
-    // 🔹 Forcer navigation même si on est déjà sur la page
-    if (router.pathname === "/accept-invitation") {
-      router.replace("/accept-invitation");
-      router.refresh(); // recharge la page
-    } else {
-      router.push("/accept-invitation");
+    if (pendingToken) {
+      router.push(`/accept-invitation?token=${pendingToken}`);
     }
   };
 
   return (
     <div className="w-full max-w-5xl mx-auto mt-4">
-      {/* Top bar */}
       <div className="flex justify-between items-center mb-1">
         <button
           onClick={() => router.back()}
@@ -101,21 +99,19 @@ export default function HeaderPages() {
           ← Retour
         </button>
 
-        <div className="flex items-center space-x-4">
-          {/* 🔔 Cloche pour admin si invitation pending */}
+        <div className="flex items-center space-x-2">
+          {/* 🔔 Cloche avec notification */}
           {userRole === "Administrateur" && invitationPending && (
-  <button
-    onClick={() => router.push(`/accept-invitation?token=${invitationToken}`)} // 🔹 redirection avec token
-    className="relative text-amber-300 text-lg hover:text-gray-200 transition"
-    title="Invitation en attente"
-  >
-    🔔
-    {/* 🔹 Petit point rouge / chiffre 1 pour notification */}
-    <span className="absolute -top-1 -right-1 bg-red-500 text-xs text-white w-4 h-4 flex items-center justify-center rounded-full">
-      1
-    </span>
-  </button>
-)}
+            <button
+              onClick={handleClickInvitation}
+              className="relative text-amber-300 text-lg hover:text-gray-200 transition"
+              title="Invitation en attente"
+            >
+              🔔
+              {/* 🔹 petit point rouge */}
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            </button>
+          )}
 
           <button
             onClick={handleLogout}
@@ -126,7 +122,6 @@ export default function HeaderPages() {
         </div>
       </div>
 
-      {/* User info */}
       <div className="flex justify-end flex-col text-right space-y-1 mb-2 text-sm">
         <p className="text-white text-sm">
           Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
@@ -139,7 +134,6 @@ export default function HeaderPages() {
         )}
       </div>
 
-      {/* Logo centré */}
       <div className="flex flex-col items-center mb-4">
         <img
           src="/logo.png"

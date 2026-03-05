@@ -78,6 +78,23 @@ export default function HeaderPages() {
     fetchProfile();
   }, []);
 
+  const [pendingInvitations, setPendingInvitations] = useState([]);
+
+useEffect(() => {
+  const fetchPending = async () => {
+    const { data, error } = await supabase
+      .from('eglise_supervisions')
+      .select('*')
+      .eq('superviseur_eglise_id', currentUserEgliseId)
+      .eq('statut', 'pending');
+
+    if (!error && data) setPendingInvitations(data);
+  };
+  fetchPending();
+}, [currentUserEgliseId]);
+
+const hasPendingInvitations = pendingInvitations.length > 0;
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");

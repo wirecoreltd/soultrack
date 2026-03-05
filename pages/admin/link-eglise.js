@@ -114,8 +114,9 @@ export default function LinkEglise() {
     // 🔹 NOUVELLE INVITATION
     // 🔹 ===============================
     if (!selectedInvitation && modeAction === null) {
-      const token = crypto.randomUUID();
+      const token = crypto.randomUUID(); // Génération unique
 
+      // 🔹 Insérer la nouvelle invitation
       await supabase.from("eglise_supervisions").insert([{
         superviseur_eglise_id: superviseur.eglise_id,
         superviseur_branche_id: superviseur.branche_id,
@@ -130,6 +131,7 @@ export default function LinkEglise() {
         invitation_token: token
       }]);
 
+      // 🔹 Envoyer le lien avec le même token
       const message = `
 🙏 Bonjour ${responsable.prenom} ${responsable.nom},
 
@@ -142,14 +144,14 @@ Que Dieu vous bénisse 🙏
 `;
 
       if (canal === "whatsapp") {
-        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank`);
       } else if (canal === "email") {
         window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
       }
     }
 
     // 🔹 ===============================
-    // 🔹 RENVOYER LE LIEN (refusee, lien_casse, supprimee)
+    // 🔹 RENVOYER LE LIEN
     // 🔹 ===============================
     if (modeAction === "renvoyer" && selectedInvitation) {
       const newToken = crypto.randomUUID();
@@ -174,14 +176,14 @@ Que Dieu vous bénisse 🙏
 `;
 
       if (canal === "whatsapp") {
-        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank`);
       } else if (canal === "email") {
         window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
       }
     }
 
     // 🔹 ===============================
-    // 🔹 RAPPEL (pending)
+    // 🔹 RAPPEL (statut pending)
     // 🔹 ===============================
     if (modeAction === "rappel" && selectedInvitation) {
       const message = `
@@ -196,7 +198,7 @@ Que Dieu vous bénisse 🙏
 `;
 
       if (canal === "whatsapp") {
-        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank`);
       } else if (canal === "email") {
         window.location.href = `mailto:?subject=Rappel Invitation&body=${encodeURIComponent(message)}`;
       }
@@ -227,14 +229,14 @@ Que Dieu vous bénisse 🙏
 `;
 
       if (canal === "whatsapp") {
-        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank`);
       } else if (canal === "email") {
         window.location.href = `mailto:?subject=Lien cassé&body=${encodeURIComponent(message)}`;
       }
     }
 
     // 🔹 ===============================
-    // 🔹 SUPPRIMER (refusee, supprimee, lien_casse)
+    // 🔹 SUPPRIMER (statut supprimee)
     // 🔹 ===============================
     if (modeAction === "supprimer" && selectedInvitation) {
       await supabase
@@ -252,6 +254,8 @@ Que Dieu vous bénisse 🙏
           superviseur_id: null
         })
         .eq("id", selectedInvitation.supervisee_branche_id);
+
+      // ⚠️ Pas d'envoi de message pour suppression
     }
 
     // 🔹 RESET

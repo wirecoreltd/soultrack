@@ -114,9 +114,8 @@ export default function LinkEglise() {
     // 🔹 NOUVELLE INVITATION
     // 🔹 ===============================
     if (!selectedInvitation && modeAction === null) {
-      const token = crypto.randomUUID(); // Génération unique
+      const token = crypto.randomUUID();
 
-      // 🔹 Insérer la nouvelle invitation
       await supabase.from("eglise_supervisions").insert([{
         superviseur_eglise_id: superviseur.eglise_id,
         superviseur_branche_id: superviseur.branche_id,
@@ -131,7 +130,6 @@ export default function LinkEglise() {
         invitation_token: token
       }]);
 
-      // 🔹 Envoyer le lien avec le même token
       const message = `
 🙏 Bonjour ${responsable.prenom} ${responsable.nom},
 
@@ -144,7 +142,7 @@ Que Dieu vous bénisse 🙏
 `;
 
       if (canal === "whatsapp") {
-        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank`);
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
       } else if (canal === "email") {
         window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
       }
@@ -176,7 +174,7 @@ Que Dieu vous bénisse 🙏
 `;
 
       if (canal === "whatsapp") {
-        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank`);
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
       } else if (canal === "email") {
         window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
       }
@@ -198,7 +196,7 @@ Que Dieu vous bénisse 🙏
 `;
 
       if (canal === "whatsapp") {
-        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank`);
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
       } else if (canal === "email") {
         window.location.href = `mailto:?subject=Rappel Invitation&body=${encodeURIComponent(message)}`;
       }
@@ -229,7 +227,7 @@ Que Dieu vous bénisse 🙏
 `;
 
       if (canal === "whatsapp") {
-        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank`);
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
       } else if (canal === "email") {
         window.location.href = `mailto:?subject=Lien cassé&body=${encodeURIComponent(message)}`;
       }
@@ -255,7 +253,7 @@ Que Dieu vous bénisse 🙏
         })
         .eq("id", selectedInvitation.supervisee_branche_id);
 
-      // ⚠️ Pas d'envoi de message pour suppression
+      // Aucun envoi WhatsApp ou email pour supprimer
     }
 
     // 🔹 RESET

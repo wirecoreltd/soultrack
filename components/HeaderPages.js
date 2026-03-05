@@ -108,8 +108,8 @@ export default function HeaderPages() {
               title="Invitation en attente"
             >
               🔔
-              {/* 🔹 petit point rouge */}
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              {/* 🔹 Point rouge légèrement en haut à droite sur la cloche */}
+              <span className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
             </button>
           )}
 

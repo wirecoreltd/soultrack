@@ -1,216 +1,293 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
-import SendEgliseLinkPopup from "../components/SendEgliseLinkPopup";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
+import ProtectedRoute from "../components/ProtectedRoute";
 
-export default function LinkEglise() {
-  const [superviseur, setSuperviseur] = useState({
-    prenom: "",
-    nom: "",
-    eglise_id: null,
-    branche_id: null,
-    eglise_nom: "",
-    branche_nom: ""
+export default function RapportBaptemesPage() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur","ResponsableFormation"]}>
+      <RapportBaptemes />
+    </ProtectedRoute>
+  );
+}
+
+function RapportBaptemes() {
+  const [formData,setFormData]=useState({
+    date:"",
+    hommes:0,
+    femmes:0,
+    baptise_par:"",
+    eglise_id:null,
+    branche_id:null
   });
 
-  const [responsable, setResponsable] = useState({
-    prenom: "",
-    nom: ""
-  });
+  const [filterDebut,setFilterDebut]=useState("");
+  const [filterFin,setFilterFin]=useState("");
+  const [rapports,setRapports]=useState([]);
+  const [editRapport,setEditRapport]=useState(null);
+  const [expandedMonths,setExpandedMonths]=useState({});
+  const [showTable,setShowTable]=useState(false);
 
-  const [eglise, setEglise] = useState({
-    nom: "",
-    branche: "",
-    pays: ""
-  });
+  const formRef=useRef(null);
 
-  const [canal, setCanal] = useState("");
-  const [invitations, setInvitations] = useState([]);
-  const [actionContext, setActionContext] = useState({type: "send", label: "Envoyer l'invitation", currentId: null});
+  /* USER */
 
-  // 🔹 Charger superviseur connecté
-  useEffect(() => {
-    const loadSuperviseur = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  useEffect(()=>{
+    const fetchUser=async()=>{
+      const {data:session}=await supabase.auth.getSession();
+      if(!session?.session?.user) return;
 
-      const { data, error } = await supabase
+      const {data:profile}=await supabase
         .from("profiles")
-        .select(`prenom, nom, eglise_id, branche_id, eglises(nom), branches(nom)`)
-        .eq("id", user.id)
+        .select("eglise_id,branche_id")
+        .eq("id",session.session.user.id)
         .single();
 
-      if (!error) {
-        setSuperviseur({
-          prenom: data.prenom,
-          nom: data.nom,
-          eglise_id: data.eglise_id,
-          branche_id: data.branche_id,
-          eglise_nom: data.eglises?.nom || "",
-          branche_nom: data.branches?.nom || ""
-        });
+      if(profile){
+        setFormData(prev=>({...prev,eglise_id:profile.eglise_id,branche_id:profile.branche_id}));
       }
     };
+    fetchUser();
+  },[]);
 
-    loadSuperviseur();
-  }, []);
+  /* FETCH */
 
-  // 🔹 Charger invitations
-  const loadInvitations = async () => {
-    if (!superviseur.eglise_id) return;
-    const { data, error } = await supabase
-      .from("eglise_supervisions")
+  const fetchRapports=async()=>{
+    let query=supabase
+      .from("baptemes")
       .select("*")
-      .eq("superviseur_eglise_id", superviseur.eglise_id)
-      .order("created_at", { ascending: false });
-    if (!error) setInvitations(data || []);
+      .eq("eglise_id",formData.eglise_id)
+      .eq("branche_id",formData.branche_id)
+      .order("date",{ascending:false});
+
+    if(filterDebut) query=query.gte("date",filterDebut);
+    if(filterFin) query=query.lte("date",filterFin);
+
+    const {data}=await query;
+    setRapports(data||[]);
+    setShowTable(true);
   };
 
-  useEffect(() => { loadInvitations(); }, [superviseur.eglise_id]);
+  /* CRUD */
 
-  // 🔹 Style selon statut
-  const getStatusStyle = (statut) => {
-    switch (statut?.toLowerCase()) {
-      case "acceptee": return { border: "border-l-4 border-green-500", color: "text-green-500" };
-      case "refusee": return { border: "border-l-4 border-red-500", color: "text-red-500" };
-      case "pending": return { border: "border-l-4 border-yellow-500", color: "text-yellow-400" };
-      default: return { border: "border-l-4 border-gray-300", color: "text-gray-300" };
-    }
+  const handleSubmit=async(e)=>{
+    e.preventDefault();
+    if(editRapport) return handleUpdate();
+
+    await supabase.from("baptemes").insert([formData]);
+
+    setFormData(prev=>({...prev,date:"",hommes:0,femmes:0,baptise_par:""}));
+    fetchRapports();
   };
 
-  // 🔹 Pré-remplissage formulaire pour Rappel ou Supprimer
-  const handleActionClick = (invitation, type) => {
-    setResponsable({ prenom: invitation.responsable_prenom, nom: invitation.responsable_nom });
-    setEglise({ nom: invitation.eglise_nom, branche: invitation.eglise_branche, pays: invitation.eglise_pays });
-    setActionContext({
-      type,
-      label: type === "reminder" ? "Envoyer un rappel" : "Supprimer l'envoi",
-      currentId: invitation.id
+  const handleEdit=(r)=>{
+    setEditRapport(r);
+    setFormData({...formData,date:r.date,hommes:r.hommes,femmes:r.femmes,baptise_par:r.baptise_par});
+    formRef.current?.scrollIntoView({behavior:"smooth",block:"start"});
+  };
+
+  const handleUpdate=async()=>{
+    if(!editRapport) return;
+
+    await supabase
+      .from("baptemes")
+      .update({
+        date:formData.date,
+        hommes:formData.hommes,
+        femmes:formData.femmes,
+        baptise_par:formData.baptise_par
+      })
+      .eq("id",editRapport.id);
+
+    setEditRapport(null);
+    setFormData(prev=>({...prev,date:"",hommes:0,femmes:0,baptise_par:""}));
+    fetchRapports();
+  };
+
+  /* UTIL */
+
+  const getMonthNameFR=(monthIndex)=>{
+    const months=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+    return months[monthIndex]||"";
+  };
+
+  const formatDateFR=(dateString)=>{
+    if(!dateString) return "";
+    const d=new Date(dateString);
+    const day=String(d.getDate()).padStart(2,"0");
+    const month=String(d.getMonth()+1).padStart(2,"0");
+    const year=d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const groupByMonth=(rapports)=>{
+    const map={};
+    rapports.forEach(r=>{
+      const d=new Date(r.date);
+      const key=`${d.getFullYear()}-${d.getMonth()}`;
+      if(!map[key]) map[key]=[];
+      map[key].push(r);
     });
-    setCanal(""); // reset le mode d'envoi
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    return map;
   };
+
+  const toggleMonth=(monthKey)=>setExpandedMonths(prev=>({...prev,[monthKey]:!prev[monthKey]}));
+
+  const groupedReports=Object.entries(groupByMonth(rapports))
+    .sort((a,b)=>{
+      const [yearA,monthA]=a[0].split("-").map(Number);
+      const [yearB,monthB]=b[0].split("-").map(Number);
+      return new Date(yearA,monthA)-new Date(yearB,monthB);
+    });
+
+  const totalGlobal=rapports.reduce((acc,r)=>{
+    acc.hommes+=Number(r.hommes||0);
+    acc.femmes+=Number(r.femmes||0);
+    return acc;
+  },{hommes:0,femmes:0});
+
+  /* RENDER */
 
   return (
-    <div className="min-h-screen bg-[#333699] text-white p-6 flex flex-col items-center">
-      <HeaderPages />
+  <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+  <HeaderPages />
 
-      {/* TITRE FORMULAIRE */}
-      <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
-        {actionContext.label}
-      </h4>
+  <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
+  <span className="text-white">Rapport </span>
+  <span className="text-amber-300">Baptêmes</span>
+  </h1>
 
-      {/* FORMULAIRE */}
-      <div className="w-full max-w-md rounded-2xl p-6 space-y-4 mb-10 bg-white/10">
+  <p className="text-white/80 mb-6">Résumé des baptêmes par mois</p>
 
-        <div>
-          <label className="font-semibold">Prénom du responsable</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={responsable.prenom}
-            onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
-            required
-          />
-        </div>
+  {/* FORMULAIRE */}
 
-        <div>
-          <label className="font-semibold">Nom du responsable</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={responsable.nom}
-            onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
-            required
-          />
-        </div>
+  <div ref={formRef} className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
+  <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
 
-        <div>
-          <label className="font-semibold">Nom de l'Église</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={eglise.nom}
-            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
-            required
-          />
-        </div>
+  <div className="flex flex-col">
+  <label className="text-white mb-1">Date</label>
+  <input type="date" required value={formData.date} onChange={(e)=>setFormData({...formData,date:e.target.value})} className="input"/>
+  </div>
 
-        <div>
-          <label className="font-semibold">Branche</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={eglise.branche}
-            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
-            required
-          />
-        </div>
+  <div className="flex flex-col">
+  <label className="text-white mb-1">Baptisé par</label>
+  <input type="text" value={formData.baptise_par} onChange={(e)=>setFormData({...formData,baptise_par:e.target.value})} className="input"/>
+  </div>
 
-        <div>
-          <label className="font-semibold">Pays</label>
-          <input
-            className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-            value={eglise.pays}
-            onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
-            required
-          />
-        </div>
+  <div className="flex flex-col">
+  <label className="text-white mb-1">Hommes</label>
+  <input type="number" value={formData.hommes} onChange={(e)=>setFormData({...formData,hommes:e.target.value})} className="input"/>
+  </div>
 
-        <select
-          className="w-full border rounded-xl px-3 py-2 bg-white/20 text-black"
-          value={canal}
-          onChange={(e) => setCanal(e.target.value)}
-          required
-        >
-          <option value="">-- Sélectionnez le mode d’envoi --</option>
-          <option value="whatsapp">WhatsApp</option>
-          <option value="email">Email</option>
-        </select>
+  <div className="flex flex-col">
+  <label className="text-white mb-1">Femmes</label>
+  <input type="number" value={formData.femmes} onChange={(e)=>setFormData({...formData,femmes:e.target.value})} className="input"/>
+  </div>
 
-        <SendEgliseLinkPopup
-          label={actionContext.label}
-          type={canal}
-          superviseur={superviseur}
-          responsable={responsable}
-          eglise={eglise}
-          actionContext={actionContext}
-          onSuccess={loadInvitations}
-        />
-      </div>
+  <div className="col-span-2 flex justify-center mt-4">
+  <button type="submit" className="w-full max-w-xl bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300">
+  {editRapport?"Modifier":"Ajouter le baptême"}
+  </button>
+  </div>
 
-      {/* TABLE */}
-      <div className="w-full max-w-5xl overflow-x-auto">
-        <div className="grid grid-cols-4 text-sm font-semibold uppercase border-b border-white/40 pb-2 pl-3">
-          <div>Église</div>
-          <div>Branche</div>
-          <div>Responsable</div>
-          <div>Statut / Actions</div>
-        </div>
+  </form>
+  </div>
 
-        {invitations.map((inv) => {
-          const statusStyle = getStatusStyle(inv.statut);
-          return (
-            <div key={inv.id} className={`flex flex-col md:flex-row md:items-center px-4 py-2 mt-2 hover:bg-white/20 transition ${statusStyle.border}`}>
-              <div className="flex-1">{inv.eglise_nom}</div>
-              <div className="flex-1">{inv.eglise_branche}</div>
-              <div className="flex-1">{inv.responsable_prenom} {inv.responsable_nom}</div>
-              <div className="flex flex-col md:flex-row md:items-center gap-2">
-                <span className={`${statusStyle.color} font-semibold`}>{inv.statut.toLowerCase()}</span>
-                <button
-                  className="text-yellow-400 hover:text-yellow-600 font-semibold"
-                  onClick={() => handleActionClick(inv, "reminder")}
-                >⏳ Rappel</button>
-                <button
-                  className="text-red-400 hover:text-red-600 font-semibold"
-                  onClick={() => handleActionClick(inv, "delete")}
-                >❌ Supprimer</button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+  {/* FILTRES */}
 
-      <Footer />
-    </div>
+  <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+  <input type="date" value={filterDebut} onChange={(e)=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+  <input type="date" value={filterFin} onChange={(e)=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+  <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
+  </div>
+
+  {/* TABLEAU */}
+
+  {showTable && (
+  <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
+  <div className="w-max space-y-2">
+
+  <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+  <div className="min-w-[200px]">Date</div>
+  <div className="min-w-[200px] text-center">Baptisé par</div>
+  <div className="min-w-[120px] text-center">Hommes</div>
+  <div className="min-w-[120px] text-center">Femmes</div>
+  <div className="min-w-[120px] text-center">Total</div>
+  <div className="min-w-[150px] text-center">Actions</div>
+  </div>
+
+  {groupedReports.map(([monthKey,monthRapports],idx)=>{
+  const [year,monthIndex]=monthKey.split("-").map(Number);
+  const monthLabel=`${getMonthNameFR(monthIndex)} ${year}`;
+
+  const totalMonth=monthRapports.reduce((acc,r)=>{
+  acc.hommes+=Number(r.hommes||0);
+  acc.femmes+=Number(r.femmes||0);
+  return acc;
+  },{hommes:0,femmes:0});
+
+  const isExpanded=expandedMonths[monthKey]||false;
+
+  return(
+  <div key={monthKey} className="space-y-1">
+
+  <div className="flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 border-blue-500" onClick={()=>toggleMonth(monthKey)}>
+  <div className="min-w-[200px] text-white font-semibold">{isExpanded?"➖ ":"➕ "}{monthLabel}</div>
+  <div className="min-w-[200px]"></div>
+  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
+  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
+  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.hommes+totalMonth.femmes}</div>
+  <div className="min-w-[150px]"></div>
+  </div>
+
+  {(isExpanded||monthRapports.length===1)&&monthRapports.map(r=>{
+  const total=Number(r.hommes)+Number(r.femmes);
+  return(
+  <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500">
+  <div className="min-w-[200px] text-white">{formatDateFR(r.date)}</div>
+  <div className="min-w-[200px] text-center text-white">{r.baptise_par}</div>
+  <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+  <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+  <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
+  <div className="min-w-[150px] text-center">
+  <button onClick={()=>handleEdit(r)} className="text-orange-400 underline hover:text-orange-500 px-4 py-1 rounded-xl">Modifier</button>
+  </div>
+  </div>
+  );
+  })}
+
+  </div>
+  );
+  })}
+
+  <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
+  <div className="min-w-[200px] text-white font-bold">TOTAL</div>
+  <div className="min-w-[200px]"></div>
+  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
+  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
+  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes+totalGlobal.femmes}</div>
+  <div className="min-w-[150px]"></div>
+  </div>
+
+  </div>
+  </div>
+  )}
+
+  <Footer />
+
+  <style jsx>{`
+  .input{
+  border:1px solid #ccc;
+  padding:10px;
+  border-radius:12px;
+  background:rgba(255,255,255,0.05);
+  color:white;
+  }
+  `}</style>
+
+  </div>
   );
 }

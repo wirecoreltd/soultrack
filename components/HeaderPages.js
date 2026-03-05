@@ -52,18 +52,17 @@ export default function HeaderPages() {
             if (brancheData.superviseur_nom) setSuperviseur(brancheData.superviseur_nom);
           }
 
-          // 🔹 Vérifier invitations pending pour admin
           if (profile?.role === "Administrateur") {
             const { data: invites } = await supabase
               .from("eglise_supervisions")
               .select("*")
               .eq("supervisee_branche_id", profile.branche_id)
               .eq("statut", "pending")
-              .limit(1); 
-
+              .limit(1);
             if (invites && invites.length > 0) setInvitationPending(true);
           }
         }
+
       } catch (err) {
         console.error("Erreur récupération profil :", err);
       } finally {
@@ -80,15 +79,16 @@ export default function HeaderPages() {
   };
 
   const handleClickInvitation = () => {
-  setInvitationPending(false); // retire le badge
+    setInvitationPending(false); // retire le badge
 
-  // 🔹 Si déjà sur /accept-invitation, on force le rechargement
-  if (router.pathname === "/accept-invitation") {
-    router.replace("/accept-invitation"); // remplace la route actuelle
-  } else {
-    router.push("/accept-invitation");
-  }
-};
+    // 🔹 Forcer navigation même si on est déjà sur la page
+    if (router.pathname === "/accept-invitation") {
+      router.replace("/accept-invitation");
+      router.refresh(); // recharge la page
+    } else {
+      router.push("/accept-invitation");
+    }
+  };
 
   return (
     <div className="w-full max-w-5xl mx-auto mt-4">
@@ -103,7 +103,7 @@ export default function HeaderPages() {
 
         <div className="flex items-center space-x-4">
           {/* 🔔 Cloche pour admin si invitation pending */}
-          {userRole === "Administrateur" && (
+          {userRole === "Administrateur" && invitationPending && (
             <div className="relative">
               <button
                 onClick={handleClickInvitation}
@@ -112,11 +112,10 @@ export default function HeaderPages() {
               >
                 🔔
               </button>
-              {invitationPending && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 text-white text-[10px] font-bold flex items-center justify-center rounded-full">
-                  1
-                </span>
-              )}
+              {/* Badge rouge */}
+              <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                1
+              </span>
             </div>
           )}
 

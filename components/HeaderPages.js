@@ -105,8 +105,7 @@ export default function HeaderPages() {
           {/* 🔔 Cloche pour admin si invitation pending */}
           {userRole === "Administrateur" && invitationPending && (
             <div className="relative">
-              <button
-                <button
+              <button               
                   onClick={() => router.push("/accept-invitation")}
                   className="text-amber-300 text-lg hover:text-gray-200 transition"
                   title="Invitation en attente"

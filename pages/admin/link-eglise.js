@@ -149,22 +149,39 @@ export default function LinkEglise() {
       }
 
       // 🔹 NOUVELLE INVITATION
-      if (!selectedInvitation && modeAction === null) {
-        const token = crypto.randomUUID();
-        await supabase.from("eglise_supervisions").insert([{
-          superviseur_eglise_id: superviseur.eglise_id,
-          superviseur_branche_id: superviseur.branche_id,
-          supervisee_eglise_id: null,
-          supervisee_branche_id: null,
-          responsable_prenom: responsable.prenom,
-          responsable_nom: responsable.nom,
-          eglise_nom: eglise.nom,
-          eglise_branche: eglise.branche,
-          eglise_pays: eglise.pays,
-          statut: "pending",
-          invitation_token: token
-        }]);
-      }
+        if (!selectedInvitation && modeAction === null) {
+          const token = crypto.randomUUID();
+          await supabase.from("eglise_supervisions").insert([{
+            superviseur_eglise_id: superviseur.eglise_id,
+            superviseur_branche_id: superviseur.branche_id,
+            supervisee_eglise_id: null,
+            supervisee_branche_id: null,
+            responsable_prenom: responsable.prenom,
+            responsable_nom: responsable.nom,
+            eglise_nom: eglise.nom,
+            eglise_branche: eglise.branche,
+            eglise_pays: eglise.pays,
+            statut: "pending",
+            invitation_token: token
+          }]);
+        
+          const message = `
+        🙏 Bonjour ${responsable.prenom} ${responsable.nom},
+        
+        ${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_nom} - ${superviseur.branche_nom} vous a envoyé une invitation pour que votre église soit placée sous sa supervision.
+        
+        Lien : https://soultrack-three.vercel.app/accept-invitation?token=${token}
+        Cliquez sur le lien pour être redirigé vers l'application SoulTrack afin d'accepter, refuser ou garder l’invitation en attente.
+        
+        Que Dieu vous bénisse 🙏
+        `;
+        
+          if (canal === "whatsapp") {
+            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+          } else if (canal === "email") {
+            window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
+          }
+        }
 
       // 🔹 Reset formulaire et rechargement
       setModeAction(null);

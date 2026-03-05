@@ -108,14 +108,12 @@ export default function LinkEglise() {
   // 🔹 Exécuter l'action
   const handleAction = async () => {
   try {
-
     if (!selectedInvitation && modeAction === null && (!eglise.nom || !eglise.branche || !eglise.pays)) return;
 
-    // ===============================
-    // NOUVELLE INVITATION
-    // ===============================
+    // 🔹 ===============================
+    // 🔹 NOUVELLE INVITATION
+    // 🔹 ===============================
     if (!selectedInvitation && modeAction === null) {
-
       const token = crypto.randomUUID();
 
       await supabase.from("eglise_supervisions").insert([{
@@ -132,14 +130,28 @@ export default function LinkEglise() {
         invitation_token: token
       }]);
 
-      sendMessage(token, responsable.prenom, responsable.nom, "Invitation SoulTrack");
+      const message = `
+🙏 Bonjour ${responsable.prenom} ${responsable.nom},
+
+${superviseur.prenom} ${superviseur.nom} vous invite à placer votre église sous sa supervision.
+
+Lien :
+https://soultrack-three.vercel.app/accept-invitation?token=${token}
+
+Que Dieu vous bénisse 🙏
+`;
+
+      if (canal === "whatsapp") {
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+      } else if (canal === "email") {
+        window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
+      }
     }
 
-    // ===============================
-    // RENVOYER (refusee / lien_casse / lien_expire / supprimee)
-    // ===============================
+    // 🔹 ===============================
+    // 🔹 RENVOYER LE LIEN (refusee, lien_casse, supprimee)
+    // 🔹 ===============================
     if (modeAction === "renvoyer" && selectedInvitation) {
-
       const newToken = crypto.randomUUID();
 
       await supabase
@@ -150,71 +162,81 @@ export default function LinkEglise() {
         })
         .eq("id", selectedInvitation.id);
 
-      sendMessage(
-        newToken,
-        selectedInvitation.responsable_prenom,
-        selectedInvitation.responsable_nom,
-        "Renvoi Invitation"
-      );
+      const message = `
+🙏 Bonjour ${selectedInvitation.responsable_prenom} ${selectedInvitation.responsable_nom},
+
+${superviseur.prenom} ${superviseur.nom} vous renvoie une invitation.
+
+Lien :
+https://soultrack-three.vercel.app/accept-invitation?token=${newToken}
+
+Que Dieu vous bénisse 🙏
+`;
+
+      if (canal === "whatsapp") {
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+      } else if (canal === "email") {
+        window.location.href = `mailto:?subject=Invitation SoulTrack&body=${encodeURIComponent(message)}`;
+      }
     }
 
-    // ===============================
-    // RAPPEL (uniquement pending)
-    // ===============================
+    // 🔹 ===============================
+    // 🔹 RAPPEL (pending)
+    // 🔹 ===============================
     if (modeAction === "rappel" && selectedInvitation) {
+      const message = `
+🙏 Bonjour ${selectedInvitation.responsable_prenom} ${selectedInvitation.responsable_nom},
 
-      if (selectedInvitation.statut.toLowerCase() !== "pending") return;
+Ceci est un rappel pour votre invitation.
 
-      sendMessage(
-        selectedInvitation.invitation_token,
-        selectedInvitation.responsable_prenom,
-        selectedInvitation.responsable_nom,
-        "Rappel Invitation"
-      );
+Lien :
+https://soultrack-three.vercel.app/accept-invitation?token=${selectedInvitation.invitation_token}
+
+Que Dieu vous bénisse 🙏
+`;
+
+      if (canal === "whatsapp") {
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+      } else if (canal === "email") {
+        window.location.href = `mailto:?subject=Rappel Invitation&body=${encodeURIComponent(message)}`;
+      }
     }
 
-// CASSER LE LIEN (acceptee)
-// ===============================
-if (modeAction === "casser" && selectedInvitation) {
-  if (selectedInvitation.statut.toLowerCase() !== "acceptee") return;
+    // 🔹 ===============================
+    // 🔹 CASSER LE LIEN (acceptee)
+    // 🔹 ===============================
+    if (modeAction === "casser" && selectedInvitation) {
+      await supabase
+        .from("eglise_supervisions")
+        .update({
+          statut: "lien_casse",
+          superviseur_branche_id: null
+        })
+        .eq("id", selectedInvitation.id);
 
-  // 🔹 Mise à jour eglise_supervisions
-  await supabase
-    .from("eglise_supervisions")
-    .update({
-      statut: "lien_casse",
-      superviseur_branche_id: null
-    })
-    .eq("id", selectedInvitation.id);
+      await supabase
+        .from("branches")
+        .update({
+          superviseur_nom: null,
+          superviseur_id: null
+        })
+        .eq("id", selectedInvitation.supervisee_branche_id);
 
-  // 🔹 Mise à jour branches
-  if (selectedInvitation.supervisee_branche_id) {
-    await supabase
-      .from("branches")
-      .update({
-        superviseur_nom: null,
-        superviseur_id: null
-      })
-      .eq("id", selectedInvitation.supervisee_branche_id);
-  }
-
-  // 🔹 Envoi notification WhatsApp / Email
-  const message = `
+      const message = `
 💔 Le lien avec l'église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche} a été cassé.
 `;
 
-  if (canal === "whatsapp") {
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-  } else if (canal === "email") {
-    window.location.href = `mailto:?subject=Lien cassé&body=${encodeURIComponent(message)}`;
-  }
-}
+      if (canal === "whatsapp") {
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+      } else if (canal === "email") {
+        window.location.href = `mailto:?subject=Lien cassé&body=${encodeURIComponent(message)}`;
+      }
+    }
 
-    // ===============================
-    // SUPPRIMER
-    // ===============================
+    // 🔹 ===============================
+    // 🔹 SUPPRIMER (refusee, supprimee, lien_casse)
+    // 🔹 ===============================
     if (modeAction === "supprimer" && selectedInvitation) {
-
       await supabase
         .from("eglise_supervisions")
         .update({
@@ -223,21 +245,16 @@ if (modeAction === "casser" && selectedInvitation) {
         })
         .eq("id", selectedInvitation.id);
 
-      // Nettoyage uniquement si lien actif existait
-      if (selectedInvitation.statut.toLowerCase() === "acceptee" && selectedInvitation.supervisee_branche_id) {
-        await supabase
-          .from("branches")
-          .update({
-            superviseur_nom: null,
-            superviseur_id: null
-          })
-          .eq("id", selectedInvitation.supervisee_branche_id);
-      }
+      await supabase
+        .from("branches")
+        .update({
+          superviseur_nom: null,
+          superviseur_id: null
+        })
+        .eq("id", selectedInvitation.supervisee_branche_id);
     }
 
-    // ===============================
-    // RESET
-    // ===============================
+    // 🔹 RESET
     setModeAction(null);
     setSelectedInvitation(null);
     setResponsable({ prenom: "", nom: "" });

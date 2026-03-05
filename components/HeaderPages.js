@@ -109,7 +109,7 @@ export default function HeaderPages() {
   >
     🔔
     {/* 🔹 Petit point rouge sur la cloche */}
-    <span className="absolute top-0 right-0 transform translate-x-1/12 -translate-y-1/6 w-2 h-2 bg-red-500 rounded-full"></span>
+    <span className="absolute top-0 right-0 transform translate-x-1/14 -translate-y-1/8 w-2 h-2 bg-red-500 rounded-full"></span>
   </button>
 )}
 

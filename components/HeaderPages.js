@@ -80,9 +80,15 @@ export default function HeaderPages() {
   };
 
   const handleClickInvitation = () => {
-    setInvitationPending(false); // retire le badge
+  setInvitationPending(false); // retire le badge
+
+  // 🔹 Si déjà sur /accept-invitation, on force le rechargement
+  if (router.pathname === "/accept-invitation") {
+    router.replace("/accept-invitation"); // remplace la route actuelle
+  } else {
     router.push("/accept-invitation");
-  };
+  }
+};
 
   return (
     <div className="w-full max-w-5xl mx-auto mt-4">

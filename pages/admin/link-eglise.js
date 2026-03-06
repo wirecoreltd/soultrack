@@ -218,13 +218,7 @@ Que Dieu vous bénisse 🙏
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-4 flex flex-col items-center">
-      <HeaderPages />
-      <h4 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
-        {modeAction === "rappel" ? "Envoyer un rappel" :
-         modeAction === "supprimer" ? "Supprimer une invitation" :
-         modeAction === "casser" ? "Casser le lien" :
-         "Envoyer une invitation pour relier une église"}
-      </h4>
+      <HeaderPages />     
 
          {/* TEXTE EXPLICATIF FULL WIDTH, CENTRÉ, COULEURS POUR ACTIONS */}
           <div className="w-full max-w-5xl mx-auto mb-6 p-6 rounded-2xl text-center text-white text-sm">
@@ -244,7 +238,14 @@ Que Dieu vous bénisse 🙏
             <p className="mt-3 text-gray-300 text-sm">
               Toutes les actions sont suivies ici et visibles dans votre tableau.
             </p>
-          </div>                    
+          </div> 
+
+  <h5 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
+        {modeAction === "rappel" ? "Envoyer un rappel" :
+         modeAction === "supprimer" ? "Supprimer une invitation" :
+         modeAction === "casser" ? "Casser le lien" :
+         "Envoyer une invitation pour relier une église"}
+      </h5>
 
       {/* FORMULAIRE */}
       <div ref={formRef} className="w-full max-w-md rounded-2xl shadow-lg p-6 space-y-4 mb-10 bg-white/10">

@@ -230,6 +230,7 @@ Que Dieu vous bénisse 🙏
               Dans cette interface, vous pouvez :
             </p>
             <ul className="list-none space-y-2 ml-0">
+              <li className="text-green-400">✉️ <strong>Envoyer une invitation</strong> à une église</li>  
               <li className="text-gray-400">🔗 <strong>Casser le lien</strong> avec une église supervisée</li>
               <li className="text-red-500">🗑️ <strong>Supprimer</strong> une invitation envoyée</li>
               <li className="text-green-400">🔄 <strong>Renvoyer le lien</strong> si nécessaire</li>

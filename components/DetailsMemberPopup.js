@@ -243,7 +243,8 @@ export default function DetailsMemberPopup({
             💡 Statut Suivi : {statutSuiviLabels[membre.statut_suivis] || ""}
           </p>
           <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
-          <p>🎗️ Sexe : {membre.sexe || ""}</p>
+          <p>🎗️ Civilité : {membre.sexe || ""}</p>
+          <p>⏳ Age : {membre.age || ""}</p>
           <p>💧 Baptême d’Eau : {membre.bapteme_eau ? "Oui" : "Non"}</p>
           <p>🔥 Baptême de Feu : {membre.bapteme_esprit ? "Oui" : "Non"}</p>
           <p>✒️ Formation : {membre.Formation || ""}</p>

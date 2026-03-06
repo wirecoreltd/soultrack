@@ -159,7 +159,7 @@ function CreateInternalUserContent() {
     });
   };
 
- const handleSubmit = async e => {
+const handleSubmit = async (e) => {
   e.preventDefault();
 
   if (formData.password !== formData.confirmPassword) {
@@ -176,7 +176,7 @@ function CreateInternalUserContent() {
   setMessage("⏳ Création en cours...");
 
   try {
-    // ➤ Récupérer session
+    // ➤ Récupérer la session
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       setMessage("❌ Session expirée");
@@ -184,14 +184,14 @@ function CreateInternalUserContent() {
       return;
     }
 
-    // ➤ Récupérer eglise_id et branche_id depuis le profil
-    const { data: profile } = await supabase
+    // ➤ Récupérer eglise_id et branche_id du profil
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("eglise_id, branche_id")
       .eq("id", session.user.id)
       .single();
 
-    if (!profile) {
+    if (profileError || !profile) {
       setMessage("❌ Impossible de récupérer l'église et la branche.");
       setLoading(false);
       return;
@@ -213,7 +213,7 @@ function CreateInternalUserContent() {
     const data = await res.json().catch(() => null);
 
     if (res.ok) {
-      // ➤ Créer la ligne dans membres_complets avec eglise_id et branche_id
+      // ➤ Créer une ligne dans membres_complets avec eglise_id et branche_id
       await supabase.from("membres_complets").insert([{
         prenom: formData.prenom,
         nom: formData.nom,

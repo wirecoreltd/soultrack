@@ -254,27 +254,30 @@ Que Dieu vous bénisse 🙏
             value={eglise.pays} onChange={(e) => setEglise({ ...eglise, pays: e.target.value })} />
         </div>
 
-         {modeAction === "supprimer" ? (
-            <div className="bg-red-100 text-red-700 p-3 rounded-xl text-sm">
-              ⚠️ Si vous supprimez cette invitation, l'église sortira de la liste des
-              supervisions.
-            </div>
-          ) : modeAction === "casser" ? (
-            <div className="bg-yellow-100 text-yellow-800 p-3 rounded-xl text-sm">
-              ⚠️ Si vous cassez ce lien, l'église ne sera plus sous votre supervision
-              et la branche perdra également son superviseur.
-            </div>
-          ) : (
-            <select
-              className="w-full border rounded-xl px-3 py-2 text-black"
-              value={canal}
-              onChange={(e) => setCanal(e.target.value)}
-            >
-              <option value="">-- Sélectionnez le mode d’envoi --</option>
-              <option value="whatsapp">WhatsApp</option>
-              <option value="email">Email</option>
-            </select>
-          )}
+        {modeAction === "supprimer" && (
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded-xl text-sm">
+            ⚠️ Si vous supprimez cette invitation, l'église sortira de la liste des
+            supervisions et le lien avec la branche sera retiré.
+          </div>
+        )}
+        
+        {modeAction === "casser" && (
+          <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-3 rounded-xl text-sm">
+            ⚠️ Si vous cassez ce lien, l'église ne sera plus sous votre supervision.
+          </div>
+        )}
+        
+        {modeAction !== "supprimer" && (
+          <select
+            className="w-full border rounded-xl px-3 py-2 text-black"
+            value={canal}
+            onChange={(e) => setCanal(e.target.value)}
+          >
+            <option value="">-- Sélectionnez le mode d’envoi --</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="email">Email</option>
+          </select>
+        )}
 
        <button
         onClick={handleAction}

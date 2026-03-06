@@ -259,12 +259,21 @@ Que Dieu vous bénisse 🙏
           <option value="email">Email</option>
         </select>
 
-        <button onClick={handleAction} disabled={!canal && modeAction === "casser"} className={`w-full py-2 rounded-xl text-white font-semibold ${!canal && modeAction === "casser" ? "bg-gray-400 cursor-not-allowed" : "bg-[#333699] hover:bg-[#2a2f85]"}`}>
-          {modeAction === "rappel" && "Envoyer le rappel"}
-          {modeAction === "supprimer" && "Supprimer l'invitation"}
-          {modeAction === "casser" && "Confirmer le cassage"}
-          {modeAction === null && "Envoyer l'invitation"}
-        </button>
+       <button
+        onClick={handleAction}
+        disabled={!canal && modeAction === "casser"}
+        className={`w-full py-3 rounded-xl text-white font-semibold ${
+          !canal && modeAction === "casser"
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-[#333699] hover:bg-[#2a2f85]"
+        }`}
+      >
+        {modeAction === "rappel" && "Envoyer le rappel"}
+        {modeAction === "renvoyer" && "Renvoyer le lien"}
+        {modeAction === "supprimer" && "Supprimer l'invitation"}
+        {modeAction === "casser" && "Confirmer le cassage"}
+        {modeAction === null && "Envoyer l'invitation"}
+      </button>
       </div>
 
       <h3 className="w-full max-w-5xl text-center text-2xl font-bold text-amber-300 mb-8">

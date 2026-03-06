@@ -155,26 +155,88 @@ function CreateInternalUserContent() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      setMessage("❌ Les mots de passe ne correspondent pas.");
+  if (formData.password !== formData.confirmPassword) {
+    setMessage("❌ Les mots de passe ne correspondent pas.");
+    return;
+  }
+
+  if (!formData.roles || formData.roles.length === 0) {
+    setMessage("❌ Sélectionnez au moins un rôle !");
+    return;
+  }
+
+  setLoading(true);
+  setMessage("⏳ Création en cours...");
+
+  try {
+    // ➤ Récupérer la session
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setMessage("❌ Session expirée");
+      setLoading(false);
       return;
     }
 
-    if (!formData.roles || formData.roles.length === 0) {
-      setMessage("❌ Sélectionnez au moins un rôle !");
+    // ➤ Préparer le corps pour l'API
+    const body = { ...formData, member_id: selectedMemberId, roles: formData.roles };
+
+    if (selectedMemberId === "add-serviteur") body.addServiteur = true;
+
+    // ➤ Appel à ton API pour créer le user dans "profiles"
+    const res = await fetch("/api/create-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      setMessage(`❌ ${data?.error || "Erreur serveur"}`);
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setMessage("⏳ Création en cours...");
+    // ➤ Créer une ligne dans "membres_complets" pour ce nouvel utilisateur
+    await supabase.from("membres_complets").insert([{
+      prenom: formData.prenom,
+      nom: formData.nom,
+      telephone: formData.telephone || null,
+      email: formData.email || null,
+      star: true,                // <-- par défaut
+      etat_contact: "existant",  // <-- par défaut pour utilisateur interne
+      Ministere: formData.ministere.length ? formData.ministere.join(",") : null,
+      eglise_id: session.user.id_eglise,   // <-- adapter selon comment tu stockes eglise_id dans session
+      branche_id: session.user.id_branche, // <-- idem
+    }]);
 
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setMessage("❌ Session expirée");
-        setLoading(false);
+    // ➤ Réinitialiser le formulaire
+    setMessage("✅ Utilisateur créé avec succès !");
+    setSelectedMemberId("");
+    setFormData({
+      prenom: "",
+      nom: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      telephone: "",
+      roles: [],
+      cellule_nom: "",
+      cellule_zone: "",
+      ministere: [],
+    });
+    setRolesToHide([]);
+  } catch (err) {
+    setMessage("❌ " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
         return;
       }
 

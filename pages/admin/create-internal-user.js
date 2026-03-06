@@ -38,6 +38,7 @@ function CreateInternalUserContent() {
 
   const ministereOptions = [
     "Intercession",
+    "Administration"
     "Louange",
     "Technique",
     "Communication",

@@ -171,19 +171,17 @@ function CreateInternalUserContent() {
   setMessage("⏳ Création en cours...");
 
   try {
-    // ➤ Récupérer la session
     const { data: { session } } = await supabase.auth.getSession();
+
     if (!session) {
       setMessage("❌ Session expirée");
       setLoading(false);
       return;
     }
 
-    // ➤ Préparer le corps pour l'API
     const body = { ...formData, member_id: selectedMemberId, roles: formData.roles };
     if (selectedMemberId === "add-serviteur") body.addServiteur = true;
 
-    // ➤ Appel API pour créer le profile
     const res = await fetch("/api/create-user", {
       method: "POST",
       headers: {
@@ -196,7 +194,7 @@ function CreateInternalUserContent() {
     const data = await res.json().catch(() => null);
 
     if (res.ok) {
-      // ➤ Créer la ligne dans membres_complets
+      // ➤ Insert dans membres_complets
       await supabase.from("membres_complets").insert([{
         prenom: formData.prenom,
         nom: formData.nom,
@@ -226,7 +224,9 @@ function CreateInternalUserContent() {
       setRolesToHide([]);
     } else {
       setMessage(`❌ ${data?.error || "Erreur serveur"}`);
+      setLoading(false); // ✅ déplacer ici pour éviter le return
     }
+
   } catch (err) {
     setMessage("❌ " + err.message);
   } finally {

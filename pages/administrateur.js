@@ -99,7 +99,7 @@ export default function Administrateur() {
           >
             <div className="text-4xl mb-1">🔗</div>
             <div className="text-lg font-bold text-gray-800 text-center">
-              Relier une Église
+              Invitations & Liens d’églises
             </div>
           </Link>
 

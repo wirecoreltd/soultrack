@@ -29,7 +29,7 @@ function CreateInternalUserContent() {
     roles: [],
     cellule_nom: "",
     cellule_zone: "",
-    ministere: [], // <-- pour serviteur
+    ministere: [],
   });
 
   const [message, setMessage] = useState("");
@@ -38,7 +38,6 @@ function CreateInternalUserContent() {
 
   const ministereOptions = [
     "Intercession",
-    "Administration",
     "Louange",
     "Technique",
     "Communication",
@@ -54,7 +53,6 @@ function CreateInternalUserContent() {
     "Modération",
   ];
 
-  // ➤ Tous les rôles avec nom lisible
   const allRoles = [
     { key: "Administrateur", label: "Administrateur" },
     { key: "ResponsableIntegration", label: "Responsable Integration" },
@@ -99,12 +97,19 @@ function CreateInternalUserContent() {
   // ➤ Pré-remplissage infos et calcul des rôles à cacher
   useEffect(() => {
     if (!selectedMemberId || selectedMemberId === "add-serviteur") {
-      setFormData(prev => ({ ...prev, prenom: "", nom: "", telephone: "", roles: [], ministere: [] }));
+      setFormData(prev => ({
+        ...prev,
+        prenom: "",
+        nom: "",
+        telephone: "",
+        roles: [],
+        ministere: [],
+      }));
       setRolesToHide([]);
       return;
     }
 
-    const member = members.find((m) => m.id === selectedMemberId);
+    const member = members.find(m => m.id === selectedMemberId);
     if (member) {
       setFormData(prev => ({
         ...prev,
@@ -134,9 +139,9 @@ function CreateInternalUserContent() {
     }
   }, [selectedMemberId, members]);
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleRoleChange = (role) => {
+  const handleRoleChange = role => {
     setFormData(prev => {
       const roles = prev.roles.includes(role)
         ? prev.roles.filter(r => r !== role)
@@ -145,7 +150,7 @@ function CreateInternalUserContent() {
     });
   };
 
-  const handleMinistereChange = (ministere) => {
+  const handleMinistereChange = ministere => {
     setFormData(prev => {
       const list = prev.ministere.includes(ministere)
         ? prev.ministere.filter(m => m !== ministere)
@@ -154,154 +159,35 @@ function CreateInternalUserContent() {
     });
   };
 
-  const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async e => {
+    e.preventDefault();
 
-  if (formData.password !== formData.confirmPassword) {
-    setMessage("❌ Les mots de passe ne correspondent pas.");
-    return;
-  }
-
-  if (!formData.roles || formData.roles.length === 0) {
-    setMessage("❌ Sélectionnez au moins un rôle !");
-    return;
-  }
-
-  setLoading(true);
-  setMessage("⏳ Création en cours...");
-
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
-      setMessage("❌ Session expirée");
-      setLoading(false);
+    if (formData.password !== formData.confirmPassword) {
+      setMessage("❌ Les mots de passe ne correspondent pas.");
       return;
     }
 
-    const body = { ...formData, member_id: selectedMemberId, roles: formData.roles };
-    if (selectedMemberId === "add-serviteur") body.addServiteur = true;
-
-    const res = await fetch("/api/create-user", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    const data = await res.json().catch(() => null);
-
-    if (res.ok) {
-      // ➤ Insert dans membres_complets
-      await supabase.from("membres_complets").insert([{
-        prenom: formData.prenom,
-        nom: formData.nom,
-        telephone: formData.telephone || null,
-        email: formData.email || null,
-        star: true,
-        etat_contact: "existant",
-        Ministere: formData.ministere.length ? formData.ministere.join(",") : null,
-        eglise_id: session.user.id_eglise,   // adapter selon ta session
-        branche_id: session.user.id_branche, // adapter selon ta session
-      }]);
-
-      setMessage("✅ Utilisateur créé avec succès !");
-      setSelectedMemberId("");
-      setFormData({
-        prenom: "",
-        nom: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        telephone: "",
-        roles: [],
-        cellule_nom: "",
-        cellule_zone: "",
-        ministere: [],
-      });
-      setRolesToHide([]);
-    } else {
-      setMessage(`❌ ${data?.error || "Erreur serveur"}`);
-      setLoading(false); // ✅ déplacer ici pour éviter le return
-    }
-
-  } catch (err) {
-    setMessage("❌ " + err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+    if (!formData.roles || formData.roles.length === 0) {
+      setMessage("❌ Sélectionnez au moins un rôle !");
       return;
     }
 
-    // ➤ Préparer le corps pour l'API
-    const body = { ...formData, member_id: selectedMemberId, roles: formData.roles };
+    setLoading(true);
+    setMessage("⏳ Création en cours...");
 
-    if (selectedMemberId === "add-serviteur") body.addServiteur = true;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
 
-    // ➤ Appel à ton API pour créer le user dans "profiles"
-    const res = await fetch("/api/create-user", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    const data = await res.json().catch(() => null);
-
-    if (!res.ok) {
-      setMessage(`❌ ${data?.error || "Erreur serveur"}`);
-      setLoading(false);
-      return;
-    }
-
-    // ➤ Créer une ligne dans "membres_complets" pour ce nouvel utilisateur
-    await supabase.from("membres_complets").insert([{
-      prenom: formData.prenom,
-      nom: formData.nom,
-      telephone: formData.telephone || null,
-      email: formData.email || null,
-      star: true,                // <-- par défaut
-      etat_contact: "existant",  // <-- par défaut pour utilisateur interne
-      Ministere: formData.ministere.length ? formData.ministere.join(",") : null,
-      eglise_id: session.user.id_eglise,   // <-- adapter selon comment tu stockes eglise_id dans session
-      branche_id: session.user.id_branche, // <-- idem
-    }]);
-
-    // ➤ Réinitialiser le formulaire
-    setMessage("✅ Utilisateur créé avec succès !");
-    setSelectedMemberId("");
-    setFormData({
-      prenom: "",
-      nom: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      telephone: "",
-      roles: [],
-      cellule_nom: "",
-      cellule_zone: "",
-      ministere: [],
-    });
-    setRolesToHide([]);
-  } catch (err) {
-    setMessage("❌ " + err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      if (!session) {
+        setMessage("❌ Session expirée");
+        setLoading(false);
         return;
       }
 
       const body = { ...formData, member_id: selectedMemberId, roles: formData.roles };
-
-      // Si c'est un serviteur, indiquer pour l'API
       if (selectedMemberId === "add-serviteur") body.addServiteur = true;
 
+      // ➤ Créer le profile via API
       const res = await fetch("/api/create-user", {
         method: "POST",
         headers: {
@@ -314,6 +200,19 @@ function CreateInternalUserContent() {
       const data = await res.json().catch(() => null);
 
       if (res.ok) {
+        // ➤ Ajouter ligne dans membres_complets
+        await supabase.from("membres_complets").insert([{
+          prenom: formData.prenom,
+          nom: formData.nom,
+          telephone: formData.telephone || null,
+          email: formData.email || null,
+          star: true,
+          etat_contact: "existant",
+          Ministere: formData.ministere.length ? formData.ministere.join(",") : null,
+          eglise_id: session.user.id_eglise || null,
+          branche_id: session.user.id_branche || null,
+        }]);
+
         setMessage("✅ Utilisateur créé avec succès !");
         setSelectedMemberId("");
         setFormData({
@@ -331,6 +230,7 @@ function CreateInternalUserContent() {
         setRolesToHide([]);
       } else {
         setMessage(`❌ ${data?.error || "Erreur serveur"}`);
+        setLoading(false);
       }
     } catch (err) {
       setMessage("❌ " + err.message);
@@ -357,7 +257,7 @@ function CreateInternalUserContent() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <select
             value={selectedMemberId}
-            onChange={(e) => setSelectedMemberId(e.target.value)}
+            onChange={e => setSelectedMemberId(e.target.value)}
             className="input"
             required
           >
@@ -376,7 +276,6 @@ function CreateInternalUserContent() {
             </>
           )}
 
-{/* Ministère si serviteur */}
           {selectedMemberId === "add-serviteur" && (
             <div className="flex flex-col gap-2">
               <label className="font-semibold">Ministères :</label>
@@ -411,7 +310,7 @@ function CreateInternalUserContent() {
                 </label>
               )
             )}
-          </div>          
+          </div>
 
           {formData.roles.includes("ResponsableCellule") && (
             <div className="flex flex-col gap-2">

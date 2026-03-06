@@ -21,6 +21,7 @@ export default function LinkEglise() {
   const [invitations, setInvitations] = useState([]);
   const [modeAction, setModeAction] = useState(null); // null, "rappel", "supprimer", "casser", "renvoyer"
   const [selectedInvitation, setSelectedInvitation] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // 🔹 Charger superviseur connecté
   useEffect(() => {
@@ -253,11 +254,22 @@ Que Dieu vous bénisse 🙏
             value={eglise.pays} onChange={(e) => setEglise({ ...eglise, pays: e.target.value })} />
         </div>
 
-        <select className="w-full border rounded-xl px-3 py-2 text-black" value={canal} onChange={(e) => setCanal(e.target.value)}>
-          <option value="">-- Sélectionnez le mode d’envoi --</option>
-          <option value="whatsapp">WhatsApp</option>
-          <option value="email">Email</option>
-        </select>
+          {modeAction !== "supprimer" ? (
+            <select
+              className="w-full border rounded-xl px-3 py-2 text-black"
+              value={canal}
+              onChange={(e) => setCanal(e.target.value)}
+            >
+              <option value="">-- Sélectionnez le mode d’envoi --</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="email">Email</option>
+            </select>
+          ) : (
+            <div className="bg-red-100 text-red-700 p-3 rounded-xl text-sm">
+              ⚠️ Si vous supprimez cette invitation, l'église sortira de la liste des
+              supervisions et le lien avec la branche sera retiré.
+            </div>
+          )}  
 
        <button
         onClick={handleAction}

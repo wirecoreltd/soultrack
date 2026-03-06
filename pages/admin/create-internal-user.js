@@ -159,85 +159,99 @@ function CreateInternalUserContent() {
     });
   };
 
-  const handleSubmit = async e => {
-    e.preventDefault();
+ const handleSubmit = async e => {
+  e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      setMessage("❌ Les mots de passe ne correspondent pas.");
+  if (formData.password !== formData.confirmPassword) {
+    setMessage("❌ Les mots de passe ne correspondent pas.");
+    return;
+  }
+
+  if (!formData.roles || formData.roles.length === 0) {
+    setMessage("❌ Sélectionnez au moins un rôle !");
+    return;
+  }
+
+  setLoading(true);
+  setMessage("⏳ Création en cours...");
+
+  try {
+    // ➤ Récupérer session
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setMessage("❌ Session expirée");
+      setLoading(false);
       return;
     }
 
-    if (!formData.roles || formData.roles.length === 0) {
-      setMessage("❌ Sélectionnez au moins un rôle !");
+    // ➤ Récupérer eglise_id et branche_id depuis le profil
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("eglise_id, branche_id")
+      .eq("id", session.user.id)
+      .single();
+
+    if (!profile) {
+      setMessage("❌ Impossible de récupérer l'église et la branche.");
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setMessage("⏳ Création en cours...");
+    const body = { ...formData, member_id: selectedMemberId, roles: formData.roles };
+    if (selectedMemberId === "add-serviteur") body.addServiteur = true;
 
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
+    // ➤ Créer le profile via API
+    const res = await fetch("/api/create-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(body),
+    });
 
-      if (!session) {
-        setMessage("❌ Session expirée");
-        setLoading(false);
-        return;
-      }
+    const data = await res.json().catch(() => null);
 
-      const body = { ...formData, member_id: selectedMemberId, roles: formData.roles };
-      if (selectedMemberId === "add-serviteur") body.addServiteur = true;
+    if (res.ok) {
+      // ➤ Créer la ligne dans membres_complets avec eglise_id et branche_id
+      await supabase.from("membres_complets").insert([{
+        prenom: formData.prenom,
+        nom: formData.nom,
+        telephone: formData.telephone || null,
+        email: formData.email || null,
+        star: true,
+        etat_contact: "existant",
+        Ministere: formData.ministere.length ? formData.ministere.join(",") : null,
+        eglise_id: profile.eglise_id,
+        branche_id: profile.branche_id,
+      }]);
 
-      // ➤ Créer le profile via API
-      const res = await fetch("/api/create-user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(body),
+      setMessage("✅ Utilisateur créé avec succès !");
+      setSelectedMemberId("");
+      setFormData({
+        prenom: "",
+        nom: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        telephone: "",
+        roles: [],
+        cellule_nom: "",
+        cellule_zone: "",
+        ministere: [],
       });
-
-      const data = await res.json().catch(() => null);
-
-      if (res.ok) {
-        // ➤ Ajouter ligne dans membres_complets
-        await supabase.from("membres_complets").insert([{
-          prenom: formData.prenom,
-          nom: formData.nom,
-          telephone: formData.telephone || null,
-          email: formData.email || null,
-          star: true,
-          etat_contact: "existant",
-          Ministere: formData.ministere.length ? formData.ministere.join(",") : null,
-          eglise_id: session.user.id_eglise || null,
-          branche_id: session.user.id_branche || null,
-        }]);
-
-        setMessage("✅ Utilisateur créé avec succès !");
-        setSelectedMemberId("");
-        setFormData({
-          prenom: "",
-          nom: "",
-          email: "",
-          password: "",
-          confirmPassword: "",
-          telephone: "",
-          roles: [],
-          cellule_nom: "",
-          cellule_zone: "",
-          ministere: [],
-        });
-        setRolesToHide([]);
-      } else {
-        setMessage(`❌ ${data?.error || "Erreur serveur"}`);
-        setLoading(false);
-      }
-    } catch (err) {
-      setMessage("❌ " + err.message);
-    } finally {
+      setRolesToHide([]);
+    } else {
+      setMessage(`❌ ${data?.error || "Erreur serveur"}`);
       setLoading(false);
     }
-  };
+
+  } catch (err) {
+    setMessage("❌ " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCancel = () => router.push("/admin/list-users");
 

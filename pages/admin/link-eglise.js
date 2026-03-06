@@ -226,7 +226,7 @@ Que Dieu vous bénisse 🙏
          "Envoyer une invitation pour relier une église"}
       </h4>
 
-          <div className="w-full max-w-md mb-6 text-white text-sm bg-white/10 p-4 rounded-xl">
+          <className="w-full max-w-md mb-6 text-white text-sm bg-white/10 p-4 rounded-xl">
           <p>
             Bienvenue dans <strong>Invitations & Liens d’églises</strong>.<br />
             Relier une église vous permet de placer une église sous votre supervision et de consulter ses statistiques dans <strong>Stats Globales</strong>.<br />
@@ -235,8 +235,7 @@ Que Dieu vous bénisse 🙏
             - Supprimer une invitation envoyée.<br />
             - Renvoyer un lien si nécessaire.<br />
             Toutes les actions sont suivies et visibles dans cette interface.
-          </p>
-        </div>                          
+          </p>                         
 
       {/* FORMULAIRE */}
       <div ref={formRef} className="w-full max-w-md rounded-2xl shadow-lg p-6 space-y-4 mb-10 bg-white/10">

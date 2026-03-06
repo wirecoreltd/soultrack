@@ -59,6 +59,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     const ministereOptions = [
     "Intercession",
     "Louange",
+    "Administration",  
     "Technique",
     "Communication",
     "Les Enfants",

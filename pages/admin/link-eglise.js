@@ -318,7 +318,7 @@ Que Dieu vous bénisse 🙏
       </button>
       </div>
 
-      <h3 className="w-full max-w-5xl text-center text-2xl font-bold text-amber-300 mb-8">
+      <h3 className="w-full max-w-5xl text-center text-2xl font-bold text-amber-300 mb-8 text-sm">
         Liste des églises supervisées
       </h3>
 

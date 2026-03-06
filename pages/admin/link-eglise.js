@@ -226,25 +226,25 @@ Que Dieu vous bénisse 🙏
          "Envoyer une invitation pour relier une église"}
       </h4>
 
-         {/* TEXTE EXPLICATIF FULL WIDTH STYLE MODERNE */}
-          <div className="w-full max-w-5xl mx-auto mb-6 p-6 rounded-2xl shadow-lg bg-white/10 text-white text-sm">
-            <p className="mb-3 font-bold text-xl">Invitations & Liens d’églises</p>
+         {/* TEXTE EXPLICATIF FULL WIDTH, CENTRÉ, COULEURS POUR ACTIONS */}
+          <div className="w-full max-w-5xl mx-auto mb-6 p-6 rounded-2xl text-center text-white text-sm">
+            <p className="mb-4 font-bold text-2xl text-amber-400">Invitations & Liens d’églises</p>
             <p className="mb-2">
               Relier une église vous permet de placer une église sous votre supervision et de voir ses statistiques dans <strong>Stats Globales</strong>.
             </p>
-            <p className="mb-2">
+            <p className="mb-3">
               Dans cette interface, vous pouvez :
             </p>
-            <ul className="list-none space-y-1 ml-2">
-              <li>🔗 <strong>Casser le lien</strong> avec une église supervisée</li>
-              <li>🗑️ <strong>Supprimer</strong> une invitation envoyée</li>
-              <li>🔄 <strong>Renvoyer le lien</strong> si nécessaire</li>
-              <li>⏳ <strong>Envoyer un rappel</strong> pour une invitation en attente</li>
+            <ul className="list-none space-y-2 ml-0">
+              <li className="text-gray-400">🔗 <strong>Casser le lien</strong> avec une église supervisée</li>
+              <li className="text-red-500">🗑️ <strong>Supprimer</strong> une invitation envoyée</li>
+              <li className="text-green-400">🔄 <strong>Renvoyer le lien</strong> si nécessaire</li>
+              <li className="text-yellow-300">⏳ <strong>Envoyer un rappel</strong> pour une invitation en attente</li>
             </ul>
-            <p className="mt-2 text-gray-200 text-sm">
+            <p className="mt-3 text-gray-300 text-sm">
               Toutes les actions sont suivies ici et visibles dans votre tableau.
             </p>
-          </div>                     
+          </div>                    
 
       {/* FORMULAIRE */}
       <div ref={formRef} className="w-full max-w-md rounded-2xl shadow-lg p-6 space-y-4 mb-10 bg-white/10">

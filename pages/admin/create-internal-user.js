@@ -181,6 +181,63 @@ function CreateInternalUserContent() {
 
     // ➤ Préparer le corps pour l'API
     const body = { ...formData, member_id: selectedMemberId, roles: formData.roles };
+    if (selectedMemberId === "add-serviteur") body.addServiteur = true;
+
+    // ➤ Appel API pour créer le profile
+    const res = await fetch("/api/create-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (res.ok) {
+      // ➤ Créer la ligne dans membres_complets
+      await supabase.from("membres_complets").insert([{
+        prenom: formData.prenom,
+        nom: formData.nom,
+        telephone: formData.telephone || null,
+        email: formData.email || null,
+        star: true,
+        etat_contact: "existant",
+        Ministere: formData.ministere.length ? formData.ministere.join(",") : null,
+        eglise_id: session.user.id_eglise,   // adapter selon ta session
+        branche_id: session.user.id_branche, // adapter selon ta session
+      }]);
+
+      setMessage("✅ Utilisateur créé avec succès !");
+      setSelectedMemberId("");
+      setFormData({
+        prenom: "",
+        nom: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        telephone: "",
+        roles: [],
+        cellule_nom: "",
+        cellule_zone: "",
+        ministere: [],
+      });
+      setRolesToHide([]);
+    } else {
+      setMessage(`❌ ${data?.error || "Erreur serveur"}`);
+    }
+  } catch (err) {
+    setMessage("❌ " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+      return;
+    }
+
+    // ➤ Préparer le corps pour l'API
+    const body = { ...formData, member_id: selectedMemberId, roles: formData.roles };
 
     if (selectedMemberId === "add-serviteur") body.addServiteur = true;
 

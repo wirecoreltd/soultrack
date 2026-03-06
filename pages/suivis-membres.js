@@ -264,7 +264,8 @@ return (
       <div className="text-black text-sm space-y-2 w-full">
         <p>📅 {m.sexe === "Femme" ? "Arrivée" : "Arrivé"} le : {formatDateFr(m.created_at)}</p> 
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-        <p>🎗️ Sexe : {m.sexe || ""}</p>
+        <p>🎗️ Civilité : {m.sexe || ""}</p>
+        <p>⏳ Age : {m.age || ""}</p>
         <p>💧 Baptême d'Eau : {m.bapteme_eau || ""}</p>
         <p>🔥 Baptême de Feu : {m.bapteme_esprit || ""}</p>        
         <p>✒️ Formation : {m.Formation || "—"}</p>  

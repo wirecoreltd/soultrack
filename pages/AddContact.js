@@ -15,6 +15,7 @@ export default function AddContact() {
     is_whatsapp: false,
     ville: "",
     sexe: "",
+    age: "",
     statut: "",
     venu: "",
     priere_salut: "",
@@ -102,6 +103,7 @@ export default function AddContact() {
         is_whatsapp: false,
         ville: "",
         sexe: "",
+        age: "",
         statut: "",
         venu: "",
         priere_salut: "",
@@ -222,7 +224,25 @@ export default function AddContact() {
                 <option value="Femme">Femme</option>
               </select>
             </div>
-            
+
+              {/* Age */}
+              <label className="text-sm sm:text-base font-semibold">Âge</label>
+              <select
+                value={formData.age}
+                onChange={e => setFormData({...formData, age: e.target.value})}
+                className="input"
+                required
+              >
+                <option value="">-- Choisir --</option>
+                <option value="12-17 ans">12-17 ans</option>
+                <option value="18-25 ans">18-25 ans</option>
+                <option value="26-30 ans">26-30 ans</option>
+                <option value="31-40 ans">31-40 ans</option>
+                <option value="41-55 ans">41-55 ans</option>
+                <option value="56-69 ans">56-69 ans</option>
+                <option value="70 ans et plus">70 ans et plus</option>
+              </select>   
+                  
             {/* Raison de la venue */}
             <div className="flex flex-col">
               <label className="text-sm sm:text-base font-bold mb-1">

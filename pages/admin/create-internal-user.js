@@ -221,6 +221,7 @@ const handleSubmit = async (e) => {
         email: formData.email || null,
         star: true,
         etat_contact: "existant",
+        statut_initial: null,  
         Ministere: formData.ministere.length ? formData.ministere.join(",") : null,
         eglise_id: profile.eglise_id,
         branche_id: profile.branche_id,

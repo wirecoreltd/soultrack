@@ -14,7 +14,6 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
     const fetchOrCreateToken = async () => {
       const now = new Date().toISOString();
 
-      // Vérifier s’il existe un token actif
       let { data, error } = await supabase
         .from("access_tokens")
         .select("*")
@@ -27,13 +26,16 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
       if (!error && data) {
         setToken(data.token);
       } else {
-        // Créer un nouveau token avec expiration 7 jours
         const newToken = uuidv4();
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        const expiresAt = new Date(
+          Date.now() + 7 * 24 * 60 * 60 * 1000
+        ).toISOString();
 
         const { error: insertError } = await supabase
           .from("access_tokens")
-          .insert([{ token: newToken, access_type: type, expires_at: expiresAt }]);
+          .insert([
+            { token: newToken, access_type: type, expires_at: expiresAt },
+          ]);
 
         if (insertError) {
           console.error("Erreur création token :", insertError.message);
@@ -50,10 +52,42 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
   const getLink = () => {
     const base = window.location.origin;
     if (!token) return base;
-    if (type === "ajouter_membre") return `${base}/add-member?token=${token}`;
-    if (type === "ajouter_evangelise") return `${base}/add-evangelise?token=${token}`;
+
+    if (type === "ajouter_membre")
+      return `${base}/add-member?token=${token}`;
+
+    if (type === "ajouter_evangelise")
+      return `${base}/add-evangelise?token=${token}`;
+
     return base;
-  };  
+  };
+
+  // ✅ CORRECT : fonction avant le return
+  const handleSend = () => {
+    const link = getLink();
+
+    const message = `Bonjour 👋
+
+Voici le lien pour accueillir un nouveau venu à l'église.
+
+Merci de prendre quelques instants pour remplir ce formulaire afin que nous puissions mieux accompagner cette personne.
+
+Cliquez ici :
+${link}
+
+Merci pour votre service 🙏`;
+
+    const whatsappLink = phoneNumber
+      ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(
+          message
+        )}`
+      : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+
+    window.open(whatsappLink, "_blank");
+
+    setShowPopup(false);
+    setPhoneNumber("");
+  };
 
   return (
     <>
@@ -63,39 +97,16 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
       >
         {label}
       </button>
-        
-
-        const handleSend = () => {
-          const link = getLink();
-        
-          const message = `Bonjour 👋
-        
-        Voici le lien pour accueillir un nouveau venu à l'église.
-        
-        Merci de prendre quelques instants pour remplir ce formulaire afin que nous puissions mieux accompagner cette personne.
-        
-        Cliquez ici :
-        ${link}
-        
-        Merci pour votre service 🙏`;
-        
-          const whatsappLink = phoneNumber
-            ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
-            : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-        
-          window.open(whatsappLink, "_blank");
-        
-          setShowPopup(false);
-          setPhoneNumber("");
-        };
 
       {showPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl relative">
             <h2 className="text-xl font-bold mb-3">{label}</h2>
+
             <p className="text-gray-700 mb-4">
-              Cliquez sur <span className="font-semibold">Envoyer</span> si le contact figure déjà dans votre liste WhatsApp,
-              ou saisissez un numéro manuellement.
+              Cliquez sur <span className="font-semibold">Envoyer</span> si le
+              contact figure déjà dans votre liste WhatsApp, ou saisissez un
+              numéro manuellement.
             </p>
 
             <input
@@ -108,11 +119,15 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
 
             <div className="flex gap-3 justify-end">
               <button
-                onClick={() => { setShowPopup(false); setPhoneNumber(""); }}
+                onClick={() => {
+                  setShowPopup(false);
+                  setPhoneNumber("");
+                }}
                 className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 rounded-2xl font-semibold transition"
               >
                 Annuler
               </button>
+
               <button
                 onClick={handleSend}
                 className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-semibold transition"

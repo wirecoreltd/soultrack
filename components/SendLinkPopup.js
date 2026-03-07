@@ -55,17 +55,7 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
     return base;
   };
 
-  const handleSend = () => {
-    const link = getLink();
-    const whatsappLink = phoneNumber
-      ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(link)}`
-      : `https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`;
-
-    window.open(whatsappLink, "_blank");
-
-    setShowPopup(false);
-    setPhoneNumber("");
-  };
+  
 
   return (
     <>
@@ -75,7 +65,29 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
       >
         {label}
       </button>
-
+        const handleSend = () => {
+          const link = getLink();
+        
+          const message = `Bonjour 👋
+        
+        Voici le lien pour accueillir un nouveau venu à l'église.
+        
+        Merci de prendre quelques instants pour remplir ce formulaire afin que nous puissions mieux accompagner cette personne.
+        
+        Cliquez ici :
+        ${link}
+        
+        Merci pour votre service 🙏`;
+        
+          const whatsappLink = phoneNumber
+            ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
+            : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+        
+          window.open(whatsappLink, "_blank");
+        
+          setShowPopup(false);
+          setPhoneNumber("");
+        };
       {showPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl relative">

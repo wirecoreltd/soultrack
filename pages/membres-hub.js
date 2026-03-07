@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import Footer from "../components/Footer";
+import LogoutLink from "../components/LogoutLink";
+import SendLinkPopup from "../components/SendLinkPopup";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
-import SendLinkPopup from "../components/SendLinkPopup";
-import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
+import Footer from "../components/Footer";
+import supabase from "../lib/supabaseClient"; // 🔹 importer supabase
 
 export default function MembresHub() {
   return (
@@ -18,38 +20,34 @@ export default function MembresHub() {
 }
 
 function MembresHubContent() {
+  const router = useRouter();
   const [userName, setUserName] = useState("");
+  const [userId, setUserId] = useState(null); // 🔹 état pour userId
+  const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
-    const fetchUserName = async () => {
-      try {
-        // Récupération du userId depuis Supabase Auth
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (session?.user?.email) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("prenom")
-            .eq("id", session.user.id)
-            .single();
-
-          setUserName(profile?.prenom || "Utilisateur");
-        } else {
-          // fallback si pas connecté
-          const localName = localStorage.getItem("userName") || "Utilisateur";
-          setUserName(localName.split(" ")[0]);
-        }
-      } catch (err) {
-        console.error("Erreur récupération nom:", err.message);
-        const localName = localStorage.getItem("userName") || "Utilisateur";
-        setUserName(localName.split(" ")[0]);
+    const fetchUser = async () => {
+      // 🔹 récupérer la session de supabase
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        console.error("Erreur récupération session :", error?.message);
+        setLoadingUser(false);
+        return;
       }
+
+      setUserId(session.user.id); // 🔹 définir le userId pour SendLinkPopup
+
+      const name = session.user.user_metadata?.full_name || "Utilisateur";
+      const prenom = name.split(" ")[0];
+      setUserName(prenom);
+
+      setLoadingUser(false);
     };
 
-    fetchUserName();
+    fetchUser();
   }, []);
+
+  if (loadingUser) return <p className="text-white mt-10 text-center">Chargement de l'utilisateur...</p>;
 
   return (
     <div
@@ -58,13 +56,12 @@ function MembresHubContent() {
     >
       <HeaderPages />
 
-      {/* Titre + texte motivant */}
       <div className="text-center mb-6">
         <h1 className="text-3xl font-bold text-white mb-2">Espace Membres</h1>
         <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
           Bienvenue {userName} ! Chaque membre compte et ensemble, nous grandissons plus fort. 🌟
         </p>
-      </div>
+      </div>   
 
       {/* Cartes principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-5xl mb-6">
@@ -97,20 +94,19 @@ function MembresHubContent() {
       </div>
 
       {/* Bouton popup pour envoyer le lien */}
-      <div className="w-full max-w-md mb-10">
+      <<div className="w-full max-w-md mb-10">
         <SendLinkPopup
           label="Envoyer l'appli – Nouveau membre"
           type="ajouter_membre"
           buttonColor="from-[#09203F] to-[#537895]"
+          userId={userId} // 🔹 passer le userId
         />
       </div>
 
-      {/* Verset biblique */}
       <div className="mt-auto mb-4 text-center text-white text-lg italic max-w-2xl leading-relaxed tracking-wide font-light">
         Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
         1 Corinthiens 12:14 ❤️
       </div>
-
       <Footer />
     </div>
   );

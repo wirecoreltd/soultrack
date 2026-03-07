@@ -8,80 +8,84 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [token, setToken] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  // 🔹 Récupération ou création du token
-  useEffect(() => {
-    if (!userId) {
-      setLoading(true);
-      return; // On attend que userId soit défini
-    }
+  // ✅ Fonction pour récupérer ou créer le token
+  const fetchOrCreateToken = async () => {
+    try {
+      // Par défaut, token vide pour revenir au lien principal si échec
+      setToken("");
 
-    const fetchOrCreateToken = async () => {
-      setLoading(true);
+      // 1️⃣ Récupérer l'église et la branche de l'utilisateur si userId fourni
+      let church_id = null;
+      let branch_id = null;
 
-      try {
-        // 1️⃣ Récupérer l'église et la branche de l'utilisateur
+      if (userId) {
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("eglise_id, branche_id")
           .eq("id", userId)
           .single();
 
-        if (profileError || !profile) throw new Error("Impossible de récupérer l'église");
-
-        const now = new Date().toISOString();
-
-        // 2️⃣ Vérifier s’il existe un token actif pour ce type et cette église/branche
-        const { data: existingToken, error: tokenError } = await supabase
-          .from("access_tokens")
-          .select("*")
-          .eq("access_type", type)
-          .eq("church_id", profile.eglise_id)
-          .eq("branch_id", profile.branche_id)
-          .gte("expires_at", now)
-          .order("expires_at", { ascending: false })
-          .limit(1)
-          .single();
-
-        if (!tokenError && existingToken) {
-          setToken(existingToken.token);
-        } else {
-          // 3️⃣ Créer un nouveau token avec expiration 7 jours
-          const newToken = uuidv4();
-          const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-          const { error: insertError } = await supabase
-            .from("access_tokens")
-            .insert([{
-              token: newToken,
-              access_type: type,
-              expires_at: expiresAt,
-              church_id: profile.eglise_id,
-              branch_id: profile.branche_id
-            }]);
-
-          if (insertError) throw insertError;
-
-          setToken(newToken);
+        if (!profileError && profile) {
+          church_id = profile.eglise_id;
+          branch_id = profile.branche_id;
         }
-      } catch (err) {
-        console.error("Erreur lors de la récupération/ création du token :", err.message);
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchOrCreateToken();
-  }, [userId, type]);
+      const now = new Date().toISOString();
 
-  // 🔹 Lien avec token
-  const getLink = () => {
-    if (!token) return window.location.origin;
-    return `${window.location.origin}/add-member?token=${token}`;
+      // 2️⃣ Vérifier s’il existe un token actif pour ce type et cette église
+      let query = supabase
+        .from("access_tokens")
+        .select("*")
+        .eq("access_type", type)
+        .gte("expires_at", now)
+        .order("expires_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (church_id) query = query.eq("church_id", church_id);
+      if (branch_id) query = query.eq("branch_id", branch_id);
+
+      const { data, error } = await query;
+
+      if (!error && data) {
+        setToken(data.token);
+        return;
+      }
+
+      // 3️⃣ Créer un nouveau token avec expiration 7 jours
+      const newToken = uuidv4();
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      const { error: insertError } = await supabase
+        .from("access_tokens")
+        .insert([{
+          token: newToken,
+          access_type: type,
+          expires_at: expiresAt,
+          church_id,
+          branch_id
+        }]);
+
+      if (!insertError) setToken(newToken);
+
+    } catch (err) {
+      console.error("Erreur récupération/creation token :", err.message);
+      setToken(""); // lien fallback
+    }
   };
 
-  // 🔹 Envoi WhatsApp
+  useEffect(() => {
+    fetchOrCreateToken();
+  }, [type, userId]);
+
+  const getLink = () => {
+    return token
+      ? `${window.location.origin}/add-member?token=${token}`
+      : window.location.origin; // fallback si pas de token
+  };
+
   const handleSend = () => {
     const link = getLink();
 
@@ -104,8 +108,6 @@ Merci pour votre service 🙏`;
     setShowPopup(false);
     setPhoneNumber("");
   };
-
-  if (loading) return <p>Chargement...</p>;
 
   return (
     <>

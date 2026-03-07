@@ -78,6 +78,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       message += `Une personne précieuse t’est confiée pour l’accompagnement.\n\n`;
       message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
       message += `🎗️ Sexe: ${membre.sexe || "—"}\n`; 
+      message += `⏳ Age: ${membre.age || "—"}\n`; 
       message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
       message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
       message += `🏙️ Ville: ${membre.ville || "—"}\n`;

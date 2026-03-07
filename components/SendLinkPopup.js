@@ -68,14 +68,14 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
 
     const message = `Bonjour 👋
 
-Voici le lien pour accueillir un nouveau venu à l'église.
+Voici le lien pour accueillir un nouveau venu.
 
 Merci de prendre quelques instants pour remplir ce formulaire afin que nous puissions mieux accompagner cette personne.
 
 Cliquez ici :
 ${link}
 
-Merci pour votre service 🙏`;
+Merci pour ton engagement 🙏`;
 
     const whatsappLink = phoneNumber
       ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(

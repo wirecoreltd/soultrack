@@ -4,30 +4,32 @@ import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
 
-export default function SendLinkPopup({ label, type, buttonColor }) {
+export default function SendLinkPopup({ label, type, buttonColor, userId }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [token, setToken] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Récupérer ou créer un token unique par église et branche
   useEffect(() => {
     const fetchOrCreateToken = async () => {
-      // Récupérer la session pour avoir l'utilisateur
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      setLoading(true);
 
-      // Récupérer eglise_id et branch_id
-      const { data: profile } = await supabase
+      // 1️⃣ Récupérer l'église et la branche de l'utilisateur
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("eglise_id, branche_id")
-        .eq("id", session.user.id)
+        .eq("id", userId)
         .single();
 
-      if (!profile) return;
+      if (profileError || !profile) {
+        console.error("Impossible de récupérer l'église :", profileError?.message);
+        setLoading(false);
+        return;
+      }
 
       const now = new Date().toISOString();
 
-      // Chercher un token actif pour cette église, branche et type
+      // 2️⃣ Vérifier s’il existe un token actif pour ce type et cette église
       const { data, error } = await supabase
         .from("access_tokens")
         .select("*")
@@ -42,7 +44,7 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
       if (!error && data) {
         setToken(data.token);
       } else {
-        // Créer un nouveau token pour cette église/branche
+        // 3️⃣ Créer un nouveau token avec expiration 7 jours
         const newToken = uuidv4();
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -58,23 +60,22 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
 
         if (insertError) {
           console.error("Erreur création token :", insertError.message);
+          setLoading(false);
           return;
         }
 
         setToken(newToken);
       }
+
+      setLoading(false);
     };
 
-    fetchOrCreateToken();
-  }, [type]);
+    if (userId) fetchOrCreateToken();
+  }, [type, userId]);
 
   const getLink = () => {
-    const base = window.location.origin;
-    if (!token) return base;
-
-    if (type === "ajouter_membre") return `${base}/add-member?token=${token}`;
-    if (type === "ajouter_evangelise") return `${base}/add-evangelise?token=${token}`;
-    return base;
+    if (!token) return window.location.origin;
+    return `${window.location.origin}/add-member?token=${token}`;
   };
 
   const handleSend = () => {
@@ -96,10 +97,11 @@ Merci pour votre service 🙏`;
       : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappLink, "_blank");
-
     setShowPopup(false);
     setPhoneNumber("");
   };
+
+  if (loading) return <p>Chargement...</p>;
 
   return (
     <>

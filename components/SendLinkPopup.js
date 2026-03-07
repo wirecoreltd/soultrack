@@ -9,16 +9,31 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [token, setToken] = useState("");
 
-  // ✅ Récupérer ou créer token
+  // ✅ Récupérer ou créer un token unique par église et branche
   useEffect(() => {
     const fetchOrCreateToken = async () => {
+      // Récupérer la session pour avoir l'utilisateur
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      // Récupérer eglise_id et branch_id
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", session.user.id)
+        .single();
+
+      if (!profile) return;
+
       const now = new Date().toISOString();
 
-      // Vérifier s’il existe un token actif
+      // Chercher un token actif pour cette église, branche et type
       const { data, error } = await supabase
         .from("access_tokens")
         .select("*")
         .eq("access_type", type)
+        .eq("church_id", profile.eglise_id)
+        .eq("branch_id", profile.branche_id)
         .gte("expires_at", now)
         .order("expires_at", { ascending: false })
         .limit(1)
@@ -27,13 +42,19 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
       if (!error && data) {
         setToken(data.token);
       } else {
-        // Créer un nouveau token avec expiration 7 jours
+        // Créer un nouveau token pour cette église/branche
         const newToken = uuidv4();
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
         const { error: insertError } = await supabase
           .from("access_tokens")
-          .insert([{ token: newToken, access_type: type, expires_at: expiresAt }]);
+          .insert([{
+            token: newToken,
+            access_type: type,
+            expires_at: expiresAt,
+            church_id: profile.eglise_id,
+            branch_id: profile.branche_id
+          }]);
 
         if (insertError) {
           console.error("Erreur création token :", insertError.message);
@@ -47,18 +68,18 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
     fetchOrCreateToken();
   }, [type]);
 
-  // Génère le lien complet avec token
   const getLink = () => {
     const base = window.location.origin;
     if (!token) return base;
+
     if (type === "ajouter_membre") return `${base}/add-member?token=${token}`;
     if (type === "ajouter_evangelise") return `${base}/add-evangelise?token=${token}`;
     return base;
   };
 
-  // Envoie le message WhatsApp
   const handleSend = () => {
     const link = getLink();
+
     const message = `Bonjour 👋
 
 Voici le lien pour accueillir un nouveau venu à l'église.
@@ -75,6 +96,7 @@ Merci pour votre service 🙏`;
       : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappLink, "_blank");
+
     setShowPopup(false);
     setPhoneNumber("");
   };

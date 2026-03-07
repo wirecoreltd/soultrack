@@ -10,74 +10,78 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // 🔹 Récupération ou création du token
   useEffect(() => {
+    if (!userId) {
+      setLoading(true);
+      return; // On attend que userId soit défini
+    }
+
     const fetchOrCreateToken = async () => {
       setLoading(true);
 
-      // 1️⃣ Récupérer l'église et la branche de l'utilisateur
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("eglise_id, branche_id")
-        .eq("id", userId)
-        .single();
+      try {
+        // 1️⃣ Récupérer l'église et la branche de l'utilisateur
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("eglise_id, branche_id")
+          .eq("id", userId)
+          .single();
 
-      if (profileError || !profile) {
-        console.error("Impossible de récupérer l'église :", profileError?.message);
-        setLoading(false);
-        return;
-      }
+        if (profileError || !profile) throw new Error("Impossible de récupérer l'église");
 
-      const now = new Date().toISOString();
+        const now = new Date().toISOString();
 
-      // 2️⃣ Vérifier s’il existe un token actif pour ce type et cette église
-      const { data, error } = await supabase
-        .from("access_tokens")
-        .select("*")
-        .eq("access_type", type)
-        .eq("church_id", profile.eglise_id)
-        .eq("branch_id", profile.branche_id)
-        .gte("expires_at", now)
-        .order("expires_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (!error && data) {
-        setToken(data.token);
-      } else {
-        // 3️⃣ Créer un nouveau token avec expiration 7 jours
-        const newToken = uuidv4();
-        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-        const { error: insertError } = await supabase
+        // 2️⃣ Vérifier s’il existe un token actif pour ce type et cette église/branche
+        const { data: existingToken, error: tokenError } = await supabase
           .from("access_tokens")
-          .insert([{
-            token: newToken,
-            access_type: type,
-            expires_at: expiresAt,
-            church_id: profile.eglise_id,
-            branch_id: profile.branche_id
-          }]);
+          .select("*")
+          .eq("access_type", type)
+          .eq("church_id", profile.eglise_id)
+          .eq("branch_id", profile.branche_id)
+          .gte("expires_at", now)
+          .order("expires_at", { ascending: false })
+          .limit(1)
+          .single();
 
-        if (insertError) {
-          console.error("Erreur création token :", insertError.message);
-          setLoading(false);
-          return;
+        if (!tokenError && existingToken) {
+          setToken(existingToken.token);
+        } else {
+          // 3️⃣ Créer un nouveau token avec expiration 7 jours
+          const newToken = uuidv4();
+          const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+          const { error: insertError } = await supabase
+            .from("access_tokens")
+            .insert([{
+              token: newToken,
+              access_type: type,
+              expires_at: expiresAt,
+              church_id: profile.eglise_id,
+              branch_id: profile.branche_id
+            }]);
+
+          if (insertError) throw insertError;
+
+          setToken(newToken);
         }
-
-        setToken(newToken);
+      } catch (err) {
+        console.error("Erreur lors de la récupération/ création du token :", err.message);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
-    if (userId) fetchOrCreateToken();
-  }, [type, userId]);
+    fetchOrCreateToken();
+  }, [userId, type]);
 
+  // 🔹 Lien avec token
   const getLink = () => {
     if (!token) return window.location.origin;
     return `${window.location.origin}/add-member?token=${token}`;
   };
 
+  // 🔹 Envoi WhatsApp
   const handleSend = () => {
     const link = getLink();
 

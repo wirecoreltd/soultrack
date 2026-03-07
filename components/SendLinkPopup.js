@@ -53,9 +53,7 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
     if (type === "ajouter_membre") return `${base}/add-member?token=${token}`;
     if (type === "ajouter_evangelise") return `${base}/add-evangelise?token=${token}`;
     return base;
-  };
-
-  
+  };  
 
   return (
     <>
@@ -65,6 +63,8 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
       >
         {label}
       </button>
+        
+
         const handleSend = () => {
           const link = getLink();
         
@@ -88,6 +88,7 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
           setShowPopup(false);
           setPhoneNumber("");
         };
+
       {showPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl relative">

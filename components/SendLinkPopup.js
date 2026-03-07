@@ -4,22 +4,21 @@ import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
 
-export default function SendLinkPopup({ label, type, buttonColor, church_id, branch_id }) {
+export default function SendLinkPopup({ label, type, buttonColor }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [token, setToken] = useState("");
 
+  // ✅ Récupérer ou créer token
   useEffect(() => {
     const fetchOrCreateToken = async () => {
       const now = new Date().toISOString();
 
-      // Vérifier s’il existe un token actif pour cette église + branche
+      // Vérifier s’il existe un token actif
       const { data, error } = await supabase
         .from("access_tokens")
         .select("*")
         .eq("access_type", type)
-        .eq("church_id", church_id)
-        .eq("branch_id", branch_id)
         .gte("expires_at", now)
         .order("expires_at", { ascending: false })
         .limit(1)
@@ -34,13 +33,7 @@ export default function SendLinkPopup({ label, type, buttonColor, church_id, bra
 
         const { error: insertError } = await supabase
           .from("access_tokens")
-          .insert([{
-            token: newToken,
-            access_type: type,
-            expires_at: expiresAt,
-            church_id: church_id,
-            branch_id: branch_id
-          }]);
+          .insert([{ token: newToken, access_type: type, expires_at: expiresAt }]);
 
         if (insertError) {
           console.error("Erreur création token :", insertError.message);
@@ -51,11 +44,10 @@ export default function SendLinkPopup({ label, type, buttonColor, church_id, bra
       }
     };
 
-    if (church_id && branch_id) {
-      fetchOrCreateToken();
-    }
-  }, [type, church_id, branch_id]);
+    fetchOrCreateToken();
+  }, [type]);
 
+  // Génère le lien complet avec token
   const getLink = () => {
     const base = window.location.origin;
     if (!token) return base;
@@ -64,15 +56,17 @@ export default function SendLinkPopup({ label, type, buttonColor, church_id, bra
     return base;
   };
 
+  // Envoie le message WhatsApp
   const handleSend = () => {
     const link = getLink();
     const message = `Bonjour 👋
-    
+
 Voici le lien pour accueillir un nouveau venu à l'église.
 
 Merci de prendre quelques instants pour remplir ce formulaire afin que nous puissions mieux accompagner cette personne.
 
-Cliquez ici : ${link}
+Cliquez ici :
+${link}
 
 Merci pour votre service 🙏`;
 

@@ -62,23 +62,43 @@ export default function AddMember() {
 
   // Vérification du token
   useEffect(() => {
-    if (!token) return;
+  if (!token) return;
 
-    const verifyToken = async () => {
-      setLoading(true);
+  const verifyToken = async () => {
+    setLoading(true);
+
+    try {
+      // Récupérer le token et les IDs associés
       const { data, error } = await supabase
         .from("access_tokens")
-        .select("*")
+        .select("token, access_type, expires_at, church_id, branch_id")
         .eq("token", token)
         .gte("expires_at", new Date().toISOString())
         .single();
 
-      if (error || !data) setErrorMsg("Lien invalide ou expiré.");
-      setLoading(false);
-    };
+      if (error || !data) {
+        setErrorMsg("Lien invalide ou expiré.");
+        setLoading(false);
+        return;
+      }
 
-    verifyToken();
-  }, [token]);
+      // Mettre à jour formData avec l'eglise et la branche du token
+      setFormData(prev => ({
+        ...prev,
+        eglise_id: data.church_id,
+        branche_id: data.branch_id,
+      }));
+
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Erreur lors de la vérification du lien.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  verifyToken();
+}, [token]);
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
@@ -97,7 +117,10 @@ export default function AddMember() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+
+  try {
+    if (!formData.telephone) throw new Error("Le téléphone est requis.");
 
     // Concat besoin avec besoinLibre si coché
     const finalBesoin = showBesoinLibre && formData.besoinLibre
@@ -108,53 +131,52 @@ export default function AddMember() {
       ...formData,
       besoin: finalBesoin,
       etat_contact: "nouveau",
+      // ✅ On utilise l'eglise et la branche du token
       eglise_id: formData.eglise_id,
       branche_id: formData.branche_id,
     };
 
     delete dataToSend.besoinLibre;
 
-    try {
-      // Vérifier si le téléphone existe déjà
-      if (!formData.telephone) throw new Error("Le téléphone est requis.");
+    // Vérifier si le téléphone existe déjà
+    const { data: existing } = await supabase
+      .from("membres_complets")
+      .select("id")
+      .eq("telephone", formData.telephone)
+      .single();
 
-      const { data: existing } = await supabase
-        .from("membres_complets")
-        .select("id")
-        .eq("telephone", formData.telephone)
-        .single();
+    if (existing) throw new Error("Ce numéro de téléphone existe déjà.");
 
-      if (existing) throw new Error("Ce numéro de téléphone existe déjà.");
+    const { error } = await supabase.from("membres_complets").insert([dataToSend]);
+    if (error) throw error;
 
-      const { error } = await supabase.from("membres_complets").insert([dataToSend]);
-      if (error) throw error;
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 3000);
 
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+    // Reset du formulaire
+    setFormData(prev => ({
+      ...prev,
+      sexe: "",
+      nom: "",
+      prenom: "",
+      telephone: "",
+      ville: "",
+      age: "",
+      statut: "",
+      venu: "",
+      besoin: [],
+      besoinLibre: "",
+      is_whatsapp: false,
+      infos_supplementaires: "",
+      priere_salut: "",
+      type_conversion: "",
+    }));
+    setShowBesoinLibre(false);
 
-      setFormData(prev => ({
-        ...prev,
-        sexe: "",
-        nom: "",
-        prenom: "",
-        telephone: "",
-        ville: "",
-        age: "",
-        statut: "",
-        venu: "",
-        besoin: [],
-        besoinLibre: "",
-        is_whatsapp: false,
-        infos_supplementaires: "",
-        priere_salut: "",
-        type_conversion: "",
-      }));
-      setShowBesoinLibre(false);
-
-    } catch (err) {
-      setErrorMsg(err.message || "Erreur lors de l'ajout du membre.");
-    }
-  };
+  } catch (err) {
+    setErrorMsg(err.message || "Erreur lors de l'ajout du membre.");
+  }
+};
 
   const handleCancel = () => {
     setFormData(prev => ({

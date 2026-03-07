@@ -67,34 +67,24 @@ export default function AddMember() {
   const verifyToken = async () => {
     setLoading(true);
 
-    try {
-      // Récupérer le token et les IDs associés
-      const { data, error } = await supabase
-        .from("access_tokens")
-        .select("token, access_type, expires_at, church_id, branch_id")
-        .eq("token", token)
-        .gte("expires_at", new Date().toISOString())
-        .single();
+    const { data, error } = await supabase
+      .from("access_tokens")
+      .select("church_id, branch_id")
+      .eq("token", token)
+      .gte("expires_at", new Date().toISOString())
+      .single();
 
-      if (error || !data) {
-        setErrorMsg("Lien invalide ou expiré.");
-        setLoading(false);
-        return;
-      }
-
-      // Mettre à jour formData avec l'eglise et la branche du token
+    if (error || !data) {
+      setErrorMsg("Lien invalide ou expiré.");
+    } else {
       setFormData(prev => ({
         ...prev,
         eglise_id: data.church_id,
-        branche_id: data.branch_id,
+        branche_id: data.branch_id
       }));
-
-    } catch (err) {
-      console.error(err);
-      setErrorMsg("Erreur lors de la vérification du lien.");
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   verifyToken();

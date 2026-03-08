@@ -142,10 +142,10 @@ export default function AddMember() {
     const { error } = await supabase.from("membres_complets").insert([dataToSend]);
     if (error) throw error;
 
-    if (!phone && !noPhone) {
-      alert("Veuillez saisir un numéro ou cocher 'Pas de téléphone'");
+    if (!telephone && !noPhone) {
+      setError("Téléphone requis ou cochez 'Pas de téléphone'");
       return;
-    }
+}
 
     setSuccess(true);
     setTimeout(() => setSuccess(false), 3000);

@@ -91,7 +91,10 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
 
     const message = `Bonjour 👋
 
-Voici le lien pour accueillir un nouveau venu à l'église.
+Voici le lien pour accueillir un nouveau venu.
+
+Église: ${churchId}
+Branche: ${branchId}
 
 Merci de prendre quelques instants pour remplir ce formulaire afin que nous puissions mieux accompagner cette personne.
 

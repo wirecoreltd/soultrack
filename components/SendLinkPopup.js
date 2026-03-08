@@ -10,17 +10,17 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [token, setToken] = useState("");
 
-  const [churchId, setChurchId] = useState(null);
-  const [branchId, setBranchId] = useState(null);
+  const [churchName, setChurchName] = useState("");
+  const [branchName, setBranchName] = useState("");
 
-  // 🔹 récupérer ou créer token
   const fetchOrCreateToken = async () => {
+
     try {
 
       let church_id = null;
       let branch_id = null;
 
-      // 1️⃣ récupérer profil utilisateur
+      // 🔹 récupérer profil utilisateur
       if (userId) {
 
         const { data: profile, error: profileError } = await supabase
@@ -29,18 +29,35 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
           .eq("id", userId)
           .single();
 
-        if (!profileError && profile) {
-          church_id = profile.eglise_id;
-          branch_id = profile.branche_id;
-
-          setChurchId(profile.eglise_id);
-          setBranchId(profile.branche_id);
+        if (profileError) {
+          console.error(profileError);
+          return;
         }
+
+        church_id = profile.eglise_id;
+        branch_id = profile.branche_id;
+
+        // 🔹 récupérer nom église
+        const { data: church } = await supabase
+          .from("eglises")
+          .select("nom")
+          .eq("id", church_id)
+          .single();
+
+        if (church) setChurchName(church.nom);
+
+        // 🔹 récupérer nom branche
+        const { data: branch } = await supabase
+          .from("branches")
+          .select("nom")
+          .eq("id", branch_id)
+          .single();
+
+        if (branch) setBranchName(branch.nom);
       }
 
       const now = new Date().toISOString();
 
-      // 2️⃣ vérifier token existant
       let query = supabase
         .from("access_tokens")
         .select("*")
@@ -60,7 +77,7 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
         return;
       }
 
-      // 3️⃣ créer nouveau token
+      // 🔹 créer nouveau token
       const newToken = uuidv4();
 
       const expiresAt = new Date(
@@ -79,9 +96,7 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
           },
         ]);
 
-      if (!insertError) {
-        setToken(newToken);
-      }
+      if (!insertError) setToken(newToken);
 
     } catch (err) {
       console.error("Erreur token :", err.message);
@@ -92,9 +107,7 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
     fetchOrCreateToken();
   }, [type, userId]);
 
-  // 🔹 générer lien formulaire
   const getLink = () => {
-
     if (typeof window === "undefined") return "";
 
     return token
@@ -102,7 +115,6 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
       : window.location.origin;
   };
 
-  // 🔹 envoyer WhatsApp
   const handleSend = () => {
 
     const link = getLink();
@@ -111,8 +123,8 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
 
 Voici le lien pour accueillir un nouveau venu.
 
-Église: ${churchId ?? "-"}
-Branche: ${branchId ?? "-"}
+Église : ${churchName}
+Branche : ${branchName}
 
 Merci de prendre quelques instants pour remplir ce formulaire afin que nous puissions mieux accompagner cette personne.
 
@@ -133,7 +145,6 @@ Merci pour votre service 🙏`;
 
   return (
     <>
-      {/* bouton principal */}
       <button
         onClick={() => setShowPopup(true)}
         className={`w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r ${buttonColor} hover:opacity-90 transition`}
@@ -141,7 +152,6 @@ Merci pour votre service 🙏`;
         {label}
       </button>
 
-      {/* popup */}
       {showPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
 
@@ -152,8 +162,8 @@ Merci pour votre service 🙏`;
             </h2>
 
             <p className="text-gray-700 mb-4">
-              Cliquez sur <b>Envoyer</b> si le contact est dans WhatsApp,
-              ou saisissez un numéro.
+              Cliquez sur <b>Envoyer</b> si le contact figure déjà dans WhatsApp,
+              ou saisissez un numéro manuellement.
             </p>
 
             <input

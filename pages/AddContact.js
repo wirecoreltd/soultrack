@@ -212,7 +212,7 @@ export default function AddContact() {
             
             {/* Sexe */}
             <div className="flex flex-col">
-              <label className="text-sm sm:text-base font-bold mb-1">Sexe</label>
+              <label className="text-sm sm:text-base font-bold mb-1">Civilité</label>
               <select
                 value={formData.sexe}
                 onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}

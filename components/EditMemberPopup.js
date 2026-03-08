@@ -33,6 +33,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
     telephone: member?.telephone || "",
     ville: member?.ville || "",
     sexe: member?.sexe || "",
+    age: member?.age || "",
     star: !!member?.star,
     etat_contact: member?.etat_contact || "Nouveau",
     bapteme_eau: member?.bapteme_eau ?? null,
@@ -170,6 +171,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
       telephone: formData.telephone || null,
       ville: formData.ville || null,
       sexe: formData.sexe || null,
+      age: formData.age || null, 
       star: !!formData.star,
       etat_contact: formData.etat_contact || "Nouveau",
       bapteme_eau: formData.bapteme_eau,
@@ -261,13 +263,33 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
 
           {/* Sexe */}
           <div className="flex flex-col">
-            <label className="font-medium">Sexe</label>
+            <label className="font-medium">Civilité</label>
             <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
-              <option value="">-- Sexe --</option>
+              <option value="">-- Civilité --</option>
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
             </select>
           </div>
+
+            {/* Age */}
+            <div className="flex flex-col">
+              <label className="font-medium">Âge</label>
+              <select
+                name="age"
+                value={formData.age}
+                onChange={handleChange}
+                className="input"
+              >
+                <option value="">-- Choisir --</option>
+                <option value="12-17 ans">12-17 ans</option>
+                <option value="18-25 ans">18-25 ans</option>
+                <option value="26-30 ans">26-30 ans</option>
+                <option value="31-40 ans">31-40 ans</option>
+                <option value="41-55 ans">41-55 ans</option>
+                <option value="56-69 ans">56-69 ans</option>
+                <option value="70 ans et plus">70 ans et plus</option>
+              </select>
+            </div>              
 
           {/* Serviteur */}         
           <div className="flex items-center gap-3 mt-3">

@@ -8,6 +8,8 @@ import supabase from "../lib/supabaseClient";
 export default function AddMember() {
   const router = useRouter();
   const { token } = router.query;
+  const [phone, setPhone] = useState("");
+  const [noPhone, setNoPhone] = useState(false);
 
   const [formData, setFormData] = useState({
     sexe: "",
@@ -140,6 +142,11 @@ export default function AddMember() {
     const { error } = await supabase.from("membres_complets").insert([dataToSend]);
     if (error) throw error;
 
+    if (!phone && !noPhone) {
+      alert("Veuillez saisir un numéro ou cocher 'Pas de téléphone'");
+      return;
+    }
+
     setSuccess(true);
     setTimeout(() => setSuccess(false), 3000);
 
@@ -235,13 +242,31 @@ export default function AddMember() {
           />
 
           {/* Téléphone */}
-          <label className="text-sm sm:text-base font-semibold">Téléphone</label>
-          <input
-            type="text"
-            value={formData.telephone}
-            onChange={e => setFormData({...formData, telephone: e.target.value})}
-            className="input"
-            required
+         <div className="mb-4">
+            <label className="block font-medium mb-1">Téléphone</label>
+          
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={noPhone}
+              required={!noPhone}
+              className="w-full border rounded-lg px-3 py-2"
+              placeholder="Ex: 5 1234 5678"
+            />
+          
+            <label className="flex items-center mt-2 space-x-2">
+              <input
+                type="checkbox"
+                checked={noPhone}
+                onChange={(e) => {
+                  setNoPhone(e.target.checked);
+                  if (e.target.checked) setPhone("");
+                }}
+              />
+              <span>La personne n'a pas de téléphone</span>
+            </label>
+          </div>
           />
 
           {/* WhatsApp */}

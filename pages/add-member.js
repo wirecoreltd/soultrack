@@ -8,8 +8,6 @@ import supabase from "../lib/supabaseClient";
 export default function AddMember() {
   const router = useRouter();
   const { token } = router.query;
-  const [phone, setPhone] = useState("");
-  const [noPhone, setNoPhone] = useState(false);
 
   const [formData, setFormData] = useState({
     sexe: "",
@@ -17,6 +15,7 @@ export default function AddMember() {
     prenom: "",
     telephone: "",
     ville: "",
+    age: "",
     statut: "",
     venu: "",
     besoin: [],
@@ -29,13 +28,17 @@ export default function AddMember() {
     branche_id: "",
   });
 
+  const [noPhone, setNoPhone] = useState(false);
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const besoinsOptions = ["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
-  "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"];
+  const besoinsOptions = [
+    "Finances","Santé","Travail / Études","Famille / Enfants",
+    "Relations / Conflits","Addictions / Dépendances","Guidance spirituelle",
+    "Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"
+  ];
 
   // Récupération eglise_id et branche_id de l'utilisateur connecté
   useEffect(() => {
@@ -64,33 +67,33 @@ export default function AddMember() {
 
   // Vérification du token
   useEffect(() => {
-  if (!token) return;
+    if (!token) return;
 
-  const verifyToken = async () => {
-    setLoading(true);
+    const verifyToken = async () => {
+      setLoading(true);
 
-    const { data, error } = await supabase
-      .from("access_tokens")
-      .select("church_id, branch_id")
-      .eq("token", token)
-      .gte("expires_at", new Date().toISOString())
-      .single();
+      const { data, error } = await supabase
+        .from("access_tokens")
+        .select("church_id, branch_id")
+        .eq("token", token)
+        .gte("expires_at", new Date().toISOString())
+        .single();
 
-    if (error || !data) {
-      setErrorMsg("Lien invalide ou expiré.");
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        eglise_id: data.church_id,
-        branche_id: data.branch_id
-      }));
-    }
+      if (error || !data) {
+        setErrorMsg("Lien invalide ou expiré.");
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          eglise_id: data.church_id,
+          branche_id: data.branch_id
+        }));
+      }
 
-    setLoading(false);
-  };
+      setLoading(false);
+    };
 
-  verifyToken();
-}, [token]);
+    verifyToken();
+  }, [token]);
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
@@ -109,71 +112,66 @@ export default function AddMember() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    if (!formData.telephone) throw new Error("Le téléphone est requis.");
+    try {
+      // Validation du téléphone
+      if (!noPhone && !formData.telephone) throw new Error("Le téléphone est requis ou cochez 'Pas de téléphone'");
 
-    // Concat besoin avec besoinLibre si coché
-    const finalBesoin = showBesoinLibre && formData.besoinLibre
-      ? [...formData.besoin.filter(b => b !== "Autre"), formData.besoinLibre]
-      : formData.besoin;
+      const finalBesoin = showBesoinLibre && formData.besoinLibre
+        ? [...formData.besoin.filter(b => b !== "Autre"), formData.besoinLibre]
+        : formData.besoin;
 
-    const dataToSend = {
-      ...formData,
-      besoin: finalBesoin,
-      etat_contact: "nouveau",
-      // ✅ On utilise l'eglise et la branche du token
-      eglise_id: formData.eglise_id,
-      branche_id: formData.branche_id,
-    };
+      const dataToSend = {
+        ...formData,
+        besoin: finalBesoin,
+        etat_contact: "nouveau",
+      };
 
-    delete dataToSend.besoinLibre;
+      delete dataToSend.besoinLibre;
 
-    // Vérifier si le téléphone existe déjà
-    const { data: existing } = await supabase
-      .from("membres_complets")
-      .select("id")
-      .eq("telephone", formData.telephone)
-      .single();
+      // Vérifier si le téléphone existe déjà
+      if (!noPhone) {
+        const { data: existing } = await supabase
+          .from("membres_complets")
+          .select("id")
+          .eq("telephone", formData.telephone)
+          .single();
 
-    if (existing) throw new Error("Ce numéro de téléphone existe déjà.");
+        if (existing) throw new Error("Ce numéro de téléphone existe déjà.");
+      }
 
-    const { error } = await supabase.from("membres_complets").insert([dataToSend]);
-    if (error) throw error;
+      const { error } = await supabase.from("membres_complets").insert([dataToSend]);
+      if (error) throw error;
 
-    if (!telephone && !noPhone) {
-      setError("Téléphone requis ou cochez 'Pas de téléphone'");
-      return;
-}
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
 
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
+      // Reset du formulaire
+      setFormData(prev => ({
+        ...prev,
+        sexe: "",
+        nom: "",
+        prenom: "",
+        telephone: "",
+        ville: "",
+        age: "",
+        statut: "",
+        venu: "",
+        besoin: [],
+        besoinLibre: "",
+        is_whatsapp: false,
+        infos_supplementaires: "",
+        priere_salut: "",
+        type_conversion: "",
+      }));
+      setNoPhone(false);
+      setShowBesoinLibre(false);
 
-    // Reset du formulaire
-    setFormData(prev => ({
-      ...prev,
-      sexe: "",
-      nom: "",
-      prenom: "",
-      telephone: "",
-      ville: "",
-      age: "",
-      statut: "",
-      venu: "",
-      besoin: [],
-      besoinLibre: "",
-      is_whatsapp: false,
-      infos_supplementaires: "",
-      priere_salut: "",
-      type_conversion: "",
-    }));
-    setShowBesoinLibre(false);
-
-  } catch (err) {
-    setErrorMsg(err.message || "Erreur lors de l'ajout du membre.");
-  }
-};
+    } catch (err) {
+      setErrorMsg(err.message || "Erreur lors de l'ajout du membre.");
+    }
+  };
 
   const handleCancel = () => {
     setFormData(prev => ({
@@ -193,6 +191,7 @@ export default function AddMember() {
       priere_salut: "",
       type_conversion: "",
     }));
+    setNoPhone(false);
     setShowBesoinLibre(false);
     setErrorMsg("");
   };
@@ -242,26 +241,25 @@ export default function AddMember() {
           />
 
           {/* Téléphone */}
-         <div className="mb-4">
+          <div className="mb-4">
             <label className="block font-medium mb-1">Téléphone</label>
-          
             <input
               type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              value={noPhone ? "Pas de téléphone" : formData.telephone}
+              onChange={e => setFormData({...formData, telephone: e.target.value})}
               disabled={noPhone}
               required={!noPhone}
               className="w-full border rounded-lg px-3 py-2"
               placeholder="Ex: 5 1234 5678"
             />
-          
             <label className="flex items-center mt-2 space-x-2">
               <input
                 type="checkbox"
                 checked={noPhone}
                 onChange={(e) => {
                   setNoPhone(e.target.checked);
-                  if (e.target.checked) setPhone("");
+                  if (e.target.checked) setFormData(prev => ({ ...prev, telephone: "Pas de téléphone" }));
+                  else setFormData(prev => ({ ...prev, telephone: "" }));
                 }}
               />
               <span>La personne n'a pas de téléphone</span>
@@ -287,7 +285,7 @@ export default function AddMember() {
             className="input"
           />
 
-          {/* Sexe */}
+          {/* Civilité */}
           <label className="text-sm sm:text-base font-semibold">Civilité</label>
           <select
             value={formData.sexe}
@@ -301,22 +299,22 @@ export default function AddMember() {
           </select>
 
           {/* Age */}
-            <label className="text-sm sm:text-base font-semibold">Âge</label>
-            <select
-              value={formData.age}
-              onChange={e => setFormData({...formData, age: e.target.value})}
-              className="input"
-              required
-            >
-              <option value="">-- Choisir --</option>
-              <option value="12-17 ans">12-17 ans</option>
-              <option value="18-25 ans">18-25 ans</option>
-              <option value="26-30 ans">26-30 ans</option>
-              <option value="31-40 ans">31-40 ans</option>
-              <option value="41-55 ans">41-55 ans</option>
-              <option value="56-69 ans">56-69 ans</option>
-              <option value="70 ans et plus">70 ans et plus</option>
-            </select>
+          <label className="text-sm sm:text-base font-semibold">Âge</label>
+          <select
+            value={formData.age}
+            onChange={e => setFormData({...formData, age: e.target.value})}
+            className="input"
+            required
+          >
+            <option value="">-- Choisir --</option>
+            <option value="12-17 ans">12-17 ans</option>
+            <option value="18-25 ans">18-25 ans</option>
+            <option value="26-30 ans">26-30 ans</option>
+            <option value="31-40 ans">31-40 ans</option>
+            <option value="41-55 ans">41-55 ans</option>
+            <option value="56-69 ans">56-69 ans</option>
+            <option value="70 ans et plus">70 ans et plus</option>
+          </select>
 
           {/* Statut */}
           <label className="text-sm sm:text-base font-semibold">Statut</label>
@@ -333,7 +331,7 @@ export default function AddMember() {
             <option value="visiteur">Visiteur</option>
           </select>
 
-          {/* Comment est-il venu */}
+          {/* Venue */}
           <label className="text-sm sm:text-base font-semibold">Comment est-il venu ?</label>
           <select
             value={formData.venu}

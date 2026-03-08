@@ -267,7 +267,6 @@ export default function AddMember() {
               <span>La personne n'a pas de téléphone</span>
             </label>
           </div>
-          />
 
           {/* WhatsApp */}
           <label className="flex items-center gap-2 text-sm sm:text-base">

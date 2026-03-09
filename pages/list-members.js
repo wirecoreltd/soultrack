@@ -491,13 +491,19 @@ const canAddMember =
   };
 
   //---------------
-  const getBorderClass = (m) => {
-  if (!m.etat_contact) return "border-gray-300";
-  const etat = m.etat_contact.trim().toLowerCase();
-  if (etat === "existant") return "border-green-600";   // vert
-  if (etat === "nouveau") return "border-green-400";    // vert clair
-  if (etat === "inactif") return "border-gray-400";     // gris
-  return "border-gray-300";                             // défaut
+  const borderClass = (etat) => {
+  switch ((etat || "").toLowerCase()) {
+    case "nouveau":
+      return "border-yellow-400"; // nouveau → jaune
+    case "existant":
+      return "border-green-400";  // existant → vert
+    case "en attente":
+      return "border-orange-400"; // en attente → orange
+    case "refus":
+      return "border-red-400";    // refus → rouge
+    default:
+      return "border-gray-300";   // valeur par défaut
+  }
 };
   //--------------------
   const getBorderColor = (m) => {

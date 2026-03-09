@@ -939,70 +939,67 @@ const canAddMember =
       )}
       
      {/* ==================== VUE TABLE ==================== */}
-{view === "table" && (
-  <div className="w-full max-w-6xl overflow-x-auto py-2 hidden sm:block">
-    <div className="min-w-[700px]">
-      {/* Header */}
-      <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b bg-transparent">
-        <div className="flex-[2]">Nom complet</div>
-        <div className="flex-[1]">Téléphone</div>
-        <div className="flex-[1]">Statut</div>
-        <div className="flex-[2]">Affectation</div>
-        <div className="flex-[1] text-center">Actions</div>
-      </div>
-
-      {/* Nouveaux Membres */}
-      {filteredNouveaux.length > 0 && (
-        <div className="px-2 py-1 rounded shadow text-white bg-transparent">
-          💖 Bien aimé venu le {formatDate(filteredNouveaux[0].created_at)}
-        </div>
-      )}
-
-      {/* Lignes Membres */}
-      {filteredNouveaux.map((m) => (
-        <div
-          key={m.id}
-          className="flex flex-row items-center px-4 py-2 rounded-lg gap-2 bg-white/10 border-l-4 text-sm hover:bg-white/20 transition"
-          style={{ borderLeftColor: getBorderColor(m) }}
-        >
-          {/* Nom complet */}
-          <div className="flex-[2] text-white font-semibold flex items-center gap-2">
-            <span>{m.prenom} {m.nom}</span>
-            <span className="flex items-center gap-1 text-xs font-semibold text-orange-500">
-              <span className="inline-block w-2 h-2 rounded-full bg-orange-500" />
-              Nouveau
-            </span>
-          </div>
-
-          {/* Téléphone */}
-          <div className="flex-[1] text-white">{m.telephone || "—"}</div>
-
-          {/* Statut */}
-          <div className="flex-[1] text-white">{m.statut}</div>
-
-          {/* Affectation */}
-          <div className="flex-[2] text-white">
-            {m.cellule_id
-              ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
-              : m.conseiller_id
-              ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom}`
-              : "—"}
-          </div>
-
-          {/* Actions */}
-          <div className="flex-[1] flex justify-center gap-2">
-            <button
-              onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
-              className="text-orange-500 hover:text-orange-400 text-sm underline whitespace-nowrap"
-            >
-              {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
+              {view === "table" && (
+                <div className="w-full max-w-6xl overflow-x-auto py-2 hidden sm:block">
+                  <div className="min-w-[700px]">
+                    {/* Header */}
+                    <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b bg-transparent">
+                      <div className="flex-[2]">Nom complet</div>
+                      <div className="flex-[1]">Téléphone</div>
+                      <div className="flex-[1]">Statut</div>
+                      <div className="flex-[2]">Affectation</div>
+                      <div className="flex-[1] text-center">Actions</div>
+                    </div>
+              
+                    {/* Nouveaux Membres */}
+                    {filteredNouveaux.length > 0 && (
+                      <div className="px-2 py-1 rounded shadow text-white bg-transparent">
+                        💖 Bien aimé venu le {formatDate(filteredNouveaux[0].created_at)}
+                      </div>
+                    )}
+              
+                    {/* Lignes des membres */}
+                    {filteredNouveaux.map((m) => (
+                      <div
+                        key={m.id}
+                        className="flex flex-col px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 border-l-4"
+                        style={{ borderLeftColor: getBorderColor(m) }}
+                      >
+                        {/* Ligne principale */}
+                        <div className="flex flex-row items-center gap-2">
+                          <div className="flex-[2] text-white font-semibold flex items-center gap-2">
+                            <span>{m.prenom} {m.nom}</span>
+                            <span className="flex items-center gap-1 text-xs font-semibold text-orange">
+                              <span className="inline-block w-2 h-2 rounded-full bg-orange" />
+                              Nouveau
+                            </span>
+                          </div>
+              
+                          <div className="flex-[1] text-white">{m.telephone || "—"}</div>
+                          <div className="flex-[1] text-white">{m.statut}</div>
+                          <div className="flex-[2] text-white">
+                            {m.cellule_id
+                              ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
+                              : m.conseiller_id
+                              ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom}`
+                              : "—"
+                            }
+                          </div>
+              
+                          <div className="flex-[1]">
+                            <button
+                              onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                              className="text-orange-500 underline text-sm whitespace-nowrap"
+                            >
+                              {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
       
             {/* Membres existants */}
             {filteredAnciens.length > 0 && (

@@ -929,27 +929,45 @@ style={{ borderLeftColor: getBorderColor(m) }}
       </div>
 
       {/* ==================== VUE CARTE ==================== */}
-      {view === "card" && (
-        <>
-          {filteredNouveaux.length > 0 && (
-            <>
-              <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">💖 Bien aimé venu le {dateDuJour}</h2>
-              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-                {filteredNouveaux.map(m => renderMemberCard({ ...m, isNouveau: true }))}
-              </div>
-            </>
-          )}
-          {filteredAnciens.length > 0 && (
-            <>
-              <h2 className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-blue-500 to-gray-300 bg-clip-text text-transparent">Membres existants</h2>
-              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                {filteredAnciens.map(m => renderMemberCard(m))}
-              </div>
-            </>
-          )}
-        </>
-      )}
-      
+        {view === "card" && (
+          <>
+            {/* ------------------ Nouveaux ------------------ */}
+            {filteredNouveaux.length > 0 && (
+              <>
+                <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">
+                  💖 Bien aimé venu le {dateDuJour}
+                </h2>
+                <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                  {filteredNouveaux.map((m) => renderMemberCard({ ...m, isNouveau: true }))}
+                </div>
+              </>
+            )}
+        
+            {/* ------------------ Existants ------------------ */}
+            {filteredAnciens.length > 0 && (
+              <>
+                <h2 className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-blue-500 to-gray-300 bg-clip-text text-transparent">
+                  Membres existants
+                </h2>
+                <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                  {filteredAnciens.map((m) => renderMemberCard(m))}
+                </div>
+              </>
+            )}
+        
+            {/* ------------------ Inactifs ------------------ */}
+            {filteredInactifs.length > 0 && (
+              <>
+                <h2 className="w-full max-w-6xl text-gray-400 font-bold mb-2 text-lg">
+                  Contacts inactifs
+                </h2>
+                <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  {filteredInactifs.map((m) => renderMemberCard(m))}
+                </div>
+              </>
+            )}
+          </>
+        )}
      {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto py-2">

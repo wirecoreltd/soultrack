@@ -250,8 +250,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
             required
           >
             <option value="">Civilité</option>
-            <option value="Homme">Monsieur</option>
-            <option value="Femme">Madame</option>
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
           </select>
 
           {/* Prenom */}  

@@ -999,7 +999,7 @@ const canAddMember =
                     className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
-                    <div className="flex-[2] text-white font-semibold flex items-center gap-2">
+                    <div className="flex-[2] text-white font-semibold flex items-center gap-2 text-sm">
                       <span>{m.prenom} {m.nom}</span>
                       <span className="flex items-center gap-1 text-sm font-semibold text-orange">
                         <span className="inline-block w-2.5 h-2.5 rounded-full bg-white-600" />                      
@@ -1045,7 +1045,7 @@ const canAddMember =
                         className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
                         style={{ borderLeftColor: getBorderColor(m) }}
                       >
-                        <div className="flex-[2] text-white font-semibold flex items-center gap-1 text-xs">
+                        <div className="flex-[2] text-white font-semibold flex items-center gap-1 text-sm">
                           <span>{m.prenom} {m.nom}</span>
                           {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
                             <span className="text-yellow-400 ml-1">⭐</span>

@@ -273,15 +273,14 @@ export default function AddEvangelise({ onNewEvangelise }) {
             required
           />
               {/* Age */}
-              <div className="flex flex-col">
-                <label className="font-medium">Âge</label>
+              <div className="flex flex-col">               
                 <select
                   name="age"
                   value={formData.age}
                   onChange={(e) => setFormData({ ...formData, age: e.target.value })}
                   className="input"
                 >
-                  <option value="">-- Choisir --</option>
+                  <option value="">-- Tranche d'age --</option>
                   <option value="12-17 ans">12-17 ans</option>
                   <option value="18-25 ans">18-25 ans</option>
                   <option value="26-30 ans">26-30 ans</option>

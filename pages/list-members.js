@@ -901,7 +901,7 @@ const canAddMember =
 
       {/* Barre de recherche */}
       <div className="w-full max-w-4xl flex justify-center mb-2">
-        <input type="text" placeholder="Recherche..." value={search} onChange={e => setSearch(e.target.value)} className="w-full sm:w-2/3 px-3 py-1 rounded-md border text-black"/>
+        <input type="text" placeholder="🔍Recherche..." value={search} onChange={e => setSearch(e.target.value)} className="w-full sm:w-2/3 px-3 py-1 rounded-md border text-black"/>
       </div>
 
       {/* Filtre */}
@@ -1003,7 +1003,7 @@ const canAddMember =
                       <span>{m.prenom} {m.nom}</span>
                       <span className="flex items-center gap-1 text-sm font-semibold text-orange">
                         <span className="inline-block w-2 h-2 rounded-full bg-orange" />
-                        Nouveau
+                        Nou
                       </span>
                     </div>
                     <div className="flex-[1] text-white text-sm">{m.telephone || "—"}</div>

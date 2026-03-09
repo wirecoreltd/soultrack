@@ -454,26 +454,21 @@ const canAddMember =
 
   // -------------------- Filtrage --------------------
   const { filteredMembers, filteredNouveaux, filteredAnciens } = useMemo(() => {
-  const actifs = members.filter((m) => m.etat_contact !== "supprime");
-
-  const baseFiltered = filter
-    ? actifs.filter((m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase())
-    : actifs;
-
-  const searchFiltered = baseFiltered.filter(
-    (m) => `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const nouveaux = searchFiltered.filter(
-    (m) => m.etat_contact?.trim().toLowerCase() === "nouveau"
-  );
-
-  const existants = searchFiltered.filter((m) =>
-    ["existant", "ancien"].includes(m.etat_contact?.trim().toLowerCase())
-  );
-
-  return { filteredMembers: searchFiltered, filteredNouveaux: nouveaux, filteredAnciens: existants };
-}, [members, filter, search]);
+    const actifs = members.filter((m) => m.etat_contact !== "supprime");
+    const baseFiltered = filter
+      ? actifs.filter((m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase())
+      : actifs;
+    const searchFiltered = baseFiltered.filter(
+      (m) => `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
+    );
+    const nouveaux = searchFiltered.filter(
+      (m) => m.etat_contact?.trim().toLowerCase() === "nouveau"
+    );
+    const existants = searchFiltered.filter((m) =>
+      ["existant", "ancien"].includes(m.etat_contact?.trim().toLowerCase())
+    );
+    return { filteredMembers: searchFiltered, filteredNouveaux: nouveaux, filteredAnciens: existants };
+  }, [members, filter, search]);
 
   // -------------------- Handlers --------------------
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -495,24 +490,14 @@ const canAddMember =
     }
   };
 
-  //---------------
- const getBorderColor = (member) => {
-  const etat = (member?.etat_contact || "").toLowerCase().trim();
-
-  switch (etat) {
-    case "nouveau":
-      return "#fb923c"; // orange
-
-    case "existant":
-      return "#4ade80"; // vert
-
-    case "inactif":
-      return "#9ca3af"; // gris
-
-    default:
-      return "#9ca3af"; // gris par défaut
-  }
-};  
+  const getBorderColor = (m) => {
+    if (!m.etat_contact) return "#ccc";
+    const etat = m.etat_contact.trim().toLowerCase();
+    if (etat === "existant") return "#34A853";
+    if (etat === "nouveau") return "#34A85e";
+    if (etat === "inactif") return "#999999";
+    return "#ccc";
+  };
 
   const formatDate = (dateStr) => {
     try {
@@ -580,11 +565,7 @@ const canAddMember =
 
     return (
    
-        <div
-  key={m.id}
-  className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative"
-style={{ borderLeftColor: getBorderColor(m) }}
->
+        <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative">
           
           {/* Badge Nouveau */}
           {m.isNouveau && (
@@ -929,45 +910,27 @@ style={{ borderLeftColor: getBorderColor(m) }}
       </div>
 
       {/* ==================== VUE CARTE ==================== */}
-        {view === "card" && (
-          <>
-            {/* ------------------ Nouveaux ------------------ */}
-            {filteredNouveaux.length > 0 && (
-              <>
-                <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">
-                  💖 Bien aimé venu le {dateDuJour}
-                </h2>
-                <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-                  {filteredNouveaux.map((m) => renderMemberCard({ ...m, isNouveau: true }))}
-                </div>
-              </>
-            )}
-        
-            {/* ------------------ Existants ------------------ */}
-            {filteredAnciens.length > 0 && (
-              <>
-                <h2 className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-blue-500 to-gray-300 bg-clip-text text-transparent">
-                  Membres existants
-                </h2>
-                <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-                  {filteredAnciens.map((m) => renderMemberCard(m))}
-                </div>
-              </>
-            )}
-        
-            {/* ------------------ Inactifs ------------------ */}
-            {filteredInactifs.length > 0 && (
-              <>
-                <h2 className="w-full max-w-6xl text-gray-400 font-bold mb-2 text-lg">
-                  Contacts inactifs
-                </h2>
-                <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                  {filteredInactifs.map((m) => renderMemberCard(m))}
-                </div>
-              </>
-            )}
-          </>
-        )}
+      {view === "card" && (
+        <>
+          {filteredNouveaux.length > 0 && (
+            <>
+              <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">💖 Bien aimé venu le {dateDuJour}</h2>
+              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+                {filteredNouveaux.map(m => renderMemberCard({ ...m, isNouveau: true }))}
+              </div>
+            </>
+          )}
+          {filteredAnciens.length > 0 && (
+            <>
+              <h2 className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-blue-500 to-gray-300 bg-clip-text text-transparent">Membres existants</h2>
+              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {filteredAnciens.map(m => renderMemberCard(m))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+      
      {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto py-2">

@@ -490,21 +490,14 @@ const canAddMember =
     }
   };
 
-  const getBorderClass = (membre) => {
-  if (!membre?.etat_contact) return "border-gray-300"; // par défaut
-  const etat = membre.etat_contact.trim().toLowerCase();
-
-  switch (etat) {
-    case "existant":
-      return "border-green-600"; // vert pour existant
-    case "nouveau":
-      return "border-amber-400"; // orange/amber pour nouveau
-    case "inactif":
-      return "border-gray-500"; // gris pour inactif
-    default:
-      return "border-gray-300"; // fallback
-  }
-};
+  const getBorderColor = (m) => {
+    if (!m.etat_contact) return "#ccc";
+    const etat = m.etat_contact.trim().toLowerCase();
+    if (etat === "existant") return "#34A853";
+    if (etat === "nouveau") return "#34A85e";
+    if (etat === "inactif") return "#999999";
+    return "#ccc";
+  };
 
   const formatDate = (dateStr) => {
     try {
@@ -571,10 +564,8 @@ const canAddMember =
     console.log("ROLE ACTUEL:", role);    
 
     return (
-        <div
-          key={m.id}
-          className={`bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative ${getBorderClass(m)}`}
-        >
+   
+        <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative">
           
           {/* Badge Nouveau */}
           {m.isNouveau && (
@@ -955,16 +946,16 @@ const canAddMember =
       
             {/* Nouveaux Membres */}
             {filteredNouveaux.length > 0 && (
-              <div className="px-2 py-1 rounded shadow text-white bg-transparent rounded">
+              <div className="px-2 py-1 rounded shadow text-white bg-[#2E3192] rounded">
                 💖 Bien aimé venu le {formatDate(filteredNouveaux[0].created_at)}
               </div>
             )}
       
             {filteredNouveaux.map((m) => (
               <div
-              key={m.id}
-              className={`flex flex-row items-center px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 gap-2 border-l-4 ${getBorderClass(m)}`}
-                        >                                    
+                key={m.id}
+                className="flex flex-col px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 border-l-4"
+                style={{ borderLeftColor: getBorderColor(m) }}>                             
 
                 {/* Ligne principale */}
                 <div className="flex flex-row items-center gap-2">
@@ -1005,11 +996,11 @@ const canAddMember =
                     Membres existants
                   </span>
                 </div>
-
                 {filteredAnciens.map((m) => (
-              <div                
+              <div
                 key={m.id}
-                className={`flex flex-row items-center px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 gap-2 border-l-4 ${getBorderClass(m)}`}
+                className="flex flex-row items-center px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 gap-2 border-l-4"
+                style={{ borderLeftColor: getBorderColor(m) }}
               >
                 <div className="flex-[2] text-white font-semibold flex items-center gap-1">
                   <span>{m.prenom} {m.nom}</span>

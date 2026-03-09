@@ -941,7 +941,7 @@ const canAddMember =
       
      {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
-        <div className="overflow-auto max-h-[600px]">
+        <div className="w-full max-w-6xl overflow-x-auto py-2">
           <div className="min-w-[700px]">
             {/* Header */}
             <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent sticky top-0 z-10">

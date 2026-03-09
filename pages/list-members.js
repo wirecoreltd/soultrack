@@ -491,18 +491,27 @@ const canAddMember =
   };
 
   //---------------
-  const borderClass = (etat) => {
-  switch ((etat || "").toLowerCase()) {
+  const getBorderClass = (member) => {
+  const etat = (member?.etat_contact || "").toLowerCase();
+
+  switch (etat) {
     case "nouveau":
-      return "border-yellow-400"; // nouveau → jaune
-    case "existant":
-      return "border-green-400";  // existant → vert
-    case "en attente":
-      return "border-orange-400"; // en attente → orange
-    case "refus":
-      return "border-red-400";    // refus → rouge
+      return "border-yellow-400";
+
+    case "contacté":
+      return "border-blue-400";
+
+    case "intéressé":
+      return "border-green-400";
+
+    case "pas intéressé":
+      return "border-red-400";
+
+    case "à rappeler":
+      return "border-orange-400";
+
     default:
-      return "border-gray-300";   // valeur par défaut
+      return "border-gray-300";
   }
 };
   //--------------------
@@ -582,9 +591,9 @@ const canAddMember =
     return (
    
         <div
-          key={m.id}
-          className={`bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative ${getBorderClass(m)}`}
-        >
+  key={m.id}
+  className={`bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative ${getBorderClass(m)}`}
+>
           
           {/* Badge Nouveau */}
           {m.isNouveau && (

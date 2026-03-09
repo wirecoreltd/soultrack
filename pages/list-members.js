@@ -921,7 +921,7 @@ const canAddMember =
         <>
           {filteredNouveaux.length > 0 && (
             <>
-              <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">💖 Bien aimé venu le {dateDuJour}</h2>
+              <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg bg-transparent">💖 Bien aimé venu le {dateDuJour}</h2>
               <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 {filteredNouveaux.map(m => renderMemberCard({ ...m, isNouveau: true }))}
               </div>

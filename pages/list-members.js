@@ -873,20 +873,21 @@ const canAddMember =
   return (
     <div className="min-h-screen flex flex-col items-center px-4 sm:px-6 md:px-8 lg:px-10" style={{ background: "#333699" }}>
       {/* Top Bar */}
-      <HeaderPages />
-      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white text-center mb-2">Liste des Membres</h1>
-      <button className="text-sm sm:text-base lg:text-lg font-semibold underline text-white">
-
-      {/* Barre de recherche */}
-      <div className="w-full max-w-4xl flex justify-center mb-2 px-2 sm:px-0">
-        <input
-          type="text"
-          placeholder="Recherche..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full sm:w-2/3 md:w-1/2 px-3 py-2 rounded-md border text-black"
-        />
-      </div>
+        <HeaderPages />
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white text-center mb-2">
+          Liste des Membres
+        </h1>
+        
+        {/* Barre de recherche */}
+        <div className="w-full max-w-4xl flex justify-center mb-2 px-2 sm:px-0">
+          <input
+            type="text"
+            placeholder="Recherche..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full sm:w-2/3 md:w-1/2 px-3 py-2 rounded-md border text-black"
+          />
+        </div>
 
       {/* Filtre */}
       <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">

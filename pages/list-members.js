@@ -938,7 +938,7 @@ const canAddMember =
         </>
       )}
       
-     {/* ==================== VUE TABLE ==================== */}
+           {/* ==================== VUE TABLE ==================== */}
               {view === "table" && (
                 <div className="w-full max-w-6xl overflow-x-auto py-2 hidden sm:block">
                   <div className="min-w-[700px]">
@@ -958,7 +958,6 @@ const canAddMember =
                       </div>
                     )}
               
-                    {/* Lignes des membres */}
                     {filteredNouveaux.map((m) => (
                       <div
                         key={m.id}
@@ -997,6 +996,53 @@ const canAddMember =
                         </div>
                       </div>
                     ))}
+              
+                    {/* Membres existants */}
+                    {filteredAnciens.length > 0 && (
+                      <div>
+                        <div className="px-2 py-1 font-semibold text-lg">
+                          <span style={{ background: "linear-gradient(to right, #3B82F6, #D1D5DB)", WebkitBackgroundClip: "text", color: "transparent" }}>
+                            Membres existants
+                          </span>
+                        </div>
+              
+                        {filteredAnciens.map((m) => (
+                          <div
+                            key={m.id}
+                            className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
+                            style={{ borderLeftColor: getBorderColor(m) }}
+                          >
+                            <div className="flex-[2] text-white font-semibold flex items-center gap-1">
+                              <span>{m.prenom} {m.nom}</span>
+                              {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
+                                <span className="text-yellow-400 ml-1">⭐</span>
+                              )}
+                            </div>
+              
+                            <div className="flex-[1] text-white">{m.telephone || "—"}</div>
+                            <div className="flex-[1] text-white">{m.etat_contact || "—"}</div>
+              
+                            <div className="flex-[2] text-white">
+                              {m.cellule_id
+                                ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
+                                : m.conseiller_id
+                                ? `👤 ${getConseillerName(m.conseiller_id)}`
+                                : "—"
+                              }
+                            </div>
+              
+                            <div className="flex-[1]">
+                              <button
+                                onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                                className="text-orange-500 underline text-sm whitespace-nowrap"
+                              >
+                                {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
+export default function EditMemberPopup({ member, cellules, conseillers, onClose, onUpdateMember }) {
   if (!member) return null;
 
   const besoinsOptions = ["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
@@ -78,30 +78,7 @@ export default function EditMemberPopup({ member, onClose, onUpdateMember }) {
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-
-  // -------------------- LOAD DATA --------------------
-  useEffect(() => {
-    let mounted = true;
-    const loadData = async () => {
-      try {
-        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
-        const { data: conseillersData, error } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom")
-        .or('role.eq.Conseiller,roles.cs.{"Conseiller"}');
-        if (!mounted) return;
-        setCellules(cellulesData || []);
-        setConseillers(conseillersData || []);
-        setLoadingData(false);
-      } catch (err) {
-        console.error("Erreur chargement cellules/conseillers:", err);
-        setLoadingData(false);
-      }
-    };
-    loadData();
-    return () => { mounted = false; };
-  }, []);
-
+  
   // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
   const { name, value, type, checked } = e.target;

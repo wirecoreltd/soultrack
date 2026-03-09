@@ -490,6 +490,17 @@ const canAddMember =
     }
   };
 
+  //----------
+  const getBorderClass = (m) => {
+  if (!m.etat_contact) return "border-gray-300";
+  const etat = m.etat_contact.trim().toLowerCase();
+  if (etat === "existant") return "border-green-600";   // vert
+  if (etat === "nouveau") return "border-green-400";    // vert clair
+  if (etat === "inactif") return "border-gray-400";     // gris
+  return "border-gray-300";                             // défaut
+};
+
+  //---------------
   const getBorderColor = (m) => {
     if (!m.etat_contact) return "#ccc";
     const etat = m.etat_contact.trim().toLowerCase();
@@ -498,7 +509,8 @@ const canAddMember =
     if (etat === "inactif") return "#999999";
     return "#ccc";
   };
-
+//-------------------
+  
   const formatDate = (dateStr) => {
     try {
       return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr });
@@ -565,7 +577,7 @@ const canAddMember =
 
     return (
    
-        <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative">
+        <div key={m.id} className='bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative ${getBorderClass(m)}`>
           
           {/* Badge Nouveau */}
           {m.isNouveau && (

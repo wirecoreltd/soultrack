@@ -16,6 +16,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     ville: "",
     statut: "evangelisé",
     sexe: "",
+    age: "",
     priere_salut: "",
     type_conversion: "",
     besoin: [],
@@ -109,6 +110,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     ville: formData.ville.trim() || null,
     statut: "evangelisé",
     sexe: formData.sexe || null,
+    age: formData.age || null,
     priere_salut: formData.priere_salut === "Oui",
     type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
     besoin: finalBesoins,
@@ -188,6 +190,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
       ville: "",
       statut: "evangelisé",
       sexe: "",
+      age: "",
       priere_salut: "",
       type_conversion: "",
       besoin: [],
@@ -213,6 +216,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
       ville: "",
       statut: "evangelisé",
       sexe: "",
+      age: "",
       priere_salut: "",
       type_conversion: "",
       besoin: [],
@@ -238,7 +242,19 @@ export default function AddEvangelise({ onNewEvangelise }) {
         <h1 className="text-3xl font-bold text-center mb-2">Ajouter une personne évangélisée</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
-    
+    {/* Civilité*/}
+          <select
+            className="input"
+            value={formData.sexe}
+            onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
+            required
+          >
+            <option value="">Civilité</option>
+            <option value="Homme">Monsieur</option>
+            <option value="Femme">Madame</option>
+          </select>
+
+          {/* Prenom */}  
           <input
             className="input"
             type="text"
@@ -247,6 +263,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
             onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
             required
           />
+          {/* Nom */}
           <input
             className="input"
             type="text"
@@ -255,6 +272,26 @@ export default function AddEvangelise({ onNewEvangelise }) {
             onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
             required
           />
+              {/* Age */}
+              <div className="flex flex-col">
+                <label className="font-medium">Âge</label>
+                <select
+                  name="age"
+                  value={formData.age}
+                  onChange={handleChange}
+                  className="input"
+                >
+                  <option value="">-- Choisir --</option>
+                  <option value="12-17 ans">12-17 ans</option>
+                  <option value="18-25 ans">18-25 ans</option>
+                  <option value="26-30 ans">26-30 ans</option>
+                  <option value="31-40 ans">31-40 ans</option>
+                  <option value="41-55 ans">41-55 ans</option>
+                  <option value="56-69 ans">56-69 ans</option>
+                  <option value="70 ans et plus">70 ans et plus</option>
+                </select>
+              </div>   
+          {/* Telephone*/}
           <input
             className="input"
             type="text"
@@ -262,6 +299,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
             value={formData.telephone}
             onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
           />
+              {/* Ville*/}
           <input
             className="input"
             type="text"
@@ -269,7 +307,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
             value={formData.ville}
             onChange={(e) => setFormData({ ...formData, ville: e.target.value })}
           />
-
+          {/* whatsapp*/}
           <label className="flex items-center gap-2 text-gray-700">
             <input
               type="checkbox"
@@ -278,19 +316,9 @@ export default function AddEvangelise({ onNewEvangelise }) {
               className="w-5 h-5 accent-indigo-600 cursor-pointer"
             />
             WhatsApp
-          </label>
-
-          <select
-            className="input"
-            value={formData.sexe}
-            onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
-            required
-          >
-            <option value="">Sexe</option>
-            <option value="Homme">Homme</option>
-            <option value="Femme">Femme</option>
-          </select>
-
+          </label>                   
+                                                   
+          {/* Priere*/}      
           <select
             className="input"
             value={formData.priere_salut}

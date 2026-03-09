@@ -943,7 +943,7 @@ const canAddMember =
         <div className="w-full max-w-6xl overflow-x-auto py-2 hidden sm:block">
         <div className="min-w-[700px]">
             {/* Header */}
-            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b style={{ background: "#333699" bg-transparent">
+            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b bg-transparent">
               <div className="flex-[2]">Nom complet</div>
               <div className="flex-[1]">Téléphone</div>
               <div className="flex-[1]">Statut</div>

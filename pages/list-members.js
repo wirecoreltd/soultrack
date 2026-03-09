@@ -871,14 +871,21 @@ const canAddMember =
 
   // -------------------- Rendu --------------------
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+    <div className="min-h-screen flex flex-col items-center px-4 sm:px-6 md:px-8 lg:px-10" style={{ background: "#333699" }}>
       {/* Top Bar */}
       <HeaderPages />
-      <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-2">Liste des Membres</h1>
+      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white text-center mb-2">Liste des Membres</h1>
+      <button className="text-sm sm:text-base lg:text-lg font-semibold underline text-white">
 
       {/* Barre de recherche */}
-      <div className="w-full max-w-4xl flex justify-center mb-2">
-        <input type="text" placeholder="Recherche..." value={search} onChange={e => setSearch(e.target.value)} className="w-full sm:w-2/3 px-3 py-1 rounded-md border text-black"/>
+      <div className="w-full max-w-4xl flex justify-center mb-2 px-2 sm:px-0">
+        <input
+          type="text"
+          placeholder="Recherche..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-full sm:w-2/3 md:w-1/2 px-3 py-2 rounded-md border text-black"
+        />
       </div>
 
       {/* Filtre */}
@@ -915,7 +922,7 @@ const canAddMember =
           {filteredNouveaux.length > 0 && (
             <>
               <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">💖 Bien aimé venu le {dateDuJour}</h2>
-              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 {filteredNouveaux.map(m => renderMemberCard({ ...m, isNouveau: true }))}
               </div>
             </>
@@ -934,7 +941,7 @@ const canAddMember =
      {/* ==================== VUE TABLE ==================== */}
       {view === "table" && (
         <div className="w-full max-w-6xl overflow-x-auto py-2">
-          <div className="min-w-[700px] space-y-2">
+          <div className="min-w-[700px]">
             {/* Header */}
             <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
               <div className="flex-[2]">Nom complet</div>
@@ -1086,14 +1093,14 @@ const canAddMember =
       )}
         
        {showScrollTop && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-6 right-6 text-amber-300 text-3xl font-semibold shadow-lg hover:scale-110 transition-transform"
-          title="Retour en haut"
-        >
-          ↑
-        </button>
-      )}
+          <button
+            onClick={scrollToTop}
+            className="fixed bottom-6 right-4 sm:right-6 text-3xl sm:text-3xl text-amber-300 font-bold shadow-lg hover:scale-110 transition-transform"
+            title="Retour en haut"
+          >
+            ↑
+          </button>
+        )}
        
 <Footer />
     </div>

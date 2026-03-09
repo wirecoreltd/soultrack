@@ -490,7 +490,7 @@ const canAddMember =
     }
   };
 
-  //----------
+  //---------------
   const getBorderClass = (m) => {
   if (!m.etat_contact) return "border-gray-300";
   const etat = m.etat_contact.trim().toLowerCase();
@@ -499,8 +499,7 @@ const canAddMember =
   if (etat === "inactif") return "border-gray-400";     // gris
   return "border-gray-300";                             // défaut
 };
-
-  //---------------
+  //--------------------
   const getBorderColor = (m) => {
     if (!m.etat_contact) return "#ccc";
     const etat = m.etat_contact.trim().toLowerCase();
@@ -509,8 +508,7 @@ const canAddMember =
     if (etat === "inactif") return "#999999";
     return "#ccc";
   };
-//-------------------
-  
+
   const formatDate = (dateStr) => {
     try {
       return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr });
@@ -578,9 +576,9 @@ const canAddMember =
     return (
    
         <div
-  key={m.id}
-  className={`bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative ${getBorderClass(m)}`}
->
+          key={m.id}
+          className={`bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative ${getBorderClass(m)}`}
+        >
           
           {/* Badge Nouveau */}
           {m.isNouveau && (
@@ -796,7 +794,7 @@ const canAddMember =
             {isOpen && (
               <div className="text-black text-sm mt-2 w-full space-y-1">
                 <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
-                <p>💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}</p>
+                  💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}</p>
                 <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                 <p>🎗️ Civilité : {m.sexe || ""}</p>
                 <p>⏳ Tranche d'age : {m.age || ""}</p>    

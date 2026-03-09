@@ -107,31 +107,59 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
     fetchOrCreateToken();
   }, [type, userId]);
 
-  const getLink = () => {
-    if (typeof window === "undefined") return "";
-
-    return token
-      ? `${window.location.origin}/add-member?token=${token}`
-      : window.location.origin;
-  };
+      const getLink = () => {
+      if (typeof window === "undefined") return "";
+    
+      if (!token) return window.location.origin;
+    
+      if (type === "ajouter_membre") {
+        return `${window.location.origin}/add-member?token=${token}`;
+      }
+    
+      if (type === "ajouter_evangelise") {
+        return `${window.location.origin}/add-evangelise?token=${token}`;
+      }
+    
+      return window.location.origin;
+    };
 
   const handleSend = () => {
 
     const link = getLink();
 
-    const message = `Bonjour 👋
+    let message = "";
 
-Voici le lien pour accueillir un nouveau venu.
+if (type === "ajouter_membre") {
+  message = `Bonjour 👋
 
-Église : ${churchName}
-Branche : ${branchName}
-
-Merci de prendre quelques instants pour remplir ce formulaire afin que nous puissions mieux accompagner cette personne.
-
-Cliquez ici :
-${link}
-
-Merci pour votre service 🙏`;
+      Voici le lien pour ajouter un nouveau membre.
+      
+      Église : ${churchName}
+      Branche : ${branchName}
+      
+      Merci de prendre quelques instants pour remplir ce formulaire.
+      
+      Cliquez ici :
+      ${link}
+      
+      Merci pour votre service 🙏`;
+      }
+      
+      if (type === "ajouter_evangelise") {
+        message = `Bonjour 👋
+      
+      Voici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.
+      
+      Église : ${churchName}
+      Branche : ${branchName}
+      
+      Merci de remplir ce formulaire après votre rencontre.
+      
+      Cliquez ici :
+      ${link}
+      
+      Merci pour votre engagement dans l'œuvre 🙏`;
+      }
 
     const whatsappLink = phoneNumber
       ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`

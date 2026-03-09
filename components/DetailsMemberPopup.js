@@ -331,23 +331,23 @@ export default function DetailsMemberPopup({
               <EditMemberPopup
                 member={editMember}
                 onClose={() => {
-                  setEditMember(null); // Ferme juste le popup EditMember
-                  onClose();           // Ferme aussi DetailsMemberPopup
+                  setEditMember(null);
+                  onClose();
                 }}
                 onUpdateMember={(updatedMember) => {
                   setAllMembers(prev =>
                     prev.map(m => (m.id === updatedMember.id ? updatedMember : m))
                   );
-            
                   setEditMember(null);
-                  onClose(); // Ferme DetailsMemberPopup après la sauvegarde
-            
+                  onClose();
                   showToast(
                     <span className="inline-block bg-white text-green-600 px-2 py-1 rounded shadow text-xs font-semibold">
                       ✅ Contact mis à jour !
                     </span>
                   );
                 }}
+                cellules={cellules}        // ← ajouté
+                conseillers={conseillers}  // ← ajouté
               />
             )}
       </div>

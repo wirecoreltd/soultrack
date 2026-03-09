@@ -38,23 +38,21 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
         branch_id = profile.branche_id;
 
         // 🔹 récupérer nom église
-        const { data: church } = await supabase
+        const { data: churchData, error: churchError } = await supabase
           .from("eglises")
           .select("nom")
           .eq("id", church_id)
           .single();
-
-        if (church) setChurchName(church.nom);
-
-        // 🔹 récupérer nom branche
-        const { data: branch } = await supabase
+        
+        if (!churchError && churchData) setChurchName(churchData.nom);
+        
+        const { data: branchData, error: branchError } = await supabase
           .from("branches")
           .select("nom")
           .eq("id", branch_id)
           .single();
-
-        if (branch) setBranchName(branch.nom);
-      }
+        
+        if (!branchError && branchData) setBranchName(branchData.nom);
 
       const now = new Date().toISOString();
 

@@ -73,32 +73,34 @@ if (userProfile?.roles) {
       .split(",");
   }
 }  
-
-    //--------------------------------------//
-// Gestion de la vue (table ou card)
+  
+   // Initialisation propre de la vue
 const getInitialView = () => {
   if (typeof window === "undefined") return "card"; // côté serveur
 
   const stored = localStorage.getItem("members_view");
-  if (window.innerWidth < 640) return "card"; // forcer carte sur petit écran
+  if (window.innerWidth < 640) return "card"; // Forcer la vue carte sur petit écran
   return stored || "card";
 };
 
 const [view, setView] = useState(getInitialView);
 
-    // Mettre à jour la vue sur redimensionnement
-    useEffect(() => {
-      const handleResize = () => {
-        if (window.innerWidth < 640) {
-          setView("card");
-        }
-      };
-    
-      handleResize(); // appel initial
-      window.addEventListener("resize", handleResize);
-    
-      return () => window.removeEventListener("resize", handleResize);
-    }, []);
+// Mettre à jour la vue sur redimensionnement
+useEffect(() => {
+  const handleResize = () => {
+    if (window.innerWidth < 640) setView("card");
+  };
+  handleResize();
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
+
+// Sauvegarder dans localStorage
+useEffect(() => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("members_view", view);
+  }
+}, [view]);
     
     // Sauvegarder la vue dans le localStorage à chaque changement
     useEffect(() => {

@@ -75,25 +75,28 @@ if (userProfile?.roles) {
 }
   
 //--------------------------------------//
-  const [view, setView] = useState(() => {
-  // Valeur initiale : récupère du localStorage si disponible
+  // Gestion de la vue (table ou card)
+const [view, setView] = useState(() => {
   if (typeof window !== "undefined") {
+    // Récupérer la vue stockée
     const stored = localStorage.getItem("members_view");
-    // Forcer la vue carte si petit écran
+    // Forcer carte si petit écran
     if (window.innerWidth < 640) return "card";
     return stored || "card";
   }
   return "card";
 });
 
-// Mettre à jour la vue sur redimensionnement
+// Forcer la vue carte sur petits écrans lors du resize
 useEffect(() => {
   const handleResize = () => {
     if (window.innerWidth < 640) {
       setView("card");
     }
   };
-
+  // Appel initial
+  handleResize();
+  // Écoute des changements de taille
   window.addEventListener("resize", handleResize);
   return () => window.removeEventListener("resize", handleResize);
 }, []);

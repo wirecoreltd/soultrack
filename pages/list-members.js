@@ -1005,12 +1005,12 @@ const canAddMember =
                     Membres existants
                   </span>
                 </div>
+
                 {filteredAnciens.map((m) => (
-              <div
-                <div
-    key={m.id}
-    className={`flex flex-row items-center px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 gap-2 border-l-4 ${getBorderClass(m)}`}
-  >
+              <div                
+                key={m.id}
+                className={`flex flex-row items-center px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 gap-2 border-l-4 ${getBorderClass(m)}`}
+              >
                 <div className="flex-[2] text-white font-semibold flex items-center gap-1">
                   <span>{m.prenom} {m.nom}</span>
                   {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (

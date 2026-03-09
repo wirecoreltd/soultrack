@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useSearchParams } from "next/navigation";
 import { useMembers } from "../context/MembersContext";
-import Header from "../components/Header";
+import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -629,7 +629,7 @@ useEffect(() => {
             <div className="w-full flex justify-end mt-3">
                 <p className="text-[11px] text-gray-400">
                   Créé le {formatDateFr(m.created_at)}</p></div>   
-            <p>🏠 Cellule : {m.cellule_id ? `${cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}` : "—"}</p>
+            <p>🏠 Cellule : {m.cellule_id? cellules.find(c => String(c.id) === String(m.cellule_id))?.cellule_full || "—" : "—"}</p>
             <p>👤 Conseiller : {getConseillerName(m.conseiller_id)}</p>
             </div>            
 
@@ -764,7 +764,8 @@ useEffect(() => {
                 <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
                   💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}</p>
                 <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                <p>🎗️ Sexe : {m.sexe || ""}</p>
+                <p>🎗️ Civilité : {m.sexe || ""}</p>
+                <p>⏳ Tranche d'age : {m.age || ""}</p>    
                 <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>
                 <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
                 <p>✒️ Formation : {m.Formation || ""}</p>
@@ -853,7 +854,7 @@ useEffect(() => {
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       {/* Top Bar */}
-      <Header />
+      <HeaderPages />
       <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-2">Liste des Membres</h1>
 
       {/* Barre de recherche */}
@@ -1050,18 +1051,18 @@ useEffect(() => {
           onUpdateMember={async (updatedMember) => {
 
           await logStats(editMember, updatedMember, userProfile);
+            
         
+          onUpdateMember={async (updatedMember) => {
+          await logStats(editMember, updatedMember, userProfile);        
           setAllMembers(prev =>
             prev.map(m =>
-              m.id === updatedMember.id
-                ? { ...m, ...updatedMember }
-                : m
+              m.id === updatedMember.id ? updatedMember : m
             )
-          );
-        
+          );        
           setEditMember(null);
           showToast("✅ Contact mis à jour !");
-        }}
+        }}  
 
         />
       )}

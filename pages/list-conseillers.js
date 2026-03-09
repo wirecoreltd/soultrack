@@ -40,11 +40,11 @@ function ListConseillers() {
       const branche_id = String(currentUserProfile.branche_id);
 
       const { data: profiles, error: errConseillers } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, email, telephone, role, responsable_id")
-        .eq("role", "Conseiller")
-        .eq("eglise_id", eglise_id)
-        .eq("branche_id", branche_id);
+      .from("profiles")
+      .select("id, prenom, nom, email, telephone, roles, responsable_id")
+      .contains("roles", ["Conseiller"])
+      .eq("eglise_id", eglise_id)
+      .eq("branche_id", branche_id);
 
       if (errConseillers) throw errConseillers;
       if (!profiles || profiles.length === 0) {

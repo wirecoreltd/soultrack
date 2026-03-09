@@ -164,7 +164,7 @@ function ListUsersContent() {
         <div className="flex justify-center">
           <input
             type="text"
-            placeholder="Chercher un membre..."
+            placeholder="Chercher un utilisateur..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full sm:w-1/2 px-4 py-2 rounded-md text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"

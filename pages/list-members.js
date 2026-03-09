@@ -72,14 +72,15 @@ if (userProfile?.roles) {
       .replace("}", "")
       .split(",");
   }
-}  
-         
+}
   //--------------------------------------//
+
 const role = userProfile?.role;
-  
+
 const canAddMember =
   role === "Administrateur" ||
   role === "ResponsableIntegration";
+
 
   const [view, setView] = useState(() => {
     if (typeof window !== "undefined") {
@@ -870,23 +871,15 @@ const canAddMember =
 
   // -------------------- Rendu --------------------
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 sm:px-6 md:px-8 lg:px-10" style={{ background: "#333699" }}>
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       {/* Top Bar */}
-        <HeaderPages />
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white text-center mb-2">
-          Liste des Membres
-        </h1>
-        
-        {/* Barre de recherche */}
-        <div className="w-full max-w-4xl flex justify-center mb-2 px-2 sm:px-0">
-          <input
-            type="text"
-            placeholder="Recherche..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full sm:w-2/3 md:w-1/2 px-3 py-2 rounded-md border text-black"
-          />
-        </div>
+      <HeaderPages />
+      <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-2">Liste des Membres</h1>
+
+      {/* Barre de recherche */}
+      <div className="w-full max-w-4xl flex justify-center mb-2">
+        <input type="text" placeholder="Recherche..." value={search} onChange={e => setSearch(e.target.value)} className="w-full sm:w-2/3 px-3 py-1 rounded-md border text-black"/>
+      </div>
 
       {/* Filtre */}
       <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
@@ -922,7 +915,7 @@ const canAddMember =
           {filteredNouveaux.length > 0 && (
             <>
               <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">💖 Bien aimé venu le {dateDuJour}</h2>
-              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
                 {filteredNouveaux.map(m => renderMemberCard({ ...m, isNouveau: true }))}
               </div>
             </>
@@ -938,161 +931,117 @@ const canAddMember =
         </>
       )}
       
-           {/* ==================== VUE TABLE ==================== */}
-              {view === "table" && (
-                <div className="w-full max-w-6xl overflow-x-auto py-2 hidden sm:block">
-                  <div className="min-w-[700px]">
-                    {/* Header */}
-                    <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b bg-transparent">
-                      <div className="flex-[2]">Nom complet</div>
-                      <div className="flex-[1]">Téléphone</div>
-                      <div className="flex-[1]">Statut</div>
-                      <div className="flex-[2]">Affectation</div>
-                      <div className="flex-[1] text-center">Actions</div>
-                    </div>
-              
-                    {/* Nouveaux Membres */}
-                    {filteredNouveaux.length > 0 && (
-                      <div className="px-2 py-1 rounded shadow text-white bg-transparent">
-                        💖 Bien aimé venu le {formatDate(filteredNouveaux[0].created_at)}
-                      </div>
-                    )}
-              
-                    {filteredNouveaux.map((m) => (
-                      <div
-                        key={m.id}
-                        className="flex flex-col px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 border-l-4"
-                        style={{ borderLeftColor: getBorderColor(m) }}
-                      >
-                        {/* Ligne principale */}
-                        <div className="flex flex-row items-center gap-2">
-                          <div className="flex-[2] text-white font-semibold flex items-center gap-2">
-                            <span>{m.prenom} {m.nom}</span>
-                            <span className="flex items-center gap-1 text-xs font-semibold text-orange">
-                              <span className="inline-block w-2 h-2 rounded-full bg-orange" />
-                              Nouveau
-                            </span>
-                          </div>
-              
-                          <div className="flex-[1] text-white">{m.telephone || "—"}</div>
-                          <div className="flex-[1] text-white">{m.statut}</div>
-                          <div className="flex-[2] text-white">
-                            {m.cellule_id
-                              ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
-                              : m.conseiller_id
-                              ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom}`
-                              : "—"
-                            }
-                          </div>
-              
-                          <div className="flex-[1]">
-                            <button
-                              onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
-                              className="text-orange-500 underline text-sm whitespace-nowrap"
-                            >
-                              {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-              
-                    {/* Membres existants */}
-                    {filteredAnciens.length > 0 && (
-                      <div>
-                        <div className="px-2 py-1 font-semibold text-lg">
-                          <span style={{ background: "linear-gradient(to right, #3B82F6, #D1D5DB)", WebkitBackgroundClip: "text", color: "transparent" }}>
-                            Membres existants
-                          </span>
-                        </div>
-              
-                        {filteredAnciens.map((m) => (
-                          <div
-                            key={m.id}
-                            className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
-                            style={{ borderLeftColor: getBorderColor(m) }}
-                          >
-                            <div className="flex-[2] text-white font-semibold flex items-center gap-1">
-                              <span>{m.prenom} {m.nom}</span>
-                              {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
-                                <span className="text-yellow-400 ml-1">⭐</span>
-                              )}
-                            </div>
-              
-                            <div className="flex-[1] text-white">{m.telephone || "—"}</div>
-                            <div className="flex-[1] text-white">{m.etat_contact || "—"}</div>
-              
-                            <div className="flex-[2] text-white">
-                              {m.cellule_id
-                                ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
-                                : m.conseiller_id
-                                ? `👤 ${getConseillerName(m.conseiller_id)}`
-                                : "—"
-                              }
-                            </div>
-              
-                            <div className="flex-[1]">
-                              <button
-                                onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
-                                className="text-orange-500 underline text-sm whitespace-nowrap"
-                              >
-                                {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+     {/* ==================== VUE TABLE ==================== */}
+      {view === "table" && (
+        <div className="w-full max-w-6xl overflow-x-auto py-2">
+          <div className="min-w-[700px] space-y-2">
+            {/* Header */}
+            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+              <div className="flex-[2]">Nom complet</div>
+              <div className="flex-[1]">Téléphone</div>
+              <div className="flex-[1]">Statut</div>
+              <div className="flex-[2]">Affectation</div>
+              <div className="flex-[1]">Actions</div>
+            </div>
+      
+            {/* Nouveaux Membres */}
+            {filteredNouveaux.length > 0 && (
+              <div className="px-2 py-1 rounded shadow text-white bg-[#2E3192] rounded">
+                💖 Bien aimé venu le {formatDate(filteredNouveaux[0].created_at)}
+              </div>
+            )}
+      
+            {filteredNouveaux.map((m) => (
+              <div
+                key={m.id}
+                className="flex flex-col px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 border-l-4"
+                style={{ borderLeftColor: getBorderColor(m) }}>                             
+
+                {/* Ligne principale */}
+                <div className="flex flex-row items-center gap-2">
+                  <div className="flex-[2] text-white font-semibold flex items-center gap-2">
+                  <span>{m.prenom} {m.nom}</span>                
+                  <span className="flex items-center gap-1 text-xs font-semibold text-orange">
+                  <span className="inline-block w-2 h-2 rounded-full bg-orange" />
+                    Nouveau
+                  </span>
+                </div>
+
+                  <div className="flex-[1] text-white">{m.telephone || "—"}</div>
+                  <div className="flex-[1] text-white">{m.statut}</div>
+                  <div className="flex-[2] text-white">
+                    {m.cellule_id
+                      ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
+                      : m.conseiller_id
+                      ? `👤 ${conseillers.find((c) => c.id === m.conseiller_id)?.prenom} ${conseillers.find((c) => c.id === m.conseiller_id)?.nom}`
+                      : "—"}
+                  </div>
+                  <div className="flex-[1]">
+                    <button
+                      onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
+                      className="text-orange-500 underline text-sm whitespace-nowrap"
+                    >
+                      {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                    </button>
                   </div>
                 </div>
-              )}
+              </div>
+            ))}
       
             {/* Membres existants */}
             {filteredAnciens.length > 0 && (
-              <div>
+              <>
                 <div className="px-2 py-1 font-semibold text-lg">
                   <span style={{ background: "linear-gradient(to right, #3B82F6, #D1D5DB)", WebkitBackgroundClip: "text", color: "transparent" }}>
                     Membres existants
                   </span>
                 </div>
-            
                 {filteredAnciens.map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
-                    style={{ borderLeftColor: getBorderColor(m) }}
+              <div
+                key={m.id}
+                className="flex flex-row items-center px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 gap-2 border-l-4"
+                style={{ borderLeftColor: getBorderColor(m) }}
+              >
+                <div className="flex-[2] text-white font-semibold flex items-center gap-1">
+                  <span>{m.prenom} {m.nom}</span>
+                  {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
+                    <span className="text-yellow-400 ml-1">⭐</span>
+                  )}
+                </div>
+            
+                <div className="flex-[1] text-white">
+                  {m.telephone || "—"}
+                </div>
+            
+                <div className="flex-[1] text-white">
+                  {m.etat_contact || "—"}
+                </div>
+            
+                <div className="flex-[2] text-white">
+                  {m.cellule_id
+                    ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
+                    : m.conseiller_id
+                      ? `👤 ${getConseillerName(m.conseiller_id)}`
+                      : "—"}
+                </div>
+            
+                <div className="flex-[1]">
+                  <button
+                    onClick={() =>
+                      setPopupMember(popupMember?.id === m.id ? null : { ...m })
+                    }
+                    className="text-orange-500 underline text-sm whitespace-nowrap"
                   >
-                    <div className="flex-[2] text-white font-semibold flex items-center gap-1">
-                      <span>{m.prenom} {m.nom}</span>
-                      {m.star && m.etat_contact?.trim().toLowerCase() === "existant" && (
-                        <span className="text-yellow-400 ml-1">⭐</span>
-                      )}
+                    {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </div>
                     </div>
-            
-                    <div className="flex-[1] text-white">{m.telephone || "—"}</div>
-                    <div className="flex-[1] text-white">{m.etat_contact || "—"}</div>
-            
-                    <div className="flex-[2] text-white">
-                      {m.cellule_id
-                        ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
-                        : m.conseiller_id
-                        ? `👤 ${getConseillerName(m.conseiller_id)}`
-                        : "—"
-                      }
-                    </div>
-            
-                    <div className="flex-[1]">
-                      <button
-                        onClick={() => setPopupMember(popupMember?.id === m.id ? null : { ...m })}
-                        className="text-orange-500 underline text-sm whitespace-nowrap"
-                      >
-                        {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  )}
             
                   {/* Popups */}
       {popupMember && (
@@ -1137,14 +1086,14 @@ const canAddMember =
       )}
         
        {showScrollTop && (
-          <button
-            onClick={scrollToTop}
-            className="fixed bottom-6 right-4 sm:right-6 text-3xl sm:text-3xl text-amber-300 font-bold shadow-lg hover:scale-110 transition-transform"
-            title="Retour en haut"
-          >
-            ↑
-          </button>
-        )}
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 text-amber-300 text-3xl font-semibold shadow-lg hover:scale-110 transition-transform"
+          title="Retour en haut"
+        >
+          ↑
+        </button>
+      )}
        
 <Footer />
     </div>

@@ -953,7 +953,7 @@ const canAddMember =
       
             {/* Nouveaux Membres */}
             {filteredNouveaux.length > 0 && (
-              <div className="px-2 py-1 rounded shadow text-white bg-[#2E3192] rounded">
+              <div className="px-2 py-1 rounded shadow text-white bg-gray-600 rounded">
                 💖 Bien aimé venu le {formatDate(filteredNouveaux[0].created_at)}
               </div>
             )}

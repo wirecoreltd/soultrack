@@ -57,6 +57,7 @@ function ListMembersContent() {
   const phoneMenuRef = useRef(null);
   const router = useRouter();
   const [userProfile, setUserProfile] = useState(null);  
+  const [showScrollTop, setShowScrollTop] = useState(false);
   
 //--------------------------------------//
    // 🔒 Sécurisation maximale des rôles
@@ -166,9 +167,7 @@ const canAddMember =
     await supabase.from("stats_ministere_besoin").insert(logs);
   }
 };
-
-
-
+  
   const formatDateFr = (dateString) => {
     if (!dateString) return "—";
     const d = new Date(dateString);
@@ -198,7 +197,24 @@ const canAddMember =
     return ministereList.join(", ");
   };
 
-  // -------------------- Supprimer un membre --------------------
+   // -------------------- Scroll to top--------------------
+  useEffect(() => {
+  const handleScroll = () => {
+    if (window.scrollY > 300) { // montre le bouton après 300px de scroll
+      setShowScrollTop(true);
+    } else {
+      setShowScrollTop(false);
+    }
+  };
+
+  window.addEventListener("scroll", handleScroll);
+  return () => window.removeEventListener("scroll", handleScroll);
+}, []);
+
+  const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+    // -------------------- Supprimer un membre --------------------
   const handleSupprimerMembre = async (id) => {
     const { error } = await supabase
       .from("membres_complets")
@@ -1068,6 +1084,17 @@ const canAddMember =
       {showingToast && (
         <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">{toastMessage}</div>
       )}
+        
+       {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-transform transform hover:-translate-y-1"
+          title="Retour en haut"
+        >
+          ↑
+        </button>
+      )}
+       
 <Footer />
     </div>
   );

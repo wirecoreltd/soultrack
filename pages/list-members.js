@@ -962,9 +962,9 @@ const canAddMember =
       
             {filteredNouveaux.map((m) => (
               <div
-    key={m.id}
-    className={`flex flex-row items-center px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 gap-2 border-l-4 ${getBorderClass(m)}`}
-  >                                     
+              key={m.id}
+              className={`flex flex-row items-center px-2 py-2 rounded-lg bg-blue-100/30 hover:bg-blue-100/50 transition duration-150 gap-2 border-l-4 ${getBorderClass(m)}`}
+                        >                                    
 
                 {/* Ligne principale */}
                 <div className="flex flex-row items-center gap-2">

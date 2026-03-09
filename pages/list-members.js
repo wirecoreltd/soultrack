@@ -72,16 +72,13 @@ if (userProfile?.roles) {
       .replace("}", "")
       .split(",");
   }
-}
-  
-//--------------------------------------//
+}  
+
   // Gestion de la vue (table ou card)
 const [view, setView] = useState(() => {
   if (typeof window !== "undefined") {
-    // Récupérer la vue stockée
     const stored = localStorage.getItem("members_view");
-    // Forcer carte si petit écran
-    if (window.innerWidth < 640) return "card";
+    if (window.innerWidth < 640) return "card"; // Forcer la vue carte si petit écran
     return stored || "card";
   }
   return "card";
@@ -94,9 +91,7 @@ useEffect(() => {
       setView("card");
     }
   };
-  // Appel initial
-  handleResize();
-  // Écoute des changements de taille
+  handleResize(); // appel initial
   window.addEventListener("resize", handleResize);
   return () => window.removeEventListener("resize", handleResize);
 }, []);

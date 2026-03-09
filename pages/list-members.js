@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useSearchParams } from "next/navigation";
 import { useMembers } from "../context/MembersContext";
-import HeaderPages from "../components/HeaderPages";
+import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -764,8 +764,7 @@ useEffect(() => {
                 <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
                   💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}</p>
                 <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                <p>🎗️ Civilité : {m.sexe || ""}</p>
-                <p>⏳ Tranche d'age : {m.age || ""}</p>    
+                <p>🎗️ Sexe : {m.sexe || ""}</p>
                 <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>
                 <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
                 <p>✒️ Formation : {m.Formation || ""}</p>
@@ -854,7 +853,7 @@ useEffect(() => {
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       {/* Top Bar */}
-      <HeaderPages />
+      <Header />
       <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-2">Liste des Membres</h1>
 
       {/* Barre de recherche */}

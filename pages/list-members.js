@@ -452,25 +452,38 @@ const canAddMember =
 }, [scopedQuery, setAllMembers]);
 
   // -------------------- Filtrage --------------------
-  const { filteredNouveaux, filteredAnciens, filteredInactifs } = useMemo(() => {
+ const { filteredMembers, filteredNouveaux, filteredAnciens, filteredInactifs } = useMemo(() => {
   const actifs = members.filter((m) => m.etat_contact !== "supprime");
 
   // Filtrage par recherche
-  const searchFiltered = actifs.filter((m) =>
+  const searchFiltered = filter
+    ? actifs.filter((m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase())
+    : actifs;
+
+  const searchAndNameFiltered = searchFiltered.filter((m) =>
     `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
   );
+
   // Groupes par état
-  const nouveaux = searchFiltered.filter(
+  const nouveaux = searchAndNameFiltered.filter(
     (m) => m.etat_contact?.trim().toLowerCase() === "nouveau"
   );
-  const existants = searchFiltered.filter(
+
+  const existants = searchAndNameFiltered.filter(
     (m) => ["existant", "ancien"].includes(m.etat_contact?.trim().toLowerCase())
   );
-  const inactifs = searchFiltered.filter(
+
+  const inactifs = searchAndNameFiltered.filter(
     (m) => m.etat_contact?.trim().toLowerCase() === "inactif"
   );
-  return { filteredNouveaux: nouveaux, filteredAnciens: existants, filteredInactifs: inactifs };
-}, [members, search]);
+
+  return {
+    filteredMembers: searchAndNameFiltered,
+    filteredNouveaux: nouveaux,
+    filteredAnciens: existants,
+    filteredInactifs: inactifs,
+  };
+}, [members, filter, search]);
 
   // -------------------- Handlers --------------------
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));

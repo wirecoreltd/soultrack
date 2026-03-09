@@ -1002,8 +1002,7 @@ const canAddMember =
                     <div className="flex-[2] text-white font-semibold flex items-center gap-2">
                       <span>{m.prenom} {m.nom}</span>
                       <span className="flex items-center gap-1 text-sm font-semibold text-orange">
-                        <span className="inline-block w-2 h-2 rounded-full bg-orange" />
-                        Nou
+                        <span className="inline-block w-2.5 h-2.5 rounded-full bg-white-600" />                      
                       </span>
                     </div>
                     <div className="flex-[1] text-white text-sm">{m.telephone || "—"}</div>

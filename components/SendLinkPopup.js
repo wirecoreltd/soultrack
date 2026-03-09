@@ -14,92 +14,82 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
   const [branchName, setBranchName] = useState("");
 
   const fetchOrCreateToken = async () => {
+  try {
+    let church_id = null;
+    let branch_id = null;
 
-    try {
-
-      let church_id = null;
-      let branch_id = null;
-
-      // 🔹 récupérer profil utilisateur
-      if (userId) {
-
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("eglise_id, branche_id")
-          .eq("id", userId)
-          .single();
-
-        if (profileError) {
-          console.error(profileError);
-          return;
-        }
-
-        church_id = profile.eglise_id;
-        branch_id = profile.branche_id;
-
-        // 🔹 récupérer nom église
-        const { data: churchData, error: churchError } = await supabase
-          .from("eglises")
-          .select("nom")
-          .eq("id", church_id)
-          .single();
-        
-        if (!churchError && churchData) setChurchName(churchData.nom);
-        
-        const { data: branchData, error: branchError } = await supabase
-          .from("branches")
-          .select("nom")
-          .eq("id", branch_id)
-          .single();
-        
-        if (!branchError && branchData) setBranchName(branchData.nom);
-
-      const now = new Date().toISOString();
-
-      let query = supabase
-        .from("access_tokens")
-        .select("*")
-        .eq("access_type", type)
-        .gte("expires_at", now)
-        .order("expires_at", { ascending: false })
-        .limit(1)
+    if (userId) {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", userId)
         .single();
 
-      if (church_id) query = query.eq("church_id", church_id);
-      if (branch_id) query = query.eq("branch_id", branch_id);
-
-      const { data, error } = await query;
-
-      if (!error && data) {
-        setToken(data.token);
+      if (profileError) {
+        console.error(profileError);
         return;
       }
 
-      // 🔹 créer nouveau token
-      const newToken = uuidv4();
+      church_id = profile.eglise_id;
+      branch_id = profile.branche_id;
 
-      const expiresAt = new Date(
-        Date.now() + 7 * 24 * 60 * 60 * 1000
-      ).toISOString();
+      const { data: churchData, error: churchError } = await supabase
+        .from("eglises")
+        .select("nom")
+        .eq("id", church_id)
+        .single();
+      if (!churchError && churchData) setChurchName(churchData.nom);
 
-      const { error: insertError } = await supabase
-        .from("access_tokens")
-        .insert([
-          {
-            token: newToken,
-            access_type: type,
-            expires_at: expiresAt,
-            church_id,
-            branch_id,
-          },
-        ]);
-
-      if (!insertError) setToken(newToken);
-
-    } catch (err) {
-      console.error("Erreur token :", err.message);
+      const { data: branchData, error: branchError } = await supabase
+        .from("branches")
+        .select("nom")
+        .eq("id", branch_id)
+        .single();
+      if (!branchError && branchData) setBranchName(branchData.nom);
     }
-  };
+
+    const now = new Date().toISOString();
+
+    let query = supabase
+      .from("access_tokens")
+      .select("*")
+      .eq("access_type", type)
+      .gte("expires_at", now)
+      .order("expires_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (church_id) query = query.eq("church_id", church_id);
+    if (branch_id) query = query.eq("branch_id", branch_id);
+
+    const { data, error } = await query;
+
+    if (!error && data) {
+      setToken(data.token);
+      return;
+    }
+
+    const newToken = uuidv4();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { error: insertError } = await supabase
+      .from("access_tokens")
+      .insert([
+        {
+          token: newToken,
+          access_type: type,
+          expires_at: expiresAt,
+          church_id,
+          branch_id,
+        },
+      ]);
+
+    if (!insertError) setToken(newToken);
+
+  } catch (err) {
+    console.error("Erreur token :", err.message);
+  }
+};
 
   useEffect(() => {
     fetchOrCreateToken();

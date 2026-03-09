@@ -467,7 +467,9 @@ const canAddMember =
     const existants = searchFiltered.filter((m) =>
       ["existant", "ancien"].includes(m.etat_contact?.trim().toLowerCase())
     );
-    return { filteredMembers: searchFiltered, filteredNouveaux: nouveaux, filteredAnciens: existants };
+    const inactifs = searchFiltered.filter(
+    (m) => m.etat_contact?.trim().toLowerCase() === "inactif"
+    return { filteredMembers: searchFiltered, filteredNouveaux: nouveaux, filteredAnciens: existants, filteredInactifs: inactif };
   }, [members, filter, search]);
 
   // -------------------- Handlers --------------------

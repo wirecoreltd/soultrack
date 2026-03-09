@@ -362,8 +362,9 @@ export default function Evangelisation() {
 
                {detailsOpen[member.id] && (                  
                   <div className="text-sm mt-2 space-y-1">
+                    <p>🎗️ Civilité : {member.sexe || "—"}</p>                    
+                    <p>⏳ Tranche d'age : {member.age || "—"}</p>
                     <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>🎗️ Sexe : {member.sexe || "—"}</p>
                     <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
                     <p>☀️ Type : {member.type_conversion || "—"}</p>
                     <p>❓ Difficultés / Besoins : {formatBesoin(member.besoin)}</p>

@@ -75,19 +75,26 @@ if (userProfile?.roles) {
 }
   
 //--------------------------------------//
-  const [view, setView] = useState("card");
+  const [view, setView] = useState(() => {
+  // Valeur initiale : récupère du localStorage si disponible
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem("members_view");
+    // Forcer la vue carte si petit écran
+    if (window.innerWidth < 640) return "card";
+    return stored || "card";
+  }
+  return "card";
+});
 
-// Forcer la vue carte sur petits écrans
+// Mettre à jour la vue sur redimensionnement
 useEffect(() => {
   const handleResize = () => {
-    if (window.innerWidth < 640) { // sm breakpoint de Tailwind
+    if (window.innerWidth < 640) {
       setView("card");
     }
   };
 
-  handleResize(); // au chargement
   window.addEventListener("resize", handleResize);
-
   return () => window.removeEventListener("resize", handleResize);
 }, []);
   //--------------------------------------//

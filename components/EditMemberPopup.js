@@ -445,7 +445,8 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
           {/* Cellule */}
           <div className="flex flex-col">
             <label className="font-medium">Cellule</label>
-            <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input" disabled={loadingData}>
+            //<select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input" disabled={loadingData}>
+              <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="input">
               <option value="">-- Cellule --</option>
               {cellules.map(c => (
                 <option key={c.id} value={c.id}>{c.cellule_full}</option>
@@ -456,7 +457,8 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
           {/* Conseiller */}
           <div className="flex flex-col">
             <label className="font-medium">Conseiller</label>
-            <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input" disabled={loadingData}>
+            //<select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input" disabled={loadingData}>
+            <select name="conseiller_id" value={formData.conseiller_id ?? ""} onChange={handleChange} className="input">
               <option value="">-- Conseiller --</option>
               {conseillers.map(c => (
                 <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>

@@ -490,14 +490,21 @@ const canAddMember =
     }
   };
 
-  const getBorderColor = (m) => {
-    if (!m.etat_contact) return "#ccc";
-    const etat = m.etat_contact.trim().toLowerCase();
-    if (etat === "existant") return "#34A853";
-    if (etat === "nouveau") return "#34A85e";
-    if (etat === "inactif") return "#999999";
-    return "#ccc";
-  };
+  const getBorderClass = (membre) => {
+  if (!membre?.etat_contact) return "border-gray-300"; // par défaut
+  const etat = membre.etat_contact.trim().toLowerCase();
+
+  switch (etat) {
+    case "existant":
+      return "border-green-600"; // vert pour existant
+    case "nouveau":
+      return "border-amber-400"; // orange/amber pour nouveau
+    case "inactif":
+      return "border-gray-500"; // gris pour inactif
+    default:
+      return "border-gray-300"; // fallback
+  }
+};
 
   const formatDate = (dateStr) => {
     try {
@@ -565,7 +572,9 @@ const canAddMember =
 
     return (
    
-        <div key={m.id} className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative">
+        key={m.id}
+          className={`bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative ${getBorderClass(m)}`}
+        >
           
           {/* Badge Nouveau */}
           {m.isNouveau && (
@@ -954,8 +963,8 @@ const canAddMember =
             {filteredNouveaux.map((m) => (
               <div
                 key={m.id}
-                className="flex flex-col px-2 py-2 rounded-lg bg-white/10 hover:bg-blue-100/50 transition duration-150 border-l-4"
-                style={{ borderLeftColor: getBorderColor(m) }}>                             
+                className={`flex flex-col px-2 py-2 rounded-lg bg-white/10 hover:bg-blue-100/50 transition duration-150 border-l-4 ${getBorderClass(m)}`}
+                >                                     
 
                 {/* Ligne principale */}
                 <div className="flex flex-row items-center gap-2">

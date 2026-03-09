@@ -23,10 +23,6 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
 
   const initialBesoin = parseBesoin(member?.besoin);
 
-  const [cellules, setCellules] = useState([]);
-  const [conseillers, setConseillers] = useState([]);
-  const [loadingData, setLoadingData] = useState(true);
-
   const [formData, setFormData] = useState({
     prenom: member?.prenom || "",
     nom: member?.nom || "",

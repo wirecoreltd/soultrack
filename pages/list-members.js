@@ -1088,10 +1088,10 @@ const canAddMember =
                         className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
                         style={{ borderLeftColor: getBorderColor(m) }}
                       >
-                        <div className="flex-[2] text-white font-semibold text-xs">{m.prenom} {m.nom}</div>
-                        <div className="flex-[1] text-white text-text-sm">{m.telephone || "—"}</div>
-                        <div className="flex-[1] text-white text-text-sm">{m.etat_contact || "—"}</div>
-                        <div className="flex-[2] text-white text-text-sm">
+                        <div className="flex-[2] text-white font-semibold text-sm">{m.prenom} {m.nom}</div>
+                        <div className="flex-[1] text-white text-sm">{m.telephone || "—"}</div>
+                        <div className="flex-[1] text-white text-sm">{m.etat_contact || "—"}</div>
+                        <div className="flex-[2] text-white text-sm">
                           {m.cellule_id
                             ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
                             : m.conseiller_id

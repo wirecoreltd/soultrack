@@ -1059,8 +1059,7 @@ useEffect(() => {
         setEditMember(null);
         showToast("✅ Contact mis à jour !");
       }}
-    />
-    )}
+    />   
 
       {/* Toast */}
       {showingToast && (

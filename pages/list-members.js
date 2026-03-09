@@ -938,7 +938,7 @@ const canAddMember =
             {/* ------------------ Nouveaux ------------------ */}
             {filteredNouveaux.length > 0 && (
               <>
-                <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg">
+                <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg text-sm">
                   💖 Bien aimé venu le {dateDuJour}
                 </h2>
                 <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
@@ -1001,14 +1001,14 @@ const canAddMember =
                   >
                     <div className="flex-[2] text-white font-semibold flex items-center gap-2">
                       <span>{m.prenom} {m.nom}</span>
-                      <span className="flex items-center gap-1 text-xs font-semibold text-orange">
+                      <span className="flex items-center gap-1 text-sm font-semibold text-orange">
                         <span className="inline-block w-2 h-2 rounded-full bg-orange" />
                         Nouveau
                       </span>
                     </div>
-                    <div className="flex-[1] text-white text-xs">{m.telephone || "—"}</div>
-                    <div className="flex-[1] text-white text-xs">{m.etat_contact}</div>
-                    <div className="flex-[2] text-white text-xs">
+                    <div className="flex-[1] text-white text-sm">{m.telephone || "—"}</div>
+                    <div className="flex-[1] text-white text-sm">{m.etat_contact}</div>
+                    <div className="flex-[2] text-white text-sm">
                       {m.cellule_id
                         ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
                         : m.conseiller_id
@@ -1052,9 +1052,9 @@ const canAddMember =
                             <span className="text-yellow-400 ml-1">⭐</span>
                           )}
                         </div>
-                        <div className="flex-[1] text-white text-xs">{m.telephone || "—"}</div>
-                        <div className="flex-[1] text-white text-xs">{m.etat_contact || "—"}</div>
-                        <div className="flex-[2] text-white text-xs">
+                        <div className="flex-[1] text-white text-sm">{m.telephone || "—"}</div>
+                        <div className="flex-[1] text-white text-sm">{m.etat_contact || "—"}</div>
+                        <div className="flex-[2] text-white text-sm">
                           {m.cellule_id
                             ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
                             : m.conseiller_id
@@ -1089,9 +1089,9 @@ const canAddMember =
                         style={{ borderLeftColor: getBorderColor(m) }}
                       >
                         <div className="flex-[2] text-white font-semibold text-xs">{m.prenom} {m.nom}</div>
-                        <div className="flex-[1] text-white text-xs">{m.telephone || "—"}</div>
-                        <div className="flex-[1] text-white text-xs">{m.etat_contact || "—"}</div>
-                        <div className="flex-[2] text-white text-xs">
+                        <div className="flex-[1] text-white text-text-sm">{m.telephone || "—"}</div>
+                        <div className="flex-[1] text-white text-text-sm">{m.etat_contact || "—"}</div>
+                        <div className="flex-[2] text-white text-text-sm">
                           {m.cellule_id
                             ? `🏠 ${cellules.find((c) => c.id === m.cellule_id)?.cellule_full || "—"}`
                             : m.conseiller_id

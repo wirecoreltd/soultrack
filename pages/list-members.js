@@ -73,6 +73,23 @@ if (userProfile?.roles) {
       .split(",");
   }
 }
+  
+//--------------------------------------//
+  const [view, setView] = useState("card");
+
+// Forcer la vue carte sur petits écrans
+useEffect(() => {
+  const handleResize = () => {
+    if (window.innerWidth < 640) { // sm breakpoint de Tailwind
+      setView("card");
+    }
+  };
+
+  handleResize(); // au chargement
+  window.addEventListener("resize", handleResize);
+
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
   //--------------------------------------//
 
 const role = userProfile?.role;

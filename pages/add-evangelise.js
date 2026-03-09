@@ -278,7 +278,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
                 <select
                   name="age"
                   value={formData.age}
-                  onChange={handleChange}
+                  onChange={(e) => setFormData({ ...formData, age: e.target.value })}
                   className="input"
                 >
                   <option value="">-- Choisir --</option>

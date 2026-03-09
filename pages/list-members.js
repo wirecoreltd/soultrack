@@ -1093,9 +1093,8 @@ const canAddMember =
                                   </button>
                                 </div>
                               </div>
-                            ))}
-                              </div>
-                          //</>
+                            ))}                            
+                          </>
                         )}
                       </div>
                     </div>

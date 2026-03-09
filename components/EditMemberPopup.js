@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
+const safeCellules = cellules || [];
+const safeConseillers = conseillers || [];
+
 export default function EditMemberPopup({ member, cellules, conseillers, onClose, onUpdateMember }) {
   if (!member) return null;
 

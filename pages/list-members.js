@@ -793,7 +793,7 @@ const canAddMember =
             {isOpen && (
               <div className="text-black text-sm mt-2 w-full space-y-1">
                 <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
-                  💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}</p>
+                <p>💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}</p>
                 <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                 <p>🎗️ Civilité : {m.sexe || ""}</p>
                 <p>⏳ Tranche d'age : {m.age || ""}</p>    

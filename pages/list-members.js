@@ -251,56 +251,59 @@ const canAddMember =
 
 
 // -------------------- Fetch membres via scopedQuery avec multi-roles --------------------
-useEffect(() => {
-  if (!scopedQuery || !userProfile) return;
-
-  const fetchMembers = async () => {
-    try {
-      let query = supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("eglise_id", userProfile.eglise_id)
-        .eq("branche_id", userProfile.branche_id);
-
-      // 🔹 userProfile.roles est déjà un ARRAY PostgreSQL, donc on peut utiliser includes
-      const rolesArray = Array.isArray(userProfile.roles) ? userProfile.roles : [userProfile.role];
-
-      // 🔐 Filtrage pour les Conseillers
-      if (rolesArray.includes("Conseiller") || rolesArray.includes("ResponsableIntegration")) {
-        query = query.eq("conseiller_id", userProfile.id);
-      }
-
-      // 🔐 Filtrage pour les Responsables de Cellule
-      if (rolesArray.includes("ResponsableCellule")) {
-        const { data: cellulesData } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", userProfile.id);
-
-        const celluleIds = cellulesData?.map(c => c.id) || [];
-        if (celluleIds.length > 0) {
-          query = query.in("cellule_id", celluleIds);
+  useEffect(() => {
+    if (!scopedQuery || !userProfile) return;
+  
+    const fetchMembers = async () => {
+      try {
+        let query = supabase
+          .from("membres_complets")
+          .select("*")
+          .eq("eglise_id", userProfile.eglise_id)
+          .eq("branche_id", userProfile.branche_id);
+  
+        // 🔹 Si on vient d'un conseiller spécifique
+        if (conseillerIdFromUrl) {
+          query = query.eq("conseiller_id", conseillerIdFromUrl);
         } else {
-          setAllMembers([]);
-          setLoading(false);
-          return;
+          // 🔐 Filtrage selon le rôle
+          const rolesArray = Array.isArray(userProfile.roles)
+            ? userProfile.roles
+            : [userProfile.role];
+  
+          if (rolesArray.includes("Conseiller") || rolesArray.includes("ResponsableIntegration")) {
+            query = query.eq("conseiller_id", userProfile.id);
+          }
+  
+          if (rolesArray.includes("ResponsableCellule")) {
+            const { data: cellulesData } = await supabase
+              .from("cellules")
+              .select("id")
+              .eq("responsable_id", userProfile.id);
+  
+            const celluleIds = cellulesData?.map(c => c.id) || [];
+            if (celluleIds.length > 0) query = query.in("cellule_id", celluleIds);
+            else {
+              setAllMembers([]);
+              setLoading(false);
+              return;
+            }
+          }
         }
+  
+        const { data, error } = await query.order("created_at", { ascending: false });
+        if (error) throw error;
+  
+        setAllMembers(data || []);
+        setLoading(false);
+      } catch (err) {
+        console.error("Erreur fetchMembers:", err);
+        setLoading(false);
       }
-
-      const { data, error } = await query.order("created_at", { ascending: false });
-      if (error) throw error;
-
-      setAllMembers(data || []);
-      setLoading(false);
-    } catch (err) {
-      console.error("Erreur fetchMembers:", err);
-      setLoading(false);
-    }
-  };
-
-  fetchMembers();
-}, [userProfile, scopedQuery, setAllMembers]);
-
+    };
+  
+    fetchMembers();
+  }, [userProfile, scopedQuery, setAllMembers, conseillerIdFromUrl]);
 
   // -------------------- Récupérer la session Supabase --------------------
     useEffect(() => {

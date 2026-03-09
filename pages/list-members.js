@@ -1044,28 +1044,25 @@ useEffect(() => {
         />
       )}
 
-      {editMember && (
-        <EditMemberPopup
-          member={editMember}
-          onClose={() => setEditMember(null)}
-          onUpdateMember={async (updatedMember) => {
+     {editMember && (
+  <EditMemberPopup
+    member={editMember}
+    onClose={() => setEditMember(null)}
+    onUpdateMember={async (updatedMember) => {
 
-          await logStats(editMember, updatedMember, userProfile);
-            
-        
-          onUpdateMember={async (updatedMember) => {
-          await logStats(editMember, updatedMember, userProfile);        
-          setAllMembers(prev =>
-            prev.map(m =>
-              m.id === updatedMember.id ? updatedMember : m
-            )
-          );        
-          setEditMember(null);
-          showToast("✅ Contact mis à jour !");
-        }}  
+      await logStats(editMember, updatedMember, userProfile);
 
-        />
-      )}
+      setAllMembers(prev =>
+        prev.map(m =>
+          m.id === updatedMember.id ? updatedMember : m
+        )
+      );
+
+      setEditMember(null);
+      showToast("✅ Contact mis à jour !");
+    }}
+  />
+)}
 
       {/* Toast */}
       {showingToast && (

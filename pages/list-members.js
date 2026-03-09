@@ -577,7 +577,8 @@ const canAddMember =
    
         <div
   key={m.id}
-  className={`bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative ${getBorderClass(m)}`}
+  className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative"
+style={{ borderLeftColor: getBorderColor(m) }}
 >
           
           {/* Badge Nouveau */}

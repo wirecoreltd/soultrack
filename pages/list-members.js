@@ -1085,7 +1085,7 @@ const canAddMember =
                     {filteredInactifs.map((m) => (
                       <div
                         key={m.id}
-                        className="flex flex-row items-center px-2 py-2 rounded-lg bg-gray-100/20 hover:bg-gray-100/40 transition duration-150 gap-2 border-l-4"
+                        className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
                         style={{ borderLeftColor: getBorderColor(m) }}
                       >
                         <div className="flex-[2] text-gray-300 font-semibold">{m.prenom} {m.nom}</div>
@@ -1103,7 +1103,7 @@ const canAddMember =
                             onClick={() =>
                               setPopupMember(popupMember?.id === m.id ? null : { ...m })
                             }
-                            className="text-gray-400 underline text-sm whitespace-nowrap"
+                            className="text-orange-500 underline text-sm whitespace-nowrap"
                           >
                             {popupMember?.id === m.id ? "Fermer détails" : "Détails"}
                           </button>

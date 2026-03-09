@@ -1079,7 +1079,7 @@ const canAddMember =
                 {/* Membres inactifs */}
                 {filteredInactifs?.length > 0 && (
                   <>
-                    <div className="px-2 py-1 font-semibold text-lg text-white">
+                    <div className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-gray-300 to-blue-500 bg-clip-text text-transparent">
                       Membres inactifs
                     </div>
                     {filteredInactifs.map((m) => (

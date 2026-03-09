@@ -507,16 +507,7 @@ const canAddMember =
     default:
       return "#9ca3af"; // gris par défaut
   }
-};
-  //--------------------
-  const getBorderColor = (m) => {
-    if (!m.etat_contact) return "#ccc";
-    const etat = m.etat_contact.trim().toLowerCase();
-    if (etat === "existant") return "#34A853";
-    if (etat === "nouveau") return "#34A85e";
-    if (etat === "inactif") return "#999999";
-    return "#ccc";
-  };
+};  
 
   const formatDate = (dateStr) => {
     try {

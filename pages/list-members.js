@@ -491,27 +491,21 @@ const canAddMember =
   };
 
   //---------------
-  const getBorderClass = (member) => {
-  const etat = (member?.etat_contact || "").toLowerCase();
+ const getBorderColor = (member) => {
+  const etat = (member?.etat_contact || "").toLowerCase().trim();
 
   switch (etat) {
     case "nouveau":
-      return "border-yellow-400";
+      return "#fb923c"; // orange
 
-    case "contacté":
-      return "border-blue-400";
+    case "existant":
+      return "#4ade80"; // vert
 
-    case "intéressé":
-      return "border-green-400";
-
-    case "pas intéressé":
-      return "border-red-400";
-
-    case "à rappeler":
-      return "border-orange-400";
+    case "inactif":
+      return "#9ca3af"; // gris
 
     default:
-      return "border-gray-300";
+      return "#9ca3af"; // gris par défaut
   }
 };
   //--------------------

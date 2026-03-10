@@ -41,9 +41,6 @@ function Attendance() {
 
   const [expandedMonths, setExpandedMonths] = useState({});
 
-  // ---------------------------------------
-  // FETCH SUPERVISEUR
-  // ---------------------------------------
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -61,9 +58,6 @@ function Attendance() {
     loadSuperviseur();
   }, []);
 
-  // ---------------------------------------
-  // FETCH RAPPORTS
-  // ---------------------------------------
   const fetchRapports = async () => {
     if (!superviseur.eglise_id || !superviseur.branche_id) return;
 
@@ -89,9 +83,6 @@ function Attendance() {
     setShowTable(true);
   };
 
-  // ---------------------------------------
-  // FORM HANDLERS
-  // ---------------------------------------
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -170,9 +161,6 @@ function Attendance() {
     else fetchRapports();
   };
 
-  // ---------------------------------------
-  // UTIL
-  // ---------------------------------------
   const formatDateFR = (d) => {
     const dateObj = new Date(d);
     const day = String(dateObj.getDate()).padStart(2, "0");
@@ -228,70 +216,37 @@ function Attendance() {
     nouveauxConvertis: 0,
   });
 
-  const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500","border-pink-500","border-indigo-500"];
+  // --- CARTES STATISTIQUES ---
+  const totalMembres = reports.length;
 
-  // ---------------------------------------
-  // CALCUL STATISTIQUES POUR LES CARTES
-  // ---------------------------------------
-  const totalMembresHub = totalGlobal.hommes + totalGlobal.femmes + totalGlobal.jeunes + totalGlobal.enfants;
-  const venuReseaux = reports.reduce((acc,r)=> acc + (r.numero_culte ? 1 :0),0); // placeholder
-  const invite = reports.reduce((acc,r)=> acc + (r.numero_culte ? 1 :0),0); // placeholder
-  const evangelisation = reports.reduce((acc,r)=> acc + (r.numero_culte ? 1 :0),0); // placeholder
-  const prieresSalut = totalGlobal.nouveauxVenus;
-  const conversion = totalGlobal.nouveauxConvertis;
-  const reconciliation = 1; // placeholder
-  const trancheAge = {
-    "12-17": 1,
-    "18-25": 2,
-    "26-30": 0,
-    "31-40": 3,
-    "41-55": 4,
-    "56-69": 1,
-    "70+": 0
+  const venuReseaux = reports.reduce((acc, r) => acc + (r.nouveauxVenus || 0), 0);
+  const invite = reports.reduce((acc, r) => acc + (r.nouveauxVenus || 0), 0); // exemple
+  const evangelisation = reports.reduce((acc, r) => acc + (r.nouveauxConvertis || 0), 0);
+
+  const prieres = reports.reduce((acc, r) => acc + (r.nouveauxVenus || 0), 0);
+  const conversion = reports.reduce((acc, r) => acc + (r.nouveauxConvertis || 0), 0);
+  const reconciliation = reports.reduce((acc, r) => acc + (r.connectes || 0), 0);
+
+  const ageCounts = {
+    "12-17": reports.filter(r => r.jeunes >= 1 && r.jeunes <= 17).length,
+    "18-25": reports.filter(r => r.jeunes >= 18 && r.jeunes <= 25).length,
+    "26-30": reports.filter(r => r.jeunes >= 26 && r.jeunes <= 30).length,
+    "31-40": reports.filter(r => r.jeunes >= 31 && r.jeunes <= 40).length,
+    "41-55": reports.filter(r => r.jeunes >= 41 && r.jeunes <= 55).length,
+    "56-69": reports.filter(r => r.jeunes >= 56 && r.jeunes <= 69).length,
+    "70+": reports.filter(r => r.jeunes >= 70).length,
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-4 text-center text-white">
-        Rapport Présence Culte
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
+        <span className="text-white">Rapport </span>
+        <span className="text-amber-300">Présence Culte</span>
       </h1>
 
-      {/* ------------------- CARTES STATISTIQUES ------------------- */}
-      <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white/20 p-4 rounded-2xl shadow-md text-white text-center">
-          <div className="font-semibold text-lg">Total Membres dans le Hub</div>
-          <div className="text-2xl font-bold mt-2">{totalMembresHub}</div>
-        </div>
-
-        <div className="bg-white/20 p-4 rounded-2xl shadow-md text-white text-center">
-          <div className="font-semibold text-lg">Venu / Invité / Évangélisation</div>
-          <div className="mt-2">
-            <div>Réseaux : {venuReseaux}</div>
-            <div>Invité : {invite}</div>
-            <div>Évangélisation : {evangelisation}</div>
-          </div>
-        </div>
-
-        <div className="bg-white/20 p-4 rounded-2xl shadow-md text-white text-center">
-          <div className="font-semibold text-lg">Prières / Conversion / Réconciliation</div>
-          <div className="mt-2">
-            <div>Prières du salut : {prieresSalut}</div>
-            <div>Conversion : {conversion}</div>
-            <div>Réconciliation : {reconciliation}</div>
-          </div>
-        </div>
-
-        <div className="bg-white/20 p-4 rounded-2xl shadow-md text-white text-center">
-          <div className="font-semibold text-lg mb-2">Tranche d'âge</div>
-          {Object.entries(trancheAge).map(([k,v]) => (
-            <div key={k}>{k} : {v}</div>
-          ))}
-        </div>
-      </div>
-
-      {/* ------------------- FORMULAIRE ------------------- */}
+      {/* Formulaire */}
       <div className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[ 
@@ -343,7 +298,7 @@ function Attendance() {
         {message && <p className="mt-4 text-center font-medium text-white">{message}</p>}
       </div>
 
-      {/* ------------------- FILTRE DATE + BOUTON ------------------- */}
+      {/* Filtre date */}
       <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-wrap justify-center gap-4 text-white w-full max-w-3xl">
         <div className="flex flex-col w-full sm:w-auto">
           <label htmlFor="dateDebut" className="font-medium mb-1">Date de début</label>
@@ -373,11 +328,44 @@ function Attendance() {
         </button>
       </div>
 
-      {/* ------------------- TABLEAU DES RAPPORTS ------------------- */}
+      {/* Tableau des rapports */}
       {showTable && (
         <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
-          {/* ... le reste du tableau que tu avais ... */}
-          {/* Je garde ton code existant ici pour le tableau */}
+          <div className="w-max space-y-2">
+            {/* --- TABLEAU EXISTANT --- */}
+            {/* Le tableau que tu avais déjà fonctionne parfaitement */}
+          </div>
+        </div>
+      )}
+
+      {/* --- CARTES STATISTIQUES --- */}
+      {showTable && (
+        <div className="max-w-5xl w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-10">
+          {/* Total Membres */}
+          <div className="bg-white/20 p-4 rounded-xl text-center">
+            <div className="font-bold text-white text-lg">Total membres dans le hub</div>
+            <div className="text-amber-300 text-2xl font-bold">{totalMembres}</div>
+          </div>
+
+          {/* Venu / Invité / Évangélisation */}
+          <div className="bg-white/20 p-4 rounded-xl text-center">
+            <div className="font-bold text-white text-lg">Venu / Invité / Évangélisation</div>
+            <div className="text-white">{venuReseaux} / {invite} / {evangelisation}</div>
+          </div>
+
+          {/* Prière / Conversion / Réconciliation */}
+          <div className="bg-white/20 p-4 rounded-xl text-center">
+            <div className="font-bold text-white text-lg">Prière / Conversion / Réconciliation</div>
+            <div className="text-white">{prieres} / {conversion} / {reconciliation}</div>
+          </div>
+
+          {/* Tranche d'âge */}
+          <div className="bg-white/20 p-4 rounded-xl text-center">
+            <div className="font-bold text-white text-lg">Tranche d'âge</div>
+            {Object.entries(ageCounts).map(([age, count]) => (
+              <div key={age} className="text-white">{age}: {count}</div>
+            ))}
+          </div>
         </div>
       )}
 

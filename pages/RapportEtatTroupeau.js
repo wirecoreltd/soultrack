@@ -6,61 +6,81 @@ import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 
-export default function RapportEtatTroupeauPage() {
+export default function RapportFormationPage() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFormation"]}>
-      <RapportNouveauVenu />
+      <RapportFormation />
     </ProtectedRoute>
   );
 }
 
-function RapportNouveauVenu() {
+function RapportFormation() {
+  const [formData, setFormData] = useState({
+    eglise_id: null,
+    branche_id: null,
+  });
+
+  const [filterDebut, setFilterDebut] = useState("");
+  const [filterFin, setFilterFin] = useState("");
   const [rapports, setRapports] = useState([]);
+  const [expandedMonths, setExpandedMonths] = useState({});
   const [showTable, setShowTable] = useState(false);
+
   const formRef = useRef(null);
 
-  // fetch les données depuis Supabase
+  /* ================= USER ================= */
   useEffect(() => {
-    const fetchRapports = async () => {
-      const { data } = await supabase
-        .from("membres_complets")
-        .select(`
-          id, nom, prenom, created_at, etat_contact, date_premiere_visite,
-          venu, conseiller_id, cellule_id, statut_suivis, suivi_commentaire_suivis
-        `)
-        .order("created_at", { ascending: false });
+    const fetchUser = async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return;
 
-      // fetch infos conseillers et cellules
-      const rapportsWithResponsable = await Promise.all(
-        (data || []).map(async (r) => {
-          let responsable = "-";
-          if (r.conseiller_id) {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("prenom, nom")
-              .eq("id", r.conseiller_id)
-              .single();
-            if (profile) responsable = `${profile.prenom} ${profile.nom}`;
-          }
-          if (r.cellule_id) {
-            const { data: cellule } = await supabase
-              .from("cellules")
-              .select("cellule, ville")
-              .eq("id", r.cellule_id)
-              .single();
-            if (cellule) responsable += ` - ${cellule.cellule}`;
-          }
-          return { ...r, responsable_suivi: responsable };
-        })
-      );
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", session.session.user.id)
+        .single();
 
-      setRapports(rapportsWithResponsable);
-      setShowTable(true);
+      if (profile) {
+        setFormData({
+          eglise_id: profile.eglise_id,
+          branche_id: profile.branche_id,
+        });
+      }
     };
-
-    fetchRapports();
+    fetchUser();
   }, []);
 
+  /* ================= FETCH ================= */
+  const fetchRapports = async () => {
+    if (!formData.eglise_id || !formData.branche_id) return;
+
+    let query = supabase
+      .from("membres_complets")
+      .select(`
+        id, nom, prenom, created_at, etat_contact,
+        date_premiere_visite, venu, conseiller_id, cellule_id,
+        statut_suivis, suivi_commentaire_suivis
+      `)
+      .eq("eglise_id", formData.eglise_id)
+      .eq("branche_id", formData.branche_id)
+      .eq("etat_contact", "nouveau")
+      .order("created_at", { ascending: false });
+
+    if (filterDebut) query = query.gte("created_at", filterDebut);
+    if (filterFin) query = query.lte("created_at", filterFin);
+
+    const { data, error } = await query;
+    if (error) {
+      console.error("Erreur fetchRapports:", error);
+      setRapports([]);
+      return;
+    }
+
+    setRapports(data || []);
+    setShowTable(true);
+  };
+
+  /* ================= UTIL ================= */
   const formatDateFR = (dateString) => {
     if (!dateString) return "";
     const d = new Date(dateString);
@@ -70,51 +90,94 @@ function RapportNouveauVenu() {
     return `${day}/${month}/${year}`;
   };
 
-  const statutMapping = {
-    1: "en attente",
-    2: "refus",
-    3: "intégré"
+  const groupByMonth = (rapports) => {
+    const map = {};
+    rapports.forEach((r) => {
+      const d = new Date(r.created_at);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(r);
+    });
+    return map;
   };
 
+  const toggleMonth = (monthKey) => {
+    setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
+  };
+
+  const groupedReports = Object.entries(groupByMonth(rapports)).sort((a, b) => {
+    const [yearA, monthA] = a[0].split("-").map(Number);
+    const [yearB, monthB] = b[0].split("-").map(Number);
+    return new Date(yearA, monthA) - new Date(yearB, monthB);
+  });
+
+  /* ================= RENDER ================= */
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        Rapport Nouveau-Venu
+
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
+        <span className="text-white">Rapport </span>
+        <span className="text-amber-300">Nouveaux Contacts</span>
       </h1>
 
+      {/* ================= FILTRES ================= */}
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+        <input
+          type="date"
+          value={filterDebut}
+          onChange={(e) => setFilterDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <input
+          type="date"
+          value={filterFin}
+          onChange={(e) => setFilterFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <button
+          onClick={fetchRapports}
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+        >
+          Générer
+        </button>
+      </div>
+
+      {/* ================= TABLEAU ================= */}
       {showTable && (
         <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
-          <table className="min-w-max text-white border border-white/20">
-            <thead>
-              <tr className="bg-white/10 text-left">
-                <th className="px-4 py-2 border">Nom</th>
-                <th className="px-4 py-2 border">Prénom</th>
-                <th className="px-4 py-2 border">Date d’arrivée</th>
-                <th className="px-4 py-2 border">État contact</th>
-                <th className="px-4 py-2 border">Envoyé vers suivi</th>
-                <th className="px-4 py-2 border">Venu par</th>
-                <th className="px-4 py-2 border">Responsable suivi</th>
-                <th className="px-4 py-2 border">Statut suivi</th>
-                <th className="px-4 py-2 border">Commentaire suivi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rapports.map((r) => (
-                <tr key={r.id} className="hover:bg-white/20 transition">
-                  <td className="px-4 py-2 border">{r.nom}</td>
-                  <td className="px-4 py-2 border">{r.prenom}</td>
-                  <td className="px-4 py-2 border">{formatDateFR(r.created_at)}</td>
-                  <td className="px-4 py-2 border">{r.etat_contact}</td>
-                  <td className="px-4 py-2 border">{formatDateFR(r.date_premiere_visite)}</td>
-                  <td className="px-4 py-2 border">{r.venu}</td>
-                  <td className="px-4 py-2 border">{r.responsable_suivi}</td>
-                  <td className="px-4 py-2 border">{statutMapping[r.statut_suivis]}</td>
-                  <td className="px-4 py-2 border">{r.suivi_commentaire_suivis || "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="w-max space-y-2">
+            {/* HEADER */}
+            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[150px]">Date d'arrivée</div>
+              <div className="min-w-[150px]">État contact</div>
+              <div className="min-w-[150px]">Envoyé vers suivi</div>
+              <div className="min-w-[200px]">Responsable suivi</div>
+            </div>
+
+            {groupedReports.map(([monthKey, monthRapports]) => {
+              const isExpanded = expandedMonths[monthKey] || false;
+
+              return (
+                <div key={monthKey} className="space-y-1">
+                  {monthRapports.map((r) => (
+                    <div
+                      key={r.id}
+                      className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition"
+                    >
+                      <div className="min-w-[150px] text-white">{formatDateFR(r.created_at)}</div>
+                      <div className="min-w-[150px] text-white">{r.etat_contact}</div>
+                      <div className="min-w-[150px] text-white">{formatDateFR(r.date_premiere_visite)}</div>
+                      <div className="min-w-[200px] text-white">
+                        {/* Ici tu peux récupérer le nom du conseiller et cellule si tu joins supabase */}
+                        {r.conseiller_id || r.cellule_id || "-"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

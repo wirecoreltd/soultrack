@@ -23,7 +23,6 @@ function RapportFormation() {
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
   const [rapports, setRapports] = useState([]);
-  const [expandedMonths, setExpandedMonths] = useState({});
   const [showTable, setShowTable] = useState(false);
 
   const formRef = useRef(null);
@@ -64,7 +63,7 @@ function RapportFormation() {
       .eq("eglise_id", formData.eglise_id)
       .eq("branche_id", formData.branche_id)
       .eq("etat_contact", "nouveau")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true });
 
     if (filterDebut) query = query.gte("created_at", filterDebut);
     if (filterFin) query = query.lte("created_at", filterFin);
@@ -89,27 +88,6 @@ function RapportFormation() {
     const year = d.getFullYear();
     return `${day}/${month}/${year}`;
   };
-
-  const groupByMonth = (rapports) => {
-    const map = {};
-    rapports.forEach((r) => {
-      const d = new Date(r.created_at);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (!map[key]) map[key] = [];
-      map[key].push(r);
-    });
-    return map;
-  };
-
-  const toggleMonth = (monthKey) => {
-    setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
-  };
-
-  const groupedReports = Object.entries(groupByMonth(rapports)).sort((a, b) => {
-    const [yearA, monthA] = a[0].split("-").map(Number);
-    const [yearB, monthB] = b[0].split("-").map(Number);
-    return new Date(yearA, monthA) - new Date(yearB, monthB);
-  });
 
   /* ================= RENDER ================= */
   return (
@@ -149,34 +127,36 @@ function RapportFormation() {
           <div className="w-max space-y-2">
             {/* HEADER */}
             <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[150px]">Date d'arrivée</div>
-              <div className="min-w-[150px]">État contact</div>
-              <div className="min-w-[150px]">Envoyé vers suivi</div>
+              <div className="min-w-[120px]">Nom</div>
+              <div className="min-w-[120px]">Prénom</div>
+              <div className="min-w-[120px]">Date d’arrivée</div>
+              <div className="min-w-[120px]">État contact</div>
+              <div className="min-w-[120px]">Envoyé vers suivi</div>
+              <div className="min-w-[120px]">Venu par</div>
               <div className="min-w-[200px]">Responsable suivi</div>
+              <div className="min-w-[120px]">Statut suivi</div>
+              <div className="min-w-[200px]">Commentaire suivi</div>
             </div>
 
-            {groupedReports.map(([monthKey, monthRapports]) => {
-              const isExpanded = expandedMonths[monthKey] || false;
-
-              return (
-                <div key={monthKey} className="space-y-1">
-                  {monthRapports.map((r) => (
-                    <div
-                      key={r.id}
-                      className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition"
-                    >
-                      <div className="min-w-[150px] text-white">{formatDateFR(r.created_at)}</div>
-                      <div className="min-w-[150px] text-white">{r.etat_contact}</div>
-                      <div className="min-w-[150px] text-white">{formatDateFR(r.date_premiere_visite)}</div>
-                      <div className="min-w-[200px] text-white">
-                        {/* Ici tu peux récupérer le nom du conseiller et cellule si tu joins supabase */}
-                        {r.conseiller_id || r.cellule_id || "-"}
-                      </div>
-                    </div>
-                  ))}
+            {rapports.map((r) => (
+              <div
+                key={r.id}
+                className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition"
+              >
+                <div className="min-w-[120px] text-white">{r.nom}</div>
+                <div className="min-w-[120px] text-white">{r.prenom}</div>
+                <div className="min-w-[120px] text-white">{formatDateFR(r.created_at)}</div>
+                <div className="min-w-[120px] text-white">{r.etat_contact}</div>
+                <div className="min-w-[120px] text-white">{formatDateFR(r.date_premiere_visite)}</div>
+                <div className="min-w-[120px] text-white">{r.venu}</div>
+                <div className="min-w-[200px] text-white">
+                  {/* Ici on peut récupérer le nom du conseiller et cellule via une jointure */}
+                  {r.conseiller_id || r.cellule_id || "-"}
                 </div>
-              );
-            })}
+                <div className="min-w-[120px] text-white">{r.statut_suivis}</div>
+                <div className="min-w-[200px] text-white">{r.suivi_commentaire_suivis || "-"}</div>
+              </div>
+            ))}
           </div>
         </div>
       )}

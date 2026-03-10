@@ -8,7 +8,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function MembresHubPage() {
   return (
-    <ProtectedRoute allowedRoles={["ResponsableIntegration"]}>
+    <ProtectedRoute allowedRoles={["Administrateur","ResponsableIntegration"]}>
       <MembresHub />
     </ProtectedRoute>
   );

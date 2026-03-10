@@ -8,14 +8,16 @@ import Footer from "../components/Footer";
 
 export default function MembresHubPageWrapper() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur"]}>
+    <ProtectedRoute allowedRoles={["Responsable"]}>
       <MembresHubPage />
     </ProtectedRoute>
   );
 }
 
 function MembresHubPage() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [dateDebut, setDateDebut] = useState("");
+  const [dateFin, setDateFin] = useState("");
   const [stats, setStats] = useState({
     totalMembres: 0,
     etatContact: { nouveau: 0, existant: 0 },
@@ -32,93 +34,120 @@ function MembresHubPage() {
     },
   });
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      setLoading(true);
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+  const fetchStats = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("branche_id")
-          .eq("id", user.id)
-          .single();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("branche_id")
+        .eq("id", user.id)
+        .single();
 
-        const brancheId = profile?.branche_id;
+      const brancheId = profile?.branche_id;
 
-        const { data: membres } = await supabase
-          .from("membres_complets")
-          .select("*")
-          .eq("branche_id", brancheId);
+      let query = supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("branche_id", brancheId);
 
-        if (!membres) return;
+      if (dateDebut) query = query.gte("created_at", dateDebut);
+      if (dateFin) query = query.lte("created_at", dateFin);
 
-        // État contact
-        const etatContact = {
-          nouveau: membres.filter(m => m.etat_contact === "nouveau").length,
-          existant: membres.filter(m => m.etat_contact !== "nouveau").length,
-        };
+      const { data: membres } = await query;
 
-        // Venu par réseaux / invité / évangélisation
-        const venu = {
-          reseaux: membres.filter(m => m.venu === "réseaux").length,
-          invite: membres.filter(m => m.venu === "invité").length,
-          evangelisation: membres.filter(m => m.venu === "evangélisation").length,
-        };
+      if (!membres) return;
 
-        // Prières / conversion / réconciliation
-        const priereConversion = {
-          priere: membres.filter(m => m.priere_salut === "Oui").length,
-          conversion: membres.filter(m => m.type_conversion === "Nouveau converti").length,
-          reconciliation: membres.filter(m => m.type_conversion === "Réconciliation").length,
-        };
+      // État contact
+      const etatContact = {
+        nouveau: membres.filter(m => m.etat_contact === "nouveau").length,
+        existant: membres.filter(m => m.etat_contact !== "nouveau").length,
+      };
 
-        // Tranche d’âge
-        const trancheAge = {
-          "12-17 ans": membres.filter(m => m.age === "12-17 ans").length,
-          "18-25 ans": membres.filter(m => m.age === "18-25 ans").length,
-          "26-30 ans": membres.filter(m => m.age === "26-30 ans").length,
-          "31-40 ans": membres.filter(m => m.age === "31-40 ans").length,
-          "41-55 ans": membres.filter(m => m.age === "41-55 ans").length,
-          "56-69 ans": membres.filter(m => m.age === "56-69 ans").length,
-          "70 ans et plus": membres.filter(m => m.age === "70 ans et plus").length,
-        };
+      // Venu par réseaux / invité / évangélisation
+      const venu = {
+        reseaux: membres.filter(m => m.venu === "réseaux").length,
+        invite: membres.filter(m => m.venu === "invité").length,
+        evangelisation: membres.filter(m => m.venu === "evangélisation").length,
+      };
 
-        setStats({
-          totalMembres: membres.length,
-          etatContact,
-          venu,
-          priereConversion,
-          trancheAge,
-        });
+      // Prières / conversion / réconciliation
+      const priereConversion = {
+        priere: membres.filter(m => m.priere_salut === "Oui").length,
+        conversion: membres.filter(m => m.type_conversion === "Nouveau converti").length,
+        reconciliation: membres.filter(m => m.type_conversion === "Réconciliation").length,
+      };
 
-      } catch (err) {
-        console.error("Erreur fetch stats hub:", err);
-      }
-      setLoading(false);
-    };
+      // Tranche d’âge
+      const trancheAge = {
+        "12-17 ans": membres.filter(m => m.age === "12-17 ans").length,
+        "18-25 ans": membres.filter(m => m.age === "18-25 ans").length,
+        "26-30 ans": membres.filter(m => m.age === "26-30 ans").length,
+        "31-40 ans": membres.filter(m => m.age === "31-40 ans").length,
+        "41-55 ans": membres.filter(m => m.age === "41-55 ans").length,
+        "56-69 ans": membres.filter(m => m.age === "56-69 ans").length,
+        "70 ans et plus": membres.filter(m => m.age === "70 ans et plus").length,
+      };
 
-    fetchStats();
-  }, []);
-
-  if (loading) return <p className="text-center mt-10 text-white">Chargement des statistiques...</p>;
+      setStats({
+        totalMembres: membres.length,
+        etatContact,
+        venu,
+        priereConversion,
+        trancheAge,
+      });
+    } catch (err) {
+      console.error("Erreur fetch stats hub:", err);
+    }
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">
       <HeaderPages />
-      <h1 className="text-2xl font-bold text-center mb-8">
+      <h1 className="text-2xl font-bold text-center mb-6">
         Membres <span className="text-amber-300">Hub</span>
       </h1>
 
-      {/* BOITE 1 : Total + état contact */}
+      {/* FILTRE DATE */}
+      <div className="flex flex-wrap gap-4 justify-center mb-8 bg-white/10 p-4 rounded-xl">
+        <div className="flex flex-col">
+          <label>Date début</label>
+          <input
+            type="date"
+            value={dateDebut}
+            onChange={(e) => setDateDebut(e.target.value)}
+            className="text-black px-2 py-1 rounded"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label>Date fin</label>
+          <input
+            type="date"
+            value={dateFin}
+            onChange={(e) => setDateFin(e.target.value)}
+            className="text-black px-2 py-1 rounded"
+          />
+        </div>
+        <button
+          onClick={fetchStats}
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition"
+        >
+          {loading ? "Générer..." : "Générer"}
+        </button>
+      </div>
+
+      {/* BOITES DE STATISTIQUES */}
+      {/* BOITE 1 */}
       <div className="mb-6 p-6 bg-white/10 rounded-xl border-l-4 border-green-400">
         <h2 className="text-lg font-bold mb-3">Total membres dans le hub</h2>
         <p className="text-xl font-bold">{stats.totalMembres}</p>
         <p>Nouveau: {stats.etatContact.nouveau} | Existant: {stats.etatContact.existant}</p>
       </div>
 
-      {/* BOITE 2 : Venu par */}
+      {/* BOITE 2 */}
       <div className="mb-6 p-6 bg-white/10 rounded-xl border-l-4 border-blue-400">
         <h2 className="text-lg font-bold mb-3">Venu par</h2>
         <p>Réseaux: {stats.venu.reseaux}</p>
@@ -126,7 +155,7 @@ function MembresHubPage() {
         <p>Évangélisation: {stats.venu.evangelisation}</p>
       </div>
 
-      {/* BOITE 3 : Prières / Conversion / Réconciliation */}
+      {/* BOITE 3 */}
       <div className="mb-6 p-6 bg-white/10 rounded-xl border-l-4 border-yellow-400">
         <h2 className="text-lg font-bold mb-3">Suivi spirituel</h2>
         <p>Prières du salut: {stats.priereConversion.priere}</p>
@@ -134,7 +163,7 @@ function MembresHubPage() {
         <p>Réconciliation: {stats.priereConversion.reconciliation}</p>
       </div>
 
-      {/* BOITE 4 : Tranche d’âge */}
+      {/* BOITE 4 */}
       <div className="mb-6 p-6 bg-white/10 rounded-xl border-l-4 border-purple-400">
         <h2 className="text-lg font-bold mb-3">Tranche d’âge</h2>
         <ul className="list-disc list-inside">

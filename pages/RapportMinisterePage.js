@@ -99,8 +99,14 @@ function RapportMinistere() {
         serviteursSet.add(s.membre_id); // déduplication
 
         if (!s.valeur) return;
-        if (!counts[s.valeur]) counts[s.valeur] = 0;
-        counts[s.valeur]++;
+
+        // 🔹 Séparer les ministères si plusieurs dans la même valeur
+        const ministeres = s.valeur.split(",").map((m) => m.trim());
+
+        ministeres.forEach((ministere) => {
+          if (!counts[ministere]) counts[ministere] = 0;
+          counts[ministere]++;
+        });
       });
 
       setTotalServiteurs(serviteursSet.size);
@@ -126,7 +132,7 @@ function RapportMinistere() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-            <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
         <span className="text-white">Rapport </span>
         <span className="text-amber-300">Ministère</span>
       </h1>

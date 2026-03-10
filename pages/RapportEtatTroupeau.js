@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
@@ -8,135 +8,117 @@ import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function RapportEtatTroupeauPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur","ResponsableSuivi"]}>
-      <RapportEtatTroupeau />
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFormation"]}>
+      <RapportNouveauVenu />
     </ProtectedRoute>
   );
 }
 
-function RapportEtatTroupeau() {
-  const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
-  const [membres, setMembres] = useState([]);
-  const [message, setMessage] = useState("");
+function RapportNouveauVenu() {
+  const [rapports, setRapports] = useState([]);
+  const [showTable, setShowTable] = useState(false);
+  const formRef = useRef(null);
 
-  const fetchMembres = async () => {
-    setMessage("⏳ Chargement...");
-    setMembres([]);
-
-    try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("eglise_id, branche_id")
-        .eq("id", session.session.user.id)
-        .single();
-
-      const { data, error } = await supabase
+  // fetch les données depuis Supabase
+  useEffect(() => {
+    const fetchRapports = async () => {
+      const { data } = await supabase
         .from("membres_complets")
-        .select("id, nom, prenom, sexe, date_premiere_visite")
-        .eq("eglise_id", profile.eglise_id)
-        .eq("branche_id", profile.branche_id)
-        .eq("etat_contact", "nouveau")
-        .gte("date_premiere_visite", dateDebut || "1900-01-01")
-        .lte("date_premiere_visite", dateFin || "2999-12-31")
-        .order("date_premiere_visite", { ascending: true });
+        .select(`
+          id, nom, prenom, created_at, etat_contact, date_premiere_visite,
+          venu, conseiller_id, cellule_id, statut_suivis, suivi_commentaire_suivis
+        `)
+        .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      // fetch infos conseillers et cellules
+      const rapportsWithResponsable = await Promise.all(
+        (data || []).map(async (r) => {
+          let responsable = "-";
+          if (r.conseiller_id) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("prenom, nom")
+              .eq("id", r.conseiller_id)
+              .single();
+            if (profile) responsable = `${profile.prenom} ${profile.nom}`;
+          }
+          if (r.cellule_id) {
+            const { data: cellule } = await supabase
+              .from("cellules")
+              .select("cellule, ville")
+              .eq("id", r.cellule_id)
+              .single();
+            if (cellule) responsable += ` - ${cellule.cellule}`;
+          }
+          return { ...r, responsable_suivi: responsable };
+        })
+      );
 
-      setMembres(data || []);
-      setMessage("");
-    } catch (err) {
-      console.error(err);
-      setMessage("❌ " + err.message);
-    }
+      setRapports(rapportsWithResponsable);
+      setShowTable(true);
+    };
+
+    fetchRapports();
+  }, []);
+
+  const formatDateFR = (dateString) => {
+    if (!dateString) return "";
+    const d = new Date(dateString);
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
-  const totalHommes = membres.filter(m => m.sexe?.toLowerCase() === "homme").length;
-  const totalFemmes = membres.filter(m => m.sexe?.toLowerCase() === "femme").length;
+  const statutMapping = {
+    1: "en attente",
+    2: "refus",
+    3: "intégré"
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-
-      <h1 className="text-2xl font-bold text-white mt-4 mb-6 text-center">
-        <span className="text-white">Rapport </span>
-        <span className="text-amber-300">État du Troupeau</span>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
+        Rapport Nouveau-Venu
       </h1>
 
-      {/* FILTRES */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <div className="flex flex-col">
-          <label className="text-white mb-1">Date de début</label>
-          <input
-            type="date"
-            value={dateDebut}
-            onChange={(e) => setDateDebut(e.target.value)}
-            className="input"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-white mb-1">Date de fin</label>
-          <input
-            type="date"
-            value={dateFin}
-            onChange={(e) => setDateFin(e.target.value)}
-            className="input"
-          />
-        </div>
-        <div className="flex items-end">
-          <button onClick={fetchMembres} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] text-white">
-            Générer
-          </button>
-        </div>
-      </div>
-
-      {message && <p className="text-white mb-4">{message}</p>}
-
-      {/* TABLEAU */}
-      {membres.length > 0 && (
-        <div className="w-full max-w-[700px] bg-white/10 rounded-2xl shadow-lg p-6 mb-8">
-          <div className="grid grid-cols-5 text-white font-bold border-b border-white/30 pb-2 mb-2 text-center">
-            <div className="text-left pl-2">Nom</div>
-            <div>Prénom</div>
-            <div>Sexe</div>
-            <div>Date arrivée</div>
-            <div>Total</div>
-          </div>
-
-          {membres.map((m) => (
-            <div key={m.id} className="grid grid-cols-5 text-white py-2 border-b border-white/10 text-center">
-              <div className="text-left pl-2">{m.nom}</div>
-              <div>{m.prenom || "-"}</div>
-              <div>{m.sexe || "-"}</div>
-              <div>{new Date(m.date_premiere_visite).toLocaleDateString()}</div>
-              <div>1</div>
-            </div>
-          ))}
-
-          <div className="grid grid-cols-5 text-white font-bold mt-4 text-center">
-            <div className="text-left pl-2">TOTAL</div>
-            <div>-</div>
-            <div>{totalHommes} Hommes</div>
-            <div>{totalFemmes} Femmes</div>
-            <div>{membres.length}</div>
-          </div>
+      {showTable && (
+        <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
+          <table className="min-w-max text-white border border-white/20">
+            <thead>
+              <tr className="bg-white/10 text-left">
+                <th className="px-4 py-2 border">Nom</th>
+                <th className="px-4 py-2 border">Prénom</th>
+                <th className="px-4 py-2 border">Date d’arrivée</th>
+                <th className="px-4 py-2 border">État contact</th>
+                <th className="px-4 py-2 border">Envoyé vers suivi</th>
+                <th className="px-4 py-2 border">Venu par</th>
+                <th className="px-4 py-2 border">Responsable suivi</th>
+                <th className="px-4 py-2 border">Statut suivi</th>
+                <th className="px-4 py-2 border">Commentaire suivi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rapports.map((r) => (
+                <tr key={r.id} className="hover:bg-white/20 transition">
+                  <td className="px-4 py-2 border">{r.nom}</td>
+                  <td className="px-4 py-2 border">{r.prenom}</td>
+                  <td className="px-4 py-2 border">{formatDateFR(r.created_at)}</td>
+                  <td className="px-4 py-2 border">{r.etat_contact}</td>
+                  <td className="px-4 py-2 border">{formatDateFR(r.date_premiere_visite)}</td>
+                  <td className="px-4 py-2 border">{r.venu}</td>
+                  <td className="px-4 py-2 border">{r.responsable_suivi}</td>
+                  <td className="px-4 py-2 border">{statutMapping[r.statut_suivis]}</td>
+                  <td className="px-4 py-2 border">{r.suivi_commentaire_suivis || "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
       <Footer />
-
-      <style jsx>{`
-        .input{
-          border:1px solid #ccc;
-          padding:10px;
-          border-radius:12px;
-          background:rgba(255,255,255,0.05);
-          color:white;
-        }
-      `}</style>
     </div>
   );
 }

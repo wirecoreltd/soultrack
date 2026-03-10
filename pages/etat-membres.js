@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
-import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function EtatMembresWrapper() {
   return (
@@ -15,232 +15,158 @@ export default function EtatMembresWrapper() {
 }
 
 function EtatMembresPage() {
-
-  const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
+  const [branchesTree, setBranchesTree] = useState([]);
+  const [allBranches, setAllBranches] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [rootId, setRootId] = useState(null);
+  const [expandedBranches, setExpandedBranches] = useState([]);
 
-  const [stats, setStats] = useState({
-    visiteurs: 0,
-    nouveauxContacts: 0,
-    envoyesSuivi: 0,
-    enAttente: 0,
-    conseillers: 0,
-    amesParConseiller: 0,
-    enCellule: 0,
-    envoyesCellule: 0,
-    integration: 0,
-    conversion: 0,
-    formation: 0,
-    ministere: 0,
-    sansConseiller: 0,
-    sansCellule: 0
-  });
-
-  const fetchStats = async () => {
-
-    setLoading(true);
-
-    let query = supabase
-      .from("membres_complets")
-      .select("*");
-
-    if (dateDebut) query = query.gte("created_at", dateDebut);
-    if (dateFin) query = query.lte("created_at", dateFin);
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error(error);
-      setLoading(false);
-      return;
-    }
-
-    const membres = data || [];
-
-    const visiteurs = membres.filter(
-      m => m.statut_initial === "visiteur"
-    ).length;
-
-    const nouveauxContacts = membres.filter(
-      m => m.etat_contact === "nouveau"
-    ).length;
-
-    const envoyesSuivi = membres.filter(
-      m => m.conseiller_id !== null
-    ).length;
-
-    const enAttente = membres.filter(
-      m => m.conseiller_id === null
-    ).length;
-
-    const conseillersSet = new Set(
-      membres
-        .filter(m => m.conseiller_id)
-        .map(m => m.conseiller_id)
+  const toggleExpand = (branchId) => {
+    setExpandedBranches(prev =>
+      prev.includes(branchId) ? prev.filter(id => id !== branchId) : [...prev, branchId]
     );
+  };
 
-    const conseillers = conseillersSet.size;
+  const fetchMembres = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("branche_id")
+        .eq("id", user.id)
+        .single();
+      
+      const rootIdValue = profileData.branche_id;
+      setRootId(rootIdValue);
 
-    const amesParConseiller =
-      conseillers > 0
-        ? (envoyesSuivi / conseillers).toFixed(1)
-        : 0;
+      // Récupérer toutes les branches descendantes
+      const { data: branchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
+      if (!branchesData?.length) {
+        setBranchesTree([]);
+        setAllBranches([]);
+        setLoading(false);
+        return;
+      }
 
-    const enCellule = membres.filter(
-      m => m.cellule_id !== null
-    ).length;
+      const branchIds = branchesData.map(b => b.id);
 
-    const envoyesCellule = membres.filter(
-      m => m.sent_to_cellule
-    ).length;
+      // Récupérer tous les membres de ces branches
+      const { data: membresData } = await supabase
+        .from("membres_complets")
+        .select("id, sexe, age, etat_contact, priere_salut, type_conversion, branche_id, cellule_id, ministry_id")
+        .in("branche_id", branchIds);
 
-    const integration = membres.filter(
-      m => m.integration_fini === "oui"
-    ).length;
+      // Construire stats par branche
+      const statsMap = {};
+      branchIds.forEach(id => {
+        statsMap[id] = {
+          visiteur: 0,
+          converti: 0,
+          integre: 0,
+          cellule: 0,
+          ministere: 0,
+          hommes: 0,
+          femmes: 0
+        };
+      });
 
-    const conversion = membres.filter(
-      m => m.type_conversion !== null
-    ).length;
+      membresData.forEach(m => {
+        const s = statsMap[m.branche_id];
+        if (!s) return;
 
-    const formation = membres.filter(
-      m => m.Formation !== null
-    ).length;
+        // Sexe
+        if (m.sexe === "Homme") s.hommes++;
+        if (m.sexe === "Femme") s.femmes++;
 
-    const ministere = membres.filter(
-      m => m.Ministere !== null
-    ).length;
+        // Parcours spirituel
+        if (m.etat_contact === "visiteur") s.visiteur++;
+        if (m.priere_salut === "Oui" && m.type_conversion === "Nouveau converti") s.converti++;
+        if (m.etat_contact === "integre") s.integre++;
+        if (m.cellule_id) s.cellule++;
+        if (m.ministry_id) s.ministere++;
+      });
 
-    const sansConseiller = membres.filter(
-      m => m.conseiller_id === null
-    ).length;
+      // Construire l'arbre des branches
+      const map = {};
+      branchesData.forEach(b => {
+        map[b.id] = { ...b, stats: statsMap[b.id], enfants: [] };
+      });
+      const tree = [];
+      Object.values(map).forEach(b => {
+        if (b.superviseur_id && map[b.superviseur_id]) map[b.superviseur_id].enfants.push(b);
+        else tree.push(b);
+      });
 
-    const sansCellule = membres.filter(
-      m => m.cellule_id === null
-    ).length;
+      setBranchesTree(tree);
+      setAllBranches(Object.values(map));
 
-    setStats({
-      visiteurs,
-      nouveauxContacts,
-      envoyesSuivi,
-      enAttente,
-      conseillers,
-      amesParConseiller,
-      enCellule,
-      envoyesCellule,
-      integration,
-      conversion,
-      formation,
-      ministere,
-      sansConseiller,
-      sansCellule
-    });
-
+    } catch (err) {
+      console.error("Erreur fetch membres:", err);
+      setBranchesTree([]);
+      setAllBranches([]);
+    }
     setLoading(false);
   };
 
-  const Card = ({ title, value }) => (
-    <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl text-center shadow-lg">
-      <div className="text-sm uppercase opacity-80">{title}</div>
-      <div className="text-3xl font-bold mt-2 text-amber-300">{value}</div>
-    </div>
-  );
+  useEffect(() => { fetchMembres(); }, []);
+
+  const renderBranch = (branch, level = 0) => {
+    const isExpanded = expandedBranches.includes(branch.id);
+
+    // Totaux généraux si superviseur collapsed
+    const totalStats = branch.enfants.length > 0 && !isExpanded
+      ? branch.enfants.reduce((acc, child) => {
+          Object.keys(acc).forEach(k => acc[k] += child.stats[k] || 0);
+          return acc;
+        }, { ...branch.stats })
+      : branch.stats;
+
+    return (
+      <div key={branch.id} className="mt-6">
+        <div className="flex items-center mb-2">
+          {level >= 1 && branch.enfants.length > 0 && (
+            <button onClick={() => toggleExpand(branch.id)} className="mr-2 text-xl">
+              {isExpanded ? "➖" : "➕"}
+            </button>
+          )}
+          <span className={`text-xl font-semibold ${branch.enfants.length > 0 ? "text-amber-300" : "text-white"}`}>
+            {branch.nom}
+          </span>
+          {branch.enfants.length > 0 && !isExpanded && (
+            <span className="text-sm text-amber-300 ml-2">• Total général</span>
+          )}
+        </div>
+
+        <div className="flex gap-4 flex-wrap">
+          <div className="bg-white/10 p-3 rounded-xl border-l-4 border-blue-400">
+            <p>Visiteur: {totalStats.visiteur}</p>
+            <p>Converti: {totalStats.converti}</p>
+            <p>Intégré: {totalStats.integre}</p>
+            <p>Cellule: {totalStats.cellule}</p>
+            <p>Ministère: {totalStats.ministere}</p>
+            <p>Hommes: {totalStats.hommes}</p>
+            <p>Femmes: {totalStats.femmes}</p>
+          </div>
+        </div>
+
+        {branch.enfants.map(child => (level === 0 || isExpanded) ? renderBranch(child, level + 1) : null)}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">
-
       <HeaderPages />
-
-      <h1 className="text-2xl font-bold text-center mb-10">
-        Rapport <span className="text-amber-300">État des Membres</span>
+      <h1 className="text-2xl font-bold text-center mb-8">
+        État des <span className="text-amber-300">Membres</span>
       </h1>
-
-      {/* FILTRES */}
-
-      <div className="flex justify-center mb-10">
-        <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl flex gap-6 flex-wrap items-end">
-
-          <div className="flex flex-col">
-            <label className="text-sm mb-1">Date début</label>
-            <input
-              type="date"
-              value={dateDebut}
-              onChange={(e) => setDateDebut(e.target.value)}
-              className="px-3 py-2 rounded-lg text-black"
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="text-sm mb-1">Date fin</label>
-            <input
-              type="date"
-              value={dateFin}
-              onChange={(e) => setDateFin(e.target.value)}
-              className="px-3 py-2 rounded-lg text-black"
-            />
-          </div>
-
-          <button
-            onClick={fetchStats}
-            className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-          >
-            {loading ? "Générer..." : "Générer"}
-          </button>
-
-        </div>
-      </div>
-
-      {/* VISITEURS */}
-
-      <h2 className="text-xl mb-4 font-semibold">👥 Visiteurs</h2>
-
-      <div className="grid md:grid-cols-3 gap-6 mb-10">
-        <Card title="Visiteurs reçus" value={stats.visiteurs} />
-        <Card title="Nouveaux contacts" value={stats.nouveauxContacts} />
-      </div>
-
-      {/* SUIVI */}
-
-      <h2 className="text-xl mb-4 font-semibold">🤝 Suivi</h2>
-
-      <div className="grid md:grid-cols-4 gap-6 mb-10">
-        <Card title="Envoyés en suivi" value={stats.envoyesSuivi} />
-        <Card title="En attente" value={stats.enAttente} />
-        <Card title="Conseillers actifs" value={stats.conseillers} />
-        <Card title="Âmes / conseiller" value={stats.amesParConseiller} />
-      </div>
-
-      {/* INTÉGRATION */}
-
-      <h2 className="text-xl mb-4 font-semibold">🏠 Intégration</h2>
-
-      <div className="grid md:grid-cols-3 gap-6 mb-10">
-        <Card title="En cellule" value={stats.enCellule} />
-        <Card title="Envoyés cellule" value={stats.envoyesCellule} />
-        <Card title="Intégration terminée" value={stats.integration} />
-      </div>
-
-      {/* CROISSANCE */}
-
-      <h2 className="text-xl mb-4 font-semibold">🌱 Croissance</h2>
-
-      <div className="grid md:grid-cols-3 gap-6 mb-10">
-        <Card title="Conversions" value={stats.conversion} />
-        <Card title="Formation" value={stats.formation} />
-        <Card title="Ministère" value={stats.ministere} />
-      </div>
-
-      {/* BREBIS À SURVEILLER */}
-
-      <h2 className="text-xl mb-4 font-semibold">⚠️ Brebis à surveiller</h2>
-
-      <div className="grid md:grid-cols-2 gap-6 mb-16">
-        <Card title="Sans conseiller" value={stats.sansConseiller} />
-        <Card title="Sans cellule" value={stats.sansCellule} />
-      </div>
-
+      {loading ? (
+        <p className="text-center mt-10">Chargement des membres...</p>
+      ) : (
+        branchesTree.map(branch => renderBranch(branch))
+      )}
       <Footer />
-
     </div>
   );
 }

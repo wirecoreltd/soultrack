@@ -8,7 +8,7 @@ import Footer from "../components/Footer";
 
 export default function MembresHubPageWrapper() {
   return (
-    <ProtectedRoute allowedRoles={["Responsable"]}>
+    <ProtectedRoute allowedRoles={["Administrateur"]}>
       <MembresHubPage />
     </ProtectedRoute>
   );

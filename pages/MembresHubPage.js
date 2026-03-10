@@ -2,186 +2,135 @@
 
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
-import HeaderPages from "../components/HeaderPages";
-import ProtectedRoute from "../components/ProtectedRoute";
-import Footer from "../components/Footer";
 
-export default function MembersHubWrapper() {
-  return (
-    <ProtectedRoute allowedRoles={["Administrateur"]}>
-      <MembersHub />
-    </ProtectedRoute>
-  );
-}
-
-function MembersHub() {
-  const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
-  const [branchesTree, setBranchesTree] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [allBranches, setAllBranches] = useState([]);
-  const [rootId, setRootId] = useState(null);
-  const [expandedBranches, setExpandedBranches] = useState([]);
-
-  const toggleExpand = (branchId) => {
-    setExpandedBranches(prev => 
-      prev.includes(branchId) ? prev.filter(id => id !== branchId) : [...prev, branchId]
-    );
-  };
-
-  const fetchStats = async () => {
-    setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: profileData } = await supabase.from("profiles").select("branche_id").eq("id", user.id).single();
-      const rootIdValue = profileData.branche_id;
-      setRootId(rootIdValue);
-
-      const { data: branches } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
-      if (!branches?.length) {
-        setBranchesTree([]);
-        setAllBranches([]);
-        setLoading(false);
-        return;
-      }
-
-      const branchIds = branches.map(b => b.id);
-
-      // ===== Membres du hub =====
-      let membersQuery = supabase.from("membres_complets").select("id, sexe, age, venu, priere_salut, type_conversion, reconciliation, created_at").in("branche_id", branchIds);
-      if (dateDebut) membersQuery = membersQuery.gte("created_at", dateDebut);
-      if (dateFin) membersQuery = membersQuery.lte("created_at", dateFin);
-      const { data: membersData } = await membersQuery;
-
-      // ===== Évangélisation =====
-      let evangeQuery = supabase.from("rapport_evangelisation").select("branche_id, nouveau_converti, reconciliation").in("branche_id", branchIds);
-      if (dateDebut) evangeQuery = evangeQuery.gte("date", dateDebut);
-      if (dateFin) evangeQuery = evangeQuery.lte("date", dateFin);
-      const { data: evangeData } = await evangeQuery;
-
-      // ===== Stats par branche =====
-      const statsMap = {};
-      branchIds.forEach(id => {
-        statsMap[id] = {
-          total: 0,
-          hommes: 0,
-          femmes: 0,
-          jeunes: 0,
-          enfants: 0,
-          reseau: 0,
-          invite: 0,
-          evang: 0,
-          priere_salut: 0,
-          conversion: 0,
-          reconciliation: 0
-        };
-      });
-
-      membersData.forEach(m => {
-        const s = statsMap[m.branche_id];
-        s.total++;
-        if (m.sexe === "Homme") s.hommes++;
-        if (m.sexe === "Femme") s.femmes++;
-        if (["12-17 ans", "18-25 ans"].includes(m.age)) s.jeunes++;
-        if (["12-17 ans"].includes(m.age)) s.enfants++;
-
-        if (m.venu === "réseaux") s.reseau++;
-        if (m.venu === "invité") s.invite++;
-        if (m.venu === "evangélisation") s.evang++;
-        if (m.priere_salut === "Oui") s.priere_salut++;
-        if (m.type_conversion === "Nouveau converti") s.conversion++;
-        if (m.type_conversion === "Réconciliation") s.reconciliation++;
-      });
-
-      evangeData?.forEach(e => {
-        const s = statsMap[e.branche_id];
-        s.conversion += e.nouveau_converti || 0;
-        s.reconciliation += e.reconciliation || 0;
-      });
-
-      // ===== Construire arbre =====
-      const map = {};
-      branches.forEach(b => map[b.id] = { ...b, stats: statsMap[b.id], enfants: [] });
-      const tree = [];
-      Object.values(map).forEach(b => {
-        if (b.superviseur_id && map[b.superviseur_id]) map[b.superviseur_id].enfants.push(b);
-        else tree.push(b);
-      });
-
-      setBranchesTree(tree);
-      setAllBranches(Object.values(map));
-
-    } catch (err) {
-      console.error("Erreur fetch Members Hub:", err);
-      setBranchesTree([]);
-      setAllBranches([]);
+export default function MembresHubPage() {
+  const [loading, setLoading] = useState(true);
+  const [membresData, setMembresData] = useState([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    venuParReseaux: 0,
+    invite: 0,
+    evangelisation: 0,
+    priereSalut: 0,
+    conversion: 0,
+    reconciliation: 0,
+    trancheAge: {
+      "12-17": 0,
+      "18-25": 0,
+      "26-30": 0,
+      "31-40": 0,
+      "41-55": 0,
+      "56-69": 0,
+      "70+": 0
     }
-    setLoading(false);
-  };
+  });
 
-  const renderBranch = (branch, level = 0) => {
-    const isExpanded = expandedBranches.includes(branch.id);
-    return (
-      <div key={branch.id} className="mt-6">
-        <div className="flex items-center mb-2">
-          {branch.enfants.length > 0 && (
-            <button onClick={() => toggleExpand(branch.id)} className="mr-2 text-xl">
-              {isExpanded ? "➖" : "➕"}
-            </button>
-          )}
-          <span className={`text-xl font-semibold ${branch.enfants.length > 0 ? "text-amber-300" : "text-white"}`}>{branch.nom}</span>
-        </div>
+  useEffect(() => {
+    const fetchMembres = async () => {
+      setLoading(true);
+      try {
+        const { data: sessionData } = await supabase.auth.getUser();
+        const userId = sessionData.user.id;
 
-        <div className="overflow-x-auto">
-          <div className="w-max flex gap-4 border border-white/30 p-2 rounded-xl bg-white/5">
-            <div className="min-w-[150px] font-semibold">Statistique</div>
-            <div className="min-w-[80px] text-center">Total</div>
-            <div className="min-w-[80px] text-center">Hommes</div>
-            <div className="min-w-[80px] text-center">Femmes</div>
-            <div className="min-w-[80px] text-center">Jeunes</div>
-            <div className="min-w-[80px] text-center">Enfants</div>
-            <div className="min-w-[80px] text-center">Réseau</div>
-            <div className="min-w-[80px] text-center">Invité</div>
-            <div className="min-w-[80px] text-center">Évangélisation</div>
-            <div className="min-w-[80px] text-center">Prière</div>
-            <div className="min-w-[80px] text-center">Conversion</div>
-            <div className="min-w-[80px] text-center">Réconciliation</div>
-          </div>
+        // Récupère le branche_id du user
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("branche_id")
+          .eq("id", userId)
+          .single();
 
-          <div className="w-max flex gap-4 border border-white/30 p-2 rounded-xl bg-white/10 mt-1">
-            <div className="min-w-[150px] font-semibold">Hub {branch.nom}</div>
-            <div className="min-w-[80px] text-center">{branch.stats.total}</div>
-            <div className="min-w-[80px] text-center">{branch.stats.hommes}</div>
-            <div className="min-w-[80px] text-center">{branch.stats.femmes}</div>
-            <div className="min-w-[80px] text-center">{branch.stats.jeunes}</div>
-            <div className="min-w-[80px] text-center">{branch.stats.enfants}</div>
-            <div className="min-w-[80px] text-center">{branch.stats.reseau}</div>
-            <div className="min-w-[80px] text-center">{branch.stats.invite}</div>
-            <div className="min-w-[80px] text-center">{branch.stats.evang}</div>
-            <div className="min-w-[80px] text-center">{branch.stats.priere_salut}</div>
-            <div className="min-w-[80px] text-center">{branch.stats.conversion}</div>
-            <div className="min-w-[80px] text-center">{branch.stats.reconciliation}</div>
-          </div>
-        </div>
+        if (!profile?.branche_id) {
+          console.warn("Aucune branche trouvée pour l'utilisateur");
+          setLoading(false);
+          return;
+        }
 
-        {branch.enfants.map(child => isExpanded ? renderBranch(child, level + 1) : null)}
-      </div>
-    );
-  };
+        const brancheId = profile.branche_id;
+
+        // Récupère tous les membres de la branche
+        const { data: membres, error } = await supabase
+          .from("membres_complets")
+          .select("*")
+          .eq("branche_id", brancheId);
+
+        if (error) throw error;
+
+        console.log("Membres récupérés :", membres);
+        setMembresData(membres);
+
+        // Calcul des stats
+        const newStats = { ...stats };
+        newStats.total = membres.length;
+
+        membres.forEach((m) => {
+          // Venu par réseaux
+          if (m.venu?.toLowerCase() === "réseaux") newStats.venuParReseaux++;
+
+          // Invité
+          if (m.venu?.toLowerCase() === "invité") newStats.invite++;
+
+          // Évangélisation
+          if (m.venu?.toLowerCase() === "evangélisation") newStats.evangelisation++;
+
+          // Prières du salut
+          if (m.priere_salut?.toLowerCase() === "oui") {
+            newStats.priereSalut++;
+
+            // Conversion
+            if (m.type_conversion?.toLowerCase() === "nouveau converti") newStats.conversion++;
+            if (m.type_conversion?.toLowerCase() === "réconciliation") newStats.reconciliation++;
+          }
+
+          // Tranche d'âge
+          if (m.age) {
+            switch (m.age) {
+              case "12-17 ans": newStats.trancheAge["12-17"]++; break;
+              case "18-25 ans": newStats.trancheAge["18-25"]++; break;
+              case "26-30 ans": newStats.trancheAge["26-30"]++; break;
+              case "31-40 ans": newStats.trancheAge["31-40"]++; break;
+              case "41-55 ans": newStats.trancheAge["41-55"]++; break;
+              case "56-69 ans": newStats.trancheAge["56-69"]++; break;
+              case "70 ans et plus": newStats.trancheAge["70+"]++; break;
+              default: break;
+            }
+          }
+        });
+
+        console.log("Stats calculées :", newStats);
+        setStats(newStats);
+
+      } catch (err) {
+        console.error("Erreur fetch MembresHub :", err);
+      }
+      setLoading(false);
+    };
+
+    fetchMembres();
+  }, []);
+
+  if (loading) return <p className="text-white text-center mt-10">Chargement...</p>;
 
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">
-      <HeaderPages />
-      <h1 className="text-2xl font-bold text-center mb-6">Members Hub</h1>
+      <h1 className="text-2xl font-bold text-center mb-6">Membres Hub - Statistiques</h1>
 
-      <div className="flex justify-center mb-6 gap-4">
-        <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} className="px-3 py-2 rounded-lg text-black" />
-        <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} className="px-3 py-2 rounded-lg text-black" />
-        <button onClick={fetchStats} className="bg-[#2a2f85] px-4 py-2 rounded-xl hover:bg-[#1f2366] transition">{loading ? "Chargement..." : "Générer"}</button>
+      <div className="bg-white/10 rounded-xl p-4 max-w-2xl mx-auto">
+        <p>Total membres dans le hub : <strong>{stats.total}</strong></p>
+        <p>Venu par réseaux : <strong>{stats.venuParReseaux}</strong></p>
+        <p>Invité : <strong>{stats.invite}</strong></p>
+        <p>Évangélisation : <strong>{stats.evangelisation}</strong></p>
+        <p>Prières du salut : <strong>{stats.priereSalut}</strong></p>
+        <p>Conversion : <strong>{stats.conversion}</strong></p>
+        <p>Réconciliation : <strong>{stats.reconciliation}</strong></p>
+        <div className="mt-2">
+          <p>Tranche d'âge :</p>
+          <ul className="list-disc list-inside">
+            {Object.entries(stats.trancheAge).map(([age, count]) => (
+              <li key={age}>{age} : {count}</li>
+            ))}
+          </ul>
+        </div>
       </div>
-
-      {branchesTree.map(branch => renderBranch(branch))}
-      <Footer />
     </div>
   );
 }

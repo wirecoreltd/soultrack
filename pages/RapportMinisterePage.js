@@ -62,7 +62,7 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 1️⃣ Total membres (tous, pas filtré par date)
+      // 🔹 1️⃣ Total membres existants
       const { data: membresData, error: membresError } = await supabase
         .from("membres_complets")
         .select("id, etat_contact")
@@ -76,10 +76,10 @@ function RapportMinistere() {
       ).length;
       setTotalMembres(totalMembresLocal);
 
-      // 🔹 2️⃣ Récupérer stats_ministere_besoin pour la période
+      // 🔹 2️⃣ Récupérer stats_ministere_besoin de type "ministere"
       let queryStats = supabase
         .from("stats_ministere_besoin")
-        .select("membre_id, valeur, date_action")
+        .select("membre_id, valeur, type, date_action")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId)
         .eq("type", "ministere");
@@ -90,22 +90,21 @@ function RapportMinistere() {
       const { data: statsData, error: statsError } = await queryStats;
       if (statsError) throw statsError;
 
-      // 🔹 3️⃣ Total serviteurs = membre_id distinct
+      // 🔹 3️⃣ Comptage serviteurs
       const serviteursSet = new Set();
       const counts = {}; // par ministère
 
       statsData.forEach((s) => {
         if (!s.membre_id) return;
-        serviteursSet.add(s.membre_id); // déduplication
+        serviteursSet.add(s.membre_id); // déduplication globale
 
         if (!s.valeur) return;
 
-        // 🔹 Séparer les ministères si plusieurs dans la même valeur
-        const ministeres = s.valeur.split(",").map((m) => m.trim());
-
-        ministeres.forEach((ministere) => {
-          if (!counts[ministere]) counts[ministere] = 0;
-          counts[ministere]++;
+        // Gérer les ministères multiples séparés par virgules
+        s.valeur.split(",").forEach((ministere) => {
+          const m = ministere.trim();
+          if (!counts[m]) counts[m] = 0;
+          counts[m]++;
         });
       });
 
@@ -153,7 +152,10 @@ function RapportMinistere() {
         />
         <button
           onClick={fetchRapport}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+          disabled={!egliseId || !brancheId || loading}
+          className={`bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] ${
+            !egliseId || !brancheId || loading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           Générer
         </button>
@@ -209,6 +211,12 @@ function RapportMinistere() {
           ))}
         </div>
       </div>
+
+      {(!egliseId || !brancheId) && (
+        <p className="text-white text-center mt-2">
+          ⏳ Chargement des informations utilisateur...
+        </p>
+      )}
 
       {message && <p className="text-white text-center">{message}</p>}
 

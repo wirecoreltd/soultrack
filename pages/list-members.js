@@ -808,7 +808,7 @@ const canAddMember =
                 <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                 <p>🎗️ Civilité : {m.sexe || ""}</p>
                 <p>⏳ Tranche d'age : {m.age || ""}</p>    
-                <p>💧 Baptême d’Eau : {m.bapteme_eau === "oui" ? "Oui" : "Non"}</p>
+                <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>
                   <label className="flex items-center gap-2 mt-1">
                     <input
                       type="checkbox"

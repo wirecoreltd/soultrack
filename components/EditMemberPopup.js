@@ -166,6 +166,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
       is_whatsapp: !!formData.is_whatsapp,
       Formation: formData.Formation || null,
       Soin_Pastoral: formData.Soin_Pastoral || null,
+      veut_se_faire_baptiser: formData.veut_se_faire_baptiser || null,      
       Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
       Ministere: formData.star ? JSON.stringify(finalMinistere) : null,
     };
@@ -354,20 +355,47 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
             </select>
           </div>
 
-            {/* Bapteme de d'eau */}
-          <div className="flex flex-col">
-            <label className="font-medium">Baptême d'eau</label>
-            <select
-              name="bapteme_eau"
-              value={formData.bapteme_eau ?? ""}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
-            </select>
-          </div>
+            {/* Bapteme d'eau */}
+<div className="flex flex-col">
+  <label className="font-medium">Baptême d'eau</label>
+  <select
+    name="bapteme_eau"
+    value={formData.bapteme_eau ?? ""}
+    onChange={(e) => {
+      const value = e.target.value;
+      setFormData(prev => ({
+        ...prev,
+        bapteme_eau: value,
+        // reset veut_se_faire_baptiser si on met Oui
+        veut_se_faire_baptiser: value === "oui" ? "non" : prev.veut_se_faire_baptiser
+      }));
+    }}
+    className="input"
+  >
+    <option value="">-- Sélectionner --</option>
+    <option value="oui">Oui</option>
+    <option value="non">Non</option>
+  </select>
+</div>
+
+{/* Veut se faire baptiser – s'affiche seulement si bapteme_eau = "non" */}
+{formData.bapteme_eau === "non" && (
+  <div className="flex items-center gap-2 mt-2">
+    <input
+      type="checkbox"
+      name="veut_se_faire_baptiser"
+      checked={formData.veut_se_faire_baptiser === "oui"}
+      onChange={(e) =>
+        setFormData(prev => ({
+          ...prev,
+          veut_se_faire_baptiser: e.target.checked ? "oui" : "non"
+        }))
+      }
+      className="accent-[#25297e]"
+    />
+    <span>💧 Veut se faire baptiser</span>
+  </div>
+)}
 
           {/* Bapteme de feu */}
           <div className="flex flex-col">

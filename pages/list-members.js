@@ -808,7 +808,10 @@ const canAddMember =
                 <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                 <p>🎗️ Civilité : {m.sexe || ""}</p>
                 <p>⏳ Tranche d'age : {m.age || ""}</p>    
-                <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>
+                <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>               
+                {m.bapteme_eau === "oui" && (
+                  <p>💦 Veut se faire baptiser : {m.veut_se_faire_baptiser || "non"}</p>
+                )}    
                 <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
                 <p>✒️ Formation : {m.Formation || ""}</p>
                 <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>

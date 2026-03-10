@@ -2,135 +2,143 @@
 
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
+import HeaderPages from "../components/HeaderPages";
+import ProtectedRoute from "../components/ProtectedRoute";
+import Footer from "../components/Footer";
 
-export default function MembresHubPage() {
+export default function MembresHubPageWrapper() {
+  return (
+    <ProtectedRoute allowedRoles={["Responsable"]}>
+      <MembresHubPage />
+    </ProtectedRoute>
+  );
+}
+
+function MembresHubPage() {
   const [loading, setLoading] = useState(true);
-  const [membresData, setMembresData] = useState([]);
   const [stats, setStats] = useState({
-    total: 0,
-    venuParReseaux: 0,
+    totalMembres: 0,
+    venuReseaux: 0,
     invite: 0,
     evangelisation: 0,
     priereSalut: 0,
     conversion: 0,
     reconciliation: 0,
     trancheAge: {
-      "12-17": 0,
-      "18-25": 0,
-      "26-30": 0,
-      "31-40": 0,
-      "41-55": 0,
-      "56-69": 0,
-      "70+": 0
-    }
+      "12-17 ans": 0,
+      "18-25 ans": 0,
+      "26-30 ans": 0,
+      "31-40 ans": 0,
+      "41-55 ans": 0,
+      "56-69 ans": 0,
+      "70 ans et plus": 0,
+    },
   });
 
   useEffect(() => {
-    const fetchMembres = async () => {
+    const fetchStats = async () => {
       setLoading(true);
       try {
-        const { data: sessionData } = await supabase.auth.getUser();
-        const userId = sessionData.user.id;
+        // Récupérer l'utilisateur connecté
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-        // Récupère le branche_id du user
+        // Récupérer les membres du hub de cet utilisateur
         const { data: profile } = await supabase
           .from("profiles")
           .select("branche_id")
-          .eq("id", userId)
+          .eq("id", user.id)
           .single();
 
-        if (!profile?.branche_id) {
-          console.warn("Aucune branche trouvée pour l'utilisateur");
-          setLoading(false);
-          return;
-        }
+        const brancheId = profile?.branche_id;
 
-        const brancheId = profile.branche_id;
-
-        // Récupère tous les membres de la branche
-        const { data: membres, error } = await supabase
+        const { data: membres } = await supabase
           .from("membres_complets")
           .select("*")
           .eq("branche_id", brancheId);
 
-        if (error) throw error;
+        if (!membres) return;
 
-        console.log("Membres récupérés :", membres);
-        setMembresData(membres);
+        // Calculer les stats
+        const newStats = {
+          totalMembres: membres.length,
+          venuReseaux: membres.filter(m => m.venu === "réseaux").length,
+          invite: membres.filter(m => m.venu === "invité").length,
+          evangelisation: membres.filter(m => m.venu === "evangélisation").length,
+          priereSalut: membres.filter(m => m.priere_salut === "Oui").length,
+          conversion: membres.filter(m => m.type_conversion === "Nouveau converti").length,
+          reconciliation: membres.filter(m => m.type_conversion === "Réconciliation").length,
+          trancheAge: {
+            "12-17 ans": membres.filter(m => m.age === "12-17 ans").length,
+            "18-25 ans": membres.filter(m => m.age === "18-25 ans").length,
+            "26-30 ans": membres.filter(m => m.age === "26-30 ans").length,
+            "31-40 ans": membres.filter(m => m.age === "31-40 ans").length,
+            "41-55 ans": membres.filter(m => m.age === "41-55 ans").length,
+            "56-69 ans": membres.filter(m => m.age === "56-69 ans").length,
+            "70 ans et plus": membres.filter(m => m.age === "70 ans et plus").length,
+          },
+        };
 
-        // Calcul des stats
-        const newStats = { ...stats };
-        newStats.total = membres.length;
-
-        membres.forEach((m) => {
-          // Venu par réseaux
-          if (m.venu?.toLowerCase() === "réseaux") newStats.venuParReseaux++;
-
-          // Invité
-          if (m.venu?.toLowerCase() === "invité") newStats.invite++;
-
-          // Évangélisation
-          if (m.venu?.toLowerCase() === "evangélisation") newStats.evangelisation++;
-
-          // Prières du salut
-          if (m.priere_salut?.toLowerCase() === "oui") {
-            newStats.priereSalut++;
-
-            // Conversion
-            if (m.type_conversion?.toLowerCase() === "nouveau converti") newStats.conversion++;
-            if (m.type_conversion?.toLowerCase() === "réconciliation") newStats.reconciliation++;
-          }
-
-          // Tranche d'âge
-          if (m.age) {
-            switch (m.age) {
-              case "12-17 ans": newStats.trancheAge["12-17"]++; break;
-              case "18-25 ans": newStats.trancheAge["18-25"]++; break;
-              case "26-30 ans": newStats.trancheAge["26-30"]++; break;
-              case "31-40 ans": newStats.trancheAge["31-40"]++; break;
-              case "41-55 ans": newStats.trancheAge["41-55"]++; break;
-              case "56-69 ans": newStats.trancheAge["56-69"]++; break;
-              case "70 ans et plus": newStats.trancheAge["70+"]++; break;
-              default: break;
-            }
-          }
-        });
-
-        console.log("Stats calculées :", newStats);
         setStats(newStats);
-
       } catch (err) {
-        console.error("Erreur fetch MembresHub :", err);
+        console.error("Erreur fetch stats hub:", err);
       }
       setLoading(false);
     };
 
-    fetchMembres();
+    fetchStats();
   }, []);
 
-  if (loading) return <p className="text-white text-center mt-10">Chargement...</p>;
+  if (loading) return <p className="text-center mt-10 text-white">Chargement des statistiques...</p>;
 
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">
-      <h1 className="text-2xl font-bold text-center mb-6">Membres Hub - Statistiques</h1>
+      <HeaderPages />
+      <h1 className="text-2xl font-bold text-center mb-8">
+        Membres <span className="text-amber-300">Hub</span>
+      </h1>
 
-      <div className="bg-white/10 rounded-xl p-4 max-w-2xl mx-auto">
-        <p>Total membres dans le hub : <strong>{stats.total}</strong></p>
-        <p>Venu par réseaux : <strong>{stats.venuParReseaux}</strong></p>
-        <p>Invité : <strong>{stats.invite}</strong></p>
-        <p>Évangélisation : <strong>{stats.evangelisation}</strong></p>
-        <p>Prières du salut : <strong>{stats.priereSalut}</strong></p>
-        <p>Conversion : <strong>{stats.conversion}</strong></p>
-        <p>Réconciliation : <strong>{stats.reconciliation}</strong></p>
-        <div className="mt-2">
-          <p>Tranche d'âge :</p>
-          <ul className="list-disc list-inside">
-            {Object.entries(stats.trancheAge).map(([age, count]) => (
-              <li key={age}>{age} : {count}</li>
-            ))}
-          </ul>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <StatCard title="Total membres dans le hub" value={stats.totalMembres} color="green" />
+        <StatCard title="Venu par réseaux" value={stats.venuReseaux} color="blue" />
+        <StatCard title="Invité" value={stats.invite} color="purple" />
+        <StatCard title="Évangélisation" value={stats.evangelisation} color="pink" />
+        <StatCard title="Prières du salut" value={stats.priereSalut} color="yellow" />
+        <StatCard title="Conversion" value={stats.conversion} color="orange" />
+        <StatCard title="Réconciliation" value={stats.reconciliation} color="red" />
       </div>
+
+      <div className="mt-8">
+        <h2 className="text-xl font-bold mb-4">Tranche d'âge</h2>
+        <ul className="list-disc list-inside space-y-1">
+          {Object.entries(stats.trancheAge).map(([age, count]) => (
+            <li key={age}>
+              {age}: <span className="font-semibold">{count}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <Footer />
+    </div>
+  );
+}
+
+function StatCard({ title, value, color }) {
+  const colorMap = {
+    green: "border-green-400 bg-white/10",
+    blue: "border-blue-400 bg-white/10",
+    purple: "border-purple-400 bg-white/10",
+    pink: "border-pink-400 bg-white/10",
+    yellow: "border-yellow-400 bg-white/10",
+    orange: "border-orange-400 bg-white/10",
+    red: "border-red-400 bg-white/10",
+  };
+
+  return (
+    <div className={`p-4 rounded-xl border-l-4 ${colorMap[color]} flex justify-between items-center`}>
+      <span className="font-semibold">{title}</span>
+      <span className="text-2xl font-bold">{value}</span>
     </div>
   );
 }

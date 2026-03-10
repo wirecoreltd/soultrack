@@ -216,26 +216,9 @@ function Attendance() {
     nouveauxConvertis: 0,
   });
 
-  // --- CARTES STATISTIQUES ---
-  const totalMembres = reports.length;
+  const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500","border-pink-500","border-indigo-500"];
+  
 
-  const venuReseaux = reports.reduce((acc, r) => acc + (r.nouveauxVenus || 0), 0);
-  const invite = reports.reduce((acc, r) => acc + (r.nouveauxVenus || 0), 0); // exemple
-  const evangelisation = reports.reduce((acc, r) => acc + (r.nouveauxConvertis || 0), 0);
-
-  const prieres = reports.reduce((acc, r) => acc + (r.nouveauxVenus || 0), 0);
-  const conversion = reports.reduce((acc, r) => acc + (r.nouveauxConvertis || 0), 0);
-  const reconciliation = reports.reduce((acc, r) => acc + (r.connectes || 0), 0);
-
-  const ageCounts = {
-    "12-17": reports.filter(r => r.jeunes >= 1 && r.jeunes <= 17).length,
-    "18-25": reports.filter(r => r.jeunes >= 18 && r.jeunes <= 25).length,
-    "26-30": reports.filter(r => r.jeunes >= 26 && r.jeunes <= 30).length,
-    "31-40": reports.filter(r => r.jeunes >= 31 && r.jeunes <= 40).length,
-    "41-55": reports.filter(r => r.jeunes >= 41 && r.jeunes <= 55).length,
-    "56-69": reports.filter(r => r.jeunes >= 56 && r.jeunes <= 69).length,
-    "70+": reports.filter(r => r.jeunes >= 70).length,
-  };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -332,39 +315,122 @@ function Attendance() {
       {showTable && (
         <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
           <div className="w-max space-y-2">
-            {/* --- TABLEAU EXISTANT --- */}
-            {/* Le tableau que tu avais déjà fonctionne parfaitement */}
-          </div>
-        </div>
-      )}
 
-      {/* --- CARTES STATISTIQUES --- */}
-      {showTable && (
-        <div className="max-w-5xl w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-10">
-          {/* Total Membres */}
-          <div className="bg-white/20 p-4 rounded-xl text-center">
-            <div className="font-bold text-white text-lg">Total membres dans le hub</div>
-            <div className="text-amber-300 text-2xl font-bold">{totalMembres}</div>
-          </div>
+            {/* HEADER */}
+            <div className="flex font-semibold uppercase text-white px-4 py-3 
+                            border-b border-white/30 bg-white/5 rounded-t-xl 
+                            whitespace-nowrap border-l-4 border-transparent">
 
-          {/* Venu / Invité / Évangélisation */}
-          <div className="bg-white/20 p-4 rounded-xl text-center">
-            <div className="font-bold text-white text-lg">Venu / Invité / Évangélisation</div>
-            <div className="text-white">{venuReseaux} / {invite} / {evangelisation}</div>
-          </div>
+              <div className="min-w-[150px] pl-2">Culte / Date</div>
+              <div className="min-w-[120px] text-center font-semibold ml-3">Hommes</div>
+              <div className="min-w-[120px] text-center font-semibold">Femmes</div>
+              <div className="min-w-[120px] text-center font-semibold">Jeunes</div>
+              <div className="min-w-[130px] text-center text-orange-400 font-semibold -ml-2">Total</div>
+              <div className="min-w-[120px] text-center font-semibold">Enfants</div>
+              <div className="min-w-[140px] text-center font-semibold">Connectés</div>
+              <div className="min-w-[150px] text-center font-semibold">Nouveaux<br />Venus</div>
+              <div className="min-w-[180px] text-center font-semibold">Nouveaux<br />Convertis</div>
+              <div className="min-w-[140px] text-center text-orange-400 font-semibold">Actions</div>
+            </div>
+       
+            {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
+              const [year, monthIndex] = monthKey.split("-").map(Number);
+              const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+              const isExpanded = expandedMonths[monthKey] || false;
+              const borderColor = borderColors[idx % borderColors.length];
 
-          {/* Prière / Conversion / Réconciliation */}
-          <div className="bg-white/20 p-4 rounded-xl text-center">
-            <div className="font-bold text-white text-lg">Prière / Conversion / Réconciliation</div>
-            <div className="text-white">{prieres} / {conversion} / {reconciliation}</div>
-          </div>
+              const totalMonth = monthReports.reduce((acc, r) => {
+                acc.hommes += Number(r.hommes || 0);
+                acc.femmes += Number(r.femmes || 0);
+                acc.jeunes += Number(r.jeunes || 0);
+                acc.enfants += Number(r.enfants || 0);
+                acc.connectes += Number(r.connectes || 0);
+                acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
+                acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
+                return acc;
+              }, {
+                hommes: 0, femmes: 0, jeunes: 0,
+                enfants: 0, connectes: 0,
+                nouveauxVenus: 0, nouveauxConvertis: 0
+              });
 
-          {/* Tranche d'âge */}
-          <div className="bg-white/20 p-4 rounded-xl text-center">
-            <div className="font-bold text-white text-lg">Tranche d'âge</div>
-            {Object.entries(ageCounts).map(([age, count]) => (
-              <div key={age} className="text-white">{age}: {count}</div>
-            ))}
+              return (
+                <div key={monthKey} className="space-y-1">
+
+                  {/* MOIS */}
+                  <div
+                    className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer 
+                                border-l-4 ${borderColor}`}
+                    onClick={() => toggleMonth(monthKey)}
+                  >
+                    <div className="min-w-[150px] pl-2 text-white font-semibold">
+                      {isExpanded ? "➖" : "➕"} {monthLabel}
+                    </div>
+
+                    <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-1">{totalMonth.hommes}</div>
+                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.femmes}</div>
+                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.jeunes}</div>
+                    <div className="min-w-[130px] text-center text-orange-400 font-semibold">
+                      {totalMonth.hommes + totalMonth.femmes + totalMonth.jeunes}
+                    </div>
+                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.enfants}</div>
+                    <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalMonth.connectes}</div>
+                    <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalMonth.nouveauxVenus}</div>
+                    <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalMonth.nouveauxConvertis}</div>
+                    <div className="min-w-[140px]"></div>
+                  </div>
+
+                  {(isExpanded || monthReports.length === 1) &&
+                    monthReports.map((r) => {
+                      const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+                      const culteLabel = `Culte ${r.numero_culte}`;
+
+                      return (
+                        <div
+                          key={r.id}
+                          className={`flex items-center px-4 py-2 rounded-lg 
+                                     bg-white/10 hover:bg-white/20 transition 
+                                     border-l-4 ${borderColor}`}
+                        >                         
+
+                           <div className="min-w-[150px] pl-2 text-white">
+                            {`${culteLabel} : ${formatDateFR(r.date)}`}
+                          </div>
+
+                          <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                          <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                          <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
+                          <div className="min-w-[130px] text-center text-orange-400 font-semibold">{total}</div>
+                          <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
+                          <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
+                          <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
+                          <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+
+                          <div className="min-w-[140px] text-center flex justify-center gap-2">
+                            <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
+                            <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              );
+            })}
+
+            {/* TOTAL GLOBAL */}
+            <div className="flex items-center px-6 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl text-orange-500 font-semibold">
+              <div className="min-w-[150px]">Total Global</div>
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold -ml-1">{totalGlobal.hommes}</div>
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold">{totalGlobal.femmes}</div>
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold">{totalGlobal.jeunes}</div>
+              <div className="min-w-[130px] text-center text-orange-500 font-semibold">{totalGlobal.hommes + totalGlobal.femmes + totalGlobal.jeunes}</div>
+              <div className="min-w-[120px] text-center text-orange-500 font-semibold">{totalGlobal.enfants}</div>
+              <div className="min-w-[140px] text-center text-orange-500 font-semibold">{totalGlobal.connectes}</div>
+              <div className="min-w-[150px] text-center text-orange-500 font-semibold">{totalGlobal.nouveauxVenus}</div>
+              <div className="min-w-[180px] text-center text-orange-500 font-semibold">{totalGlobal.nouveauxConvertis}</div>
+              <div className="min-w-[140px]"></div>
+            </div>        
+
           </div>
         </div>
       )}

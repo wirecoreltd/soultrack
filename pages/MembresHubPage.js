@@ -3,149 +3,185 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+import Footer from "../components/Footer";
 
-export default function MembresHubPage() {
+export default function MembersHubWrapper() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur","ResponsableIntegration"]}>
-      <MembresHub />
+    <ProtectedRoute allowedRoles={["Administrateur"]}>
+      <MembersHub />
     </ProtectedRoute>
   );
 }
 
-function MembresHub() {
+function MembersHub() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [message, setMessage] = useState("");
-  const [stats, setStats] = useState({
-    presenceCulte: 0,
-    envoyesSuivi: 0,
-    integres: 0,
-    recus: 0,
-    enAttente: 0,
-    nbConseillers: 0,
-    amesParConseiller: 0,
-  });
+  const [branchesTree, setBranchesTree] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [allBranches, setAllBranches] = useState([]);
+  const [rootId, setRootId] = useState(null);
+  const [expandedBranches, setExpandedBranches] = useState([]);
 
-  // Récupération des stats depuis Supabase
+  const toggleExpand = (branchId) => {
+    setExpandedBranches(prev => 
+      prev.includes(branchId) ? prev.filter(id => id !== branchId) : [...prev, branchId]
+    );
+  };
+
   const fetchStats = async () => {
-    setMessage("⏳ Chargement...");
+    setLoading(true);
     try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profileData } = await supabase.from("profiles").select("branche_id").eq("id", user.id).single();
+      const rootIdValue = profileData.branche_id;
+      setRootId(rootIdValue);
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("eglise_id, branche_id")
-        .eq("id", session.session.user.id)
-        .single();
+      const { data: branches } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
+      if (!branches?.length) {
+        setBranchesTree([]);
+        setAllBranches([]);
+        setLoading(false);
+        return;
+      }
 
-      // Exemple : fetch stats globales (à adapter selon ta base)
-      const { data: membres } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("eglise_id", profile.eglise_id)
-        .eq("branche_id", profile.branche_id)
-        .gte("created_at", dateDebut || "1900-01-01")
-        .lte("created_at", dateFin || "2999-12-31");
+      const branchIds = branches.map(b => b.id);
 
-      // Calcul des stats
-      const presenceCulte = membres.filter(m => m.presence_culte).length;
-      const envoyesSuivi = membres.filter(m => m.envoye_suivi).length;
-      const integres = membres.filter(m => m.integre).length;
-      const recus = membres.filter(m => m.recu).length;
-      const enAttente = membres.filter(m => m.en_attente).length;
-      const nbConseillers = membres.filter(m => m.is_conseiller).length;
-      const amesParConseiller = nbConseillers ? membres.length / nbConseillers : 0;
+      // ===== Membres du hub =====
+      let membersQuery = supabase.from("membres_complets").select("id, sexe, age, venu, priere_salut, type_conversion, reconciliation, created_at").in("branche_id", branchIds);
+      if (dateDebut) membersQuery = membersQuery.gte("created_at", dateDebut);
+      if (dateFin) membersQuery = membersQuery.lte("created_at", dateFin);
+      const { data: membersData } = await membersQuery;
 
-      setStats({
-        presenceCulte,
-        envoyesSuivi,
-        integres,
-        recus,
-        enAttente,
-        nbConseillers,
-        amesParConseiller,
+      // ===== Évangélisation =====
+      let evangeQuery = supabase.from("rapport_evangelisation").select("branche_id, nouveau_converti, reconciliation").in("branche_id", branchIds);
+      if (dateDebut) evangeQuery = evangeQuery.gte("date", dateDebut);
+      if (dateFin) evangeQuery = evangeQuery.lte("date", dateFin);
+      const { data: evangeData } = await evangeQuery;
+
+      // ===== Stats par branche =====
+      const statsMap = {};
+      branchIds.forEach(id => {
+        statsMap[id] = {
+          total: 0,
+          hommes: 0,
+          femmes: 0,
+          jeunes: 0,
+          enfants: 0,
+          reseau: 0,
+          invite: 0,
+          evang: 0,
+          priere_salut: 0,
+          conversion: 0,
+          reconciliation: 0
+        };
       });
 
-      setMessage("");
+      membersData.forEach(m => {
+        const s = statsMap[m.branche_id];
+        s.total++;
+        if (m.sexe === "Homme") s.hommes++;
+        if (m.sexe === "Femme") s.femmes++;
+        if (["12-17 ans", "18-25 ans"].includes(m.age)) s.jeunes++;
+        if (["12-17 ans"].includes(m.age)) s.enfants++;
+
+        if (m.venu === "réseaux") s.reseau++;
+        if (m.venu === "invité") s.invite++;
+        if (m.venu === "evangélisation") s.evang++;
+        if (m.priere_salut === "Oui") s.priere_salut++;
+        if (m.type_conversion === "Nouveau converti") s.conversion++;
+        if (m.type_conversion === "Réconciliation") s.reconciliation++;
+      });
+
+      evangeData?.forEach(e => {
+        const s = statsMap[e.branche_id];
+        s.conversion += e.nouveau_converti || 0;
+        s.reconciliation += e.reconciliation || 0;
+      });
+
+      // ===== Construire arbre =====
+      const map = {};
+      branches.forEach(b => map[b.id] = { ...b, stats: statsMap[b.id], enfants: [] });
+      const tree = [];
+      Object.values(map).forEach(b => {
+        if (b.superviseur_id && map[b.superviseur_id]) map[b.superviseur_id].enfants.push(b);
+        else tree.push(b);
+      });
+
+      setBranchesTree(tree);
+      setAllBranches(Object.values(map));
+
     } catch (err) {
-      console.error(err);
-      setMessage("❌ " + err.message);
+      console.error("Erreur fetch Members Hub:", err);
+      setBranchesTree([]);
+      setAllBranches([]);
     }
+    setLoading(false);
+  };
+
+  const renderBranch = (branch, level = 0) => {
+    const isExpanded = expandedBranches.includes(branch.id);
+    return (
+      <div key={branch.id} className="mt-6">
+        <div className="flex items-center mb-2">
+          {branch.enfants.length > 0 && (
+            <button onClick={() => toggleExpand(branch.id)} className="mr-2 text-xl">
+              {isExpanded ? "➖" : "➕"}
+            </button>
+          )}
+          <span className={`text-xl font-semibold ${branch.enfants.length > 0 ? "text-amber-300" : "text-white"}`}>{branch.nom}</span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <div className="w-max flex gap-4 border border-white/30 p-2 rounded-xl bg-white/5">
+            <div className="min-w-[150px] font-semibold">Statistique</div>
+            <div className="min-w-[80px] text-center">Total</div>
+            <div className="min-w-[80px] text-center">Hommes</div>
+            <div className="min-w-[80px] text-center">Femmes</div>
+            <div className="min-w-[80px] text-center">Jeunes</div>
+            <div className="min-w-[80px] text-center">Enfants</div>
+            <div className="min-w-[80px] text-center">Réseau</div>
+            <div className="min-w-[80px] text-center">Invité</div>
+            <div className="min-w-[80px] text-center">Évangélisation</div>
+            <div className="min-w-[80px] text-center">Prière</div>
+            <div className="min-w-[80px] text-center">Conversion</div>
+            <div className="min-w-[80px] text-center">Réconciliation</div>
+          </div>
+
+          <div className="w-max flex gap-4 border border-white/30 p-2 rounded-xl bg-white/10 mt-1">
+            <div className="min-w-[150px] font-semibold">Hub {branch.nom}</div>
+            <div className="min-w-[80px] text-center">{branch.stats.total}</div>
+            <div className="min-w-[80px] text-center">{branch.stats.hommes}</div>
+            <div className="min-w-[80px] text-center">{branch.stats.femmes}</div>
+            <div className="min-w-[80px] text-center">{branch.stats.jeunes}</div>
+            <div className="min-w-[80px] text-center">{branch.stats.enfants}</div>
+            <div className="min-w-[80px] text-center">{branch.stats.reseau}</div>
+            <div className="min-w-[80px] text-center">{branch.stats.invite}</div>
+            <div className="min-w-[80px] text-center">{branch.stats.evang}</div>
+            <div className="min-w-[80px] text-center">{branch.stats.priere_salut}</div>
+            <div className="min-w-[80px] text-center">{branch.stats.conversion}</div>
+            <div className="min-w-[80px] text-center">{branch.stats.reconciliation}</div>
+          </div>
+        </div>
+
+        {branch.enfants.map(child => isExpanded ? renderBranch(child, level + 1) : null)}
+      </div>
+    );
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+    <div className="min-h-screen bg-[#333699] p-6 text-white">
       <HeaderPages />
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        Membres Hub
-      </h1>
+      <h1 className="text-2xl font-bold text-center mb-6">Members Hub</h1>
 
-      {/* FILTRES */}
-      <div className="flex flex-wrap gap-4 mb-6 bg-white/10 p-4 rounded-2xl">
-        <div className="flex flex-col">
-          <label className="text-white mb-1">Date début</label>
-          <input
-            type="date"
-            value={dateDebut}
-            onChange={e => setDateDebut(e.target.value)}
-            className="input"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label className="text-white mb-1">Date fin</label>
-          <input
-            type="date"
-            value={dateFin}
-            onChange={e => setDateFin(e.target.value)}
-            className="input"
-          />
-        </div>
-        <div className="flex items-end">
-          <button
-            onClick={fetchStats}
-            className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] text-white"
-          >
-            Générer
-          </button>
-        </div>
+      <div className="flex justify-center mb-6 gap-4">
+        <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} className="px-3 py-2 rounded-lg text-black" />
+        <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} className="px-3 py-2 rounded-lg text-black" />
+        <button onClick={fetchStats} className="bg-[#2a2f85] px-4 py-2 rounded-xl hover:bg-[#1f2366] transition">{loading ? "Chargement..." : "Générer"}</button>
       </div>
 
-      {message && <p className="text-white mb-4">{message}</p>}
-
-      {/* KPI CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8 w-full max-w-6xl">
-        <KpiCard label="Présence Culte" value={stats.presenceCulte} />
-        <KpiCard label="Envoyés en Suivi" value={stats.envoyesSuivi} />
-        <KpiCard label="Intégrés" value={stats.integres} />
-        <KpiCard label="Reçus" value={stats.recus} />
-        <KpiCard label="En Attente" value={stats.enAttente} />
-        <KpiCard label="Nombre Conseillers" value={stats.nbConseillers} />
-        <KpiCard label="Âmes par Conseiller" value={stats.amesParConseiller.toFixed(1)} />
-      </div>
-
+      {branchesTree.map(branch => renderBranch(branch))}
       <Footer />
-
-      <style jsx>{`
-        .input {
-          border: 1px solid #ccc;
-          padding: 10px;
-          border-radius: 12px;
-          background: rgba(255,255,255,0.05);
-          color: white;
-        }
-      `}</style>
-    </div>
-  );
-}
-
-function KpiCard({ label, value }) {
-  return (
-    <div className="bg-white/10 rounded-2xl shadow-lg p-4 flex flex-col items-center justify-center">
-      <p className="text-white text-lg font-medium">{label}</p>
-      <p className="text-amber-300 text-2xl font-bold">{value}</p>
     </div>
   );
 }

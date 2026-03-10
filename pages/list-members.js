@@ -807,48 +807,11 @@ const canAddMember =
                   💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}</p>
                 <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                 <p>🎗️ Civilité : {m.sexe || ""}</p>
-                <p>⏳ Tranche d'age : {m.age || ""}</p>    
-                    
-               {m.bapteme_eau === "oui" ? (
-                  <p>💧 Baptême d’Eau : Oui</p>
-                ) : (
-                  <>
-                    <p>💧 Baptême d’Eau : Non</p>
-                    <label className="flex items-center gap-2 mt-1">
-                      <input
-                        type="checkbox"
-                        checked={m.veut_se_faire_baptiser === "oui"}
-                        onChange={async (e) => {
-                          const newValue = e.target.checked ? "oui" : "non";
-              
-                          // Mettre à jour dans la base Supabase
-                          const { error } = await supabase
-                            .from("membres_complets")
-                            .update({ veut_se_faire_baptiser: newValue })
-                            .eq("id", m.id);
-              
-                          if (error) {
-                            alert("Erreur : " + error.message);
-                            return;
-                          }
-              
-                          // Mettre à jour dans le state parent pour re-render
-                          setMembers((prev) =>
-                            prev.map((member) =>
-                              member.id === m.id ? { ...member, veut_se_faire_baptiser: newValue } : member
-                            )
-                          );
-                        }}
-                      />
-                      Veut se faire baptiser
-                    </label>
-                    {/* Affichage conditionnel si coché */}
-                    {m.veut_se_faire_baptiser === "oui" && (
-                      <p>💧 Veut se faire baptiser : Oui</p>
-                    )}
-                  </>
+                <p>⏳ Tranche d'age : {m.age || ""}</p> 
+                <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>
+                {m.bapteme_eau === "non" && m.veut_se_faire_baptiser === "oui" && (
+                  <p>💧 Veut se faire baptiser : Oui</p>
                 )}
-
                 <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
                 <p>✒️ Formation : {m.Formation || ""}</p>
                 <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>

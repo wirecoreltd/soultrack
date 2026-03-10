@@ -308,37 +308,7 @@ function Attendance() {
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end"
         >
           Générer
-        </button>
-
-            {/* Cartes synthétiques */}
-{showTable && (
-  <div className="max-w-5xl w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6 mb-6">
-    <div className="bg-blue-500 text-white p-4 rounded-2xl shadow-lg flex flex-col items-center justify-center">
-      <span className="text-lg font-semibold">Nouveaux venus</span>
-      <span className="text-3xl font-bold">{totalGlobal.nouveauxVenus}</span>
-    </div>
-    <div className="bg-green-500 text-white p-4 rounded-2xl shadow-lg flex flex-col items-center justify-center">
-      <span className="text-lg font-semibold">Nouveaux convertis</span>
-      <span className="text-3xl font-bold">{totalGlobal.nouveauxConvertis}</span>
-    </div>
-    <div className="bg-indigo-500 text-white p-4 rounded-2xl shadow-lg flex flex-col items-center justify-center">
-      <span className="text-lg font-semibold">Hommes</span>
-      <span className="text-3xl font-bold">{totalGlobal.hommes}</span>
-    </div>
-    <div className="bg-pink-500 text-white p-4 rounded-2xl shadow-lg flex flex-col items-center justify-center">
-      <span className="text-lg font-semibold">Femmes</span>
-      <span className="text-3xl font-bold">{totalGlobal.femmes}</span>
-    </div>
-    <div className="bg-yellow-500 text-white p-4 rounded-2xl shadow-lg flex flex-col items-center justify-center">
-      <span className="text-lg font-semibold">Jeunes</span>
-      <span className="text-3xl font-bold">{totalGlobal.jeunes}</span>
-    </div>
-    <div className="bg-purple-500 text-white p-4 rounded-2xl shadow-lg flex flex-col items-center justify-center">
-      <span className="text-lg font-semibold">Enfants</span>
-      <span className="text-3xl font-bold">{totalGlobal.enfants}</span>
-    </div>
-  </div>
-)}
+        </button>           
       </div>
 
       {/* Tableau des rapports */}

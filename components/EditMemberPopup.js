@@ -52,6 +52,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
     Formation: member?.Formation || "",
     Soin_Pastoral: member?.Soin_Pastoral || "",
     Ministere: parseBesoin(member?.Ministere),
+    veut_se_faire_baptiser: member?.veut_se_faire_baptiser || "",
     Commentaire_Suivi_Evangelisation: member?.Commentaire_Suivi_Evangelisation || "",
 
   });

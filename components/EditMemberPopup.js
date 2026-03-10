@@ -347,9 +347,9 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
             <label className="font-medium">État du contact</label>
             <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="input">
               <option value="">-- Sélectionner --</option>
-              <option value="Nouveau">Nouveau</option>
-              <option value="Existant">Existant</option>
-              <option value="Inactif">Inactif</option>
+              <option value="nouveau">Nouveau</option>
+              <option value="existant">Existant</option>
+              <option value="inactif">Inactif</option>
             </select>
           </div>
 

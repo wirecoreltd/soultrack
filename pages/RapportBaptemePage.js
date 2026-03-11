@@ -229,11 +229,9 @@ function RapportBaptemes() {
                   <button
                     onClick={() => {
                       if (selectedCandidats.length === 0) {
-                        // Tout sélectionner
-                        setSelectedCandidats(candidats.map(c => c.id));
+                        setSelectedCandidats(candidats.map(c => c.id)); // Tout sélectionner
                       } else {
-                        // Tout désélectionner
-                        setSelectedCandidats([]);
+                        setSelectedCandidats([]); // Tout désélectionner
                       }
                     }}
                     className="text-sm underline hover:text-orange-400"
@@ -242,11 +240,14 @@ function RapportBaptemes() {
                   </button>
                 </div>
               
-                {/* Liste déroulante avec scroll si trop longue */}
-                <div className="flex flex-col items-center overflow-y-auto max-h-[300px] space-y-1">
+                {/* Liste des candidats avec checkboxes à côté du nom */}
+                <div className="flex flex-col overflow-y-auto max-h-[300px] space-y-1">
                   {candidats.map(c => (
-                    <div key={c.id} className="flex justify-between items-center w-full px-2 py-1 rounded hover:bg-white/20">
-                      <span className="mr-2">{c.prenom} {c.nom}</span>
+                    <div
+                      key={c.id}
+                      className="flex justify-between items-center w-full px-2 py-1 rounded hover:bg-white/20"
+                    >
+                      <span>{c.prenom} {c.nom}</span>
                       <input
                         type="checkbox"
                         checked={selectedCandidats.includes(c.id)}
@@ -263,9 +264,12 @@ function RapportBaptemes() {
                   ))}
                 </div>
               
+                {/* Ligne de séparation */}
+                <hr className="border-t border-white/30 my-3" />
+              
                 {/* Personnes sélectionnées */}
                 {selectedCandidats.length > 0 && (
-                  <div className="mt-3">
+                  <div>
                     <h3 className="text-amber-300 font-semibold text-sm mb-1">Personnes sélectionnées :</h3>
                     <ul className="list-disc list-inside text-white text-sm space-y-1">
                       {candidats
@@ -276,8 +280,8 @@ function RapportBaptemes() {
                     </ul>
                   </div>
                 )}
-              </div>     
-      </div>
+              </div>  
+            </div>
 
       {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">

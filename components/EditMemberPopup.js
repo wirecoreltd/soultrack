@@ -379,7 +379,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
               </div>
               
               {/* Veut se faire baptiser – s'affiche seulement si bapteme_eau = "non" */}
-              {formData.bapteme_eau === "non" && (
+              {formData.bapteme_eau === "Non" && (
                 <div className="flex items-center font-medium gap-2 mt-2 ml-6">
                   <input
                     type="checkbox"

@@ -348,7 +348,7 @@ function RapportBaptemes() {
       </div>
     )}
   </div>
-
+</div>
 </div>
 
       {/* FILTRES */}

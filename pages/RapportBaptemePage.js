@@ -216,47 +216,38 @@ function RapportBaptemes() {
           </form>
         </div>
 
-        {/* Menu déroulant / sélection de baptisés */}
-          <div className="bg-white/10 p-4 rounded-3xl shadow-lg text-white">
-            <div className="flex justify-between items-center mb-2 gap-2">
-              <label className="block font-semibold">Sélectionner les baptisés</label>
+        {/* Menu déroulant / Sélectionner les baptisés */}
+          <div className="bg-white/10 p-4 rounded-3xl shadow-lg text-white max-w-md w-full">
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-semibold">Sélectionner les baptisés</span>
               <button
-                type="button"
-                onClick={() => {
-                  if(selectedCandidats.length === candidats.length){
-                    setSelectedCandidats([]);
-                  } else {
-                    setSelectedCandidats(candidats.map(c=>c.id));
-                  }
-                }}
-                className="text-sm underline hover:text-amber-300"
+                onClick={() => setSelectedCandidats([])}
+                className="text-sm text-red-400 underline hover:text-red-500"
               >
-                {selectedCandidats.length === candidats.length ? "Tout désélectionner" : "Tout sélectionner"}
+                Tout désélectionner
               </button>
             </div>
           
-            <div className="h-52 overflow-y-auto border border-white/20 rounded-lg p-1">
+            <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
               {candidats.map(c => (
-                <label
-              key={c.id}
-              className="flex items-center gap-2 p-1 hover:bg-white/10 rounded cursor-pointer"
-            >
-              <span>{c.prenom} {c.nom}</span>
-              <input
-                type="checkbox"
-                checked={selectedCandidats.includes(c.id)}
-                onChange={()=>{
-                  if(selectedCandidats.includes(c.id)){
-                    setSelectedCandidats(prev => prev.filter(id => id !== c.id));
-                  } else {
-                    setSelectedCandidats(prev => [...prev, c.id]);
-                  }
-                }}
-                className="accent-[#25297e] ml-1"
-              />
-            </label>
+                <label key={c.id} className="flex items-center justify-between bg-white/5 px-3 py-1 rounded-md hover:bg-white/10 cursor-pointer">
+                  <span>{c.prenom} {c.nom}</span>
+                  <input
+                    type="checkbox"
+                    checked={selectedCandidats.includes(c.id)}
+                    onChange={() => {
+                      if (selectedCandidats.includes(c.id)) {
+                        setSelectedCandidats(prev => prev.filter(id => id !== c.id));
+                      } else {
+                        setSelectedCandidats(prev => [...prev, c.id]);
+                      }
+                    }}
+                    className="accent-[#25297e]"
+                  />
+                </label>
               ))}
             </div>
+          </div>
           
             {/* Noms sélectionnés */}
             {selectedCandidats.length > 0 && (

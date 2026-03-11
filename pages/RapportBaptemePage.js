@@ -223,36 +223,36 @@ function RapportBaptemes() {
         </div>
 
         {/* Menu déroulant compact */}
-        <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white h-full">
-          <div className="flex justify-between items-center mb-2">
-            <label className="font-semibold">Sélectionner les baptisés</label>
-            <button
-              onClick={()=>setSelectedCandidats([])}
-              className="text-sm underline hover:text-orange-400"
-            >
-              Tout désélectionner
-            </button>
+          <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white w-full md:w-80">
+            <div className="flex justify-between items-center mb-2">
+              <label className="font-semibold">Sélectionner les baptisés</label>
+              <button
+                onClick={()=>setSelectedCandidats([])}
+                className="text-sm underline hover:text-orange-400"
+              >
+                Tout désélectionner
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-[220px]">
+              {candidats.map(c=>(
+                <div key={c.id} className="flex items-center gap-2 mb-1">
+                  <span className="flex-1">{c.prenom} {c.nom}</span>
+                  <input
+                    type="checkbox"
+                    checked={selectedCandidats.includes(c.id)}
+                    onChange={()=>{
+                      if(selectedCandidats.includes(c.id)){
+                        setSelectedCandidats(selectedCandidats.filter(id=>id!==c.id));
+                      }else{
+                        setSelectedCandidats([...selectedCandidats,c.id]);
+                      }
+                    }}
+                    className="accent-[#25297e]"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="overflow-y-auto max-h-[220px]">
-            {candidats.map(c=>(
-              <div key={c.id} className="flex items-center gap-2 mb-1">
-                <span className="flex-1">{c.prenom} {c.nom}</span>
-                <input
-                  type="checkbox"
-                  checked={selectedCandidats.includes(c.id)}
-                  onChange={()=>{
-                    if(selectedCandidats.includes(c.id)){
-                      setSelectedCandidats(selectedCandidats.filter(id=>id!==c.id));
-                    }else{
-                      setSelectedCandidats([...selectedCandidats,c.id]);
-                    }
-                  }}
-                  className="accent-[#25297e]"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* FILTRES */}

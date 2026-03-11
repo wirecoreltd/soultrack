@@ -342,7 +342,7 @@ function RapportBaptemes() {
           </div>
         </div>
       )}
-      )}
+     
 
       <Footer />
       <style jsx>{`

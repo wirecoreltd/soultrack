@@ -99,10 +99,24 @@ function RapportBaptemes() {
     e.preventDefault();
     if(editRapport) return handleUpdate();
 
+    // Ajouter le rapport
     await supabase.from("baptemes").insert([formData]);
+
+    // Mettre à jour les candidats sélectionnés : bapteme_eau=Oui, veut_se_faire_baptiser=Non
+    if(selectedCandidats.length>0){
+      await supabase
+        .from("membres_complets")
+        .update({
+          bapteme_eau:"Oui",
+          veut_se_faire_baptiser:"Non"
+        })
+        .in("id",selectedCandidats);
+    }
+
     setSelectedCandidats([]);
     setFormData(prev=>({...prev,date:"",hommes:0,femmes:0,baptise_par:""}));
     fetchRapports();
+    fetchCandidats(formData.eglise_id,formData.branche_id); // rafraîchir la liste
   };
 
   const handleEdit=(r)=>{
@@ -208,44 +222,41 @@ function RapportBaptemes() {
         </form>
 
         {/* Noms sélectionnés */}
-          {selectedCandidats.length>0 && (
-            <div className="mt-6 text-white">
-              <h3 className="font-bold mb-2">Personnes sélectionnées</h3>          
-              {candidats
-                .filter(c=>selectedCandidats.includes(c.id))
-                .map(c=>(
-                  <div key={c.id}>
-                    {c.prenom} {c.nom} ({c.sexe})
-                  </div>
-                ))
-              }          
-            </div>
-          )}          
+        {selectedCandidats.length>0 && (
+          <div className="mt-6 text-white">
+            <h3 className="font-bold mb-2">Personnes sélectionnées</h3>          
+            {candidats
+              .filter(c=>selectedCandidats.includes(c.id))
+              .map(c=>(
+                <div key={c.id}>
+                  {c.prenom} {c.nom} ({c.sexe})
+                </div>
+              ))
+            }          
           </div>
+        )}
+      </div>
           
-          {/* Menu déroulant */}
-          <div className="bg-white/10 p-6 rounded-3xl shadow-lg text-white">          
-          <label className="block mb-2 font-semibold">
-          Sélectionner les baptisés
-          </label>          
-          <select
-            className="input w-full"
-            onChange={(e)=>{
-              const id=e.target.value;          
-              if(!selectedCandidats.includes(id)){
-                setSelectedCandidats([...selectedCandidats,id]);
-              }
-            }}
-          >          
-          <option value="">Choisir une personne</option>          
+      {/* Menu déroulant MULTI */}
+      <div className="bg-white/10 p-6 rounded-3xl shadow-lg text-white">          
+        <label className="block mb-2 font-semibold">Sélectionner les baptisés</label>          
+        <select
+          multiple
+          className="input w-full h-60"
+          value={selectedCandidats}
+          onChange={(e)=>{
+            const values=[...e.target.selectedOptions].map(o=>o.value);
+            setSelectedCandidats(values);
+          }}
+        >          
           {candidats.map(c=>(
             <option key={c.id} value={c.id}>
               {c.prenom} {c.nom} ({c.sexe})
             </option>
           ))}          
-          </select>          
-            </div>
-          </div>
+        </select>          
+      </div>
+    </div>
 
     {/* FILTRES */}
     <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">

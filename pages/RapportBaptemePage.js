@@ -181,6 +181,15 @@ function RapportBaptemes() {
     return acc;
   },{hommes:0,femmes:0});
 
+  /* Sélecteur WhatsApp-like */
+  const toggleSelectAll = () => {
+    if(selectedCandidats.length===candidats.length){
+      setSelectedCandidats([]);
+    } else {
+      setSelectedCandidats(candidats.map(c=>c.id));
+    }
+  };
+
   /* RENDER */
   return (
   <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -193,9 +202,8 @@ function RapportBaptemes() {
 
     <p className="text-white/80 mb-6">Résumé des baptêmes par mois</p>
 
-    {/* FORMULAIRE + MENU DEROU */}
+    {/* FORMULAIRE + SELECTEUR */}
     <div className="max-w-5xl w-full grid md:grid-cols-2 gap-6 mb-6">
-      {/* Formulaire */}
       <div ref={formRef} className="bg-white/10 rounded-3xl p-6 shadow-lg">
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
           <div className="flex flex-col">
@@ -236,25 +244,35 @@ function RapportBaptemes() {
           </div>
         )}
       </div>
-          
-      {/* Menu déroulant MULTI */}
-      <div className="bg-white/10 p-6 rounded-3xl shadow-lg text-white">          
-        <label className="block mb-2 font-semibold">Sélectionner les baptisés</label>          
-        <select
-          multiple
-          className="input w-full h-60"
-          value={selectedCandidats}
-          onChange={(e)=>{
-            const values=[...e.target.selectedOptions].map(o=>o.value);
-            setSelectedCandidats(values);
-          }}
-        >          
+
+      {/* SELECTEUR WhatsApp-like */}
+      <div className="bg-white/10 p-6 rounded-3xl shadow-lg text-white">
+        <div className="flex justify-between items-center mb-2">
+          <span className="font-semibold">Sélectionner les baptisés</span>
+          <button type="button" onClick={toggleSelectAll} className="underline text-sm text-orange-300 hover:text-orange-400">
+            {selectedCandidats.length===candidats.length ? "Tout décocher" : "Tout sélectionner"}
+          </button>
+        </div>
+
+        <div className="h-60 overflow-y-auto border border-white/20 rounded-lg p-2">
           {candidats.map(c=>(
-            <option key={c.id} value={c.id}>
-              {c.prenom} {c.nom} ({c.sexe})
-            </option>
-          ))}          
-        </select>          
+            <label key={c.id} className="flex items-center gap-2 p-1 hover:bg-white/10 rounded cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedCandidats.includes(c.id)}
+                onChange={()=>{
+                  if(selectedCandidats.includes(c.id)){
+                    setSelectedCandidats(prev => prev.filter(id=>id!==c.id));
+                  } else {
+                    setSelectedCandidats(prev => [...prev,c.id]);
+                  }
+                }}
+                className="accent-[#25297e]"
+              />
+              <span>{c.prenom} {c.nom} ({c.sexe})</span>
+            </label>
+          ))}
+        </div>
       </div>
     </div>
 

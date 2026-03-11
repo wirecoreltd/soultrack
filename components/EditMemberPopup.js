@@ -367,14 +367,14 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
                       ...prev,
                       bapteme_eau: value,
                       // reset veut_se_faire_baptiser si on met Oui
-                      veut_se_faire_baptiser: value === "oui" ? "non" : prev.veut_se_faire_baptiser
+                      veut_se_faire_baptiser: value === "Oui" ? "Non" : prev.veut_se_faire_baptiser
                     }));
                   }}
                   className="input"
                 >
                   <option value="">-- Sélectionner --</option>
-                  <option value="oui">Oui</option>
-                  <option value="non">Non</option>
+                  <option value="Oui">Oui</option>
+                  <option value="Non">Non</option>
                 </select>
               </div>
               
@@ -384,11 +384,11 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
                   <input
                     type="checkbox"
                     name="veut_se_faire_baptiser"
-                    checked={formData.veut_se_faire_baptiser === "oui"}
+                    checked={formData.veut_se_faire_baptiser === "Oui"}
                     onChange={(e) =>
                       setFormData(prev => ({
                         ...prev,
-                        veut_se_faire_baptiser: e.target.checked ? "oui" : "non"
+                        veut_se_faire_baptiser: e.target.checked ? "Oui" : "Non"
                       }))
                     }
                     className="accent-[#25297e]"

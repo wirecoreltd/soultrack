@@ -246,7 +246,7 @@ export default function DetailsMemberPopup({
           <p>🎗️ Civilité : {membre.sexe || ""}</p>
           <p>⏳ Age : {membre.age || ""}</p>
           <p>💧 Baptême d’Eau : {membre.bapteme_eau ? "Oui" : "Non"}</p>          
-                {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
+                {membre.bapteme_eau === "Non" && membre.veut_se_faire_baptiser === "Oui" && (
                   <p className="ml-6">💦 Veut se faire baptiser</p>
                 )}  
           <p>🔥 Baptême de Feu : {membre.bapteme_esprit ? "Oui" : "Non"}</p>

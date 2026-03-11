@@ -187,19 +187,19 @@ function RapportBaptemes() {
   },{hommes:0,femmes:0});
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+    <div className="min-h-screen flex flex-col items-center px-4 py-6 sm:p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
+      <h1 className="text-xl sm:text-2xl font-bold mt-4 mb-6 text-center">
         <span className="text-white">Rapport </span>
         <span className="text-amber-300">Baptêmes</span>
       </h1>      
 
       {/* FORMULAIRE + MENU DEROU */}
-      <div className="max-w-5xl w-full grid md:grid-cols-2 gap-6 mb-6">
+      <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Formulaire */}
         <div ref={formRef} className="bg-white/10 rounded-3xl p-6 shadow-lg">
-          <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col">
               <label className="text-white mb-1">Date</label>
               <input type="date" required value={formData.date} onChange={(e)=>setFormData({...formData,date:e.target.value})} className="input"/>
@@ -217,7 +217,7 @@ function RapportBaptemes() {
               <input type="number" value={formData.femmes} disabled className="input opacity-60"/>
             </div>
             <div className="col-span-2 mt-4">
-              <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl">
+              <button type="submit" className="w-full sm:w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:scale-[1.02] transition">
                 {editRapport?"Modifier":"Ajouter le baptême"}
               </button>
                {rapportSuccess && (
@@ -267,7 +267,7 @@ function RapportBaptemes() {
     </div>
 
     {/* Liste */}
-    <div className="flex flex-col overflow-y-auto max-h-[300px] space-y-1">
+    <div className="flex flex-col overflow-y-auto max-h-[250px] sm:max-h-[300px] space-y-1">
       {candidats.map(c => (
         <div
           key={c.id}
@@ -326,8 +326,8 @@ function RapportBaptemes() {
 
       {/* TABLEAU */}
       {showTable && (
-        <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
-          <div className="w-max space-y-2">
+        <div className="w-full overflow-x-auto mt-6">
+          <div className="min-w-[700px] space-y-2">
             <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[200px]">Date</div>
               <div className="min-w-[200px] text-center">Baptisé par</div>

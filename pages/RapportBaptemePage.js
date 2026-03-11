@@ -36,7 +36,6 @@ function RapportBaptemes() {
   const formRef = useRef(null);
   const router = useRouter();
 
-  // Fetch user profile
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -60,7 +59,6 @@ function RapportBaptemes() {
     fetchUser();
   }, []);
 
-  // Fetch candidats
   const fetchCandidats = async (eglise_id, branche_id) => {
     const { data } = await supabase
       .from("membres_complets")
@@ -73,7 +71,6 @@ function RapportBaptemes() {
     setCandidats(data || []);
   };
 
-  // Auto update hommes/femmes when selection changes
   useEffect(() => {
     const selected = candidats.filter(c => selectedCandidats.includes(c.id));
     const hommes = selected.filter(c => c.sexe === "Homme").length;
@@ -81,7 +78,6 @@ function RapportBaptemes() {
     setFormData(prev => ({ ...prev, hommes, femmes }));
   }, [selectedCandidats, candidats]);
 
-  // Fetch rapports
   const fetchRapports = async () => {
     let query = supabase
       .from("baptemes")
@@ -98,7 +94,6 @@ function RapportBaptemes() {
     setShowTable(true);
   };
 
-  // Add or update rapport
   const handleSubmit = async e => {
     e.preventDefault();
     if (editRapport) return handleUpdate();
@@ -196,9 +191,8 @@ function RapportBaptemes() {
         Rapport <span className="text-amber-300">Baptêmes</span>
       </h1>
 
-      {/* Formulaire et liste candidats */}
       <div className="max-w-6xl w-full grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-
+        {/* Formulaire */}
         <div ref={formRef} className="bg-white/10 rounded-3xl p-6 shadow-lg">
           <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col">
@@ -225,10 +219,9 @@ function RapportBaptemes() {
             </div>
           </form>
         </div>
-                       {/* Liste des candidats et table */}
-        <div className="w-full flex flex-col gap-4">
 
-          {/* Boîte explication */}
+        {/* Liste candidats */}
+        <div className="w-full flex flex-col gap-4">
           <div className="bg-blue-900/40 border border-blue-300/30 text-white text-sm p-4 rounded-2xl">
             ℹ️ Cette liste contient les personnes qui <strong>n'ont pas encore été baptisées</strong> et qui
             <strong> souhaitent prendre leur baptême</strong>.<br/><br/>
@@ -243,7 +236,6 @@ function RapportBaptemes() {
             </div>
           </div>
 
-          {/* Sélection candidats */}
           <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white">
             <div className="flex justify-between items-center mb-2">
               <label className="font-semibold">Sélectionner les baptisés</label>
@@ -299,83 +291,83 @@ function RapportBaptemes() {
               </div>
             )}
           </div>
-
         </div>
+      </div>
 
-        {/* Filtres */}
-        <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-col sm:flex-row sm:justify-center gap-4 text-white w-full max-w-4xl">
-          <input type="date" value={filterDebut} onChange={e=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"/>
-          <input type="date" value={filterFin} onChange={e=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"/>
-          <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto">Générer</button>
-        </div>
+      {/* Filtres */}
+      <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-col sm:flex-row sm:justify-center gap-4 text-white w-full max-w-4xl">
+        <input type="date" value={filterDebut} onChange={e=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"/>
+        <input type="date" value={filterFin} onChange={e=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"/>
+        <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto">Générer</button>
+      </div>
 
-        {/* Tableau responsive */}
-        {showTable && (
-          <div className="w-full overflow-x-auto mt-6 px-2">
-            <div className="min-w-[700px] space-y-2">
+      {/* Tableau responsive */}
+      {showTable && (
+        <div className="w-full overflow-x-auto mt-6 px-2">
+          <div className="min-w-[700px] space-y-2">
 
-              {/* Header tableau desktop */}
-              <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl">
-                <div className="flex-1">Date</div>
-                <div className="flex-1 text-center">Baptisé par</div>
-                <div className="w-24 text-center">Hommes</div>
-                <div className="w-24 text-center">Femmes</div>
-                <div className="w-24 text-center">Total</div>
-                <div className="w-32 text-center">Actions</div>
-              </div>
-
-              {/* Groupement par mois */}
-              {groupedReports.map(([monthKey, monthRapports]) => {
-                const [year, monthIndex] = monthKey.split("-").map(Number);
-                const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-                const totalMonth = monthRapports.reduce((acc, r) => {
-                  acc.hommes += Number(r.hommes||0);
-                  acc.femmes += Number(r.femmes||0);
-                  return acc;
-                }, {hommes:0, femmes:0});
-                const isExpanded = expandedMonths[monthKey] || false;
-
-                return (
-                  <div key={monthKey} className="space-y-1">
-                    <div className="flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 border-blue-500" onClick={()=>toggleMonth(monthKey)}>
-                      <div className="flex-1 text-white font-semibold">{isExpanded ? "➖ " : "➕ "} {monthLabel}</div>
-                      <div className="w-24 text-center text-white font-bold">{totalMonth.hommes}</div>
-                      <div className="w-24 text-center text-white font-bold">{totalMonth.femmes}</div>
-                      <div className="w-24 text-center text-orange-400 font-semibold">{totalMonth.hommes + totalMonth.femmes}</div>
-                      <div className="w-32"></div>
-                    </div>
-
-                    {/* Lignes rapports du mois */}
-                    {(isExpanded || monthRapports.length===1) && monthRapports.map(r => {
-                      const total = Number(r.hommes) + Number(r.femmes);
-                      return (
-                        <div key={r.id} className="flex flex-col sm:flex-row sm:items-center gap-2 px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 text-white">
-                          <div className="flex-1">{formatDateFR(r.date)}</div>
-                          <div className="flex-1 sm:text-center">{r.baptise_par}</div>
-                          <div className="w-full sm:w-24 sm:text-center">{r.hommes}</div>
-                          <div className="w-full sm:w-24 sm:text-center">{r.femmes}</div>
-                          <div className="w-full sm:w-24 sm:text-center font-bold">{total}</div>
-                          <div className="w-full sm:w-32 sm:text-center">
-                            <button onClick={()=>handleEdit(r)} className="text-orange-400 underline hover:text-orange-500">Modifier</button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              })}
-
-              {/* Total global */}
-              <div className="flex flex-col sm:flex-row sm:items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl text-white font-bold">
-                <div className="flex-1">TOTAL GLOBAL</div>
-                <div className="w-full sm:w-24 sm:text-center text-orange-400">{totalGlobal.hommes}</div>
-                <div className="w-full sm:w-24 sm:text-center text-orange-400">{totalGlobal.femmes}</div>
-                <div className="w-full sm:w-24 sm:text-center text-orange-400">{totalGlobal.hommes + totalGlobal.femmes}</div>
-              </div>
-
+            {/* Header tableau desktop */}
+            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl">
+              <div className="flex-1">Date</div>
+              <div className="flex-1 text-center">Baptisé par</div>
+              <div className="w-24 text-center">Hommes</div>
+              <div className="w-24 text-center">Femmes</div>
+              <div className="w-24 text-center">Total</div>
+              <div className="w-32 text-center">Actions</div>
             </div>
+
+            {/* Groupement par mois */}
+            {groupedReports.map(([monthKey, monthRapports]) => {
+              const [year, monthIndex] = monthKey.split("-").map(Number);
+              const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+              const totalMonth = monthRapports.reduce((acc, r) => {
+                acc.hommes += Number(r.hommes||0);
+                acc.femmes += Number(r.femmes||0);
+                return acc;
+              }, {hommes:0, femmes:0});
+              const isExpanded = expandedMonths[monthKey] || false;
+
+              return (
+                <div key={monthKey} className="space-y-1">
+                  <div className="flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 border-blue-500" onClick={()=>toggleMonth(monthKey)}>
+                    <div className="flex-1 text-white font-semibold">{isExpanded ? "➖ " : "➕ "} {monthLabel}</div>
+                    <div className="w-24 text-center text-white font-bold">{totalMonth.hommes}</div>
+                    <div className="w-24 text-center text-white font-bold">{totalMonth.femmes}</div>
+                    <div className="w-24 text-center text-orange-400 font-semibold">{totalMonth.hommes + totalMonth.femmes}</div>
+                    <div className="w-32"></div>
+                  </div>
+
+                  {/* Lignes rapports du mois */}
+                  {(isExpanded || monthRapports.length===1) && monthRapports.map(r => {
+                    const total = Number(r.hommes) + Number(r.femmes);
+                    return (
+                      <div key={r.id} className="flex flex-col sm:flex-row sm:items-center gap-2 px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 text-white">
+                        <div className="flex-1">{formatDateFR(r.date)}</div>
+                        <div className="flex-1 sm:text-center">{r.baptise_par}</div>
+                        <div className="w-full sm:w-24 sm:text-center">{r.hommes}</div>
+                        <div className="w-full sm:w-24 sm:text-center">{r.femmes}</div>
+                        <div className="w-full sm:w-24 sm:text-center font-bold">{total}</div>
+                        <div className="w-full sm:w-32 sm:text-center">
+                          <button onClick={()=>handleEdit(r)} className="text-orange-400 underline hover:text-orange-500">Modifier</button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })}
+
+            {/* Total global */}
+            <div className="flex flex-col sm:flex-row sm:items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl text-white font-bold">
+              <div className="flex-1">TOTAL GLOBAL</div>
+              <div className="w-full sm:w-24 sm:text-center text-orange-400">{totalGlobal.hommes}</div>
+              <div className="w-full sm:w-24 sm:text-center text-orange-400">{totalGlobal.femmes}</div>
+              <div className="w-full sm:w-24 sm:text-center text-orange-400">{totalGlobal.hommes + totalGlobal.femmes}</div>
+            </div>
+
           </div>
-        )}
+        </div>
+      )}
 
       <Footer />
 
@@ -386,11 +378,8 @@ function RapportBaptemes() {
           border-radius:12px;
           background:rgba(255,255,255,0.05);
           color:white;
-          width:100%;
         }
       `}</style>
-
     </div>
   );
 }
-

@@ -189,9 +189,7 @@ function RapportBaptemes() {
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
         <span className="text-white">Rapport </span>
         <span className="text-amber-300">Baptêmes</span>
-      </h1>
-
-      <p className="text-white/80 mb-6">Résumé des baptêmes par mois</p>
+      </h1>      
 
       {/* FORMULAIRE + MENU DEROU */}
       <div className="max-w-5xl w-full grid md:grid-cols-2 gap-6 mb-6">
@@ -223,64 +221,76 @@ function RapportBaptemes() {
         </div>
 
             {/* Menu déroulant / Sélectionner les baptisés */}
-                <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white w-full md:w-96">
-                <div className="flex justify-between items-center mb-2">
-                  <label className="font-semibold">Sélectionner les baptisés</label>
-                  <button
-                    onClick={() => {
-                      if (selectedCandidats.length === 0) {
-                        setSelectedCandidats(candidats.map(c => c.id)); // Tout sélectionner
-                      } else {
-                        setSelectedCandidats([]); // Tout désélectionner
-                      }
-                    }}
-                    className="text-sm underline hover:text-orange-400"
+            <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white w-full md:w-96">
+              <div className="flex justify-between items-center mb-2">
+                <label className="font-semibold">Sélectionner les baptisés</label>
+                <button
+                  onClick={() => {
+                    if (selectedCandidats.length === 0) {
+                      setSelectedCandidats(candidats.map(c => c.id)); // Tout sélectionner
+                    } else {
+                      setSelectedCandidats([]); // Tout désélectionner
+                    }
+                  }}
+                  className="text-sm underline hover:text-orange-400"
+                >
+                  {selectedCandidats.length === 0 ? "Tout sélectionner" : "Tout désélectionner"}
+                </button>
+              </div>
+            
+              {/* Liste des candidats avec checkboxes */}
+              <div className="flex flex-col overflow-y-auto max-h-[300px] space-y-1">
+                {candidats.map(c => (
+                  <div
+                    key={c.id}
+                    className="flex justify-between items-center w-full px-2 py-1 rounded hover:bg-white/20"
                   >
-                    {selectedCandidats.length === 0 ? "Tout sélectionner" : "Tout désélectionner"}
+                    <span>{c.prenom} {c.nom}</span>
+                    <input
+                      type="checkbox"
+                      checked={selectedCandidats.includes(c.id)}
+                      onChange={() => {
+                        if (selectedCandidats.includes(c.id)) {
+                          setSelectedCandidats(selectedCandidats.filter(id => id !== c.id));
+                        } else {
+                          setSelectedCandidats([...selectedCandidats, c.id]);
+                        }
+                      }}
+                      className="accent-[#25297e]"
+                    />
+                  </div>
+                ))}
+              </div>
+            
+              {/* Bouton Ajouter un baptisé */}
+              {canAddMember && (
+                <div className="flex justify-center mt-2">
+                  <button
+                    onClick={() => router.push("/AddContact")}
+                    className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-blue-600 hover:bg-blue-700"
+                  >
+                    ➕ Ajouter un baptisé
                   </button>
                 </div>
-              
-                {/* Liste des candidats avec checkboxes à côté du nom */}
-                <div className="flex flex-col overflow-y-auto max-h-[300px] space-y-1">
-                  {candidats.map(c => (
-                    <div
-                      key={c.id}
-                      className="flex justify-between items-center w-full px-2 py-1 rounded hover:bg-white/20"
-                    >
-                      <span>{c.prenom} {c.nom}</span>
-                      <input
-                        type="checkbox"
-                        checked={selectedCandidats.includes(c.id)}
-                        onChange={() => {
-                          if (selectedCandidats.includes(c.id)) {
-                            setSelectedCandidats(selectedCandidats.filter(id => id !== c.id));
-                          } else {
-                            setSelectedCandidats([...selectedCandidats, c.id]);
-                          }
-                        }}
-                        className="accent-[#25297e]"
-                      />
-                    </div>
-                  ))}
+              )}
+            
+              {/* Ligne de séparation */}
+              <hr className="border-t border-white/30 my-2" />
+            
+              {/* Personnes sélectionnées */}
+              {selectedCandidats.length > 0 && (
+                <div>
+                  <h3 className="text-amber-300 font-semibold text-sm mb-1">Personnes sélectionnées :</h3>
+                  <ul className="list-disc list-inside text-white text-sm space-y-1">
+                    {candidats
+                      .filter(c => selectedCandidats.includes(c.id))
+                      .map(c => (
+                        <li key={c.id}>{c.prenom} {c.nom}</li>
+                      ))}
+                  </ul>
                 </div>
-              
-                {/* Ligne de séparation */}
-                <hr className="border-t border-white/30 my-3" />
-              
-                {/* Personnes sélectionnées */}
-                {selectedCandidats.length > 0 && (
-                  <div>
-                    <h3 className="text-amber-300 font-semibold text-sm mb-1">Personnes sélectionnées :</h3>
-                    <ul className="list-disc list-inside text-white text-sm space-y-1">
-                      {candidats
-                        .filter(c => selectedCandidats.includes(c.id))
-                        .map(c => (
-                          <li key={c.id}>{c.prenom} {c.nom}</li>
-                        ))}
-                    </ul>
-                  </div>
-                )}
-              </div>  
+              )}
+            </div>
             </div>
 
       {/* FILTRES */}

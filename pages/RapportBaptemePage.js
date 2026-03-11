@@ -238,31 +238,31 @@ function RapportBaptemes() {
             <div className="h-52 overflow-y-auto border border-white/20 rounded-lg p-1">
               {candidats.map(c => (
                 <label
-                  key={c.id}
-                  className="flex items-center justify-between gap-2 p-1 hover:bg-white/10 rounded cursor-pointer"
-                >
-                  <span>{c.prenom} {c.nom}</span>
-                  <input
-                    type="checkbox"
-                    checked={selectedCandidats.includes(c.id)}
-                    onChange={()=>{
-                      if(selectedCandidats.includes(c.id)){
-                        setSelectedCandidats(prev => prev.filter(id => id !== c.id));
-                      } else {
-                        setSelectedCandidats(prev => [...prev, c.id]);
-                      }
-                    }}
-                    className="accent-[#25297e]"
-                  />
-                </label>
+              key={c.id}
+              className="flex items-center gap-2 p-1 hover:bg-white/10 rounded cursor-pointer"
+            >
+              <span>{c.prenom} {c.nom}</span>
+              <input
+                type="checkbox"
+                checked={selectedCandidats.includes(c.id)}
+                onChange={()=>{
+                  if(selectedCandidats.includes(c.id)){
+                    setSelectedCandidats(prev => prev.filter(id => id !== c.id));
+                  } else {
+                    setSelectedCandidats(prev => [...prev, c.id]);
+                  }
+                }}
+                className="accent-[#25297e] ml-1"
+              />
+            </label>
               ))}
             </div>
           
             {/* Noms sélectionnés */}
             {selectedCandidats.length > 0 && (
-              <div className="mt-2 text-amber-300 text-sm">
-                <h3 className="font-semibold mb-1">Personnes sélectionnées :</h3>
-                <ul className="list-disc list-inside">
+              <div className="mt-2 text-sm">
+                <h3 className="font-semibold mb-1 text-amber-300">Personnes sélectionnées :</h3>
+                <ul className="list-disc list-inside text-white">
                   {candidats
                     .filter(c => selectedCandidats.includes(c.id))
                     .map(c => (

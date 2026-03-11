@@ -246,7 +246,7 @@ function RapportBaptemes() {
                     </button>
                   </div>
                 </div>  
-
+              </div>  
 
             {/* Menu déroulant / Sélectionner les baptisés */}
                 <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white w-full md:w-96">

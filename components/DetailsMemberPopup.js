@@ -245,7 +245,10 @@ export default function DetailsMemberPopup({
           <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
           <p>🎗️ Civilité : {membre.sexe || ""}</p>
           <p>⏳ Age : {membre.age || ""}</p>
-          <p>💧 Baptême d’Eau : {membre.bapteme_eau ? "Oui" : "Non"}</p>
+          <p>💧 Baptême d’Eau : {membre.bapteme_eau ? "Oui" : "Non"}</p>          
+                {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
+                  <p className="ml-6">💦 Veut se faire baptiser</p>
+                )}  
           <p>🔥 Baptême de Feu : {membre.bapteme_esprit ? "Oui" : "Non"}</p>
           <p>✒️ Formation : {membre.Formation || ""}</p>
           <p>❤️‍🩹 Soin Pastoral : {membre.Soin_Pastoral || ""}</p>

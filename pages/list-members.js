@@ -809,7 +809,7 @@ const canAddMember =
                 <p>🎗️ Civilité : {m.sexe || ""}</p>
                 <p>⏳ Tranche d'age : {m.age || ""}</p> 
                 <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>
-                {m.bapteme_eau === "non" && m.veut_se_faire_baptiser === "oui" && (
+                {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
                   <p className="ml-6">💦 Veut se faire baptiser</p>
                 )}
                 <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>

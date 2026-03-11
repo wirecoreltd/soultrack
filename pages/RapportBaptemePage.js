@@ -37,7 +37,6 @@ function RapportBaptemes() {
   const formRef=useRef(null);
   const [rapportSuccess, setRapportSuccess] = useState(false);
 
-  /* USER */
   useEffect(()=>{
     const fetchUser=async()=>{
       const {data:session}=await supabase.auth.getSession();
@@ -57,7 +56,6 @@ function RapportBaptemes() {
     fetchUser();
   },[]);
 
-  /* CANDIDATS */
   const fetchCandidats=async(eglise_id,branche_id)=>{
     const {data}=await supabase
       .from("membres_complets")
@@ -70,15 +68,13 @@ function RapportBaptemes() {
     setCandidats(data || []);
   };
 
-  /* CALCUL HOMMES FEMMES */
   useEffect(()=>{
     const selected=candidats.filter(c=>selectedCandidats.includes(c.id));
     const hommes=selected.filter(c=>c.sexe==="Homme").length;
     const femmes=selected.filter(c=>c.sexe==="Femme").length;
     setFormData(prev=>({...prev,hommes,femmes}));
-  },[selectedCandidats]);
+  },[selectedCandidats,candidats]);
 
-  /* FETCH RAPPORTS */
   const fetchRapports=async()=>{
     let query=supabase
       .from("baptemes")
@@ -95,22 +91,15 @@ function RapportBaptemes() {
     setShowTable(true);
   };
 
-  /* CRUD */
   const handleSubmit=async(e)=>{
     e.preventDefault();
     if(editRapport) return handleUpdate();
 
-    // Ajouter le rapport avec valeurs Oui/Non pour que ne s'affiche plus dans menu
-    await supabase.from("baptemes").insert([{
-      ...formData,
-      hommes:formData.hommes,
-      femmes:formData.femmes
-    }]);
+    await supabase.from("baptemes").insert([{...formData}]);
 
-    setRapportSuccess(true);      // afficher le message
-    setTimeout(() => setRapportSuccess(false), 3000);  // disparaît après 3s
+    setRapportSuccess(true);
+    setTimeout(() => setRapportSuccess(false), 3000);
 
-    // Mettre à jour les membres sélectionnés pour que bapteme_eau=Oui et veut_se_faire_baptiser=Non
     for(const id of selectedCandidats){
       await supabase
         .from("membres_complets")
@@ -148,7 +137,6 @@ function RapportBaptemes() {
     fetchRapports();
   };
 
-  /* UTIL */
   const getMonthNameFR=(monthIndex)=>{
     const months=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
     return months[monthIndex]||"";
@@ -173,12 +161,7 @@ function RapportBaptemes() {
 
   const toggleMonth=(monthKey)=>setExpandedMonths(prev=>({...prev,[monthKey]:!prev[monthKey]}));
 
-  const groupedReports=Object.entries(groupByMonth(rapports))
-    .sort((a,b)=>{
-      const [yearA,monthA]=a[0].split("-").map(Number);
-      const [yearB,monthB]=b[0].split("-").map(Number);
-      return new Date(yearA,monthA)-new Date(yearB,monthB);
-    });
+  const groupedReports=Object.entries(groupByMonth(rapports));
 
   const totalGlobal=rapports.reduce((acc,r)=>{
     acc.hommes+=Number(r.hommes||0);
@@ -187,20 +170,18 @@ function RapportBaptemes() {
   },{hommes:0,femmes:0});
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-6 sm:p-6 bg-[#333699]">
+    <div className="min-h-screen flex flex-col items-center px-3 py-4 sm:px-4 sm:py-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-xl sm:text-2xl font-bold mt-4 mb-6 text-center">
+      <h1 className="text-lg sm:text-2xl font-bold mt-4 mb-6 text-center px-2">
         <span className="text-white">Rapport </span>
         <span className="text-amber-300">Baptêmes</span>
-      </h1>      
+      </h1>
 
-      {/* FORMULAIRE + MENU DEROU */}
-      <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Formulaire */}
-        <div ref={formRef} className="bg-white/10 rounded-3xl p-6 shadow-lg">
+      <div className="max-w-6xl w-full grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6 px-2">
+        <div ref={formRef} className="bg-white/10 rounded-3xl p-4 sm:p-6 shadow-lg">
           <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col">
+                <div className="flex flex-col">
               <label className="text-white mb-1">Date</label>
               <input type="date" required value={formData.date} onChange={(e)=>setFormData({...formData,date:e.target.value})} className="input"/>
             </div>
@@ -217,158 +198,139 @@ function RapportBaptemes() {
               <input type="number" value={formData.femmes} disabled className="input opacity-60"/>
             </div>
             <div className="col-span-2 mt-4">
-              <button type="submit" className="w-full sm:w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:scale-[1.02] transition">
+              <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:scale-[1.02] transition">
                 {editRapport?"Modifier":"Ajouter le baptême"}
               </button>
-               {rapportSuccess && (
-                <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
+              {rapportSuccess && (
+                <p className="text-green-400 font-semibold text-center mt-4 animate-pulse">
                   ✅ Rapport ajouté !
                 </p>
-              )}             
+              )}
             </div>
           </form>
         </div>
 
-            {/* SECTION CANDIDATS */}
-    <div className="w-full flex flex-col gap-4">
+        <div className="w-full flex flex-col gap-4">
+          <div className="bg-blue-900/40 border border-blue-300/30 text-white text-sm p-4 rounded-2xl">
+            ℹ️ Cette liste contient les personnes qui <strong>n'ont pas encore été baptisées</strong> et qui
+            <strong> souhaitent prendre leur baptême</strong>.<br/><br/>
+            Ces informations sont mises à jour dans la <strong>Liste des membres</strong>.
+            <div className="mt-2">
+              <button
+                onClick={() => router.push("/list-members")}
+                className="underline text-amber-300 hover:text-amber-200 text-sm"
+              >
+                Voir la liste des membres
+              </button>
+            </div>
+          </div>
 
-  {/* BOITE EXPLICATION */}
-  <div className="bg-blue-900/40 border border-blue-300/30 text-white text-sm p-4 rounded-2xl">
-    ℹ️ Cette liste contient les personnes qui <strong>n'ont pas encore été baptisées</strong> et qui
-    <strong> souhaitent prendre leur baptême</strong>.<br/><br/>
-    Ces informations sont mises à jour dans la <strong>Liste des membres</strong>.
-    <div className="mt-2">
-      <button
-        onClick={() => router.push("/list-members")}
-        className="underline text-amber-300 hover:text-amber-200 text-sm"
-      >
-        Voir la liste des membres
-      </button>
-    </div>
-  </div>
-</div>
+          <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
+              <label className="font-semibold">Sélectionner les baptisés</label>
+              <button
+                onClick={() => {
+                  if (selectedCandidats.length === 0) {
+                    setSelectedCandidats(candidats.map(c => c.id));
+                  } else {
+                    setSelectedCandidats([]);
+                  }
+                }}
+                className="text-sm underline hover:text-orange-400"
+              >
+                {selectedCandidats.length === 0 ? "Tout sélectionner" : "Tout désélectionner"}
+              </button>
+            </div>
 
-  {/* Menu déroulant / Sélectionner les baptisés */}
-  <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white">
-    <div className="flex justify-between items-center mb-2">
-      <label className="font-semibold">Sélectionner les baptisés</label>
-      <button
-        onClick={() => {
-          if (selectedCandidats.length === 0) {
-            setSelectedCandidats(candidats.map(c => c.id));
-          } else {
-            setSelectedCandidats([]);
-          }
-        }}
-        className="text-sm underline hover:text-orange-400"
-      >
-        {selectedCandidats.length === 0 ? "Tout sélectionner" : "Tout désélectionner"}
-      </button>
-    </div>
+            <div className="flex flex-col overflow-y-auto max-h-[250px] sm:max-h-[300px] space-y-1">
+              {candidats.map(c => (
+                <div key={c.id} className="flex justify-between items-center w-full px-2 py-1 rounded hover:bg-white/20">
+                  <span className="text-sm">{c.prenom} {c.nom}</span>
+                  <input
+                    type="checkbox"
+                    checked={selectedCandidats.includes(c.id)}
+                    onChange={() => {
+                      if (selectedCandidats.includes(c.id)) {
+                        setSelectedCandidats(selectedCandidats.filter(id => id !== c.id));
+                      } else {
+                        setSelectedCandidats([...selectedCandidats, c.id]);
+                      }
+                    }}
+                    className="accent-[#25297e]"
+                  />
+                </div>
+              ))}
+            </div>
 
-    {/* Liste */}
-    <div className="flex flex-col overflow-y-auto max-h-[250px] sm:max-h-[300px] space-y-1">
-      {candidats.map(c => (
-        <div
-          key={c.id}
-          className="flex justify-between items-center w-full px-2 py-1 rounded hover:bg-white/20"
-        >
-          <span>{c.prenom} {c.nom}</span>
-          <input
-            type="checkbox"
-            checked={selectedCandidats.includes(c.id)}
-            onChange={() => {
-              if (selectedCandidats.includes(c.id)) {
-                setSelectedCandidats(selectedCandidats.filter(id => id !== c.id));
-              } else {
-                setSelectedCandidats([...selectedCandidats, c.id]);
-              }
-            }}
-            className="accent-[#25297e]"
-          />
+            <button
+              onClick={() => router.push("/AddContactbaptise")}
+              className="text-white font-semibold px-4 py-2 rounded shadow text-sm mt-2 w-full bg-indigo-600 hover:bg-indigo-700"
+            >
+              ➕ Ajouter un Baptisé
+            </button>
+
+            <hr className="border-t border-white/30 my-3" />
+
+            {selectedCandidats.length > 0 && (
+              <div>
+                <h3 className="text-amber-300 font-semibold text-sm mb-1">
+                  Personnes sélectionnées :
+                </h3>
+                <ul className="list-disc list-inside text-white text-sm space-y-1">
+                  {candidats
+                    .filter(c => selectedCandidats.includes(c.id))
+                    .map(c => (
+                      <li key={c.id}>{c.prenom} {c.nom}</li>
+                    ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
-      ))}
-    </div>
-
-    <button
-      onClick={() => router.push("/AddContactbaptise")}
-      className="text-white font-semibold px-4 py-2 rounded shadow text-sm mt-2 w-full"
-    >
-      ➕ Ajouter un Baptisé
-    </button>
-
-    <hr className="border-t border-white/30 my-3" />
-
-    {selectedCandidats.length > 0 && (
-      <div>
-        <h3 className="text-amber-300 font-semibold text-sm mb-1">
-          Personnes sélectionnées :
-        </h3>
-        <ul className="list-disc list-inside text-white text-sm space-y-1">
-          {candidats
-            .filter(c => selectedCandidats.includes(c.id))
-            .map(c => (
-              <li key={c.id}>{c.prenom} {c.nom}</li>
-            ))}
-        </ul>
-      </div>
-    )}
-  </div>
-
-</div>
-
-      {/* FILTRES */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
-        <input type="date" value={filterDebut} onChange={(e)=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-        <input type="date" value={filterFin} onChange={(e)=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-        <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
       </div>
 
-      {/* TABLEAU */}
+      <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-2 flex flex-col sm:flex-row sm:justify-center gap-4 text-white w-full max-w-4xl">
+        <input type="date" value={filterDebut} onChange={(e)=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"/>
+        <input type="date" value={filterFin} onChange={(e)=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"/>
+        <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto">Générer</button>
+      </div>
+
       {showTable && (
-        <div className="w-full overflow-x-auto mt-6">
-          <div className="min-w-[700px] space-y-2">
-            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[200px]">Date</div>
-              <div className="min-w-[200px] text-center">Baptisé par</div>
-              <div className="min-w-[120px] text-center">Hommes</div>
-              <div className="min-w-[120px] text-center">Femmes</div>
-              <div className="min-w-[120px] text-center">Total</div>
-              <div className="min-w-[150px] text-center">Actions</div>
+        <div className="w-full overflow-x-auto mt-6 px-2">
+          <div className="space-y-2 min-w-[600px] sm:min-w-0">
+                    <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl">
+              <div className="flex-1">Date</div>
+              <div className="flex-1 text-center">Baptisé par</div>
+              <div className="w-24 text-center">Hommes</div>
+              <div className="w-24 text-center">Femmes</div>
+              <div className="w-24 text-center">Total</div>
+              <div className="w-32 text-center">Actions</div>
             </div>
 
             {groupedReports.map(([monthKey,monthRapports])=>{
-              const [year,monthIndex]=monthKey.split("-").map(Number);
-              const monthLabel=`${getMonthNameFR(monthIndex)} ${year}`;
               const totalMonth=monthRapports.reduce((acc,r)=>{
                 acc.hommes+=Number(r.hommes||0);
                 acc.femmes+=Number(r.femmes||0);
                 return acc;
               },{hommes:0,femmes:0});
-              const isExpanded=expandedMonths[monthKey]||false;
 
               return(
                 <div key={monthKey} className="space-y-1">
-                  <div className="flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 border-blue-500" onClick={()=>toggleMonth(monthKey)}>
-                    <div className="min-w-[200px] text-white font-semibold">{isExpanded?"➖ ":"➕ "}{monthLabel}</div>
-                    <div className="min-w-[200px]"></div>
-                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
-                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
-                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.hommes+totalMonth.femmes}</div>
-                    <div className="min-w-[150px]"></div>
+                  <div className="px-4 py-2 rounded-lg bg-white/20 border-l-4 border-blue-500 text-white font-semibold">
+                    Total du mois : {totalMonth.hommes+totalMonth.femmes}
                   </div>
 
-                  {(isExpanded||monthRapports.length===1)&&monthRapports.map(r=>{
+                  {monthRapports.map(r=>{
                     const total=Number(r.hommes)+Number(r.femmes);
                     return(
-                      <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500">
-                        <div className="min-w-[200px] text-white">{formatDateFR(r.date)}</div>
-                        <div className="min-w-[200px] text-center text-white">{r.baptise_par}</div>
-                        <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                        <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                        <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
-                        <div className="min-w-[150px] text-center">
-                          <button onClick={()=>handleEdit(r)} className="text-orange-400 underline hover:text-orange-500 px-4 py-1 rounded-xl">Modifier</button>
+                      <div key={r.id} className="flex flex-col sm:flex-row sm:items-center gap-2 px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 text-white">
+                        <div className="flex-1">{formatDateFR(r.date)}</div>
+                        <div className="flex-1 sm:text-center">{r.baptise_par}</div>
+                        <div className="w-full sm:w-24 sm:text-center">Hommes : {r.hommes}</div>
+                        <div className="w-full sm:w-24 sm:text-center">Femmes : {r.femmes}</div>
+                        <div className="w-full sm:w-24 sm:text-center font-bold">Total : {total}</div>
+                        <div className="w-full sm:w-32 sm:text-center">
+                          <button onClick={()=>handleEdit(r)} className="text-orange-400 underline hover:text-orange-500">Modifier</button>
                         </div>
                       </div>
                     );
@@ -377,19 +339,18 @@ function RapportBaptemes() {
               );
             })}
 
-            <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
-              <div className="min-w-[200px] text-white font-bold">TOTAL</div>
-              <div className="min-w-[200px]"></div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes+totalGlobal.femmes}</div>
-              <div className="min-w-[150px]"></div>
+            <div className="flex flex-col sm:flex-row sm:items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl text-white font-bold">
+              <div className="flex-1">TOTAL GLOBAL</div>
+              <div className="w-full sm:w-24 sm:text-center text-orange-400">{totalGlobal.hommes}</div>
+              <div className="w-full sm:w-24 sm:text-center text-orange-400">{totalGlobal.femmes}</div>
+              <div className="w-full sm:w-24 sm:text-center text-orange-400">{totalGlobal.hommes+totalGlobal.femmes}</div>
             </div>
           </div>
         </div>
-      )}     
+      )}
 
       <Footer />
+
       <style jsx>{`
         .input{
           border:1px solid #ccc;
@@ -397,8 +358,10 @@ function RapportBaptemes() {
           border-radius:12px;
           background:rgba(255,255,255,0.05);
           color:white;
+          width:100%;
         }
       `}</style>
     </div>
   );
 }
+      

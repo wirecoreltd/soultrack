@@ -7,8 +7,6 @@ import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useRouter } from "next/navigation";
 
-const router = useRouter();
-
 export default function RapportBaptemesPage() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur","ResponsableFormation"]}>
@@ -33,10 +31,9 @@ function RapportBaptemes() {
   const [editRapport,setEditRapport]=useState(null);
   const [expandedMonths,setExpandedMonths]=useState({});
   const [showTable,setShowTable]=useState(false);
-
   const [candidats,setCandidats]=useState([]);
   const [selectedCandidats,setSelectedCandidats]=useState([]);
-
+  const router = useRouter();
   const formRef=useRef(null);
 
   /* USER */

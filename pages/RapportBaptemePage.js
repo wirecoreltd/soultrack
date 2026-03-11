@@ -72,12 +72,22 @@ function RapportBaptemes() {
   };
 
   /* CALCUL HOMMES FEMMES */
-  useEffect(()=>{
-    const selected=candidats.filter(c=>selectedCandidats.includes(c.id));
-    const hommes=selected.filter(c=>c.sexe==="Homme").length;
-    const femmes=selected.filter(c=>c.sexe==="Femme").length;
-    setFormData(prev=>({...prev,hommes,femmes}));
-  },[selectedCandidats]);
+useEffect(() => {
+
+  const selected = candidats.filter(c =>
+    selectedCandidats.includes(c.id)
+  );
+
+  const hommes = selected.filter(c => c.sexe === "Homme").length;
+  const femmes = selected.filter(c => c.sexe === "Femme").length;
+
+  setFormData(prev => ({
+    ...prev,
+    hommes: hommes,
+    femmes: femmes
+  }));
+
+}, [selectedCandidats, candidats]);
 
   /* FETCH RAPPORTS */
   const fetchRapports=async()=>{
@@ -252,7 +262,9 @@ function RapportBaptemes() {
   {/* Menu déroulant / Sélectionner les baptisés */}
   <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white">
     <div className="flex justify-between items-center mb-2">
-      <label className="font-semibold">Sélectionner les baptisés</label>
+      <label className="font-semibold">
+Sélectionner les baptisés ({candidats.length})
+</label>
       <button
         onClick={() => {
           if (selectedCandidats.length === 0) {
@@ -280,9 +292,9 @@ function RapportBaptemes() {
             checked={selectedCandidats.includes(c.id)}
             onChange={() => {
               if (selectedCandidats.includes(c.id)) {
-                setSelectedCandidats(selectedCandidats.filter(id => id !== c.id));
+                setSelectedCandidats(prev => prev.filter(id => id !== c.id));
               } else {
-                setSelectedCandidats([...selectedCandidats, c.id]);
+                setSelectedCandidats(prev => [...prev, c.id]);
               }
             }}
             className="accent-[#25297e]"

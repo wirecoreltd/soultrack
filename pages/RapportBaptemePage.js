@@ -15,7 +15,6 @@ export default function RapportBaptemesPage() {
 }
 
 function RapportBaptemes() {
-
   const [formData,setFormData]=useState({
     date:"",
     hommes:0,
@@ -25,25 +24,21 @@ function RapportBaptemes() {
     branche_id:null
   });
 
-  const [candidats,setCandidats]=useState([]);
-  const [selectedCandidats,setSelectedCandidats]=useState([]);
-
   const [filterDebut,setFilterDebut]=useState("");
   const [filterFin,setFilterFin]=useState("");
   const [rapports,setRapports]=useState([]);
-
   const [editRapport,setEditRapport]=useState(null);
   const [expandedMonths,setExpandedMonths]=useState({});
   const [showTable,setShowTable]=useState(false);
 
+  const [candidats,setCandidats]=useState([]);
+  const [selectedCandidats,setSelectedCandidats]=useState([]);
+
   const formRef=useRef(null);
 
   /* USER */
-
   useEffect(()=>{
-
     const fetchUser=async()=>{
-
       const {data:session}=await supabase.auth.getSession();
       if(!session?.session?.user) return;
 
@@ -54,43 +49,36 @@ function RapportBaptemes() {
         .single();
 
       if(profile){
-
-        setFormData(prev=>({
-          ...prev,
-          eglise_id:profile.eglise_id,
-          branche_id:profile.branche_id
-        }));
-
+        setFormData(prev=>({...prev,eglise_id:profile.eglise_id,branche_id:profile.branche_id}));
         fetchCandidats(profile.eglise_id,profile.branche_id);
-
       }
-
     };
-
     fetchUser();
-
   },[]);
 
   /* CANDIDATS */
-
   const fetchCandidats=async(eglise_id,branche_id)=>{
-
     const {data}=await supabase
       .from("membres_complets")
-      .select("id,nom,prenom,sexe")
+      .select("id,prenom,nom,sexe")
       .eq("eglise_id",eglise_id)
       .eq("branche_id",branche_id)
-      .eq("bapteme_eau","Non")
-      .eq("veut_se_faire_baptiser","Oui");
+      .eq("veut_se_faire_baptiser","Oui")
+      .eq("bapteme_eau","Non");
 
-    setCandidats(data||[]);
-
+    setCandidats(data || []);
   };
 
-  /* RAPPORTS */
+  /* CALCUL HOMMES FEMMES */
+  useEffect(()=>{
+    const selected=candidats.filter(c=>selectedCandidats.includes(c.id));
+    const hommes=selected.filter(c=>c.sexe==="Homme").length;
+    const femmes=selected.filter(c=>c.sexe==="Femme").length;
+    setFormData(prev=>({...prev,hommes,femmes}));
+  },[selectedCandidats]);
 
+  /* FETCH RAPPORTS */
   const fetchRapports=async()=>{
-
     let query=supabase
       .from("baptemes")
       .select("*")
@@ -102,86 +90,29 @@ function RapportBaptemes() {
     if(filterFin) query=query.lte("date",filterFin);
 
     const {data}=await query;
-
     setRapports(data||[]);
     setShowTable(true);
-
   };
 
   /* CRUD */
-
   const handleSubmit=async(e)=>{
-
     e.preventDefault();
+    if(editRapport) return handleUpdate();
 
-    const hommes=candidats
-      .filter(c=>selectedCandidats.includes(c.id) && c.sexe==="Homme")
-      .length;
-
-    const femmes=candidats
-      .filter(c=>selectedCandidats.includes(c.id) && c.sexe==="Femme")
-      .length;
-
-    const dataToInsert={
-      ...formData,
-      hommes,
-      femmes
-    };
-
-    await supabase
-      .from("baptemes")
-      .insert([dataToInsert]);
-
-    if(selectedCandidats.length>0){
-
-      await supabase
-        .from("membres_complets")
-        .update({
-          bapteme_eau:"Oui",
-          veut_se_faire_baptiser:"Non"
-        })
-        .in("id",selectedCandidats);
-
-    }
-
+    await supabase.from("baptemes").insert([formData]);
     setSelectedCandidats([]);
-
-    setFormData(prev=>({
-      ...prev,
-      date:"",
-      hommes:0,
-      femmes:0,
-      baptise_par:""
-    }));
-
-    fetchCandidats(formData.eglise_id,formData.branche_id);
+    setFormData(prev=>({...prev,date:"",hommes:0,femmes:0,baptise_par:""}));
     fetchRapports();
-
   };
 
   const handleEdit=(r)=>{
-
     setEditRapport(r);
-
-    setFormData({
-      ...formData,
-      date:r.date,
-      hommes:r.hommes,
-      femmes:r.femmes,
-      baptise_par:r.baptise_par
-    });
-
-    formRef.current?.scrollIntoView({
-      behavior:"smooth",
-      block:"start"
-    });
-
+    setFormData({...formData,date:r.date,hommes:r.hommes,femmes:r.femmes,baptise_par:r.baptise_par});
+    formRef.current?.scrollIntoView({behavior:"smooth",block:"start"});
   };
 
   const handleUpdate=async()=>{
-
     if(!editRapport) return;
-
     await supabase
       .from("baptemes")
       .update({
@@ -193,21 +124,12 @@ function RapportBaptemes() {
       .eq("id",editRapport.id);
 
     setEditRapport(null);
-
-    setFormData(prev=>({
-      ...prev,
-      date:"",
-      hommes:0,
-      femmes:0,
-      baptise_par:""
-    }));
-
+    setSelectedCandidats([]);
+    setFormData(prev=>({...prev,date:"",hommes:0,femmes:0,baptise_par:""}));
     fetchRapports();
-
   };
 
   /* UTIL */
-
   const getMonthNameFR=(monthIndex)=>{
     const months=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
     return months[monthIndex]||"";
@@ -216,163 +138,199 @@ function RapportBaptemes() {
   const formatDateFR=(dateString)=>{
     if(!dateString) return "";
     const d=new Date(dateString);
-    const day=String(d.getDate()).padStart(2,"0");
-    const month=String(d.getMonth()+1).padStart(2,"0");
-    const year=d.getFullYear();
-    return `${day}/${month}/${year}`;
+    return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
   };
 
   const groupByMonth=(rapports)=>{
-
     const map={};
-
     rapports.forEach(r=>{
-
       const d=new Date(r.date);
       const key=`${d.getFullYear()}-${d.getMonth()}`;
-
       if(!map[key]) map[key]=[];
-
       map[key].push(r);
-
     });
-
     return map;
-
   };
 
-  const toggleMonth=(monthKey)=>
-    setExpandedMonths(prev=>({...prev,[monthKey]:!prev[monthKey]}));
+  const toggleMonth=(monthKey)=>setExpandedMonths(prev=>({...prev,[monthKey]:!prev[monthKey]}));
 
-  const groupedReports=Object.entries(groupByMonth(rapports));
+  const groupedReports=Object.entries(groupByMonth(rapports))
+    .sort((a,b)=>{
+      const [yearA,monthA]=a[0].split("-").map(Number);
+      const [yearB,monthB]=b[0].split("-").map(Number);
+      return new Date(yearA,monthA)-new Date(yearB,monthB);
+    });
 
   const totalGlobal=rapports.reduce((acc,r)=>{
-
     acc.hommes+=Number(r.hommes||0);
     acc.femmes+=Number(r.femmes||0);
-
     return acc;
-
   },{hommes:0,femmes:0});
 
   /* RENDER */
-
-  return(
-
+  return (
   <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+    <HeaderPages />
 
-  <HeaderPages />
+    <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
+      <span className="text-white">Rapport </span>
+      <span className="text-amber-300">Baptêmes</span>
+    </h1>
 
-  <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
-  <span className="text-white">Rapport </span>
-  <span className="text-amber-300">Baptêmes</span>
-  </h1>
+    <p className="text-white/80 mb-6">Résumé des baptêmes par mois</p>
 
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl">
+    {/* FORMULAIRE + MENU DEROU */}
+    <div className="max-w-5xl w-full grid md:grid-cols-2 gap-6 mb-6">
+      {/* Formulaire */}
+      <div ref={formRef} className="bg-white/10 rounded-3xl p-6 shadow-lg">
+        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col">
+            <label className="text-white mb-1">Date</label>
+            <input type="date" required value={formData.date} onChange={(e)=>setFormData({...formData,date:e.target.value})} className="input"/>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-white mb-1">Baptisé par</label>
+            <input type="text" value={formData.baptise_par} onChange={(e)=>setFormData({...formData,baptise_par:e.target.value})} className="input"/>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-white mb-1">Hommes</label>
+            <input type="number" value={formData.hommes} disabled className="input opacity-60"/>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-white mb-1">Femmes</label>
+            <input type="number" value={formData.femmes} disabled className="input opacity-60"/>
+          </div>
+          <div className="col-span-2 mt-4">
+            <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl">
+              {editRapport?"Modifier":"Ajouter le baptême"}
+            </button>
+          </div>
+        </form>
 
-  {/* FORMULAIRE */}
+        {/* Noms sélectionnés */}
+          {selectedCandidats.length>0 && (
+            <div className="mt-6 text-white">
+              <h3 className="font-bold mb-2">Personnes sélectionnées</h3>          
+              {candidats
+                .filter(c=>selectedCandidats.includes(c.id))
+                .map(c=>(
+                  <div key={c.id}>
+                    {c.prenom} {c.nom} ({c.sexe})
+                  </div>
+                ))
+              }          
+            </div>
+          )}          
+          </div>
+          
+          {/* Menu déroulant */}
+          <div className="bg-white/10 p-6 rounded-3xl shadow-lg text-white">          
+          <label className="block mb-2 font-semibold">
+          Sélectionner les baptisés
+          </label>          
+          <select
+            className="input w-full"
+            onChange={(e)=>{
+              const id=e.target.value;          
+              if(!selectedCandidats.includes(id)){
+                setSelectedCandidats([...selectedCandidats,id]);
+              }
+            }}
+          >          
+          <option value="">Choisir une personne</option>          
+          {candidats.map(c=>(
+            <option key={c.id} value={c.id}>
+              {c.prenom} {c.nom} ({c.sexe})
+            </option>
+          ))}          
+          </select>          
+            </div>
+          </div>
 
-  <div ref={formRef} className="bg-white/10 rounded-3xl p-6 shadow-lg">
+    {/* FILTRES */}
+    <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+      <input type="date" value={filterDebut} onChange={(e)=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+      <input type="date" value={filterFin} onChange={(e)=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+      <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
+    </div>
 
-  <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+    {/* TABLEAU */}
+    {showTable && (
+      <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
+        <div className="w-max space-y-2">
+          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="min-w-[200px]">Date</div>
+            <div className="min-w-[200px] text-center">Baptisé par</div>
+            <div className="min-w-[120px] text-center">Hommes</div>
+            <div className="min-w-[120px] text-center">Femmes</div>
+            <div className="min-w-[120px] text-center">Total</div>
+            <div className="min-w-[150px] text-center">Actions</div>
+          </div>
 
-  <div className="flex flex-col">
-  <label className="text-white mb-1">Date</label>
-  <input type="date" required value={formData.date}
-  onChange={(e)=>setFormData({...formData,date:e.target.value})}
-  className="input"/>
-  </div>
+          {groupedReports.map(([monthKey,monthRapports])=>{
+            const [year,monthIndex]=monthKey.split("-").map(Number);
+            const monthLabel=`${getMonthNameFR(monthIndex)} ${year}`;
+            const totalMonth=monthRapports.reduce((acc,r)=>{
+              acc.hommes+=Number(r.hommes||0);
+              acc.femmes+=Number(r.femmes||0);
+              return acc;
+            },{hommes:0,femmes:0});
+            const isExpanded=expandedMonths[monthKey]||false;
 
-  <div className="flex flex-col">
-  <label className="text-white mb-1">Baptisé par</label>
-  <input type="text"
-  value={formData.baptise_par}
-  onChange={(e)=>setFormData({...formData,baptise_par:e.target.value})}
-  className="input"/>
-  </div>
+            return(
+              <div key={monthKey} className="space-y-1">
+                <div className="flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 border-blue-500" onClick={()=>toggleMonth(monthKey)}>
+                  <div className="min-w-[200px] text-white font-semibold">{isExpanded?"➖ ":"➕ "}{monthLabel}</div>
+                  <div className="min-w-[200px]"></div>
+                  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
+                  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
+                  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.hommes+totalMonth.femmes}</div>
+                  <div className="min-w-[150px]"></div>
+                </div>
 
-  <div className="flex flex-col">
-  <label className="text-white mb-1">Hommes</label>
-  <input type="number" value={formData.hommes} disabled className="input"/>
-  </div>
+                {(isExpanded||monthRapports.length===1)&&monthRapports.map(r=>{
+                  const total=Number(r.hommes)+Number(r.femmes);
+                  return(
+                    <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500">
+                      <div className="min-w-[200px] text-white">{formatDateFR(r.date)}</div>
+                      <div className="min-w-[200px] text-center text-white">{r.baptise_par}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                      <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
+                      <div className="min-w-[150px] text-center">
+                        <button onClick={()=>handleEdit(r)} className="text-orange-400 underline hover:text-orange-500 px-4 py-1 rounded-xl">Modifier</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
 
-  <div className="flex flex-col">
-  <label className="text-white mb-1">Femmes</label>
-  <input type="number" value={formData.femmes} disabled className="input"/>
-  </div>
-
-  <div className="col-span-2 flex justify-center mt-4">
-  <button type="submit"
-  className="w-full max-w-xl bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 px-6 rounded-2xl shadow-lg">
-  {editRapport?"Modifier":"Ajouter le baptême"}
-  </button>
-  </div>
-
-  </form>
-
-  {/* NOMS */}
-
-  {selectedCandidats.length>0 &&(
-  <div className="mt-6 text-white">
-  <h3 className="font-bold mb-2">Personnes sélectionnées</h3>
-
-  {candidats
-    .filter(c=>selectedCandidats.includes(c.id))
-    .map(c=>(
-      <div key={c.id}>
-      {c.prenom} {c.nom} ({c.sexe})
+          <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
+            <div className="min-w-[200px] text-white font-bold">TOTAL</div>
+            <div className="min-w-[200px]"></div>
+            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
+            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
+            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes+totalGlobal.femmes}</div>
+            <div className="min-w-[150px]"></div>
+          </div>
+        </div>
       </div>
-    ))
-  }
+    )}
+
+    <Footer />
+
+    <style jsx>{`
+      .input{
+        border:1px solid #ccc;
+        padding:10px;
+        border-radius:12px;
+        background:rgba(255,255,255,0.05);
+        color:white;
+      }
+    `}</style>
 
   </div>
-  )}
-
-  </div>
-
-  {/* MENU */}
-
-  <div className="bg-white/10 p-6 rounded-3xl shadow-lg text-white">
-
-  <label className="block mb-2 font-semibold">
-  Sélectionner les baptisés
-  </label>
-
-  <select
-  multiple
-  className="input w-full h-60"
-  onChange={(e)=>{
-    const values=[...e.target.selectedOptions].map(o=>o.value);
-    setSelectedCandidats(values);
-  }}
-  >
-
-  {candidats.map(c=>(
-  <option key={c.id} value={c.id}>
-  {c.prenom} {c.nom} ({c.sexe})
-  </option>
-  ))}
-
-  </select>
-
-  </div>
-
-  </div>
-
-  <Footer />
-
-  <style jsx>{`
-  .input{
-  border:1px solid #ccc;
-  padding:10px;
-  border-radius:12px;
-  background:rgba(255,255,255,0.05);
-  color:white;
-  }
-  `}</style>
-
-  </div>
-
   );
-
 }

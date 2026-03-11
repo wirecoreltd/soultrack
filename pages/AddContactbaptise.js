@@ -134,12 +134,22 @@ export default function AddContactbaptise() {
           <Image src="/logo.png" alt="SoulTrack Logo" width={70} height={70} className="sm:w-[80px] sm:h-[60px]" />
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">Ajouter un nouveau membre</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">Ajouter un nouveau bâptié</h1>
         <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
+            {/* Civilité */}
+          <div className="flex flex-col">
+            <label className="text-sm sm:text-base font-bold mb-1">Civilité</label>
+            <select value={formData.sexe} onChange={e => setFormData({...formData,sexe:e.target.value})} className="input" required>
+              <option value="">-- Choisir --</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
+            </select>
+          </div>
+  
           {/* Prénom */}
           <div className="flex flex-col">
             <label className="text-sm sm:text-base font-bold mb-1">Prénom</label>
@@ -164,16 +174,7 @@ export default function AddContactbaptise() {
           <div className="flex flex-col">
             <label className="text-sm sm:text-base font-bold mb-1">Ville</label>
             <input type="text" value={formData.ville} onChange={e => setFormData({...formData,ville:e.target.value})} className="input"/>
-          </div>
-          {/* Civilité */}
-          <div className="flex flex-col">
-            <label className="text-sm sm:text-base font-bold mb-1">Civilité</label>
-            <select value={formData.sexe} onChange={e => setFormData({...formData,sexe:e.target.value})} className="input" required>
-              <option value="">-- Choisir --</option>
-              <option value="Homme">Homme</option>
-              <option value="Femme">Femme</option>
-            </select>
-          </div>
+          </div>         
 
           {/* Boutons */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">

@@ -243,6 +243,7 @@ function RapportBaptemes() {
         className="input w-full opacity-60"
       />
     </div>
+ </div>
 
     {/* Bouton Ajouter / Modifier */}
     <div className="col-span-1 sm:col-span-2 mt-4">

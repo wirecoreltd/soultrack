@@ -263,16 +263,14 @@ function RapportBaptemes() {
                     </div>
                   ))}
                 </div>
-
-                {canAddMember && (
+                    
                 <button
                   onClick={() => router.push("/AddContact")}
-                  className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+                  className="text-white font-semibold px-4 py-2 rounded shadow text-sm mt-2 w-full"
                 >
                   ➕ Ajouter un membre
                 </button>
-              )}
-              
+                              
                 {/* Ligne de séparation */}
                 <hr className="border-t border-white/30 my-3" />
               

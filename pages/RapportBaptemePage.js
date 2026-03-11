@@ -222,7 +222,7 @@ function RapportBaptemes() {
           </form>
         </div>
 
-        <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white w-full md:w-80">
+        <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white w-full md:w-96">
           <div className="flex justify-between items-center mb-2">
             <label className="font-semibold">Sélectionner les baptisés</label>
             <button
@@ -342,23 +342,9 @@ function RapportBaptemes() {
           </div>
         </div>
       )}
-
-      {/* Noms sélectionnés sous le tableau */}
-      {selectedCandidats.length>0 && (
-        <div className="mt-4 text-amber-300 text-sm max-w-5xl">
-          <h3 className="font-semibold mb-1">Personnes sélectionnées :</h3>
-          <ul className="list-disc list-inside text-white">
-            {candidats
-              .filter(c=>selectedCandidats.includes(c.id))
-              .map(c=>(
-                <li key={c.id}>{c.prenom} {c.nom}</li>
-              ))}
-          </ul>
-        </div>
       )}
 
       <Footer />
-
       <style jsx>{`
         .input{
           border:1px solid #ccc;

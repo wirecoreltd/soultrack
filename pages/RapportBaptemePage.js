@@ -291,12 +291,33 @@ Sélectionner les baptisés ({candidats.length})
             type="checkbox"
             checked={selectedCandidats.includes(c.id)}
             onChange={() => {
-              if (selectedCandidats.includes(c.id)) {
-                setSelectedCandidats(prev => prev.filter(id => id !== c.id));
-              } else {
-                setSelectedCandidats(prev => [...prev, c.id]);
-              }
-            }}
+
+  setSelectedCandidats(prev => {
+
+    let updated;
+
+    if (prev.includes(c.id)) {
+      updated = prev.filter(id => id !== c.id);
+    } else {
+      updated = [...prev, c.id];
+    }
+
+    const selected = candidats.filter(x => updated.includes(x.id));
+
+    const hommes = selected.filter(x => x.sexe === "Homme").length;
+    const femmes = selected.filter(x => x.sexe === "Femme").length;
+
+    setFormData(prevForm => ({
+      ...prevForm,
+      hommes,
+      femmes
+    }));
+
+    return updated;
+
+  });
+
+}}
             className="accent-[#25297e]"
           />
         </div>

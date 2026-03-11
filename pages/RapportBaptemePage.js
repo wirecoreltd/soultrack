@@ -230,7 +230,7 @@ function RapportBaptemes() {
         </div>
 
             {/* SECTION CANDIDATS */}
-<div className="w-full md:w-96 flex flex-col gap-4">
+    <div className="w-full flex flex-col gap-4">
 
   {/* BOITE EXPLICATION */}
   <div className="bg-blue-900/40 border border-blue-300/30 text-white text-sm p-4 rounded-2xl">

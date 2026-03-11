@@ -35,6 +35,7 @@ function RapportBaptemes() {
   const [selectedCandidats,setSelectedCandidats]=useState([]);
   const router = useRouter();
   const formRef=useRef(null);
+  const [rapportSuccess, setRapportSuccess] = useState(false);
 
   /* USER */
   useEffect(()=>{
@@ -105,6 +106,9 @@ function RapportBaptemes() {
       hommes:formData.hommes,
       femmes:formData.femmes
     }]);
+
+    setRapportSuccess(true);      // afficher le message
+    setTimeout(() => setRapportSuccess(false), 3000);  // disparaît après 3s
 
     // Mettre à jour les membres sélectionnés pour que bapteme_eau=Oui et veut_se_faire_baptiser=Non
     for(const id of selectedCandidats){
@@ -218,6 +222,11 @@ function RapportBaptemes() {
               <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl">
                 {editRapport?"Modifier":"Ajouter le baptême"}
               </button>
+               {rapportSuccess && (
+                <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
+                  ✅ Rapport ajouté !
+                </p>
+              )}             
             </div>
           </form>
         </div>

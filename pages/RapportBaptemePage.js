@@ -217,61 +217,61 @@ function RapportBaptemes() {
         </div>
 
         {/* Menu déroulant / sélection de baptisés */}
-        <div className="bg-white/10 p-4 rounded-3xl shadow-lg text-white">
-          <div className="flex justify-between items-center mb-2">
-            <label className="block font-semibold">Sélectionner les baptisés</label>
-            <button
-              type="button"
-              onClick={() => {
-                if(selectedCandidats.length === candidats.length){
-                  setSelectedCandidats([]);
-                } else {
-                  setSelectedCandidats(candidats.map(c=>c.id));
-                }
-              }}
-              className="text-sm underline hover:text-amber-300"
-            >
-              {selectedCandidats.length === candidats.length ? "Tout désélectionner" : "Tout sélectionner"}
-            </button>
-          </div>
-
-          <div className="h-52 overflow-y-auto border border-white/20 rounded-lg p-1">
-            {candidats.map(c => (
-              <label
-                key={c.id}
-                className="flex items-center justify-between gap-2 p-1 hover:bg-white/10 rounded cursor-pointer"
+          <div className="bg-white/10 p-4 rounded-3xl shadow-lg text-white">
+            <div className="flex justify-between items-center mb-2 gap-2">
+              <label className="block font-semibold">Sélectionner les baptisés</label>
+              <button
+                type="button"
+                onClick={() => {
+                  if(selectedCandidats.length === candidats.length){
+                    setSelectedCandidats([]);
+                  } else {
+                    setSelectedCandidats(candidats.map(c=>c.id));
+                  }
+                }}
+                className="text-sm underline hover:text-amber-300"
               >
-                <span>{c.prenom} {c.nom}</span>
-                <input
-                  type="checkbox"
-                  checked={selectedCandidats.includes(c.id)}
-                  onChange={()=>{
-                    if(selectedCandidats.includes(c.id)){
-                      setSelectedCandidats(prev => prev.filter(id => id !== c.id));
-                    } else {
-                      setSelectedCandidats(prev => [...prev, c.id]);
-                    }
-                  }}
-                  className="accent-[#25297e]"
-                />
-              </label>
-            ))}
-          </div>
-
-          {/* Noms sélectionnés */}
-          {selectedCandidats.length > 0 && (
-            <div className="mt-2 text-white text-sm">
-              <h3 className="font-semibold mb-1">Personnes sélectionnées :</h3>
-              <ul className="list-disc list-inside">
-                {candidats
-                  .filter(c => selectedCandidats.includes(c.id))
-                  .map(c => (
-                    <li key={c.id}>{c.prenom} {c.nom}</li>
-                  ))}
-              </ul>
+                {selectedCandidats.length === candidats.length ? "Tout désélectionner" : "Tout sélectionner"}
+              </button>
             </div>
-          )}
-        </div>
+          
+            <div className="h-52 overflow-y-auto border border-white/20 rounded-lg p-1">
+              {candidats.map(c => (
+                <label
+                  key={c.id}
+                  className="flex items-center justify-between gap-2 p-1 hover:bg-white/10 rounded cursor-pointer"
+                >
+                  <span>{c.prenom} {c.nom}</span>
+                  <input
+                    type="checkbox"
+                    checked={selectedCandidats.includes(c.id)}
+                    onChange={()=>{
+                      if(selectedCandidats.includes(c.id)){
+                        setSelectedCandidats(prev => prev.filter(id => id !== c.id));
+                      } else {
+                        setSelectedCandidats(prev => [...prev, c.id]);
+                      }
+                    }}
+                    className="accent-[#25297e]"
+                  />
+                </label>
+              ))}
+            </div>
+          
+            {/* Noms sélectionnés */}
+            {selectedCandidats.length > 0 && (
+              <div className="mt-2 text-amber-300 text-sm">
+                <h3 className="font-semibold mb-1">Personnes sélectionnées :</h3>
+                <ul className="list-disc list-inside">
+                  {candidats
+                    .filter(c => selectedCandidats.includes(c.id))
+                    .map(c => (
+                      <li key={c.id}>{c.prenom} {c.nom}</li>
+                    ))}
+                </ul>
+              </div>
+            )}
+          </div>
       </div>
 
       {/* FILTRES */}

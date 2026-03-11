@@ -99,24 +99,18 @@ function RapportBaptemes() {
     e.preventDefault();
     if(editRapport) return handleUpdate();
 
-    // Ajouter le rapport
+    // Mettre bapteme_eau=Oui et veut_se_faire_baptiser=Non pour les candidats ajoutés
     await supabase.from("baptemes").insert([formData]);
 
-    // Mettre à jour les candidats sélectionnés : bapteme_eau=Oui, veut_se_faire_baptiser=Non
     if(selectedCandidats.length>0){
-      await supabase
-        .from("membres_complets")
-        .update({
-          bapteme_eau:"Oui",
-          veut_se_faire_baptiser:"Non"
-        })
+      await supabase.from("membres_complets")
+        .update({bapteme_eau:"Oui",veut_se_faire_baptiser:"Non"})
         .in("id",selectedCandidats);
     }
 
     setSelectedCandidats([]);
     setFormData(prev=>({...prev,date:"",hommes:0,femmes:0,baptise_par:""}));
     fetchRapports();
-    fetchCandidats(formData.eglise_id,formData.branche_id); // rafraîchir la liste
   };
 
   const handleEdit=(r)=>{
@@ -181,185 +175,189 @@ function RapportBaptemes() {
     return acc;
   },{hommes:0,femmes:0});
 
-  /* Sélecteur WhatsApp-like */
-  const toggleSelectAll = () => {
-    if(selectedCandidats.length===candidats.length){
-      setSelectedCandidats([]);
-    } else {
-      setSelectedCandidats(candidats.map(c=>c.id));
-    }
-  };
-
   /* RENDER */
   return (
-  <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
-    <HeaderPages />
+    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+      <HeaderPages />
 
-    <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
-      <span className="text-white">Rapport </span>
-      <span className="text-amber-300">Baptêmes</span>
-    </h1>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
+        <span className="text-white">Rapport </span>
+        <span className="text-amber-300">Baptêmes</span>
+      </h1>
 
-    <p className="text-white/80 mb-6">Résumé des baptêmes par mois</p>
+      <p className="text-white/80 mb-6">Résumé des baptêmes par mois</p>
 
-    {/* FORMULAIRE + SELECTEUR */}
-    <div className="max-w-5xl w-full grid md:grid-cols-2 gap-6 mb-6">
-      <div ref={formRef} className="bg-white/10 rounded-3xl p-6 shadow-lg">
-        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col">
-            <label className="text-white mb-1">Date</label>
-            <input type="date" required value={formData.date} onChange={(e)=>setFormData({...formData,date:e.target.value})} className="input"/>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-white mb-1">Baptisé par</label>
-            <input type="text" value={formData.baptise_par} onChange={(e)=>setFormData({...formData,baptise_par:e.target.value})} className="input"/>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-white mb-1">Hommes</label>
-            <input type="number" value={formData.hommes} disabled className="input opacity-60"/>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-white mb-1">Femmes</label>
-            <input type="number" value={formData.femmes} disabled className="input opacity-60"/>
-          </div>
-          <div className="col-span-2 mt-4">
-            <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl">
-              {editRapport?"Modifier":"Ajouter le baptême"}
+      {/* FORMULAIRE + MENU DEROU */}
+      <div className="max-w-5xl w-full grid md:grid-cols-2 gap-6 mb-6">
+        {/* Formulaire */}
+        <div ref={formRef} className="bg-white/10 rounded-3xl p-6 shadow-lg">
+          <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col">
+              <label className="text-white mb-1">Date</label>
+              <input type="date" required value={formData.date} onChange={(e)=>setFormData({...formData,date:e.target.value})} className="input"/>
+            </div>
+            <div className="flex flex-col">
+              <label className="text-white mb-1">Baptisé par</label>
+              <input type="text" value={formData.baptise_par} onChange={(e)=>setFormData({...formData,baptise_par:e.target.value})} className="input"/>
+            </div>
+            <div className="flex flex-col">
+              <label className="text-white mb-1">Hommes</label>
+              <input type="number" value={formData.hommes} disabled className="input opacity-60"/>
+            </div>
+            <div className="flex flex-col">
+              <label className="text-white mb-1">Femmes</label>
+              <input type="number" value={formData.femmes} disabled className="input opacity-60"/>
+            </div>
+            <div className="col-span-2 mt-4">
+              <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl">
+                {editRapport?"Modifier":"Ajouter le baptême"}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Menu déroulant / sélection de baptisés */}
+        <div className="bg-white/10 p-4 rounded-3xl shadow-lg text-white">
+          <div className="flex justify-between items-center mb-2">
+            <label className="block font-semibold">Sélectionner les baptisés</label>
+            <button
+              type="button"
+              onClick={() => {
+                if(selectedCandidats.length === candidats.length){
+                  setSelectedCandidats([]);
+                } else {
+                  setSelectedCandidats(candidats.map(c=>c.id));
+                }
+              }}
+              className="text-sm underline hover:text-amber-300"
+            >
+              {selectedCandidats.length === candidats.length ? "Tout désélectionner" : "Tout sélectionner"}
             </button>
           </div>
-        </form>
 
-        {/* Noms sélectionnés */}
-        {selectedCandidats.length>0 && (
-          <div className="mt-6 text-white">
-            <h3 className="font-bold mb-2">Personnes sélectionnées</h3>          
-            {candidats
-              .filter(c=>selectedCandidats.includes(c.id))
-              .map(c=>(
-                <div key={c.id}>
-                  {c.prenom} {c.nom} ({c.sexe})
-                </div>
-              ))
-            }          
-          </div>
-        )}
-      </div>
-
-      {/* SELECTEUR WhatsApp-like */}
-      <div className="bg-white/10 p-6 rounded-3xl shadow-lg text-white">
-        <div className="flex justify-between items-center mb-2">
-          <span className="font-semibold">Sélectionner les baptisés</span>
-          <button type="button" onClick={toggleSelectAll} className="underline text-sm text-orange-300 hover:text-orange-400">
-            {selectedCandidats.length===candidats.length ? "Tout décocher" : "Tout sélectionner"}
-          </button>
-        </div>
-
-        <div className="h-60 overflow-y-auto border border-white/20 rounded-lg p-2">
-          {candidats.map(c=>(
-            <label key={c.id} className="flex items-center gap-2 p-1 hover:bg-white/10 rounded cursor-pointer">
-              <input
-                type="checkbox"
-                checked={selectedCandidats.includes(c.id)}
-                onChange={()=>{
-                  if(selectedCandidats.includes(c.id)){
-                    setSelectedCandidats(prev => prev.filter(id=>id!==c.id));
-                  } else {
-                    setSelectedCandidats(prev => [...prev,c.id]);
-                  }
-                }}
-                className="accent-[#25297e]"
-              />
-              <span>{c.prenom} {c.nom} ({c.sexe})</span>
-            </label>
-          ))}
-        </div>
-      </div>
-    </div>
-
-    {/* FILTRES */}
-    <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
-      <input type="date" value={filterDebut} onChange={(e)=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-      <input type="date" value={filterFin} onChange={(e)=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-      <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
-    </div>
-
-    {/* TABLEAU */}
-    {showTable && (
-      <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
-        <div className="w-max space-y-2">
-          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[200px]">Date</div>
-            <div className="min-w-[200px] text-center">Baptisé par</div>
-            <div className="min-w-[120px] text-center">Hommes</div>
-            <div className="min-w-[120px] text-center">Femmes</div>
-            <div className="min-w-[120px] text-center">Total</div>
-            <div className="min-w-[150px] text-center">Actions</div>
+          <div className="h-52 overflow-y-auto border border-white/20 rounded-lg p-1">
+            {candidats.map(c => (
+              <label
+                key={c.id}
+                className="flex items-center justify-between gap-2 p-1 hover:bg-white/10 rounded cursor-pointer"
+              >
+                <span>{c.prenom} {c.nom}</span>
+                <input
+                  type="checkbox"
+                  checked={selectedCandidats.includes(c.id)}
+                  onChange={()=>{
+                    if(selectedCandidats.includes(c.id)){
+                      setSelectedCandidats(prev => prev.filter(id => id !== c.id));
+                    } else {
+                      setSelectedCandidats(prev => [...prev, c.id]);
+                    }
+                  }}
+                  className="accent-[#25297e]"
+                />
+              </label>
+            ))}
           </div>
 
-          {groupedReports.map(([monthKey,monthRapports])=>{
-            const [year,monthIndex]=monthKey.split("-").map(Number);
-            const monthLabel=`${getMonthNameFR(monthIndex)} ${year}`;
-            const totalMonth=monthRapports.reduce((acc,r)=>{
-              acc.hommes+=Number(r.hommes||0);
-              acc.femmes+=Number(r.femmes||0);
-              return acc;
-            },{hommes:0,femmes:0});
-            const isExpanded=expandedMonths[monthKey]||false;
+          {/* Noms sélectionnés */}
+          {selectedCandidats.length > 0 && (
+            <div className="mt-2 text-white text-sm">
+              <h3 className="font-semibold mb-1">Personnes sélectionnées :</h3>
+              <ul className="list-disc list-inside">
+                {candidats
+                  .filter(c => selectedCandidats.includes(c.id))
+                  .map(c => (
+                    <li key={c.id}>{c.prenom} {c.nom}</li>
+                  ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
 
-            return(
-              <div key={monthKey} className="space-y-1">
-                <div className="flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 border-blue-500" onClick={()=>toggleMonth(monthKey)}>
-                  <div className="min-w-[200px] text-white font-semibold">{isExpanded?"➖ ":"➕ "}{monthLabel}</div>
-                  <div className="min-w-[200px]"></div>
-                  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
-                  <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
-                  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.hommes+totalMonth.femmes}</div>
-                  <div className="min-w-[150px]"></div>
-                </div>
+      {/* FILTRES */}
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+        <input type="date" value={filterDebut} onChange={(e)=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+        <input type="date" value={filterFin} onChange={(e)=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+        <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
+      </div>
 
-                {(isExpanded||monthRapports.length===1)&&monthRapports.map(r=>{
-                  const total=Number(r.hommes)+Number(r.femmes);
-                  return(
-                    <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500">
-                      <div className="min-w-[200px] text-white">{formatDateFR(r.date)}</div>
-                      <div className="min-w-[200px] text-center text-white">{r.baptise_par}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                      <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                      <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
-                      <div className="min-w-[150px] text-center">
-                        <button onClick={()=>handleEdit(r)} className="text-orange-400 underline hover:text-orange-500 px-4 py-1 rounded-xl">Modifier</button>
+      {/* TABLEAU */}
+      {showTable && (
+        <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
+          <div className="w-max space-y-2">
+            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[200px]">Date</div>
+              <div className="min-w-[200px] text-center">Baptisé par</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center">Total</div>
+              <div className="min-w-[150px] text-center">Actions</div>
+            </div>
+
+            {groupedReports.map(([monthKey,monthRapports])=>{
+              const [year,monthIndex]=monthKey.split("-").map(Number);
+              const monthLabel=`${getMonthNameFR(monthIndex)} ${year}`;
+              const totalMonth=monthRapports.reduce((acc,r)=>{
+                acc.hommes+=Number(r.hommes||0);
+                acc.femmes+=Number(r.femmes||0);
+                return acc;
+              },{hommes:0,femmes:0});
+              const isExpanded=expandedMonths[monthKey]||false;
+
+              return(
+                <div key={monthKey} className="space-y-1">
+                  <div className="flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 border-blue-500" onClick={()=>toggleMonth(monthKey)}>
+                    <div className="min-w-[200px] text-white font-semibold">{isExpanded?"➖ ":"➕ "}{monthLabel}</div>
+                    <div className="min-w-[200px]"></div>
+                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
+                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
+                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.hommes+totalMonth.femmes}</div>
+                    <div className="min-w-[150px]"></div>
+                  </div>
+
+                  {(isExpanded||monthRapports.length===1)&&monthRapports.map(r=>{
+                    const total=Number(r.hommes)+Number(r.femmes);
+                    return(
+                      <div key={r.id} className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500">
+                        <div className="min-w-[200px] text-white">{formatDateFR(r.date)}</div>
+                        <div className="min-w-[200px] text-center text-white">{r.baptise_par}</div>
+                        <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                        <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                        <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
+                        <div className="min-w-[150px] text-center">
+                          <button onClick={()=>handleEdit(r)} className="text-orange-400 underline hover:text-orange-500 px-4 py-1 rounded-xl">Modifier</button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
+                    );
+                  })}
+                </div>
+              );
+            })}
 
-          <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
-            <div className="min-w-[200px] text-white font-bold">TOTAL</div>
-            <div className="min-w-[200px]"></div>
-            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
-            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
-            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes+totalGlobal.femmes}</div>
-            <div className="min-w-[150px]"></div>
+            <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
+              <div className="min-w-[200px] text-white font-bold">TOTAL</div>
+              <div className="min-w-[200px]"></div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes+totalGlobal.femmes}</div>
+              <div className="min-w-[150px]"></div>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
-    <Footer />
+      <Footer />
 
-    <style jsx>{`
-      .input{
-        border:1px solid #ccc;
-        padding:10px;
-        border-radius:12px;
-        background:rgba(255,255,255,0.05);
-        color:white;
-      }
-    `}</style>
+      <style jsx>{`
+        .input{
+          border:1px solid #ccc;
+          padding:10px;
+          border-radius:12px;
+          background:rgba(255,255,255,0.05);
+          color:white;
+        }
+      `}</style>
 
-  </div>
+    </div>
   );
 }

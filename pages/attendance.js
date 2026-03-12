@@ -22,7 +22,7 @@ function Attendance() {
 
   const [formData, setFormData] = useState({
     date: "",
-    typeTemps: "Culte",
+    typeTemps: "",
     numero_culte: 1,
     hommes: 0,
     femmes: 0,
@@ -249,12 +249,21 @@ if (formData.typeTemps === "AUTRE") {
 
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-white">Type du temps</label>
-            <select name="typeTemps" value={formData.typeTemps} onChange={handleChange} className="input bg-white/20 text-white">
-            {tempsOptions.map(t => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-            <option value="AUTRE">+ Ajouter un temps</option>
-          </select>
+            <select
+  name="typeTemps"
+  value={formData.typeTemps}
+  onChange={handleChange}
+  className="input bg-white text-black"
+  required
+>
+  <option value="">-- Sélectionner un temps --</option>
+
+  {tempsOptions.map(t => (
+    <option key={t} value={t}>{t}</option>
+  ))}
+
+  <option value="AUTRE">+ Ajouter un temps</option>
+</select>
                     </div>
           {formData.typeTemps === "AUTRE" && (
             <>

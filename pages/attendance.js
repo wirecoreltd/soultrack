@@ -282,87 +282,84 @@ function Attendance() {
           </div>
         
         <div className="flex flex-col relative">
-            <label className="font-medium mb-1 text-white">Type du temps</label>
-          
-            {/* Bouton pour ouvrir le menu */}
-            <button
-              type="button"
-              onClick={() => setFormData(prev => ({ ...prev, openTempsDropdown: !prev.openTempsDropdown }))}
-              className="input bg-white text-black text-left"
-            >
-              {formData.typeTemps || "-- Sélectionner un temps --"}
-            </button>
-          
-            {/* Menu déroulant custom */}
-            {formData.openTempsDropdown && (
-              <ul className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-lg border border-gray-300">
-                {tempsOptions.map((t, idx) => (
-                  <li
-                    key={idx}
-                    className={`flex justify-between items-center px-3 py-2 cursor-pointer ${
-                      t === "Culte" ? "bg-black text-black hover:bg-gray-800 hover:text-white" : "bg-black text-black hover:bg-[#333699] hover:text-white"
-                    }`}
-                  >
-                    <span
-                      onClick={() => {
-                        setFormData(prev => ({
-                          ...prev,
-                          typeTemps: t,
-                          openTempsDropdown: false,
-                          nouveauTemps: "",
-                          enregistrerTemps: false,
-                        }));
-                      }}
-                    >
-                      {t}
-                    </span>
-          
-                    {/* ✏️ et 🗑 seulement si ce n'est pas Culte */}
-                    {t !== "Culte" && (
-                      <span className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const newName = prompt("Renommer le temps :", t);
-                            if (newName) renameTemps(t, newName);
-                          }}
-                          className="text-black hover:text-white"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteTemps(t);
-                          }}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          🗑
-                        </button>
-                      </span>
-                    )}
-                  </li>
-                ))}
-          
-                {/* Ajouter un temps */}
-                <li
-                  className="px-3 py-2 text-white bg-[#1f2366] hover:bg-[#333699] cursor-pointer"
-                  onClick={() => {
-                    setFormData(prev => ({
-                      ...prev,
-                      typeTemps: "AUTRE",
-                      openTempsDropdown: false,
-                      nouveauTemps: "",
-                      enregistrerTemps: false,
-                    }));
-                  }}
-                >
-                  + Ajouter un temps
-                </li>
-              </ul>
-            )}
+  <label className="font-medium mb-1 text-white">Type du temps</label>
+
+  {/* Menu déroulant classique */}
+  <div className="relative">
+    <select
+      name="typeTemps"
+      value={formData.typeTemps}
+      onChange={(e) => setFormData(prev => ({ ...prev, typeTemps: e.target.value }))}
+      className="input bg-white text-black appearance-none pr-8"
+    >
+      <option value="">-- Sélectionner un temps --</option>
+      {tempsOptions.map((t) => (
+        <option key={t} value={t}>{t}</option>
+      ))}
+      <option value="AUTRE" className="text-blue-700">+ Ajouter un temps</option>
+    </select>
+    {/* Flèche vers le bas */}
+    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+      <svg className="h-4 w-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    </div>
+  </div>
+
+  {/* Champ ajouter si AUTRE */}
+  {formData.typeTemps === "AUTRE" && (
+    <>
+      <div className="flex flex-col mt-2">
+        <label className="font-medium mb-1 text-white">Nom du temps</label>
+        <input
+          type="text"
+          name="nouveauTemps"
+          value={formData.nouveauTemps}
+          onChange={handleChange}
+          className="input bg-white text-black"
+          placeholder="Ex: ADP"
+        />
+      </div>
+
+      <div className="flex items-center gap-2 mt-1">
+        <input
+          type="checkbox"
+          name="enregistrerTemps"
+          checked={formData.enregistrerTemps}
+          onChange={(e) =>
+            setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))
+          }
+        />
+        <label className="text-white text-sm">
+          Enregistrer ce temps pour le futur
+        </label>
+      </div>
+    </>
+  )}
+
+  {/* Boutons renommer / supprimer pour les autres temps */}
+  {formData.typeTemps && formData.typeTemps !== "Culte" && formData.typeTemps !== "AUTRE" && (
+    <div className="flex gap-2 mt-2">
+      <button
+        type="button"
+        onClick={() => {
+          const newName = prompt("Renommer le temps :", formData.typeTemps);
+          if (newName) renameTemps(formData.typeTemps, newName);
+        }}
+        className="text-blue-500 hover:text-blue-700"
+      >
+        ✏️
+      </button>
+      <button
+        type="button"
+        onClick={() => deleteTemps(formData.typeTemps)}
+        className="text-red-500 hover:text-red-700"
+      >
+        🗑
+      </button>
+    </div>
+  )}
+</div>
           
             {/* Champ ajouter si AUTRE */}
             {formData.typeTemps === "AUTRE" && (

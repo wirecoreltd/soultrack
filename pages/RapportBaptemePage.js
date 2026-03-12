@@ -213,70 +213,44 @@ function RapportBaptemes() {
       </div>
 
       {/* --- MENU DEROU / Sélectionner les baptisés --- */}
-      <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white w-full max-w-lg mx-auto mt-4">
-        <div className="flex justify-between items-center mb-2">
-          <label className="font-semibold">Sélectionner les baptisés</label>
-          <button
-            onClick={() => {
-              if (selectedCandidats.length === 0) {
-                setSelectedCandidats(candidats.map(c => c.id));
-              } else {
-                setSelectedCandidats([]);
-              }
-            }}
-            className="text-sm underline hover:text-orange-400"
-          >
-            {selectedCandidats.length === 0 ? "Tout sélectionner" : "Tout désélectionner"}
-          </button>
-        </div>
-        <div className="flex flex-col space-y-1 max-h-60 overflow-y-auto">
-          {candidats.map(c => (
-            <div key={c.id} className="flex justify-between items-center w-full px-2 py-1 rounded hover:bg-white/20">
-              <span>{c.prenom} {c.nom}</span>
-              <input type="checkbox"
-                checked={selectedCandidats.includes(c.id)}
-                onChange={() => {
-                  if (selectedCandidats.includes(c.id)) {
-                    setSelectedCandidats(selectedCandidats.filter(id => id !== c.id));
-                  } else {
-                    setSelectedCandidats([...selectedCandidats, c.id]);
-                  }
-                }}
-                className="accent-[#25297e]"
-              />
-            </div>
-          ))}
-        </div>
-
-        <button
-          onClick={() => router.push("/AddContactbaptise")}
-          className="text-white font-semibold px-4 py-2 rounded shadow text-sm mt-2 w-full"
-        >
-          ➕ Ajouter un Baptisé
-        </button>
-
-        <hr className="border-t border-white/30 my-3" />
-
-        {selectedCandidats.length > 0 && (
-          <div>
-            <h3 className="text-amber-300 font-semibold text-sm mb-1">
-              Personnes sélectionnées :
-            </h3>
-            <ul className="list-disc list-inside text-white text-sm space-y-1">
-              {candidats
-                .filter(c => selectedCandidats.includes(c.id))
-                .map(c => (
-                  <li key={c.id}>{c.prenom} {c.nom}</li>
-                ))}
-            </ul>
-          </div>
-        )}
+<div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white w-full max-w-lg mx-auto mt-4">
+  <div className="flex justify-between items-center mb-2">
+    <label className="font-semibold">Sélectionner les baptisés</label>
+    <button
+      onClick={() => {
+        if (selectedCandidats.length === 0) {
+          setSelectedCandidats(candidats.map(c => c.id));
+        } else {
+          setSelectedCandidats([]);
+        }
+      }}
+      className="text-sm underline hover:text-orange-400"
+    >
+      {selectedCandidats.length === 0 ? "Tout sélectionner" : "Tout désélectionner"}
+    </button>
+  </div>
+  <div className="flex flex-col space-y-1 max-h-60 overflow-y-auto">
+    {candidats.map(c => (
+      <div key={c.id} className="flex justify-between items-center w-full px-2 py-1 rounded hover:bg-white/20">
+        <span>{c.prenom} {c.nom}</span>
+        <input type="checkbox"
+          checked={selectedCandidats.includes(c.id)}
+          onChange={() => {
+            if (selectedCandidats.includes(c.id)) {
+              setSelectedCandidats(selectedCandidats.filter(id => id !== c.id));
+            } else {
+              setSelectedCandidats([...selectedCandidats, c.id]);
+            }
+          }}
+          className="accent-[#25297e]"
+        />
       </div>
+    ))}
+  </div>
 
-      {/* --- FORMULAIRE AJOUT BAPTÊME --- */}
+  {/* --- FORMULAIRE AJOUT BAPTÊME --- */}
   <div className="bg-white/10 rounded-3xl p-4 mt-4 shadow-lg">
     <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      
       {/* DATE */}
       <div className="flex flex-col">
         <label className="text-white mb-1">Date</label>
@@ -306,8 +280,12 @@ function RapportBaptemes() {
         <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:scale-[1.02] transition">
           {editRapport?"Modifier":"Ajouter"}
         </button>
+        {rapportSuccess && (
+          <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
+            ✅ Rapport ajouté !
+          </p>
+        )}
       </div>
-
     </form>
   </div>
 </div>

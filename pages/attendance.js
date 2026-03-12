@@ -39,7 +39,7 @@ function Attendance() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [expandedMonths, setExpandedMonths] = useState({});
-  const [tempsOptions, setTempsOptions] = useState(["Culte", "Réunion", "Soin Pastoral"]);
+  const [tempsOptions, setTempsOptions] = useState(["Culte"]);
 
   // --- Load superviseur ---
   useEffect(() => {
@@ -90,12 +90,22 @@ function Attendance() {
   };
 
   const handleSubmit = async (e) => {
+    let typeTempsFinal = formData.typeTemps;
+
+if (formData.typeTemps === "AUTRE") {
+  typeTempsFinal = formData.nouveauTemps;
+
+  if (formData.enregistrerTemps && !tempsOptions.includes(typeTempsFinal)) {
+    setTempsOptions(prev => [...prev, typeTempsFinal]);
+  }
+}
     e.preventDefault();
     setMessage("⏳ Enregistrement en cours...");
 
     try {
       const rapportAvecEglise = {
         ...formData,
+        typeTemps: typeTempsFinal,
         eglise_id: superviseur.eglise_id,
         branche_id: superviseur.branche_id,
       };
@@ -124,7 +134,9 @@ function Attendance() {
 
       setFormData({
         date: "",
-        typeTemps: "Culte",
+        typeTemps: "",        
+        nouveauTemps: "",
+        enregistrerTemps: false,        
         numero_culte: 1,
         hommes: 0,
         femmes: 0,
@@ -214,9 +226,41 @@ function Attendance() {
           <div className="flex flex-col">
             <label className="font-medium mb-1 text-white">Type du temps</label>
             <select name="typeTemps" value={formData.typeTemps} onChange={handleChange} className="input bg-white/20 text-white">
-              {tempsOptions.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
+            {tempsOptions.map(t => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+            <option value="AUTRE">+ Ajouter un temps</option>
+          </select>
+                    </div>
+          {formData.typeTemps === "AUTRE" && (
+            <>
+              <div className="flex flex-col">
+                <label className="font-medium mb-1 text-white">Nom du temps</label>
+                <input
+                  type="text"
+                  name="nouveauTemps"
+                  value={formData.nouveauTemps}
+                  onChange={handleChange}
+                  className="input bg-white/20 text-white"
+                  placeholder="Ex: ADP"
+                />
+              </div>
+          
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="enregistrerTemps"
+                  checked={formData.enregistrerTemps}
+                  onChange={(e) =>
+                    setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))
+                  }
+                />
+                <label className="text-white text-sm">
+                  Enregistrer ce temps pour le futur
+                </label>
+              </div>
+            </>
+          )}
 
           {formData.typeTemps === "Culte" && (
             <div className="flex flex-col">

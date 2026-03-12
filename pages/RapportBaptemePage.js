@@ -274,36 +274,70 @@ function RapportBaptemes() {
       </div>
 
         {/* FORMULAIRE */}
-            <div className="bg-white/10 rounded-3xl p-6 shadow-lg w-full max-w-lg mx-auto mt-4">
-              <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <label className="text-white mb-1">Date</label>
-                  <input type="date" required value={formData.date} onChange={e=>setFormData({...formData,date:e.target.value})} className="input"/>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-white mb-1">Baptisé par</label>
-                  <input type="text" value={formData.baptise_par} onChange={e=>setFormData({...formData,baptise_par:e.target.value})} className="input"/>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-white mb-1">Hommes</label>
-                  <input type="number" value={formData.hommes} disabled className="input opacity-60"/>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-white mb-1">Femmes</label>
-                  <input type="number" value={formData.femmes} disabled className="input opacity-60"/>
-                </div>
-                <div className="col-span-2 mt-4">
-                  <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:scale-[1.02] transition">
-                    {editRapport?"Modifier":"Ajouter le baptême"}
-                  </button>
-                  {rapportSuccess && (
-                    <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
-                      ✅ Rapport ajouté !
-                    </p>
-                  )}
-                </div>
-              </form>
-            </div>
+<div className="bg-white/10 rounded-3xl p-6 shadow-lg w-full max-w-lg mx-auto mt-4">
+  <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    
+    {/* DATE */}
+    <div className="flex flex-col">
+      <label className="text-white mb-1">Date</label>
+      <input 
+        type="date" 
+        required 
+        value={formData.date} 
+        onChange={e => setFormData({...formData, date: e.target.value})} 
+        className="input"
+      />
+    </div>
+
+    {/* HOMMES / FEMMES côte à côte */}
+    <div className="flex gap-2">
+      <div className="flex-1 flex flex-col">
+        <label className="text-white mb-1">Hommes</label>
+        <input 
+          type="number" 
+          value={formData.hommes} 
+          disabled 
+          className="input opacity-60"
+        />
+      </div>
+      <div className="flex-1 flex flex-col">
+        <label className="text-white mb-1">Femmes</label>
+        <input 
+          type="number" 
+          value={formData.femmes} 
+          disabled 
+          className="input opacity-60"
+        />
+      </div>
+    </div>
+
+    {/* BAPTISÉ PAR */}
+    <div className="flex flex-col">
+      <label className="text-white mb-1">Baptisé par</label>
+      <input 
+        type="text" 
+        value={formData.baptise_par} 
+        onChange={e => setFormData({...formData, baptise_par: e.target.value})} 
+        className="input"
+      />
+    </div>
+
+    {/* BOUTON AJOUTER */}
+    <button 
+      type="submit" 
+      className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:scale-[1.02] transition"
+    >
+      {editRapport ? "Modifier" : "Ajouter"}
+    </button>
+
+    {/* MESSAGE SUCCESS */}
+    {rapportSuccess && (
+      <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
+        ✅ Rapport ajouté !
+      </p>
+    )}
+  </form>
+</div>
 
       {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-4 flex flex-col sm:flex-row justify-center gap-4 w-full max-w-lg mx-auto text-white">

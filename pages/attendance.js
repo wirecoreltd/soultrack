@@ -88,6 +88,42 @@ function Attendance() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+    // Renommer un temps (✏️)
+    const handleRenameTemps = async (ancienNom, nouveauNom) => {
+      if (!nouveauNom) return; // si l'utilisateur annule le prompt
+      try {
+        const { error } = await supabase
+          .from("attendance")
+          .update({ typeTemps: nouveauNom })
+          .eq("typeTemps", ancienNom);
+        if (error) throw error;
+        fetchRapports(); // recharge les rapports pour voir le nouveau nom
+      } catch (err) {
+        console.error("Erreur renommer temps:", err.message);
+        alert("Erreur lors du renommage du temps.");
+      }
+    };
+    
+    // Supprimer un temps (🗑️)
+    const handleDeleteTemps = async (nomTemps) => {
+      const confirmDelete = confirm(
+        "Voulez-vous vraiment supprimer ce temps ? Les rapports existants resteront mais sans nom de temps."
+      );
+      if (!confirmDelete) return;
+    
+      try {
+        const { error } = await supabase
+          .from("attendance")
+          .update({ typeTemps: null })
+          .eq("typeTemps", nomTemps);
+        if (error) throw error;
+        fetchRapports(); // recharge la table
+      } catch (err) {
+        console.error("Erreur suppression temps:", err.message);
+        alert("Erreur lors de la suppression du temps.");
+      }
+    };
+
   /* ================= HANDLE FORM ================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -232,26 +268,56 @@ function Attendance() {
             <input type="date" name="date" value={formData.date} onChange={handleChange} className="input" required />
           </div>
           
-          {/* TYPE TEMPS */}
-            <div className="flex flex-col relative" ref={selectRef}>
-              <label className="text-white mb-1">Type du temps</label>
-              <select
-                name="typeTemps"
-                value={formData.typeTemps}
-                onChange={e => { handleChange(e); setDropdownOpen(false); }}
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="input text-black bg-white cursor-pointer h-12 px-3"
-                required
+         {/* TYPE TEMPS */}
+<div className="flex flex-col relative" ref={selectRef}>
+  <label className="text-white mb-1">Type du temps</label>
+  <div
+    className="input bg-white text-black h-12 px-3 flex items-center justify-between cursor-pointer"
+    onClick={() => setDropdownOpen(!dropdownOpen)}
+  >
+    {formData.typeTemps || "-- Sélectionner un temps --"}
+    <span className="ml-2 text-gray-400">▾</span>
+  </div>
+
+  {dropdownOpen && (
+    <div className="absolute z-50 mt-1 w-full bg-white shadow-lg rounded-lg max-h-60 overflow-y-auto">
+      {tempsOptions.map(t => (
+        <div
+          key={t}
+          className="flex justify-between items-center px-3 py-2 hover:bg-blue-100 cursor-pointer"
+          onClick={() => { setFormData(prev => ({ ...prev, typeTemps: t })); setDropdownOpen(false); }}
+        >
+          <span>{t}</span>
+          {t !== "Culte" && (
+            <span className="flex gap-2">
+              <button
+                onClick={e => { e.stopPropagation(); 
+                  const newName = prompt("Nouveau nom ?", t); 
+                  if (newName) handleRenameTemps(t, newName); 
+                }}
+                className="text-blue-500 hover:text-blue-700"
               >
-                <option value="">-- Sélectionner un temps --</option>
-                {tempsOptions.map(t => (
-                  <option key={t} value={t} className="text-black">
-                    {t}{t !== "Culte" ? " ✏️ 🗑️" : ""}
-                  </option>
-                ))}
-                <option value="AUTRE" className="text-[#333699] font-semibold">+ Ajouter un temps</option>
-              </select>
-            </div>
+                ✏️
+              </button>
+              <button
+                onClick={e => { e.stopPropagation(); handleDeleteTemps(t); }}
+                className="text-red-500 hover:text-red-700"
+              >
+                🗑️
+              </button>
+            </span>
+          )}
+        </div>
+      ))}
+      <div
+        className="px-3 py-2 text-[#333699] font-semibold hover:bg-blue-500 hover:text-white cursor-pointer"
+        onClick={() => { setFormData(prev => ({ ...prev, typeTemps: "AUTRE" })); setDropdownOpen(false); }}
+      >
+        + Ajouter un temps
+      </div>
+    </div>
+  )}
+</div>
           
           {formData.typeTemps === "AUTRE" && (
             <>

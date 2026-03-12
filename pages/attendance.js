@@ -282,78 +282,65 @@ function Attendance() {
           </div>
 
           {/* TYPE TEMPS */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-white">Type du temps</label>
-            <select
-              name="typeTemps"
-              value={formData.typeTemps}
-              onChange={handleChange}
-              className="input bg-white text-[#333699]"
-              required
-            >
-              <option value="">-- Sélectionner un temps --</option>
-              {tempsOptions.map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-              <option value="AUTRE">+ Ajouter un temps</option>
-            </select>
-
-            {/* Boutons renommer/supprimer */}
-            {tempsOptions.length > 1 && formData.typeTemps !== "AUTRE" && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {tempsOptions.filter(t => t !== "Culte").map(t => (
-                  <div key={t} className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded text-white text-sm">
-                    <span>{t}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const nouveauNom = prompt("Nouveau nom pour ce temps :", t);
-                        if (nouveauNom && nouveauNom !== t) renameTemps(t, nouveauNom);
-                      }}
-                      className="text-yellow-300 hover:text-yellow-400"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => deleteTemps(t)}
-                      className="text-red-300 hover:text-red-400"
-                    >
-                      🗑️
-                    </button>
-                  </div>
+            <div className="flex flex-col relative">
+              <label className="font-medium mb-1 text-white">Type du temps</label>
+              <select
+                name="typeTemps"
+                value={formData.typeTemps}
+                onChange={handleChange}
+                className="input bg-white text-black"
+                required
+              >
+                <option value="">-- Sélectionner un temps --</option>
+            
+                {tempsOptions.map((t) => (
+                  <option
+                    key={t}
+                    value={t}
+                    className={t === "Culte" ? "" : "font-medium"}
+                  >
+                    {t} {t !== "Culte" ? " ✏️ 🗑" : ""}
+                  </option>
                 ))}
-              </div>
-            )}
-          </div>
-
-          {/* NOUVEAU TEMPS */}
-          {formData.typeTemps === "AUTRE" && (
-            <>
-              <div className="flex flex-col">
-                <label className="font-medium mb-1 text-white">Nom du temps</label>
-                <input
-                  type="text"
-                  name="nouveauTemps"
-                  value={formData.nouveauTemps}
-                  onChange={handleChange}
-                  className="input bg-white text-black"
-                  placeholder="Ex: ADP"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  name="enregistrerTemps"
-                  checked={formData.enregistrerTemps}
-                  onChange={handleChange}
-                />
-                <label className="text-white text-sm">
-                  Enregistrer ce temps pour le futur
-                </label>
-              </div>
-            </>
-          )}
+            
+                <option
+                  value="AUTRE"
+                  style={{ color: "#333699", fontWeight: "bold" }}
+                >
+                  + Ajouter un temps
+                </option>
+              </select>
+            
+              {formData.typeTemps === "AUTRE" && (
+                <div className="mt-2">
+                  <div className="flex flex-col">
+                    <label className="font-medium mb-1 text-white">Nom du temps</label>
+                    <input
+                      type="text"
+                      name="nouveauTemps"
+                      value={formData.nouveauTemps}
+                      onChange={handleChange}
+                      className="input bg-white text-black"
+                      placeholder="Ex: ADP"
+                    />
+                  </div>
+            
+                  <div className="flex items-center gap-2 mt-2">
+                    <input
+                      type="checkbox"
+                      name="enregistrerTemps"
+                      checked={formData.enregistrerTemps}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, enregistrerTemps: e.target.checked }))
+                      }
+                    />
+                    <label className="text-white text-sm">
+                      Enregistrer ce temps pour le futur
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
 
           {/* NUMÉRO CULTE */}
           {formData.typeTemps === "Culte" && (
@@ -458,24 +445,26 @@ function Attendance() {
 
       <Footer />
 
+      
       <style jsx>{`
-        .input {
+        select {
           width: 100%;
           border: 1px solid #ccc;
           border-radius: 12px;
           padding: 10px;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-        select {
-          background: white;
+          appearance: none;
+          background-color: white;
           color: black;
+          cursor: pointer;
         }
+      
         select:focus {
           outline: 2px solid #333699;
         }
-        select option:checked {
-          background: #333699;
-          color: white;
+      
+        select option:hover {
+          background-color: #e0e7ff; /* bleu clair au hover */
+          color: black;
         }
       `}</style>
     </div>

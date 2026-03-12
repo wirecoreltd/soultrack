@@ -177,8 +177,14 @@ function RapportBaptemes() {
 
     fetchCandidats(formData.eglise_id,formData.branche_id);
     fetchRapports();
-
   };
+
+  const groupedReports = rapports ? Object.entries(groupByMonth(rapports))
+  .sort((a,b)=>{
+    const [yearA,monthA]=a[0].split("-").map(Number);
+    const [yearB,monthB]=b[0].split("-").map(Number);
+    return new Date(yearA,monthA)-new Date(yearB,monthB);
+  }) : [];
 
   return (
 
@@ -192,11 +198,8 @@ function RapportBaptemes() {
       </h1>
 
       {/* FORMULAIRE + MENU */}
-
       <div className="max-w-5xl w-full grid md:grid-cols-2 gap-6 mb-6">
-
         {/* FORMULAIRE */}
-
         <div ref={formRef} className="bg-white/10 rounded-3xl p-6 shadow-lg">
 
           <form

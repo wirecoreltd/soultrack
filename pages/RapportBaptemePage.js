@@ -253,9 +253,9 @@ useEffect(() => {
         </button>
       </div>
   </div>
-</div>
-  
-  {/* Menu déroulant / Sélectionner les baptisés */}
+</div>  
+
+{/* --- Menu déroulant / Sélectionner les baptisés --- */}
 <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white w-full max-w-lg mx-auto mt-4">
   <div className="flex justify-between items-center mb-2">
     <label className="font-semibold">Sélectionner les baptisés</label>

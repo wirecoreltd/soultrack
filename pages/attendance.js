@@ -233,25 +233,26 @@ function Attendance() {
           </div>
 
           {/* TYPE TEMPS */}
-          <div className="flex flex-col relative" ref={selectRef}>
-            <label className="text-white mb-1">Type du temps</label>
-            <div className="relative">
+          {/* TYPE TEMPS */}
+            <div className="flex flex-col relative" ref={selectRef}>
+              <label className="text-white mb-1">Type du temps</label>
               <select
                 name="typeTemps"
                 value={formData.typeTemps}
                 onChange={e => { handleChange(e); setDropdownOpen(false); }}
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="input appearance-none pr-8 cursor-pointer"
+                className="input text-black bg-white cursor-pointer h-12 px-3"
                 required
               >
                 <option value="">-- Sélectionner un temps --</option>
                 {tempsOptions.map(t => (
-                  <option key={t} value={t}>
+                  <option key={t} value={t} className="text-black">
                     {t}{t !== "Culte" ? " ✏️ 🗑️" : ""}
                   </option>
                 ))}
                 <option value="AUTRE" className="text-[#333699]">+ Ajouter un temps</option>
-              </select>             
+              </select>
+            </div>
           </div>
 
           {formData.typeTemps === "AUTRE" && (
@@ -374,18 +375,34 @@ function Attendance() {
 
       <Footer />
 
-      <style jsx>{`
+     <style jsx>{`
         .input {
           border: 1px solid #ccc;
-          padding: 10px;
+          padding: 12px 14px; /* plus large pour agrandir le champ */
           border-radius: 12px;
-          background: rgba(255,255,255,0.05);
-          color: white;
+          background: white; /* fond du select blanc */
+          color: black; /* texte par défaut noir */
+          font-size: 16px;
+          height: 48px; /* hauteur plus grande */
+          -webkit-appearance: none; /* supprime la flèche */
+          -moz-appearance: none;
+          appearance: none;
+          cursor: pointer;
         }
+      
+        /* + Ajouter un temps en couleur spéciale */
         select.input option[value='AUTRE'] {
           color: #333699;
         }
+      
+        /* Hover sur toutes les options sauf + Ajouter un temps */
         select.input option:hover {
+          background: #e0e0e0; /* hover gris clair */
+          color: black;
+        }
+      
+        /* Hover pour + Ajouter un temps */
+        select.input option[value='AUTRE']:hover {
           background: #333699;
           color: white;
         }

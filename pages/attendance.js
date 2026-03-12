@@ -288,6 +288,7 @@ function Attendance() {
             {editId ? "Mettre à jour" : "Ajouter le rapport"}
           </button>
 
+          <div>  
         </form>
         {message && <p className="mt-4 text-center text-white font-medium">{message}</p>}
       </div>

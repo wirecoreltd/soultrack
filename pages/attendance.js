@@ -253,8 +253,7 @@ function Attendance() {
                 <option value="AUTRE" className="text-[#333699]">+ Ajouter un temps</option>
               </select>
             </div>
-          </div>
-
+          
           {formData.typeTemps === "AUTRE" && (
             <>
               <div className="flex flex-col col-span-2">

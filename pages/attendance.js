@@ -18,11 +18,11 @@ function Attendance() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showTable, setShowTable] = useState(false);
-
   const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
 
   const [formData, setFormData] = useState({
     date: "",
+    typeTemps: "Culte",
     numero_culte: 1,
     hommes: 0,
     femmes: 0,
@@ -31,10 +31,6 @@ function Attendance() {
     connectes: 0,
     nouveauxVenus: 0,
     nouveauxConvertis: 0,
-    temps_nom: "",
-    temps_type: "Culte",
-    temps_special: false,
-    temps_enregistre: false,
   });
 
   const [editId, setEditId] = useState(null);
@@ -42,11 +38,10 @@ function Attendance() {
 
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-
   const [expandedMonths, setExpandedMonths] = useState({});
+  const [tempsOptions, setTempsOptions] = useState(["Culte", "Réunion", "Soin Pastoral"]);
 
-  const [savedTemps, setSavedTemps] = useState([]);
-
+  // --- Load superviseur ---
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -64,22 +59,9 @@ function Attendance() {
     loadSuperviseur();
   }, []);
 
-  useEffect(() => {
-    // Charger les temps enregistrés
-    const loadTemps = async () => {
-      const { data, error } = await supabase
-        .from("attendance")
-        .select("temps_nom")
-        .eq("temps_enregistre", true)
-        .neq("temps_nom", "");
-      if (!error && data) setSavedTemps([...new Set(data.map(d => d.temps_nom))]);
-    };
-    loadTemps();
-  }, [reports]);
-
+  // --- Fetch rapports ---
   const fetchRapports = async () => {
     if (!superviseur.eglise_id || !superviseur.branche_id) return;
-
     setLoading(true);
     setShowTable(false);
 
@@ -95,19 +77,16 @@ function Attendance() {
     query = query.order("date", { ascending: true }).order("numero_culte", { ascending: true });
 
     const { data, error } = await query;
-    if (error) console.error("❌ Erreur fetch:", error);
+    if (error) console.error("Erreur fetch:", error);
     else setReports(data || []);
-
     setLoading(false);
     setShowTable(true);
   };
 
+  // --- Handle form ---
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value
-    }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -120,6 +99,11 @@ function Attendance() {
         eglise_id: superviseur.eglise_id,
         branche_id: superviseur.branche_id,
       };
+
+      // Enregistrer nouveau temps si non existant
+      if (!tempsOptions.includes(formData.typeTemps)) {
+        setTempsOptions(prev => [...prev, formData.typeTemps]);
+      }
 
       if (editId) {
         const { error } = await supabase
@@ -136,15 +120,11 @@ function Attendance() {
         setMessage("✅ Rapport ajouté !");
       }
 
-      // Mettre à jour la liste des temps enregistrés si nécessaire
-      if (formData.temps_enregistre && formData.temps_nom && !savedTemps.includes(formData.temps_nom)) {
-        setSavedTemps((prev) => [...prev, formData.temps_nom]);
-      }
-
       setTimeout(() => setMessage(""), 3000);
 
       setFormData({
         date: "",
+        typeTemps: "Culte",
         numero_culte: 1,
         hommes: 0,
         femmes: 0,
@@ -153,10 +133,6 @@ function Attendance() {
         connectes: 0,
         nouveauxVenus: 0,
         nouveauxConvertis: 0,
-        temps_nom: "",
-        temps_type: "Culte",
-        temps_special: false,
-        temps_enregistre: false,
       });
       setEditId(null);
       setShowTable(false);
@@ -166,55 +142,44 @@ function Attendance() {
     }
   };
 
-  const handleEdit = (report) => {
-    setEditId(report.id);
+  const handleEdit = (r) => {
+    setEditId(r.id);
     setFormData({
-      date: report.date,
-      numero_culte: report.numero_culte || 1,
-      hommes: report.hommes,
-      femmes: report.femmes,
-      jeunes: report.jeunes,
-      enfants: report.enfants,
-      connectes: report.connectes,
-      nouveauxVenus: report.nouveauxVenus,
-      nouveauxConvertis: report.nouveauxConvertis,
-      temps_nom: report.temps_nom || "",
-      temps_type: report.temps_type || "Culte",
-      temps_special: report.temps_special || false,
-      temps_enregistre: report.temps_enregistre || false,
+      date: r.date,
+      typeTemps: r.typeTemps || "Culte",
+      numero_culte: r.numero_culte || 1,
+      hommes: r.hommes,
+      femmes: r.femmes,
+      jeunes: r.jeunes,
+      enfants: r.enfants,
+      connectes: r.connectes,
+      nouveauxVenus: r.nouveauxVenus,
+      nouveauxConvertis: r.nouveauxConvertis,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (id) => {
     if (!confirm("Voulez-vous vraiment supprimer ce rapport ?")) return;
-    const { error } = await supabase
-      .from("attendance")
-      .delete()
-      .eq("id", id);
-    if (error) console.error("❌ Erreur delete:", error);
+    const { error } = await supabase.from("attendance").delete().eq("id", id);
+    if (error) console.error("Erreur delete:", error);
     else fetchRapports();
   };
 
+  // --- Utilities ---
   const formatDateFR = (d) => {
     const dateObj = new Date(d);
-    const day = String(dateObj.getDate()).padStart(2, "0");
-    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-    const year = dateObj.getFullYear();
-    return `${day}/${month}/${year}`;
+    return `${String(dateObj.getDate()).padStart(2,"0")}/${String(dateObj.getMonth()+1).padStart(2,"0")}/${dateObj.getFullYear()}`;
   };
 
   const getMonthNameFR = (monthIndex) => {
-    const months = [
-      "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-      "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
-    ];
+    const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
     return months[monthIndex] || "";
   };
 
   const groupByMonth = (reports) => {
     const map = {};
-    reports.forEach((r) => {
+    reports.forEach(r => {
       const d = new Date(r.date);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       if (!map[key]) map[key] = [];
@@ -223,33 +188,9 @@ function Attendance() {
     return map;
   };
 
-  const toggleMonth = (monthKey) => {
-    setExpandedMonths((prev) => ({
-      ...prev,
-      [monthKey]: !prev[monthKey],
-    }));
-  };
+  const toggleMonth = (key) => setExpandedMonths(prev => ({ ...prev, [key]: !prev[key] }));
 
   const groupedReports = groupByMonth(reports);
-
-  const totalGlobal = reports.reduce((acc, r) => {
-    acc.hommes += Number(r.hommes || 0);
-    acc.femmes += Number(r.femmes || 0);
-    acc.jeunes += Number(r.jeunes || 0);
-    acc.enfants += Number(r.enfants || 0);
-    acc.connectes += Number(r.connectes || 0);
-    acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
-    acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
-    return acc;
-  }, {
-    hommes: 0,
-    femmes: 0,
-    jeunes: 0,
-    enfants: 0,
-    connectes: 0,
-    nouveauxVenus: 0,
-    nouveauxConvertis: 0,
-  });
 
   const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500","border-pink-500","border-indigo-500"];
 
@@ -257,67 +198,29 @@ function Attendance() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
-        <span className="text-white">Rapport </span>
-        <span className="text-amber-300">Présence Culte</span>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
+        Rapport <span className="text-amber-300">Présence / Temps</span>
       </h1>
 
-      {/* Formulaire */}
-     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
-      <HeaderPages />
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
-        <span className="text-white">Rapport </span>
-        <span className="text-amber-300">Présence Culte / Temps</span>
-      </h1>
-
-      {/* Formulaire */}
+      {/* FORMULAIRE */}
       <div className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-          {/* Date */}
           <div className="flex flex-col">
-            <label className="text-white font-medium mb-1">Date du culte</label>
-            <input type="date" name="date" value={formData.date} onChange={handleChange}
-              className="input bg-white/20 text-white" required />
+            <label className="font-medium mb-1 text-white">Date du culte</label>
+            <input type="date" name="date" value={formData.date} onChange={handleChange} className="input bg-white/20 text-white" required/>
           </div>
 
-          {/* Type du temps */}
           <div className="flex flex-col">
-            <label className="text-white font-medium mb-1">Type du temps</label>
-            <select
-              name="typeTemps"
-              value={addingTemps ? "" : formData.typeTemps}
-              onChange={(e) => {
-                if (e.target.value === "addNew") setAddingTemps(true);
-                else setFormData(prev => ({ ...prev, typeTemps: e.target.value })); 
-              }}
-              className="input bg-white/20 text-white"
-            >
-              <option value="">-- Sélectionner --</option>
-              {typeTempsList.map(t => <option key={t} value={t}>{t}</option>)}
-              <option value="addNew">+ Ajouter un temps</option>
+            <label className="font-medium mb-1 text-white">Type du temps</label>
+            <select name="typeTemps" value={formData.typeTemps} onChange={handleChange} className="input bg-white/20 text-white">
+              {tempsOptions.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
 
-          {/* Nouveau temps */}
-          {addingTemps && (
-            <>
-              <div className="flex flex-col">
-                <label className="text-white font-medium mb-1">Nom du temps</label>
-                <input type="text" name="nouveauTemps" value={formData.nouveauTemps} onChange={handleChange} 
-                  className="input bg-white/20 text-white" required />
-              </div>
-              <div className="flex items-center mt-6">
-                <input type="checkbox" name="saveNouveauTemps" checked={formData.saveNouveauTemps} onChange={handleChange} className="mr-2"/>
-                <span className="text-white">Enregistrer ce temps pour le futur</span>
-              </div>
-            </>
-          )}
-
-          {/* Numéro de culte */}
-          {(!addingTemps && formData.typeTemps === "Culte") && (
+          {formData.typeTemps === "Culte" && (
             <div className="flex flex-col">
-              <label className="text-white font-medium mb-1">Numéro de culte</label>
+              <label className="font-medium mb-1 text-white">Numéro de culte</label>
               <select name="numero_culte" value={formData.numero_culte} onChange={handleChange} className="input bg-white/20 text-white">
                 {[1,2,3,4,5,6,7].map(n => <option key={n} value={n}>{n} {n===1 ? "er" : "ème"} Culte</option>)}
               </select>
@@ -326,9 +229,9 @@ function Attendance() {
 
           {/* Détails chiffrés */}
           {["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].map(field => (
-            <div key={field} className="flex flex-col">
-              <label className="text-white font-medium mb-1">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-              <input type="number" name={field} value={formData[field]} onChange={handleChange} className="input bg-white/20 text-white" min={0} />
+            <div className="flex flex-col" key={field}>
+              <label className="font-medium mb-1 text-white">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
+              <input type="number" name={field} value={formData[field]} onChange={handleChange} className="input bg-white/20 text-white"/>
             </div>
           ))}
 
@@ -336,101 +239,52 @@ function Attendance() {
             {editId ? "Mettre à jour" : "Ajouter le rapport"}
           </button>
         </form>
-
         {message && <p className="mt-4 text-center font-medium text-white">{message}</p>}
       </div>
-      {/* Filtre date */}
+
+      {/* FILTRE DATE */}
       <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-wrap justify-center gap-4 text-white w-full max-w-3xl">
         <div className="flex flex-col w-full sm:w-auto">
-          <label htmlFor="dateDebut" className="font-medium mb-1">Date de début</label>
-          <input
-            type="date"
-            id="dateDebut"
-            value={dateDebut}
-            onChange={(e) => setDateDebut(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-          />
+          <label>Date de début</label>
+          <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
         </div>
         <div className="flex flex-col w-full sm:w-auto">
-          <label htmlFor="dateFin" className="font-medium mb-1">Date de fin</label>
-          <input
-            type="date"
-            id="dateFin"
-            value={dateFin}
-            onChange={(e) => setDateFin(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-          />
+          <label>Date de fin</label>
+          <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
         </div>
-        <button
-          onClick={fetchRapports}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end"
-        >
-          Générer
-        </button>           
+        <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end">Générer</button>
       </div>
 
-      {/* Tableau des rapports */}
+      {/* TABLEAU */}
       {showTable && (
         <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
           <div className="w-max space-y-2">
-
-            {/* HEADER */}
-            <div className="flex font-semibold uppercase text-white px-4 py-3 
-                            border-b border-white/30 bg-white/5 rounded-t-xl 
-                            whitespace-nowrap border-l-4 border-transparent">
-
-              <div className="min-w-[150px] pl-2">Culte / Date</div>
-              <div className="min-w-[120px] text-center font-semibold ml-3">Hommes</div>
-              <div className="min-w-[120px] text-center font-semibold">Femmes</div>
-              <div className="min-w-[120px] text-center font-semibold">Jeunes</div>
-              <div className="min-w-[130px] text-center text-orange-400 font-semibold -ml-2">Total</div>
-              <div className="min-w-[120px] text-center font-semibold">Enfants</div>
-              <div className="min-w-[140px] text-center font-semibold">Connectés</div>
-              <div className="min-w-[150px] text-center font-semibold">Nouveaux<br />Venus</div>
-              <div className="min-w-[180px] text-center font-semibold">Nouveaux<br />Convertis</div>
-              <div className="min-w-[140px] text-center text-orange-400 font-semibold">Actions</div>
-            </div>
-       
             {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
               const [year, monthIndex] = monthKey.split("-").map(Number);
               const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
               const isExpanded = expandedMonths[monthKey] || false;
               const borderColor = borderColors[idx % borderColors.length];
 
-              const totalMonth = monthReports.reduce((acc, r) => {
-                acc.hommes += Number(r.hommes || 0);
-                acc.femmes += Number(r.femmes || 0);
-                acc.jeunes += Number(r.jeunes || 0);
-                acc.enfants += Number(r.enfants || 0);
-                acc.connectes += Number(r.connectes || 0);
-                acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
-                acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
+              const totalMonth = monthReports.reduce((acc,r) => {
+                acc.hommes += Number(r.hommes||0);
+                acc.femmes += Number(r.femmes||0);
+                acc.jeunes += Number(r.jeunes||0);
+                acc.enfants += Number(r.enfants||0);
+                acc.connectes += Number(r.connectes||0);
+                acc.nouveauxVenus += Number(r.nouveauxVenus||0);
+                acc.nouveauxConvertis += Number(r.nouveauxConvertis||0);
                 return acc;
-              }, {
-                hommes: 0, femmes: 0, jeunes: 0,
-                enfants: 0, connectes: 0,
-                nouveauxVenus: 0, nouveauxConvertis: 0
-              });
+              }, {hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0});
 
               return (
                 <div key={monthKey} className="space-y-1">
-
                   {/* MOIS */}
-                  <div
-                    className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer 
-                                border-l-4 ${borderColor}`}
-                    onClick={() => toggleMonth(monthKey)}
-                  >
-                    <div className="min-w-[150px] pl-2 text-white font-semibold">
-                      {isExpanded ? "➖" : "➕"} {monthLabel}
-                    </div>
-
+                  <div className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 ${borderColor}`} onClick={()=>toggleMonth(monthKey)}>
+                    <div className="min-w-[150px] pl-2 text-white font-semibold">{isExpanded ? "➖":"➕"} {monthLabel}</div>
                     <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-1">{totalMonth.hommes}</div>
                     <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.femmes}</div>
                     <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.jeunes}</div>
-                    <div className="min-w-[130px] text-center text-orange-400 font-semibold">
-                      {totalMonth.hommes + totalMonth.femmes + totalMonth.jeunes}
-                    </div>
+                    <div className="min-w-[130px] text-center text-orange-400 font-semibold">{totalMonth.hommes+totalMonth.femmes+totalMonth.jeunes}</div>
                     <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.enfants}</div>
                     <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalMonth.connectes}</div>
                     <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalMonth.nouveauxVenus}</div>
@@ -438,57 +292,29 @@ function Attendance() {
                     <div className="min-w-[140px]"></div>
                   </div>
 
-                  {(isExpanded || monthReports.length === 1) &&
-                    monthReports.map((r) => {
-                      const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-                      const culteLabel = `Culte ${r.numero_culte}`;
-
-                      return (
-                        <div
-                          key={r.id}
-                          className={`flex items-center px-4 py-2 rounded-lg 
-                                     bg-white/10 hover:bg-white/20 transition 
-                                     border-l-4 ${borderColor}`}
-                        >                         
-
-                           <div className="min-w-[150px] pl-2 text-white">
-                            {`${culteLabel} : ${formatDateFR(r.date)}`}
-                          </div>
-
-                          <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-                          <div className="min-w-[130px] text-center text-orange-400 font-semibold">{total}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-                          <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
-                          <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-                          <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
-
-                          <div className="min-w-[140px] text-center flex justify-center gap-2">
-                            <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
-                            <button onClick={() => handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
-                          </div>
+                  {(isExpanded || monthReports.length===1) && monthReports.map(r => {
+                    const total = Number(r.hommes)+Number(r.femmes)+Number(r.jeunes);
+                    return (
+                      <div key={r.id} className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}>
+                        <div className="min-w-[150px] pl-2 text-white">{r.typeTemps} : {formatDateFR(r.date)}</div>
+                        <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                        <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                        <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
+                        <div className="min-w-[130px] text-center text-orange-400 font-semibold">{total}</div>
+                        <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
+                        <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
+                        <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
+                        <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+                        <div className="min-w-[140px] text-center flex justify-center gap-2">
+                          <button onClick={()=>handleEdit(r)} className="text-blue-400 hover:text-blue-600">✏️</button>
+                          <button onClick={()=>handleDelete(r.id)} className="text-red-400 hover:text-red-600">🗑️</button>
                         </div>
-                      );
-                    })}
+                      </div>
+                    )
+                  })}
                 </div>
-              );
+              )
             })}
-
-            {/* TOTAL GLOBAL */}
-            <div className="flex items-center px-6 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl text-orange-500 font-semibold">
-              <div className="min-w-[150px]">Total Global</div>
-              <div className="min-w-[120px] text-center text-orange-500 font-semibold -ml-1">{totalGlobal.hommes}</div>
-              <div className="min-w-[120px] text-center text-orange-500 font-semibold">{totalGlobal.femmes}</div>
-              <div className="min-w-[120px] text-center text-orange-500 font-semibold">{totalGlobal.jeunes}</div>
-              <div className="min-w-[130px] text-center text-orange-500 font-semibold">{totalGlobal.hommes + totalGlobal.femmes + totalGlobal.jeunes}</div>
-              <div className="min-w-[120px] text-center text-orange-500 font-semibold">{totalGlobal.enfants}</div>
-              <div className="min-w-[140px] text-center text-orange-500 font-semibold">{totalGlobal.connectes}</div>
-              <div className="min-w-[150px] text-center text-orange-500 font-semibold">{totalGlobal.nouveauxVenus}</div>
-              <div className="min-w-[180px] text-center text-orange-500 font-semibold">{totalGlobal.nouveauxConvertis}</div>
-              <div className="min-w-[140px]"></div>
-            </div>        
-
           </div>
         </div>
       )}

@@ -288,7 +288,7 @@ function Attendance() {
               name="typeTemps"
               value={formData.typeTemps}
               onChange={handleChange}
-              className="input bg-white text-black"
+              className="input bg-white text-[#333699]"
               required
             >
               <option value="">-- Sélectionner un temps --</option>

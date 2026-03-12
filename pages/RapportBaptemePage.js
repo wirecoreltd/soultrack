@@ -93,23 +93,27 @@ function RapportBaptemes() {
   },[selectedCandidats]);
 
   //////////// FETCH RAPPORTS ////////////
-  const fetchRapports = async()=>{
-    if(!egliseId || !brancheId) return;
+  const fetchRapports = async () => {
+  // si pas encore chargé, ne rien faire
+  if (!egliseId || !brancheId) return;
 
-    let query = supabase
-      .from("baptemes")
-      .select("*")
-      .eq("eglise_id",egliseId)
-      .eq("branche_id",brancheId)
-      .order("date",{ascending:false});
+  let query = supabase
+    .from("baptemes")
+    .select("*")
+    .eq("eglise_id", egliseId)
+    .eq("branche_id", brancheId)
+    .order("date", { ascending: false });
 
-    if(filterDebut) query=query.gte("date",filterDebut);
-    if(filterFin) query=query.lte("date",filterFin);
+  if (filterDebut) query = query.gte("date", filterDebut);
+  if (filterFin) query = query.lte("date", filterFin);
 
-    const {data} = await query;
-    setRapports(data || []);
-    setShowTable(true);
-  };
+  const { data, error } = await query;
+
+  if (error) console.log("Erreur fetchRapports:", error);
+  else setRapports(data || []);
+
+  setShowTable(true);
+};
 
   //////////// AJOUT RAPPORT ////////////
   const handleSubmit = async(e)=>{

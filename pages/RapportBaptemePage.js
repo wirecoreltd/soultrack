@@ -254,8 +254,7 @@ useEffect(() => {
       </div>
   </div>
 </div>
-
-  //* Menu déroulant / Sélectionner les baptisés *
+  
   <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white w-full max-w-lg mx-auto mt-4">
   <div className="flex justify-between items-center mb-2">
     <label className="font-semibold">Sélectionner les baptisés</label>
@@ -271,7 +270,7 @@ useEffect(() => {
     >
       {selectedCandidats.length === 0 ? "Tout sélectionner" : "Tout désélectionner"}
     </button>
-  </div>
+ 
   </div>  
       
         <div className="flex flex-col space-y-1 max-h-60 overflow-y-auto">
@@ -317,7 +316,6 @@ useEffect(() => {
       </div>
     )}
   </div>
-
 </div>
 
       {/* FILTRES */}

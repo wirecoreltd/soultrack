@@ -280,8 +280,7 @@ function Attendance() {
             <label className="font-medium mb-1 text-white">Date du culte</label>
             <input type="date" name="date" value={formData.date} onChange={handleChange} className="input bg-white/20 text-white" required/>
           </div>
-
-        //----------------------------- 
+        
         <div className="flex flex-col relative">
             <label className="font-medium mb-1 text-white">Type du temps</label>
           
@@ -328,7 +327,7 @@ function Attendance() {
                             const newName = prompt("Renommer le temps :", t);
                             if (newName) renameTemps(t, newName);
                           }}
-                          className="text-blue-500 hover:text-blue-700"
+                          className="text-black hover:text-white"
                         >
                           ✏️
                         </button>
@@ -349,7 +348,7 @@ function Attendance() {
           
                 {/* Ajouter un temps */}
                 <li
-                  className="px-3 py-2 text-white bg-[#333699] hover:bg-[#1f2366] cursor-pointer"
+                  className="px-3 py-2 text-white bg-[#1f2366] hover:bg-[#333699] cursor-pointer"
                   onClick={() => {
                     setFormData(prev => ({
                       ...prev,

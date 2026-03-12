@@ -281,79 +281,114 @@ function Attendance() {
             <input type="date" name="date" value={formData.date} onChange={handleChange} className="input bg-white/20 text-white" required/>
           </div>
 
-          {/* TYPE TEMPS */}
-          <div className="flex flex-col">
-            <label className="font-medium mb-1 text-white">Type du temps</label>
-            <select
-              name="typeTemps"
-              value={formData.typeTemps}
-              onChange={handleChange}
-              className="input bg-white text-black"
-              required
+          <div className="flex flex-col relative">
+  <label className="font-medium mb-1 text-white">Type du temps</label>
+
+  {/* Bouton pour ouvrir le menu */}
+  <button
+    type="button"
+    onClick={() => setFormData(prev => ({ ...prev, openTempsDropdown: !prev.openTempsDropdown }))}
+    className="input bg-white text-black text-left"
+  >
+    {formData.typeTemps || "-- Sélectionner un temps --"}
+  </button>
+
+  {/* Menu déroulant custom */}
+  {formData.openTempsDropdown && (
+    <ul className="absolute z-50 mt-1 w-full max-h-60 overflow-auto bg-white shadow-lg rounded-lg border border-gray-300">
+      {tempsOptions.map((t, idx) => (
+        <li
+          key={idx}
+          className="flex justify-between items-center px-3 py-2 hover:bg-[#333699] hover:text-white cursor-pointer"
+        >
+          <span
+            onClick={() => {
+              setFormData(prev => ({
+                ...prev,
+                typeTemps: t,
+                openTempsDropdown: false,
+                nouveauTemps: "",
+                enregistrerTemps: false,
+              }));
+            }}
+          >
+            {t}
+          </span>
+          <span className="flex gap-2">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                const newName = prompt("Renommer le temps :", t);
+                if (newName) renameTemps(t, newName);
+              }}
+              className="text-blue-500 hover:text-blue-700"
             >
-              <option value="">-- Sélectionner un temps --</option>
-              {tempsOptions.map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-              <option value="AUTRE">+ Ajouter un temps</option>
-            </select>
+              ✏️
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteTemps(t);
+              }}
+              className="text-red-500 hover:text-red-700"
+            >
+              🗑
+            </button>
+          </span>
+        </li>
+      ))}
 
-            {/* Boutons renommer/supprimer */}
-            {tempsOptions.length > 1 && formData.typeTemps !== "AUTRE" && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {tempsOptions.filter(t => t !== "Culte").map(t => (
-                  <div key={t} className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded text-white text-sm">
-                    <span>{t}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const nouveauNom = prompt("Nouveau nom pour ce temps :", t);
-                        if (nouveauNom && nouveauNom !== t) renameTemps(t, nouveauNom);
-                      }}
-                      className="text-yellow-300 hover:text-yellow-400"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => deleteTemps(t)}
-                      className="text-red-300 hover:text-red-400"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+      {/* Ajouter un temps */}
+      <li
+        className="px-3 py-2 text-white bg-[#333699] hover:bg-[#1f2366] cursor-pointer"
+        onClick={() => {
+          setFormData(prev => ({
+            ...prev,
+            typeTemps: "AUTRE",
+            openTempsDropdown: false,
+            nouveauTemps: "",
+            enregistrerTemps: false,
+          }));
+        }}
+      >
+        + Ajouter un temps
+      </li>
+    </ul>
+  )}
 
-          {/* NOUVEAU TEMPS */}
-          {formData.typeTemps === "AUTRE" && (
-            <>
-              <div className="flex flex-col">
-                <label className="font-medium mb-1 text-white">Nom du temps</label>
-                <input
-                  type="text"
-                  name="nouveauTemps"
-                  value={formData.nouveauTemps}
-                  onChange={handleChange}
-                  className="input bg-white text-black"
-                  placeholder="Ex: ADP"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  name="enregistrerTemps"
-                  checked={formData.enregistrerTemps}
-                  onChange={handleChange}
-                />
-                <label className="text-white text-sm">
-                  Enregistrer ce temps pour le futur
-                </label>
-              </div>
-            </>
-          )}
+  {/* Champ ajouter si AUTRE */}
+  {formData.typeTemps === "AUTRE" && (
+    <>
+      <div className="flex flex-col mt-2">
+        <label className="font-medium mb-1 text-white">Nom du temps</label>
+        <input
+          type="text"
+          name="nouveauTemps"
+          value={formData.nouveauTemps}
+          onChange={handleChange}
+          className="input bg-white text-black"
+          placeholder="Ex: ADP"
+        />
+      </div>
+
+      <div className="flex items-center gap-2 mt-1">
+        <input
+          type="checkbox"
+          name="enregistrerTemps"
+          checked={formData.enregistrerTemps}
+          onChange={(e) =>
+            setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))
+          }
+        />
+        <label className="text-white text-sm">
+          Enregistrer ce temps pour le futur
+        </label>
+      </div>
+    </>
+  )}
+</div>
 
           {/* NUMÉRO CULTE */}
           {formData.typeTemps === "Culte" && (

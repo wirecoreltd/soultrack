@@ -283,33 +283,29 @@ function Attendance() {
         
         <div className="flex flex-col relative">
   <label className="font-medium mb-1 text-white">Type du temps</label>
+  <select
+    name="typeTemps"
+    value={formData.typeTemps}
+    onChange={handleChange}
+    className="input bg-white text-black"
+    required
+  >
+    <option value="">-- Sélectionner un temps --</option>
 
-  {/* Menu déroulant classique */}
-  <div className="relative">
-    <select
-      name="typeTemps"
-      value={formData.typeTemps}
-      onChange={(e) => setFormData(prev => ({ ...prev, typeTemps: e.target.value }))}
-      className="input bg-white text-black appearance-none pr-8"
-    >
-      <option value="">-- Sélectionner un temps --</option>
-      {tempsOptions.map((t) => (
-        <option key={t} value={t}>{t}</option>
-      ))}
-      <option value="AUTRE" className="text-blue-700">+ Ajouter un temps</option>
-    </select>
-    {/* Flèche vers le bas */}
-    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-      <svg className="h-4 w-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-      </svg>
-    </div>
-  </div>
+    {tempsOptions.map((t) => (
+      <option key={t} value={t} className={t === "Culte" ? "" : "font-medium"}>
+        {t} {t !== "Culte" ? " ✏️ 🗑" : ""}
+      </option>
+    ))}
 
-  {/* Champ ajouter si AUTRE */}
+    <option value="AUTRE" className="text-blue-700 font-bold">
+      + Ajouter un temps
+    </option>
+  </select>
+
   {formData.typeTemps === "AUTRE" && (
-    <>
-      <div className="flex flex-col mt-2">
+    <div className="mt-2">
+      <div className="flex flex-col">
         <label className="font-medium mb-1 text-white">Nom du temps</label>
         <input
           type="text"
@@ -321,21 +317,22 @@ function Attendance() {
         />
       </div>
 
-      <div className="flex items-center gap-2 mt-1">
+      <div className="flex items-center gap-2 mt-2">
         <input
           type="checkbox"
           name="enregistrerTemps"
           checked={formData.enregistrerTemps}
           onChange={(e) =>
-            setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))
+            setFormData((prev) => ({ ...prev, enregistrerTemps: e.target.checked }))
           }
         />
         <label className="text-white text-sm">
           Enregistrer ce temps pour le futur
         </label>
       </div>
-    </>
+    </div>
   )}
+</div>
 
   {/* Boutons renommer / supprimer pour les autres temps */}
   {formData.typeTemps && formData.typeTemps !== "Culte" && formData.typeTemps !== "AUTRE" && (

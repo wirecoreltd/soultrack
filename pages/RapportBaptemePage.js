@@ -315,13 +315,10 @@ function RapportBaptemes() {
           {/* PERSONNES SELECTIONNEES */}
 
           {selectedCandidats.length>0 &&(
-
             <div className="mt-3">
-
               <h3 className="text-amber-300 font-semibold text-sm mb-1">
                 Personnes sélectionnées :
               </h3>
-
               <ul className="list-disc list-inside text-white text-sm space-y-1">
 
                 {candidats
@@ -331,19 +328,78 @@ function RapportBaptemes() {
                     {c.prenom} {c.nom}
                   </li>
                 ))}
-
               </ul>
-
             </div>
-
           )}
-
         </div>
-
       </div>
 
-      <Footer/>
+          {/* FILTRES */}
 
+<div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+
+  <input
+    type="date"
+    value={filterDebut}
+    onChange={(e)=>setFilterDebut(e.target.value)}
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
+  <input
+    type="date"
+    value={filterFin}
+    onChange={(e)=>setFilterFin(e.target.value)}
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
+  <button
+    onClick={fetchRapports}
+    className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+  >
+    Générer
+  </button>
+</div>
+
+{/* TABLEAU RAPPORTS */}
+
+{showTable && (
+<div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
+  <div className="w-max space-y-2">
+    <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+      <div className="min-w-[200px]">Date</div>
+      <div className="min-w-[200px] text-center">Baptisé par</div>
+      <div className="min-w-[120px] text-center">Hommes</div>
+      <div className="min-w-[120px] text-center">Femmes</div>
+      <div className="min-w-[120px] text-center">Total</div>
+    </div>
+
+    {rapports.map(r=>{
+      const total = Number(r.hommes) + Number(r.femmes);
+      return(
+      <div
+      key={r.id}
+      className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500"
+      >
+        <div className="min-w-[200px] text-white">
+          {new Date(r.date).toLocaleDateString("fr-FR")}
+        </div>
+        <div className="min-w-[200px] text-center text-white">
+          {r.baptise_par}
+        </div>
+        <div className="min-w-[120px] text-center text-white">
+          {r.hommes}
+        </div>
+        <div className="min-w-[120px] text-center text-white">
+          {r.femmes}
+        </div>
+        <div className="min-w-[120px] text-center text-white font-bold">
+          {total}
+        </div>
+      </div>
+      )
+    })}
+  </div>
+</div>
+)}
+      <Footer/>
       <style jsx>{`
         .input{
           border:1px solid #ccc;

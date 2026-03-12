@@ -59,6 +59,30 @@ function Attendance() {
     loadSuperviseur();
   }, []);
 
+  //----------------------
+  useEffect(() => {
+  const loadTemps = async () => {
+    const { data, error } = await supabase
+      .from("attendance")
+      .select("typeTemps")
+      .not("typeTemps", "is", null);
+    if (error) {
+      console.error("Erreur chargement temps:", error);
+      return;
+    }
+    const uniqueTemps = [
+      "Culte",
+      ...new Set(
+        data
+          .map(t => t.typeTemps)
+          .filter(t => t && t !== "Culte")
+      )
+    ];
+    setTempsOptions(uniqueTemps);
+  };
+  loadTemps();
+}, []);
+
   // --- Fetch rapports ---
   const fetchRapports = async () => {
     if (!superviseur.eglise_id || !superviseur.branche_id) return;
@@ -241,7 +265,7 @@ if (formData.typeTemps === "AUTRE") {
                   name="nouveauTemps"
                   value={formData.nouveauTemps}
                   onChange={handleChange}
-                  className="input bg-white/20 text-white"
+                  className="input bg-white text-black"
                   placeholder="Ex: ADP"
                 />
               </div>
@@ -265,7 +289,7 @@ if (formData.typeTemps === "AUTRE") {
           {formData.typeTemps === "Culte" && (
             <div className="flex flex-col">
               <label className="font-medium mb-1 text-white">Numéro de culte</label>
-              <select name="numero_culte" value={formData.numero_culte} onChange={handleChange} className="input bg-white/20 text-white">
+              <select name="numero_culte" value={formData.numero_culte} onChange={handleChange} className="input bg-transparent text-white">
                 {[1,2,3,4,5,6,7].map(n => <option key={n} value={n}>{n} {n===1 ? "er" : "ème"} Culte</option>)}
               </select>
             </div>
@@ -275,7 +299,7 @@ if (formData.typeTemps === "AUTRE") {
           {["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].map(field => (
             <div className="flex flex-col" key={field}>
               <label className="font-medium mb-1 text-white">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-              <input type="number" name={field} value={formData[field]} onChange={handleChange} className="input bg-white/20 text-white"/>
+              <input type="number" name={field} value={formData[field]} onChange={handleChange} className="input bg-white text-black"/>
             </div>
           ))}
 
@@ -372,6 +396,8 @@ if (formData.typeTemps === "AUTRE") {
           border-radius: 12px;
           padding: 10px;
           box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+          color: black;
+          background: white;
         }
       `}</style>
     </div>

@@ -272,8 +272,9 @@ useEffect(() => {
       {selectedCandidats.length === 0 ? "Tout sélectionner" : "Tout désélectionner"}
     </button>
   </div>
-
-  <div className="flex flex-col space-y-1 max-h-60 overflow-y-auto">
+  </div>  
+      
+        <div className="flex flex-col space-y-1 max-h-60 overflow-y-auto">
     {candidats.map(c => (
       <div key={c.id} className="flex justify-between items-center w-full px-2 py-1 rounded hover:bg-white/20">
         <span>{c.prenom} {c.nom}</span>

@@ -251,9 +251,7 @@ function Attendance() {
                   </option>
                 ))}
                 <option value="AUTRE" className="text-[#333699]">+ Ajouter un temps</option>
-              </select>
-              //<div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">▼</div>
-           //</div>
+              </select>             
           </div>
 
           {formData.typeTemps === "AUTRE" && (

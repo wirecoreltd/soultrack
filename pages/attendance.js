@@ -263,87 +263,82 @@ function Attendance() {
       </h1>
 
       {/* Formulaire */}
+     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+      <HeaderPages />
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
+        <span className="text-white">Rapport </span>
+        <span className="text-amber-300">Présence Culte / Temps</span>
+      </h1>
+
+      {/* Formulaire */}
       <div className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[ 
-            { label: "Date", name: "date", type: "date" },
-            { label: "Numéro de culte", name: "numero_culte", type: "select" },
-            { label: "Hommes", name: "hommes", type: "number" },
-            { label: "Femmes", name: "femmes", type: "number" },
-            { label: "Jeunes", name: "jeunes", type: "number" },
-            { label: "Enfants", name: "enfants", type: "number" },
-            { label: "Connectés", name: "connectes", type: "number" },
-            { label: "Nouveaux venus", name: "nouveauxVenus", type: "number" },
-            { label: "Nouveaux convertis", name: "nouveauxConvertis", type: "number" },
-            { label: "Nom du temps", name: "temps_nom", type: "selectTemps" },
-            { label: "Type du temps", name: "temps_type", type: "selectType" },
-            { label: "Temps spécial", name: "temps_special", type: "checkbox" },
-            { label: "Enregistrer ce temps", name: "temps_enregistre", type: "checkbox" },
-          ].map((field) => (
-            <div key={field.name} className="flex flex-col">
-              <label htmlFor={field.name} className="font-medium mb-1 text-white">{field.label}</label>
-              {field.type === "select" ? (
-                <select
-                  name={field.name}
-                  id={field.name}
-                  value={formData[field.name]}
-                  onChange={handleChange}
-                  className="input bg-white/20 text-white placeholder-white"
-                >
-                  {[1,2,3,4,5,6,7].map((n) => (
-                    <option key={n} value={n}>{n} {n===1 ? "er" : "ème"} Culte</option>
-                  ))}
-                </select>
-              ) : field.type === "selectTemps" ? (
-                <input
-                  list="temps-list"
-                  name={field.name}
-                  id={field.name}
-                  value={formData[field.name]}
-                  onChange={handleChange}
-                  className="input bg-white/20 text-white placeholder-white"
-                  placeholder="Saisir ou choisir..."
-                />
-              ) : field.type === "selectType" ? (
-                <select
-                  name={field.name}
-                  value={formData[field.name]}
-                  onChange={handleChange}
-                  className="input bg-white/20 text-white placeholder-white"
-                >
-                  {["Culte", "Formation", "Évangélisation", "Réunion spéciale"].map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type={field.type}
-                  name={field.name}
-                  id={field.name}
-                  checked={field.type==="checkbox" ? formData[field.name] : undefined}
-                  value={field.type==="checkbox" ? undefined : formData[field.name]}
-                  onChange={handleChange}
-                  className="input bg-white/20 text-white placeholder-white"
-                  required={field.type === "date"}
-                />
-              )}
+
+          {/* Date */}
+          <div className="flex flex-col">
+            <label className="text-white font-medium mb-1">Date du culte</label>
+            <input type="date" name="date" value={formData.date} onChange={handleChange}
+              className="input bg-white/20 text-white" required />
+          </div>
+
+          {/* Type du temps */}
+          <div className="flex flex-col">
+            <label className="text-white font-medium mb-1">Type du temps</label>
+            <select
+              name="typeTemps"
+              value={addingTemps ? "" : formData.typeTemps}
+              onChange={(e) => {
+                if (e.target.value === "addNew") setAddingTemps(true);
+                else setFormData(prev => ({ ...prev, typeTemps: e.target.value })); 
+              }}
+              className="input bg-white/20 text-white"
+            >
+              <option value="">-- Sélectionner --</option>
+              {typeTempsList.map(t => <option key={t} value={t}>{t}</option>)}
+              <option value="addNew">+ Ajouter un temps</option>
+            </select>
+          </div>
+
+          {/* Nouveau temps */}
+          {addingTemps && (
+            <>
+              <div className="flex flex-col">
+                <label className="text-white font-medium mb-1">Nom du temps</label>
+                <input type="text" name="nouveauTemps" value={formData.nouveauTemps} onChange={handleChange} 
+                  className="input bg-white/20 text-white" required />
+              </div>
+              <div className="flex items-center mt-6">
+                <input type="checkbox" name="saveNouveauTemps" checked={formData.saveNouveauTemps} onChange={handleChange} className="mr-2"/>
+                <span className="text-white">Enregistrer ce temps pour le futur</span>
+              </div>
+            </>
+          )}
+
+          {/* Numéro de culte */}
+          {(!addingTemps && formData.typeTemps === "Culte") && (
+            <div className="flex flex-col">
+              <label className="text-white font-medium mb-1">Numéro de culte</label>
+              <select name="numero_culte" value={formData.numero_culte} onChange={handleChange} className="input bg-white/20 text-white">
+                {[1,2,3,4,5,6,7].map(n => <option key={n} value={n}>{n} {n===1 ? "er" : "ème"} Culte</option>)}
+              </select>
+            </div>
+          )}
+
+          {/* Détails chiffrés */}
+          {["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].map(field => (
+            <div key={field} className="flex flex-col">
+              <label className="text-white font-medium mb-1">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
+              <input type="number" name={field} value={formData[field]} onChange={handleChange} className="input bg-white/20 text-white" min={0} />
             </div>
           ))}
 
-          <datalist id="temps-list">
-            {savedTemps.map((t, idx) => <option key={idx} value={t} />)}
-          </datalist>
-
-          <button
-            type="submit"
-            className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all"
-          >
+          <button type="submit" className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all">
             {editId ? "Mettre à jour" : "Ajouter le rapport"}
           </button>
         </form>
+
         {message && <p className="mt-4 text-center font-medium text-white">{message}</p>}
       </div>
-
       {/* Filtre date */}
       <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-wrap justify-center gap-4 text-white w-full max-w-3xl">
         <div className="flex flex-col w-full sm:w-auto">

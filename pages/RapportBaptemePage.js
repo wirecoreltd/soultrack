@@ -179,11 +179,36 @@ function RapportBaptemes() {
     fetchRapports();
   };
 
-  const groupedReports = rapports ? Object.entries(groupByMonth(rapports))
-  .sort((a,b)=>{
-    const [yearA,monthA]=a[0].split("-").map(Number);
-    const [yearB,monthB]=b[0].split("-").map(Number);
-    return new Date(yearA,monthA)-new Date(yearB,monthB);
+  /* UTIL */
+const getMonthNameFR = (monthIndex) => {
+  const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+  return months[monthIndex] || "";
+};
+
+const formatDateFR = (dateString) => {
+  if (!dateString) return "";
+  const d = new Date(dateString);
+  return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
+};
+
+// ⚡ Fonction pour grouper les rapports par mois
+const groupByMonth = (rapports) => {
+  const map = {};
+  rapports.forEach(r => {
+    const d = new Date(r.date);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    if (!map[key]) map[key] = [];
+    map[key].push(r);
+  });
+  return map;
+};
+
+// Calcul des rapports groupés par mois (pour collapse)
+const groupedReports = rapports ? Object.entries(groupByMonth(rapports))
+  .sort((a,b) => {
+    const [yearA, monthA] = a[0].split("-").map(Number);
+    const [yearB, monthB] = b[0].split("-").map(Number);
+    return new Date(yearA, monthA) - new Date(yearB, monthB);
   }) : [];
 
   return (

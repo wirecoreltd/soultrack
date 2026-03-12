@@ -281,41 +281,44 @@ function Attendance() {
             <input type="date" name="date" value={formData.date} onChange={handleChange} className="input bg-white/20 text-white" required/>
           </div>
 
-          {/* TYPE TEMPS */}
-            {/* TYPE TEMPS */}
+          {/* ================= TYPE TEMPS ================= */}
 <div className="flex flex-col relative">
-  <label className="font-medium mb-1 text-white">Type du temps</label>
+  <label className="text-white mb-1 font-medium">Type du temps</label>
   <div className="relative">
     <select
       name="typeTemps"
       value={formData.typeTemps}
       onChange={handleChange}
-      className="input bg-white text-black h-12 pr-10 appearance-none"
+      className="input h-12 w-full pr-10 appearance-none"
       required
     >
       <option value="">-- Sélectionner un temps --</option>
 
       {tempsOptions.map((t) => (
-        <option
-          key={t}
-          value={t}
-        >
+        <option key={t} value={t}>
           {t} {t !== "Culte" ? " ✏️ 🗑" : ""}
         </option>
       ))}
 
-      <option
-        value="AUTRE"
-        style={{ color: "#333699", fontWeight: "bold" }}
-      >
+      <option value="AUTRE" style={{ color: "#333699", fontWeight: "bold" }}>
         + Ajouter un temps
       </option>
     </select>
 
     {/* Petite flèche à droite */}
     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-      <svg className="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/>
+      <svg
+        className="h-5 w-5 text-gray-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M19 9l-7 7-7-7"
+        />
       </svg>
     </div>
   </div>
@@ -323,13 +326,13 @@ function Attendance() {
   {formData.typeTemps === "AUTRE" && (
     <div className="mt-2">
       <div className="flex flex-col">
-        <label className="font-medium mb-1 text-white">Nom du temps</label>
+        <label className="text-white mb-1 font-medium">Nom du temps</label>
         <input
           type="text"
           name="nouveauTemps"
           value={formData.nouveauTemps}
           onChange={handleChange}
-          className="input bg-white text-black h-12"
+          className="input h-12 w-full"
           placeholder="Ex: ADP"
         />
       </div>
@@ -351,30 +354,58 @@ function Attendance() {
   )}
 </div>
 
-          {/* NUMÉRO CULTE */}
-          {formData.typeTemps === "Culte" && (
-            <div className="flex flex-col">
-              <label className="font-medium mb-1 text-white">Numéro de culte</label>
-              <select name="numero_culte" value={formData.numero_culte} onChange={handleChange} className="input bg-transparent text-white">
-                {[1,2,3,4,5,6,7].map(n => <option key={n} value={n}>{n} {n===1 ? "er" : "ème"} Culte</option>)}
-              </select>
-            </div>
-          )}
+{/* ================= NUMÉRO CULTE ================= */}
+{formData.typeTemps === "Culte" && (
+  <div className="flex flex-col mt-2">
+    <label className="text-white mb-1 font-medium">Numéro de culte</label>
+    <select
+      name="numero_culte"
+      value={formData.numero_culte}
+      onChange={handleChange}
+      className="input h-12 w-full pr-10 appearance-none"
+    >
+      {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+        <option key={n} value={n}>
+          {n} {n === 1 ? "er" : "ème"} Culte
+        </option>
+      ))}
+    </select>
 
-          {/* DÉTAILS CHIFFRÉS */}
-          {["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].map(field => (
-            <div className="flex flex-col" key={field}>
-              <label className="font-medium mb-1 text-white">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-              <input type="number" name={field} value={formData[field]} onChange={handleChange} className="input bg-white text-black"/>
-            </div>
-          ))}
+    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+      <svg
+        className="h-5 w-5 text-gray-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M19 9l-7 7-7-7"
+        />
+      </svg>
+    </div>
+  </div>
+)}
 
-          <button type="submit" className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all">
-            {editId ? "Mettre à jour" : "Ajouter le rapport"}
-          </button>
-        </form>
-        {message && <p className="mt-4 text-center font-medium text-white">{message}</p>}
-      </div>
+{/* ================= CHAMPS CHIFFRÉS ================= */}
+<div className="grid grid-cols-2 gap-4 mt-2">
+  {["hommes", "femmes", "jeunes", "enfants", "connectes", "nouveauxVenus", "nouveauxConvertis"].map((field) => (
+    <div className="flex flex-col" key={field}>
+      <label className="text-white mb-1 font-medium">
+        {field.charAt(0).toUpperCase() + field.slice(1)}
+      </label>
+      <input
+        type={field === "connectes" || field === "nouveauxVenus" || field === "nouveauxConvertis" ? "number" : "number"}
+        name={field}
+        value={formData[field]}
+        onChange={handleChange}
+        className="input h-12 w-full"
+      />
+    </div>
+  ))}
+</div>
 
       {/* FILTRE DATE */}
       <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-wrap justify-center gap-4 text-white w-full max-w-3xl">
@@ -455,29 +486,30 @@ function Attendance() {
       <Footer />
 
       <style jsx>{`
-  select {
+  .input {
     border: 1px solid #ccc;
+    padding: 10px;
     border-radius: 12px;
-    padding: 0 10px;
-    background-color: white;
-    color: black;
-    cursor: pointer;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    width: 100%;
   }
-
+  select {
+    background: white;
+    color: black;
+  }
   select:focus {
     outline: 2px solid #333699;
   }
-
-  select option:hover {
-    background-color: #e0e7ff; /* bleu clair */
-    color: black;
-  }
-
   select option[value="AUTRE"] {
     color: #333699;
     font-weight: bold;
   }
+  select option:hover {
+    background-color: #e0e7ff;
+    color: black;
+  }
 `}</style>
-    </div>
+</div>
   );
 }

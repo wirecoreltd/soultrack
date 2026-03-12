@@ -198,21 +198,8 @@ function Attendance() {
     });
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
-
-  const handleDeleteTemps = async (nomTemps) => {
-    if (!confirm("Si vous supprimez ce temps, les rapports resteront mais sans nom. Continuer ?")) return;
-    const { error } = await supabase.from("attendance").update({ typeTemps: null }).eq("typeTemps", nomTemps);
-    if (error) console.error(error);
-    else fetchRapports();
-  };
-
-  const handleRenameTemps = async (ancienNom, nouveauNom) => {
-    const { error } = await supabase.from("attendance").update({ typeTemps: nouveauNom }).eq("typeTemps", ancienNom);
-    if (error) console.error(error);
-    else fetchRapports();
-  };
-
-  /* ================= FETCH RAPPORTS ================= */
+  
+    /* ================= FETCH RAPPORTS ================= */
   const fetchRapports = async () => {
     if (!superviseur.eglise_id) return;
     setLoading(true);

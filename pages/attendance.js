@@ -249,7 +249,7 @@ function Attendance() {
                     {t}{t !== "Culte" ? " ✏️ 🗑️" : ""}
                   </option>
                 ))}
-                <option value="AUTRE" className="text-[#333699] text-semibold">+ Ajouter un temps</option>
+                <option value="AUTRE" className="text-[#333699] font-semibold">+ Ajouter un temps</option>
               </select>
             </div>
           

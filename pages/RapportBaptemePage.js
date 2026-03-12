@@ -196,8 +196,40 @@ function RapportBaptemes() {
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
         <span className="text-white">Rapport </span>
         <span className="text-amber-300">Baptêmes</span>
-      </h1>    
-     
+      </h1>      
+
+      {/* FORMULAIRE */}
+      <div className="bg-white/10 rounded-3xl p-6 shadow-lg w-full max-w-lg mx-auto mt-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col">
+            <label className="text-white mb-1">Date</label>
+            <input type="date" required value={formData.date} onChange={e=>setFormData({...formData,date:e.target.value})} className="input"/>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-white mb-1">Baptisé par</label>
+            <input type="text" value={formData.baptise_par} onChange={e=>setFormData({...formData,baptise_par:e.target.value})} className="input"/>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-white mb-1">Hommes</label>
+            <input type="number" value={formData.hommes} disabled className="input opacity-60"/>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-white mb-1">Femmes</label>
+            <input type="number" value={formData.femmes} disabled className="input opacity-60"/>
+          </div>
+          <div className="col-span-2 mt-4">
+            <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:scale-[1.02] transition">
+              {editRapport?"Modifier":"Ajouter le baptême"}
+            </button>
+            {rapportSuccess && (
+              <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
+                ✅ Rapport ajouté !
+              </p>
+            )}
+          </div>
+        </form>
+      </div>
+
       {/* BOITE INFO CANDIDATS */}
       <div className="w-full flex flex-col gap-4 mt-4">
         <div className="bg-blue-900/40 border border-blue-300/30 text-white text-center text-sm p-4 rounded-2xl max-w-lg mx-auto">
@@ -213,82 +245,65 @@ function RapportBaptemes() {
       </div>
 
       {/* --- MENU DEROU / Sélectionner les baptisés --- */}
-<div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white w-full max-w-lg mx-auto mt-4">
-  <div className="flex justify-between items-center mb-2">
-    <label className="font-semibold">Sélectionner les baptisés</label>
-    <button
-      onClick={() => {
-        if (selectedCandidats.length === 0) {
-          setSelectedCandidats(candidats.map(c => c.id));
-        } else {
-          setSelectedCandidats([]);
-        }
-      }}
-      className="text-sm underline hover:text-orange-400"
-    >
-      {selectedCandidats.length === 0 ? "Tout sélectionner" : "Tout désélectionner"}
-    </button>
-  </div>
-  <div className="flex flex-col space-y-1 max-h-60 overflow-y-auto">
-    {candidats.map(c => (
-      <div key={c.id} className="flex justify-between items-center w-full px-2 py-1 rounded hover:bg-white/20">
-        <span>{c.prenom} {c.nom}</span>
-        <input type="checkbox"
-          checked={selectedCandidats.includes(c.id)}
-          onChange={() => {
-            if (selectedCandidats.includes(c.id)) {
-              setSelectedCandidats(selectedCandidats.filter(id => id !== c.id));
-            } else {
-              setSelectedCandidats([...selectedCandidats, c.id]);
-            }
-          }}
-          className="accent-[#25297e]"
-        />
-      </div>
-    ))}
-  </div>
-
-  {/* --- FORMULAIRE AJOUT BAPTÊME --- */}
-  <div className="bg-white/10 rounded-3xl p-4 mt-4 shadow-lg">
-    <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {/* DATE */}
-      <div className="flex flex-col">
-        <label className="text-white mb-1">Date</label>
-        <input type="date" required value={formData.date} onChange={e=>setFormData({...formData,date:e.target.value})} className="input"/>
-      </div>
-
-      {/* HOMMES / FEMMES côte à côte */}
-      <div className="flex gap-2">
-        <div className="flex-1 flex flex-col">
-          <label className="text-white mb-1">Hommes</label>
-          <input type="number" value={formData.hommes} disabled className="input opacity-60"/>
+      <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white w-full max-w-lg mx-auto mt-4">
+        <div className="flex justify-between items-center mb-2">
+          <label className="font-semibold">Sélectionner les baptisés</label>
+          <button
+            onClick={() => {
+              if (selectedCandidats.length === 0) {
+                setSelectedCandidats(candidats.map(c => c.id));
+              } else {
+                setSelectedCandidats([]);
+              }
+            }}
+            className="text-sm underline hover:text-orange-400"
+          >
+            {selectedCandidats.length === 0 ? "Tout sélectionner" : "Tout désélectionner"}
+          </button>
         </div>
-        <div className="flex-1 flex flex-col">
-          <label className="text-white mb-1">Femmes</label>
-          <input type="number" value={formData.femmes} disabled className="input opacity-60"/>
+        <div className="flex flex-col space-y-1 max-h-60 overflow-y-auto">
+          {candidats.map(c => (
+            <div key={c.id} className="flex justify-between items-center w-full px-2 py-1 rounded hover:bg-white/20">
+              <span>{c.prenom} {c.nom}</span>
+              <input type="checkbox"
+                checked={selectedCandidats.includes(c.id)}
+                onChange={() => {
+                  if (selectedCandidats.includes(c.id)) {
+                    setSelectedCandidats(selectedCandidats.filter(id => id !== c.id));
+                  } else {
+                    setSelectedCandidats([...selectedCandidats, c.id]);
+                  }
+                }}
+                className="accent-[#25297e]"
+              />
+            </div>
+          ))}
         </div>
-      </div>
 
-      {/* BAPTISÉ PAR */}
-      <div className="flex flex-col sm:col-span-2">
-        <label className="text-white mb-1">Baptisé par</label>
-        <input type="text" value={formData.baptise_par} onChange={e=>setFormData({...formData,baptise_par:e.target.value})} className="input"/>
-      </div>
-
-      {/* BOUTON AJOUTER */}
-      <div className="sm:col-span-2">
-        <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:scale-[1.02] transition">
-          {editRapport?"Modifier":"Ajouter"}
+        <button
+          onClick={() => router.push("/AddContactbaptise")}
+          className="text-white font-semibold px-4 py-2 rounded shadow text-sm mt-2 w-full"
+        >
+          ➕ Ajouter un Baptisé
         </button>
-        {rapportSuccess && (
-          <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
-            ✅ Rapport ajouté !
-          </p>
+
+        <hr className="border-t border-white/30 my-3" />
+
+        {selectedCandidats.length > 0 && (
+          <div>
+            <h3 className="text-amber-300 font-semibold text-sm mb-1">
+              Personnes sélectionnées :
+            </h3>
+            <ul className="list-disc list-inside text-white text-sm space-y-1">
+              {candidats
+                .filter(c => selectedCandidats.includes(c.id))
+                .map(c => (
+                  <li key={c.id}>{c.prenom} {c.nom}</li>
+                ))}
+            </ul>
+          </div>
         )}
       </div>
-    </form>
-  </div>
-</div>
 
       {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-4 flex flex-col sm:flex-row justify-center gap-4 w-full max-w-lg mx-auto text-white">

@@ -510,6 +510,4 @@ function Attendance() {
     color: black;
   }
 `}</style>
-</div>
-  );
-}
+

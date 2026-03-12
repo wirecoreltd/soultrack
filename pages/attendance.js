@@ -231,8 +231,7 @@ function Attendance() {
             <label className="text-white mb-1">Date du culte</label>
             <input type="date" name="date" value={formData.date} onChange={handleChange} className="input" required />
           </div>
-
-          {/* TYPE TEMPS */}
+          
           {/* TYPE TEMPS */}
             <div className="flex flex-col relative" ref={selectRef}>
               <label className="text-white mb-1">Type du temps</label>
@@ -250,7 +249,7 @@ function Attendance() {
                     {t}{t !== "Culte" ? " ✏️ 🗑️" : ""}
                   </option>
                 ))}
-                <option value="AUTRE" className="text-[#333699]">+ Ajouter un temps</option>
+                <option value="AUTRE" className="text-[#333699] text-semibold">+ Ajouter un temps</option>
               </select>
             </div>
           

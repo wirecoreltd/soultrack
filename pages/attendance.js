@@ -31,6 +31,10 @@ function Attendance() {
     connectes: 0,
     nouveauxVenus: 0,
     nouveauxConvertis: 0,
+    temps_nom: "",
+    temps_type: "Culte",
+    temps_special: false,
+    temps_enregistre: false,
   });
 
   const [editId, setEditId] = useState(null);
@@ -40,6 +44,8 @@ function Attendance() {
   const [dateFin, setDateFin] = useState("");
 
   const [expandedMonths, setExpandedMonths] = useState({});
+
+  const [savedTemps, setSavedTemps] = useState([]);
 
   useEffect(() => {
     const loadSuperviseur = async () => {
@@ -57,6 +63,19 @@ function Attendance() {
     };
     loadSuperviseur();
   }, []);
+
+  useEffect(() => {
+    // Charger les temps enregistrés
+    const loadTemps = async () => {
+      const { data, error } = await supabase
+        .from("attendance")
+        .select("temps_nom")
+        .eq("temps_enregistre", true)
+        .neq("temps_nom", "");
+      if (!error && data) setSavedTemps([...new Set(data.map(d => d.temps_nom))]);
+    };
+    loadTemps();
+  }, [reports]);
 
   const fetchRapports = async () => {
     if (!superviseur.eglise_id || !superviseur.branche_id) return;
@@ -84,8 +103,11 @@ function Attendance() {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -114,6 +136,11 @@ function Attendance() {
         setMessage("✅ Rapport ajouté !");
       }
 
+      // Mettre à jour la liste des temps enregistrés si nécessaire
+      if (formData.temps_enregistre && formData.temps_nom && !savedTemps.includes(formData.temps_nom)) {
+        setSavedTemps((prev) => [...prev, formData.temps_nom]);
+      }
+
       setTimeout(() => setMessage(""), 3000);
 
       setFormData({
@@ -126,6 +153,10 @@ function Attendance() {
         connectes: 0,
         nouveauxVenus: 0,
         nouveauxConvertis: 0,
+        temps_nom: "",
+        temps_type: "Culte",
+        temps_special: false,
+        temps_enregistre: false,
       });
       setEditId(null);
       setShowTable(false);
@@ -147,6 +178,10 @@ function Attendance() {
       connectes: report.connectes,
       nouveauxVenus: report.nouveauxVenus,
       nouveauxConvertis: report.nouveauxConvertis,
+      temps_nom: report.temps_nom || "",
+      temps_type: report.temps_type || "Culte",
+      temps_special: report.temps_special || false,
+      temps_enregistre: report.temps_enregistre || false,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -217,8 +252,6 @@ function Attendance() {
   });
 
   const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500","border-pink-500","border-indigo-500"];
-  
-
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -242,6 +275,10 @@ function Attendance() {
             { label: "Connectés", name: "connectes", type: "number" },
             { label: "Nouveaux venus", name: "nouveauxVenus", type: "number" },
             { label: "Nouveaux convertis", name: "nouveauxConvertis", type: "number" },
+            { label: "Nom du temps", name: "temps_nom", type: "selectTemps" },
+            { label: "Type du temps", name: "temps_type", type: "selectType" },
+            { label: "Temps spécial", name: "temps_special", type: "checkbox" },
+            { label: "Enregistrer ce temps", name: "temps_enregistre", type: "checkbox" },
           ].map((field) => (
             <div key={field.name} className="flex flex-col">
               <label htmlFor={field.name} className="font-medium mb-1 text-white">{field.label}</label>
@@ -257,12 +294,34 @@ function Attendance() {
                     <option key={n} value={n}>{n} {n===1 ? "er" : "ème"} Culte</option>
                   ))}
                 </select>
+              ) : field.type === "selectTemps" ? (
+                <input
+                  list="temps-list"
+                  name={field.name}
+                  id={field.name}
+                  value={formData[field.name]}
+                  onChange={handleChange}
+                  className="input bg-white/20 text-white placeholder-white"
+                  placeholder="Saisir ou choisir..."
+                />
+              ) : field.type === "selectType" ? (
+                <select
+                  name={field.name}
+                  value={formData[field.name]}
+                  onChange={handleChange}
+                  className="input bg-white/20 text-white placeholder-white"
+                >
+                  {["Culte", "Formation", "Évangélisation", "Réunion spéciale"].map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
               ) : (
                 <input
                   type={field.type}
                   name={field.name}
                   id={field.name}
-                  value={formData[field.name]}
+                  checked={field.type==="checkbox" ? formData[field.name] : undefined}
+                  value={field.type==="checkbox" ? undefined : formData[field.name]}
                   onChange={handleChange}
                   className="input bg-white/20 text-white placeholder-white"
                   required={field.type === "date"}
@@ -270,6 +329,10 @@ function Attendance() {
               )}
             </div>
           ))}
+
+          <datalist id="temps-list">
+            {savedTemps.map((t, idx) => <option key={idx} value={t} />)}
+          </datalist>
 
           <button
             type="submit"

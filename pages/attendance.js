@@ -83,6 +83,44 @@ function Attendance() {
   loadTemps();
 }, []);
 
+  //---------------------
+  const renameTemps = async (ancienNom, nouveauNom) => {
+
+  const { error } = await supabase
+    .from("attendance")
+    .update({ typeTemps: nouveauNom })
+    .eq("typeTemps", ancienNom);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  fetchRapports();
+};
+
+  //----------------------
+  const deleteTemps = async (nomTemps) => {
+
+  const confirmDelete = confirm(
+    "Si vous supprimez ce temps, les rapports existants resteront dans la base mais ils n'auront plus de nom de temps. Voulez-vous continuer ?"
+  );
+
+  if (!confirmDelete) return;
+
+  const { error } = await supabase
+    .from("attendance")
+    .update({ typeTemps: null })
+    .eq("typeTemps", nomTemps);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  fetchRapports();
+};
+
   // --- Fetch rapports ---
   const fetchRapports = async () => {
     if (!superviseur.eglise_id || !superviseur.branche_id) return;
@@ -405,9 +443,19 @@ if (formData.typeTemps === "AUTRE") {
           border-radius: 12px;
           padding: 10px;
           box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-          color: black;
+         select {
           background: white;
+          color: black;
         }
+        
+        select:focus {
+          outline: 2px solid #333699;
+        }
+        
+        select option:checked {
+          background: #333699;
+          color: white;
+        }       
       `}</style>
     </div>
   );

@@ -67,6 +67,8 @@ function Attendance() {
       const { data, error } = await supabase
         .from("attendance")
         .select("typeTemps")
+         .eq("eglise_id", superviseur.eglise_id)
+      .eq("branche_id", superviseur.branche_id)
         .not("typeTemps", "is", null);
       if (error) console.error(error);
       else {
@@ -75,7 +77,7 @@ function Attendance() {
       }
     };
     loadTemps();
-  }, []);
+  }, [superviseur]);
 
   /* ================= DROPDOWN CLICK OUTSIDE ================= */
   useEffect(() => {
@@ -95,7 +97,9 @@ function Attendance() {
         const { error } = await supabase
           .from("attendance")
           .update({ typeTemps: nouveauNom })
-          .eq("typeTemps", ancienNom);
+          .eq("typeTemps", ancienNom)
+          .eq("eglise_id", superviseur.eglise_id)
+          .eq("branche_id", superviseur.branche_id);
         if (error) throw error;
         fetchRapports(); // recharge les rapports pour voir le nouveau nom
       } catch (err) {
@@ -115,7 +119,9 @@ function Attendance() {
         const { error } = await supabase
           .from("attendance")
           .update({ typeTemps: null })
-          .eq("typeTemps", nomTemps);
+          .eq("typeTemps", nomTemps)
+          .eq("eglise_id", superviseur.eglise_id)
+          .eq("branche_id", superviseur.branche_id);
         if (error) throw error;
         fetchRapports(); // recharge la table
       } catch (err) {
@@ -138,7 +144,11 @@ function Attendance() {
 
     if (formData.enregistrerTemps && formData.typeTemps === "AUTRE" && !tempsOptions.includes(typeTempsFinal)) {
       setTempsOptions(prev => [...prev, typeTempsFinal]);
-      await supabase.from("attendance").insert([{ typeTemps: typeTempsFinal }]);
+      await supabase.from("attendance").insert([{ 
+        typeTemps: typeTempsFinal,
+        eglise_id: superviseur.eglise_id,
+        branche_id: superviseur.branche_id  
+      }]);
     }
 
     const rapportAvecEglise = {

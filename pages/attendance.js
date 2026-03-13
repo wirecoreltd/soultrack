@@ -415,11 +415,11 @@ const calculateTypeTotals = (rows) => {
       </div>
 
      
-    {/* TABLEAU / CARDS DESKTOP + MOBILE */}
+  {/* TABLEAU / CARDS DESKTOP + MOBILE */}
 {showTable && (
   <div className="max-w-5xl w-full mt-6 mb-6">
-    
-    {/* DESKTOP */}
+
+    {/* ================= DESKTOP ================= */}
     <div className="hidden md:block overflow-x-auto">
       <div className="w-max space-y-2">
 
@@ -441,7 +441,6 @@ const calculateTypeTotals = (rows) => {
           const [year, monthIndex] = monthKey.split("-").map(Number);
           const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
           const monthExpanded = expandedMonths[monthKey] || false;
-
           const monthTotals = calculateMonthTotals(typesObj);
 
           return (
@@ -449,10 +448,10 @@ const calculateTypeTotals = (rows) => {
 
               {/* MOIS */}
               <div
-                className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-orange-500`}
+                className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-orange-500 cursor-pointer`}
                 onClick={() => toggleMonth(monthKey)}
               >
-                <div className="min-w-[220px] pl-2 text-white font-semibold flex items-center gap-2">
+                <div className="min-w-[220px] text-white font-semibold flex items-center gap-2">
                   {monthExpanded ? "➖" : "➕"} {monthLabel}
                 </div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotals.hommes}</div>
@@ -472,17 +471,17 @@ const calculateTypeTotals = (rows) => {
                 const typeTotals = calculateTypeTotals(rows);
 
                 return (
-                  <div key={typeTemps} className="ml-6 space-y-1">
+                  <div key={typeTemps} className="space-y-1">
 
                     {/* HEADER TYPE */}
                     <div
-                      className={`flex items-center px-4 py-2 rounded-lg bg-white/5 cursor-pointer border-l-4 border-yellow-500`}
+                      className="flex items-center px-4 py-2 rounded-lg bg-white/5 cursor-pointer border-l-4 border-yellow-500"
                       onClick={() => setTypeCollapsedDesktop(prev => ({
                         ...prev,
                         [typeTemps]: !prev[typeTemps]
                       }))}
                     >
-                      <div className="min-w-[220px] pl-2 text-white font-semibold">
+                      <div className="min-w-[220px] text-white font-semibold flex items-center gap-2">
                         {typeExpanded ? "➖" : "➕"} {typeTemps}
                       </div>
                       <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.hommes}</div>
@@ -500,8 +499,8 @@ const calculateTypeTotals = (rows) => {
                     {typeExpanded && rows.map(r => {
                       const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
                       return (
-                        <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-yellow-500 ml-4">
-                          <div className="min-w-[220px] break-words pl-2 text-white">{formatDateFR(r.date)}</div>
+                        <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-yellow-500">
+                          <div className="min-w-[220px] break-words text-white">{formatDateFR(r.date)}</div>
                           <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
                           <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
                           <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
@@ -529,22 +528,28 @@ const calculateTypeTotals = (rows) => {
       </div>
     </div>
 
-    {/* MOBILE */}
+    {/* ================= MOBILE ================= */}
     <div className="md:hidden space-y-4">
       {Object.entries(groupByMonthAndType(reports)).map(([monthKey, typesObj]) => {
         const [year, monthIndex] = monthKey.split("-").map(Number);
         const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+
         return (
           <div key={monthKey} className="space-y-2">
 
             <h3 className="text-white font-bold">{monthLabel}</h3>
 
             {Object.entries(typesObj).map(([typeTemps, rows]) => {
+              const typeTotals = calculateTypeTotals(rows);
+
               return (
-                <div key={typeTemps} className="space-y-2">
-                  <h4 className="text-orange-400 font-semibold">{typeTemps}</h4>
+                <div key={typeTemps} className="space-y-2 bg-white/10 rounded-xl p-2">
+                  <h4 className="text-orange-400 font-semibold flex justify-between">
+                    <span>{typeTemps}</span>
+                    <span>Total: {typeTotals.total}</span>
+                  </h4>
                   {rows.map(r => (
-                    <div key={r.id} className="bg-white/10 rounded-xl p-4 text-white space-y-1">
+                    <div key={r.id} className="bg-white/5 rounded-xl p-4 text-white space-y-1">
                       <p>{formatDateFR(r.date)}</p>
                       <p>Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
                       <p>Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>

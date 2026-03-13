@@ -43,8 +43,7 @@ function Attendance() {
   const [editId, setEditId] = useState(null);
   const [message, setMessage] = useState("");
   const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
-  const [expandedMonths, setExpandedMonths] = useState({});
+  const [dateFin, setDateFin] = useState("");  
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   /* ================= USER ================= */

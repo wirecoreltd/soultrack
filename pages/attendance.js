@@ -357,7 +357,7 @@ function Attendance() {
           </button>           
         </form>
         {message && <p className="mt-4 text-center text-white font-medium">{message}</p>}
-     
+     </div>
 
       {/* FILTRE DATE */}
       <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-wrap justify-center gap-4 text-white w-full max-w-3xl">

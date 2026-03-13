@@ -449,10 +449,10 @@ const calculateTypeTotals = (rows) => {
 
               {/* MOIS */}
               <div
-                className={`flex items-center px-4 py-2 rounded-lg bg-white/10 cursor-pointer border-l-4 border-orange-500`}
+                className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-orange-500`}
                 onClick={() => toggleMonth(monthKey)}
               >
-                <div className="min-w-[220px] pl-2 text-white font-semibold">
+                <div className="min-w-[220px] pl-2 text-white font-semibold flex items-center gap-2">
                   {monthExpanded ? "➖" : "➕"} {monthLabel}
                 </div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotals.hommes}</div>

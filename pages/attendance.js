@@ -262,7 +262,7 @@ function Attendance() {
     className="input h-12 flex items-center justify-between px-3 cursor-pointer text-black bg-white"
     onClick={() => setDropdownOpen(!dropdownOpen)}
   >
-    <option value="">--- Sélectionner un Temps ---</option>
+    {formData.typeTemps || "-- Sélectionner un temps --"}
     <span>▼</span>
   </div>
 

@@ -385,7 +385,7 @@ return (
                     : "—"}
                 </p>
                     
-                  <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(m.date_premiere_visite)}</p>
+                  <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(m.date_envoi_suivi)}</p>
         
                   {/* Commentaire & Statut */}
                   <div className="flex flex-col w-full mt-2">

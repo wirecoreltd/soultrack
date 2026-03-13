@@ -290,12 +290,12 @@ function Attendance() {
       <div
         className="px-3 py-2 text-[#333699] font-semibold hover:bg-gray-200 cursor-pointer"
         onClick={() => {
-          const nouveau = prompt("Nom du nouveau temps ?");
-          if (nouveau) {
-            setTempsOptions(prev => [...prev, nouveau]);
-            setFormData(prev => ({ ...prev, typeTemps: nouveau }));
-            setDropdownOpen(false);
-          }
+          setFormData(prev => ({
+            ...prev,
+            typeTemps: "AUTRE",
+            nouveauTemps: ""
+          }));
+          setDropdownOpen(false);
         }}
       >
         + Ajouter un temps

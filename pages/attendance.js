@@ -415,12 +415,11 @@ const calculateTypeTotals = (rows) => {
       </div>
 
      
-    {/* TABLEAU RESPONSIVE */}
+   {/* TABLEAU RESPONSIVE DESKTOP + MOBILE */}
 {showTable && (
-  <div className="max-w-5xl w-full overflow-x-auto mt-6 mb-6">
-
-    <div className="w-max space-y-2">
-
+  <div className="max-w-full w-full overflow-x-auto mt-6 mb-6">
+    <div className="w-full space-y-2">
+      
       {/* HEADER TABLE */}
       <div className="hidden md:flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
         <div className="min-w-[220px]">Type / Date</div>
@@ -439,33 +438,25 @@ const calculateTypeTotals = (rows) => {
         const [year, monthIndex] = monthKey.split("-").map(Number);
         const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
         const isExpandedMonth = expandedMonths[monthKey] || false;
-        const borderColor = borderColors[idx % borderColors.length];
 
-        // Totaux par mois
-        const totalMonth = monthReports.reduce((acc,r) => {
-          acc.hommes += Number(r.hommes||0);
-          acc.femmes += Number(r.femmes||0);
-          acc.jeunes += Number(r.jeunes||0);
-          acc.enfants += Number(r.enfants||0);
-          acc.connectes += Number(r.connectes||0);
-          acc.nouveauxVenus += Number(r.nouveauxVenus||0);
-          acc.nouveauxConvertis += Number(r.nouveauxConvertis||0);
+        // Totaux du mois
+        const totalMonth = monthReports.reduce((acc, r) => {
+          acc.hommes += Number(r.hommes || 0);
+          acc.femmes += Number(r.femmes || 0);
+          acc.jeunes += Number(r.jeunes || 0);
+          acc.enfants += Number(r.enfants || 0);
+          acc.connectes += Number(r.connectes || 0);
+          acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
+          acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
           return acc;
         }, {hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0});
 
-        // Grouper par type pour Desktop et Mobile
-        const reportsByType = monthReports.reduce((acc,r) => {
-          if(!acc[r.typeTemps]) acc[r.typeTemps] = [];
-          acc[r.typeTemps].push(r);
-          return acc;
-        }, {});
-
         return (
           <div key={monthKey} className="space-y-1">
-
-            {/* COLLAPSE MOIS */}
+            
+            {/* ENTETE MOIS - COLLAPSIBLE */}
             <div
-              className={`flex items-center px-4 py-2 rounded-lg bg-white/10 cursor-pointer border-l-4 ${borderColor}`}
+              className="flex items-center px-4 py-2 rounded-lg bg-white/10 cursor-pointer border-l-4 border-orange-400 md:border-l-0"
               onClick={() => toggleMonth(monthKey)}
             >
               <div className="min-w-[220px] pl-2 text-white font-semibold">
@@ -474,7 +465,7 @@ const calculateTypeTotals = (rows) => {
               <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.hommes}</div>
               <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.femmes}</div>
               <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.jeunes}</div>
-              <div className="min-w-[130px] text-center text-orange-400 font-semibold">{totalMonth.hommes+totalMonth.femmes+totalMonth.jeunes}</div>
+              <div className="min-w-[130px] text-center text-orange-400 font-semibold">{totalMonth.hommes + totalMonth.femmes + totalMonth.jeunes}</div>
               <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.enfants}</div>
               <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalMonth.connectes}</div>
               <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalMonth.nouveauxVenus}</div>
@@ -482,35 +473,44 @@ const calculateTypeTotals = (rows) => {
               <div className="min-w-[140px]"></div>
             </div>
 
-            {/* DETAILS PAR TYPE */}
-            {isExpandedMonth && Object.entries(reportsByType).map(([type, reports]) => {
-              const isExpandedType = typeCollapsedDesktop[`${monthKey}-${type}`] || false;
-              const totalType = reports.reduce((acc,r)=>{
-                acc.hommes += Number(r.hommes||0);
-                acc.femmes += Number(r.femmes||0);
-                acc.jeunes += Number(r.jeunes||0);
-                acc.enfants += Number(r.enfants||0);
-                acc.connectes += Number(r.connectes||0);
-                acc.nouveauxVenus += Number(r.nouveauxVenus||0);
-                acc.nouveauxConvertis += Number(r.nouveauxConvertis||0);
+            {/* DETAILS DES TEMPS */}
+            {isExpandedMonth && Object.entries(
+              monthReports.reduce((acc, r) => {
+                const key = r.typeTemps;
+                if (!acc[key]) acc[key] = [];
+                acc[key].push(r);
+                return acc;
+              }, {})
+            ).map(([typeTemps, tempsReports]) => {
+              const isExpandedType = typeCollapsedDesktop[typeTemps] || false;
+
+              // Totaux du type
+              const totalType = tempsReports.reduce((acc, r) => {
+                acc.hommes += Number(r.hommes || 0);
+                acc.femmes += Number(r.femmes || 0);
+                acc.jeunes += Number(r.jeunes || 0);
+                acc.enfants += Number(r.enfants || 0);
+                acc.connectes += Number(r.connectes || 0);
+                acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
+                acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
                 return acc;
               }, {hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0});
 
               return (
-                <div key={type} className="space-y-1">
+                <div key={typeTemps} className="space-y-1">
 
-                  {/* COLLAPSE TYPE */}
+                  {/* HEADER TYPE COLLAPSIBLE */}
                   <div
-                    className={`flex items-center px-6 py-1 rounded-lg bg-white/5 cursor-pointer`}
-                    onClick={() => toggleTypeDesktop(`${monthKey}-${type}`)}
+                    className="flex items-center px-6 py-1 rounded-lg bg-white/5 cursor-pointer"
+                    onClick={() => toggleType(typeTemps)}
                   >
                     <div className="min-w-[220px] pl-2 text-white font-semibold">
-                      {isExpandedType ? "➖" : "➕"} {type}
+                      {isExpandedType ? "▼" : "▶"} {typeTemps} (Total)
                     </div>
                     <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalType.hommes}</div>
                     <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalType.femmes}</div>
                     <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalType.jeunes}</div>
-                    <div className="min-w-[130px] text-center text-orange-400 font-semibold">{totalType.hommes+totalType.femmes+totalType.jeunes}</div>
+                    <div className="min-w-[130px] text-center text-orange-400 font-semibold">{totalType.hommes + totalType.femmes + totalType.jeunes}</div>
                     <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalType.enfants}</div>
                     <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalType.connectes}</div>
                     <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalType.nouveauxVenus}</div>
@@ -519,13 +519,14 @@ const calculateTypeTotals = (rows) => {
                   </div>
 
                   {/* LIGNES DETAILLEES */}
-                  {isExpandedType && reports.map(r => {
-                    const total = Number(r.hommes)+Number(r.femmes)+Number(r.jeunes);
+                  {isExpandedType && tempsReports.map(r => {
+                    const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
                     return (
-                      <div key={r.id} className={`flex items-center px-8 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition`}>
-                        <div className="min-w-[220px] max-w-[220px] break-words pl-2 text-white">
-                          {formatDateFR(r.date)}
-                        </div>
+                      <div
+                        key={r.id}
+                        className="flex items-center px-8 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition"
+                      >
+                        <div className="min-w-[220px] max-w-[220px] break-words pl-2 text-white">{formatDateFR(r.date)}</div>
                         <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
                         <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
                         <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
@@ -539,15 +540,17 @@ const calculateTypeTotals = (rows) => {
                           <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 hover:text-red-500">🗑️</button>
                         </div>
                       </div>
-                    )
+                    );
                   })}
+
                 </div>
-              )
+              );
             })}
 
           </div>
-        )
+        );
       })}
+
     </div>
   </div>
 )}

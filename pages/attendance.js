@@ -32,6 +32,7 @@ function Attendance() {
   const [followUpStats, setFollowUpStats] = useState({});
   const [showCards, setShowCards] = useState(true);
   const [membres, setMembres] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   
   // Calcul des stats à partir de la table membres_complets et stats_ministere_besoin
   const fetchDashboardStats = async () => {

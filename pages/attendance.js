@@ -47,19 +47,31 @@ function Attendance() {
 
   /* ================= USER ================= */
   useEffect(() => {
-    const loadSuperviseur = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("eglise_id, branche_id")
-        .eq("id", user.id)
-        .single();
-      if (error) console.error(error);
-      else setSuperviseur({ eglise_id: data.eglise_id, branche_id: data.branche_id });
-    };
-    loadSuperviseur();
-  }, []);
+
+if (!superviseur?.eglise_id || !superviseur?.branche_id) return;
+
+const loadTemps = async () => {
+
+const { data, error } = await supabase
+.from("attendance")
+.select("typeTemps")
+.eq("eglise_id", superviseur.eglise_id)
+.eq("branche_id", superviseur.branche_id)
+.not("typeTemps","is",null);
+
+if (error) console.error(error);
+
+else {
+
+const uniqueTemps = [
+"Culte",
+...new Set(data.map(t => t.typeTemps).filter(t => t && t !== "Culte"))
+];
+setTempsOptions(uniqueTemps);
+}
+};
+loadTemps();
+}, [superviseur]);
 
    /* =================  */
   const toggleMonth = key=>{

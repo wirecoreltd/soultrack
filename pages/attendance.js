@@ -262,7 +262,7 @@ function Attendance() {
     className="input h-12 flex items-center justify-between px-3 cursor-pointer text-black bg-white"
     onClick={() => setDropdownOpen(!dropdownOpen)}
   >
-    {formData.typeTemps || "-- Sélectionner un temps --"}
+    <option value="">--- Sélectionner un Temps ---</option>
     <span>▼</span>
   </div>
 
@@ -327,7 +327,7 @@ function Attendance() {
                   name="numero_culte"
                   value={formData.numero_culte}
                   onChange={handleChange}
-                  className="input appearance-none pr-8 cursor-pointer text-black bg-white"
+                  className="input h-12 flex items-center justify-between px-3 cursor-pointer text-black bg-white"
                   required
                 >
                   <option value="">--- Sélectionner un numéro ---</option>

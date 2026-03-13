@@ -22,6 +22,8 @@ function Attendance() {
   const [tempsOptions, setTempsOptions] = useState(["Culte"]);
   const formRef = useRef(null);
   const selectRef = useRef(null);
+  const [expandedMonths,setExpandedMonths]=useState({})
+  const [expandedTypes,setExpandedTypes]=useState({})
 
   const [formData, setFormData] = useState({
     date: "",
@@ -60,6 +62,15 @@ function Attendance() {
     };
     loadSuperviseur();
   }, []);
+
+   /* =================  */
+  const toggleMonth = key=>{
+setExpandedMonths(prev=>({...prev,[key]:!prev[key]}))
+}
+
+const toggleType = key=>{
+setExpandedTypes(prev=>({...prev,[key]:!prev[key]}))
+}
 
   /* ================= TEMPS ================= */
   useEffect(() => {
@@ -369,104 +380,240 @@ function Attendance() {
       </div>
 
       {showTable && (
-  <div className="w-full max-w-5xl mx-auto">
+<div className="w-full max-w-5xl mx-auto mt-6 mb-6">
 
-    {/* ================= DESKTOP ================= */}
-    <div className="hidden md:block overflow-x-auto mt-6 mb-6">
-      <div className="w-max space-y-2">
+{/* ================= DESKTOP ================= */}
+<div className="hidden md:block overflow-x-auto">
+<div className="w-max space-y-2">
 
-        {/* HEADER TABLE */}
-        <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-          <div className="min-w-[220px]">Type / Date</div>
-          <div className="min-w-[120px] text-center">Hommes</div>
-          <div className="min-w-[120px] text-center">Femmes</div>
-          <div className="min-w-[120px] text-center">Jeunes</div>
-          <div className="min-w-[130px] text-center">Total</div>
-          <div className="min-w-[120px] text-center">Enfants</div>
-          <div className="min-w-[140px] text-center">Connectés</div>
-          <div className="min-w-[150px] text-center">Nouveaux venus</div>
-          <div className="min-w-[180px] text-center">Nouveaux convertis</div>
-          <div className="min-w-[140px] text-center">Actions</div>
-        </div>
+{/* HEADER */}
+<div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+<div className="min-w-[220px]">Type / Date</div>
+<div className="min-w-[120px] text-center">Hommes</div>
+<div className="min-w-[120px] text-center">Femmes</div>
+<div className="min-w-[120px] text-center">Jeunes</div>
+<div className="min-w-[130px] text-center">Total</div>
+<div className="min-w-[120px] text-center">Enfants</div>
+<div className="min-w-[140px] text-center">Connectés</div>
+<div className="min-w-[150px] text-center">Nouveaux venus</div>
+<div className="min-w-[180px] text-center">Nouveaux convertis</div>
+<div className="min-w-[140px] text-center">Actions</div>
+</div>
 
-        {Object.entries(groupedReports).map(([monthKey, monthReports], monthIdx) => {
-          const [year, monthIndex] = monthKey.split("-").map(Number);
-          const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-          const borderColor = borderColors[monthIdx % borderColors.length];
+{Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
 
-          // Regrouper par typeTemps
-          const reportsByType = {};
-          monthReports.forEach(r => {
-            if (!reportsByType[r.typeTemps]) reportsByType[r.typeTemps] = [];
-            reportsByType[r.typeTemps].push(r);
-          });
+const [year, monthIndex] = monthKey.split("-").map(Number)
+const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`
+const borderColor = borderColors[idx % borderColors.length]
+const monthOpen = expandedMonths[monthKey]
 
-          return (
-            <div key={monthKey} className="space-y-1">
+/* GROUP BY TYPE */
+const reportsByType = {}
+monthReports.forEach(r=>{
+if(!reportsByType[r.typeTemps]) reportsByType[r.typeTemps]=[]
+reportsByType[r.typeTemps].push(r)
+})
 
-              {/* MOIS */}
-              <div className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 ${borderColor}`}>
-                <div className="min-w-[220px] pl-2 text-white font-semibold">{monthLabel}</div>
-              </div>
+/* MONTH TOTAL */
+const totalMonth = monthReports.reduce((acc,r)=>{
+acc.hommes += Number(r.hommes||0)
+acc.femmes += Number(r.femmes||0)
+acc.jeunes += Number(r.jeunes||0)
+acc.enfants += Number(r.enfants||0)
+acc.connectes += Number(r.connectes||0)
+acc.nouveauxVenus += Number(r.nouveauxVenus||0)
+acc.nouveauxConvertis += Number(r.nouveauxConvertis||0)
+return acc
+},{hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0})
 
-              {Object.entries(reportsByType).map(([type, reportsList]) => {
-                const totalType = reportsList.reduce((acc, r) => {
-                  acc.hommes += Number(r.hommes || 0);
-                  acc.femmes += Number(r.femmes || 0);
-                  acc.jeunes += Number(r.jeunes || 0);
-                  acc.enfants += Number(r.enfants || 0);
-                  acc.connectes += Number(r.connectes || 0);
-                  acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
-                  acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
-                  return acc;
-                }, {hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0});
+return (
+<div key={monthKey} className="space-y-1">
 
-                return (
-                  <div key={type} className="space-y-1">
+{/* MONTH HEADER */}
+<div
+className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 ${borderColor}`}
+onClick={()=>toggleMonth(monthKey)}
+>
+<div className="min-w-[220px] text-white font-semibold">
+{monthOpen?"➖":"➕"} {monthLabel}
+</div>
 
-                    {/* TOTAl PAR TYPE */}
-                    <div className="flex items-center px-4 py-2 bg-yellow-500/30 rounded-lg text-white font-semibold">
-                      <div className="min-w-[220px] pl-2">{type} - Total</div>
-                      <div className="min-w-[120px] text-center">{totalType.hommes}</div>
-                      <div className="min-w-[120px] text-center">{totalType.femmes}</div>
-                      <div className="min-w-[120px] text-center">{totalType.jeunes}</div>
-                      <div className="min-w-[130px] text-center">{totalType.hommes + totalType.femmes + totalType.jeunes}</div>
-                      <div className="min-w-[120px] text-center">{totalType.enfants}</div>
-                      <div className="min-w-[140px] text-center">{totalType.connectes}</div>
-                      <div className="min-w-[150px] text-center">{totalType.nouveauxVenus}</div>
-                      <div className="min-w-[180px] text-center">{totalType.nouveauxConvertis}</div>
-                      <div className="min-w-[140px]"></div>
-                    </div>
+<div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.hommes}</div>
+<div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.femmes}</div>
+<div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.jeunes}</div>
+<div className="min-w-[130px] text-center text-orange-400 font-semibold">
+{totalMonth.hommes+totalMonth.femmes+totalMonth.jeunes}
+</div>
+<div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.enfants}</div>
+<div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalMonth.connectes}</div>
+<div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalMonth.nouveauxVenus}</div>
+<div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalMonth.nouveauxConvertis}</div>
+<div className="min-w-[140px]"></div>
+</div>
 
-                    {/* RAPPORTS INDIVIDUELS */}
-                    {reportsList.map(r => {
-                      const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-                      return (
-                        <div key={r.id} className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}>
-                          <div className="min-w-[220px] break-words pl-2 text-white">{r.typeTemps} : {formatDateFR(r.date)}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-                          <div className="min-w-[130px] text-center text-white">{total}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-                          <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
-                          <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-                          <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
-                          <div className="min-w-[140px] flex justify-center gap-2">
-                            <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-500">✏️</button>
-                            <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 hover:text-red-500">🗑️</button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              })}
-            </div>
-          )
-        })}
-      </div>
-    </div>
+
+{/* TYPES */}
+{monthOpen && Object.entries(reportsByType).map(([type,reportsList])=>{
+
+const typeKey = `${monthKey}-${type}`
+const typeOpen = expandedTypes[typeKey]
+
+/* TYPE TOTAL */
+const totalType = reportsList.reduce((acc,r)=>{
+acc.hommes += Number(r.hommes||0)
+acc.femmes += Number(r.femmes||0)
+acc.jeunes += Number(r.jeunes||0)
+acc.enfants += Number(r.enfants||0)
+acc.connectes += Number(r.connectes||0)
+acc.nouveauxVenus += Number(r.nouveauxVenus||0)
+acc.nouveauxConvertis += Number(r.nouveauxConvertis||0)
+return acc
+},{hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0})
+
+return (
+<div key={typeKey}>
+
+{/* TYPE HEADER */}
+<div
+className="flex items-center px-4 py-2 bg-white/10 cursor-pointer"
+onClick={()=>toggleType(typeKey)}
+>
+
+<div className="min-w-[220px] text-white">
+{typeOpen?"➖":"➕"} {type}
+</div>
+
+<div className="min-w-[120px] text-center text-orange-400">{totalType.hommes}</div>
+<div className="min-w-[120px] text-center text-orange-400">{totalType.femmes}</div>
+<div className="min-w-[120px] text-center text-orange-400">{totalType.jeunes}</div>
+<div className="min-w-[130px] text-center text-orange-400">
+{totalType.hommes+totalType.femmes+totalType.jeunes}
+</div>
+<div className="min-w-[120px] text-center text-orange-400">{totalType.enfants}</div>
+<div className="min-w-[140px] text-center text-orange-400">{totalType.connectes}</div>
+<div className="min-w-[150px] text-center text-orange-400">{totalType.nouveauxVenus}</div>
+<div className="min-w-[180px] text-center text-orange-400">{totalType.nouveauxConvertis}</div>
+<div className="min-w-[140px]"></div>
+
+</div>
+
+
+{/* REPORTS */}
+{typeOpen && reportsList.map(r=>{
+
+const total = Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)
+
+return (
+<div
+key={r.id}
+className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
+>
+
+<div className="min-w-[220px] text-white">
+{formatDateFR(r.date)}
+</div>
+
+<div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+<div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+<div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
+<div className="min-w-[130px] text-center text-white">{total}</div>
+<div className="min-w-[120px] text-center text-white">{r.enfants}</div>
+<div className="min-w-[140px] text-center text-white">{r.connectes}</div>
+<div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
+<div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+
+<div className="min-w-[140px] flex justify-center gap-2">
+<button onClick={()=>handleEdit(r)} className="text-blue-400">✏️</button>
+<button onClick={()=>handleDeleteTemps(r.typeTemps)} className="text-red-400">🗑️</button>
+</div>
+
+</div>
+)
+
+})}
+
+</div>
+)
+
+})}
+
+</div>
+)
+
+})}
+
+</div>
+</div>
+
+
+{/* ================= MOBILE ================= */}
+
+<div className="md:hidden flex flex-col gap-4">
+
+{Object.entries(groupedReports).map(([monthKey,monthReports])=>{
+
+const [year,monthIndex]=monthKey.split("-").map(Number)
+const monthLabel=`${getMonthNameFR(monthIndex)} ${year}`
+
+const reportsByType={}
+monthReports.forEach(r=>{
+if(!reportsByType[r.typeTemps]) reportsByType[r.typeTemps]=[]
+reportsByType[r.typeTemps].push(r)
+})
+
+return(
+<div key={monthKey} className="space-y-2">
+
+<div className="text-white font-semibold text-center bg-white/20 py-2 rounded">
+{monthLabel}
+</div>
+
+{Object.entries(reportsByType).map(([type,reportsList])=>{
+
+const totalType = reportsList.reduce((acc,r)=>{
+acc.hommes+=Number(r.hommes||0)
+acc.femmes+=Number(r.femmes||0)
+acc.jeunes+=Number(r.jeunes||0)
+return acc
+},{hommes:0,femmes:0,jeunes:0})
+
+return(
+
+<div key={type} className="space-y-2">
+
+<div className="text-orange-400 font-semibold">
+{type} — Total {totalType.hommes+totalType.femmes+totalType.jeunes}
+</div>
+
+{reportsList.map(r=>(
+<div key={r.id} className="bg-white/10 rounded-xl p-3 text-white">
+
+<div className="font-semibold mb-1">{formatDateFR(r.date)}</div>
+
+<div className="grid grid-cols-2 text-sm gap-1">
+<div>Hommes : {r.hommes}</div>
+<div>Femmes : {r.femmes}</div>
+<div>Jeunes : {r.jeunes}</div>
+<div>Enfants : {r.enfants}</div>
+<div>Connectés : {r.connectes}</div>
+<div>Nouveaux : {r.nouveauxVenus}</div>
+</div>
+
+<div className="flex justify-end gap-3 mt-2">
+<button onClick={()=>handleEdit(r)} className="text-blue-400">✏️</button>
+<button onClick={()=>handleDeleteTemps(r.typeTemps)} className="text-red-400">🗑️</button>
+</div>
+</div>
+))}
+</div>
+)
+})}
+</div>
+)
+})}
+</div>
+</div>
+)}
 
     {/* ================= MOBILE : CARTES ================= */}
     <div className="flex flex-col gap-4 w-full max-w-md mx-auto md:hidden">

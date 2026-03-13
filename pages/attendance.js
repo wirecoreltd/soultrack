@@ -353,7 +353,8 @@ function Attendance() {
 
           <button type="submit" className="col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all">
             {editId ? "Mettre à jour" : "Ajouter le rapport"}
-          </button>           
+          </button>   
+            </div>
         </form>
         {message && <p className="mt-4 text-center text-white font-medium">{message}</p>}
       </div>

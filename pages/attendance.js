@@ -262,96 +262,95 @@ function Attendance() {
       {/* FORMULAIRE */}
       <div ref={formRef} className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
           {/* Date */}
           <div className="flex flex-col">
             <label className="text-white mb-1">Date du culte</label>
-            <input type="date" name="date" value={formData.date} onChange={handleChange} className="input" required />
+            <input type="date" name="date" value={formData.date} onChange={handleChange} className="input w-full" required />
           </div>
-          
-         {/* TYPE TEMPS */}
-<div className="flex flex-col relative w-64" ref={selectRef}>
-  <label className="text-white mb-1">Type du temps</label>
-  <div
-    className="input h-12 flex items-center justify-between px-3 cursor-pointer text-black bg-white"
-    onClick={() => setDropdownOpen(!dropdownOpen)}
-  >
-    {formData.typeTemps || "-- Sélectionner un temps --"}
-    <span>▼</span>
-  </div>
-
-  {dropdownOpen && (
-    <div className="absolute top-full left-0 z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white border rounded shadow-lg">
-      {tempsOptions.map((t) => (
-        <div
-          key={t}
-          className="flex justify-between items-center px-3 py-2 hover:bg-gray-200 cursor-pointer text-black"
-          onClick={() => {
-            setFormData(prev => ({ ...prev, typeTemps: t }));
-            setDropdownOpen(false);
-          }}
-        >
-          <span>{t}</span>
-          {t !== "Culte" && (
-            <div className="flex gap-2">
-              <button onClick={(e)=>{ e.stopPropagation(); handleRenameTemps(t, prompt("Nouveau nom ?", t)) }} className="text-blue-500">✏️</button>
-              <button onClick={(e)=>{ e.stopPropagation(); handleDeleteTemps(t) }} className="text-red-500">🗑️</button>
+        
+          {/* Type de temps */}
+          <div className="flex flex-col relative w-full md:w-64" ref={selectRef}>
+            <label className="text-white mb-1">Type du temps</label>
+            <div
+              className="input h-12 flex items-center justify-between px-3 cursor-pointer text-black bg-white"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+            >
+              {formData.typeTemps || "-- Sélectionner un temps --"} <span>▼</span>
             </div>
-          )}
-        </div>
-      ))}
-
-      <div
-        className="px-3 py-2 text-[#333699] font-semibold hover:bg-gray-200 cursor-pointer"
-        onClick={() => {
-          setFormData(prev => ({
-            ...prev,
-            typeTemps: "AUTRE",
-            nouveauTemps: ""
-          }));
-          setDropdownOpen(false);
-        }}
-      >
-        + Ajouter un temps
-      </div>
-    </div>
-  )}
-</div>
-          
+        
+            {dropdownOpen && (
+              <div className="absolute top-full left-0 z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white border rounded shadow-lg">
+                {tempsOptions.map((t) => (
+                  <div
+                    key={t}
+                    className="flex justify-between items-center px-3 py-2 hover:bg-gray-200 cursor-pointer text-black"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, typeTemps: t }));
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    <span>{t}</span>
+                    {t !== "Culte" && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e)=>{ e.stopPropagation(); handleRenameTemps(t, prompt("Nouveau nom ?", t)) }}
+                          className="text-blue-500"
+                        >✏️</button>
+                        <button
+                          onClick={(e)=>{ e.stopPropagation(); handleDeleteTemps(t) }}
+                          className="text-red-500"
+                        >🗑️</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <div
+                  className="px-3 py-2 text-[#333699] font-semibold hover:bg-gray-200 cursor-pointer"
+                  onClick={() => setFormData(prev => ({ ...prev, typeTemps: "AUTRE", nouveauTemps: "" }))}
+                >
+                  + Ajouter un temps
+                </div>
+              </div>
+            )}
+          </div>
+        
+          {/* Nouveau temps si AUTRE */}
           {formData.typeTemps === "AUTRE" && (
             <>
-              <div className="flex flex-col col-span-2">
+              <div className="flex flex-col col-span-1 md:col-span-2">
                 <label className="text-white mb-1">Nom du temps</label>
-                <input type="text" name="nouveauTemps" value={formData.nouveauTemps} onChange={handleChange} className="input" placeholder="Ex: ADP" />
+                <input type="text" name="nouveauTemps" value={formData.nouveauTemps} onChange={handleChange} className="input w-full" placeholder="Ex: ADP" />
               </div>
-              <div className="flex items-center gap-2 col-span-2">
+              <div className="flex items-center gap-2 col-span-1 md:col-span-2">
                 <input type="checkbox" name="enregistrerTemps" checked={formData.enregistrerTemps} onChange={e => setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))}/>
                 <label className="text-amber-300 text-sm">Enregistrer ce temps pour le futur</label>
               </div>
             </>
           )}
-
+        
+          {/* Numéro de culte si Culte */}
           {formData.typeTemps === "Culte" && (
-            <div className="flex flex-col">
+            <div className="flex flex-col w-full">
               <label className="text-white mb-1">Numéro de culte</label>
-              <select name="numero_culte" value={formData.numero_culte} onChange={handleChange} className="input appearance-none pr-8 cursor-pointer">
-              <option value="">--- Sélectionner un numéro ---</option><span>▼</span>              
+              <select name="numero_culte" value={formData.numero_culte} onChange={handleChange} className="input w-full appearance-none pr-8 cursor-pointer">
+                <option value="">--- Sélectionner un numéro ---</option>
                 {[1,2,3,4,5,6,7].map(n => <option key={n} value={n}>{n} {n===1?"er":"ème"} Culte</option>)}
               </select>
             </div>
           )}
-
+        
           {/* Détails chiffrés */}
           {["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].map(field => (
-            <div className="flex flex-col" key={field}>
+            <div className="flex flex-col w-full" key={field}>
               <label className="text-white mb-1">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-              <input type="number" name={field} value={formData[field]} onChange={handleChange} className="input" />
+              <input type="number" name={field} value={formData[field]} onChange={handleChange} className="input w-full" />
             </div>
           ))}
-
-          <button type="submit" className="col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all">
+        
+          {/* Bouton */}
+          <button type="submit" className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all">
             {editId ? "Mettre à jour" : "Ajouter le rapport"}
-          </button>           
+          </button>
         </form>
         {message && <p className="mt-4 text-center text-white font-medium">{message}</p>}
       </div>

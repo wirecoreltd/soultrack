@@ -379,7 +379,10 @@ setExpandedTypes(prev=>({...prev,[key]:!prev[key]}))
         <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end">Générer</button>
       </div>
 
-      {showTable && (
+   {/* =================TABLE ================= */}      
+
+      {/* =================TABLE ================= */}
+{showTable && (
 <div className="w-full max-w-5xl mx-auto mt-6 mb-6">
 
 {/* ================= DESKTOP ================= */}
@@ -524,30 +527,22 @@ className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20
 
 <div className="min-w-[140px] flex justify-center gap-2">
 <button onClick={()=>handleEdit(r)} className="text-blue-400">✏️</button>
-<button onClick={()=>handleDeleteTemps(r.typeTemps)} className="text-red-400">🗑️</button>
+<button onClick={()=>handleDelete(r.id)} className="text-red-400">🗑️</button>
 </div>
-
-</div>
-)
-
-})}
-
 </div>
 )
-
 })}
-
 </div>
 )
-
 })}
-
+</div>
+)
+})}
 </div>
 </div>
 
 
 {/* ================= MOBILE ================= */}
-
 <div className="md:hidden flex flex-col gap-4">
 
 {Object.entries(groupedReports).map(([monthKey,monthReports])=>{
@@ -601,7 +596,7 @@ return(
 
 <div className="flex justify-end gap-3 mt-2">
 <button onClick={()=>handleEdit(r)} className="text-blue-400">✏️</button>
-<button onClick={()=>handleDeleteTemps(r.typeTemps)} className="text-red-400">🗑️</button>
+<button onClick={()=>handleDelete(r.id)} className="text-red-400">🗑️</button>
 </div>
 </div>
 ))}
@@ -613,87 +608,6 @@ return(
 })}
 </div>
 </div>
-)}
-
-    {/* ================= MOBILE : CARTES ================= */}
-    <div className="flex flex-col gap-4 w-full max-w-md mx-auto md:hidden">
-      {Object.entries(groupedReports).map(([monthKey, monthReports], monthIdx) => {
-        const [year, monthIndex] = monthKey.split("-").map(Number);
-        const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-
-        const reportsByType = {};
-        monthReports.forEach(r => {
-          if (!reportsByType[r.typeTemps]) reportsByType[r.typeTemps] = [];
-          reportsByType[r.typeTemps].push(r);
-        });
-
-        return (
-          <div key={monthKey} className="space-y-2">
-
-            {/* MOIS */}
-            <div className="bg-white/20 text-white font-bold px-4 py-2 rounded-lg text-center">{monthLabel}</div>
-
-            {Object.entries(reportsByType).map(([type, reportsList]) => {
-              const totalType = reportsList.reduce((acc, r) => {
-                acc.hommes += Number(r.hommes || 0);
-                acc.femmes += Number(r.femmes || 0);
-                acc.jeunes += Number(r.jeunes || 0);
-                acc.enfants += Number(r.enfants || 0);
-                acc.connectes += Number(r.connectes || 0);
-                acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
-                acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
-                return acc;
-              }, {hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0});
-
-              return (
-                <div key={type} className="space-y-1">
-
-                  {/* TOTALS PAR TYPE */}
-                  <div className="bg-yellow-500/30 text-white font-semibold px-3 py-2 rounded-lg">
-                    <div className="flex justify-between text-sm">
-                      <span>{type}</span>
-                      <span>Total: {totalType.hommes + totalType.femmes + totalType.jeunes}</span>
-                    </div>
-                    <div className="flex justify-between text-xs mt-1">
-                      <span>H: {totalType.hommes}</span>
-                      <span>F: {totalType.femmes}</span>
-                      <span>J: {totalType.jeunes}</span>
-                      <span>E: {totalType.enfants}</span>
-                      <span>C: {totalType.connectes}</span>
-                      <span>NV: {totalType.nouveauxVenus}</span>
-                      <span>NC: {totalType.nouveauxConvertis}</span>
-                    </div>
-                  </div>
-
-                  {/* RAPPORTS INDIVIDUELS */}
-                  {reportsList.map(r => (
-                    <div key={r.id} className="bg-white/10 text-white rounded-lg p-3 flex flex-col gap-1">
-                      <div className="font-semibold">{formatDateFR(r.date)} - {r.typeTemps}</div>
-                      <div className="flex justify-between text-sm">
-                        <span>H: {r.hommes}</span>
-                        <span>F: {r.femmes}</span>
-                        <span>J: {r.jeunes}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>E: {r.enfants}</span>
-                        <span>C: {r.connectes}</span>
-                        <span>NV: {r.nouveauxVenus}</span>
-                        <span>NC: {r.nouveauxConvertis}</span>
-                      </div>
-                      <div className="flex justify-end gap-2 mt-2">
-                        <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-500">✏️</button>
-                        <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 hover:text-red-500">🗑️</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )
-            })}
-          </div>
-        )
-      })}
-    </div>
-  </div>
 )}
 
       <Footer />

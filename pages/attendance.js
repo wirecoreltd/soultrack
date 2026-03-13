@@ -267,7 +267,7 @@ function Attendance() {
   </div>
 
   {dropdownOpen && (
-    <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white border rounded shadow-lg">
+    <div className="absolute top-full left-0 z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white border rounded shadow-lg">
       {tempsOptions.map((t) => (
         <div
           key={t}
@@ -437,7 +437,7 @@ function Attendance() {
   </div>
 )}
 
-      <Footer />
+      <Footer />adp
 
      <style jsx>{`
         .input {

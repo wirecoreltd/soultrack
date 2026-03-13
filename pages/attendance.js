@@ -424,16 +424,12 @@ function Attendance() {
                           <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
                           <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
                           <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-                          <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
-        
-                          <div className="min-w-[140px] flex justify-center gap-2">
-                            <button onClick={()=>handleEdit(r)} className="text-orange-400 underline hover:text-orange-500">Modifier</button>
-        
+                          <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>        
+                                  
                             <div className="min-w-[140px] flex justify-center gap-2">
                               <button onClick={() => handleEdit(r)} className="text-blue-400 underline hover:text-blue-500">✏️</button>
                               <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 underline hover:text-red-500">🗑️</button>
-                            </div>
-        
+                            </div>        
                         </div>
                       )
                     })}

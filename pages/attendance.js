@@ -165,7 +165,7 @@ function Attendance() {
         typeTemps: "",
         nouveauTemps: "",
         enregistrerTemps: false,
-        numero_culte: "",
+        numero_culte: 1,
         hommes: 0,
         femmes: 0,
         jeunes: 0,
@@ -256,59 +256,59 @@ function Attendance() {
           </div>
           
          {/* TYPE TEMPS */}
-<div className="flex flex-col relative w-64" ref={selectRef}>
-  <label className="text-white mb-1">Type du temps</label>
-  <div
-    className="input h-12 flex items-center justify-between px-3 cursor-pointer text-black bg-white"
-    onClick={() => setDropdownOpen(!dropdownOpen)}
-  >
-    {formData.typeTemps || "-- Sélectionner un temps --"}
-    <span>▼</span>
-  </div>
-
-  {dropdownOpen && (
-    <div className="absolute top-full left-0 z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white border rounded shadow-lg">
-      {tempsOptions.map((t) => (
-        <div
-          key={t}
-          className="flex justify-between items-center px-3 py-2 hover:bg-gray-200 cursor-pointer text-black"
-          onClick={() => {
-            setFormData(prev => ({ ...prev, typeTemps: t }));
-            setDropdownOpen(false);
-          }}
-        >
-          <span>{t}</span>
-          {t !== "Culte" && (
-            <div className="flex gap-2">
-              <button onClick={(e)=>{ e.stopPropagation(); handleRenameTemps(t, prompt("Nouveau nom ?", t)) }} className="text-blue-500">✏️</button>
-              <button onClick={(e)=>{ e.stopPropagation(); handleDeleteTemps(t) }} className="text-red-500">🗑️</button>
+          <div className="flex flex-col relative w-64" ref={selectRef}>
+            <label className="text-white mb-1">Type du temps</label>
+            <div
+              className="input h-12 flex items-center justify-between px-3 cursor-pointer text-black bg-white"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+            >
+              {formData.typeTemps || "-- Sélectionner un temps --"}
+              <span>▼</span>
             </div>
-          )}
-        </div>
-      ))}
-
-      <div
-        className="px-3 py-2 text-[#333699] font-semibold hover:bg-gray-200 cursor-pointer"
-        onClick={() => {
-          const nouveau = prompt("Nom du nouveau temps ?");
-          if (nouveau) {
-            setTempsOptions(prev => [...prev, nouveau]);
-            setFormData(prev => ({ ...prev, typeTemps: nouveau }));
-            setDropdownOpen(false);
-          }
-        }}
-      >
-        + Ajouter un temps
-      </div>
-    </div>
-  )}
-</div>
+          
+            {dropdownOpen && (
+              <div className="absolute top-full left-0 z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white border rounded shadow-lg">
+                {tempsOptions.map((t) => (
+                  <div
+                    key={t}
+                    className="flex justify-between items-center px-3 py-2 hover:bg-gray-200 cursor-pointer text-black"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, typeTemps: t }));
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    <span>{t}</span>
+                    {t !== "Culte" && (
+                      <div className="flex gap-2">
+                        <button onClick={(e)=>{ e.stopPropagation(); handleRenameTemps(t, prompt("Nouveau nom ?", t)) }} className="text-blue-500">✏️</button>
+                        <button onClick={(e)=>{ e.stopPropagation(); handleDeleteTemps(t) }} className="text-red-500">🗑️</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+          
+                <div
+                  className="px-3 py-2 text-[#333699] font-semibold hover:bg-gray-200 cursor-pointer"
+                  onClick={() => {
+                    const nouveau = prompt("Nom du nouveau temps ?");
+                    if (nouveau) {
+                      setTempsOptions(prev => [...prev, nouveau]);
+                      setFormData(prev => ({ ...prev, typeTemps: nouveau }));
+                      setDropdownOpen(false);
+                    }
+                  }}
+                >
+                  + Ajouter un temps
+                </div>
+              </div>
+            )}
+          </div>
           
           {formData.typeTemps === "AUTRE" && (
             <>
               <div className="flex flex-col col-span-2">
                 <label className="text-white mb-1">Nom du temps</label>
-                <input type="text" name="nouveauTemps" value={formData.nouveauTemps} onChange={handleChange} className="input" placeholder="Ex: Temps de Miracles" />
+                <input type="text" name="nouveauTemps" value={formData.nouveauTemps} onChange={handleChange} className="input" placeholder="Ex: ADP" />
               </div>
               <div className="flex items-center gap-2 col-span-2">
                 <input type="checkbox" name="enregistrerTemps" checked={formData.enregistrerTemps} onChange={e => setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))}/>
@@ -327,7 +327,7 @@ function Attendance() {
                   name="numero_culte"
                   value={formData.numero_culte}
                   onChange={handleChange}
-                  className="input h-12 flex items-center justify-between px-3 cursor-pointer text-black bg-white"
+                  className="input appearance-none pr-8 cursor-pointer text-black bg-white"
                   required
                 >
                   <option value="">--- Sélectionner un numéro ---</option>
@@ -342,24 +342,33 @@ function Attendance() {
                 <span className="absolute right-3 top-[38px] pointer-events-none text-black">
                   ▼
                 </span>
-              </div>     
+              </div>
 
-          {/* Détails chiffrés */}
-          {["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].map(field => (
-            <div className="flex flex-col" key={field}>
-              <label className="text-white mb-1">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-              <input type="number" name={field} value={formData[field]} onChange={handleChange} className="input" />
-            </div>
-            ))}
-          </>
-        )}
+          {/* DETAILS */}
+    {["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].map(field => (
+      <div className="flex flex-col" key={field}>
+        <label className="text-white mb-1">
+          {field.charAt(0).toUpperCase() + field.slice(1)}
+        </label>
+
+        <input
+          type="number"
+          name={field}
+          value={formData[field]}
+          onChange={handleChange}
+          className="input"
+        />
+      </div>
+    ))}
+  </>
+)}
 
           <button type="submit" className="col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all">
             {editId ? "Mettre à jour" : "Ajouter le rapport"}
-          </button>           
+          </button> 
         </form>
         {message && <p className="mt-4 text-center text-white font-medium">{message}</p>}
-     </div>
+      </div>
 
       {/* FILTRE DATE */}
       <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-wrap justify-center gap-4 text-white w-full max-w-3xl">

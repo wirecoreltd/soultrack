@@ -48,7 +48,7 @@ function Attendance() {
   
       if (membresErr) throw membresErr;
 
-      setMembres(membresData); 
+      setMembres(membres);
   
       // 2️⃣ Âge
       const ageCount = {};

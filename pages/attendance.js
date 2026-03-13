@@ -28,7 +28,7 @@ function Attendance() {
     typeTemps: "",
     nouveauTemps: "",
     enregistrerTemps: false,
-    numero_culte: 1,
+    numero_culte: "",
     hommes: 0,
     femmes: 0,
     jeunes: 0,
@@ -165,7 +165,7 @@ function Attendance() {
         typeTemps: "",
         nouveauTemps: "",
         enregistrerTemps: false,
-        numero_culte: 1,
+        numero_culte: "",
         hommes: 0,
         femmes: 0,
         jeunes: 0,
@@ -308,7 +308,7 @@ function Attendance() {
             <>
               <div className="flex flex-col col-span-2">
                 <label className="text-white mb-1">Nom du temps</label>
-                <input type="text" name="nouveauTemps" value={formData.nouveauTemps} onChange={handleChange} className="input" placeholder="Ex: ADP" />
+                <input type="text" name="nouveauTemps" value={formData.nouveauTemps} onChange={handleChange} className="input" placeholder="Ex: Temps de Miracles" />
               </div>
               <div className="flex items-center gap-2 col-span-2">
                 <input type="checkbox" name="enregistrerTemps" checked={formData.enregistrerTemps} onChange={e => setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))}/>

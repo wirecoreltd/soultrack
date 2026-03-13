@@ -31,6 +31,7 @@ function Attendance() {
   const [reasonStats, setReasonStats] = useState({});
   const [followUpStats, setFollowUpStats] = useState({});
   const [showCards, setShowCards] = useState(true);
+  const [membres, setMembres] = useState([]);
   
   // Calcul des stats à partir de la table membres_complets et stats_ministere_besoin
   const fetchDashboardStats = async () => {
@@ -45,6 +46,8 @@ function Attendance() {
         .eq("branche_id", superviseur.branche_id);
   
       if (membresErr) throw membresErr;
+
+      setMembres(membresData); 
   
       // 2️⃣ Âge
       const ageCount = {};
@@ -105,12 +108,13 @@ function Attendance() {
   };
 
    const membresSuivi = useMemo(() => {
-    return membres.filter(m =>
-      m.date_premiere_visite &&
-      new Date(m.date_premiere_visite).toDateString() === new Date(selectedDate).toDateString() &&
-      m.statut_suivis === 2 // en suivi
-    );
-  }, [membres, selectedDate]);
+  if (!membres || !selectedDate) return [];
+  return membres.filter(m =>
+    m.date_premiere_visite &&
+    new Date(m.date_premiere_visite).toDateString() === new Date(selectedDate).toDateString() &&
+    m.statut_suivis === 2 // en suivi
+  );
+}, [membres, selectedDate]);
   
   
   // Lancer le fetch quand les membres ou superviseur sont prêts

@@ -529,75 +529,55 @@ function Attendance() {
           </div>
         )}
 
-          {/* ================== CARTES STATS ================== */}
-        <div className="max-w-5xl w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6 mb-6">
-        
-          {/* Âge */}
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-4 rounded-2xl shadow-lg">
-            <h3 className="font-bold text-lg mb-2">Âge des membres</h3>
-            {Object.entries(ageStats).map(([range, count]) => (
-              <div key={range} className="flex justify-between text-sm mb-1">
-                <span>{range}</span>
-                <span>{count}</span>
+          {/* CARTES DE SUIVI */}
+            {showCards && membresSuivi && membresSuivi.length > 0 && (
+              <div className="max-w-5xl w-full mt-6 mb-6">
+                <h2 className="text-white font-bold text-lg mb-4">Rapport Suivi</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {membresSuivi.map((membre, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white/10 backdrop-blur-md border border-white/30 rounded-xl p-4 shadow-sm hover:shadow-md transition"
+                    >
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-gray-300">Âge</span>
+                        <span className="text-base font-semibold text-white">{membre.age || "—"}</span>
+                      </div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-gray-300">Sexe</span>
+                        <span className="text-base font-semibold text-white">{membre.sexe || "—"}</span>
+                      </div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-gray-300">État contact</span>
+                        <span className="text-base font-semibold text-white">{membre.etat_contact || "—"}</span>
+                      </div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-gray-300">Comment est-il venu</span>
+                        <span className="text-base font-semibold text-white">{membre.venu || "—"}</span>
+                      </div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-gray-300">Raison de la venue</span>
+                        <span className="text-base font-semibold text-white">{membre.statut_initial || "—"}</span>
+                      </div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-gray-300">Envoyé en suivi</span>
+                        <span className="text-base font-semibold text-white">
+                          {membre.date_envoi_suivi
+                            ? new Date(membre.date_envoi_suivi).toLocaleDateString()
+                            : "—"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-300">En suivi</span>
+                        <span className="text-base font-semibold text-white">
+                          {membre.statut_suivis === 2 ? "Oui" : "Non"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-        
-          {/* Sexe */}
-          <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-4 rounded-2xl shadow-lg">
-            <h3 className="font-bold text-lg mb-2">Répartition par sexe</h3>
-            <div className="flex justify-between mb-1">
-              <span>Hommes</span>
-              <span>{sexStats.men}</span>
-            </div>
-            <div className="flex justify-between mb-1">
-              <span>Femmes</span>
-              <span>{sexStats.women}</span>
-            </div>
-          </div>
-        
-          {/* Besoins */}
-          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-4 rounded-2xl shadow-lg">
-            <h3 className="font-bold text-lg mb-2">Besoins principaux</h3>
-            {Object.entries(needsStats).map(([need, count]) => (
-              <div key={need} className="flex justify-between text-sm mb-1">
-                <span>{need}</span>
-                <span>{count}</span>
-              </div>
-            ))}
-          </div>
-        
-          {/* État contact */}
-          <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white p-4 rounded-2xl shadow-lg">
-            <h3 className="font-bold text-lg mb-2">État contact</h3>
-            {Object.entries(contactStats).map(([etat, count]) => (
-              <div key={etat} className="flex justify-between text-sm mb-1">
-                <span>{etat}</span>
-                <span>{count}</span>
-              </div>
-            ))}
-          </div>
-        
-          {/* Raison de la venue */}
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-4 rounded-2xl shadow-lg">
-            <h3 className="font-bold text-lg mb-2">Raison de la venue</h3>
-            {Object.entries(reasonStats).map(([raison, count]) => (
-              <div key={raison} className="flex justify-between text-sm mb-1">
-                <span>{raison}</span>
-                <span>{count}</span>
-              </div>
-            ))}
-          </div>
-        
-          {/* Suivis */}
-          <div className="bg-gradient-to-r from-gray-700 to-gray-900 text-white p-4 rounded-2xl shadow-lg">
-            <h3 className="font-bold text-lg mb-2">Suivis envoyés</h3>
-            <div className="flex justify-between text-sm">
-              <span>Membres envoyés en suivi</span>
-              <span>{followUpStats.Envoyés || 0}</span>
-            </div>
-          </div>
-        </div>
+            )}
 
       <Footer />
 

@@ -431,8 +431,8 @@ function Attendance() {
                           <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>        
                                   
                             <div className="min-w-[140px] flex justify-center gap-2">
-                              <button onClick={() => handleEdit(r)} className="text-blue-400 underline hover:text-blue-500">✏️</button>
-                              <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 underline hover:text-red-500">🗑️</button>
+                              <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-500">✏️</button>
+                              <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 hover:text-red-500">🗑️</button>
                             </div>        
                         </div>
                       )

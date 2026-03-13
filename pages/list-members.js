@@ -805,9 +805,11 @@ const canAddMember =
               <div className="text-black text-sm mt-2 w-full space-y-1">
                 <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
                   💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}</p>
-                <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                
+                <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
                 <p>🎗️ Civilité : {m.sexe || ""}</p>
                 <p>⏳ Tranche d'age : {m.age || ""}</p> 
+                <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>    
                 <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>
                 {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
                   <p className="ml-6">💦 Veut se faire baptiser</p>

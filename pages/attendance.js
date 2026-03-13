@@ -28,7 +28,7 @@ function Attendance() {
     typeTemps: "",
     nouveauTemps: "",
     enregistrerTemps: false,
-    numero_culte: 1,
+    numero_culte: "",
     hommes: 0,
     femmes: 0,
     jeunes: 0,
@@ -256,53 +256,53 @@ function Attendance() {
           </div>
           
          {/* TYPE TEMPS */}
-<div className="flex flex-col relative w-64" ref={selectRef}>
-  <label className="text-white mb-1">Type du temps</label>
-  <div
-    className="input h-12 flex items-center justify-between px-3 cursor-pointer text-black bg-white"
-    onClick={() => setDropdownOpen(!dropdownOpen)}
-  >
-    {formData.typeTemps || "-- Sélectionner un temps --"}
-    <span>▼</span>
-  </div>
-
-  {dropdownOpen && (
-    <div className="absolute top-full left-0 z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white border rounded shadow-lg">
-      {tempsOptions.map((t) => (
-        <div
-          key={t}
-          className="flex justify-between items-center px-3 py-2 hover:bg-gray-200 cursor-pointer text-black"
-          onClick={() => {
-            setFormData(prev => ({ ...prev, typeTemps: t }));
-            setDropdownOpen(false);
-          }}
-        >
-          <span>{t}</span>
-          {t !== "Culte" && (
-            <div className="flex gap-2">
-              <button onClick={(e)=>{ e.stopPropagation(); handleRenameTemps(t, prompt("Nouveau nom ?", t)) }} className="text-blue-500">✏️</button>
-              <button onClick={(e)=>{ e.stopPropagation(); handleDeleteTemps(t) }} className="text-red-500">🗑️</button>
+          <div className="flex flex-col relative w-64" ref={selectRef}>
+            <label className="text-white mb-1">Type du temps</label>
+            <div
+              className="input h-12 flex items-center justify-between px-3 cursor-pointer text-black bg-white"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+            >
+              {formData.typeTemps || "-- Sélectionner un temps --"}
+              <span>▼</span>
             </div>
-          )}
-        </div>
-      ))}
-
-      <div
-        className="px-3 py-2 text-[#333699] font-semibold hover:bg-gray-200 cursor-pointer"
-        onClick={() => {
-          const nouveau = prompt("Nom du nouveau temps ?");
-          if (nouveau) {
-            setTempsOptions(prev => [...prev, nouveau]);
-            setFormData(prev => ({ ...prev, typeTemps: nouveau }));
-            setDropdownOpen(false);
-          }
-        }}
-      >
-        + Ajouter un temps
-      </div>
-    </div>
-  )}
-</div>
+          
+            {dropdownOpen && (
+              <div className="absolute top-full left-0 z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white border rounded shadow-lg">
+                {tempsOptions.map((t) => (
+                  <div
+                    key={t}
+                    className="flex justify-between items-center px-3 py-2 hover:bg-gray-200 cursor-pointer text-black"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, typeTemps: t }));
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    <span>{t}</span>
+                    {t !== "Culte" && (
+                      <div className="flex gap-2">
+                        <button onClick={(e)=>{ e.stopPropagation(); handleRenameTemps(t, prompt("Nouveau nom ?", t)) }} className="text-blue-500">✏️</button>
+                        <button onClick={(e)=>{ e.stopPropagation(); handleDeleteTemps(t) }} className="text-red-500">🗑️</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+          
+                <div
+                  className="px-3 py-2 text-[#333699] font-semibold hover:bg-gray-200 cursor-pointer"
+                  onClick={() => {
+                    const nouveau = prompt("Nom du nouveau temps ?");
+                    if (nouveau) {
+                      setTempsOptions(prev => [...prev, nouveau]);
+                      setFormData(prev => ({ ...prev, typeTemps: nouveau }));
+                      setDropdownOpen(false);
+                    }
+                  }}
+                >
+                  + Ajouter un temps
+                </div>
+              </div>
+            )}
+          </div>
           
           {formData.typeTemps === "AUTRE" && (
             <>
@@ -320,11 +320,28 @@ function Attendance() {
           {formData.typeTemps === "Culte" && (
             <div className="flex flex-col">
               <label className="text-white mb-1">Numéro de culte</label>
-              <select name="numero_culte" value={formData.numero_culte} onChange={handleChange} className="input appearance-none pr-8 cursor-pointer">
-                {[1,2,3,4,5,6,7].map(n => <option key={n} value={n}>{n} {n===1?"er":"ème"} Culte</option>)}
-              </select>
-            </div>
-          )}
+              {formData.typeTemps === "Culte" && (
+  <div className="flex flex-col relative">
+    <label className="text-white mb-1">Numéro de culte</label>
+    <select name="numero_culte" value={formData.numero_culte} onChange={handleChange}
+      className="input appearance-none pr-8 cursor-pointer text-black bg-white"
+      required
+    >
+      <option value="">--- Sélectionner un numéro ---</option>
+
+      {[1,2,3,4,5,6,7].map(n => (
+        <option key={n} value={n}>
+          {n} {n === 1 ? "er" : "ème"} Culte
+        </option>
+      ))}
+    </select>
+
+    {/* Flèche */}
+    <span className="absolute right-3 top-[38px] pointer-events-none text-black">
+      ▼
+    </span>
+  </div>
+)}
 
           {/* Détails chiffrés */}
           {["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].map(field => (

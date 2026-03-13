@@ -526,20 +526,20 @@ const calculateTypeTotals = (rows) => {
                           [typeTemps]: !prev[typeTemps]
                         }))}
                       >
-                        <div className="flex items-center px-4 py-2 rounded-lg bg-white/5 cursor-pointer border-l-4 border-yellow-500">
-  <div className="min-w-[220px] max-w-[220px] text-white font-semibold flex items-center gap-2 whitespace-pre-line break-words">
-    {typeExpanded ? "➖" : "➕"} {splitTypeName(typeTemps, 15)}
-  </div>
-  <div className="min-w-[120px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.hommes}</div>
-  <div className="min-w-[120px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.femmes}</div>
-  <div className="min-w-[120px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.jeunes}</div>
-  <div className="min-w-[130px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.total}</div>
-  <div className="min-w-[120px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.enfants}</div>
-  <div className="min-w-[140px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.connectes}</div>
-  <div className="min-w-[150px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.nouveauxVenus}</div>
-  <div className="min-w-[180px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.nouveauxConvertis}</div>
-  <div className="min-w-[140px] flex-shrink-0"></div>
-</div>
+                        <div className="min-w-[220px] max-w-[220px] text-white font-semibold flex items-center gap-2 whitespace-pre-line break-words">
+                          {typeExpanded ? "➖" : "➕"} {splitTypeName(typeTemps, 15)}
+                        </div>
+                      
+                        <div className="min-w-[120px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.hommes}</div>
+                        <div className="min-w-[120px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.femmes}</div>
+                        <div className="min-w-[120px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.jeunes}</div>
+                        <div className="min-w-[130px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.total}</div>
+                        <div className="min-w-[120px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.enfants}</div>
+                        <div className="min-w-[140px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.connectes}</div>
+                        <div className="min-w-[150px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.nouveauxVenus}</div>
+                        <div className="min-w-[180px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.nouveauxConvertis}</div>
+                        <div className="min-w-[140px] flex-shrink-0"></div>
+                      </div>
                 
                       {/* LIGNES */}
                       {typeExpanded && rows.map(r => {

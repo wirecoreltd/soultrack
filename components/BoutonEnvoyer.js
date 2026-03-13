@@ -27,121 +27,128 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
   };
 
   const handleClick = async () => {
-    if (!session) {
-      alert("❌ Vous devez être connecté.");
+  if (!session) {
+    alert("❌ Vous devez être connecté.");
+    return;
+  }
+
+  try {
+    // 🔹 Vérification de doublon
+    if (await checkDoublon()) {
+      setDoublonDetected(true);
+      setShowDoublonPopup(true);
       return;
     }
 
-    const isDoublon = await checkDoublon();
-    if (isDoublon) {
-      setDoublonDetected(true);
-      setShowDoublonPopup(true);
-    } else {
-      await sendToWhatsapp();
-    }
-  };
+    // 🔹 Préparer responsable
+    let responsablePrenom = "";
+    let responsableTelephone = "";
 
-  const sendToWhatsapp = async () => {
-    setLoading(true);
-    try {
-      let responsablePrenom = "";
-      let responsableTelephone = "";
-
-      if (type === "cellule") {
-        const { data: cellule } = await supabase
-          .from("cellules")
-          .select("id, responsable_id, cellule_full")
-          .eq("id", cible.id)
-          .single();
-        const { data: resp } = await supabase
-          .from("profiles")
-          .select("prenom, telephone")
-          .eq("id", cellule.responsable_id)
-          .single();
-        responsablePrenom = resp.prenom;
-        responsableTelephone = resp.telephone;
-        cible.cellule_full = cellule.cellule_full;
-      }
-
-      if (type === "conseiller") {
-        responsablePrenom = cible.prenom;
-        responsableTelephone = cible.telephone;
-      }
-
-      if (type === "numero") {
-        responsablePrenom = "Responsable";
-        responsableTelephone = cible; // numéro saisi
-      }
-
-      // 🔹 Message WhatsApp complet
-      let message = `👋 Bonjour ${responsablePrenom}!\n\n`;
-      message += `Une personne précieuse t’est confiée pour l’accompagnement.\n\n`;
-      message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
-      message += `🎗️ Sexe: ${membre.sexe || "—"}\n`; 
-      message += `⏳ Age: ${membre.age || "—"}\n`; 
-      message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
-      message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
-      message += `🏙️ Ville: ${membre.ville || "—"}\n`;
-      message += `✨ Raison de la venue: ${membre.statut_initial || "—"}\n`;   
-      message += `🙏 Prière du salut: ${membre.priere_salut || "—"}\n`; 
-      message += `☀️ Type de conversion: ${membre.type_conversion || "—"}\n`;
-      message += `❓Besoin: ${
-        membre.besoin
-          ? (() => {
-              try {
-                const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
-                return Array.isArray(besoins) ? besoins.join(", ") : besoins;
-              } catch {
-                return membre.besoin;
-              }
-            })()
-          : "—"
-      }\n`;
-      message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
-      message += "Merci pour ton accompagnement ❤️";
-
-      const phone = responsableTelephone?.replace(/\D/g, "");
-      if (!phone) {
-        alert("❌ Le numéro WhatsApp est invalide.");
-        setLoading(false);
-        return;
-      }
-
-      // Ouvrir WhatsApp avant l'update pour éviter le blocage
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
-
-      // 🔹 Mettre à jour le membre dans Supabase
-      const { data: updatedMember } = await supabase
-        .from("membres_complets")
-        .update({
-          statut: "actif",
-          statut_suivis: statutIds.envoye,
-          cellule_id: type === "cellule" ? cible.id : null,
-          conseiller_id: type === "conseiller" ? cible.id : null,
-          suivi_cellule_nom: type === "cellule" ? cible.cellule_full : null,
-          suivi_responsable: type === "conseiller" ? `${cible.prenom} ${cible.nom}` : responsablePrenom,
-          suivi_responsable_id: type === "conseiller" ? cible.id : null,
-          etat_contact: "Existant",
-          date_envoi_suivi: new Date().toISOString() 
-        })
-        .eq("id", membre.id)
-        .select()
+    if (type === "cellule") {
+      const { data: cellule } = await supabase
+        .from("cellules")
+        .select("id, responsable_id, cellule_full")
+        .eq("id", cible.id)
         .single();
 
-      if (onEnvoyer) onEnvoyer(updatedMember);
-      if (showToast) showToast(`✅ ${membre.prenom} ${membre.nom} envoyé à ${
-        type === "cellule" ? cible.cellule_full : type === "conseiller" ? `${cible.prenom} ${cible.nom}` : cible
-      }`);
-      
-    } catch (err) {
-      console.error(err);
-      alert(`❌ ${err.message}`);
-    } finally {
-      setLoading(false);
-      setShowDoublonPopup(false);
-      setDoublonDetected(false);
+      const { data: resp } = await supabase
+        .from("profiles")
+        .select("prenom, telephone")
+        .eq("id", cellule.responsable_id)
+        .single();
+
+      responsablePrenom = resp.prenom;
+      responsableTelephone = resp.telephone;
+      cible.cellule_full = cellule.cellule_full;
     }
-  };
+
+    if (type === "conseiller") {
+      responsablePrenom = cible.prenom;
+      responsableTelephone = cible.telephone;
+    }
+
+    if (type === "numero") {
+      responsablePrenom = "Responsable";
+      responsableTelephone = cible; 
+    }
+
+    // 🔹 Message WhatsApp
+    let message = `👋 Bonjour ${responsablePrenom}!\n\n`;
+    message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
+    message += `🎗️ Sexe: ${membre.sexe || "—"}\n`; 
+    message += `⏳ Age: ${membre.age || "—"}\n`; 
+    message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
+    message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
+    message += `🏙️ Ville: ${membre.ville || "—"}\n`;
+    message += `✨ Raison de la venue: ${membre.statut_initial || "—"}\n`;   
+    message += `🙏 Prière du salut: ${membre.priere_salut || "—"}\n`; 
+    message += `❓Besoin: ${
+      membre.besoin
+        ? (() => {
+            try {
+              const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
+              return Array.isArray(besoins) ? besoins.join(", ") : besoins;
+            } catch {
+              return membre.besoin;
+            }
+          })()
+        : "—"
+    }\n`;
+    message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
+    message += "Merci pour ton accompagnement ❤️";
+
+    const phone = responsableTelephone?.replace(/\D/g, "");
+    if (!phone) {
+      alert("❌ Le numéro WhatsApp est invalide.");
+      return;
+    }
+
+    // 🔹 Ouvrir WhatsApp
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+
+    // 🔹 Mettre à jour la base avec la date
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from("membres_complets")
+      .update({
+        statut: "actif",
+        statut_suivis: statutIds.envoye,
+        cellule_id: type === "cellule" ? cible.id : null,
+        conseiller_id: type === "conseiller" ? cible.id : null,
+        suivi_cellule_nom: type === "cellule" ? cible.cellule_full : null,
+        suivi_responsable: type === "conseiller" ? `${cible.prenom} ${cible.nom}` : responsablePrenom,
+        suivi_responsable_id: type === "conseiller" ? cible.id : null,
+        etat_contact: "Existant",
+        date_envoi_suivi: now
+      })
+      .eq("id", membre.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("❌ Erreur mise à jour Supabase :", error);
+      alert("❌ Impossible d'enregistrer la date d'envoi du suivi.");
+      return;
+    }
+
+    if (!data) {
+      alert("❌ Aucune ligne mise à jour. Vérifie l'ID du membre.");
+      return;
+    }
+
+    if (onEnvoyer) onEnvoyer(data);
+    if (showToast) showToast(`✅ ${membre.prenom} ${membre.nom} envoyé à ${
+      type === "cellule" ? cible.cellule_full : type === "conseiller" ? `${cible.prenom} ${cible.nom}` : cible
+    } le ${now}`);
+    
+  } catch (err) {
+    console.error(err);
+    alert(`❌ ${err.message}`);
+  } finally {
+    setShowDoublonPopup(false);
+    setDoublonDetected(false);
+  }
+};
 
   return (
     <>

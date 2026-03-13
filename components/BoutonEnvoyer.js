@@ -121,7 +121,8 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
           suivi_cellule_nom: type === "cellule" ? cible.cellule_full : null,
           suivi_responsable: type === "conseiller" ? `${cible.prenom} ${cible.nom}` : responsablePrenom,
           suivi_responsable_id: type === "conseiller" ? cible.id : null,
-          etat_contact: "Existant"
+          etat_contact: "Existant",
+          date_envoi_suivi: new Date().toISOString() 
         })
         .eq("id", membre.id)
         .select()

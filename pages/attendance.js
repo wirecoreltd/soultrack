@@ -30,7 +30,8 @@ function Attendance() {
   const [contactStats, setContactStats] = useState({});
   const [reasonStats, setReasonStats] = useState({});
   const [followUpStats, setFollowUpStats] = useState({});
-  
+  const [showCards, setShowCards] = useState(true);
+  const membresSuivi = [...];
   // Calcul des stats à partir de la table membres_complets et stats_ministere_besoin
   const fetchDashboardStats = async () => {
     if (!superviseur.eglise_id) return;

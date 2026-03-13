@@ -312,7 +312,7 @@ function Attendance() {
               </div>
               <div className="flex items-center gap-2 col-span-2">
                 <input type="checkbox" name="enregistrerTemps" checked={formData.enregistrerTemps} onChange={e => setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))}/>
-                <label className="text-white text-sm">Enregistrer ce temps pour le futur</label>
+                <label className="text-amber-300 text-sm">Enregistrer ce temps pour le futur</label>
               </div>
             </>
           )}
@@ -363,14 +363,14 @@ function Attendance() {
               {/* HEADER TABLE */}
               <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
                 <div className="min-w-[220px]">Type / Date</div>
-                <div className="min-w-[120px] text-right">Hommes</div>
-                <div className="min-w-[120px] text-right">Femmes</div>
-                <div className="min-w-[120px] text-right">Jeunes</div>
-                <div className="min-w-[130px] text-right">Total</div>
-                <div className="min-w-[120px] text-right">Enfants</div>
-                <div className="min-w-[140px] text-right">Connectés</div>
-                <div className="min-w-[150px] text-right">Nouveaux venus</div>
-                <div className="min-w-[180px] text-right">Nouveaux convertis</div>
+                <div className="min-w-[120px] text-center">Hommes</div>
+                <div className="min-w-[120px] text-center">Femmes</div>
+                <div className="min-w-[120px] text-center">Jeunes</div>
+                <div className="min-w-[130px] text-center">Total</div>
+                <div className="min-w-[120px] text-center">Enfants</div>
+                <div className="min-w-[140px] text-center">Connectés</div>
+                <div className="min-w-[150px] text-center">Nouveaux venus</div>
+                <div className="min-w-[180px] text-center">Nouveaux convertis</div>
                 <div className="min-w-[140px] text-center">Actions</div>
               </div>
         
@@ -397,14 +397,14 @@ function Attendance() {
                     {/* MOIS */}
                     <div className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 ${borderColor}`} onClick={()=>toggleMonth(monthKey)}>
                       <div className="min-w-[220px] pl-2 text-white font-semibold">{isExpanded?"➖":"➕"} {monthLabel}</div>
-                      <div className="min-w-[120px] text-right text-orange-400 font-semibold">{totalMonth.hommes}</div>
-                      <div className="min-w-[120px] text-right text-orange-400 font-semibold">{totalMonth.femmes}</div>
-                      <div className="min-w-[120px] text-right text-orange-400 font-semibold">{totalMonth.jeunes}</div>
-                      <div className="min-w-[130px] text-right text-orange-400 font-semibold">{totalMonth.hommes+totalMonth.femmes+totalMonth.jeunes}</div>
-                      <div className="min-w-[120px] text-right text-orange-400 font-semibold">{totalMonth.enfants}</div>
-                      <div className="min-w-[140px] text-right text-orange-400 font-semibold">{totalMonth.connectes}</div>
-                      <div className="min-w-[150px] text-right text-orange-400 font-semibold">{totalMonth.nouveauxVenus}</div>
-                      <div className="min-w-[180px] text-right text-orange-400 font-semibold">{totalMonth.nouveauxConvertis}</div>
+                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.hommes}</div>
+                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.femmes}</div>
+                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.jeunes}</div>
+                      <div className="min-w-[130px] text-center text-orange-400 font-semibold">{totalMonth.hommes+totalMonth.femmes+totalMonth.jeunes}</div>
+                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalMonth.enfants}</div>
+                      <div className="min-w-[140px] text-center text-orange-400 font-semibold">{totalMonth.connectes}</div>
+                      <div className="min-w-[150px] text-center text-orange-400 font-semibold">{totalMonth.nouveauxVenus}</div>
+                      <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalMonth.nouveauxConvertis}</div>
                       <div className="min-w-[140px]"></div>
                     </div>
         
@@ -417,23 +417,22 @@ function Attendance() {
                             {r.typeTemps} : {formatDateFR(r.date)}
                           </div>
         
-                          <div className="min-w-[120px] text-right text-white">{r.hommes}</div>
-                          <div className="min-w-[120px] text-right text-white">{r.femmes}</div>
-                          <div className="min-w-[120px] text-right text-white">{r.jeunes}</div>
-                          <div className="min-w-[130px] text-right text-white">{total}</div>
-                          <div className="min-w-[120px] text-right text-white">{r.enfants}</div>
-                          <div className="min-w-[140px] text-right text-white">{r.connectes}</div>
-                          <div className="min-w-[150px] text-right text-white">{r.nouveauxVenus}</div>
-                          <div className="min-w-[180px] text-right text-white">{r.nouveauxConvertis}</div>
+                          <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                          <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                          <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
+                          <div className="min-w-[130px] text-center text-white">{total}</div>
+                          <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
+                          <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
+                          <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
+                          <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
         
                           <div className="min-w-[140px] flex justify-center gap-2">
                             <button onClick={()=>handleEdit(r)} className="text-orange-400 underline hover:text-orange-500">Modifier</button>
         
-                            {r.typeTemps!=="Culte" && <>
-                              <button onClick={()=>handleRenameTemps(r.typeTemps, prompt("Nouveau nom?", r.typeTemps))} className="text-blue-400 underline hover:text-blue-500">✏️</button>
-                              <button onClick={()=>handleDeleteTemps(r.typeTemps)} className="text-red-400 underline hover:text-red-500">🗑️</button>
-                            </>}
-                          </div>
+                            <div className="min-w-[140px] flex justify-center gap-2">
+                              <button onClick={() => handleEdit(r)} className="text-blue-400 underline hover:text-blue-500">✏️</button>
+                              <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 underline hover:text-red-500">🗑️</button>
+                            </div>
         
                         </div>
                       )

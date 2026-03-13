@@ -273,24 +273,54 @@ function Attendance() {
 
   /* ================= FETCH RAPPORTS ================= */
   const fetchRapports = async () => {
-    if (!superviseur.eglise_id) return;
-    setLoading(true);
-    let query = supabase.from("attendance").select("*")
+  if (!superviseur.eglise_id) {
+    console.warn("Superviseur non défini, impossible de récupérer les rapports");
+    return;
+  }
+
+  setLoading(true);
+  setShowTable(false); // cacher la table pendant le fetch
+
+  try {
+    let query = supabase
+      .from("attendance")
+      .select("*")
       .eq("eglise_id", superviseur.eglise_id)
-      .eq("branche_id", superviseur.branche_id);
-    if (dateDebut) query = query.gte("date", dateDebut);
-    if (dateFin) query = query.lte("date", dateFin);
-    query = query.order("date", { ascending: true }).order("numero_culte", { ascending: true });
+      .eq("branche_id", superviseur.branche_id)
+      .order("date", { ascending: true })
+      .order("numero_culte", { ascending: true });
+
+    // DEBUG : filtrage par date si défini
+    if (dateDebut) {
+      console.log("Filtrage dateDebut:", dateDebut);
+      query = query.gte("date", dateDebut);
+    }
+    if (dateFin) {
+      console.log("Filtrage dateFin:", dateFin);
+      query = query.lte("date", dateFin);
+    }
 
     const { data, error } = await query;
-    if (error) console.error("Erreur fetchRapports:", error);
-    else {
+
+    if (error) {
+      console.error("Erreur fetchRapports:", error);
+      setReports([]);
+    } else if (!data || data.length === 0) {
+      console.warn("Aucun rapport trouvé pour ce superviseur et ces dates.");
+      setReports([]);
+    } else {
       console.log("Rapports récupérés:", data);
-      setReports(data || []);
+      setReports(data);
+      setShowTable(true); // afficher la table seulement si on a des rapports
     }
-    setLoading(false);
-    setShowTable(true);
-  };
+
+  } catch (err) {
+    console.error("Exception fetchRapports:", err);
+    setReports([]);
+  }
+
+  setLoading(false);
+};
 
   /* ================= DELETE RAPPORT ================= */
   const handleDeleteRapport = async (id) => {

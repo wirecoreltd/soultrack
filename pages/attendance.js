@@ -335,8 +335,7 @@ function Attendance() {
     
           <span className="absolute right-3 top-[38px] pointer-events-none text-black">
             ▼
-          </span>
-        </div>
+          </span>        
 
           {/* Détails chiffrés */}
           {["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].map(field => (

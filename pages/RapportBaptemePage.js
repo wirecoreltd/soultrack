@@ -340,11 +340,38 @@ function RapportBaptemes() {
           </div>
 
       {/* FILTRES */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-4 flex flex-col sm:flex-row justify-center gap-4 w-full max-w-lg mx-auto text-white">
-        <input type="date" value={filterDebut} onChange={e=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"/>
-        <input type="date" value={filterFin} onChange={e=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"/>
-        <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto">Générer</button>
-      </div>
+<div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-4 flex flex-col sm:flex-row justify-center gap-4 w-full max-w-lg mx-auto text-white">
+
+  <div className="flex flex-col w-full sm:w-auto">
+    <label className="text-sm mb-1">Date de Début</label>
+    <input
+      type="date"
+      value={filterDebut}
+      onChange={e => setFilterDebut(e.target.value)}
+      className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+    />
+  </div>
+
+  <div className="flex flex-col w-full sm:w-auto">
+    <label className="text-sm mb-1">Date de Fin</label>
+    <input
+      type="date"
+      value={filterFin}
+      onChange={e => setFilterFin(e.target.value)}
+      className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+    />
+  </div>
+
+  <div className="flex items-end w-full sm:w-auto">
+    <button
+      onClick={fetchRapports}
+      className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full"
+    >
+      Générer
+    </button>
+  </div>
+
+</div>
 
       {/* --- TABLEAU --- */}
       {showTable && (

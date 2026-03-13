@@ -208,6 +208,14 @@ const calculateTypeTotals = (rows) => {
       typeTemps: typeTempsFinal,
       eglise_id: superviseur.eglise_id,
       branche_id: superviseur.branche_id,
+      hommes: Number(formData.hommes) || 0,
+      femmes: Number(formData.femmes) || 0,
+      jeunes: Number(formData.jeunes) || 0,
+      enfants: Number(formData.enfants) || 0,
+      connectes: Number(formData.connectes) || 0,
+      nouveauxVenus: Number(formData.nouveauxVenus) || 0,
+      nouveauxConvertis: Number(formData.nouveauxConvertis) || 0,
+      numero_culte: Number(formData.numero_culte) || 1
     };
 
     try {

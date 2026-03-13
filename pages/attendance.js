@@ -183,21 +183,25 @@ function Attendance() {
   };
 
   const handleEdit = (r) => {
-    setEditId(r.id);
-    setFormData({
-      date: r.date,
-      typeTemps: r.typeTemps || "Culte",
-      numero_culte: r.numero_culte || 1,
-      hommes: r.hommes,
-      femmes: r.femmes,
-      jeunes: r.jeunes,
-      enfants: r.enfants,
-      connectes: r.connectes,
-      nouveauxVenus: r.nouveauxVenus,
-      nouveauxConvertis: r.nouveauxConvertis,
-    });
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  setEditId(r.id);
+
+  setFormData({
+    date: r.date,
+    typeTemps: r.typeTemps === "Culte" ? "Culte" : "AUTRE", // <-- ici
+    nouveauTemps: r.typeTemps !== "Culte" ? r.typeTemps : "", // <-- ici
+    numero_culte: r.numero_culte || 1,
+    hommes: r.hommes,
+    femmes: r.femmes,
+    jeunes: r.jeunes,
+    enfants: r.enfants,
+    connectes: r.connectes,
+    nouveauxVenus: r.nouveauxVenus,
+    nouveauxConvertis: r.nouveauxConvertis,
+    enregistrerTemps: false, // par défaut
+  });
+
+  formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
   
     /* ================= FETCH RAPPORTS ================= */
   const fetchRapports = async () => {

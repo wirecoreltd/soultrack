@@ -178,10 +178,16 @@ const calculateTypeTotals = (rows) => {
 
   /* ================= HANDLE FORM ================= */
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  const { name, value } = e.target;
 
+  setFormData(prev => ({
+    ...prev,
+    [name]: ["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].includes(name)
+      ? Number(value) || 0 // transforme "" en 0
+      : value
+  }));
+};
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("⏳ Enregistrement en cours...");
@@ -406,7 +412,13 @@ const calculateTypeTotals = (rows) => {
           {["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].map(field => (
             <div className="flex flex-col w-full" key={field}>
               <label className="text-white mb-1">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-              <input type="number" name={field} value={formData[field]} onChange={handleChange} className="input w-full" />
+              <input
+                type="number"
+                name={field}
+                value={formData[field] || 0}  // <-- assure toujours un nombre
+                onChange={handleChange}
+                className="input w-full"
+              />
             </div>
           ))}
         

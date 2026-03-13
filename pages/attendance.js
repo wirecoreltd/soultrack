@@ -63,6 +63,14 @@ function Attendance() {
   }, []);
 
   /*===========*/
+  // Fonction utilitaire pour splitter le texte en lignes de max 15 caractères
+const splitTypeName = (name, lineLength = 15) => {
+  if (!name) return "";
+  const regex = new RegExp(`.{1,${lineLength}}`, "g");
+  return name.match(regex).join("\n");
+};
+
+  /*------------------*/
   const groupByMonthAndType = (reports) => {
   const map = {};
   reports.forEach(r => {
@@ -519,7 +527,7 @@ const calculateTypeTotals = (rows) => {
                         }))}
                       >
                         <div className="min-w-[220px] max-w-[220px] text-white font-semibold flex items-center gap-2 break-words whitespace-normal line-clamp-2">
-                          {typeExpanded ? "➖" : "➕"} {typeTemps}
+                          {typeExpanded ? "➖" : "➕"} {splitTypeName(typeTemps, 15)}
                         </div>
                         <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.hommes}</div>
                         <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.femmes}</div>

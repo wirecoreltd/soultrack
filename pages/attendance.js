@@ -503,60 +503,60 @@ const calculateTypeTotals = (rows) => {
               </div>
 
               {/* TYPES PAR MOIS */}
-              {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows]) => {
-                const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
-                const typeTotals = calculateTypeTotals(rows);
-
-                return (
-                  <div key={typeTemps} className="space-y-1">
-
-                    {/* HEADER TYPE */}
-                    <div
-                      className="flex items-center px-4 py-2 rounded-lg bg-white/5 cursor-pointer border-l-4 border-yellow-500"
-                      onClick={() => setTypeCollapsedDesktop(prev => ({
-                        ...prev,
-                        [typeTemps]: !prev[typeTemps]
-                      }))}
-                    >
-                      <div className="min-w-[220px] max-w-[220px] text-white font-semibold flex items-center gap-2 break-words whitespace-normal">
-                        {typeExpanded ? "➖" : "➕"} {typeTemps}
-                      </div>
-                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.hommes}</div>
-                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.femmes}</div>
-                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.jeunes}</div>
-                      <div className="min-w-[130px] text-center text-orange-400 font-semibold">{typeTotals.total}</div>
-                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.enfants}</div>
-                      <div className="min-w-[140px] text-center text-orange-400 font-semibold">{typeTotals.connectes}</div>
-                      <div className="min-w-[150px] text-center text-orange-400 font-semibold">{typeTotals.nouveauxVenus}</div>
-                      <div className="min-w-[180px] text-center text-orange-400 font-semibold">{typeTotals.nouveauxConvertis}</div>
-                      <div className="min-w-[140px]"></div>
-                    </div>
-
-                    {/* LIGNES */}
-                    {typeExpanded && rows.map(r => {
-                      const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-                      return (
-                        <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-yellow-500">
-                          <div className="min-w-[220px] break-words text-white">{formatDateFR(r.date)}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-                          <div className="min-w-[130px] text-center text-white">{total}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-                          <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
-                          <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-                          <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
-                          <div className="min-w-[140px] flex justify-center gap-2">
-                            <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-500">✏️</button>
-                            <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 hover:text-red-500">🗑️</button>
-                          </div>
+                {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows]) => {
+                  const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
+                  const typeTotals = calculateTypeTotals(rows);
+                
+                  return (
+                    <div key={typeTemps} className="space-y-1">
+                
+                      {/* HEADER TYPE */}
+                      <div
+                        className="flex items-center px-4 py-2 rounded-lg bg-white/5 cursor-pointer border-l-4 border-yellow-500"
+                        onClick={() => setTypeCollapsedDesktop(prev => ({
+                          ...prev,
+                          [typeTemps]: !prev[typeTemps]
+                        }))}
+                      >
+                        <div className="min-w-[220px] max-w-[220px] text-white font-semibold flex items-center gap-2 break-words whitespace-normal line-clamp-2">
+                          {typeExpanded ? "➖" : "➕"} {typeTemps}
                         </div>
-                      );
-                    })}
-
-                  </div>
-                );
-              })}
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.hommes}</div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.femmes}</div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.jeunes}</div>
+                        <div className="min-w-[130px] text-center text-orange-400 font-semibold">{typeTotals.total}</div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.enfants}</div>
+                        <div className="min-w-[140px] text-center text-orange-400 font-semibold">{typeTotals.connectes}</div>
+                        <div className="min-w-[150px] text-center text-orange-400 font-semibold">{typeTotals.nouveauxVenus}</div>
+                        <div className="min-w-[180px] text-center text-orange-400 font-semibold">{typeTotals.nouveauxConvertis}</div>
+                        <div className="min-w-[140px]"></div>
+                      </div>
+                
+                      {/* LIGNES */}
+                      {typeExpanded && rows.map(r => {
+                        const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+                        return (
+                          <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-yellow-500">
+                            <div className="min-w-[220px] break-words text-white">{formatDateFR(r.date)}</div>
+                            <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                            <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                            <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
+                            <div className="min-w-[130px] text-center text-white">{total}</div>
+                            <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
+                            <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
+                            <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
+                            <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+                            <div className="min-w-[140px] flex justify-center gap-2">
+                              <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-500">✏️</button>
+                              <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 hover:text-red-500">🗑️</button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                
+                    </div>
+                  );
+                })}
 
             </div>
           );

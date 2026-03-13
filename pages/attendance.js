@@ -22,7 +22,7 @@ function Attendance() {
   const [tempsOptions, setTempsOptions] = useState(["Culte"]);
   const formRef = useRef(null);
   const selectRef = useRef(null);
-    
+
   /* ===================== STATS CARTES ===================== */
   const [ageStats, setAgeStats] = useState({});
   const [sexStats, setSexStats] = useState({ men: 0, women: 0 });
@@ -33,39 +33,39 @@ function Attendance() {
   const [showCards, setShowCards] = useState(true);
   const [membres, setMembres] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  
+
   // Calcul des stats à partir de la table membres_complets et stats_ministere_besoin
   const fetchDashboardStats = async () => {
     if (!superviseur.eglise_id) return;
-  
+
     try {
       // 1️⃣ Récupérer tous les membres
-      const { data: membres, error: membresErr } = await supabase
+      const { data: membresData, error: membresErr } = await supabase
         .from("membres_complets")
         .select("*")
         .eq("eglise_id", superviseur.eglise_id)
         .eq("branche_id", superviseur.branche_id);
-  
+
       if (membresErr) throw membresErr;
 
-      setMembres(membres);
-  
+      setMembres(membresData); // ✅ Correction ici
+
       // 2️⃣ Âge
       const ageCount = {};
-      membres.forEach(m => {
+      membresData.forEach(m => {
         const range = m.age || "Non défini";
         ageCount[range] = (ageCount[range] || 0) + 1;
       });
       setAgeStats(ageCount);
-  
+
       // 3️⃣ Sexe
       let men = 0, women = 0;
-      membres.forEach(m => {
+      membresData.forEach(m => {
         if (m.sexe?.toLowerCase() === "homme") men++;
         if (m.sexe?.toLowerCase() === "femme") women++;
       });
       setSexStats({ men, women });
-  
+
       // 4️⃣ Besoins principaux
       const { data: besoins, error: besoinsErr } = await supabase
         .from("stats_ministere_besoin")
@@ -73,51 +73,50 @@ function Attendance() {
         .eq("eglise_id", superviseur.eglise_id)
         .eq("branche_id", superviseur.branche_id)
         .eq("type", "besoin");
-  
+
       if (besoinsErr) throw besoinsErr;
-  
+
       const besoinsCount = {};
       besoins.forEach(b => {
         const val = b.valeur || "Non défini";
         besoinsCount[val] = (besoinsCount[val] || 0) + 1;
       });
       setNeedsStats(besoinsCount);
-  
+
       // 5️⃣ État contact
       const contactCount = {};
-      membres.forEach(m => {
+      membresData.forEach(m => {
         const etat = m.etat_contact || "Non défini";
         contactCount[etat] = (contactCount[etat] || 0) + 1;
       });
       setContactStats(contactCount);
-  
+
       // 6️⃣ Raison de la venue (statut_initial)
       const raisonCount = {};
-      membres.forEach(m => {
+      membresData.forEach(m => {
         const raison = m.statut_initial || "Non défini";
         raisonCount[raison] = (raisonCount[raison] || 0) + 1;
       });
       setReasonStats(raisonCount);
-  
+
       // 7️⃣ Nombre envoyés en suivis (statut_suivis = 1)
-      const suiviCount = membres.filter(m => m.statut_suivis === 1).length;
+      const suiviCount = membresData.filter(m => m.statut_suivis === 1).length;
       setFollowUpStats({ "Envoyés": suiviCount });
-  
+
     } catch (err) {
       console.error("Erreur fetchDashboardStats:", err.message);
     }
   };
 
-   const membresSuivi = useMemo(() => {
-  if (!membres || !selectedDate) return [];
-  return membres.filter(m =>
-    m.date_premiere_visite &&
-    new Date(m.date_premiere_visite).toDateString() === new Date(selectedDate).toDateString() &&
-    m.statut_suivis === 2 // en suivi
-  );
-}, [membres, selectedDate]);
-  
-  
+  const membresSuivi = useMemo(() => {
+    if (!membres || !selectedDate) return [];
+    return membres.filter(m =>
+      m.date_premiere_visite &&
+      new Date(m.date_premiere_visite).toDateString() === new Date(selectedDate).toDateString() &&
+      m.statut_suivis === 2 // en suivi
+    );
+  }, [membres, selectedDate]);
+
   // Lancer le fetch quand les membres ou superviseur sont prêts
   useEffect(() => {
     fetchDashboardStats();
@@ -161,6 +160,11 @@ function Attendance() {
     loadSuperviseur();
   }, []);
 
+  // ✅ Appel automatique des rapports après superviseur
+  useEffect(() => {
+    if (superviseur.eglise_id) fetchRapports();
+  }, [superviseur]);
+
   /* ================= TEMPS ================= */
   useEffect(() => {
     const loadTemps = async () => {
@@ -187,42 +191,6 @@ function Attendance() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-    // Renommer un temps (✏️)
-    const handleRenameTemps = async (ancienNom, nouveauNom) => {
-      if (!nouveauNom) return; // si l'utilisateur annule le prompt
-      try {
-        const { error } = await supabase
-          .from("attendance")
-          .update({ typeTemps: nouveauNom })
-          .eq("typeTemps", ancienNom);
-        if (error) throw error;
-        fetchRapports(); // recharge les rapports pour voir le nouveau nom
-      } catch (err) {
-        console.error("Erreur renommer temps:", err.message);
-        alert("Erreur lors du renommage du temps.");
-      }
-    };
-    
-    // Supprimer un temps (🗑️)
-    const handleDeleteTemps = async (nomTemps) => {
-      const confirmDelete = confirm(
-        "Voulez-vous vraiment supprimer ce temps ? Les rapports existants resteront mais sans nom de temps."
-      );
-      if (!confirmDelete) return;
-    
-      try {
-        const { error } = await supabase
-          .from("attendance")
-          .update({ typeTemps: null })
-          .eq("typeTemps", nomTemps);
-        if (error) throw error;
-        fetchRapports(); // recharge la table
-      } catch (err) {
-        console.error("Erreur suppression temps:", err.message);
-        alert("Erreur lors de la suppression du temps.");
-      }
-    };
 
   /* ================= HANDLE FORM ================= */
   const handleChange = (e) => {
@@ -283,27 +251,27 @@ function Attendance() {
   };
 
   const handleEdit = (r) => {
-  setEditId(r.id);
+    setEditId(r.id);
 
-  setFormData({
-    date: r.date,
-    typeTemps: r.typeTemps === "Culte" ? "Culte" : "AUTRE", // <-- ici
-    nouveauTemps: r.typeTemps !== "Culte" ? r.typeTemps : "", // <-- ici
-    numero_culte: r.numero_culte || 1,
-    hommes: r.hommes,
-    femmes: r.femmes,
-    jeunes: r.jeunes,
-    enfants: r.enfants,
-    connectes: r.connectes,
-    nouveauxVenus: r.nouveauxVenus,
-    nouveauxConvertis: r.nouveauxConvertis,
-    enregistrerTemps: false, // par défaut
-  });
+    setFormData({
+      date: r.date,
+      typeTemps: r.typeTemps === "Culte" ? "Culte" : "AUTRE",
+      nouveauTemps: r.typeTemps !== "Culte" ? r.typeTemps : "",
+      numero_culte: r.numero_culte || 1,
+      hommes: r.hommes,
+      femmes: r.femmes,
+      jeunes: r.jeunes,
+      enfants: r.enfants,
+      connectes: r.connectes,
+      nouveauxVenus: r.nouveauxVenus,
+      nouveauxConvertis: r.nouveauxConvertis,
+      enregistrerTemps: false,
+    });
 
-  formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-};
-  
-    /* ================= FETCH RAPPORTS ================= */
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  /* ================= FETCH RAPPORTS ================= */
   const fetchRapports = async () => {
     if (!superviseur.eglise_id) return;
     setLoading(true);
@@ -313,11 +281,29 @@ function Attendance() {
     if (dateDebut) query = query.gte("date", dateDebut);
     if (dateFin) query = query.lte("date", dateFin);
     query = query.order("date", { ascending: true }).order("numero_culte", { ascending: true });
+
     const { data, error } = await query;
-    if (error) console.error(error);
-    else setReports(data || []);
+    if (error) console.error("Erreur fetchRapports:", error);
+    else {
+      console.log("Rapports récupérés:", data);
+      setReports(data || []);
+    }
     setLoading(false);
     setShowTable(true);
+  };
+
+  /* ================= DELETE RAPPORT ================= */
+  const handleDeleteRapport = async (id) => {
+    const confirmDelete = confirm("Voulez-vous vraiment supprimer ce rapport ?");
+    if (!confirmDelete) return;
+    try {
+      const { error } = await supabase.from("attendance").delete().eq("id", id);
+      if (error) throw error;
+      fetchRapports();
+    } catch (err) {
+      console.error(err);
+      alert("Erreur suppression rapport : " + err.message);
+    }
   };
 
   /* ================= UTIL ================= */
@@ -342,6 +328,7 @@ function Attendance() {
   const toggleMonth = (key) => setExpandedMonths(prev => ({ ...prev, [key]: !prev[key] }));
   const groupedReports = groupByMonth(reports);
   const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500","border-pink-500","border-indigo-500"];
+
 
   /* ================= RENDER ================= */
   return (

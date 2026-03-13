@@ -481,7 +481,7 @@ const calculateTypeTotals = (rows) => {
                         [typeTemps]: !prev[typeTemps]
                       }))}
                     >
-                      <div className="min-w-[220px] text-white font-semibold flex items-center gap-2">
+                      <div className="min-w-[220px] max-w-[220px] text-white font-semibold flex items-center gap-2 break-words whitespace-normal">
                         {typeExpanded ? "➖" : "➕"} {typeTemps}
                       </div>
                       <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.hommes}</div>

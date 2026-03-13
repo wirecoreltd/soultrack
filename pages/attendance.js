@@ -234,37 +234,35 @@ setExpandedTypes(prev=>({...prev,[key]:!prev[key]}))
   formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
   
-    /* ================= FETCH RAPPORTS ================= */
-  const fetchRapports = async () => {
+  /* ================= FETCH RAPPORTS ================= */
+const fetchRapports = async () => {
+  // Toujours vérifier superviseur avant de lancer la requête
+  if (!superviseur?.eglise_id || !superviseur?.branche_id) return;
 
-if (!superviseur?.eglise_id || !superviseur?.branche_id) {
-console.log("superviseur pas encore chargé");
-return;
-}
+  setLoading(true);
 
-setLoading(true);
+  try {
+    let query = supabase
+      .from("attendance")
+      .select("*")
+      .eq("eglise_id", superviseur.eglise_id)
+      .eq("branche_id", superviseur.branche_id);
 
-let query = supabase
-.from("attendance")
-.select("*")
-.eq("eglise_id", superviseur.eglise_id)
-.eq("branche_id", superviseur.branche_id);
+    if (dateDebut) query = query.gte("date", dateDebut);
+    if (dateFin) query = query.lte("date", dateFin);
 
-if (dateDebut) query = query.gte("date", dateDebut);
-if (dateFin) query = query.lte("date", dateFin);
+    query = query.order("date", { ascending: true }).order("numero_culte", { ascending: true });
 
-query = query
-.order("date", { ascending: true })
-.order("numero_culte", { ascending: true });
+    const { data, error } = await query;
+    if (error) throw error;
 
-const { data, error } = await query;
-
-if (error) console.error(error);
-else setReports(data || []);
-
-setLoading(false);
-setShowTable(true);
-
+    setReports(data || []);
+    setShowTable(true);
+  } catch (err) {
+    console.error("Erreur fetchRapports:", err.message);
+  } finally {
+    setLoading(false);
+  }
 };
 
   /* ================= UTIL ================= */

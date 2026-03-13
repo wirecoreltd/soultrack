@@ -21,9 +21,7 @@ function Attendance() {
   const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
   const [tempsOptions, setTempsOptions] = useState(["Culte"]);
   const formRef = useRef(null);
-  const selectRef = useRef(null);
-  const [expandedMonths,setExpandedMonths]=useState({})
-  const [expandedTypes,setExpandedTypes]=useState({})
+  const selectRef = useRef(null); 
 
   const [formData, setFormData] = useState({
     date: "",

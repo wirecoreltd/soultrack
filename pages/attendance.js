@@ -236,20 +236,36 @@ setExpandedTypes(prev=>({...prev,[key]:!prev[key]}))
   
     /* ================= FETCH RAPPORTS ================= */
   const fetchRapports = async () => {
-    if (!superviseur.eglise_id) return;
-    setLoading(true);
-    let query = supabase.from("attendance").select("*")
-      .eq("eglise_id", superviseur.eglise_id)
-      .eq("branche_id", superviseur.branche_id);
-    if (dateDebut) query = query.gte("date", dateDebut);
-    if (dateFin) query = query.lte("date", dateFin);
-    query = query.order("date", { ascending: true }).order("numero_culte", { ascending: true });
-    const { data, error } = await query;
-    if (error) console.error(error);
-    else setReports(data || []);
-    setLoading(false);
-    setShowTable(true);
-  };
+
+if (!superviseur?.eglise_id || !superviseur?.branche_id) {
+console.log("superviseur pas encore chargé");
+return;
+}
+
+setLoading(true);
+
+let query = supabase
+.from("attendance")
+.select("*")
+.eq("eglise_id", superviseur.eglise_id)
+.eq("branche_id", superviseur.branche_id);
+
+if (dateDebut) query = query.gte("date", dateDebut);
+if (dateFin) query = query.lte("date", dateFin);
+
+query = query
+.order("date", { ascending: true })
+.order("numero_culte", { ascending: true });
+
+const { data, error } = await query;
+
+if (error) console.error(error);
+else setReports(data || []);
+
+setLoading(false);
+setShowTable(true);
+
+};
 
   /* ================= UTIL ================= */
   const getMonthNameFR = (monthIndex) => {

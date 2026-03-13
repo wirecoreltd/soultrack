@@ -22,6 +22,8 @@ function Attendance() {
   const [tempsOptions, setTempsOptions] = useState(["Culte"]);
   const formRef = useRef(null);
   const selectRef = useRef(null);
+  const [expandedMonths, setExpandedMonths] = useState({});
+  const [typeCollapsedDesktop, setTypeCollapsedDesktop] = useState({});
 
   const [formData, setFormData] = useState({
     date: "",

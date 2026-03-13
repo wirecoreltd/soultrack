@@ -28,7 +28,7 @@ function Attendance() {
     typeTemps: "",
     nouveauTemps: "",
     enregistrerTemps: false,
-    numero_culte: 1,
+    numero_culte: "",
     hommes: 0,
     femmes: 0,
     jeunes: 0,
@@ -321,6 +321,7 @@ function Attendance() {
             <div className="flex flex-col">
               <label className="text-white mb-1">Numéro de culte</label>
               <select name="numero_culte" value={formData.numero_culte} onChange={handleChange} className="input appearance-none pr-8 cursor-pointer">
+              <option value="">--- Sélectionner un numéro ---</option>
                 {[1,2,3,4,5,6,7].map(n => <option key={n} value={n}>{n} {n===1?"er":"ème"} Culte</option>)}
               </select>
             </div>
@@ -437,7 +438,7 @@ function Attendance() {
   </div>
 )}
 
-      <Footer />adp
+      <Footer />
 
      <style jsx>{`
         .input {

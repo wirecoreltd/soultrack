@@ -22,6 +22,91 @@ function Attendance() {
   const [tempsOptions, setTempsOptions] = useState(["Culte"]);
   const formRef = useRef(null);
   const selectRef = useRef(null);
+    
+  /* ===================== STATS CARTES ===================== */
+  const [ageStats, setAgeStats] = useState({});
+  const [sexStats, setSexStats] = useState({ men: 0, women: 0 });
+  const [needsStats, setNeedsStats] = useState({});
+  const [contactStats, setContactStats] = useState({});
+  const [reasonStats, setReasonStats] = useState({});
+  const [followUpStats, setFollowUpStats] = useState({});
+  
+  // Calcul des stats à partir de la table membres_complets et stats_ministere_besoin
+  const fetchDashboardStats = async () => {
+    if (!superviseur.eglise_id) return;
+  
+    try {
+      // 1️⃣ Récupérer tous les membres
+      const { data: membres, error: membresErr } = await supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("eglise_id", superviseur.eglise_id)
+        .eq("branche_id", superviseur.branche_id);
+  
+      if (membresErr) throw membresErr;
+  
+      // 2️⃣ Âge
+      const ageCount = {};
+      membres.forEach(m => {
+        const range = m.age || "Non défini";
+        ageCount[range] = (ageCount[range] || 0) + 1;
+      });
+      setAgeStats(ageCount);
+  
+      // 3️⃣ Sexe
+      let men = 0, women = 0;
+      membres.forEach(m => {
+        if (m.sexe?.toLowerCase() === "homme") men++;
+        if (m.sexe?.toLowerCase() === "femme") women++;
+      });
+      setSexStats({ men, women });
+  
+      // 4️⃣ Besoins principaux
+      const { data: besoins, error: besoinsErr } = await supabase
+        .from("stats_ministere_besoin")
+        .select("*")
+        .eq("eglise_id", superviseur.eglise_id)
+        .eq("branche_id", superviseur.branche_id)
+        .eq("type", "besoin");
+  
+      if (besoinsErr) throw besoinsErr;
+  
+      const besoinsCount = {};
+      besoins.forEach(b => {
+        const val = b.valeur || "Non défini";
+        besoinsCount[val] = (besoinsCount[val] || 0) + 1;
+      });
+      setNeedsStats(besoinsCount);
+  
+      // 5️⃣ État contact
+      const contactCount = {};
+      membres.forEach(m => {
+        const etat = m.etat_contact || "Non défini";
+        contactCount[etat] = (contactCount[etat] || 0) + 1;
+      });
+      setContactStats(contactCount);
+  
+      // 6️⃣ Raison de la venue (statut_initial)
+      const raisonCount = {};
+      membres.forEach(m => {
+        const raison = m.statut_initial || "Non défini";
+        raisonCount[raison] = (raisonCount[raison] || 0) + 1;
+      });
+      setReasonStats(raisonCount);
+  
+      // 7️⃣ Nombre envoyés en suivis (statut_suivis = 1)
+      const suiviCount = membres.filter(m => m.statut_suivis === 1).length;
+      setFollowUpStats({ "Envoyés": suiviCount });
+  
+    } catch (err) {
+      console.error("Erreur fetchDashboardStats:", err.message);
+    }
+  };
+  
+  // Lancer le fetch quand les membres ou superviseur sont prêts
+  useEffect(() => {
+    fetchDashboardStats();
+  }, [superviseur]);
 
   const [formData, setFormData] = useState({
     date: "",
@@ -443,6 +528,76 @@ function Attendance() {
             </div>
           </div>
         )}
+
+          {/* ================== CARTES STATS ================== */}
+        <div className="max-w-5xl w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6 mb-6">
+        
+          {/* Âge */}
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-4 rounded-2xl shadow-lg">
+            <h3 className="font-bold text-lg mb-2">Âge des membres</h3>
+            {Object.entries(ageStats).map(([range, count]) => (
+              <div key={range} className="flex justify-between text-sm mb-1">
+                <span>{range}</span>
+                <span>{count}</span>
+              </div>
+            ))}
+          </div>
+        
+          {/* Sexe */}
+          <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-4 rounded-2xl shadow-lg">
+            <h3 className="font-bold text-lg mb-2">Répartition par sexe</h3>
+            <div className="flex justify-between mb-1">
+              <span>Hommes</span>
+              <span>{sexStats.men}</span>
+            </div>
+            <div className="flex justify-between mb-1">
+              <span>Femmes</span>
+              <span>{sexStats.women}</span>
+            </div>
+          </div>
+        
+          {/* Besoins */}
+          <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-4 rounded-2xl shadow-lg">
+            <h3 className="font-bold text-lg mb-2">Besoins principaux</h3>
+            {Object.entries(needsStats).map(([need, count]) => (
+              <div key={need} className="flex justify-between text-sm mb-1">
+                <span>{need}</span>
+                <span>{count}</span>
+              </div>
+            ))}
+          </div>
+        
+          {/* État contact */}
+          <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white p-4 rounded-2xl shadow-lg">
+            <h3 className="font-bold text-lg mb-2">État contact</h3>
+            {Object.entries(contactStats).map(([etat, count]) => (
+              <div key={etat} className="flex justify-between text-sm mb-1">
+                <span>{etat}</span>
+                <span>{count}</span>
+              </div>
+            ))}
+          </div>
+        
+          {/* Raison de la venue */}
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-4 rounded-2xl shadow-lg">
+            <h3 className="font-bold text-lg mb-2">Raison de la venue</h3>
+            {Object.entries(reasonStats).map(([raison, count]) => (
+              <div key={raison} className="flex justify-between text-sm mb-1">
+                <span>{raison}</span>
+                <span>{count}</span>
+              </div>
+            ))}
+          </div>
+        
+          {/* Suivis */}
+          <div className="bg-gradient-to-r from-gray-700 to-gray-900 text-white p-4 rounded-2xl shadow-lg">
+            <h3 className="font-bold text-lg mb-2">Suivis envoyés</h3>
+            <div className="flex justify-between text-sm">
+              <span>Membres envoyés en suivi</span>
+              <span>{followUpStats.Envoyés || 0}</span>
+            </div>
+          </div>
+        </div>
 
       <Footer />
 

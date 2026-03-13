@@ -317,14 +317,26 @@ function Attendance() {
             </>
           )}
 
-          {formData.typeTemps === "Culte" && (
-            <div className="flex flex-col">
-              <label className="text-white mb-1">Numéro de culte</label>
-              <select name="numero_culte" value={formData.numero_culte} onChange={handleChange} className="input appearance-none pr-8 cursor-pointer">
-                {[1,2,3,4,5,6,7].map(n => <option key={n} value={n}>{n} {n===1?"er":"ème"} Culte</option>)}
-              </select>
-            </div>
-          )}
+          <select
+            name="numero_culte"
+            value={formData.numero_culte}
+            onChange={handleChange}
+            className="input appearance-none pr-8 cursor-pointer text-black bg-white"
+            required
+          >
+            <option value="">--- Sélectionner un numéro ---</option>
+    
+            {[1,2,3,4,5,6,7].map(n => (
+              <option key={n} value={n}>
+                {n} {n === 1 ? "er" : "ème"} Culte
+              </option>
+            ))}
+          </select>
+    
+          <span className="absolute right-3 top-[38px] pointer-events-none text-black">
+            ▼
+          </span>
+        </div>
 
           {/* Détails chiffrés */}
           {["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].map(field => (

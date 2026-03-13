@@ -342,11 +342,8 @@ function Attendance() {
             <div className="flex flex-col" key={field}>
               <label className="text-white mb-1">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
               <input type="number" name={field} value={formData[field]} onChange={handleChange} className="input" />
-            />
-      </div>
-    ))}
-  </>
-)}
+            </div>
+          ))}
 
           <button type="submit" className="col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all">
             {editId ? "Mettre à jour" : "Ajouter le rapport"}

@@ -103,6 +103,15 @@ function Attendance() {
       console.error("Erreur fetchDashboardStats:", err.message);
     }
   };
+
+   const membresSuivi = useMemo(() => {
+    return membres.filter(m =>
+      m.date_premiere_visite &&
+      new Date(m.date_premiere_visite).toDateString() === new Date(selectedDate).toDateString() &&
+      m.statut_suivis === 2 // en suivi
+    );
+  }, [membres, selectedDate]);
+  
   
   // Lancer le fetch quand les membres ou superviseur sont prêts
   useEffect(() => {

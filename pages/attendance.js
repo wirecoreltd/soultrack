@@ -519,29 +519,29 @@ const calculateTypeTotals = (rows) => {
                     <div key={typeTemps} className="space-y-1">
                 
                       {/* HEADER TYPE */}
-                      <div
-                        className="min-w-[220px] max-w-[220px] pl-6 text-white font-semibold flex items-center gap-2 whitespace-pre-line break-words"
+                      <div className="flex items-center px-4 py-2 rounded-lg bg-white/5 cursor-pointer border-l-4 border-yellow-500"
                         onClick={() => setTypeCollapsedDesktop(prev => ({
                           ...prev,
                           [typeTemps]: !prev[typeTemps]
                         }))}
-                      >
+                      >                      
                         <div className="min-w-[220px] max-w-[220px] text-white font-semibold">
                           <div className="ml-6 flex items-center gap-2 whitespace-pre-line break-words">
-                          {typeExpanded ? "➖" : "➕"} {splitTypeName(typeTemps, 15)}
+                            {typeExpanded ? "➖" : "➕"} {splitTypeName(typeTemps, 15)}
+                          </div>
                         </div>
                       
-                        <div className="min-w-[120px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.hommes}</div>
-                        <div className="min-w-[120px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.femmes}</div>
-                        <div className="min-w-[120px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.jeunes}</div>
-                        <div className="min-w-[130px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.total}</div>
-                        <div className="min-w-[120px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.enfants}</div>
-                        <div className="min-w-[140px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.connectes}</div>
-                        <div className="min-w-[150px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.nouveauxVenus}</div>
-                        <div className="min-w-[180px] flex-shrink-0 text-center text-orange-400 font-semibold">{typeTotals.nouveauxConvertis}</div>
-                        <div className="min-w-[140px] flex-shrink-0"></div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.hommes}</div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.femmes}</div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.jeunes}</div>
+                        <div className="min-w-[130px] text-center text-orange-400 font-semibold">{typeTotals.total}</div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.enfants}</div>
+                        <div className="min-w-[140px] text-center text-orange-400 font-semibold">{typeTotals.connectes}</div>
+                        <div className="min-w-[150px] text-center text-orange-400 font-semibold">{typeTotals.nouveauxVenus}</div>
+                        <div className="min-w-[180px] text-center text-orange-400 font-semibold">{typeTotals.nouveauxConvertis}</div>
+                        <div className="min-w-[140px]"></div>                      
                       </div>
-                
+                                      
                       {/* LIGNES */}
                       {typeExpanded && rows.map(r => {
                         const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
@@ -549,6 +549,7 @@ const calculateTypeTotals = (rows) => {
                           <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-yellow-500 cursor-pointer">
                             <div className="min-w-[220px] text-white">
                             <div className="ml-12 break-words">{formatDateFR(r.date)}</div>
+                            </div>
                             <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
                             <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
                             <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>

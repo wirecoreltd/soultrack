@@ -270,7 +270,7 @@ moissonneurs
                   <div>M: {monthTotals.moissonneurs}</div>                  
                   </div>                  
                   </div>
-                  )}
+                  }
 
                   {/* TYPES */}
                   {isExpanded &&

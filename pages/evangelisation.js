@@ -24,6 +24,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     is_whatsapp: false,
     eglise_id: null,
     branche_id: null,
+    type_evangelisation: null,
   });
 
   const [showOtherField, setShowOtherField] = useState(false);
@@ -118,6 +119,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     is_whatsapp: formData.is_whatsapp,
     eglise_id: formData.eglise_id,
     branche_id: formData.branche_id,
+    type_evangelisation: formData.type_evangelisation
   };
 
   console.log("DATA ENVOYÉE EVANGELISE :", finalData);
@@ -198,6 +200,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
       is_whatsapp: false,
       eglise_id: prev.eglise_id,
       branche_id: prev.branche_id,
+      type_evangelisation: prev.type_evangelisation
     }));
     setShowOtherField(false);
     setOtherBesoin("");
@@ -224,6 +227,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
       is_whatsapp: false,
       eglise_id: prev.eglise_id,
       branche_id: prev.branche_id,
+      type_evangelisation: prev.type_evangelisation,      
     }));
     setShowOtherField(false);
     setOtherBesoin("");
@@ -242,7 +246,20 @@ export default function AddEvangelise({ onNewEvangelise }) {
         <h1 className="text-3xl font-bold text-center mb-2">Ajouter une personne évangélisée</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
-    {/* Civilité*/}
+ {/* Type Evangelisatoin*/}
+          <select
+            className="input text-center"
+            value={formData.type_evangelisation}
+            onChange={(e) => setFormData({ ...formData, type_evangelisation: e.target.value })}
+            required
+          >
+            <option value="">Type d'Evangélisation</option>
+            <option value="Homme">Individuel</option>
+            <option value="Sortie_groupe">Sortie de groupe</option>
+            <option value="Grande_evangelisation">Grande campagne d’Evangélisation</option>  
+          </select>
+  
+  {/* Civilité*/}
           <select
             className="input"
             value={formData.sexe}

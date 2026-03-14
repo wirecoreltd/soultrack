@@ -178,7 +178,8 @@ export default function DetailsEvangePopup({ member, onClose, onEdit }) {
           <div className="mt-5 text-sm text-black space-y-1 text-left w-full">
           <p className="text-[11px] text-gray-400 text-right mb-1">Crée le {formatDateFr(member.created_at)}</p>
           <p>🏙️ Ville : {member.ville || "—"}</p>    
-          <p>🎗️ Sexe : {member.sexe || "—"}</p> 
+          <p>🎗️ Civilité : {member.sexe || "—"}</p> 
+          <p>📣 Type d'Evangélisation: {member.type_evangelisation || "—"}</p>
           <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
           <p>☀️ Type : {member.type_conversion || "—"}</p>
           <p>❓ Besoin : {formatBesoin(member.besoin)}</p>

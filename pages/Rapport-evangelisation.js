@@ -313,7 +313,7 @@ moissonneurs
 
                         <div className="flex ml-auto text-white text-sm">
 
-                          <div className="min-w-[110px] text-center ml-28">{typeTotals.hommes}</div>
+                          <div className="min-w-[110px] text-center">{typeTotals.hommes}</div>
                           <div className="min-w-[110px] text-center">{typeTotals.femmes}</div>                          
                           <div className="min-w-[120px] text-center">{typeTotals.priere}</div>
                           <div className="min-w-[140px] text-center">{typeTotals.nouveau}</div>
@@ -366,7 +366,7 @@ moissonneurs
                                 {new Date(r.date).toLocaleDateString()}
                               </div>
 
-                              <div className="min-w-[110px] text-center text-white">{r.hommes ?? "-"}</div>
+                              <div className="min-w-[110px] text-center text-white ml-28">{r.hommes ?? "-"}</div>
                               <div className="min-w-[110px] text-center text-white">{r.femmes ?? "-"}</div>                              
                               <div className="min-w-[120px] text-center text-white">{r.priere ?? "-"}</div>
                               <div className="min-w-[140px] text-center text-white">{r.nouveau_converti ?? "-"}</div>

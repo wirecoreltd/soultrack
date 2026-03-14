@@ -319,150 +319,112 @@ className="bg-amber-400 text-black font-bold px-6 py-2 rounded-lg hover:bg-amber
 </div>
 
 
-{Object.entries(groupedReports).map(([monthKey, monthReports], idx)=>{
+{Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
 
-const [year, monthIndex] = monthKey.split("-").map(Number);
-const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+  const [year, monthIndex] = monthKey.split("-").map(Number);
+  const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
 
-const isExpanded = expandedMonths[monthKey] || false;
+  const isExpanded = expandedMonths[monthKey] || false;
+  const borderColor = borderColors[idx % borderColors.length];
 
-const borderColor = borderColors[idx % borderColors.length];
+  // 🔹 Calcul des totaux du mois
+  const monthTotals = monthReports.reduce(
+    (acc, r) => {
+      acc.hommes += Number(r.hommes) || 0;
+      acc.femmes += Number(r.femmes) || 0;
+      acc.priere += Number(r.priere) || 0;
+      acc.nouveau_converti += Number(r.nouveau_converti) || 0;
+      acc.reconciliation += Number(r.reconciliation) || 0;
+      acc.moissonneurs += Number(r.moissonneurs) || 0;
+      return acc;
+    },
+    { hommes: 0, femmes: 0, priere: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 }
+  );
 
+  return (
+    <div key={monthKey} className="space-y-1">
 
-return (
+      {/* MOIS */}
+      <div
+        className={`flex items-center px-4 py-3 rounded-lg bg-white/25 cursor-pointer border-l-4 ${borderColor}`}
+        onClick={() => toggleMonth(monthKey)}
+      >
+        <div className="min-w-[150px] text-white font-semibold">
+          {isExpanded ? "➖ " : "➕ "} {monthLabel}
+        </div>
+      </div>
 
-<div key={monthKey} className="space-y-1">
+      {/* 🔹 TOTAL MOIS */}
+      {isExpanded && (
+        <div className="flex items-center px-4 py-2 rounded-lg bg-white/20 ml-4 border-l-4 border-green-400 font-semibold text-white">
+          <div className="min-w-[150px]">Total mois</div>
+          <div className="min-w-[120px] text-center">{monthTotals.hommes}</div>
+          <div className="min-w-[120px] text-center">{monthTotals.femmes}</div>
+          <div className="min-w-[120px] text-center text-orange-500">{monthTotals.hommes + monthTotals.femmes}</div>
+          <div className="min-w-[150px] text-center">{monthTotals.priere}</div>
+          <div className="min-w-[180px] text-center">{monthTotals.nouveau_converti}</div>
+          <div className="min-w-[160px] text-center">{monthTotals.reconciliation}</div>
+          <div className="min-w-[160px] text-center">{monthTotals.moissonneurs}</div>
+          <div className="min-w-[140px]"></div>
+        </div>
+      )}
 
+      {/* TYPES */}
+      {isExpanded &&
+        Object.entries(groupByType(monthReports)).map(([type, typeReports]) => {
 
-{/* MOIS */}
+          const typeKey = `${monthKey}-${type}`;
+          const typeExpanded = expandedTypes[typeKey] || false;
 
-<div
-className={`flex items-center px-4 py-3 rounded-lg bg-white/25 cursor-pointer border-l-4 ${borderColor}`}
-onClick={()=>toggleMonth(monthKey)}
->
+          return (
+            <div key={typeKey}>
+              <div
+                onClick={() => toggleType(typeKey)}
+                className="flex items-center px-4 py-2 rounded-lg bg-white/15 cursor-pointer border-l-4 border-yellow-400 ml-4"
+              >
+                <div className="min-w-[150px] text-white font-semibold">
+                  {typeExpanded ? "➖ " : "➕ "} {type}
+                </div>
+              </div>
 
-<div className="min-w-[150px] text-white font-semibold">
-{isExpanded ? "➖ " : "➕ "} {monthLabel}
-</div>
+              {/* RAPPORTS */}
+              {typeExpanded &&
+                typeReports.map((r) => {
+                  const total = (Number(r.hommes) || 0) + (Number(r.femmes) || 0);
 
-</div>
-
-
-{/* TYPES */}
-
-{isExpanded &&
-
-Object.entries(groupByType(monthReports)).map(([type,typeReports])=>{
-
-const typeKey = `${monthKey}-${type}`;
-const typeExpanded = expandedTypes[typeKey] || false;
-
-return (
-
-<div key={typeKey}>
-
-<div
-onClick={()=>toggleType(typeKey)}
-className="flex items-center px-4 py-2 rounded-lg bg-white/15 cursor-pointer border-l-4 border-yellow-400 ml-4"
->
-
-<div className="min-w-[150px] text-white font-semibold">
-{typeExpanded ? "➖ " : "➕ "} {type}
-</div>
-
-</div>
-
-
-{/* RAPPORTS */}
-
-{typeExpanded &&
-
-typeReports.map((r)=>{
-
-const total =
-(Number(r.hommes)||0) +
-(Number(r.femmes)||0);
-
-return (
-
-<div
-key={r.id}
-className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border-l-4 border-blue-500 ml-8"
->
-
-<div className="min-w-[150px] text-white">
-{new Date(r.date).toLocaleDateString()}
-</div>
-
-<div className="min-w-[120px] text-center text-white">
-{r.hommes ?? "-"}
-</div>
-
-<div className="min-w-[120px] text-center text-white">
-{r.femmes ?? "-"}
-</div>
-
-<div className="min-w-[120px] text-center text-orange-500 font-semibold">
-{total}
-</div>
-
-<div className="min-w-[150px] text-center text-white">
-{r.priere ?? "-"}
-</div>
-
-<div className="min-w-[180px] text-center text-white">
-{r.nouveau_converti ?? "-"}
-</div>
-
-<div className="min-w-[160px] text-center text-white">
-{r.reconciliation ?? "-"}
-</div>
-
-<div className="min-w-[160px] text-center text-white">
-{r.moissonneurs ?? "-"}
-</div>
-
-<div className="min-w-[140px] text-center">
-
-<button
-onClick={()=>{
-setSelectedRapport(r);
-setEditOpen(true);
-}}
-className="text-orange-400 underline hover:text-orange-500"
->
-Modifier
-</button>
-
-</div>
-
-</div>
-
-);
-
-})
-
-}
-
-</div>
-
-);
-
-})
-
-}
-
-</div>
-
-);
-
+                  return (
+                    <div
+                      key={r.id}
+                      className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border-l-4 border-blue-500 ml-8"
+                    >
+                      <div className="min-w-[150px] text-white">{new Date(r.date).toLocaleDateString()}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.hommes ?? "-"}</div>
+                      <div className="min-w-[120px] text-center text-white">{r.femmes ?? "-"}</div>
+                      <div className="min-w-[120px] text-center text-orange-500 font-semibold">{total}</div>
+                      <div className="min-w-[150px] text-center text-white">{r.priere ?? "-"}</div>
+                      <div className="min-w-[180px] text-center text-white">{r.nouveau_converti ?? "-"}</div>
+                      <div className="min-w-[160px] text-center text-white">{r.reconciliation ?? "-"}</div>
+                      <div className="min-w-[160px] text-center text-white">{r.moissonneurs ?? "-"}</div>
+                      <div className="min-w-[140px] text-center">
+                        <button
+                          onClick={() => {
+                            setSelectedRapport(r);
+                            setEditOpen(true);
+                          }}
+                          className="text-orange-400 underline hover:text-orange-500"
+                        >
+                          Modifier
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          );
+        })}
+    </div>
+  );
 })}
-
-</div>
-
-</div>
-
-)}
 
 {selectedRapport && (
 

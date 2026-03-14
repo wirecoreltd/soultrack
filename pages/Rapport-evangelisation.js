@@ -221,7 +221,7 @@ moissonneurs
       {/* HEADER DESKTOP */}
       <div className="hidden md:flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
         <div className="min-w-[150px] ml-2">Type / Date</div>
-        <div className="min-w-[110px] text-center ml-28">Hommes</div>
+        <div className="min-w-[110px] text-center ml-20">Hommes</div>
         <div className="min-w-[110px] text-center">Femmes</div>        
         <div className="min-w-[120px] text-center">Prières</div>
         <div className="min-w-[140px] text-center">Nouv. conv</div>
@@ -366,7 +366,7 @@ moissonneurs
                                 {new Date(r.date).toLocaleDateString()}
                               </div>
 
-                              <div className="min-w-[110px] text-center text-white ml-28">{r.hommes ?? "-"}</div>
+                              <div className="min-w-[110px] text-center text-white ml-20">{r.hommes ?? "-"}</div>
                               <div className="min-w-[110px] text-center text-white">{r.femmes ?? "-"}</div>                              
                               <div className="min-w-[120px] text-center text-white">{r.priere ?? "-"}</div>
                               <div className="min-w-[140px] text-center text-white">{r.nouveau_converti ?? "-"}</div>

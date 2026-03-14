@@ -428,7 +428,7 @@ setTimeout(() => setSuccess(false), 3000); // 3000ms = 3 secondes
         </form>
 
         {success && (
-          <p className="text-green-600 font-semibold text-center mt-3 animate-bounce">
+          <p className="text-green-600 font-semibold text-center mt-3">
             ✅ Personne évangélisée ajoutée avec succès !
           </p>
         )}

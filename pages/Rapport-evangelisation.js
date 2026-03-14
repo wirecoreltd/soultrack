@@ -296,11 +296,11 @@ moissonneurs
                     <div className="text-white font-medium">{typeExpanded ? "➖ " : "➕ "} {type}</div>
                   </div>
 
-                  {/* RAPPORTS DES LIGNES */}
+                  {/* RAPPORTS DES LIGNES DESKTOP */}
                   {typeExpanded && typeReports.map((r) => {
                     const total = (Number(r.hommes)||0) + (Number(r.femmes)||0);
                     return (
-                      <div key={r.id} className="grid grid-cols-[150px_110px_110px_110px_120px_140px_130px_130px_120px] md:grid hidden items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border-l-4 border-blue-500 ml-8">
+                      <div key={r.id} className="hidden md:grid grid-cols-[150px_110px_110px_110px_120px_140px_130px_130px_120px] items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border-l-4 border-blue-500 ml-8">
                         <div className="text-white">{new Date(r.date).toLocaleDateString()}</div>
                         <div className="text-center text-white">{r.hommes ?? "-"}</div>
                         <div className="text-center text-white">{r.femmes ?? "-"}</div>
@@ -310,12 +310,7 @@ moissonneurs
                         <div className="text-center text-white">{r.reconciliation ?? "-"}</div>
                         <div className="text-center text-white">{r.moissonneurs ?? "-"}</div>
                         <div className="text-center">
-                          <button
-                            onClick={()=>{ setSelectedRapport(r); setEditOpen(true); }}
-                            className="text-orange-400 underline hover:text-orange-500"
-                          >
-                            ✏️
-                          </button>
+                          <button onClick={()=>{ setSelectedRapport(r); setEditOpen(true); }} className="text-orange-400 underline hover:text-orange-500">✏️</button>
                         </div>
                       </div>
                     );
@@ -329,12 +324,7 @@ moissonneurs
                         H: {r.hommes} | F: {r.femmes} | J: {r.jeunes} | P: {r.priere} | N: {r.nouveau_converti} | R: {r.reconciliation} | M: {r.moissonneurs}
                       </div>
                       <div className="mt-1">
-                        <button
-                          onClick={()=>{ setSelectedRapport(r); setEditOpen(true); }}
-                          className="text-orange-400 underline hover:text-orange-500 text-xs"
-                        >
-                          ✏️ Modifier
-                        </button>
+                        <button onClick={()=>{ setSelectedRapport(r); setEditOpen(true); }} className="text-orange-400 underline hover:text-orange-500 text-xs">✏️ Modifier</button>
                       </div>
                     </div>
                   ))}
@@ -344,6 +334,9 @@ moissonneurs
             })}
           </div>
         </div>
+      ))}
+    </div>
+  </div>
 )}
 
       {selectedRapport && (

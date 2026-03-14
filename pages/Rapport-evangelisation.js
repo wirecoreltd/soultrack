@@ -43,10 +43,10 @@ export default function RapportEvangelisationPage() {
 
     const { data, error } = await query;
     if (error) {
-      console.error(error);
-      setMessage("Erreur lors du chargement des rapports");
-      return;
-    }
+  console.error("Supabase fetch error:", error);
+  setMessage(`Erreur: ${error.message}`);
+  return;
+}
 
     setRapports(data || []);
     setShowTable(true);

@@ -248,7 +248,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
  {/* Type Evangelisatoin*/}
           <select
-            className="input"
+            className="input text-center"
             value={formData.type_evangelisation}
             onChange={(e) => setFormData({ ...formData, type_evangelisation: e.target.value })}
             required

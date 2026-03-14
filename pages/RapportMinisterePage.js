@@ -170,7 +170,7 @@ function RapportMinistere() {
 
       {/* Tableau ministères */}
         <div className="w-full flex justify-center mt-6 mb-6">
-          <div className="w-full max-w-2xl md:max-w-4xl overflow-x-auto space-y-2">
+          <div className="w-full max-w-xl overflow-x-auto space-y-2">
             <div className="grid grid-cols-[2fr_1fr] text-sm md:text-base font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div>Ministère</div>
               <div className="text-center text-orange-400">Nombre de serviteurs</div>

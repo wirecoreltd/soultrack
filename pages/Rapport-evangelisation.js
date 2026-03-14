@@ -8,8 +8,8 @@ import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function RapportEvangelisation() {
   const [rapports, setRapports] = useState([]);
-  const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFinF = useState("");
+  const [dateDebut, setDateDebut] = useState(""); 
+  const [dateFin, setDateFin] = useState("");
   const [message, setMessage] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});

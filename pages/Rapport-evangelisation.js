@@ -222,8 +222,7 @@ moissonneurs
       <div className="hidden md:flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
         <div className="min-w-[150px]">Type / Date</div>
         <div className="min-w-[110px] text-center">Hommes</div>
-        <div className="min-w-[110px] text-center">Femmes</div>
-        <div className="min-w-[110px] text-center">Total</div>
+        <div className="min-w-[110px] text-center">Femmes</div>        
         <div className="min-w-[120px] text-center">Prières</div>
         <div className="min-w-[140px] text-center">Nouv. conv</div>
         <div className="min-w-[130px] text-center">Recon</div>
@@ -259,8 +258,7 @@ moissonneurs
                 <div className="flex ml-auto text-white font-semibold text-sm">
 
                   <div className="min-w-[110px] text-center">{monthTotals.hommes}</div>
-                  <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>
-                  <div className="min-w-[110px] text-center text-orange-300">{monthTotals.total}</div>
+                  <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>                  
                   <div className="min-w-[120px] text-center">{monthTotals.priere}</div>
                   <div className="min-w-[140px] text-center">{monthTotals.nouveau}</div>
                   <div className="min-w-[130px] text-center">{monthTotals.reconciliation}</div>
@@ -278,8 +276,7 @@ moissonneurs
 
                 <div className="grid grid-cols-2 gap-1 text-sm mt-1">
                   <div>Hommes: {monthTotals.hommes}</div>
-                  <div>Femmes: {monthTotals.femmes}</div>
-                  <div>Total: {monthTotals.total}</div>
+                  <div>Femmes: {monthTotals.femmes}</div>                  
                   <div>Prières: {monthTotals.priere}</div>
                   <div>NouvConv: {monthTotals.nouveau}</div>
                   <div>Recon: {monthTotals.reconciliation}</div>
@@ -317,8 +314,7 @@ moissonneurs
                         <div className="flex ml-auto text-white text-sm">
 
                           <div className="min-w-[110px] text-center">{typeTotals.hommes}</div>
-                          <div className="min-w-[110px] text-center">{typeTotals.femmes}</div>
-                          <div className="min-w-[110px] text-center text-orange-300">{typeTotals.total}</div>
+                          <div className="min-w-[110px] text-center">{typeTotals.femmes}</div>                          
                           <div className="min-w-[120px] text-center">{typeTotals.priere}</div>
                           <div className="min-w-[140px] text-center">{typeTotals.nouveau}</div>
                           <div className="min-w-[130px] text-center">{typeTotals.reconciliation}</div>
@@ -337,8 +333,7 @@ moissonneurs
 
                         <div className="grid grid-cols-2 gap-1 text-sm mt-1">
                           <div>Hommes: {typeTotals.hommes}</div>
-                          <div>Femmes: {typeTotals.femmes}</div>
-                          <div>Total: {typeTotals.total}</div>
+                          <div>Femmes: {typeTotals.femmes}</div>                          
                           <div>Prières: {typeTotals.priere}</div>
                           <div>NouvConv: {typeTotals.nouveau}</div>
                           <div>Recon: {typeTotals.reconciliation}</div>
@@ -372,8 +367,7 @@ moissonneurs
                               </div>
 
                               <div className="min-w-[110px] text-center text-white">{r.hommes ?? "-"}</div>
-                              <div className="min-w-[110px] text-center text-white">{r.femmes ?? "-"}</div>
-                              <div className="min-w-[110px] text-center text-orange-400 font-semibold">{total}</div>
+                              <div className="min-w-[110px] text-center text-white">{r.femmes ?? "-"}</div>                              
                               <div className="min-w-[120px] text-center text-white">{r.priere ?? "-"}</div>
                               <div className="min-w-[140px] text-center text-white">{r.nouveau_converti ?? "-"}</div>
                               <div className="min-w-[130px] text-center text-white">{r.reconciliation ?? "-"}</div>
@@ -403,8 +397,7 @@ moissonneurs
 
                               <div className="grid grid-cols-2 gap-1">
                                 <div>Hommes: {r.hommes ?? "-"}</div>
-                                <div>Femmes: {r.femmes ?? "-"}</div>
-                                <div>Total: {total}</div>
+                                <div>Femmes: {r.femmes ?? "-"}</div>                                
                                 <div>Prières: {r.priere ?? "-"}</div>
                                 <div>NouvConv: {r.nouveau_converti ?? "-"}</div>
                                 <div>Recon: {r.reconciliation ?? "-"}</div>

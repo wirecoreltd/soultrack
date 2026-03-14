@@ -526,7 +526,8 @@ const calculateTypeTotals = (rows) => {
                           [typeTemps]: !prev[typeTemps]
                         }))}
                       >
-                        <div className="min-w-[220px] max-w-[220px] text-white font-semibold flex items-center gap-2 whitespace-pre-line break-words">
+                        <div className="min-w-[220px] max-w-[220px] text-white font-semibold">
+                          <div className="ml-6 flex items-center gap-2 whitespace-pre-line break-words">
                           {typeExpanded ? "➖" : "➕"} {splitTypeName(typeTemps, 15)}
                         </div>
                       
@@ -545,8 +546,9 @@ const calculateTypeTotals = (rows) => {
                       {typeExpanded && rows.map(r => {
                         const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
                         return (
-                          <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-yellow-500">
-                            <div className="min-w-[220px] pl-12 break-words text-white">{formatDateFR(r.date)}</div>
+                          <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-yellow-500 cursor-pointer">
+                            <div className="min-w-[220px] text-white">
+                            <div className="ml-12 break-words">{formatDateFR(r.date)}</div>
                             <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
                             <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
                             <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>

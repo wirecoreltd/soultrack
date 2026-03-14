@@ -147,6 +147,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
       .eq("date", today)
       .eq("eglise_id", formData.eglise_id)
       .eq("branche_id", formData.branche_id)
+      .eq("type_evangelisation", formData.type_evangelisation) 
       .single();
 
     if (reportError && reportError.code !== "PGRST116") {
@@ -186,6 +187,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
     // 🔹 Afficher le message de succès via le composant
     setSuccess(true);
+setTimeout(() => setSuccess(false), 3000); // 3000ms = 3 secondes
 
     // 🔹 Reset formulaire (sauf eglise_id et branche_id)
     setFormData((prev) => ({

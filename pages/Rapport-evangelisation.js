@@ -15,7 +15,7 @@ export default function RapportEvangelisationPage() {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from("evangelisation")
+        .from("rapport_evangelisation")
         .select("*")
         .order("date", { ascending: true });
 

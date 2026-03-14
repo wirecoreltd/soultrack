@@ -366,7 +366,7 @@ moissonneurs
                                 {new Date(r.date).toLocaleDateString()}
                               </div>
 
-                              <div className="min-w-[110px] text-center text-white">{r.hommes ?? "-"}</div>
+                              <div className="min-w-[110px] text-center text-white ml 28">{r.hommes ?? "-"}</div>
                               <div className="min-w-[110px] text-center text-white">{r.femmes ?? "-"}</div>                              
                               <div className="min-w-[120px] text-center text-white">{r.priere ?? "-"}</div>
                               <div className="min-w-[140px] text-center text-white">{r.nouveau_converti ?? "-"}</div>

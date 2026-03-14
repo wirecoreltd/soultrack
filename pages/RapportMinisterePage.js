@@ -168,29 +168,30 @@ function RapportMinistere() {
         </div>
       </div>
 
-      {/* Tableau ministères */}
-        <div className="w-full flex justify-center mt-6 mb-6">
-          <div className="w-full max-w-xl overflow-x-auto space-y-2">
-            <div className="grid grid-cols-[2fr_1fr] text-sm md:text-base font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div>Ministère</div>
-              <div className="text-center text-orange-400">Nombre de serviteurs</div>
-            </div>
-        
-            {loading && (
-              <div className="text-white text-center py-4">Chargement...</div>
-            )}
-        
-            {rapports.map((r, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-[2fr_1fr] items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
-              >
-                <div className="text-white font-semibold">{r.ministere}</div>
-                <div className="text-center text-orange-400 font-bold">{r.total}</div>
-              </div>
-            ))}
+      {/* 🔹 Tableau ministères responsive avec style transparent et bordure colorée */}
+      <div className="w-full flex justify-center mt-6 mb-6">
+        <div className="w-full max-w-2xl overflow-x-auto space-y-2">
+          {/* Header */}
+          <div className="grid grid-cols-[2fr_1fr] text-sm md:text-base font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div>Ministère</div>
+            <div className="text-center text-orange-400">Nombre de serviteurs</div>
           </div>
+
+          {loading && (
+            <div className="text-white text-center py-4">Chargement...</div>
+          )}
+
+          {rapports.map((r, index) => (
+            <div
+              key={index}
+              className="grid grid-cols-[2fr_1fr] items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+            >
+              <div className="text-white font-semibold">{r.ministere}</div>
+              <div className="text-center text-orange-400 font-bold">{r.total}</div>
+            </div>
+          ))}
         </div>
+      </div>
 
       {(!egliseId || !brancheId) && (
         <p className="text-white text-center mt-2">

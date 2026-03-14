@@ -254,9 +254,11 @@ export default function AddEvangelise({ onNewEvangelise }) {
             required
           >
             <option value="">Type d'Evangélisation</option>
-            <option value="Homme">Individuel</option>
-            <option value="Sortie_groupe">Sortie de groupe</option>
-            <option value="Grande_evangelisation">Grande campagne d’Evangélisation</option>  
+            <option value="Sortie de groupe">Sortie de groupe</option>
+            <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
+            <option value="Évangélisation de rue">Évangélisation de rue</option>  
+            <option value="Évangélisation maison">Évangélisation maison</option>    
+            <option value="Évangélisation stade">Évangélisation stade</option> 
           </select>
   
   {/* Civilité*/}

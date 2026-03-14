@@ -9,7 +9,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 export default function RapportEvangelisation() {
   const [rapports, setRapports] = useState([]);
   const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
+  const [dateFin, setDateFinF = useState("");
   const [message, setMessage] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
@@ -80,8 +80,29 @@ export default function RapportEvangelisation() {
             className="border border-gray-400 rounded-lg px-4 py-2 bg-transparent text-white"
           />
         </div>
-        <button
-          onClick={fetchRapports}
+       <button
+          onClick={async () => {
+            if (!egliseId || !brancheId) {
+              // Refetch profile au cas où
+              const { data: sessionData } = await supabase.auth.getSession();
+              const user = sessionData?.session?.user;
+              if (!user) return;
+        
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("eglise_id, branche_id")
+                .eq("id", user.id)
+                .single();
+        
+              if (profile) {
+                setEgliseId(profile.eglise_id);
+                setBrancheId(profile.branche_id);
+                await fetchRapports(profile.eglise_id, profile.branche_id); // fetch avec les IDs
+              }
+            } else {
+              fetchRapports();
+            }
+          }}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end"
         >
           Générer

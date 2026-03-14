@@ -485,6 +485,7 @@ const calculateTypeTotals = (rows) => {
           const [year, monthIndex] = monthKey.split("-").map(Number);
           const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
           const borderColor = borderColors[monthIdx % borderColors.length];
+          const [typeCollapsed, setTypeCollapsed] = useState({}); // gère collapse par type
 
           // Regrouper par typeTemps
           const reportsByType = {};
@@ -497,11 +498,12 @@ const calculateTypeTotals = (rows) => {
             <div key={monthKey} className="space-y-1">
 
               {/* MOIS */}
-              <div className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 ${borderColor}`}>
-                <div className="min-w-[220px] pl-2 text-white font-semibold">{monthLabel}</div>
+              <div className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 ${borderColor}`} 
+                   onClick={() => setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }))}>
+                <div className="min-w-[220px] pl-2 text-white font-semibold">{expandedMonths[monthKey] ? "➖" : "➕"} {monthLabel}</div>
               </div>
 
-              {Object.entries(reportsByType).map(([type, reportsList]) => {
+              {expandedMonths[monthKey] && Object.entries(reportsByType).map(([type, reportsList]) => {
                 const totalType = reportsList.reduce((acc, r) => {
                   acc.hommes += Number(r.hommes || 0);
                   acc.femmes += Number(r.femmes || 0);
@@ -513,25 +515,28 @@ const calculateTypeTotals = (rows) => {
                   return acc;
                 }, {hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0});
 
+                const collapsed = typeCollapsed[type] || false;
+
                 return (
                   <div key={type} className="space-y-1">
 
                     {/* TOTAl PAR TYPE */}
-                    <div className="flex items-center px-4 py-2 bg-yellow-500/30 rounded-lg text-white font-semibold">
-                      <div className="min-w-[220px] pl-2">{type} - Total</div>
-                      <div className="min-w-[120px] text-center">{totalType.hommes}</div>
-                      <div className="min-w-[120px] text-center">{totalType.femmes}</div>
-                      <div className="min-w-[120px] text-center">{totalType.jeunes}</div>
-                      <div className="min-w-[130px] text-center">{totalType.hommes + totalType.femmes + totalType.jeunes}</div>
-                      <div className="min-w-[120px] text-center">{totalType.enfants}</div>
-                      <div className="min-w-[140px] text-center">{totalType.connectes}</div>
-                      <div className="min-w-[150px] text-center">{totalType.nouveauxVenus}</div>
-                      <div className="min-w-[180px] text-center">{totalType.nouveauxConvertis}</div>
+                    <div className="flex items-center px-4 py-2 cursor-pointer hover:bg-white/10" 
+                         onClick={() => setTypeCollapsed(prev => ({ ...prev, [type]: !prev[type] }))}>
+                      <div className="min-w-[220px] pl-2 text-orange-400 font-semibold">{collapsed ? "➖" : "➕"} {type} - Total</div>
+                      <div className="min-w-[120px] text-center text-orange-400">{totalType.hommes}</div>
+                      <div className="min-w-[120px] text-center text-orange-400">{totalType.femmes}</div>
+                      <div className="min-w-[120px] text-center text-orange-400">{totalType.jeunes}</div>
+                      <div className="min-w-[130px] text-center text-orange-400">{totalType.hommes + totalType.femmes + totalType.jeunes}</div>
+                      <div className="min-w-[120px] text-center text-orange-400">{totalType.enfants}</div>
+                      <div className="min-w-[140px] text-center text-orange-400">{totalType.connectes}</div>
+                      <div className="min-w-[150px] text-center text-orange-400">{totalType.nouveauxVenus}</div>
+                      <div className="min-w-[180px] text-center text-orange-400">{totalType.nouveauxConvertis}</div>
                       <div className="min-w-[140px]"></div>
                     </div>
 
                     {/* RAPPORTS INDIVIDUELS */}
-                    {reportsList.map(r => {
+                    {!collapsed && reportsList.map(r => {
                       const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
                       return (
                         <div key={r.id} className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}>
@@ -559,6 +564,83 @@ const calculateTypeTotals = (rows) => {
         })}
       </div>
     </div>
+
+    {/* ================= MOBILE : CARTES ================= */}
+    <div className="flex flex-col gap-4 w-full max-w-md mx-auto md:hidden">
+      {Object.entries(groupedReports).map(([monthKey, monthReports], monthIdx) => {
+        const [year, monthIndex] = monthKey.split("-").map(Number);
+        const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+        const [typeCollapsedMobile, setTypeCollapsedMobile] = useState({});
+
+        const reportsByType = {};
+        monthReports.forEach(r => {
+          if (!reportsByType[r.typeTemps]) reportsByType[r.typeTemps] = [];
+          reportsByType[r.typeTemps].push(r);
+        });
+
+        return (
+          <div key={monthKey} className="space-y-2">
+
+            {/* MOIS */}
+            <div className="bg-white/20 text-white font-bold px-4 py-2 rounded-lg text-center cursor-pointer"
+                 onClick={() => setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }))}>
+              {expandedMonths[monthKey] ? "➖" : "➕"} {monthLabel}
+            </div>
+
+            {expandedMonths[monthKey] && Object.entries(reportsByType).map(([type, reportsList]) => {
+              const totalType = reportsList.reduce((acc, r) => {
+                acc.hommes += Number(r.hommes || 0);
+                acc.femmes += Number(r.femmes || 0);
+                acc.jeunes += Number(r.jeunes || 0);
+                acc.enfants += Number(r.enfants || 0);
+                acc.connectes += Number(r.connectes || 0);
+                acc.nouveauxVenus += Number(r.nouveauxVenus || 0);
+                acc.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
+                return acc;
+              }, {hommes:0,femmes:0,jeunes:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0});
+
+              const collapsed = typeCollapsedMobile[type] || false;
+
+              return (
+                <div key={type} className="space-y-1">
+
+                  {/* TOTALS PAR TYPE */}
+                  <div className="flex justify-between px-3 py-2 text-orange-400 font-semibold rounded-lg cursor-pointer hover:bg-white/10"
+                       onClick={() => setTypeCollapsedMobile(prev => ({ ...prev, [type]: !prev[type] }))}>
+                    <span>{type}</span>
+                    <span>Total: {totalType.hommes + totalType.femmes + totalType.jeunes}</span>
+                  </div>
+
+                  {/* RAPPORTS INDIVIDUELS */}
+                  {!collapsed && reportsList.map(r => (
+                    <div key={r.id} className="bg-white/10 text-white rounded-lg p-3 flex flex-col gap-1">
+                      <div className="font-semibold">{formatDateFR(r.date)} - {r.typeTemps}</div>
+                      <div className="flex justify-between text-sm">
+                        <span>H: {r.hommes}</span>
+                        <span>F: {r.femmes}</span>
+                        <span>J: {r.jeunes}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>E: {r.enfants}</span>
+                        <span>C: {r.connectes}</span>
+                        <span>NV: {r.nouveauxVenus}</span>
+                        <span>NC: {r.nouveauxConvertis}</span>
+                      </div>
+                      <div className="flex justify-end gap-2 mt-2">
+                        <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-500">✏️</button>
+                        <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 hover:text-red-500">🗑️</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+        )
+      })}
+    </div>
+  </div>
+)}
 
     {/* ================= MOBILE : CARTES ================= */}
     <div className="flex flex-col gap-4 w-full max-w-md mx-auto md:hidden">

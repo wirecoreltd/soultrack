@@ -227,8 +227,7 @@ export default function Evangelisation() {
         Date_Evangelise: m.created_at, 
         date_suivi: new Date().toISOString(),
         eglise_id: profile?.eglise_id || null,
-        type_evangelisation: profile?.type_evangelisation || null,
-        type_evangelisation: profile?.type_evangelisation || null,
+        type_evangelisation: profile?.type_evangelisation || null,       
       }));
 
       const { error: insertError } = await supabase
@@ -363,8 +362,8 @@ export default function Evangelisation() {
 
                {detailsOpen[member.id] && (                  
                   <div className="text-sm mt-2 space-y-1">
-                    <p>🎗️ Civilité : {member.sexe || "—"}</p> 
                     <p>📣 Type d'Evangélisation : {member.type_evangelisation || ""}</p>
+                    <p>🎗️ Civilité : {member.sexe || "—"}</p>                     
                     <p>⏳ Tranche d'age : {member.age || "—"}</p>
                     <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>

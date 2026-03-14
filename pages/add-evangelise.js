@@ -178,6 +178,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
           reconciliation: formData.type_conversion === "Réconciliation" ? 1 : 0,          
           eglise_id: formData.eglise_id,
           branche_id: formData.branche_id,
+          type_evangelisation: formData.type_evangelisation,
         }]);
     }
 

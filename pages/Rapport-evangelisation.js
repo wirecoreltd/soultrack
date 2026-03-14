@@ -110,6 +110,40 @@ export default function RapportEvangelisation() {
     return map;
   };
 
+  // -------- TOTALS --------
+
+const getTotals = (reports) => {
+
+let hommes = 0;
+let femmes = 0;
+let priere = 0;
+let nouveau = 0;
+let reconciliation = 0;
+let moissonneurs = 0;
+
+reports.forEach(r => {
+
+hommes += Number(r.hommes) || 0;
+femmes += Number(r.femmes) || 0;
+priere += Number(r.priere) || 0;
+nouveau += Number(r.nouveau_converti) || 0;
+reconciliation += Number(r.reconciliation) || 0;
+moissonneurs += Number(r.moissonneurs) || 0;
+
+});
+
+return {
+hommes,
+femmes,
+total: hommes + femmes,
+priere,
+nouveau,
+reconciliation,
+moissonneurs
+};
+
+};
+
   // ---------------- LAST MONTH ----------------
   const getLastMonthKey = (data) => {
     if (!data || data.length === 0) return null;
@@ -202,6 +236,7 @@ export default function RapportEvangelisation() {
               const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
               const isExpanded = expandedMonths[monthKey] || false;
               const borderColor = borderColors[idx % borderColors.length];
+              const monthTotals = getTotals(monthReports);
 
               // 🔹 Totaux mois
               const monthTotals = monthReports.reduce((acc, r) => {
@@ -218,28 +253,23 @@ export default function RapportEvangelisation() {
                 <div key={monthKey} className="space-y-1">
 
                   {/* MOIS */}
-                  <div
-                    className={`flex items-center px-4 py-3 rounded-lg bg-white/25 cursor-pointer border-l-4 ${borderColor}`}
-                    onClick={()=>toggleMonth(monthKey)}
-                  >
-                    <div className="min-w-[150px] text-white font-semibold">
-                      {isExpanded ? "➖ " : "➕ "} {monthLabel}
-                    </div>
+                  <div className={`flex items-center px-4 py-3 rounded-lg bg-white/25 cursor-pointer border-l-4 ${borderColor}`}
+                  onClick={()=>toggleMonth(monthKey)}
+                  >                  
+                  <div className="min-w-[150px] text-white font-semibold">
+                  {isExpanded ? "➖ " : "➕ "} {monthLabel}
                   </div>
-
-                  {/* 🔹 TOTAL MOIS */}
-                  {isExpanded && (
-                    <div className="flex items-center px-4 py-2 rounded-lg bg-white/20 ml-4 border-l-4 border-green-400 font-semibold text-white">
-                      <div className="min-w-[150px]">Total mois</div>
-                      <div className="min-w-[120px] text-center">{monthTotals.hommes}</div>
-                      <div className="min-w-[120px] text-center">{monthTotals.femmes}</div>
-                      <div className="min-w-[120px] text-center text-orange-500">{monthTotals.hommes + monthTotals.femmes}</div>
-                      <div className="min-w-[150px] text-center">{monthTotals.priere}</div>
-                      <div className="min-w-[180px] text-center">{monthTotals.nouveau_converti}</div>
-                      <div className="min-w-[160px] text-center">{monthTotals.reconciliation}</div>
-                      <div className="min-w-[160px] text-center">{monthTotals.moissonneurs}</div>
-                      <div className="min-w-[140px]"></div>
-                    </div>
+                  
+                  <div className="ml-auto flex gap-6 text-white font-semibold text-sm">                  
+                  <div>H: {monthTotals.hommes}</div>
+                  <div>F: {monthTotals.femmes}</div>
+                  <div className="text-orange-300">T: {monthTotals.total}</div>
+                  <div>P: {monthTotals.priere}</div>
+                  <div>N: {monthTotals.nouveau}</div>
+                  <div>R: {monthTotals.reconciliation}</div>
+                  <div>M: {monthTotals.moissonneurs}</div>                  
+                  </div>                  
+                  </div>
                   )}
 
                   {/* TYPES */}

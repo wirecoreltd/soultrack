@@ -213,30 +213,30 @@ moissonneurs
         <div className="text-center text-white mt-4 font-medium">{message}</div>
       )}
 
-      {/* TABLEAU */}
+     {/* TABLEAU */}
 {showTable && (
   <div id="rapport-table" className="w-full flex justify-center mt-8">
-    <div className="w-full md:w-max space-y-2">
+    <div className="w-full md:w-max space-y-2 overflow-x-auto">
 
       {/* HEADER DESKTOP */}
-      <div className="hidden md:flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-        <div className="min-w-[150px] ml-2">Type / Date</div>
-        <div className="min-w-[110px] text-center ml-25">Hommes</div>
-        <div className="min-w-[110px] text-center">Femmes</div>        
-        <div className="min-w-[120px] text-center">Prières</div>
-        <div className="min-w-[140px] text-center">Nouv. conv</div>
-        <div className="min-w-[130px] text-center">Recon</div>
-        <div className="min-w-[130px] text-center">Moiss</div>
-        <div className="min-w-[120px] text-center">Actions</div>
+      <div className="hidden md:grid grid-cols-[150px_100px_100px_100px_120px_130px_120px_120px_120px] font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+        <div>Type / Date</div>
+        <div className="text-center">Hommes</div>
+        <div className="text-center">Femmes</div>
+        <div className="text-center">Jeunes</div>
+        <div className="text-center">Prières</div>
+        <div className="text-center">NouvConv</div>
+        <div className="text-center">Recon</div>
+        <div className="text-center">Moiss</div>
+        <div className="text-center">Actions</div>
       </div>
 
+      {/* DATA */}
       {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
-
         const [year, monthIndex] = monthKey.split("-").map(Number);
         const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
         const isExpanded = expandedMonths[monthKey] || false;
         const borderColor = borderColors[idx % borderColors.length];
-
         const monthTotals = getTotals(monthReports);
 
         return (
@@ -244,178 +244,69 @@ moissonneurs
 
             {/* MOIS */}
             <div
-              className={`px-4 py-3 rounded-lg bg-white/25 cursor-pointer border-l-4 ${borderColor}`}
+              className={`flex items-center px-4 py-3 rounded-lg bg-white/25 cursor-pointer border-l-4 ${borderColor}`}
               onClick={() => toggleMonth(monthKey)}
             >
-
-              {/* DESKTOP */}
-              <div className="hidden md:flex items-center">
-
-                <div className="min-w-[150px] text-white font-semibold">
-                  {isExpanded ? "➖ " : "➕ "} {monthLabel}
-                </div>
-
-                <div className="flex ml-auto text-white font-semibold text-sm">
-
-                  <div className="min-w-[110px] text-center">{monthTotals.hommes}</div>
-                  <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>                  
-                  <div className="min-w-[120px] text-center">{monthTotals.priere}</div>
-                  <div className="min-w-[140px] text-center">{monthTotals.nouveau}</div>
-                  <div className="min-w-[130px] text-center">{monthTotals.reconciliation}</div>
-                  <div className="min-w-[130px] text-center">{monthTotals.moissonneurs}</div>
-                  <div className="min-w-[120px]"></div>
-
-                </div>
+              <div className="font-semibold text-white min-w-[150px]">
+                {isExpanded ? "➖ " : "➕ "} {monthLabel}
               </div>
 
-              {/* MOBILE */}
-              <div className="md:hidden text-white">
-                <div className="font-semibold">
-                  {isExpanded ? "➖ " : "➕ "} {monthLabel}
-                </div>
-
-                <div className="grid grid-cols-2 gap-1 text-sm mt-1">
-                  <div>Hommes: {monthTotals.hommes}</div>
-                  <div>Femmes: {monthTotals.femmes}</div>                 
-                  <div>Prières: {monthTotals.priere}</div>
-                  <div>NouvConv: {monthTotals.nouveau}</div>
-                  <div>Recon: {monthTotals.reconciliation}</div>
-                  <div>Moiss: {monthTotals.moissonneurs}</div>
-                </div>
+              <div className="ml-auto flex gap-6 text-white font-semibold text-sm">
+                <div>H: {monthTotals.hommes}</div>
+                <div>F: {monthTotals.femmes}</div>
+                <div className="text-orange-300">T: {monthTotals.total}</div>
+                <div>P: {monthTotals.priere}</div>
+                <div>N: {monthTotals.nouveau}</div>
+                <div>R: {monthTotals.reconciliation}</div>
+                <div>M: {monthTotals.moissonneurs}</div>
               </div>
-
             </div>
-
 
             {/* TYPES */}
             {isExpanded &&
               Object.entries(groupByType(monthReports)).map(([type, typeReports]) => {
-
                 const typeKey = `${monthKey}-${type}`;
                 const typeExpanded = expandedTypes[typeKey] || false;
-                const typeTotals = getTotals(typeReports);
 
                 return (
                   <div key={typeKey}>
-
-                    {/* TYPE */}
                     <div
                       onClick={() => toggleType(typeKey)}
-                      className="px-4 py-2 rounded-lg bg-white/15 cursor-pointer border-l-4 border-yellow-400 ml-4"
+                      className="flex items-center px-4 py-2 rounded-lg bg-white/15 cursor-pointer border-l-4 border-yellow-400 ml-4"
                     >
-
-                      {/* DESKTOP */}
-                      <div className="hidden md:flex items-center">
-
-                        <div className="min-w-[150px] text-white font-semibold">
-                          {typeExpanded ? "➖ " : "➕ "} {type}
-                        </div>
-
-                        <div className="flex ml-auto text-white text-sm">
-
-                          <div className="min-w-[110px] text-center">{typeTotals.hommes}</div>
-                          <div className="min-w-[110px] text-center">{typeTotals.femmes}</div>                          
-                          <div className="min-w-[120px] text-center">{typeTotals.priere}</div>
-                          <div className="min-w-[140px] text-center">{typeTotals.nouveau}</div>
-                          <div className="min-w-[130px] text-center">{typeTotals.reconciliation}</div>
-                          <div className="min-w-[130px] text-center">{typeTotals.moissonneurs}</div>
-                          <div className="min-w-[120px]"></div>
-
-                        </div>
-
+                      <div className="min-w-[150px] text-white font-semibold">
+                        {typeExpanded ? "➖ " : "➕ "} {type}
                       </div>
-
-                      {/* MOBILE */}
-                      <div className="md:hidden text-white">
-                        <div className="font-semibold">
-                          {typeExpanded ? "➖ " : "➕ "} {type}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-1 text-sm mt-1">
-                          <div>Hommes: {typeTotals.hommes}</div>
-                          <div>Femmes: {typeTotals.femmes}</div>                          
-                          <div>Prières: {typeTotals.priere}</div>
-                          <div>NouvConv: {typeTotals.nouveau}</div>
-                          <div>Recon: {typeTotals.reconciliation}</div>
-                          <div>Moiss: {typeTotals.moissonneurs}</div>
-                        </div>
-                      </div>
-
                     </div>
-
 
                     {/* RAPPORTS */}
                     {typeExpanded &&
                       typeReports.map((r) => {
-
-                        const total =
-                          (Number(r.hommes) || 0) +
-                          (Number(r.femmes) || 0);
-
+                        const total = (Number(r.hommes) || 0) + (Number(r.femmes) || 0);
                         return (
-
                           <div
                             key={r.id}
-                            className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border-l-4 border-blue-500 ml-8"
+                            className="hidden md:grid grid-cols-[150px_100px_100px_100px_120px_130px_120px_120px_120px] items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border-l-4 border-blue-500 ml-8"
                           >
-
-                            {/* DESKTOP */}
-                            <div className="hidden md:flex items-center">
-
-                              <div className="min-w-[150px] text-white">
-                                {new Date(r.date).toLocaleDateString()}
-                              </div>
-
-                              <div className="min-w-[110px] text-center text-white">{r.hommes ?? "-"}</div>
-                              <div className="min-w-[110px] text-center text-white">{r.femmes ?? "-"}</div>                              
-                              <div className="min-w-[120px] text-center text-white">{r.priere ?? "-"}</div>
-                              <div className="min-w-[140px] text-center text-white">{r.nouveau_converti ?? "-"}</div>
-                              <div className="min-w-[130px] text-center text-white">{r.reconciliation ?? "-"}</div>
-                              <div className="min-w-[130px] text-center text-white">{r.moissonneurs ?? "-"}</div>
-
-                              <div className="min-w-[120px] text-center">
-                                <button
-                                  onClick={() => {
-                                    setSelectedRapport(r);
-                                    setEditOpen(true);
-                                  }}
-                                  className="text-orange-400 underline hover:text-orange-500"
-                                >
-                                  Modifier
-                                </button>
-                              </div>
-
-                            </div>
-
-
-                            {/* MOBILE */}
-                            <div className="md:hidden text-white text-sm">
-
-                              <div className="font-semibold mb-1">
-                                {new Date(r.date).toLocaleDateString()}
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-1">
-                                <div>Hommes: {r.hommes ?? "-"}</div>
-                                <div>Femmes: {r.femmes ?? "-"}</div>                                
-                                <div>Prières: {r.priere ?? "-"}</div>
-                                <div>NouvConv: {r.nouveau_converti ?? "-"}</div>
-                                <div>Recon: {r.reconciliation ?? "-"}</div>
-                                <div>Moiss: {r.moissonneurs ?? "-"}</div>
-                              </div>
-
+                            <div>{new Date(r.date).toLocaleDateString()}</div>
+                            <div className="text-center">{r.hommes ?? "-"}</div>
+                            <div className="text-center">{r.femmes ?? "-"}</div>
+                            <div className="text-center">{r.jeunes ?? "-"}</div>
+                            <div className="text-center">{r.priere ?? "-"}</div>
+                            <div className="text-center">{r.nouveau_converti ?? "-"}</div>
+                            <div className="text-center">{r.reconciliation ?? "-"}</div>
+                            <div className="text-center">{r.moissonneurs ?? "-"}</div>
+                            <div className="text-center">
                               <button
                                 onClick={() => {
                                   setSelectedRapport(r);
                                   setEditOpen(true);
                                 }}
-                                className="text-orange-400 underline mt-2"
+                                className="text-orange-400 underline hover:text-orange-500"
                               >
                                 Modifier
                               </button>
-
                             </div>
-
                           </div>
                         );
                       })}
@@ -425,6 +316,63 @@ moissonneurs
           </div>
         );
       })}
+
+      {/* MOBILE VIEW */}
+      <div className="md:hidden space-y-2">
+        {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
+          const [year, monthIndex] = monthKey.split("-").map(Number);
+          const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+          const isExpanded = expandedMonths[monthKey] || false;
+
+          return (
+            <div key={monthKey} className="space-y-1">
+              <div
+                className={`flex flex-col px-4 py-3 rounded-lg bg-white/25 cursor-pointer border-l-4 ${borderColors[idx % borderColors.length]}`}
+                onClick={() => toggleMonth(monthKey)}
+              >
+                <div className="text-white font-semibold">{isExpanded ? "➖ " : "➕ "} {monthLabel}</div>
+
+                {isExpanded &&
+                  Object.entries(groupByType(monthReports)).map(([type, typeReports]) => {
+                    const typeKey = `${monthKey}-${type}`;
+                    const typeExpanded = expandedTypes[typeKey] || false;
+
+                    return (
+                      <div key={typeKey} className="pl-4">
+                        <div
+                          className="text-white font-semibold cursor-pointer"
+                          onClick={() => toggleType(typeKey)}
+                        >
+                          {typeExpanded ? "➖ " : "➕ "} {type}
+                        </div>
+
+                        {typeExpanded &&
+                          typeReports.map((r) => (
+                            <div key={r.id} className="bg-white/10 rounded-lg p-2 mt-1">
+                              <div className="flex justify-between text-white text-sm">
+                                <span>Date: {new Date(r.date).toLocaleDateString()}</span>
+                                <span>Actions: <button onClick={() => { setSelectedRapport(r); setEditOpen(true); }} className="underline text-orange-400">✏️</button></span>
+                              </div>
+                              <div className="flex flex-wrap gap-2 text-white text-sm mt-1">
+                                <span>H: {r.hommes ?? "-"}</span>
+                                <span>F: {r.femmes ?? "-"}</span>
+                                <span>J: {r.jeunes ?? "-"}</span>
+                                <span>P: {r.priere ?? "-"}</span>
+                                <span>N: {r.nouveau_converti ?? "-"}</span>
+                                <span>R: {r.reconciliation ?? "-"}</span>
+                                <span>M: {r.moissonneurs ?? "-"}</span>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
     </div>
   </div>
 )}

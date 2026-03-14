@@ -9,7 +9,7 @@ import Footer from "../components/Footer";
 // ── Largeurs des colonnes centralisées ──────────────────────────────────────
 const COL = {
   label:         "w-[160px] shrink-0",
-  hommes:        "w-[90px]  shrink-0 text-center",
+  hommes:        "w-[120px]  shrink-0 text-center",
   femmes:        "w-[90px]  shrink-0 text-center",
   total:         "w-[90px]  shrink-0 text-center",
   priere:        "w-[90px]  shrink-0 text-center",

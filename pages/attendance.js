@@ -525,6 +525,7 @@ const calculateTypeTotals = (rows) => {
                           ...prev,
                           [typeTemps]: !prev[typeTemps]
                         }))}
+                        }
                       >
                         <div className="min-w-[220px] max-w-[220px] text-white font-semibold flex items-center gap-2 whitespace-pre-line break-words">
                           {typeExpanded ? "➖" : "➕"} {splitTypeName(typeTemps, 15)}

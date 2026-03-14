@@ -520,7 +520,7 @@ const calculateTypeTotals = (rows) => {
                 
                       {/* HEADER TYPE */}
                       <div
-                        className="flex items-center px-4 py-2 rounded-lg bg-white/5 cursor-pointer border-l-4 border-yellow-500"
+                        className="min-w-[220px] max-w-[220px] pl-6 text-white font-semibold flex items-center gap-2 whitespace-pre-line break-words">
                         onClick={() => setTypeCollapsedDesktop(prev => ({
                           ...prev,
                           [typeTemps]: !prev[typeTemps]
@@ -546,15 +546,15 @@ const calculateTypeTotals = (rows) => {
                         const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
                         return (
                           <div key={r.id} className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-yellow-500">
-                            <div className="min-w-[220px] break-words text-white">{formatDateFR(r.date)}</div>
-                            <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                            <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                            <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-                            <div className="min-w-[130px] text-center text-white">{total}</div>
-                            <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-                            <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
-                            <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-                            <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
+                            <div className="min-w-[220px] min-w-[220px] pl-12 break-words text-white">{formatDateFR(r.date)}</div>
+                            <div className="min-w-[120px] min-w-[220px] pl-12 break-words text-white">{r.hommes}</div>
+                            <div className="min-w-[120px] min-w-[220px] pl-12 break-words text-white">{r.femmes}</div>
+                            <div className="min-w-[120px] min-w-[220px] pl-12 break-words text-white">{r.jeunes}</div>
+                            <div className="min-w-[130px] min-w-[220px] pl-12 break-words text-white">{total}</div>
+                            <div className="min-w-[120px] min-w-[220px] pl-12 break-words text-white">{r.enfants}</div>
+                            <div className="min-w-[140px] min-w-[220px] pl-12 break-words text-white">{r.connectes}</div>
+                            <div className="min-w-[150px] min-w-[220px] pl-12 break-words text-white">{r.nouveauxVenus}</div>
+                            <div className="min-w-[180px] min-w-[220px] pl-12 break-words text-white">{r.nouveauxConvertis}</div>
                             <div className="min-w-[140px] flex justify-center gap-2">
                               <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-500">✏️</button>
                               <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 hover:text-red-500">🗑️</button>

@@ -162,10 +162,12 @@ export default function AddEvangelise({ onNewEvangelise }) {
           priere: existingReport.priere + (formData.priere_salut === "Oui" ? 1 : 0),
           nouveau_converti: existingReport.nouveau_converti + (formData.type_conversion === "Nouveau converti" ? 1 : 0),
           reconciliation: existingReport.reconciliation + (formData.type_conversion === "Réconciliation" ? 1 : 0),
+          type_evangelisation: formData.type_evangelisation,
           })
         .eq("date", today)
         .eq("eglise_id", formData.eglise_id)
-        .eq("branche_id", formData.branche_id);
+        .eq("branche_id", formData.branche_id);        
+      
     } else {
       await supabase
         .from("rapport_evangelisation")

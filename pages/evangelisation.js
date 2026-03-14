@@ -228,7 +228,7 @@ export default function Evangelisation() {
         date_suivi: new Date().toISOString(),
         eglise_id: profile?.eglise_id || null,
         branche_id: profile?.branche_id || null,        
-        type_evangelisatione: m.type_evangelisation,
+        type_evangelisation: m.type_evangelisation,
       }));
 
       const { error: insertError } = await supabase

@@ -17,8 +17,35 @@ export default function RapportEvangelisation() {
   const [selectedRapport, setSelectedRapport] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
 
-  const fetchRapports = async () => {
-    // Ta logique fetch ici
+  const fetchRapports = async (egliseIdParam, brancheIdParam) => {
+  const eId = egliseIdParam ?? egliseId;
+  const bId = brancheIdParam ?? brancheId;
+  if (!eId || !bId) return;
+
+  setShowTable(false);
+  setMessage("Chargement...");
+  
+  let query = supabase
+    .from("rapport_evangelisation")
+    .select("*")
+    .eq("eglise_id", eId)
+    .eq("branche_id", bId)
+    .order("date", { ascending: true });
+
+  if (dateDebut) query = query.gte("date", dateDebut);
+  if (dateFin) query = query.lte("date", dateFin);
+
+  const { data, error } = await query;
+  if (error) {
+    setMessage("❌ Erreur lors du chargement");
+    console.error(error);
+    return;
+  }
+
+  setRapports(data || []);
+  setShowTable(true);
+  setMessage(data.length ? "" : "Aucun rapport trouvé");
+};
   };
 
   const toggleMonth = (monthKey) => {
@@ -81,32 +108,32 @@ export default function RapportEvangelisation() {
           />
         </div>
        <button
-          onClick={async () => {
-            if (!egliseId || !brancheId) {
-              // Refetch profile au cas où
-              const { data: sessionData } = await supabase.auth.getSession();
-              const user = sessionData?.session?.user;
-              if (!user) return;
-        
-              const { data: profile } = await supabase
-                .from("profiles")
-                .select("eglise_id, branche_id")
-                .eq("id", user.id)
-                .single();
-        
-              if (profile) {
-                setEgliseId(profile.eglise_id);
-                setBrancheId(profile.branche_id);
-                await fetchRapports(profile.eglise_id, profile.branche_id); // fetch avec les IDs
-              }
-            } else {
-              fetchRapports();
-            }
-          }}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end"
-        >
-          Générer
-        </button>
+  onClick={async () => {
+    // Vérifie si egliseId et brancheId sont déjà chargés
+    if (!egliseId || !brancheId) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profile) {
+        setEgliseId(profile.eglise_id);
+        setBrancheId(profile.branche_id);
+        await fetchRapports(profile.eglise_id, profile.branche_id);
+      }
+    } else {
+      fetchRapports();
+    }
+  }}
+  className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end"
+>
+  Générer
+</button>
       </div>
 
       {message && <div className="text-center text-white mt-4 font-medium">{message}</div>}

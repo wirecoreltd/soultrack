@@ -236,18 +236,7 @@ moissonneurs
               const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
               const isExpanded = expandedMonths[monthKey] || false;
               const borderColor = borderColors[idx % borderColors.length];
-              const monthTotals = getTotals(monthReports);
-
-              // 🔹 Totaux mois
-              const monthTotals = monthReports.reduce((acc, r) => {
-                acc.hommes += Number(r.hommes) || 0;
-                acc.femmes += Number(r.femmes) || 0;
-                acc.priere += Number(r.priere) || 0;
-                acc.nouveau_converti += Number(r.nouveau_converti) || 0;
-                acc.reconciliation += Number(r.reconciliation) || 0;
-                acc.moissonneurs += Number(r.moissonneurs) || 0;
-                return acc;
-              }, { hommes:0, femmes:0, priere:0, nouveau_converti:0, reconciliation:0, moissonneurs:0 });
+              const monthTotals = getTotals(monthReports);              
 
               return (
                 <div key={monthKey} className="space-y-1">

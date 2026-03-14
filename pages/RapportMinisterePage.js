@@ -25,7 +25,6 @@ function RapportMinistere() {
   const [totalMembres, setTotalMembres] = useState(0);
   const [message, setMessage] = useState("");
 
-  // 🔹 Charger profil utilisateur
   useEffect(() => {
     const fetchUser = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -43,11 +42,9 @@ function RapportMinistere() {
         setBrancheId(profile.branche_id);
       }
     };
-
     fetchUser();
   }, []);
 
-  // 🔹 Générer rapport
   const fetchRapport = async () => {
     setLoading(true);
     setRapports([]);
@@ -62,7 +59,6 @@ function RapportMinistere() {
     }
 
     try {
-      // 🔹 1️⃣ Total membres existants
       const { data: membresData, error: membresError } = await supabase
         .from("membres_complets")
         .select("id, etat_contact")
@@ -76,7 +72,6 @@ function RapportMinistere() {
       ).length;
       setTotalMembres(totalMembresLocal);
 
-      // 🔹 2️⃣ Récupérer stats_ministere_besoin de type "ministere"
       let queryStats = supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, type, date_action")
@@ -90,17 +85,13 @@ function RapportMinistere() {
       const { data: statsData, error: statsError } = await queryStats;
       if (statsError) throw statsError;
 
-      // 🔹 3️⃣ Comptage serviteurs
       const serviteursSet = new Set();
-      const counts = {}; // par ministère
+      const counts = {};
 
       statsData.forEach((s) => {
         if (!s.membre_id) return;
-        serviteursSet.add(s.membre_id); // déduplication globale
-
+        serviteursSet.add(s.membre_id);
         if (!s.valeur) return;
-
-        // Gérer les ministères multiples séparés par virgules
         s.valeur.split(",").forEach((ministere) => {
           const m = ministere.trim();
           if (!counts[m]) counts[m] = 0;
@@ -110,14 +101,9 @@ function RapportMinistere() {
 
       setTotalServiteurs(serviteursSet.size);
 
-      // 🔹 4️⃣ Rapport par ministère
       setRapports(
-        Object.entries(counts).map(([ministere, total]) => ({
-          ministere,
-          total,
-        }))
+        Object.entries(counts).map(([ministere, total]) => ({ ministere, total }))
       );
-
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -128,27 +114,27 @@ function RapportMinistere() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
+      <h1 className="text-2xl sm:text-3xl font-bold mt-4 mb-6 text-center">
         <span className="text-white">Rapport </span>
         <span className="text-amber-300">Ministère</span>
       </h1>
 
       {/* 🔹 Filtres */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-6 flex justify-center gap-4 flex-wrap text-white">
+      <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-6 flex flex-wrap justify-center gap-3">
         <input
           type="date"
           value={dateDebut}
           onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"
         />
         <input
           type="date"
           value={dateFin}
           onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"
         />
         <button
           onClick={fetchRapport}
@@ -162,15 +148,15 @@ function RapportMinistere() {
       </div>
 
       {/* 🔹 Résumé */}
-      <div className="flex gap-4 mt-6 flex-wrap justify-center">
-        <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
+      <div className="flex flex-wrap gap-4 mt-6 justify-center w-full max-w-xl">
+        <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center flex-1 min-w-[160px]">
           <div className="text-sm uppercase font-semibold mb-1">
             Nombre total de serviteurs
           </div>
           <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
         </div>
 
-        <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center min-w-[220px]">
+        <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center flex-1 min-w-[160px]">
           <div className="text-sm uppercase font-semibold mb-1">
             % de serviteurs / membres
           </div>
@@ -184,12 +170,10 @@ function RapportMinistere() {
 
       {/* 🔹 Tableau des ministères */}
       <div className="w-full flex justify-center mt-6 mb-6">
-        <div className="w-max overflow-x-auto space-y-2">
-          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[250px]">Ministère</div>
-            <div className="min-w-[150px] text-center text-orange-400">
-              Nombre de serviteurs
-            </div>
+        <div className="w-full max-w-4xl overflow-x-auto space-y-2">
+          <div className="grid grid-cols-[2fr_1fr] text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div>Ministère</div>
+            <div className="text-center text-orange-400">Nombre de serviteurs</div>
           </div>
 
           {loading && (
@@ -199,14 +183,10 @@ function RapportMinistere() {
           {rapports.map((r, index) => (
             <div
               key={index}
-              className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+              className="grid grid-cols-[2fr_1fr] items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
             >
-              <div className="min-w-[250px] text-white font-semibold">
-                {r.ministere}
-              </div>
-              <div className="min-w-[150px] text-center text-orange-400 font-bold">
-                {r.total}
-              </div>
+              <div className="text-white font-semibold">{r.ministere}</div>
+              <div className="text-center text-orange-400 font-bold">{r.total}</div>
             </div>
           ))}
         </div>

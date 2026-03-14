@@ -4,7 +4,6 @@ import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
-import EditModal from "../components/EditModal"; // si tu as un composant modal
 import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function RapportEvangelisation() {

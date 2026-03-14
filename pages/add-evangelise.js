@@ -24,7 +24,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     is_whatsapp: false,
     eglise_id: null,
     branche_id: null,
-    type_evangelisation: null,
+    type_evangelisation: "",
   });
 
   const [showOtherField, setShowOtherField] = useState(false);

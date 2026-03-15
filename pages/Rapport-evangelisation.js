@@ -20,6 +20,14 @@ export default function RapportEvangelisation() {
   const [expandedTypes, setExpandedTypes] = useState({});
   const [showTable, setShowTable] = useState(false);
 
+  // --- NOUVEAU : Modal personnes ---
+  const [personnesModal, setPersonnesModal] = useState({
+    open: false,
+    titre: "",
+    personnes: [],
+    loadingPersonnes: false,
+  });
+
   // ---------------- PROFIL USER ----------------
   useEffect(() => {
     const fetchProfile = async () => {
@@ -72,6 +80,31 @@ export default function RapportEvangelisation() {
     }, 100);
   };
 
+  // ---------------- NOUVEAU : FETCH PERSONNES ----------------
+  const fetchPersonnes = async ({ titre, dateMin, dateMax, type }) => {
+    setPersonnesModal({ open: true, titre, personnes: [], loadingPersonnes: true });
+
+    let query = supabase
+      .from("evangelises")
+      .select("nom, prenom, sexe, telephone, ville, priere_salut, type_conversion, besoin")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId)
+      .gte("created_at", dateMin)
+      .lte("created_at", dateMax)
+      .order("created_at", { ascending: true });
+
+    if (type) query = query.eq("type_evangelisation", type);
+
+    const { data, error } = await query;
+
+    setPersonnesModal({
+      open: true,
+      titre,
+      personnes: data || [],
+      loadingPersonnes: false,
+    });
+  };
+
   // ---------------- EDIT RAPPORT ----------------
   const handleSaveRapport = async (updated) => {
     await supabase.from("rapport_evangelisation").upsert(updated);
@@ -110,39 +143,19 @@ export default function RapportEvangelisation() {
     return map;
   };
 
-  // -------- TOTALS --------
-
-const getTotals = (reports) => {
-
-let hommes = 0;
-let femmes = 0;
-let priere = 0;
-let nouveau = 0;
-let reconciliation = 0;
-let moissonneurs = 0;
-
-reports.forEach(r => {
-
-hommes += Number(r.hommes) || 0;
-femmes += Number(r.femmes) || 0;
-priere += Number(r.priere) || 0;
-nouveau += Number(r.nouveau_converti) || 0;
-reconciliation += Number(r.reconciliation) || 0;
-moissonneurs += Number(r.moissonneurs) || 0;
-
-});
-
-return {
-hommes,
-femmes,
-total: hommes + femmes,
-priere,
-nouveau,
-reconciliation,
-moissonneurs
-};
-
-};
+  // ---------------- TOTALS ----------------
+  const getTotals = (reports) => {
+    let hommes = 0, femmes = 0, priere = 0, nouveau = 0, reconciliation = 0, moissonneurs = 0;
+    reports.forEach((r) => {
+      hommes += Number(r.hommes) || 0;
+      femmes += Number(r.femmes) || 0;
+      priere += Number(r.priere) || 0;
+      nouveau += Number(r.nouveau_converti) || 0;
+      reconciliation += Number(r.reconciliation) || 0;
+      moissonneurs += Number(r.moissonneurs) || 0;
+    });
+    return { hommes, femmes, total: hommes + femmes, priere, nouveau, reconciliation, moissonneurs };
+  };
 
   // ---------------- LAST MONTH ----------------
   const getLastMonthKey = (data) => {
@@ -154,17 +167,19 @@ moissonneurs
 
   // ---------------- UTILS ----------------
   const getMonthNameFR = (monthIndex) => {
-    const months = [
-      "Janvier","Février","Mars","Avril","Mai","Juin",
-      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
-    ];
+    const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
     return months[monthIndex] || "";
   };
 
+  // NOUVEAU : calcule dateMin/dateMax pour un mois donné
+  const getMonthRange = (year, monthIndex) => {
+    const dateMin = new Date(year, monthIndex, 1).toISOString();
+    const dateMax = new Date(year, monthIndex + 1, 0, 23, 59, 59).toISOString();
+    return { dateMin, dateMax };
+  };
+
   const groupedReports = groupByMonth(rapports);
-  const borderColors = [
-    "border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"
-  ];
+  const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"];
 
   // ---------------- UI ----------------
   return (
@@ -181,258 +196,271 @@ moissonneurs
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end text-white">
           <div className="flex flex-col">
             <label className="text-sm font-semibold mb-1">Date de début</label>
-            <input
-              type="date"
-              value={dateDebut}
-              onChange={(e)=>setDateDebut(e.target.value)}
-              className="bg-white/10 border border-white/30 rounded-lg px-4 py-2"
-            />
+            <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)}
+              className="bg-white/10 border border-white/30 rounded-lg px-4 py-2" />
           </div>
-
           <div className="flex flex-col">
             <label className="text-sm font-semibold mb-1">Date de fin</label>
-            <input
-              type="date"
-              value={dateFin}
-              onChange={(e)=>setDateFin(e.target.value)}
-              className="bg-white/10 border border-white/30 rounded-lg px-4 py-2"
-            />
+            <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)}
+              className="bg-white/10 border border-white/30 rounded-lg px-4 py-2" />
           </div>
-
-          <button
-            onClick={fetchRapports}
-            disabled={loading}
-            className="bg-amber-400 text-black font-bold px-6 py-2 rounded-lg hover:bg-amber-300 transition disabled:opacity-50"
-          >
+          <button onClick={fetchRapports} disabled={loading}
+            className="bg-amber-400 text-black font-bold px-6 py-2 rounded-lg hover:bg-amber-300 transition disabled:opacity-50">
             {loading ? "Chargement..." : "Générer le rapport"}
           </button>
         </div>
       </div>
 
-      {message && (
-        <div className="text-center text-white mt-4 font-medium">{message}</div>
-      )}
+      {message && <div className="text-center text-white mt-4 font-medium">{message}</div>}
 
       {/* TABLEAU */}
-{showTable && (
-  <div id="rapport-table" className="w-full flex justify-center mt-8">
-    <div className="w-full md:w-max space-y-2">
+      {showTable && (
+        <div id="rapport-table" className="w-full flex justify-center mt-8">
+          <div className="w-full md:w-max space-y-2">
 
-      {/* HEADER DESKTOP */}
-      <div className="hidden md:flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-        <div className="min-w-[150px] ml-2">Type / Date</div>
-        <div className="min-w-[110px] text-center ml-28">Hommes</div>
-        <div className="min-w-[110px] text-center">Femmes</div>        
-        <div className="min-w-[120px] text-center">Prières</div>
-        <div className="min-w-[140px] text-center">Nouv. conv</div>
-        <div className="min-w-[130px] text-center">Recon</div>
-        <div className="min-w-[130px] text-center">Moiss</div>
-        <div className="min-w-[120px] text-center">Actions</div>
-      </div>
-
-      {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
-
-        const [year, monthIndex] = monthKey.split("-").map(Number);
-        const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-        const isExpanded = expandedMonths[monthKey] || false;
-        const borderColor = borderColors[idx % borderColors.length];
-
-        const monthTotals = getTotals(monthReports);
-
-        return (
-          <div key={monthKey} className="space-y-1">
-
-            {/* MOIS */}
-            <div
-              className={`px-4 py-3 rounded-lg bg-white/25 cursor-pointer border-l-4 ${borderColor}`}
-              onClick={() => toggleMonth(monthKey)}
-            >
-
-              {/* DESKTOP */}
-              <div className="hidden md:flex items-center">
-
-                <div className="min-w-[150px] text-white font-semibold">
-                  {isExpanded ? "➖ " : "➕ "} {monthLabel}
-                </div>
-
-                <div className="flex ml-auto text-white font-semibold text-sm">
-
-                  <div className="min-w-[110px] text-center">{monthTotals.hommes}</div>
-                  <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>                  
-                  <div className="min-w-[120px] text-center">{monthTotals.priere}</div>
-                  <div className="min-w-[140px] text-center">{monthTotals.nouveau}</div>
-                  <div className="min-w-[130px] text-center">{monthTotals.reconciliation}</div>
-                  <div className="min-w-[130px] text-center">{monthTotals.moissonneurs}</div>
-                  <div className="min-w-[120px]"></div>
-
-                </div>
+            {/* HEADER */}
+            <div className="hidden md:flex px-4 py-2 text-amber-300 font-bold text-sm">
+              <div className="min-w-[150px]">Période / Type</div>
+              <div className="flex ml-auto">
+                <div className="min-w-[110px] text-center">Hommes</div>
+                <div className="min-w-[110px] text-center">Femmes</div>
+                <div className="min-w-[120px] text-center">Prières</div>
+                <div className="min-w-[140px] text-center">Nouv. conv</div>
+                <div className="min-w-[130px] text-center">Recon</div>
+                <div className="min-w-[130px] text-center">Moiss</div>
+                <div className="min-w-[120px] text-center">Actions</div>
               </div>
-
-              {/* MOBILE */}
-              <div className="md:hidden text-white">
-                <div className="font-semibold">
-                  {isExpanded ? "➖ " : "➕ "} {monthLabel}
-                </div>
-
-                <div className="grid grid-cols-2 gap-1 text-sm mt-1">
-                  <div>Hommes: {monthTotals.hommes}</div>
-                  <div>Femmes: {monthTotals.femmes}</div>                  
-                  <div>Prières: {monthTotals.priere}</div>
-                  <div>NouvConv: {monthTotals.nouveau}</div>
-                  <div>Recon: {monthTotals.reconciliation}</div>
-                  <div>Moiss: {monthTotals.moissonneurs}</div>
-                </div>
-              </div>
-
             </div>
 
+            {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
+              const [year, monthIndex] = monthKey.split("-").map(Number);
+              const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+              const isExpanded = expandedMonths[monthKey] || false;
+              const borderColor = borderColors[idx % borderColors.length];
+              const monthTotals = getTotals(monthReports);
+              const { dateMin, dateMax } = getMonthRange(year, monthIndex);
 
-            {/* TYPES */}
-            {isExpanded &&
-              Object.entries(groupByType(monthReports)).map(([type, typeReports]) => {
+              return (
+                <div key={monthKey} className="space-y-1">
 
-                const typeKey = `${monthKey}-${type}`;
-                const typeExpanded = expandedTypes[typeKey] || false;
-                const typeTotals = getTotals(typeReports);
+                  {/* MOIS */}
+                  <div className={`px-4 py-3 rounded-lg bg-white/25 border-l-4 ${borderColor}`}>
 
-                return (
-                  <div key={typeKey}>
-
-                    {/* TYPE */}
-                    <div
-                      onClick={() => toggleType(typeKey)}
-                      className="px-4 py-2 rounded-lg bg-white/15 cursor-pointer border-l-4 border-yellow-400 ml-4"
-                    >
-
-                      {/* DESKTOP */}
-                      <div className="hidden md:flex items-center">
-
-                        <div className="min-w-[150px] text-white font-semibold">
-                          {typeExpanded ? "➖ " : "➕ "} {type}
-                        </div>
-
-                        <div className="flex ml-auto text-white text-sm">
-
-                          <div className="min-w-[110px] text-center">{typeTotals.hommes}</div>
-                          <div className="min-w-[110px] text-center">{typeTotals.femmes}</div>                          
-                          <div className="min-w-[120px] text-center">{typeTotals.priere}</div>
-                          <div className="min-w-[140px] text-center">{typeTotals.nouveau}</div>
-                          <div className="min-w-[130px] text-center">{typeTotals.reconciliation}</div>
-                          <div className="min-w-[130px] text-center">{typeTotals.moissonneurs}</div>
-                          <div className="min-w-[120px]"></div>
-
-                        </div>
-
+                    {/* DESKTOP */}
+                    <div className="hidden md:flex items-center">
+                      <div
+                        className="min-w-[150px] text-white font-semibold cursor-pointer"
+                        onClick={() => toggleMonth(monthKey)}
+                      >
+                        {isExpanded ? "➖ " : "➕ "} {monthLabel}
                       </div>
 
-                      {/* MOBILE */}
-                      <div className="md:hidden text-white">
-                        <div className="font-semibold">
-                          {typeExpanded ? "➖ " : "➕ "} {type}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-1 text-sm mt-1">
-                          <div>Hommes: {typeTotals.hommes}</div>
-                          <div>Femmes: {typeTotals.femmes}</div>                          
-                          <div>Prières: {typeTotals.priere}</div>
-                          <div>NouvConv: {typeTotals.nouveau}</div>
-                          <div>Recon: {typeTotals.reconciliation}</div>
-                          <div>Moiss: {typeTotals.moissonneurs}</div>
-                        </div>
+                      {/* TOTAUX CLIQUABLES DU MOIS */}
+                      <div className="flex ml-auto text-white font-semibold text-sm">
+                        <div
+                          className="min-w-[110px] text-center cursor-pointer hover:text-amber-300 hover:underline"
+                          onClick={() => fetchPersonnes({ titre: `Hommes — ${monthLabel}`, ...getMonthRange(year, monthIndex), type: null })}
+                        >{monthTotals.hommes}</div>
+                        <div
+                          className="min-w-[110px] text-center cursor-pointer hover:text-amber-300 hover:underline"
+                          onClick={() => fetchPersonnes({ titre: `Femmes — ${monthLabel}`, ...getMonthRange(year, monthIndex), type: null })}
+                        >{monthTotals.femmes}</div>
+                        <div className="min-w-[120px] text-center">{monthTotals.priere}</div>
+                        <div className="min-w-[140px] text-center">{monthTotals.nouveau}</div>
+                        <div className="min-w-[130px] text-center">{monthTotals.reconciliation}</div>
+                        <div className="min-w-[130px] text-center">{monthTotals.moissonneurs}</div>
+                        <div className="min-w-[120px]"></div>
                       </div>
-
                     </div>
 
+                    {/* MOBILE */}
+                    <div className="md:hidden text-white">
+                      <div className="font-semibold cursor-pointer" onClick={() => toggleMonth(monthKey)}>
+                        {isExpanded ? "➖ " : "➕ "} {monthLabel}
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 text-sm mt-1">
+                        <div
+                          className="cursor-pointer hover:text-amber-300 underline"
+                          onClick={() => fetchPersonnes({ titre: `Hommes — ${monthLabel}`, ...getMonthRange(year, monthIndex), type: null })}
+                        >Hommes: {monthTotals.hommes}</div>
+                        <div
+                          className="cursor-pointer hover:text-amber-300 underline"
+                          onClick={() => fetchPersonnes({ titre: `Femmes — ${monthLabel}`, ...getMonthRange(year, monthIndex), type: null })}
+                        >Femmes: {monthTotals.femmes}</div>
+                        <div>Prières: {monthTotals.priere}</div>
+                        <div>NouvConv: {monthTotals.nouveau}</div>
+                        <div>Recon: {monthTotals.reconciliation}</div>
+                        <div>Moiss: {monthTotals.moissonneurs}</div>
+                      </div>
+                    </div>
+                  </div>
 
-                    {/* RAPPORTS */}
-                    {typeExpanded &&
-                      typeReports.map((r) => {
+                  {/* TYPES */}
+                  {isExpanded &&
+                    Object.entries(groupByType(monthReports)).map(([type, typeReports]) => {
+                      const typeKey = `${monthKey}-${type}`;
+                      const typeExpanded = expandedTypes[typeKey] || false;
+                      const typeTotals = getTotals(typeReports);
 
-                        const total =
-                          (Number(r.hommes) || 0) +
-                          (Number(r.femmes) || 0);
+                      return (
+                        <div key={typeKey}>
 
-                        return (
-
-                          <div
-                            key={r.id}
-                            className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border-l-4 border-blue-500 ml-8"
-                          >
+                          {/* TYPE */}
+                          <div className="px-4 py-2 rounded-lg bg-white/15 border-l-4 border-yellow-400 ml-4">
 
                             {/* DESKTOP */}
                             <div className="hidden md:flex items-center">
-
-                              <div className="min-w-[150px] text-white">
-                                {new Date(r.date).toLocaleDateString()}
+                              <div
+                                className="min-w-[150px] text-white font-semibold cursor-pointer"
+                                onClick={() => toggleType(typeKey)}
+                              >
+                                {typeExpanded ? "➖ " : "➕ "} {type}
                               </div>
 
-                              <div className="min-w-[110px] text-center text-white ml-20">{r.hommes ?? "-"}</div>
-                              <div className="min-w-[110px] text-center text-white">{r.femmes ?? "-"}</div>                              
-                              <div className="min-w-[120px] text-center text-white">{r.priere ?? "-"}</div>
-                              <div className="min-w-[140px] text-center text-white">{r.nouveau_converti ?? "-"}</div>
-                              <div className="min-w-[130px] text-center text-white">{r.reconciliation ?? "-"}</div>
-                              <div className="min-w-[130px] text-center text-white">{r.moissonneurs ?? "-"}</div>
-
-                              <div className="min-w-[120px] text-center">
-                                <button
-                                  onClick={() => {
-                                    setSelectedRapport(r);
-                                    setEditOpen(true);
-                                  }}
-                                  className="text-orange-400 underline hover:text-orange-500"
-                                >
-                                  Modifier
-                                </button>
+                              {/* TOTAUX CLIQUABLES DU TYPE */}
+                              <div className="flex ml-auto text-white text-sm">
+                                <div
+                                  className="min-w-[110px] text-center cursor-pointer hover:text-amber-300 hover:underline"
+                                  onClick={() => fetchPersonnes({ titre: `Hommes — ${type} — ${monthLabel}`, ...getMonthRange(year, monthIndex), type })}
+                                >{typeTotals.hommes}</div>
+                                <div
+                                  className="min-w-[110px] text-center cursor-pointer hover:text-amber-300 hover:underline"
+                                  onClick={() => fetchPersonnes({ titre: `Femmes — ${type} — ${monthLabel}`, ...getMonthRange(year, monthIndex), type })}
+                                >{typeTotals.femmes}</div>
+                                <div className="min-w-[120px] text-center">{typeTotals.priere}</div>
+                                <div className="min-w-[140px] text-center">{typeTotals.nouveau}</div>
+                                <div className="min-w-[130px] text-center">{typeTotals.reconciliation}</div>
+                                <div className="min-w-[130px] text-center">{typeTotals.moissonneurs}</div>
+                                <div className="min-w-[120px]"></div>
                               </div>
-
                             </div>
-
 
                             {/* MOBILE */}
-                            <div className="md:hidden text-white text-sm">
-
-                              <div className="font-semibold mb-1">
-                                {new Date(r.date).toLocaleDateString()}
+                            <div className="md:hidden text-white">
+                              <div className="font-semibold cursor-pointer" onClick={() => toggleType(typeKey)}>
+                                {typeExpanded ? "➖ " : "➕ "} {type}
                               </div>
-
-                              <div className="grid grid-cols-2 gap-1">
-                                <div>Hommes: {r.hommes ?? "-"}</div>
-                                <div>Femmes: {r.femmes ?? "-"}</div>                                
-                                <div>Prières: {r.priere ?? "-"}</div>
-                                <div>NouvConv: {r.nouveau_converti ?? "-"}</div>
-                                <div>Recon: {r.reconciliation ?? "-"}</div>
-                                <div>Moiss: {r.moissonneurs ?? "-"}</div>
+                              <div className="grid grid-cols-2 gap-1 text-sm mt-1">
+                                <div
+                                  className="cursor-pointer hover:text-amber-300 underline"
+                                  onClick={() => fetchPersonnes({ titre: `Hommes — ${type} — ${monthLabel}`, ...getMonthRange(year, monthIndex), type })}
+                                >Hommes: {typeTotals.hommes}</div>
+                                <div
+                                  className="cursor-pointer hover:text-amber-300 underline"
+                                  onClick={() => fetchPersonnes({ titre: `Femmes — ${type} — ${monthLabel}`, ...getMonthRange(year, monthIndex), type })}
+                                >Femmes: {typeTotals.femmes}</div>
+                                <div>Prières: {typeTotals.priere}</div>
+                                <div>NouvConv: {typeTotals.nouveau}</div>
+                                <div>Recon: {typeTotals.reconciliation}</div>
+                                <div>Moiss: {typeTotals.moissonneurs}</div>
                               </div>
-
-                              <button
-                                onClick={() => {
-                                  setSelectedRapport(r);
-                                  setEditOpen(true);
-                                }}
-                                className="text-orange-400 underline mt-2"
-                              >
-                                Modifier
-                              </button>
-
                             </div>
-
                           </div>
-                        );
-                      })}
-                  </div>
-                );
-              })}
+
+                          {/* RAPPORTS INDIVIDUELS */}
+                          {typeExpanded &&
+                            typeReports.map((r) => (
+                              <div key={r.id} className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border-l-4 border-blue-500 ml-8">
+
+                                {/* DESKTOP */}
+                                <div className="hidden md:flex items-center">
+                                  <div className="min-w-[150px] text-white">{new Date(r.date).toLocaleDateString()}</div>
+                                  <div className="min-w-[110px] text-center text-white ml-20">{r.hommes ?? "-"}</div>
+                                  <div className="min-w-[110px] text-center text-white">{r.femmes ?? "-"}</div>
+                                  <div className="min-w-[120px] text-center text-white">{r.priere ?? "-"}</div>
+                                  <div className="min-w-[140px] text-center text-white">{r.nouveau_converti ?? "-"}</div>
+                                  <div className="min-w-[130px] text-center text-white">{r.reconciliation ?? "-"}</div>
+                                  <div className="min-w-[130px] text-center text-white">{r.moissonneurs ?? "-"}</div>
+                                  <div className="min-w-[120px] text-center">
+                                    <button
+                                      onClick={() => { setSelectedRapport(r); setEditOpen(true); }}
+                                      className="text-orange-400 underline hover:text-orange-500"
+                                    >Modifier</button>
+                                  </div>
+                                </div>
+
+                                {/* MOBILE */}
+                                <div className="md:hidden text-white text-sm">
+                                  <div className="font-semibold mb-1">{new Date(r.date).toLocaleDateString()}</div>
+                                  <div className="grid grid-cols-2 gap-1">
+                                    <div>Hommes: {r.hommes ?? "-"}</div>
+                                    <div>Femmes: {r.femmes ?? "-"}</div>
+                                    <div>Prières: {r.priere ?? "-"}</div>
+                                    <div>NouvConv: {r.nouveau_converti ?? "-"}</div>
+                                    <div>Recon: {r.reconciliation ?? "-"}</div>
+                                    <div>Moiss: {r.moissonneurs ?? "-"}</div>
+                                  </div>
+                                  <button
+                                    onClick={() => { setSelectedRapport(r); setEditOpen(true); }}
+                                    className="text-orange-400 underline mt-2"
+                                  >Modifier</button>
+                                </div>
+
+                              </div>
+                            ))}
+                        </div>
+                      );
+                    })}
+                </div>
+              );
+            })}
           </div>
-        );
-      })}
-    </div>
-  </div>
-)}
+        </div>
+      )}
+
+      {/* -------- MODAL PERSONNES -------- */}
+      {personnesModal.open && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1e2a7a] border border-white/20 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+
+            {/* Header modal */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/20">
+              <h2 className="text-white font-bold text-lg">👥 {personnesModal.titre}</h2>
+              <button
+                onClick={() => setPersonnesModal({ ...personnesModal, open: false })}
+                className="text-white text-2xl hover:text-red-400 transition"
+              >✕</button>
+            </div>
+
+            {/* Contenu */}
+            <div className="overflow-y-auto px-6 py-4 space-y-3">
+              {personnesModal.loadingPersonnes ? (
+                <p className="text-white text-center py-8">Chargement...</p>
+              ) : personnesModal.personnes.length === 0 ? (
+                <p className="text-white/60 text-center py-8">Aucune personne trouvée.</p>
+              ) : (
+                personnesModal.personnes.map((p, i) => (
+                  <div key={i} className="bg-white/10 rounded-xl px-4 py-3 text-white text-sm space-y-1">
+                    <div className="font-bold text-base">{p.prenom} {p.nom}</div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-white/80">
+                      <div>🚻 {p.sexe || "—"}</div>
+                      <div>📞 {p.telephone || "—"}</div>
+                      <div>📍 {p.ville || "—"}</div>
+                      <div>🙏 Prière: {p.priere_salut ? "Oui" : "Non"}</div>
+                      {p.type_conversion && <div>✝️ {p.type_conversion}</div>}
+                    </div>
+                    {p.besoin && p.besoin.length > 0 && (
+                      <div className="text-white/60 text-xs mt-1">
+                        🎯 Besoins : {p.besoin.join(", ")}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer modal */}
+            <div className="px-6 py-3 border-t border-white/20 text-white/50 text-sm text-right">
+              {personnesModal.personnes.length} personne(s)
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedRapport && (
         <EditEvanRapportLine
           isOpen={editOpen}
-          onClose={()=>setEditOpen(false)}
+          onClose={() => setEditOpen(false)}
           rapport={selectedRapport}
           onSave={handleSaveRapport}
         />

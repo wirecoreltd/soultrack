@@ -112,105 +112,63 @@ export default function AddEvangelise({ onNewEvangelise }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!formData.eglise_id || !formData.branche_id) {
-      console.error("Eglise ID ou Branche ID manquant :", formData.eglise_id, formData.branche_id);
-      alert("Erreur : votre compte n'est pas rattaché à une église ou branche.");
+  if (!formData.eglise_id || !formData.branche_id) {
+    console.error("Eglise ID ou Branche ID manquant :", formData.eglise_id, formData.branche_id);
+    alert("Erreur : votre compte n'est pas rattaché à une église ou branche.");
+    return;
+  }
+
+  const finalBesoins = [...formData.besoin];
+  if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
+
+  const finalData = {
+    nom: formData.nom.trim(),
+    prenom: formData.prenom.trim(),
+    telephone: formData.telephone.trim() || "",
+    ville: formData.ville.trim() || null,
+    statut: "evangelisé",
+    sexe: formData.sexe || null,
+    age: formData.age || null,
+    priere_salut: formData.priere_salut === "Oui",
+    type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
+    besoin: finalBesoins,
+    infos_supplementaires: formData.infos_supplementaires || null,
+    is_whatsapp: formData.is_whatsapp,
+    eglise_id: formData.eglise_id,
+    branche_id: formData.branche_id,
+    type_evangelisation: formData.type_evangelisation
+  };
+
+  console.log("DATA ENVOYÉE EVANGELISE :", finalData);
+
+  try {
+    // ➤ Ajouter la personne dans la table evangelises
+    const { data: newEvangelise, error: insertError } = await supabase
+      .from("evangelises")
+      .insert([finalData])
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("ERREUR INSERT EVANGELISE :", insertError);
+      alert(insertError.message);
       return;
     }
 
-    const finalBesoins = [...formData.besoin];
-    if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
+    // ✅ Aucun update des totaux ici
+    // Le trigger `trigger_copy_evangelise_id` s'occupe de copier automatiquement l'id
 
-    const finalData = {
-      nom: formData.nom.trim(),
-      prenom: formData.prenom.trim(),
-      telephone: formData.telephone.trim() || "",
-      ville: formData.ville.trim() || null,
-      statut: "evangelisé",
-      sexe: formData.sexe || null,
-      age: formData.age || null,
-      priere_salut: formData.priere_salut === "Oui",
-      type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
-      besoin: finalBesoins,
-      infos_supplementaires: formData.infos_supplementaires || null,
-      is_whatsapp: formData.is_whatsapp,
-      eglise_id: formData.eglise_id,
-      branche_id: formData.branche_id,
-      type_evangelisation: formData.type_evangelisation
-    };
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 3000); // message succès 3s
+    resetForm();
 
-    console.log("DATA ENVOYÉE EVANGELISE :", finalData);
-
-    try {
-      const { data: newEvangelise, error: insertError } = await supabase
-        .from("evangelises")
-        .insert([finalData])
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error("ERREUR INSERT EVANGELISE :", insertError);
-        alert(insertError.message);
-        return;
-      }
-
-      const today = new Date().toISOString().slice(0, 10);
-
-      const { data: existingReport, error: reportError } = await supabase
-        .from("rapport_evangelisation")
-        .select("*")
-        .eq("date", today)
-        .eq("eglise_id", formData.eglise_id)
-        .eq("branche_id", formData.branche_id)
-        .eq("type_evangelisation", formData.type_evangelisation)
-        .single();
-
-      if (reportError && reportError.code !== "PGRST116") {
-        console.error("ERREUR RAPPORT :", reportError);
-      }
-
-      if (existingReport) {
-        await supabase
-          .from("rapport_evangelisation")
-          .update({
-            hommes: existingReport.hommes + (formData.sexe === "Homme" ? 1 : 0),
-            femmes: existingReport.femmes + (formData.sexe === "Femme" ? 1 : 0),
-            priere: existingReport.priere + (formData.priere_salut === "Oui" ? 1 : 0),
-            nouveau_converti: existingReport.nouveau_converti + (formData.type_conversion === "Nouveau converti" ? 1 : 0),
-            reconciliation: existingReport.reconciliation + (formData.type_conversion === "Réconciliation" ? 1 : 0),
-          })
-          .eq("date", today)
-          .eq("eglise_id", formData.eglise_id)
-          .eq("branche_id", formData.branche_id)
-          .eq("type_evangelisation", formData.type_evangelisation);
-      } else {
-        await supabase
-          .from("rapport_evangelisation")
-          .insert([{
-            date: today,
-            hommes: formData.sexe === "Homme" ? 1 : 0,
-            femmes: formData.sexe === "Femme" ? 1 : 0,
-            priere: formData.priere_salut === "Oui" ? 1 : 0,
-            nouveau_converti: formData.type_conversion === "Nouveau converti" ? 1 : 0,
-            reconciliation: formData.type_conversion === "Réconciliation" ? 1 : 0,          
-            eglise_id: formData.eglise_id,
-            branche_id: formData.branche_id,
-            type_evangelisation: formData.type_evangelisation,
-          }]);
-      }
-
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000); // disparaît après 3s
-
-      resetForm();
-
-    } catch (err) {
-      console.error("ERREUR GLOBALE :", err);
-      alert(err.message);
-    }
-  };
+  } catch (err) {
+    console.error("ERREUR GLOBALE :", err);
+    alert(err.message);
+  }
+};
 
   const handleCancel = () => {
     resetForm();

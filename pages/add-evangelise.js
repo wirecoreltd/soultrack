@@ -115,13 +115,14 @@ export default function AddEvangelise({ onNewEvangelise }) {
   e.preventDefault();
 
   if (!formData.eglise_id || !formData.branche_id) {
-    console.error("Eglise ID ou Branche ID manquant :", formData.eglise_id, formData.branche_id);
     alert("Erreur : votre compte n'est pas rattaché à une église ou branche.");
     return;
   }
 
   const finalBesoins = [...formData.besoin];
-  if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
+  if (showOtherField && otherBesoin.trim()) {
+    finalBesoins.push(otherBesoin.trim());
+  }
 
   const finalData = {
     nom: formData.nom.trim(),
@@ -132,41 +133,51 @@ export default function AddEvangelise({ onNewEvangelise }) {
     sexe: formData.sexe || null,
     age: formData.age || null,
     priere_salut: formData.priere_salut === "Oui",
-    type_conversion: formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
+    type_conversion:
+      formData.priere_salut === "Oui" ? formData.type_conversion || null : null,
     besoin: finalBesoins,
     infos_supplementaires: formData.infos_supplementaires || null,
     is_whatsapp: formData.is_whatsapp,
     eglise_id: formData.eglise_id,
     branche_id: formData.branche_id,
-    type_evangelisation: formData.type_evangelisation
+    type_evangelisation: formData.type_evangelisation,
   };
 
-  console.log("DATA ENVOYÉE EVANGELISE :", finalData);
-
   try {
-    // ➤ Ajouter la personne dans la table evangelises
-    const { data: newEvangelise, error: insertError } = await supabase
+    setLoading(true);
+
+    const { data, error } = await supabase
       .from("evangelises")
-      .insert([finalData])
+      .insert(finalData)
       .select()
       .single();
 
-    if (insertError) {
-      console.error("ERREUR INSERT EVANGELISE :", insertError);
-      alert(insertError.message);
+    if (error) {
+      console.error("Erreur Supabase :", error);
+      alert(error.message);
+      setLoading(false);
       return;
     }
 
-    // ✅ Aucun update des totaux ici
-    // Le trigger `trigger_copy_evangelise_id` s'occupe de copier automatiquement l'id
+    console.log("Nouvel évangélisé ajouté :", data);
+
+    // le trigger Supabase crée automatiquement la ligne
+    // dans rapport_evangelisation
 
     setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000); // message succès 3s
     resetForm();
 
+    if (onNewEvangelise) {
+      onNewEvangelise(data);
+    }
+
+    setTimeout(() => setSuccess(false), 3000);
+    setLoading(false);
+
   } catch (err) {
-    console.error("ERREUR GLOBALE :", err);
+    console.error("Erreur globale :", err);
     alert(err.message);
+    setLoading(false);
   }
 };
 

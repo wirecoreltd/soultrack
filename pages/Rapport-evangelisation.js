@@ -250,23 +250,27 @@ export default function RapportEvangelisation() {
   const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"];
 
   // ================= KPI =================  
-      const filteredRapports = rapports.filter((r) => {
-      if (typeFilter && r.type_evangelisation !== typeFilter) {
-        return false;
-      }
-    
-      if (statusFilter && r.status_suivi !== statusFilter) {
-        return false;
-      }
-    
-      return true;
-    });
-      
-  const totalEvangelises = filteredRapports.length;
-  const tauxIntegration =
+      // ================= FILTRES =================
+
+const filteredRapports = rapports.filter((r) => {
+  if (typeFilter && r.type_evangelisation !== typeFilter) {
+    return false;
+  }
+  if (statusFilter && r.status_suivi !== statusFilter) {
+    return false;
+  }
+  return true;
+});
+// regroupement
+const groupedReports = groupByMonth(filteredRapports);
+// totals
+const totalEvangelises = filteredRapports.length;
+// taux integration
+const tauxIntegration =
   totalEnvoyes > 0
     ? Math.round((totalIntegres / totalEnvoyes) * 100)
     : 0;
+  
   const handleKpiClick = (status) => {
     setStatusFilter(status);
     if(formRef.current) window.scrollTo({ top: formRef.current.offsetTop, behavior: "smooth" });

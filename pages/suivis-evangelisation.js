@@ -210,11 +210,13 @@ export default function SuivisEvangelisation() {
   const upsertMembre = async (suivi) => {
   try {
 
+    console.log("PAYLOAD MEMBRE :", payload);
+    
     const payload = {
       suivi_int_id: Number(suivi.id),
     
       // 🔹 Lien avec évangélisation
-      evangelise_member_id: suivi.evangelise_id,
+       evangelise_member_id: suivi.evangelise_id ?? null,
 
       // 🔹 Lier au compte connecté
       eglise_id: user.eglise_id,
@@ -244,9 +246,13 @@ export default function SuivisEvangelisation() {
       suivi_updated_at: new Date().toISOString(),
     };
 
-    const { data, error } = await supabase
+      const { data, error } = await supabase
       .from("membres_complets")
-      .upsert(payload, { onConflict: "suivi_int_id" });
+      .upsert(payload, {
+        onConflict: "suivi_int_id",
+        ignoreDuplicates: false
+      })
+      .select();
 
     if (error) {
       console.error("Erreur insertion membre :", error);

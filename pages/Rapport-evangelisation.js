@@ -226,6 +226,10 @@ export default function RapportEvangelisation() {
   // ================= KPI =================
   const filteredRapports = statusFilter ? rapports.filter(r => r.status_suivi === statusFilter) : rapports;
   const totalEvangelises = rapports.length;
+  const tauxIntegration =
+  totalEnvoyes > 0
+    ? Math.round((totalIntegres / totalEnvoyes) * 100)
+    : 0;
   const handleKpiClick = (status) => {
     setStatusFilter(status);
     if(formRef.current) window.scrollTo({ top: formRef.current.offsetTop, behavior: "smooth" });

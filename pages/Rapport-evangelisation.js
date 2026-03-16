@@ -79,6 +79,9 @@ if (dateFin) evangelisesData = evangelisesData.filter(e => new Date(e.created_at
 
 // mettre à jour l’état
 setTotalEnvoyes(evangelisesData.length);
+setTotalIntegres(evangelisesData.filter(e => e.status_suivis_evangelises === "Intégré").length);
+setTotalEncour(evangelisesData.filter(e => e.status_suivis_evangelises === "En cours").length);
+setTotalRefus(evangelisesData.filter(e => e.status_suivis_evangelises === "Refus").length);    
 
   // 4️⃣ Gérer l’expansion du dernier mois
   const lastMonth = getLastMonthKey(rapportsData);

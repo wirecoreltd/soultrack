@@ -29,6 +29,7 @@ export default function RapportEvangelisation() {
   const [totalCellule, setTotalCellule] = useState(0);
   const [totalEglise, setTotalEglise] = useState(0);
   const [typeFilter, setTypeFilter] = useState("");
+  const [totalPriereSalut, setTotalPriereSalut] = useState(0);
   
 
   // ---------------- PROFIL USER ----------------

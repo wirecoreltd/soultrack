@@ -46,61 +46,73 @@ export default function RapportEvangelisation() {
     fetchProfile();
   }, []);
 
-  // ---------------- FETCH RAPPORTS ----------------
-    const fetchRapports = async () => {
-      if (!egliseId || !brancheId) return;
-      setLoading(true);
-      setShowTable(false);
-    
-      // 1️⃣ Récupérer les rapports
-      let { data: rapportsData } = await supabase
-        .from("rapport_evangelisation")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .order("date", { ascending: true });
-    
-      if (dateDebut) rapportsData = rapportsData.filter(r => new Date(r.date) >= new Date(dateDebut));
-      if (dateFin) rapportsData = rapportsData.filter(r => new Date(r.date) <= new Date(dateFin));
-    
-      setRapports(rapportsData);
-    
-      // 2️⃣ Récupérer les évangélisés envoyés au suivi
-      let { data: evangelisesData } = await supabase
-        .from("evangelises")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .eq("status_suivi", "Envoyé");
-    
-      if (dateDebut) evangelisesData = evangelisesData.filter(e => new Date(e.created_at) >= new Date(dateDebut));
-      if (dateFin) evangelisesData = evangelisesData.filter(e => new Date(e.created_at) <= new Date(dateFin));
-    
-      // -------- Calcul des KPI --------
-      const totalEvangelises = evangelisesData.length;
-      const totalIntegres = evangelisesData.filter(e => e.status_suivis_evangelises === "Intégré").length;
-      const totalEncour = evangelisesData.filter(e => e.status_suivis_evangelises === "En cours").length;
-      const totalRefus = evangelisesData.filter(e => e.status_suivis_evangelises === "Refus").length;
-      const tauxIntegration = totalEvangelises ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
-    
-      // -------- Mise à jour des states --------
-      setTotalEnvoyes(totalEvangelises);
-      setTotalIntegres(totalIntegres);
-      setTotalEncour(totalEncour);
-      setTotalRefus(totalRefus);
-      setTauxIntegration(tauxIntegration);
-    
-      // 4️⃣ Gérer l’expansion du dernier mois
-      const lastMonth = getLastMonthKey(rapportsData);
-      if (lastMonth) setExpandedMonths({ [lastMonth]: true });
-    
-      setLoading(false);
-      setShowTable(true);
-    
-      setTimeout(() => {
-        document.getElementById("rapport-table")?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profile) {
+        setEgliseId(profile.eglise_id);
+        setBrancheId(profile.branche_id);
+      }
     };
+    fetchProfile();
+  }, []);
+
+  // Fetch rapports + calcul KPI
+  const fetchRapports = async (dateDebut, dateFin) => {
+    if (!egliseId || !brancheId) return;
+    setLoading(true);
+    setShowTable(false);
+
+    // 1️⃣ Récupérer les rapports
+    let { data: rapportsData } = await supabase
+      .from("rapport_evangelisation")
+      .select("*")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId)
+      .order("date", { ascending: true });
+
+    // Filtrer par date si nécessaire
+    if (dateDebut)
+      rapportsData = rapportsData.filter(r => new Date(r.date) >= new Date(dateDebut));
+    if (dateFin)
+      rapportsData = rapportsData.filter(r => new Date(r.date) <= new Date(dateFin));
+
+    setRapports(rapportsData);
+
+    // 2️⃣ Calcul des KPI
+    const totalEvangelises = rapportsData.length;
+    const totalInt = rapportsData.filter(r => r.status_suivi === "Intégré").length;
+    const totalEnC = rapportsData.filter(r => r.status_suivi === "En cours").length;
+    const totalR = rapportsData.filter(r => r.status_suivi === "Refus").length;
+    const totalEnv = await supabase
+      .from("evangelises")
+      .select("*")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId)
+      .eq("status_suivi", "Envoyé");
+    
+    setTotalEnvoyes(totalEnv.data?.length || 0);
+    setTotalIntegres(totalInt);
+    setTotalEncour(totalEnC);
+    setTotalRefus(totalR);
+    setTauxIntegration(totalEvangelises ? Math.round((totalInt / totalEvangelises) * 100) : 0);
+
+    setLoading(false);
+    setShowTable(true);
+  };
+
+  useEffect(() => {
+    if (egliseId && brancheId) fetchRapports();
+  }, [egliseId, brancheId]);
 
   // ---------------- EDIT RAPPORT ----------------
   const handleSaveRapport = async (updated) => {

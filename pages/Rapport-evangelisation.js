@@ -106,64 +106,72 @@ export default function RapportEvangelisation() {
     }, 100);
   };
 
-  // ---------------- FETCH KPI ----------------
-  const fetchKPI = async () => {
-    if (!egliseId || !brancheId) return;
-
-    try {
-      // 1️⃣ Évangélisés envoyés
-      let { data: evangelisesData } = await supabase
-        .from("evangelises")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .eq("status_suivi", "Envoyé");
-
-      let filteredEvangelises = (evangelisesData || []);
-      if (dateDebut)
-        filteredEvangelises = filteredEvangelises.filter(
-          (e) => new Date(e.created_at) >= new Date(dateDebut)
-        );
-      if (dateFin)
-        filteredEvangelises = filteredEvangelises.filter(
-          (e) => new Date(e.created_at) <= new Date(dateFin)
-        );
-      setTotalEnvoyes(filteredEvangelises.length);
-      setTotalCellule(
-          filteredSuivis.filter(e => e.cellule_id !== null).length
-        );
-        
-        setTotalEglise(
-          filteredSuivis.filter(e => e.conseiller_id !== null).length
-        );
-
-      // 2️⃣ Suivis pour Intégré / En cours / Refus
-      let { data: suivisData } = await supabase
-        .from("suivis_des_evangelises")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
-      
-        setSuivis(suivisData || []);
-      
-
-      let filteredSuivis = (suivisData || []).filter(e => e.status_suivis_evangelises);
-
-        // Filtrage par date si nécessaire
+      // ---------------- FETCH KPI ----------------
+      const fetchKPI = async () => {
+      if (!egliseId || !brancheId) return;
+    
+      try {
+        // 1️⃣ Évangélisés envoyés
+        let { data: evangelisesData } = await supabase
+          .from("evangelises")
+          .select("*")
+          .eq("eglise_id", egliseId)
+          .eq("branche_id", brancheId)
+          .eq("status_suivi", "Envoyé");
+    
         if (dateDebut)
-          filteredSuivis = filteredSuivis.filter(e => e.date_suivi && new Date(e.date_suivi) >= new Date(dateDebut));
+          evangelisesData = evangelisesData.filter(
+            (e) => new Date(e.created_at) >= new Date(dateDebut)
+          );
         if (dateFin)
-          filteredSuivis = filteredSuivis.filter(e => e.date_suivi && new Date(e.date_suivi) <= new Date(dateFin));
-        
-        setTotalIntegres(filteredSuivis.filter(e => e.status_suivis_evangelises === "Intégré").length);
-        setTotalEncour(filteredSuivis.filter(e => e.status_suivis_evangelises === "En cours").length);
-        setTotalRefus(filteredSuivis.filter(e => e.status_suivis_evangelises === "Refus").length);
-        setTotalCellule(filteredSuivis.filter(e => e.cellule_id !== null).length);
-        setTotalEglise(filteredSuivis.filter(e => e.conseiller_id !== null).length);
-          } catch (err) {
-            console.error("Erreur fetchKPI:", err);
-          }
-        };
+          evangelisesData = evangelisesData.filter(
+            (e) => new Date(e.created_at) <= new Date(dateFin)
+          );
+    
+        setTotalEnvoyes(evangelisesData.length);
+        setTotalEvangelises(rapports.length); // tu l'as déjà
+    
+        // 2️⃣ Suivis
+        let { data: suivisData } = await supabase
+          .from("suivis_des_evangelises")
+          .select("*")
+          .eq("eglise_id", egliseId)
+          .eq("branche_id", brancheId);
+    
+        // Filtrage par date
+        let filteredSuivis = suivisData || [];
+        if (dateDebut)
+          filteredSuivis = filteredSuivis.filter(
+            (e) => e.date_suivi && new Date(e.date_suivi) >= new Date(dateDebut)
+          );
+        if (dateFin)
+          filteredSuivis = filteredSuivis.filter(
+            (e) => e.date_suivi && new Date(e.date_suivi) <= new Date(dateFin)
+          );
+    
+        // KPI
+        setTotalIntegres(
+          filteredSuivis.filter((e) => e.status_suivis_evangelises === "Intégré")
+            .length
+        );
+        setTotalEncour(
+          filteredSuivis.filter((e) => e.status_suivis_evangelises === "En cours")
+            .length
+        );
+        setTotalRefus(
+          filteredSuivis.filter((e) => e.status_suivis_evangelises === "Refus")
+            .length
+        );
+    
+        // Totaux cellule / église
+        setTotalCellule(filteredSuivis.filter((e) => e.cellule_id).length);
+        setTotalEglise(filteredSuivis.filter((e) => e.conseiller_id).length);
+    
+        setSuivis(filteredSuivis);
+      } catch (err) {
+        console.error("Erreur fetchKPI:", err);
+      }
+    };
 
   useEffect(() => {
     fetchKPI();

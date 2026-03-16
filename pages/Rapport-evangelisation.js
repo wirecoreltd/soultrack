@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import EditEvanRapportLine from "../components/EditEvanRapportLine";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 
 export default function RapportEvangelisation() {
+  const formRef = useRef(null);
+
   const [rapports, setRapports] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -20,10 +22,6 @@ export default function RapportEvangelisation() {
   const [expandedTypes, setExpandedTypes] = useState({});
   const [showTable, setShowTable] = useState(false);
   const [statusFilter, setStatusFilter] = useState(null);  
-  const [totalEnvoyes, setTotalEnvoyes] = useState(0);
-  const [totalEncour, setTotalEncour] = useState(0);
-  const [totalIntegres, setTotalIntegres] = useState(0);
-  const [totalRefus, setTotalRefus] = useState(0);
 
   // ---------------- PROFIL USER ----------------
   useEffect(() => {
@@ -46,112 +44,83 @@ export default function RapportEvangelisation() {
     fetchProfile();
   }, []);
 
+  // ---------------- STATE KPI ----------------
+  const [totalEnvoyes, setTotalEnvoyes] = useState(0);
+  const [totalIntegres, setTotalIntegres] = useState(0);
+  const [totalEncour, setTotalEncour] = useState(0);
+  const [totalRefus, setTotalRefus] = useState(0);
+
   // ---------------- FETCH RAPPORTS ----------------
   const fetchRapports = async () => {
-  if (!egliseId || !brancheId) return;
-  setLoading(true);
-  setShowTable(false);
+    if (!egliseId || !brancheId) return;
+    setLoading(true);
+    setShowTable(false);
 
-  // 1️⃣ Récupérer les rapports
-  let { data: rapportsData } = await supabase
-    .from("rapport_evangelisation")
-    .select("*")
-    .eq("eglise_id", egliseId)
-    .eq("branche_id", brancheId)
-    .order("date", { ascending: true });
+    // 1️⃣ Récupérer les rapports avec filtre date directement côté Supabase
+    let query = supabase
+      .from("rapport_evangelisation")
+      .select("*")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId)
+      .order("date", { ascending: true });
 
-  if (dateDebut) rapportsData = rapportsData.filter(r => new Date(r.date) >= new Date(dateDebut));
-  if (dateFin) rapportsData = rapportsData.filter(r => new Date(r.date) <= new Date(dateFin));
+    if (dateDebut) query = query.gte("date", dateDebut);
+    if (dateFin) query = query.lte("date", dateFin);
 
-  setRapports(rapportsData);
+    let { data: rapportsData } = await query;
 
-  // 2️⃣ Récupérer les évangélisés envoyés au suivi
-  let { data: evangelisesData } = await supabase
-  .from("evangelises")
-  .select("*")
-  .eq("eglise_id", egliseId)
-  .eq("branche_id", brancheId)
-  .eq("status_suivi", "Envoyé");
+    setRapports(rapportsData || []);
 
-// filtrage par date si nécessaire
-if (dateDebut) evangelisesData = evangelisesData.filter(e => new Date(e.created_at) >= new Date(dateDebut));
-if (dateFin) evangelisesData = evangelisesData.filter(e => new Date(e.created_at) <= new Date(dateFin));
+    // 2️⃣ Gérer l’expansion du dernier mois
+    const lastMonth = getLastMonthKey(rapportsData);
+    if (lastMonth) setExpandedMonths({ [lastMonth]: true });
 
-// mettre à jour l’état
-setTotalEnvoyes(evangelisesData.length);
+    // 3️⃣ Appeler fetchKPI pour mettre à jour les KPI
+    await fetchKPI();
 
-  // 4️⃣ Gérer l’expansion du dernier mois
-  const lastMonth = getLastMonthKey(rapportsData);
-  if (lastMonth) setExpandedMonths({ [lastMonth]: true });
-
-  setLoading(false);
-  setShowTable(true);
-
-  setTimeout(() => {
-    document.getElementById("rapport-table")?.scrollIntoView({ behavior: "smooth" });
-  }, 100);
-};
+    setLoading(false);
+    setShowTable(true);
+  };
 
   // ---------------- FETCH KPI ----------------
-const [totalEnvoyes, setTotalEnvoyes] = useState(0);
-const [totalIntegres, setTotalIntegres] = useState(0);
-const [totalEncour, setTotalEncour] = useState(0);
-const [totalRefus, setTotalRefus] = useState(0);
+  const fetchKPI = async () => {
+    if (!egliseId || !brancheId) return;
 
-const fetchKPI = async () => {
-  if (!egliseId || !brancheId) return;
+    // 1️⃣ Récupérer les évangélisés envoyés au suivi
+    let evangelisesQuery = supabase
+      .from("evangelises")
+      .select("*")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId)
+      .eq("status_suivi", "Envoyé");
 
-  // 1️⃣ Récupérer les évangélisés envoyés au suivi
-  let { data: evangelisesData } = await supabase
-    .from("evangelises")
-    .select("*")
-    .eq("eglise_id", egliseId)
-    .eq("branche_id", brancheId)
-    .eq("status_suivi", "Envoyé");
+    if (dateDebut) evangelisesQuery = evangelisesQuery.gte("created_at", dateDebut);
+    if (dateFin) evangelisesQuery = evangelisesQuery.lte("created_at", dateFin);
 
-  if (dateDebut)
-    evangelisesData = evangelisesData.filter(
-      (e) => new Date(e.created_at) >= new Date(dateDebut)
-    );
-  if (dateFin)
-    evangelisesData = evangelisesData.filter(
-      (e) => new Date(e.created_at) <= new Date(dateFin)
-    );
+    let { data: evangelisesData } = await evangelisesQuery;
+    setTotalEnvoyes(evangelisesData?.length || 0);
 
-  setTotalEnvoyes(evangelisesData.length);
+    // 2️⃣ Récupérer les suivis
+    let suivisQuery = supabase
+      .from("suivis_des_evangelises")
+      .select("*")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
 
-  // 2️⃣ Récupérer les suivis pour calculer Intégré / En cours / Refus
-  let { data: suivisData } = await supabase
-    .from("suivis_des_evangelises")
-    .select("*")
-    .eq("eglise_id", egliseId)
-    .eq("branche_id", brancheId);
+    if (dateDebut) suivisQuery = suivisQuery.gte("date_suivi", dateDebut);
+    if (dateFin) suivisQuery = suivisQuery.lte("date_suivi", dateFin);
 
-  if (dateDebut)
-    suivisData = suivisData.filter(
-      (e) => new Date(e.date_suivi) >= new Date(dateDebut)
-    );
-  if (dateFin)
-    suivisData = suivisData.filter(
-      (e) => new Date(e.date_suivi) <= new Date(dateFin)
-    );
+    let { data: suivisData } = await suivisQuery;
 
-  setTotalIntegres(
-    suivisData.filter((e) => e.status_suivis_evangelises === "Intégré").length
-  );
-  setTotalEncour(
-    suivisData.filter((e) => e.status_suivis_evangelises === "En cours").length
-  );
-  setTotalRefus(
-    suivisData.filter((e) => e.status_suivis_evangelises === "Refus").length
-  );
-};
+    setTotalIntegres(suivisData?.filter(e => e.status_suivis_evangelises === "Intégré").length || 0);
+    setTotalEncour(suivisData?.filter(e => e.status_suivis_evangelises === "En cours").length || 0);
+    setTotalRefus(suivisData?.filter(e => e.status_suivis_evangelises === "Refus").length || 0);
+  };
 
-// appeler fetchKPI après fetchRapports ou dans un useEffect
-useEffect(() => {
-  fetchKPI();
-}, [egliseId, brancheId, dateDebut, dateFin]);
-  
+  useEffect(() => {
+    if (egliseId && brancheId) fetchRapports();
+  }, [egliseId, brancheId, dateDebut, dateFin]);
+
   // ---------------- EDIT RAPPORT ----------------
   const handleSaveRapport = async (updated) => {
     await supabase.from("rapport_evangelisation").upsert(updated);
@@ -161,17 +130,13 @@ useEffect(() => {
   };
 
   // ---------------- COLLAPSE ----------------
-  const toggleMonth = (monthKey) => {
-    setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
-  };
-  const toggleType = (typeKey) => {
-    setExpandedTypes((prev) => ({ ...prev, [typeKey]: !prev[typeKey] }));
-  };
+  const toggleMonth = (monthKey) => setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
+  const toggleType = (typeKey) => setExpandedTypes(prev => ({ ...prev, [typeKey]: !prev[typeKey] }));
 
   // ---------------- GROUPING ----------------
   const groupByMonth = (data) => {
     const map = {};
-    data.forEach((r) => {
+    data?.forEach(r => {
       const d = new Date(r.date);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       if (!map[key]) map[key] = [];
@@ -182,7 +147,7 @@ useEffect(() => {
 
   const groupByType = (data) => {
     const map = {};
-    data.forEach((r) => {
+    data?.forEach(r => {
       const type = r.type_evangelisation || "Non défini";
       if (!map[type]) map[type] = [];
       map[type].push(r);
@@ -192,14 +157,8 @@ useEffect(() => {
 
   // -------- TOTALS --------
   const getTotals = (reports) => {
-    let hommes = 0;
-    let femmes = 0;
-    let priere = 0;
-    let nouveau = 0;
-    let reconciliation = 0;
-    let moissonneurs = 0;
-
-    reports.forEach((r) => {
+    let hommes = 0, femmes = 0, priere = 0, nouveau = 0, reconciliation = 0, moissonneurs = 0;
+    reports?.forEach(r => {
       hommes += Number(r.hommes) || 0;
       femmes += Number(r.femmes) || 0;
       priere += Number(r.priere) || 0;
@@ -207,45 +166,28 @@ useEffect(() => {
       reconciliation += Number(r.reconciliation) || 0;
       moissonneurs += Number(r.moissonneurs) || 0;
     });
-
-    return {
-      hommes,
-      femmes,
-      total: hommes + femmes,
-      priere,
-      nouveau,
-      reconciliation,
-      moissonneurs,
-    };
+    return { hommes, femmes, total: hommes + femmes, priere, nouveau, reconciliation, moissonneurs };
   };
 
   // ---------------- LAST MONTH ----------------
   const getLastMonthKey = (data) => {
     if (!data || data.length === 0) return null;
-    const dates = data.map((r) => new Date(r.date));
+    const dates = data.map(r => new Date(r.date));
     const lastDate = new Date(Math.max(...dates));
     return `${lastDate.getFullYear()}-${lastDate.getMonth()}`;
   };
 
   // ---------------- UTILS ----------------
   const getMonthNameFR = (monthIndex) => {
-    const months = [
-      "Janvier","Février","Mars","Avril","Mai","Juin",
-      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
-    ];
+    const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
     return months[monthIndex] || "";
   };
 
   const groupedReports = groupByMonth(rapports);
-  const borderColors = [
-    "border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"
-  ];
+  const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"];
 
   /* ================= KPI ================= */
-  const filteredRapports = statusFilter
-    ? rapports.filter(r => r.status_suivi === statusFilter)
-    : rapports;
-
+  const filteredRapports = statusFilter ? rapports.filter(r => r.status_suivi === statusFilter) : rapports;
   const totalEvangelises = rapports.length;   
   const totalEnCours = rapports.filter(r => r.status_suivi === "En cours").length;
   const nonIntegres = totalEvangelises - totalIntegres;
@@ -253,8 +195,14 @@ useEffect(() => {
 
   const handleKpiClick = (status) => {
     setStatusFilter(status);
-    window.scrollTo({ top: formRef.current.offsetTop, behavior: "smooth" });
+    window.scrollTo({ top: formRef.current?.offsetTop || 0, behavior: "smooth" });
   };
+
+  // ---------------- SCROLL TABLE ----------------
+  useEffect(() => {
+    if (showTable) document.getElementById("rapport-table")?.scrollIntoView({ behavior: "smooth" });
+  }, [showTable]);
+
   // ---------------- UI ----------------
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">

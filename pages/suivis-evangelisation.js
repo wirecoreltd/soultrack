@@ -207,54 +207,58 @@ export default function SuivisEvangelisation() {
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
   // ================= UPSERT MEMBRE =================
-  const upsertMembre = async (suivi) => {
-  try {
-
-    const payload = {
-     suivi_int_id: Number(suivi.id),
-
-      // 🔹 Lier au compte connecté
-      eglise_id: user.eglise_id,
-      branche_id: user.branche_id,
-
-      // 🔹 Infos personne
-      nom: suivi.nom,
-      prenom: suivi.prenom,
-      telephone: suivi.telephone,
-      ville: suivi.ville,
-      sexe: suivi.sexe,
-
-      // 🔹 Attribution
-      cellule_id: suivi.cellule_id,
-      conseiller_id: suivi.conseiller_id,
-
-      // 🔹 Infos suivi
-      besoin: suivi.besoin,
-      infos_supplementaires: suivi.infos_supplementaires,
-      Commentaire_Suivi_Evangelisation: suivi.commentaire_evangelises,
-
-      // 🔹 Champs automatiques
-      etat_contact: "Existant",
-      venu: "Évangélisation",
-      statut_suivis: 3,
-
-      suivi_updated_at: new Date().toISOString(),
+    const upsertMembre = async (suivi) => {
+      try {
+        // 🔹 Crée le payload avec UUID tel quel (pas de Number)
+        const payload = {
+          suivi_int_id: suivi.id,           // UUID du suivi
+          eglise_id: user.eglise_id,       // UUID église
+          branche_id: user.branche_id,     // UUID branche
+    
+          // Infos personne
+          nom: suivi.nom || "",
+          prenom: suivi.prenom || "",
+          telephone: suivi.telephone || "",
+          ville: suivi.ville || "",
+          sexe: suivi.sexe || "",
+    
+          // Attribution
+          cellule_id: suivi.cellule_id || null,      // UUID cellule
+          conseiller_id: suivi.conseiller_id || null,// UUID conseiller
+    
+          // Infos suivi
+          besoin: suivi.besoin || "",
+          infos_supplementaires: suivi.infos_supplementaires || "",
+          Commentaire_Suivi_Evangelisation: suivi.commentaire_evangelises || "",
+    
+          // Champs automatiques
+          etat_contact: "Existant",
+          venu: "Évangélisation",
+          statut_suivis: 3,
+    
+          suivi_updated_at: new Date().toISOString(),
+    
+          // 🔹 Copier l'UUID de l'évangélisé pour liaison
+          evangelise_member_id: suivi.id || null,
+        };
+    
+        // 🔹 Upsert dans membres_complets sur UUID
+        const { data, error } = await supabase
+          .from("membres_complets")
+          .upsert(payload, { onConflict: "suivi_int_id" });
+    
+        if (error) {
+          console.error("Erreur insertion membre :", error);
+          alert("Erreur insertion membre : " + error.message);
+        } else {
+          console.log("Membre intégré avec succès :", data);
+        }
+    
+      } catch (err) {
+        console.error("Erreur upsert membre :", err.message);
+        alert("Erreur upsert membre : " + err.message);
+      }
     };
-
-    const { data, error } = await supabase
-      .from("membres_complets")
-      .upsert(payload, { onConflict: "suivi_int_id" });
-
-    if (error) {
-      console.error("Erreur insertion membre :", error);
-    } else {
-      console.log("Membre intégré avec succès :", data);
-    }
-
-  } catch (err) {
-    console.error("Erreur upsert membre :", err.message);
-  }
-};
 
   // ================= UPDATE SUIVI =================
   const updateSuivi = async (id, m) => {

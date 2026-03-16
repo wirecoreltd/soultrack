@@ -161,6 +161,22 @@ export default function RapportEvangelisation() {
     "border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"
   ];
 
+  /* ================= KPI ================= */
+  const filteredRapports = statusFilter
+    ? rapports.filter(r => r.status_suivi === statusFilter)
+    : rapports;
+
+  const totalEvangelises = rapports.length;
+  const totalEnvoyes = rapports.filter(r => r.status_suivi === "Envoyé").length;
+  const totalIntegres = rapports.filter(r => r.status_suivi === "Intégré").length;
+  const totalEnCours = rapports.filter(r => r.status_suivi === "En cours").length;
+  const nonIntegres = totalEvangelises - totalIntegres;
+  const tauxIntegration = totalEvangelises ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
+
+  const handleKpiClick = (status) => {
+    setStatusFilter(status);
+    window.scrollTo({ top: formRef.current.offsetTop, behavior: "smooth" });
+  };
   // ---------------- UI ----------------
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -203,6 +219,36 @@ export default function RapportEvangelisation() {
           </button>
         </div>
       </div>
+
+{/* ================= KPI ================= */}
+      {showTable && (
+        <div className="w-full max-w-4xl bg-white/10 rounded-2xl p-6 shadow-lg mt-6 text-white grid grid-cols-3 gap-4 text-center">
+          <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick(null)}>
+            <div className="text-2xl font-bold">{totalEvangelises}</div>
+            <div>Évangélisés</div>
+          </div>
+          <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Envoyé")}>
+            <div className="text-2xl font-bold">{totalEnvoyes}</div>
+            <div>Envoyés au suivi</div>
+          </div>
+          <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Intégré")}>
+            <div className="text-2xl font-bold">{totalIntegres}</div>
+            <div>Intégrés</div>
+          </div>
+          <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("En cours")}>
+            <div className="text-2xl font-bold">{totalEnCours}</div>
+            <div>En cours</div>
+          </div>
+          <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Non Intégré")}>
+            <div className="text-2xl font-bold">{nonIntegres}</div>
+            <div>Non intégrés</div>
+          </div>
+          <div className="p-4 bg-white/20 rounded-xl">
+            <div className="text-2xl font-bold">{tauxIntegration}%</div>
+            <div>Taux d’intégration</div>
+          </div>
+        </div>
+      )}
 
       {message && <div className="text-center text-white mt-4 font-medium">{message}</div>}
 

@@ -23,7 +23,7 @@ export default function RapportEvangelisation() {
   const [statusFilter, setStatusFilter] = useState(null);
   const [totalEnvoyes, setTotalEnvoyes] = useState(0);
   const [totalIntegres, setTotalIntegres] = useState(0);
-  const [totalEncour, setTotalEnCour] = useState(0);
+  const [totalEncour, setTotalEncour] = useState(0);
   const [totalRefus, setTotalRefus] = useState(0);
   const [suivis, setSuivis] = useState([]);
 

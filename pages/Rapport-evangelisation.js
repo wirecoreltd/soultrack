@@ -244,9 +244,18 @@ export default function RapportEvangelisation() {
   });
 
   const groupedReports = groupByMonth(filteredRapports);
-  const totalEvangelises = filteredRapports.length;
-  const tauxIntegration = totalEnvoyes > 0 ? Math.round((totalIntegres / totalEnvoyes) * 100) : 0;
-  const ratioPriere = totalEvangelises > 0 ? Math.round((totalPriereSalut / totalEvangelises) * 100) : 0;
+  // total évangélisés filtrés par date
+const totalEvangelises = filteredEvangelises.length;
+
+// nombre qui ont prié pour le salut
+const nbPriere = filteredEvangelises.filter(e => e.priere_salut === true).length;
+
+// ratio correct
+const ratioPriere = totalEvangelises > 0
+  ? Math.round((nbPriere / totalEvangelises) * 100)
+  : 0;
+
+setTotalPriereSalut(nbPriere);
 
   const handleKpiClick = (status) => {
     setStatusFilter(status);

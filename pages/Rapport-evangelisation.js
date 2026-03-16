@@ -26,6 +26,8 @@ export default function RapportEvangelisation() {
   const [totalEncour, setTotalEncour] = useState(0);
   const [totalRefus, setTotalRefus] = useState(0);
   const [suivis, setSuivis] = useState([]);
+  const [totalCellule, setTotalCellule] = useState(0);
+  const [totalEglise, setTotalEglise] = useState(0);
 
   // ---------------- PROFIL USER ----------------
   useEffect(() => {
@@ -127,6 +129,13 @@ export default function RapportEvangelisation() {
           (e) => new Date(e.created_at) <= new Date(dateFin)
         );
       setTotalEnvoyes(filteredEvangelises.length);
+      setTotalCellule(
+          filteredSuivis.filter(e => e.cellule_id !== null).length
+        );
+        
+        setTotalEglise(
+          filteredSuivis.filter(e => e.conseiller_id !== null).length
+        );
 
       // 2️⃣ Suivis pour Intégré / En cours / Refus
       let { data: suivisData } = await supabase
@@ -149,6 +158,8 @@ export default function RapportEvangelisation() {
         setTotalIntegres(filteredSuivis.filter(e => e.status_suivis_evangelises === "Intégré").length);
         setTotalEncour(filteredSuivis.filter(e => e.status_suivis_evangelises === "En cours").length);
         setTotalRefus(filteredSuivis.filter(e => e.status_suivis_evangelises === "Refus").length);
+        setTotalCellule(filteredSuivis.filter(e => e.cellule_id !== null).length);
+        setTotalEglise(filteredSuivis.filter(e => e.conseiller_id !== null).length);
           } catch (err) {
             console.error("Erreur fetchKPI:", err);
           }
@@ -297,6 +308,14 @@ export default function RapportEvangelisation() {
           <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Refus")}>
             <div className="text-2xl font-bold">{totalRefus}</div>
             <div>Refus</div>
+          </div>
+            <div className="p-4 bg-white/20 rounded-xl">
+            <div className="text-2xl font-bold">{totalCellule}</div>
+            <div>Intégrés en cellule</div>
+          </div>
+            <div className="p-4 bg-white/20 rounded-xl">
+            <div className="text-2xl font-bold">{totalEglise}</div>
+            <div>Intégrés à l'église</div>
           </div>
           <div className="p-4 bg-white/20 rounded-xl">
             <div className="text-2xl font-bold">{tauxIntegration}%</div>

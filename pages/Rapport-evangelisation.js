@@ -20,6 +20,7 @@ export default function RapportEvangelisation() {
   const [expandedTypes, setExpandedTypes] = useState({});
   const [showTable, setShowTable] = useState(false);
   const [statusFilter, setStatusFilter] = useState(null);
+  const [totalEnvoyes, setTotalEnvoyes] = useState(0);
 
   // ---------------- PROFIL USER ----------------
   useEffect(() => {
@@ -44,34 +45,48 @@ export default function RapportEvangelisation() {
 
   // ---------------- FETCH RAPPORTS ----------------
   const fetchRapports = async () => {
-    if (!egliseId || !brancheId) return;
-    setLoading(true);
-    setShowTable(false);
+  if (!egliseId || !brancheId) return;
+  setLoading(true);
+  setShowTable(false);
 
-    let query = supabase
-      .from("rapport_evangelisation")
-      .select("*")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId)
-      .order("date", { ascending: true });
+  // 1️⃣ Récupérer les rapports
+  let { data: rapportsData } = await supabase
+    .from("rapport_evangelisation")
+    .select("*")
+    .eq("eglise_id", egliseId)
+    .eq("branche_id", brancheId)
+    .order("date", { ascending: true });
 
-    if (dateDebut) query = query.gte("date", dateDebut);
-    if (dateFin) query = query.lte("date", dateFin);
+  if (dateDebut) rapportsData = rapportsData.filter(r => new Date(r.date) >= new Date(dateDebut));
+  if (dateFin) rapportsData = rapportsData.filter(r => new Date(r.date) <= new Date(dateFin));
 
-    const { data } = await query;
-    const reports = data || [];
-    setRapports(reports);
+  setRapports(rapportsData);
 
-    const lastMonth = getLastMonthKey(reports);
-    if (lastMonth) setExpandedMonths({ [lastMonth]: true });
+  // 2️⃣ Récupérer les évangélisés envoyés au suivi
+  let { data: evangelisesData } = await supabase
+    .from("evangelises")
+    .select("*")
+    .eq("eglise_id", egliseId)
+    .eq("branche_id", brancheId)
+    .eq("status_suivi", "Envoyé");
 
-    setLoading(false);
-    setShowTable(true);
+  if (dateDebut) evangelisesData = evangelisesData.filter(e => new Date(e.created_at) >= new Date(dateDebut));
+  if (dateFin) evangelisesData = evangelisesData.filter(e => new Date(e.created_at) <= new Date(dateFin));
 
-    setTimeout(() => {
-      document.getElementById("rapport-table")?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  };
+  // 3️⃣ Mettre à jour le KPI
+  setTotalEnvoyes(evangelisesData.length);
+
+  // 4️⃣ Gérer l’expansion du dernier mois
+  const lastMonth = getLastMonthKey(rapportsData);
+  if (lastMonth) setExpandedMonths({ [lastMonth]: true });
+
+  setLoading(false);
+  setShowTable(true);
+
+  setTimeout(() => {
+    document.getElementById("rapport-table")?.scrollIntoView({ behavior: "smooth" });
+  }, 100);
+};
 
   // ---------------- EDIT RAPPORT ----------------
   const handleSaveRapport = async (updated) => {

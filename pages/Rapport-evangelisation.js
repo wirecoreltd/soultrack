@@ -47,53 +47,60 @@ export default function RapportEvangelisation() {
   }, []);
 
   // ---------------- FETCH RAPPORTS ----------------
-  const fetchRapports = async () => {
-  if (!egliseId || !brancheId) return;
-  setLoading(true);
-  setShowTable(false);
-
-  // 1️⃣ Récupérer les rapports
-  let { data: rapportsData } = await supabase
-    .from("rapport_evangelisation")
-    .select("*")
-    .eq("eglise_id", egliseId)
-    .eq("branche_id", brancheId)
-    .order("date", { ascending: true });
-
-  if (dateDebut) rapportsData = rapportsData.filter(r => new Date(r.date) >= new Date(dateDebut));
-  if (dateFin) rapportsData = rapportsData.filter(r => new Date(r.date) <= new Date(dateFin));
-
-  setRapports(rapportsData);
-
-  // 2️⃣ Récupérer les évangélisés envoyés au suivi
-  let { data: evangelisesData } = await supabase
-  .from("evangelises")
-  .select("*")
-  .eq("eglise_id", egliseId)
-  .eq("branche_id", brancheId)
-  .eq("status_suivi", "Envoyé");
-
-// filtrage par date si nécessaire
-if (dateDebut) evangelisesData = evangelisesData.filter(e => new Date(e.created_at) >= new Date(dateDebut));
-if (dateFin) evangelisesData = evangelisesData.filter(e => new Date(e.created_at) <= new Date(dateFin));
-
-// mettre à jour l’état
-setTotalEnvoyes(evangelisesData.length);
-setTotalIntegres(evangelisesData.filter(e => e.status_suivis_evangelises === "Intégré").length);
-setTotalEncour(evangelisesData.filter(e => e.status_suivis_evangelises === "En cours").length);
-setTotalRefus(evangelisesData.filter(e => e.status_suivis_evangelises === "Refus").length);    
-
-  // 4️⃣ Gérer l’expansion du dernier mois
-  const lastMonth = getLastMonthKey(rapportsData);
-  if (lastMonth) setExpandedMonths({ [lastMonth]: true });
-
-  setLoading(false);
-  setShowTable(true);
-
-  setTimeout(() => {
-    document.getElementById("rapport-table")?.scrollIntoView({ behavior: "smooth" });
-  }, 100);
-};
+    const fetchRapports = async () => {
+      if (!egliseId || !brancheId) return;
+      setLoading(true);
+      setShowTable(false);
+    
+      // 1️⃣ Récupérer les rapports
+      let { data: rapportsData } = await supabase
+        .from("rapport_evangelisation")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId)
+        .order("date", { ascending: true });
+    
+      if (dateDebut) rapportsData = rapportsData.filter(r => new Date(r.date) >= new Date(dateDebut));
+      if (dateFin) rapportsData = rapportsData.filter(r => new Date(r.date) <= new Date(dateFin));
+    
+      setRapports(rapportsData);
+    
+      // 2️⃣ Récupérer les évangélisés envoyés au suivi
+      let { data: evangelisesData } = await supabase
+        .from("evangelises")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId)
+        .eq("status_suivi", "Envoyé");
+    
+      if (dateDebut) evangelisesData = evangelisesData.filter(e => new Date(e.created_at) >= new Date(dateDebut));
+      if (dateFin) evangelisesData = evangelisesData.filter(e => new Date(e.created_at) <= new Date(dateFin));
+    
+      // -------- Calcul des KPI --------
+      const totalEvangelises = evangelisesData.length;
+      const totalIntegres = evangelisesData.filter(e => e.status_suivis_evangelises === "Intégré").length;
+      const totalEncour = evangelisesData.filter(e => e.status_suivis_evangelises === "En cours").length;
+      const totalRefus = evangelisesData.filter(e => e.status_suivis_evangelises === "Refus").length;
+      const tauxIntegration = totalEvangelises ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
+    
+      // -------- Mise à jour des states --------
+      setTotalEnvoyes(totalEvangelises);
+      setTotalIntegres(totalIntegres);
+      setTotalEncour(totalEncour);
+      setTotalRefus(totalRefus);
+      setTauxIntegration(tauxIntegration);
+    
+      // 4️⃣ Gérer l’expansion du dernier mois
+      const lastMonth = getLastMonthKey(rapportsData);
+      if (lastMonth) setExpandedMonths({ [lastMonth]: true });
+    
+      setLoading(false);
+      setShowTable(true);
+    
+      setTimeout(() => {
+        document.getElementById("rapport-table")?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    };
 
   // ---------------- EDIT RAPPORT ----------------
   const handleSaveRapport = async (updated) => {

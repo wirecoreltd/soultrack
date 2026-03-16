@@ -339,105 +339,104 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
       </div>
 
      {/* ================= KPI ================= */}
-        {showTable && (
-          <div className="w-full max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-        
-            {/* Évangélisés */}
-            <div
-              className="p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:scale-105 transition-transform flex flex-col items-center"
-              onClick={() => handleKpiClick(null)}
-            >
-              <div className="text-3xl font-semibold">{totalEvangelises}</div>
-              <div className="mt-1 text-sm font-semibold">Évangélisés</div>
-            </div>
-        
-            {/* Envoyés au suivi */}
-            <div
-              className="p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:scale-105 transition-transform flex flex-col items-center"
-              onClick={() => handleKpiClick("Envoyé")}
-            >
-              <div className="text-3xl font-semibold">
-                {filteredEvangelisesByType.filter(e => e.status_suivi === "Envoyé").length}
-              </div>
-              <div className="mt-1 text-sm font-semibold">Envoyés au suivi</div>
-              <div className="mt-2 text-lg font-semibold bg-white/20 rounded-full px-3 py-1">
-                {totalEvangelises > 0
-                  ? Math.round((filteredEvangelisesByType.filter(e => e.status_suivi === "Envoyé").length / totalEvangelises) * 100)
-                  : 0}%
-              </div>
-            </div>
-        
-            {/* Intégrés */}
-            <div
-              className="p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-green-400 to-green-600 text-white hover:scale-105 transition-transform flex flex-col items-center"
-              onClick={() => handleKpiClick("Intégré")}
-            >
-              <div className="text-3xl font-semibold">{totalIntegres}</div>
-              <div className="mt-1 text-sm font-semibold">Intégrés</div>
-              <div className="mt-2 text-lg font-semibold bg-white/20 rounded-full px-3 py-1">
-                {totalEvangelises > 0 ? Math.round((totalIntegres / totalEvangelises) * 100) : 0}%
-              </div>
-            </div>
-        
-            {/* En cours */}
-            <div
-              className="p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
-              onClick={() => handleKpiClick("En cours")}
-            >
-              <div className="text-3xl font-semibold">{totalEncour}</div>
-              <div className="mt-1 text-sm font-semibold">En cours</div>
-              <div className="mt-2 text-lg font-semibold bg-white/20 rounded-full px-3 py-1">
-                {totalEvangelises > 0 ? Math.round((totalEncour / totalEvangelises) * 100) : 0}%
-              </div>
-            </div>
-        
-            {/* Refus */}
-            <div
-              className="p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-red-400 to-red-600 text-white hover:scale-105 transition-transform flex flex-col items-center"
-              onClick={() => handleKpiClick("Refus")}
-            >
-              <div className="text-3xl font-semibold">{totalRefus}</div>
-              <div className="mt-1 text-sm font-semibold">Refus</div>
-              <div className="mt-2 text-lg font-semibold bg-white/20 rounded-full px-3 py-1">
-                {totalEvangelises > 0 ? Math.round((totalRefus / totalEvangelises) * 100) : 0}%
-              </div>
-            </div>
-        
-            {/* Intégrés en cellule */}
-            <div className="p-6 rounded-2xl shadow-lg bg-gradient-to-r from-indigo-400 to-indigo-500 text-white flex flex-col items-center">
-              <div className="text-3xl font-semibold">{totalCellule}</div>
-              <div className="mt-1 text-sm font-semibold">Intégrés en cellule</div>
-              <div className="mt-2 text-lg font-semibold bg-white/20 rounded-full px-3 py-1">
-                {totalIntegres > 0 ? Math.round((totalCellule / totalIntegres) * 100) : 0}%
-              </div>
-            </div>
-        
-            {/* Intégrés à l'église */}
-            <div className="p-6 rounded-2xl shadow-lg bg-gradient-to-r from-teal-400 to-teal-500 text-white flex flex-col items-center">
-              <div className="text-3xl font-semibold">{totalEglise}</div>
-              <div className="mt-1 text-sm font-semibold">Intégrés à l'église</div>
-              <div className="mt-2 text-lg font-semibold bg-white/20 rounded-full px-3 py-1">
-                {totalIntegres > 0 ? Math.round((totalEglise / totalIntegres) * 100) : 0}%
-              </div>
-            </div>
-        
-            {/* Convertis / Évangélisés */}
-            <div className="p-6 rounded-2xl shadow-lg bg-gradient-to-r from-pink-400 to-pink-500 text-white flex flex-col items-center">
-              <div className="text-3xl font-semibold">
-                {totalEvangelises > 0 ? Math.round((totalPriereSalut / totalEvangelises) * 100) : 0}%
-              </div>
-              <div className="mt-1 text-sm font-semibold">Convertis / Évangélisés (prière)</div>
-            </div>
-        
-            {/* Taux d’intégration */}
-            <div className="p-6 rounded-2xl shadow-lg bg-gradient-to-r from-orange-400 to-orange-500 text-white flex flex-col items-center">
-              <div className="text-3xl font-semibold">{tauxIntegration}%</div>
-              <div className="mt-1 text-sm font-semibold">Taux d’intégration</div>
-            </div>
-        
+      {showTable && (
+        <div className="w-full max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+      
+        {/* Évangélisés */}
+        <div
+          className="p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:scale-105 transition-transform flex flex-col items-center"
+          onClick={() => handleKpiClick(null)}
+        >
+          <div className="text-3xl font-semibold">{totalEvangelises}</div>
+          <div className="mt-1 text-sm font-semibold">Évangélisés</div>
+        </div>
+      
+        {/* Envoyés au suivi */}
+        <div
+          className="p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:scale-105 transition-transform flex flex-col items-center"
+          onClick={() => handleKpiClick("Envoyé")}
+        >
+          <div className="text-3xl font-semibold">
+            {filteredEvangelisesByType.filter(e => e.status_suivi === "Envoyé").length}
           </div>
-        )}
-
+          <div className="mt-1 text-sm font-semibold">Envoyés au suivi</div>
+          <div className="mt-2 w-16 p-2 bg-white/20 rounded-2xl text-center text-lg font-semibold">
+            {totalEvangelises > 0
+              ? Math.round((filteredEvangelisesByType.filter(e => e.status_suivi === "Envoyé").length / totalEvangelises) * 100)
+              : 0}%
+          </div>
+        </div>
+      
+        {/* Intégrés */}
+        <div
+          className="p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-green-400 to-green-600 text-white hover:scale-105 transition-transform flex flex-col items-center"
+          onClick={() => handleKpiClick("Intégré")}
+        >
+          <div className="text-3xl font-semibold">{totalIntegres}</div>
+          <div className="mt-1 text-sm font-semibold">Intégrés</div>
+          <div className="mt-2 w-16 p-2 bg-white/20 rounded-2xl text-center text-lg font-semibold">
+            {totalEvangelises > 0 ? Math.round((totalIntegres / totalEvangelises) * 100) : 0}%
+          </div>
+        </div>
+      
+        {/* En cours */}
+        <div
+          className="p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
+          onClick={() => handleKpiClick("En cours")}
+        >
+          <div className="text-3xl font-semibold">{totalEncour}</div>
+          <div className="mt-1 text-sm font-semibold">En cours</div>
+          <div className="mt-2 w-16 p-2 bg-white/20 rounded-2xl text-center text-lg font-semibold">
+            {totalEvangelises > 0 ? Math.round((totalEncour / totalEvangelises) * 100) : 0}%
+          </div>
+        </div>
+      
+        {/* Refus */}
+        <div
+          className="p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-red-400 to-red-600 text-white hover:scale-105 transition-transform flex flex-col items-center"
+          onClick={() => handleKpiClick("Refus")}
+        >
+          <div className="text-3xl font-semibold">{totalRefus}</div>
+          <div className="mt-1 text-sm font-semibold">Refus</div>
+          <div className="mt-2 w-16 p-2 bg-white/20 rounded-2xl text-center text-lg font-semibold">
+            {totalEvangelises > 0 ? Math.round((totalRefus / totalEvangelises) * 100) : 0}%
+          </div>
+        </div>
+      
+        {/* Intégrés en cellule */}
+        <div className="p-6 rounded-2xl shadow-lg bg-gradient-to-r from-indigo-400 to-indigo-500 text-white flex flex-col items-center">
+          <div className="text-3xl font-semibold">{totalCellule}</div>
+          <div className="mt-1 text-sm font-semibold">Intégrés en cellule</div>
+          <div className="mt-2 w-16 p-2 bg-white/20 rounded-2xl text-center text-lg font-semibold">
+            {totalIntegres > 0 ? Math.round((totalCellule / totalIntegres) * 100) : 0}%
+          </div>
+        </div>
+      
+        {/* Intégrés à l'église */}
+        <div className="p-6 rounded-2xl shadow-lg bg-gradient-to-r from-teal-400 to-teal-500 text-white flex flex-col items-center">
+          <div className="text-3xl font-semibold">{totalEglise}</div>
+          <div className="mt-1 text-sm font-semibold">Intégrés à l'église</div>
+          <div className="mt-2 w-16 p-2 bg-white/20 rounded-2xl text-center text-lg font-semibold">
+            {totalIntegres > 0 ? Math.round((totalEglise / totalIntegres) * 100) : 0}%
+          </div>
+        </div>
+      
+        {/* Convertis / Évangélisés */}
+        <div className="p-6 rounded-2xl shadow-lg bg-gradient-to-r from-pink-400 to-pink-500 text-white flex flex-col items-center">
+          <div className="text-3xl font-semibold">
+            {totalEvangelises > 0 ? Math.round((totalPriereSalut / totalEvangelises) * 100) : 0}%
+          </div>
+          <div className="mt-1 text-sm font-semibold">Convertis / Évangélisés (prière)</div>
+        </div>
+      
+        {/* Taux d’intégration */}
+        <div className="p-6 rounded-2xl shadow-lg bg-gradient-to-r from-orange-400 to-orange-500 text-white flex flex-col items-center">
+          <div className="text-3xl font-semibold">{tauxIntegration}%</div>
+          <div className="mt-1 text-sm font-semibold">Taux d’intégration</div>
+        </div>
+      
+        </div>
+      )}
       {message && <div className="text-center text-white mt-4 font-medium">{message}</div>}
 
       {/* TABLEAU */}

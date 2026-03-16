@@ -92,6 +92,66 @@ setTotalEnvoyes(evangelisesData.length);
   }, 100);
 };
 
+  // ---------------- FETCH KPI ----------------
+const [totalEnvoyes, setTotalEnvoyes] = useState(0);
+const [totalIntegres, setTotalIntegres] = useState(0);
+const [totalEncour, setTotalEncour] = useState(0);
+const [totalRefus, setTotalRefus] = useState(0);
+
+const fetchKPI = async () => {
+  if (!egliseId || !brancheId) return;
+
+  // 1️⃣ Récupérer les évangélisés envoyés au suivi
+  let { data: evangelisesData } = await supabase
+    .from("evangelises")
+    .select("*")
+    .eq("eglise_id", egliseId)
+    .eq("branche_id", brancheId)
+    .eq("status_suivi", "Envoyé");
+
+  if (dateDebut)
+    evangelisesData = evangelisesData.filter(
+      (e) => new Date(e.created_at) >= new Date(dateDebut)
+    );
+  if (dateFin)
+    evangelisesData = evangelisesData.filter(
+      (e) => new Date(e.created_at) <= new Date(dateFin)
+    );
+
+  setTotalEnvoyes(evangelisesData.length);
+
+  // 2️⃣ Récupérer les suivis pour calculer Intégré / En cours / Refus
+  let { data: suivisData } = await supabase
+    .from("suivis_des_evangelises")
+    .select("*")
+    .eq("eglise_id", egliseId)
+    .eq("branche_id", brancheId);
+
+  if (dateDebut)
+    suivisData = suivisData.filter(
+      (e) => new Date(e.date_suivi) >= new Date(dateDebut)
+    );
+  if (dateFin)
+    suivisData = suivisData.filter(
+      (e) => new Date(e.date_suivi) <= new Date(dateFin)
+    );
+
+  setTotalIntegres(
+    suivisData.filter((e) => e.status_suivis_evangelises === "Intégré").length
+  );
+  setTotalEncour(
+    suivisData.filter((e) => e.status_suivis_evangelises === "En cours").length
+  );
+  setTotalRefus(
+    suivisData.filter((e) => e.status_suivis_evangelises === "Refus").length
+  );
+};
+
+// appeler fetchKPI après fetchRapports ou dans un useEffect
+useEffect(() => {
+  fetchKPI();
+}, [egliseId, brancheId, dateDebut, dateFin]);
+  
   // ---------------- EDIT RAPPORT ----------------
   const handleSaveRapport = async (updated) => {
     await supabase.from("rapport_evangelisation").upsert(updated);

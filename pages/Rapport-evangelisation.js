@@ -243,17 +243,26 @@ export default function RapportEvangelisation() {
     return months[monthIndex] || "";
   };
 
-    const filteredRapports = typeFilter
-    ? rapports.filter((r) => r.type_evangelisation === typeFilter)
-    : rapports;
   
+      
   const groupedReports = groupByMonth(filteredRapports);
   
   const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"];
 
-  // ================= KPI =================
-  const filteredRapports = statusFilter ? rapports.filter(r => r.status_suivi === statusFilter) : rapports;
-  const totalEvangelises = rapports.length;
+  // ================= KPI =================  
+      const filteredRapports = rapports.filter((r) => {
+      if (typeFilter && r.type_evangelisation !== typeFilter) {
+        return false;
+      }
+    
+      if (statusFilter && r.status_suivi !== statusFilter) {
+        return false;
+      }
+    
+      return true;
+    });
+      
+  const totalEvangelises = filteredRapports.length;
   const tauxIntegration =
   totalEnvoyes > 0
     ? Math.round((totalIntegres / totalEnvoyes) * 100)

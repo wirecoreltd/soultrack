@@ -315,21 +315,21 @@ const tauxIntegration =
           </button>
             
              <div className="flex flex-col">
-              <label className="text-sm font-semibold mb-1">Type</label>
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="bg-white/10 border border-white/30 rounded-lg px-4 py-2 text-white"
-              >
-                <option value="">Tous</option>
-                <option value="Individuel">Individuel</option>
-                <option value="Sortie de groupe">Sortie de groupe</option>
-                <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
-                <option value="Évangélisation de rue">Évangélisation de rue</option>
-                <option value="Évangélisation maison">Évangélisation maison</option>
-                <option value="Évangélisation stade">Évangélisation stade</option>
-                  </select>
-            </div>
+                <label className="text-sm font-semibold mb-1">Type</label>
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  className="bg-white/10 border border-white/30 rounded-lg px-4 py-2 text-black"
+                >
+                  <option value="">Tous</option>
+                  <option value="Individuel">Individuel</option>
+                  <option value="Sortie de groupe">Sortie de groupe</option>
+                  <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
+                  <option value="Évangélisation de rue">Évangélisation de rue</option>
+                  <option value="Évangélisation maison">Évangélisation maison</option>
+                  <option value="Évangélisation stade">Évangélisation stade</option>
+                </select>
+              </div>
                   
         </div>
       </div>

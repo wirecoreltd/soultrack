@@ -241,16 +241,11 @@ export default function RapportEvangelisation() {
   const getMonthNameFR = (monthIndex) => {
     const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
     return months[monthIndex] || "";
-  };
-
-  
-      
-  const groupedReports = groupByMonth(filteredRapports);
+  };        
   
   const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"];
 
   // ================= KPI =================  
-      // ================= FILTRES =================
 
 const filteredRapports = rapports.filter((r) => {
   if (typeFilter && r.type_evangelisation !== typeFilter) {

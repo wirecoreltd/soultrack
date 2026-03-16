@@ -211,7 +211,7 @@ export default function SuivisEvangelisation() {
   try {
 
     const payload = {
-      suivi_int_id: Number(suivi.id),
+     suivi_int_id: suivi.id,
 
       // 🔹 Lier au compte connecté
       eglise_id: user.eglise_id,

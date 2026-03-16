@@ -57,16 +57,19 @@ export default function RapportEvangelisation() {
     setShowTable(false);
 
     // 1️⃣ Récupérer les rapports avec filtre date côté Supabase
-    let { data: rapportsData } = await supabase
-      .from("rapport_evangelisation")
-      .select("*")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId)
-      .order("date", { ascending: true })
-      .gte(dateDebut ? "date" : null, dateDebut || undefined)
-      .lte(dateFin ? "date" : null, dateFin || undefined);
-
-    setRapports(rapportsData);
+    let query = supabase
+    .from("rapport_evangelisation")
+    .select("*")
+    .eq("eglise_id", egliseId)
+    .eq("branche_id", brancheId)
+    .order("date", { ascending: true });
+  
+  // Ajouter gte seulement si dateDebut existe
+  if (dateDebut) query = query.gte("date", dateDebut);
+  if (dateFin) query = query.lte("date", dateFin);
+  
+  const { data: rapportsData } = await query;
+  setRapports(rapportsData || []);
 
     // 2️⃣ Gérer l’expansion du dernier mois
     const lastMonth = getLastMonthKey(rapportsData);

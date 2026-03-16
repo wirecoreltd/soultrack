@@ -134,23 +134,21 @@ export default function RapportEvangelisation() {
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
 
-      let filteredSuivis = suivisData || [];
-      if (dateDebut)
-        filteredSuivis = filteredSuivis.filter(
-          (e) => new Date(e.date_suivi) >= new Date(dateDebut)
-        );
-      if (dateFin)
-        filteredSuivis = filteredSuivis.filter(
-          (e) => new Date(e.date_suivi) <= new Date(dateFin)
-        );
+      let filteredSuivis = (suivisData || []).filter(e => e.status_suivis_evangelises);
 
-      setTotalIntegres(filteredSuivis.filter((e) => e.status_suivis_evangelises === "Intégré").length);
-      setTotalEncour(filteredSuivis.filter((e) => e.status_suivis_evangelises === "En cours").length);
-      setTotalRefus(filteredSuivis.filter((e) => e.status_suivis_evangelises === "Refus").length);
-    } catch (err) {
-      console.error("Erreur fetchKPI:", err);
-    }
-  };
+        // Filtrage par date si nécessaire
+        if (dateDebut)
+          filteredSuivis = filteredSuivis.filter(e => e.date_suivi && new Date(e.date_suivi) >= new Date(dateDebut));
+        if (dateFin)
+          filteredSuivis = filteredSuivis.filter(e => e.date_suivi && new Date(e.date_suivi) <= new Date(dateFin));
+        
+        setTotalIntegres(filteredSuivis.filter(e => e.status_suivis_evangelises === "Intégré").length);
+        setTotalEncour(filteredSuivis.filter(e => e.status_suivis_evangelises === "En cours").length);
+        setTotalRefus(filteredSuivis.filter(e => e.status_suivis_evangelises === "Refus").length);
+          } catch (err) {
+            console.error("Erreur fetchKPI:", err);
+          }
+        };
 
   useEffect(() => {
     fetchKPI();
@@ -310,7 +308,7 @@ export default function RapportEvangelisation() {
         <div id="rapport-table" className="w-full flex justify-center mt-8">
           <div className="w-full md:w-max space-y-2">
             {/* HEADER DESKTOP */}
-            <div className="hidden md:flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="hidden md:flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[150px] ml-2">Type / Date</div>
               <div className="min-w-[110px] text-center ml-28">Hommes</div>
               <div className="min-w-[110px] text-center">Femmes</div>        

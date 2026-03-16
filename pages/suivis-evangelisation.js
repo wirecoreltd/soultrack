@@ -239,7 +239,7 @@ export default function SuivisEvangelisation() {
           suivi_updated_at: new Date().toISOString(),
     
           // 🔹 Copier l'UUID de l'évangélisé pour liaison
-          evangelise_member_id: evangelise_id.id || null,
+          evangelise_member_id: suivi.evangelise_id || null,
         };
     
         // 🔹 Upsert dans membres_complets sur UUID

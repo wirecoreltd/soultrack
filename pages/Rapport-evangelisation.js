@@ -183,8 +183,7 @@ setTotalEnvoyes(evangelisesData.length);
     ? rapports.filter(r => r.status_suivi === statusFilter)
     : rapports;
 
-  const totalEvangelises = rapports.length;
-  const totalEnvoyes = rapports.filter(r => r.status_suivi === "Envoyé").length;
+  const totalEvangelises = rapports.length; 
   const totalIntegres = rapports.filter(r => r.status_suivi === "Intégré").length;
   const totalEnCours = rapports.filter(r => r.status_suivi === "En cours").length;
   const nonIntegres = totalEvangelises - totalIntegres;

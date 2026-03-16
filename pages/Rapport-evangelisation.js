@@ -121,11 +121,11 @@ export default function RapportEvangelisation() {
       
           if (dateDebut)
             evangelisesData = evangelisesData.filter(
-              (e) => e.created_at && new Date(e.created_at) >= new Date(dateDebut)
+              (e) => new Date(e.created_at) >= new Date(dateDebut)
             );
           if (dateFin)
             evangelisesData = evangelisesData.filter(
-              (e) => e.created_at && new Date(e.created_at) <= new Date(dateFin)
+              (e) => new Date(e.created_at) <= new Date(dateFin)
             );
       
           setTotalEnvoyes(evangelisesData.length);
@@ -139,7 +139,6 @@ export default function RapportEvangelisation() {
       
           let filteredSuivis = suivisData || [];
       
-          // Filtrage par date si nécessaire
           if (dateDebut)
             filteredSuivis = filteredSuivis.filter(
               (e) => e.date_suivi && new Date(e.date_suivi) >= new Date(dateDebut)
@@ -149,43 +148,28 @@ export default function RapportEvangelisation() {
               (e) => e.date_suivi && new Date(e.date_suivi) <= new Date(dateFin)
             );
       
-          // ---------------- 3️⃣ KPI Statuts ----------------
-          const normalize = (str) => (str ? str.trim().toLowerCase() : "");
+          // ---------------- 3️⃣ KPI par statut ----------------
+          const normalize = (str) => (str ? str.trim() : "");
       
-          setTotalIntegres(
-            filteredSuivis.filter(
-              (e) => normalize(e.status_suivis_evangelises) === "intégré"
-            ).length
+          const integres = filteredSuivis.filter(
+            (e) => normalize(e.status_suivis_evangelises) === "Intégré"
           );
-          setTotalEncour(
-            filteredSuivis.filter(
-              (e) => normalize(e.status_suivis_evangelises) === "en cours"
-            ).length
+          const enCours = filteredSuivis.filter(
+            (e) => normalize(e.status_suivis_evangelises) === "En cours"
           );
-          setTotalRefus(
-            filteredSuivis.filter(
-              (e) => normalize(e.status_suivis_evangelises) === "refus"
-            ).length
+          const refus = filteredSuivis.filter(
+            (e) => normalize(e.status_suivis_evangelises) === "Refus"
           );
       
-          // ---------------- 4️⃣ Totaux Cellule / Église ----------------
-          setTotalCellule(
-            filteredSuivis.filter((e) => e.cellule_id != null).length
-          );
-          setTotalEglise(
-            filteredSuivis.filter((e) => e.conseiller_id != null).length
-          );
+          setTotalIntegres(integres.length);
+          setTotalEncour(enCours.length);
+          setTotalRefus(refus.length);
+      
+          // ---------------- 4️⃣ Totaux cellule / église ----------------
+          setTotalCellule(integres.filter((e) => e.cellule_id != null).length);
+          setTotalEglise(integres.filter((e) => e.conseiller_id != null).length);
       
           setSuivis(filteredSuivis);
-      
-          // ---------------- 5️⃣ Logs pour debug ----------------
-          console.log("Suivis filtrés:", filteredSuivis);
-          console.log("Intégrés:", totalIntegres);
-          console.log("En cours:", totalEncour);
-          console.log("Refus:", totalRefus);
-          console.log("Intégrés en cellule:", totalCellule);
-          console.log("Intégrés à l'église:", totalEglise);
-      
         } catch (err) {
           console.error("Erreur fetchKPI:", err);
         }

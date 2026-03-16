@@ -93,7 +93,15 @@ export default function RapportEvangelisation() {
         );
 
       setFilteredEvangelises(filtered);
-      setTotalEnvoyes(filtered.length);
+      let envoyesFiltered = filtered;
+
+      if (typeFilter) {
+        envoyesFiltered = filtered.filter(
+          (e) => e.type_evangelisation === typeFilter
+        );
+      }
+
+setTotalEnvoyes(envoyesFiltered.length);
 
       // 4️⃣ Gérer l’expansion du dernier mois
       const lastMonth = getLastMonthKey(rapportsData || []);
@@ -165,14 +173,17 @@ export default function RapportEvangelisation() {
 
   // ---------------- KPI PRIERE ----------------
   useEffect(() => {
-    const totalEvangelises = filteredEvangelises.length;
+    const totalEvangelises = filteredRapports.reduce(
+      (acc, r) => acc + (Number(r.hommes) || 0) + (Number(r.femmes) || 0),
+      0
+    );
     const nbPriere = filteredEvangelises.filter((e) => e.priere_salut === true).length;
     setTotalPriereSalut(nbPriere);
   }, [filteredEvangelises]);
 
   useEffect(() => {
-    fetchKPI();
-  }, [egliseId, brancheId, dateDebut, dateFin, rapports]);
+  fetchKPI();
+}, [egliseId, brancheId, dateDebut, dateFin, rapports, typeFilter]);
 
   // ---------------- EDIT RAPPORT ----------------
   const handleSaveRapport = async (updated) => {
@@ -291,22 +302,24 @@ export default function RapportEvangelisation() {
           >
             {loading ? "Chargement..." : "Générer le rapport"}
           </button>
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold mb-1">Type</label>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="bg-white/10 border border-white/30 rounded-lg px-4 py-2 text-black"
-            >
-              <option value="">Tous</option>
-              <option value="Individuel">Individuel</option>
-              <option value="Sortie de groupe">Sortie de groupe</option>
-              <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
-              <option value="Évangélisation de rue">Évangélisation de rue</option>
-              <option value="Évangélisation maison">Évangélisation maison</option>
-              <option value="Évangélisation stade">Évangélisation stade</option>
-            </select>
-          </div>
+         {showTable && (
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold mb-1">Type</label>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="bg-white/10 border border-white/30 rounded-lg px-4 py-2 text-black"
+              >
+                <option value="">Tous</option>
+                <option value="Individuel">Individuel</option>
+                <option value="Sortie de groupe">Sortie de groupe</option>
+                <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
+                <option value="Évangélisation de rue">Évangélisation de rue</option>
+                <option value="Évangélisation maison">Évangélisation maison</option>
+                <option value="Évangélisation stade">Évangélisation stade</option>
+              </select>
+            </div>
+          )}
         </div>
       </div>
 

@@ -8,7 +8,6 @@ import Footer from "../components/Footer";
 
 export default function RapportEvangelisation() {
   const formRef = useRef(null);
-
   const [rapports, setRapports] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -21,9 +20,7 @@ export default function RapportEvangelisation() {
   const [expandedMonths, setExpandedMonths] = useState({});
   const [expandedTypes, setExpandedTypes] = useState({});
   const [showTable, setShowTable] = useState(false);
-  const [statusFilter, setStatusFilter] = useState(null);  
-
-  // ---------------- KPI ----------------
+  const [statusFilter, setStatusFilter] = useState(null);
   const [totalEnvoyes, setTotalEnvoyes] = useState(0);
   const [totalIntegres, setTotalIntegres] = useState(0);
   const [totalEncour, setTotalEncour] = useState(0);
@@ -56,76 +53,108 @@ export default function RapportEvangelisation() {
     setLoading(true);
     setShowTable(false);
 
-    // 1️⃣ Récupérer les rapports avec filtre date côté Supabase
-    let query = supabase
-    .from("rapport_evangelisation")
-    .select("*")
-    .eq("eglise_id", egliseId)
-    .eq("branche_id", brancheId)
-    .order("date", { ascending: true });
-  
-  // Ajouter gte seulement si dateDebut existe
-  if (dateDebut) query = query.gte("date", dateDebut);
-  if (dateFin) query = query.lte("date", dateFin);
-  
-  const { data: rapportsData } = await query;
-  setRapports(rapportsData || []);
+    try {
+      let query = supabase
+        .from("rapport_evangelisation")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId)
+        .order("date", { ascending: true });
 
-    // 2️⃣ Gérer l’expansion du dernier mois
-    const lastMonth = getLastMonthKey(rapportsData);
-    if (lastMonth) setExpandedMonths({ [lastMonth]: true });
+      if (dateDebut) query = query.gte("date", dateDebut);
+      if (dateFin) query = query.lte("date", dateFin);
+
+      const { data: rapportsData } = await query;
+      setRapports(rapportsData || []);
+
+      // 2️⃣ Récupérer les évangélisés envoyés au suivi
+      let evangelisesQuery = supabase
+        .from("evangelises")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId)
+        .eq("status_suivi", "Envoyé");
+
+      const { data: evangelisesData } = await evangelisesQuery;
+      let filteredEvangelises = (evangelisesData || []);
+      if (dateDebut)
+        filteredEvangelises = filteredEvangelises.filter(
+          (e) => new Date(e.created_at) >= new Date(dateDebut)
+        );
+      if (dateFin)
+        filteredEvangelises = filteredEvangelises.filter(
+          (e) => new Date(e.created_at) <= new Date(dateFin)
+        );
+
+      setTotalEnvoyes(filteredEvangelises.length);
+
+      // 4️⃣ Gérer l’expansion du dernier mois
+      const lastMonth = getLastMonthKey(rapportsData || []);
+      if (lastMonth) setExpandedMonths({ [lastMonth]: true });
+    } catch (err) {
+      console.error("Erreur fetchRapports:", err);
+    }
 
     setLoading(false);
     setShowTable(true);
+
+    setTimeout(() => {
+      document.getElementById("rapport-table")?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
   };
 
   // ---------------- FETCH KPI ----------------
   const fetchKPI = async () => {
     if (!egliseId || !brancheId) return;
 
-    // Évangélisés envoyés au suivi
-    let { data: evangelisesData } = await supabase
-      .from("evangelises")
-      .select("*")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId)
-      .eq("status_suivi", "Envoyé")
-      .gte(dateDebut ? "created_at" : null, dateDebut || undefined)
-      .lte(dateFin ? "created_at" : null, dateFin || undefined);
+    try {
+      // 1️⃣ Évangélisés envoyés
+      let { data: evangelisesData } = await supabase
+        .from("evangelises")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId)
+        .eq("status_suivi", "Envoyé");
 
-    setTotalEnvoyes(evangelisesData.length);
+      let filteredEvangelises = (evangelisesData || []);
+      if (dateDebut)
+        filteredEvangelises = filteredEvangelises.filter(
+          (e) => new Date(e.created_at) >= new Date(dateDebut)
+        );
+      if (dateFin)
+        filteredEvangelises = filteredEvangelises.filter(
+          (e) => new Date(e.created_at) <= new Date(dateFin)
+        );
+      setTotalEnvoyes(filteredEvangelises.length);
 
-    // Suivis pour calculer Intégré / En cours / Refus
-    let { data: suivisData } = await supabase
-      .from("suivis_des_evangelises")
-      .select("*")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId)
-      .gte(dateDebut ? "date_suivi" : null, dateDebut || undefined)
-      .lte(dateFin ? "date_suivi" : null, dateFin || undefined);
+      // 2️⃣ Suivis pour Intégré / En cours / Refus
+      let { data: suivisData } = await supabase
+        .from("suivis_des_evangelises")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
 
-    setTotalIntegres(
-      suivisData.filter((e) => e.status_suivis_evangelises === "Intégré").length
-    );
-    setTotalEncour(
-      suivisData.filter((e) => e.status_suivis_evangelises === "En cours").length
-    );
-    setTotalRefus(
-      suivisData.filter((e) => e.status_suivis_evangelises === "Refus").length
-    );
+      let filteredSuivis = suivisData || [];
+      if (dateDebut)
+        filteredSuivis = filteredSuivis.filter(
+          (e) => new Date(e.date_suivi) >= new Date(dateDebut)
+        );
+      if (dateFin)
+        filteredSuivis = filteredSuivis.filter(
+          (e) => new Date(e.date_suivi) <= new Date(dateFin)
+        );
+
+      setTotalIntegres(filteredSuivis.filter((e) => e.status_suivis_evangelises === "Intégré").length);
+      setTotalEncour(filteredSuivis.filter((e) => e.status_suivis_evangelises === "En cours").length);
+      setTotalRefus(filteredSuivis.filter((e) => e.status_suivis_evangelises === "Refus").length);
+    } catch (err) {
+      console.error("Erreur fetchKPI:", err);
+    }
   };
 
-  // Appeler fetchKPI après fetchRapports
   useEffect(() => {
     fetchKPI();
   }, [egliseId, brancheId, dateDebut, dateFin, rapports]);
-
-  // Scroll vers tableau
-  useEffect(() => {
-    if (showTable) {
-      document.getElementById("rapport-table")?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [showTable]);
 
   // ---------------- EDIT RAPPORT ----------------
   const handleSaveRapport = async (updated) => {
@@ -136,17 +165,13 @@ export default function RapportEvangelisation() {
   };
 
   // ---------------- COLLAPSE ----------------
-  const toggleMonth = (monthKey) => {
-    setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
-  };
-  const toggleType = (typeKey) => {
-    setExpandedTypes((prev) => ({ ...prev, [typeKey]: !prev[typeKey] }));
-  };
+  const toggleMonth = (monthKey) => setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
+  const toggleType = (typeKey) => setExpandedTypes(prev => ({ ...prev, [typeKey]: !prev[typeKey] }));
 
   // ---------------- GROUPING ----------------
   const groupByMonth = (data) => {
     const map = {};
-    data.forEach((r) => {
+    (data || []).forEach((r) => {
       const d = new Date(r.date);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       if (!map[key]) map[key] = [];
@@ -157,7 +182,7 @@ export default function RapportEvangelisation() {
 
   const groupByType = (data) => {
     const map = {};
-    data.forEach((r) => {
+    (data || []).forEach((r) => {
       const type = r.type_evangelisation || "Non défini";
       if (!map[type]) map[type] = [];
       map[type].push(r);
@@ -167,14 +192,8 @@ export default function RapportEvangelisation() {
 
   // -------- TOTALS --------
   const getTotals = (reports) => {
-    let hommes = 0;
-    let femmes = 0;
-    let priere = 0;
-    let nouveau = 0;
-    let reconciliation = 0;
-    let moissonneurs = 0;
-
-    reports.forEach((r) => {
+    let hommes = 0, femmes = 0, priere = 0, nouveau = 0, reconciliation = 0, moissonneurs = 0;
+    (reports || []).forEach(r => {
       hommes += Number(r.hommes) || 0;
       femmes += Number(r.femmes) || 0;
       priere += Number(r.priere) || 0;
@@ -182,69 +201,49 @@ export default function RapportEvangelisation() {
       reconciliation += Number(r.reconciliation) || 0;
       moissonneurs += Number(r.moissonneurs) || 0;
     });
-
-    return {
-      hommes,
-      femmes,
-      total: hommes + femmes,
-      priere,
-      nouveau,
-      reconciliation,
-      moissonneurs,
-    };
+    return { hommes, femmes, total: hommes+femmes, priere, nouveau, reconciliation, moissonneurs };
   };
 
   // ---------------- LAST MONTH ----------------
   const getLastMonthKey = (data) => {
     if (!data || data.length === 0) return null;
-    const dates = data.map((r) => new Date(r.date));
+    const dates = data.map(r => new Date(r.date));
     const lastDate = new Date(Math.max(...dates));
     return `${lastDate.getFullYear()}-${lastDate.getMonth()}`;
   };
 
   // ---------------- UTILS ----------------
   const getMonthNameFR = (monthIndex) => {
-    const months = [
-      "Janvier","Février","Mars","Avril","Mai","Juin",
-      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
-    ];
+    const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
     return months[monthIndex] || "";
   };
 
   const groupedReports = groupByMonth(rapports);
-  const borderColors = [
-    "border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"
-  ];
+  const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"];
 
-  /* ================= KPI ================= */
-  const filteredRapports = statusFilter
-    ? rapports.filter(r => r.status_suivi === statusFilter)
-    : rapports;
-
-  const totalEvangelises = rapports.length;   
+  // ================= KPI =================
+  const filteredRapports = statusFilter ? rapports.filter(r => r.status_suivi === statusFilter) : rapports;
+  const totalEvangelises = rapports.length;
   const totalEnCours = rapports.filter(r => r.status_suivi === "En cours").length;
   const nonIntegres = totalEvangelises - totalIntegres;
   const tauxIntegration = totalEvangelises ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
 
   const handleKpiClick = (status) => {
     setStatusFilter(status);
-    if (formRef.current) {
-      window.scrollTo({ top: formRef.current.offsetTop, behavior: "smooth" });
-    }
+    if(formRef.current) window.scrollTo({ top: formRef.current.offsetTop, behavior: "smooth" });
   };
 
   // ---------------- UI ----------------
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
         <span className="text-white">Rapport </span>
         <span className="text-amber-300">Evangélisation</span>
       </h1>
 
       {/* FILTRES */}
-      <div ref={formRef} className="w-full max-w-4xl bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6">
+      <div className="w-full max-w-4xl bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end text-white">
           <div className="flex flex-col">
             <label className="text-sm font-semibold mb-1">Date de début</label>
@@ -255,7 +254,6 @@ export default function RapportEvangelisation() {
               className="bg-white/10 border border-white/30 rounded-lg px-4 py-2"
             />
           </div>
-
           <div className="flex flex-col">
             <label className="text-sm font-semibold mb-1">Date de fin</label>
             <input
@@ -265,7 +263,6 @@ export default function RapportEvangelisation() {
               className="bg-white/10 border border-white/30 rounded-lg px-4 py-2"
             />
           </div>
-
           <button
             onClick={fetchRapports}
             disabled={loading}
@@ -276,7 +273,7 @@ export default function RapportEvangelisation() {
         </div>
       </div>
 
-{/* ================= KPI ================= */}
+      {/* ================= KPI ================= */}
       {showTable && (
         <div className="w-full max-w-4xl bg-white/10 rounded-2xl p-6 shadow-lg mt-6 text-white grid grid-cols-3 gap-4 text-center">
           <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick(null)}>
@@ -296,7 +293,7 @@ export default function RapportEvangelisation() {
             <div>En cours</div>
           </div>
           <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Non Intégré")}>
-            <div className="text-2xl font-bold">{nonIntegres}</div>
+            <div className="text-2xl font-bold">{totalRefus}</div>
             <div>Non intégrés</div>
           </div>
           <div className="p-4 bg-white/20 rounded-xl">

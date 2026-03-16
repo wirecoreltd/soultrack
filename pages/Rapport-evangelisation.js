@@ -20,6 +20,7 @@ export default function RapportEvangelisation() {
   const [expandedTypes, setExpandedTypes] = useState({});
   const [showTable, setShowTable] = useState(false);
   const [statusFilter, setStatusFilter] = useState(null);  
+  const [totalEnvoyes, setTotalEnvoyes] = useState(0);
 
   // ---------------- PROFIL USER ----------------
   useEffect(() => {
@@ -63,17 +64,18 @@ export default function RapportEvangelisation() {
 
   // 2️⃣ Récupérer les évangélisés envoyés au suivi
   let { data: evangelisesData } = await supabase
-    .from("evangelises")
-    .select("*")
-    .eq("eglise_id", egliseId)
-    .eq("branche_id", brancheId)
-    .eq("status_suivi", "Envoyé");
+  .from("evangelises")
+  .select("*")
+  .eq("eglise_id", egliseId)
+  .eq("branche_id", brancheId)
+  .eq("status_suivi", "Envoyé");
 
-  if (dateDebut) evangelisesData = evangelisesData.filter(e => new Date(e.created_at) >= new Date(dateDebut));
-  if (dateFin) evangelisesData = evangelisesData.filter(e => new Date(e.created_at) <= new Date(dateFin));
+// filtrage par date si nécessaire
+if (dateDebut) evangelisesData = evangelisesData.filter(e => new Date(e.created_at) >= new Date(dateDebut));
+if (dateFin) evangelisesData = evangelisesData.filter(e => new Date(e.created_at) <= new Date(dateFin));
 
-  // 3️⃣ Mettre à jour le KPI
-  setTotalEnvoyes(evangelisesData.length);
+// mettre à jour l’état
+setTotalEnvoyes(evangelisesData.length);
 
   // 4️⃣ Gérer l’expansion du dernier mois
   const lastMonth = getLastMonthKey(rapportsData);

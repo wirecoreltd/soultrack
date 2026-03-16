@@ -338,51 +338,103 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
         </div>
       </div>
 
-      {/* ================= KPI ================= */}
-      {showTable && (
-        <div className="w-full max-w-4xl bg-white/10 rounded-2xl p-6 shadow-lg mt-6 text-white grid grid-cols-3 gap-4 text-center">
-          <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick(null)}>
-            <div className="text-2xl font-bold">{totalEvangelises}</div>
-            <div>Évangélisés</div>
+     {/* ================= KPI ================= */}
+        {showTable && (
+          <div className="w-full max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+        
+            {/* Fonction pour couleur dynamique */}
+            {(() => {
+              const getBadgeColor = (percent) => {
+                if (percent > 80) return "bg-green-500";
+                if (percent >= 50) return "bg-yellow-400";
+                return "bg-red-500";
+              };
+        
+              const kpis = [
+                {
+                  value: totalEvangelises,
+                  label: "Évangélisés",
+                  percent: 100,
+                  gradient: "from-indigo-500 to-indigo-600",
+                  onClick: () => handleKpiClick(null)
+                },
+                {
+                  value: filteredEvangelisesByType.filter(e => e.status_suivi === "Envoyé").length,
+                  label: "Envoyés au suivi",
+                  percent: totalEvangelises > 0
+                    ? Math.round((filteredEvangelisesByType.filter(e => e.status_suivi === "Envoyé").length / totalEvangelises) * 100)
+                    : 0,
+                  gradient: "from-purple-500 to-purple-600",
+                  onClick: () => handleKpiClick("Envoyé")
+                },
+                {
+                  value: totalIntegres,
+                  label: "Intégrés",
+                  percent: totalEvangelises > 0 ? Math.round((totalIntegres / totalEvangelises) * 100) : 0,
+                  gradient: "from-green-400 to-green-600",
+                  onClick: () => handleKpiClick("Intégré")
+                },
+                {
+                  value: totalEncour,
+                  label: "En cours",
+                  percent: totalEvangelises > 0 ? Math.round((totalEncour / totalEvangelises) * 100) : 0,
+                  gradient: "from-yellow-400 to-yellow-500",
+                  onClick: () => handleKpiClick("En cours")
+                },
+                {
+                  value: totalRefus,
+                  label: "Refus",
+                  percent: totalEvangelises > 0 ? Math.round((totalRefus / totalEvangelises) * 100) : 0,
+                  gradient: "from-red-400 to-red-600",
+                  onClick: () => handleKpiClick("Refus")
+                },
+                {
+                  value: totalCellule,
+                  label: "Intégrés en cellule",
+                  percent: totalEvangelises > 0 ? Math.round((totalCellule / totalEvangelises) * 100) : 0,
+                  gradient: "from-teal-400 to-teal-500",
+                  onClick: null
+                },
+                {
+                  value: totalEglise,
+                  label: "Intégrés à l'église",
+                  percent: totalEvangelises > 0 ? Math.round((totalEglise / totalEvangelises) * 100) : 0,
+                  gradient: "from-blue-400 to-blue-500",
+                  onClick: null
+                },
+                {
+                  value: totalEvangelises > 0 ? Math.round((totalPriereSalut / totalEvangelises) * 100) : 0,
+                  label: "Convertis / Évangélisés (prière)",
+                  percent: totalEvangelises > 0 ? Math.round((totalPriereSalut / totalEvangelises) * 100) : 0,
+                  gradient: "from-pink-400 to-pink-500",
+                  onClick: null
+                },
+                {
+                  value: tauxIntegration,
+                  label: "Taux d’intégration",
+                  percent: tauxIntegration,
+                  gradient: "from-cyan-400 to-cyan-500",
+                  onClick: null
+                }
+              ];
+        
+              return kpis.map((kpi, idx) => (
+                <div
+                  key={idx}
+                  className={`p-6 rounded-2xl shadow-lg text-white cursor-pointer hover:scale-105 transition-transform bg-gradient-to-r ${kpi.gradient}`}
+                  onClick={kpi.onClick || undefined}
+                >
+                  <div className="text-3xl font-bold">{kpi.value}</div>
+                  <div className="mt-2 text-sm opacity-90 flex justify-center gap-2 items-center">{kpi.label}</div>
+                  <div className={`mt-1 text-xs text-white rounded-full px-2 py-0.5 inline-block ${getBadgeColor(kpi.percent)}`}>
+                    {kpi.percent}%
+                  </div>
+                </div>
+              ));
+            })()}
+        
           </div>
-          <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Envoyé")}>
-            <div className="text-2xl font-bold">
-              {filteredEvangelisesByType.filter(e => e.status_suivi === "Envoyé").length}
-            </div>
-            <div>Envoyés au suivi</div>
-          </div>
-          <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Intégré")}>
-            <div className="text-2xl font-bold">{totalIntegres}</div>
-            <div>Intégrés</div>
-          </div>
-          <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("En cours")}>
-            <div className="text-2xl font-bold">{totalEncour}</div>
-            <div>En cours</div>
-          </div>
-          <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Refus")}>
-            <div className="text-2xl font-bold">{totalRefus}</div>
-            <div>Refus</div>
-          </div>
-          <div className="p-4 bg-white/20 rounded-xl">
-            <div className="text-2xl font-bold">{totalCellule}</div>
-            <div>Intégrés en cellule</div>
-          </div>
-          <div className="p-4 bg-white/20 rounded-xl">
-            <div className="text-2xl font-bold">{totalEglise}</div>
-            <div>Intégrés à l'église</div>
-          </div>
-          <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30">
-            <div className="text-2xl font-bold">
-              {totalEvangelises > 0 ? Math.round((totalPriereSalut / totalEvangelises) * 100) : 0}%
-            </div>
-            <div>Convertis / Évangélisés (prière)</div>
-          </div>
-          <div className="p-4 bg-white/20 rounded-xl">
-            <div className="text-2xl font-bold">{tauxIntegration}%</div>
-            <div>Taux d’intégration</div>
-          </div>
-        </div>
-      )}
+        )}
 
       {message && <div className="text-center text-white mt-4 font-medium">{message}</div>}
 

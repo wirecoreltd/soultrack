@@ -212,6 +212,9 @@ export default function SuivisEvangelisation() {
 
     const payload = {
       suivi_int_id: Number(suivi.id),
+    
+      // 🔹 Lien avec évangélisation
+      evangelise_member_id: suivi.evangelise_id,
 
       // 🔹 Lier au compte connecté
       eglise_id: user.eglise_id,

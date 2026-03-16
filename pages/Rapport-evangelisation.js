@@ -294,7 +294,7 @@ export default function RapportEvangelisation() {
           </div>
           <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Non Intégré")}>
             <div className="text-2xl font-bold">{totalRefus}</div>
-            <div>Non intégrés</div>
+            <div>Refus</div>
           </div>
           <div className="p-4 bg-white/20 rounded-xl">
             <div className="text-2xl font-bold">{tauxIntegration}%</div>

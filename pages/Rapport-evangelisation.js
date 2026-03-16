@@ -264,7 +264,11 @@ const totalEvangelises = filteredRapports.length;
 const tauxIntegration =
   totalEnvoyes > 0
     ? Math.round((totalIntegres / totalEnvoyes) * 100)
-    : 0;
+    : 0; 
+
+    const ratioPriere = totalEvangelises > 0
+      ? Math.round((totalPriereSalut / totalEvangelises) * 100)
+      : 0;
   
   const handleKpiClick = (status) => {
     setStatusFilter(status);
@@ -360,6 +364,10 @@ const tauxIntegration =
             <div className="text-2xl font-bold">{totalEglise}</div>
             <div>Intégrés à l'église</div>
           </div>
+            <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30">
+              <div className="text-2xl font-bold">{ratioPriere}%</div>
+              <div>Convertis / Évangélisés</div>
+            </div>
           <div className="p-4 bg-white/20 rounded-xl">
             <div className="text-2xl font-bold">{tauxIntegration}%</div>
             <div>Taux d’intégration</div>

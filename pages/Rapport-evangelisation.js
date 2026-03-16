@@ -24,6 +24,7 @@ export default function RapportEvangelisation() {
   const [totalEncour, setTotalEncour] = useState(0);
   const [totalIntegres, setTotalIntegres] = useState(0);
   const [totalRefus, setTotalRefus] = useState(0);
+  const [tauxIntegration, setTauxIntegration] = useState(0);
 
   // ---------------- PROFIL USER ----------------
   useEffect(() => {

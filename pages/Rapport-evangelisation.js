@@ -121,8 +121,7 @@ export default function RapportEvangelisation() {
         .from("evangelises")
         .select("*")
         .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
-        .eq("status_suivi", "Envoyé");
+        .eq("branche_id", brancheId);        
 
       let filtered = evangelisesData || [];
       if (dateDebut) filtered = filtered.filter((e) => new Date(e.created_at) >= new Date(dateDebut));

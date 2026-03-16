@@ -21,6 +21,9 @@ export default function RapportEvangelisation() {
   const [showTable, setShowTable] = useState(false);
   const [statusFilter, setStatusFilter] = useState(null);  
   const [totalEnvoyes, setTotalEnvoyes] = useState(0);
+  const [totalEncour, setTotalEncour] = useState(0);
+  const [totalIntegres, setTotalIntegres] = useState(0);
+  const [totalRefus, setTotalRefus] = useState(0);
 
   // ---------------- PROFIL USER ----------------
   useEffect(() => {
@@ -256,7 +259,7 @@ setTotalEnvoyes(evangelisesData.length);
             <div>En cours</div>
           </div>
           <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Non Intégré")}>
-            <div className="text-2xl font-bold">{nonIntegres}</div>
+            <div className="text-2xl font-bold">{totalRefus}</div>
             <div>Non intégrés</div>
           </div>
           <div className="p-4 bg-white/20 rounded-xl">

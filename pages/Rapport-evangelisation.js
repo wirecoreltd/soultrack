@@ -25,6 +25,7 @@ export default function RapportEvangelisation() {
   const [totalIntegres, setTotalIntegres] = useState(0);
   const [totalEncour, setTotalEncour] = useState(0);
   const [totalRefus, setTotalRefus] = useState(0);
+  const [suivis, setSuivis] = useState([]);
 
   // ---------------- PROFIL USER ----------------
   useEffect(() => {
@@ -133,6 +134,9 @@ export default function RapportEvangelisation() {
         .select("*")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
+      
+        setSuivis(suivisData || []);
+      
 
       let filteredSuivis = (suivisData || []).filter(e => e.status_suivis_evangelises);
 
@@ -222,9 +226,9 @@ export default function RapportEvangelisation() {
   // ================= KPI =================
   const filteredRapports = statusFilter ? rapports.filter(r => r.status_suivi === statusFilter) : rapports;
   const totalEvangelises = rapports.length;
-  const totalEnCours = (suivisData || []).filter(s => s.status_suivis_evangelises === "En cours").length;
-  const nonIntegres = totalEvangelises - totalIntegres;
-  const tauxIntegration = totalEvangelises ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
+  const totalEnCours = suivis.filter(s => s.status_suivis_evangelises === "En cours").length;
+  const totalRefus = suivis.filter(s => s.status_suivis_evangelises === "Refus").length;
+  const totalIntegres = suivis.filter(s => s.status_suivis_evangelises === "Intégré").length;
 
   const handleKpiClick = (status) => {
     setStatusFilter(status);
@@ -290,7 +294,7 @@ export default function RapportEvangelisation() {
             <div className="text-2xl font-bold">{totalEnCours}</div>
             <div>En cours</div>
           </div>
-          <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Non Intégré")}>
+          <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Refus")}>
             <div className="text-2xl font-bold">{totalRefus}</div>
             <div>Refus</div>
           </div>

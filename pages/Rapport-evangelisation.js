@@ -211,8 +211,7 @@ export default function RapportEvangelisation() {
 
   const totalEvangelises = rapports.length;   
   const totalEnCours = rapports.filter(r => r.status_suivi === "En cours").length;
-  const nonIntegres = totalEvangelises - totalIntegres;
-  const tauxIntegration = totalEvangelises ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
+  const nonIntegres = totalEvangelises - totalIntegres;  
 
   const handleKpiClick = (status) => {
     setStatusFilter(status);

@@ -19,6 +19,7 @@ export default function RapportEvangelisation() {
   const [expandedMonths, setExpandedMonths] = useState({});
   const [expandedTypes, setExpandedTypes] = useState({});
   const [showTable, setShowTable] = useState(false);
+  const [statusFilter, setStatusFilter] = useState(null);
 
   // ---------------- PROFIL USER ----------------
   useEffect(() => {

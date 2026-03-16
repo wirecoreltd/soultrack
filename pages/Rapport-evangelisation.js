@@ -287,7 +287,7 @@ export default function RapportEvangelisation() {
             <div>Intégrés</div>
           </div>
           <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("En cours")}>
-            <div className="text-2xl font-bold">{totalEnCours}</div>
+            <div className="text-2xl font-bold">{totalEnCour}</div>
             <div>En cours</div>
           </div>
           <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Refus")}>

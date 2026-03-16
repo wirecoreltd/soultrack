@@ -28,6 +28,8 @@ export default function RapportEvangelisation() {
   const [suivis, setSuivis] = useState([]);
   const [totalCellule, setTotalCellule] = useState(0);
   const [totalEglise, setTotalEglise] = useState(0);
+  const [typeFilter, setTypeFilter] = useState("");
+  
 
   // ---------------- PROFIL USER ----------------
   useEffect(() => {
@@ -241,7 +243,12 @@ export default function RapportEvangelisation() {
     return months[monthIndex] || "";
   };
 
-  const groupedReports = groupByMonth(rapports);
+    const filteredRapports = typeFilter
+    ? rapports.filter((r) => r.type_evangelisation === typeFilter)
+    : rapports;
+  
+  const groupedReports = groupByMonth(filteredRapports);
+  
   const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"];
 
   // ================= KPI =================
@@ -267,7 +274,7 @@ export default function RapportEvangelisation() {
 
       {/* FILTRES */}
       <div className="w-full max-w-4xl bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end text-white">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-white">
           <div className="flex flex-col">
             <label className="text-sm font-semibold mb-1">Date de début</label>
             <input
@@ -293,6 +300,24 @@ export default function RapportEvangelisation() {
           >
             {loading ? "Chargement..." : "Générer le rapport"}
           </button>
+            
+             <div className="flex flex-col">
+              <label className="text-sm font-semibold mb-1">Type</label>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="bg-white/10 border border-white/30 rounded-lg px-4 py-2 text-white"
+              >
+                <option value="">Tous</option>
+                <option value="Individuel">Individuel</option>
+                <option value="Sortie de groupe">Sortie de groupe</option>
+                <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
+                <option value="Évangélisation de rue">Évangélisation de rue</option>
+                <option value="Évangélisation maison">Évangélisation maison</option>
+                <option value="Évangélisation stade">Évangélisation stade</option>
+                  </select>
+            </div>
+                  
         </div>
       </div>
 

@@ -256,8 +256,16 @@ setTotalEnvoyes(envoyesFiltered.length);
     return true;
   });
 
+  //-------------------------//
+  // filtrer les évangélisés selon le type
+const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
+  if (!typeFilter) return true;
+  return e.type_evangelisation === typeFilter;
+});
+  //------------------------
+
   const groupedReports = groupByMonth(filteredRapports);
-  const totalEvangelises = filteredEvangelises.length;
+  const totalEvangelises = filteredEvangelisesByType.length;
   const tauxIntegration = totalEvangelises > 0 ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
 
   const handleKpiClick = (status) => {
@@ -331,7 +339,9 @@ setTotalEnvoyes(envoyesFiltered.length);
             <div>Évangélisés</div>
           </div>
           <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Envoyé")}>
-            <div className="text-2xl font-bold">{totalEnvoyes}</div>
+            <div className="text-2xl font-bold">
+              {filteredEvangelisesByType.filter(e => e.status_suivi === "Envoyé").length}
+            </div>
             <div>Envoyés au suivi</div>
           </div>
           <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30" onClick={() => handleKpiClick("Intégré")}>

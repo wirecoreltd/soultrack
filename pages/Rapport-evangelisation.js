@@ -82,7 +82,7 @@ export default function RapportEvangelisation() {
         .eq("branche_id", brancheId)
         .eq("status_suivi", "Envoyé");
 
-      let filtered = (evangelisesData || []);
+      let filtered = evangelisesData || [];
       if (dateDebut)
         filtered = filtered.filter(
           (e) => new Date(e.created_at) >= new Date(dateDebut)
@@ -159,14 +159,17 @@ export default function RapportEvangelisation() {
       setTotalCellule(integres.filter((e) => e.cellule_id != null).length);
       setTotalEglise(integres.filter((e) => e.conseiller_id != null).length);
 
-      // ---------------- KPI Prières ----------------
-      const nbPriere = filtered.filter((e) => e.priere_salut === true).length;
-      setTotalPriereSalut(nbPriere);
-
     } catch (err) {
       console.error("Erreur fetchKPI:", err);
     }
   };
+
+  // ---------------- KPI PRIERE ----------------
+  useEffect(() => {
+    const totalEvangelises = filteredEvangelises.length;
+    const nbPriere = filteredEvangelises.filter((e) => e.priere_salut === true).length;
+    setTotalPriereSalut(nbPriere);
+  }, [filteredEvangelises]);
 
   useEffect(() => {
     fetchKPI();
@@ -244,18 +247,8 @@ export default function RapportEvangelisation() {
   });
 
   const groupedReports = groupByMonth(filteredRapports);
-  // total évangélisés filtrés par date
-const totalEvangelises = filteredEvangelises.length;
-
-// nombre qui ont prié pour le salut
-const nbPriere = filteredEvangelises.filter(e => e.priere_salut === true).length;
-
-// ratio correct
-const ratioPriere = totalEvangelises > 0
-  ? Math.round((nbPriere / totalEvangelises) * 100)
-  : 0;
-
-setTotalPriereSalut(nbPriere);
+  const totalEvangelises = filteredEvangelises.length;
+  const tauxIntegration = totalEvangelises > 0 ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
 
   const handleKpiClick = (status) => {
     setStatusFilter(status);
@@ -299,24 +292,22 @@ setTotalPriereSalut(nbPriere);
           >
             {loading ? "Chargement..." : "Générer le rapport"}
           </button>
-            
-             <div className="flex flex-col">
-                <label className="text-sm font-semibold mb-1">Type</label>
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="bg-white/10 border border-white/30 rounded-lg px-4 py-2 text-black"
-                >
-                  <option value="">Tous</option>
-                  <option value="Individuel">Individuel</option>
-                  <option value="Sortie de groupe">Sortie de groupe</option>
-                  <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
-                  <option value="Évangélisation de rue">Évangélisation de rue</option>
-                  <option value="Évangélisation maison">Évangélisation maison</option>
-                  <option value="Évangélisation stade">Évangélisation stade</option>
-                </select>
-              </div>
-                  
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold mb-1">Type</label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="bg-white/10 border border-white/30 rounded-lg px-4 py-2 text-black"
+            >
+              <option value="">Tous</option>
+              <option value="Individuel">Individuel</option>
+              <option value="Sortie de groupe">Sortie de groupe</option>
+              <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
+              <option value="Évangélisation de rue">Évangélisation de rue</option>
+              <option value="Évangélisation maison">Évangélisation maison</option>
+              <option value="Évangélisation stade">Évangélisation stade</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -343,23 +334,20 @@ setTotalPriereSalut(nbPriere);
             <div className="text-2xl font-bold">{totalRefus}</div>
             <div>Refus</div>
           </div>
-            <div className="p-4 bg-white/20 rounded-xl">
+          <div className="p-4 bg-white/20 rounded-xl">
             <div className="text-2xl font-bold">{totalCellule}</div>
             <div>Intégrés en cellule</div>
           </div>
-            <div className="p-4 bg-white/20 rounded-xl">
+          <div className="p-4 bg-white/20 rounded-xl">
             <div className="text-2xl font-bold">{totalEglise}</div>
             <div>Intégrés à l'église</div>
           </div>
-            <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30">
+          <div className="p-4 bg-white/20 rounded-xl cursor-pointer hover:bg-white/30">
             <div className="text-2xl font-bold">
-              {totalEvangelises > 0
-                ? Math.round((totalPriereSalut / totalEvangelises) * 100)
-                : 0}%
+              {totalEvangelises > 0 ? Math.round((totalPriereSalut / totalEvangelises) * 100) : 0}%
             </div>
             <div>Convertis / Évangélisés (prière)</div>
           </div>
-              
           <div className="p-4 bg-white/20 rounded-xl">
             <div className="text-2xl font-bold">{tauxIntegration}%</div>
             <div>Taux d’intégration</div>

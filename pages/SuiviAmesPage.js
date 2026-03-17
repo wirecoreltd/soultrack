@@ -5,145 +5,138 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
-import { formatDistanceToNow } from "date-fns";
+import { motion } from "framer-motion";
 
 export default function ParcoursEvangelisesPage() {
-  const [contacts, setContacts] = useState([]);
+  const [evangelises, setEvangelises] = useState([]);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const [checkedContacts, setCheckedContacts] = useState({});
-  const [popupMember, setPopupMember] = useState(null);
 
-  const PAGE_SIZE = 50;
+  const pageSize = 50; // nombre de personnes par fetch
 
-  const fetchContacts = useCallback(async () => {
+  const fetchEvangelises = useCallback(async () => {
     if (loading || !hasMore) return;
     setLoading(true);
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("membres_complets")
-      .select(`
-        *,
-        suivis_des_evangelises!inner(
-          date_suivi,
-          status_suivis_evangelises
-        )
-      `)
-      .order("created_at", { ascending: false })
-      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+      .select("*")
+      .order("date_premiere_visite", { ascending: false })
+      .range((page - 1) * pageSize, page * pageSize - 1);
 
     if (error) {
-      console.error("Erreur Supabase:", error);
-    } else {
-      const mapped = data.map((m) => ({
-        id: m.id,
-        prenom: m.prenom,
-        nom: m.nom,
-        telephone: m.telephone,
-        ville: m.ville,
-        status: m.statut_suivis,
-        dateEvangelise: m.created_at,
-        dateEnvoye: m.date_envoi_suivi,
-        dateSuivi: m.suivi_updated_at,
-        dateIntegre: m.integration_fini,
-        bapteme: m.bapteme_eau || m.bapteme_esprit,
-        ministere: m.Ministere,
-        responsable: m.suivi_responsable,
-        urgent: m.suivi_statut === "URGENT",
-      }));
-      setContacts((prev) => [...prev, ...mapped]);
-      setHasMore(data.length === PAGE_SIZE);
-      setPage((prev) => prev + 1);
+      console.error(error);
+      setLoading(false);
+      return;
     }
+
+    if (data.length < pageSize) setHasMore(false);
+
+    setEvangelises((prev) => [...prev, ...data]);
+    setPage((prev) => prev + 1);
     setLoading(false);
-  }, [loading, page, hasMore]);
+  }, [page, loading, hasMore]);
 
   useEffect(() => {
-    fetchContacts();
+    fetchEvangelises();
   }, []);
-
-  const handleCheck = (id) => {
-    setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const getBorderColor = (m) => {
-    if (m.urgent) return "red";
-    if (m.status === "Intégré") return "green";
-    if (m.status === "En cours") return "orange";
-    return "#888";
-  };
 
   // Scroll infini
   useEffect(() => {
-    const onScroll = () => {
+    const handleScroll = () => {
       if (
-        window.innerHeight + window.scrollY >=
-          document.body.offsetHeight - 200 &&
-        hasMore &&
-        !loading
+        window.innerHeight + document.documentElement.scrollTop + 50 >=
+        document.documentElement.scrollHeight
       ) {
-        fetchContacts();
+        fetchEvangelises();
       }
     };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [fetchContacts, hasMore, loading]);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [fetchEvangelises]);
+
+  const getBorderColor = (m) => {
+    // Scoring couleur selon état
+    switch (m.suivi_statut) {
+      case "URGENT":
+        return "#ff4d4d";
+      case "Intégré":
+        return "#4caf50";
+      case "Suivi":
+        return "#ffa500";
+      default:
+        return "#888";
+    }
+  };
+
+  const getBadge = (m) => {
+    if (m.suivi_statut === "URGENT") {
+      return (
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+          className="text-red-500 font-bold text-sm"
+        >
+          🔴 URGENT
+        </motion.div>
+      );
+    }
+    return null;
+  };
 
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
       <div className="min-h-screen flex flex-col" style={{ background: "#333699" }}>
-        <HeaderPages title="Parcours des évangélisés: De l’Évangélisation à l’Intégration" />
+        <HeaderPages />
 
-        <main className="flex-1 flex flex-col items-center py-6 px-4">
-          {/* VUE TABLE */}
-          {contacts && (
-            <div className="w-full max-w-6xl overflow-x-auto py-2">
-              <div className="min-w-[700px] space-y-2">
-                <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
-                  <div className="flex-[2]">Nom complet</div>
-                  <div className="flex-[1]">Téléphone</div>
-                  <div className="flex-[1]">Ville</div>
-                  <div className="flex-[1] flex justify-center items-center">Sélectionner</div>
-                  <div className="flex-[1]">Action</div>
-                </div>
-                {contacts.map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4 relative"
-                    style={{ borderLeftColor: getBorderColor(m) }}
-                  >
-                    {m.urgent && (
-                      <span className="absolute top-0 left-0 bg-red-500 text-white px-2 py-0.5 text-xs animate-pulse rounded-tr-lg">
-                        URGENT
-                      </span>
-                    )}
-                    <div className="flex-[2] text-white flex items-center gap-1">
-                      {m.prenom} {m.nom}
-                    </div>
-                    <div className="flex-[1] text-white">{m.telephone || "—"}</div>
-                    <div className="flex-[1] text-white">{m.ville || "—"}</div>
-                    <div className="flex-[1] flex justify-center items-center">
-                      <input
-                        type="checkbox"
-                        checked={checkedContacts[m.id] || false}
-                        onChange={() => handleCheck(m.id)}
-                      />
-                    </div>
-                    <div className="flex-[1]">
-                      <button
-                        onClick={() => setPopupMember(m)}
-                        className="text-orange-500 underline text-sm"
-                      >
-                        Détails
-                      </button>
-                    </div>
-                  </div>
-                ))}
+        <main className="flex-1 p-6 flex flex-col items-center text-white">
+          <h1 className="text-2xl font-bold mb-4">De l’Évangélisation à l’Intégration</h1>
+
+          {/* Tableau transparent */}
+          <div className="w-full max-w-6xl overflow-x-auto py-2">
+            <div className="min-w-[700px] space-y-2">
+              <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+                <div className="flex-[2]">Nom complet</div>
+                <div className="flex-[1]">Statut</div>
+                <div className="flex-[1]">Jours</div>
+                <div className="flex-[1]">Évangélisé</div>
+                <div className="flex-[1]">Envoyé</div>
+                <div className="flex-[1]">Suivi</div>
+                <div className="flex-[1]">Intégré</div>
+                <div className="flex-[1]">Baptême</div>
+                <div className="flex-[1]">Ministère</div>
+                <div className="flex-[1]">Responsable</div>
               </div>
-              {loading && <p className="text-white mt-4">Chargement...</p>}
+
+              {evangelises.map((m) => (
+                <div
+                  key={m.id}
+                  className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
+                  style={{ borderLeftColor: getBorderColor(m) }}
+                >
+                  <div className="flex-[2] flex items-center gap-1">{m.prenom} {m.nom}</div>
+                  <div className="flex-[1]">{m.statut || "—"}</div>
+                  <div className="flex-[1]">{m.jours || "—"}</div>
+                  <div className="flex-[1]">{m.date_premiere_visite ? new Date(m.date_premiere_visite).toLocaleDateString() : "—"}</div>
+                  <div className="flex-[1]">{m.date_envoi_suivi ? new Date(m.date_envoi_suivi).toLocaleDateString() : "—"}</div>
+                  <div className="flex-[1]">{m.suivi_statut || "—"} {getBadge(m)}</div>
+                  <div className="flex-[1]">{m.integration_fini || "—"}</div>
+                  <div className="flex-[1]">{m.bapteme_eau || "—"}</div>
+                  <div className="flex-[1]">{m.Ministere || "—"}</div>
+                  <div className="flex-[1]">{m.suivi_responsable || "—"}</div>
+                </div>
+              ))}
             </div>
-          )}
+
+            {loading && (
+              <div className="text-white text-center py-4">Chargement...</div>
+            )}
+
+            {!hasMore && (
+              <div className="text-white text-center py-4">Fin de la liste</div>
+            )}
+          </div>
         </main>
 
         <Footer />

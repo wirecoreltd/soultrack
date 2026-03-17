@@ -156,29 +156,36 @@ function SuiviAmesPage() {
   }, [egliseId, brancheId]);  
  
   const filteredData = useMemo(() => {
-    
-    let d = [...data];
+  let d = [...data];
 
-    if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
-    if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+  if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
+  if (filter === "STABLE") d = d.filter((p) => p.score > 80);
 
-    if (search) d = d.filter((p) =>
+  if (search) {
+    d = d.filter((p) =>
       `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
     );
+  }
 
-       if (statusQuery) {
-      d = d.filter((p) => {
-        if (!p.lastSuivi?.status_suivis_evangelises) return false;
-    
-        return (
-          p.lastSuivi.status_suivis_evangelises.toLowerCase().trim() ===
-          statusQuery.toLowerCase().trim()
-        );
-      });
+  // ✅ FIX ICI
+  if (statusQuery) {
+    const temp = d.filter((p) => {
+      if (!p.lastSuivi) return false;
+
+      return p.lastSuivi.status_suivis_evangelises
+        ?.toLowerCase()
+        .trim()
+        .includes(statusQuery.toLowerCase().trim());
+    });
+
+    // 🔥 NE PAS casser l'affichage si rien ne match
+    if (temp.length > 0) {
+      d = temp;
     }
+  }
 
-    return d.sort((a, b) => a.score - b.score);
-  }, [data, search, filter, statusQuery]); // <-- statusQuery ajouté ici
+  return d.sort((a, b) => a.score - b.score);
+}, [data, search, filter, statusQuery]); // <-- statusQuery ajouté ici
 
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 

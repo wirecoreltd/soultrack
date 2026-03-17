@@ -1,176 +1,210 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 
-export default function ParcoursEvangelisesPage() {
-  const [contacts, setContacts] = useState([]);
-  const [checkedContacts, setCheckedContacts] = useState({});
-  const [popupMember, setPopupMember] = useState(null);
+export default function SuiviAmesPageWrapper() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
+      <SuiviAmesPage />
+    </ProtectedRoute>
+  );
+}
+
+function SuiviAmesPage() {
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(0);
+  const [expanded, setExpanded] = useState({});
+  const [egliseId, setEgliseId] = useState(null);
+  const [brancheId, setBrancheId] = useState(null);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("ALL");
 
-  // Récupération des données avec scroll infini
   useEffect(() => {
-    fetchContacts(page);
-  }, [page]);
+    const fetchProfile = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) return;
 
-  const fetchContacts = async (pageNumber) => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("membres_complets")
-      .select(`
-        id,
-        prenom,
-        nom,
-        telephone,
-        ville,
-        created_at,
-        date_envoi_suivi,
-        suivi_updated_at,
-        integration_fini,
-        bapteme_eau,
-        Ministere,
-        suivi_responsable,
-        statut_suivis,
-        status_suivi,
-        evangelise_member_id
-      `)
-      .order("created_at", { ascending: false })
-      .range(pageNumber * 100, (pageNumber + 1) * 100 - 1); // 100 par batch
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
 
-    if (error) console.error(error);
-    else setContacts((prev) => [...prev, ...data]);
+      if (profile) {
+        setEgliseId(profile.eglise_id);
+        setBrancheId(profile.branche_id);
+      }
+    };
 
-    setLoading(false);
-  };
+    fetchProfile();
+  }, []);
 
-  const handleCheck = (id) => {
-    setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  useEffect(() => {
+    if (!egliseId || !brancheId) return;
 
-  const getBorderColor = (m) => {
-    switch (m.statut_suivis || m.status_suivi) {
-      case "Intégré":
-        return "#00FF00";
-      case "En cours":
-      case "Envoyé":
-        return "#FFA500";
-      case "Refus":
-        return "#FF0000";
-      default:
-        return "#999999";
+    const fetchData = async () => {
+      setLoading(true);
+
+      const { data: evangelises } = await supabase
+        .from("evangelises")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
+
+      const { data: suivis } = await supabase
+        .from("suivis_des_evangelises")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
+
+      const { data: membres } = await supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
+
+      const map = {};
+      evangelises.forEach((e) => {
+        map[e.id] = { ...e, suivis: [] };
+      });
+
+      suivis.forEach((s) => {
+        if (map[s.evangelise_id]) {
+          map[s.evangelise_id].suivis.push(s);
+        }
+      });
+
+      const membresMap = {};
+      membres.forEach((m) => {
+        membresMap[String(m.evangelise_member_id)] = m;
+      });
+
+      const finalData = Object.values(map).map((p) => {
+        const membre = membresMap[p.id];
+        const sortedSuivis = p.suivis.sort(
+          (a, b) => new Date(b.date_suivi) - new Date(a.date_suivi)
+        );
+        const lastSuivi = sortedSuivis[0];
+        const dateRef = lastSuivi?.date_suivi || p.created_at;
+        const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
+
+        let score = 100;
+        if (p.status_suivi === "Non envoyé") score -= 40;
+        if (joursSansSuivi > 7) score -= 25;
+        else if (joursSansSuivi > 3) score -= 10;
+        if (!membre?.integration_fini) score -= 15;
+        if (!membre?.bapteme_eau) score -= 10;
+        if (!membre?.Ministere && !membre?.Autre_Ministere) score -= 10;
+        if (joursSansSuivi <= 3) score += 10;
+        if (membre?.integration_fini) score += 10;
+        score = Math.max(0, Math.min(100, score));
+
+        let couleur = "border-gray-500";
+        if (score <= 30) couleur = "border-red-500 animate-pulse";
+        else if (score <= 60) couleur = "border-orange-400";
+        else if (score <= 80) couleur = "border-yellow-300";
+        else couleur = "border-green-400";
+
+        return { ...p, membre, sortedSuivis, lastSuivi, joursSansSuivi, score, couleur };
+      });
+
+      setData(finalData);
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [egliseId, brancheId]);
+
+  const filteredData = useMemo(() => {
+    let d = [...data];
+    if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
+    if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+    if (search) {
+      d = d.filter((p) => `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase()));
     }
-  };
+    d.sort((a, b) => a.score - b.score);
+    return d;
+  }, [data, search, filter]);
 
-  const calculateDays = (m) => {
-    const start = new Date(m.created_at);
-    const end = new Date();
-    return Math.floor((end - start) / (1000 * 60 * 60 * 24));
+  const toggle = (id) => {
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
+    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "#333699" }}>
       <HeaderPages />
-      <div className="min-h-screen p-6" style={{ background: "#333699" }}>
-        <h1 className="text-2xl font-bold text-white mb-4">
-          De l’Évangélisation à l’Intégration
-        </h1>
+      <h1 className="text-3xl font-bold text-white mt-4 mb-4">De l’Évangélisation à l’Intégration</h1>
 
-        {/* VUE TABLE */}
-        {contacts && (
-          <div className="w-full max-w-6xl overflow-x-auto py-2">
-            <div className="min-w-[700px] space-y-2">
-              <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
-                <div className="flex-[2]">Nom complet</div>
-                <div className="flex-[1]">Statut</div>
-                <div className="flex-[1]">Jours</div>
-                <div className="flex-[1]">Évangélisé</div>
-                <div className="flex-[1]">Envoyé</div>
-                <div className="flex-[1]">Suivi</div>
-                <div className="flex-[1]">Intégré</div>
-                <div className="flex-[1]">Baptême</div>
-                <div className="flex-[1]">Ministère</div>
-                <div className="flex-[1]">Responsable</div>
-                <div className="flex-[1] flex justify-center items-center">Sélectionner</div>
-                <div className="flex-[1]">Action</div>
-              </div>
-
-              {contacts.map((m) => (
-                <div
-                  key={m.id}
-                  className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
-                  style={{ borderLeftColor: getBorderColor(m) }}
-                >
-                  <div className="flex-[2] text-white flex items-center gap-1">
-                    {m.prenom} {m.nom}
-                  </div>
-                  <div className="flex-[1] text-white">{m.statut_suivis || m.status_suivi}</div>
-                  <div className="flex-[1] text-white">{calculateDays(m)}</div>
-                  <div className="flex-[1] text-white">{new Date(m.created_at).toLocaleDateString()}</div>
-                  <div className="flex-[1] text-white">
-                    {m.date_envoi_suivi ? new Date(m.date_envoi_suivi).toLocaleDateString() : "—"}
-                  </div>
-                  <div className="flex-[1] text-white">
-                    {m.suivi_updated_at ? new Date(m.suivi_updated_at).toLocaleDateString() : "—"}
-                  </div>
-                  <div className="flex-[1] text-white">
-                    {m.integration_fini ? new Date(m.integration_fini).toLocaleDateString() : "—"}
-                  </div>
-                  <div className="flex-[1] text-white">{m.bapteme_eau || "—"}</div>
-                  <div className="flex-[1] text-white">{m.Ministere || "—"}</div>
-                  <div className="flex-[1] text-white">{m.suivi_responsable || "—"}</div>
-                  <div className="flex-[1] flex justify-center items-center">
-                    <input
-                      type="checkbox"
-                      checked={checkedContacts[m.id] || false}
-                      onChange={() => handleCheck(m.id)}
-                    />
-                  </div>
-                  <div className="flex-[1]">
-                    <button
-                      onClick={() => setPopupMember(m)}
-                      className="text-orange-500 underline text-sm"
-                    >
-                      Détails
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {loading && <p className="text-white mt-4">Chargement...</p>}
+      <div className="flex gap-3 my-4 flex-wrap justify-center">
+        <input
+          placeholder="Rechercher..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="p-2 rounded"
+        />
+        <button onClick={() => setFilter("ALL")} className="bg-white px-3 py-1 rounded">Tous</button>
+        <button onClick={() => setFilter("URGENT")} className="bg-red-300 px-3 py-1 rounded">Urgents</button>
+        <button onClick={() => setFilter("STABLE")} className="bg-green-300 px-3 py-1 rounded">Stables</button>
       </div>
 
-      <Footer />
-
-      {/* POPUP MEMBER */}
-      {popupMember && (
-        <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg w-11/12 max-w-2xl text-black">
-            <h2 className="font-bold text-xl mb-4">{popupMember.prenom} {popupMember.nom}</h2>
-            <p><strong>Statut:</strong> {popupMember.statut_suivis || popupMember.status_suivi}</p>
-            <p><strong>Évangélisé:</strong> {new Date(popupMember.created_at).toLocaleDateString()}</p>
-            <p><strong>Envoyé:</strong> {popupMember.date_envoi_suivi ? new Date(popupMember.date_envoi_suivi).toLocaleDateString() : "—"}</p>
-            <p><strong>Suivi:</strong> {popupMember.suivi_updated_at ? new Date(popupMember.suivi_updated_at).toLocaleDateString() : "—"}</p>
-            <p><strong>Intégré:</strong> {popupMember.integration_fini ? new Date(popupMember.integration_fini).toLocaleDateString() : "—"}</p>
-            <p><strong>Baptême:</strong> {popupMember.bapteme_eau || "—"}</p>
-            <p><strong>Ministère:</strong> {popupMember.Ministere || "—"}</p>
-            <p><strong>Responsable:</strong> {popupMember.suivi_responsable || "—"}</p>
-            <button
-              className="mt-4 bg-orange-500 text-white px-4 py-2 rounded"
-              onClick={() => setPopupMember(null)}
-            >
-              Fermer
-            </button>
+      <div className="w-full max-w-6xl overflow-x-auto py-2">
+        <div className="min-w-[900px] space-y-2">
+          <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+            <div className="flex-[2]">Nom complet</div>
+            <div className="flex-[1]">Statut</div>
+            <div className="flex-[1]">Jours</div>
+            <div className="flex-[1]">Évangélisé</div>
+            <div className="flex-[1]">Envoyé</div>
+            <div className="flex-[1]">Suivi</div>
+            <div className="flex-[1]">Intégré</div>
+            <div className="flex-[1]">Baptême</div>
+            <div className="flex-[1]">Ministère</div>
+            <div className="flex-[1]">Responsable</div>
           </div>
+
+          {filteredData.map((p) => (
+            <div key={p.id}>
+              <div
+                className={`flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4 ${p.couleur} cursor-pointer`}
+                onClick={() => toggle(p.id)}
+              >
+                {p.score <= 30 && <span className="text-red-500 font-bold animate-pulse mr-2">🔴 URGENT</span>}
+                <div className="flex-[2] text-white">{p.prenom} {p.nom}</div>
+                <div className="flex-[1] text-white">{p.status_suivi}</div>
+                <div className="flex-[1] text-white">{p.joursSansSuivi}</div>
+                <div className="flex-[1] text-white">{new Date(p.created_at).toLocaleDateString()}</div>
+                <div className="flex-[1] text-white">{p.membre?.date_envoi_suivi ? new Date(p.membre.date_envoi_suivi).toLocaleDateString() : "-"}</div>
+                <div className="flex-[1] text-white">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
+                <div className="flex-[1] text-white">{p.membre?.integration_fini ? new Date(p.membre.integration_fini).toLocaleDateString() : "-"}</div>
+                <div className="flex-[1] text-white">{p.membre?.bapteme_eau || "-"}</div>
+                <div className="flex-[1] text-white">{p.membre?.Ministere || "-"}</div>
+                <div className="flex-[1] text-white">{p.membre?.suivi_responsable || "-"}</div>
+              </div>
+
+              {expanded[p.id] && (
+                <div className="bg-white/10 rounded-lg p-3 ml-4 mt-1">
+                  <b className="text-white">Historique des suivis :</b>
+                  <ul className="mt-2 text-white">
+                    {p.sortedSuivis.map((s) => (
+                      <li key={s.id}>
+                        {new Date(s.date_suivi).toLocaleDateString()} — {s.status_suivis_evangelises}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-      )}
-    </ProtectedRoute>
+      </div>
+
+      {loading && <p className="text-white mt-4">Chargement...</p>}
+      <Footer />
+    </div>
   );
 }

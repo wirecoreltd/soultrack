@@ -170,16 +170,26 @@ function SuiviAmesPage() {
  if (statusQuery && statusQuery !== "all") {
   const query = statusQuery.toLowerCase().trim();
 
-  // ✅ CAS SPÉCIFIQUE : ENVOYÉ
-  if (query === "envoyé") {
-    d = d.filter(
-      (p) => p.status_suivi?.toLowerCase().trim() === "envoyé"
+  const temp = d.filter((p) => {
+    // ✅ 1. CAS ENVOYÉ (table evangelises)
+    if (query === "envoyé") {
+      return p.status_suivi?.toLowerCase().trim() === "envoyé";
+    }
+
+    // ✅ 2. CAS SUIVIS (Intégré / En cours / Refus)
+    if (!p.lastSuivi) return false;
+
+    return (
+      p.lastSuivi.status_suivis_evangelises
+        ?.toLowerCase()
+        .trim() === query
     );
+  });
+
+  if (temp.length > 0) {
+    d = temp;
   }
 }
-
-  return d.sort((a, b) => a.score - b.score);
-}, [data, search, filter, statusQuery]); // <-- statusQuery ajouté ici
 
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 

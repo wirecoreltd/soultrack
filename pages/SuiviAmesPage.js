@@ -193,11 +193,8 @@ function SuiviAmesPage() {
   }
 
   return d;
-}, [data, filter, search, statusQuery]);
-      
-      return d;
-      }, [data, filter, search, statusQuery]);
-
+}, [data, filter, search, statusQuery]);      
+    
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
   // ================= UI =================

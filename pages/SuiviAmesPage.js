@@ -165,7 +165,16 @@ function SuiviAmesPage() {
       `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
     );
 
-    if (statusQuery) d = d.filter((p) => p.lastSuivi?.status_suivis_evangelises === statusQuery);
+       if (statusQuery) {
+      d = d.filter((p) => {
+        if (!p.lastSuivi?.status_suivis_evangelises) return false;
+    
+        return (
+          p.lastSuivi.status_suivis_evangelises.toLowerCase().trim() ===
+          statusQuery.toLowerCase().trim()
+        );
+      });
+    }
 
     return d.sort((a, b) => a.score - b.score);
   }, [data, search, filter, statusQuery]); // <-- statusQuery ajouté ici

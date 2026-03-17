@@ -57,6 +57,10 @@ function SuiviAmesPage() {
         .select("*")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
+      
+      const { data: baptemes } = await supabase
+        .from("baptemes")
+        .select("*");
 
       const { data: suivis } = await supabase
         .from("suivis_des_evangelises")
@@ -113,6 +117,11 @@ function SuiviAmesPage() {
       ministeres.forEach((m) => {
         ministereMap[m.membre_id] = m.created_at;
       });
+
+      const baptemeMap = {};        
+        baptemes.forEach((b) => {
+          baptemeMap[String(b.evangelise_member_id)] = b.date;
+        });
 
       // ================= FINAL DATA =================
       const finalData = Object.values(map).map((p) => {
@@ -173,6 +182,7 @@ function SuiviAmesPage() {
           couleur,
           responsable,
           debutMinistere: membre ? ministereMap[membre.id] : null,
+           dateBapteme: baptemeMap[String(p.id)],
         };
       });
 
@@ -264,16 +274,7 @@ function SuiviAmesPage() {
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.status_suivis_evangelises}</div>
                 <div className="col-span-1 text-white text-center">{p.membre?.created_at ? new Date(p.membre.created_at).toLocaleDateString() : "-"}</div>
-                <div className="col-span-1 text-white text-center">
-                  {(() => {
-                    const d =
-                      p.membre?.bapteme_date ||
-                      p.membre?.date_bapteme ||
-                      p.membre?.baptise_le;
-                
-                    return d ? new Date(d).toLocaleDateString() : "-";
-                  })()}
-</div>
+                <div className="col-span-1 text-white text-center">{p.dateBapteme? new Date(p.dateBapteme).toLocaleDateString(): "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.responsable}</div>
 

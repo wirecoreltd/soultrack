@@ -172,7 +172,7 @@ export default function RapportEvangelisation() {
       setTotalIntegres(integres.length);
       setTotalEncour(enCours.length);
       setTotalRefus(refus.length);
-      setTotalCellule(integres.filter((e) => e.cellule_id != null).length);
+      setTotalCellule(filteredSuivis.filter((e) => e.cellule_id != null).length);
       setTotalEglise(integres.filter((e) => e.conseiller_id != null).length);
   
     } catch (err) {
@@ -414,7 +414,7 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
             <div className="text-2xl sm:text-3xl font-semibold">{totalCellule}</div>
             <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Cellule</div>
             <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-              {totalIntegres > 0 ? Math.round((totalCellule / totalIntegres) * 100) : 0}%
+              {totalCellule > 0 ? Math.round((totalCellule / filteredSuivis.length) * 100) : 0}%
             </div>
           </div>
       

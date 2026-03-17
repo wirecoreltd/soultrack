@@ -276,12 +276,11 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
   const tauxIntegration = totalEvangelises > 0 ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
 
   const handleKpiClick = (status) => {
-      // Construire l'URL avec les filtres
-      let url = `/suivi-ames?`;
-      if (status) url += `status=${encodeURIComponent(status)}&`;
-      // tu peux ajouter d'autres filtres si nécessaire
-      // Exemple : eglise, date, branche
-      window.location.href = url; // redirige vers Suivi des âmes
+  // Navigue vers SuiviAmesPage avec le filtre en query param
+      router.push({
+        pathname: "/SuiviAmesPage",
+        query: { status: status || "all" }, // "all" pour Évangélisés total
+      });
     };
 
   // ---------------- UI ----------------

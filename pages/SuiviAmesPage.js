@@ -5,6 +5,7 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+import { useSearchParams } from "next/navigation";
 
 export default function SuiviAmesPageWrapper() {
   return (
@@ -193,21 +194,28 @@ function SuiviAmesPage() {
     fetchData();
   }, [egliseId, brancheId]);
 
-  // ================= FILTER =================
+  const searchParams = useSearchParams();
   const filteredData = useMemo(() => {
-    let d = [...data];
+  let d = [...data];
 
-    if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
-    if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+  // === Filtre score existant ===
+  if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
+  if (filter === "STABLE") d = d.filter((p) => p.score > 80);
 
-    if (search) {
-      d = d.filter((p) =>
-        `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
-      );
-    }
+  // === Filtre recherche ===
+  if (search) {
+    d = d.filter((p) =>
+      `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
+    );
+  }
 
-    return d.sort((a, b) => a.score - b.score);
-  }, [data, search, filter]);
+  // === Nouveau filtre KPI via URL ===
+  if (statusQuery) {
+    d = d.filter((p) => p.lastSuivi?.status_suivis_evangelises === statusQuery);
+  }
+
+  return d.sort((a, b) => a.score - b.score);
+}, [data, search, filter, statusQuery]);
 
   const toggle = (id) =>
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));

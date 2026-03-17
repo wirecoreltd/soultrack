@@ -52,7 +52,6 @@ function SuiviAmesPage() {
     const fetchData = async () => {
       setLoading(true);
 
-      // ------------------- FETCH TABLES -------------------
       const { data: evangelises } = await supabase
         .from("evangelises")
         .select("*")
@@ -79,7 +78,6 @@ function SuiviAmesPage() {
         .from("stats_ministere_besoin")
         .select("*");
 
-      // ------------------- MAP EVANGELISES -------------------
       const map = {};
       evangelises.forEach((e) => {
         map[e.id] = { ...e, suivis: [] };
@@ -106,7 +104,6 @@ function SuiviAmesPage() {
         ministereMap[m.membre_id] = m.created_at;
       });
 
-      // ------------------- FINAL DATA -------------------
       const finalData = Object.values(map).map((p) => {
         const membre = membresMap[p.id];
         const sortedSuivis = p.suivis.sort(
@@ -116,16 +113,13 @@ function SuiviAmesPage() {
         const dateRef = lastSuivi?.date_suivi || p.created_at;
         const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
 
-        // SCORING
         let score = 100;
         if (p.status_suivi === "Non envoyé") score -= 40;
         if (joursSansSuivi > 7) score -= 25;
         else if (joursSansSuivi > 3) score -= 10;
-        if (!membre?.integration_fini) score -= 15;
-        if (!membre?.bapteme_eau) score -= 10;
+        if (!membre?.bapteme_date) score -= 10;
         if (!membre?.star) score -= 10;
         if (joursSansSuivi <= 3) score += 10;
-        if (membre?.integration_fini) score += 10;
         score = Math.max(0, Math.min(100, score));
 
         let couleur = "border-gray-500";
@@ -134,14 +128,13 @@ function SuiviAmesPage() {
         else if (score <= 80) couleur = "border-yellow-300";
         else couleur = "border-green-400";
 
-        // ------------------- RESPONSABLE -------------------
         let responsable = "-";
-        if (membre?.integration_fini) {
+        if (membre) {
           if (membre.conseiller_id) responsable = profilesMap[membre.conseiller_id] || "-";
           else if (membre.cellule_id) responsable = profilesMap[membre.cellule_id] || "-";
-        } else {
-          if (lastSuivi?.conseiller_id) responsable = profilesMap[lastSuivi.conseiller_id] || "-";
-          else if (lastSuivi?.cellule_id) responsable = profilesMap[lastSuivi.cellule_id] || "-";
+        } else if (lastSuivi) {
+          if (lastSuivi.conseiller_id) responsable = profilesMap[lastSuivi.conseiller_id] || "-";
+          else if (lastSuivi.cellule_id) responsable = profilesMap[lastSuivi.cellule_id] || "-";
         }
 
         return {
@@ -164,7 +157,6 @@ function SuiviAmesPage() {
     fetchData();
   }, [egliseId, brancheId]);
 
-  // ================= FILTER + SEARCH =================
   const filteredData = useMemo(() => {
     let d = [...data];
     if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
@@ -176,15 +168,11 @@ function SuiviAmesPage() {
     return d;
   }, [data, search, filter]);
 
-  const toggle = (id) => {
-    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  const toggle = (id) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
-  // ================= UI =================
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "#333699" }}>
       <HeaderPages />
-
       <h1 className="text-3xl font-bold text-white mt-4 mb-4">De l’Évangélisation à l’Intégration</h1>
 
       <div className="flex gap-3 my-4 flex-wrap justify-center">
@@ -199,46 +187,46 @@ function SuiviAmesPage() {
         <button onClick={() => setFilter("STABLE")} className="bg-green-300 px-3 py-1 rounded">Stables</button>
       </div>
 
-      <div className="w-full max-w-6xl overflow-x-auto py-2">
-        <div className="min-w-[1000px] space-y-2">
-          <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
-            <div className="flex-[2]">Nom complet</div>
-            <div className="flex-[1]">Statut</div>
-            <div className="flex-[1]">Jours</div>
-            <div className="flex-[1]">Évangélisé</div>
-            <div className="flex-[1]">Envoyé au</div>
-            <div className="flex-[1]">Status Suivi</div>            
-            <div className="flex-[1]">Date intégration</div>
-            <div className="flex-[1]">Baptisé le</div>
-            <div className="flex-[1]">Début Ministère</div>
-            <div className="flex-[1]">Suivis par</div>
-            <div className="flex-[1]">Action</div>
+      <div className="w-full max-w-7xl overflow-x-auto py-2">
+        <div className="min-w-[1100px]">
+          <div className="grid grid-cols-12 text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 gap-2">
+            <div className="col-span-2">Nom complet</div>
+            <div className="col-span-1">Statut</div>
+            <div className="col-span-1">Jours</div>
+            <div className="col-span-1">Évangélisé</div>
+            <div className="col-span-1">Envoyé au</div>
+            <div className="col-span-1">Status Suivi</div>
+            <div className="col-span-1">Date intégration</div>
+            <div className="col-span-1">Baptisé le</div>
+            <div className="col-span-1">Début Ministère</div>
+            <div className="col-span-1">Suivis par</div>
+            <div className="col-span-1">Action</div>
           </div>
 
           {filteredData.map((p) => (
             <div key={p.id}>
               <div
-                className={`flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4 ${p.couleur} cursor-pointer`}
+                className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4 ${p.couleur} cursor-pointer`}
                 onClick={() => toggle(p.id)}
               >
-                {p.score <= 30 && <span className="text-red-500 font-bold animate-pulse mr-2">🔴 URGENT</span>}
-                <div className="flex-[2] text-white">{p.prenom} {p.nom}</div>
-                <div className="flex-[1] text-white">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
-                <div className="flex-[1] text-white">{p.joursSansSuivi}</div>
-                <div className="flex-[1] text-white">{new Date(p.created_at).toLocaleDateString()}</div>
-                <div className="flex-[1] text-white">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
-                <div className="flex-[1] text-white">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>                
-                <div className="flex-[1] text-white">{p.membre?.created_at ? new Date(p.membre.created_at).toLocaleDateString() : "-"}</div>
-                <div className="flex-[1] text-white">{p.membre?.bapteme_date ? new Date(p.membre.bapteme_date).toLocaleDateString() : "-"}</div>
-                <div className="flex-[1] text-white">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString() : "-"}</div>
-                <div className="flex-[1] text-white">{p.responsable}</div>
-                <div className="flex-[1] text-white">
+                {p.score <= 30 && <span className="text-red-500 font-bold animate-pulse col-span-12">🔴 URGENT</span>}
+                <div className="col-span-2 text-white">{p.prenom} {p.nom}</div>
+                <div className="col-span-1 text-white">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
+                <div className="col-span-1 text-white">{p.joursSansSuivi}</div>
+                <div className="col-span-1 text-white">{new Date(p.created_at).toLocaleDateString()}</div>
+                <div className="col-span-1 text-white">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
+                <div className="col-span-1 text-white">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
+                <div className="col-span-1 text-white">{p.membre?.created_at ? new Date(p.membre.created_at).toLocaleDateString() : "-"}</div>
+                <div className="col-span-1 text-white">{p.membre?.bapteme_date ? new Date(p.membre.bapteme_date).toLocaleDateString() : "-"}</div>
+                <div className="col-span-1 text-white">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString() : "-"}</div>
+                <div className="col-span-1 text-white">{p.responsable}</div>
+                <div className="col-span-1 text-white">
                   <button className="bg-blue-500 px-2 py-1 rounded text-white text-sm hover:bg-blue-600">Détails</button>
                 </div>
               </div>
 
               {expanded[p.id] && (
-                <div className="bg-white/10 rounded-lg p-3 ml-4 mt-1">
+                <div className="bg-white/10 rounded-lg p-3 mt-1">
                   <b className="text-white">Historique des suivis :</b>
                   <ul className="mt-2 text-white">
                     {p.sortedSuivis.map((s) => (

@@ -190,7 +190,7 @@ function SuiviAmesPage() {
           {/* HEADER */}
           <div className="grid grid-cols-12 text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 gap-1">
             <div className="col-span-2">Nom complet</div>
-            <div className="col-span-1">Statut</div>
+            <div className="col-span-1">Envoi</div>
             <div className="col-span-1">Jours</div>
             <div className="col-span-1">Évangélisé</div>
             <div className="col-span-1 text-center">Envoyé au</div>
@@ -223,7 +223,7 @@ function SuiviAmesPage() {
               >
                 {p.score <= 30 && <span className="text-red-500 font-bold animate-pulse col-span-12">🔴 URGENT</span>}
                 <div className="col-span-2 text-white">{p.prenom} {p.nom}</div>
-                <div className="col-span-1 text-white">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
+                <div className="col-span-1 text-white">{p.status_suivi || "-"}</div>
                 <div className="col-span-1 text-white">{p.joursSansSuivi}</div>
                 <div className="col-span-1 text-white">{new Date(p.created_at).toLocaleDateString()}</div>
                 <div className="col-span-1 text-white">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>

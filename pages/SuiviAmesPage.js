@@ -158,36 +158,42 @@ function SuiviAmesPage() {
   const filteredData = useMemo(() => {
   let d = [...data];
 
+  // FILTRE SCORE
   if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
   if (filter === "STABLE") d = d.filter((p) => p.score > 80);
 
+  // FILTRE RECHERCHE
   if (search) {
     d = d.filter((p) =>
       `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
     );
   }
 
-       if (statusQuery && statusQuery !== "all") {
-        const query = statusQuery.toLowerCase().trim();
-      
-        const temp = d.filter((p) => {
-          if (query === "envoyé") {
-            return p.status_suivi?.toLowerCase().trim() === "envoyé";
-          }
-      
-          if (!p.lastSuivi) return false;
-      
-          return (
-            p.lastSuivi.status_suivis_evangelises
-              ?.toLowerCase()
-              .trim() === query
-          );
-        });
-      
-        if (temp.length > 0) {
-          d = temp;
-        }
+  // FILTRE STATUS (envoyé / Intégré / Refus / Non envoyé)
+  if (statusQuery && statusQuery !== "all") {
+    const query = statusQuery.toLowerCase().trim();
+
+    const temp = d.filter((p) => {
+      // ✅ Cas "envoyé" : inclure aussi "Non envoyé"
+      if (query === "envoyé") {
+        return (
+          p.status_suivi?.toLowerCase().trim() === "envoyé" ||
+          p.status_suivi?.toLowerCase().trim() === "non envoyé"
+        );
       }
+
+      // ✅ Cas Suivis (Intégré / En cours / Refus)
+      if (!p.lastSuivi) return false;
+      return p.lastSuivi.status_suivis_evangelises
+        ?.toLowerCase()
+        .trim() === query;
+    });
+
+    d = temp; // on remplace directement
+  }
+
+  return d;
+}, [data, filter, search, statusQuery]);
       
       return d;
       }, [data, filter, search, statusQuery]);

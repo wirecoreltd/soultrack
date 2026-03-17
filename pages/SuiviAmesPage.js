@@ -247,6 +247,7 @@ function SuiviAmesPage() {
                 </div>
               )}
             </div>
+            );
           ))}
         </div>
       </div>

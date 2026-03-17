@@ -167,22 +167,16 @@ function SuiviAmesPage() {
     );
   }
 
-  // ✅ FIX ICI
-  if (statusQuery) {
-    const temp = d.filter((p) => {
-      if (!p.lastSuivi) return false;
+ if (statusQuery && statusQuery !== "all") {
+  const query = statusQuery.toLowerCase().trim();
 
-      return p.lastSuivi.status_suivis_evangelises
-        ?.toLowerCase()
-        .trim()
-        .includes(statusQuery.toLowerCase().trim());
-    });
-
-    // 🔥 NE PAS casser l'affichage si rien ne match
-    if (temp.length > 0) {
-      d = temp;
-    }
+  // ✅ CAS SPÉCIFIQUE : ENVOYÉ
+  if (query === "envoyé") {
+    d = d.filter(
+      (p) => p.status_suivi?.toLowerCase().trim() === "envoyé"
+    );
   }
+}
 
   return d.sort((a, b) => a.score - b.score);
 }, [data, search, filter, statusQuery]); // <-- statusQuery ajouté ici

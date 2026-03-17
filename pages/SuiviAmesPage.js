@@ -23,6 +23,7 @@ function SuiviAmesPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("ALL");
 
+  // ================= FETCH PROFIL =================
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -44,12 +45,14 @@ function SuiviAmesPage() {
     fetchProfile();
   }, []);
 
+  // ================= FETCH DATA =================
   useEffect(() => {
     if (!egliseId || !brancheId) return;
 
     const fetchData = async () => {
       setLoading(true);
 
+      // ------------------- FETCH TABLES -------------------
       const { data: evangelises } = await supabase
         .from("evangelises")
         .select("*")
@@ -68,6 +71,11 @@ function SuiviAmesPage() {
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
 
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom");
+
+      // ------------------- MAP EVANGELISES -------------------
       const map = {};
       evangelises.forEach((e) => {
         map[e.id] = { ...e, suivis: [] };
@@ -84,6 +92,12 @@ function SuiviAmesPage() {
         membresMap[String(m.evangelise_member_id)] = m;
       });
 
+      const profilesMap = {};
+      profiles.forEach((p) => {
+        profilesMap[p.id] = p.prenom + " " + p.nom;
+      });
+
+      // ------------------- FINAL DATA -------------------
       const finalData = Object.values(map).map((p) => {
         const membre = membresMap[p.id];
         const sortedSuivis = p.suivis.sort(
@@ -93,6 +107,7 @@ function SuiviAmesPage() {
         const dateRef = lastSuivi?.date_suivi || p.created_at;
         const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
 
+        // SCORING
         let score = 100;
         if (p.status_suivi === "Non envoyé") score -= 40;
         if (joursSansSuivi > 7) score -= 25;
@@ -110,7 +125,26 @@ function SuiviAmesPage() {
         else if (score <= 80) couleur = "border-yellow-300";
         else couleur = "border-green-400";
 
-        return { ...p, membre, sortedSuivis, lastSuivi, joursSansSuivi, score, couleur };
+        // ------------------- RESPONSABLE -------------------
+        let responsable = "-";
+        if (membre?.integration_fini) {
+          if (membre.conseiller_id) responsable = profilesMap[membre.conseiller_id] || "-";
+          else if (membre.cellule_id) responsable = profilesMap[membre.cellule_id] || "-";
+        } else {
+          if (lastSuivi?.conseiller_id) responsable = profilesMap[lastSuivi.conseiller_id] || "-";
+          else if (lastSuivi?.cellule_id) responsable = profilesMap[lastSuivi.cellule_id] || "-";
+        }
+
+        return {
+          ...p,
+          membre,
+          sortedSuivis,
+          lastSuivi,
+          joursSansSuivi,
+          score,
+          couleur,
+          responsable,
+        };
       });
 
       setData(finalData);
@@ -120,6 +154,7 @@ function SuiviAmesPage() {
     fetchData();
   }, [egliseId, brancheId]);
 
+  // ================= FILTER + SEARCH =================
   const filteredData = useMemo(() => {
     let d = [...data];
     if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
@@ -135,9 +170,11 @@ function SuiviAmesPage() {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  // ================= UI =================
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "#333699" }}>
       <HeaderPages />
+
       <h1 className="text-3xl font-bold text-white mt-4 mb-4">De l’Évangélisation à l’Intégration</h1>
 
       <div className="flex gap-3 my-4 flex-wrap justify-center">
@@ -162,6 +199,7 @@ function SuiviAmesPage() {
             <div className="flex-[1]">Envoyé</div>
             <div className="flex-[1]">Suivi</div>
             <div className="flex-[1]">Intégré</div>
+            <div className="flex-[1]">Date intégration</div>
             <div className="flex-[1]">Baptême</div>
             <div className="flex-[1]">Ministère</div>
             <div className="flex-[1]">Responsable</div>
@@ -175,15 +213,16 @@ function SuiviAmesPage() {
               >
                 {p.score <= 30 && <span className="text-red-500 font-bold animate-pulse mr-2">🔴 URGENT</span>}
                 <div className="flex-[2] text-white">{p.prenom} {p.nom}</div>
-                <div className="flex-[1] text-white">{p.status_suivi}</div>
+                <div className="flex-[1] text-white">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
                 <div className="flex-[1] text-white">{p.joursSansSuivi}</div>
                 <div className="flex-[1] text-white">{new Date(p.created_at).toLocaleDateString()}</div>
-                <div className="flex-[1] text-white">{p.membre?.date_envoi_suivi ? new Date(p.membre.date_envoi_suivi).toLocaleDateString() : "-"}</div>
                 <div className="flex-[1] text-white">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
-                <div className="flex-[1] text-white">{p.membre?.integration_fini ? new Date(p.membre.integration_fini).toLocaleDateString() : "-"}</div>
-                <div className="flex-[1] text-white">{p.membre?.bapteme_eau || "-"}</div>
-                <div className="flex-[1] text-white">{p.membre?.Ministere || "-"}</div>
-                <div className="flex-[1] text-white">{p.membre?.suivi_responsable || "-"}</div>
+                <div className="flex-[1] text-white">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
+                <div className="flex-[1] text-white">{p.membre?.integration_fini ? "Intégré" : "-"}</div>
+                <div className="flex-[1] text-white">{p.membre?.created_at ? new Date(p.membre.created_at).toLocaleDateString() : "-"}</div>
+                <div className="flex-[1] text-white">{p.membre?.bapteme_eau ? "Oui" : "-"}</div>
+                <div className="flex-[1] text-white">{p.membre?.star ? "Oui" : "-"}</div>
+                <div className="flex-[1] text-white">{p.responsable}</div>
               </div>
 
               {expanded[p.id] && (

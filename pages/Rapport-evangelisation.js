@@ -370,6 +370,22 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
                 : 0}%
             </div>
           </div>
+
+            {/* Non envoyés au suivi */}
+            <div
+              className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-gray-400 to-gray-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
+              onClick={() => handleKpiClick("NonEnvoye")} // tu peux gérer la navigation comme tu veux
+            >
+              <div className="text-2xl sm:text-3xl font-semibold">
+                {filteredEvangelisesByType.filter(e => e.status_suivi !== "Envoyé").length}
+              </div>
+              <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Non envoyés</div>
+              <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
+                {totalEvangelises > 0
+                  ? Math.round((filteredEvangelisesByType.filter(e => e.status_suivi !== "Envoyé").length / totalEvangelises) * 100)
+                  : 0}%
+              </div>
+            </div>
       
           {/* Intégrés */}
           <div

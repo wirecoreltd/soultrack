@@ -188,13 +188,13 @@ function SuiviAmesPage() {
       <div className="w-full max-w-7xl overflow-x-auto py-2">
         <div className="min-w-[1200px]">
           {/* HEADER */}
-          <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent gap-x-1 text-center">
+          <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent gap-y-2 text-center">
             <div className="flex-[2]">Nom complet</div>
-            <div className="flex-[1]">Statut (Envoyé)</div>
+            <div className="flex-[1]">Envoi</div>
             <div className="flex-[1]">Jours</div>
-            <div className="flex-[1]">Évangélisé<br/>Le</div>
+            <div className="flex-[1]">Évangélisé</div>
             <div className="flex-[1]">Envoyé au<br/>Suivi</div>
-            <div className="flex-[1]">Status<br/>Suivi</div>
+            <div className="flex-[1]">Statut (Envoyé)</div>
             <div className="flex-[1]">Date<br/>Intégration</div>
             <div className="flex-[1]">Baptisé<br/>le</div>
             <div className="flex-[1]">Début<br/>Ministère</div>
@@ -202,53 +202,53 @@ function SuiviAmesPage() {
             <div className="flex-[1]">Action</div>
           </div>
 
-          {filteredData.map((p) => {              
-              const membre = membresMap[p.evangelise_member_id]; 
-              const sortedSuivis = p.suivis.sort(
-                (a, b) => new Date(b.date_suivi) - new Date(a.date_suivi)
-              );
-              const lastSuivi = sortedSuivis[0];
-              const dateRef = lastSuivi?.date_suivi || p.created_at;
-              const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
-            
-              return (
-                <div key={p.id} className="mb-1">
-                  <div
-                    className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-1 border-l-4 ${p.couleur} cursor-pointer`}
-                    onClick={() => toggle(p.id)}
-                  >
-                    {p.score <= 30 && <span className="text-red-500 font-bold animate-pulse col-span-12 text-center">🔴 URGENT</span>}
-            
-                    <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
-                    <div className="col-span-1 text-white text-center">{p.status_suivi || "-"}</div>
-                    <div className="col-span-1 text-white text-center">{joursSansSuivi}</div>
-                    <div className="col-span-1 text-white text-center">{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
-                    <div className="col-span-1 text-white text-center">{lastSuivi?.date_suivi ? new Date(lastSuivi.date_suivi).toLocaleDateString("fr-FR") : "-"}</div>
-                    <div className="col-span-1 text-white text-center">{lastSuivi?.status_suivis_evangelises || "-"}</div>
-                    <div className="col-span-1 text-white text-center">{membre?.created_at ? new Date(membre.created_at).toLocaleDateString("fr-FR") : "-"}</div>
-                    <div className="col-span-1 text-white text-center">{membre?.bapteme_date ? new Date(membre.bapteme_date).toLocaleDateString("fr-FR") : "-"}</div>
-                    <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString("fr-FR") : "-"}</div>
-                    <div className="col-span-1 text-white text-center">{p.responsable}</div>
-                    <div className="col-span-1 text-orange-400 text-center underline">
-                      <button>Détails</button>
-                    </div>
-                  </div>
-
-              {expanded[p.id] && (
-                <div className="bg-orange-100 rounded-lg p-3 mt-1">
-                  <b className="text-orange-600">Historique des suivis :</b>
-                  <ul className="mt-2 text-orange-600">
-                    {p.sortedSuivis.map((s) => (
-                      <li key={s.id}>
-                        {new Date(s.date_suivi).toLocaleDateString()} — {s.status_suivis_evangelises}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+          {filteredData.map((p) => {
+            const membre = membresMap[p.id];
+            const sortedSuivis = p.suivis.sort(
+              (a, b) => new Date(b.date_suivi) - new Date(a.date_suivi)
             );
-          ))}
+            const lastSuivi = sortedSuivis[0];
+            const dateRef = lastSuivi?.date_suivi || p.created_at;
+            const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
+
+            return (
+              <div key={p.id} className="mb-1">
+                <div
+                  className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-1 border-l-4 ${p.couleur} cursor-pointer`}
+                  onClick={() => toggle(p.id)}
+                >
+                  {p.score <= 30 && <span className="text-red-500 font-bold animate-pulse col-span-12 text-center">🔴 URGENT</span>}
+
+                  <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
+                  <div className="col-span-1 text-white text-center">{p.status_suivi || "-"}</div>
+                  <div className="col-span-1 text-white text-center">{joursSansSuivi}</div>
+                  <div className="col-span-1 text-white text-center">{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
+                  <div className="col-span-1 text-white text-center">{lastSuivi?.date_suivi ? new Date(lastSuivi.date_suivi).toLocaleDateString("fr-FR") : "-"}</div>
+                  <div className="col-span-1 text-white text-center">{lastSuivi?.status_suivis_evangelises || "-"}</div>
+                  <div className="col-span-1 text-white text-center">{membre?.created_at ? new Date(membre.created_at).toLocaleDateString("fr-FR") : "-"}</div>
+                  <div className="col-span-1 text-white text-center">{membre?.bapteme_date ? new Date(membre.bapteme_date).toLocaleDateString("fr-FR") : "-"}</div>
+                  <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString("fr-FR") : "-"}</div>
+                  <div className="col-span-1 text-white text-center">{p.responsable}</div>
+                  <div className="col-span-1 text-orange-400 text-center underline">
+                    <button>Détails</button>
+                  </div>
+                </div>
+
+                {expanded[p.id] && (
+                  <div className="bg-orange-100 rounded-lg p-3 mt-1">
+                    <b className="text-orange-600">Historique des suivis :</b>
+                    <ul className="mt-2 text-orange-600">
+                      {sortedSuivis.map((s) => (
+                        <li key={s.id}>
+                          {new Date(s.date_suivi).toLocaleDateString()} — {s.status_suivis_evangelises}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 

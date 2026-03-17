@@ -153,8 +153,15 @@ function SuiviAmesPage() {
 
     fetchData();
   }, [egliseId, brancheId]);
+
+  console.log("FINAL DATA:", finalData);
  
   const filteredData = useMemo(() => {
+
+    console.log("STATUS QUERY:", statusQuery);
+console.log("DATA BEFORE FILTER:", data);
+console.log("DATA AFTER FILTER:", d);
+    
     let d = [...data];
 
     if (filter === "URGENT") d = d.filter((p) => p.score <= 30);

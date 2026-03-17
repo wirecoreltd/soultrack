@@ -154,6 +154,9 @@ function SuiviAmesPage() {
     fetchData();
   }, [egliseId, brancheId]);
 
+  console.log("evangelises", evangelises);
+console.log("suivis", suivis);
+console.log("membres", membres);
   // ================= FILTER =================
   const filteredData = useMemo(() => {
     let d = [...data];

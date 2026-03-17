@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useSearchParams } from "next/navigation"; // <-- bien importé
+import { useSearchParams } from "next/navigation"; 
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
@@ -22,8 +22,8 @@ function SuiviAmesPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("ALL");
 
-  const searchParams = useSearchParams(); // <-- créer searchParams ici
-  const statusQuery = searchParams?.get("status"); // <-- status via URL
+  const searchParams = useSearchParams(); 
+  const statusQuery = searchParams?.get("status"); 
 
   // ================= PROFILE =================
   useEffect(() => {
@@ -43,7 +43,6 @@ function SuiviAmesPage() {
         setBrancheId(profile.branche_id);
       }
     };
-
     fetchProfile();
   }, []);
 
@@ -79,7 +78,6 @@ function SuiviAmesPage() {
         .select("id, cellule_full");
       const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
 
-      // ... mapping et finalData inchangé
       // ================= MAPS =================
       const map = {};
       evangelises.forEach((e) => { map[e.id] = { ...e, suivis: [] }; });
@@ -146,55 +144,38 @@ function SuiviAmesPage() {
           dateBapteme: baptemeMap[String(p.id)],
         };
       });     
-      console.log("FINAL DATA:", finalData); // ✅ ICI
-  
+
       setData(finalData);
       setLoading(false);
     };
 
     fetchData();
   }, [egliseId, brancheId]);  
- 
+
+  // ================= FILTERED DATA =================
   const filteredData = useMemo(() => {
-  let d = [...data];
+    let d = [...data];
 
-  // FILTRE SCORE
-  if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
-  if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+    // Filtre score
+    if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
+    if (filter === "STABLE") d = d.filter((p) => p.score > 80);
 
-  // FILTRE RECHERCHE
-  if (search) {
-    d = d.filter((p) =>
-      `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
-    );
-  }
+    // Filtre recherche
+    if (search) {
+      d = d.filter((p) =>
+        `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
+      );
+    }
 
-  // FILTRE STATUS (envoyé / Intégré / Refus / Non envoyé)
-  if (statusQuery && statusQuery !== "all") {
-    const query = statusQuery.toLowerCase().trim();
+    // FILTRE STATUS (optionnel)
+    if (statusQuery && statusQuery.toLowerCase() !== "all") {
+      const query = statusQuery.toLowerCase().trim();
+      d = d.filter((p) => p.status_suivi?.toLowerCase().trim() === query);
+    }
 
-    const temp = d.filter((p) => {
-      // ✅ Cas "envoyé" : inclure aussi "Non envoyé"
-      if (query === "envoyé") {
-        return (
-          p.status_suivi?.toLowerCase().trim() === "envoyé" ||
-          p.status_suivi?.toLowerCase().trim() === "non envoyé"
-        );
-      }
+    return d;
+  }, [data, filter, search, statusQuery]);
 
-      // ✅ Cas Suivis (Intégré / En cours / Refus)
-      if (!p.lastSuivi) return false;
-      return p.lastSuivi.status_suivis_evangelises
-        ?.toLowerCase()
-        .trim() === query;
-    });
-
-    d = temp; // on remplace directement
-  }
-
-  return d;
-}, [data, filter, search, statusQuery]);      
-    
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
   // ================= UI =================
@@ -219,7 +200,6 @@ function SuiviAmesPage() {
       {/* TABLE */}
       <div className="w-full max-w-7xl overflow-x-auto py-2">
         <div className="min-w-[1200px]">
-          {/* HEADER */}
           <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent gap-y-2 text-center">
             <div className="flex-[2]">Nom complet</div>
             <div className="flex-[1]">Envoi</div>
@@ -243,9 +223,9 @@ function SuiviAmesPage() {
                 <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>
                 <div className="col-span-1 text-white text-center">{new Date(p.created_at).toLocaleDateString()}</div>
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
-                <div className="col-span-1 text-white text-center">{p.lastSuivi?.status_suivis_evangelises}</div>
+                <div className="col-span-1 text-white text-center">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.membre?.created_at ? new Date(p.membre.created_at).toLocaleDateString() : "-"}</div>
-                <div className="col-span-1 text-white text-center">{p.dateBapteme? new Date(p.dateBapteme).toLocaleDateString(): "-"}</div>
+                <div className="col-span-1 text-white text-center">{p.dateBapteme ? new Date(p.dateBapteme).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.responsable}</div>
                 <div className="col-span-1 text-orange-400 text-center underline">

@@ -23,6 +23,15 @@ function SuiviAmesPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("ALL");
 
+  const { data: cellules } = await supabase
+  .from("cellules")
+  .select("id, cellule_full");
+
+  const { data: cellules } = await supabase
+  .from("cellules")
+  .select("id, cellule_full");
+
+  
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -127,13 +136,19 @@ function SuiviAmesPage() {
         else couleur = "border-green-400";
 
         let responsable = "-";
-        if (membre) {
-          if (membre.conseiller_id) responsable = profilesMap[membre.conseiller_id] || "-";
-          else if (membre.cellule_id) responsable = profilesMap[membre.cellule_id] || "-";
-        } else if (lastSuivi) {
-          if (lastSuivi.conseiller_id) responsable = profilesMap[lastSuivi.conseiller_id] || "-";
-          else if (lastSuivi.cellule_id) responsable = profilesMap[lastSuivi.cellule_id] || "-";
-        }
+          if (membre) {
+            if (membre.conseiller_id) {
+              responsable = profilesMap[membre.conseiller_id] || "-";
+            } else if (membre.cellule_id) {
+              responsable = cellulesMap[membre.cellule_id] || "-";
+            }
+          } else if (lastSuivi) {
+            if (lastSuivi.conseiller_id) {
+              responsable = profilesMap[lastSuivi.conseiller_id] || "-";
+            } else if (lastSuivi.cellule_id) {
+              responsable = cellulesMap[lastSuivi.cellule_id] || "-";
+            }
+          }
 
         return {
           ...p,
@@ -210,8 +225,7 @@ function SuiviAmesPage() {
   return (
     <div key={p.id} className="mb-1">
       <div
-        className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-1 border-l-4 ${p.couleur} cursor-pointer`}
-        onClick={() => toggle(p.id)}
+        className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-1 border-l-4 ${p.couleur} cursor-pointer`}        
       >
         {p.score <= 30 && <span className="text-red-500 font-bold animate-pulse col-span-12 text-center">🔴 URGENT</span>}
 

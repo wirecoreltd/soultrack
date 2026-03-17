@@ -238,18 +238,18 @@ function SuiviAmesPage() {
         <div className="min-w-[1200px]">
 
           {/* HEADER */}
-          <div className="grid grid-cols-12 text-sm font-semibold uppercase text-white text-center mb-2">
-            <div className="col-span-2">Nom complet</div>
-            <div className="col-span-1">Statut</div>
-            <div className="col-span-1">Jours</div>
-            <div className="col-span-1">Évangélisé</div>
-            <div className="col-span-1">Envoyé</div>
-            <div className="col-span-1">Status</div>
-            <div className="col-span-1">Intégration</div>
-            <div className="col-span-1">Baptisé</div>
-            <div className="col-span-1">Ministère</div>
-            <div className="col-span-1">Suivis</div>
-            <div className="col-span-1">Action</div>
+          <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent gap-y-2 text-center">
+            <div className="flex-[2]">Nom complet</div>
+            <div className="flex-[1]">Envoi</div>
+            <div className="flex-[1]">Jours</div>
+            <div className="flex-[1]">Évangélisé</div>
+            <div className="flex-[1]">Envoyé au<br/>Suivi</div>
+            <div className="flex-[1]">Statut (Envoyé)</div>
+            <div className="flex-[1]">Date<br/>Intégration</div>
+            <div className="flex-[1]">Baptisé<br/>le</div>
+            <div className="flex-[1]">Début<br/>Ministère</div>
+            <div className="flex-[1]">Suivis<br/>par</div>
+            <div className="flex-[1]">Action</div>
           </div>
 
           {/* ROWS */}
@@ -264,7 +264,16 @@ function SuiviAmesPage() {
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.status_suivis_evangelises}</div>
                 <div className="col-span-1 text-white text-center">{p.membre?.created_at ? new Date(p.membre.created_at).toLocaleDateString() : "-"}</div>
-                <div className="col-span-1 text-white text-center">{p.membre?.bapteme_date ? new Date(p.membre.bapteme_date).toLocaleDateString() : "-"}</div>
+                <div className="col-span-1 text-white text-center">
+                  {(() => {
+                    const d =
+                      p.membre?.bapteme_date ||
+                      p.membre?.date_bapteme ||
+                      p.membre?.baptise_le;
+                
+                    return d ? new Date(d).toLocaleDateString() : "-";
+                  })()}
+</div>
                 <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.responsable}</div>
 

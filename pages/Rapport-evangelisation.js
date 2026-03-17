@@ -25,7 +25,7 @@ export default function RapportEvangelisation() {
   const [statusFilter, setStatusFilter] = useState(null);
   const [typeFilter, setTypeFilter] = useState("");
   const router = useRouter();
-
+  const [filteredSuivisState, setFilteredSuivisState] = useState([]);
   // KPI
   const [totalEnvoyes, setTotalEnvoyes] = useState(0);
   const [totalIntegres, setTotalIntegres] = useState(0);
@@ -149,19 +149,20 @@ export default function RapportEvangelisation() {
   
       setAllSuivis(suivisData || []);
   
-      let filteredSuivis = (suivisData || []).filter((s) => {
-        const dateOk =
-          !dateDebut || (s.date_suivi && new Date(s.date_suivi) >= new Date(dateDebut));
-        const dateFinOk =
-          !dateFin || (s.date_suivi && new Date(s.date_suivi) <= new Date(dateFin));
-  
-        const typeOk =
-          !typeFilter ||
-          typeFilter === "Tous" ||
-          (s.type_evangelisation && s.type_evangelisation === typeFilter);
-  
-        return dateOk && dateFinOk && typeOk;
-      });
+      const filteredSuivis = (suivisData || []).filter((s) => {
+  const dateOk =
+    !dateDebut || (s.date_suivi && new Date(s.date_suivi) >= new Date(dateDebut));
+  const dateFinOk =
+    !dateFin || (s.date_suivi && new Date(s.date_suivi) <= new Date(dateFin));
+  const typeOk =
+    !typeFilter ||
+    typeFilter === "Tous" ||
+    (s.type_evangelisation && s.type_evangelisation === typeFilter);
+
+  return dateOk && dateFinOk && typeOk;
+});
+
+setFilteredSuivisState(filteredSuivis); // <-- ici on le stocke pour le JSX
   
       const normalize = (str) => (str ? str.trim() : "");
   
@@ -414,7 +415,7 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
             <div className="text-2xl sm:text-3xl font-semibold">{totalCellule}</div>
             <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Cellule</div>
             <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-              {totalCellule > 0 ? Math.round((totalCellule / filteredSuivis.length) * 100) : 0}%
+              {totalCellule > 0 ? Math.round((totalCellule / filteredSuivisState.length) * 100) : 0}%
             </div>
           </div>
       

@@ -99,6 +99,10 @@ function SuiviAmesPage() {
 
       const baptemeMap = {};        
       baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
+      
+      console.log("evangelises", evangelises);
+console.log("suivis", suivis);
+console.log("membres", membres);
 
       // ================= FINAL DATA =================
       const finalData = Object.values(map).map((p) => {
@@ -145,10 +149,7 @@ function SuiviAmesPage() {
           debutMinistere: membre ? ministereMap[membre.id] : null,
           dateBapteme: baptemeMap[String(p.id)],
         };
-      });
-      console.log("evangelises", evangelises);
-console.log("suivis", suivis);
-console.log("membres", membres);
+      });      
   
       setData(finalData);
       setLoading(false);

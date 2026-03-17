@@ -276,12 +276,11 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
   const tauxIntegration = totalEvangelises > 0 ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
 
   const handleKpiClick = (status) => {
-  // Navigue vers SuiviAmesPage avec le filtre en query param
-      router.push({
-        pathname: "/SuiviAmesPage",
-        query: { status: status || "all" }, // "all" pour Évangélisés total
-      });
-    };
+    router.push({
+      pathname: "/SuiviAmesPage",
+      query: { status: status || "all" },
+    });
+  };
 
   // ---------------- UI ----------------
   return (

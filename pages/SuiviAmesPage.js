@@ -1,99 +1,87 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
-import { motion } from "framer-motion";
 
 export default function ParcoursEvangelisesPage() {
-  const [evangelises, setEvangelises] = useState([]);
-  const [page, setPage] = useState(1);
+  const [contacts, setContacts] = useState([]);
+  const [checkedContacts, setCheckedContacts] = useState({});
+  const [popupMember, setPopupMember] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
 
-  const pageSize = 50; // nombre de personnes par fetch
+  // Récupération des données avec scroll infini
+  useEffect(() => {
+    fetchContacts(page);
+  }, [page]);
 
-  const fetchEvangelises = useCallback(async () => {
-    if (loading || !hasMore) return;
+  const fetchContacts = async (pageNumber) => {
     setLoading(true);
-
-    let { data, error } = await supabase
+    const { data, error } = await supabase
       .from("membres_complets")
-      .select("*")
-      .order("date_premiere_visite", { ascending: false })
-      .range((page - 1) * pageSize, page * pageSize - 1);
+      .select(`
+        id,
+        prenom,
+        nom,
+        telephone,
+        ville,
+        created_at,
+        date_envoi_suivi,
+        suivi_updated_at,
+        integration_fini,
+        bapteme_eau,
+        Ministere,
+        suivi_responsable,
+        statut_suivis,
+        status_suivi,
+        evangelise_member_id
+      `)
+      .order("created_at", { ascending: false })
+      .range(pageNumber * 100, (pageNumber + 1) * 100 - 1); // 100 par batch
 
-    if (error) {
-      console.error(error);
-      setLoading(false);
-      return;
-    }
+    if (error) console.error(error);
+    else setContacts((prev) => [...prev, ...data]);
 
-    if (data.length < pageSize) setHasMore(false);
-
-    setEvangelises((prev) => [...prev, ...data]);
-    setPage((prev) => prev + 1);
     setLoading(false);
-  }, [page, loading, hasMore]);
+  };
 
-  useEffect(() => {
-    fetchEvangelises();
-  }, []);
-
-  // Scroll infini
-  useEffect(() => {
-    const handleScroll = () => {
-      if (
-        window.innerHeight + document.documentElement.scrollTop + 50 >=
-        document.documentElement.scrollHeight
-      ) {
-        fetchEvangelises();
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [fetchEvangelises]);
+  const handleCheck = (id) => {
+    setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const getBorderColor = (m) => {
-    // Scoring couleur selon état
-    switch (m.suivi_statut) {
-      case "URGENT":
-        return "#ff4d4d";
+    switch (m.statut_suivis || m.status_suivi) {
       case "Intégré":
-        return "#4caf50";
-      case "Suivi":
-        return "#ffa500";
+        return "#00FF00";
+      case "En cours":
+      case "Envoyé":
+        return "#FFA500";
+      case "Refus":
+        return "#FF0000";
       default:
-        return "#888";
+        return "#999999";
     }
   };
 
-  const getBadge = (m) => {
-    if (m.suivi_statut === "URGENT") {
-      return (
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-          className="text-red-500 font-bold text-sm"
-        >
-          🔴 URGENT
-        </motion.div>
-      );
-    }
-    return null;
+  const calculateDays = (m) => {
+    const start = new Date(m.created_at);
+    const end = new Date();
+    return Math.floor((end - start) / (1000 * 60 * 60 * 24));
   };
 
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
-      <div className="min-h-screen flex flex-col" style={{ background: "#333699" }}>
-        <HeaderPages />
+      <HeaderPages />
+      <div className="min-h-screen p-6" style={{ background: "#333699" }}>
+        <h1 className="text-2xl font-bold text-white mb-4">
+          De l’Évangélisation à l’Intégration
+        </h1>
 
-        <main className="flex-1 p-6 flex flex-col items-center text-white">
-          <h1 className="text-2xl font-bold mb-4">De l’Évangélisation à l’Intégration</h1>
-
-          {/* Tableau transparent */}
+        {/* VUE TABLE */}
+        {contacts && (
           <div className="w-full max-w-6xl overflow-x-auto py-2">
             <div className="min-w-[700px] space-y-2">
               <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
@@ -107,40 +95,82 @@ export default function ParcoursEvangelisesPage() {
                 <div className="flex-[1]">Baptême</div>
                 <div className="flex-[1]">Ministère</div>
                 <div className="flex-[1]">Responsable</div>
+                <div className="flex-[1] flex justify-center items-center">Sélectionner</div>
+                <div className="flex-[1]">Action</div>
               </div>
 
-              {evangelises.map((m) => (
+              {contacts.map((m) => (
                 <div
                   key={m.id}
                   className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
                   style={{ borderLeftColor: getBorderColor(m) }}
                 >
-                  <div className="flex-[2] flex items-center gap-1">{m.prenom} {m.nom}</div>
-                  <div className="flex-[1]">{m.statut || "—"}</div>
-                  <div className="flex-[1]">{m.jours || "—"}</div>
-                  <div className="flex-[1]">{m.date_premiere_visite ? new Date(m.date_premiere_visite).toLocaleDateString() : "—"}</div>
-                  <div className="flex-[1]">{m.date_envoi_suivi ? new Date(m.date_envoi_suivi).toLocaleDateString() : "—"}</div>
-                  <div className="flex-[1]">{m.suivi_statut || "—"} {getBadge(m)}</div>
-                  <div className="flex-[1]">{m.integration_fini || "—"}</div>
-                  <div className="flex-[1]">{m.bapteme_eau || "—"}</div>
-                  <div className="flex-[1]">{m.Ministere || "—"}</div>
-                  <div className="flex-[1]">{m.suivi_responsable || "—"}</div>
+                  <div className="flex-[2] text-white flex items-center gap-1">
+                    {m.prenom} {m.nom}
+                  </div>
+                  <div className="flex-[1] text-white">{m.statut_suivis || m.status_suivi}</div>
+                  <div className="flex-[1] text-white">{calculateDays(m)}</div>
+                  <div className="flex-[1] text-white">{new Date(m.created_at).toLocaleDateString()}</div>
+                  <div className="flex-[1] text-white">
+                    {m.date_envoi_suivi ? new Date(m.date_envoi_suivi).toLocaleDateString() : "—"}
+                  </div>
+                  <div className="flex-[1] text-white">
+                    {m.suivi_updated_at ? new Date(m.suivi_updated_at).toLocaleDateString() : "—"}
+                  </div>
+                  <div className="flex-[1] text-white">
+                    {m.integration_fini ? new Date(m.integration_fini).toLocaleDateString() : "—"}
+                  </div>
+                  <div className="flex-[1] text-white">{m.bapteme_eau || "—"}</div>
+                  <div className="flex-[1] text-white">{m.Ministere || "—"}</div>
+                  <div className="flex-[1] text-white">{m.suivi_responsable || "—"}</div>
+                  <div className="flex-[1] flex justify-center items-center">
+                    <input
+                      type="checkbox"
+                      checked={checkedContacts[m.id] || false}
+                      onChange={() => handleCheck(m.id)}
+                    />
+                  </div>
+                  <div className="flex-[1]">
+                    <button
+                      onClick={() => setPopupMember(m)}
+                      className="text-orange-500 underline text-sm"
+                    >
+                      Détails
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
-
-            {loading && (
-              <div className="text-white text-center py-4">Chargement...</div>
-            )}
-
-            {!hasMore && (
-              <div className="text-white text-center py-4">Fin de la liste</div>
-            )}
           </div>
-        </main>
+        )}
 
-        <Footer />
+        {loading && <p className="text-white mt-4">Chargement...</p>}
       </div>
+
+      <Footer />
+
+      {/* POPUP MEMBER */}
+      {popupMember && (
+        <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg w-11/12 max-w-2xl text-black">
+            <h2 className="font-bold text-xl mb-4">{popupMember.prenom} {popupMember.nom}</h2>
+            <p><strong>Statut:</strong> {popupMember.statut_suivis || popupMember.status_suivi}</p>
+            <p><strong>Évangélisé:</strong> {new Date(popupMember.created_at).toLocaleDateString()}</p>
+            <p><strong>Envoyé:</strong> {popupMember.date_envoi_suivi ? new Date(popupMember.date_envoi_suivi).toLocaleDateString() : "—"}</p>
+            <p><strong>Suivi:</strong> {popupMember.suivi_updated_at ? new Date(popupMember.suivi_updated_at).toLocaleDateString() : "—"}</p>
+            <p><strong>Intégré:</strong> {popupMember.integration_fini ? new Date(popupMember.integration_fini).toLocaleDateString() : "—"}</p>
+            <p><strong>Baptême:</strong> {popupMember.bapteme_eau || "—"}</p>
+            <p><strong>Ministère:</strong> {popupMember.Ministere || "—"}</p>
+            <p><strong>Responsable:</strong> {popupMember.suivi_responsable || "—"}</p>
+            <button
+              className="mt-4 bg-orange-500 text-white px-4 py-2 rounded"
+              onClick={() => setPopupMember(null)}
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
     </ProtectedRoute>
   );
 }

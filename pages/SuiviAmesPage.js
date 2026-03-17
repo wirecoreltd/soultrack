@@ -167,29 +167,30 @@ function SuiviAmesPage() {
     );
   }
 
- if (statusQuery && statusQuery !== "all") {
-  const query = statusQuery.toLowerCase().trim();
-
-  const temp = d.filter((p) => {
-    // ✅ 1. CAS ENVOYÉ (table evangelises)
-    if (query === "envoyé") {
-      return p.status_suivi?.toLowerCase().trim() === "envoyé";
-    }
-
-    // ✅ 2. CAS SUIVIS (Intégré / En cours / Refus)
-    if (!p.lastSuivi) return false;
-
-    return (
-      p.lastSuivi.status_suivis_evangelises
-        ?.toLowerCase()
-        .trim() === query
-    );
-  });
-
-  if (temp.length > 0) {
-    d = temp;
-  }
-}
+       if (statusQuery && statusQuery !== "all") {
+        const query = statusQuery.toLowerCase().trim();
+      
+        const temp = d.filter((p) => {
+          if (query === "envoyé") {
+            return p.status_suivi?.toLowerCase().trim() === "envoyé";
+          }
+      
+          if (!p.lastSuivi) return false;
+      
+          return (
+            p.lastSuivi.status_suivis_evangelises
+              ?.toLowerCase()
+              .trim() === query
+          );
+        });
+      
+        if (temp.length > 0) {
+          d = temp;
+        }
+      }
+      
+      return d;
+      }, [data, filter, search, statusQuery]);
 
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 

@@ -216,7 +216,7 @@ function SuiviAmesPage() {
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.membre?.created_at ? new Date(p.membre.created_at).toLocaleDateString() : "-"}</div>
-                <div className="col-span-1 text-white text-center">{p.membre?.bapteme_date ? new Date(p.membre.bapteme_date).toLocaleDateString() : "-"}</div>
+                <div className="col-span-1 text-white text-center">{p.membre?.bapteme_date ? new Date(p.membre.bapteme_date).toLocaleDateString("fr-FR"): "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.responsable}</div>
                 <div className="col-span-1 text-center">

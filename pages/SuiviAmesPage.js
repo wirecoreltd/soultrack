@@ -203,52 +203,48 @@ function SuiviAmesPage() {
           </div>
 
           {filteredData.map((p) => {
-            const membre = membresMap[p.id];
-            const sortedSuivis = p.suivis.sort(
-              (a, b) => new Date(b.date_suivi) - new Date(a.date_suivi)
-            );
-            const lastSuivi = sortedSuivis[0];
-            const dateRef = lastSuivi?.date_suivi || p.created_at;
-            const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
+  const sortedSuivis = p.sortedSuivis;
+  const lastSuivi = p.lastSuivi;
+  const joursSansSuivi = p.joursSansSuivi;
 
-            return (
-              <div key={p.id} className="mb-1">
-                <div
-                  className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-1 border-l-4 ${p.couleur} cursor-pointer`}
-                  onClick={() => toggle(p.id)}
-                >
-                  {p.score <= 30 && <span className="text-red-500 font-bold animate-pulse col-span-12 text-center">🔴 URGENT</span>}
+  return (
+    <div key={p.id} className="mb-1">
+      <div
+        className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-1 border-l-4 ${p.couleur} cursor-pointer`}
+        onClick={() => toggle(p.id)}
+      >
+        {p.score <= 30 && <span className="text-red-500 font-bold animate-pulse col-span-12 text-center">🔴 URGENT</span>}
 
-                  <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
-                  <div className="col-span-1 text-white text-center">{p.status_suivi || "-"}</div>
-                  <div className="col-span-1 text-white text-center">{joursSansSuivi}</div>
-                  <div className="col-span-1 text-white text-center">{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
-                  <div className="col-span-1 text-white text-center">{lastSuivi?.date_suivi ? new Date(lastSuivi.date_suivi).toLocaleDateString("fr-FR") : "-"}</div>
-                  <div className="col-span-1 text-white text-center">{lastSuivi?.status_suivis_evangelises || "-"}</div>
-                  <div className="col-span-1 text-white text-center">{membre?.created_at ? new Date(membre.created_at).toLocaleDateString("fr-FR") : "-"}</div>
-                  <div className="col-span-1 text-white text-center">{membre?.bapteme_date ? new Date(membre.bapteme_date).toLocaleDateString("fr-FR") : "-"}</div>
-                  <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString("fr-FR") : "-"}</div>
-                  <div className="col-span-1 text-white text-center">{p.responsable}</div>
-                  <div className="col-span-1 text-orange-400 text-center underline">
-                    <button>Détails</button>
-                  </div>
-                </div>
+        <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
+        <div className="col-span-1 text-white text-center">{p.status_suivi || "-"}</div>
+        <div className="col-span-1 text-white text-center">{joursSansSuivi}</div>
+        <div className="col-span-1 text-white text-center">{new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
+        <div className="col-span-1 text-white text-center">{lastSuivi?.date_suivi ? new Date(lastSuivi.date_suivi).toLocaleDateString("fr-FR") : "-"}</div>
+        <div className="col-span-1 text-white text-center">{lastSuivi?.status_suivis_evangelises || "-"}</div>
+        <div className="col-span-1 text-white text-center">{p.membre?.created_at ? new Date(p.membre.created_at).toLocaleDateString("fr-FR") : "-"}</div>
+        <div className="col-span-1 text-white text-center">{p.membre?.bapteme_date ? new Date(p.membre.bapteme_date).toLocaleDateString("fr-FR") : "-"}</div>
+        <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString("fr-FR") : "-"}</div>
+        <div className="col-span-1 text-white text-center">{p.responsable}</div>
+        <div className="col-span-1 text-orange-400 text-center underline">
+          <button>Détails</button>
+        </div>
+      </div>
 
-                {expanded[p.id] && (
-                  <div className="bg-orange-100 rounded-lg p-3 mt-1">
-                    <b className="text-orange-600">Historique des suivis :</b>
-                    <ul className="mt-2 text-orange-600">
-                      {sortedSuivis.map((s) => (
-                        <li key={s.id}>
-                          {new Date(s.date_suivi).toLocaleDateString()} — {s.status_suivis_evangelises}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+      {expanded[p.id] && (
+        <div className="bg-orange-100 rounded-lg p-3 mt-1">
+          <b className="text-orange-600">Historique des suivis :</b>
+          <ul className="mt-2 text-orange-600">
+            {sortedSuivis.map((s) => (
+              <li key={s.id}>
+                {new Date(s.date_suivi).toLocaleDateString("fr-FR")} — {s.status_suivis_evangelises}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+})}
         </div>
       </div>
 

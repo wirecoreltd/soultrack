@@ -1,11 +1,9 @@
-"use client";
-
 import { useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation"; // <-- bien importé
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
-import { useSearchParams } from "next/navigation";
 
 export default function SuiviAmesPageWrapper() {
   return (
@@ -23,6 +21,9 @@ function SuiviAmesPage() {
   const [brancheId, setBrancheId] = useState(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("ALL");
+
+  const searchParams = useSearchParams(); // <-- créer searchParams ici
+  const statusQuery = searchParams?.get("status"); // <-- status via URL
 
   // ================= PROFILE =================
   useEffect(() => {
@@ -59,87 +60,55 @@ function SuiviAmesPage() {
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
       
-      const { data: baptemes } = await supabase
-        .from("baptemes")
-        .select("*");
-
+      const { data: baptemes } = await supabase.from("baptemes").select("*");
       const { data: suivis } = await supabase
         .from("suivis_des_evangelises")
         .select("*")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
-
       const { data: membres } = await supabase
         .from("membres_complets")
         .select("*")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
-
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, prenom, nom");
-
       const { data: cellules } = await supabase
         .from("cellules")
         .select("id, cellule_full");
+      const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
 
-      const { data: ministeres } = await supabase
-        .from("stats_ministere_besoin")
-        .select("*");
-
+      // ... mapping et finalData inchangé
       // ================= MAPS =================
       const map = {};
-      evangelises.forEach((e) => {
-        map[e.id] = { ...e, suivis: [] };
-      });
-
-      suivis.forEach((s) => {
-        if (map[s.evangelise_id]) {
-          map[s.evangelise_id].suivis.push(s);
-        }
-      });
+      evangelises.forEach((e) => { map[e.id] = { ...e, suivis: [] }; });
+      suivis.forEach((s) => { if (map[s.evangelise_id]) map[s.evangelise_id].suivis.push(s); });
 
       const membresMap = {};
-      membres.forEach((m) => {
-        membresMap[String(m.evangelise_member_id)] = m;
-      });
+      membres.forEach((m) => { membresMap[String(m.evangelise_member_id)] = m; });
 
       const profilesMap = {};
-      profiles.forEach((p) => {
-        profilesMap[p.id] = p.prenom + " " + p.nom;
-      });
+      profiles.forEach((p) => { profilesMap[p.id] = p.prenom + " " + p.nom; });
 
       const cellulesMap = {};
-      cellules.forEach((c) => {
-        cellulesMap[c.id] = c.cellule_full;
-      });
+      cellules.forEach((c) => { cellulesMap[c.id] = c.cellule_full; });
 
       const ministereMap = {};
-      ministeres.forEach((m) => {
-        ministereMap[m.membre_id] = m.created_at;
-      });
+      ministeres.forEach((m) => { ministereMap[m.membre_id] = m.created_at; });
 
       const baptemeMap = {};        
-        baptemes.forEach((b) => {
-          baptemeMap[String(b.evangelise_member_id)] = b.date;
-        });
+      baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
 
       // ================= FINAL DATA =================
       const finalData = Object.values(map).map((p) => {
         const membre = membresMap[p.id];
-
-        const sortedSuivis = p.suivis.sort(
-          (a, b) => new Date(b.date_suivi) - new Date(a.date_suivi)
-        );
-
+        const sortedSuivis = p.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
         const lastSuivi = sortedSuivis[0];
         const dateRef = lastSuivi?.date_suivi || p.created_at;
 
-        const joursSansSuivi = Math.floor(
-          (new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24)
-        );
+        const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
 
-        // SCORE
         let score = 100;
         if (p.status_suivi === "Non envoyé") score -= 40;
         if (joursSansSuivi > 7) score -= 25;
@@ -147,7 +116,6 @@ function SuiviAmesPage() {
         if (!membre?.bapteme_date) score -= 10;
         if (!membre?.star) score -= 10;
         if (joursSansSuivi <= 3) score += 10;
-
         score = Math.max(0, Math.min(100, score));
 
         let couleur = "border-gray-500";
@@ -156,21 +124,13 @@ function SuiviAmesPage() {
         else if (score <= 80) couleur = "border-yellow-300";
         else couleur = "border-green-400";
 
-        // RESPONSABLE
         let responsable = "-";
-
         if (membre) {
-          if (membre.conseiller_id) {
-            responsable = profilesMap[membre.conseiller_id] || "-";
-          } else if (membre.cellule_id) {
-            responsable = cellulesMap[membre.cellule_id] || "-";
-          }
+          if (membre.conseiller_id) responsable = profilesMap[membre.conseiller_id] || "-";
+          else if (membre.cellule_id) responsable = cellulesMap[membre.cellule_id] || "-";
         } else if (lastSuivi) {
-          if (lastSuivi.conseiller_id) {
-            responsable = profilesMap[lastSuivi.conseiller_id] || "-";
-          } else if (lastSuivi.cellule_id) {
-            responsable = cellulesMap[lastSuivi.cellule_id] || "-";
-          }
+          if (lastSuivi.conseiller_id) responsable = profilesMap[lastSuivi.conseiller_id] || "-";
+          else if (lastSuivi.cellule_id) responsable = cellulesMap[lastSuivi.cellule_id] || "-";
         }
 
         return {
@@ -183,7 +143,7 @@ function SuiviAmesPage() {
           couleur,
           responsable,
           debutMinistere: membre ? ministereMap[membre.id] : null,
-           dateBapteme: baptemeMap[String(p.id)],
+          dateBapteme: baptemeMap[String(p.id)],
         };
       });
 
@@ -194,43 +154,29 @@ function SuiviAmesPage() {
     fetchData();
   }, [egliseId, brancheId]);
 
-  const searchParams = useSearchParams();
+  // ================= FILTER =================
   const filteredData = useMemo(() => {
-  let d = [...data];
+    let d = [...data];
 
-  // === Filtre score existant ===
-  if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
-  if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+    if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
+    if (filter === "STABLE") d = d.filter((p) => p.score > 80);
 
-  // === Filtre recherche ===
-  if (search) {
-    d = d.filter((p) =>
+    if (search) d = d.filter((p) =>
       `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
     );
-  }
 
-  // === Nouveau filtre KPI via URL ===
-  if (statusQuery) {
-    d = d.filter((p) => p.lastSuivi?.status_suivis_evangelises === statusQuery);
-  }
+    if (statusQuery) d = d.filter((p) => p.lastSuivi?.status_suivis_evangelises === statusQuery);
 
-  return d.sort((a, b) => a.score - b.score);
-}, [data, search, filter, statusQuery]);
+    return d.sort((a, b) => a.score - b.score);
+  }, [data, search, filter, statusQuery]); // <-- statusQuery ajouté ici
 
-  const toggle = (id) =>
-    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
   // ================= UI =================
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-6"
-      style={{ background: "#333699" }}
-    >
+    <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "#333699" }}>
       <HeaderPages />
-
-      <h1 className="text-3xl font-bold text-white mt-4 mb-4">
-        De l’Évangélisation à l’Intégration
-      </h1>
+      <h1 className="text-3xl font-bold text-white mt-4 mb-4">De l’Évangélisation à l’Intégration</h1>
 
       {/* FILTER */}
       <div className="flex gap-3 my-4 flex-wrap justify-center">
@@ -240,21 +186,14 @@ function SuiviAmesPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="p-2 rounded"
         />
-        <button onClick={() => setFilter("ALL")} className="bg-white px-3 py-1 rounded">
-          Tous
-        </button>
-        <button onClick={() => setFilter("URGENT")} className="bg-red-300 px-3 py-1 rounded">
-          Urgents
-        </button>
-        <button onClick={() => setFilter("STABLE")} className="bg-green-300 px-3 py-1 rounded">
-          Stables
-        </button>
+        <button onClick={() => setFilter("ALL")} className="bg-white px-3 py-1 rounded">Tous</button>
+        <button onClick={() => setFilter("URGENT")} className="bg-red-300 px-3 py-1 rounded">Urgents</button>
+        <button onClick={() => setFilter("STABLE")} className="bg-green-300 px-3 py-1 rounded">Stables</button>
       </div>
 
       {/* TABLE */}
       <div className="w-full max-w-7xl overflow-x-auto py-2">
         <div className="min-w-[1200px]">
-
           {/* HEADER */}
           <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent gap-y-2 text-center">
             <div className="flex-[2]">Nom complet</div>
@@ -274,7 +213,6 @@ function SuiviAmesPage() {
           {filteredData.map((p) => (
             <div key={p.id} className="mb-1">
               <div className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 border-l-4 ${p.couleur}`}>
-
                 <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
                 <div className="col-span-1 text-white text-center">{p.status_suivi}</div>
                 <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>
@@ -285,11 +223,8 @@ function SuiviAmesPage() {
                 <div className="col-span-1 text-white text-center">{p.dateBapteme? new Date(p.dateBapteme).toLocaleDateString(): "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.responsable}</div>
-
                 <div className="col-span-1 text-orange-400 text-center underline">
-                  <button onClick={(e) => { e.stopPropagation(); toggle(p.id); }}>
-                    Détails
-                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); toggle(p.id); }}>Détails</button>
                 </div>
               </div>
 
@@ -307,7 +242,6 @@ function SuiviAmesPage() {
               )}
             </div>
           ))}
-
         </div>
       </div>
 

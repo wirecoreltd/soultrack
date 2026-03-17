@@ -23,7 +23,6 @@ function SuiviAmesPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("ALL");
 
-  // ================= FETCH PROFIL =================
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -45,7 +44,6 @@ function SuiviAmesPage() {
     fetchProfile();
   }, []);
 
-  // ================= FETCH DATA =================
   useEffect(() => {
     if (!egliseId || !brancheId) return;
 
@@ -188,25 +186,39 @@ function SuiviAmesPage() {
       </div>
 
       <div className="w-full max-w-7xl overflow-x-auto py-2">
-        <div className="min-w-[1100px]">
-          <div className="grid grid-cols-12 text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 gap-2">
+        <div className="min-w-[1200px]">
+          {/* HEADER */}
+          <div className="grid grid-cols-12 text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 gap-1">
             <div className="col-span-2">Nom complet</div>
             <div className="col-span-1">Statut</div>
             <div className="col-span-1">Jours</div>
             <div className="col-span-1">Évangélisé</div>
-            <div className="col-span-1">Envoyé au</div>
-            <div className="col-span-1">Status Suivi</div>
-            <div className="col-span-1">Date intégration</div>
-            <div className="col-span-1">Baptisé le</div>
-            <div className="col-span-1">Début Ministère</div>
-            <div className="col-span-1">Suivis par</div>
-            <div className="col-span-1">Action</div>
+            <div className="col-span-1 text-center">Envoyé au</div>
+            <div className="col-span-1 text-center">Status</div>
+            <div className="col-span-1 text-center">Date</div>
+            <div className="col-span-1 text-center">Baptisé</div>
+            <div className="col-span-1 text-center">Début</div>
+            <div className="col-span-1 text-center">Suivis</div>
+            <div className="col-span-1 text-center">Action</div>
+          </div>
+          <div className="grid grid-cols-12 text-xs font-semibold text-white px-2 py-0.5 border-b border-gray-400 gap-1">
+            <div className="col-span-2"></div>
+            <div className="col-span-1"></div>
+            <div className="col-span-1"></div>
+            <div className="col-span-1"></div>
+            <div className="col-span-1 text-center">le</div>
+            <div className="col-span-1 text-center">Suivis</div>
+            <div className="col-span-1 text-center">Intégration</div>
+            <div className="col-span-1 text-center">le</div>
+            <div className="col-span-1 text-center">Ministère</div>
+            <div className="col-span-1 text-center">par</div>
+            <div className="col-span-1"></div>
           </div>
 
           {filteredData.map((p) => (
             <div key={p.id}>
               <div
-                className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4 ${p.couleur} cursor-pointer`}
+                className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-1 border-l-4 ${p.couleur} cursor-pointer`}
                 onClick={() => toggle(p.id)}
               >
                 {p.score <= 30 && <span className="text-red-500 font-bold animate-pulse col-span-12">🔴 URGENT</span>}

@@ -145,22 +145,17 @@ function SuiviAmesPage() {
           debutMinistere: membre ? ministereMap[membre.id] : null,
           dateBapteme: baptemeMap[String(p.id)],
         };
-      });      
+      });     
+      console.log("FINAL DATA:", finalData); // ✅ ICI
   
       setData(finalData);
       setLoading(false);
     };
 
     fetchData();
-  }, [egliseId, brancheId]);
-
-  console.log("FINAL DATA:", finalData);
+  }, [egliseId, brancheId]);  
  
   const filteredData = useMemo(() => {
-
-    console.log("STATUS QUERY:", statusQuery);
-console.log("DATA BEFORE FILTER:", data);
-console.log("DATA AFTER FILTER:", d);
     
     let d = [...data];
 

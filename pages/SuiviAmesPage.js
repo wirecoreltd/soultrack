@@ -6,267 +6,152 @@ import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 
-export default function SuiviAmesPageWrapper() {
-  return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
-      <SuiviAmesPage />
-    </ProtectedRoute>
-  );
-}
-
-function SuiviAmesPage() {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
+// PAGE : Parcours des Âmes
+export default function ParcoursEvangelisesPage() {
+  const [contacts, setContacts] = useState([]);
   const [expanded, setExpanded] = useState({});
-  const [egliseId, setEgliseId] = useState(null);
-  const [brancheId, setBrancheId] = useState(null);
+  const [checkedContacts, setCheckedContacts] = useState({});
+  const [view, setView] = useState("table");
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 50; // scroll infini
 
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("ALL");
+  // Fetch data avec pagination (scroll infini)
+  const fetchData = async (pageNum = 1) => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("membres_complets")
+      .select(`
+        id, prenom, nom, telephone, ville, status_suivi, 
+        created_at, date_envoi_suivi, suivi_id, suivi_responsable,
+        bapteme_eau, Ministere, suivi_int_id, integration_fini,
+        sortedSuivis:suivis_des_evangelises(*)
+      `)
+      .range((pageNum - 1) * pageSize, pageNum * pageSize - 1);
 
-  // ================= PROFIL =================
+    if (!error && data) {
+      setContacts((prev) => [...prev, ...data]);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData?.session?.user;
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("eglise_id, branche_id")
-        .eq("id", user.id)
-        .single();
-
-      if (profile) {
-        setEgliseId(profile.eglise_id);
-        setBrancheId(profile.branche_id);
-      }
-    };
-
-    fetchProfile();
+    fetchData();
   }, []);
 
-  // ================= FETCH =================
-  useEffect(() => {
-    if (!egliseId || !brancheId) return;
-
-    const fetchData = async () => {
-      setLoading(true);
-
-      const { data: evangelises } = await supabase
-        .from("evangelises")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
-
-      const { data: suivis } = await supabase
-        .from("suivis_des_evangelises")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
-
-      const { data: membres } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
-
-      // MAP
-      const map = {};
-      evangelises.forEach((e) => {
-        map[e.id] = { ...e, suivis: [] };
-      });
-
-      suivis.forEach((s) => {
-        if (map[s.evangelise_id]) {
-          map[s.evangelise_id].suivis.push(s);
-        }
-      });
-
-      const membresMap = {};
-      membres.forEach((m) => {
-        membresMap[String(m.evangelise_member_id)] = m;
-      });
-
-      // FINAL DATA + SCORING
-      const finalData = Object.values(map).map((p) => {
-        const membre = membresMap[p.id];
-
-        const sortedSuivis = p.suivis.sort(
-          (a, b) => new Date(b.date_suivi) - new Date(a.date_suivi)
-        );
-
-        const lastSuivi = sortedSuivis[0];
-
-        const dateRef = lastSuivi?.date_suivi || p.created_at;
-
-        const joursSansSuivi = Math.floor(
-          (new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24)
-        );
-
-        // ===== SCORING =====
-        let score = 100;
-
-        if (p.status_suivi === "Non envoyé") score -= 40;
-
-        if (joursSansSuivi > 7) score -= 25;
-        else if (joursSansSuivi > 3) score -= 10;
-
-        if (!membre?.integration_fini) score -= 15;
-        if (!membre?.bapteme_eau) score -= 10;
-        if (!membre?.Ministere && !membre?.Autre_Ministere) score -= 10;
-
-        if (joursSansSuivi <= 3) score += 10;
-        if (membre?.integration_fini) score += 10;
-
-        score = Math.max(0, Math.min(100, score));
-
-        let couleur = "bg-green-100";
-        if (score <= 30) couleur = "bg-red-200";
-        else if (score <= 60) couleur = "bg-orange-200";
-        else if (score <= 80) couleur = "bg-yellow-100";
-
-        return {
-          ...p,
-          membre,
-          lastSuivi,
-          sortedSuivis,
-          joursSansSuivi,
-          score,
-          couleur,
-        };
-      });
-
-      setData(finalData);
-      setLoading(false);
-    };
-
-    fetchData();
-  }, [egliseId, brancheId]);
-
-  // ================= FILTER + SEARCH =================
-  const filteredData = useMemo(() => {
-    let d = [...data];
-
-    if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
-    if (filter === "STABLE") d = d.filter((p) => p.score > 80);
-
-    if (search) {
-      d = d.filter((p) =>
-        `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
-      );
+  // scroll infini
+  const handleScroll = (e) => {
+    const bottom =
+      e.target.scrollHeight - e.target.scrollTop === e.target.clientHeight;
+    if (bottom && !loading) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchData(nextPage);
     }
-
-    // TRI URGENCE
-    d.sort((a, b) => a.score - b.score);
-
-    return d;
-  }, [data, search, filter]);
+  };
 
   const toggle = (id) => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // ================= UI =================
+  const handleCheck = (id) => {
+    setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const getBorderColor = (p) => {
+    if (p.status_suivi === "Non envoyé") return "#ef4444"; // rouge URGENT
+    if (!p.integration_fini) return "#eab308"; // jaune
+    if (p.integration_fini) return "#22c55e"; // vert
+    return "#94a3b8"; // gris
+  };
+
+  const isUrgent = (p) => p.status_suivi === "Non envoyé";
+
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
-      <HeaderPages />
+    <ProtectedRoute allowedRoles={["Administrateur", "Responsable"]}>
+      <HeaderPages title="Parcours des Âmes : De l’Évangélisation à l’Intégration" />
 
-      <h1 className="text-3xl font-bold text-white text-center mt-4">
-        De l’Évangélisation à l’Intégration
-      </h1>
+      <div
+        className="w-full px-4 py-4 max-w-7xl mx-auto"
+        style={{ minHeight: "80vh" }}
+        onScroll={handleScroll}
+      >
+        {contacts && view === "table" && (
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-[1100px] space-y-2">
 
-      {/* FILTERS */}
-      <div className="flex gap-3 my-4 flex-wrap justify-center">
-        <input
-          placeholder="Rechercher..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="p-2 rounded"
-        />
+              {/* HEADER */}
+              <div className="hidden sm:flex text-xs font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+                <div className="flex-[2]">Nom</div>
+                <div className="flex-[1]">Statut</div>
+                <div className="flex-[1]">Jours</div>
+                <div className="flex-[1]">Évangélisé</div>
+                <div className="flex-[1]">Envoyé</div>
+                <div className="flex-[1]">Suivi</div>
+                <div className="flex-[1]">Intégré</div>
+                <div className="flex-[1]">Baptême</div>
+                <div className="flex-[1]">Ministère</div>
+                <div className="flex-[1]">Responsable</div>
+              </div>
 
-        <button onClick={() => setFilter("ALL")} className="bg-white px-3 py-1 rounded">
-          Tous
-        </button>
+              {/* LIGNES */}
+              {contacts.map((p) => {
+                const dateIntegre = p.sortedSuivis?.find(
+                  (s) => s.status_suivis_evangelises === "Intégré"
+                )?.date_suivi;
 
-        <button onClick={() => setFilter("URGENT")} className="bg-red-300 px-3 py-1 rounded">
-          Urgents
-        </button>
+                return (
+                  <div key={p.id}>
+                    {/* LIGNE PRINCIPALE */}
+                    <div
+                      className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4 cursor-pointer relative"
+                      style={{ borderLeftColor: getBorderColor(p) }}
+                      onClick={() => toggle(p.id)}
+                    >
+                      {isUrgent(p) && (
+                        <span className="absolute -top-2 -left-2 px-2 py-1 text-xs font-bold text-white bg-red-500 rounded animate-pulse">
+                          URGENT
+                        </span>
+                      )}
+                      <div className="flex-[2] text-white">{p.prenom} {p.nom}</div>
+                      <div className="flex-[1] text-white">{p.status_suivi}</div>
+                      <div className="flex-[1] text-white">{p.joursSansSuivi}</div>
+                      <div className="flex-[1] text-white">{new Date(p.created_at).toLocaleDateString()}</div>
+                      <div className="flex-[1] text-white">
+                        {p.date_envoi_suivi ? new Date(p.date_envoi_suivi).toLocaleDateString() : "-"}
+                      </div>
+                      <div className="flex-[1] text-white">
+                        {p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}
+                      </div>
+                      <div className="flex-[1] text-white">
+                        {dateIntegre ? new Date(dateIntegre).toLocaleDateString() : "-"}
+                      </div>
+                      <div className="flex-[1] text-white">{p.bapteme_eau || "-"}</div>
+                      <div className="flex-[1] text-white">{p.Ministere || "-"}</div>
+                      <div className="flex-[1] text-white">{p.suivi_responsable || "-"}</div>
+                    </div>
 
-        <button onClick={() => setFilter("STABLE")} className="bg-green-300 px-3 py-1 rounded">
-          Stables
-        </button>
-      </div>
-
-      {/* TABLE */}
-      <div className="w-full overflow-x-auto bg-white rounded-xl">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-200">
-            <tr>
-              <th>Nom</th>
-              <th>Statut</th>
-              <th>Score</th>
-              <th>Jours</th>
-              <th>Évangélisé</th>
-              <th>Envoyé</th>
-              <th>Suivi</th>
-              <th>Intégré</th>
-              <th>Baptême</th>
-              <th>Ministère</th>
-              <th>Besoin</th>
-              <th>Responsable</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filteredData.map((p) => {
-              const dateIntegre = p.sortedSuivis?.find(
-                (s) => s.status_suivis_evangelises === "Intégré"
-              )?.date_suivi;
-
-              return (
-                <>
-                  <tr
-                    key={p.id}
-                    className={`border-t cursor-pointer ${p.couleur}`}
-                    onClick={() => toggle(p.id)}
-                  >
-                    <td>{p.prenom} {p.nom}</td>
-                    <td>{p.status_suivi}</td>
-                    <td className="font-bold">{p.score}</td>
-                    <td>{p.joursSansSuivi}</td>
-                    <td>{new Date(p.created_at).toLocaleDateString()}</td>
-                    <td>{p.membre?.date_envoi_suivi ? new Date(p.membre.date_envoi_suivi).toLocaleDateString() : "-"}</td>
-                    <td>{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</td>
-                    <td>{dateIntegre ? new Date(dateIntegre).toLocaleDateString() : "-"}</td>
-                    <td>{p.membre?.bapteme_eau || "-"}</td>
-                    <td>{p.membre?.Ministere || "-"}</td>
-                    <td>{p.lastSuivi?.besoin || "-"}</td>
-                    <td>{p.membre?.suivi_responsable || "-"}</td>
-                  </tr>
-
-                  {expanded[p.id] && (
-                    <tr className="bg-gray-50">
-                      <td colSpan="12" className="p-3">
-                        <b>Historique des suivis :</b>
-                        <ul className="mt-2">
-                          {p.sortedSuivis.map((s) => (
-                            <li key={s.id}>
-                              {new Date(s.date_suivi).toLocaleDateString()} — {s.status_suivis_evangelises}
-                            </li>
-                          ))}
-                        </ul>
-                      </td>
-                    </tr>
-                  )}
-                </>
-              );
-            })}
-          </tbody>
-        </table>
+                    {/* DETAILS */}
+                    {expanded[p.id] && (
+                      <div className="bg-white/5 text-white text-sm px-4 py-3 rounded-lg mt-1">
+                        <div className="mb-2 font-semibold">Historique des suivis</div>
+                        {p.sortedSuivis.length === 0 && <div className="text-gray-300">Aucun suivi</div>}
+                        {p.sortedSuivis.map((s) => (
+                          <div key={s.id} className="border-b border-white/10 py-1">
+                            {new Date(s.date_suivi).toLocaleDateString()} — {s.status_suivis_evangelises}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <Footer />
-    </div>
+    </ProtectedRoute>
   );
 }

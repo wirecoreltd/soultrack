@@ -153,8 +153,7 @@ function SuiviAmesPage() {
 
     fetchData();
   }, [egliseId, brancheId]);
-
-  ============
+ 
   const filteredData = useMemo(() => {
     let d = [...data];
 

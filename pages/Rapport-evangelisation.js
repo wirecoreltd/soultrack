@@ -24,7 +24,7 @@ export default function RapportEvangelisation() {
   const [showTable, setShowTable] = useState(false);
   const [statusFilter, setStatusFilter] = useState(null);
   const [typeFilter, setTypeFilter] = useState("");
-  import { useRouter } from "next/navigation";
+  const router = useRouter();
 
   // KPI
   const [totalEnvoyes, setTotalEnvoyes] = useState(0);

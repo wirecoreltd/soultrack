@@ -188,31 +188,18 @@ function SuiviAmesPage() {
       <div className="w-full max-w-7xl overflow-x-auto py-2">
         <div className="min-w-[1200px]">
           {/* HEADER */}
-          <div className="grid grid-cols-12 text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 gap-1">
-            <div className="col-span-2">Nom complet</div>
-            <div className="col-span-1">Envoi</div>
-            <div className="col-span-1">Jours</div>
-            <div className="col-span-1">Évangélisé</div>
-            <div className="col-span-1 text-center">Envoyé au</div>
-            <div className="col-span-1 text-center">Status</div>
-            <div className="col-span-1 text-center">Date</div>
-            <div className="col-span-1 text-center">Baptisé</div>
-            <div className="col-span-1 text-center">Début</div>
-            <div className="col-span-1 text-center">Suivis</div>
-            <div className="col-span-1 text-center">Action</div>
-          </div>
-          <div className="grid grid-cols-12 text-xs font-semibold text-white px-2 py-0.5 border-b border-gray-400 gap-1">
-            <div className="col-span-2"></div>
-            <div className="col-span-1"></div>
-            <div className="col-span-1"></div>
-            <div className="col-span-1"></div>
-            <div className="col-span-1 text-center">le</div>
-            <div className="col-span-1 text-center">Suivis</div>
-            <div className="col-span-1 text-center">Intégration</div>
-            <div className="col-span-1 text-center">le</div>
-            <div className="col-span-1 text-center">Ministère</div>
-            <div className="col-span-1 text-center">par</div>
-            <div className="col-span-1"></div>
+          <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent gap-y-2 text-center">
+            <div className="flex-[2]">Nom complet</div>
+            <div className="flex-[1]">Envoi</div>
+            <div className="flex-[1]">Jours</div>
+            <div className="flex-[1]">Évangélisé</div>
+            <div className="flex-[1]">Envoyé au<br/>le</div>
+            <div className="flex-[1]">Status<br/>Suivi</div>
+            <div className="flex-[1]">Date<br/>Intégration</div>
+            <div className="flex-[1]">Baptisé<br/>le</div>
+            <div className="flex-[1]">Début<br/>Ministère</div>
+            <div className="flex-[1]">Suivis<br/>par</div>
+            <div className="flex-[1]">Action</div>
           </div>
 
           {filteredData.map((p) => (

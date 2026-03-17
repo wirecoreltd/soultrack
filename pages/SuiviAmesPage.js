@@ -90,9 +90,7 @@ function SuiviAmesPage() {
 
       const { data: ministeres } = await supabase
         .from("stats_ministere_besoin")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+        .select("*");
 
       // ================= MAPS =================
       const map = {};
@@ -100,7 +98,7 @@ function SuiviAmesPage() {
       suivis.forEach((s) => { if (map[s.evangelise_id]) map[s.evangelise_id].suivis.push(s); });
 
       const membresMap = {};
-      membres.forEach((m) => { membresMap[String(m.evangelise_member_id)] = m; });
+      membres.forEach((m) => { membresMap[m.evangelise_id] = m; });
 
       const profilesMap = {};
       profiles.forEach((p) => { profilesMap[p.id] = p.prenom + " " + p.nom; });
@@ -112,7 +110,7 @@ function SuiviAmesPage() {
       ministeres.forEach((m) => { ministereMap[m.membre_id] = m.created_at; });
 
       const baptemeMap = {};
-      baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
+      baptemes.forEach((b) => { baptemeMap[b.evangelise_id] = b.date; });
 
       // ================= FINAL DATA =================
       const finalData = Object.values(map).map((p) => {
@@ -121,7 +119,7 @@ function SuiviAmesPage() {
         const lastSuivi = sortedSuivis[0];
         const dateRef = lastSuivi?.date_suivi || p.created_at;
 
-        const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
+        const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000*60*60*24));
 
         let score = 100;
         if (p.status_suivi === "Non envoyé") score -= 40;
@@ -157,7 +155,7 @@ function SuiviAmesPage() {
           couleur,
           responsable,
           debutMinistere: membre ? ministereMap[membre.id] : null,
-          dateBapteme: baptemeMap[String(p.id)],
+          dateBapteme: baptemeMap[p.id],
         };
       });
 
@@ -172,26 +170,20 @@ function SuiviAmesPage() {
   const filteredData = useMemo(() => {
     let d = [...data];
 
+    // Filtre par score
     if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
     if (filter === "STABLE") d = d.filter((p) => p.score > 80);
 
-    if (search) {
-      d = d.filter((p) =>
-        `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
-      );
-    }
+    // Filtre par recherche
+    if (search) d = d.filter((p) =>
+      `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
+    );
 
-    if (statusQuery) {
-      // CAS "Envoyé au suivi"
-      if (statusQuery === "EnvoyeSuivi") {
-        d = d.filter((p) => p.status_suivi === "Envoyé");
-      } else {
-        d = d.filter((p) => p.lastSuivi?.status_suivis_evangelises
-          ?.toLowerCase()
-          .trim()
-          .includes(statusQuery.toLowerCase().trim()));
-      }
-    }
+    // Filtre par statusQuery (Envoyé / Non envoyé / En cours / Refus)
+    if (statusQuery) d = d.filter((p) => {
+      const status = p.lastSuivi?.status_suivis_evangelises || p.status_suivi;
+      return status.toLowerCase() === statusQuery.toLowerCase();
+    });
 
     return d.sort((a, b) => a.score - b.score);
   }, [data, search, filter, statusQuery]);

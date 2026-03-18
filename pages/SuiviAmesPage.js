@@ -155,48 +155,53 @@ function SuiviAmesPage() {
 
   // ================= FILTERED DATA =================
   const filteredData = useMemo(() => {
-    let d = [...data];
+  let d = [...data];
 
-    if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
-    else if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+  // Filtre score
+  if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
+  else if (filter === "STABLE") d = d.filter((p) => p.score > 80);
 
-    if (search) {
-      d = d.filter((p) =>
-        `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
-      );
-    }
+  // Filtre recherche
+  if (search) {
+    d = d.filter((p) =>
+      `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
+    );
+  }
 
-    if (statusQuery && statusQuery.toLowerCase() !== "all") {
-      const query = statusQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      d = d.filter((p) => {
-        const suiviStatus = (p.lastSuivi?.status_suivis_evangelises || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const pStatus = (p.status_suivi || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  // Filtre status
+  if (statusQuery && statusQuery.toLowerCase() !== "all") {
+    const query = statusQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    d = d.filter((p) => {
+      const suiviStatus = (p.lastSuivi?.status_suivis_evangelises || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const pStatus = (p.status_suivi || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-        if (query === "envoye") return pStatus === "envoye";
-        if (query === "nonenvoye") return pStatus === "nonenvoye";
-        if (query === "integre") return suiviStatus === "integre";
-        if (query === "en cours") return suiviStatus === "en cours";
-        if (query === "refus") return suiviStatus === "refus";
-        return true;
-      });
-    }
+      if (query === "envoye") return pStatus === "envoye";
+      if (query === "nonenvoye") return pStatus === "nonenvoye";
+      if (query === "integre") return suiviStatus === "integre";
+      if (query === "en cours") return suiviStatus === "en cours";
+      if (query === "refus") return suiviStatus === "refus";
+      return true;
+    });
+  }
 
-    if (celluleQuery) {
-      d = d.filter((p) => {
-        const celluleId = p.lastSuivi?.cellule_id || p.cellule_id;
-        return String(celluleId) === String(celluleQuery);
-      });
-    }
+  // ================= FILTRE CELLULE =================
+  if (celluleQuery) {
+    d = d.filter((p) => {
+      const celluleId = p.lastSuivi?.cellule_id || p.cellule_id;
+      return String(celluleId) === String(celluleQuery);
+    });
+  }
 
-    if (conseillerQuery) {
-      d = d.filter((p) => {
-        const conseillerId = p.lastSuivi?.conseiller_id || p.conseiller_id;
-        return String(conseillerId) === String(conseillerQuery);
-      });
-    }
+  // ================= FILTRE CONSEILLER =================
+  if (conseillerQuery) {
+    d = d.filter((p) => {
+      const conseillerId = p.lastSuivi?.conseiller_id || p.conseiller_id;
+      return String(conseillerId) === String(conseillerQuery);
+    });
+  }
 
-    return d;
-  }, [data, filter, search, statusQuery, celluleQuery, conseillerQuery]);
+  return d;
+}, [data, filter, search, statusQuery, celluleQuery, conseillerQuery]);
 
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 

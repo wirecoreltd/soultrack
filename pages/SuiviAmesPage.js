@@ -181,16 +181,26 @@ function SuiviAmesPage() {
         return true;
       });
     }
-
+    
+console.log("celluleQuery:", celluleQuery);
+console.log("conseillerQuery:", conseillerQuery);
+console.log("DATA SAMPLE:", d[0]);
+    
     // FILTRE CELLULE
-    if (celluleQuery) {
-      d = d.filter((p) => p.cellule_id === celluleQuery);
-    }
-
-    // FILTRE CONSEILLER
-    if (conseillerQuery) {
-      d = d.filter((p) => p.conseiller_id === conseillerQuery);
-    }
+      if (celluleQuery) {
+        d = d.filter((p) => {
+          const celluleId = p.lastSuivi?.cellule_id || p.cellule_id;
+          return celluleId === celluleQuery;
+        });
+      }
+      
+      // FILTRE CONSEILLER
+      if (conseillerQuery) {
+        d = d.filter((p) => {
+          const conseillerId = p.lastSuivi?.conseiller_id || p.conseiller_id;
+          return conseillerId === conseillerQuery;
+        });
+      }  
 
     return d;
   }, [data, filter, search, statusQuery, celluleQuery, conseillerQuery]);

@@ -492,7 +492,8 @@ const handleConseillerClick = () => {
             <div className="hidden md:flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[150px] ml-2">Type / Date</div>
               <div className="min-w-[110px] text-center ml-28">Hommes</div>
-              <div className="min-w-[110px] text-center">Femmes</div>        
+              <div className="min-w-[110px] text-center">Femmes</div>
+              <div className="min-w-[110px] text-center text-orange-400 font-semibold">Total</div> 
               <div className="min-w-[120px] text-center">Prières</div>
               <div className="min-w-[140px] text-center">Nouv. conv</div>
               <div className="min-w-[130px] text-center">Recon</div>
@@ -520,7 +521,9 @@ const handleConseillerClick = () => {
                       </div>
                       <div className="flex ml-auto text-white font-semibold text-sm">
                         <div className="min-w-[110px] text-center">{monthTotals.hommes}</div>
-                        <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>                  
+                        <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>  
+                        <div className="min-w-[110px] text-center text-orange-300 font-semibold">
+                       {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)} </div>
                         <div className="min-w-[120px] text-center">{monthTotals.priere}</div>
                         <div className="min-w-[140px] text-center">{monthTotals.nouveau}</div>
                         <div className="min-w-[130px] text-center">{monthTotals.reconciliation}</div>
@@ -534,7 +537,8 @@ const handleConseillerClick = () => {
                       <div className="font-semibold">{isExpanded ? "➖ " : "➕ "} {monthLabel}</div>
                       <div className="grid grid-cols-2 gap-1 text-sm mt-1">
                         <div>Hommes: {monthTotals.hommes}</div>
-                        <div>Femmes: {monthTotals.femmes}</div>                  
+                        <div>Femmes: {monthTotals.femmes}</div>  
+                        <div>Total: {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)}</div>
                         <div>Prières: {monthTotals.priere}</div>
                         <div>NouvConv: {monthTotals.nouveau}</div>
                         <div>Recon: {monthTotals.reconciliation}</div>
@@ -563,7 +567,10 @@ const handleConseillerClick = () => {
                               </div>
                               <div className="flex ml-auto text-white text-sm">
                                 <div className="min-w-[110px] text-center">{typeTotals.hommes}</div>
-                                <div className="min-w-[110px] text-center">{typeTotals.femmes}</div>                          
+                                <div className="min-w-[110px] text-center">{typeTotals.femmes}</div>
+                                <div className="min-w-[110px] text-center text-orange-300 font-semibold">
+                                  {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}
+                                </div>                                  
                                 <div className="min-w-[120px] text-center">{typeTotals.priere}</div>
                                 <div className="min-w-[140px] text-center">{typeTotals.nouveau}</div>
                                 <div className="min-w-[130px] text-center">{typeTotals.reconciliation}</div>
@@ -577,7 +584,8 @@ const handleConseillerClick = () => {
                               <div className="font-semibold">{typeExpanded ? "➖ " : "➕ "} {type}</div>
                               <div className="grid grid-cols-2 gap-1 text-sm mt-1">
                                 <div>Hommes: {typeTotals.hommes}</div>
-                                <div>Femmes: {typeTotals.femmes}</div>                          
+                                <div>Femmes: {typeTotals.femmes}</div>  
+                                <div>Total: {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}</div>
                                 <div>Prières: {typeTotals.priere}</div>
                                 <div>NouvConv: {typeTotals.nouveau}</div>
                                 <div>Recon: {typeTotals.reconciliation}</div>
@@ -594,6 +602,9 @@ const handleConseillerClick = () => {
                                   <div className="min-w-[150px] text-white">{new Date(r.date).toLocaleDateString()}</div>
                                   <div className="min-w-[110px] text-center text-white ml-20">{r.hommes ?? "-"}</div>
                                   <div className="min-w-[110px] text-center text-white">{r.femmes ?? "-"}</div>
+                                    <div className="min-w-[110px] text-center text-orange-300 font-semibold">
+                                      {(r.hommes || 0) + (r.femmes || 0)}
+                                    </div>
                                   <div className="min-w-[120px] text-center text-white">{r.priere ?? "-"}</div>
                                   <div className="min-w-[140px] text-center text-white">{r.nouveau_converti ?? "-"}</div>
                                   <div className="min-w-[130px] text-center text-white">{r.reconciliation ?? "-"}</div>
@@ -609,7 +620,8 @@ const handleConseillerClick = () => {
                                   <div className="font-semibold mb-1">{new Date(r.date).toLocaleDateString()}</div>
                                   <div className="grid grid-cols-2 gap-1">
                                     <div>Hommes: {r.hommes ?? "-"}</div>
-                                    <div>Femmes: {r.femmes ?? "-"}</div>                                
+                                    <div>Femmes: {r.femmes ?? "-"}</div>     
+                                    <div>Total: {(r.hommes || 0) + (r.femmes || 0)}</div>  
                                     <div>Prières: {r.priere ?? "-"}</div>
                                     <div>NouvConv: {r.nouveau_converti ?? "-"}</div>
                                     <div>Recon: {r.reconciliation ?? "-"}</div>

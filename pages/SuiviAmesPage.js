@@ -168,17 +168,32 @@ function SuiviAmesPage() {
     }
 
    // FILTRE STATUS (optionnel)
-    if (statusQuery && statusQuery.toLowerCase() !== "all") {
-      const query = statusQuery.toLowerCase().trim();
-    
-      d = d.filter((p) => {
-        if (!p.status_suivi) return false;
-        const status = p.status_suivi.toLowerCase().trim();
-        if (query === "envoyé") return status === "envoyé";
-        if (query === "non envoyé" || query === "nonenvoye") return status === "non envoyé";
-        return true; // si query autre que envoyé/non envoyé, tout afficher
-      });
-    }
+      if (statusQuery && statusQuery.toLowerCase() !== "all") {
+        const query = statusQuery.toLowerCase().trim();
+      
+        d = d.filter((p) => {
+          // ===== 1. FILTRE ENVOI =====
+          if (query === "envoyé") {
+            return p.status_suivi?.toLowerCase().trim() === "envoyé";
+          }      
+          if (query === "non envoyé" || query === "nonenvoye") {
+            return p.status_suivi?.toLowerCase().trim() === "non envoyé";
+          }      
+          // ===== 2. FILTRE SUIVI =====
+          const suiviStatus = p.lastSuivi?.status_suivis_evangelises?.toLowerCase().trim();
+      
+          if (query === "integré" || query === "integre") {
+            return suiviStatus === "integré" || suiviStatus === "intégré";
+          }      
+          if (query === "en cours") {
+            return suiviStatus === "en cours";
+          }      
+          if (query === "refus") {
+            return suiviStatus === "refus";
+          }      
+          return true;
+        });
+      }
 
     return d;
   }, [data, filter, search, statusQuery]);

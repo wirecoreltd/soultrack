@@ -214,8 +214,11 @@ console.log("Conseiller query:", conseillerQuery, " | IDs dispo:", d.map(p => p.
   // ================= UI =================
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "#333699" }}>
-      <HeaderPages />
-      <h1 className="text-3xl font-bold text-white mt-4 mb-4">De l’Évangélisation à l’Intégration</h1>
+      <HeaderPages />      
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
+        <span className="text-white">De l’Évangélisation à </span>
+        <span className="text-amber-300">l’Intégration</span>
+      </h1>
 
       {/* FILTER */}
       <div className="flex gap-3 my-4 flex-wrap justify-center">

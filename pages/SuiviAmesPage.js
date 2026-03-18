@@ -174,37 +174,42 @@ function SuiviAmesPage() {
     }
 
    // FILTRE STATUS (optionnel)
-    if (statusQuery && statusQuery.toLowerCase() !== "all") {
-      const query = statusQuery.toLowerCase().trim();
-    
-      d = d.filter((p) => {
-        // ===== 1. FILTRE ENVOI =====
-        if (query === "envoyé") {
-          return p.status_suivi?.toLowerCase().trim() === "envoyé";
-        }
-    
-        if (query === "non envoyé" || query === "nonenvoye") {
-          return p.status_suivi?.toLowerCase().trim() === "non envoyé";
-        }
-    
-        // ===== 2. FILTRE SUIVI =====
-        const suiviStatus = p.lastSuivi?.status_suivis_evangelises?.toLowerCase().trim();
-    
-        if (query === "integré" || query === "integre") {
-          return suiviStatus === "integré" || suiviStatus === "intégré";
-        }
-    
-        if (query === "en cours") {
-          return suiviStatus === "en cours";
-        }
-    
-        if (query === "refus") {
-          return suiviStatus === "refus";
-        }
-    
+if (statusQuery && statusQuery.toLowerCase() !== "all") {
+  const query = statusQuery
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // supprime les accents
+    .trim();
+
+  d = d.filter((p) => {
+    const statusSuivi = p.status_suivi
+      ?.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+
+    const suiviStatus = p.lastSuivi?.status_suivis_evangelises
+      ?.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+
+    switch (query) {
+      case "envoye":
+        return statusSuivi === "envoye";
+      case "nonenvoye":
+        return statusSuivi === "nonenvoye";
+      case "integre":
+        return suiviStatus === "integre"; // <-- ici, on normalise aussi le statut
+      case "encours":
+        return suiviStatus === "en cours";
+      case "refus":
+        return suiviStatus === "refus";
+      default:
         return true;
-      });
     }
+  });
+}
 
     return d;
   }, [data, filter, search, statusQuery]);

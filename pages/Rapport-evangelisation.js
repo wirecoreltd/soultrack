@@ -110,10 +110,12 @@ export default function RapportEvangelisation() {
       setLoading(false);
       setShowTable(true);
     
-      setTimeout(() => {
-        document.getElementById("rapport-table")?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-    };
+     setTimeout(() => {
+      document.getElementById("rapport-filtres")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
   
        // Fetch KPI
        const fetchKPI = async () => {
@@ -304,7 +306,7 @@ const handleConseillerClick = () => {
       </h1>
 
       {/* FILTRES */}
-      <div className="w-full max-w-4xl bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6">
+      <div id="rapport-filtres" className="w-full max-w-4xl bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-white">
           <div className="flex flex-col">
             <label className="text-sm font-semibold mb-1">Date de début</label>

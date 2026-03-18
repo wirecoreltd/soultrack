@@ -4,6 +4,7 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+import { normalize } from "../utils/string";
 
 export default function SuiviAmesPageWrapper() {
   return (
@@ -20,8 +21,7 @@ function SuiviAmesPage() {
   const [egliseId, setEgliseId] = useState(null);
   const [brancheId, setBrancheId] = useState(null);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("ALL");
-  import { normalize } from "../utils/string";
+  const [filter, setFilter] = useState("ALL");  
   const searchParams = useSearchParams(); 
   const statusQuery = searchParams?.get("status"); 
 

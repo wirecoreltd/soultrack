@@ -27,6 +27,7 @@ function SuiviAmesPage() {
   const conseillerQuery = searchParams?.get("conseiller");
   const status = searchParams.get("status");
   const filterQuery = searchParams.get("filter");
+  const [allSuivis, setAllSuivis] = useState([]);
 
   // ================= PROFILE =================
   useEffect(() => {

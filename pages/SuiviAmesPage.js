@@ -152,6 +152,14 @@ function SuiviAmesPage() {
     fetchData();
   }, [egliseId, brancheId]);  
 
+  // ================= 
+  const normalize = (str) =>
+  str
+    ?.toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
   // ================= FILTERED DATA =================
   const filteredData = useMemo(() => {
     let d = [...data];

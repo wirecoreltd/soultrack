@@ -129,11 +129,8 @@ function SuiviAmesPage() {
             ?.toLowerCase()
             .normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "")
-            .trim();
-        
-        let responsable = "-";
-        let typeResponsable = "";
-        
+            .trim();        
+               
         const statutSuivi = normalize(lastSuivi?.status_suivis_evangelises || "");
         
         let responsable = "-";

@@ -96,7 +96,7 @@ function SuiviAmesPage() {
 
       const baptemeMap = {};        
       baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });     
-
+     
       // ================= FINAL DATA =================
       const finalData = Object.values(map).map((p) => {
         const membre = membresMap[p.id];
@@ -153,54 +153,54 @@ function SuiviAmesPage() {
   
   // ================= FILTERED DATA =================
   const filteredData = useMemo(() => {
-  let d = [...data];
+    let d = [...data];
 
-  // Filtre score
-  if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
-  if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+    // Filtre score
+    if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
+    if (filter === "STABLE") d = d.filter((p) => p.score > 80);
 
-  // Filtre recherche
-  if (search) {
-    d = d.filter((p) =>
-      `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
-    );
-  }
+    // Filtre recherche
+    if (search) {
+      d = d.filter((p) =>
+        `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
+      );
+    }
 
-  // ================= NORMALIZE =================
-  const normalize = (str) =>
-    str
-      ?.toLowerCase()
-      .normalize("NFD") // décompose accents
-      .replace(/[\u0300-\u036f]/g, "") // supprime accents
-      .trim();
+    // ================= NORMALIZE =================
+    const normalize = (str) =>
+      str
+        ?.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
 
-  // ================= FILTRE STATUS =================
-  if (statusQuery && normalize(statusQuery) !== "all") {
-    const query = normalize(statusQuery);
+    // ================= FILTRE STATUS =================
+    if (statusQuery && normalize(statusQuery) !== "all") {
+      const query = normalize(statusQuery);
 
-    d = d.filter((p) => {
-      const statusSuivi = normalize(p.status_suivi); // Envoyé / Non envoyé
-      const suiviStatus = normalize(p.lastSuivi?.status_suivis_evangelises); // Intégré / En cours / Refus
+      d = d.filter((p) => {
+        const statusSuivi = normalize(p.status_suivi);
+        const suiviStatus = normalize(p.lastSuivi?.status_suivis_evangelises);
 
-      switch (query) {
-        case "envoye":
-          return statusSuivi === "envoye";
-        case "nonenvoye":
-          return statusSuivi === "nonenvoye";
-        case "integre":
-          return suiviStatus === "integre";
-        case "encours":
-          return suiviStatus === "en cours";
-        case "refus":
-          return suiviStatus === "refus";
-        default:
-          return true;
-      }
-    });
-  }
+        switch (query) {
+          case "envoye":
+            return statusSuivi === "envoye";
+          case "nonenvoye":
+            return statusSuivi === "nonenvoye";
+          case "integre":
+            return suiviStatus === "integre";
+          case "encours":
+            return suiviStatus === "en cours";
+          case "refus":
+            return suiviStatus === "refus";
+          default:
+            return true;
+        }
+      });
+    }
 
-  return d;
-}, [data, filter, search, statusQuery]);
+    return d;
+  }, [data, filter, search, statusQuery]);
 
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -240,6 +240,7 @@ function SuiviAmesPage() {
             <div className="flex-[1]">Action</div>
           </div>
 
+          {/* ROWS */}
           {filteredData.map((p) => (
             <div key={p.id} className="mb-1">
               <div className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 border-l-4 ${p.couleur}`}>

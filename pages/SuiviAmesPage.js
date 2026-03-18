@@ -23,8 +23,8 @@ function SuiviAmesPage() {
   const [filter, setFilter] = useState("ALL");  
   const searchParams = useSearchParams(); 
   const statusQuery = searchParams?.get("status"); 
-  const celluleQuery = searchParams?.get("cellule");
-  const conseillerQuery = searchParams?.get("conseiller");
+  const celluleQuery = searchParams?.get("cellule") || null;
+  const conseillerQuery = searchParams?.get("conseiller") || null;
 
   // ================= PROFILE =================
   useEffect(() => {
@@ -186,19 +186,12 @@ function SuiviAmesPage() {
 
   // ===== FILTRE CELLULE =====
   if (celluleQuery) {
-    d = d.filter((p) => {
-      const celluleId = p.membre?.cellule_id || p.lastSuivi?.cellule_id || null;
-      return celluleId === celluleQuery;
-    });
-  }
+  d = d.filter((p) => (p.membre?.cellule_id || p.lastSuivi?.cellule_id) === celluleQuery);
+}
 
-  // ===== FILTRE CONSEILLER =====
-  if (conseillerQuery) {
-    d = d.filter((p) => {
-      const conseillerId = p.membre?.conseiller_id || p.lastSuivi?.conseiller_id || null;
-      return conseillerId === conseillerQuery;
-    });
-  }
+if (conseillerQuery) {
+  d = d.filter((p) => (p.membre?.conseiller_id || p.lastSuivi?.conseiller_id) === conseillerQuery);
+}
 
   console.log("===== DEBUG FILTER =====");
   console.log("Cellule query:", celluleQuery);

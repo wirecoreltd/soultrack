@@ -522,7 +522,7 @@ const handleConseillerClick = () => {
                       <div className="flex ml-auto text-white font-semibold text-sm">
                         <div className="min-w-[110px] text-center">{monthTotals.hommes}</div>
                         <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>  
-                        <div className="min-w-[110px] text-center text-orange-300 font-semibold">
+                        <div className="min-w-[110px] text-center text-orange-400 font-semibold">
                        {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)} </div>
                         <div className="min-w-[120px] text-center">{monthTotals.priere}</div>
                         <div className="min-w-[140px] text-center">{monthTotals.nouveau}</div>
@@ -568,7 +568,7 @@ const handleConseillerClick = () => {
                               <div className="flex ml-auto text-white text-sm">
                                 <div className="min-w-[110px] text-center">{typeTotals.hommes}</div>
                                 <div className="min-w-[110px] text-center">{typeTotals.femmes}</div>
-                                <div className="min-w-[110px] text-center text-orange-300 font-semibold">
+                                <div className="min-w-[110px] text-center text-orange-400 font-semibold">
                                   {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}
                                 </div>                                  
                                 <div className="min-w-[120px] text-center">{typeTotals.priere}</div>
@@ -602,7 +602,7 @@ const handleConseillerClick = () => {
                                   <div className="min-w-[150px] text-white">{new Date(r.date).toLocaleDateString()}</div>
                                   <div className="min-w-[110px] text-center text-white ml-20">{r.hommes ?? "-"}</div>
                                   <div className="min-w-[110px] text-center text-white">{r.femmes ?? "-"}</div>
-                                    <div className="min-w-[110px] text-center text-orange-300 font-semibold">
+                                    <div className="min-w-[110px] text-center text-orange-400 font-semibold">
                                       {(r.hommes || 0) + (r.femmes || 0)}
                                     </div>
                                   <div className="min-w-[120px] text-center text-white">{r.priere ?? "-"}</div>

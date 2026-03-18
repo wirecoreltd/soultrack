@@ -143,6 +143,8 @@ function SuiviAmesPage() {
           responsable,
           debutMinistere: membre ? ministereMap[membre.id] : null,
           dateBapteme: baptemeMap[String(p.id)],
+          cellule_id: membre?.cellule_id || lastSuivi?.cellule_id || null,
+          conseiller_id: membre?.conseiller_id || lastSuivi?.conseiller_id || null,
         };
       });     
 
@@ -155,53 +157,46 @@ function SuiviAmesPage() {
 
   // ================= FILTERED DATA =================
   const filteredData = useMemo(() => {
-  let d = [...data];
+    let d = [...data];
 
-  // Filtre score
-  if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
-  else if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+    // Filtre score
+    if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
+    if (filter === "STABLE") d = d.filter((p) => p.score > 80);
 
-  // Filtre recherche
-  if (search) {
-    d = d.filter((p) =>
-      `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
-    );
-  }
+    // Filtre recherche
+    if (search) {
+      d = d.filter((p) =>
+        `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
+      );
+    }
 
-  // Filtre status
-  if (statusQuery && statusQuery.toLowerCase() !== "all") {
-    const query = statusQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    d = d.filter((p) => {
-      const suiviStatus = (p.lastSuivi?.status_suivis_evangelises || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      const pStatus = (p.status_suivi || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    // Filtre status
+    if (statusQuery && statusQuery.toLowerCase() !== "all") {
+      const query = statusQuery.toLowerCase().trim();
+      d = d.filter((p) => {
+        const suiviStatus = p.lastSuivi?.status_suivis_evangelises?.toLowerCase().trim();
+        if (query === "envoyé") return p.status_suivi?.toLowerCase().trim() === "envoyé";
+        if (query === "non envoyé" || query === "nonenvoye")
+          return p.status_suivi?.toLowerCase().trim() === "non envoyé";
+        if (query === "integré" || query === "intégré") return suiviStatus === "integré" || suiviStatus === "intégré";
+        if (query === "en cours") return suiviStatus === "en cours";
+        if (query === "refus") return suiviStatus === "refus";
+        return true;
+      });
+    }
 
-      if (query === "envoye") return pStatus === "envoye";
-      if (query === "nonenvoye") return pStatus === "nonenvoye";
-      if (query === "integre") return suiviStatus === "integre";
-      if (query === "en cours") return suiviStatus === "en cours";
-      if (query === "refus") return suiviStatus === "refus";
-      return true;
-    });
-  }
+    // Filtre cellule
+    if (celluleQuery) {
+      d = d.filter((p) => String(p.cellule_id) === String(celluleQuery));
+    }
 
-  // ================= FILTRE CELLULE =================
-  if (celluleQuery) {
-    d = d.filter((p) => {
-      const celluleId = p.lastSuivi?.cellule_id || p.cellule_id;
-      return String(celluleId) === String(celluleQuery);
-    });
-  }
+    // Filtre conseiller
+    if (conseillerQuery) {
+      d = d.filter((p) => String(p.conseiller_id) === String(conseillerQuery));
+    }
 
-  // ================= FILTRE CONSEILLER =================
-  if (conseillerQuery) {
-    d = d.filter((p) => {
-      const conseillerId = p.lastSuivi?.conseiller_id || p.conseiller_id;
-      return String(conseillerId) === String(conseillerQuery);
-    });
-  }
-
-  return d;
-}, [data, filter, search, statusQuery, celluleQuery, conseillerQuery]);
+    return d;
+  }, [data, filter, search, statusQuery, celluleQuery, conseillerQuery]);
 
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 

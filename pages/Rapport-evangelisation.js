@@ -174,7 +174,7 @@ setFilteredSuivisState(filteredSuivis); // <-- ici on le stocke pour le JSX
       setTotalEncour(enCours.length);
       setTotalRefus(refus.length);
       setTotalCellule(filteredSuivis.filter((e) => e.cellule_id != null).length);
-      setTotalEglise(integres.filter((e) => e.conseiller_id != null).length);
+      setTotalEglise(filteredSuivis.filter((e) => e.conseiller_id != null).length);
   
     } catch (err) {
       console.error("Erreur fetchKPI:", err);
@@ -452,7 +452,7 @@ const handleConseillerClick = () => {
             <div className="text-2xl sm:text-3xl font-semibold">{totalEglise}</div>
             <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Église</div>
             <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-              {totalIntegres > 0 ? Math.round((totalEglise / totalIntegres) * 100) : 0}%
+              {totalEglise > 0 ? Math.round((totalEglise / filteredSuivisState.length) * 100) : 0}%
             </div>
           </div>
       

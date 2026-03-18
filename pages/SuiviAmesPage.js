@@ -150,7 +150,14 @@ function SuiviAmesPage() {
 
     fetchData();
   }, [egliseId, brancheId]);  
-  
+
+  const normalize = (str) =>
+  str
+    ?.toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
   // ================= FILTERED DATA =================
   const filteredData = useMemo(() => {
     let d = [...data];
@@ -166,36 +173,36 @@ function SuiviAmesPage() {
       );
     }
 
-    // ================= NORMALIZE =================
-    const normalize = (str) =>
-      str
-        ?.toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .trim();
-
-    // ================= FILTRE STATUS =================
-    if (statusQuery && normalize(statusQuery) !== "all") {
-      const query = normalize(statusQuery);
-
+   // FILTRE STATUS (optionnel)
+    if (statusQuery && statusQuery.toLowerCase() !== "all") {
+      const query = statusQuery.toLowerCase().trim();
+    
       d = d.filter((p) => {
-        const statusSuivi = normalize(p.status_suivi);
-        const suiviStatus = normalize(p.lastSuivi?.status_suivis_evangelises);
-
-        switch (query) {
-          case "envoye":
-            return statusSuivi === "envoye";
-          case "nonenvoye":
-            return statusSuivi === "nonenvoye";
-          case "integre":
-            return suiviStatus === "integre";
-          case "encours":
-            return suiviStatus === "en cours";
-          case "refus":
-            return suiviStatus === "refus";
-          default:
-            return true;
+        // ===== 1. FILTRE ENVOI =====
+        if (query === "envoyé") {
+          return p.status_suivi?.toLowerCase().trim() === "envoyé";
         }
+    
+        if (query === "non envoyé" || query === "nonenvoye") {
+          return p.status_suivi?.toLowerCase().trim() === "non envoyé";
+        }
+    
+        // ===== 2. FILTRE SUIVI =====
+        const suiviStatus = p.lastSuivi?.status_suivis_evangelises?.toLowerCase().trim();
+    
+        if (query === "integré" || query === "integre") {
+          return suiviStatus === "integré" || suiviStatus === "intégré";
+        }
+    
+        if (query === "en cours") {
+          return suiviStatus === "en cours";
+        }
+    
+        if (query === "refus") {
+          return suiviStatus === "refus";
+        }
+    
+        return true;
       });
     }
 

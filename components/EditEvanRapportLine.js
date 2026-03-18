@@ -1,4 +1,3 @@
-// components/EditEvanRapportLine.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -24,7 +23,7 @@ export default function EditEvanRapportLine({ isOpen, onClose, rapport, onSave }
     { key: "priere", label: "Prière du salut", type: "number" },
     { key: "nouveau_converti", label: "Nouveau converti", type: "number" },
     { key: "reconciliation", label: "Réconciliation", type: "number" },
-    { key: "moissonneurs", label: "Moissonneurs", type: "text" }, // champ libre
+    { key: "moissonneurs", label: "Moissonneurs", type: "text" },
   ];
 
   return (
@@ -32,28 +31,29 @@ export default function EditEvanRapportLine({ isOpen, onClose, rapport, onSave }
       <div className="bg-white rounded-2xl p-6 w-80 shadow-lg max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4 text-center">Modifier le rapport</h2>
 
-          <div className="flex flex-col gap-3">
-                {/* Champ Type d’Évangélisation */}
-                <div className="flex flex-col">
-                  <label className="font-semibold mb-1">Type d'Évangélisation</label>
-                  <select
-                    className="input text-center"
-                    value={formData.type_evangelisation || ""}
-                    onChange={e =>
-                      setFormData({ ...formData, type_evangelisation: e.target.value })
-                    }              
-                  >
-                    <option value="">Type d'Evangélisation</option>
-                    <option value="Individuel">Individuel</option>
-                    <option value="Sortie de groupe">Sortie de groupe</option>
-                    <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
-                    <option value="Évangélisation de rue">Évangélisation de rue</option>
-                    <option value="Évangélisation maison">Évangélisation maison</option>
-                    <option value="Évangélisation stade">Évangélisation stade</option>
-                  </select>
-                </div>
-
         <div className="flex flex-col gap-3">
+          {/* Champ Type d’Évangélisation */}
+          <div className="flex flex-col">
+            <label className="font-semibold mb-1">Type d'Évangélisation</label>
+            <select
+              className="input text-center"
+              value={formData.type_evangelisation || ""}
+              onChange={e =>
+                setFormData({ ...formData, type_evangelisation: e.target.value })
+              }
+              required
+            >
+              <option value="">Type d'Evangélisation</option>
+              <option value="Individuel">Individuel</option>
+              <option value="Sortie de groupe">Sortie de groupe</option>
+              <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
+              <option value="Évangélisation de rue">Évangélisation de rue</option>
+              <option value="Évangélisation maison">Évangélisation maison</option>
+              <option value="Évangélisation stade">Évangélisation stade</option>
+            </select>
+          </div>
+
+          {/* Les autres champs générés dynamiquement */}
           {fields.map(f => (
             <div key={f.key} className="flex flex-col">
               <label className="font-semibold mb-1">{f.label}</label>

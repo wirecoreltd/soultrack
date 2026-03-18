@@ -111,15 +111,9 @@ export default function RapportEvangelisation() {
       setShowTable(true);
     
       setTimeout(() => {
-        const table = document.getElementById("rapport-table");
-        if (table) {
-          // Décaler de 200px au-dessus pour que ça commence juste après les filtres
-          const top = table.getBoundingClientRect().top + window.scrollY - 200;
-          window.scrollTo({ top, behavior: "smooth" });
-        }
+        document.getElementById("rapport-table")?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     };
-      
   
        // Fetch KPI
        const fetchKPI = async () => {
@@ -180,7 +174,7 @@ setFilteredSuivisState(filteredSuivis); // <-- ici on le stocke pour le JSX
       setTotalEncour(enCours.length);
       setTotalRefus(refus.length);
       setTotalCellule(filteredSuivis.filter((e) => e.cellule_id != null).length);
-      setTotalEglise(filteredSuivis.filter((e) => e.conseiller_id != null).length);
+      setTotalEglise(integres.filter((e) => e.conseiller_id != null).length);
   
     } catch (err) {
       console.error("Erreur fetchKPI:", err);
@@ -458,7 +452,7 @@ const handleConseillerClick = () => {
             <div className="text-2xl sm:text-3xl font-semibold">{totalEglise}</div>
             <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Église</div>
             <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-              {totalEglise > 0 ? Math.round((totalEglise / filteredSuivisState.length) * 100) : 0}%
+              {totalIntegres > 0 ? Math.round((totalEglise / totalIntegres) * 100) : 0}%
             </div>
           </div>
       
@@ -495,8 +489,7 @@ const handleConseillerClick = () => {
             <div className="hidden md:flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[150px] ml-2">Type / Date</div>
               <div className="min-w-[110px] text-center ml-28">Hommes</div>
-              <div className="min-w-[110px] text-center">Femmes</div>   
-              <div className="min-w-[110px] text-center text-orange-400 font-semibold">Total</div>
+              <div className="min-w-[110px] text-center">Femmes</div>        
               <div className="min-w-[120px] text-center">Prières</div>
               <div className="min-w-[140px] text-center">Nouv. conv</div>
               <div className="min-w-[130px] text-center">Recon</div>
@@ -524,8 +517,7 @@ const handleConseillerClick = () => {
                       </div>
                       <div className="flex ml-auto text-white font-semibold text-sm">
                         <div className="min-w-[110px] text-center">{monthTotals.hommes}</div>
-                        <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>    
-                        <div className="min-w-[110px] text-center text-orange-400 font-semibold">Total</div>
+                        <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>                  
                         <div className="min-w-[120px] text-center">{monthTotals.priere}</div>
                         <div className="min-w-[140px] text-center">{monthTotals.nouveau}</div>
                         <div className="min-w-[130px] text-center">{monthTotals.reconciliation}</div>
@@ -539,8 +531,7 @@ const handleConseillerClick = () => {
                       <div className="font-semibold">{isExpanded ? "➖ " : "➕ "} {monthLabel}</div>
                       <div className="grid grid-cols-2 gap-1 text-sm mt-1">
                         <div>Hommes: {monthTotals.hommes}</div>
-                        <div>Femmes: {monthTotals.femmes}</div>     
-                        <div>Total: <span className="text-orange-400 font-semibold">{monthTotals.hommes + monthTotals.femmes}</span></div>
+                        <div>Femmes: {monthTotals.femmes}</div>                  
                         <div>Prières: {monthTotals.priere}</div>
                         <div>NouvConv: {monthTotals.nouveau}</div>
                         <div>Recon: {monthTotals.reconciliation}</div>

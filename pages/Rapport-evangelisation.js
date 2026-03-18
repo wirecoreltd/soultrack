@@ -493,7 +493,8 @@ const handleConseillerClick = () => {
             <div className="hidden md:flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[150px] ml-2">Type / Date</div>
               <div className="min-w-[110px] text-center ml-28">Hommes</div>
-              <div className="min-w-[110px] text-center">Femmes</div>        
+              <div className="min-w-[110px] text-center">Femmes</div>   
+              <div className="min-w-[110px] text-center text-orange-400 font-semibold">Total</div>
               <div className="min-w-[120px] text-center">Prières</div>
               <div className="min-w-[140px] text-center">Nouv. conv</div>
               <div className="min-w-[130px] text-center">Recon</div>
@@ -521,7 +522,8 @@ const handleConseillerClick = () => {
                       </div>
                       <div className="flex ml-auto text-white font-semibold text-sm">
                         <div className="min-w-[110px] text-center">{monthTotals.hommes}</div>
-                        <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>                  
+                        <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>    
+                        <div className="min-w-[110px] text-center text-orange-400 font-semibold">Total</div>
                         <div className="min-w-[120px] text-center">{monthTotals.priere}</div>
                         <div className="min-w-[140px] text-center">{monthTotals.nouveau}</div>
                         <div className="min-w-[130px] text-center">{monthTotals.reconciliation}</div>
@@ -535,7 +537,8 @@ const handleConseillerClick = () => {
                       <div className="font-semibold">{isExpanded ? "➖ " : "➕ "} {monthLabel}</div>
                       <div className="grid grid-cols-2 gap-1 text-sm mt-1">
                         <div>Hommes: {monthTotals.hommes}</div>
-                        <div>Femmes: {monthTotals.femmes}</div>                  
+                        <div>Femmes: {monthTotals.femmes}</div>     
+                        <div>Total: <span className="text-orange-400 font-semibold">{(Number(r.hommes) + Number(r.femmes)) ?? "-"}</span></div>
                         <div>Prières: {monthTotals.priere}</div>
                         <div>NouvConv: {monthTotals.nouveau}</div>
                         <div>Recon: {monthTotals.reconciliation}</div>

@@ -25,9 +25,6 @@ function SuiviAmesPage() {
   const statusQuery = searchParams?.get("status"); 
   const celluleQuery = searchParams?.get("cellule");
   const conseillerQuery = searchParams?.get("conseiller");
-  const status = searchParams.get("status");
-  const filterQuery = searchParams.get("filter");
-  const [allSuivis, setAllSuivis] = useState([]);
 
   // ================= PROFILE =================
   useEffect(() => {
@@ -154,70 +151,50 @@ function SuiviAmesPage() {
     };
 
     fetchData();
-  }, [egliseId, brancheId]);  
+  }, [egliseId, brancheId]);
 
   // ================= FILTERED DATA =================
-    const filteredData = useMemo(() => {
-  let d = [...data];
+  const filteredData = useMemo(() => {
+    let d = [...data];
 
-  if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
-  else if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+    if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
+    else if (filter === "STABLE") d = d.filter((p) => p.score > 80);
 
-  if (search) {
-    d = d.filter((p) =>
-      `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
-    );
-  }
+    if (search) {
+      d = d.filter((p) =>
+        `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
+      );
+    }
 
-  if (statusQuery && statusQuery.toLowerCase() !== "all") {
-    const query = statusQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    d = d.filter((p) => {
-      const suiviStatus = (p.lastSuivi?.status_suivis_evangelises || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      const pStatus = (p.status_suivi || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      
-      if (query === "envoye") return pStatus === "envoye";
-      if (query === "nonenvoye") return pStatus === "nonenvoye";
-      if (query === "integre") return suiviStatus === "integre";
-      if (query === "en cours") return suiviStatus === "en cours";
-      if (query === "refus") return suiviStatus === "refus";
-      return true;
-    });
-  }
+    if (statusQuery && statusQuery.toLowerCase() !== "all") {
+      const query = statusQuery.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      d = d.filter((p) => {
+        const suiviStatus = (p.lastSuivi?.status_suivis_evangelises || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const pStatus = (p.status_suivi || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  if (celluleQuery) {
-    d = d.filter((p) => {
-      const celluleId = p.lastSuivi?.cellule_id || p.cellule_id;
-      return String(celluleId) === String(celluleQuery);
-    });
-  }
+        if (query === "envoye") return pStatus === "envoye";
+        if (query === "nonenvoye") return pStatus === "nonenvoye";
+        if (query === "integre") return suiviStatus === "integre";
+        if (query === "en cours") return suiviStatus === "en cours";
+        if (query === "refus") return suiviStatus === "refus";
+        return true;
+      });
+    }
 
-  if (conseillerQuery) {
-    d = d.filter((p) => {
-      const conseillerId = p.lastSuivi?.conseiller_id || p.conseiller_id;
-      return String(conseillerId) === String(conseillerQuery);
-    });
-  }
+    if (celluleQuery) {
+      d = d.filter((p) => {
+        const celluleId = p.lastSuivi?.cellule_id || p.cellule_id;
+        return String(celluleId) === String(celluleQuery);
+      });
+    }
 
-  return d;
-}, [data, filter, search, statusQuery, celluleQuery, conseillerQuery]);
+    if (conseillerQuery) {
+      d = d.filter((p) => {
+        const conseillerId = p.lastSuivi?.conseiller_id || p.conseiller_id;
+        return String(conseillerId) === String(conseillerQuery);
+      });
+    }
 
-    //===============================
-    let filtered = allSuivis;
-
-if (status && status !== "all") {
-  filtered = filtered.filter(
-    (e) => e.status_suivis_evangelises === status
-  );
-}
-
-if (filterQuery === "cellule") {
-  filtered = filtered.filter((e) => e.cellule_id != null);
-}
-
-if (filter === "conseiller") {
-  filtered = filtered.filter((e) => e.conseiller_id != null);
-}
-    
     return d;
   }, [data, filter, search, statusQuery, celluleQuery, conseillerQuery]);
 

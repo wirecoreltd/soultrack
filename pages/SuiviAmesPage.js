@@ -151,12 +151,9 @@ function SuiviAmesPage() {
     fetchData();
   }, [egliseId, brancheId]);  
 
+  // ================= NORMALIZE =================
   const normalize = (str) =>
-  str
-    ?.toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
+    str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
   // ================= FILTERED DATA =================
   const filteredData = useMemo(() => {
@@ -173,43 +170,26 @@ function SuiviAmesPage() {
       );
     }
 
-   // FILTRE STATUS (optionnel)
-if (statusQuery && statusQuery.toLowerCase() !== "all") {
-  const query = statusQuery
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // supprime les accents
-    .trim();
+    // FILTRE STATUS (optionnel)
+    if (statusQuery && normalize(statusQuery) !== "all") {
+      const query = normalize(statusQuery);
 
-  d = d.filter((p) => {
-    const statusSuivi = p.status_suivi
-      ?.toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .trim();
+      d = d.filter((p) => {
+        const suiviStatus = normalize(p.lastSuivi?.status_suivis_evangelises);
+        const statusSuivi = normalize(p.status_suivi);
 
-    const suiviStatus = p.lastSuivi?.status_suivis_evangelises
-      ?.toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .trim();
+        // ===== 1. FILTRE ENVOI =====
+        if (query === "envoye") return statusSuivi === "envoye";
+        if (query === "nonenvoye") return statusSuivi === "nonenvoye" || statusSuivi === "non envoye";
 
-    switch (query) {
-      case "envoye":
-        return statusSuivi === "envoye";
-      case "nonenvoye":
-        return statusSuivi === "nonenvoye";
-      case "integre":
-        return suiviStatus === "integre"; // <-- ici, on normalise aussi le statut
-      case "encours":
-        return suiviStatus === "en cours";
-      case "refus":
-        return suiviStatus === "refus";
-      default:
+        // ===== 2. FILTRE SUIVI =====
+        if (query === "integre") return suiviStatus === "integre";
+        if (query === "en cours") return suiviStatus === "en cours";
+        if (query === "refus") return suiviStatus === "refus";
+
         return true;
+      });
     }
-  });
-}
 
     return d;
   }, [data, filter, search, statusQuery]);

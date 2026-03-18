@@ -153,43 +153,54 @@ function SuiviAmesPage() {
   
   // ================= FILTERED DATA =================
   const filteredData = useMemo(() => {
-    let d = [...data];
+  let d = [...data];
 
-    if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
-    if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+  // Filtre score
+  if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
+  if (filter === "STABLE") d = d.filter((p) => p.score > 80);
 
-    if (search) {
-      d = d.filter((p) =>
-        `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
-      );
-    }
+  // Filtre recherche
+  if (search) {
+    d = d.filter((p) =>
+      `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
+    );
+  }
 
-    const normalize = (str) =>
-      str
-        ?.toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .trim();
+  // ================= NORMALIZE =================
+  const normalize = (str) =>
+    str
+      ?.toLowerCase()
+      .normalize("NFD") // décompose accents
+      .replace(/[\u0300-\u036f]/g, "") // supprime accents
+      .trim();
 
-    if (statusQuery && normalize(statusQuery) !== "all") {
-      const query = normalize(statusQuery);
+  // ================= FILTRE STATUS =================
+  if (statusQuery && normalize(statusQuery) !== "all") {
+    const query = normalize(statusQuery);
 
-      d = d.filter((p) => {
-        const statusSuivi = normalize(p.status_suivi);
-        if (query === "envoye") return statusSuivi === "envoye";
-        if (query === "nonenvoye") return statusSuivi === "nonenvoye";
+    d = d.filter((p) => {
+      const statusSuivi = normalize(p.status_suivi); // Envoyé / Non envoyé
+      const suiviStatus = normalize(p.lastSuivi?.status_suivis_evangelises); // Intégré / En cours / Refus
 
-        const suiviStatus = normalize(p.lastSuivi?.status_suivis_evangelises);
-        if (query === "integre") return suiviStatus === "integre";
-        if (query === "encours") return suiviStatus === "en cours";
-        if (query === "refus") return suiviStatus === "refus";
+      switch (query) {
+        case "envoye":
+          return statusSuivi === "envoye";
+        case "nonenvoye":
+          return statusSuivi === "nonenvoye";
+        case "integre":
+          return suiviStatus === "integre";
+        case "encours":
+          return suiviStatus === "en cours";
+        case "refus":
+          return suiviStatus === "refus";
+        default:
+          return true;
+      }
+    });
+  }
 
-        return true;
-      });
-    }
-
-    return d;
-  }, [data, filter, search, statusQuery]);
+  return d;
+}, [data, filter, search, statusQuery]);
 
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 

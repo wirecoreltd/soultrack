@@ -286,13 +286,13 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
   };
 
   //==================
-  const handleCelluleClick = (celluleId) => {
-  router.push(`/SuiviAmesPage?cellule=${celluleId}`);
-    };
-    
-    const handleConseillerClick = (conseillerId) => {
-      router.push(`/SuiviAmesPage?conseiller=${conseillerId}`);
-    };
+  const handleCelluleClick = () => {
+  router.push("/SuiviAmesPage?filter=cellule");
+};
+
+const handleConseillerClick = () => {
+  router.push("/SuiviAmesPage?filter=conseiller");
+};
 
   // ---------------- UI ----------------
   return (
@@ -435,7 +435,7 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
           {/* Intégrés en cellule */}
           <div
             className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-indigo-400 to-indigo-500 text-white flex flex-col items-center"
-            onClick={() => handleCelluleClick(e.cellule_id)}
+            onClick={() => handleCelluleClick("all")}
           >
             <div className="text-2xl sm:text-3xl font-semibold">{totalCellule}</div>
             <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Cellule</div>
@@ -447,7 +447,7 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
           {/* Intégrés à l'église */}
           <div
             className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-teal-400 to-teal-500 text-white flex flex-col items-center"
-            onClick={() => handleConseillerClick(e.conseiller_id)}
+            onClick={() => handleConseillerClick("all")}
           >
             <div className="text-2xl sm:text-3xl font-semibold">{totalEglise}</div>
             <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Église</div>

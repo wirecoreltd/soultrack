@@ -99,89 +99,89 @@ function SuiviAmesPage() {
       baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });     
      
       // ================= FINAL DATA =================
-        const finalData = Object.values(map).map((p) => {
-          // 🔹 Trouver le membre correspondant dans membres_complets
-          const membre =
-            membres.find((m) => String(m.evangelise_member_id) === String(p.id)) ||
-            membres.find((m) => m.suivi_int_id === p.id);
-        
-          // 🔹 Trier les suivis par date décroissante
-          const sortedSuivis = p.suivis.sort(
-            (a, b) => new Date(b.date_suivi) - new Date(a.date_suivi)
-          );
-          const lastSuivi = sortedSuivis[0];
-        
-          // 🔹 Calcul jours sans suivi
-          const dateRef = lastSuivi?.date_suivi || p.created_at;
-          const joursSansSuivi = Math.floor(
-            (new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24)
-          );
-        
-          // 🔹 Calcul score
-          let score = 100;
-          if (p.status_suivi?.toLowerCase() === "non envoyé") score -= 40;
-          if (joursSansSuivi > 7) score -= 25;
-          else if (joursSansSuivi > 3) score -= 10;
-          if (!membre?.bapteme_date) score -= 10;
-          if (!membre?.star) score -= 10;
-          if (joursSansSuivi <= 3) score += 10;
-          score = Math.max(0, Math.min(100, score));
-        
-          // 🔹 Couleur selon score
-          let couleur = "border-gray-500";
-          if (score <= 30) couleur = "border-red-500 animate-pulse";
-          else if (score <= 60) couleur = "border-orange-400";
-          else if (score <= 80) couleur = "border-yellow-300";
-          else couleur = "border-green-400";
-        
-          // 🔹 Normalize helper
-          const normalize = (str) =>
-            str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-        
-          // 🔹 Déterminer responsable et type
-          let responsable = "-";
-          let typeResponsable = "";
-        
-          const statutSuivi = normalize(lastSuivi?.status_suivis_evangelises || "");
-        
-          if (statutSuivi === "integre") {
-            // ✅ Intégré → prendre info du membre complet
-            if (membre?.conseiller_id) {
-              responsable = profilesMap[membre.conseiller_id] || "-";
-              typeResponsable = "Conseiller";
-            } else if (membre?.cellule_id) {
-              responsable = cellulesMap[membre.cellule_id] || "-";
-              typeResponsable = "Cellule";
-            }
-          } else if (statutSuivi === "en cours" || statutSuivi === "refus") {
-            // ✅ En cours / Refus → prendre info du dernier suivi
-            if (lastSuivi?.conseiller_id) {
-              responsable = profilesMap[lastSuivi.conseiller_id] || "-";
-              typeResponsable = "Conseiller";
-            } else if (lastSuivi?.cellule_id) {
-              responsable = cellulesMap[lastSuivi.cellule_id] || "-";
-              typeResponsable = "Cellule";
-            }
-          }
-        
-          // 🔹 Dates Bapteme & Ministère
-          const dateBapteme = membre ? baptemeMap[String(p.id)] : null;
-          const debutMinistere = membre ? ministereMap[membre.id] : null;
-        
-          return {
-            ...p,
-            membre,
-            sortedSuivis,
-            lastSuivi,
-            joursSansSuivi,
-            score,
-            couleur,
-            responsable,
-            typeResponsable,
-            dateBapteme,
-            debutMinistere,
-          };
-        });
+const finalData = Object.values(map).map((p) => {
+  // 🔹 Trouver le membre correspondant dans membres_complets
+  const membre =
+    membres.find((m) => String(m.evangelise_member_id) === String(p.id)) ||
+    membres.find((m) => m.suivi_int_id === p.id);
+
+  // 🔹 Trier les suivis par date décroissante
+  const sortedSuivis = p.suivis.sort(
+    (a, b) => new Date(b.date_suivi) - new Date(a.date_suivi)
+  );
+  const lastSuivi = sortedSuivis[0];
+
+  // 🔹 Calcul jours sans suivi
+  const dateRef = lastSuivi?.date_suivi || p.created_at;
+  const joursSansSuivi = Math.floor(
+    (new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24)
+  );
+
+  // 🔹 Calcul score
+  let score = 100;
+  if (p.status_suivi?.toLowerCase() === "non envoyé") score -= 40;
+  if (joursSansSuivi > 7) score -= 25;
+  else if (joursSansSuivi > 3) score -= 10;
+  if (!membre?.bapteme_date) score -= 10;
+  if (!membre?.star) score -= 10;
+  if (joursSansSuivi <= 3) score += 10;
+  score = Math.max(0, Math.min(100, score));
+
+  // 🔹 Couleur selon score
+  let couleur = "border-gray-500";
+  if (score <= 30) couleur = "border-red-500 animate-pulse";
+  else if (score <= 60) couleur = "border-orange-400";
+  else if (score <= 80) couleur = "border-yellow-300";
+  else couleur = "border-green-400";
+
+  // 🔹 Normalize helper
+  const normalize = (str) =>
+    str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+  // 🔹 Déterminer responsable et type
+  let responsable = "-";
+  let typeResponsable = "";
+
+  const statutSuivi = normalize(lastSuivi?.status_suivis_evangelises || "");
+
+  if (statutSuivi === "integre") {
+    // ✅ Intégré → prendre info du membre complet
+    if (membre?.conseiller_id) {
+      responsable = profilesMap[membre.conseiller_id] || "-";
+      typeResponsable = "Conseiller";
+    } else if (membre?.cellule_id) {
+      responsable = cellulesMap[membre.cellule_id] || "-";
+      typeResponsable = "Cellule";
+    }
+  } else if (statutSuivi === "en cours" || statutSuivi === "refus") {
+    // ✅ En cours / Refus → prendre info du dernier suivi
+    if (lastSuivi?.conseiller_id) {
+      responsable = profilesMap[lastSuivi.conseiller_id] || "-";
+      typeResponsable = "Conseiller";
+    } else if (lastSuivi?.cellule_id) {
+      responsable = cellulesMap[lastSuivi.cellule_id] || "-";
+      typeResponsable = "Cellule";
+    }
+  }
+
+  // 🔹 Dates Bapteme & Ministère
+  const dateBapteme = membre ? baptemeMap[String(p.id)] : null;
+  const debutMinistere = membre ? ministereMap[membre.id] : null;
+
+  return {
+    ...p,
+    membre,
+    sortedSuivis,
+    lastSuivi,
+    joursSansSuivi,
+    score,
+    couleur,
+    responsable,
+    typeResponsable,
+    dateBapteme,
+    debutMinistere,
+  };
+});
 
       setData(finalData);
       setLoading(false);

@@ -25,6 +25,11 @@ function SuiviAmesPage() {
   const searchParams = useSearchParams();
   const statusQuery = searchParams?.get("status");
 
+  const normalize = (str) =>
+    str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+  const statusOptions = ["Envoyé", "Non envoyé", "En cours", "Intégré", "Refus"];
+
   // ================= PROFILE =================
   useEffect(() => {
     const fetchProfile = async () => {
@@ -116,25 +121,20 @@ function SuiviAmesPage() {
 
       // ================= FINAL DATA =================
       const finalData = Object.values(map).map((p) => {
-        // 🔹 Trouver le membre correspondant dans membres_complets
         const membre =
-          membres.find(
-            (m) => String(m.evangelise_member_id) === String(p.id)
-          ) || membres.find((m) => m.suivi_int_id === p.id);
+          membres.find((m) => String(m.evangelise_member_id) === String(p.id)) ||
+          membres.find((m) => m.suivi_int_id === p.id);
 
-        // 🔹 Trier les suivis par date décroissante
         const sortedSuivis = p.suivis.sort(
           (a, b) => new Date(b.date_suivi) - new Date(a.date_suivi)
         );
         const lastSuivi = sortedSuivis[0];
 
-        // 🔹 Calcul jours sans suivi
         const dateRef = lastSuivi?.date_suivi || p.created_at;
         const joursSansSuivi = Math.floor(
           (new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24)
         );
 
-        // 🔹 Calcul score
         let score = 100;
         if (p.status_suivi?.toLowerCase() === "non envoyé") score -= 40;
         if (joursSansSuivi > 7) score -= 25;
@@ -144,24 +144,15 @@ function SuiviAmesPage() {
         if (joursSansSuivi <= 3) score += 10;
         score = Math.max(0, Math.min(100, score));
 
-        // 🔹 Couleur selon score
         let couleur = "border-gray-500";
         if (score <= 30) couleur = "border-red-500 animate-pulse";
         else if (score <= 60) couleur = "border-orange-400";
         else if (score <= 80) couleur = "border-yellow-300";
         else couleur = "border-green-400";
 
-        // 🔹 Normalize helper
-        const normalize = (str) =>
-          str
-            ?.toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .trim();
-
         // 🔹 Déterminer responsable et type
         let responsable = "-";
-        let typeResponsable = "-";
+        let typeResponsable = "";
 
         const statutSuivi = normalize(lastSuivi?.status_suivis_evangelises || "");
 
@@ -183,7 +174,6 @@ function SuiviAmesPage() {
           }
         }
 
-        // 🔹 Dates Bapteme & Ministère
         const dateBapteme = membre ? baptemeMap[String(p.id)] : null;
         const debutMinistere = membre ? ministereMap[membre.id] : null;
 
@@ -199,7 +189,6 @@ function SuiviAmesPage() {
           typeResponsable,
           dateBapteme,
           debutMinistere,
-          statut: lastSuivi?.status_suivis_evangelises || p.status_suivi || "Non envoyé",
         };
       });
 
@@ -210,15 +199,26 @@ function SuiviAmesPage() {
     fetchData();
   }, [egliseId, brancheId]);
 
-  // ================= FILTER =================
-  const normalize = (str) =>
-    str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-
+  // ================= FILTERED DATA =================
   const filteredData = useMemo(() => {
     let d = [...data];
 
     if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
-    if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+    else if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+    else if (statusOptions.includes(filter)) {
+      const query = normalize(filter);
+      d = d.filter((p) => {
+        const envoi = normalize(p.status_suivi);
+        const suivi = normalize(p.lastSuivi?.status_suivis_evangelises);
+        return (
+          (query === "envoye" && envoi === "envoye") ||
+          (query === "non envoye" && envoi === "non envoyé") ||
+          (query === "en cours" && suivi === "en cours") ||
+          (query === "integre" && suivi === "integre") ||
+          (query === "refus" && suivi === "refus")
+        );
+      });
+    }
 
     if (search) {
       d = d.filter((p) =>
@@ -226,29 +226,11 @@ function SuiviAmesPage() {
       );
     }
 
-    if (statusQuery && statusQuery.toLowerCase() !== "all") {
-      const query = normalize(statusQuery);
-
-      d = d.filter((p) => {
-        const envoi = normalize(p.status_suivi);
-        const suivi = normalize(p.lastSuivi?.status_suivis_evangelises);
-
-        if (query === "envoye") return envoi === "envoye";
-        if (query === "non envoye") return envoi === "non envoyé";
-        if (query === "integre") return suivi === "integre";
-        if (query === "en cours") return suivi === "en cours";
-        if (query === "refus") return suivi === "refus";
-
-        return true;
-      });
-    }
-
     return d;
-  }, [data, filter, search, statusQuery]);
+  }, [data, filter, search]);
 
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  // ================= UI =================
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "#333699" }}>
       <HeaderPages />
@@ -256,7 +238,7 @@ function SuiviAmesPage() {
         De l’Évangélisation à l’Intégration
       </h1>
 
-      {/* FILTER */}
+      {/* SEARCH & FILTER */}
       <div className="flex gap-3 my-4 flex-wrap justify-center">
         <input
           placeholder="Rechercher..."
@@ -264,13 +246,31 @@ function SuiviAmesPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="p-2 rounded"
         />
-        <button onClick={() => setFilter("ALL")} className="bg-white px-3 py-1 rounded">
+        {statusOptions.map((status) => (
+          <button
+            key={status}
+            onClick={() => setFilter(status)}
+            className={`px-3 py-1 rounded ${filter === status ? "bg-blue-400 text-white" : "bg-white"}`}
+          >
+            {status}
+          </button>
+        ))}
+        <button
+          onClick={() => setFilter("ALL")}
+          className={`px-3 py-1 rounded ${filter === "ALL" ? "bg-blue-400 text-white" : "bg-white"}`}
+        >
           Tous
         </button>
-        <button onClick={() => setFilter("URGENT")} className="bg-red-300 px-3 py-1 rounded">
+        <button
+          onClick={() => setFilter("URGENT")}
+          className={`px-3 py-1 rounded ${filter === "URGENT" ? "bg-red-400 text-white" : "bg-white"}`}
+        >
           Urgents
         </button>
-        <button onClick={() => setFilter("STABLE")} className="bg-green-300 px-3 py-1 rounded">
+        <button
+          onClick={() => setFilter("STABLE")}
+          className={`px-3 py-1 rounded ${filter === "STABLE" ? "bg-green-400 text-white" : "bg-white"}`}
+        >
           Stables
         </button>
       </div>
@@ -296,7 +296,7 @@ function SuiviAmesPage() {
             <div key={p.id} className="mb-1">
               <div className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 border-l-4 ${p.couleur}`}>
                 <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
-                <div className="col-span-1 text-white text-center">{p.status_suivi}</div>
+                <div className="col-span-1 text-white text-center">{p.status_suivi || "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>
                 <div className="col-span-1 text-white text-center">{new Date(p.created_at).toLocaleDateString()}</div>
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
@@ -306,7 +306,7 @@ function SuiviAmesPage() {
                 <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.responsable}</div>
                 <div className="col-span-1 text-orange-400 text-center underline">
-                  <button onClick={() => toggle(p.id)}>Détails</button>
+                  <button onClick={(e) => { e.stopPropagation(); toggle(p.id); }}>Détails</button>
                 </div>
               </div>
 

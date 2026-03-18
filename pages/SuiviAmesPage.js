@@ -184,14 +184,18 @@ function SuiviAmesPage() {
     });
   }
 
-  // ===== FILTRE CELLULE =====
-  if (celluleQuery) {
-  d = d.filter((p) => (p.membre?.cellule_id || p.lastSuivi?.cellule_id) === celluleQuery);
-}
-
-if (conseillerQuery) {
-  d = d.filter((p) => (p.membre?.conseiller_id || p.lastSuivi?.conseiller_id) === conseillerQuery);
-}
+  // ===== FILTRE CELLULE & CONSEILLER =====
+        if (celluleQuery) {
+        d = d.filter(
+          (p) => (p.membre?.cellule_id || p.lastSuivi?.cellule_id) === celluleQuery
+        );
+      }
+      
+      if (conseillerQuery) {
+        d = d.filter(
+          (p) => (p.membre?.conseiller_id || p.lastSuivi?.conseiller_id) === conseillerQuery
+        );
+      }
 
   console.log("===== DEBUG FILTER =====");
   console.log("Cellule query:", celluleQuery);

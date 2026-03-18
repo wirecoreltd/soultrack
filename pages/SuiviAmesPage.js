@@ -23,6 +23,8 @@ function SuiviAmesPage() {
   const [filter, setFilter] = useState("ALL");  
   const searchParams = useSearchParams(); 
   const statusQuery = searchParams?.get("status"); 
+  const celluleQuery = searchParams?.get("cellule");
+  const conseillerQuery = searchParams?.get("conseiller");
 
   // ================= PROFILE =================
   useEffect(() => {
@@ -96,7 +98,7 @@ function SuiviAmesPage() {
 
       const baptemeMap = {};        
       baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });     
-     
+
       // ================= FINAL DATA =================
       const finalData = Object.values(map).map((p) => {
         const membre = membresMap[p.id];
@@ -151,10 +153,6 @@ function SuiviAmesPage() {
     fetchData();
   }, [egliseId, brancheId]);  
 
-  // ================= NORMALIZE =================
-  const normalize = (str) =>
-    str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-
   // ================= FILTERED DATA =================
   const filteredData = useMemo(() => {
     let d = [...data];
@@ -170,29 +168,32 @@ function SuiviAmesPage() {
       );
     }
 
-    // FILTRE STATUS (optionnel)
-    if (statusQuery && normalize(statusQuery) !== "all") {
-      const query = normalize(statusQuery);
-
+    // FILTRE STATUS
+    if (statusQuery && statusQuery.toLowerCase() !== "all") {
+      const query = statusQuery.toLowerCase().trim();
       d = d.filter((p) => {
-        const suiviStatus = normalize(p.lastSuivi?.status_suivis_evangelises);
-        const statusSuivi = normalize(p.status_suivi);
-
-        // ===== 1. FILTRE ENVOI =====
-        if (query === "envoye") return statusSuivi === "envoye";
-        if (query === "nonenvoye") return statusSuivi === "nonenvoye" || statusSuivi === "non envoye";
-
-        // ===== 2. FILTRE SUIVI =====
-        if (query === "integre") return suiviStatus === "integre";
+        const suiviStatus = p.lastSuivi?.status_suivis_evangelises?.toLowerCase().trim();
+        if (query === "envoyé") return p.status_suivi?.toLowerCase().trim() === "envoyé";
+        if (query === "non envoyé" || query === "nonenvoye") return p.status_suivi?.toLowerCase().trim() === "non envoyé";
+        if (query === "integré" || query === "intégré") return suiviStatus === "integré" || suiviStatus === "intégré";
         if (query === "en cours") return suiviStatus === "en cours";
         if (query === "refus") return suiviStatus === "refus";
-
         return true;
       });
     }
 
+    // FILTRE CELLULE
+    if (celluleQuery) {
+      d = d.filter((p) => p.cellule_id === celluleQuery);
+    }
+
+    // FILTRE CONSEILLER
+    if (conseillerQuery) {
+      d = d.filter((p) => p.conseiller_id === conseillerQuery);
+    }
+
     return d;
-  }, [data, filter, search, statusQuery]);
+  }, [data, filter, search, statusQuery, celluleQuery, conseillerQuery]);
 
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 

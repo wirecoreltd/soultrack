@@ -111,9 +111,13 @@ export default function RapportEvangelisation() {
       setShowTable(true);
     
       setTimeout(() => {
-        document.getElementById("rapport-table")?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-    };
+  const table = document.getElementById("rapport-table");
+  if (table) {
+    // Décaler de 200px au-dessus pour que ça commence juste après les filtres
+    const top = table.getBoundingClientRect().top + window.scrollY - 200;
+    window.scrollTo({ top, behavior: "smooth" });
+  }
+}, 100);
   
        // Fetch KPI
        const fetchKPI = async () => {

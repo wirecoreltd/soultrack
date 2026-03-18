@@ -100,7 +100,9 @@ function SuiviAmesPage() {
      
       // ================= FINAL DATA =================
       const finalData = Object.values(map).map((p) => {
-        const membre = membresMap[p.id];
+        const membre = membres.find(
+          (m) => String(m.evangelise_member_id) === String(p.id)
+        );
         const sortedSuivis = p.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
         const lastSuivi = sortedSuivis[0];
         const dateRef = lastSuivi?.date_suivi || p.created_at;
@@ -123,49 +125,51 @@ function SuiviAmesPage() {
         else couleur = "border-green-400";
 
         const normalize = (str) =>
-  str
-    ?.toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-
-let responsable = "-";
-let typeResponsable = "";
-
-const statutSuivi = normalize(lastSuivi?.status_suivis_evangelises);
-
-    // ===== EN COURS / REFUS =====
-    if (statutSuivi === "en cours" || statutSuivi === "refus") {
-      if (lastSuivi?.conseiller_id) {
-        responsable = profilesMap[lastSuivi.conseiller_id] || "-";
-        typeResponsable = "Conseiller";
-      } else if (lastSuivi?.cellule_id) {
-        responsable = cellulesMap[lastSuivi.cellule_id] || "-";
-        typeResponsable = "Cellule";
-      }
-    }
-    
-    // ===== INTEGRE =====
-    else if (statutSuivi === "integre") {
-      if (membre?.conseiller_id) {
-        responsable = profilesMap[membre.conseiller_id] || "-";
-        typeResponsable = "Conseiller";
-      } else if (membre?.cellule_id) {
-        responsable = cellulesMap[membre.cellule_id] || "-";
-        typeResponsable = "Cellule";
-      }
-    }
-    
-    // ===== FALLBACK =====
-    else {
-      if (lastSuivi?.conseiller_id) {
-        responsable = profilesMap[lastSuivi.conseiller_id] || "-";
-        typeResponsable = "Conseiller";
-      } else if (lastSuivi?.cellule_id) {
-        responsable = cellulesMap[lastSuivi.cellule_id] || "-";
-        typeResponsable = "Cellule";
-      }
-    }
+          str
+            ?.toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim();
+        
+        let responsable = "-";
+        let typeResponsable = "";
+        
+        const statutSuivi = normalize(lastSuivi?.status_suivis_evangelises || "");
+        
+        let responsable = "-";
+        let typeResponsable = "";
+        
+        // 🔍 sécuriser membre
+        const membreSafe = membres.find(
+          (m) => String(m.evangelise_member_id) === String(p.id)
+        );
+        
+        // ===== EN COURS / REFUS =====
+        if (statutSuivi.includes("en cours") || statutSuivi.includes("refus")) {
+          if (lastSuivi?.conseiller_id) {
+            responsable = profilesMap[lastSuivi.conseiller_id] || "-";
+          } else if (lastSuivi?.cellule_id) {
+            responsable = cellulesMap[lastSuivi.cellule_id] || "-";
+          }
+        }
+        
+        // ===== INTEGRE =====
+        else if (statutSuivi.includes("integre")) {
+          if (membreSafe?.conseiller_id) {
+            responsable = profilesMap[membreSafe.conseiller_id] || "-";
+          } else if (membreSafe?.cellule_id) {
+            responsable = cellulesMap[membreSafe.cellule_id] || "-";
+          }
+        }
+        
+        // ===== FALLBACK =====
+        else {
+          if (lastSuivi?.conseiller_id) {
+            responsable = profilesMap[lastSuivi.conseiller_id] || "-";
+          } else if (lastSuivi?.cellule_id) {
+            responsable = cellulesMap[lastSuivi.cellule_id] || "-";
+          }
+        }
         return {
           ...p,
           membre,
@@ -216,10 +220,10 @@ const statutSuivi = normalize(lastSuivi?.status_suivis_evangelises);
     
       d = d.filter((p) => {
         // ===== ENVOI =====
-        const envoi = normalize(p.status_suivi);
-    
-        if (query === "envoye") return envoi === "envoye";
-        if (query === "non envoye") return envoi === "non envoye";
+        const envoi = normalize(p.status_suivi || "");
+
+        if (query === "envoye") return envoi.includes("envoye");
+        if (query === "non envoye") return envoi.includes("non");
     
         // ===== SUIVI =====
         const suivi = normalize(p.lastSuivi?.status_suivis_evangelises);

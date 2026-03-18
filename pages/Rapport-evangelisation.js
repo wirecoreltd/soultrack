@@ -84,7 +84,7 @@ export default function RapportEvangelisation() {
           .select("*")
           .eq("eglise_id", egliseId)
           .eq("branche_id", brancheId)
-          .neq("statut", "supprimé");
+          .neq("statut", "supprime");
     
         setAllEvangelises(evangelisesData || []); // sauvegarder la source complète
     

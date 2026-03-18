@@ -150,14 +150,7 @@ function SuiviAmesPage() {
 
     fetchData();
   }, [egliseId, brancheId]);  
-
-  const normalize = (str) =>
-  str
-    ?.toLowerCase()
-    .normalize("NFD") // décompose les accents
-    .replace(/[\u0300-\u036f]/g, "") // supprime les diacritiques
-    .trim();
-
+  
   // ================= FILTERED DATA =================
   const filteredData = useMemo(() => {
     let d = [...data];
@@ -173,7 +166,15 @@ function SuiviAmesPage() {
       );
     }
 
-   // ================= FILTRE STATUS =================
+   // ================= NORMALIZE =================
+    const normalize = (str) =>
+      str
+        ?.toLowerCase()
+        .normalize("NFD") // décompose les accents
+        .replace(/[\u0300-\u036f]/g, "") // supprime les accents
+        .trim();
+    
+    // ================= FILTRE STATUS =================
     if (statusQuery && normalize(statusQuery) !== "all") {
       const query = normalize(statusQuery);
     
@@ -189,7 +190,7 @@ function SuiviAmesPage() {
         if (query === "encours") return suiviStatus === "en cours";
         if (query === "refus") return suiviStatus === "refus";
     
-        return true;
+        return true; // ✅ Par défaut, on garde l’élément
       });
     }
     

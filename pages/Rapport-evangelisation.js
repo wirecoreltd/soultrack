@@ -286,8 +286,13 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
   };
 
   //==================
-  const celluleQuery = searchParams.get("cellule");
-const conseillerQuery = searchParams.get("conseiller");
+  const handleCelluleClick = () => {
+  router.push("/SuiviAmesPage?cellule=true");
+};
+
+const handleConseillerClick = () => {
+  router.push("/SuiviAmesPage?conseiller=true");
+};
 
   // ---------------- UI ----------------
   return (

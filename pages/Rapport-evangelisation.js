@@ -116,6 +116,7 @@ export default function RapportEvangelisation() {
         block: "start",
       });
     }, 100);
+      ;
   
        // Fetch KPI
        const fetchKPI = async () => {

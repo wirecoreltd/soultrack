@@ -167,33 +167,27 @@ function SuiviAmesPage() {
       );
     }
 
-   // FILTRE STATUS (optionnel)
-      if (statusQuery && statusQuery.toLowerCase() !== "all") {
-        const query = statusQuery.toLowerCase().trim();
-      
-        d = d.filter((p) => {
-          // ===== 1. FILTRE ENVOI =====
-          if (query === "envoyé") {
-            return p.status_suivi?.toLowerCase().trim() === "envoyé";
-          }      
-          if (query === "non envoyé" || query === "nonenvoye") {
-            return p.status_suivi?.toLowerCase().trim() === "non envoyé";
-          }      
-          // ===== 2. FILTRE SUIVI =====
-          const suiviStatus = p.lastSuivi?.status_suivis_evangelises?.toLowerCase().trim();
-      
-          if (query === "integré" || query === "integre") {
-            return suiviStatus === "integré" || suiviStatus === "intégré";
-          }      
-          if (query === "en cours") {
-            return suiviStatus === "en cours";
-          }      
-          if (query === "refus") {
-            return suiviStatus === "refus";
-          }      
-          return true;
-        });
-      }
+  // FILTRE STATUS (optionnel)
+    if (statusQuery && statusQuery.toLowerCase() !== "all") {
+      const query = normalize(statusQuery);
+    
+      d = d.filter((p) => {
+        // ===== ENVOI =====
+        const envoi = normalize(p.status_suivi);
+    
+        if (query === "envoye") return envoi === "envoye";
+        if (query === "non envoye") return envoi === "non envoye";
+    
+        // ===== SUIVI =====
+        const suivi = normalize(p.lastSuivi?.status_suivis_evangelises);
+    
+        if (query === "integre") return suivi === "integre";
+        if (query === "en cours") return suivi === "en cours";
+        if (query === "refus") return suivi === "refus";
+    
+        return true;
+      });
+    }
 
     return d;
   }, [data, filter, search, statusQuery]);

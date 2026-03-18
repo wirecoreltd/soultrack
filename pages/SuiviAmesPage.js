@@ -122,44 +122,50 @@ function SuiviAmesPage() {
         else if (score <= 80) couleur = "border-yellow-300";
         else couleur = "border-green-400";
 
-        // ================= 
-        let responsable = "-";
-          let typeResponsable = "";
-          
-          const statutSuivi = lastSuivi?.status_suivis_evangelises;
-          
-          // ===== CAS 1 : EN COURS / REFUS =====
-          if (statutSuivi === "En cours" || statutSuivi === "Refus") {
-            if (lastSuivi?.conseiller_id) {
-              responsable = profilesMap[lastSuivi.conseiller_id] || "-";
-              typeResponsable = "Conseiller";
-            } else if (lastSuivi?.cellule_id) {
-              responsable = cellulesMap[lastSuivi.cellule_id] || "-";
-              typeResponsable = "Cellule";
-            }
-          }
-          
-          // ===== CAS 2 : INTÉGRÉ =====
-          else if (statutSuivi === "Intégré") {
-            if (membre?.conseiller_id) {
-              responsable = profilesMap[membre.conseiller_id] || "-";
-              typeResponsable = "Conseiller";
-            } else if (membre?.cellule_id) {
-              responsable = cellulesMap[membre.cellule_id] || "-";
-              typeResponsable = "Cellule";
-            }
-          }
-          
-          // ===== CAS PAR DÉFAUT =====
-          else {
-            if (lastSuivi?.conseiller_id) {
-              responsable = profilesMap[lastSuivi.conseiller_id] || "-";
-              typeResponsable = "Conseiller";
-            } else if (lastSuivi?.cellule_id) {
-              responsable = cellulesMap[lastSuivi.cellule_id] || "-";
-              typeResponsable = "Cellule";
-            }
-          }
+        const normalize = (str) =>
+  str
+    ?.toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
+let responsable = "-";
+let typeResponsable = "";
+
+const statutSuivi = normalize(lastSuivi?.status_suivis_evangelises);
+
+    // ===== EN COURS / REFUS =====
+    if (statutSuivi === "en cours" || statutSuivi === "refus") {
+      if (lastSuivi?.conseiller_id) {
+        responsable = profilesMap[lastSuivi.conseiller_id] || "-";
+        typeResponsable = "Conseiller";
+      } else if (lastSuivi?.cellule_id) {
+        responsable = cellulesMap[lastSuivi.cellule_id] || "-";
+        typeResponsable = "Cellule";
+      }
+    }
+    
+    // ===== INTEGRE =====
+    else if (statutSuivi === "integre") {
+      if (membre?.conseiller_id) {
+        responsable = profilesMap[membre.conseiller_id] || "-";
+        typeResponsable = "Conseiller";
+      } else if (membre?.cellule_id) {
+        responsable = cellulesMap[membre.cellule_id] || "-";
+        typeResponsable = "Cellule";
+      }
+    }
+    
+    // ===== FALLBACK =====
+    else {
+      if (lastSuivi?.conseiller_id) {
+        responsable = profilesMap[lastSuivi.conseiller_id] || "-";
+        typeResponsable = "Conseiller";
+      } else if (lastSuivi?.cellule_id) {
+        responsable = cellulesMap[lastSuivi.cellule_id] || "-";
+        typeResponsable = "Cellule";
+      }
+    }
         return {
           ...p,
           membre,

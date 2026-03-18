@@ -154,8 +154,8 @@ function SuiviAmesPage() {
   const normalize = (str) =>
   str
     ?.toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .normalize("NFD") // décompose les accents
+    .replace(/[\u0300-\u036f]/g, "") // supprime les diacritiques
     .trim();
 
   // ================= FILTERED DATA =================
@@ -173,35 +173,38 @@ function SuiviAmesPage() {
       );
     }
 
-   // FILTRE STATUS (optionnel)
-    if (statusQuery && statusQuery.toLowerCase() !== "all") {
-      const query = statusQuery.toLowerCase().trim();
+   // ================= FILTRE STATUS =================
+    if (statusQuery && normalize(statusQuery) !== "all") {
+      const query = normalize(statusQuery);
     
       d = d.filter((p) => {
         // ===== 1. FILTRE ENVOI =====
-        if (query === "envoyé") {
-          return p.status_suivi?.toLowerCase().trim() === "envoyé";
-        }
+        const statusSuivi = normalize(p.status_suivi);
+        if (query === "envoye") return statusSuivi === "envoye";
+        if (query === "nonenvoye") return statusSuivi === "nonenvoye";
     
-        if (query === "non envoyé" || query === "nonenvoye") {
-          return p.status_suivi?.toLowerCase().trim() === "non envoyé";
-        }
+        // ===== 2. FILTRE SUIVI =====
+        const suiviStatus = normalize(p.lastSuivi?.status_suivis_evangelises);
+        if (query === "integre") return suiviStatus === "integre";
+        if (query === "encours") return suiviStatus === "en cours";
+        if (query === "refus") return suiviStatus === "refus";
+    
+        return true;
+      });
+    }
     
         // ===== 2. FILTRE SUIVI =====
         const suiviStatus = p.lastSuivi?.status_suivis_evangelises?.toLowerCase().trim();
     
         if (query === "integré" || query === "integre") {
           return suiviStatus === "integré" || suiviStatus === "intégré";
-        }
-    
+        }    
         if (query === "en cours") {
           return suiviStatus === "en cours";
-        }
-    
+        }    
         if (query === "refus") {
           return suiviStatus === "refus";
-        }
-    
+        }    
         return true;
       });
     }

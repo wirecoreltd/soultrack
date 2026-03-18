@@ -157,33 +157,57 @@ function SuiviAmesPage() {
 
       // ================= FILTERED DATA =================
       const filteredData = useMemo(() => {
-      let d = [...data];
-    
-      // ... tous les filtres déjà existants ...
-    
-      // Debug : vérifier cellule et conseiller
-      console.log("===== DEBUG FILTER =====");
-      console.log("Cellule query:", celluleQuery);
-      console.log("Conseiller query:", conseillerQuery);
-      console.log("Avant filtre:", d.map(p => ({
-        id: p.id,
-        nom: p.nom,
-        cellule_id: p.cellule_id,
-        conseiller_id: p.conseiller_id
-      })));
-    
-      if (celluleQuery) {
-        d = d.filter((p) => String(p.cellule_id) === String(celluleQuery));
-        console.log("Après filtre cellule:", d.map(p => p.id));
-      }
-    
-      if (conseillerQuery) {
-        d = d.filter((p) => String(p.conseiller_id) === String(conseillerQuery));
-        console.log("Après filtre conseiller:", d.map(p => p.id));
-      }
-    
-      return d;
-    }, [data, filter, search, statusQuery, celluleQuery, conseillerQuery]);
+  let d = [...data];
+
+  // Filtre score
+  if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
+  if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+
+  // Filtre recherche
+  if (search) {
+    d = d.filter((p) =>
+      `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+
+  // ===== FILTRE STATUS =====
+  if (statusQuery && statusQuery.toLowerCase() !== "all") {
+    const query = statusQuery.toLowerCase().trim();
+    d = d.filter((p) => {
+      const suiviStatus = p.lastSuivi?.status_suivis_evangelises?.toLowerCase().trim();
+      if (query === "envoyé") return p.status_suivi?.toLowerCase().trim() === "envoyé";
+      if (query === "non envoyé" || query === "nonenvoye") return p.status_suivi?.toLowerCase().trim() === "non envoyé";
+      if (query === "integré" || query === "intégré") return suiviStatus === "integré" || suiviStatus === "intégré";
+      if (query === "en cours") return suiviStatus === "en cours";
+      if (query === "refus") return suiviStatus === "refus";
+      return true;
+    });
+  }
+
+  // ===== FILTRE CELLULE =====
+  if (celluleQuery) {
+    d = d.filter((p) => {
+      const celluleId = p.membre?.cellule_id || p.lastSuivi?.cellule_id || null;
+      return celluleId === celluleQuery;
+    });
+  }
+
+  // ===== FILTRE CONSEILLER =====
+  if (conseillerQuery) {
+    d = d.filter((p) => {
+      const conseillerId = p.membre?.conseiller_id || p.lastSuivi?.conseiller_id || null;
+      return conseillerId === conseillerQuery;
+    });
+  }
+
+  console.log("===== DEBUG FILTER =====");
+  console.log("Cellule query:", celluleQuery);
+  console.log("Conseiller query:", conseillerQuery);
+  console.log("Résultat après filtre:", d);
+  console.log("===== END DEBUG =====");
+
+  return d;
+}, [data, filter, search, statusQuery, celluleQuery, conseillerQuery]);
 
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 

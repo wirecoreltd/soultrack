@@ -25,6 +25,8 @@ function SuiviAmesPage() {
   const statusQuery = searchParams?.get("status"); 
   const celluleQuery = searchParams?.get("cellule");
   const conseillerQuery = searchParams?.get("conseiller");
+  const status = searchParams.get("status");
+  const filter = searchParams.get("filter");
 
   // ================= PROFILE =================
   useEffect(() => {
@@ -202,6 +204,23 @@ console.log("DATA SAMPLE:", d[0]);
         });
       }  
 
+    //===============================
+    let filtered = allSuivis;
+
+if (status && status !== "all") {
+  filtered = filtered.filter(
+    (e) => e.status_suivis_evangelises === status
+  );
+}
+
+if (filter === "cellule") {
+  filtered = filtered.filter((e) => e.cellule_id != null);
+}
+
+if (filter === "conseiller") {
+  filtered = filtered.filter((e) => e.conseiller_id != null);
+}
+    
     return d;
   }, [data, filter, search, statusQuery, celluleQuery, conseillerQuery]);
 

@@ -4,7 +4,6 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
-import { normalize } from "../utils/string";
 
 export default function SuiviAmesPageWrapper() {
   return (

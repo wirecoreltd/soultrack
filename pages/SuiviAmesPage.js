@@ -26,7 +26,7 @@ function SuiviAmesPage() {
   const celluleQuery = searchParams?.get("cellule");
   const conseillerQuery = searchParams?.get("conseiller");
   const status = searchParams.get("status");
-  const filter = searchParams.get("filter");
+  const filterQuery = searchParams.get("filter");
 
   // ================= PROFILE =================
   useEffect(() => {
@@ -213,7 +213,7 @@ if (status && status !== "all") {
   );
 }
 
-if (filter === "cellule") {
+if (filterQuery === "cellule") {
   filtered = filtered.filter((e) => e.cellule_id != null);
 }
 

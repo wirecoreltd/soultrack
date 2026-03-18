@@ -167,10 +167,17 @@ function SuiviAmesPage() {
       );
     }
 
-    // FILTRE STATUS (optionnel)
+   // FILTRE STATUS (optionnel)
     if (statusQuery && statusQuery.toLowerCase() !== "all") {
       const query = statusQuery.toLowerCase().trim();
-      d = d.filter((p) => p.status_suivi?.toLowerCase().trim() === query);
+    
+      d = d.filter((p) => {
+        if (!p.status_suivi) return false;
+        const status = p.status_suivi.toLowerCase().trim();
+        if (query === "envoyé") return status === "envoyé";
+        if (query === "non envoyé" || query === "nonenvoye") return status === "non envoyé";
+        return true; // si query autre que envoyé/non envoyé, tout afficher
+      });
     }
 
     return d;

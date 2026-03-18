@@ -540,7 +540,7 @@ const handleConseillerClick = () => {
                       <div className="grid grid-cols-2 gap-1 text-sm mt-1">
                         <div>Hommes: {monthTotals.hommes}</div>
                         <div>Femmes: {monthTotals.femmes}</div>     
-                        <div>Total: <span className="text-orange-400 font-semibold">{(Number(r.hommes) + Number(r.femmes)) ?? "-"}</span></div>
+                        <div>Total: <span className="text-orange-400 font-semibold">{monthTotals.hommes + monthTotals.femmes}</span></div>
                         <div>Prières: {monthTotals.priere}</div>
                         <div>NouvConv: {monthTotals.nouveau}</div>
                         <div>Recon: {monthTotals.reconciliation}</div>

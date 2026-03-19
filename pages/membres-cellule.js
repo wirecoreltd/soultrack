@@ -130,6 +130,17 @@ export default function MembresCellule() {
     4: "Refus",
   };
 
+    //==================
+     const formatDateFr = (dateString) => {
+    if (!dateString) return "—";
+    const d = new Date(dateString);
+    const day = d.getDate().toString().padStart(2, "0");
+    const months = [
+      "Janv","Févr","Mars","Avr","Mai","Juin",
+      "Juil","Août","Sept","Oct","Nov","Déc",
+    ];
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
   // ================= HELPERS =================
   const getCelluleNom = (celluleId) => {
     const c = cellules.find(c => c.id === celluleId);

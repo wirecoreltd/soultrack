@@ -218,10 +218,13 @@ export default function SuivisMembres() {
 };
 
   const filteredMembers = members.filter(m => {
-    const status = m.statut_suivis ?? 0;
-    if (showRefus) return status === 4;
-    return status === 1 || status === 2;
-  });
+  // 🔥 EXCLURE les supprimés
+  if (m.etat_contact === "supprime") return false;
+
+  const status = m.statut_suivis ?? 0;
+  if (showRefus) return status === 4;
+  return status === 1 || status === 2;
+});
   
   const uniqueMembers = Array.from(new Map(filteredMembers.map(i => [i.id, i])).values());
 

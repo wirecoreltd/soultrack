@@ -166,28 +166,27 @@ export default function MembresCellule() {
     return c?.cellule_full || "—";
   };
 
-  //===================
-     const renderMemberCard = (m) => {
-    const isOpen = detailsOpen[m.id];
-    const besoins = !m.besoin
-      ? "—"
-      : Array.isArray(m.besoin)
-      ? m.besoin.join(", ")
-      : (() => {
-          try {
-            const arr = JSON.parse(m.besoin);
-            return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-          } catch {
-            return m.besoin;
-          }
-        })();
-       
-       //======================
+  const renderMemberCard = (m) => {
+  const isOpen = detailsOpen[m.id];
+  const besoins = !m.besoin
+    ? "—"
+    : Array.isArray(m.besoin)
+    ? m.besoin.join(", ")
+    : (() => {
+        try {
+          const arr = JSON.parse(m.besoin);
+          return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+        } catch {
+          return m.besoin;
+        }
+      })();
+
   const getBorderColor = (m) => {
     if (m.besoin) return "#f97316";
     if (m.is_whatsapp) return "#22c55e";
     return "#3b82f6";
   };
+};
 
   const handleUpdateMember = (updated) => {
     setMembres(prev =>

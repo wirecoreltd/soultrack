@@ -52,6 +52,25 @@ export default function MembresCellule() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+    //=====================
+     const formatMinistere = (ministereJson, autreMinistere) => {
+    let ministereList = [];
+    if (ministereJson) {
+      try {
+        const parsed =
+          typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
+        ministereList = Array.isArray(parsed) ? parsed : [parsed];
+        ministereList = ministereList.filter((m) => m.toLowerCase() !== "autre");
+      } catch {
+        if (ministereJson.toLowerCase() !== "autre") ministereList = [ministereJson];
+      }
+    }
+    if (autreMinistere?.trim()) {
+      ministereList.push(autreMinistere.trim());
+    }
+    return ministereList.join(", ");
+  };
+
   // ================= FETCH =================
   useEffect(() => {
     const fetchData = async () => {

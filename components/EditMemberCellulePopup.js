@@ -267,94 +267,8 @@ export default function EditMemberCellulePopup({ member, cellules, conseillers, 
                 <option value="56-69 ans">56-69 ans</option>
                 <option value="70 ans et plus">70 ans et plus</option>
               </select>
-            </div>              
-
-          {/* Serviteur */}         
-          <div className="flex items-center gap-3 mt-3">
-            <label className="font-medium">
-              Définir en tant que serviteur
-            </label>
-            <input
-              type="checkbox"
-              name="star"
-              checked={formData.star}
-              onChange={handleChange}
-              className="accent-[#25297e]"
-            />
-          </div>
-            
-          {/* Ministere */}    
-          {formData.star && (
-            <div className="flex flex-col gap-2">
-              <label className="font-medium">Ministère</label>
-          
-              {ministereOptions.map((m) => (
-                <label
-                  key={m}
-                  className="flex items-center gap-3"
-                >
-                  <input
-                    type="checkbox"
-                    value={m}
-                    checked={formData.Ministere.includes(m)}
-                    onChange={(e) => {
-                      const { value, checked } = e.target;
-                      setFormData(prev => ({
-                        ...prev,
-                        Ministere: checked
-                          ? [...prev.Ministere, value]
-                          : prev.Ministere.filter(v => v !== value),
-                      }));
-                    }}
-                    className="accent-[#25297e]"
-                  />
-                  <span>{m}</span>
-                </label>
-              ))}
-          
-              {/* OPTION AUTRE */}
-              <label className="flex items-center gap-3 mt-2">
-                <input
-                  type="checkbox"
-                  checked={formData.Ministere.includes("Autre")}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setFormData(prev => ({
-                      ...prev,
-                      Ministere: checked
-                        ? [...prev.Ministere, "Autre"]
-                        : prev.Ministere.filter(v => v !== "Autre"),
-                    }));
-                    if (!checked) setAutreMinistere("");
-                  }}
-                  className="accent-[#25297e]"
-                />
-                <span>Autre</span>
-              </label>
-          
-              {/* CHAMP TEXTE AUTRE */}
-              {formData.Ministere.includes("Autre") && (
-                <input
-                  type="text"
-                  className="input mt-2"
-                  placeholder="Précisez le ministère"
-                  value={autreMinistere}
-                  onChange={(e) => setAutreMinistere(e.target.value)}
-                />
-              )}
-            </div>
-          )}
-          {/* État du contact */}
-          <div className="flex flex-col">
-            <label className="font-medium">État du contact</label>
-            <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="input">
-              <option value="">-- Sélectionner --</option>
-              <option value="nouveau">Nouveau</option>
-              <option value="existant">Existant</option>
-              <option value="inactif">Inactif</option>
-            </select>
-          </div>
-
+            </div>            
+         
             {/* Bapteme d'eau */}
               <div className="flex flex-col">
                 <label className="font-medium">Baptême d'eau</label>
@@ -473,37 +387,6 @@ export default function EditMemberCellulePopup({ member, cellules, conseillers, 
               </select>
             )}
           </div>
-
-          {/* Cellule */}
-          <div className="flex flex-col">
-            <label className="font-medium">Cellule</label>
-            <select
-              name="cellule_id"
-              value={formData.cellule_id ?? ""}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="">-- Cellule --</option>
-              {cellules.map(c => (
-                <option key={c.id} value={c.id}>{c.cellule_full}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="flex flex-col">
-            <label className="font-medium">Conseiller</label>
-            <select
-              name="conseiller_id"
-              value={formData.conseiller_id ?? ""}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="">-- Conseiller --</option>
-              {conseillers.map(c => (
-                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
-              ))}
-            </select>
-          </div>      
 
           {/* Besoins */}
           <div className="flex flex-col">

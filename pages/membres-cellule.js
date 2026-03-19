@@ -166,7 +166,10 @@ export default function MembresCellule() {
     return c?.cellule_full || "—";
   };
 
-  const besoins = !m.besoin
+  //===================
+     const renderMemberCard = (m) => {
+    const isOpen = detailsOpen[m.id];
+    const besoins = !m.besoin
       ? "—"
       : Array.isArray(m.besoin)
       ? m.besoin.join(", ")
@@ -176,7 +179,10 @@ export default function MembresCellule() {
             return Array.isArray(arr) ? arr.join(", ") : m.besoin;
           } catch {
             return m.besoin;
-
+          }
+        })();
+       
+       //======================
   const getBorderColor = (m) => {
     if (m.besoin) return "#f97316";
     if (m.is_whatsapp) return "#22c55e";

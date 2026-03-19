@@ -119,64 +119,49 @@ export default function RapportEvangelisation() {
     }, 100);
     };
   
-  //========fetch kpi
-       useEffect(() => {
-  if (!filteredEvangelises || !allSuivis) return;
-
-  // 🔥 KPI EVANGELISES
-  setTotalEnvoyes(
-    filteredEvangelises.filter(e => e.status_suivi === "Envoyé").length
-  );
-
-  // 🔥 KPI SUIVIS (déjà filtrés avec dates)
-  const normalize = (str) => (str ? str.trim() : "");
-
-  const integres = filteredSuivisState.filter(
-    (e) => normalize(e.status_suivis_evangelises) === "Intégré"
-  );
-
-  const enCours = filteredSuivisState.filter(
-    (e) => normalize(e.status_suivis_evangelises) === "En cours"
-  );
-
-  const refus = filteredSuivisState.filter(
-    (e) => normalize(e.status_suivis_evangelises) === "Refus"
-  );
-
-  setTotalIntegres(integres.length);
-  setTotalEncour(enCours.length);
-  setTotalRefus(refus.length);
-
-  setTotalCellule(
-    filteredSuivisState.filter((e) => e.cellule_id != null).length
-  );
-
-  setTotalEglise(
-    filteredSuivisState.filter((e) => e.conseiller_id != null).length
-  );
-
-}, [filteredEvangelises, filteredSuivisState]);
-  //==================
-
+       // Fetch KPI
+       const fetchKPI = async () => {
+    if (!egliseId || !brancheId) return;
   
+    try {
+      // ---------------- 1️⃣ Récupérer tous les évangélisés ----------------
+      let { data: evangelisesData } = await supabase
+        .from("evangelises")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
   
-     let { data: suivisData } = await supabase
-  .from("suivis_des_evangelises")
-  .select("*")
-  .eq("eglise_id", egliseId)
-  .eq("branche_id", brancheId);
-
-const filteredSuivis = (suivisData || []).filter((s) => {
+      setAllEvangelises(evangelisesData || []);
+  
+      let filtered = (evangelisesData || []).filter((e) => {
+        const dateOk =
+          (!dateDebut || new Date(e.created_at) >= new Date(dateDebut)) &&
+          (!dateFin || new Date(e.created_at) <= new Date(dateFin));
+        const typeOk = !typeFilter || typeFilter === "Tous" || e.type_evangelisation === typeFilter;
+        return dateOk && typeOk;
+      });
+  
+      setFilteredEvangelises(filtered);
+      setTotalEnvoyes(filtered.filter((e) => e.status_suivi === "Envoyé").length);
+  
+      // ---------------- 2️⃣ Suivis ----------------
+      let { data: suivisData } = await supabase
+        .from("suivis_des_evangelises")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
+  
+      setAllSuivis(suivisData || []);
+  
+      const filteredSuivis = (suivisData || []).filter((s) => {
   const dateOk =
     !dateDebut || (s.date_suivi && new Date(s.date_suivi) >= new Date(dateDebut));
-
   const dateFinOk =
     !dateFin || (s.date_suivi && new Date(s.date_suivi) <= new Date(dateFin));
-
   const typeOk =
     !typeFilter ||
     typeFilter === "Tous" ||
-    s.type_evangelisation === typeFilter;
+    (s.type_evangelisation && s.type_evangelisation === typeFilter);
 
   return dateOk && dateFinOk && typeOk;
 });

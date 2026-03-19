@@ -169,6 +169,7 @@ export default function MembresCellule() {
     //=========================
   const renderMemberCard = (m) => {
   const isOpen = detailsOpen[m.id];
+  {filteredMembres.map(m => {
   const besoins = !m.besoin
     ? "—"
     : Array.isArray(m.besoin)
@@ -180,8 +181,14 @@ export default function MembresCellule() {
         } catch {
           return m.besoin;
         }
-      })();  
-     };
+      })();
+
+  return (
+    <div
+      key={m.id}
+      className="bg-white p-4 rounded-2xl shadow-xl border-l-4"
+      style={{ borderLeftColor: getBorderColor(m) }}
+    >
 
   const handleUpdateMember = (updated) => {
     setMembres(prev =>

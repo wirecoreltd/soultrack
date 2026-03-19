@@ -180,23 +180,8 @@ export default function MembresCellule() {
         } catch {
           return m.besoin;
         }
-      })();
-
-  const getBorderColor = (member) => {
-    const etat = (member?.etat_contact || "").toLowerCase().trim();
-
-    switch (etat) {
-      case "nouveau":
-        return "#fb923c";
-      case "existant":
-        return "#4ade80";
-      case "inactif":
-        return "#9ca3af";
-      default:
-        return "#9ca3af";
-    }
-  };
-}; // ✅ ADD THIS
+      })();  
+     };
 
   const handleUpdateMember = (updated) => {
     setMembres(prev =>
@@ -214,7 +199,21 @@ export default function MembresCellule() {
       )
     );
 
-  // ================= RENDER =================
+ const getBorderColor = (member) => {
+  const etat = (member?.etat_contact || "").toLowerCase().trim();
+
+  switch (etat) {
+    case "nouveau":
+      return "#fb923c"; // orange
+    case "existant":
+      return "#4ade80"; // vert
+    case "inactif":
+      return "#9ca3af"; // gris
+    default:
+      return "#9ca3af";
+  }
+};
+    
   return (
     
   <div className="min-h-screen p-6" style={{ backgroundColor: "#333699" }}>

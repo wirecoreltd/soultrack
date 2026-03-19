@@ -166,15 +166,16 @@ export default function MembresCellule() {
     return c?.cellule_full || "—";
   };
 
-  const formatBesoin = (b) => {
-    if (!b) return "—";
-    try {
-      const arr = JSON.parse(b);
-      return Array.isArray(arr) ? arr.join(", ") : b;
-    } catch {
-      return b;
-    }
-  };
+  const besoins = !m.besoin
+      ? "—"
+      : Array.isArray(m.besoin)
+      ? m.besoin.join(", ")
+      : (() => {
+          try {
+            const arr = JSON.parse(m.besoin);
+            return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+          } catch {
+            return m.besoin;
 
   const getBorderColor = (m) => {
     if (m.besoin) return "#f97316";

@@ -122,6 +122,14 @@ export default function MembresCellule() {
     fetchData();
   }, []);
 
+    //=================
+     const statutSuiviLabels = {
+    1: "En attente",
+    2: "En Suivis",
+    3: "Intégré",
+    4: "Refus",
+  };
+
   // ================= HELPERS =================
   const getCelluleNom = (celluleId) => {
     const c = cellules.find(c => c.id === celluleId);

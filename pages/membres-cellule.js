@@ -181,12 +181,21 @@ export default function MembresCellule() {
         }
       })();
 
-  const getBorderColor = (m) => {
-    if (m.besoin) return "#f97316";
-    if (m.is_whatsapp) return "#22c55e";
-    return "#3b82f6";
-  };
-};
+   //---------------
+ const getBorderColor = (member) => {
+  const etat = (member?.etat_contact || "").toLowerCase().trim();
+
+  switch (etat) {
+    case "nouveau":
+      return "#fb923c"; // orange
+    case "existant":
+      return "#4ade80"; // vert
+    case "inactif":
+      return "#9ca3af"; // gris
+    default:
+      return "#9ca3af"; // gris par défaut
+  }
+};  ;
 
   const handleUpdateMember = (updated) => {
     setMembres(prev =>

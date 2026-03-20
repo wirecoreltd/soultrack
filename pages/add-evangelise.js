@@ -193,13 +193,13 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
           <div className="flex justify-center">
-          <input
-            type="date"
-            className="input w-auto text-center"
-            value={formData.date}
-            onChange={e => setFormData({ ...formData, date: e.target.value })}
-          />
-        </div>
+            <input
+              type="date"
+              className="input w-auto text-center"
+              value={formData.date}
+              onChange={e => setFormData({ ...formData, date: e.target.value })}
+            />
+          </div>
   
           {/* Type Evangelisation */}
           <select

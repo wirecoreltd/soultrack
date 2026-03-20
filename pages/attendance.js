@@ -62,6 +62,22 @@ function Attendance() {
     loadSuperviseur();
   }, []);
 
+   // ✅ Calcul des KPI existants
+  const totalHommes = membresComplet.filter(m => m.sexe === 'Homme').length;
+  const totalFemmes = membresComplet.filter(m => m.sexe === 'Femme').length;
+  const totalJeunes = membresComplet.filter(m => m.age && m.age < 30).length;
+  const totalEnfants = membresComplet.filter(m => m.age && m.age < 13).length;
+  const totalConnectes = membresComplet.filter(m => m.connecte === true).length;
+  const totalNouveauxVenus = membresComplet.filter(m => m.date_premiere_visite).length;
+  const totalNouveauxConvertis = membresComplet.filter(m => m.type_conversion === 'Nouveau converti').length;
+  const totalGeneral = membresComplet.length;
+
+  // ✅ Calcul des KPI “croissance de l’église”
+  const fidelesSuivis = membresComplet.filter(m => m.statut_suivis === 'Existant').length;
+  const baptismesAVenir = membresComplet.filter(m => m.bapteme_eau === 'Non').length;
+  const futursLeaders = membresComplet.filter(m => m.star === '3').length;
+  const besoinsCritiques = membresComplet.filter(m => m.besoin && m.besoin.length > 0).length;
+
   /*===========*/
   // Fonction utilitaire pour splitter le texte en lignes de max 15 caractères
 const splitTypeName = (name, lineLength = 15) => {

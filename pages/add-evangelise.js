@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
+import { useRef } from "react";
 
 export default function AddEvangelise({ onNewEvangelise }) {
   const router = useRouter();
@@ -40,6 +41,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
     "Communauté / Isolement","Dépression / Santé mentale"
   ];
 
+
+
   // Récupérer eglise_id et branche_id
   useEffect(() => {
     const fetchUserEglise = async () => {
@@ -63,6 +66,14 @@ export default function AddEvangelise({ onNewEvangelise }) {
     fetchUserEglise();
   }, []);
 
+  //===================
+  const successRef = useRef(null);
+  
+      useEffect(() => {
+      if (success && successRef.current) {
+        successRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, [success]);
   // Vérification du token si présent
   useEffect(() => {
     if (!token) return;
@@ -296,7 +307,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
           </div>
         </form>
 
-        {success && <p className="text-green-600 font-semibold text-center mt-3">✅ Personne évangélisée ajoutée avec succès !</p>}
+        {success && (<p ref={successRef} className="text-green-600 font-semibold text-center mt-3" > ✅ Personne évangélisée ajoutée avec succès ! </p>)}
 
         <style jsx>{`.input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ccc; }`}</style>
       </div>

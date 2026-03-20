@@ -327,8 +327,7 @@ export default function EditEvangelisePopup({
             >
               {loading ? "Enregistrement..." : "Sauvegarder"}
             </button>
-          </div>
-        </div>
+          </div>        
 
         <style jsx>{`
           .input {

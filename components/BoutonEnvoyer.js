@@ -20,7 +20,7 @@ export default function BoutonEnvoyer({
 
   const statutIds = { envoye: 1, en_attente: 2, integrer: 3, refus: 4 };
 
-  // 🔹 Envoi WhatsApp
+  // 🔹 WhatsApp
   const sendWhatsApp = (phone, message) => {
     if (!phone) {
       alert("❌ Numéro invalide");
@@ -32,7 +32,7 @@ export default function BoutonEnvoyer({
     window.open(url, "_blank");
   };
 
-  // 🔹 Vérification doublon
+  // 🔹 Doublon
   const checkDoublon = async () => {
     if (!membre.telephone) return false;
 
@@ -50,16 +50,17 @@ export default function BoutonEnvoyer({
     return data.length > 0;
   };
 
-  // 🔹 Envoi final WhatsApp
+  // 🔹 ENVOI WHATSAPP FINAL
   const sendToWhatsapp = () => {
     if (!phoneNumber) {
-      alert("❌ Numéro invalide");
+      alert("❌ Veuillez saisir un numéro");
       return;
     }
 
     sendWhatsApp(phoneNumber, currentMessage);
   };
 
+  // 🔹 HANDLE CLICK PRINCIPAL
   const handleClick = async () => {
     if (!session) {
       alert("❌ Vous devez être connecté.");
@@ -67,14 +68,14 @@ export default function BoutonEnvoyer({
     }
 
     try {
-      // 🔹 Doublon
+      // Doublon
       if (await checkDoublon()) {
         setDoublonDetected(true);
         setShowDoublonPopup(true);
         return;
       }
 
-      // 🔹 Responsable
+      // Responsable
       let responsablePrenom = "";
       let responsableTelephone = "";
 
@@ -106,7 +107,7 @@ export default function BoutonEnvoyer({
         responsableTelephone = cible;
       }
 
-      // 🔹 Message
+      // Message WhatsApp
       const message = `👋 Bonjour ${responsablePrenom},
 
 Nous te confions cette nouvelle personne avec joie 🙏  
@@ -121,22 +122,17 @@ Merci pour ton engagement et ton cœur pour le suivi des âmes ✨
 🎗️ Sexe : ${membre.sexe || "—"}
 ⏳ Age : ${membre.age || "—"}
 📱 Téléphone : ${membre.telephone || "—"}
-💬 WhatsApp : ${membre.is_whatsapp ? "Oui" : "Non"}
 
 ✨ Raison : ${membre.statut_initial || "—"}
-🙏 Prière du salut : ${membre.priere_salut ? "Oui" : "Non"}
-☀️ Type : ${membre.type_conversion || "—"}
-
-📝 Infos : ${membre.infos_supplementaires || "—"}
 
 Merci pour ton accompagnement ❤️`;
 
-      // 🔹 Afficher popup WhatsApp
+      // 🔹 IMPORTANT : on ouvre TOUJOURS le popup
       setCurrentMessage(message);
-      setPhoneNumber(responsableTelephone || "");
+      setPhoneNumber(responsableTelephone || membre.telephone || "");
       setShowWhatsappPopup(true);
 
-      // 🔹 Mise à jour DB
+      // 🔹 Update DB
       const now = new Date().toISOString();
 
       const { data, error } = await supabase
@@ -164,15 +160,11 @@ Merci pour ton accompagnement ❤️`;
       if (error) {
         console.error(error);
         alert("❌ Erreur mise à jour");
-        return;
       }
 
       if (onEnvoyer) onEnvoyer(data);
 
-      if (showToast)
-        showToast(
-          `✅ ${membre.prenom} ${membre.nom} prêt à être envoyé`
-        );
+      if (showToast) showToast("✅ Membre prêt à être envoyé");
     } catch (err) {
       console.error(err);
       alert(err.message);
@@ -184,71 +176,35 @@ Merci pour ton accompagnement ❤️`;
 
   return (
     <>
-      {/* 🔹 Bouton principal */}
+      {/* Bouton principal */}
       <button
         onClick={handleClick}
         disabled={loading}
-        className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg ${
-          loading
-            ? "bg-gray-400"
-            : "bg-green-500 hover:bg-green-600"
-        }`}
+        className="w-full bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-lg"
       >
         📤 Envoyer par WhatsApp
       </button>
 
-      {/* 🔹 Popup Doublon */}
-      {showDoublonPopup && doublonDetected && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-96 text-center">
-            <h3 className="font-bold mb-3">
-              ⚠️ Doublon détecté
-            </h3>
-            <p className="mb-4">
-              Ce numéro existe déjà.
-            </p>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowDoublonPopup(false)}
-                className="flex-1 bg-gray-300 py-2 rounded"
-              >
-                Annuler
-              </button>
-
-              <button
-                onClick={() => {
-                  setShowDoublonPopup(false);
-                  setShowWhatsappPopup(true);
-                }}
-                className="flex-1 bg-green-500 text-white py-2 rounded"
-              >
-                Envoyer quand même
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 🔹 Popup WhatsApp */}
+      {/* Popup WhatsApp */}
       {showWhatsappPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
+
             <h2 className="text-xl font-bold mb-3">
               Envoyer le membre
             </h2>
 
-            <p className="mb-4 text-gray-700">
-              Vérifiez ou modifiez le numéro avant envoi.
+            <p className="text-gray-700 mb-4">
+              Cliquez sur <b>Envoyer</b> si le contact figure déjà dans WhatsApp,
+              ou saisissez un numéro manuellement.
             </p>
 
             <input
               type="text"
+              placeholder="Numéro (ex: +2305xxxxxxx)"
               value={phoneNumber}
-              onChange={(e) =>
-                setPhoneNumber(e.target.value)
-              }
-              className="w-full border rounded-xl px-4 py-3 mb-4"
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4"
             />
 
             <div className="flex gap-3">
@@ -257,7 +213,7 @@ Merci pour ton accompagnement ❤️`;
                   setShowWhatsappPopup(false);
                   setPhoneNumber("");
                 }}
-                className="flex-1 bg-gray-300 py-3 rounded-xl"
+                className="flex-1 py-3 bg-gray-300 rounded-2xl font-semibold"
               >
                 Annuler
               </button>
@@ -268,11 +224,12 @@ Merci pour ton accompagnement ❤️`;
                   setShowWhatsappPopup(false);
                   setPhoneNumber("");
                 }}
-                className="flex-1 bg-green-500 text-white py-3 rounded-xl"
+                className="flex-1 py-3 bg-green-500 text-white rounded-2xl font-semibold"
               >
                 Envoyer
               </button>
             </div>
+
           </div>
         </div>
       )}

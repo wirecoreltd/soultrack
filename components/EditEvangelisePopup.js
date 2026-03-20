@@ -17,14 +17,18 @@ export default function EditEvangelisePopup({
   const [formData, setFormData] = useState({
     prenom: member.prenom || "",
     nom: member.nom || "",
+    sexe: member.sexe || "",
+    age: member.age || "",
     telephone: member.telephone || "",
     ville: member.ville || "",
+    type_evangelisation: member.type_evangelisation || "",
     besoin: initialBesoin,
     autreBesoin: "",
     infos_supplementaires: member.infos_supplementaires || "",
     priere_salut: member.priere_salut || false,
     type_conversion: member.type_conversion || "",
     is_whatsapp: member.is_whatsapp || false,
+    date_evangelise: member.date_evangelise || "",
   });
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -69,13 +73,17 @@ export default function EditEvangelisePopup({
     const cleanData = {
       prenom: formData.prenom,
       nom: formData.nom,
+      sexe: formData.sexe,
+      age: formData.age,
       telephone: formData.telephone,
       ville: formData.ville || null,
+      type_evangelisation: formData.type_evangelisation,
       infos_supplementaires: formData.infos_supplementaires || null,
       besoin: JSON.stringify(besoinsFinal),
       priere_salut: formData.priere_salut,
       type_conversion: formData.type_conversion,
       is_whatsapp: formData.is_whatsapp,
+      date_evangelise: formData.date_evangelise,
     };
 
     const { data, error } = await supabase
@@ -118,19 +126,72 @@ export default function EditEvangelisePopup({
           Modifier {member.prenom} {member.nom}
         </h2>
 
-        <div className="flex flex-col gap-4 text-white">
-          {["prenom", "nom", "ville", "telephone"].map((f) => (
-            <div key={f} className="flex flex-col">
-              <label className="font-semibold capitalize">{f}</label>
-              <input
-                name={f}
-                value={formData[f]}
-                onChange={handleChange}
-                className="input"
-              />
-            </div>
-          ))}
-
+        {/* Civilité */}
+          <select
+            className="input"
+            value={formData.sexe}
+            onChange={e => setFormData({ ...formData, sexe: e.target.value })}
+            required
+          >
+            <option value="">Civilité</option>
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
+          </select>
+          
+          {/* Prénom */}
+          <input
+            name="prenom"
+            value={formData.prenom}
+            onChange={handleChange}
+            className="input"
+            placeholder="Prénom"
+          />
+          
+          {/* Nom */}
+          <input
+            name="nom"
+            value={formData.nom}
+            onChange={handleChange}
+            className="input"
+            placeholder="Nom"
+          />
+          
+          {/* Age */}
+          <select
+            name="age"
+            value={formData.age}
+            onChange={handleChange}
+            className="input"
+          >
+            <option value="">-- Tranche d'âge --</option>
+            <option value="12-17 ans">12-17 ans</option>
+            <option value="18-25 ans">18-25 ans</option>
+            <option value="26-30 ans">26-30 ans</option>
+            <option value="31-40 ans">31-40 ans</option>
+            <option value="41-55 ans">41-55 ans</option>
+            <option value="56-69 ans">56-69 ans</option>
+            <option value="70 ans et plus">70 ans et plus</option>
+          </select>
+          
+          {/* Ville */}
+          <input
+            name="ville"
+            value={formData.ville}
+            onChange={handleChange}
+            className="input"
+            placeholder="Ville"
+          />
+          
+          {/* Téléphone */}
+          <input
+            name="telephone"
+            value={formData.telephone}
+            onChange={handleChange}
+            className="input"
+            placeholder="Téléphone"
+          />
+          
+          {/* WhatsApp */}
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -141,41 +202,67 @@ export default function EditEvangelisePopup({
             />
             WhatsApp
           </label>
-
+          
+          {/* Type d'évangélisation */}
+          <select
+            className="input"
+            value={formData.type_evangelisation}
+            onChange={e => setFormData({ ...formData, type_evangelisation: e.target.value })}
+            required
+          >
+            <option value="">Type d'Evangélisation</option>
+            <option value="Individuel">Individuel</option>
+            <option value="Sortie de groupe">Sortie de groupe</option>
+            <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
+            <option value="Évangélisation de rue">Évangélisation de rue</option>
+            <option value="Évangélisation maison">Évangélisation maison</option>
+            <option value="Évangélisation stade">Évangélisation stade</option>
+          </select>
+          
+          {/* Date Evangelisation */}
+          <div className="flex justify-center w-full">
+            <input
+              type="date"
+              className="input w-auto text-center"
+              value={formData.date_evangelise}
+              onChange={e => setFormData({ ...formData, date_evangelise: e.target.value })}
+            />
+          </div>
+          
           {/* Prière du salut */}
+          <select
+            className="input"
+            value={formData.priere_salut ? "Oui" : "Non"}
+            required
+            onChange={(e) => {
+              const value = e.target.value;
+              setFormData({
+                ...formData,
+                priere_salut: value === "Oui",
+                type_conversion: value === "Oui" ? formData.type_conversion : "",
+              });
+            }}
+          >
+            <option value="">-- Prière du salut ? --</option>
+            <option value="Oui">Oui</option>
+            <option value="Non">Non</option>
+          </select>
+          
+          {/* Type conversion */}
+          {formData.priere_salut && (
             <select
               className="input"
-              value={formData.priere_salut ? "Oui" : "Non"}
+              value={formData.type_conversion || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, type_conversion: e.target.value })
+              }
               required
-              onChange={(e) => {
-                const value = e.target.value;
-                setFormData({
-                  ...formData,
-                  priere_salut: value === "Oui", // conversion en boolean pour Supabase
-                  type_conversion: value === "Oui" ? formData.type_conversion : "",
-                });
-              }}
             >
-              <option value="" className="text-black">-- Prière du salut ? --</option>
-              <option value="Oui" className="text-black">Oui</option>
-              <option value="Non" className="text-black">Non</option>
+              <option value="">Type</option>
+              <option value="Nouveau converti">Nouveau converti</option>
+              <option value="Réconciliation">Réconciliation</option>
             </select>
-            
-            {/* Type de conversion */}
-            {formData.priere_salut && (
-              <select
-                className="input"
-                value={formData.type_conversion || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, type_conversion: e.target.value })
-                }
-                required
-              >
-                <option value="" className="text-black">Type</option>
-                <option value="Nouveau converti" className="text-black">Nouveau converti</option>
-                <option value="Réconciliation" className="text-black">Réconciliation</option>
-              </select>
-            )}
+          )}
 
           <div className="flex flex-col">
             <label className="font-semibold">Besoins</label>

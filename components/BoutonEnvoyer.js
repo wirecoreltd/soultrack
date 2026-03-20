@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
@@ -11,6 +12,7 @@ export default function BoutonEnvoyer({
   showToast
 }) {
   const [loading, setLoading] = useState(false);
+
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
   const [doublonDetected, setDoublonDetected] = useState(false);
 
@@ -18,9 +20,16 @@ export default function BoutonEnvoyer({
   const [manualPhone, setManualPhone] = useState("");
   const [messageToSend, setMessageToSend] = useState("");
 
-  const statutIds = { envoye: 1, en_attente: 2, integrer: 3, refus: 4 };
+  const statutIds = {
+    envoye: 1,
+    en_attente: 2,
+    integrer: 3,
+    refus: 4
+  };
 
-  // Vérification doublon
+  // =========================
+  // 🔹 Vérification doublon
+  // =========================
   const checkDoublon = async () => {
     if (!membre.telephone) return false;
 
@@ -38,8 +47,10 @@ export default function BoutonEnvoyer({
     return data.length > 0;
   };
 
-  // Construction message + responsable
-  const buildData = async () => {
+  // =========================
+  // 🔹 Construction message + responsable
+  // =========================
+  const buildMessage = async () => {
     let responsablePrenom = "";
     let responsableTelephone = "";
 
@@ -58,6 +69,7 @@ export default function BoutonEnvoyer({
 
       responsablePrenom = resp.prenom;
       responsableTelephone = resp.telephone;
+
       cible.cellule_full = cellule.cellule_full;
     }
 
@@ -102,13 +114,12 @@ export default function BoutonEnvoyer({
     }\n\n`;
     message += "Merci pour ton accompagnement ❤️";
 
-    return {
-      message,
-      responsablePrenom,
-      responsableTelephone
-    };
+    return { message, responsableTelephone };
   };
 
+  // =========================
+  // 🔹 Click principal
+  // =========================
   const handleClick = async () => {
     if (!session) {
       alert("❌ Vous devez être connecté.");
@@ -118,10 +129,9 @@ export default function BoutonEnvoyer({
     try {
       setLoading(true);
 
-      const { message, responsablePrenom, responsableTelephone } =
-        await buildData();
+      const { message, responsableTelephone } = await buildMessage();
 
-      // 🔹 Vérification doublon
+      // 🔹 Doublon
       if (await checkDoublon()) {
         setDoublonDetected(true);
         setShowDoublonPopup(true);
@@ -131,85 +141,79 @@ export default function BoutonEnvoyer({
         return;
       }
 
+      // 🔹 Préparer popup WhatsApp
       setMessageToSend(message);
       setManualPhone(responsableTelephone || "");
       setShowWhatsappPopup(true);
-      setLoading(false);
+
     } catch (err) {
       console.error(err);
       alert(`❌ ${err.message}`);
+    } finally {
       setLoading(false);
     }
   };
 
-  // Envoi WhatsApp
+  // =========================
+  // 🔹 Envoi WhatsApp
+  // =========================
   const sendToWhatsapp = async () => {
     const phone = manualPhone?.replace(/\D/g, "");
 
-   const sendToWhatsapp = async () => {
-  const phone = manualPhone?.replace(/\D/g, "");
+    const whatsappLink = phone
+      ? `https://wa.me/${phone}?text=${encodeURIComponent(messageToSend)}`
+      : `https://wa.me/?text=${encodeURIComponent(messageToSend)}`;
 
-  let whatsappLink;
+    window.open(whatsappLink, "_blank");
 
-  // ✅ Si numéro fourni → envoi direct
-  if (phone) {
-    whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(
-      messageToSend
-    )}`;
-  } else {
-    // ✅ Si vide → ouvrir WhatsApp sans contact (choix manuel)
-    whatsappLink = `https://wa.me/?text=${encodeURIComponent(
-      messageToSend
-    )}`;
-  }
+    try {
+      const now = new Date().toISOString();
 
-  window.open(whatsappLink, "_blank");
+      const { data, error } = await supabase
+        .from("membres_complets")
+        .update({
+          statut: "actif",
+          statut_suivis: statutIds.envoye,
+          cellule_id: type === "cellule" ? cible.id : null,
+          conseiller_id: type === "conseiller" ? cible.id : null,
+          suivi_cellule_nom:
+            type === "cellule" ? cible.cellule_full : null,
+          suivi_responsable:
+            type === "conseiller"
+              ? `${cible.prenom} ${cible.nom}`
+              : null,
+          suivi_responsable_id:
+            type === "conseiller" ? cible.id : null,
+          etat_contact: "Existant",
+          date_envoi_suivi: now
+        })
+        .eq("id", membre.id)
+        .select()
+        .single();
 
-  try {
-    const now = new Date().toISOString();
+      if (error) {
+        console.error(error);
+        alert("❌ Erreur mise à jour Supabase");
+        return;
+      }
 
-    const { data, error } = await supabase
-      .from("membres_complets")
-      .update({
-        statut: "actif",
-        statut_suivis: statutIds.envoye,
-        cellule_id: type === "cellule" ? cible.id : null,
-        conseiller_id: type === "conseiller" ? cible.id : null,
-        suivi_cellule_nom:
-          type === "cellule" ? cible.cellule_full : null,
-        suivi_responsable:
-          type === "conseiller"
-            ? `${cible.prenom} ${cible.nom}`
-            : null,
-        suivi_responsable_id:
-          type === "conseiller" ? cible.id : null,
-        etat_contact: "Existant",
-        date_envoi_suivi: now
-      })
-      .eq("id", membre.id)
-      .select()
-      .single();
+      if (onEnvoyer) onEnvoyer(data);
 
-    if (error) {
-      console.error(error);
-      alert("❌ Erreur update Supabase");
-      return;
+      if (showToast) {
+        showToast(`✅ ${membre.prenom} ${membre.nom} envoyé`);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setShowWhatsappPopup(false);
+      setShowDoublonPopup(false);
+      setDoublonDetected(false);
     }
+  };
 
-    if (onEnvoyer) onEnvoyer(data);
-
-    if (showToast) {
-      showToast(`✅ ${membre.prenom} ${membre.nom} envoyé`);
-    }
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setShowWhatsappPopup(false);
-    setShowDoublonPopup(false);
-    setDoublonDetected(false);
-  }
-};
-
+  // =========================
+  // 🔹 UI
+  // =========================
   return (
     <>
       <button
@@ -224,11 +228,13 @@ export default function BoutonEnvoyer({
         {loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
       </button>
 
-      {/* Popup doublon */}
+      {/* ================= POPUP DOUBLON ================= */}
       {showDoublonPopup && doublonDetected && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl w-96 text-center">
-            <h3 className="font-bold text-lg mb-3">⚠️ Doublon détecté</h3>
+            <h3 className="font-bold text-lg mb-3">
+              ⚠️ Doublon détecté
+            </h3>
             <p className="mb-4">
               Ce numéro ({membre.telephone}) existe déjà.
             </p>
@@ -252,10 +258,11 @@ export default function BoutonEnvoyer({
         </div>
       )}
 
-      {/* Popup WhatsApp */}
+      {/* ================= POPUP WHATSAPP ================= */}
       {showWhatsappPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+
             <p className="text-gray-700 mb-4">
               Cliquez sur <b>Envoyer</b> si le contact figure déjà dans WhatsApp,
               ou saisissez un numéro manuellement.
@@ -284,6 +291,7 @@ export default function BoutonEnvoyer({
                 Annuler
               </button>
             </div>
+
           </div>
         </div>
       )}

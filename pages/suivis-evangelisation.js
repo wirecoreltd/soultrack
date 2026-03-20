@@ -31,6 +31,8 @@ export default function SuivisEvangelisation() {
   const [showRefus, setShowRefus] = useState(false);
   const [user, setUser] = useState(null);
   const [phoneMenuId, setPhoneMenuId] = useState(null);
+  const [showWhatsappPopup, setShowWhatsappPopup] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");  
   const phoneMenuRef = useRef(null); 
   const [view, setView] = useState(() => {
   if (typeof window !== "undefined") {
@@ -573,6 +575,14 @@ export default function SuivisEvangelisation() {
                           >
                             ✏️ Modifier le contact
                           </button>
+                              <div className="mt-2 rounded-xl w-full p-4 bg-white">
+                                <button
+                                  onClick={() => setShowWhatsappPopup(true)}
+                                  className="w-full py-2 rounded-md bg-green-500 text-white shadow-md"
+                                >
+                                  📤 Envoyer WhatsApp
+                                </button>
+                              </div>
                         </div>
                       )}
               </div>
@@ -699,6 +709,66 @@ export default function SuivisEvangelisation() {
         }}
       />
     )}
+{showWhatsappPopup && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
+
+      <h2 className="text-xl font-bold mb-3">
+        Envoyer via WhatsApp
+      </h2>
+
+      <p className="text-gray-700 mb-4">
+        Saisissez un numéro ou utilisez celui du contact.
+      </p>
+
+      <input
+        type="text"
+        placeholder="Numéro (ex: +2305xxxxxxx)"
+        value={phoneNumber}
+        onChange={(e) => setPhoneNumber(e.target.value)}
+        className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4"
+      />
+
+      <div className="flex gap-3">
+        <button
+          onClick={() => {
+            setShowWhatsappPopup(false);
+            setPhoneNumber("");
+          }}
+          className="flex-1 py-3 bg-gray-300 rounded-2xl font-semibold"
+        >
+          Annuler
+        </button>
+
+        <button
+          onClick={() => {
+            const num = (phoneNumber || member.telephone || "").replace(/\D/g, "");
+
+            if (!num) {
+              alert("Numéro invalide");
+              return;
+            }
+
+            const message = encodeURIComponent(
+              `Bonjour ${member.prenom}, nous souhaitons faire un suivi avec vous 🙏`
+            );
+
+            const link = `https://wa.me/${num}?text=${message}`;
+
+            window.open(link, "_blank");
+
+            setShowWhatsappPopup(false);
+            setPhoneNumber("");
+          }}
+          className="flex-1 py-3 bg-green-500 text-white rounded-2xl font-semibold"
+        >
+          Envoyer
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
 <Footer />
   </div>
 );

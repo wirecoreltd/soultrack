@@ -137,8 +137,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
       is_whatsapp: formData.is_whatsapp,
       eglise_id: formData.eglise_id,
       branche_id: formData.branche_id,
-      type_evangelisation: formData.type_evangelisation,
-      date: formData.date,
+      type_evangelisation: formData.type_evangelisation,      
       date_evangelise: formData.date_evangelise,
     };
 

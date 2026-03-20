@@ -508,7 +508,7 @@ const calculateTypeTotals = (rows) => {
                 <div className="kpi-value text-3xl font-bold">{besoinsCritiques}</div>
                 <div className="kpi-label mt-2 text-sm">Besoins Critiques</div>
               </div>
-          
+          </div>
             </div>
 
      

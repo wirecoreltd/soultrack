@@ -578,9 +578,7 @@ const canAddMember =
           } catch {
             return m.besoin;
           }
-        })();
-
-    console.log("ROLE ACTUEL:", role);    
+        })();    
 
     return (
    

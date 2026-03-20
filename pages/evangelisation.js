@@ -249,7 +249,7 @@ export default function Evangelisation() {
         evangelise_id: m.id,
         conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
         cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
-        Date_Evangelise: date_evangelise,
+        date_evangelise: m.date_evangelise,
         date_suivi: new Date().toISOString(),
         eglise_id: profile?.eglise_id || null,
         branche_id: profile?.branche_id || null,
@@ -279,17 +279,26 @@ export default function Evangelisation() {
         : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
   
       contactsToSend.forEach((m, i) => {
-        message += "────────────────────\n";
-        if (contactsToSend.length > 1) 
-          message += `👥 Personne ${i + 1}\n`;
-          message += `👤 Nom : ${m.prenom} ${m.nom}\n
-          🏙️ Ville : ${m.ville || "—"}\n
-          💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n
-          🎗️ Sexe : ${m.sexe || "—"}\n🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n
-          ☀️ Type de conversion : ${m.type_conversion || "—"}\n
-          ❓ Besoin : ${formatBesoin(m.besoin)}\n
-          📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
-      });
+          message += "────────────────────\n";
+        
+          if (contactsToSend.length > 1) {
+            message += `👥 Personne ${i + 1}\n`;
+          }
+        
+          message += `👤 Nom : ${m.prenom} ${m.nom}
+        🎗️ Civilité : ${m.sexe || "—"}
+        ⏳ Tranche d'age : ${m.age || "—"}
+        📞Téléphone : ${m.telephone || "—"}
+        💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}  
+        🏙️ Ville : ${m.ville || "—"}              
+        📅 Date évangélisé : ${formatDateFr(m.date_evangelise)}
+        🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}
+        ☀️ Type de conversion : ${m.type_conversion || "—"}
+        ❓ Besoin : ${formatBesoin(m.besoin)}
+        📝 Infos : ${m.infos_supplementaires || "—"}
+        
+        `;
+        });
   
       message += "Merci pour ton engagement ✨";
   

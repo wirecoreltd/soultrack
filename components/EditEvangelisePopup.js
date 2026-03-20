@@ -10,11 +10,7 @@ export default function EditEvangelisePopup({
   onClose,
   onUpdateMember,
 }) {
-  const besoinsOptions = [
-    "Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits",
-    "Addictions / Dépendances","Guidance spirituelle","Logement / Sécurité",
-    "Communauté / Isolement","Dépression / Santé mentale"
-  ];
+  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
 
   const initialBesoin =
     typeof member.besoin === "string"
@@ -149,7 +145,7 @@ export default function EditEvangelisePopup({
         <div>
           <label className="label">Civilité</label>
           <select
-            className="input"
+            className="input select-black"
             value={formData.sexe}
             onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
             required
@@ -168,7 +164,6 @@ export default function EditEvangelisePopup({
             value={formData.prenom}
             onChange={handleChange}
             className="input"
-            placeholder="Prénom"
           />
         </div>
 
@@ -180,7 +175,6 @@ export default function EditEvangelisePopup({
             value={formData.nom}
             onChange={handleChange}
             className="input"
-            placeholder="Nom"
           />
         </div>
 
@@ -191,7 +185,7 @@ export default function EditEvangelisePopup({
             name="age"
             value={formData.age}
             onChange={handleChange}
-            className="input"
+            className="input select-black"
           >
             <option value="">-- Tranche d'âge --</option>
             <option value="12-17 ans">12-17 ans</option>
@@ -212,7 +206,6 @@ export default function EditEvangelisePopup({
             value={formData.ville}
             onChange={handleChange}
             className="input"
-            placeholder="Ville"
           />
         </div>
 
@@ -224,7 +217,6 @@ export default function EditEvangelisePopup({
             value={formData.telephone}
             onChange={handleChange}
             className="input"
-            placeholder="Téléphone"
           />
         </div>
 
@@ -244,7 +236,7 @@ export default function EditEvangelisePopup({
         <div>
           <label className="label">Type d'évangélisation</label>
           <select
-            className="input"
+            className="input select-black"
             value={formData.type_evangelisation}
             onChange={(e) =>
               setFormData({ ...formData, type_evangelisation: e.target.value })
@@ -265,7 +257,7 @@ export default function EditEvangelisePopup({
         <div>
           <label className="label">Prière du salut</label>
           <select
-            className="input"
+            className="input select-black"
             value={formData.priere_salut ? "Oui" : "Non"}
             onChange={(e) => {
               const value = e.target.value;
@@ -286,7 +278,7 @@ export default function EditEvangelisePopup({
           <div>
             <label className="label">Type conversion</label>
             <select
-              className="input"
+              className="input select-black"
               value={formData.type_conversion || ""}
               onChange={(e) =>
                 setFormData({ ...formData, type_conversion: e.target.value })
@@ -332,7 +324,6 @@ export default function EditEvangelisePopup({
               name="autreBesoin"
               value={formData.autreBesoin}
               onChange={handleChange}
-              placeholder="Précisez"
               className="input mt-2"
             />
           )}
@@ -383,11 +374,14 @@ export default function EditEvangelisePopup({
           }
           .label {
             display: block;
-            text-align: right;
+            text-align: left;
             font-weight: 600;
             color: white;
             margin-bottom: 6px;
             font-size: 14px;
+          }
+          .select-black option {
+            color: black;
           }
         `}</style>
       </div>

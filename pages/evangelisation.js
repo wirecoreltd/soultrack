@@ -283,10 +283,11 @@ export default function Evangelisation() {
       message += "Merci pour ton engagement ✨";
   
       // 🔹 Ouvrir WhatsApp
-      window.open(
-  `https://wa.me/${encodeURIComponent(targetPhone)}?text=${encodeURIComponent(message)}`,
-  "_blank"
-);
+      const whatsappLink = targetPhone
+        ? `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(message)}`
+        : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+      
+      window.open(whatsappLink, "_blank");
   
       alert("✅ Contacts envoyés et enregistrés");
   

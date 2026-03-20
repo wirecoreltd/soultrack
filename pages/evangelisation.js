@@ -278,27 +278,34 @@ export default function Evangelisation() {
         ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l’évangélisation.\n\n"
         : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
   
-      contactsToSend.forEach((m, i) => {
-          message += "────────────────────\n";
-        
-          if (contactsToSend.length > 1) {
-            message += `👥 Personne ${i + 1}\n`;
-          }
-        
-          message += `👤 Nom : ${m.prenom} ${m.nom}
-        🎗️ Civilité : ${m.sexe || "—"}
-        ⏳ Tranche d'age : ${m.age || "—"}
-        📞Téléphone : ${m.telephone || "—"}
-        💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}  
-        🏙️ Ville : ${m.ville || "—"}              
-        📅 Date évangélisé : ${formatDateFr(m.date_evangelise)}
-        🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}
-        ☀️ Type de conversion : ${m.type_conversion || "—"}
-        ❓ Besoin : ${formatBesoin(m.besoin)}
-        📝 Infos : ${m.infos_supplementaires || "—"}
-        
-        `;
-        });
+     contactsToSend.forEach((m, i) => {
+        message += "────────────────────\n\n";
+      
+        if (contactsToSend.length > 1) {
+          message += `👥 Personne ${i + 1}\n\n`;
+        }
+      
+        message += 
+      `👤 Nom : ${m.prenom} ${m.nom}
+      
+      🏙️ Ville : ${m.ville || "—"}
+      
+      💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}
+      
+      🎗️ Sexe : ${m.sexe || "—"}
+      
+      🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}
+      
+      ☀️ Type de conversion : ${m.type_conversion || "—"}
+      
+      📅 Date évangélisé : ${formatDateFr(m.date_evangelise)}
+      
+      ❓ Besoin : ${formatBesoin(m.besoin)}
+      
+      📝 Infos : ${m.infos_supplementaires || "—"}
+      
+      `;
+      });
   
       message += "Merci pour ton engagement ✨";
   

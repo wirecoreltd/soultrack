@@ -31,6 +31,9 @@ export default function Evangelisation() {
   const [loadingSend, setLoadingSend] = useState(false);  
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
+  const [showWhatsappPopup, setShowWhatsappPopup] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [contactsToSendNow, setContactsToSendNow] = useState([]);  
   
   // 🔹 Popup doublon
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
@@ -191,12 +194,13 @@ export default function Evangelisation() {
       setPendingContacts(selectedContacts);
       setShowDoublonPopup(true);
     } else {
-      sendToWhatsapp(selectedContacts);
+      setContactsToSendNow(selectedContacts);
+      setShowWhatsappPopup(true);
     }
   };
 
     /* ================= SEND MESSAGE ================= */
-    const sendToWhatsapp = async (contactsToSend = pendingContacts) => {
+    const sendToWhatsapp = async (contactsToSend = contactsToSendNow) => {
     setShowDoublonPopup(false);
     setPendingContacts([]);
     setLoadingSend(true);
@@ -290,11 +294,9 @@ export default function Evangelisation() {
       message += "Merci pour ton engagement ✨";
   
       // 🔹 Ouvrir WhatsApp    
-      const whatsappLink = cible.telephone
-        ? `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(message)}`
+      const whatsappLink = phoneNumber
+        ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
         : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-
-window.open(whatsappLink, "_blank");;
       
       window.open(whatsappLink, "_blank");
   
@@ -517,7 +519,8 @@ window.open(whatsappLink, "_blank");;
                   <div className="flex gap-2 mt-2 sm:mt-0">
                     <button
                       onClick={() => {
-                        sendToWhatsapp([d]);
+                        setContactsToSendNow([d]);
+                        setShowWhatsappPopup(true);
                         setDoublonsDetected((prev) => prev.filter((c) => c.id !== d.id));
                       }}
                       className="bg-green-500 text-white px-3 py-1 rounded font-semibold"
@@ -550,6 +553,57 @@ window.open(whatsappLink, "_blank");;
           </div>
         </div>
       )}
+
+        {showWhatsappPopup && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
+        
+              <h2 className="text-xl font-bold mb-3">
+                Envoyer l'évangélisation
+              </h2>
+        
+              <p className="text-gray-700 mb-4">
+                Cliquez sur <b>Envoyer</b> si le contact figure déjà dans WhatsApp,
+                ou saisissez un numéro manuellement.
+              </p>
+        
+              <input
+                type="text"
+                placeholder="Numéro (ex: +2305xxxxxxx)"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4"
+              />
+        
+              <div className="flex gap-3">
+        
+                <button
+                  onClick={() => {
+                    setShowWhatsappPopup(false);
+                    setPhoneNumber("");
+                  }}
+                  className="flex-1 py-3 bg-gray-300 rounded-2xl font-semibold"
+                >
+                  Annuler
+                </button>
+        
+                <button
+                  onClick={() => {
+                    sendToWhatsapp();
+                    setShowWhatsappPopup(false);
+                    setPhoneNumber("");
+                  }}
+                  className="flex-1 py-3 bg-green-500 text-white rounded-2xl font-semibold"
+                >
+                  Envoyer
+                </button>
+        
+              </div>
+        
+            </div>
+          </div>
+        )}
+
         <Footer />
     </div>
   );

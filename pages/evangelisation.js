@@ -220,8 +220,15 @@ export default function Evangelisation() {
         return;
       }
   
-      const targetPhone = cible.telephone.replace(/\D/g, "");
-  
+      // 👉 Si on envoie un seul contact (doublon), on envoie directement à CE contact
+        let targetPhone = "";
+        
+        if (contactsToSend.length === 1) {
+          targetPhone = contactsToSend[0].telephone?.replace(/\D/g, "") || "";
+        } else {
+          targetPhone = cible.telephone?.replace(/\D/g, "") || "";
+        }
+          
       // 🔹 Préparer les inserts pour suivis_des_evangelises
       const inserts = contactsToSend.map((m) => ({
         prenom: m.prenom,
@@ -282,10 +289,12 @@ export default function Evangelisation() {
   
       message += "Merci pour ton engagement ✨";
   
-      // 🔹 Ouvrir WhatsApp
-      const whatsappLink = targetPhone
+      // 🔹 Ouvrir WhatsApp    
+      const whatsappLink = cible.telephone
         ? `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(message)}`
         : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+
+window.open(whatsappLink, "_blank");;
       
       window.open(whatsappLink, "_blank");
   
@@ -339,14 +348,22 @@ export default function Evangelisation() {
           </select>
         )}
 
-        {hasSelectedContacts && selectedTarget && (
-          <button
-            onClick={checkDoublons}
-            disabled={loadingSend}
-            className="w-full bg-green-500 text-white font-bold px-4 py-2 rounded"
-          >
-            {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
-          </button>
+       {hasSelectedContacts && selectedTarget && (
+          <>
+            {/* 👉 MESSAGE UX */}
+            <p className="text-gray-200 text-sm text-center mb-2">
+              Cliquez sur <b>Envoyer</b> si le contact est sur WhatsApp,
+              sinon WhatsApp s’ouvrira avec vos contacts.
+            </p>
+        
+            <button
+              onClick={checkDoublons}
+              disabled={loadingSend}
+              className="w-full bg-green-500 text-white font-bold px-4 py-2 rounded"
+            >
+              {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
+            </button>
+          </>
         )}
       </div>
 

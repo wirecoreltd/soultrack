@@ -6,6 +6,9 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
   const [loading, setLoading] = useState(false);
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
   const [doublonDetected, setDoublonDetected] = useState(false);
+  const [showWhatsappPopup, setShowWhatsappPopup] = useState(false);
+const [manualPhone, setManualPhone] = useState("");
+const [messageToSend, setMessageToSend] = useState("");
 
   const statutIds = { envoye: 1, en_attente: 2, integrer: 3, refus: 4 };
 
@@ -103,8 +106,20 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
       return;
     }
 
+    setManualPhone(responsableTelephone || "");
+setMessageToSend(message); // important
+setShowWhatsappPopup(true);
+return;
     // 🔹 Ouvrir WhatsApp
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+    const sendToWhatsapp = () => {
+  const phone = manualPhone.replace(/\D/g, "");
+
+  const whatsappLink = phone
+    ? `https://wa.me/${phone}?text=${encodeURIComponent(messageToSend)}`
+    : `https://wa.me/?text=${encodeURIComponent(messageToSend)}`;
+
+  window.open(whatsappLink, "_blank");
+};
 
     // 🔹 Mettre à jour la base avec la date
     const now = new Date().toISOString();
@@ -182,6 +197,41 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
               </button>
             </div>
           </div>
+                  {showWhatsappPopup && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+
+      <p className="text-gray-700 mb-4">
+        Cliquez sur <b>Envoyer</b> si le contact figure déjà dans WhatsApp,
+        ou saisissez un numéro manuellement.
+      </p>
+
+      <input
+        type="text"
+        value={manualPhone}
+        onChange={(e) => setManualPhone(e.target.value)}
+        placeholder="Numéro WhatsApp"
+        className="w-full border p-2 rounded mb-4"
+      />
+
+      <div className="flex gap-2">
+        <button
+          onClick={sendToWhatsapp}
+          className="flex-1 bg-green-500 text-white py-2 rounded"
+        >
+          Envoyer
+        </button>
+
+        <button
+          onClick={() => setShowWhatsappPopup(false)}
+          className="flex-1 bg-gray-300 py-2 rounded"
+        >
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+)}
         </div>
       )}
     </>

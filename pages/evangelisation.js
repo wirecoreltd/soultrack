@@ -19,18 +19,18 @@ export default function Evangelisation() {
 
   function EvangelisationContent() {
    const { profile, loading: loadingProfile, error: profileError, scopedQuery } = useChurchScope();  
-  const [contacts, setContacts] = useState([]);
-  const [cellules, setCellules] = useState([]);
-  const [conseillers, setConseillers] = useState([]);
-  const [selectedTargetType, setSelectedTargetType] = useState("");
-  const [selectedTarget, setSelectedTarget] = useState("");
-  const [checkedContacts, setCheckedContacts] = useState({});
-  const [detailsOpen, setDetailsOpen] = useState({});
-  const [editMember, setEditMember] = useState(null);
-  const [popupMember, setPopupMember] = useState(null);
-  const [loadingSend, setLoadingSend] = useState(false);  
-  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
-  const phoneMenuRef = useRef(null);
+    const [contacts, setContacts] = useState([]);
+    const [cellules, setCellules] = useState([]);
+    const [conseillers, setConseillers] = useState([]);
+    const [selectedTargetType, setSelectedTargetType] = useState("");
+    const [selectedTarget, setSelectedTarget] = useState("");
+    const [checkedContacts, setCheckedContacts] = useState({});
+    const [detailsOpen, setDetailsOpen] = useState({});
+    const [editMember, setEditMember] = useState(null);
+    const [popupMember, setPopupMember] = useState(null);
+    const [loadingSend, setLoadingSend] = useState(false);  
+    const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
+    const phoneMenuRef = useRef(null);    
   
   // 🔹 Popup doublon
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
@@ -117,6 +117,28 @@ export default function Evangelisation() {
       setConseillers([]);
     }
   };
+
+    //==========Normalize phone
+    const normalizePhone = (phone, defaultCountryCode = "230") => {
+  if (!phone) return "";
+  // enlever espaces, tirets, etc.
+  let cleaned = phone.replace(/\D/g, "");
+  // si le numéro commence déjà par un indicatif (ex: 230, 33, 1...)
+  // on suppose qu'il est déjà international
+  if (phone.startsWith("+")) {
+    return cleaned;
+  }
+  // sinon on ajoute un indicatif par défaut (ex: Maurice +230)
+  return defaultCountryCode + cleaned;
+};
+    //=====================
+    const isValidPhone = (phone) => {
+  if (!phone) return false;
+
+  const cleaned = phone.replace(/\D/g, "");
+
+  return cleaned.length >= 8 && cleaned.length <= 15;
+};
 
   /* ================= UTILS ================= */
   const handleCheck = (id) =>
@@ -220,7 +242,33 @@ export default function Evangelisation() {
         return;
       }
   
-      const targetPhone = cible.telephone.replace(/\D/g, "");
+      const rawPhone = cible.telephone;
+
+// normalisation
+let targetPhone = normalizePhone(rawPhone);
+
+// validation
+if (!isValidPhone(targetPhone)) {
+  const choice = window.confirm(
+    "⚠️ Numéro invalide.\n\nOK = Ouvrir WhatsApp sans numéro\nAnnuler = Abandonner"
+  );
+
+  if (!choice) {
+    setLoadingSend(false);
+    return;
+  }
+
+  window.open("https://web.whatsapp.com/", "_blank");
+
+  navigator.clipboard.writeText(message);
+  alert("📋 Message copié. Colle-le dans WhatsApp.");
+
+  setLoadingSend(false);
+  return;
+}
+
+// format WhatsApp (sans +)
+targetPhone = targetPhone.replace("+", "");
   
       // 🔹 Préparer les inserts pour suivis_des_evangelises
       const inserts = contactsToSend.map((m) => ({

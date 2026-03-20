@@ -373,7 +373,7 @@ export default function Evangelisation() {
                 <label className="flex justify-center gap-2 mt-4">
                   <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} /> Sélectionner
                 </label>
-                  <p className="text-[11px] text-gray-400 text-right mt-3">Créé le {formatDateFr(member.created_at)} </p>
+                  <p className="text-[11px] text-gray-400 text-right mt-3">Evangélisé le {formatDateFr(member.date_evangelise} </p>
                 <button onClick={() => setDetailsOpen(prev => ({ ...prev, [member.id]: !prev[member.id] }))} className="text-orange-500 underline text-sm block mx-auto mt-2">
                   {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
                 </button>

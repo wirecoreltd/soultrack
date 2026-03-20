@@ -10,7 +10,11 @@ export default function EditEvangelisePopup({
   onClose,
   onUpdateMember,
 }) {
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  const besoinsOptions = [
+    "Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits",
+    "Addictions / Dépendances","Guidance spirituelle","Logement / Sécurité",
+    "Communauté / Isolement","Dépression / Santé mentale"
+  ];
 
   const initialBesoin =
     typeof member.besoin === "string"
@@ -133,7 +137,7 @@ export default function EditEvangelisePopup({
         <div className="flex justify-center">
           <input
             type="date"
-            className="input text-center w-48"
+            className="input date-input text-center w-48"
             value={formData.date_evangelise}
             onChange={(e) =>
               setFormData({ ...formData, date_evangelise: e.target.value })
@@ -150,7 +154,7 @@ export default function EditEvangelisePopup({
             onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
             required
           >
-            <option value="">Civilité</option>
+            <option value="">-- Civilité --</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
           </select>
@@ -243,7 +247,7 @@ export default function EditEvangelisePopup({
             }
             required
           >
-            <option value="">Type d'Evangélisation</option>
+            <option value="">-- Type d'Evangélisation --</option>
             <option value="Individuel">Individuel</option>
             <option value="Sortie de groupe">Sortie de groupe</option>
             <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
@@ -284,7 +288,7 @@ export default function EditEvangelisePopup({
                 setFormData({ ...formData, type_conversion: e.target.value })
               }
             >
-              <option value="">Type</option>
+              <option value="">-- Type --</option>
               <option value="Nouveau converti">Nouveau converti</option>
               <option value="Réconciliation">Réconciliation</option>
             </select>
@@ -372,6 +376,7 @@ export default function EditEvangelisePopup({
             background: rgba(255, 255, 255, 0.1);
             color: white;
           }
+
           .label {
             display: block;
             text-align: left;
@@ -380,8 +385,19 @@ export default function EditEvangelisePopup({
             margin-bottom: 6px;
             font-size: 14px;
           }
+
           .select-black option {
             color: black;
+          }
+
+          /* Remove default calendar icon & keep clickable */
+          .date-input::-webkit-calendar-picker-indicator {
+            opacity: 0;
+            cursor: pointer;
+          }
+
+          .date-input {
+            text-align: center;
           }
         `}</style>
       </div>

@@ -25,7 +25,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     eglise_id: null,
     branche_id: null,
     type_evangelisation: "",
-    date: new Date().toISOString().split("T")[0], 
+    date_evangelise: new Date().toISOString().split("T")[0],
   });
 
   const [showOtherField, setShowOtherField] = useState(false);
@@ -138,6 +138,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
       branche_id: formData.branche_id,
       type_evangelisation: formData.type_evangelisation,
       date: formData.date,
+      date_evangelise: formData.date_evangelise,
     };
 
     try {
@@ -188,7 +189,16 @@ export default function AddEvangelise({ onNewEvangelise }) {
         <h1 className="text-3xl font-bold text-center mb-2">Ajouter une personne évangélisée</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 justify-center">
-          <input type="date" className="input text-center" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })}/>
+
+          {/* Date Evangelisation */}
+          <div className="flex justify-center">
+            <input
+              type="date"
+              className="input w-auto text-center"
+              value={formData.date_evangelise}
+              onChange={e => setFormData({ ...formData, date_evangelise: e.target.value })}
+            />
+          </div>
   
           {/* Type Evangelisation */}
           <select

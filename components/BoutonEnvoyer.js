@@ -2,31 +2,38 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
+export default function BoutonEnvoyer({
+  membre,
+  type = "cellule",
+  cible,
+  session,
+  onEnvoyer,
+  showToast,
+}) {
   const [loading, setLoading] = useState(false);
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
-  const [doublonDetected, setDoublonDetected] = useState(false);
+
+  // ✅ NOUVEAU (évangélisation)
+  const [showWhatsappPopup, setShowWhatsappPopup] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   const statutIds = { envoye: 1, en_attente: 2, integrer: 3, refus: 4 };
 
-  // ✅ Normaliser téléphone
-  const getPhone = (phone) => {
-    if (!phone) return null;
-    return phone.replace(/\D/g, "");
-  };
-
-  // ✅ Envoi WhatsApp
+  // =========================
+  // ✅ WhatsApp
   const sendWhatsApp = (phone, message) => {
     if (!phone) {
       alert("❌ Numéro invalide");
       return;
     }
 
-    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    const num = phone.replace(/\D/g, "");
+    const url = `https://wa.me/${num}?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
   };
 
-  // ✅ Générer message UNE SEULE FOIS
+  // =========================
+  // ✅ Message suivi (responsable)
   const buildMessage = (responsablePrenom) => {
     return `👋 Bonjour ${responsablePrenom},
 
@@ -50,7 +57,29 @@ Merci pour ton engagement et ton cœur pour le suivi des âmes ✨
 Merci pour ton accompagnement ❤️`;
   };
 
-  // Vérification doublon
+  // =========================
+  // ✅ Message évangélisation
+  const sendEvangelisation = () => {
+    const phone = (phoneNumber || membre.telephone)?.replace(/\D/g, "");
+
+    if (!phone) {
+      alert("❌ Numéro invalide");
+      return;
+    }
+
+    const message = `👋 Bonjour ${membre.prenom || ""},
+
+Nous sommes heureux de t’avoir rencontré 🙏  
+Sache que Dieu t’aime et a un plan merveilleux pour ta vie ✨
+
+Si tu as besoin de prière ou d’accompagnement,
+nous sommes là pour toi ❤️`;
+
+    sendWhatsApp(phone, message);
+  };
+
+  // =========================
+  // ✅ Vérification doublon
   const checkDoublon = async () => {
     if (!membre.telephone) return false;
 
@@ -68,24 +97,17 @@ Merci pour ton accompagnement ❤️`;
     return data.length > 0;
   };
 
+  // =========================
+  // ✅ CLICK PRINCIPAL
   const handleClick = async () => {
     if (!session) {
       alert("❌ Vous devez être connecté.");
       return;
     }
 
-    setLoading(true);
-
     try {
-      // 🔹 Vérifier doublon
-      if (await checkDoublon()) {
-        setDoublonDetected(true);
-        setShowDoublonPopup(true);
-        setLoading(false);
-        return;
-      }
+      setLoading(true);
 
-      // 🔹 Responsable
       let responsablePrenom = "";
       let responsableTelephone = "";
 
@@ -117,18 +139,24 @@ Merci pour ton accompagnement ❤️`;
         responsableTelephone = cible;
       }
 
-      const phone = getPhone(responsableTelephone);
+      const message = buildMessage(responsablePrenom);
+      const phone = responsableTelephone?.replace(/\D/g, "");
+
       if (!phone) {
-        alert("❌ Numéro invalide");
+        alert("❌ Numéro WhatsApp invalide.");
         return;
       }
 
-      const message = buildMessage(responsablePrenom);
+      const doublon = await checkDoublon();
+      if (doublon) {
+        setShowDoublonPopup(true);
+        return;
+      }
 
-      // 🔹 WhatsApp
+      // ✅ Envoi normal
       sendWhatsApp(phone, message);
 
-      // 🔹 Update DB
+      // ✅ Update DB
       const now = new Date().toISOString();
 
       const { data, error } = await supabase
@@ -138,7 +166,8 @@ Merci pour ton accompagnement ❤️`;
           statut_suivis: statutIds.envoye,
           cellule_id: type === "cellule" ? cible.id : null,
           conseiller_id: type === "conseiller" ? cible.id : null,
-          suivi_cellule_nom: type === "cellule" ? cible.cellule_full : null,
+          suivi_cellule_nom:
+            type === "cellule" ? cible.cellule_full : null,
           suivi_responsable:
             type === "conseiller"
               ? `${cible.prenom} ${cible.nom}`
@@ -152,43 +181,46 @@ Merci pour ton accompagnement ❤️`;
         .select()
         .single();
 
-      if (error) throw error;
-
       if (onEnvoyer) onEnvoyer(data);
-
-      if (showToast) {
-        showToast(
-          `✅ ${membre.prenom} ${membre.nom} envoyé le ${new Date(now).toLocaleString("fr-FR")}`
-        );
-      }
-
     } catch (err) {
       console.error(err);
       alert(`❌ ${err.message}`);
     } finally {
       setLoading(false);
-      setShowDoublonPopup(false);
-      setDoublonDetected(false);
     }
   };
 
+  // =========================
   return (
     <>
+      {/* ✅ BOUTON PRINCIPAL */}
       <button
         onClick={handleClick}
         disabled={loading}
-        className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg ${
+        className={`w-full text-white font-bold px-4 py-2 rounded-lg ${
           loading ? "bg-gray-400" : "bg-green-500 hover:bg-green-600"
         }`}
       >
-        {loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
+        {loading ? "Envoi..." : "📤 Envoyer au responsable"}
       </button>
 
-      {/* 🔥 POPUP DOUBLON */}
-      {showDoublonPopup && doublonDetected && (
+      {/* ✅ BOUTON EVANGELISATION */}
+      <button
+        onClick={() => setShowWhatsappPopup(true)}
+        className="w-full mt-2 bg-blue-500 text-white font-bold px-4 py-2 rounded-lg"
+      >
+        ✝️ Évangéliser par WhatsApp
+      </button>
+
+      {/* ===================== */}
+      {/* ✅ POPUP DOUBLON */}
+      {showDoublonPopup && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-96 text-center">
-            <h3 className="text-xl font-bold mb-3">⚠️ Doublon détecté</h3>
+            <h3 className="text-xl font-bold mb-3">
+              ⚠️ Doublon détecté
+            </h3>
+
             <p className="mb-6">
               Ce numéro ({membre.telephone}) existe déjà.
             </p>
@@ -196,21 +228,72 @@ Merci pour ton accompagnement ❤️`;
             <div className="flex gap-3">
               <button
                 onClick={() => {
-                  const phone = getPhone(membre.telephone);
-                  const message = buildMessage("Responsable");
-                  sendWhatsApp(phone, message);
+                  const msg = buildMessage("Responsable");
+                  const phone = membre.telephone?.replace(/\D/g, "");
+                  sendWhatsApp(phone, msg);
+                  setShowDoublonPopup(false);
                 }}
-                className="flex-1 bg-green-500 text-white px-4 py-2 rounded"
+                className="flex-1 bg-green-500 text-white px-4 py-2 rounded-lg"
               >
                 Envoyer quand même
               </button>
 
               <button
                 onClick={() => setShowDoublonPopup(false)}
-                className="flex-1 bg-gray-300 px-4 py-2 rounded"
+                className="flex-1 bg-gray-300 px-4 py-2 rounded-lg"
               >
                 Annuler
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================== */}
+      {/* ✅ POPUP EVANGELISATION */}
+      {showWhatsappPopup && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
+
+            <h2 className="text-xl font-bold mb-3">
+              Envoyer l'évangélisation
+            </h2>
+
+            <p className="text-gray-700 mb-4">
+              Cliquez sur <b>Envoyer</b> ou saisissez un numéro.
+            </p>
+
+            <input
+              type="text"
+              placeholder="Numéro (ex: +2305xxxxxxx)"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4"
+            />
+
+            <div className="flex gap-3">
+
+              <button
+                onClick={() => {
+                  setShowWhatsappPopup(false);
+                  setPhoneNumber("");
+                }}
+                className="flex-1 py-3 bg-gray-300 rounded-2xl"
+              >
+                Annuler
+              </button>
+
+              <button
+                onClick={() => {
+                  sendEvangelisation(); // ✅ CORRIGÉ
+                  setShowWhatsappPopup(false);
+                  setPhoneNumber("");
+                }}
+                className="flex-1 py-3 bg-green-500 text-white rounded-2xl"
+              >
+                Envoyer
+              </button>
+
             </div>
           </div>
         </div>

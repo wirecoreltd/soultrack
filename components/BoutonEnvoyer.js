@@ -1,273 +1,189 @@
 "use client";
-
-import { useEffect, useState, useRef } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
-import HeaderPages from "../components/HeaderPages";
-import EditEvangelisePopup from "../components/EditEvangelisePopup";
-import DetailsEvangePopup from "../components/DetailsEvangePopup";
-import ProtectedRoute from "../components/ProtectedRoute";
-import useChurchScope from "../hooks/useChurchScope";
-import Footer from "../components/Footer";
 
-export default function Evangelisation() {
-  return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEvangelisation"]}>
-      <EvangelisationContent />
-    </ProtectedRoute>
-  );
-}
+export default function BoutonEnvoyer({ membre, type = "cellule", cible, session, onEnvoyer, showToast }) {
+  const [loading, setLoading] = useState(false);
+  const [showDoublonPopup, setShowDoublonPopup] = useState(false);
+  const [doublonDetected, setDoublonDetected] = useState(false);
 
-function EvangelisationContent() {
-  const { profile, scopedQuery } = useChurchScope();
+  const statutIds = { envoye: 1, en_attente: 2, integrer: 3, refus: 4 };
 
-  const [contacts, setContacts] = useState([]);
-  const [cellules, setCellules] = useState([]);
-  const [conseillers, setConseillers] = useState([]);
+  // Vérification de doublon
+  const checkDoublon = async () => {
+    if (!membre.telephone) return false;
+    const { data, error } = await supabase
+      .from("membres_complets")
+      .select("id")
+      .eq("telephone", membre.telephone)
+      .neq("id", membre.id);
 
-  const [selectedTargetType, setSelectedTargetType] = useState("");
-  const [selectedTarget, setSelectedTarget] = useState("");
-
-  const [checkedContacts, setCheckedContacts] = useState({});
-  const [detailsOpen, setDetailsOpen] = useState({});
-  const [editMember, setEditMember] = useState(null);
-  const [popupMember, setPopupMember] = useState(null);
-
-  const [loadingSend, setLoadingSend] = useState(false);
-
-  const [showWhatsappPopup, setShowWhatsappPopup] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState("");
-
-  const [contactsToSendNow, setContactsToSendNow] = useState([]);
-
-  /* ================= FETCH ================= */
-
-  useEffect(() => {
-    fetchContacts();
-    fetchCellules();
-    fetchConseillers();
-  }, [profile]);
-
-  const fetchContacts = async () => {
-    try {
-      const query = scopedQuery("evangelises");
-      if (!query) return;
-
-      const { data } = await query
-        .eq("status_suivi", "Non envoyé")
-        .order("created_at", { ascending: false });
-
-      setContacts(data || []);
-    } catch (err) {
-      console.error(err);
+    if (error) {
+      alert("❌ Erreur lors de la vérification des doublons");
+      return false;
     }
+
+    return data.length > 0;
   };
 
-  const fetchCellules = async () => {
-    const query = scopedQuery("cellules");
-    if (!query) return;
+  const handleClick = async () => {
+  if (!session) {
+    alert("❌ Vous devez être connecté.");
+    return;
+  }
 
-    const { data } = await query.select("*");
-    setCellules(data || []);
-  };
-
-  const fetchConseillers = async () => {
-    const query = scopedQuery("profiles");
-    if (!query) return;
-
-    const { data } = await query.select("*").eq("role", "Conseiller");
-    setConseillers(data || []);
-  };
-
-  /* ================= UTILS ================= */
-
-  const handleCheck = (id) =>
-    setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
-
-  const selectedContacts = contacts.filter((c) => checkedContacts[c.id]);
-  const hasSelectedContacts = selectedContacts.length > 0;
-
-  /* ================= CHECK + OPEN POPUP ================= */
-
-  const checkDoublons = () => {
-    if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) {
-      alert("⚠️ Sélection incomplète");
+  try {
+    // 🔹 Vérification de doublon
+    if (await checkDoublon()) {
+      setDoublonDetected(true);
+      setShowDoublonPopup(true);
       return;
     }
 
-    setContactsToSendNow(selectedContacts);
-    setShowWhatsappPopup(true);
-  };
+    // 🔹 Préparer responsable
+    let responsablePrenom = "";
+    let responsableTelephone = "";
 
-  /* ================= SEND WHATSAPP ================= */
+    if (type === "cellule") {
+      const { data: cellule } = await supabase
+        .from("cellules")
+        .select("id, responsable_id, cellule_full")
+        .eq("id", cible.id)
+        .single();
 
-  const sendToWhatsapp = async (contactsToSend = contactsToSendNow) => {
-    setLoadingSend(true);
+      const { data: resp } = await supabase
+        .from("profiles")
+        .select("prenom, telephone")
+        .eq("id", cellule.responsable_id)
+        .single();
 
-    try {
-      const cible =
-        selectedTargetType === "cellule"
-          ? cellules.find((c) => c.id === selectedTarget)
-          : conseillers.find((c) => c.id === selectedTarget);
-
-      if (!cible) {
-        alert("⚠️ Cible introuvable");
-        setLoadingSend(false);
-        return;
-      }
-
-      // numéro cible fallback
-      let targetPhone = cible.telephone?.replace(/\D/g, "") || "";
-
-      // message
-      let message = `👋 Bonjour ${selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
-
-      message += "Voici les contacts :\n\n";
-
-      contactsToSend.forEach((m, i) => {
-        message += `👤 ${i + 1}. ${m.prenom} ${m.nom}\n`;
-        message += `🏙️ Ville : ${m.ville || "—"}\n\n`;
-      });
-
-      message += "Merci ✨";
-
-      // numéro saisi prioritaire
-      const finalPhone = phoneNumber?.replace(/\D/g, "");
-
-      const whatsappLink = finalPhone
-        ? `https://wa.me/${finalPhone}?text=${encodeURIComponent(message)}`
-        : targetPhone
-        ? `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`
-        : `https://wa.me/?text=${encodeURIComponent(message)}`;
-
-      window.open(whatsappLink, "_blank");
-
-      alert("✅ WhatsApp ouvert");
-
-    } catch (err) {
-      console.error(err);
-      alert("❌ Erreur envoi");
-    } finally {
-      setLoadingSend(false);
+      responsablePrenom = resp.prenom;
+      responsableTelephone = resp.telephone;
+      cible.cellule_full = cellule.cellule_full;
     }
-  };
 
-  /* ================= UI ================= */
+    if (type === "conseiller") {
+      responsablePrenom = cible.prenom;
+      responsableTelephone = cible.telephone;
+    }
+
+    if (type === "numero") {
+      responsablePrenom = "Responsable";
+      responsableTelephone = cible; 
+    }
+
+    // 🔹 Message WhatsApp
+    let message = `👋 Bonjour ${responsablePrenom}!\n\n`;
+    message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
+    message += `🎗️ Sexe: ${membre.sexe || "—"}\n`; 
+    message += `⏳ Age: ${membre.age || "—"}\n`; 
+    message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
+    message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
+    message += `🏙️ Ville: ${membre.ville || "—"}\n`;
+    message += `✨ Raison de la venue: ${membre.statut_initial || "—"}\n`;   
+    message += `🙏 Prière du salut: ${membre.priere_salut || "—"}\n`; 
+    message += `❓Besoin: ${
+      membre.besoin
+        ? (() => {
+            try {
+              const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
+              return Array.isArray(besoins) ? besoins.join(", ") : besoins;
+            } catch {
+              return membre.besoin;
+            }
+          })()
+        : "—"
+    }\n`;
+    message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
+    message += "Merci pour ton accompagnement ❤️";
+
+    const phone = responsableTelephone?.replace(/\D/g, "");
+    if (!phone) {
+      alert("❌ Le numéro WhatsApp est invalide.");
+      return;
+    }
+
+    // 🔹 Ouvrir WhatsApp
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+
+    // 🔹 Mettre à jour la base avec la date
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from("membres_complets")
+      .update({
+        statut: "actif",
+        statut_suivis: statutIds.envoye,
+        cellule_id: type === "cellule" ? cible.id : null,
+        conseiller_id: type === "conseiller" ? cible.id : null,
+        suivi_cellule_nom: type === "cellule" ? cible.cellule_full : null,
+        suivi_responsable: type === "conseiller" ? `${cible.prenom} ${cible.nom}` : responsablePrenom,
+        suivi_responsable_id: type === "conseiller" ? cible.id : null,
+        etat_contact: "Existant",
+        date_envoi_suivi: now
+      })
+      .eq("id", membre.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("❌ Erreur mise à jour Supabase :", error);
+      alert("❌ Impossible d'enregistrer la date d'envoi du suivi.");
+      return;
+    }
+
+    if (!data) {
+      alert("❌ Aucune ligne mise à jour. Vérifie l'ID du membre.");
+      return;
+    }
+
+    if (onEnvoyer) onEnvoyer(data);
+    if (showToast) showToast(`✅ ${membre.prenom} ${membre.nom} envoyé à ${
+      type === "cellule" ? cible.cellule_full : type === "conseiller" ? `${cible.prenom} ${cible.nom}` : cible
+    } le ${now}`);
+    
+  } catch (err) {
+    console.error(err);
+    alert(`❌ ${err.message}`);
+  } finally {
+    setShowDoublonPopup(false);
+    setDoublonDetected(false);
+  }
+};
 
   return (
-    <div className="min-h-screen p-6 bg-[#333699]">
-      <HeaderPages />
+    <>
+      <button
+        onClick={handleClick}
+        disabled={loading}
+        className={`w-full text-white font-bold px-4 py-2 rounded-lg shadow-lg ${
+          loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+        }`}
+      >
+        {loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
+      </button>
 
-      <h1 className="text-white text-3xl mb-4 text-center">
-        Contacts
-      </h1>
-
-      {/* SELECT TARGET */}
-      <div className="max-w-md mx-auto mb-6">
-        <select
-          value={selectedTargetType}
-          onChange={(e) => {
-            setSelectedTargetType(e.target.value);
-            setSelectedTarget("");
-          }}
-          className="w-full mb-3 p-2 rounded"
-        >
-          <option value="">-- Envoyer à --</option>
-          <option value="cellule">Cellule</option>
-          <option value="conseiller">Conseiller</option>
-        </select>
-
-        {selectedTargetType && (
-          <select
-            value={selectedTarget}
-            onChange={(e) => setSelectedTarget(e.target.value)}
-            className="w-full mb-3 p-2 rounded"
-          >
-            <option value="">-- Choisir --</option>
-            {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
-              <option key={c.id} value={c.id}>
-                {selectedTargetType === "cellule"
-                  ? c.cellule_full
-                  : `${c.prenom} ${c.nom}`}
-              </option>
-            ))}
-          </select>
-        )}
-
-        {hasSelectedContacts && selectedTarget && (
-          <button
-            onClick={checkDoublons}
-            className="w-full bg-green-500 text-white py-2 rounded"
-          >
-            📤 Envoyer WhatsApp
-          </button>
-        )}
-      </div>
-
-      {/* CONTACT LIST */}
-      <div className="max-w-4xl mx-auto bg-white p-4 rounded">
-        {contacts.map((c) => (
-          <div key={c.id} className="flex justify-between border-b py-2">
-            <div>
-              {c.prenom} {c.nom}
-            </div>
-            <input
-              type="checkbox"
-              checked={checkedContacts[c.id] || false}
-              onChange={() => handleCheck(c.id)}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* POPUP WHATSAPP */}
-      {showWhatsappPopup && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-xl max-w-md w-full">
-
-            <h2 className="text-xl font-bold mb-3">
-              Envoyer WhatsApp
-            </h2>
-
-            <p className="mb-4 text-gray-600">
-              Cliquez sur Envoyer ou saisissez un numéro manuellement.
-            </p>
-
-            <input
-              type="text"
-              placeholder="Numéro (ex: +230...)"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              className="w-full border p-3 rounded mb-4"
-            />
-
-            <div className="flex gap-3">
+      {showDoublonPopup && doublonDetected && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity">
+          <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl p-6 w-96 max-w-[90%] text-center animate-fadeIn">
+            <h3 className="text-xl font-bold mb-3 text-gray-800">⚠️ Doublon détecté</h3>
+            <p className="mb-6 text-gray-700">Ce numéro ({membre.telephone}) existe déjà dans la base.</p>
+            <div className="flex justify-center gap-3">
               <button
-                onClick={() => {
-                  setShowWhatsappPopup(false);
-                  setPhoneNumber("");
-                }}
-                className="flex-1 bg-gray-300 py-2 rounded"
+                onClick={sendToWhatsapp}
+                className="flex-1 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition"
+              >
+                Envoyer quand même
+              </button>
+              <button
+                onClick={() => setShowDoublonPopup(false)}
+                className="flex-1 bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400 transition"
               >
                 Annuler
               </button>
-
-              <button
-                onClick={() => {
-                  sendToWhatsapp();
-                  setShowWhatsappPopup(false);
-                  setPhoneNumber("");
-                }}
-                className="flex-1 bg-green-500 text-white py-2 rounded"
-              >
-                Envoyer
-              </button>
             </div>
-
           </div>
         </div>
       )}
-
-      <Footer />
-    </div>
+    </>
   );
 }

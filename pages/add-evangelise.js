@@ -105,6 +105,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
       eglise_id: prev.eglise_id,
       branche_id: prev.branche_id,
       type_evangelisation: "",
+      date_evangelise: new Date().toISOString().split("T")[0],
     }));
     setShowOtherField(false);
     setOtherBesoin("");

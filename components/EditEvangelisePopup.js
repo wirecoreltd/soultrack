@@ -133,16 +133,16 @@ export default function EditEvangelisePopup({
           Modifier {member.prenom} {member.nom}
         </h2>
 
-        {/* DATE EN HAUT */}
-        <div className="flex justify-center">
+        {/* DATE + LABEL */}
+        <div className="flex items-center justify-between gap-4">
+          <label className="label">Date</label>
           <input
             type="date"
-            className="input date-input text-center w-48"
+            className="input w-48"
             value={formData.date_evangelise}
             onChange={(e) =>
               setFormData({ ...formData, date_evangelise: e.target.value })
             }
-            onFocus={(e) => e.target.showPicker && e.target.showPicker()}
           />
         </div>
 
@@ -155,7 +155,7 @@ export default function EditEvangelisePopup({
             onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
             required
           >
-            <option value="">-- Civilité --</option>
+            <option value="">Civilité</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
           </select>
@@ -248,7 +248,7 @@ export default function EditEvangelisePopup({
             }
             required
           >
-            <option value="">-- Type d'Evangélisation --</option>
+            <option value="">Type d'Evangélisation</option>
             <option value="Individuel">Individuel</option>
             <option value="Sortie de groupe">Sortie de groupe</option>
             <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
@@ -289,7 +289,7 @@ export default function EditEvangelisePopup({
                 setFormData({ ...formData, type_conversion: e.target.value })
               }
             >
-              <option value="">-- Type --</option>
+              <option value="">Type</option>
               <option value="Nouveau converti">Nouveau converti</option>
               <option value="Réconciliation">Réconciliation</option>
             </select>
@@ -368,52 +368,29 @@ export default function EditEvangelisePopup({
           </button>
         </div>
 
-       <style jsx>{`
-        .input {
-          width: 100%;
-          border: 1px solid #a0c4ff;
-          border-radius: 14px;
-          padding: 12px;
-          background: rgba(255, 255, 255, 0.1);
-          color: white;
-        }
-      
-        .label {
-          display: block;
-          text-align: left;
-          font-weight: 600;
-          color: white;
-          margin-bottom: 6px;
-          font-size: 14px;
-        }
-      
-        .select-black option {
-          color: black;
-        }
-      
-        /* DATE INPUT FIX */
-        .date-input {
-          text-align: center;
-          cursor: pointer;
-        }
-      
-        /* Hide calendar icon but keep functionality */
-        .date-input::-webkit-calendar-picker-indicator {
-          opacity: 0;
-          cursor: pointer;
-        }
-      
-        /* Remove extra UI that can interfere */
-        .date-input::-webkit-inner-spin-button,
-        .date-input::-webkit-clear-button {
-          display: none;
-        }
-      
-        /* Firefox fix */
-        .date-input::-moz-focus-inner {
-          border: 0;
-        }
-      `}</style>
+        <style jsx>{`
+          .input {
+            width: 100%;
+            border: 1px solid #a0c4ff;
+            border-radius: 14px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+          }
+
+          .label {
+            display: block;
+            text-align: left;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 6px;
+            font-size: 14px;
+          }
+
+          .select-black option {
+            color: black;
+          }
+        `}</style>
       </div>
     </div>
   );

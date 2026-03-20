@@ -476,70 +476,69 @@ function Attendance() {
         <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end">Générer</button>
       </div>
         
-    //=================KPI
-     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      {/* KPI existants */}
-      <div className="card" onClick={() => handleCardClick('Hommes')}>
-        <h3>Hommes</h3>
-        <div className="kpi-value">{totalHommes}</div>
+         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* KPI existants */}
+        <div className="card" onClick={() => handleCardClick('Hommes')}>
+          <h3>Hommes</h3>
+          <div className="kpi-value">{hommes}</div>
+        </div>
+      
+        <div className="card" onClick={() => handleCardClick('Femmes')}>
+          <h3>Femmes</h3>
+          <div className="kpi-value">{femmes}</div>
+        </div>
+      
+        <div className="card" onClick={() => handleCardClick('Jeunes')}>
+          <h3>Jeunes</h3>
+          <div className="kpi-value">{jeunes}</div>
+        </div>
+      
+        <div className="card" onClick={() => handleCardClick('Enfants')}>
+          <h3>Enfants</h3>
+          <div className="kpi-value">{enfants}</div>
+        </div>
+      
+        <div className="card" onClick={() => handleCardClick('Connectés')}>
+          <h3>Connectés</h3>
+          <div className="kpi-value">{connectes}</div>
+        </div>
+      
+        <div className="card" onClick={() => handleCardClick('Nouveaux venus')}>
+          <h3>Nouveaux venus</h3>
+          <div className="kpi-value">{nouveauxVenus}</div>
+        </div>
+      
+        <div className="card" onClick={() => handleCardClick('Nouveaux convertis')}>
+          <h3>Nouveaux convertis</h3>
+          <div className="kpi-value">{nouveauxConvertis}</div>
+        </div>
+      
+        <div className="card" onClick={() => handleCardClick('Total')}>
+          <h3>Total</h3>
+          <div className="kpi-value">{total}</div>
+        </div>
+      
+        {/* KPI Croissance Église */}
+        <div className="card" onClick={() => handleCardClick('Fidèles suivis')}>
+          <h3>Fidèles suivis</h3>
+          <div className="kpi-value">{fidelesSuivis}</div>
+        </div>
+      
+        <div className="card" onClick={() => handleCardClick('Baptêmes à venir')}>
+          <h3>Baptêmes à venir</h3>
+          <div className="kpi-value">{baptismesAVenir}</div>
+        </div>
+      
+        <div className="card" onClick={() => handleCardClick('Futurs leaders')}>
+          <h3>Futurs leaders</h3>
+          <div className="kpi-value">{futursLeaders}</div>
+        </div>
+      
+        <div className="card" onClick={() => handleCardClick('Besoins critiques')}>
+          <h3>Besoins critiques</h3>
+          <div className="kpi-value">{besoinsCritiques}</div>
+        </div>
       </div>
-
-      <div className="card" onClick={() => handleCardClick('Femmes')}>
-        <h3>Femmes</h3>
-        <div className="kpi-value">{totalFemmes}</div>
-      </div>
-
-      <div className="card" onClick={() => handleCardClick('Jeunes')}>
-        <h3>Jeunes</h3>
-        <div className="kpi-value">{totalJeunes}</div>
-      </div>
-
-      <div className="card" onClick={() => handleCardClick('Enfants')}>
-        <h3>Enfants</h3>
-        <div className="kpi-value">{totalEnfants}</div>
-      </div>
-
-      <div className="card" onClick={() => handleCardClick('Connectés')}>
-        <h3>Connectés</h3>
-        <div className="kpi-value">{totalConnectes}</div>
-      </div>
-
-      <div className="card" onClick={() => handleCardClick('Nouveaux venus')}>
-        <h3>Nouveaux venus</h3>
-        <div className="kpi-value">{totalNouveauxVenus}</div>
-      </div>
-
-      <div className="card" onClick={() => handleCardClick('Nouveaux convertis')}>
-        <h3>Nouveaux convertis</h3>
-        <div className="kpi-value">{totalNouveauxConvertis}</div>
-      </div>
-
-      <div className="card" onClick={() => handleCardClick('Total')}>
-        <h3>Total</h3>
-        <div className="kpi-value">{totalGeneral}</div>
-      </div>
-
-      {/* KPI Croissance Église */}
-      <div className="card" onClick={() => handleCardClick('Fidèles suivis')}>
-        <h3>Fidèles suivis</h3>
-        <div className="kpi-value">{fidelesSuivis}</div>
-      </div>
-
-      <div className="card" onClick={() => handleCardClick('Baptêmes à venir')}>
-        <h3>Baptêmes à venir</h3>
-        <div className="kpi-value">{baptismesAVenir}</div>
-      </div>
-
-      <div className="card" onClick={() => handleCardClick('Futurs leaders')}>
-        <h3>Futurs leaders</h3>
-        <div className="kpi-value">{futursLeaders}</div>
-      </div>
-
-      <div className="card" onClick={() => handleCardClick('Besoins critiques')}>
-        <h3>Besoins critiques</h3>
-        <div className="kpi-value">{besoinsCritiques}</div>
-      </div>
-    </div>
 
   {/* TABLEAU / CARDS DESKTOP + MOBILE */}
 {showTable && (

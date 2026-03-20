@@ -85,17 +85,18 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
     }
 
     // 🔹 Message WhatsApp
-   let message = `👋 Bonjour ${responsablePrenom}
+   let message = `👋 Bonjour ${responsablePrenom},
 
-────────────────────
+  Nous te confions cette nouvelle personne avec joie,  
+  Merci pour ton engagement et ton cœur pour le suivi des âmes ✨.
 
+📅 Date de Création : ${new Date(membre.created_at).toLocaleString("fr-FR")}
 👤 Nom : ${membre.prenom} ${membre.nom}
 🏙️ Ville : ${membre.ville || "—"}
 🎗️ Sexe : ${membre.sexe || "—"}
 ⏳ Age : ${membre.age || "—"}
 📱 Téléphone : ${membre.telephone || "—"}
 💬 WhatsApp : ${membre.is_whatsapp ? "Oui" : "Non"}
-
 ✨ Raison de la venue : ${membre.statut_initial || "—"}
 🙏 Prière du salut : ${membre.priere_salut ? "Oui" : "Non"}
 ☀️ Type : ${membre.type_conversion || "—"}
@@ -117,9 +118,6 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 }
 
 📝 Infos : ${membre.infos_supplementaires || "—"}
-
-📅 Date évangélisé : ${formatDateFr(membre.date_evangelise || membre.created_at)}
-
 Merci pour ton accompagnement ❤️
 `;
 

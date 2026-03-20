@@ -134,8 +134,7 @@ export default function EditEvangelisePopup({
         </h2>
 
         {/* DATE + LABEL */}
-        <div className="flex items-center justify-between gap-4">
-          <label className="label">Date</label>
+        <div className="flex items-center justify-between gap-4">          
           <input
             type="date"
             className="input w-48"

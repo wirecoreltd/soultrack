@@ -367,39 +367,52 @@ export default function EditEvangelisePopup({
           </button>
         </div>
 
-        <style jsx>{`
-          .input {
-            width: 100%;
-            border: 1px solid #a0c4ff;
-            border-radius: 14px;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-          }
-
-          .label {
-            display: block;
-            text-align: left;
-            font-weight: 600;
-            color: white;
-            margin-bottom: 6px;
-            font-size: 14px;
-          }
-
-          .select-black option {
-            color: black;
-          }
-
-          /* Remove default calendar icon & keep clickable */
-          .date-input::-webkit-calendar-picker-indicator {
-            opacity: 0;
-            cursor: pointer;
-          }
-
-          .date-input {
-            text-align: center;
-          }
-        `}</style>
+       <style jsx>{`
+        .input {
+          width: 100%;
+          border: 1px solid #a0c4ff;
+          border-radius: 14px;
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+        }
+      
+        .label {
+          display: block;
+          text-align: left;
+          font-weight: 600;
+          color: white;
+          margin-bottom: 6px;
+          font-size: 14px;
+        }
+      
+        .select-black option {
+          color: black;
+        }
+      
+        /* DATE INPUT FIX */
+        .date-input {
+          text-align: center;
+          cursor: pointer;
+        }
+      
+        /* Hide calendar icon but keep functionality */
+        .date-input::-webkit-calendar-picker-indicator {
+          opacity: 0;
+          cursor: pointer;
+        }
+      
+        /* Remove extra UI that can interfere */
+        .date-input::-webkit-inner-spin-button,
+        .date-input::-webkit-clear-button {
+          display: none;
+        }
+      
+        /* Firefox fix */
+        .date-input::-moz-focus-inner {
+          border: 0;
+        }
+      `}</style>
       </div>
     </div>
   );

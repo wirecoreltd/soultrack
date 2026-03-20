@@ -180,26 +180,15 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
-      <div className="flex justify-center">
-          <input
-            type="date"
-            className="px-4 py-2 border rounded-xl text-center w-auto shadow-sm"
-            value={formData.date}
-            onChange={e => setFormData({ ...formData, date: e.target.value })}
-          />
+      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg">
+        <div className="flex justify-center mb-6">
+          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
 
         <h1 className="text-3xl font-bold text-center mb-2">Ajouter une personne évangélisée</h1>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
-          <div className="flex justify-center">
-            <input
-              type="date"
-              className="input w-auto text-center"
-              value={formData.date}
-              onChange={e => setFormData({ ...formData, date: e.target.value })}
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 justify-center">
+          <input type="date" className="input text-center" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })}/>
   
           {/* Type Evangelisation */}
           <select

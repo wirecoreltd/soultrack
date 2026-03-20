@@ -20,7 +20,6 @@ function Attendance() {
   const [showTable, setShowTable] = useState(false);
   const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
   const [tempsOptions, setTempsOptions] = useState(["Culte"]);
-  const [membresComplet, setMembresComplet] = useState([]);
   const formRef = useRef(null);
   const selectRef = useRef(null);
   const [expandedMonths, setExpandedMonths] = useState({});
@@ -62,59 +61,60 @@ function Attendance() {
     };
     loadSuperviseur();
   }, []);
- 
+
+  /*===========*/
   // Fonction utilitaire pour splitter le texte en lignes de max 15 caractères
-    const splitTypeName = (name, lineLength = 15) => {
-      if (!name) return "";
-      const regex = new RegExp(`.{1,${lineLength}}`, "g");
-      return name.match(regex).join("\n");
-    };
-    
-      /*------------------*/
-      const groupByMonthAndType = (reports) => {
-      const map = {};
-      reports.forEach(r => {
-        const d = new Date(r.date);
-        const monthKey = `${d.getFullYear()}-${d.getMonth()}`;
-        if (!map[monthKey]) map[monthKey] = {};
-        if (!map[monthKey][r.typeTemps]) map[monthKey][r.typeTemps] = [];
-        map[monthKey][r.typeTemps].push(r);
-      });
-      return map;
-    };
-    
-    const calculateMonthTotals = (typesObj) => {
-      const totals = {hommes:0,femmes:0,jeunes:0,total:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0};
-      Object.values(typesObj).forEach(rows => {
-        rows.forEach(r => {
-          totals.hommes += Number(r.hommes||0);
-          totals.femmes += Number(r.femmes||0);
-          totals.jeunes += Number(r.jeunes||0);
-          totals.total += Number(r.hommes||0)+Number(r.femmes||0)+Number(r.jeunes||0);
-          totals.enfants += Number(r.enfants||0);
-          totals.connectes += Number(r.connectes||0);
-          totals.nouveauxVenus += Number(r.nouveauxVenus||0);
-          totals.nouveauxConvertis += Number(r.nouveauxConvertis||0);
-        });
-      });
-      return totals;
-    };
-    
-    const calculateTypeTotals = (rows) => {
-      const totals = {hommes:0,femmes:0,jeunes:0,total:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0};
-      rows.forEach(r => {
-        totals.hommes += Number(r.hommes||0);
-        totals.femmes += Number(r.femmes||0);
-        totals.jeunes += Number(r.jeunes||0);
-        totals.total += Number(r.hommes||0)+Number(r.femmes||0)+Number(r.jeunes||0);
-        totals.enfants += Number(r.enfants||0);
-        totals.connectes += Number(r.connectes||0);
-        totals.nouveauxVenus += Number(r.nouveauxVenus||0);
-        totals.nouveauxConvertis += Number(r.nouveauxConvertis||0);
-      });
-      return totals;
-    };
-      
+const splitTypeName = (name, lineLength = 15) => {
+  if (!name) return "";
+  const regex = new RegExp(`.{1,${lineLength}}`, "g");
+  return name.match(regex).join("\n");
+};
+
+  /*------------------*/
+  const groupByMonthAndType = (reports) => {
+  const map = {};
+  reports.forEach(r => {
+    const d = new Date(r.date);
+    const monthKey = `${d.getFullYear()}-${d.getMonth()}`;
+    if (!map[monthKey]) map[monthKey] = {};
+    if (!map[monthKey][r.typeTemps]) map[monthKey][r.typeTemps] = [];
+    map[monthKey][r.typeTemps].push(r);
+  });
+  return map;
+};
+
+const calculateMonthTotals = (typesObj) => {
+  const totals = {hommes:0,femmes:0,jeunes:0,total:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0};
+  Object.values(typesObj).forEach(rows => {
+    rows.forEach(r => {
+      totals.hommes += Number(r.hommes||0);
+      totals.femmes += Number(r.femmes||0);
+      totals.jeunes += Number(r.jeunes||0);
+      totals.total += Number(r.hommes||0)+Number(r.femmes||0)+Number(r.jeunes||0);
+      totals.enfants += Number(r.enfants||0);
+      totals.connectes += Number(r.connectes||0);
+      totals.nouveauxVenus += Number(r.nouveauxVenus||0);
+      totals.nouveauxConvertis += Number(r.nouveauxConvertis||0);
+    });
+  });
+  return totals;
+};
+
+const calculateTypeTotals = (rows) => {
+  const totals = {hommes:0,femmes:0,jeunes:0,total:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0};
+  rows.forEach(r => {
+    totals.hommes += Number(r.hommes||0);
+    totals.femmes += Number(r.femmes||0);
+    totals.jeunes += Number(r.jeunes||0);
+    totals.total += Number(r.hommes||0)+Number(r.femmes||0)+Number(r.jeunes||0);
+    totals.enfants += Number(r.enfants||0);
+    totals.connectes += Number(r.connectes||0);
+    totals.nouveauxVenus += Number(r.nouveauxVenus||0);
+    totals.nouveauxConvertis += Number(r.nouveauxConvertis||0);
+  });
+  return totals;
+};
+  
   /* ================= TEMPS ================= */
   useEffect(() => {
     const loadTemps = async () => {
@@ -298,23 +298,6 @@ function Attendance() {
     setShowTable(true);
   };
 
-  /* ------------------ KPI CROISSANCE ------------------ */
-  const total = membresComplet.length;
-  const hommes = membresComplet.filter(m => m.sexe === "Homme").length;
-  const femmes = membresComplet.filter(m => m.sexe === "Femme").length;
-  const enfants = membresComplet.filter(m => m.age < 12).length;
-  const jeunes = membresComplet.filter(m => m.age >= 12 && m.age <= 25).length;
-  const connectes = membresComplet.filter(m => m.connecte).length;
-  const nouveauxVenus = membresComplet.filter(
-    m => m.date_premiere_visite && new Date(m.date_premiere_visite) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-  ).length;
-  const nouveauxConvertis = membresComplet.filter(m => m.type_conversion === "Nouveau converti").length;
-
-  const fidelesSuivis = membresComplet.filter(m => m.statut_suivis === "Existant").length;
-  const baptismesAVenir = membresComplet.filter(m => m.bapteme_eau === "Non").length;
-  const futursLeaders = membresComplet.filter(m => m.star === "3").length;
-  const besoinsCritiques = membresComplet.filter(m => m.besoin && m.besoin.length > 0).length;
-
   /* ================= UTIL ================= */
   const getMonthNameFR = (monthIndex) => {
     const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
@@ -400,36 +383,36 @@ function Attendance() {
           </div>
         
           {/* Nouveau temps si AUTRE */}
-          {formData.typeTemps === "AUTRE" && (
-            <>
-              <div className="flex flex-col col-span-1 md:col-span-2">
-                <label className="text-white mb-1">Nom du temps</label>
-                <input
-                  type="text"
-                  name="nouveauTemps"
-                  value={formData.nouveauTemps}
-                  onChange={(e) => {
-                    // Limite à 30 caractères
-                    const value = e.target.value.slice(0, 30);
-                    setFormData(prev => ({ ...prev, nouveauTemps: value }));
-                  }}
-                  className="input w-full"
-                  placeholder="Ex: ADP"
-                  maxLength={30} // limite côté HTML
-                />
-              </div>
-              <div className="flex items-center gap-2 col-span-1 md:col-span-2">
-                <input
-                  type="checkbox"
-                  name="enregistrerTemps"
-                  checked={formData.enregistrerTemps}
-                  onChange={e => setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))}
-                />
-                <label className="text-amber-300 text-sm">Enregistrer ce temps pour le futur</label>
-              </div>
-            </>
-          )}
-                  
+{formData.typeTemps === "AUTRE" && (
+  <>
+    <div className="flex flex-col col-span-1 md:col-span-2">
+      <label className="text-white mb-1">Nom du temps</label>
+      <input
+        type="text"
+        name="nouveauTemps"
+        value={formData.nouveauTemps}
+        onChange={(e) => {
+          // Limite à 30 caractères
+          const value = e.target.value.slice(0, 30);
+          setFormData(prev => ({ ...prev, nouveauTemps: value }));
+        }}
+        className="input w-full"
+        placeholder="Ex: ADP"
+        maxLength={30} // limite côté HTML
+      />
+    </div>
+    <div className="flex items-center gap-2 col-span-1 md:col-span-2">
+      <input
+        type="checkbox"
+        name="enregistrerTemps"
+        checked={formData.enregistrerTemps}
+        onChange={e => setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))}
+      />
+      <label className="text-amber-300 text-sm">Enregistrer ce temps pour le futur</label>
+    </div>
+  </>
+)}
+        
           {/* Numéro de culte si Culte */}
           {formData.typeTemps === "Culte" && (
             <div className="flex flex-col w-full">
@@ -475,71 +458,8 @@ function Attendance() {
         </div>
         <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end">Générer</button>
       </div>
-        
-         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* KPI existants */}
-        <div className="card" onClick={() => handleCardClick('Hommes')}>
-          <h3>Hommes</h3>
-          <div className="kpi-value">{hommes}</div>
-        </div>
-      
-        <div className="card" onClick={() => handleCardClick('Femmes')}>
-          <h3>Femmes</h3>
-          <div className="kpi-value">{femmes}</div>
-        </div>
-      
-        <div className="card" onClick={() => handleCardClick('Jeunes')}>
-          <h3>Jeunes</h3>
-          <div className="kpi-value">{jeunes}</div>
-        </div>
-      
-        <div className="card" onClick={() => handleCardClick('Enfants')}>
-          <h3>Enfants</h3>
-          <div className="kpi-value">{enfants}</div>
-        </div>
-      
-        <div className="card" onClick={() => handleCardClick('Connectés')}>
-          <h3>Connectés</h3>
-          <div className="kpi-value">{connectes}</div>
-        </div>
-      
-        <div className="card" onClick={() => handleCardClick('Nouveaux venus')}>
-          <h3>Nouveaux venus</h3>
-          <div className="kpi-value">{nouveauxVenus}</div>
-        </div>
-      
-        <div className="card" onClick={() => handleCardClick('Nouveaux convertis')}>
-          <h3>Nouveaux convertis</h3>
-          <div className="kpi-value">{nouveauxConvertis}</div>
-        </div>
-      
-        <div className="card" onClick={() => handleCardClick('Total')}>
-          <h3>Total</h3>
-          <div className="kpi-value">{total}</div>
-        </div>
-      
-        {/* KPI Croissance Église */}
-        <div className="card" onClick={() => handleCardClick('Fidèles suivis')}>
-          <h3>Fidèles suivis</h3>
-          <div className="kpi-value">{fidelesSuivis}</div>
-        </div>
-      
-        <div className="card" onClick={() => handleCardClick('Baptêmes à venir')}>
-          <h3>Baptêmes à venir</h3>
-          <div className="kpi-value">{baptismesAVenir}</div>
-        </div>
-      
-        <div className="card" onClick={() => handleCardClick('Futurs leaders')}>
-          <h3>Futurs leaders</h3>
-          <div className="kpi-value">{futursLeaders}</div>
-        </div>
-      
-        <div className="card" onClick={() => handleCardClick('Besoins critiques')}>
-          <h3>Besoins critiques</h3>
-          <div className="kpi-value">{besoinsCritiques}</div>
-        </div>
-      </div>
 
+     
   {/* TABLEAU / CARDS DESKTOP + MOBILE */}
 {showTable && (
   <div className="max-w-5xl w-full mt-6 mb-6">

@@ -19,20 +19,18 @@ export default function Evangelisation() {
 
   function EvangelisationContent() {
    const { profile, loading: loadingProfile, error: profileError, scopedQuery } = useChurchScope();  
-    const [contacts, setContacts] = useState([]);
-    const [cellules, setCellules] = useState([]);
-    const [conseillers, setConseillers] = useState([]);
-    const [selectedTargetType, setSelectedTargetType] = useState("");
-    const [selectedTarget, setSelectedTarget] = useState("");
-    const [checkedContacts, setCheckedContacts] = useState({});
-    const [detailsOpen, setDetailsOpen] = useState({});
-    const [editMember, setEditMember] = useState(null);
-    const [popupMember, setPopupMember] = useState(null);
-    const [loadingSend, setLoadingSend] = useState(false);  
-    const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
-    const phoneMenuRef = useRef(null);  
-    const [showWhatsappFallback, setShowWhatsappFallback] = useState(false);
-    const [fallbackMessage, setFallbackMessage] = useState("");
+  const [contacts, setContacts] = useState([]);
+  const [cellules, setCellules] = useState([]);
+  const [conseillers, setConseillers] = useState([]);
+  const [selectedTargetType, setSelectedTargetType] = useState("");
+  const [selectedTarget, setSelectedTarget] = useState("");
+  const [checkedContacts, setCheckedContacts] = useState({});
+  const [detailsOpen, setDetailsOpen] = useState({});
+  const [editMember, setEditMember] = useState(null);
+  const [popupMember, setPopupMember] = useState(null);
+  const [loadingSend, setLoadingSend] = useState(false);  
+  const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
+  const phoneMenuRef = useRef(null);
   
   // 🔹 Popup doublon
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
@@ -119,28 +117,6 @@ export default function Evangelisation() {
       setConseillers([]);
     }
   };
-
-    //==========Normalize phone
-    const normalizePhone = (phone, defaultCountryCode = "230") => {
-  if (!phone) return "";
-  // enlever espaces, tirets, etc.
-  let cleaned = phone.replace(/\D/g, "");
-  // si le numéro commence déjà par un indicatif (ex: 230, 33, 1...)
-  // on suppose qu'il est déjà international
-  if (phone.startsWith("+")) {
-    return cleaned;
-  }
-  // sinon on ajoute un indicatif par défaut (ex: Maurice +230)
-  return defaultCountryCode + cleaned;
-};
-    //=====================
-    const isValidPhone = (phone) => {
-  if (!phone) return false;
-
-  const cleaned = phone.replace(/\D/g, "");
-
-  return cleaned.length >= 8 && cleaned.length <= 15;
-};
 
   /* ================= UTILS ================= */
   const handleCheck = (id) =>
@@ -244,33 +220,7 @@ export default function Evangelisation() {
         return;
       }
   
-      const rawPhone = cible.telephone;
-
-// normalisation
-let targetPhone = normalizePhone(rawPhone);
-
-// validation
-if (!isValidPhone(targetPhone)) {
-  const choice = window.confirm(
-    "⚠️ Numéro invalide.\n\nOK = Ouvrir WhatsApp sans numéro\nAnnuler = Abandonner"
-  );
-
-  if (!choice) {
-    setLoadingSend(false);
-    return;
-  }
-
-  window.open("https://web.whatsapp.com/", "_blank");
-
-  navigator.clipboard.writeText(message);
-  alert("📋 Message copié. Colle-le dans WhatsApp.");
-
-  setLoadingSend(false);
-  return;
-}
-
-// format WhatsApp (sans +)
-targetPhone = targetPhone.replace("+", "");
+      const targetPhone = cible.telephone.replace(/\D/g, "");
   
       // 🔹 Préparer les inserts pour suivis_des_evangelises
       const inserts = contactsToSend.map((m) => ({
@@ -333,24 +283,12 @@ targetPhone = targetPhone.replace("+", "");
       message += "Merci pour ton engagement ✨";
   
       // 🔹 Ouvrir WhatsApp
-      let whatsappUrl = `https://wa.me/${encodeURIComponent(targetPhone)}?text=${encodeURIComponent(message)}`;
-
-        try {
-          const newWindow = window.open(whatsappUrl, "_blank");
-        
-          // Si popup bloquée
-          if (!newWindow) {
-            throw new Error("Popup blocked");
-          }
-        
-          setSuccessMessage("✅ Personne évangélisée ajoutée avec succès");
-        
-        } catch (err) {
-          console.error("WhatsApp error:", err);
-        
-          setFallbackMessage(message);
-          setShowWhatsappFallback(true);
-        }
+      window.open(
+  `https://wa.me/${encodeURIComponent(targetPhone)}?text=${encodeURIComponent(message)}`,
+  "_blank"
+);
+  
+      alert("✅ Contacts envoyés et enregistrés");
   
     } catch (err) {
       console.error("Erreur envoi WhatsApp :", err);
@@ -594,48 +532,6 @@ targetPhone = targetPhone.replace("+", "");
           </div>
         </div>
       )}
-//=======================
-        {showWhatsappFallback && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-xl p-6 w-full max-w-md space-y-4 text-center">
-                <h2 className="text-lg font-bold">⚠️ WhatsApp indisponible</h2>
-          
-                <p className="text-sm">
-                  Le numéro ne semble pas accessible sur WhatsApp ou l’ouverture a échoué.
-                </p>
-          
-                <div className="flex flex-col gap-3 mt-4">
-                  
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(fallbackMessage);
-                      alert("📋 Message copié !");
-                    }}
-                    className="bg-blue-500 text-white py-2 rounded"
-                  >
-                    📋 Copier le message
-                  </button>
-          
-                  <button
-                    onClick={() => {
-                      window.open("https://web.whatsapp.com/", "_blank");
-                    }}
-                    className="bg-green-500 text-white py-2 rounded"
-                  >
-                    📱 Ouvrir WhatsApp
-                  </button>
-          
-                  <button
-                    onClick={() => setShowWhatsappFallback(false)}
-                    className="bg-gray-300 py-2 rounded"
-                  >
-                    ❌ Annuler
-                  </button>
-          
-                </div>
-              </div>
-            </div>
-          )}
         <Footer />
     </div>
   );

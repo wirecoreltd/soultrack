@@ -142,6 +142,7 @@ export default function EditEvangelisePopup({
             onChange={(e) =>
               setFormData({ ...formData, date_evangelise: e.target.value })
             }
+            onFocus={(e) => e.target.showPicker && e.target.showPicker()}
           />
         </div>
 

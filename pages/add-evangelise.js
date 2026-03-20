@@ -25,6 +25,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     eglise_id: null,
     branche_id: null,
     type_evangelisation: "",
+    date: new Date().toISOString().split("T")[0], 
   });
 
   const [showOtherField, setShowOtherField] = useState(false);
@@ -135,7 +136,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
       is_whatsapp: formData.is_whatsapp,
       eglise_id: formData.eglise_id,
       branche_id: formData.branche_id,
-      type_evangelisation: formData.type_evangelisation
+      type_evangelisation: formData.type_evangelisation,
+      date: formData.date,
     };
 
     try {
@@ -186,6 +188,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
         <h1 className="text-3xl font-bold text-center mb-2">Ajouter une personne évangélisée</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
+          <input type="date" className="input" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })}/>
+  
           {/* Type Evangelisation */}
           <select
             className="input text-center"

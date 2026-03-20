@@ -9,6 +9,18 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
   const statutIds = { envoye: 1, en_attente: 2, integrer: 3, refus: 4 };
 
+  //=============
+  const sendWhatsApp = (phone, message) => {
+  if (!phone) {
+    alert("❌ Numéro invalide");
+    return;
+  }
+
+  const num = phone.replace(/\D/g, "");
+  const url = `https://wa.me/${num}?text=${encodeURIComponent(message)}`;
+  window.open(url, "_blank");
+};
+
   // Vérification de doublon
   const checkDoublon = async () => {
     if (!membre.telephone) return false;
@@ -73,29 +85,43 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
     }
 
     // 🔹 Message WhatsApp
-    let message = `👋 Bonjour ${responsablePrenom}!\n\n`;
-    message += `👤 Nom: ${membre.prenom} ${membre.nom}\n`;
-    message += `🎗️ Sexe: ${membre.sexe || "—"}\n`; 
-    message += `⏳ Age: ${membre.age || "—"}\n`; 
-    message += `📱 Téléphone: ${membre.telephone || "—"}\n`;
-    message += `💬 WhatsApp: ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
-    message += `🏙️ Ville: ${membre.ville || "—"}\n`;
-    message += `✨ Raison de la venue: ${membre.statut_initial || "—"}\n`;   
-    message += `🙏 Prière du salut: ${membre.priere_salut || "—"}\n`; 
-    message += `❓Besoin: ${
-      membre.besoin
-        ? (() => {
-            try {
-              const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
-              return Array.isArray(besoins) ? besoins.join(", ") : besoins;
-            } catch {
-              return membre.besoin;
-            }
-          })()
-        : "—"
-    }\n`;
-    message += `📝 Infos supplémentaires: ${membre.infos_supplementaires || "—"}\n\n`;
-    message += "Merci pour ton accompagnement ❤️";
+   let message = `👋 Bonjour ${responsablePrenom}
+
+────────────────────
+
+👤 Nom : ${membre.prenom} ${membre.nom}
+🏙️ Ville : ${membre.ville || "—"}
+🎗️ Sexe : ${membre.sexe || "—"}
+⏳ Age : ${membre.age || "—"}
+📱 Téléphone : ${membre.telephone || "—"}
+💬 WhatsApp : ${membre.is_whatsapp ? "Oui" : "Non"}
+
+✨ Raison de la venue : ${membre.statut_initial || "—"}
+🙏 Prière du salut : ${membre.priere_salut ? "Oui" : "Non"}
+☀️ Type : ${membre.type_conversion || "—"}
+
+❓ Besoin : ${
+  membre.besoin
+    ? (() => {
+        try {
+          const besoins =
+            typeof membre.besoin === "string"
+              ? JSON.parse(membre.besoin)
+              : membre.besoin;
+          return Array.isArray(besoins) ? besoins.join(", ") : besoins;
+        } catch {
+          return membre.besoin;
+        }
+      })()
+    : "—"
+}
+
+📝 Infos : ${membre.infos_supplementaires || "—"}
+
+📅 Date évangélisé : ${formatDateFr(membre.date_evangelise || membre.created_at)}
+
+Merci pour ton accompagnement ❤️
+`;
 
     const phone = responsableTelephone?.replace(/\D/g, "");
     if (!phone) {
@@ -104,7 +130,7 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
     }
 
     // 🔹 Ouvrir WhatsApp
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+    sendWhatsApp(phone, message);
 
     // 🔹 Mettre à jour la base avec la date
     const now = new Date().toISOString();
@@ -169,7 +195,11 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
             <p className="mb-6 text-gray-700">Ce numéro ({membre.telephone}) existe déjà dans la base.</p>
             <div className="flex justify-center gap-3">
               <button
-                onClick={sendToWhatsapp}
+                onClick={() => {
+                  const phone = membre.telephone?.replace(/\D/g, "");
+                  const msg = message; // ou reconstruire si besoin
+                  sendWhatsApp(phone, msg);
+                }}
                 className="flex-1 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition"
               >
                 Envoyer quand même

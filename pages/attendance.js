@@ -63,14 +63,14 @@ function Attendance() {
   }, []);
 
    // ✅ Calcul des KPI existants
-  const totalHommes = membresComplet.filter(m => m.sexe === 'Homme').length;
-  const totalFemmes = membresComplet.filter(m => m.sexe === 'Femme').length;
-  const totalJeunes = membresComplet.filter(m => m.age && m.age < 30).length;
-  const totalEnfants = membresComplet.filter(m => m.age && m.age < 13).length;
-  const totalConnectes = membresComplet.filter(m => m.connecte === true).length;
-  const totalNouveauxVenus = membresComplet.filter(m => m.date_premiere_visite).length;
-  const totalNouveauxConvertis = membresComplet.filter(m => m.type_conversion === 'Nouveau converti').length;
-  const totalGeneral = membresComplet.length;
+  const total = membresComplet.length;
+  const hommes = membresComplet.filter(m => m.sexe === "Homme").length;
+  const femmes = membresComplet.filter(m => m.sexe === "Femme").length;
+  const enfants = membresComplet.filter(m => m.age < 12).length;
+  const jeunes = membresComplet.filter(m => m.age >= 12 && m.age <= 25).length;
+  const connectes = membresComplet.filter(m => m.connecte).length;
+  const nouveauxVenus = membresComplet.filter(m => m.date_premiere_visite && new Date(m.date_premiere_visite) >= new Date(Date.now() - 30*24*60*60*1000)).length; // derniers 30 jours
+  const nouveauxConvertis = membresComplet.filter(m => m.type_conversion === "Nouveau converti").length;;
 
   // ✅ Calcul des KPI “croissance de l’église”
   const fidelesSuivis = membresComplet.filter(m => m.statut_suivis === 'Existant').length;

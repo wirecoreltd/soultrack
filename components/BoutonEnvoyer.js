@@ -85,10 +85,14 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
     }
 
     // 🔹 Message WhatsApp
-   let message = `👋 Bonjour ${responsablePrenom},
+   <button
+  onClick={() => {
+    const phone = membre.telephone?.replace(/\D/g, "");
 
-  Nous te confions cette nouvelle personne avec joie,  
-  Merci pour ton engagement et ton cœur pour le suivi des âmes ✨.
+    const msg = `👋 Bonjour ${responsablePrenom},
+
+Nous te confions cette nouvelle personne avec joie 🙏  
+Merci pour ton engagement et ton cœur pour le suivi des âmes ✨
 
 📅 Date de Création : ${new Date(membre.created_at).toLocaleString("fr-FR")}
 👤 Nom : ${membre.prenom} ${membre.nom}
@@ -97,35 +101,21 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 ⏳ Age : ${membre.age || "—"}
 📱 Téléphone : ${membre.telephone || "—"}
 💬 WhatsApp : ${membre.is_whatsapp ? "Oui" : "Non"}
+
 ✨ Raison de la venue : ${membre.statut_initial || "—"}
 🙏 Prière du salut : ${membre.priere_salut ? "Oui" : "Non"}
 ☀️ Type : ${membre.type_conversion || "—"}
 
-❓ Besoin : ${
-  membre.besoin
-    ? (() => {
-        try {
-          const besoins =
-            typeof membre.besoin === "string"
-              ? JSON.parse(membre.besoin)
-              : membre.besoin;
-          return Array.isArray(besoins) ? besoins.join(", ") : besoins;
-        } catch {
-          return membre.besoin;
-        }
-      })()
-    : "—"
-}
-
 📝 Infos : ${membre.infos_supplementaires || "—"}
-Merci pour ton accompagnement ❤️
-`;
 
-    const phone = responsableTelephone?.replace(/\D/g, "");
-    if (!phone) {
-      alert("❌ Le numéro WhatsApp est invalide.");
-      return;
-    }
+Merci pour ton accompagnement ❤️`;
+
+    sendWhatsApp(phone, msg);
+  }}
+  className="flex-1 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition"
+>
+  Envoyer quand même
+</button>
 
     // 🔹 Ouvrir WhatsApp
     sendWhatsApp(phone, message);

@@ -62,22 +62,6 @@ function Attendance() {
     loadSuperviseur();
   }, []);
 
-   // ✅ Calcul des KPI existants
-  const total = membresComplet.length;
-  const hommes = membresComplet.filter(m => m.sexe === "Homme").length;
-  const femmes = membresComplet.filter(m => m.sexe === "Femme").length;
-  const enfants = membresComplet.filter(m => m.age < 12).length;
-  const jeunes = membresComplet.filter(m => m.age >= 12 && m.age <= 25).length;
-  const connectes = membresComplet.filter(m => m.connecte).length;
-  const nouveauxVenus = membresComplet.filter(m => m.date_premiere_visite && new Date(m.date_premiere_visite) >= new Date(Date.now() - 30*24*60*60*1000)).length; // derniers 30 jours
-  const nouveauxConvertis = membresComplet.filter(m => m.type_conversion === "Nouveau converti").length;;
-
-  // ✅ Calcul des KPI “croissance de l’église”
-  const fidelesSuivis = membresComplet.filter(m => m.statut_suivis === 'Existant').length;
-  const baptismesAVenir = membresComplet.filter(m => m.bapteme_eau === 'Non').length;
-  const futursLeaders = membresComplet.filter(m => m.star === '3').length;
-  const besoinsCritiques = membresComplet.filter(m => m.besoin && m.besoin.length > 0).length;
-
   /*===========*/
   // Fonction utilitaire pour splitter le texte en lignes de max 15 caractères
 const splitTypeName = (name, lineLength = 15) => {
@@ -399,35 +383,35 @@ const calculateTypeTotals = (rows) => {
           </div>
         
           {/* Nouveau temps si AUTRE */}
-            {formData.typeTemps === "AUTRE" && (
-              <>
-                <div className="flex flex-col col-span-1 md:col-span-2">
-                  <label className="text-white mb-1">Nom du temps</label>
-                  <input
-                    type="text"
-                    name="nouveauTemps"
-                    value={formData.nouveauTemps}
-                    onChange={(e) => {
-                      // Limite à 30 caractères
-                      const value = e.target.value.slice(0, 30);
-                      setFormData(prev => ({ ...prev, nouveauTemps: value }));
-                    }}
-                    className="input w-full"
-                    placeholder="Ex: ADP"
-                    maxLength={30} // limite côté HTML
-                  />
-                </div>
-                <div className="flex items-center gap-2 col-span-1 md:col-span-2">
-                  <input
-                    type="checkbox"
-                    name="enregistrerTemps"
-                    checked={formData.enregistrerTemps}
-                    onChange={e => setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))}
-                  />
-                  <label className="text-amber-300 text-sm">Enregistrer ce temps pour le futur</label>
-                </div>
-              </>
-            )}
+{formData.typeTemps === "AUTRE" && (
+  <>
+    <div className="flex flex-col col-span-1 md:col-span-2">
+      <label className="text-white mb-1">Nom du temps</label>
+      <input
+        type="text"
+        name="nouveauTemps"
+        value={formData.nouveauTemps}
+        onChange={(e) => {
+          // Limite à 30 caractères
+          const value = e.target.value.slice(0, 30);
+          setFormData(prev => ({ ...prev, nouveauTemps: value }));
+        }}
+        className="input w-full"
+        placeholder="Ex: ADP"
+        maxLength={30} // limite côté HTML
+      />
+    </div>
+    <div className="flex items-center gap-2 col-span-1 md:col-span-2">
+      <input
+        type="checkbox"
+        name="enregistrerTemps"
+        checked={formData.enregistrerTemps}
+        onChange={e => setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))}
+      />
+      <label className="text-amber-300 text-sm">Enregistrer ce temps pour le futur</label>
+    </div>
+  </>
+)}
         
           {/* Numéro de culte si Culte */}
           {formData.typeTemps === "Culte" && (
@@ -474,58 +458,6 @@ const calculateTypeTotals = (rows) => {
         </div>
         <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end">Générer</button>
       </div>
-
-         <div className="attendance-page p-4">            
-            {/* Section KPI Croissance */}
-            
-            <div className="kpi-croissance grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-              
-              {/* Âmes Converties */}
-              <div
-                className="kpi-card p-4 bg-gradient-to-r from-green-400 to-green-600 text-white rounded-xl shadow-lg cursor-pointer hover:scale-105 transition"
-                onClick={() => navigate("/attendance?filter=nouveaux_convertis")}
-              >
-                <div className="kpi-value text-3xl font-bold">{nouveauxConvertis}</div>
-                <div className="kpi-label mt-2 text-sm">Âmes Converties</div>
-              </div>
-          
-              {/* Fidèles Suivis */}
-              <div
-                className="kpi-card p-4 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-xl shadow-lg cursor-pointer hover:scale-105 transition"
-                onClick={() => navigate("/attendance?filter=fideles_suivis")}
-              >
-                <div className="kpi-value text-3xl font-bold">{fidelesSuivis}</div>
-                <div className="kpi-label mt-2 text-sm">Fidèles Suivis</div>
-              </div>
-          
-              {/* Baptêmes à venir */}
-              <div
-                className="kpi-card p-4 bg-gradient-to-r from-purple-400 to-purple-600 text-white rounded-xl shadow-lg cursor-pointer hover:scale-105 transition"
-                onClick={() => navigate("/attendance?filter=bapteme")}
-              >
-                <div className="kpi-value text-3xl font-bold">{baptismesAVenir}</div>
-                <div className="kpi-label mt-2 text-sm">Baptêmes à venir</div>
-              </div>
-          
-              {/* Futurs Leaders */}
-              <div
-                className="kpi-card p-4 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-xl shadow-lg cursor-pointer hover:scale-105 transition"
-                onClick={() => navigate("/attendance?filter=futurs_leaders")}
-              >
-                <div className="kpi-value text-3xl font-bold">{futursLeaders}</div>
-                <div className="kpi-label mt-2 text-sm">Futurs Leaders</div>
-              </div>
-          
-              {/* Besoins Critiques */}
-              <div
-                className="kpi-card p-4 bg-gradient-to-r from-red-400 to-red-600 text-white rounded-xl shadow-lg cursor-pointer hover:scale-105 transition"
-                onClick={() => navigate("/attendance?filter=besoins_critiques")}
-              >
-                <div className="kpi-value text-3xl font-bold">{besoinsCritiques}</div>
-                <div className="kpi-label mt-2 text-sm">Besoins Critiques</div>
-              </div>
-          </div>
-            </div>
 
      
   {/* TABLEAU / CARDS DESKTOP + MOBILE */}

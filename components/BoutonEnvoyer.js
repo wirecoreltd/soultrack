@@ -86,9 +86,14 @@ export default function BoutonEnvoyer({ membre, type = "cellule", cible, session
 
     // 🔹 Message WhatsApp
    <button
-  onClick={() => {
-    const phone = membre.telephone?.replace(/\D/g, "");
+ onClick={() => {
+  const phoneNumber = membre.telephone;
 
+  if (!phoneNumber) {
+    alert("❌ Numéro invalide");
+    return;
+  }
+  const phone = phoneNumber.replace(/\D/g, "");
     const msg = `👋 Bonjour ${responsablePrenom},
 
 Nous te confions cette nouvelle personne avec joie 🙏  

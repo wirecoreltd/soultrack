@@ -52,13 +52,15 @@ export default function BoutonEnvoyer({
 
   // 🔹 ENVOI WHATSAPP FINAL
   const sendToWhatsapp = () => {
-    if (!phoneNumber) {
-      alert("❌ Veuillez saisir un numéro");
-      return;
-    }
+  const finalPhone = phoneNumber || membre.telephone;
 
-    sendWhatsApp(phoneNumber, currentMessage);
-  };
+  if (!finalPhone) {
+    alert("❌ Veuillez saisir un numéro");
+    return;
+  }
+
+  sendWhatsApp(finalPhone, currentMessage);
+};
 
   // 🔹 HANDLE CLICK PRINCIPAL
   const handleClick = async () => {

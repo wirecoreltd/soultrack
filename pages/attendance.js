@@ -540,7 +540,6 @@ function Attendance() {
         <div className="kpi-value">{besoinsCritiques}</div>
       </div>
     </div>
-</div>
 
   {/* TABLEAU / CARDS DESKTOP + MOBILE */}
 {showTable && (

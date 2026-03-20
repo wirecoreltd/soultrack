@@ -146,63 +146,69 @@ export default function BoutonEnvoyer({
   const sendToWhatsapp = async () => {
     const phone = manualPhone?.replace(/\D/g, "");
 
-    if (!phone) {
-      alert("❌ Numéro invalide");
+   const sendToWhatsapp = async () => {
+  const phone = manualPhone?.replace(/\D/g, "");
+
+  let whatsappLink;
+
+  // ✅ Si numéro fourni → envoi direct
+  if (phone) {
+    whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(
+      messageToSend
+    )}`;
+  } else {
+    // ✅ Si vide → ouvrir WhatsApp sans contact (choix manuel)
+    whatsappLink = `https://wa.me/?text=${encodeURIComponent(
+      messageToSend
+    )}`;
+  }
+
+  window.open(whatsappLink, "_blank");
+
+  try {
+    const now = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from("membres_complets")
+      .update({
+        statut: "actif",
+        statut_suivis: statutIds.envoye,
+        cellule_id: type === "cellule" ? cible.id : null,
+        conseiller_id: type === "conseiller" ? cible.id : null,
+        suivi_cellule_nom:
+          type === "cellule" ? cible.cellule_full : null,
+        suivi_responsable:
+          type === "conseiller"
+            ? `${cible.prenom} ${cible.nom}`
+            : null,
+        suivi_responsable_id:
+          type === "conseiller" ? cible.id : null,
+        etat_contact: "Existant",
+        date_envoi_suivi: now
+      })
+      .eq("id", membre.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(error);
+      alert("❌ Erreur update Supabase");
       return;
     }
 
-    const whatsappLink = `https://wa.me/${phone}?text=${encodeURIComponent(
-      messageToSend
-    )}`;
+    if (onEnvoyer) onEnvoyer(data);
 
-    window.open(whatsappLink, "_blank");
-
-    try {
-      const now = new Date().toISOString();
-
-      const { data, error } = await supabase
-        .from("membres_complets")
-        .update({
-          statut: "actif",
-          statut_suivis: statutIds.envoye,
-          cellule_id: type === "cellule" ? cible.id : null,
-          conseiller_id: type === "conseiller" ? cible.id : null,
-          suivi_cellule_nom:
-            type === "cellule" ? cible.cellule_full : null,
-          suivi_responsable:
-            type === "conseiller"
-              ? `${cible.prenom} ${cible.nom}`
-              : null,
-          suivi_responsable_id:
-            type === "conseiller" ? cible.id : null,
-          etat_contact: "Existant",
-          date_envoi_suivi: now
-        })
-        .eq("id", membre.id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error(error);
-        alert("❌ Erreur update Supabase");
-        return;
-      }
-
-      if (onEnvoyer) onEnvoyer(data);
-
-      if (showToast) {
-        showToast(
-          `✅ ${membre.prenom} ${membre.nom} envoyé le ${now}`
-        );
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setShowWhatsappPopup(false);
-      setShowDoublonPopup(false);
-      setDoublonDetected(false);
+    if (showToast) {
+      showToast(`✅ ${membre.prenom} ${membre.nom} envoyé`);
     }
-  };
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setShowWhatsappPopup(false);
+    setShowDoublonPopup(false);
+    setDoublonDetected(false);
+  }
+};
 
   return (
     <>

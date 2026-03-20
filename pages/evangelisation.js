@@ -367,14 +367,8 @@ export default function Evangelisation() {
         )}
 
        {hasSelectedContacts && selectedTarget && (
-          <>
-            {/* 👉 MESSAGE UX */}
-            <p className="text-gray-200 text-sm text-center mb-2">
-              Cliquez sur <b>Envoyer</b> si le contact est sur WhatsApp,
-              sinon WhatsApp s’ouvrira avec vos contacts.
-            </p>
-        
-            <button
+          <>           
+                    <button
               onClick={checkDoublons}
               disabled={loadingSend}
               className="w-full bg-green-500 text-white font-bold px-4 py-2 rounded"
@@ -572,8 +566,17 @@ export default function Evangelisation() {
 
         {showWhatsappPopup && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">       
-                      
+            <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
+        
+              <h2 className="text-xl font-bold mb-3">
+                Envoyer l'évangélisation
+              </h2>
+        
+              <p className="text-gray-700 mb-4">
+                Cliquez sur <b>Envoyer</b> si le contact figure déjà dans WhatsApp,
+                ou saisissez un numéro manuellement.
+              </p>
+        
               <input
                 type="text"
                 placeholder="Numéro (ex: +2305xxxxxxx)"
@@ -605,8 +608,7 @@ export default function Evangelisation() {
                   Envoyer
                 </button>
         
-              </div>
-        
+              </div>        
             </div>
           </div>
         )}

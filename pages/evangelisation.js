@@ -269,8 +269,15 @@ export default function Evangelisation() {
   
       contactsToSend.forEach((m, i) => {
         message += "────────────────────\n";
-        if (contactsToSend.length > 1) message += `👥 Personne ${i + 1}\n`;
-        message += `👤 Nom : ${m.prenom} ${m.nom}\n🏙️ Ville : ${m.ville || "—"}\n💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n🎗️ Sexe : ${m.sexe || "—"}\n🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n☀️ Type de conversion : ${m.type_conversion || "—"}\n❓ Besoin : ${formatBesoin(m.besoin)}\n📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
+        if (contactsToSend.length > 1) 
+          message += `👥 Personne ${i + 1}\n`;
+          message += `👤 Nom : ${m.prenom} ${m.nom}\n
+          🏙️ Ville : ${m.ville || "—"}\n
+          💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}\n
+          🎗️ Sexe : ${m.sexe || "—"}\n🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}\n
+          ☀️ Type de conversion : ${m.type_conversion || "—"}\n
+          ❓ Besoin : ${formatBesoin(m.besoin)}\n
+          📝 Infos : ${m.infos_supplementaires || "—"}\n\n`;
       });
   
       message += "Merci pour ton engagement ✨";

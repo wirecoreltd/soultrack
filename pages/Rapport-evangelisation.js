@@ -91,8 +91,8 @@ export default function RapportEvangelisation() {
         // Filtrer selon dates et typeFilter
         let filtered = (evangelisesData || []).filter((e) => {
           const dateOk =
-            (!dateDebut || new Date(e.created_at) >= new Date(dateDebut)) &&
-            (!dateFin || new Date(e.created_at) <= new Date(dateFin));
+            (!dateDebut || new Date(e.date_evangelise) >= new Date(dateDebut)) &&
+            (!dateFin || new Date(e.date_evangelise) <= new Date(dateFin));
           const typeOk = !typeFilter || typeFilter === "Tous" || e.type_evangelisation === typeFilter;
           return dateOk && typeOk;
         });
@@ -135,8 +135,8 @@ export default function RapportEvangelisation() {
   
       let filtered = (evangelisesData || []).filter((e) => {
         const dateOk =
-          (!dateDebut || new Date(e.created_at) >= new Date(dateDebut)) &&
-          (!dateFin || new Date(e.created_at) <= new Date(dateFin));
+          (!dateDebut || new Date(e.date_evangelise) >= new Date(dateDebut)) &&
+          (!dateFin || new Date(e.date_evangelise) <= new Date(dateFin));
         const typeOk = !typeFilter || typeFilter === "Tous" || e.type_evangelisation === typeFilter;
         return dateOk && typeOk;
       });

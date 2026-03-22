@@ -70,10 +70,10 @@ export default function RapportEvangelisation() {
           .select("*")
           .eq("eglise_id", egliseId)
           .eq("branche_id", brancheId)
-          .order("date", { ascending: true });
+          .order("date_evangelise", { ascending: true });
     
-        if (dateDebut) query = query.gte("date", dateDebut);
-        if (dateFin) query = query.lte("date", dateFin);
+        if (dateDebut) query = query.gte("date_evangelise", dateDebut);
+        if (dateFin) query = query.lte("date_evangelise", dateFin);
     
         const { data: rapportsData } = await query;
         setRapports(rapportsData || []);
@@ -91,8 +91,8 @@ export default function RapportEvangelisation() {
         // Filtrer selon dates et typeFilter
         let filtered = (evangelisesData || []).filter((e) => {
           const dateOk =
-            (!dateDebut || new Date(e.created_at) >= new Date(dateDebut)) &&
-            (!dateFin || new Date(e.created_at) <= new Date(dateFin));
+            (!dateDebut || new Date(e.date_evangelise) >= new Date(dateDebut)) &&
+            (!dateFin || new Date(e.date_evangelise) <= new Date(dateFin));
           const typeOk = !typeFilter || typeFilter === "Tous" || e.type_evangelisation === typeFilter;
           return dateOk && typeOk;
         });
@@ -135,8 +135,8 @@ export default function RapportEvangelisation() {
   
       let filtered = (evangelisesData || []).filter((e) => {
         const dateOk =
-          (!dateDebut || new Date(e.created_at) >= new Date(dateDebut)) &&
-          (!dateFin || new Date(e.created_at) <= new Date(dateFin));
+          (!dateDebut || new Date(e.date_evangelise) >= new Date(dateDebut)) &&
+          (!dateFin || new Date(e.date_evangelise) <= new Date(dateFin));
         const typeOk = !typeFilter || typeFilter === "Tous" || e.type_evangelisation === typeFilter;
         return dateOk && typeOk;
       });
@@ -215,7 +215,7 @@ setFilteredSuivisState(filteredSuivis); // <-- ici on le stocke pour le JSX
   const groupByMonth = (data) => {
     const map = {};
     (data || []).forEach((r) => {
-      const d = new Date(r.date);
+      const d = new Date(r.date_evangelise);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       if (!map[key]) map[key] = [];
       map[key].push(r);
@@ -250,7 +250,7 @@ setFilteredSuivisState(filteredSuivis); // <-- ici on le stocke pour le JSX
   // ---------------- LAST MONTH ----------------
   const getLastMonthKey = (data) => {
     if (!data || data.length === 0) return null;
-    const dates = data.map(r => new Date(r.date));
+    const dates = data.map(r => new Date(r.date_evangelise));
     const lastDate = new Date(Math.max(...dates));
     return `${lastDate.getFullYear()}-${lastDate.getMonth()}`;
   };
@@ -600,7 +600,7 @@ const handleConseillerClick = () => {
                             typeReports.map((r) => (
                               <div key={r.id} className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border-l-4 border-blue-500 ml-8">
                                 <div className="hidden md:flex items-center">
-                                  <div className="min-w-[150px] text-white">{new Date(r.date).toLocaleDateString()}</div>
+                                  <div className="min-w-[150px] text-white">{new Date(r.date_evangelise).toLocaleDateString()}</div>
                                   <div className="min-w-[110px] text-center text-white ml-20">{r.hommes ?? "-"}</div>
                                   <div className="min-w-[110px] text-center text-white">{r.femmes ?? "-"}</div>
                                     <div className="min-w-[110px] text-center text-orange-400 font-semibold">
@@ -618,7 +618,7 @@ const handleConseillerClick = () => {
                                 </div>
 
                                 <div className="md:hidden text-white text-sm">
-                                  <div className="font-semibold mb-1">{new Date(r.date).toLocaleDateString()}</div>
+                                  <div className="font-semibold mb-1">{new Date(r.date_evangelise).toLocaleDateString()}</div>
                                   <div className="grid grid-cols-2 gap-1">
                                     <div>Hommes: {r.hommes ?? "-"}</div>
                                     <div>Femmes: {r.femmes ?? "-"}</div>     

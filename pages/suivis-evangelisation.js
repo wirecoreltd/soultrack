@@ -418,7 +418,7 @@ export default function SuivisEvangelisation() {
                 
                 {/* Téléphone */}
                 <div className="flex-[1] text-sm text-white relative mb-3">
-                  <span className="sm:hidden text-xs text-gray-300 block">Téléphone</span>
+                  <span className="sm:hidden text-xs text-gray-300 block"></span>
                   
                   <p
                     onClick={(e) => {
@@ -476,7 +476,7 @@ export default function SuivisEvangelisation() {
                   <p className="text-sm text-black-700">🏙️ Ville : {m.ville || ""}</p>
                 </div>
                 
-                <p className="self-end text-[11px] text-gray-400 mt-2">Créé le {formatDateFr(m.date_suivi)}</p>
+                <p className="self-end text-[11px] text-gray-400 mt-2">Envoyé au suivis le {formatDateFr(m.date_suivi)}</p>
 
 
                 {/* Commentaire + statut */}

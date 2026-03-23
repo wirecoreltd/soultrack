@@ -284,18 +284,7 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
   // redirection
   router.push(`/suivi-ames?${query.toString()}`);
 };
-    
-      router.push({
-        pathname: "/SuiviAmesPage",
-        query: {
-          status: status || "all",
-          ids: evangeliseIds.join(","), // IDs filtrés
-          dateDebut, // ajout automatique
-          dateFin,   // ajout automatique
-        },
-      });
-    };
-    
+
     const handleCelluleClick = () => {
       router.push({
         pathname: "/SuiviAmesPage",

@@ -101,7 +101,30 @@ const { data: evangelises } = await query;
       const { data: baptemes } = await supabase.from("baptemes").select("*");
 
       // ================= FILTER PAR ID ET DATE =================
-     const filteredEvangelises = evangelises;
+     const filteredEvangelises = evangelises.filter(e => {
+  // Si idsQuery contient des IDs, on exclut ceux déjà dans le rapport
+  if (idsQuery.length > 0 && idsQuery.includes(e.id)) {
+    return false;
+  }
+
+  // Filtrage par dates si défini
+  const dateEv = e.date_evangelise ? new Date(e.date_evangelise) : null;
+  if (!dateEv || isNaN(dateEv)) return false;
+
+  if (dateDebutQuery) {
+    const start = new Date(dateDebutQuery);
+    start.setHours(0,0,0,0);
+    if (dateEv < start) return false;
+  }
+
+  if (dateFinQuery) {
+    const end = new Date(dateFinQuery);
+    end.setHours(23,59,59,999);
+    if (dateEv > end) return false;
+  }
+
+  return true; // garde tout le reste
+});
 
       // ================= MAPS =================
       const map = {};

@@ -6,6 +6,8 @@ import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useRouter } from "next/navigation";
+import Layout from "../components/Layout";
+
 
 export default function EtatCellulePage({ egliseId, brancheId }) {
   const [reports, setReports] = useState([]);

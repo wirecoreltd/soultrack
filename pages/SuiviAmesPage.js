@@ -28,6 +28,7 @@ function SuiviAmesPage() {
   const idsQuery = searchParams?.get("ids")?.split(",") || [];
   const dateDebutQuery = searchParams?.get("dateDebut");
   const dateFinQuery = searchParams?.get("dateFin");
+  
 
   // Ajoute cette fonction au début de ton composant SuiviAmesPage
 const formatDateFR = (dateString) => {
@@ -101,16 +102,26 @@ const formatDateFR = (dateString) => {
         // ================= FILTRAGE DATE & IDs =================
         const dateOnly = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
-        const filteredEvangelises = evangelises.filter(e => {
-          if (!e.date_evangelise) return false;
-          const d = new Date(e.date_evangelise);
-          if (isNaN(d)) return false;
-
-          if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
-          if (dateDebutQuery && dateOnly(d) < dateOnly(new Date(dateDebutQuery))) return false;
-          if (dateFinQuery && dateOnly(d) > dateOnly(new Date(dateFinQuery))) return false;
-          return true;
-        });
+          const filteredEvangelises = evangelises.filter(e => {
+            const dateEv = e.date_evangelise ? new Date(e.date_evangelise) : null;
+            if (!dateEv || isNaN(dateEv)) return false;
+          
+            if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
+          
+            if (dateDebutQuery) {
+              const start = new Date(dateDebutQuery);
+              start.setHours(0,0,0,0);
+              if (dateEv < start) return false;
+            }
+          
+            if (dateFinQuery) {
+              const end = new Date(dateFinQuery);
+              end.setHours(23,59,59,999);
+              if (dateEv > end) return false;
+            }
+          
+            return true;
+          });
 
         // ================= MAP =================
         const map = {};

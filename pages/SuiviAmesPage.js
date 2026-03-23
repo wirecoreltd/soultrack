@@ -142,7 +142,7 @@ function SuiviAmesPage() {
         const membre = membresMap[p.id];
         const sortedSuivis = p.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
         const lastSuivi = sortedSuivis[0];
-        const dateRef = lastSuivi?.date_suivi || p.created_at;
+        const dateRef = lastSuivi?.date_suivi || p.date_evangelise;
         const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
 
         let score = 100;

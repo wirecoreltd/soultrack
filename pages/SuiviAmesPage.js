@@ -57,11 +57,25 @@ function SuiviAmesPage() {
     const fetchData = async () => {
       setLoading(true);
 
-      const { data: evangelises } = await supabase
-        .from("evangelises")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+      let query = supabase
+  .from("evangelises")
+  .select("*")
+  .eq("eglise_id", egliseId)
+  .eq("branche_id", brancheId);
+
+if (dateDebutQuery) {
+  query = query.gte("date_evangelise", dateDebutQuery);
+}
+
+if (dateFinQuery) {
+  query = query.lte("date_evangelise", dateFinQuery + "T23:59:59");
+}
+
+if (idsQuery.length > 0) {
+  query = query.in("id", idsQuery);
+}
+
+const { data: evangelises } = await query;
 
       const { data: suivis } = await supabase
         .from("suivis_des_evangelises")
@@ -87,27 +101,7 @@ function SuiviAmesPage() {
       const { data: baptemes } = await supabase.from("baptemes").select("*");
 
       // ================= FILTER PAR ID ET DATE =================
-      const filteredEvangelises = evangelises.filter(e => {
-  const dateEv = e.date_evangelise ? new Date(e.date_evangelise) : null;
-
-  if (!dateEv || isNaN(dateEv)) return false; // 🔥 ignore les mauvaises dates
-
-  if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
-
-  if (dateDebutQuery) {
-    const start = new Date(dateDebutQuery);
-    start.setHours(0, 0, 0, 0);
-    if (dateEv < start) return false;
-  }
-
-  if (dateFinQuery) {
-    const end = new Date(dateFinQuery);
-    end.setHours(23, 59, 59, 999);
-    if (dateEv > end) return false;
-  }
-
-  return true;
-});
+     const filteredEvangelises = evangelises;
 
       // ================= MAPS =================
       const map = {};
@@ -115,9 +109,8 @@ function SuiviAmesPage() {
 
       suivis.forEach((s) => {
         if (map[s.evangelise_id]) {
-          // filtrer les suivis par date de suivi également
-          if (dateDebutQuery && s.date_suivi && new Date(s.date_suivi) < new Date(dateDebutQuery)) return;
-          if (dateFinQuery && s.date_suivi && new Date(s.date_suivi) > new Date(dateFinQuery)) return;
+          // filtrer les suivis par date de suivi également         
+          
           map[s.evangelise_id].suivis.push(s);
         }
       });

@@ -227,44 +227,15 @@ function SuiviAmesPage() {
         <span className="text-amber-300">l’Intégration</span>
       </h1>
 
-      {/* FILTER */}
-      <div className="flex gap-3 my-4 flex-wrap justify-center">
-        <input
-          placeholder="Rechercher..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="p-2 rounded"
-        />
-        <button onClick={() => setFilter("ALL")} className="bg-white px-3 py-1 rounded">Tous</button>
-        <button onClick={() => setFilter("URGENT")} className="bg-red-300 px-3 py-1 rounded">Urgents</button>
-        <button onClick={() => setFilter("STABLE")} className="bg-green-300 px-3 py-1 rounded">Stables</button>
-      </div>
-
       {/* TABLE */}
       <div className="w-full max-w-7xl overflow-x-auto py-2">
         <div className="min-w-[1200px]">
-          <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent gap-y-2 text-center">
-        <div className="flex-[1]">Évangélisé</div>    
-        <div className="flex-[2]">Nom complet</div>
-            <div className="flex-[1]">Envoi</div>
-            <div className="flex-[1]">Jours</div>            
-            <div className="flex-[1]">Envoyé au<br/>Suivi</div>
-            <div className="flex-[1]">Statut (Envoyé)</div>
-            <div className="flex-[1]">Date<br/>Intégration</div>
-            <div className="flex-[1]">Baptisé<br/>le</div>
-            <div className="flex-[1]">Début<br/>Ministère</div>
-            <div className="flex-[1]">Suivis<br/>par</div>
-            <div className="flex-[1]">Action</div>
-          </div>
-
-          {/* ROWS */}
           {filteredData.map((p) => (
             <div key={p.id} className="mb-1">
               <div className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 border-l-4 ${p.couleur}`}>
-            <div className="col-span-1 text-white text-center">{new Date(p.created_at).toLocaleDateString()}</div>
                 <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
-                <div className="col-span-1 text-white text-center">{p.status_suivi}</div>
-                <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>                
+                <div className="col-span-2 text-white text-center">{p.status_suivi}</div>
+                <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.membre?.created_at ? new Date(p.membre.created_at).toLocaleDateString() : "-"}</div>
@@ -275,7 +246,6 @@ function SuiviAmesPage() {
                   <button onClick={(e) => { e.stopPropagation(); toggle(p.id); }}>Détails</button>
                 </div>
               </div>
-
               {expanded[p.id] && (
                 <div className="bg-orange-100 rounded-lg p-3 mt-1">
                   <b className="text-orange-600">Historique :</b>
@@ -292,7 +262,6 @@ function SuiviAmesPage() {
           ))}
         </div>
       </div>
-
       {loading && <p className="text-white mt-4">Chargement...</p>}
       <Footer />
     </div>

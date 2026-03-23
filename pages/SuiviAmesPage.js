@@ -29,13 +29,6 @@ function SuiviAmesPage() {
   const dateDebutQuery = searchParams?.get("dateDebut");
   const dateFinQuery = searchParams?.get("dateFin");
 
-  const { data } = await supabase
-  .from("rapport_evangelisation_suivis")
-  .select("*")
-  .eq("eglise_id", egliseId)
-  .eq("branche_id", brancheId)
-  .gte("date_evangelise", dateDebutQuery)
-  .lte("date_evangelise", dateFinQuery);
   // ================= PROFILE =================
   useEffect(() => {
     const fetchProfile = async () => {

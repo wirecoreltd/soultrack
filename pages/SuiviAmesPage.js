@@ -25,6 +25,9 @@ function SuiviAmesPage() {
   const statusQuery = searchParams?.get("status"); 
   const celluleQuery = searchParams?.get("cellule") || null;
   const conseillerQuery = searchParams?.get("conseiller") || null;
+  const idsQuery = searchParams?.get("ids")?.split(",") || [];
+  const dateDebutQuery = searchParams?.get("dateDebut");
+  const dateFinQuery = searchParams?.get("dateFin");
 
   // ================= PROFILE =================
   useEffect(() => {
@@ -59,30 +62,50 @@ function SuiviAmesPage() {
         .select("*")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
-      
-      const { data: baptemes } = await supabase.from("baptemes").select("*");
+
       const { data: suivis } = await supabase
         .from("suivis_des_evangelises")
         .select("*")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
+
       const { data: membres } = await supabase
         .from("membres_complets")
         .select("*")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
+
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, prenom, nom");
+
       const { data: cellules } = await supabase
         .from("cellules")
         .select("id, cellule_full");
+
       const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
+      const { data: baptemes } = await supabase.from("baptemes").select("*");
+
+      // ================= FILTER PAR ID ET DATE =================
+      const filteredEvangelises = evangelises.filter(e => {
+        if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
+        if (dateDebutQuery && new Date(e.date_evangelise) < new Date(dateDebutQuery)) return false;
+        if (dateFinQuery && new Date(e.date_evangelise) > new Date(dateFinQuery)) return false;
+        return true;
+      });
 
       // ================= MAPS =================
       const map = {};
-      evangelises.forEach((e) => { map[e.id] = { ...e, suivis: [] }; });
-      suivis.forEach((s) => { if (map[s.evangelise_id]) map[s.evangelise_id].suivis.push(s); });
+      filteredEvangelises.forEach((e) => { map[e.id] = { ...e, suivis: [] }; });
+
+      suivis.forEach((s) => {
+        if (map[s.evangelise_id]) {
+          // filtrer les suivis par date de suivi également
+          if (dateDebutQuery && s.date_suivi && new Date(s.date_suivi) < new Date(dateDebutQuery)) return;
+          if (dateFinQuery && s.date_suivi && new Date(s.date_suivi) > new Date(dateFinQuery)) return;
+          map[s.evangelise_id].suivis.push(s);
+        }
+      });
 
       const membresMap = {};
       membres.forEach((m) => { membresMap[String(m.evangelise_member_id)] = m; });
@@ -96,8 +119,8 @@ function SuiviAmesPage() {
       const ministereMap = {};
       ministeres.forEach((m) => { ministereMap[m.membre_id] = m.created_at; });
 
-      const baptemeMap = {};        
-      baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });     
+      const baptemeMap = {};
+      baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
 
       // ================= FINAL DATA =================
       const finalData = Object.values(map).map((p) => {
@@ -105,7 +128,6 @@ function SuiviAmesPage() {
         const sortedSuivis = p.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
         const lastSuivi = sortedSuivis[0];
         const dateRef = lastSuivi?.date_suivi || p.created_at;
-
         const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
 
         let score = 100;
@@ -146,62 +168,53 @@ function SuiviAmesPage() {
           cellule_id: membre?.cellule_id || lastSuivi?.cellule_id || null,
           conseiller_id: membre?.conseiller_id || lastSuivi?.conseiller_id || null,
         };
-      });     
+      });
 
       setData(finalData);
       setLoading(false);
     };
 
     fetchData();
-  }, [egliseId, brancheId]);
+  }, [egliseId, brancheId, idsQuery, dateDebutQuery, dateFinQuery]);
 
-      // ================= FILTERED DATA =================
-      const idsQuery = searchParams?.get("ids")?.split(",") || [];
+  const filteredData = useMemo(() => {
+    let d = [...data];
 
-      const filteredData = useMemo(() => {
-        let d = [...data];
-      
-        // 🔹 Filtrer uniquement les évangélisés venant du rapport si idsQuery existe
-        if (idsQuery.length > 0) {
-          d = d.filter(p => idsQuery.includes(p.id));
-        }
-      
-        // ===== FILTRE SCORE =====
-        if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
-        if (filter === "STABLE") d = d.filter((p) => p.score > 80);
-      
-        // ===== FILTRE RECHERCHE =====
-        if (search) {
-          d = d.filter((p) =>
-            `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
-          );
-        }
-      
-        // ===== FILTRE STATUS =====
-        if (statusQuery && statusQuery.toLowerCase() !== "all") {
-          const query = statusQuery.toLowerCase().trim();
-          d = d.filter((p) => {
-            const suiviStatus = p.lastSuivi?.status_suivis_evangelises?.toLowerCase().trim();
-            if (query === "envoyé") return p.status_suivi?.toLowerCase().trim() === "envoyé";
-            if (query === "non envoyé" || query === "nonenvoye") return p.status_suivi?.toLowerCase().trim() === "non envoyé";
-            if (query === "integré" || query === "intégré") return suiviStatus === "integré" || suiviStatus === "intégré";
-            if (query === "en cours") return suiviStatus === "en cours";
-            if (query === "refus") return suiviStatus === "refus";
-            return true;
-          });
-        }
-      
-        // ===== FILTRE CELLULE & CONSEILLER =====
-        if (celluleQuery === "true") {
-          d = d.filter((p) => (p.membre?.cellule_id || p.lastSuivi?.cellule_id) != null);
-        }
-      
-        if (conseillerQuery === "true") {
-          d = d.filter((p) => (p.membre?.conseiller_id || p.lastSuivi?.conseiller_id) != null);
-        }
-      
-        return d;
-      }, [data, filter, search, statusQuery, celluleQuery, conseillerQuery, idsQuery]);
+    // Filtre score
+    if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
+    if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+
+    // Filtre recherche
+    if (search) {
+      d = d.filter((p) =>
+        `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // ===== FILTRE STATUS =====
+    if (statusQuery && statusQuery.toLowerCase() !== "all") {
+      const query = statusQuery.toLowerCase().trim();
+      d = d.filter((p) => {
+        const suiviStatus = p.lastSuivi?.status_suivis_evangelises?.toLowerCase().trim();
+        if (query === "envoyé") return p.status_suivi?.toLowerCase().trim() === "envoyé";
+        if (query === "non envoyé" || query === "nonenvoye") return p.status_suivi?.toLowerCase().trim() === "non envoyé";
+        if (query === "integré" || query === "intégré") return suiviStatus === "integré" || suiviStatus === "intégré";
+        if (query === "en cours") return suiviStatus === "en cours";
+        if (query === "refus") return suiviStatus === "refus";
+        return true;
+      });
+    }
+
+    // ===== FILTRE CELLULE & CONSEILLER =====     
+    if (celluleQuery === "true") { 
+      d = d.filter((p) => (p.membre?.cellule_id || p.lastSuivi?.cellule_id) != null);
+    }      
+    if (conseillerQuery === "true") { 
+      d = d.filter((p) => (p.membre?.conseiller_id || p.lastSuivi?.conseiller_id) != null);
+    }
+
+    return d;
+  }, [data, filter, search, statusQuery, celluleQuery, conseillerQuery]);
 
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 

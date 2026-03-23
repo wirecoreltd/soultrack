@@ -264,8 +264,9 @@ setFilteredSuivisState(filteredSuivis); // <-- ici on le stocke pour le JSX
   const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"];
 
   // ================= KPI =================  
-    const filteredRapports = rapports.filter((r) => {
+  const filteredRapports = rapports.filter((r) => {
     if (typeFilter && r.type_evangelisation !== typeFilter) return false;
+    if (statusFilter && r.status_suivi !== statusFilter) return false;
     return true;
   });
 

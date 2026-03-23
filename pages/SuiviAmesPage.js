@@ -21,7 +21,6 @@ function SuiviAmesPage() {
   const [brancheId, setBrancheId] = useState(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("ALL");  
-
   const searchParams = useSearchParams(); 
   const statusQuery = searchParams?.get("status"); 
   const celluleQuery = searchParams?.get("cellule") || null;
@@ -52,150 +51,146 @@ function SuiviAmesPage() {
   }, []);
 
   // ================= DATA =================
- useEffect(() => {
-  if (!egliseId || !brancheId) return;
+  useEffect(() => {
+    if (!egliseId || !brancheId) return;
 
-  const fetchData = async () => {
-    setLoading(true);
+    const fetchData = async () => {
+      setLoading(true);
 
-    // ========== Récupération des données ==========
-    const { data: evangelises } = await supabase
-      .from("evangelises")
-      .select("*")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId);
+      const { data: evangelises } = await supabase
+        .from("evangelises")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
 
-    const { data: suivis } = await supabase
-      .from("suivis_des_evangelises")
-      .select("*")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId);
+      const { data: suivis } = await supabase
+        .from("suivis_des_evangelises")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
 
-    const { data: membres } = await supabase
-      .from("membres_complets")
-      .select("*")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId);
+      const { data: membres } = await supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
 
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom");
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom");
 
-    const { data: cellules } = await supabase
-      .from("cellules")
-      .select("id, cellule_full");
+      const { data: cellules } = await supabase
+        .from("cellules")
+        .select("id, cellule_full");
 
-    const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
-    const { data: baptemes } = await supabase.from("baptemes").select("*");
+      const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
+      const { data: baptemes } = await supabase.from("baptemes").select("*");
 
-    // ========== Filtrage des évangélisés par date et IDs ==========
-    const filteredEvangelises = evangelises.filter((e) => {
-      const dateEv = e.date_evangelise ? new Date(e.date_evangelise) : null;
-      if (!dateEv || isNaN(dateEv)) return false;
+      // ================= FILTER PAR ID ET DATE =================
+      const filteredEvangelises = evangelises.filter(e => {
+  const dateEv = e.date_evangelise ? new Date(e.date_evangelise) : null;
 
-      if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
+  if (!dateEv || isNaN(dateEv)) return false; // 🔥 ignore les mauvaises dates
 
-      if (dateDebutQuery) {
-        const start = new Date(dateDebutQuery);
-        start.setHours(0, 0, 0, 0);
-        if (dateEv < start) return false;
-      }
+  if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
 
-      if (dateFinQuery) {
-        const end = new Date(dateFinQuery);
-        end.setHours(23, 59, 59, 999);
-        if (dateEv > end) return false;
-      }
+  if (dateDebutQuery) {
+    const start = new Date(dateDebutQuery);
+    start.setHours(0, 0, 0, 0);
+    if (dateEv < start) return false;
+  }
 
-      return true;
-    });
+  if (dateFinQuery) {
+    const end = new Date(dateFinQuery);
+    end.setHours(23, 59, 59, 999);
+    if (dateEv > end) return false;
+  }
 
-    // ========== Création du map des évangélisés ==========
-    const map = {};
-    filteredEvangelises.forEach((e) => {
-      map[e.id] = { ...e, suivis: [] };
-    });
+  return true;
+});
 
-    // ========== Attachement des suivis filtrés ==========
-    suivis.forEach((s) => {
-      if (!s.date_suivi) return;
-      const dateSuivi = new Date(s.date_suivi);
-      if (dateDebutQuery && dateSuivi < new Date(dateDebutQuery)) return;
-      if (dateFinQuery && dateSuivi > new Date(dateFinQuery)) return;
+      // ================= MAPS =================
+      const map = {};
+      filteredEvangelises.forEach((e) => { map[e.id] = { ...e, suivis: [] }; });
 
-      if (map[s.evangelise_id]) map[s.evangelise_id].suivis.push(s);
-    });
+      suivis.forEach((s) => {
+        if (map[s.evangelise_id]) {
+          // filtrer les suivis par date de suivi également
+          if (dateDebutQuery && s.date_suivi && new Date(s.date_suivi) < new Date(dateDebutQuery)) return;
+          if (dateFinQuery && s.date_suivi && new Date(s.date_suivi) > new Date(dateFinQuery)) return;
+          map[s.evangelise_id].suivis.push(s);
+        }
+      });
 
-    // ========== Mappings pour profils, membres, cellules ==========
-    const membresMap = {};
-    membres.forEach((m) => { membresMap[String(m.evangelise_member_id)] = m; });
+      const membresMap = {};
+      membres.forEach((m) => { membresMap[String(m.evangelise_member_id)] = m; });
 
-    const profilesMap = {};
-    profiles.forEach((p) => { profilesMap[p.id] = p.prenom + " " + p.nom; });
+      const profilesMap = {};
+      profiles.forEach((p) => { profilesMap[p.id] = p.prenom + " " + p.nom; });
 
-    const cellulesMap = {};
-    cellules.forEach((c) => { cellulesMap[c.id] = c.cellule_full; });
+      const cellulesMap = {};
+      cellules.forEach((c) => { cellulesMap[c.id] = c.cellule_full; });
 
-    const ministereMap = {};
-    ministeres.forEach((m) => { ministereMap[m.membre_id] = m.created_at; });
+      const ministereMap = {};
+      ministeres.forEach((m) => { ministereMap[m.membre_id] = m.created_at; });
 
-    const baptemeMap = {};
-    baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
+      const baptemeMap = {};
+      baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
 
-    // ========== Création des données finales ==========
-    const finalData = Object.values(map).map((p) => {
-      const membre = membresMap[p.id];
-      const sortedSuivis = p.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
-      const lastSuivi = sortedSuivis[0];
-      const dateRef = lastSuivi?.date_suivi || p.date_evangelise;
-      const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
+      // ================= FINAL DATA =================
+      const finalData = Object.values(map).map((p) => {
+        const membre = membresMap[p.id];
+        const sortedSuivis = p.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
+        const lastSuivi = sortedSuivis[0];
+        const dateRef = lastSuivi?.date_suivi || p.date_evangelise;
+        const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
 
-      let score = 100;
-      if (p.status_suivi === "Non envoyé") score -= 40;
-      if (joursSansSuivi > 7) score -= 25;
-      else if (joursSansSuivi > 3) score -= 10;
-      if (!membre?.bapteme_date) score -= 10;
-      if (!membre?.star) score -= 10;
-      if (joursSansSuivi <= 3) score += 10;
-      score = Math.max(0, Math.min(100, score));
+        let score = 100;
+        if (p.status_suivi === "Non envoyé") score -= 40;
+        if (joursSansSuivi > 7) score -= 25;
+        else if (joursSansSuivi > 3) score -= 10;
+        if (!membre?.bapteme_date) score -= 10;
+        if (!membre?.star) score -= 10;
+        if (joursSansSuivi <= 3) score += 10;
+        score = Math.max(0, Math.min(100, score));
 
-      let couleur = "border-gray-500";
-      if (score <= 30) couleur = "border-red-500 animate-pulse";
-      else if (score <= 60) couleur = "border-orange-400";
-      else if (score <= 80) couleur = "border-yellow-300";
-      else couleur = "border-green-400";
+        let couleur = "border-gray-500";
+        if (score <= 30) couleur = "border-red-500 animate-pulse";
+        else if (score <= 60) couleur = "border-orange-400";
+        else if (score <= 80) couleur = "border-yellow-300";
+        else couleur = "border-green-400";
 
-      let responsable = "-";
-      if (membre) {
-        if (membre.conseiller_id) responsable = profilesMap[membre.conseiller_id] || "-";
-        else if (membre.cellule_id) responsable = cellulesMap[membre.cellule_id] || "-";
-      } else if (lastSuivi) {
-        if (lastSuivi.conseiller_id) responsable = profilesMap[lastSuivi.conseiller_id] || "-";
-        else if (lastSuivi.cellule_id) responsable = cellulesMap[lastSuivi.cellule_id] || "-";
-      }
+        let responsable = "-";
+        if (membre) {
+          if (membre.conseiller_id) responsable = profilesMap[membre.conseiller_id] || "-";
+          else if (membre.cellule_id) responsable = cellulesMap[membre.cellule_id] || "-";
+        } else if (lastSuivi) {
+          if (lastSuivi.conseiller_id) responsable = profilesMap[lastSuivi.conseiller_id] || "-";
+          else if (lastSuivi.cellule_id) responsable = cellulesMap[lastSuivi.cellule_id] || "-";
+        }
 
-      return {
-        ...p,
-        membre,
-        sortedSuivis,
-        lastSuivi,
-        joursSansSuivi,
-        score,
-        couleur,
-        responsable,
-        debutMinistere: membre ? ministereMap[membre.id] : null,
-        dateBapteme: baptemeMap[String(p.id)],
-        cellule_id: membre?.cellule_id || lastSuivi?.cellule_id || null,
-        conseiller_id: membre?.conseiller_id || lastSuivi?.conseiller_id || null,
-      };
-    });
+        return {
+          ...p,
+          membre,
+          sortedSuivis,
+          lastSuivi,
+          joursSansSuivi,
+          score,
+          couleur,
+          responsable,
+          debutMinistere: membre ? ministereMap[membre.id] : null,
+          dateBapteme: baptemeMap[String(p.id)],
+          cellule_id: membre?.cellule_id || lastSuivi?.cellule_id || null,
+          conseiller_id: membre?.conseiller_id || lastSuivi?.conseiller_id || null,
+        };
+      });
 
-    setData(finalData);
-    setLoading(false);
-  };
+      setData(finalData);
+      setLoading(false);
+    };
 
-  fetchData();
-}, [egliseId, brancheId, idsQuery, dateDebutQuery, dateFinQuery]);
+    fetchData();
+  }, [egliseId, brancheId, idsQuery, dateDebutQuery, dateFinQuery]);
 
   const filteredData = useMemo(() => {
     let d = [...data];
@@ -227,10 +222,10 @@ function SuiviAmesPage() {
 
     // ===== FILTRE CELLULE & CONSEILLER =====     
     if (celluleQuery === "true") { 
-      d = d.filter((p) => p.cellule_id != null);
+      d = d.filter((p) => (p.membre?.cellule_id || p.lastSuivi?.cellule_id) != null);
     }      
     if (conseillerQuery === "true") { 
-      d = d.filter((p) => p.conseiller_id != null);
+      d = d.filter((p) => (p.membre?.conseiller_id || p.lastSuivi?.conseiller_id) != null);
     }
 
     return d;
@@ -264,8 +259,8 @@ function SuiviAmesPage() {
       <div className="w-full max-w-7xl overflow-x-auto py-2">
         <div className="min-w-[1200px]">
           <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent gap-y-2 text-center">
-            <div className="flex-[1]">Évangélisé</div>    
-            <div className="flex-[2]">Nom complet</div>
+        <div className="flex-[1]">Évangélisé</div>    
+        <div className="flex-[2]">Nom complet</div>
             <div className="flex-[1]">Envoi</div>
             <div className="flex-[1]">Jours</div>            
             <div className="flex-[1]">Envoyé au<br/>Suivi</div>
@@ -281,7 +276,7 @@ function SuiviAmesPage() {
           {filteredData.map((p) => (
             <div key={p.id} className="mb-1">
               <div className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 border-l-4 ${p.couleur}`}>
-                <div className="col-span-1 text-white text-center">{new Date(p.date_evangelise).toLocaleDateString()}</div>
+            <div className="col-span-1 text-white text-center">{new Date(p.date_evangelise).toLocaleDateString()}</div>
                 <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
                 <div className="col-span-1 text-white text-center">{p.status_suivi}</div>
                 <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>                

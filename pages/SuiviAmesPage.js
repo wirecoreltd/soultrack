@@ -52,91 +52,85 @@ function SuiviAmesPage() {
 
   // ================= DATA =================
   useEffect(() => {
-    if (!egliseId || !brancheId) return;
+  if (!egliseId || !brancheId) return;
 
-    const fetchData = async () => {
-      setLoading(true);
+  const fetchData = async () => {
+    setLoading(true);
 
-      // 1️⃣ Récupération complète
-      const { data: evangelises } = await supabase
-        .from("suivis_des_evangelises") // on récupère directement les évangélisés
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+    // 1️⃣ Récupérer tous les évangélisés
+    const { data: evangelises } = await supabase
+      .from("suivis_des_evangelises")
+      .select("*")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
 
-      // 2️⃣ Filtrer uniquement par date_evangelise et par ID
-      const filteredEvangelises = evangelises.filter(e => {
-        if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
-        if (dateDebutQuery && new Date(e.date_evangelise) < new Date(dateDebutQuery)) return false;
-        if (dateFinQuery && new Date(e.date_evangelise) > new Date(dateFinQuery)) return false;
-        return true;
-      });
+    // 2️⃣ Filtrer uniquement par date_evangelise et par IDs si fourni
+    const filteredEvangelises = evangelises.filter(e => {
+      if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
+      if (dateDebutQuery && new Date(e.date_evangelise) < new Date(dateDebutQuery)) return false;
+      if (dateFinQuery && new Date(e.date_evangelise) > new Date(dateFinQuery)) return false;
+      return true;
+    });
 
-      // 3️⃣ Construction de maps et données supplémentaires
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom");
+    // 3️⃣ Construire les maps pour profils, cellules, ministères, baptêmes
+    const { data: profiles } = await supabase.from("profiles").select("id, prenom, nom");
+    const { data: cellules } = await supabase.from("cellules").select("id, cellule_full");
+    const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
+    const { data: baptemes } = await supabase.from("baptemes").select("*");
 
-      const { data: cellules } = await supabase
-        .from("cellules")
-        .select("id, cellule_full");
+    const profilesMap = {};
+    profiles.forEach(p => { profilesMap[p.id] = p.prenom + " " + p.nom; });
 
-      const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
-      const { data: baptemes } = await supabase.from("baptemes").select("*");
+    const cellulesMap = {};
+    cellules.forEach(c => { cellulesMap[c.id] = c.cellule_full; });
 
-      const profilesMap = {};
-      profiles.forEach((p) => { profilesMap[p.id] = p.prenom + " " + p.nom; });
+    const ministereMap = {};
+    ministeres.forEach(m => { ministereMap[m.membre_id] = m.created_at; });
 
-      const cellulesMap = {};
-      cellules.forEach((c) => { cellulesMap[c.id] = c.cellule_full; });
+    const baptemeMap = {};
+    baptemes.forEach(b => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
 
-      const ministereMap = {};
-      ministeres.forEach((m) => { ministereMap[m.membre_id] = m.created_at; });
+    // 4️⃣ Préparer les données finales
+    const finalData = filteredEvangelises.map(p => {
+      const joursSansSuivi = Math.floor((new Date() - new Date(p.date_evangelise)) / (1000 * 60 * 60 * 24));
 
-      const baptemeMap = {};
-      baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
+      let score = 100;
+      if (p.status_suivi === "Non envoyé") score -= 40;
+      if (joursSansSuivi > 7) score -= 25;
+      else if (joursSansSuivi > 3) score -= 10;
+      if (joursSansSuivi <= 3) score += 10;
+      score = Math.max(0, Math.min(100, score));
 
-      // 4️⃣ Calcul des scores, responsables et préparation finale
-      const finalData = filteredEvangelises.map(p => {
-        const joursSansSuivi = Math.floor((new Date() - new Date(p.date_evangelise)) / (1000 * 60 * 60 * 24));
+      let couleur = "border-gray-500";
+      if (score <= 30) couleur = "border-red-500 animate-pulse";
+      else if (score <= 60) couleur = "border-orange-400";
+      else if (score <= 80) couleur = "border-yellow-300";
+      else couleur = "border-green-400";
 
-        let score = 100;
-        if (p.status_suivi === "Non envoyé") score -= 40;
-        if (joursSansSuivi > 7) score -= 25;
-        else if (joursSansSuivi > 3) score -= 10;
-        if (joursSansSuivi <= 3) score += 10;
-        score = Math.max(0, Math.min(100, score));
+      const responsable = p.conseiller_id
+        ? profilesMap[p.conseiller_id] || "-"
+        : p.cellule_id
+        ? cellulesMap[p.cellule_id] || "-"
+        : "-";
 
-        let couleur = "border-gray-500";
-        if (score <= 30) couleur = "border-red-500 animate-pulse";
-        else if (score <= 60) couleur = "border-orange-400";
-        else if (score <= 80) couleur = "border-yellow-300";
-        else couleur = "border-green-400";
+      return {
+        ...p,
+        sortedSuivis: [], // tu peux remplir l'historique si besoin
+        joursSansSuivi,
+        score,
+        couleur,
+        responsable,
+        dateBapteme: baptemeMap[String(p.id)],
+        debutMinistere: ministereMap[p.id] || null,
+      };
+    });
 
-        const responsable = p.conseiller_id
-          ? profilesMap[p.conseiller_id] || "-"
-          : p.cellule_id
-          ? cellulesMap[p.cellule_id] || "-"
-          : "-";
+    setData(finalData);
+    setLoading(false);
+  };
 
-        return {
-          ...p,
-          sortedSuivis: [], // pour l'instant on n'affiche pas d'historique, mais tu peux l'ajouter si besoin
-          joursSansSuivi,
-          score,
-          couleur,
-          responsable,
-          dateBapteme: baptemeMap[String(p.id)],
-          debutMinistere: ministereMap[p.id] || null,
-        };
-      });
-
-      setData(finalData);
-      setLoading(false);
-    };
-
-    fetchData();
-  }, [egliseId, brancheId, idsQuery, dateDebutQuery, dateFinQuery]);
+  fetchData();
+}, [egliseId, brancheId, idsQuery, dateDebutQuery, dateFinQuery]);
 
   const filteredData = useMemo(() => {
     let d = [...data];

@@ -5,127 +5,169 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
-import { useRouter } from "next/navigation";
-import Layout from "../components/Layout";
 
+export default function EtatCelluleWrapper() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule"]}>
+      <EtatCellulePage />
+    </ProtectedRoute>
+  );
+}
 
-export default function EtatCellulePage({ egliseId, brancheId }) {
+function EtatCellulePage() {
   const [reports, setReports] = useState([]);
   const [expandedMonths, setExpandedMonths] = useState({});
-  const [typeCollapsedDesktop, setTypeCollapsedDesktop] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ startDate: null, endDate: null });
+  const [filterDebut, setFilterDebut] = useState("");
+  const [filterFin, setFilterFin] = useState("");
+  const [showTable, setShowTable] = useState(false);
+  const formRef = useRef(null);
 
-  // FETCH DATA
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      try {
-        const data = await fetchEtatCellule(egliseId, brancheId, filters);
-        setReports(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, [egliseId, brancheId, filters]);
+  // ================= FETCH =================
+  const fetchReports = async () => {
+    let query = supabase.rpc("get_etat_cellule"); // Remplacer par un rpc ou table si besoin
+    if (filterDebut) query = query.gte("date_evangelise", filterDebut);
+    if (filterFin) query = query.lte("date_evangelise", filterFin);
+
+    const { data } = await query;
+    setReports(data || []);
+    setShowTable(true);
+  };
+
+  // ================= UTIL =================
+  const formatDateFR = (dateString) => {
+    if (!dateString) return "";
+    const d = new Date(dateString);
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const getMonthNameFR = (monthIndex) => {
+    const months = [
+      "Janvier","Février","Mars","Avril","Mai","Juin",
+      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
+    ];
+    return months[monthIndex] || "";
+  };
+
+  const groupByMonth = (reports) => {
+    const map = {};
+    reports.forEach(r => {
+      if (!r.cellule_full) return; // ignorer si pas de cellule
+      const d = new Date(r.date_evangelise);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(r);
+    });
+    return map;
+  };
 
   const toggleMonth = (monthKey) => {
     setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
   };
 
-  // TOTALS FUNCTIONS
-  const calculateMonthTotals = (typesObj) => {
-    const totals = { hommes:0, femmes:0, jeunes:0, total:0, enfants:0, connectes:0, nouveauxVenus:0, nouveauxConvertis:0 };
-    Object.values(typesObj).forEach(rows => {
-      rows.forEach(r => {
-        totals.hommes += Number(r.hommes);
-        totals.femmes += Number(r.femmes);
-        totals.jeunes += Number(r.jeunes);
-        totals.total += Number(r.hommes)+Number(r.femmes)+Number(r.jeunes);
-        totals.enfants += Number(r.enfants || 0);
-        totals.connectes += Number(r.connectes || 0);
-        totals.nouveauxVenus += Number(r.nouveauxVenus || 0);
-        totals.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
-      });
+  const groupedReports = Object.entries(groupByMonth(reports))
+    .sort((a, b) => {
+      const [yearA, monthA] = a[0].split("-").map(Number);
+      const [yearB, monthB] = b[0].split("-").map(Number);
+      return new Date(yearA, monthA) - new Date(yearB, monthB);
     });
-    return totals;
-  };
-
-  const calculateTypeTotals = (rows) => {
-    const totals = { hommes:0, femmes:0, jeunes:0, total:0, enfants:0, connectes:0, nouveauxVenus:0, nouveauxConvertis:0 };
-    rows.forEach(r => {
-      totals.hommes += Number(r.hommes);
-      totals.femmes += Number(r.femmes);
-      totals.jeunes += Number(r.jeunes);
-      totals.total += Number(r.hommes)+Number(r.femmes)+Number(r.jeunes);
-      totals.enfants += Number(r.enfants || 0);
-      totals.connectes += Number(r.connectes || 0);
-      totals.nouveauxVenus += Number(r.nouveauxVenus || 0);
-      totals.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
-    });
-    return totals;
-  };
-
-  const formatDateFR = (dateStr) => new Date(dateStr).toLocaleDateString("fr-FR");
-
-  const splitTypeName = (typeName, maxLength=20) => {
-    return typeName.length > maxLength ? typeName.slice(0,maxLength)+"..." : typeName;
-  }
-
-  if (loading) return Chargement...;
 
   return (
-    <ProtectedRoute roles={["Admin", "ResponsableCellule"]}>
-      <title="État de cellule">
-        <div className="max-w-6xl mx-auto p-4">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+      <HeaderPages />
 
-          {/* ====== FILTRES DATES ====== */}
-          <div className="flex gap-4 mb-4">
-            <input type="date" className="border p-2 rounded" 
-              onChange={e => setFilters(f => ({ ...f, startDate: e.target.value }))} />
-            <input type="date" className="border p-2 rounded"
-              onChange={e => setFilters(f => ({ ...f, endDate: e.target.value }))} />
-          </div>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
+        État de <span className="text-amber-300">Cellule</span>
+      </h1>
 
-          {/* ====== TABLEAU / CARDS ====== */}
-          <div className="overflow-x-auto">
-            <div className="w-max space-y-2">
+      {/* ================= FILTRES ================= */}
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+        <input
+          type="date"
+          value={filterDebut}
+          onChange={(e) => setFilterDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <input
+          type="date"
+          value={filterFin}
+          onChange={(e) => setFilterFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <button
+          onClick={fetchReports}
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+        >
+          Générer
+        </button>
+      </div>
 
-              {/* HEADER TABLE DESKTOP */}
-              <div className="hidden md:flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-                <div className="min-w-[200px]">Nom / Prénom</div>
-                <div className="min-w-[150px] text-center">Téléphone</div>
-                <div className="min-w-[140px] text-center">Date évangélisation</div>
-                <div className="min-w-[180px] text-center">Type évangélisation</div>
-                <div className="min-w-[160px] text-center">Statut suivi</div>
-                <div className="min-w-[160px] text-center">Date intégration</div>
-                <div className="min-w-[140px] text-center">Date baptême</div>
-                <div className="min-w-[180px] text-center">Dernier ministère</div>
-                <div className="min-w-[220px] text-center">Cellule / Responsable</div>
-              </div>
+      {/* ================= TABLEAU ================= */}
+      {showTable && (
+        <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
+          <div className="w-max space-y-2">
 
-              {reports.map((r, idx) => (
-                <div key={idx} className="flex md:flex-row flex-col px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">
-                  <div className="min-w-[200px]">{r.nom} {r.prenom}</div>
-                  <div className="min-w-[150px] text-center">{r.telephone}</div>
-                  <div className="min-w-[140px] text-center">{formatDateFR(r.date_evangelise)}</div>
-                  <div className="min-w-[180px] text-center">{r.type_evangelisation}</div>
-                  <div className="min-w-[160px] text-center">{r.status_suivis_evangelises}</div>
-                  <div className="min-w-[160px] text-center">{r.date_integration ? formatDateFR(r.date_integration) : "-"}</div>
-                  <div className="min-w-[140px] text-center">{r.date_baptise ? formatDateFR(r.date_baptise) : "-"}</div>
-                  <div className="min-w-[180px] text-center">{r.ministere_date ? formatDateFR(r.ministere_date) : "-"}</div>
-                  <div className="min-w-[220px] text-center">{r.cellule_full} / {r.responsable_cellule}</div>
-                </div>
-              ))}
-
+            {/* HEADER */}
+            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[200px]">Prénom</div>
+              <div className="min-w-[200px]">Nom</div>
+              <div className="min-w-[200px]">Cellule</div>
+              <div className="min-w-[200px]">Responsable</div>
+              <div className="min-w-[150px] text-center">Date Evangelisation</div>
+              <div className="min-w-[150px] text-center">Type</div>
+              <div className="min-w-[150px] text-center">Status Suivis</div>
+              <div className="min-w-[150px] text-center">Date Intégration</div>
+              <div className="min-w-[150px] text-center">Date Baptême</div>
+              <div className="min-w-[150px] text-center">Date Ministère</div>
             </div>
-          </div>
 
+            {/* LIGNES */}
+            {groupedReports.map(([monthKey, monthReports], idx) => {
+              const [year, monthIndex] = monthKey.split("-").map(Number);
+              const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+              const isExpanded = expandedMonths[monthKey] || false;
+
+              return (
+                <div key={monthKey} className="space-y-1">
+                  {/* Ligne mois */}
+                  <div
+                    className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 border-orange-500`}
+                    onClick={() => toggleMonth(monthKey)}
+                  >
+                    <div className="min-w-[200px] text-white font-semibold">
+                      {isExpanded ? "➖ " : "➕ "} {monthLabel}
+                    </div>
+                  </div>
+
+                  {/* Détails par personne */}
+                  {isExpanded && monthReports.map(r => (
+                    <div
+                      key={r.evangelise_id}
+                      className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-yellow-500 cursor-pointer text-white"
+                    >
+                      <div className="min-w-[200px]">{r.prenom}</div>
+                      <div className="min-w-[200px]">{r.nom}</div>
+                      <div className="min-w-[200px]">{r.cellule_full}</div>
+                      <div className="min-w-[200px]">{r.responsable_cellule}</div>
+                      <div className="min-w-[150px] text-center">{formatDateFR(r.date_evangelise)}</div>
+                      <div className="min-w-[150px] text-center">{r.type_evangelisation}</div>
+                      <div className="min-w-[150px] text-center">{r.status_suivis_evangelises}</div>
+                      <div className="min-w-[150px] text-center">{formatDateFR(r.date_integration)}</div>
+                      <div className="min-w-[150px] text-center">{formatDateFR(r.date_baptise)}</div>
+                      <div className="min-w-[150px] text-center">{formatDateFR(r.ministere_date)}</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+
+          </div>
         </div>
-     
-    </ProtectedRoute>
+      )}
+
+      <Footer />
+    </div>
   );
 }

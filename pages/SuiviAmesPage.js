@@ -87,29 +87,26 @@ function SuiviAmesPage() {
       const { data: baptemes } = await supabase.from("baptemes").select("*");
 
       // ================= FILTER PAR ID ET DATE =================
-const start = dateDebutQuery ? new Date(dateDebutQuery) : null;
-if (start) start.setHours(0, 0, 0, 0);
-const end = dateFinQuery ? new Date(dateFinQuery) : null;
-if (end) end.setHours(23, 59, 59, 999);
-
-const filteredEvangelises = evangelises.filter(e => {
+      const filteredEvangelises = evangelises.filter(e => {
   const dateEv = e.date_evangelise ? new Date(e.date_evangelise) : null;
-  if (!dateEv || isNaN(dateEv)) return false;
+
+  if (!dateEv || isNaN(dateEv)) return false; // 🔥 ignore les mauvaises dates
 
   if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
-  if (start && dateEv < start) return false;
-  if (end && dateEv > end) return false;
+
+  if (dateDebutQuery) {
+    const start = new Date(dateDebutQuery);
+    start.setHours(0, 0, 0, 0);
+    if (dateEv < start) return false;
+  }
+
+  if (dateFinQuery) {
+    const end = new Date(dateFinQuery);
+    end.setHours(23, 59, 59, 999);
+    if (dateEv > end) return false;
+  }
 
   return true;
-});
-
-// filtrer les suivis par date également
-suivis.forEach(s => {
-  const dateS = s.date_suivi ? new Date(s.date_suivi) : null;
-  if (!dateS || isNaN(dateS)) return;
-  if (start && dateS < start) return;
-  if (end && dateS > end) return;
-  if (map[s.evangelise_id]) map[s.evangelise_id].suivis.push(s);
 });
 
       // ================= MAPS =================

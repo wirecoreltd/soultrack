@@ -116,6 +116,9 @@ export default function RapportEvangelisation() {
             .select("*")
             .eq("eglise_id", egliseId)
             .eq("branche_id", brancheId);
+
+          console.log("Evangelise IDs:", evangeliseIds);
+          console.log("Suivis avant filtre:", suivisData);
       
           const filteredSuivisFinal = (suivisData || []).filter(s => 
             evangeliseIds.includes(s.evangelise_id) &&

@@ -86,65 +86,51 @@ function SuiviAmesPage() {
       const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
       const { data: baptemes } = await supabase.from("baptemes").select("*");
 
-      // ================= FILTER PAR ID ET DATE_EVANGELISE =================
-      // Filtrer les évangélisés par date_evangelise
-const filteredEvangelises = evangelises.filter(e => {
-  const dateEv = new Date(e.date_evangelise);
-  if (dateDebutQuery && dateEv < new Date(dateDebutQuery)) return false;
-  if (dateFinQuery && dateEv > new Date(dateFinQuery)) return false;
-  if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
-  return true;
-});
+      // ===== FILTRE PAR DATE_EVANGELISE ET IDS =====
+      const filteredEvangelises = evangelises.filter(e => {
+        const dateEv = new Date(e.date_evangelise);
+        if (dateDebutQuery && dateEv < new Date(dateDebutQuery)) return false;
+        if (dateFinQuery && dateEv > new Date(dateFinQuery)) return false;
+        if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
+        return true;
+      });
 
-const validIds = new Set(filteredEvangelises.map(e => e.id));
+      const validIds = new Set(filteredEvangelises.map(e => e.id));
 
-// Ne garder que les suivis pour ces évangélisés
-const filteredSuivis = suivis.filter(s => validIds.has(s.evangelise_id));
+      const filteredSuivis = suivis.filter(s => validIds.has(s.evangelise_id));
+      const filteredMembres = membres.filter(m => validIds.has(m.evangelise_member_id));
 
-// Ne garder que les membres pour ces évangélisés
-const filteredMembres = membres.filter(m => validIds.has(m.evangelise_member_id));
-
-// Construire la map des évangélisés avec leurs suivis valides
-const map = {};
-filteredEvangelises.forEach(e => {
-  map[e.id] = { ...e, suivis: [] };
-});
-
-filteredSuivis.forEach(s => {
-  map[s.evangelise_id].suivis.push(s);
-});
+      // ===== MAPS =====
+      const map = {};
+      filteredEvangelises.forEach(e => { map[e.id] = { ...e, suivis: [] }; });
+      filteredSuivis.forEach(s => { map[s.evangelise_id].suivis.push(s); });
 
       const membresMap = {};
-      membres.forEach((m) => { 
-        if (validIds.has(m.evangelise_member_id)) {
-          membresMap[m.evangelise_member_id] = m; 
-        }
-      });
+      filteredMembres.forEach(m => { membresMap[String(m.evangelise_member_id)] = m; });
 
       const profilesMap = {};
-      profiles.forEach((p) => { profilesMap[p.id] = p.prenom + " " + p.nom; });
+      profiles.forEach(p => { profilesMap[p.id] = p.prenom + " " + p.nom; });
 
       const cellulesMap = {};
-      cellules.forEach((c) => { cellulesMap[c.id] = c.cellule_full; });
+      cellules.forEach(c => { cellulesMap[c.id] = c.cellule_full; });
 
       const ministereMap = {};
-      ministeres.forEach((m) => { ministereMap[m.membre_id] = m.created_at; });
+      ministeres.forEach(m => { ministereMap[m.membre_id] = m.created_at; });
 
       const baptemeMap = {};
-      baptemes.forEach((b) => { 
-        if (validIds.has(b.evangelise_member_id)) {
-          baptemeMap[b.evangelise_member_id] = b.date; 
-        }
-      });
+      baptemes.forEach(b => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
 
-      // ================= FINAL DATA =================
-      const finalData = Object.values(map).map((p) => {
+      // ===== FINAL DATA =====
+      const finalData = Object.values(map).map(p => {
         const membre = membresMap[p.id];
-        const sortedSuivis = p.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
+        const sortedSuivis = p.suivis.sort((a,b)=> new Date(b.date_suivi) - new Date(a.date_suivi));
         const lastSuivi = sortedSuivis[0];
-        const dateRef = p.date_evangelise; // <-- toujours date_evangelise
-const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
 
+        // Toujours date_evangelise pour calculer jours sans suivi
+        const dateRef = new Date(p.date_evangelise);
+        const joursSansSuivi = Math.floor((new Date() - dateRef) / (1000*60*60*24));
+
+        // Score et couleur
         let score = 100;
         if (p.status_suivi === "Non envoyé") score -= 40;
         if (joursSansSuivi > 7) score -= 25;
@@ -179,7 +165,7 @@ const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 
           couleur,
           responsable,
           debutMinistere: membre ? ministereMap[membre.id] : null,
-          dateBapteme: baptemeMap[p.id],
+          dateBapteme: baptemeMap[String(p.id)],
           cellule_id: membre?.cellule_id || lastSuivi?.cellule_id || null,
           conseiller_id: membre?.conseiller_id || lastSuivi?.conseiller_id || null,
         };
@@ -195,15 +181,18 @@ const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 
   const filteredData = useMemo(() => {
     let d = [...data];
 
+    // Filtre score
     if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
     if (filter === "STABLE") d = d.filter((p) => p.score > 80);
 
+    // Filtre recherche
     if (search) {
       d = d.filter((p) =>
         `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
       );
     }
 
+    // ===== FILTRE STATUS =====
     if (statusQuery && statusQuery.toLowerCase() !== "all") {
       const query = statusQuery.toLowerCase().trim();
       d = d.filter((p) => {
@@ -217,6 +206,7 @@ const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 
       });
     }
 
+    // ===== FILTRE CELLULE & CONSEILLER =====     
     if (celluleQuery === "true") { 
       d = d.filter((p) => (p.membre?.cellule_id || p.lastSuivi?.cellule_id) != null);
     }      
@@ -238,6 +228,7 @@ const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 
         <span className="text-amber-300">l’Intégration</span>
       </h1>
 
+      {/* FILTER */}
       <div className="flex gap-3 my-4 flex-wrap justify-center">
         <input
           placeholder="Rechercher..."
@@ -250,6 +241,7 @@ const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 
         <button onClick={() => setFilter("STABLE")} className="bg-green-300 px-3 py-1 rounded">Stables</button>
       </div>
 
+      {/* TABLE */}
       <div className="w-full max-w-7xl overflow-x-auto py-2">
         <div className="min-w-[1200px]">
           <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent gap-y-2 text-center">
@@ -266,18 +258,17 @@ const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 
             <div className="flex-[1]">Action</div>
           </div>
 
+          {/* ROWS */}
           {filteredData.map((p) => (
             <div key={p.id} className="mb-1">
               <div className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 border-l-4 ${p.couleur}`}>
-               <div className="col-span-1 text-white text-center">
-  {new Date(p.date_evangelise).toLocaleDateString()}
-</div>
+                <div className="col-span-1 text-white text-center">{new Date(p.date_evangelise).toLocaleDateString()}</div>
                 <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
                 <div className="col-span-1 text-white text-center">{p.status_suivi}</div>
                 <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>                
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
-                <div className="col-span-1 text-white text-center">{p.membre?.date_evangelise ? new Date(p.membre.date_evangelise).toLocaleDateString() : "-"}</div>
+                <div className="col-span-1 text-white text-center">{p.membre?.date_integr ? new Date(p.membre.date_integr).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.dateBapteme ? new Date(p.dateBapteme).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.responsable}</div>

@@ -271,26 +271,40 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
 
   // Ajouter ids filtrés pour que SuiviAmesPage sache quoi afficher
     const handleKpiClick = (status) => {
-      // ids des évangélisés filtrés selon les critères actuels
       const evangeliseIds = filteredEvangelises.map(e => e.id);
     
       router.push({
         pathname: "/SuiviAmesPage",
         query: {
           status: status || "all",
-          ids: evangeliseIds.join(","), // passer les IDs en CSV
+          ids: evangeliseIds.join(","), // IDs filtrés
+          dateDebut, // ajout automatique
+          dateFin,   // ajout automatique
         },
       });
     };
-
-  //==================
-  const handleCelluleClick = () => {
-  router.push("/SuiviAmesPage?cellule=true");
-};
-
-const handleConseillerClick = () => {
-  router.push("/SuiviAmesPage?conseiller=true");
-};
+    
+    const handleCelluleClick = () => {
+      router.push({
+        pathname: "/SuiviAmesPage",
+        query: {
+          cellule: true,
+          dateDebut,
+          dateFin,
+        },
+      });
+    };
+    
+    const handleConseillerClick = () => {
+      router.push({
+        pathname: "/SuiviAmesPage",
+        query: {
+          conseiller: true,
+          dateDebut,
+          dateFin,
+        },
+      });
+    };
 
   // ---------------- UI ----------------
   return (

@@ -57,22 +57,24 @@ function SuiviAmesPage() {
   const fetchData = async () => {
     setLoading(true);
 
-    // 1️⃣ Récupérer tous les évangélisés
     const { data: evangelises } = await supabase
       .from("suivis_des_evangelises")
       .select("*")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId);
 
-    // 2️⃣ Filtrer uniquement par date_evangelise et par IDs si fourni
+    // Filtrer uniquement par date_evangelise valide et plage
     const filteredEvangelises = evangelises.filter(e => {
+      if (!e.date_evangelise) return false; // ignore les lignes sans date
+      const dateEv = new Date(e.date_evangelise);
+      if (isNaN(dateEv.getTime())) return false; // ignore invalid date
       if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
-      if (dateDebutQuery && new Date(e.date_evangelise) < new Date(dateDebutQuery)) return false;
-      if (dateFinQuery && new Date(e.date_evangelise) > new Date(dateFinQuery)) return false;
+      if (dateDebutQuery && dateEv < new Date(dateDebutQuery)) return false;
+      if (dateFinQuery && dateEv > new Date(dateFinQuery)) return false;
       return true;
     });
 
-    // 3️⃣ Construire les maps pour profils, cellules, ministères, baptêmes
+    // Maps pour profils, cellules, ministères, baptêmes
     const { data: profiles } = await supabase.from("profiles").select("id, prenom, nom");
     const { data: cellules } = await supabase.from("cellules").select("id, cellule_full");
     const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
@@ -90,9 +92,10 @@ function SuiviAmesPage() {
     const baptemeMap = {};
     baptemes.forEach(b => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
 
-    // 4️⃣ Préparer les données finales
+    // Construire finalData
     const finalData = filteredEvangelises.map(p => {
-      const joursSansSuivi = Math.floor((new Date() - new Date(p.date_evangelise)) / (1000 * 60 * 60 * 24));
+      const dateEv = new Date(p.date_evangelise);
+      const joursSansSuivi = Math.floor((new Date() - dateEv) / (1000 * 60 * 60 * 24));
 
       let score = 100;
       if (p.status_suivi === "Non envoyé") score -= 40;

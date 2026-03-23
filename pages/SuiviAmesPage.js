@@ -156,58 +156,52 @@ function SuiviAmesPage() {
   }, [egliseId, brancheId]);
 
       // ================= FILTERED DATA =================
+      const idsQuery = searchParams?.get("ids")?.split(",") || [];
+
       const filteredData = useMemo(() => {
-  let d = [...data];
-
-  // Filtre score
-  if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
-  if (filter === "STABLE") d = d.filter((p) => p.score > 80);
-
-  // Filtre recherche
-  if (search) {
-    d = d.filter((p) =>
-      `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
-    );
-  }
-
-  // ===== FILTRE STATUS =====
-  if (statusQuery && statusQuery.toLowerCase() !== "all") {
-    const query = statusQuery.toLowerCase().trim();
-    d = d.filter((p) => {
-      const suiviStatus = p.lastSuivi?.status_suivis_evangelises?.toLowerCase().trim();
-      if (query === "envoyé") return p.status_suivi?.toLowerCase().trim() === "envoyé";
-      if (query === "non envoyé" || query === "nonenvoye") return p.status_suivi?.toLowerCase().trim() === "non envoyé";
-      if (query === "integré" || query === "intégré") return suiviStatus === "integré" || suiviStatus === "intégré";
-      if (query === "en cours") return suiviStatus === "en cours";
-      if (query === "refus") return suiviStatus === "refus";
-      return true;
-    });
-  }
-
-        console.log("Cellule query:", celluleQuery, " | IDs dispo:", d.map(p => p.membre?.cellule_id || p.lastSuivi?.cellule_id));
-console.log("Conseiller query:", conseillerQuery, " | IDs dispo:", d.map(p => p.membre?.conseiller_id || p.lastSuivi?.conseiller_id));
-
-  // ===== FILTRE CELLULE & CONSEILLER =====     
-      if (celluleQuery === "true") { 
-        d = d.filter(
-          (p) => (p.membre?.cellule_id || p.lastSuivi?.cellule_id) != null
-        );
-      }      
+        let d = [...data];
       
-      if (conseillerQuery === "true") { 
-        d = d.filter(
-          (p) => (p.membre?.conseiller_id || p.lastSuivi?.conseiller_id) != null
-        );
-      }
-
-  console.log("===== DEBUG FILTER =====");
-  console.log("Cellule query:", celluleQuery);
-  console.log("Conseiller query:", conseillerQuery);
-  console.log("Résultat après filtre:", d);
-  console.log("===== END DEBUG =====");
-
-  return d;
-}, [data, filter, search, statusQuery, celluleQuery, conseillerQuery]);
+        // 🔹 Filtrer uniquement les évangélisés venant du rapport si idsQuery existe
+        if (idsQuery.length > 0) {
+          d = d.filter(p => idsQuery.includes(p.id));
+        }
+      
+        // ===== FILTRE SCORE =====
+        if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
+        if (filter === "STABLE") d = d.filter((p) => p.score > 80);
+      
+        // ===== FILTRE RECHERCHE =====
+        if (search) {
+          d = d.filter((p) =>
+            `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
+          );
+        }
+      
+        // ===== FILTRE STATUS =====
+        if (statusQuery && statusQuery.toLowerCase() !== "all") {
+          const query = statusQuery.toLowerCase().trim();
+          d = d.filter((p) => {
+            const suiviStatus = p.lastSuivi?.status_suivis_evangelises?.toLowerCase().trim();
+            if (query === "envoyé") return p.status_suivi?.toLowerCase().trim() === "envoyé";
+            if (query === "non envoyé" || query === "nonenvoye") return p.status_suivi?.toLowerCase().trim() === "non envoyé";
+            if (query === "integré" || query === "intégré") return suiviStatus === "integré" || suiviStatus === "intégré";
+            if (query === "en cours") return suiviStatus === "en cours";
+            if (query === "refus") return suiviStatus === "refus";
+            return true;
+          });
+        }
+      
+        // ===== FILTRE CELLULE & CONSEILLER =====
+        if (celluleQuery === "true") {
+          d = d.filter((p) => (p.membre?.cellule_id || p.lastSuivi?.cellule_id) != null);
+        }
+      
+        if (conseillerQuery === "true") {
+          d = d.filter((p) => (p.membre?.conseiller_id || p.lastSuivi?.conseiller_id) != null);
+        }
+      
+        return d;
+      }, [data, filter, search, statusQuery, celluleQuery, conseillerQuery, idsQuery]);
 
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 

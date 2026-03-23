@@ -269,12 +269,19 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
   const totalEvangelises = filteredEvangelisesByType.length;
   const tauxIntegration = totalEvangelises > 0 ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
 
-  const handleKpiClick = (status) => {
-    router.push({
-      pathname: "/SuiviAmesPage",
-      query: { status: status || "all" },
-    });
-  };
+  // Ajouter ids filtrés pour que SuiviAmesPage sache quoi afficher
+    const handleKpiClick = (status) => {
+      // ids des évangélisés filtrés selon les critères actuels
+      const evangeliseIds = filteredEvangelises.map(e => e.id);
+    
+      router.push({
+        pathname: "/SuiviAmesPage",
+        query: {
+          status: status || "all",
+          ids: evangeliseIds.join(","), // passer les IDs en CSV
+        },
+      });
+    };
 
   //==================
   const handleCelluleClick = () => {

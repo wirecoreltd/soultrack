@@ -17,68 +17,148 @@ function SuiviAmesPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState({});
+  const [egliseId, setEgliseId] = useState(null);
+  const [brancheId, setBrancheId] = useState(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("ALL");  
-  const searchParams = useSearchParams(); 
 
+  const searchParams = useSearchParams(); 
+  const statusQuery = searchParams?.get("status"); 
+  const celluleQuery = searchParams?.get("cellule") || null;
+  const conseillerQuery = searchParams?.get("conseiller") || null;
   const dateDebutQuery = searchParams?.get("dateDebut");
   const dateFinQuery = searchParams?.get("dateFin");
 
+  // ================= PROFILE =================
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profile) {
+        setEgliseId(profile.eglise_id);
+        setBrancheId(profile.branche_id);
+      }
+    };
+    fetchProfile();
+  }, []);
+
   // ================= DATA =================
   useEffect(() => {
-    if (!dateDebutQuery || !dateFinQuery) return;
+    if (!egliseId || !brancheId) return;
 
     const fetchData = async () => {
       setLoading(true);
 
-      const { data: suiviData, error } = await supabase
-        .rpc("get_suivi_ames", { _start: dateDebutQuery, _end: dateFinQuery });
+      try {
+        const { data: evangelises } = await supabase
+          .from("suivis_des_evangelises")
+          .select("*")
+          .eq("eglise_id", egliseId)
+          .eq("branche_id", brancheId);
 
-      if (error) {
-        console.error("Erreur get_suivi_ames:", error);
+        const { data: membres } = await supabase
+          .from("membres_complets")
+          .select("*")
+          .eq("eglise_id", egliseId)
+          .eq("branche_id", brancheId);
+
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, prenom, nom");
+
+        const { data: cellules } = await supabase
+          .from("cellules")
+          .select("id, cellule_full");
+
+        const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
+        const { data: baptemes } = await supabase.from("baptemes").select("*");
+
+        // ================= FILTRE DATE =================
+        const filteredEvangelises = evangelises.filter((e) => {
+          if (dateDebutQuery && new Date(e.date_evangelise) < new Date(dateDebutQuery)) return false;
+          if (dateFinQuery && new Date(e.date_evangelise) > new Date(dateFinQuery)) return false;
+          return true;
+        });
+
+        // ================= MAPS =================
+        const membresMap = {};
+        membres.forEach((m) => { membresMap[String(m.evangelise_member_id)] = m; });
+
+        const profilesMap = {};
+        profiles.forEach((p) => { profilesMap[p.id] = p.prenom + " " + p.nom; });
+
+        const cellulesMap = {};
+        cellules.forEach((c) => { cellulesMap[c.id] = c.cellule_full; });
+
+        const ministereMap = {};
+        ministeres.forEach((m) => { ministereMap[m.membre_id] = m.created_at; });
+
+        const baptemeMap = {};
+        baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
+
+        // ================= FINAL DATA =================
+        const finalData = filteredEvangelises.map((p) => {
+          const membre = membresMap[p.id];
+          const joursSansSuivi = Math.floor((new Date() - new Date(p.date_evangelise)) / (1000 * 60 * 60 * 24));
+
+          // Calcul score
+          let score = 100;
+          if (p.status_suivi === "Non envoyé") score -= 40;
+          if (joursSansSuivi > 7) score -= 25;
+          else if (joursSansSuivi > 3) score -= 10;
+          if (!membre?.bapteme_date) score -= 10;
+          if (!membre?.star) score -= 10;
+          if (joursSansSuivi <= 3) score += 10;
+          score = Math.max(0, Math.min(100, score));
+
+          // Couleur bordure
+          let couleur = "border-gray-500";
+          if (score <= 30) couleur = "border-red-500 animate-pulse";
+          else if (score <= 60) couleur = "border-orange-400";
+          else if (score <= 80) couleur = "border-yellow-300";
+          else couleur = "border-green-400";
+
+          // Responsable
+          let responsable = "-";
+          if (membre) {
+            if (membre.conseiller_id) responsable = profilesMap[membre.conseiller_id] || "-";
+            else if (membre.cellule_id) responsable = cellulesMap[membre.cellule_id] || "-";
+          }
+
+          return {
+            ...p,
+            membre,
+            joursSansSuivi,
+            score,
+            couleur,
+            responsable,
+            debutMinistere: membre ? ministereMap[membre.id] : null,
+            dateBapteme: baptemeMap[String(p.id)],
+            cellule_id: membre?.cellule_id || null,
+            conseiller_id: membre?.conseiller_id || null,
+          };
+        });
+
+        setData(finalData);
+      } catch (err) {
+        console.error("Erreur fetchData:", err);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      // On peut trier ou enrichir ici si besoin
-      const enrichedData = suiviData.map((p) => {
-        const sortedSuivis = p.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
-        const lastSuivi = sortedSuivis[0];
-        const joursSansSuivi = Math.floor((new Date() - new Date(p.date_evangelise)) / (1000 * 60 * 60 * 24));
-
-        let score = 100;
-        if (p.status_suivi === "Non envoyé") score -= 40;
-        if (joursSansSuivi > 7) score -= 25;
-        else if (joursSansSuivi > 3) score -= 10;
-        if (!p.bapteme_date) score -= 10;
-        if (!p.star) score -= 10;
-        if (joursSansSuivi <= 3) score += 10;
-        score = Math.max(0, Math.min(100, score));
-
-        let couleur = "border-gray-500";
-        if (score <= 30) couleur = "border-red-500 animate-pulse";
-        else if (score <= 60) couleur = "border-orange-400";
-        else if (score <= 80) couleur = "border-yellow-300";
-        else couleur = "border-green-400";
-
-        return {
-          ...p,
-          sortedSuivis,
-          lastSuivi,
-          joursSansSuivi,
-          score,
-          couleur
-        };
-      });
-
-      setData(enrichedData);
-      setLoading(false);
     };
 
     fetchData();
-  }, [dateDebutQuery, dateFinQuery]);
+  }, [egliseId, brancheId, dateDebutQuery, dateFinQuery]);
 
-  // ================= FILTERED DATA =================
+  // ================= FILTRE MEMO =================
   const filteredData = useMemo(() => {
     let d = [...data];
 
@@ -91,8 +171,27 @@ function SuiviAmesPage() {
       );
     }
 
+    if (statusQuery && statusQuery.toLowerCase() !== "all") {
+      const query = statusQuery.toLowerCase().trim();
+      d = d.filter((p) => {
+        if (query === "envoyé") return p.status_suivi?.toLowerCase().trim() === "envoyé";
+        if (query === "non envoyé" || query === "nonenvoye") return p.status_suivi?.toLowerCase().trim() === "non envoyé";
+        if (query === "integré" || query === "intégré") return p.status_suivi?.toLowerCase().trim() === "intégré";
+        if (query === "en cours") return p.status_suivi?.toLowerCase().trim() === "en cours";
+        if (query === "refus") return p.status_suivi?.toLowerCase().trim() === "refus";
+        return true;
+      });
+    }
+
+    if (celluleQuery === "true") { 
+      d = d.filter((p) => p.cellule_id != null);
+    }      
+    if (conseillerQuery === "true") { 
+      d = d.filter((p) => p.conseiller_id != null);
+    }
+
     return d;
-  }, [data, filter, search]);
+  }, [data, filter, search, statusQuery, celluleQuery, conseillerQuery]);
 
   const toggle = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -126,10 +225,9 @@ function SuiviAmesPage() {
             <div className="flex-[2]">Nom complet</div>
             <div className="flex-[1]">Envoi</div>
             <div className="flex-[1]">Jours</div>            
-            <div className="flex-[1]">Envoyé au<br/>Suivi</div>
-            <div className="flex-[1]">Statut (Envoyé)</div>
-            <div className="flex-[1]">Date<br/>Intégration</div>
-            <div className="flex-[1]">Baptisé<br/>le</div>
+            <div className="flex-[1]">Date<br/>Évangélisation</div>
+            <div className="flex-[1]">Statut</div>
+            <div className="flex-[1]">Baptisé</div>
             <div className="flex-[1]">Début<br/>Ministère</div>
             <div className="flex-[1]">Suivis<br/>par</div>
             <div className="flex-[1]">Action</div>
@@ -142,10 +240,9 @@ function SuiviAmesPage() {
                 <div className="col-span-1 text-white text-center">{new Date(p.date_evangelise).toLocaleDateString()}</div>
                 <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
                 <div className="col-span-1 text-white text-center">{p.status_suivi}</div>
-                <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>                
-                <div className="col-span-1 text-white text-center">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
-                <div className="col-span-1 text-white text-center">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
-                <div className="col-span-1 text-white text-center">{p.date_integration ? new Date(p.date_integration).toLocaleDateString() : "-"}</div>
+                <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>
+                <div className="col-span-1 text-white text-center">{p.date_evangelise ? new Date(p.date_evangelise).toLocaleDateString() : "-"}</div>
+                <div className="col-span-1 text-white text-center">{p.status_suivi || "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.dateBapteme ? new Date(p.dateBapteme).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.responsable}</div>
@@ -153,19 +250,6 @@ function SuiviAmesPage() {
                   <button onClick={(e) => { e.stopPropagation(); toggle(p.id); }}>Détails</button>
                 </div>
               </div>
-
-              {expanded[p.id] && (
-                <div className="bg-orange-100 rounded-lg p-3 mt-1">
-                  <b className="text-orange-600">Historique :</b>
-                  <ul className="mt-2 text-orange-600">
-                    {p.sortedSuivis.map((s) => (
-                      <li key={s.id}>
-                        {new Date(s.date_suivi).toLocaleDateString()} — {s.status_suivis_evangelises}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
           ))}
         </div>

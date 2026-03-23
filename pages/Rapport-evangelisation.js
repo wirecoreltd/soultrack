@@ -282,7 +282,7 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
   if (evangeliseIds.length) query.append("ids", evangeliseIds.join(","));
 
   // redirection
-  router.push(`/suivi-ames?${query.toString()}`);
+  router.push(`/SuiviAmesPage?${query.toString()}`);
 };
 
     const handleCelluleClick = () => {

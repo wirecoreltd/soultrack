@@ -50,69 +50,62 @@ function SuiviAmesPage() {
     fetchProfile();
   }, []);
 
+  // ================= DATA =================
   useEffect(() => {
-  if (!egliseId || !brancheId) return;
+    if (!egliseId || !brancheId) return;
 
-  const fetchData = async () => {
-    setLoading(true);
+    const fetchData = async () => {
+      setLoading(true);
 
-    // 1️⃣ Récupération complète
-    const { data: evangelises } = await supabase
-      .from("evangelises")
-      .select("*")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId);
+      const { data: evangelises } = await supabase
+        .from("evangelises")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
 
-    const { data: suivis } = await supabase
-      .from("suivis_des_evangelises")
-      .select("*")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId);
+      const { data: suivis } = await supabase
+        .from("suivis_des_evangelises")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
 
-    // 2️⃣ Filtrage strict par date
-    const dateDebutQuery = searchParams?.get("dateDebut");
-    const dateFinQuery = searchParams?.get("dateFin");
+      const { data: membres } = await supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
 
-    const filteredEvangelises = (evangelises || []).filter(e => {
-      const dateE = new Date(e.date_evangelise);
-      if (dateDebutQuery && dateE < new Date(dateDebutQuery)) return false;
-      if (dateFinQuery && dateE > new Date(dateFinQuery)) return false;
-      return true;
-    });
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom");
 
-    const filteredEvangeliseIds = filteredEvangelises.map(e => e.id);
+      const { data: cellules } = await supabase
+        .from("cellules")
+        .select("id, cellule_full");
 
-    const filteredSuivis = (suivis || []).filter(s => {
-      const dateS = new Date(s.date_suivi);
-      if (!filteredEvangeliseIds.includes(s.evangelise_id)) return false;
-      if (dateDebutQuery && dateS < new Date(dateDebutQuery)) return false;
-      if (dateFinQuery && dateS > new Date(dateFinQuery)) return false;
-      return true;
-    });
+      const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
+      const { data: baptemes } = await supabase.from("baptemes").select("*");
 
-    // 3️⃣ Construction de la map
-    const map = {};
-    filteredEvangelises.forEach(e => map[e.id] = { ...e, suivis: [] });
-    filteredSuivis.forEach(s => map[s.evangelise_id].suivis.push(s));
+      // ================= FILTER PAR ID ET DATE =================
+      const filteredEvangelises = evangelises.filter(e => {
+        if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
+        if (dateDebutQuery && new Date(e.date_evangelise) < new Date(dateDebutQuery)) return false;
+        if (dateFinQuery && new Date(e.date_evangelise) > new Date(dateFinQuery)) return false;
+        return true;
+      });
 
-    // 4️⃣ Transforme en array pour le state
-    const finalData = Object.values(map).map(e => {
-      const sortedSuivis = e.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
-      const lastSuivi = sortedSuivis[0];
-      return {
-        ...e,
-        sortedSuivis,
-        lastSuivi,
-        joursSansSuivi: Math.floor((new Date() - new Date(lastSuivi?.date_suivi || e.created_at)) / (1000*60*60*24)),
-      };
-    });
+      // ================= MAPS =================
+      const map = {};
+      filteredEvangelises.forEach((e) => { map[e.id] = { ...e, suivis: [] }; });
 
-    setData(finalData);
-    setLoading(false);
-  };
-
-  fetchData();
-}, [egliseId, brancheId, searchParams]);
+      suivis.forEach((s) => {
+        if (map[s.evangelise_id]) {
+          // filtrer les suivis par date de suivi également
+          if (dateDebutQuery && s.date_suivi && new Date(s.date_suivi) < new Date(dateDebutQuery)) return;
+          if (dateFinQuery && s.date_suivi && new Date(s.date_suivi) > new Date(dateFinQuery)) return;
+          map[s.evangelise_id].suivis.push(s);
+        }
+      });
 
       const membresMap = {};
       membres.forEach((m) => { membresMap[String(m.evangelise_member_id)] = m; });

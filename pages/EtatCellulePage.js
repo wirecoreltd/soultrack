@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
-import { useRouter } from "next/navigation";
 
 export default function EtatCellulePage({ egliseId, brancheId }) {
   const [reports, setReports] = useState([]);

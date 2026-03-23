@@ -86,11 +86,12 @@ function SuiviAmesPage() {
       const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
       const { data: baptemes } = await supabase.from("baptemes").select("*");
 
-      // ================= FILTER PAR ID ET DATE =================
+      // ================= FILTRAGE PAR DATE ET IDS =================
       const filteredEvangelises = evangelises.filter(e => {
         if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
-        if (dateDebutQuery && new Date(e.date_evangelise) < new Date(dateDebutQuery)) return false;
-        if (dateFinQuery && new Date(e.date_evangelise) > new Date(dateFinQuery)) return false;
+        const dateEv = new Date(e.date_evangelise);
+        if (dateDebutQuery && dateEv < new Date(dateDebutQuery)) return false;
+        if (dateFinQuery && dateEv > new Date(dateFinQuery)) return false;
         return true;
       });
 
@@ -98,16 +99,11 @@ function SuiviAmesPage() {
       const map = {};
       filteredEvangelises.forEach((e) => { map[e.id] = { ...e, suivis: [] }; });
 
-      // filtrer les suivis selon la date_evangelise du suivi
+      // Associer uniquement les suivis liés aux évangélisés filtrés
       suivis.forEach((s) => {
-        const e = map[s.evangelise_id];
-        if (!e) return;
-
-        const dateEv = new Date(s.date_evangelise);
-        if (dateDebutQuery && dateEv < new Date(dateDebutQuery)) return;
-        if (dateFinQuery && dateEv > new Date(dateFinQuery)) return;
-
-        e.suivis.push(s);
+        if (map[s.evangelise_id]) {
+          map[s.evangelise_id].suivis.push(s);
+        }
       });
 
       const membresMap = {};
@@ -180,21 +176,19 @@ function SuiviAmesPage() {
     fetchData();
   }, [egliseId, brancheId, idsQuery, dateDebutQuery, dateFinQuery]);
 
+  // ================= FILTRAGE FINALE =================
   const filteredData = useMemo(() => {
     let d = [...data];
 
-    // Filtre score
     if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
     if (filter === "STABLE") d = d.filter((p) => p.score > 80);
 
-    // Filtre recherche
     if (search) {
       d = d.filter((p) =>
         `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    // ===== FILTRE STATUS =====
     if (statusQuery && statusQuery.toLowerCase() !== "all") {
       const query = statusQuery.toLowerCase().trim();
       d = d.filter((p) => {
@@ -208,7 +202,6 @@ function SuiviAmesPage() {
       });
     }
 
-    // ===== FILTRE CELLULE & CONSEILLER =====     
     if (celluleQuery === "true") { 
       d = d.filter((p) => (p.membre?.cellule_id || p.lastSuivi?.cellule_id) != null);
     }      
@@ -260,7 +253,6 @@ function SuiviAmesPage() {
             <div className="flex-[1]">Action</div>
           </div>
 
-          {/* ROWS */}
           {filteredData.map((p) => (
             <div key={p.id} className="mb-1">
               <div className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 border-l-4 ${p.couleur}`}>

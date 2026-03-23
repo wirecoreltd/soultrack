@@ -98,7 +98,8 @@ export default function RapportEvangelisation() {
         });
     
         setFilteredEvangelises(filtered);
-        setTotalEnvoyes(filtered.filter(e => e.status_suivi === "Envoyé").length);
+        const envoyes = filtered.filter(e => e.status_suivi === "Envoyé");
+        setTotalEnvoyes(envoyes.length);
     
         // Expansion du dernier mois
         const lastMonth = getLastMonthKey(rapportsData || []);
@@ -151,6 +152,11 @@ export default function RapportEvangelisation() {
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
       
+      const evangeliseIds = filtered.map(e => e.id);
+      const filteredSuivis = (suivisData || []).filter(s => 
+        evangeliseIds.includes(s.evangelise_id)
+      );
+      
       const filteredSuivis = (suivisData || []).filter((s) => {
         const dateOk =
           (!dateDebut || (s.date_suivi && new Date(s.date_suivi) >= new Date(dateDebut))) &&
@@ -164,13 +170,12 @@ export default function RapportEvangelisation() {
       
       // KPI
       const normalize = (str) => (str ? str.trim() : "");
-      
       setTotalIntegres(filteredSuivis.filter(e => normalize(e.status_suivis_evangelises) === "Intégré").length);
       setTotalEncour(filteredSuivis.filter(e => normalize(e.status_suivis_evangelises) === "En cours").length);
       setTotalRefus(filteredSuivis.filter(e => normalize(e.status_suivis_evangelises) === "Refus").length);
       setTotalCellule(filteredSuivis.filter(e => e.cellule_id != null).length);
       setTotalEglise(filteredSuivis.filter(e => e.conseiller_id != null).length);
-  
+        
     } catch (err) {
       console.error("Erreur fetchKPI:", err);
     }

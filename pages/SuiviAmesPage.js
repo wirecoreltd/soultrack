@@ -59,23 +59,20 @@ function SuiviAmesPage() {
 
       // 1️⃣ Récupération complète
       const { data: evangelises } = await supabase
-        .from("evangelises")
+        .from("suivis_des_evangelises") // on récupère directement les évangélisés
         .select("*")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
 
-      const { data: suivis } = await supabase
-        .from("suivis_des_evangelises")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+      // 2️⃣ Filtrer uniquement par date_evangelise et par ID
+      const filteredEvangelises = evangelises.filter(e => {
+        if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
+        if (dateDebutQuery && new Date(e.date_evangelise) < new Date(dateDebutQuery)) return false;
+        if (dateFinQuery && new Date(e.date_evangelise) > new Date(dateFinQuery)) return false;
+        return true;
+      });
 
-      const { data: membres } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
-
+      // 3️⃣ Construction de maps et données supplémentaires
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, prenom, nom");
@@ -86,32 +83,6 @@ function SuiviAmesPage() {
 
       const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
       const { data: baptemes } = await supabase.from("baptemes").select("*");
-
-      // 2️⃣ Filtrer les évangélisés par ID et date
-      const filteredEvangelises = evangelises.filter(e => {
-        if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
-        if (dateDebutQuery && new Date(e.date_evangelise) < new Date(dateDebutQuery)) return false;
-        if (dateFinQuery && new Date(e.date_evangelise) > new Date(dateFinQuery)) return false;
-        return true;
-      });
-
-      const filteredEvangeliseIds = filteredEvangelises.map(e => e.id);
-
-      // 3️⃣ Filtrer les suivis uniquement pour les évangélisés valides et dans la période
-      const filteredSuivis = suivis.filter(s => {
-        if (!filteredEvangeliseIds.includes(s.evangelise_id)) return false;
-        if (dateDebutQuery && new Date(s.date_suivi) < new Date(dateDebutQuery)) return false;
-        if (dateFinQuery && new Date(s.date_suivi) > new Date(dateFinQuery)) return false;
-        return true;
-      });
-
-      // 4️⃣ Construction de la map
-      const map = {};
-      filteredEvangelises.forEach(e => map[e.id] = { ...e, suivis: [] });
-      filteredSuivis.forEach(s => map[s.evangelise_id].suivis.push(s));
-
-      const membresMap = {};
-      membres.forEach((m) => { membresMap[String(m.evangelise_member_id)] = m; });
 
       const profilesMap = {};
       profiles.forEach((p) => { profilesMap[p.id] = p.prenom + " " + p.nom; });
@@ -125,20 +96,14 @@ function SuiviAmesPage() {
       const baptemeMap = {};
       baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
 
-      // 5️⃣ Final data
-      const finalData = Object.values(map).map((p) => {
-        const membre = membresMap[p.id];
-        const sortedSuivis = p.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
-        const lastSuivi = sortedSuivis[0];
-        const dateRef = lastSuivi?.date_suivi || p.created_at;
-        const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
+      // 4️⃣ Calcul des scores, responsables et préparation finale
+      const finalData = filteredEvangelises.map(p => {
+        const joursSansSuivi = Math.floor((new Date() - new Date(p.date_evangelise)) / (1000 * 60 * 60 * 24));
 
         let score = 100;
         if (p.status_suivi === "Non envoyé") score -= 40;
         if (joursSansSuivi > 7) score -= 25;
         else if (joursSansSuivi > 3) score -= 10;
-        if (!membre?.bapteme_date) score -= 10;
-        if (!membre?.star) score -= 10;
         if (joursSansSuivi <= 3) score += 10;
         score = Math.max(0, Math.min(100, score));
 
@@ -148,28 +113,21 @@ function SuiviAmesPage() {
         else if (score <= 80) couleur = "border-yellow-300";
         else couleur = "border-green-400";
 
-        let responsable = "-";
-        if (membre) {
-          if (membre.conseiller_id) responsable = profilesMap[membre.conseiller_id] || "-";
-          else if (membre.cellule_id) responsable = cellulesMap[membre.cellule_id] || "-";
-        } else if (lastSuivi) {
-          if (lastSuivi.conseiller_id) responsable = profilesMap[lastSuivi.conseiller_id] || "-";
-          else if (lastSuivi.cellule_id) responsable = cellulesMap[lastSuivi.cellule_id] || "-";
-        }
+        const responsable = p.conseiller_id
+          ? profilesMap[p.conseiller_id] || "-"
+          : p.cellule_id
+          ? cellulesMap[p.cellule_id] || "-"
+          : "-";
 
         return {
           ...p,
-          membre,
-          sortedSuivis,
-          lastSuivi,
+          sortedSuivis: [], // pour l'instant on n'affiche pas d'historique, mais tu peux l'ajouter si besoin
           joursSansSuivi,
           score,
           couleur,
           responsable,
-          debutMinistere: membre ? ministereMap[membre.id] : null,
           dateBapteme: baptemeMap[String(p.id)],
-          cellule_id: membre?.cellule_id || lastSuivi?.cellule_id || null,
-          conseiller_id: membre?.conseiller_id || lastSuivi?.conseiller_id || null,
+          debutMinistere: ministereMap[p.id] || null,
         };
       });
 
@@ -195,7 +153,7 @@ function SuiviAmesPage() {
     if (statusQuery && statusQuery.toLowerCase() !== "all") {
       const query = statusQuery.toLowerCase().trim();
       d = d.filter((p) => {
-        const suiviStatus = p.lastSuivi?.status_suivis_evangelises?.toLowerCase().trim();
+        const suiviStatus = p.status_suivis_evangelises?.toLowerCase().trim();
         if (query === "envoyé") return p.status_suivi?.toLowerCase().trim() === "envoyé";
         if (query === "non envoyé" || query === "nonenvoye") return p.status_suivi?.toLowerCase().trim() === "non envoyé";
         if (query === "integré" || query === "intégré") return suiviStatus === "integré" || suiviStatus === "intégré";
@@ -206,10 +164,10 @@ function SuiviAmesPage() {
     }
 
     if (celluleQuery === "true") { 
-      d = d.filter((p) => (p.membre?.cellule_id || p.lastSuivi?.cellule_id) != null);
+      d = d.filter((p) => p.cellule_id != null);
     }      
     if (conseillerQuery === "true") { 
-      d = d.filter((p) => (p.membre?.conseiller_id || p.lastSuivi?.conseiller_id) != null);
+      d = d.filter((p) => p.conseiller_id != null);
     }
 
     return d;

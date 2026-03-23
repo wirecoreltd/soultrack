@@ -76,8 +76,7 @@ export default function RapportEvangelisation() {
         if (dateFin) query = query.lte("date_evangelise", dateFin);
     
         const { data: rapportsData } = await query;
-        setRapports(rapportsData || []);
-        await fetchKPI();
+        setRapports(rapportsData || []);      
     
         // ---------------- 2️⃣ Récupérer tous les évangélisés ----------------
         let { data: evangelisesData } = await supabase
@@ -99,7 +98,7 @@ export default function RapportEvangelisation() {
         });
     
         setFilteredEvangelises(filtered);
-        setTotalEnvoyes(filtered.filter((e) => e.status_suivi === "Envoyé").length);
+        setTotalEnvoyes(filtered.filter(e => e.status_suivi === "Envoyé").length);
     
         // Expansion du dernier mois
         const lastMonth = getLastMonthKey(rapportsData || []);
@@ -151,35 +150,26 @@ export default function RapportEvangelisation() {
         .select("*")
         .eq("eglise_id", egliseId)
         .eq("branche_id", brancheId);
-  
-      setAllSuivis(suivisData || []);
-  
+      
       const filteredSuivis = (suivisData || []).filter((s) => {
-  const dateOk =
-    !dateDebut || (s.date_suivi && new Date(s.date_suivi) >= new Date(dateDebut));
-  const dateFinOk =
-    !dateFin || (s.date_suivi && new Date(s.date_suivi) <= new Date(dateFin));
-  const typeOk =
-    !typeFilter ||
-    typeFilter === "Tous" ||
-    (s.type_evangelisation && s.type_evangelisation === typeFilter);
-
-  return dateOk && dateFinOk && typeOk;
-});
-
-setFilteredSuivisState(filteredSuivis); // <-- ici on le stocke pour le JSX
-  
+        const dateOk =
+          (!dateDebut || (s.date_suivi && new Date(s.date_suivi) >= new Date(dateDebut))) &&
+          (!dateFin || (s.date_suivi && new Date(s.date_suivi) <= new Date(dateFin)));
+      
+        const typeOk =
+          !typeFilter || typeFilter === "Tous" || s.type_evangelisation === typeFilter;
+      
+        return dateOk && typeOk;
+      });
+      
+      // KPI
       const normalize = (str) => (str ? str.trim() : "");
-  
-      const integres = filteredSuivis.filter((e) => normalize(e.status_suivis_evangelises) === "Intégré");
-      const enCours = filteredSuivis.filter((e) => normalize(e.status_suivis_evangelises) === "En cours");
-      const refus = filteredSuivis.filter((e) => normalize(e.status_suivis_evangelises) === "Refus");
-  
-      setTotalIntegres(integres.length);
-      setTotalEncour(enCours.length);
-      setTotalRefus(refus.length);
-      setTotalCellule(filteredSuivis.filter((e) => e.cellule_id != null).length);
-      setTotalEglise(filteredSuivis.filter((e) => e.conseiller_id != null).length);
+      
+      setTotalIntegres(filteredSuivis.filter(e => normalize(e.status_suivis_evangelises) === "Intégré").length);
+      setTotalEncour(filteredSuivis.filter(e => normalize(e.status_suivis_evangelises) === "En cours").length);
+      setTotalRefus(filteredSuivis.filter(e => normalize(e.status_suivis_evangelises) === "Refus").length);
+      setTotalCellule(filteredSuivis.filter(e => e.cellule_id != null).length);
+      setTotalEglise(filteredSuivis.filter(e => e.conseiller_id != null).length);
   
     } catch (err) {
       console.error("Erreur fetchKPI:", err);

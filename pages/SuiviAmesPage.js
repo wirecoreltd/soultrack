@@ -57,25 +57,11 @@ function SuiviAmesPage() {
     const fetchData = async () => {
       setLoading(true);
 
-      let query = supabase
-  .from("evangelises")
-  .select("*")
-  .eq("eglise_id", egliseId)
-  .eq("branche_id", brancheId);
-
-if (dateDebutQuery) {
-  query = query.gte("date_evangelise", dateDebutQuery);
-}
-
-if (dateFinQuery) {
-  query = query.lte("date_evangelise", dateFinQuery + "T23:59:59");
-}
-
-if (idsQuery.length > 0) {
-  query = query.in("id", idsQuery);
-}
-
-const { data: evangelises } = await query;
+      const { data: evangelises } = await supabase
+        .from("evangelises")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId);
 
       const { data: suivis } = await supabase
         .from("suivis_des_evangelises")
@@ -101,29 +87,26 @@ const { data: evangelises } = await query;
       const { data: baptemes } = await supabase.from("baptemes").select("*");
 
       // ================= FILTER PAR ID ET DATE =================
-     const filteredEvangelises = evangelises.filter(e => {
-  // Si idsQuery contient des IDs, on exclut ceux déjà dans le rapport
-  if (idsQuery.length > 0 && idsQuery.includes(e.id)) {
-    return false;
-  }
-
-  // Filtrage par dates si défini
+      const filteredEvangelises = evangelises.filter(e => {
   const dateEv = e.date_evangelise ? new Date(e.date_evangelise) : null;
-  if (!dateEv || isNaN(dateEv)) return false;
+
+  if (!dateEv || isNaN(dateEv)) return false; // 🔥 ignore les mauvaises dates
+
+  if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
 
   if (dateDebutQuery) {
     const start = new Date(dateDebutQuery);
-    start.setHours(0,0,0,0);
+    start.setHours(0, 0, 0, 0);
     if (dateEv < start) return false;
   }
 
   if (dateFinQuery) {
     const end = new Date(dateFinQuery);
-    end.setHours(23,59,59,999);
+    end.setHours(23, 59, 59, 999);
     if (dateEv > end) return false;
   }
 
-  return true; // garde tout le reste
+  return true;
 });
 
       // ================= MAPS =================
@@ -132,8 +115,9 @@ const { data: evangelises } = await query;
 
       suivis.forEach((s) => {
         if (map[s.evangelise_id]) {
-          // filtrer les suivis par date de suivi également         
-          
+          // filtrer les suivis par date de suivi également
+          if (dateDebutQuery && s.date_suivi && new Date(s.date_suivi) < new Date(dateDebutQuery)) return;
+          if (dateFinQuery && s.date_suivi && new Date(s.date_suivi) > new Date(dateFinQuery)) return;
           map[s.evangelise_id].suivis.push(s);
         }
       });
@@ -148,7 +132,7 @@ const { data: evangelises } = await query;
       cellules.forEach((c) => { cellulesMap[c.id] = c.cellule_full; });
 
       const ministereMap = {};
-      ministeres.forEach((m) => { ministereMap[m.membre_id] = m.date_evangelise; });
+      ministeres.forEach((m) => { ministereMap[m.membre_id] = m.created_at; });
 
       const baptemeMap = {};
       baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
@@ -298,7 +282,7 @@ const { data: evangelises } = await query;
                 <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>                
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
-                <div className="col-span-1 text-white text-center">{p.membre?.date_evangelise ? new Date(p.membre.date_evangelise).toLocaleDateString() : "-"}</div>
+                <div className="col-span-1 text-white text-center">{p.membre?.created_at ? new Date(p.membre.created_at).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.dateBapteme ? new Date(p.dateBapteme).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.responsable}</div>

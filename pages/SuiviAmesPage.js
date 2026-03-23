@@ -116,71 +116,110 @@ function SuiviAmesPage() {
         }
       });
 
-      const membresMap = {};
-      membres.forEach((m) => { membresMap[String(m.evangelise_member_id)] = m; });
+      // ================= MAPS CORRIGÉES =================
+const membresMap = {};
+membres.forEach((m) => {
+  // ⚡ Clé = evangelise_member_id pour correspondre à evangelises.id
+  if (m.evangelise_member_id) {
+    membresMap[m.evangelise_member_id] = m;
+  }
+});
 
-      const profilesMap = {};
-      profiles.forEach((p) => { profilesMap[String(p.id)] = p.prenom + " " + p.nom; });
+const profilesMap = {};
+profiles.forEach((p) => {
+  profilesMap[p.id] = p.prenom + " " + p.nom;
+});
 
-      const cellulesMap = {};
-      cellules.forEach((c) => { cellulesMap[String(c.id)] = c.cellule_full; });
+const cellulesMap = {};
+cellules.forEach((c) => {
+  cellulesMap[c.id] = c.cellule_full;
+});
 
-      const ministereMap = {};
-      ministeres.forEach((m) => { ministereMap[m.membre_id] = m.created_at; });
+// ministere et bapteme restent identiques
+const ministereMap = {};
+ministeres.forEach((m) => {
+  ministereMap[m.membre_id] = m.created_at;
+});
 
-      const baptemeMap = {};
-      baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
+const baptemeMap = {};
+baptemes.forEach((b) => {
+  if (b.evangelise_member_id) {
+    baptemeMap[b.evangelise_member_id] = b.date;
+  }
+});
 
-      // ================= FINAL DATA =================
-      const finalData = Object.values(map).map((p) => {
-        const membre = membresMap[p.id];
-        const sortedSuivis = p.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
-        const lastSuivi = sortedSuivis[0];
-        const dateRef = lastSuivi?.date_suivi || p.date_evangelise;
-        const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
+// ================= FINAL DATA CORRIGÉ =================
+const finalData = Object.values(map).map((p) => {
+  // ⚡ Cherche le membre via evangelise_member_id
+  const membre = membresMap[p.id];
+  const sortedSuivis = p.suivis.sort(
+    (a, b) => new Date(b.date_suivi) - new Date(a.date_suivi)
+  );
+  const lastSuivi = sortedSuivis[0];
+  const dateRef = lastSuivi?.date_suivi || p.date_evangelise;
+  const joursSansSuivi = Math.floor(
+    (new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24)
+  );
 
-        let score = 100;
-        if (p.status_suivi === "Non envoyé") score -= 40;
-        if (joursSansSuivi > 7) score -= 25;
-        else if (joursSansSuivi > 3) score -= 10;
-        if (!membre?.bapteme_date) score -= 10;
-        if (!membre?.star) score -= 10;
-        if (joursSansSuivi <= 3) score += 10;
-        score = Math.max(0, Math.min(100, score));
+  // ⚡ Calcul score et couleur inchangés
+  let score = 100;
+  if (p.status_suivi === "Non envoyé") score -= 40;
+  if (joursSansSuivi > 7) score -= 25;
+  else if (joursSansSuivi > 3) score -= 10;
+  if (!membre?.bapteme_date) score -= 10;
+  if (!membre?.star) score -= 10;
+  if (joursSansSuivi <= 3) score += 10;
+  score = Math.max(0, Math.min(100, score));
 
-        let couleur = "border-gray-500";
-        if (score <= 30) couleur = "border-red-500 animate-pulse";
-        else if (score <= 60) couleur = "border-orange-400";
-        else if (score <= 80) couleur = "border-yellow-300";
-        else couleur = "border-green-400";
+  let couleur = "border-gray-500";
+  if (score <= 30) couleur = "border-red-500 animate-pulse";
+  else if (score <= 60) couleur = "border-orange-400";
+  else if (score <= 80) couleur = "border-yellow-300";
+  else couleur = "border-green-400";
 
-        const conseillerId = membre?.conseiller_id || lastSuivi?.conseiller_id;
-        const celluleId = membre?.cellule_id || lastSuivi?.cellule_id;
+  // ================= RESPONSABLE CORRIGÉ =================
+  let responsable = "-";
+  let cellule_id = null;
+  let conseiller_id = null;
 
-        let responsable = "-";
-        if (conseillerId) responsable = profilesMap[String(conseillerId)] || "-";
-        else if (celluleId) responsable = cellulesMap[String(celluleId)] || "-";
+  if (membre) {
+    // Priorité : conseiller → cellule
+    if (membre.conseiller_id) {
+      responsable = profilesMap[membre.conseiller_id] || "-";
+      conseiller_id = membre.conseiller_id;
+    } else if (membre.cellule_id) {
+      responsable = cellulesMap[membre.cellule_id] || "-";
+      cellule_id = membre.cellule_id;
+    }
+  } else if (lastSuivi) {
+    if (lastSuivi.conseiller_id) {
+      responsable = profilesMap[lastSuivi.conseiller_id] || "-";
+      conseiller_id = lastSuivi.conseiller_id;
+    } else if (lastSuivi.cellule_id) {
+      responsable = cellulesMap[lastSuivi.cellule_id] || "-";
+      cellule_id = lastSuivi.cellule_id;
+    }
+  }
 
-        return {
-          ...p,
-          membre,
-          sortedSuivis,
-          lastSuivi,
-          joursSansSuivi,
-          score,
-          couleur,
-          responsable,
-          debutMinistere: membre ? ministereMap[membre.id] : null,
-          dateBapteme: baptemeMap[String(p.id)],
-          cellule_id: celluleId,
-          conseiller_id: conseillerId,
-        };
-      });
+  return {
+    ...p,
+    membre,
+    sortedSuivis,
+    lastSuivi,
+    joursSansSuivi,
+    score,
+    couleur,
+    responsable,
+    cellule_id,
+    conseiller_id,
+    debutMinistere: membre ? ministereMap[membre.id] : null,
+    dateBapteme: baptemeMap[p.id] || null,
+  };
+});
 
-      setData(finalData);
-      setLoading(false);
-    };
-
+setData(finalData);
+setLoading(false);
+      
     fetchData();
   }, [egliseId, brancheId, idsQuery, dateDebutQuery, dateFinQuery]);
 

@@ -134,13 +134,16 @@ export default function RapportEvangelisation() {
   
       setAllEvangelises(evangelisesData || []);
   
-      let filtered = (evangelisesData || []).filter((e) => {
-        const dateOk =
-          (!dateDebut || new Date(e.date_evangelise) >= new Date(dateDebut)) &&
-          (!dateFin || new Date(e.date_evangelise) <= new Date(dateFin));
-        const typeOk = !typeFilter || typeFilter === "Tous" || e.type_evangelisation === typeFilter;
-        return dateOk && typeOk;
-      });
+      const evangeliseIds = filtered.map(e => e.id);
+
+        const filteredSuivis = (suivisData || []).filter((s) => {
+          const matchEvangelise = evangeliseIds.includes(s.evangelise_id);
+        
+          const typeOk =
+            !typeFilter || typeFilter === "Tous" || s.type_evangelisation === typeFilter;
+        
+          return matchEvangelise && typeOk;
+        });;
   
       setFilteredEvangelises(filtered);
       setTotalEnvoyes(filtered.filter((e) => e.status_suivi === "Envoyé").length);

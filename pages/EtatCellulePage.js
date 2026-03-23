@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
@@ -15,33 +15,68 @@ export default function EtatCellulePage() {
 }
 
 function EtatCellule() {
-  const [rapports, setRapports] = useState([]);
+  const [reports, setReports] = useState([]);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
   const [showTable, setShowTable] = useState(false);
 
-  const formRef = useRef(null);
-
   // ================= FETCH DATA =================
-  const fetchRapports = async () => {
-    const { data } = await supabase
-      .from("vue_etat_cellule") // ta vue SQL
-      .select("*")
-      .order("date_evangelise", { ascending: false })
-      .gte(filterDebut ? "date_evangelise" : "date_evangelise", filterDebut || "1900-01-01")
-      .lte(filterFin ? "date_evangelise" : "date_evangelise", filterFin || "2100-12-31");
+  const fetchReports = async () => {
+    const sqlQuery = `
+      SELECT
+        e.prenom,
+        e.nom,
+        e.telephone,
+        e.date_evangelise,
+        e.type_evangelisation,
+        e.status_suivis_evangelises,
+        m.created_at AS date_integration,
+        b.date AS date_baptise,
+        MAX(s.created_at) AS ministere_date,
+        c.cellule_full,
+        c.responsable AS responsable_cellule
+      FROM suivis_des_evangelises e
+      LEFT JOIN membres_complets m 
+        ON m.evangelise_member_id::uuid = e.evangelise_id
+      LEFT JOIN baptemes b 
+        ON b.evangelise_member_id::uuid = e.evangelise_id
+      LEFT JOIN stats_ministere_besoin s 
+        ON s.membre_id::uuid = m.id
+      LEFT JOIN cellules c
+        ON c.id::uuid = e.cellule_id
+      WHERE e.cellule_id IS NOT NULL
+      GROUP BY
+        e.prenom,
+        e.nom,
+        e.telephone,
+        e.date_evangelise,
+        e.type_evangelisation,
+        e.status_suivis_evangelises,
+        m.created_at,
+        b.date,
+        c.cellule_full,
+        c.responsable
+      ORDER BY e.date_evangelise DESC;
+    `;
 
-    setRapports(data || []);
-    setShowTable(true);
+    const { data, error } = await supabase.rpc("run_sql", { query: sqlQuery });
+
+    if (error) {
+      console.error("Erreur fetch :", error);
+    } else {
+      let filtered = data;
+      if (filterDebut) filtered = filtered.filter(r => new Date(r.date_evangelise) >= new Date(filterDebut));
+      if (filterFin) filtered = filtered.filter(r => new Date(r.date_evangelise) <= new Date(filterFin));
+
+      setReports(filtered);
+      setShowTable(true);
+    }
   };
 
   // ================= UTIL =================
   const getMonthNameFR = (monthIndex) => {
-    const months = [
-      "Janvier","Février","Mars","Avril","Mai","Juin",
-      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
-    ];
+    const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
     return months[monthIndex] || "";
   };
 
@@ -54,9 +89,9 @@ function EtatCellule() {
     return `${day}/${month}/${year}`;
   };
 
-  const groupByMonth = (data) => {
+  const groupByMonth = (reports) => {
     const map = {};
-    data.forEach(r => {
+    reports.forEach(r => {
       const d = new Date(r.date_evangelise);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       if (!map[key]) map[key] = [];
@@ -69,22 +104,20 @@ function EtatCellule() {
     setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
   };
 
-  const groupedReports = Object.entries(groupByMonth(rapports))
-    .sort((a,b) => new Date(a[0]) - new Date(b[0]));
-
-  const totalGlobal = rapports.length; // total de personnes
+  const groupedReports = Object.entries(groupByMonth(reports))
+    .sort((a, b) => {
+      const [yearA, monthA] = a[0].split("-").map(Number);
+      const [yearB, monthB] = b[0].split("-").map(Number);
+      return new Date(yearB, monthB) - new Date(yearA, monthA); // tri décroissant
+    });
 
   // ================= RENDER =================
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
-        <span className="text-white">État de </span>
-        <span className="text-amber-300">Cellule</span>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
+        État de <span className="text-amber-300">Cellule</span>
       </h1>
-
-      <p className="text-white/80 mb-6">Liste des évangélisés par cellule</p>
 
       {/* ================= FILTRES ================= */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
@@ -101,101 +134,66 @@ function EtatCellule() {
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
-          onClick={fetchRapports}
+          onClick={fetchReports}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
           Générer
         </button>
       </div>
 
-      {/* ================= TABLEAU ================= */}
+      {/* ================= CARDS ================= */}
       {showTable && (
-        <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
-          <div className="w-max space-y-2">
-            {/* HEADER */}
-            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[220px]">Nom / Prénom</div>
-              <div className="min-w-[140px]">Téléphone</div>
-              <div className="min-w-[180px]">Date Evangelise</div>
-              <div className="min-w-[180px]">Type Evangelisation</div>
-              <div className="min-w-[200px]">Status Suivis</div>
-              <div className="min-w-[180px]">Date Intégration</div>
-              <div className="min-w-[180px]">Date Baptême</div>
-              <div className="min-w-[180px]">Ministère Date</div>
-              <div className="min-w-[220px]">Cellule</div>
-              <div className="min-w-[200px]">Responsable</div>
-            </div>
+        <div className="w-full max-w-4xl mt-6 space-y-4">
+          {groupedReports.map(([monthKey, monthReports], idx) => {
+            const [year, monthIndex] = monthKey.split("-").map(Number);
+            const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+            const isExpanded = expandedMonths[monthKey] || false;
 
-            {groupedReports.map(([monthKey, monthRapports], idx) => {
-              const [year, monthIndex] = monthKey.split("-").map(Number);
-              const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-              const totalMonth = monthRapports.length;
-              const isExpanded = expandedMonths[monthKey] || false;
-              const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500"];
-              const borderColor = borderColors[idx % borderColors.length];
-
-              return (
-                <div key={monthKey} className="space-y-1">
-                  {/* HEADER MOIS */}
-                  <div
-                    className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 ${borderColor}`}
-                    onClick={() => toggleMonth(monthKey)}
-                  >
-                    <div className="min-w-[220px] text-white font-semibold">
-                      {isExpanded ? "➖ " : "➕ "} {monthLabel}
-                    </div>
-                    <div className="min-w-[140px]"></div>
-                    <div className="min-w-[180px]"></div>
-                    <div className="min-w-[180px]"></div>
-                    <div className="min-w-[200px]"></div>
-                    <div className="min-w-[180px]"></div>
-                    <div className="min-w-[180px]"></div>
-                    <div className="min-w-[180px]"></div>
-                    <div className="min-w-[220px] text-orange-400 font-bold text-center">{totalMonth}</div>
-                    <div className="min-w-[200px]"></div>
-                  </div>
-
-                  {/* LIGNES */}
-                  {isExpanded && monthRapports.map(r => (
-                    <div
-                      key={r.evangelise_id}
-                      className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
-                    >
-                      <div className="min-w-[220px] text-white">{r.nom} {r.prenom}</div>
-                      <div className="min-w-[140px] text-white">{r.telephone}</div>
-                      <div className="min-w-[180px] text-white">{formatDateFR(r.date_evangelise)}</div>
-                      <div className="min-w-[180px] text-white">{r.type_evangelisation}</div>
-                      <div className="min-w-[200px] text-white">{r.status_suivis_evangelises}</div>
-                      <div className="min-w-[180px] text-white">{formatDateFR(r.date_integration)}</div>
-                      <div className="min-w-[180px] text-white">{formatDateFR(r.date_baptise)}</div>
-                      <div className="min-w-[180px] text-white">{formatDateFR(r.ministere_date)}</div>
-                      <div className="min-w-[220px] text-white">{r.cellule_full}</div>
-                      <div className="min-w-[200px] text-white">{r.responsable_cellule}</div>
-                    </div>
-                  ))}
+            return (
+              <div key={monthKey} className="bg-white/10 rounded-2xl shadow-lg overflow-hidden">
+                <div
+                  className="flex justify-between items-center px-4 py-3 cursor-pointer bg-white/20 hover:bg-white/30 transition"
+                  onClick={() => toggleMonth(monthKey)}
+                >
+                  <h2 className="text-white font-semibold">{monthLabel} ({monthReports.length})</h2>
+                  <span className="text-white">{isExpanded ? "➖" : "➕"}</span>
                 </div>
-              );
-            })}
 
-            {/* TOTAL GLOBAL */}
-            <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
-              <div className="min-w-[220px] text-white font-bold">TOTAL Évangélisés</div>
-              <div className="min-w-[140px]"></div>
-              <div className="min-w-[180px]"></div>
-              <div className="min-w-[180px]"></div>
-              <div className="min-w-[200px]"></div>
-              <div className="min-w-[180px]"></div>
-              <div className="min-w-[180px]"></div>
-              <div className="min-w-[180px]"></div>
-              <div className="min-w-[220px] text-orange-400 font-bold text-center">{totalGlobal}</div>
-              <div className="min-w-[200px]"></div>
-            </div>
-
-          </div>
+                {isExpanded && (
+                  <div className="p-4 space-y-2">
+                    {monthReports.map(r => (
+                      <div key={r.evangelise_id} className="bg-white/10 p-3 rounded-lg flex flex-col space-y-1 hover:bg-white/20 transition">
+                        <div><strong>Nom / Prénom:</strong> {r.nom} {r.prenom}</div>
+                        <div><strong>Téléphone:</strong> {r.telephone}</div>
+                        <div><strong>Date Évangélisé:</strong> {formatDateFR(r.date_evangelise)}</div>
+                        <div><strong>Type:</strong> {r.type_evangelisation}</div>
+                        <div><strong>Status:</strong> {r.status_suivis_evangelises}</div>
+                        <div><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</div>
+                        <div><strong>Date Baptême:</strong> {formatDateFR(r.date_baptise)}</div>
+                        <div><strong>Date Ministère:</strong> {formatDateFR(r.ministere_date)}</div>
+                        <div><strong>Cellule:</strong> {r.cellule_full}</div>
+                        <div><strong>Responsable:</strong> {r.responsable_cellule}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
       <Footer />
+
+      <style jsx>{`
+        input {
+          border: 1px solid #ccc;
+          padding: 10px;
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.05);
+          color: white;
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 // pages/reports/etat-cellule.jsx
 import { useState, useEffect } from "react";
-import Layout from "@/components/Layout"; // ton layout avec header/footer
-import ProtectedRoute from "@/components/ProtectedRoute"; // protection de la page
-import { fetchEtatCellule } from "@/lib/api"; // fonction pour appeler ton API ou serveur
+import supabase from "../lib/supabaseClient";
+import HeaderPages from "../components/HeaderPages";
+import Footer from "../components/Footer";
+import { useRouter } from "next/navigation";
 
 export default function EtatCellulePage({ egliseId, brancheId }) {
   const [reports, setReports] = useState([]);

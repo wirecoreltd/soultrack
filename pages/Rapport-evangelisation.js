@@ -153,19 +153,14 @@ export default function RapportEvangelisation() {
         .eq("branche_id", brancheId);
       
       const evangeliseIds = filtered.map(e => e.id);
-      const filteredSuivis = (suivisData || []).filter(s => 
-        evangeliseIds.includes(s.evangelise_id)
-      );
-      
       const filteredSuivis = (suivisData || []).filter((s) => {
+        const matchEvangelise = evangeliseIds.includes(s.evangelise_id);      
         const dateOk =
           (!dateDebut || (s.date_suivi && new Date(s.date_suivi) >= new Date(dateDebut))) &&
-          (!dateFin || (s.date_suivi && new Date(s.date_suivi) <= new Date(dateFin)));
-      
+          (!dateFin || (s.date_suivi && new Date(s.date_suivi) <= new Date(dateFin)));      
         const typeOk =
-          !typeFilter || typeFilter === "Tous" || s.type_evangelisation === typeFilter;
-      
-        return dateOk && typeOk;
+          !typeFilter || typeFilter === "Tous" || s.type_evangelisation === typeFilter;      
+        return matchEvangelise && dateOk && typeOk;
       });
       
       // KPI

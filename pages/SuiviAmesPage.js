@@ -102,7 +102,11 @@ function SuiviAmesPage() {
       suivis.forEach((s) => {
         const e = map[s.evangelise_id];
         if (!e) return; // évangélisation hors filtre
-        // filtrer les suivis uniquement si l'évangélisation est dans la plage
+      
+        const dateEv = new Date(s.date_evangelise);
+        if (dateDebutQuery && dateEv < new Date(dateDebutQuery)) return;
+        if (dateFinQuery && dateEv > new Date(dateFinQuery)) return;
+      
         e.suivis.push(s);
       });
 

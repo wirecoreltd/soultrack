@@ -90,13 +90,14 @@ const fetchRapports = async () => {
     setAllEvangelises(evangelisesData || []);
 
     // Filtrer selon dates et type
-    const filtered = (evangelisesData || []).filter((e) => {
+      const filtered = (evangelisesData || []).filter((e) => {
       const dateOk =
-        (!dateDebut || new Date(e.date_evangelise) >= new Date(dateDebut)) &&
-        (!dateFin || new Date(e.date_evangelise) <= new Date(dateFin));
+        !dateDebut || !e.date_evangelise || new Date(e.date_evangelise) >= new Date(dateDebut);
+      const dateOkFin =
+        !dateFin || !e.date_evangelise || new Date(e.date_evangelise) <= new Date(dateFin);
       const typeOk =
-        !typeFilter || typeFilter === "Tous" || e.type_evangelisation === typeFilter;
-      return dateOk && typeOk;
+        !typeFilter || typeFilter === "Tous" || !e.type_evangelisation || e.type_evangelisation === typeFilter;
+      return dateOk && dateOkFin && typeOk;
     });
 
     setFilteredEvangelises(filtered);
@@ -104,7 +105,7 @@ const fetchRapports = async () => {
     // KPI à partir de evangelises
     const totalEvangelises = filtered.length;
     const totalEnvoyes = filtered.filter(e => e.status_suivi === "Envoyé").length;
-    const totalNonEnvoyes = filtered.filter(e => e.status_suivi !== "Envoyé").length;
+    const totalNonEnvoyes = filtered.filter(e => e.status_suivi === "Non envoyé" || e.status_suivi === null).length;
     const totalConvertis = filtered.filter(e => e.priere_salut === true).length;
 
     setTotalEnvoyes(totalEnvoyes);

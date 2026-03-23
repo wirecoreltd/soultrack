@@ -66,12 +66,13 @@ const fetchRapports = async () => {
 
   try {
     // 🔹 Récupérer les rapports
-    let query = supabase
-      .from("rapport_evangelisation")
-      .select("*")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId)
-      .order("date_evangelise", { ascending: true });
+     let { data: rapportsData } = await supabase
+    .from("rapport_evangelisation")
+    .select("*")
+    .eq("eglise_id", egliseId)
+    .eq("branche_id", brancheId)
+    .in("evangelise_member_id", filtered.map(e => e.id)) // uniquement les evangelises valides
+    .order("date_evangelise", { ascending: true });
 
     if (dateDebut) query = query.gte("date_evangelise", dateDebut);
     if (dateFin) query = query.lte("date_evangelise", dateFin);

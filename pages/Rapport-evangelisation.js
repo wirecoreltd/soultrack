@@ -77,6 +77,7 @@ export default function RapportEvangelisation() {
     
         const { data: rapportsData } = await query;
         setRapports(rapportsData || []);
+        await fetchKPI();
     
         // ---------------- 2️⃣ Récupérer tous les évangélisés ----------------
         let { data: evangelisesData } = await supabase
@@ -193,11 +194,7 @@ setFilteredSuivisState(filteredSuivis); // <-- ici on le stocke pour le JSX
     );
     const nbPriere = filteredEvangelises.filter((e) => e.priere_salut === true).length;
     setTotalPriereSalut(nbPriere);
-  }, [filteredEvangelises]);
-
-  useEffect(() => {
-  fetchKPI();
-}, [egliseId, brancheId, dateDebut, dateFin, rapports, typeFilter]);
+  }, [filteredEvangelises]);  
 
   // ---------------- EDIT RAPPORT ----------------
   const handleSaveRapport = async (updated) => {

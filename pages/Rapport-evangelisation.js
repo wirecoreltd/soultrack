@@ -271,7 +271,19 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
 
   // Ajouter ids filtrés pour que SuiviAmesPage sache quoi afficher
     const handleKpiClick = (status) => {
-      const evangeliseIds = filteredEvangelises.map(e => e.id);
+  // ids des évangélisés filtrés selon les critères actuels
+  const evangeliseIds = filteredEvangelises.map(e => e.id);
+
+  // construire l'URL avec dates et IDs
+  const query = new URLSearchParams();
+  query.append("status", status || "all");
+  query.append("dateDebut", dateDebut || "");
+  query.append("dateFin", dateFin || "");
+  if (evangeliseIds.length) query.append("ids", evangeliseIds.join(","));
+
+  // redirection
+  router.push(`/suivi-ames?${query.toString()}`);
+};
     
       router.push({
         pathname: "/SuiviAmesPage",

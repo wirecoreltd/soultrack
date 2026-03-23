@@ -75,11 +75,11 @@ export default function EtatCellulePage({ egliseId, brancheId }) {
     return typeName.length > maxLength ? typeName.slice(0,maxLength)+"..." : typeName;
   }
 
-  if (loading) return <Layout>Chargement...</Layout>;
+  if (loading) return Chargement...;
 
   return (
     <ProtectedRoute roles={["Admin", "ResponsableCellule"]}>
-      <Layout title="État de cellule">
+      <title="État de cellule">
         <div className="max-w-6xl mx-auto p-4">
 
           {/* ====== FILTRES DATES ====== */}
@@ -125,7 +125,7 @@ export default function EtatCellulePage({ egliseId, brancheId }) {
           </div>
 
         </div>
-      </Layout>
+     
     </ProtectedRoute>
   );
 }

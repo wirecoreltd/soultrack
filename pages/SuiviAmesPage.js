@@ -87,25 +87,32 @@ function SuiviAmesPage() {
       const { data: baptemes } = await supabase.from("baptemes").select("*");
 
       // ================= FILTER PAR ID ET DATE_EVANGELISE =================
-      const filteredEvangelises = evangelises.filter(e => {
-        if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
-        if (dateDebutQuery && new Date(e.date_evangelise) < new Date(dateDebutQuery)) return false;
-        if (dateFinQuery && new Date(e.date_evangelise) > new Date(dateFinQuery)) return false;
-        return true;
-      });
+      // Filtrer les évangélisés par date_evangelise
+const filteredEvangelises = evangelises.filter(e => {
+  const dateEv = new Date(e.date_evangelise);
+  if (dateDebutQuery && dateEv < new Date(dateDebutQuery)) return false;
+  if (dateFinQuery && dateEv > new Date(dateFinQuery)) return false;
+  if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
+  return true;
+});
 
-      const validIds = new Set(filteredEvangelises.map(e => e.id));
+const validIds = new Set(filteredEvangelises.map(e => e.id));
 
-      // ================= MAPS =================
-      const map = {};
-      filteredEvangelises.forEach((e) => { map[e.id] = { ...e, suivis: [] }; });
+// Ne garder que les suivis pour ces évangélisés
+const filteredSuivis = suivis.filter(s => validIds.has(s.evangelise_id));
 
-      // filtrer les suivis pour ne prendre que ceux liés aux évangélisés valides
-      suivis.forEach((s) => {
-        if (validIds.has(s.evangelise_id)) {
-          map[s.evangelise_id].suivis.push(s);
-        }
-      });
+// Ne garder que les membres pour ces évangélisés
+const filteredMembres = membres.filter(m => validIds.has(m.evangelise_member_id));
+
+// Construire la map des évangélisés avec leurs suivis valides
+const map = {};
+filteredEvangelises.forEach(e => {
+  map[e.id] = { ...e, suivis: [] };
+});
+
+filteredSuivis.forEach(s => {
+  map[s.evangelise_id].suivis.push(s);
+});
 
       const membresMap = {};
       membres.forEach((m) => { 
@@ -135,8 +142,8 @@ function SuiviAmesPage() {
         const membre = membresMap[p.id];
         const sortedSuivis = p.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
         const lastSuivi = sortedSuivis[0];
-        const dateRef = lastSuivi?.date_suivi || p.date_evangelise; // <-- UTILISER date_evangelise
-        const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
+        const dateRef = p.date_evangelise; // <-- toujours date_evangelise
+const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
 
         let score = 100;
         if (p.status_suivi === "Non envoyé") score -= 40;
@@ -262,7 +269,9 @@ function SuiviAmesPage() {
           {filteredData.map((p) => (
             <div key={p.id} className="mb-1">
               <div className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 border-l-4 ${p.couleur}`}>
-                <div className="col-span-1 text-white text-center">{new Date(p.date_evangelise).toLocaleDateString()}</div>
+               <div className="col-span-1 text-white text-center">
+  {new Date(p.date_evangelise).toLocaleDateString()}
+</div>
                 <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
                 <div className="col-span-1 text-white text-center">{p.status_suivi}</div>
                 <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>                

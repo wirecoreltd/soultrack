@@ -80,28 +80,32 @@ const fetchRapports = async () => {
     const { data: rapportsData } = await query;
     setRapports(rapportsData || []);
 
-    // 🔹 Récupérer tous les évangélisés (exclure les supprimés)
-    let { data: evangelisesData } = await supabase
-      .from("evangelises")
-      .select("*")
-      .eq("eglise_id", egliseId)
-      .eq("branche_id", brancheId)
-      .neq("status_suivi", "supprime"); // correction statut
-
-    setAllEvangelises(evangelisesData || []);
-
-    // Filtrer selon dates et type
-      const filtered = (evangelisesData || []).filter((e) => {
-      const dateOk =
-        !dateDebut || !e.date_evangelise || new Date(e.date_evangelise) >= new Date(dateDebut);
-      const dateOkFin =
-        !dateFin || !e.date_evangelise || new Date(e.date_evangelise) <= new Date(dateFin);
-      const typeOk =
-        !typeFilter || typeFilter === "Tous" || !e.type_evangelisation || e.type_evangelisation === typeFilter;
-      return dateOk && dateOkFin && typeOk;
-    });
-
-    setFilteredEvangelises(filtered);
+    // 🔹 Récupérer tous les évangélisés (exclure les supprimés)   
+      let { data: evangelisesData } = await supabase
+        .from("evangelises")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId)
+        .not("status_suivi", "eq", "supprime");
+      
+      const filteredIds = evangelisesData.map(e => e.id);
+      
+      // 🔹 Récupérer les rapports correspondant aux évangélisés valides
+      let query = supabase
+        .from("rapport_evangelisation")
+        .select("*")
+        .eq("eglise_id", egliseId)
+        .eq("branche_id", brancheId)
+        .in("evangelise_member_id", filteredIds)
+        .order("date_evangelise", { ascending: true });
+      
+      if (dateDebut) query = query.gte("date_evangelise", dateDebut);
+      if (dateFin) query = query.lte("date_evangelise", dateFin);
+      
+      const { data: rapportsFiltered } = await query;
+      
+      // 🔹 Mettre à jour l’état
+      setRapports(rapportsFiltered || []);
 
     // KPI à partir de evangelises
     const totalEvangelises = filtered.length;

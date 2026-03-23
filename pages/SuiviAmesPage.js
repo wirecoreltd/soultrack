@@ -88,26 +88,21 @@ function SuiviAmesPage() {
 
       // ================= FILTER PAR ID ET DATE =================
       const filteredEvangelises = evangelises.filter(e => {
-  const dateEv = e.date_evangelise ? new Date(e.date_evangelise) : null;
-
-  if (!dateEv || isNaN(dateEv)) return false; // 🔥 ignore les mauvaises dates
-
-  if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
-
-  if (dateDebutQuery) {
-    const start = new Date(dateDebutQuery);
-    start.setHours(0, 0, 0, 0);
-    if (dateEv < start) return false;
-  }
-
-  if (dateFinQuery) {
-    const end = new Date(dateFinQuery);
-    end.setHours(23, 59, 59, 999);
-    if (dateEv > end) return false;
-  }
-
-  return true;
-});
+        const dateEv = e.date_evangelise ? new Date(e.date_evangelise) : null;
+        if (!dateEv || isNaN(dateEv)) return false;
+        if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
+        if (dateDebutQuery) {
+          const start = new Date(dateDebutQuery);
+          start.setHours(0, 0, 0, 0);
+          if (dateEv < start) return false;
+        }
+        if (dateFinQuery) {
+          const end = new Date(dateFinQuery);
+          end.setHours(23, 59, 59, 999);
+          if (dateEv > end) return false;
+        }
+        return true;
+      });
 
       // ================= MAPS =================
       const map = {};
@@ -115,7 +110,6 @@ function SuiviAmesPage() {
 
       suivis.forEach((s) => {
         if (map[s.evangelise_id]) {
-          // filtrer les suivis par date de suivi également
           if (dateDebutQuery && s.date_suivi && new Date(s.date_suivi) < new Date(dateDebutQuery)) return;
           if (dateFinQuery && s.date_suivi && new Date(s.date_suivi) > new Date(dateFinQuery)) return;
           map[s.evangelise_id].suivis.push(s);
@@ -126,10 +120,10 @@ function SuiviAmesPage() {
       membres.forEach((m) => { membresMap[String(m.evangelise_member_id)] = m; });
 
       const profilesMap = {};
-      profiles.forEach((p) => { profilesMap[p.id] = p.prenom + " " + p.nom; });
+      profiles.forEach((p) => { profilesMap[String(p.id)] = p.prenom + " " + p.nom; });
 
       const cellulesMap = {};
-      cellules.forEach((c) => { cellulesMap[c.id] = c.cellule_full; });
+      cellules.forEach((c) => { cellulesMap[String(c.id)] = c.cellule_full; });
 
       const ministereMap = {};
       ministeres.forEach((m) => { ministereMap[m.membre_id] = m.created_at; });
@@ -160,14 +154,12 @@ function SuiviAmesPage() {
         else if (score <= 80) couleur = "border-yellow-300";
         else couleur = "border-green-400";
 
+        const conseillerId = membre?.conseiller_id || lastSuivi?.conseiller_id;
+        const celluleId = membre?.cellule_id || lastSuivi?.cellule_id;
+
         let responsable = "-";
-        if (membre) {
-          if (membre.conseiller_id) responsable = profilesMap[membre.conseiller_id] || "-";
-          else if (membre.cellule_id) responsable = cellulesMap[membre.cellule_id] || "-";
-        } else if (lastSuivi) {
-          if (lastSuivi.conseiller_id) responsable = profilesMap[lastSuivi.conseiller_id] || "-";
-          else if (lastSuivi.cellule_id) responsable = cellulesMap[lastSuivi.cellule_id] || "-";
-        }
+        if (conseillerId) responsable = profilesMap[String(conseillerId)] || "-";
+        else if (celluleId) responsable = cellulesMap[String(celluleId)] || "-";
 
         return {
           ...p,
@@ -180,8 +172,8 @@ function SuiviAmesPage() {
           responsable,
           debutMinistere: membre ? ministereMap[membre.id] : null,
           dateBapteme: baptemeMap[String(p.id)],
-          cellule_id: membre?.cellule_id || lastSuivi?.cellule_id || null,
-          conseiller_id: membre?.conseiller_id || lastSuivi?.conseiller_id || null,
+          cellule_id: celluleId,
+          conseiller_id: conseillerId,
         };
       });
 
@@ -195,18 +187,15 @@ function SuiviAmesPage() {
   const filteredData = useMemo(() => {
     let d = [...data];
 
-    // Filtre score
     if (filter === "URGENT") d = d.filter((p) => p.score <= 30);
     if (filter === "STABLE") d = d.filter((p) => p.score > 80);
 
-    // Filtre recherche
     if (search) {
       d = d.filter((p) =>
         `${p.prenom} ${p.nom}`.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    // ===== FILTRE STATUS =====
     if (statusQuery && statusQuery.toLowerCase() !== "all") {
       const query = statusQuery.toLowerCase().trim();
       d = d.filter((p) => {
@@ -222,10 +211,10 @@ function SuiviAmesPage() {
 
     // ===== FILTRE CELLULE & CONSEILLER =====     
     if (celluleQuery === "true") { 
-      d = d.filter((p) => (p.membre?.cellule_id || p.lastSuivi?.cellule_id) != null);
+      d = d.filter((p) => (p.cellule_id != null && String(p.cellule_id) !== ""));
     }      
     if (conseillerQuery === "true") { 
-      d = d.filter((p) => (p.membre?.conseiller_id || p.lastSuivi?.conseiller_id) != null);
+      d = d.filter((p) => (p.conseiller_id != null && String(p.conseiller_id) !== ""));
     }
 
     return d;
@@ -242,7 +231,6 @@ function SuiviAmesPage() {
         <span className="text-amber-300">l’Intégration</span>
       </h1>
 
-      {/* FILTER */}
       <div className="flex gap-3 my-4 flex-wrap justify-center">
         <input
           placeholder="Rechercher..."
@@ -255,12 +243,11 @@ function SuiviAmesPage() {
         <button onClick={() => setFilter("STABLE")} className="bg-green-300 px-3 py-1 rounded">Stables</button>
       </div>
 
-      {/* TABLE */}
       <div className="w-full max-w-7xl overflow-x-auto py-2">
         <div className="min-w-[1200px]">
           <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent gap-y-2 text-center">
-        <div className="flex-[1]">Évangélisé</div>    
-        <div className="flex-[2]">Nom complet</div>
+            <div className="flex-[1]">Évangélisé</div>    
+            <div className="flex-[2]">Nom complet</div>
             <div className="flex-[1]">Envoi</div>
             <div className="flex-[1]">Jours</div>            
             <div className="flex-[1]">Envoyé au<br/>Suivi</div>
@@ -272,11 +259,10 @@ function SuiviAmesPage() {
             <div className="flex-[1]">Action</div>
           </div>
 
-          {/* ROWS */}
           {filteredData.map((p) => (
             <div key={p.id} className="mb-1">
               <div className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 border-l-4 ${p.couleur}`}>
-            <div className="col-span-1 text-white text-center">{new Date(p.date_evangelise).toLocaleDateString()}</div>
+                <div className="col-span-1 text-white text-center">{new Date(p.date_evangelise).toLocaleDateString()}</div>
                 <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
                 <div className="col-span-1 text-white text-center">{p.status_suivi}</div>
                 <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>                

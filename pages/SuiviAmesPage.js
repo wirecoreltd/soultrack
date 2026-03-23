@@ -132,7 +132,7 @@ function SuiviAmesPage() {
       cellules.forEach((c) => { cellulesMap[c.id] = c.cellule_full; });
 
       const ministereMap = {};
-      ministeres.forEach((m) => { ministereMap[m.membre_id] = m.created_at; });
+      ministeres.forEach((m) => { ministereMap[m.membre_id] = m.date_evangelise; });
 
       const baptemeMap = {};
       baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
@@ -282,7 +282,7 @@ function SuiviAmesPage() {
                 <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>                
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
-                <div className="col-span-1 text-white text-center">{p.membre?.created_at ? new Date(p.membre.created_at).toLocaleDateString() : "-"}</div>
+                <div className="col-span-1 text-white text-center">{p.membre?.date_evangelise ? new Date(p.membre.date_evangelise).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.dateBapteme ? new Date(p.dateBapteme).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.responsable}</div>

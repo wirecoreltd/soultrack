@@ -1,8 +1,9 @@
-// pages/reports/etat-cellule.jsx
-import { useState, useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
+import ProtectedRoute from "../components/ProtectedRoute";
+import { useRouter } from "next/navigation";
 
 export default function EtatCellulePage({ egliseId, brancheId }) {
   const [reports, setReports] = useState([]);

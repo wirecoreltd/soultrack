@@ -28,6 +28,7 @@ export default function RapportEvangelisation() {
   const [filteredSuivisState, setFilteredSuivisState] = useState([]);
   // KPI
   const [totalEnvoyes, setTotalEnvoyes] = useState(0);
+  const [totalNonEnvoyes, setTotalNonEnvoyes] = useState(0); 
   const [totalIntegres, setTotalIntegres] = useState(0);
   const [totalEncour, setTotalEncour] = useState(0);
   const [totalRefus, setTotalRefus] = useState(0);
@@ -36,6 +37,9 @@ export default function RapportEvangelisation() {
   const [totalPriereSalut, setTotalPriereSalut] = useState(0);
   const [allEvangelises, setAllEvangelises] = useState([]);
   const [allSuivis, setAllSuivis] = useState([]);
+  // ---------------- KPI CALCULS EN POURCENTAGES ----------------
+const [convertisPercent, setConvertisPercent] = useState(0);
+const [integrationPercent, setIntegrationPercent] = useState(0);
 
   // ---------------- PROFIL USER ----------------
   useEffect(() => {

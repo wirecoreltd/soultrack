@@ -50,70 +50,69 @@ function SuiviAmesPage() {
     fetchProfile();
   }, []);
 
-  // ================= DATA =================
   useEffect(() => {
-    if (!egliseId || !brancheId) return;
+  if (!egliseId || !brancheId) return;
 
-    const fetchData = async () => {
-      setLoading(true);
+  const fetchData = async () => {
+    setLoading(true);
 
-      const { data: evangelises } = await supabase
-        .from("evangelises")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+    // 1️⃣ Récupération complète
+    const { data: evangelises } = await supabase
+      .from("evangelises")
+      .select("*")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
 
-      const { data: suivis } = await supabase
-        .from("suivis_des_evangelises")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+    const { data: suivis } = await supabase
+      .from("suivis_des_evangelises")
+      .select("*")
+      .eq("eglise_id", egliseId)
+      .eq("branche_id", brancheId);
 
-      const { data: membres } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+    // 2️⃣ Filtrage strict par date
+    const dateDebutQuery = searchParams?.get("dateDebut");
+    const dateFinQuery = searchParams?.get("dateFin");
 
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom");
+    const filteredEvangelises = (evangelises || []).filter(e => {
+      const dateE = new Date(e.date_evangelise);
+      if (dateDebutQuery && dateE < new Date(dateDebutQuery)) return false;
+      if (dateFinQuery && dateE > new Date(dateFinQuery)) return false;
+      return true;
+    });
 
-      const { data: cellules } = await supabase
-        .from("cellules")
-        .select("id, cellule_full");
+    const filteredEvangeliseIds = filteredEvangelises.map(e => e.id);
 
-      const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
-      const { data: baptemes } = await supabase.from("baptemes").select("*");
+    const filteredSuivis = (suivis || []).filter(s => {
+      const dateS = new Date(s.date_suivi);
+      if (!filteredEvangeliseIds.includes(s.evangelise_id)) return false;
+      if (dateDebutQuery && dateS < new Date(dateDebutQuery)) return false;
+      if (dateFinQuery && dateS > new Date(dateFinQuery)) return false;
+      return true;
+    });
 
-      // ================= FILTER PAR ID ET DATE =================
-        const filteredEvangelises = evangelises.filter(e => {
-          // Filtrer par IDs s'il y en a
-          if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
-          
-          // Filtrer par date d'évangélisation
-          const dateEvangelise = new Date(e.date_evangelise);
-          if (dateDebutQuery && dateEvangelise < new Date(dateDebutQuery)) return false;
-          if (dateFinQuery && dateEvangelise > new Date(dateFinQuery)) return false;
-        
-          return true;
-        });
-        
-        // ================= MAPS =================
-        const map = {};
-        filteredEvangelises.forEach((e) => { map[e.id] = { ...e, suivis: [] }; });
-        
-        // On filtre les suivis strictement selon la map et la plage de dates
-        suivis.forEach((s) => {
-          if (!map[s.evangelise_id]) return; // ignorer si évangélisé pas sélectionné
-        
-          // Filtrer les suivis hors date
-          const dateSuivi = new Date(s.date_suivi);
-          if (dateDebutQuery && dateSuivi < new Date(dateDebutQuery)) return;
-          if (dateFinQuery && dateSuivi > new Date(dateFinQuery)) return;
-        
-          map[s.evangelise_id].suivis.push(s);
-        });
+    // 3️⃣ Construction de la map
+    const map = {};
+    filteredEvangelises.forEach(e => map[e.id] = { ...e, suivis: [] });
+    filteredSuivis.forEach(s => map[s.evangelise_id].suivis.push(s));
+
+    // 4️⃣ Transforme en array pour le state
+    const finalData = Object.values(map).map(e => {
+      const sortedSuivis = e.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
+      const lastSuivi = sortedSuivis[0];
+      return {
+        ...e,
+        sortedSuivis,
+        lastSuivi,
+        joursSansSuivi: Math.floor((new Date() - new Date(lastSuivi?.date_suivi || e.created_at)) / (1000*60*60*24)),
+      };
+    });
+
+    setData(finalData);
+    setLoading(false);
+  };
+
+  fetchData();
+}, [egliseId, brancheId, searchParams]);
 
       const membresMap = {};
       membres.forEach((m) => { membresMap[String(m.evangelise_member_id)] = m; });

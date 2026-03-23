@@ -86,28 +86,33 @@ function SuiviAmesPage() {
       const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
       const { data: baptemes } = await supabase.from("baptemes").select("*");
 
-      // ================= FILTRAGE PAR DATE ET IDS =================
+      // ================= FILTER PAR ID ET DATE_EVANGELISE =================
       const filteredEvangelises = evangelises.filter(e => {
         if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
-        const dateEv = new Date(e.date_evangelise);
-        if (dateDebutQuery && dateEv < new Date(dateDebutQuery)) return false;
-        if (dateFinQuery && dateEv > new Date(dateFinQuery)) return false;
+        if (dateDebutQuery && new Date(e.date_evangelise) < new Date(dateDebutQuery)) return false;
+        if (dateFinQuery && new Date(e.date_evangelise) > new Date(dateFinQuery)) return false;
         return true;
       });
+
+      const validIds = new Set(filteredEvangelises.map(e => e.id));
 
       // ================= MAPS =================
       const map = {};
       filteredEvangelises.forEach((e) => { map[e.id] = { ...e, suivis: [] }; });
 
-      // Associer uniquement les suivis liés aux évangélisés filtrés
+      // filtrer les suivis pour ne prendre que ceux liés aux évangélisés valides
       suivis.forEach((s) => {
-        if (map[s.evangelise_id]) {
+        if (validIds.has(s.evangelise_id)) {
           map[s.evangelise_id].suivis.push(s);
         }
       });
 
       const membresMap = {};
-      membres.forEach((m) => { membresMap[String(m.evangelise_member_id)] = m; });
+      membres.forEach((m) => { 
+        if (validIds.has(m.evangelise_member_id)) {
+          membresMap[m.evangelise_member_id] = m; 
+        }
+      });
 
       const profilesMap = {};
       profiles.forEach((p) => { profilesMap[p.id] = p.prenom + " " + p.nom; });
@@ -119,14 +124,18 @@ function SuiviAmesPage() {
       ministeres.forEach((m) => { ministereMap[m.membre_id] = m.created_at; });
 
       const baptemeMap = {};
-      baptemes.forEach((b) => { baptemeMap[String(b.evangelise_member_id)] = b.date; });
+      baptemes.forEach((b) => { 
+        if (validIds.has(b.evangelise_member_id)) {
+          baptemeMap[b.evangelise_member_id] = b.date; 
+        }
+      });
 
       // ================= FINAL DATA =================
       const finalData = Object.values(map).map((p) => {
         const membre = membresMap[p.id];
         const sortedSuivis = p.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
         const lastSuivi = sortedSuivis[0];
-        const dateRef = lastSuivi?.date_suivi || p.created_at;
+        const dateRef = lastSuivi?.date_suivi || p.date_evangelise; // <-- UTILISER date_evangelise
         const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
 
         let score = 100;
@@ -163,7 +172,7 @@ function SuiviAmesPage() {
           couleur,
           responsable,
           debutMinistere: membre ? ministereMap[membre.id] : null,
-          dateBapteme: baptemeMap[String(p.id)],
+          dateBapteme: baptemeMap[p.id],
           cellule_id: membre?.cellule_id || lastSuivi?.cellule_id || null,
           conseiller_id: membre?.conseiller_id || lastSuivi?.conseiller_id || null,
         };
@@ -176,7 +185,6 @@ function SuiviAmesPage() {
     fetchData();
   }, [egliseId, brancheId, idsQuery, dateDebutQuery, dateFinQuery]);
 
-  // ================= FILTRAGE FINALE =================
   const filteredData = useMemo(() => {
     let d = [...data];
 
@@ -223,7 +231,6 @@ function SuiviAmesPage() {
         <span className="text-amber-300">l’Intégration</span>
       </h1>
 
-      {/* FILTER */}
       <div className="flex gap-3 my-4 flex-wrap justify-center">
         <input
           placeholder="Rechercher..."
@@ -236,7 +243,6 @@ function SuiviAmesPage() {
         <button onClick={() => setFilter("STABLE")} className="bg-green-300 px-3 py-1 rounded">Stables</button>
       </div>
 
-      {/* TABLE */}
       <div className="w-full max-w-7xl overflow-x-auto py-2">
         <div className="min-w-[1200px]">
           <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent gap-y-2 text-center">
@@ -256,13 +262,13 @@ function SuiviAmesPage() {
           {filteredData.map((p) => (
             <div key={p.id} className="mb-1">
               <div className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 border-l-4 ${p.couleur}`}>
-                <div className="col-span-1 text-white text-center">{new Date(p.created_at).toLocaleDateString()}</div>
+                <div className="col-span-1 text-white text-center">{new Date(p.date_evangelise).toLocaleDateString()}</div>
                 <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
                 <div className="col-span-1 text-white text-center">{p.status_suivi}</div>
                 <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>                
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
-                <div className="col-span-1 text-white text-center">{p.membre?.created_at ? new Date(p.membre.created_at).toLocaleDateString() : "-"}</div>
+                <div className="col-span-1 text-white text-center">{p.membre?.date_evangelise ? new Date(p.membre.date_evangelise).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.dateBapteme ? new Date(p.dateBapteme).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString() : "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.responsable}</div>

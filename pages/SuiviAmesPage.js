@@ -29,6 +29,17 @@ function SuiviAmesPage() {
   const dateDebutQuery = searchParams?.get("dateDebut");
   const dateFinQuery = searchParams?.get("dateFin");
 
+  // Ajoute cette fonction au début de ton composant SuiviAmesPage
+const formatDateFR = (dateString) => {
+  if (!dateString) return "-";
+  const d = new Date(dateString);
+  if (isNaN(d)) return "-";
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
   // ================= PROFILE =================
   useEffect(() => {
     const fetchProfile = async () => {
@@ -261,15 +272,15 @@ function SuiviAmesPage() {
           {filteredData.map((p) => (
             <div key={p.id} className="mb-1">
               <div className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 border-l-4 ${p.couleur}`}>
-                <div className="col-span-1 text-white text-center">{new Date(p.date_evangelise).toLocaleDateString()}</div>
+                <div className="col-span-1 text-white text-center">{formatDateFR(p.membre?.date_evangelise)}</div>
                 <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
                 <div className="col-span-1 text-white text-center">{p.status_suivi}</div>
                 <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>                
-                <div className="col-span-1 text-white text-center">{p.lastSuivi?.date_suivi ? new Date(p.lastSuivi.date_suivi).toLocaleDateString() : "-"}</div>
+                <div className="col-span-1 text-white text-center">{formatDateFR(p.lastSuivi?.date_suivi)}</div>
                 <div className="col-span-1 text-white text-center">{p.lastSuivi?.status_suivis_evangelises || "-"}</div>
                 <div className="col-span-1 text-white text-center">{p.membre?.created_at ? new Date(p.membre.created_at).toLocaleDateString() : "-"}</div>
-                <div className="col-span-1 text-white text-center">{p.dateBapteme ? new Date(p.dateBapteme).toLocaleDateString() : "-"}</div>
-                <div className="col-span-1 text-white text-center">{p.debutMinistere ? new Date(p.debutMinistere).toLocaleDateString() : "-"}</div>
+                <div className="col-span-1 text-white text-center">{formatDateFR(p.dateBapteme)}</div>
+                <div className="col-span-1 text-white text-center">{formatDateFR(p.debutMinistere)}</div>
                 <div className="col-span-1 text-white text-center">{p.responsable}</div>
                 <div className="col-span-1 text-orange-400 text-center underline">
                   <button onClick={(e) => { e.stopPropagation(); toggle(p.id); }}>Détails</button>
@@ -282,8 +293,8 @@ function SuiviAmesPage() {
                   <ul className="mt-2 text-orange-600">
                     {p.sortedSuivis.map((s) => (
                       <li key={s.id}>
-                        {new Date(s.date_suivi).toLocaleDateString()} — {s.status_suivis_evangelises}
-                      </li>
+  {formatDateFR(s.date_suivi)} — {s.status_suivis_evangelises}
+</li>
                     ))}
                   </ul>
                 </div>

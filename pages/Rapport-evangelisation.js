@@ -271,41 +271,26 @@ const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
 
   // Ajouter ids filtrés pour que SuiviAmesPage sache quoi afficher
     const handleKpiClick = (status) => {
-  // ids des évangélisés filtrés selon les critères actuels
-  const evangeliseIds = filteredEvangelises.map(e => e.id);
+      // ids des évangélisés filtrés selon les critères actuels
+      const evangeliseIds = filteredEvangelises.map(e => e.id);
+    
+      router.push({
+        pathname: "/SuiviAmesPage",
+        query: {
+          status: status || "all",
+          ids: evangeliseIds.join(","), // passer les IDs en CSV
+        },
+      });
+    };
 
-  // construire l'URL avec dates et IDs
-  const query = new URLSearchParams();
-  query.append("status", status || "all");
-  query.append("dateDebut", dateDebut || "");
-  query.append("dateFin", dateFin || "");
-  if (evangeliseIds.length) query.append("ids", evangeliseIds.join(","));
-
-  // redirection
-  router.push(`/SuiviAmesPage?${query.toString()}`);
+  //==================
+  const handleCelluleClick = () => {
+  router.push("/SuiviAmesPage?cellule=true");
 };
 
-    const handleCelluleClick = () => {
-      router.push({
-        pathname: "/SuiviAmesPage",
-        query: {
-          cellule: true,
-          dateDebut,
-          dateFin,
-        },
-      });
-    };
-    
-    const handleConseillerClick = () => {
-      router.push({
-        pathname: "/SuiviAmesPage",
-        query: {
-          conseiller: true,
-          dateDebut,
-          dateFin,
-        },
-      });
-    };
+const handleConseillerClick = () => {
+  router.push("/SuiviAmesPage?conseiller=true");
+};
 
   // ---------------- UI ----------------
   return (

@@ -88,11 +88,26 @@ function SuiviAmesPage() {
 
       // ================= FILTER PAR ID ET DATE =================
       const filteredEvangelises = evangelises.filter(e => {
-        if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
-        if (dateDebutQuery && new Date(e.date_evangelise) < new Date(dateDebutQuery)) return false;
-        if (dateFinQuery && new Date(e.date_evangelise) > new Date(dateFinQuery)) return false;
-        return true;
-      });
+  const dateEv = e.date_evangelise ? new Date(e.date_evangelise) : null;
+
+  if (!dateEv || isNaN(dateEv)) return false; // 🔥 ignore les mauvaises dates
+
+  if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
+
+  if (dateDebutQuery) {
+    const start = new Date(dateDebutQuery);
+    start.setHours(0, 0, 0, 0);
+    if (dateEv < start) return false;
+  }
+
+  if (dateFinQuery) {
+    const end = new Date(dateFinQuery);
+    end.setHours(23, 59, 59, 999);
+    if (dateEv > end) return false;
+  }
+
+  return true;
+});
 
       // ================= MAPS =================
       const map = {};
@@ -261,7 +276,7 @@ function SuiviAmesPage() {
           {filteredData.map((p) => (
             <div key={p.id} className="mb-1">
               <div className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 border-l-4 ${p.couleur}`}>
-            <div className="col-span-1 text-white text-center">{new Date(p.created_at).toLocaleDateString()}</div>
+            <div className="col-span-1 text-white text-center">{new Date(p.date_evangelise).toLocaleDateString()}</div>
                 <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
                 <div className="col-span-1 text-white text-center">{p.status_suivi}</div>
                 <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>                

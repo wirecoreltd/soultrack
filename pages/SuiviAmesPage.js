@@ -86,12 +86,11 @@ function SuiviAmesPage() {
       const { data: ministeres } = await supabase.from("stats_ministere_besoin").select("*");
       const { data: baptemes } = await supabase.from("baptemes").select("*");
 
-      // ================= FILTER PAR ID ET DATE_EVANGELISE =================
+      // ================= FILTER PAR ID ET DATE =================
       const filteredEvangelises = evangelises.filter(e => {
         if (idsQuery.length > 0 && !idsQuery.includes(e.id)) return false;
-        const dateEv = new Date(e.date_evangelise);
-        if (dateDebutQuery && dateEv < new Date(dateDebutQuery)) return false;
-        if (dateFinQuery && dateEv > new Date(dateFinQuery)) return false;
+        if (dateDebutQuery && new Date(e.date_evangelise) < new Date(dateDebutQuery)) return false;
+        if (dateFinQuery && new Date(e.date_evangelise) > new Date(dateFinQuery)) return false;
         return true;
       });
 
@@ -99,14 +98,15 @@ function SuiviAmesPage() {
       const map = {};
       filteredEvangelises.forEach((e) => { map[e.id] = { ...e, suivis: [] }; });
 
+      // filtrer les suivis selon la date_evangelise du suivi
       suivis.forEach((s) => {
         const e = map[s.evangelise_id];
-        if (!e) return; // évangélisation hors filtre
-      
+        if (!e) return;
+
         const dateEv = new Date(s.date_evangelise);
         if (dateDebutQuery && dateEv < new Date(dateDebutQuery)) return;
         if (dateFinQuery && dateEv > new Date(dateFinQuery)) return;
-      
+
         e.suivis.push(s);
       });
 
@@ -130,7 +130,7 @@ function SuiviAmesPage() {
         const membre = membresMap[p.id];
         const sortedSuivis = p.suivis.sort((a, b) => new Date(b.date_suivi) - new Date(a.date_suivi));
         const lastSuivi = sortedSuivis[0];
-        const dateRef = lastSuivi?.date_suivi || p.date_evangelise; // <-- date_ref = date_evangelise si pas de suivi
+        const dateRef = lastSuivi?.date_suivi || p.created_at;
         const joursSansSuivi = Math.floor((new Date() - new Date(dateRef)) / (1000 * 60 * 60 * 24));
 
         let score = 100;
@@ -180,7 +180,6 @@ function SuiviAmesPage() {
     fetchData();
   }, [egliseId, brancheId, idsQuery, dateDebutQuery, dateFinQuery]);
 
-  // ================= FILTERED DATA =================
   const filteredData = useMemo(() => {
     let d = [...data];
 
@@ -265,7 +264,7 @@ function SuiviAmesPage() {
           {filteredData.map((p) => (
             <div key={p.id} className="mb-1">
               <div className={`grid grid-cols-12 items-center px-2 py-2 rounded-lg bg-white/10 border-l-4 ${p.couleur}`}>
-                <div className="col-span-1 text-white text-center">{new Date(p.date_evangelise).toLocaleDateString()}</div>
+                <div className="col-span-1 text-white text-center">{new Date(p.created_at).toLocaleDateString()}</div>
                 <div className="col-span-2 text-white text-center">{p.prenom} {p.nom}</div>
                 <div className="col-span-1 text-white text-center">{p.status_suivi}</div>
                 <div className="col-span-1 text-white text-center">{p.joursSansSuivi}</div>                
@@ -297,7 +296,7 @@ function SuiviAmesPage() {
         </div>
       </div>
 
-      {loading && <p className="text-white mt-4">Chargement...</p>}
+      {loading && <p className="text-white mt-4"></p>}
       <Footer />
     </div>
   );

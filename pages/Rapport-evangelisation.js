@@ -58,7 +58,7 @@ export default function RapportEvangelisation() {
     fetchProfile();
   }, []);
 
- // ---------------- FETCH RAPPORTS ----------------
+// ---------------- FETCH RAPPORTS ----------------
 const fetchRapports = async () => {
   if (!egliseId || !brancheId) return;
   setLoading(true);
@@ -79,13 +79,13 @@ const fetchRapports = async () => {
     const { data: rapportsData } = await query;
     setRapports(rapportsData || []);
 
-    // 🔹 Récupérer tous les évangélisés
+    // 🔹 Récupérer tous les évangélisés (exclure les supprimés)
     let { data: evangelisesData } = await supabase
       .from("evangelises")
       .select("*")
       .eq("eglise_id", egliseId)
       .eq("branche_id", brancheId)
-      .neq("statut", "supprime");
+      .neq("status_suivi", "supprime"); // correction statut
 
     setAllEvangelises(evangelisesData || []);
 
@@ -100,7 +100,19 @@ const fetchRapports = async () => {
     });
 
     setFilteredEvangelises(filtered);
-    setTotalEnvoyes(filtered.filter((e) => e.status_suivi === "Envoyé").length);
+
+    // KPI à partir de evangelises
+    const totalEvangelises = filtered.length;
+    const totalEnvoyes = filtered.filter(e => e.status_suivi === "Envoyé").length;
+    const totalNonEnvoyes = filtered.filter(e => e.status_suivi !== "Envoyé").length;
+    const totalConvertis = filtered.filter(e => e.priere_salut === true).length;
+
+    setTotalEnvoyes(totalEnvoyes);
+    setTotalNonEnvoyes(totalNonEnvoyes);
+    setTotalPriereSalut(totalConvertis);
+
+    // Pourcentages
+    setConvertisPercent(totalEvangelises > 0 ? (totalConvertis / totalEvangelises * 100).toFixed(2) : 0);
 
     // Expansion du dernier mois
     const lastMonth = getLastMonthKey(rapportsData || []);
@@ -127,13 +139,23 @@ const fetchRapports = async () => {
 
     setFilteredSuivisState(filteredSuivisFinal);
 
-    // KPI
     const normalize = (str) => (str ? str.trim() : "");
-    setTotalIntegres(filteredSuivisFinal.filter(e => normalize(e.status_suivis_evangelises) === "Intégré").length);
-    setTotalEncour(filteredSuivisFinal.filter(e => normalize(e.status_suivis_evangelises) === "En cours").length);
-    setTotalRefus(filteredSuivisFinal.filter(e => normalize(e.status_suivis_evangelises) === "Refus").length);
-    setTotalCellule(filteredSuivisFinal.filter(e => e.cellule_id != null).length);
-    setTotalEglise(filteredSuivisFinal.filter(e => e.conseiller_id != null).length);
+
+    // KPI à partir de suivis
+    const totalIntegres = filteredSuivisFinal.filter(s => normalize(s.status_suivis_evangelises) === "Intégré").length;
+    const totalEncours = filteredSuivisFinal.filter(s => normalize(s.status_suivis_evangelises) === "En cours").length;
+    const totalRefus = filteredSuivisFinal.filter(s => normalize(s.status_suivis_evangelises) === "Refus").length;
+    const totalCellules = filteredSuivisFinal.filter(s => s.cellule_id != null).length;
+    const totalEglises = filteredSuivisFinal.filter(s => s.conseiller_id != null).length;
+
+    setTotalIntegres(totalIntegres);
+    setTotalEncour(totalEncours);
+    setTotalRefus(totalRefus);
+    setTotalCellule(totalCellules);
+    setTotalEglise(totalEglises);
+
+    // % intégration
+    setIntegrationPercent(totalEvangelises > 0 ? (totalIntegres / totalEvangelises * 100).toFixed(2) : 0);
 
   } catch (err) {
     console.error("Erreur fetchRapports:", err);

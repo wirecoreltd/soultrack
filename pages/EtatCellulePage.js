@@ -22,70 +22,44 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
 
   // ================= FETCH DATA =================
-  const fetchReports = async () => {
-    const sqlQuery = `
-      SELECT
-        e.prenom,
-        e.nom,
-        e.telephone,
-        e.date_evangelise,
-        e.type_evangelisation,
-        e.status_suivis_evangelises,
-        m.created_at AS date_integration,
-        b.date AS date_baptise,
-        MAX(s.created_at) AS ministere_date,
-        c.cellule_full,
-        c.responsable AS responsable_cellule
-      FROM suivis_des_evangelises e
-      LEFT JOIN membres_complets m 
-        ON m.evangelise_member_id::uuid = e.evangelise_id
-      LEFT JOIN baptemes b 
-        ON b.evangelise_member_id::uuid = e.evangelise_id
-      LEFT JOIN stats_ministere_besoin s 
-        ON s.membre_id::uuid = m.id
-      LEFT JOIN cellules c
-        ON c.id::uuid = e.cellule_id
-      WHERE e.cellule_id IS NOT NULL
-      GROUP BY
-        e.prenom,
-        e.nom,
-        e.telephone,
-        e.date_evangelise,
-        e.type_evangelisation,
-        e.status_suivis_evangelises,
-        m.created_at,
-        b.date,
-        c.cellule_full,
-        c.responsable
-      ORDER BY e.date_evangelise DESC;
-    `;
-
-    const { data, error } = await supabase
-  .from("etat_cellule")
-  .select("*")
-  .order("date_evangelise", { ascending: false });
-
-    if (error) {
-      console.error("Erreur fetch :", error);
-    } else {
-      let filtered = data;
-
+      const fetchReports = async () => {
+      const { data, error } = await supabase
+        .from("etat_cellule")
+        .select("*")
+        .not("cellule_id", "is", null) // <- Filtrer uniquement ceux qui ont une cellule
+        .order("date_evangelise", { ascending: false });
+    
+      if (error) {
+        console.error("Erreur fetch :", error);
+      } else {
+        // Filtrer par date si besoin
+        let filtered = data;
         if (filterDebut) {
-          filtered = filtered.filter(r =>
-            new Date(r.date_evangelise) >= new Date(filterDebut)
-          );
+          filtered = filtered.filter(r => new Date(r.date_evangelise) >= new Date(filterDebut));
         }
-        
         if (filterFin) {
-          filtered = filtered.filter(r =>
-            new Date(r.date_evangelise) <= new Date(filterFin)
-          );
+          filtered = filtered.filter(r => new Date(r.date_evangelise) <= new Date(filterFin));
         }
-        
+    
+        // Filtrer uniquement les membres de la cellule du responsable
+        const session = await supabase.auth.getSession();
+        const userId = session.data.session?.user?.id;
+    
+        // Récupérer le profil pour connaître la cellule du responsable
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("cellule_id")
+          .eq("id", userId)
+          .single();
+    
+        if (profile?.cellule_id) {
+          filtered = filtered.filter(r => r.cellule_id === profile.cellule_id);
+        }
+    
         setReports(filtered);
         setShowTable(true);
-    }
-  };
+      }
+    };
 
   //=======================
  const getStatusStyles = (status) => {

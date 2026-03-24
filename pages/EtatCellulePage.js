@@ -23,60 +23,51 @@ function EtatCellule() {
 
   // ================= FETCH DATA =================
       const fetchReports = async () => {
-        try {
-          // Récupérer la session utilisateur
-          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-          if (sessionError) throw sessionError;
-      
-          const userId = sessionData.session?.user?.id;
-          if (!userId) {
-            console.error("Utilisateur non connecté");
-            return;
-          }
-      
-          // Récupérer le profil pour connaître la cellule du responsable
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("cellule_id")
-            .match({ id: userId }) // ✅ utilise .match() pour éviter le 400
-            .single();
-      
-          if (profileError) throw profileError;
-      
-          const userCelluleId = profile?.cellule_id;
-          if (!userCelluleId) {
-            console.warn("Ce responsable n'a pas de cellule attribuée");
-            setReports([]);
-            setShowTable(true);
-            return;
-          }
-      
-          // Récupérer les rapports pour la cellule du responsable uniquement
-          const { data, error } = await supabase
-            .from("etat_cellule")
-            .select("*")
-            .not("cellule_id", "is", null)
-            .eq("cellule_id", userCelluleId) // filtre par cellule du responsable
-            .order("date_evangelise", { ascending: false });
-      
-          if (error) throw error;
-      
-          // Filtrage sur la date si nécessaire
-          let filtered = data;
-          if (filterDebut) {
-            filtered = filtered.filter(r => new Date(r.date_evangelise) >= new Date(filterDebut));
-          }
-          if (filterFin) {
-            filtered = filtered.filter(r => new Date(r.date_evangelise) <= new Date(filterFin));
-          }
-      
-          setReports(filtered);
-          setShowTable(true);
-      
-        } catch (err) {
-          console.error("Erreur fetch profile ou rapports :", err);
-        }
-      };
+  try {
+    // Récupérer la session utilisateur
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+
+    const userId = sessionData.session?.user?.id;
+    if (!userId) {
+      console.error("Utilisateur non connecté");
+      return;
+    }
+
+    // Récupérer le profil pour connaître la cellule du responsable
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("cellule_id")
+      .match({ id: userId }) // ✅ .match() pour éviter le 400
+      .single();
+
+    if (profileError) throw profileError;
+
+    const userCelluleId = profile?.cellule_id;
+    if (!userCelluleId) {
+      console.warn("Ce responsable n'a pas de cellule attribuée");
+      setReports([]);
+      setShowTable(true);
+      return;
+    }
+
+    // Récupérer les rapports pour la cellule du responsable uniquement
+    const { data, error } = await supabase
+      .from("etat_cellule")
+      .select("*")
+      .not("cellule_id", "is", null)
+      .eq("cellule_id", userCelluleId) // filtre par cellule
+      .order("date_evangelise", { ascending: false });
+
+    if (error) throw error;
+
+    // Filtrage sur la date si nécessaire
+    let filtered = data;
+    if (filterDebut) filtered = filtered.filter(r => new Date(r.date_evangelise) >= new Date(filterDebut));
+    if (filterFin) filtered = filtered.filter(r => new Date(r.date_evangelise) <= new Date(filterFin));
+
+    setReports(filtered);
+    setShowTable(true);
 
   } catch (err) {
     console.error("Erreur fetch profile ou rapports :", err);

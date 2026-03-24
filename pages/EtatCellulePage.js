@@ -165,7 +165,7 @@ function EtatCellule() {
           {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
             <div className="min-w-[150px]">Date Evangelisé</div>
-            <div className="min-w-[200px] text-center">Nom Complet/div>
+            <div className="min-w-[200px] text-center">Nom Complet</div>
             <div className="min-w-[200px] text-center">Type Evangélisation</div>
             <div className="min-w-[200px] text-center">Statut</div>
             <div className="min-w-[150px] text-center">Envoyer au Suivi Le</div>

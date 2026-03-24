@@ -24,56 +24,57 @@ function EtatCellule() {
 
   // ================= FETCH USER CELLULE =================
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserCellule = async () => {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user) return;
 
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from("profiles")
         .select("cellule_id")
         .eq("id", session.session.user.id)
         .single();
 
-      if (profile) setUserCellule(profile.cellule_id);
+      if (!error && profile) setUserCellule(profile.cellule_id);
     };
-    fetchUser();
+    fetchUserCellule();
   }, []);
 
   // ================= FETCH DATA =================
   const fetchReports = async () => {
-    if (!userCellule) return;
-
     const { data, error } = await supabase
       .from("etat_cellule")
       .select("*")
-      .eq("cellule_id", userCellule)
       .order("date_evangelise", { ascending: false });
 
     if (error) {
       console.error("Erreur fetch :", error);
-    } else {
-      let filtered = data;
-
-      if (filterDebut) {
-        filtered = filtered.filter(r =>
-          new Date(r.date_evangelise) >= new Date(filterDebut)
-        );
-      }
-
-      if (filterFin) {
-        filtered = filtered.filter(r =>
-          new Date(r.date_evangelise) <= new Date(filterFin)
-        );
-      }
-
-      setReports(filtered);
-      setShowTable(true);
+      return;
     }
+
+    let filtered = data;
+
+    // Filtrer sur cellule de l'utilisateur si responsable
+    if (userCellule) filtered = filtered.filter(r => r.cellule_id === userCellule);
+
+    // Filtrer par date
+    if (filterDebut)
+      filtered = filtered.filter(r => new Date(r.date_evangelise) >= new Date(filterDebut));
+    if (filterFin)
+      filtered = filtered.filter(r => new Date(r.date_evangelise) <= new Date(filterFin));
+
+    // Afficher uniquement lignes avec cellule
+    filtered = filtered.filter(r => r.cellule_id !== null);
+
+    setReports(filtered);
+    setShowTable(true);
   };
 
   // ================= UTIL =================
   const getMonthNameFR = (monthIndex) => {
-    const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+    const months = [
+      "Janvier","Février","Mars","Avril","Mai","Juin",
+      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
+    ];
     return months[monthIndex] || "";
   };
 
@@ -89,7 +90,6 @@ function EtatCellule() {
   const groupByMonth = (reports) => {
     const map = {};
     reports.forEach(r => {
-      if (!r.cellule_id) return;
       const d = new Date(r.date_evangelise);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       if (!map[key]) map[key] = [];
@@ -140,14 +140,14 @@ function EtatCellule() {
       </div>
 
       {showTable && (
-        <div className="w-full max-w-6xl mt-6 mb-6">
+        <div className="max-w-6xl w-full mt-6 mb-6">
 
-          {/* HEADER */}
+          {/* HEADER DESKTOP */}
           <div className="hidden md:flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
             <div className="min-w-[150px]">Date</div>
             <div className="min-w-[200px] text-center">Nom / Prénom</div>
             <div className="min-w-[200px] text-center">Type</div>
-            <div className="min-w-[150px] text-center">Date Suivi</div>
+            <div className="min-w-[200px] text-center">Suivi</div>
             <div className="min-w-[200px] text-center">Statut</div>
             <div className="min-w-[150px] text-center">Intégration</div>
             <div className="min-w-[150px] text-center">Baptême</div>
@@ -156,8 +156,8 @@ function EtatCellule() {
             <div className="min-w-[200px] text-center">Responsable</div>
           </div>
 
-          {/* LIGNES PAR MOIS */}
-          {groupedReports.map(([monthKey, rows]) => {
+          {/* LIGNES DESKTOP */}
+          {groupedReports.map(([monthKey, rows], idx) => {
             const [year, monthIndex] = monthKey.split("-").map(Number);
             const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
             const isExpanded = expandedMonths[monthKey] || false;
@@ -167,7 +167,7 @@ function EtatCellule() {
 
                 {/* MOIS */}
                 <div
-                  className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer"
+                  className="hidden md:flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer"
                   onClick={() => toggleMonth(monthKey)}
                 >
                   <div className="min-w-[150px] text-white font-semibold">
@@ -177,22 +177,21 @@ function EtatCellule() {
 
                 {/* LIGNES */}
                 {isExpanded && rows.map((r, i) => {
-                  const statutColor =
-                    r.status_suivis_evangelises === "En cours" ? "text-orange-400 border-orange-400" :
-                    r.status_suivis_evangelises === "Intégré" ? "text-green-400 border-green-400" :
-                    r.status_suivis_evangelises === "Refus" ? "text-red-400 border-red-400" :
-                    "text-white border-gray-500";
+                  let borderColor = "border-yellow-500 text-yellow-500";
+                  if (r.status_suivis_evangelises === "Intégré") borderColor = "border-green-500 text-green-500";
+                  else if (r.status_suivis_evangelises === "Refus") borderColor = "border-red-500 text-red-500";
+                  else if (r.status_suivis_evangelises === "En cours") borderColor = "border-orange-500 text-orange-500";
 
                   return (
                     <div
                       key={i}
-                      className={`hidden md:flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${statutColor}`}
+                      className={`hidden md:flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
                     >
                       <div className="min-w-[150px] text-white">{formatDateFR(r.date_evangelise)}</div>
                       <div className="min-w-[200px] text-center text-white">{r.nom} {r.prenom}</div>
                       <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
-                      <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_suivi)}</div>
-                      <div className={`min-w-[200px] text-center ${statutColor}`}>{r.status_suivis_evangelises}</div>
+                      <div className="min-w-[200px] text-center text-white">{r.date_suivi ? formatDateFR(r.date_suivi) : ""}</div>
+                      <div className="min-w-[200px] text-center text-white">{r.status_suivis_evangelises}</div>
                       <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
                       <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
                       <div className="min-w-[150px] text-center text-white">{formatDateFR(r.ministere_date)}</div>
@@ -206,7 +205,7 @@ function EtatCellule() {
             );
           })}
 
-          {/* MOBILE */}
+          {/* ================= MOBILE ================= */}
           <div className="md:hidden space-y-4">
             {groupedReports.map(([monthKey, rows]) => {
               const [year, monthIndex] = monthKey.split("-").map(Number);
@@ -216,20 +215,31 @@ function EtatCellule() {
                 <div key={monthKey} className="space-y-2">
                   <h3 className="text-white font-bold">{monthLabel}</h3>
 
-                  {rows.map((r, i) => (
-                    <div key={i} className="bg-white/10 rounded-xl p-4 text-white space-y-1">
-                      <p><strong>Date:</strong> {formatDateFR(r.date_evangelise)}</p>
-                      <p><strong>Nom:</strong> {r.nom} {r.prenom}</p>
-                      <p><strong>Type:</strong> {r.type_evangelisation}</p>
-                      <p><strong>Date Suivi:</strong> {formatDateFR(r.date_suivi)}</p>
-                      <p><strong>Statut:</strong> {r.status_suivis_evangelises}</p>
-                      <p><strong>Intégration:</strong> {formatDateFR(r.date_integration)}</p>
-                      <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
-                      <p><strong>Ministère:</strong> {formatDateFR(r.ministere_date)}</p>
-                      <p><strong>Cellule:</strong> {r.cellule_full}</p>
-                      <p><strong>Responsable:</strong> {r.responsable_cellule}</p>
-                    </div>
-                  ))}
+                  {rows.map((r, i) => {
+                    let borderColor = "border-yellow-500 text-yellow-500";
+                    if (r.status_suivis_evangelises === "Intégré") borderColor = "border-green-500 text-green-500";
+                    else if (r.status_suivis_evangelises === "Refus") borderColor = "border-red-500 text-red-500";
+                    else if (r.status_suivis_evangelises === "En cours") borderColor = "border-orange-500 text-orange-500";
+
+                    return (
+                      <div
+                        key={i}
+                        className={`bg-white/10 border-l-4 ${borderColor} rounded-xl p-4 text-white space-y-1`}
+                      >
+                        <p><strong>Date:</strong> {formatDateFR(r.date_evangelise)}</p>
+                        <p><strong>Nom:</strong> {r.nom} {r.prenom}</p>
+                        <p><strong>Type:</strong> {r.type_evangelisation}</p>
+                        <p><strong>Suivi:</strong> {r.date_suivi ? formatDateFR(r.date_suivi) : ""}</p>
+                        <p><strong>Statut:</strong> {r.status_suivis_evangelises}</p>
+                        <p><strong>Intégration:</strong> {formatDateFR(r.date_integration)}</p>
+                        <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
+                        <p><strong>Ministère:</strong> {formatDateFR(r.ministere_date)}</p>
+                        <p><strong>Cellule:</strong> {r.cellule_full}</p>
+                        <p><strong>Responsable:</strong> {r.responsable_cellule}</p>
+                      </div>
+                    );
+                  })}
+
                 </div>
               );
             })}

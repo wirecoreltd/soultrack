@@ -60,17 +60,30 @@ function EtatCellule() {
       ORDER BY e.date_evangelise DESC;
     `;
 
-    const { data, error } = await supabase.rpc("run_sql", { query: sqlQuery });
+    const { data, error } = await supabase
+  .from("etat_cellule")
+  .select("*")
+  .order("date_evangelise", { ascending: false });
 
     if (error) {
       console.error("Erreur fetch :", error);
     } else {
       let filtered = data;
-      if (filterDebut) filtered = filtered.filter(r => new Date(r.date_evangelise) >= new Date(filterDebut));
-      if (filterFin) filtered = filtered.filter(r => new Date(r.date_evangelise) <= new Date(filterFin));
 
-      setReports(filtered);
-      setShowTable(true);
+        if (filterDebut) {
+          filtered = filtered.filter(r =>
+            new Date(r.date_evangelise) >= new Date(filterDebut)
+          );
+        }
+        
+        if (filterFin) {
+          filtered = filtered.filter(r =>
+            new Date(r.date_evangelise) <= new Date(filterFin)
+          );
+        }
+        
+        setReports(filtered);
+        setShowTable(true);
     }
   };
 

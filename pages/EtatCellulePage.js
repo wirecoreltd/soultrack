@@ -23,40 +23,47 @@ function EtatCellule() {
 
   // ================= FETCH DATA =================
       const fetchReports = async () => {
-      const { data, error } = await supabase
+      setShowTable(false); // cacher la table pendant le fetch
+    
+      // Récupérer l'utilisateur connecté
+      const session = await supabase.auth.getSession();
+      const userId = session.data.session?.user?.id;
+    
+      // Récupérer la cellule du responsable
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("cellule_id")
+        .eq("id", userId)
+        .single();
+    
+      if (profileError) {
+        console.error("Erreur fetch profile :", profileError);
+        return;
+      }
+    
+      // Construire la query Supabase
+      let query = supabase
         .from("etat_cellule")
         .select("*")
-        .not("cellule_id", "is", null) // <- Filtrer uniquement ceux qui ont une cellule
+        .not("cellule_id", "is", null) // uniquement lignes avec cellule
         .order("date_evangelise", { ascending: false });
     
+      // Si l'utilisateur est un responsable de cellule, filtrer par sa cellule
+      if (profile?.cellule_id) {
+        query = query.eq("cellule_id", profile.cellule_id);
+      }
+    
+      // Filtrage par dates
+      if (filterDebut) query = query.gte("date_evangelise", filterDebut);
+      if (filterFin) query = query.lte("date_evangelise", filterFin);
+    
+      // Exécuter la query
+      const { data, error } = await query;
+    
       if (error) {
-        console.error("Erreur fetch :", error);
+        console.error("Erreur fetch reports :", error);
       } else {
-        // Filtrer par date si besoin
-        let filtered = data;
-        if (filterDebut) {
-          filtered = filtered.filter(r => new Date(r.date_evangelise) >= new Date(filterDebut));
-        }
-        if (filterFin) {
-          filtered = filtered.filter(r => new Date(r.date_evangelise) <= new Date(filterFin));
-        }
-    
-        // Filtrer uniquement les membres de la cellule du responsable
-        const session = await supabase.auth.getSession();
-        const userId = session.data.session?.user?.id;
-    
-        // Récupérer le profil pour connaître la cellule du responsable
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("cellule_id")
-          .eq("id", userId)
-          .single();
-    
-        if (profile?.cellule_id) {
-          filtered = filtered.filter(r => r.cellule_id === profile.cellule_id);
-        }
-    
-        setReports(filtered);
+        setReports(data || []);
         setShowTable(true);
       }
     };

@@ -88,18 +88,44 @@ function EtatCellule() {
   };
 
   //=======================
-  const getStatusTextColor = (status) => {
-  if (!status) return "text-gray-300";
+ const getStatusStyles = (status) => {
+  if (!status) return {
+    border: "border-gray-400",
+    text: "text-gray-300"
+  };
 
   const s = status.toLowerCase();
 
-  if (s.includes("intégr")) return "text-green-400";
-  if (s.includes("refus")) return "text-red-400";
-  if (s.includes("suivi")) return "text-yellow-400";
+  // 🟢 INTÉGRÉ
+  if (s.includes("intégr") || s.includes("integre")) {
+    return {
+      border: "border-green-500",
+      text: "text-green-400"
+    };
+  }
 
-  return "text-blue-400";
+  // 🔴 REFUS
+  if (s.includes("refus")) {
+    return {
+      border: "border-red-500",
+      text: "text-red-400"
+    };
+  }
+
+  // 🟠 EN COURS
+  if (s.includes("cours") || s.includes("suivi")) {
+    return {
+      border: "border-orange-500",
+      text: "text-orange-400"
+    };
+  }
+
+  // 🔵 AUTRE
+  return {
+    border: "border-blue-500",
+    text: "text-blue-400"
+  };
 };
-
   // ================= UTIL =================
   const getMonthNameFR = (monthIndex) => {
     const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
@@ -208,52 +234,66 @@ function EtatCellule() {
                 </div>
 
                 {/* LIGNES */}
-                {isExpanded && rows.map((r, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-yellow-500"
-                  >
-                    <div className="min-w-[150px] text-white">
-                      {formatDateFR(r.date_evangelise)}
-                    </div>
-
-                    <div className="min-w-[200px] text-center text-white">
-                      {r.nom} {r.prenom}
-                    </div>
-
-                    <div className="min-w-[200px] text-center text-white">
-                      {r.type_evangelisation}
-                    </div>
-
-                    <div className={`min-w-[200px] text-center font-semibold ${getStatusTextColor(r.status_suivis_evangelises)}`}>
-                      {r.status_suivis_evangelises}
-                    </div>
-
-                      <div className="min-w-[150px] text-center text-white">
-                        {formatDateFR(r.date_suivi)}
+                {isExpanded && rows.map((r, i) => {
+                  const statusStyle = getStatusStyles(r.status_suivis_evangelises);
+                
+                  return (
+                    <div
+                      key={i}
+                      className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${statusStyle.border}`}
+                    >
+                      {/* DATE */}
+                      <div className="min-w-[150px] text-white">
+                        {formatDateFR(r.date_evangelise)}
                       </div>
-
-                    <div className="min-w-[150px] text-center text-white">
-                      {formatDateFR(r.date_integration)}
+                
+                      {/* NOM */}
+                      <div className="min-w-[200px] text-center text-white">
+                        {r.nom} {r.prenom}
+                      </div>
+                
+                      {/* TYPE */}
+                      <div className="min-w-[200px] text-center text-white">
+                        {r.type_evangelisation}
+                      </div>
+                
+                      {/* SUIVI */}
+                      <div className="min-w-[150px] text-center text-white">
+                        {r.date_suivi ? formatDateFR(r.date_suivi) : "—"}
+                      </div>
+                
+                      {/* STATUT */}
+                      <div className={`min-w-[200px] text-center font-semibold ${statusStyle.text}`}>
+                        {r.status_suivis_evangelises}
+                      </div>
+                
+                      {/* INTEGRATION */}
+                      <div className="min-w-[150px] text-center text-white">
+                        {formatDateFR(r.date_integration)}
+                      </div>
+                
+                      {/* BAPTEME */}
+                      <div className="min-w-[150px] text-center text-white">
+                        {formatDateFR(r.date_baptise)}
+                      </div>
+                
+                      {/* MINISTERE */}
+                      <div className="min-w-[150px] text-center text-white">
+                        {formatDateFR(r.ministere_date)}
+                      </div>
+                
+                      {/* CELLULE */}
+                      <div className="min-w-[220px] text-center text-white">
+                        {r.cellule_full}
+                      </div>
+                
+                      {/* RESPONSABLE */}
+                      <div className="min-w-[200px] text-center text-white">
+                        {r.responsable_cellule}
+                      </div>
                     </div>
-
-                    <div className="min-w-[150px] text-center text-white">
-                      {formatDateFR(r.date_baptise)}
-                    </div>
-
-                    <div className="min-w-[150px] text-center text-white">
-                      {formatDateFR(r.ministere_date)}
-                    </div>
-
-                    <div className="min-w-[220px] text-center text-white">
-                      {r.cellule_full}
-                    </div>
-
-                    <div className="min-w-[200px] text-center text-white">
-                      {r.responsable_cellule}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
 
               </div>
             );

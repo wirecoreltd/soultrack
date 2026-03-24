@@ -154,98 +154,105 @@ function EtatCellule() {
         </button>
       </div>
 
-     {showTable && (
-  <div className="max-w-6xl w-full mt-6 mb-6">
-
-   {/* HEADER */}
-<div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-  <div className="min-w-[150px]">Date</div>
-  <div className="min-w-[200px] text-center">Nom / Prénom</div>
-  <div className="min-w-[200px] text-center">Type</div>
-  <div className="min-w-[200px] text-center">Statut</div>
-  <div className="min-w-[150px] text-center">Intégration</div>
-  <div className="min-w-[150px] text-center">Baptême</div>
-  <div className="min-w-[150px] text-center">Ministère</div>
-  <div className="min-w-[220px] text-center">Cellule</div>
-  <div className="min-w-[200px] text-center">Responsable</div>
-</div>
-
-{groupedReports.map(([monthKey, rows], idx) => {
-  const [year, monthIndex] = monthKey.split("-").map(Number);
-  const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-  const isExpanded = expandedMonths[monthKey] || false;
-
-  return (
-    <div key={monthKey} className="space-y-1">
-
-      {/* MOIS */}
-      <div
-        className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-orange-500 cursor-pointer"
-        onClick={() => toggleMonth(monthKey)}
-      >
-        <div className="min-w-[150px] text-white font-semibold">
-          {isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})
+      {showTable && (
+        <div className="max-w-6xl w-full mt-6 mb-6">
+      
+          {/* ================= DESKTOP ================= */}
+          <div className="hidden md:block">
+      
+            {/* HEADER */}
+            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[150px]">Date</div>
+              <div className="min-w-[200px] text-center">Nom / Prénom</div>
+              <div className="min-w-[200px] text-center">Type</div>
+              <div className="min-w-[200px] text-center">Statut</div>
+              <div className="min-w-[150px] text-center">Intégration</div>
+              <div className="min-w-[150px] text-center">Baptême</div>
+              <div className="min-w-[150px] text-center">Ministère</div>
+              <div className="min-w-[220px] text-center">Cellule</div>
+              <div className="min-w-[200px] text-center">Responsable</div>
+            </div>
+      
+            {groupedReports.map(([monthKey, rows]) => {
+              const [year, monthIndex] = monthKey.split("-").map(Number);
+              const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+              const isExpanded = expandedMonths[monthKey] || false;
+      
+              return (
+                <div key={monthKey} className="space-y-1">
+      
+                  {/* MOIS */}
+                  <div
+                    className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-orange-500 cursor-pointer"
+                    onClick={() => toggleMonth(monthKey)}
+                  >
+                    <div className="min-w-[150px] text-white font-semibold">
+                      {isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})
+                    </div>
+                  </div>
+      
+                  {/* LIGNES */}
+                  {isExpanded && rows.map((r, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-yellow-500"
+                    >
+                      <div className="min-w-[150px] text-white">
+                        {formatDateFR(r.date_evangelise)}
+                      </div>
+      
+                      <div className="min-w-[200px] text-center text-white">
+                        {r.nom} {r.prenom}
+                      </div>
+      
+                      <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
+                      <div className="min-w-[200px] text-center text-white">{r.status_suivis_evangelises}</div>
+                      <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
+                      <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
+                      <div className="min-w-[150px] text-center text-white">{formatDateFR(r.ministere_date)}</div>
+                      <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
+                      <div className="min-w-[200px] text-center text-white">{r.responsable_cellule}</div>
+                    </div>
+                  ))}
+      
+                </div>
+              );
+            })}
+      
+          </div>
+      
+          {/* ================= MOBILE ================= */}
+          <div className="md:hidden space-y-4">
+            {groupedReports.map(([monthKey, rows]) => {
+              const [year, monthIndex] = monthKey.split("-").map(Number);
+              const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+      
+              return (
+                <div key={monthKey} className="space-y-2">
+      
+                  <h3 className="text-white font-bold">{monthLabel}</h3>
+      
+                  {rows.map((r, i) => (
+                    <div key={i} className="bg-white/10 rounded-xl p-4 text-white space-y-1">
+                      <p><strong>Date:</strong> {formatDateFR(r.date_evangelise)}</p>
+                      <p><strong>Nom:</strong> {r.nom} {r.prenom}</p>
+                      <p><strong>Type:</strong> {r.type_evangelisation}</p>
+                      <p><strong>Statut:</strong> {r.status_suivis_evangelises}</p>
+                      <p><strong>Intégration:</strong> {formatDateFR(r.date_integration)}</p>
+                      <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
+                      <p><strong>Ministère:</strong> {formatDateFR(r.ministere_date)}</p>
+                      <p><strong>Cellule:</strong> {r.cellule_full}</p>
+                      <p><strong>Responsable:</strong> {r.responsable_cellule}</p>
+                    </div>
+                  ))}
+      
+                </div>
+              );
+            })}
+          </div>
+      
         </div>
-      </div>
-
-      {/* LIGNES */}
-      {isExpanded && rows.map((r, i) => (
-        <div
-          key={i}
-          className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-yellow-500"
-        >
-          {/* DATE (colonne principale) */}
-          <div className="min-w-[150px] text-white">
-            {formatDateFR(r.date_evangelise)}
-          </div>
-
-          {/* NOM */}
-          <div className="min-w-[200px] text-center text-white">
-            {r.nom} {r.prenom}
-          </div>
-
-          <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
-          <div className="min-w-[200px] text-center text-white">{r.status_suivis_evangelises}</div>
-          <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
-          <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
-          <div className="min-w-[150px] text-center text-white">{formatDateFR(r.ministere_date)}</div>
-          <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
-          <div className="min-w-[200px] text-center text-white">{r.responsable_cellule}</div>
-        </div>
-      ))}
-
-    </div>
-  );
-})}
-
- <div className="md:hidden space-y-4">
-  {groupedReports.map(([monthKey, rows]) => {
-    const [year, monthIndex] = monthKey.split("-").map(Number);
-    const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-
-    return (
-      <div key={monthKey} className="space-y-2">
-
-        <h3 className="text-white font-bold">{monthLabel}</h3>
-
-        {rows.map((r, i) => (
-          <div key={i} className="bg-white/10 rounded-xl p-4 text-white space-y-1">
-            <p><strong>Date:</strong> {formatDateFR(r.date_evangelise)}</p>
-            <p><strong>Nom:</strong> {r.nom} {r.prenom}</p>
-            <p><strong>Type:</strong> {r.type_evangelisation}</p>
-            <p><strong>Statut:</strong> {r.status_suivis_evangelises}</p>
-            <p><strong>Intégration:</strong> {formatDateFR(r.date_integration)}</p>
-            <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
-            <p><strong>Ministère:</strong> {formatDateFR(r.ministere_date)}</p>
-            <p><strong>Cellule:</strong> {r.cellule_full}</p>
-            <p><strong>Responsable:</strong> {r.responsable_cellule}</p>
-          </div>
-        ))}
-
-      </div>
-    );
-  })}
-</div> 
+      )}
 
       <Footer />
 

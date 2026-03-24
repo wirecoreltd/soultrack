@@ -24,47 +24,51 @@ function EtatCellule() {
   // ================= FETCH DATA =================
       const fetchReports = async () => {
   try {
-    // Récupérer la session utilisateur
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
+    // Récupérer l'utilisateur connecté
+    const session = await supabase.auth.getSession();
+    const userId = session.data.session?.user?.id;
 
-    const userId = sessionData.session?.user?.id;
     if (!userId) {
       console.error("Utilisateur non connecté");
+      setReports([]);
+      setShowTable(false);
       return;
     }
 
-    // Récupérer le profil pour connaître la cellule du responsable
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("cellule_id")
-      .match({ id: userId }) // ✅ .match() pour éviter le 400
-      .single();
+    // Récupérer toutes les cellules dont l'utilisateur est responsable
+    const { data: cellules, error: cellulesError } = await supabase
+      .from("cellules")
+      .select("id")
+      .eq("responsable_id", userId);
 
-    if (profileError) throw profileError;
+    if (cellulesError) throw cellulesError;
 
-    const userCelluleId = profile?.cellule_id;
-    if (!userCelluleId) {
-      console.warn("Ce responsable n'a pas de cellule attribuée");
+    const celluleIds = cellules.map(c => c.id);
+
+    if (celluleIds.length === 0) {
+      // Pas de cellule pour ce responsable
       setReports([]);
       setShowTable(true);
       return;
     }
 
-    // Récupérer les rapports pour la cellule du responsable uniquement
+    // Récupérer les rapports pour ces cellules uniquement
     const { data, error } = await supabase
       .from("etat_cellule")
       .select("*")
-      .not("cellule_id", "is", null)
-      .eq("cellule_id", userCelluleId) // filtre par cellule
+      .in("cellule_id", celluleIds)
       .order("date_evangelise", { ascending: false });
 
     if (error) throw error;
 
-    // Filtrage sur la date si nécessaire
+    // Filtrer par date si besoin
     let filtered = data;
-    if (filterDebut) filtered = filtered.filter(r => new Date(r.date_evangelise) >= new Date(filterDebut));
-    if (filterFin) filtered = filtered.filter(r => new Date(r.date_evangelise) <= new Date(filterFin));
+    if (filterDebut) {
+      filtered = filtered.filter(r => new Date(r.date_evangelise) >= new Date(filterDebut));
+    }
+    if (filterFin) {
+      filtered = filtered.filter(r => new Date(r.date_evangelise) <= new Date(filterFin));
+    }
 
     setReports(filtered);
     setShowTable(true);

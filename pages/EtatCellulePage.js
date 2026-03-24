@@ -164,13 +164,14 @@ function EtatCellule() {
 
           {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[150px]">Date</div>
-            <div className="min-w-[200px] text-center">Nom / Prénom</div>
-            <div className="min-w-[200px] text-center">Type</div>
+            <div className="min-w-[150px]">Date Evangelisé</div>
+            <div className="min-w-[200px] text-center">Nom Complet/div>
+            <div className="min-w-[200px] text-center">Type Evangélisation</div>
             <div className="min-w-[200px] text-center">Statut</div>
-            <div className="min-w-[150px] text-center">Intégration</div>
-            <div className="min-w-[150px] text-center">Baptême</div>
-            <div className="min-w-[150px] text-center">Ministère</div>
+            <div className="min-w-[150px] text-center">Envoyer au Suivi Le</div>
+            <div className="min-w-[150px] text-center">Date Intégration</div>
+            <div className="min-w-[150px] text-center">Date Baptême</div>
+            <div className="min-w-[150px] text-center">Début MinistereMinistère</div>
             <div className="min-w-[220px] text-center">Cellule</div>
             <div className="min-w-[200px] text-center">Responsable</div>
           </div>
@@ -214,6 +215,10 @@ function EtatCellule() {
                     <div className="min-w-[200px] text-center text-white">
                       {r.status_suivis_evangelises}
                     </div>
+
+                      <div className="min-w-[150px] text-center text-white">
+                        {formatDateFR(r.date_suivi)}
+                      </div>
 
                     <div className="min-w-[150px] text-center text-white">
                       {formatDateFR(r.date_integration)}

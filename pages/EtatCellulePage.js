@@ -87,6 +87,19 @@ function EtatCellule() {
     }
   };
 
+  //=======================
+  const getStatusTextColor = (status) => {
+  if (!status) return "text-gray-300";
+
+  const s = status.toLowerCase();
+
+  if (s.includes("intégr")) return "text-green-400";
+  if (s.includes("refus")) return "text-red-400";
+  if (s.includes("suivi")) return "text-yellow-400";
+
+  return "text-blue-400";
+};
+
   // ================= UTIL =================
   const getMonthNameFR = (monthIndex) => {
     const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
@@ -168,10 +181,10 @@ function EtatCellule() {
             <div className="min-w-[200px] text-center">Nom Complet</div>
             <div className="min-w-[200px] text-center">Type Evangélisation</div>
             <div className="min-w-[200px] text-center">Statut</div>
-            <div className="min-w-[150px] text-center">Envoyer au Suivi Le</div>
+            <div className="min-w-[150px] text-center">Envoyer au <br/>Suivi Le</div>
             <div className="min-w-[150px] text-center">Date Intégration</div>
             <div className="min-w-[150px] text-center">Date Baptême</div>
-            <div className="min-w-[150px] text-center">Début MinistereMinistère</div>
+            <div className="min-w-[150px] text-center">Début Ministère</div>
             <div className="min-w-[220px] text-center">Cellule</div>
             <div className="min-w-[200px] text-center">Responsable</div>
           </div>
@@ -212,7 +225,7 @@ function EtatCellule() {
                       {r.type_evangelisation}
                     </div>
 
-                    <div className="min-w-[200px] text-center text-white">
+                    <div className={`min-w-[200px] text-center font-semibold ${getStatusTextColor(r.status_suivis_evangelises)}`}>
                       {r.status_suivis_evangelises}
                     </div>
 

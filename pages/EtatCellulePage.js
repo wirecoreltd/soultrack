@@ -23,97 +23,97 @@ function EtatCellule() {
 
   // ================= FETCH DATA =================
       const fetchReports = async () => {
-  try {
-    // ================= USER =================
-    const session = await supabase.auth.getSession();
-    const userId = session.data.session?.user?.id;
-
-    if (!userId) {
-      console.error("Utilisateur non connecté");
-      return;
-    }
-
-    // ================= PROFILE =================
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("roles")
-      .eq("id", userId)
-      .single();
-
-    if (profileError) throw profileError;
-
-    const roles = profile?.roles || [];
-    const isAdmin = roles.includes("Administrateur");
-
-    let data = [];
-    let error = null;
-
-    // ================= ADMIN =================
-    if (isAdmin) {
-      const { data, error } = await supabase
-  .from("etat_cellule")
-  .select("*")
-  .not("cellule_id", "is", null)
-  .in("status_suivis_evangelises", ["Intégré", "Refus", "En cours"])
-  .order("date_evangelise", { ascending: false });
-
-      data = res.data;
-      error = res.error;
-    } else {
-      // ================= RESPONSABLE CELLULE =================
-
-      // Récupérer les cellules du responsable
-      const { data: cellules, error: cellulesError } = await supabase
-        .from("cellules")
-        .select("id")
-        .eq("responsable_id", userId);
-
-      if (cellulesError) throw cellulesError;
-
-      const celluleIds = cellules.map(c => c.id);
-
-      if (celluleIds.length === 0) {
-        setReports([]);
-        setShowTable(true);
-        return;
-      }
-
-      const res = await supabase
-        .from("etat_cellule")
-        .select("*")
-        .in("cellule_id", celluleIds)
-        .order("date_evangelise", { ascending: false });
-
-      data = res.data;
-      error = res.error;
-    }
-
-    if (error) throw error;
-
-    // ================= FILTER DATE =================
-    let filtered = data;
-
-    if (filterDebut) {
-      filtered = filtered.filter(r =>
-        new Date(r.date_evangelise) >= new Date(filterDebut)
-      );
-    }
-
-    if (filterFin) {
-      filtered = filtered.filter(r =>
-        new Date(r.date_evangelise) <= new Date(filterFin)
-      );
-    }
-
-    setReports(filtered);
-    setShowTable(true);
-
-  } catch (err) {
-    console.error("Erreur fetch :", err);
-    setReports([]);
-    setShowTable(false);
-  }
-};
+        try {
+          // ================= USER =================
+          const session = await supabase.auth.getSession();
+          const userId = session.data.session?.user?.id;
+      
+          if (!userId) {
+            console.error("Utilisateur non connecté");
+            return;
+          }
+      
+          // ================= PROFILE =================
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("roles")
+            .eq("id", userId)
+            .single();
+      
+          if (profileError) throw profileError;
+      
+          const roles = profile?.roles || [];
+          const isAdmin = roles.includes("Administrateur");
+      
+          let data = [];
+          let error = null;
+      
+          // ================= ADMIN =================
+          if (isAdmin) {
+            const res = await supabase
+              .from("etat_cellule")
+              .select("*")
+              .not("cellule_id", "is", null)
+              .in("status_suivis_evangelises", ["Intégré", "Refus", "En cours"])
+              .order("date_evangelise", { ascending: false });
+      
+            data = res.data;
+            error = res.error;
+      
+          } else {
+            // ================= RESPONSABLE =================
+            const { data: cellules, error: cellulesError } = await supabase
+              .from("cellules")
+              .select("id")
+              .eq("responsable_id", userId);
+      
+            if (cellulesError) throw cellulesError;
+      
+            const celluleIds = cellules.map(c => c.id);
+      
+            if (celluleIds.length === 0) {
+              setReports([]);
+              setShowTable(true);
+              return;
+            }
+      
+            const res = await supabase
+              .from("etat_cellule")
+              .select("*")
+              .in("cellule_id", celluleIds)
+              .in("status_suivis_evangelises", ["Intégré", "Refus", "En cours"])
+              .order("date_evangelise", { ascending: false });
+      
+            data = res.data;
+            error = res.error;
+          }
+      
+          if (error) throw error;
+      
+          // ================= FILTER DATE =================
+          let filtered = data;
+      
+          if (filterDebut) {
+            filtered = filtered.filter(r =>
+              new Date(r.date_evangelise) >= new Date(filterDebut)
+            );
+          }
+      
+          if (filterFin) {
+            filtered = filtered.filter(r =>
+              new Date(r.date_evangelise) <= new Date(filterFin)
+            );
+          }
+      
+          setReports(filtered);
+          setShowTable(true);
+      
+        } catch (err) {
+          console.error("Erreur fetch :", err);
+          setReports([]);
+          setShowTable(false);
+        }
+      };
 
   //=======================
  const getStatusStyles = (status) => {

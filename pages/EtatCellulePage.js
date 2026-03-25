@@ -20,11 +20,11 @@ function EtatCellule() {
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
   const [showTable, setShowTable] = useState(false);
-  //const isSuperviseur = roles.includes("Superviseur");
 
   // ================= FETCH DATA =================
       const fetchReports = async () => {
   try {
+    // ================= USER =================
     const session = await supabase.auth.getSession();
     const userId = session.data.session?.user?.id;
 
@@ -33,7 +33,7 @@ function EtatCellule() {
       return;
     }
 
-    // PROFILE
+    // ================= PROFILE =================
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("roles")
@@ -48,7 +48,7 @@ function EtatCellule() {
     let data = [];
     let error = null;
 
-    // ADMIN
+    // ================= ADMIN =================
     if (isAdmin) {
       const res = await supabase
         .from("etat_cellule")
@@ -58,9 +58,10 @@ function EtatCellule() {
 
       data = res.data;
       error = res.error;
-
     } else {
-      // RESPONSABLE CELLULE
+      // ================= RESPONSABLE CELLULE =================
+
+      // Récupérer les cellules du responsable
       const { data: cellules, error: cellulesError } = await supabase
         .from("cellules")
         .select("id")
@@ -88,7 +89,7 @@ function EtatCellule() {
 
     if (error) throw error;
 
-    // FILTER DATE
+    // ================= FILTER DATE =================
     let filtered = data;
 
     if (filterDebut) {
@@ -108,43 +109,6 @@ function EtatCellule() {
 
   } catch (err) {
     console.error("Erreur fetch :", err);
-    setReports([]);
-    setShowTable(false);
-  }
-};
-
-  } catch (err) {
-    console.error("Erreur fetch :", err);
-    setReports([]);
-    setShowTable(false);
-  }
-};
-      return;
-    }
-
-    // Récupérer les rapports pour ces cellules uniquement
-    const { data, error } = await supabase
-      .from("etat_cellule")
-      .select("*")
-      .in("cellule_id", celluleIds)
-      .order("date_evangelise", { ascending: false });
-
-    if (error) throw error;
-
-    // Filtrer par date si besoin
-    let filtered = data;
-    if (filterDebut) {
-      filtered = filtered.filter(r => new Date(r.date_evangelise) >= new Date(filterDebut));
-    }
-    if (filterFin) {
-      filtered = filtered.filter(r => new Date(r.date_evangelise) <= new Date(filterFin));
-    }
-
-    setReports(filtered);
-    setShowTable(true);
-
-  } catch (err) {
-    console.error("Erreur fetch profile ou rapports :", err);
     setReports([]);
     setShowTable(false);
   }

@@ -50,11 +50,12 @@ function EtatCellule() {
 
     // ================= ADMIN =================
     if (isAdmin) {
-      const res = await supabase
-        .from("etat_cellule")
-        .select("*")
-        .not("cellule_id", "is", null)
-        .order("date_evangelise", { ascending: false });
+      const { data, error } = await supabase
+  .from("etat_cellule")
+  .select("*")
+  .not("cellule_id", "is", null)
+  .in("status_suivis_evangelises", ["Intégré", "Refus", "En cours"])
+  .order("date_evangelise", { ascending: false });
 
       data = res.data;
       error = res.error;

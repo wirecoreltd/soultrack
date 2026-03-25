@@ -25,7 +25,6 @@ function EtatCellule() {
   // ================= FETCH DATA =================
       const fetchReports = async () => {
   try {
-    // ================= USER =================
     const session = await supabase.auth.getSession();
     const userId = session.data.session?.user?.id;
 
@@ -34,7 +33,7 @@ function EtatCellule() {
       return;
     }
 
-    // ================= PROFILE =================
+    // PROFILE
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("roles")
@@ -49,7 +48,7 @@ function EtatCellule() {
     let data = [];
     let error = null;
 
-    // ================= ADMIN =================
+    // ADMIN
     if (isAdmin) {
       const res = await supabase
         .from("etat_cellule")
@@ -59,10 +58,9 @@ function EtatCellule() {
 
       data = res.data;
       error = res.error;
-    } else {
-      // ================= RESPONSABLE CELLULE =================
 
-      // Récupérer les cellules du responsable
+    } else {
+      // RESPONSABLE CELLULE
       const { data: cellules, error: cellulesError } = await supabase
         .from("cellules")
         .select("id")
@@ -90,7 +88,7 @@ function EtatCellule() {
 
     if (error) throw error;
 
-    // ================= FILTER DATE =================
+    // FILTER DATE
     let filtered = data;
 
     if (filterDebut) {
@@ -107,6 +105,13 @@ function EtatCellule() {
 
     setReports(filtered);
     setShowTable(true);
+
+  } catch (err) {
+    console.error("Erreur fetch :", err);
+    setReports([]);
+    setShowTable(false);
+  }
+};
 
   } catch (err) {
     console.error("Erreur fetch :", err);

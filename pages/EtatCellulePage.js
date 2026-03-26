@@ -23,44 +23,65 @@ function EtatCellule() {
   const [userId, setUserId] = useState(null);
   const [userRole, setUserRole] = useState(null);
 
+  useEffect(() => {
+    const init = async () => {
+      try {
+        // Récupérer l'utilisateur connecté
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Récupérer le rôle depuis profiles
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        setUserId(user.id);
+        setUserRole(profile?.role || null);
+
+        fetchReports(user.id, profile?.role || null);
+      } catch (err) {
+        console.error("Erreur init :", err);
+      }
+    };
+    init();
+  }, []);
+
   const fetchReports = async (currentUserId, currentUserRole) => {
     try {
       setShowTable(false);
 
-      // etat_cellule
-      const { data: dataCellule, error: errorCellule } = await supabase
+      const { data: dataCellule } = await supabase
         .from("etat_cellule")
         .select("*")
         .not("cellule_id", "is", null)
         .order("date_evangelise", { ascending: false });
-      if (errorCellule) throw errorCellule;
 
-      // membres_venus_par_eglise
-      const { data: dataEglise, error: errorEglise } = await supabase
+      const { data: dataEglise } = await supabase
         .from("membres_venus_par_eglise")
         .select("*")
         .order("date_evangelise", { ascending: false });
-      if (errorEglise) throw errorEglise;
 
-      const normalizedCellule = (dataCellule || []).map((r) => ({
-        ...r,
-        nom_complet: `${r.prenom} ${r.nom}`,
-        type_evangelisation: r.type_evangelisation || "Evangélisation",
-      }));
-
-      const normalizedEglise = (dataEglise || []).map((r) => ({
-        ...r,
-        nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
-        type_evangelisation: r.type_integration || "Integration",
-        status_suivis_evangelises: r.statut || "Inconnu",
-      }));
-
-      let combined = [...normalizedCellule, ...normalizedEglise];
+      // Normaliser datasets
+      let combined = [
+        ...(dataCellule || []).map((r) => ({
+          ...r,
+          nom_complet: `${r.prenom} ${r.nom}`,
+          type_evangelisation: r.type_evangelisation || "Evangélisation",
+        })),
+        ...(dataEglise || []).map((r) => ({
+          ...r,
+          nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
+          type_evangelisation: r.type_integration || "Integration",
+          status_suivis_evangelises: r.statut || "Inconnu",
+        })),
+      ];
 
       // Filtrer contacts sans cellule
       combined = combined.filter((r) => r.cellule_full);
 
-      // Filtrer par responsable si pas admin
+      // Si responsable, ne garder que ses cellules
       if (currentUserRole === "ResponsableCellule") {
         combined = combined.filter((r) => r.responsable_cellule === currentUserId);
       }
@@ -78,32 +99,7 @@ function EtatCellule() {
     }
   };
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError) throw authError;
-        if (!user) throw new Error("Utilisateur non connecté");
-
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-        if (profileError) throw profileError;
-
-        setUserId(user.id);
-        setUserRole(profile?.role);
-
-        fetchReports(user.id, profile?.role);
-      } catch (err) {
-        console.error("Erreur init :", err);
-      }
-    };
-    init();
-  }, []);
-
-  // ======= UTIL =======
+  // ==== UTIL ====
   const getStatusStyles = (status) => {
     if (!status) return { border: "border-gray-400", text: "text-gray-300" };
     const s = status.toLowerCase();
@@ -115,10 +111,7 @@ function EtatCellule() {
     return { border: "border-blue-500", text: "text-blue-400" };
   };
 
-  const getMonthNameFR = (monthIndex) => {
-    const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
-    return months[monthIndex] || "";
-  };
+  const getMonthNameFR = (monthIndex) => ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"][monthIndex] || "";
 
   const formatDateFR = (dateString) => {
     if (!dateString) return "";

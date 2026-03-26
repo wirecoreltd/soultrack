@@ -22,45 +22,19 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
 
   // ================= FETCH DATA =================
-  const fetchReports = async () => {
-    try {
-      // Récupérer la session et la cellule du responsable
-      const session = await supabase.auth.getSession();
-      const userId = session.data.session?.user?.id;
+  // Pour récupérer le profil
+const { data: profile } = await supabase
+  .from("profiles")
+  .select("cellule_id")
+  .eq("id", userId) // userId doit être un UUID exact
+  .single();
 
-      // Pour récupérer le profil
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("cellule_id")
-          .eq("id", userId) // userId doit être un UUID exact
-          .single();
-        
-        // Pour récupérer les membres_venus_par_eglise
-        const { data: dataEglise, error: errorEglise } = await supabase
-          .from("membres_venus_par_eglise")
-          .select("*")
-          .not("cellule_id", "is", null) // JS client correct
-          .order("date_venu", { ascending: false });
-
-      const celluleId = profile?.cellule_id;
-
-      // Récupérer les membres de etat_cellule
-      const { data: dataCellule, error: errorCellule } = await supabase
-        .from("etat_cellule")
-        .select("*")
-        .not("cellule_id", "is", null)
-        .order("date_evangelise", { ascending: false });
-
-      if (errorCellule) throw errorCellule;
-
-      // Récupérer les membres venus par l'église
-      const { data: dataEglise, error: errorEglise } = await supabase
-        .from("membres_venus_par_eglise")
-        .select("*")
-        .not("cellule_id", "is", null)
-        .order("date_venu", { ascending: false });
-
-      if (errorEglise) throw errorEglise;
+// Pour récupérer les membres_venus_par_eglise
+const { data: dataEglise, error: errorEglise } = await supabase
+  .from("membres_venus_par_eglise")
+  .select("*")
+  .not("cellule_id", "is", null) // JS client correct
+  .order("date_venu", { ascending: false });
 
       // Normaliser les deux datasets pour avoir les mêmes champs
       const normalizedCellule = dataCellule.map((r) => ({

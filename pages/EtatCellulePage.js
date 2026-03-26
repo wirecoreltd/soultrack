@@ -22,269 +22,156 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
 
-      // ================== KPI ==================
-    // Juste après avoir combiné les deux datasets et filtré
-const combined = [...normalizedCellule, ...normalizedEglise].filter(r => r.cellule_full);
+     const fetchReports = async () => {
+  try {
+    if (!userProfile) return; // attendre profil
+    setShowTable(false);
 
-// Total évangélisés
-const totalEvangelises = combined.length;
+    // ================== FETCH ==================
+    const { data: cellules, error: cellulesError } = await supabase
+      .from("cellules")
+      .select("id, cellule_full, responsable_id");
+    if (cellulesError) throw cellulesError;
 
-// Total intégrés
-const totalIntegres = combined.filter(
-  r => r.status_suivis_evangelises?.toLowerCase().includes("intégr") || r.date_integration
-).length;
-const pctIntegres = totalEvangelises > 0 ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
-
-// En cours
-const totalEnCours = combined.filter(r => r.status_suivis_evangelises?.toLowerCase().includes("cours")).length;
-
-// Refus
-const totalRefus = combined.filter(r => r.status_suivis_evangelises?.toLowerCase().includes("refus")).length;
-
-// Total venus à l'église
-const totalVenus = dataEglise.length;
-
-// Total Ministère
-const totalMinistere = combined.filter(r => r.ministere_date).length;
-
-// Total Baptême
-const totalBapteme = combined.filter(r => r.date_baptise).length;
-
-// Total combiné pour % (évangelisés + venus à l'église)
-const totalCombined = totalEvangelises + totalVenus;
-
-  const [kpis, setKpis] = useState({
-  totalEvangelises: 0,
-  totalVenus: 0,
-  totalIntegration: 0,
-  totalBapteme: 0,
-  totalMinistere: 0,
-  totalRefus: 0,
-  totalEncours: 0,
-  totalAttente: 0,
-});
-    // % sécurisés
-    const percIntegration =
-      totalEvangelises > 0
-        ? Math.round((totalIntegration / totalEvangelises) * 100)
-        : 0;
-    
-    const percMinistere =
-      totalEvangelises + totalIntegration > 0
-        ? Math.round(
-            (totalMinistere / (totalEvangelises + totalIntegration)) * 100
-          )
-        : 0;
-    
-    const percBapteme =
-      totalEvangelises + totalIntegration > 0
-        ? Math.round(
-            (totalBapteme / (totalEvangelises + totalIntegration)) * 100
-          )
-        : 0;
-    
-    const percEnCours =
-      totalEvangelises > 0
-        ? Math.round((totalEnCours / totalEvangelises) * 100)
-        : 0;
-
-//========================
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
-
-  const fetchUserProfile = async () => {
-    const user = supabase.auth.getUser
-      ? (await supabase.auth.getUser()).data.user
-      : null;
-    if (!user) return;
-
-    const { data, error } = await supabase
+    const { data: allProfiles, error: profilesError } = await supabase
       .from("profiles")
+      .select("id, prenom, nom");
+    if (profilesError) throw profilesError;
+
+    const { data: dataCellule, error: errorCellule } = await supabase
+      .from("etat_cellule")
       .select("*")
-      .eq("id", user.id)
-      .single();
+      .not("cellule_id", "is", null)
+      .order("date_evangelise", { ascending: false });
+    if (errorCellule) throw errorCellule;
 
-    if (error) {
-      console.error("Erreur fetch user profile:", error);
-      return;
-    }
+    const { data: dataEglise, error: errorEglise } = await supabase
+      .from("membres_venus_par_eglise")
+      .select("*")
+      .order("date_evangelise", { ascending: false });
+    if (errorEglise) throw errorEglise;
 
-    setUserProfile(data);
-  };
+    // ================== NORMALIZATION ==================
+    const addResponsableName = (arr) =>
+      (arr || []).map((r) => {
+        const cellule = cellules.find((c) => c.id === r.cellule_id);
+        const responsableProfile = allProfiles.find(
+          (p) => p.id === cellule?.responsable_id
+        );
+        return {
+          ...r,
+          responsable_cellule: responsableProfile
+            ? `${responsableProfile.prenom} ${responsableProfile.nom}`
+            : "Inconnu",
+          cellule_full: cellule?.cellule_full || r.cellule_full,
+        };
+      });
 
-  // ================= FETCH DATA =================
-  const fetchReports = async () => {
-    try {
-      if (!userProfile) return; // attendre profil
+    const normalizedCellule = addResponsableName(dataCellule).map((r) => ({
+      id: r.id,
+      nom: r.nom,
+      prenom: r.prenom,
+      nom_complet: `${r.prenom} ${r.nom}`,
+      type_evangelisation: r.type_evangelisation || "Évangélisation",
+      status_suivis_evangelises: r.status_suivis_evangelises,
+      date_evangelise: r.date_evangelise,
+      date_suivi: r.date_suivi,
+      date_integration: r.date_integration,
+      date_baptise: r.date_baptise,
+      ministere_date: r.ministere_date,
+      cellule_full: r.cellule_full,
+      responsable_cellule: r.responsable_cellule,
+    }));
 
-      setShowTable(false);
+    const normalizedEglise = addResponsableName(dataEglise).map((r) => ({
+      id: r.id,
+      nom: r.nom || "",
+      prenom: r.prenom || "",
+      nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
+      type_evangelisation: r.type_integration || "Integration",
+      status_suivis_evangelises: r.statut || "Inconnu",
+      date_evangelise: r.date_evangelise,
+      date_suivi: r.envoyer_au_suivi_le,
+      date_integration: r.date_integration,
+      date_baptise: r.bapteme_date,
+      ministere_date: r.debut_ministere,
+      cellule_full: r.cellule_full,
+      responsable_cellule: r.responsable_cellule,
+    }));
 
-      // Récupérer toutes les cellules
-      const { data: cellules, error: cellulesError } = await supabase
-        .from("cellules")
-        .select("id, cellule_full, responsable_id");
+    // ================== COMBINE ==================
+    let combined = [...normalizedCellule, ...normalizedEglise];
 
-      if (cellulesError) throw cellulesError;
+    // Supprimer doublons
+    combined = combined.filter(
+      (v, i, a) => a.findIndex((t) => t.id === v.id) === i
+    );
 
-      // Récupérer profils pour responsables
-      const { data: allProfiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom");
+    // Supprimer les entrées sans cellule
+    combined = combined.filter((r) => r.cellule_full);
 
-      if (profilesError) throw profilesError;
-
-      // Récupérer etat_cellule
-      const { data: dataCellule, error: errorCellule } = await supabase
-        .from("etat_cellule")
-        .select("*")
-        .not("cellule_id", "is", null)
-        .order("date_evangelise", { ascending: false });
-
-      if (errorCellule) throw errorCellule;
-
-      // Récupérer membres_venus_par_eglise
-      const { data: dataEglise, error: errorEglise } = await supabase
-        .from("membres_venus_par_eglise")
-        .select("*")
-        .order("date_evangelise", { ascending: false });
-
-      if (errorEglise) throw errorEglise;
-
-      // Fonction pour ajouter le nom du responsable
-      const addResponsableName = (arr) =>
-        (arr || []).map((r) => {
-          const cellule = cellules.find((c) => c.id === r.cellule_id);
-          const responsableProfile = allProfiles.find(
-            (p) => p.id === cellule?.responsable_id
-          );
-          return {
-            ...r,
-            responsable_cellule: responsableProfile
-              ? `${responsableProfile.prenom} ${responsableProfile.nom}`
-              : "Inconnu",
-            cellule_full: cellule?.cellule_full || r.cellule_full,
-          };
-        });
-
-      let normalizedCellule = addResponsableName(dataCellule).map((r) => ({
-        id: r.id,
-        nom: r.nom,
-        prenom: r.prenom,
-        nom_complet: `${r.prenom} ${r.nom}`,
-        type_evangelisation: r.type_evangelisation || "Evangélisation",
-        status_suivis_evangelises: r.status_suivis_evangelises,
-        date_evangelise: r.date_evangelise,
-        date_suivi: r.date_suivi,
-        date_integration: r.date_integration,
-        date_baptise: r.date_baptise,
-        ministere_date: r.ministere_date,
-        cellule_full: r.cellule_full,
-        responsable_cellule: r.responsable_cellule,
-      }));
-
-      let normalizedEglise = addResponsableName(dataEglise).map((r) => ({
-        id: r.id,
-        nom: r.nom || "",
-        prenom: r.prenom || "",
-        nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
-        type_evangelisation: r.type_integration || "Integration",
-        status_suivis_evangelises: r.statut || "Inconnu",
-        date_evangelise: r.date_evangelise,
-        date_suivi: r.envoyer_au_suivi_le,
-        date_integration: r.date_integration,
-        date_baptise: r.bapteme_date,
-        ministere_date: r.debut_ministere,
-        cellule_full: r.cellule_full,
-        responsable_cellule: r.responsable_cellule,
-      }));
-
-      // Combiner datasets
-      let combined = [...normalizedCellule, ...normalizedEglise];
-
-      // Supprimer doublons
+    // Filtrage par rôle : si non admin, ne voir que sa cellule
+    if (!userProfile.roles?.includes("Administrateur")) {
       combined = combined.filter(
-        (v, i, a) => a.findIndex((t) => t.id === v.id) === i
+        (r) =>
+          cellules.find((c) => c.cellule_full === r.cellule_full)
+            ?.responsable_id === userProfile.id
       );
-
-      // Filtrer contacts sans cellule
-      combined = combined.filter((r) => r.cellule_full);
-
-      // Filtrer selon le rôle
-      if (!userProfile.roles?.includes("Administrateur")) {
-        combined = combined.filter(
-          (r) =>
-            cellules.find((c) => c.cellule_full === r.cellule_full)
-              ?.responsable_id === userProfile.id
-        );
-      }
-
-      // Filtrer par date si besoin
-      if (filterDebut) {
-        combined = combined.filter(
-          (r) => new Date(r.date_evangelise) >= new Date(filterDebut)
-        );
-      }
-      if (filterFin) {
-        combined = combined.filter(
-          (r) => new Date(r.date_evangelise) <= new Date(filterFin)
-        );
-      }
-
-      // ================= KPI =================
-
-const totalEvangelises = combined.filter(
-  (r) => r.type_evangelisation === "Evangélisation"
-).length;
-
-const totalVenus = combined.filter(
-  (r) => r.type_evangelisation === "Integration"
-).length;
-
-const totalIntegration = combined.filter(
-  (r) => r.date_integration
-).length;
-
-const totalBapteme = combined.filter(
-  (r) => r.date_baptise
-).length;
-
-const totalMinistere = combined.filter(
-  (r) => r.ministere_date
-).length;
-
-const totalRefus = combined.filter(
-  (r) => r.status_suivis_evangelises?.toLowerCase().includes("refus")
-).length;
-
-const totalEncours = combined.filter(
-  (r) => r.status_suivis_evangelises?.toLowerCase().includes("cours")
-).length;
-
-const totalAttente = combined.filter(
-  (r) => r.status_suivis_evangelises?.toLowerCase().includes("attente")
-).length;
-
-setKpis({
-  totalEvangelises,
-  totalVenus,
-  totalIntegration,
-  totalBapteme,
-  totalMinistere,
-  totalRefus,
-  totalEncours,
-  totalAttente,
-});
-      
-
-      setReports(combined);
-      setShowTable(true);
-    } catch (error) {
-      console.error("Erreur fetch :", error);
-      setReports([]);
-      setShowTable(false);
     }
-  };
+
+    // Filtrage par date
+    if (filterDebut) {
+      combined = combined.filter(
+        (r) => new Date(r.date_evangelise) >= new Date(filterDebut)
+      );
+    }
+    if (filterFin) {
+      combined = combined.filter(
+        (r) => new Date(r.date_evangelise) <= new Date(filterFin)
+      );
+    }
+
+    // ================== KPI ==================
+    const totalEvangelises = combined.filter((r) =>
+      r.type_evangelisation?.toLowerCase().includes("evangelisation")
+    ).length;
+
+    const totalVenus = combined.filter((r) =>
+      r.type_evangelisation?.toLowerCase().includes("integration")
+    ).length;
+
+    const totalIntegration = combined.filter((r) => r.date_integration).length;
+    const totalBapteme = combined.filter((r) => r.date_baptise).length;
+    const totalMinistere = combined.filter((r) => r.ministere_date).length;
+    const totalRefus = combined.filter((r) =>
+      r.status_suivis_evangelises?.toLowerCase().includes("refus")
+    ).length;
+    const totalEncours = combined.filter((r) =>
+      r.status_suivis_evangelises?.toLowerCase().includes("cours")
+    ).length;
+    const totalAttente = combined.filter((r) =>
+      r.status_suivis_evangelises?.toLowerCase().includes("attente")
+    ).length;
+
+    setKpis({
+      totalEvangelises,
+      totalVenus,
+      totalIntegration,
+      totalBapteme,
+      totalMinistere,
+      totalRefus,
+      totalEncours,
+      totalAttente,
+    });
+
+    setReports(combined);
+    setShowTable(true);
+  } catch (error) {
+    console.error("Erreur fetch :", error);
+    setReports([]);
+    setShowTable(false);
+  }
+};
 
   // ================= UTIL =================
   const getStatusStyles = (status) => {

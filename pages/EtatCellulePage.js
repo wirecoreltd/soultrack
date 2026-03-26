@@ -83,32 +83,6 @@ const { data: dataCellule, error: errorCellule } = await supabase
   .select("*")
   .not("cellule_id", "is", null)
   .order("date_evangelise", { ascending: false });
-
-if (errorCellule) throw errorCellule;
-
-// filtre date
-if (filterDebut) {
-  query = query.gte("date_evangelise", filterDebut);
-}
-if (filterFin) {
-  query = query.lte("date_evangelise", filterFin);
-}
-
-// filtre responsable si pas admin
-if (!userProfile.roles?.includes("Administrateur")) {
-  query = query.eq("responsable_cellule", userProfile.id);
-}
-
-const { data, count, error } = await query;
-
-if (error) {
-  console.error(error);
-  return;
-}
-
-console.log("TOTAL EVANGELISES:", count);
-};
-
       // ================= MEMBRES_VENUS_PAR_EGLISE =================
       const { data: dataEglise, error: errorEglise } = await supabase
         .from("membres_venus_par_eglise")

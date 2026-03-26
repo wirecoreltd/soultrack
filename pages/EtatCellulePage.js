@@ -22,44 +22,51 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
 
   // ================= FETCH DATA =================
-      const fetchReports = async () => {
-      const { data, error } = await supabase
-        .from("etat_cellule")
-        .select("*")
-        .not("cellule_id", "is", null) // <- Filtrer uniquement ceux qui ont une cellule
-        .order("date_evangelise", { ascending: false });
-    
-      if (error) {
-        console.error("Erreur fetch :", error);
-      } else {
-        // Filtrer par date si besoin
-        let filtered = data;
-        if (filterDebut) {
-          filtered = filtered.filter(r => new Date(r.date_evangelise) >= new Date(filterDebut));
-        }
-        if (filterFin) {
-          filtered = filtered.filter(r => new Date(r.date_evangelise) <= new Date(filterFin));
-        }
-    
-        // Filtrer uniquement les membres de la cellule du responsable
-        const session = await supabase.auth.getSession();
-        const userId = session.data.session?.user?.id;
-    
-        // Récupérer le profil pour connaître la cellule du responsable
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("cellule_id")
-          .eq("id", userId)
-          .single();
-    
-        if (profile?.cellule_id) {
-          filtered = filtered.filter(r => r.cellule_id === profile.cellule_id);
-        }
-    
-        setReports(filtered);
-        setShowTable(true);
-      }
-    };
+      // ================= FETCH DATA =================
+const fetchReports = async () => {
+  const { data, error } = await supabase
+    .from("etat_cellule")       // <- La nouvelle vue
+    .select("*")
+    .not("cellule_id", "is", null)
+    .order("date_evangelise", { ascending: false });
+
+  if (error) {
+    console.error("Erreur fetch :", error);
+    return;
+  }
+
+  // Filtrage par date
+  let filtered = data;
+  if (filterDebut) {
+    filtered = filtered.filter(r => new Date(r.date_evangelise) >= new Date(filterDebut));
+  }
+  if (filterFin) {
+    filtered = filtered.filter(r => new Date(r.date_evangelise) <= new Date(filterFin));
+  }
+
+  // Filtrer selon cellule du responsable
+  const session = await supabase.auth.getSession();
+  const userId = session.data.session?.user?.id;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("cellule_id")
+    .eq("id", userId)
+    .single();
+
+  if (profile?.cellule_id) {
+    filtered = filtered.filter(r => r.cellule_id === profile.cellule_id);
+  }
+
+  // Ajouter un type visible pour l’UI
+  filtered = filtered.map(r => ({
+    ...r,
+    type_evangelisation: r.venu === "eglise" ? "Integration" : "Evangélisation",
+  }));
+
+  setReports(filtered);
+  setShowTable(true);
+};
 
   //=======================
  const getStatusStyles = (status) => {
@@ -177,7 +184,7 @@ function EtatCellule() {
 
           {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[150px]">Date Evangelisé</div>
+            <div className="min-w-[150px]">Date</div>
             <div className="min-w-[200px] text-center">Nom Complet</div>
             <div className="min-w-[200px] text-center">Type</div>
             <div className="min-w-[200px] text-center">Statut</div>

@@ -30,7 +30,17 @@ function EtatCellule() {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("id, role, cellule_id")
-      .eq("id", supabase.auth.user()?.id) // récupère l'ID du user connecté
+      const {
+  data: { session },
+} = await supabase.auth.getSession();
+
+const userId = session?.user?.id;
+
+const { data: profile, error: profileError } = await supabase
+  .from("profiles")
+  .select("id, role, cellule_id")
+  .eq("id", userId)
+  .single();
       .single();
 
     if (profileError) throw profileError;

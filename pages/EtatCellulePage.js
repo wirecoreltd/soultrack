@@ -20,75 +20,116 @@ function EtatCellule() {
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
   const [showTable, setShowTable] = useState(false);
-  const [userId, setUserId] = useState(null);
-  const [userRole, setUserRole] = useState(null);
+
+  // Infos utilisateur connecté
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        // Récupérer l'utilisateur connecté
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+    const fetchProfile = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data?.user) return;
 
-        // Récupérer le rôle depuis profiles
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, roles")
+        .eq("id", data.user.id)
+        .single();
 
-        setUserId(user.id);
-        setUserRole(profile?.role || null);
-
-        fetchReports(user.id, profile?.role || null);
-      } catch (err) {
-        console.error("Erreur init :", err);
-      }
+      if (profileError) return console.error(profileError);
+      setUserProfile(profileData);
     };
-    init();
+
+    fetchProfile();
   }, []);
 
-  const fetchReports = async (currentUserId, currentUserRole) => {
+  // ================= FETCH DATA =================
+  const fetchReports = async () => {
+    if (!userProfile) return; // attendre profil
+
     try {
       setShowTable(false);
 
-      const { data: dataCellule } = await supabase
+      // Récupérer toutes les cellules
+      const { data: cellules } = await supabase
+        .from("cellules")
+        .select("id, responsable_id, cellule_full");
+
+      // Récupérer etat_cellule
+      const { data: dataCellule, error: errorCellule } = await supabase
         .from("etat_cellule")
         .select("*")
-        .not("cellule_id", "is", null)
         .order("date_evangelise", { ascending: false });
 
-      const { data: dataEglise } = await supabase
+      if (errorCellule) throw errorCellule;
+
+      // Récupérer membres_venus_par_eglise
+      const { data: dataEglise, error: errorEglise } = await supabase
         .from("membres_venus_par_eglise")
         .select("*")
         .order("date_evangelise", { ascending: false });
 
-      // Normaliser datasets
-      let combined = [
-        ...(dataCellule || []).map((r) => ({
-          ...r,
-          nom_complet: `${r.prenom} ${r.nom}`,
-          type_evangelisation: r.type_evangelisation || "Evangélisation",
-        })),
-        ...(dataEglise || []).map((r) => ({
-          ...r,
-          nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
-          type_evangelisation: r.type_integration || "Integration",
-          status_suivis_evangelises: r.statut || "Inconnu",
-        })),
-      ];
+      if (errorEglise) throw errorEglise;
+
+      // Ajouter responsable_cellule à chaque entrée
+      const addResponsable = (arr) =>
+        (arr || []).map((r) => {
+          const cellule = cellules.find((c) => c.id === r.cellule_id);
+          return { ...r, responsable_cellule: cellule?.responsable_id || null, cellule_full: cellule?.cellule_full || r.cellule_full };
+        });
+
+      let normalizedCellule = addResponsable(dataCellule).map((r) => ({
+        id: r.id,
+        nom: r.nom,
+        prenom: r.prenom,
+        nom_complet: `${r.prenom} ${r.nom}`,
+        type_evangelisation: r.type_evangelisation || "Evangélisation",
+        status_suivis_evangelises: r.status_suivis_evangelises,
+        date_evangelise: r.date_evangelise,
+        date_suivi: r.date_suivi,
+        date_integration: r.date_integration,
+        date_baptise: r.date_baptise,
+        ministere_date: r.ministere_date,
+        cellule_full: r.cellule_full,
+        responsable_cellule: r.responsable_cellule,
+      }));
+
+      let normalizedEglise = addResponsable(dataEglise).map((r) => ({
+        id: r.id,
+        nom: r.nom || "",
+        prenom: r.prenom || "",
+        nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
+        type_evangelisation: r.type_integration || "Integration",
+        status_suivis_evangelises: r.statut || "Inconnu",
+        date_evangelise: r.date_evangelise,
+        date_suivi: r.envoyer_au_suivi_le,
+        date_integration: r.date_integration,
+        date_baptise: r.bapteme_date,
+        ministere_date: r.debut_ministere,
+        cellule_full: r.cellule_full,
+        responsable_cellule: r.responsable_cellule,
+      }));
+
+      // Combiner datasets
+      let combined = [...normalizedCellule, ...normalizedEglise];
+
+      // Supprimer doublons par id
+      combined = combined.filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i);
 
       // Filtrer contacts sans cellule
       combined = combined.filter((r) => r.cellule_full);
 
-      // Si responsable, ne garder que ses cellules
-      if (currentUserRole === "ResponsableCellule") {
-        combined = combined.filter((r) => r.responsable_cellule === currentUserId);
+      // Filtrer selon le rôle si pas Admin
+      if (!userProfile.roles?.includes("Administrateur")) {
+        combined = combined.filter((r) => r.responsable_cellule === userProfile.id);
       }
 
       // Filtrer par date
-      if (filterDebut) combined = combined.filter((r) => new Date(r.date_evangelise) >= new Date(filterDebut));
-      if (filterFin) combined = combined.filter((r) => new Date(r.date_evangelise) <= new Date(filterFin));
+      if (filterDebut) {
+        combined = combined.filter((r) => new Date(r.date_evangelise) >= new Date(filterDebut));
+      }
+      if (filterFin) {
+        combined = combined.filter((r) => new Date(r.date_evangelise) <= new Date(filterFin));
+      }
 
       setReports(combined);
       setShowTable(true);
@@ -99,7 +140,11 @@ function EtatCellule() {
     }
   };
 
-  // ==== UTIL ====
+  useEffect(() => {
+    fetchReports();
+  }, [userProfile, filterDebut, filterFin]);
+
+  // ================= UTIL =================
   const getStatusStyles = (status) => {
     if (!status) return { border: "border-gray-400", text: "text-gray-300" };
     const s = status.toLowerCase();
@@ -111,12 +156,18 @@ function EtatCellule() {
     return { border: "border-blue-500", text: "text-blue-400" };
   };
 
-  const getMonthNameFR = (monthIndex) => ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"][monthIndex] || "";
+  const getMonthNameFR = (monthIndex) => {
+    const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+    return months[monthIndex] || "";
+  };
 
   const formatDateFR = (dateString) => {
     if (!dateString) return "";
     const d = new Date(dateString);
-    return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const groupByMonth = (reports) => {
@@ -130,11 +181,18 @@ function EtatCellule() {
     return map;
   };
 
-  const toggleMonth = (monthKey) => setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
+  const toggleMonth = (monthKey) => {
+    setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
+  };
 
   const groupedReports = Object.entries(groupByMonth(reports))
-    .sort((a,b) => new Date(b[0].split("-")[0], b[0].split("-")[1]) - new Date(a[0].split("-")[0], a[0].split("-")[1]));
+    .sort((a, b) => {
+      const [yearA, monthA] = a[0].split("-").map(Number);
+      const [yearB, monthB] = b[0].split("-").map(Number);
+      return new Date(yearB, monthB) - new Date(yearA, monthA);
+    });
 
+  // ================= RENDER =================
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
@@ -142,17 +200,33 @@ function EtatCellule() {
         État de <span className="text-amber-300">Cellule</span>
       </h1>
 
+      {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
-        <input type="date" value={filterDebut} onChange={(e)=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-        <input type="date" value={filterFin} onChange={(e)=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-        <button onClick={()=>fetchReports(userId,userRole)} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
+        <input
+          type="date"
+          value={filterDebut}
+          onChange={(e) => setFilterDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <input
+          type="date"
+          value={filterFin}
+          onChange={(e) => setFilterFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        />
+        <button
+          onClick={fetchReports}
+          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+        >
+          Générer
+        </button>
       </div>
 
-      {/* Tableau (desktop/mobile identique à ton admin) */}
+      {/* TABLEAU */}
       {showTable && (
         <div className="w-full flex justify-center mt-6 mb-6">
           <div className="w-full max-w-7xl">
-            {/* Desktop */}
+            {/* DESKTOP */}
             <div className="hidden md:block w-full overflow-x-auto">
               <div className="w-max mx-auto space-y-2 bg-white/5 p-2 rounded-xl">
                 <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
@@ -168,47 +242,58 @@ function EtatCellule() {
                   <div className="min-w-[200px] text-center">Responsable</div>
                 </div>
 
-                {groupedReports.map(([monthKey, rows])=>{
-                  const [year, monthIndex]=monthKey.split("-").map(Number);
-                  const monthLabel=`${getMonthNameFR(monthIndex)} ${year}`;
-                  const isExpanded=expandedMonths[monthKey]||false;
+                {groupedReports.map(([monthKey, rows]) => {
+                  const [year, monthIndex] = monthKey.split("-").map(Number);
+                  const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+                  const isExpanded = expandedMonths[monthKey] || false;
+
                   return (
                     <div key={monthKey} className="space-y-1">
-                      <div className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer" onClick={()=>toggleMonth(monthKey)}>
-                        <div className="min-w-[150px] text-white font-semibold">{isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})</div>
+                      <div
+                        className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer"
+                        onClick={() => toggleMonth(monthKey)}
+                      >
+                        <div className="min-w-[150px] text-white font-semibold">
+                          {isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})
+                        </div>
                       </div>
-                      {isExpanded && rows.map((r,i)=>{
-                        const statusStyle=getStatusStyles(r.status_suivis_evangelises);
-                        return (
-                          <div key={i} className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${statusStyle.border}`}>
-                            <div className="min-w-[150px] text-white">{formatDateFR(r.date_evangelise)}</div>
-                            <div className="min-w-[200px] text-center text-white">{r.nom_complet}</div>
-                            <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
-                            <div className={`min-w-[200px] text-center font-semibold ${statusStyle.text}`}>{r.status_suivis_evangelises}</div>
-                            <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_suivi)}</div>
-                            <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
-                            <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
-                            <div className="min-w-[150px] text-center text-white">{formatDateFR(r.ministere_date)}</div>
-                            <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
-                            <div className="min-w-[200px] text-center text-white">{r.responsable_cellule}</div>
-                          </div>
-                        )
-                      })}
+
+                      {isExpanded &&
+                        rows.map((r, i) => {
+                          const statusStyle = getStatusStyles(r.status_suivis_evangelises);
+                          return (
+                            <div
+                              key={i}
+                              className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${statusStyle.border}`}
+                            >
+                              <div className="min-w-[150px] text-white">{formatDateFR(r.date_evangelise)}</div>
+                              <div className="min-w-[200px] text-center text-white">{r.nom_complet}</div>
+                              <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
+                              <div className={`min-w-[200px] text-center font-semibold ${statusStyle.text}`}>{r.status_suivis_evangelises}</div>
+                              <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_suivi)}</div>
+                              <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
+                              <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
+                              <div className="min-w-[150px] text-center text-white">{formatDateFR(r.ministere_date)}</div>
+                              <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
+                              <div className="min-w-[200px] text-center text-white">{r.responsable_cellule}</div>
+                            </div>
+                          );
+                        })}
                     </div>
-                  )
+                  );
                 })}
               </div>
             </div>
 
-            {/* Mobile */}
+            {/* MOBILE */}
             <div className="md:hidden space-y-4">
-              {groupedReports.map(([monthKey, rows])=>{
-                const [year, monthIndex]=monthKey.split("-").map(Number);
-                const monthLabel=`${getMonthNameFR(monthIndex)} ${year}`;
+              {groupedReports.map(([monthKey, rows]) => {
+                const [year, monthIndex] = monthKey.split("-").map(Number);
+                const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
                 return (
                   <div key={monthKey} className="space-y-2">
                     <h3 className="text-white font-bold">{monthLabel}</h3>
-                    {rows.map((r,i)=>(
+                    {rows.map((r, i) => (
                       <div key={i} className="bg-white/10 rounded-xl p-4 text-white space-y-1">
                         <p><strong>Date:</strong> {formatDateFR(r.date_evangelise)}</p>
                         <p><strong>Nom:</strong> {r.nom_complet}</p>
@@ -223,14 +308,14 @@ function EtatCellule() {
                       </div>
                     ))}
                   </div>
-                )
+                );
               })}
             </div>
           </div>
         </div>
       )}
 
-      <Footer/>
+      <Footer />
     </div>
   );
 }

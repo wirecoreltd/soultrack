@@ -23,25 +23,35 @@ function EtatCellule() {
   const [userProfile, setUserProfile] = useState(null);
 
       // ================== KPI ==================
-    const totalEvangelises = reports.length;
-    
-    const totalIntegration = reports.filter(
-      (r) => r.type_evangelisation === "Integration"
-    ).length;
-    
-    const totalMinistere = reports.filter(
-      (r) => r.ministere_date
-    ).length;
-    
-    const totalBapteme = reports.filter(
-      (r) => r.date_baptise
-    ).length;
-    
-    const totalEnCours = reports.filter(
-      (r) =>
-        r.status_suivis_evangelises &&
-        r.status_suivis_evangelises.toLowerCase().includes("cours")
-    ).length;
+    // Juste après avoir combiné les deux datasets et filtré
+const combined = [...normalizedCellule, ...normalizedEglise].filter(r => r.cellule_full);
+
+// Total évangélisés
+const totalEvangelises = combined.length;
+
+// Total intégrés
+const totalIntegres = combined.filter(
+  r => r.status_suivis_evangelises?.toLowerCase().includes("intégr") || r.date_integration
+).length;
+const pctIntegres = totalEvangelises > 0 ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
+
+// En cours
+const totalEnCours = combined.filter(r => r.status_suivis_evangelises?.toLowerCase().includes("cours")).length;
+
+// Refus
+const totalRefus = combined.filter(r => r.status_suivis_evangelises?.toLowerCase().includes("refus")).length;
+
+// Total venus à l'église
+const totalVenus = dataEglise.length;
+
+// Total Ministère
+const totalMinistere = combined.filter(r => r.ministere_date).length;
+
+// Total Baptême
+const totalBapteme = combined.filter(r => r.date_baptise).length;
+
+// Total combiné pour % (évangelisés + venus à l'église)
+const totalCombined = totalEvangelises + totalVenus;
 
   const [kpis, setKpis] = useState({
   totalEvangelises: 0,

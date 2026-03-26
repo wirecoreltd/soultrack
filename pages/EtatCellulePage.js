@@ -76,8 +76,8 @@ function EtatCellule() {
         .select("id, prenom, nom");
       if (profilesError) throw profilesError;
 
-      //============================
-     // ================= ETAT_CELLULE =================
+     //============================
+ // ================= ETAT_CELLULE =================
 const { data: dataCellule, error: errorCellule } = await supabase
   .from("etat_cellule")
   .select("*")
@@ -86,27 +86,27 @@ const { data: dataCellule, error: errorCellule } = await supabase
 
 if (errorCellule) throw errorCellule;
 
-  // filtre date
-  if (filterDebut) {
-    query = query.gte("date_evangelise", filterDebut);
-  }
-  if (filterFin) {
-    query = query.lte("date_evangelise", filterFin);
-  }
+// filtre date
+if (filterDebut) {
+  query = query.gte("date_evangelise", filterDebut);
+}
+if (filterFin) {
+  query = query.lte("date_evangelise", filterFin);
+}
 
-  // filtre responsable si pas admin
-  if (!userProfile.roles?.includes("Administrateur")) {
-    query = query.eq("responsable_cellule", userProfile.id);
-  }
+// filtre responsable si pas admin
+if (!userProfile.roles?.includes("Administrateur")) {
+  query = query.eq("responsable_cellule", userProfile.id);
+}
 
-  const { data, count, error } = await query;
+const { data, count, error } = await query;
 
-  if (error) {
-    console.error(error);
-    return;
-  }
+if (error) {
+  console.error(error);
+  return;
+}
 
-  console.log("TOTAL EVANGELISES:", count);
+console.log("TOTAL EVANGELISES:", count);
 };
 
       // ================= MEMBRES_VENUS_PAR_EGLISE =================

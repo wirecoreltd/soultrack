@@ -21,6 +21,7 @@ function EtatCellule() {
   const [filterFin, setFilterFin] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
+  const [filterCellule, setFilterCellule] = useState(""); // "" = toutes les cellules
 
       // ================== KPI ==================
     const totalEvangelises = reports.length;
@@ -223,14 +224,14 @@ function EtatCellule() {
 
       // ================= KPI =================
 
+// ================= KPI =================
+
 // Filtrer selon cellule sélectionnée (ou toutes pour l'admin)
 const filteredReports = combined.filter((r) => {
-  // Si filterCellule est défini, on filtre ; sinon, on garde toutes
   const matchesCellule = filterCellule
     ? r.cellule_full.toLowerCase().includes(filterCellule.toLowerCase())
     : true;
 
-  // Filtre période
   const dateEvangelise = new Date(r.date_evangelise);
   const afterDebut = filterDebut ? dateEvangelise >= new Date(filterDebut) : true;
   const beforeFin = filterFin ? dateEvangelise <= new Date(filterFin) : true;
@@ -238,7 +239,7 @@ const filteredReports = combined.filter((r) => {
   return matchesCellule && afterDebut && beforeFin;
 });
 
-// Fonction pour normaliser texte (minuscule + supprimer accents)
+// Fonction pour normaliser texte (minuscule + retirer accents)
 const normalizeText = (text) =>
   text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
 

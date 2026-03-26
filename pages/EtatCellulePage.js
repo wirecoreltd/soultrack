@@ -24,91 +24,57 @@ function EtatCellule() {
   // ================= FETCH DATA =================
       const fetchReports = async () => {
   try {
-    // ================= USER =================
+    // Récupérer l'utilisateur connecté
     const session = await supabase.auth.getSession();
     const userId = session.data.session?.user?.id;
 
     if (!userId) {
       console.error("Utilisateur non connecté");
+      setReports([]);
+      setShowTable(false);
       return;
     }
 
-    // ================= PROFILE =================
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("roles")
-      .eq("id", userId)
-      .single();
+    // Récupérer toutes les cellules dont l'utilisateur est responsable
+    const { data: cellules, error: cellulesError } = await supabase
+      .from("cellules")
+      .select("id")
+      .eq("responsable_id", userId);
 
-    if (profileError) throw profileError;
+    if (cellulesError) throw cellulesError;
 
-    const roles = profile?.roles || [];
-    const isAdmin = roles.includes("Administrateur");
+    const celluleIds = cellules.map(c => c.id);
 
-    let data = [];
-    let error = null;
-
-    // ================= ADMIN =================
-    if (isAdmin) {
-      const res = await supabase
-        .from("etat_cellule")
-        .select("*")
-        .not("cellule_id", "is", null)
-        .order("date_evangelise", { ascending: false });
-
-      data = res.data;
-      error = res.error;
-    } else {
-      // ================= RESPONSABLE CELLULE =================
-
-      // Récupérer les cellules du responsable
-      const { data: cellules, error: cellulesError } = await supabase
-        .from("cellules")
-        .select("id")
-        .eq("responsable_id", userId);
-
-      if (cellulesError) throw cellulesError;
-
-      const celluleIds = cellules.map(c => c.id);
-
-      if (celluleIds.length === 0) {
-        setReports([]);
-        setShowTable(true);
-        return;
-      }
-
-      const res = await supabase
-        .from("etat_cellule")
-        .select("*")
-        .in("cellule_id", celluleIds)
-        .order("date_evangelise", { ascending: false });
-
-      data = res.data;
-      error = res.error;
+    if (celluleIds.length === 0) {
+      // Pas de cellule pour ce responsable
+      setReports([]);
+      setShowTable(true);
+      return;
     }
+
+    // Récupérer les rapports pour ces cellules uniquement
+    const { data, error } = await supabase
+      .from("etat_cellule")
+      .select("*")
+      .in("cellule_id", celluleIds)
+      .order("date_evangelise", { ascending: false });
 
     if (error) throw error;
 
-    // ================= FILTER DATE =================
+    // Filtrer par date si besoin
     let filtered = data;
-
     if (filterDebut) {
-      filtered = filtered.filter(r =>
-        new Date(r.date_evangelise) >= new Date(filterDebut)
-      );
+      filtered = filtered.filter(r => new Date(r.date_evangelise) >= new Date(filterDebut));
     }
-
     if (filterFin) {
-      filtered = filtered.filter(r =>
-        new Date(r.date_evangelise) <= new Date(filterFin)
-      );
+      filtered = filtered.filter(r => new Date(r.date_evangelise) <= new Date(filterFin));
     }
 
     setReports(filtered);
     setShowTable(true);
 
   } catch (err) {
-    console.error("Erreur fetch :", err);
+    console.error("Erreur fetch profile ou rapports :", err);
     setReports([]);
     setShowTable(false);
   }

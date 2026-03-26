@@ -15,190 +15,199 @@ export default function EtatCellulePage() {
 }
 
 function EtatCellule() {
+  const [userProfile, setUserProfile] = useState(null);
   const [reports, setReports] = useState([]);
-  const [expandedMonths, setExpandedMonths] = useState({});
+  const [showTable, setShowTable] = useState(false);
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
-  const [showTable, setShowTable] = useState(false);
-  const [userProfile, setUserProfile] = useState(null);
+  const [expandedMonths, setExpandedMonths] = useState({});
   const [kpis, setKpis] = useState({
-  totalEvangelises: 0,
-  totalVenus: 0,
-  totalIntegration: 0,
-  totalBapteme: 0,
-  totalMinistere: 0,
-  totalRefus: 0,
-  totalEncours: 0,
-  totalAttente: 0,
-});
+    totalEvangelises: 0,
+    totalVenus: 0,
+    totalIntegration: 0,
+    totalBapteme: 0,
+    totalMinistere: 0,
+    totalRefus: 0,
+    totalEncours: 0,
+    totalAttente: 0,
+  });
 
-     const fetchReports = async () => {
-  try {
-    if (!userProfile) return; // attendre profil
+  // ================== FETCH PROFIL ==================
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const { data: { user } = {} } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        if (error) {
+          console.error("Erreur fetch user profile:", error);
+          return;
+        }
+
+        setUserProfile(data);
+        console.log("Profil chargé :", data);
+      } catch (err) {
+        console.error("Erreur fetchUserProfile:", err);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  // ================== FETCH REPORTS ==================
+  const fetchReports = async () => {
+    if (!userProfile) return;
     setShowTable(false);
 
-    // ================== FETCH ==================
-    const { data: cellules, error: cellulesError } = await supabase
-      .from("cellules")
-      .select("id, cellule_full, responsable_id");
-    if (cellulesError) throw cellulesError;
+    try {
+      // --- Cellules ---
+      const { data: cellules, error: cellulesError } = await supabase
+        .from("cellules")
+        .select("id, cellule_full, responsable_id");
+      if (cellulesError) throw cellulesError;
 
-    const { data: allProfiles, error: profilesError } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom");
-    if (profilesError) throw profilesError;
+      // --- Profils ---
+      const { data: allProfiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom");
+      if (profilesError) throw profilesError;
 
-    const { data: dataCellule, error: errorCellule } = await supabase
-      .from("etat_cellule")
-      .select("*")
-      .not("cellule_id", "is", null)
-      .order("date_evangelise", { ascending: false });
-    if (errorCellule) throw errorCellule;
+      // --- Etat cellule ---
+      const { data: dataCellule, error: errorCellule } = await supabase
+        .from("etat_cellule")
+        .select("*")
+        .not("cellule_id", "is", null)
+        .order("date_evangelise", { ascending: false });
+      if (errorCellule) throw errorCellule;
 
-    const { data: dataEglise, error: errorEglise } = await supabase
-      .from("membres_venus_par_eglise")
-      .select("*")
-      .order("date_evangelise", { ascending: false });
-    if (errorEglise) throw errorEglise;
+      // --- Membres venus à l'église ---
+      const { data: dataEglise, error: errorEglise } = await supabase
+        .from("membres_venus_par_eglise")
+        .select("*")
+        .order("date_evangelise", { ascending: false });
+      if (errorEglise) throw errorEglise;
 
-    // ================== NORMALIZATION ==================
-    const addResponsableName = (arr) =>
-      (arr || []).map((r) => {
-        const cellule = cellules.find((c) => c.id === r.cellule_id);
-        const responsableProfile = allProfiles.find(
-          (p) => p.id === cellule?.responsable_id
+      // ================== NORMALIZATION ==================
+      const addResponsableName = (arr) =>
+        (arr || []).map((r) => {
+          const cellule = cellules.find((c) => c.id === r.cellule_id);
+          const responsableProfile = allProfiles.find(
+            (p) => p.id === cellule?.responsable_id
+          );
+          return {
+            ...r,
+            responsable_cellule: responsableProfile
+              ? `${responsableProfile.prenom} ${responsableProfile.nom}`
+              : "Inconnu",
+            cellule_full: cellule?.cellule_full || r.cellule_full,
+          };
+        });
+
+      const normalizedCellule = addResponsableName(dataCellule).map((r) => ({
+        ...r,
+        type_evangelisation: r.type_evangelisation || "Évangélisation",
+        nom_complet: `${r.prenom} ${r.nom}`,
+      }));
+
+      const normalizedEglise = addResponsableName(dataEglise).map((r) => ({
+        ...r,
+        type_evangelisation: r.type_integration || "Integration",
+        nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
+      }));
+
+      // ================== COMBINE ==================
+      let combined = [...normalizedCellule, ...normalizedEglise];
+
+      // Supprimer doublons
+      combined = combined.filter(
+        (v, i, a) => a.findIndex((t) => t.id === v.id) === i
+      );
+
+      // Supprimer sans cellule
+      combined = combined.filter((r) => r.cellule_full);
+
+      // Filtrage rôle
+      if (!userProfile.roles?.includes("Administrateur")) {
+        combined = combined.filter(
+          (r) =>
+            cellules.find((c) => c.cellule_full === r.cellule_full)
+              ?.responsable_id === userProfile.id
         );
-        return {
-          ...r,
-          responsable_cellule: responsableProfile
-            ? `${responsableProfile.prenom} ${responsableProfile.nom}`
-            : "Inconnu",
-          cellule_full: cellule?.cellule_full || r.cellule_full,
-        };
+      }
+
+      // Filtrage date
+      if (filterDebut) {
+        combined = combined.filter(
+          (r) => new Date(r.date_evangelise) >= new Date(filterDebut)
+        );
+      }
+      if (filterFin) {
+        combined = combined.filter(
+          (r) => new Date(r.date_evangelise) <= new Date(filterFin)
+        );
+      }
+
+      // ================== KPI ==================
+      const totalEvangelises = combined.filter((r) =>
+        r.type_evangelisation?.toLowerCase().includes("evangelisation")
+      ).length;
+
+      const totalVenus = combined.filter((r) =>
+        r.type_evangelisation?.toLowerCase().includes("integration")
+      ).length;
+
+      const totalIntegration = combined.filter((r) => r.date_integration).length;
+      const totalBapteme = combined.filter((r) => r.date_baptise).length;
+      const totalMinistere = combined.filter((r) => r.ministere_date).length;
+      const totalRefus = combined.filter((r) =>
+        r.status_suivis_evangelises?.toLowerCase().includes("refus")
+      ).length;
+      const totalEncours = combined.filter((r) =>
+        r.status_suivis_evangelises?.toLowerCase().includes("cours")
+      ).length;
+      const totalAttente = combined.filter((r) =>
+        r.status_suivis_evangelises?.toLowerCase().includes("attente")
+      ).length;
+
+      setKpis({
+        totalEvangelises,
+        totalVenus,
+        totalIntegration,
+        totalBapteme,
+        totalMinistere,
+        totalRefus,
+        totalEncours,
+        totalAttente,
       });
 
-    const normalizedCellule = addResponsableName(dataCellule).map((r) => ({
-      id: r.id,
-      nom: r.nom,
-      prenom: r.prenom,
-      nom_complet: `${r.prenom} ${r.nom}`,
-      type_evangelisation: r.type_evangelisation || "Évangélisation",
-      status_suivis_evangelises: r.status_suivis_evangelises,
-      date_evangelise: r.date_evangelise,
-      date_suivi: r.date_suivi,
-      date_integration: r.date_integration,
-      date_baptise: r.date_baptise,
-      ministere_date: r.ministere_date,
-      cellule_full: r.cellule_full,
-      responsable_cellule: r.responsable_cellule,
-    }));
-
-    const normalizedEglise = addResponsableName(dataEglise).map((r) => ({
-      id: r.id,
-      nom: r.nom || "",
-      prenom: r.prenom || "",
-      nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
-      type_evangelisation: r.type_integration || "Integration",
-      status_suivis_evangelises: r.statut || "Inconnu",
-      date_evangelise: r.date_evangelise,
-      date_suivi: r.envoyer_au_suivi_le,
-      date_integration: r.date_integration,
-      date_baptise: r.bapteme_date,
-      ministere_date: r.debut_ministere,
-      cellule_full: r.cellule_full,
-      responsable_cellule: r.responsable_cellule,
-    }));
-
-    // ================== COMBINE ==================
-    let combined = [...normalizedCellule, ...normalizedEglise];
-
-    // Supprimer doublons
-    combined = combined.filter(
-      (v, i, a) => a.findIndex((t) => t.id === v.id) === i
-    );
-
-    // Supprimer les entrées sans cellule
-    combined = combined.filter((r) => r.cellule_full);
-
-    // Filtrage par rôle : si non admin, ne voir que sa cellule
-    if (!userProfile.roles?.includes("Administrateur")) {
-      combined = combined.filter(
-        (r) =>
-          cellules.find((c) => c.cellule_full === r.cellule_full)
-            ?.responsable_id === userProfile.id
-      );
+      setReports(combined);
+      setShowTable(true);
+    } catch (err) {
+      console.error("Erreur fetchReports:", err);
+      setReports([]);
+      setShowTable(false);
     }
-
-    // Filtrage par date
-    if (filterDebut) {
-      combined = combined.filter(
-        (r) => new Date(r.date_evangelise) >= new Date(filterDebut)
-      );
-    }
-    if (filterFin) {
-      combined = combined.filter(
-        (r) => new Date(r.date_evangelise) <= new Date(filterFin)
-      );
-    }
-
-    // ================== KPI ==================
-    const totalEvangelises = combined.filter((r) =>
-      r.type_evangelisation?.toLowerCase().includes("evangelisation")
-    ).length;
-
-    const totalVenus = combined.filter((r) =>
-      r.type_evangelisation?.toLowerCase().includes("integration")
-    ).length;
-
-    const totalIntegration = combined.filter((r) => r.date_integration).length;
-    const totalBapteme = combined.filter((r) => r.date_baptise).length;
-    const totalMinistere = combined.filter((r) => r.ministere_date).length;
-    const totalRefus = combined.filter((r) =>
-      r.status_suivis_evangelises?.toLowerCase().includes("refus")
-    ).length;
-    const totalEncours = combined.filter((r) =>
-      r.status_suivis_evangelises?.toLowerCase().includes("cours")
-    ).length;
-    const totalAttente = combined.filter((r) =>
-      r.status_suivis_evangelises?.toLowerCase().includes("attente")
-    ).length; 
-
-    setReports(combined);
-    setShowTable(true);
-  } catch (error) {
-    console.error("Erreur fetch :", error);
-    setReports([]);
-    setShowTable(false);
-  }
-};
-
-  // ================= UTIL =================
-  const getStatusStyles = (status) => {
-    if (!status) return { border: "border-gray-400", text: "text-gray-300" };
-    const s = status.toLowerCase();
-    if (s.includes("intégr") || s.includes("integre"))
-      return { border: "border-green-500", text: "text-green-400" };
-    if (s.includes("refus")) return { border: "border-red-500", text: "text-red-400" };
-    if (s.includes("cours") || s.includes("suivi"))
-      return { border: "border-orange-500", text: "text-orange-400" };
-    return { border: "border-blue-500", text: "text-blue-400" };
   };
 
-  const getMonthNameFR = (monthIndex) => {
-    const months = [
-      "Janvier","Février","Mars","Avril","Mai","Juin",
-      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
-    ];
-    return months[monthIndex] || "";
-  };
+  // ================== UTILS ==================
+  const toggleMonth = (monthKey) =>
+    setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
+
+  const getMonthNameFR = (monthIndex) => [
+    "Janvier","Février","Mars","Avril","Mai","Juin",
+    "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
+  ][monthIndex] || "";
 
   const formatDateFR = (dateString) => {
     if (!dateString) return "";
     const d = new Date(dateString);
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
+    return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
   };
 
   const groupByMonth = (reports) => {
@@ -212,50 +221,33 @@ function EtatCellule() {
     return map;
   };
 
-  const toggleMonth = (monthKey) => {
-    setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
-  };
-
   const groupedReports = Object.entries(groupByMonth(reports))
-    .sort((a, b) => {
-      const [yearA, monthA] = a[0].split("-").map(Number);
-      const [yearB, monthB] = b[0].split("-").map(Number);
-      return new Date(yearB, monthB) - new Date(yearA, monthA);
-    });
+    .sort((a,b) => new Date(b[0].split("-")[0], b[0].split("-")[1]) - new Date(a[0].split("-")[0], a[0].split("-")[1]));
 
-  // ================= RENDER =================
+  // ================== RENDER ==================
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
+
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
         État de <span className="text-amber-300">Cellule</span>
       </h1>
 
       {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
-        <input
-          type="date"
-          value={filterDebut}
-          onChange={(e) => setFilterDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <input
-          type="date"
-          value={filterFin}
-          onChange={(e) => setFilterFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-            
+        <input type="date" value={filterDebut} onChange={e => setFilterDebut(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+        <input type="date" value={filterFin} onChange={e => setFilterFin(e.target.value)}
+          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+
         <button
           onClick={fetchReports}
           disabled={!userProfile}
-          className={`bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] ${
-            !userProfile ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          className={`bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition-colors ${!userProfile ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           Générer
         </button>
-     </div>
+      </div>
   
           {/* ================= KPIs ================= */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mt-6 w-full max-w-7xl mx-auto">

@@ -245,6 +245,7 @@ function EtatCellule() {
           onChange={(e) => setFilterFin(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
+            
         <button
   onClick={fetchReports}
   disabled={!userProfile}
@@ -252,6 +253,7 @@ function EtatCellule() {
 >
   Générer
 </button>
+ </div>
 
   
           {/* ================= KPIs ================= */}

@@ -18,6 +18,7 @@ export default function AddMember() {
     age: "",
     statut: "",
     venu: "",
+    date_venu: new Date().toISOString().slice(0, 10), // Ajout de la date de venue par défaut
     besoin: [],
     besoinLibre: "",
     is_whatsapp: false,
@@ -40,7 +41,6 @@ export default function AddMember() {
     "Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"
   ];
 
-  // Récupération eglise_id et branche_id de l'utilisateur connecté
   useEffect(() => {
     const fetchUserEglise = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -65,7 +65,6 @@ export default function AddMember() {
     fetchUserEglise();
   }, []);
 
-  // Vérification du token
   useEffect(() => {
     if (!token) return;
 
@@ -115,7 +114,6 @@ export default function AddMember() {
     e.preventDefault();
 
     try {
-      // Validation du téléphone
       if (!noPhone && !formData.telephone) throw new Error("Le téléphone est requis ou cochez 'Pas de téléphone'");
 
       const finalBesoin = showBesoinLibre && formData.besoinLibre
@@ -124,13 +122,13 @@ export default function AddMember() {
 
       const dataToSend = {
         ...formData,
+        date_venu: formData.date_venu, // Envoi de date_venu
         besoin: finalBesoin,
         etat_contact: "nouveau",
       };
 
       delete dataToSend.besoinLibre;
 
-      // Vérifier si le téléphone existe déjà
       if (!noPhone) {
         const { data: existing } = await supabase
           .from("membres_complets")
@@ -147,7 +145,6 @@ export default function AddMember() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
-      // Reset du formulaire
       setFormData(prev => ({
         ...prev,
         sexe: "",
@@ -158,6 +155,7 @@ export default function AddMember() {
         age: "",
         statut: "",
         venu: "",
+        date_venu: new Date().toISOString().slice(0, 10),
         besoin: [],
         besoinLibre: "",
         is_whatsapp: false,
@@ -184,6 +182,7 @@ export default function AddMember() {
       age: "",
       statut: "",
       venu: "",
+      date_venu: new Date().toISOString().slice(0, 10),
       besoin: [],
       besoinLibre: "",
       is_whatsapp: false,
@@ -220,27 +219,21 @@ export default function AddMember() {
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
-          {/* Prénom */}
           <label className="text-sm sm:text-base font-semibold">Prénom</label>
-          <input
-            type="text"
-            value={formData.prenom}
-            onChange={e => setFormData({...formData, prenom: e.target.value})}
-            className="input"
-            required
-          />
-
-          {/* Nom */}
+          <input type="text" value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} className="input" required />
           <label className="text-sm sm:text-base font-semibold">Nom</label>
+          <input type="text" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} className="input" required />
+
+          {/* Date de venue */}
+          <label className="text-sm sm:text-base font-semibold">Date de venue</label>
           <input
-            type="text"
-            value={formData.nom}
-            onChange={e => setFormData({...formData, nom: e.target.value})}
+            type="date"
+            value={formData.date_venu}
+            onChange={e => setFormData({...formData, date_venu: e.target.value})}
             className="input"
             required
           />
 
-          {/* Téléphone */}
           <div className="mb-4">
             <label className="block font-medium mb-1">Téléphone</label>
             <input
@@ -253,59 +246,32 @@ export default function AddMember() {
               placeholder="Ex: 5 1234 5678"
             />
             <label className="flex items-center mt-2 space-x-2">
-              <input
-                type="checkbox"
-                checked={noPhone}
-                onChange={(e) => {
-                  setNoPhone(e.target.checked);
-                  if (e.target.checked) setFormData(prev => ({ ...prev, telephone: "Pas de téléphone" }));
-                  else setFormData(prev => ({ ...prev, telephone: "" }));
-                }}
-              />
+              <input type="checkbox" checked={noPhone} onChange={(e) => {
+                setNoPhone(e.target.checked);
+                if (e.target.checked) setFormData(prev => ({ ...prev, telephone: "Pas de téléphone" }));
+                else setFormData(prev => ({ ...prev, telephone: "" }));
+              }}/>
               <span>La personne n'a pas de téléphone</span>
             </label>
           </div>
 
-          {/* WhatsApp */}
           <label className="flex items-center gap-2 text-sm sm:text-base">
-            <input
-              type="checkbox"
-              checked={formData.is_whatsapp}
-              onChange={e => setFormData({...formData, is_whatsapp: e.target.checked})}
-            />
+            <input type="checkbox" checked={formData.is_whatsapp} onChange={e => setFormData({...formData, is_whatsapp: e.target.checked})} />
             Numéro WhatsApp
           </label>
 
-          {/* Ville */}
           <label className="text-sm sm:text-base font-semibold">Ville</label>
-          <input
-            type="text"
-            value={formData.ville}
-            onChange={e => setFormData({...formData, ville: e.target.value})}
-            className="input"
-          />
+          <input type="text" value={formData.ville} onChange={e => setFormData({...formData, ville: e.target.value})} className="input" />
 
-          {/* Civilité */}
           <label className="text-sm sm:text-base font-semibold">Civilité</label>
-          <select
-            value={formData.sexe}
-            onChange={e => setFormData({...formData, sexe: e.target.value})}
-            className="input"
-            required
-          >
+          <select value={formData.sexe} onChange={e => setFormData({...formData, sexe: e.target.value})} className="input" required>
             <option value="">-- Choisir --</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
           </select>
 
-          {/* Age */}
           <label className="text-sm sm:text-base font-semibold">Âge</label>
-          <select
-            value={formData.age}
-            onChange={e => setFormData({...formData, age: e.target.value})}
-            className="input"
-            required
-          >
+          <select value={formData.age} onChange={e => setFormData({...formData, age: e.target.value})} className="input" required>
             <option value="">-- Choisir --</option>
             <option value="12-17 ans">12-17 ans</option>
             <option value="18-25 ans">18-25 ans</option>
@@ -316,14 +282,8 @@ export default function AddMember() {
             <option value="70 ans et plus">70 ans et plus</option>
           </select>
 
-          {/* Statut */}
           <label className="text-sm sm:text-base font-semibold">Statut</label>
-          <select
-            value={formData.statut}
-            onChange={e => setFormData({...formData, statut: e.target.value})}
-            className="input"
-            required
-          >
+          <select value={formData.statut} onChange={e => setFormData({...formData, statut: e.target.value})} className="input" required>
             <option value="">-- Choisir --</option>
             <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
             <option value="a déjà son église">A déjà son église</option>
@@ -331,14 +291,8 @@ export default function AddMember() {
             <option value="visiteur">Visiteur</option>
           </select>
 
-          {/* Venue */}
           <label className="text-sm sm:text-base font-semibold">Comment est-il venu ?</label>
-          <select
-            value={formData.venu}
-            onChange={e => setFormData({...formData, venu: e.target.value})}
-            className="input"
-            required
-          >
+          <select value={formData.venu} onChange={e => setFormData({...formData, venu: e.target.value})} className="input" required>
             <option value="">-- Choisir --</option>
             <option value="invité">Invité</option>
             <option value="réseaux">Réseaux</option>
@@ -346,18 +300,9 @@ export default function AddMember() {
             <option value="autre">Autre</option>
           </select>
 
-          {/* Prière du salut */}
           <label className="text-sm sm:text-base font-semibold">Prière du salut</label>
-          <select
-            className="input"
-            value={formData.priere_salut}
-            required
-            onChange={e => setFormData({
-              ...formData,
-              priere_salut: e.target.value,
-              type_conversion: e.target.value === "Oui" ? formData.type_conversion : "",
-            })}
-          >
+          <select className="input" value={formData.priere_salut} required
+            onChange={e => setFormData({...formData, priere_salut: e.target.value, type_conversion: e.target.value === "Oui" ? formData.type_conversion : ""})}>
             <option value="">-- Choisir --</option>
             <option value="Oui">Oui</option>
             <option value="Non">Non</option>
@@ -366,12 +311,7 @@ export default function AddMember() {
           {formData.priere_salut === "Oui" && (
             <>
               <label className="text-sm sm:text-base font-semibold">Type de conversion</label>
-              <select
-                className="input"
-                value={formData.type_conversion}
-                onChange={e => setFormData({...formData, type_conversion: e.target.value})}
-                required
-              >
+              <select className="input" value={formData.type_conversion} onChange={e => setFormData({...formData, type_conversion: e.target.value})} required>
                 <option value="">-- Choisir --</option>
                 <option value="Nouveau converti">Nouveau converti</option>
                 <option value="Réconciliation">Réconciliation</option>
@@ -379,52 +319,26 @@ export default function AddMember() {
             </>
           )}
 
-          {/* Besoins */}
           <label className="text-sm sm:text-base font-bold mb-1">Difficultés / Besoins</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-1 text-sm">
-                <input
-                  type="checkbox"
-                  value={item}
-                  checked={formData.besoin.includes(item)}
-                  onChange={handleBesoinChange}
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                />
+                <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} className="w-4 h-4 sm:w-5 sm:h-5" />
                 {item}
               </label>
             ))}
             <label className="flex items-center gap-1 text-sm">
-              <input
-                type="checkbox"
-                value="Autre"
-                checked={showBesoinLibre}
-                onChange={handleBesoinChange}
-                className="w-4 h-4 sm:w-5 sm:h-5"
-              />
+              <input type="checkbox" value="Autre" checked={showBesoinLibre} onChange={handleBesoinChange} className="w-4 h-4 sm:w-5 sm:h-5" />
               Autre
             </label>
           </div>
 
           {showBesoinLibre && (
-            <input
-              type="text"
-              placeholder="Précisez..."
-              value={formData.besoinLibre}
-              onChange={e => setFormData({...formData, besoinLibre: e.target.value})}
-              className="input mb-2"
-            />
+            <input type="text" placeholder="Précisez..." value={formData.besoinLibre} onChange={e => setFormData({...formData, besoinLibre: e.target.value})} className="input mb-2" />
           )}
 
-          {/* Infos supplémentaires */}
           <label className="text-sm sm:text-base font-semibold">Informations supplémentaires</label>
-          <textarea
-            placeholder="..."
-            rows={2}
-            value={formData.infos_supplementaires}
-            onChange={e => setFormData({...formData, infos_supplementaires: e.target.value})}
-            className="input"
-          />
+          <textarea placeholder="..." rows={2} value={formData.infos_supplementaires} onChange={e => setFormData({...formData, infos_supplementaires: e.target.value})} className="input" />
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
             <button type="button" onClick={handleCancel} className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">

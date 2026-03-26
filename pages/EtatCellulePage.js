@@ -22,8 +22,9 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
 
   // ================= FETCH DATA =================
-     const fetchReports = async () => {
+      const fetchReports = async () => {
   try {
+    // ================= USER =================
     const session = await supabase.auth.getSession();
     const userId = session.data.session?.user?.id;
 
@@ -32,9 +33,10 @@ function EtatCellule() {
       return;
     }
 
+    // ================= PROFILE =================
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("roles, eglise_id, branche_id")
+      .select("roles")
       .eq("id", userId)
       .single();
 
@@ -42,37 +44,24 @@ function EtatCellule() {
 
     const roles = profile?.roles || [];
     const isAdmin = roles.includes("Administrateur");
-    const userEgliseId = profile?.eglise_id;
-    const userBrancheId = profile?.branche_id;
 
     let data = [];
     let error = null;
 
+    // ================= ADMIN =================
     if (isAdmin) {
-      // ADMIN : on prend toutes les cellules
       const res = await supabase
         .from("etat_cellule")
         .select("*")
         .not("cellule_id", "is", null)
-        .in("status_suivis_evangelises", ["Intégré", "Refus", "En attente", "En suivi"])
         .order("date_evangelise", { ascending: false });
 
       data = res.data;
       error = res.error;
     } else {
-      // RESPONSABLE : filtrer membres actifs/nouveaux
-      const { data: membres, error: membresError } = await supabase
-        .from("membres_complets")
-        .select("id")
-        .is("sent_to_cellule", null)
-        .neq("etat_contact", "supprime")
-        .in("statut", ["actif", "nouveau"]);
+      // ================= RESPONSABLE CELLULE =================
 
-      if (membresError) throw membresError;
-
-      const membreIds = membres.map(m => m.id);
-
-      // Récupérer les cellules dont l'utilisateur est responsable
+      // Récupérer les cellules du responsable
       const { data: cellules, error: cellulesError } = await supabase
         .from("cellules")
         .select("id")
@@ -81,39 +70,43 @@ function EtatCellule() {
       if (cellulesError) throw cellulesError;
 
       const celluleIds = cellules.map(c => c.id);
+
       if (celluleIds.length === 0) {
         setReports([]);
         setShowTable(true);
         return;
       }
 
-      // Fetch état cellule uniquement pour les membres valides
       const res = await supabase
         .from("etat_cellule")
         .select("*")
         .in("cellule_id", celluleIds)
-        .in("status_suivis_evangelises", ["Intégré", "Refus", "En cours"])
-        .eq("eglise_id", userEgliseId)
-        .eq("branche_id", userBrancheId);
+        .order("date_evangelise", { ascending: false });
 
-      // Filtrer côté JS par membre
-      data = res.data.filter(r => membreIds.includes(r.membre_id));
+      data = res.data;
       error = res.error;
     }
 
     if (error) throw error;
 
-    // Filtre date
+    // ================= FILTER DATE =================
     let filtered = data;
+
     if (filterDebut) {
-      filtered = filtered.filter(r => new Date(r.date_evangelise) >= new Date(filterDebut));
+      filtered = filtered.filter(r =>
+        new Date(r.date_evangelise) >= new Date(filterDebut)
+      );
     }
+
     if (filterFin) {
-      filtered = filtered.filter(r => new Date(r.date_evangelise) <= new Date(filterFin));
+      filtered = filtered.filter(r =>
+        new Date(r.date_evangelise) <= new Date(filterFin)
+      );
     }
 
     setReports(filtered);
     setShowTable(true);
+
   } catch (err) {
     console.error("Erreur fetch :", err);
     setReports([]);

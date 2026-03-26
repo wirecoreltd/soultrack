@@ -22,99 +22,93 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
 
   // ================= FETCH DATA =================
-      const fetchReports = async () => {
-      try {
-        setShowTable(false);
-    
-        // ================= FETCH DATA =================
-        // Récupérer etat_cellule
-        const { data: dataCellule, error: errorCellule } = await supabase
-          .from("etat_cellule")
-          .select("*")
-          .not("cellule_id", "is", null)
-          .order("date_evangelise", { ascending: false });
-    
-        if (errorCellule) throw errorCellule;
-    
-        // Récupérer membres_venus_par_eglise
-        const { data: dataEglise, error: errorEglise } = await supabase
-          .from("membres_venus_par_eglise")
-          .select("*")
-          .order("date_evangelise", { ascending: false });
-    
-        if (errorEglise) throw errorEglise;
-    
-        // ================= NORMALISER LES DONNÉES =================
-        const normalizedCellule = (dataCellule || []).map((r) => ({
-          id: r.id,
-          nom: r.nom,
-          prenom: r.prenom,
-          nom_complet: `${r.prenom} ${r.nom}`,
-          type_evangelisation: r.type_evangelisation || "Evangélisation",
-          status_suivis_evangelises: r.status_suivis_evangelises,
-          date_evangelise: r.date_evangelise,
-          date_suivi: r.date_suivi,
-          date_integration: r.date_integration,
-          date_baptise: r.date_baptise,
-          ministere_date: r.ministere_date,
-          cellule_full: r.cellule_full,
-          responsable_cellule: r.responsable_cellule,
-          cellule_id: r.cellule_id,
-        }));
-    
-        const normalizedEglise = (dataEglise || []).map((r) => ({
-          id: r.id,
-          nom: r.nom || "",
-          prenom: r.prenom || "",
-          nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
-          type_evangelisation: r.type_integration || "Integration",
-          status_suivis_evangelises: r.statut || "Inconnu",
-          date_evangelise: r.date_evangelise,
-          date_suivi: r.envoyer_au_suivi_le,
-          date_integration: r.date_integration,
-          date_baptise: r.bapteme_date,
-          ministere_date: r.debut_ministere,
-          cellule_full: r.cellule_full,
-          responsable_cellule: r.responsable_cellule,
-          cellule_id: r.cellule_id,
-        }));
-    
-        // ================= COMBINER LES DONNÉES =================
-        let combined = [...normalizedCellule, ...normalizedEglise];
-    
-        // Filtrer contacts sans cellule
-        combined = combined.filter((r) => r.cellule_full);
-    
-        // ================= FILTRAGE PAR RÔLE =================
-        const isAdmin = userRole === "Administrateur"; // récupéré depuis le contexte auth
-        if (!isAdmin) {
-          combined = combined.filter(
-            (r) =>
-              r.responsable_cellule === userId || // responsables directs
-              r.cellule_id === userCelluleId // membres de ses cellules
-          );
-        }
-    
-        // ================= FILTRAGE PAR DATE =================
-        if (filterDebut) {
-          combined = combined.filter(
-            (r) => new Date(r.date_evangelise) >= new Date(filterDebut)
-          );
-        }
-        if (filterFin) {
-          combined = combined.filter(
-            (r) => new Date(r.date_evangelise) <= new Date(filterFin)
-          );
-        }
-    
-        setReports(combined);
-        setShowTable(true);
-      } catch (error) {
-        console.error("Erreur fetch :", error);
-        setReports([]);
-        setShowTable(false);
-      }
-    };
+     const fetchReports = async () => {
+  try {
+    setShowTable(false);
+
+    // ================= FETCH USER PROFILE =================
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, role, cellule_id")
+      .eq("id", supabase.auth.user()?.id) // récupère l'ID du user connecté
+      .single();
+
+    if (profileError) throw profileError;
+
+    const userId = profile.id;
+    const userRole = profile.role || "Membre";
+    const userCelluleId = profile.cellule_id;
+
+    // ================= FETCH DATA =================
+    const { data: dataCellule, error: errorCellule } = await supabase
+      .from("etat_cellule")
+      .select("*")
+      .not("cellule_id", "is", null)
+      .order("date_evangelise", { ascending: false });
+
+    if (errorCellule) throw errorCellule;
+
+    const { data: dataEglise, error: errorEglise } = await supabase
+      .from("membres_venus_par_eglise")
+      .select("*")
+      .order("date_evangelise", { ascending: false });
+
+    if (errorEglise) throw errorEglise;
+
+    // ================= NORMALISATION =================
+    const normalizedCellule = (dataCellule || []).map((r) => ({
+      ...r,
+      nom_complet: `${r.prenom} ${r.nom}`,
+      type_evangelisation: r.type_evangelisation || "Evangélisation",
+      status_suivis_evangelises: r.status_suivis_evangelises,
+      cellule_id: r.cellule_id,
+    }));
+
+    const normalizedEglise = (dataEglise || []).map((r) => ({
+      ...r,
+      nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
+      type_evangelisation: r.type_integration || "Integration",
+      status_suivis_evangelises: r.statut || "Inconnu",
+      cellule_id: r.cellule_id,
+    }));
+
+    // ================= COMBINE =================
+    let combined = [...normalizedCellule, ...normalizedEglise];
+
+    // Filtrer contacts sans cellule
+    combined = combined.filter((r) => r.cellule_full);
+
+    // ================= FILTRAGE PAR ROLE =================
+    const isAdmin = userRole === "Administrateur";
+    if (!isAdmin) {
+      combined = combined.filter(
+        (r) =>
+          r.responsable_cellule === userId || // responsables directs
+          r.cellule_id === userCelluleId // membres de ses cellules
+      );
+    }
+
+    // ================= FILTRAGE PAR DATE =================
+    if (filterDebut) {
+      combined = combined.filter(
+        (r) => new Date(r.date_evangelise) >= new Date(filterDebut)
+      );
+    }
+    if (filterFin) {
+      combined = combined.filter(
+        (r) => new Date(r.date_evangelise) <= new Date(filterFin)
+      );
+    }
+
+    setReports(combined);
+    setShowTable(true);
+  } catch (error) {
+    console.error("Erreur fetch :", error);
+    setReports([]);
+    setShowTable(false);
+  }
+};
+  
   // ================= UTIL =================
   const getStatusStyles = (status) => {
     if (!status) return { border: "border-gray-400", text: "text-gray-300" };

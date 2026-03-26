@@ -20,23 +20,17 @@ function EtatCellule() {
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
   const [showTable, setShowTable] = useState(false);
-  const [userId, setUserId] = useState(null);
-  const [userRole, setUserRole] = useState(null);
 
   // ================= FETCH DATA =================
-  const fetchReports = async (currentUserId, currentUserRole) => {
+  const fetchReports = async () => {
     try {
       setShowTable(false);
-
-      // Récupérer toutes les cellules avec leur responsable
-      const { data: cellules } = await supabase
-        .from("cellules")
-        .select("id,responsable_id");
 
       // Récupérer etat_cellule
       const { data: dataCellule, error: errorCellule } = await supabase
         .from("etat_cellule")
         .select("*")
+        .not("cellule_id", "is", null)
         .order("date_evangelise", { ascending: false });
 
       if (errorCellule) throw errorCellule;
@@ -49,14 +43,8 @@ function EtatCellule() {
 
       if (errorEglise) throw errorEglise;
 
-      // Ajouter responsable_cellule à chaque entrée
-      const addResponsable = (arr) =>
-        (arr || []).map((r) => {
-          const cellule = cellules.find((c) => c.id === r.cellule_id);
-          return { ...r, responsable_cellule: cellule?.responsable_id || null };
-        });
-
-      let normalizedCellule = addResponsable(dataCellule).map((r) => ({
+      // Normaliser les deux datasets
+      const normalizedCellule = (dataCellule || []).map((r) => ({
         id: r.id,
         nom: r.nom,
         prenom: r.prenom,
@@ -69,9 +57,10 @@ function EtatCellule() {
         date_baptise: r.date_baptise,
         ministere_date: r.ministere_date,
         cellule_full: r.cellule_full,
+        responsable_cellule: r.responsable_cellule,
       }));
 
-      let normalizedEglise = addResponsable(dataEglise).map((r) => ({
+      const normalizedEglise = (dataEglise || []).map((r) => ({
         id: r.id,
         nom: r.nom || "",
         prenom: r.prenom || "",
@@ -84,23 +73,14 @@ function EtatCellule() {
         date_baptise: r.bapteme_date,
         ministere_date: r.debut_ministere,
         cellule_full: r.cellule_full,
+        responsable_cellule: r.responsable_cellule,
       }));
 
-      // Combiner datasets
+      // Combiner et filtrer les doublons
       let combined = [...normalizedCellule, ...normalizedEglise];
-
-      // Supprimer les doublons par id
-      combined = combined.filter(
-        (v, i, a) => a.findIndex((t) => t.id === v.id) === i
-      );
 
       // Filtrer contacts sans cellule
       combined = combined.filter((r) => r.cellule_full);
-
-      // Filtrer selon le rôle
-      if (currentUserRole !== "Administrateur") {
-        combined = combined.filter((r) => r.responsable_cellule === currentUserId);
-      }
 
       // Filtrer par date si besoin
       if (filterDebut) {
@@ -122,36 +102,6 @@ function EtatCellule() {
       setShowTable(false);
     }
   };
-
-  // ================= INIT USER =================
-  useEffect(() => {
-    const init = async () => {
-      try {
-        // Récupérer utilisateur connecté
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError) throw authError;
-        if (!user) throw new Error("Utilisateur non connecté");
-
-        // Récupérer son profil pour avoir le rôle
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-        if (profileError) throw profileError;
-
-        setUserId(user.id);
-        setUserRole(profile?.role);
-
-        // Puis fetch les rapports
-        fetchReports(user.id, profile?.role);
-      } catch (err) {
-        console.error("Erreur init :", err);
-      }
-    };
-
-    init();
-  }, []);
 
   // ================= UTIL =================
   const getStatusStyles = (status) => {
@@ -227,7 +177,7 @@ function EtatCellule() {
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
-          onClick={() => fetchReports(userId, userRole)}
+          onClick={fetchReports}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
           Générer
@@ -238,7 +188,7 @@ function EtatCellule() {
       {showTable && (
         <div className="w-full flex justify-center mt-6 mb-6">
           <div className="w-full max-w-7xl">
-            {/* Desktop */}
+            {/* DESKTOP */}
             <div className="hidden md:block w-full overflow-x-auto">
               <div className="w-max mx-auto space-y-2 bg-white/5 p-2 rounded-xl">
                 <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
@@ -297,7 +247,7 @@ function EtatCellule() {
               </div>
             </div>
 
-            {/* Mobile */}
+            {/* MOBILE */}
             <div className="md:hidden space-y-4">
               {groupedReports.map(([monthKey, rows]) => {
                 const [year, monthIndex] = monthKey.split("-").map(Number);

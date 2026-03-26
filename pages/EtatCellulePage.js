@@ -40,16 +40,16 @@ function EtatCellule() {
   .eq("id", userId)
   .single();
 
-if (profileError) {
-  console.error("Erreur profile :", profileError);
-  return;
-}
-
-const roles = profile?.roles || [];
-const isAdmin = roles.includes("Administrateur");
-
-const userEgliseId = profile?.eglise_id;
-const userBrancheId = profile?.branche_id;
+    if (Error) {
+      console.error("Erreur profile :", profileError);
+      return;
+    }
+    
+    const roles = profile?.roles || [];
+    const isAdmin = roles.includes("Administrateur");
+    
+    const userEgliseId = profile?.eglise_id;
+    const userBrancheId = profile?.branche_id;
       
           let data = [];
           let error = null;
@@ -67,6 +67,15 @@ const userBrancheId = profile?.branche_id;
             error = res.error;
       
           } else {
+
+            //===================
+            const { data, error } = await supabase
+  .from('membres_complets')
+  .select('*')
+  .is('sent_to_cellule', null)
+  .neq('etat_contact', 'supprime')
+  .in('statut', ['actif', 'nouveau'])
+            
             // ================= RESPONSABLE =================
             const { data: cellules, error: cellulesError } = await supabase
               .from("cellules")

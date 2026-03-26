@@ -223,55 +223,46 @@ function EtatCellule() {
 
       // ================= KPI =================
 
-// Filtrer selon cellule et période
+// Filtrer selon cellule sélectionnée (ou toutes pour l'admin)
 const filteredReports = combined.filter((r) => {
-  if (!r.cellule_full) return false;
-
-  // Filtre cellule (ici Curepipe, adapter si besoin)
-  const isCurepipe = r.cellule_full.toLowerCase().includes("curepipe");
+  // Si filterCellule est défini, on filtre ; sinon, on garde toutes
+  const matchesCellule = filterCellule
+    ? r.cellule_full.toLowerCase().includes(filterCellule.toLowerCase())
+    : true;
 
   // Filtre période
   const dateEvangelise = new Date(r.date_evangelise);
   const afterDebut = filterDebut ? dateEvangelise >= new Date(filterDebut) : true;
   const beforeFin = filterFin ? dateEvangelise <= new Date(filterFin) : true;
 
-  return isCurepipe && afterDebut && beforeFin;
+  return matchesCellule && afterDebut && beforeFin;
 });
 
 // Fonction pour normaliser texte (minuscule + supprimer accents)
 const normalizeText = (text) =>
   text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
 
-// Total évangélisés (tous types d’évangélisation)
+// KPI dynamiques
 const totalEvangelises = filteredReports.filter((r) =>
   normalizeText(r.type_evangelisation).includes("evangelisation")
 ).length;
 
-// Total venus à l'église (type Integration)
 const totalVenus = filteredReports.filter((r) =>
   normalizeText(r.type_evangelisation).includes("integration")
 ).length;
 
-// Total intégration
 const totalIntegration = filteredReports.filter((r) => r.date_integration).length;
-
-// Total baptême
 const totalBapteme = filteredReports.filter((r) => r.date_baptise).length;
-
-// Total ministère
 const totalMinistere = filteredReports.filter((r) => r.ministere_date).length;
 
-// Total refus
 const totalRefus = filteredReports.filter((r) =>
   normalizeText(r.status_suivis_evangelises).includes("refus")
 ).length;
 
-// Total en cours
 const totalEncours = filteredReports.filter((r) =>
   normalizeText(r.status_suivis_evangelises).includes("cours")
 ).length;
 
-// Total en attente
 const totalAttente = filteredReports.filter((r) =>
   normalizeText(r.status_suivis_evangelises).includes("attente")
 ).length;

@@ -20,18 +20,36 @@ function EtatCellule() {
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
   const [showTable, setShowTable] = useState(false);
+  const [userId, setUserId] = useState(null);
+  const [userRole, setUserRole] = useState(null);
 
   // ================= FETCH DATA =================
-     const fetchReports = async () => {
+  const fetchReports = async () => {
     try {
       setShowTable(false);
 
-      // Récupérer toutes les cellules avec leur responsable
+      // ===================== Récupérer utilisateur et rôle =====================
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      if (!user) throw new Error("Utilisateur non connecté");
+
+      setUserId(user.id);
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+      if (profileError) throw profileError;
+
+      setUserRole(profile?.role);
+
+      // ===================== Récupérer toutes les cellules =====================
       const { data: cellules } = await supabase
         .from("cellules")
         .select("id,responsable_id");
 
-      // Récupérer etat_cellule
+      // ===================== Récupérer etat_cellule =====================
       const { data: dataCellule, error: errorCellule } = await supabase
         .from("etat_cellule")
         .select("*")
@@ -39,7 +57,7 @@ function EtatCellule() {
 
       if (errorCellule) throw errorCellule;
 
-      // Récupérer membres_venus_par_eglise
+      // ===================== Récupérer membres_venus_par_eglise =====================
       const { data: dataEglise, error: errorEglise } = await supabase
         .from("membres_venus_par_eglise")
         .select("*")
@@ -47,7 +65,7 @@ function EtatCellule() {
 
       if (errorEglise) throw errorEglise;
 
-      // Ajouter responsable_cellule à chaque entrée
+      // ===================== Ajouter responsable_cellule à chaque entrée =====================
       const addResponsable = (arr) =>
         (arr || []).map((r) => {
           const cellule = cellules.find((c) => c.id === r.cellule_id);
@@ -84,7 +102,7 @@ function EtatCellule() {
         cellule_full: r.cellule_full,
       }));
 
-      // Combiner datasets
+      // ===================== Combiner datasets =====================
       let combined = [...normalizedCellule, ...normalizedEglise];
 
       // Supprimer les doublons par id
@@ -92,10 +110,10 @@ function EtatCellule() {
         (v, i, a) => a.findIndex((t) => t.id === v.id) === i
       );
 
-      // Filtrer contacts sans cellule
+      // Supprimer contacts sans cellule
       combined = combined.filter((r) => r.cellule_full);
 
-      // Filtrer selon le rôle
+      // ===================== Filtrage selon le rôle =====================
       if (userRole !== "Administrateur") {
         combined = combined.filter(
           (r) => r.responsable_cellule === userId
@@ -122,6 +140,7 @@ function EtatCellule() {
       setShowTable(false);
     }
   };
+
   // ================= UTIL =================
   const getStatusStyles = (status) => {
     if (!status) return { border: "border-gray-400", text: "text-gray-300" };

@@ -52,55 +52,54 @@ function EtatCellule() {
     const userBrancheId = profile?.branche_id;
       
          let data = [];
-let error = null;
-
-if (isAdmin) {
-  const res = await supabase
-    .from("etat_cellule")
-    .select("*")
-    .not("cellule_id", "is", null)
-    .in("status_suivis_evangelises", ["Intégré", "Refus", "En attente", "En suivi"])
-    .order("date_evangelise", { ascending: false });
-
-  data = res.data;
-  error = res.error;
-
-} else {
-
-  const { data: membresData, error: membresError } = await supabase
-    .from('membres_complets')
-    .select('*')
-    .is('sent_to_cellule', null)
-    .neq('etat_contact', 'supprime')
-    .in('statut', ['actif', 'nouveau']);
-
-  const { data: cellules, error: cellulesError } = await supabase
-    .from("cellules")
-    .select("id")
-    .eq("responsable_id", userId);
-
-  if (cellulesError) throw cellulesError;
-
-  const celluleIds = cellules.map(c => c.id);
-
-  if (celluleIds.length === 0) {
-    setReports([]);
-    setShowTable(true);
-    return;
-  }
-
-  const res = await supabase
-    .from("etat_cellule")
-    .select("*")
-    .in("cellule_id", celluleIds)
-    .in("status_suivis_evangelises", ["Intégré", "Refus", "En cours"])
-    .eq("eglise_id", userEgliseId)
-    .eq("branche_id", userBrancheId)
-    .order("date_evangelise", { ascending: false });
-
-  data = res.data;
-  error = res.error;
-}
+          let error = null;
+          
+          if (isAdmin) {
+            const res = await supabase
+              .from("etat_cellule")
+              .select("*")
+              .not("cellule_id", "is", null)
+              .in("status_suivis_evangelises", ["Intégré", "Refus", "En attente", "En suivi"])
+              .order("date_evangelise", { ascending: false });
+          
+            data = res.data;
+            error = res.error;
+          
+          } else {
+            const { data: membresData, error: membresError } = await supabase
+              .from('membres_complets')
+              .select('*')
+              .is('sent_to_cellule', null)
+              .neq('etat_contact', 'supprime')
+              .in('statut', ['actif', 'nouveau']);
+          
+            const { data: cellules, error: cellulesError } = await supabase
+              .from("cellules")
+              .select("id")
+              .eq("responsable_id", userId);
+          
+            if (cellulesError) throw cellulesError;
+          
+            const celluleIds = cellules.map(c => c.id);
+          
+            if (celluleIds.length === 0) {
+              setReports([]);
+              setShowTable(true);
+              return;
+            }
+          
+            const res = await supabase
+              .from("etat_cellule")
+              .select("*")
+              .in("cellule_id", celluleIds)
+              .in("status_suivis_evangelises", ["Intégré", "Refus", "En cours"])
+              .eq("eglise_id", userEgliseId)
+              .eq("branche_id", userBrancheId)
+              .order("date_evangelise", { ascending: false });
+          
+            data = res.data;
+            error = res.error;
+          }
       
           } else {
 

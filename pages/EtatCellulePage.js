@@ -182,15 +182,27 @@ const { count: totalVenus } = await queryVenus;
 
 
 // ===== INTEGRATION =====
-let queryIntegration = supabase
+let queryEvangelises = supabase
   .from("etat_cellule")
-  .select("*", { count: "exact", head: true })
-  .not("date_integration", "is", null);
+  .select("*", { count: "exact", head: true });
 
-if (filterDebut) queryIntegration = queryIntegration.gte("date_evangelise", filterDebut);
-if (filterFin) queryIntegration = queryIntegration.lte("date_evangelise", filterFin);
+// 🔥 FILTRE PAR RESPONSABLE CONNECTÉ
+if (!userProfile.roles?.includes("Administrateur")) {
+  queryEvangelises = queryEvangelises.eq(
+    "responsable_cellule",
+    `${userProfile.prenom} ${userProfile.nom}`
+  );
+}
 
-const { count: totalIntegration } = await queryIntegration;
+// 🔥 FILTRE DATE
+if (filterDebut) {
+  queryEvangelises = queryEvangelises.gte("date_evangelise", filterDebut);
+}
+if (filterFin) {
+  queryEvangelises = queryEvangelises.lte("date_evangelise", filterFin);
+}
+
+const { count: totalEvangelises } = await queryEvangelises;;
 
 
 // ===== BAPTEME =====

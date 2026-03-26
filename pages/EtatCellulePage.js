@@ -22,6 +22,20 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
 
+  // ================== Calcul KPI ==================
+const totalEvangelises = combined.length;
+const totalIntegration = combined.filter(r => r.type_evangelisation === 'Integration').length;
+const totalMinistere = combined.filter(r => r.ministere_date).length;
+const totalBapteme = combined.filter(r => r.date_baptise).length;
+const totalEnCours = combined.filter(r => r.status_suivis_evangelises?.toLowerCase().includes('cours')).length;
+
+// Pourcentage par rapport aux évangélisés ou total + venu si demandé
+const percIntegration = totalEvangelises > 0 ? Math.round((totalIntegration / totalEvangelises) * 100) : 0;
+const percMinistere = totalEvangelises + totalIntegration > 0 ? Math.round((totalMinistere / (totalEvangelises + totalIntegration)) * 100) : 0;
+const percBapteme = totalEvangelises + totalIntegration > 0 ? Math.round((totalBapteme / (totalEvangelises + totalIntegration)) * 100) : 0;
+const percEnCours = totalEvangelises > 0 ? Math.round((totalEnCours / totalEvangelises) * 100) : 0;
+
+//========================
   useEffect(() => {
     fetchUserProfile();
   }, []);
@@ -253,6 +267,67 @@ function EtatCellule() {
           Générer
         </button>
       </div>
+
+  // ================== JSX KPI ==================
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
+  {/* Total Évangélisés */}
+  <div
+    className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-blue-400 to-blue-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
+    onClick={() => handleKpiClick("Total Évangélisés")}
+  >
+    <div className="text-2xl sm:text-3xl font-semibold">{totalEvangelises}</div>
+    <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Total Évangélisés</div>
+  </div>
+
+  {/* Total venus à l'église */}
+  <div
+    className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-indigo-400 to-indigo-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
+    onClick={() => handleKpiClick("Total venus")}
+  >
+    <div className="text-2xl sm:text-3xl font-semibold">{totalIntegration}</div>
+    <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Venu à l'Église</div>
+    <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
+      {percIntegration}%
+    </div>
+  </div>
+
+  {/* En cours */}
+  <div
+    className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
+    onClick={() => handleKpiClick("En cours")}
+  >
+    <div className="text-2xl sm:text-3xl font-semibold">{totalEnCours}</div>
+    <div className="mt-1 text-xs sm:text-sm font-semibold text-center">En cours</div>
+    <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
+      {percEnCours}%
+    </div>
+  </div>
+
+  {/* Total Ministère */}
+  <div
+    className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-green-400 to-green-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
+    onClick={() => handleKpiClick("Total Ministère")}
+  >
+    <div className="text-2xl sm:text-3xl font-semibold">{totalMinistere}</div>
+    <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Début Ministère</div>
+    <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
+      {percMinistere}%
+    </div>
+  </div>
+
+  {/* Total Baptême */}
+  <div
+    className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-pink-400 to-pink-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
+    onClick={() => handleKpiClick("Total Baptême")}
+  >
+    <div className="text-2xl sm:text-3xl font-semibold">{totalBapteme}</div>
+    <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Baptême</div>
+    <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
+      {percBapteme}%
+    </div>
+  </div>
+</div>
+  
 
       {/* TABLEAU */}
       {showTable && (

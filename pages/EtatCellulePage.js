@@ -246,117 +246,116 @@ function EtatCellule() {
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
-          onClick={fetchReports}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-        >
-          Générer
-        </button>
-      </div>
+  onClick={fetchReports}
+  disabled={!userProfile}
+  className={`bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] ${!userProfile ? 'opacity-50 cursor-not-allowed' : ''}`}
+>
+  Générer
+</button>
 
   
           {/* ================= KPIs ================= */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mt-6 w-full max-w-7xl mx-auto">
 
-  {/* Total Évangélisés */}
-  <div
-    className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-blue-400 to-blue-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
-    onClick={() => handleKpiClick("Evangelises")}
-  >
-    <div className="text-2xl sm:text-3xl font-semibold">{kpis.totalEvangelises}</div>
-    <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Évangélisés</div>
-    <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-      {kpis.totalEvangelises + kpis.totalVenus > 0
-        ? Math.round((kpis.totalEvangelises / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
-        : 0}%
-    </div>
-  </div>
-
-  {/* Total Intégrés */}
-  <div
-    className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-green-400 to-green-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
-    onClick={() => handleKpiClick("Integres")}
-  >
-    <div className="text-2xl sm:text-3xl font-semibold">{kpis.totalIntegration}</div>
-    <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Intégrés</div>
-    <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-      {kpis.totalEvangelises > 0
-        ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
-        : 0}%
-    </div>
-  </div>
-
-  {/* Total Venues à l'église */}
-  <div
-    className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-purple-400 to-purple-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
-    onClick={() => handleKpiClick("Venus")}
-  >
-    <div className="text-2xl sm:text-3xl font-semibold">{kpis.totalVenus}</div>
-    <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Venus à l'église</div>
-    <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-      {kpis.totalEvangelises + kpis.totalVenus > 0
-        ? Math.round((kpis.totalVenus / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
-        : 0}%
-    </div>
-  </div>
-
-  {/* Total En cours */}
-  <div
-    className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
-    onClick={() => handleKpiClick("En cours")}
-  >
-    <div className="text-2xl sm:text-3xl font-semibold">{kpis.totalEncours}</div>
-    <div className="mt-1 text-xs sm:text-sm font-semibold text-center">En cours</div>
-    <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-      {kpis.totalEvangelises > 0
-        ? Math.round((kpis.totalEncours / kpis.totalEvangelises) * 100)
-        : 0}%
-    </div>
-  </div>
-
-  {/* Total Refus */}
-  <div
-    className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-red-400 to-red-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
-    onClick={() => handleKpiClick("Refus")}
-  >
-    <div className="text-2xl sm:text-3xl font-semibold">{kpis.totalRefus}</div>
-    <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Refus</div>
-    <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-      {kpis.totalEvangelises > 0
-        ? Math.round((kpis.totalRefus / kpis.totalEvangelises) * 100)
-        : 0}%
-    </div>
-  </div>
-
-  {/* Total Bapteme */}
-  <div
-    className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-teal-400 to-teal-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
-    onClick={() => handleKpiClick("Bapteme")}
-  >
-    <div className="text-2xl sm:text-3xl font-semibold">{kpis.totalBapteme}</div>
-    <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Bapteme</div>
-    <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-      {kpis.totalEvangelises + kpis.totalVenus > 0
-        ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
-        : 0}%
-    </div>
-  </div>
-
-  {/* Total Ministère */}
-  <div
-    className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-indigo-400 to-indigo-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
-    onClick={() => handleKpiClick("Ministere")}
-  >
-    <div className="text-2xl sm:text-3xl font-semibold">{kpis.totalMinistere}</div>
-    <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Ministère</div>
-    <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-      {kpis.totalEvangelises + kpis.totalVenus > 0
-        ? Math.round((kpis.totalMinistere / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
-        : 0}%
-    </div>
-  </div>
-
-</div>
-  
+            {/* Total Évangélisés */}
+            <div
+              className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-blue-400 to-blue-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
+              onClick={() => handleKpiClick("Evangelises")}
+            >
+              <div className="text-2xl sm:text-3xl font-semibold">{kpis.totalEvangelises}</div>
+              <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Évangélisés</div>
+              <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
+                {kpis.totalEvangelises + kpis.totalVenus > 0
+                  ? Math.round((kpis.totalEvangelises / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
+                  : 0}%
+              </div>
+            </div>
+          
+            {/* Total Intégrés */}
+            <div
+              className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-green-400 to-green-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
+              onClick={() => handleKpiClick("Integres")}
+            >
+              <div className="text-2xl sm:text-3xl font-semibold">{kpis.totalIntegration}</div>
+              <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Intégrés</div>
+              <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
+                {kpis.totalEvangelises > 0
+                  ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
+                  : 0}%
+              </div>
+            </div>
+          
+            {/* Total Venues à l'église */}
+            <div
+              className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-purple-400 to-purple-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
+              onClick={() => handleKpiClick("Venus")}
+            >
+              <div className="text-2xl sm:text-3xl font-semibold">{kpis.totalVenus}</div>
+              <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Venus à l'église</div>
+              <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
+                {kpis.totalEvangelises + kpis.totalVenus > 0
+                  ? Math.round((kpis.totalVenus / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
+                  : 0}%
+              </div>
+            </div>
+          
+            {/* Total En cours */}
+            <div
+              className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
+              onClick={() => handleKpiClick("En cours")}
+            >
+              <div className="text-2xl sm:text-3xl font-semibold">{kpis.totalEncours}</div>
+              <div className="mt-1 text-xs sm:text-sm font-semibold text-center">En cours</div>
+              <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
+                {kpis.totalEvangelises > 0
+                  ? Math.round((kpis.totalEncours / kpis.totalEvangelises) * 100)
+                  : 0}%
+              </div>
+            </div>
+          
+            {/* Total Refus */}
+            <div
+              className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-red-400 to-red-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
+              onClick={() => handleKpiClick("Refus")}
+            >
+              <div className="text-2xl sm:text-3xl font-semibold">{kpis.totalRefus}</div>
+              <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Refus</div>
+              <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
+                {kpis.totalEvangelises > 0
+                  ? Math.round((kpis.totalRefus / kpis.totalEvangelises) * 100)
+                  : 0}%
+              </div>
+            </div>
+          
+            {/* Total Bapteme */}
+            <div
+              className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-teal-400 to-teal-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
+              onClick={() => handleKpiClick("Bapteme")}
+            >
+              <div className="text-2xl sm:text-3xl font-semibold">{kpis.totalBapteme}</div>
+              <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Bapteme</div>
+              <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
+                {kpis.totalEvangelises + kpis.totalVenus > 0
+                  ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
+                  : 0}%
+              </div>
+            </div>
+          
+            {/* Total Ministère */}
+            <div
+              className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-indigo-400 to-indigo-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
+              onClick={() => handleKpiClick("Ministere")}
+            >
+              <div className="text-2xl sm:text-3xl font-semibold">{kpis.totalMinistere}</div>
+              <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Ministère</div>
+              <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
+                {kpis.totalEvangelises + kpis.totalVenus > 0
+                  ? Math.round((kpis.totalMinistere / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
+                  : 0}%
+              </div>
+            </div>
+          
+          </div>  
 
       {/* TABLEAU */}
       {showTable && (

@@ -76,12 +76,15 @@ function EtatCellule() {
         .select("id, prenom, nom");
       if (profilesError) throw profilesError;
 
-      // ================= ETAT_CELLULE =================
-      const fetchTotalEvangelises = async () => {
-  let query = supabase
-    .from("etat_cellule")
-    .select("cellule_full", { count: "exact" })
-    .not("cellule_id", "is", null);
+      //============================
+     // ================= ETAT_CELLULE =================
+const { data: dataCellule, error: errorCellule } = await supabase
+  .from("etat_cellule")
+  .select("*")
+  .not("cellule_id", "is", null)
+  .order("date_evangelise", { ascending: false });
+
+if (errorCellule) throw errorCellule;
 
   // filtre date
   if (filterDebut) {
@@ -182,15 +185,15 @@ function EtatCellule() {
 
       // ================= KPI =================
       setKpis({
-        totalEvangelises: combined.filter((r) => r.type_evangelisation === "Evangélisation").length,
-        totalVenus: combined.filter((r) => r.type_evangelisation === "Integration").length,
-        totalIntegration: combined.filter((r) => r.date_integration).length,
-        totalBapteme: combined.filter((r) => r.date_baptise).length,
-        totalMinistere: combined.filter((r) => r.ministere_date).length,
-        totalRefus: combined.filter((r) => r.status_suivis_evangelises?.toLowerCase().includes("refus")).length,
-        totalEncours: combined.filter((r) => r.status_suivis_evangelises?.toLowerCase().includes("cours")).length,
-        totalAttente: combined.filter((r) => r.status_suivis_evangelises?.toLowerCase().includes("attente")).length,
-      });
+  totalEvangelises: dataCellule.length,
+  totalVenus: dataEglise.length,
+  totalIntegration: combined.filter((r) => r.date_integration).length,
+  totalBapteme: combined.filter((r) => r.date_baptise).length,
+  totalMinistere: combined.filter((r) => r.ministere_date).length,
+  totalRefus: combined.filter((r) => r.status_suivis_evangelises?.toLowerCase().includes("refus")).length,
+  totalEncours: combined.filter((r) => r.status_suivis_evangelises?.toLowerCase().includes("cours")).length,
+  totalAttente: combined.filter((r) => r.status_suivis_evangelises?.toLowerCase().includes("attente")).length,
+});
 
       setShowTable(true);
     } catch (error) {

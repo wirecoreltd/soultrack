@@ -21,46 +21,35 @@ function EtatCellule() {
   const [filterFin, setFilterFin] = useState("");
   const [showTable, setShowTable] = useState(false);
 
-  useEffect(() => {
-    fetchReports();
-  }, [filterDebut, filterFin]);
-
+  // ================= FETCH DATA =================
   const fetchReports = async () => {
     try {
-      // Récupérer session pour userId
-      const session = await supabase.auth.getSession();
-      const userId = session.data.session?.user?.id;
+      setShowTable(false);
 
-      // Récupérer cellule du responsable
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("eglise_id, branche_id")
-        .eq("id", userId)
-        .single();
-
-      if (!profile) throw new Error("Profil introuvable");
-
-      // ===================== Fetch Evangélisation =====================
-      const { data: dataCellule } = await supabase
+      // Récupérer etat_cellule
+      const { data: dataCellule, error: errorCellule } = await supabase
         .from("etat_cellule")
         .select("*")
         .not("cellule_id", "is", null)
         .order("date_evangelise", { ascending: false });
 
-      // ===================== Fetch Integration =====================
-      const { data: dataEglise } = await supabase
+      if (errorCellule) throw errorCellule;
+
+      // Récupérer membres_venus_par_eglise
+      const { data: dataEglise, error: errorEglise } = await supabase
         .from("membres_venus_par_eglise")
         .select("*")
-        .not("cellule_id", "is", null)
-        .order("date_venu", { ascending: false });
+        .order("date_evangelise", { ascending: false });
 
-      // ===================== Normalisation =====================
-      const normalizedCellule = dataCellule.map((r) => ({
+      if (errorEglise) throw errorEglise;
+
+      // Normaliser les deux datasets
+      const normalizedCellule = (dataCellule || []).map((r) => ({
         id: r.id,
         nom: r.nom,
         prenom: r.prenom,
         nom_complet: `${r.prenom} ${r.nom}`,
-        type_evangelisation: "Evangélisation",
+        type_evangelisation: r.type_evangelisation || "Evangélisation",
         status_suivis_evangelises: r.status_suivis_evangelises,
         date_evangelise: r.date_evangelise,
         date_suivi: r.date_suivi,
@@ -69,60 +58,52 @@ function EtatCellule() {
         ministere_date: r.ministere_date,
         cellule_full: r.cellule_full,
         responsable_cellule: r.responsable_cellule,
-        cellule_id: r.cellule_id,
       }));
 
-      const normalizedEglise = dataEglise.map((r) => ({
+      const normalizedEglise = (dataEglise || []).map((r) => ({
         id: r.id,
         nom: r.nom || "",
         prenom: r.prenom || "",
         nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
-        type_evangelisation: "Integration",
+        type_evangelisation: r.type_integration || "Integration",
         status_suivis_evangelises: r.statut || "Inconnu",
-        date_evangelise: r.date_venu,
+        date_evangelise: r.date_evangelise,
         date_suivi: r.envoyer_au_suivi_le,
         date_integration: r.date_integration,
         date_baptise: r.bapteme_date,
         ministere_date: r.debut_ministere,
-        cellule_full: r.cellule_full || "",
-        responsable_cellule: r.responsable_cellule || "",
-        cellule_id: r.cellule_id,
+        cellule_full: r.cellule_full,
+        responsable_cellule: r.responsable_cellule,
       }));
 
-      // ===================== Combiner et supprimer doublons =====================
-      const combined = [...normalizedCellule, ...normalizedEglise];
+      // Combiner et filtrer les doublons
+      let combined = [...normalizedCellule, ...normalizedEglise];
 
-      // Supprimer doublons sur le même id, garder Evangélisation en priorité si doublon
-      const uniqueMap = new Map();
-      combined.forEach((r) => {
-        if (!uniqueMap.has(r.id)) uniqueMap.set(r.id, r);
-      });
+      // Filtrer contacts sans cellule
+      combined = combined.filter((r) => r.cellule_full);
 
-      let finalData = Array.from(uniqueMap.values());
-
-      // Filtrer par date
+      // Filtrer par date si besoin
       if (filterDebut) {
-        finalData = finalData.filter(
+        combined = combined.filter(
           (r) => new Date(r.date_evangelise) >= new Date(filterDebut)
         );
       }
       if (filterFin) {
-        finalData = finalData.filter(
+        combined = combined.filter(
           (r) => new Date(r.date_evangelise) <= new Date(filterFin)
         );
       }
 
-      // Filtrer par cellule du responsable
-      finalData = finalData.filter((r) => r.cellule_id);
-
-      setReports(finalData);
+      setReports(combined);
       setShowTable(true);
     } catch (error) {
       console.error("Erreur fetch :", error);
+      setReports([]);
+      setShowTable(false);
     }
   };
 
-  // ===================== UTIL =====================
+  // ================= UTIL =================
   const getStatusStyles = (status) => {
     if (!status) return { border: "border-gray-400", text: "text-gray-300" };
     const s = status.toLowerCase();
@@ -136,7 +117,8 @@ function EtatCellule() {
 
   const getMonthNameFR = (monthIndex) => {
     const months = [
-      "Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"
+      "Janvier","Février","Mars","Avril","Mai","Juin",
+      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
     ];
     return months[monthIndex] || "";
   };
@@ -165,13 +147,14 @@ function EtatCellule() {
     setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
   };
 
-  const groupedReports = Object.entries(groupByMonth(reports)).sort((a, b) => {
-    const [yearA, monthA] = a[0].split("-").map(Number);
-    const [yearB, monthB] = b[0].split("-").map(Number);
-    return new Date(yearB, monthB) - new Date(yearA, monthA);
-  });
+  const groupedReports = Object.entries(groupByMonth(reports))
+    .sort((a, b) => {
+      const [yearA, monthA] = a[0].split("-").map(Number);
+      const [yearB, monthB] = b[0].split("-").map(Number);
+      return new Date(yearB, monthB) - new Date(yearA, monthA);
+    });
 
-  // ===================== RENDER =====================
+  // ================= RENDER =================
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
@@ -201,21 +184,19 @@ function EtatCellule() {
         </button>
       </div>
 
+      {/* TABLEAU */}
       {showTable && (
         <div className="w-full flex justify-center mt-6 mb-6">
           <div className="w-full max-w-7xl">
-
             {/* DESKTOP */}
             <div className="hidden md:block w-full overflow-x-auto">
               <div className="w-max mx-auto space-y-2 bg-white/5 p-2 rounded-xl">
-
-                {/* HEADER */}
                 <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
                   <div className="min-w-[150px]">Date Evangelisé</div>
                   <div className="min-w-[200px] text-center">Nom Complet</div>
                   <div className="min-w-[200px] text-center">Type</div>
                   <div className="min-w-[200px] text-center">Statut</div>
-                  <div className="min-w-[150px] text-center">Envoyer au <br/>Suivi Le</div>
+                  <div className="min-w-[150px] text-center">Envoyer au Suivi Le</div>
                   <div className="min-w-[150px] text-center">Date Intégration</div>
                   <div className="min-w-[150px] text-center">Date Baptême</div>
                   <div className="min-w-[150px] text-center">Début Ministère</div>
@@ -239,26 +220,27 @@ function EtatCellule() {
                         </div>
                       </div>
 
-                      {isExpanded && rows.map((r, i) => {
-                        const statusStyle = getStatusStyles(r.status_suivis_evangelises);
-                        return (
-                          <div
-                            key={i}
-                            className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${statusStyle.border}`}
-                          >
-                            <div className="min-w-[150px] text-white">{formatDateFR(r.date_evangelise)}</div>
-                            <div className="min-w-[200px] text-center text-white">{r.nom_complet}</div>
-                            <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
-                            <div className={`min-w-[200px] text-center font-semibold ${statusStyle.text}`}>{r.status_suivis_evangelises}</div>
-                            <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_suivi)}</div>
-                            <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
-                            <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
-                            <div className="min-w-[150px] text-center text-white">{formatDateFR(r.ministere_date)}</div>
-                            <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
-                            <div className="min-w-[200px] text-center text-white">{r.responsable_cellule}</div>
-                          </div>
-                        );
-                      })}
+                      {isExpanded &&
+                        rows.map((r, i) => {
+                          const statusStyle = getStatusStyles(r.status_suivis_evangelises);
+                          return (
+                            <div
+                              key={i}
+                              className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${statusStyle.border}`}
+                            >
+                              <div className="min-w-[150px] text-white">{formatDateFR(r.date_evangelise)}</div>
+                              <div className="min-w-[200px] text-center text-white">{r.nom_complet}</div>
+                              <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
+                              <div className={`min-w-[200px] text-center font-semibold ${statusStyle.text}`}>{r.status_suivis_evangelises}</div>
+                              <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_suivi)}</div>
+                              <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
+                              <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
+                              <div className="min-w-[150px] text-center text-white">{formatDateFR(r.ministere_date)}</div>
+                              <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
+                              <div className="min-w-[200px] text-center text-white">{r.responsable_cellule}</div>
+                            </div>
+                          );
+                        })}
                     </div>
                   );
                 })}
@@ -270,7 +252,6 @@ function EtatCellule() {
               {groupedReports.map(([monthKey, rows]) => {
                 const [year, monthIndex] = monthKey.split("-").map(Number);
                 const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-
                 return (
                   <div key={monthKey} className="space-y-2">
                     <h3 className="text-white font-bold">{monthLabel}</h3>
@@ -280,10 +261,10 @@ function EtatCellule() {
                         <p><strong>Nom:</strong> {r.nom_complet}</p>
                         <p><strong>Type:</strong> {r.type_evangelisation}</p>
                         <p><strong>Statut:</strong> {r.status_suivis_evangelises}</p>
-                        <p><strong>Envoyer au Suivi:</strong> {formatDateFR(r.date_suivi)}</p>
-                        <p><strong>Intégration:</strong> {formatDateFR(r.date_integration)}</p>
+                        <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.date_suivi)}</p>
+                        <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
                         <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
-                        <p><strong>Ministère:</strong> {formatDateFR(r.ministere_date)}</p>
+                        <p><strong>Début Ministère:</strong> {formatDateFR(r.ministere_date)}</p>
                         <p><strong>Cellule:</strong> {r.cellule_full}</p>
                         <p><strong>Responsable:</strong> {r.responsable_cellule}</p>
                       </div>

@@ -24,45 +24,16 @@ function EtatCellule() {
   const [userRole, setUserRole] = useState(null);
 
   // ================= FETCH DATA =================
-  const fetchReports = async () => {
+  const fetchReports = async (currentUserId, currentUserRole) => {
     try {
       setShowTable(false);
 
-      // ===================== Récupérer utilisateur et rôle =====================
-      useEffect(() => {
-  const init = async () => {
-    try {
-      // Récupérer l'utilisateur et son profil
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError) throw authError;
-      if (!user) throw new Error("Utilisateur non connecté");
-
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-      if (profileError) throw profileError;
-
-      setUserId(user.id);
-      setUserRole(profile?.role);
-
-      // Ensuite, fetch les rapports
-      fetchReports(user.id, profile?.role);
-    } catch (err) {
-      console.error("Erreur init :", err);
-    }
-  };
-
-  init();
-}, []);
-
-      // ===================== Récupérer toutes les cellules =====================
+      // Récupérer toutes les cellules avec leur responsable
       const { data: cellules } = await supabase
         .from("cellules")
         .select("id,responsable_id");
 
-      // ===================== Récupérer etat_cellule =====================
+      // Récupérer etat_cellule
       const { data: dataCellule, error: errorCellule } = await supabase
         .from("etat_cellule")
         .select("*")
@@ -70,7 +41,7 @@ function EtatCellule() {
 
       if (errorCellule) throw errorCellule;
 
-      // ===================== Récupérer membres_venus_par_eglise =====================
+      // Récupérer membres_venus_par_eglise
       const { data: dataEglise, error: errorEglise } = await supabase
         .from("membres_venus_par_eglise")
         .select("*")
@@ -78,7 +49,7 @@ function EtatCellule() {
 
       if (errorEglise) throw errorEglise;
 
-      // ===================== Ajouter responsable_cellule à chaque entrée =====================
+      // Ajouter responsable_cellule à chaque entrée
       const addResponsable = (arr) =>
         (arr || []).map((r) => {
           const cellule = cellules.find((c) => c.id === r.cellule_id);
@@ -115,7 +86,7 @@ function EtatCellule() {
         cellule_full: r.cellule_full,
       }));
 
-      // ===================== Combiner datasets =====================
+      // Combiner datasets
       let combined = [...normalizedCellule, ...normalizedEglise];
 
       // Supprimer les doublons par id
@@ -123,14 +94,12 @@ function EtatCellule() {
         (v, i, a) => a.findIndex((t) => t.id === v.id) === i
       );
 
-      // Supprimer contacts sans cellule
+      // Filtrer contacts sans cellule
       combined = combined.filter((r) => r.cellule_full);
 
-      // ===================== Filtrage selon le rôle =====================
-      if (userRole !== "Administrateur") {
-        combined = combined.filter(
-          (r) => r.responsable_cellule === userId
-        );
+      // Filtrer selon le rôle
+      if (currentUserRole !== "Administrateur") {
+        combined = combined.filter((r) => r.responsable_cellule === currentUserId);
       }
 
       // Filtrer par date si besoin
@@ -153,6 +122,36 @@ function EtatCellule() {
       setShowTable(false);
     }
   };
+
+  // ================= INIT USER =================
+  useEffect(() => {
+    const init = async () => {
+      try {
+        // Récupérer utilisateur connecté
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError) throw authError;
+        if (!user) throw new Error("Utilisateur non connecté");
+
+        // Récupérer son profil pour avoir le rôle
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        if (profileError) throw profileError;
+
+        setUserId(user.id);
+        setUserRole(profile?.role);
+
+        // Puis fetch les rapports
+        fetchReports(user.id, profile?.role);
+      } catch (err) {
+        console.error("Erreur init :", err);
+      }
+    };
+
+    init();
+  }, []);
 
   // ================= UTIL =================
   const getStatusStyles = (status) => {
@@ -228,7 +227,7 @@ function EtatCellule() {
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         />
         <button
-          onClick={fetchReports}
+          onClick={() => fetchReports(userId, userRole)}
           className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
         >
           Générer
@@ -239,7 +238,7 @@ function EtatCellule() {
       {showTable && (
         <div className="w-full flex justify-center mt-6 mb-6">
           <div className="w-full max-w-7xl">
-            {/* DESKTOP */}
+            {/* Desktop */}
             <div className="hidden md:block w-full overflow-x-auto">
               <div className="w-max mx-auto space-y-2 bg-white/5 p-2 rounded-xl">
                 <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
@@ -298,7 +297,7 @@ function EtatCellule() {
               </div>
             </div>
 
-            {/* MOBILE */}
+            {/* Mobile */}
             <div className="md:hidden space-y-4">
               {groupedReports.map(([monthKey, rows]) => {
                 const [year, monthIndex] = monthKey.split("-").map(Number);

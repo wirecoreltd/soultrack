@@ -34,11 +34,14 @@ function EtatCellule() {
           }
       
           // ================= PROFILE =================
-          const { data: profile, error: profileError } = await supabase
+          const { data: userProfile } = await supabase
             .from("profiles")
-            .select("roles")
+            .select("eglise_id, branche_id")
             .eq("id", userId)
             .single();
+          
+          const userEgliseId = userProfile?.eglise_id;
+          const userBrancheId = userProfile?.branche_id;
       
           if (profileError) throw profileError;
       
@@ -54,7 +57,7 @@ function EtatCellule() {
               .from("etat_cellule")
               .select("*")
               .not("cellule_id", "is", null)
-              .in("status_suivis_evangelises", ["Intégré", "Refus", "En cours"])
+              .in("status_suivis_evangelises", ["Intégré", "Refus", "En attente", "En suivi"])
               .order("date_evangelise", { ascending: false });
       
             data = res.data;

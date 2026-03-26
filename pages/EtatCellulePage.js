@@ -51,127 +51,118 @@ function EtatCellule() {
     try {
       if (!userProfile) return; // attendre profil
 
-      setShowTable(false);
+      const fetchReports = async () => {
+  try {
+    setShowTable(false);
 
-      // Récupérer toutes les cellules
-      const { data: cellules, error: cellulesError } = await supabase
-        .from("cellules")
-        .select("id, cellule_full, responsable_id");
+    // Récupérer toutes les cellules avec leur responsable
+    const { data: cellules } = await supabase
+      .from("cellules")
+      .select("id,responsable_id,cellule_full");
 
-      if (cellulesError) throw cellulesError;
+    // Récupérer les informations de l'utilisateur connecté
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id,prenom,nom,role,roles")
+      .eq("id", userId) // Assure-toi que userId est défini depuis le contexte de connexion
+      .single();
 
-      // Récupérer profils pour responsables
-      const { data: allProfiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom");
+    const userRole = profile?.role || "Membre";
 
-      if (profilesError) throw profilesError;
+    // Récupérer etat_cellule
+    const { data: dataCellule, error: errorCellule } = await supabase
+      .from("etat_cellule")
+      .select("*")
+      .not("cellule_id", "is", null);
 
-      // Récupérer etat_cellule
-      const { data: dataCellule, error: errorCellule } = await supabase
-        .from("etat_cellule")
-        .select("*")
-        .not("cellule_id", "is", null)
-        .order("date_evangelise", { ascending: false });
+    if (errorCellule) throw errorCellule;
 
-      if (errorCellule) throw errorCellule;
+    // Récupérer membres_venus_par_eglise
+    const { data: dataEglise, error: errorEglise } = await supabase
+      .from("membres_venus_par_eglise")
+      .select("*");
 
-      // Récupérer membres_venus_par_eglise
-      const { data: dataEglise, error: errorEglise } = await supabase
-        .from("membres_venus_par_eglise")
-        .select("*")
-        .order("date_evangelise", { ascending: false });
+    if (errorEglise) throw errorEglise;
 
-      if (errorEglise) throw errorEglise;
+    // Ajouter le responsable à chaque entrée
+    const addResponsable = (arr) =>
+      (arr || []).map((r) => {
+        const cellule = cellules.find((c) => c.id === r.cellule_id);
+        const responsableProfile = profile; // simplification pour exemple
+        return {
+          ...r,
+          responsable_cellule: cellule
+            ? `${profile?.prenom || ""} ${profile?.nom || ""}`
+            : null,
+        };
+      });
 
-      // Fonction pour ajouter le nom du responsable
-      const addResponsableName = (arr) =>
-        (arr || []).map((r) => {
-          const cellule = cellules.find((c) => c.id === r.cellule_id);
-          const responsableProfile = allProfiles.find(
-            (p) => p.id === cellule?.responsable_id
-          );
-          return {
-            ...r,
-            responsable_cellule: responsableProfile
-              ? `${responsableProfile.prenom} ${responsableProfile.nom}`
-              : "Inconnu",
-            cellule_full: cellule?.cellule_full || r.cellule_full,
-          };
-        });
+    let normalizedCellule = addResponsable(dataCellule).map((r) => ({
+      id: r.id,
+      nom: r.nom,
+      prenom: r.prenom,
+      nom_complet: `${r.prenom} ${r.nom}`,
+      type_evangelisation: r.type_evangelisation || "Evangélisation",
+      status_suivis_evangelises: r.status_suivis_evangelises,
+      date_evangelise: r.date_evangelise,
+      date_suivi: r.date_suivi,
+      date_integration: r.date_integration,
+      date_baptise: r.date_baptise,
+      ministere_date: r.ministere_date,
+      cellule_full: r.cellule_full,
+    }));
 
-      let normalizedCellule = addResponsableName(dataCellule).map((r) => ({
-        id: r.id,
-        nom: r.nom,
-        prenom: r.prenom,
-        nom_complet: `${r.prenom} ${r.nom}`,
-        type_evangelisation: r.type_evangelisation || "Evangélisation",
-        status_suivis_evangelises: r.status_suivis_evangelises,
-        date_evangelise: r.date_evangelise,
-        date_suivi: r.date_suivi,
-        date_integration: r.date_integration,
-        date_baptise: r.date_baptise,
-        ministere_date: r.ministere_date,
-        cellule_full: r.cellule_full,
-        responsable_cellule: r.responsable_cellule,
-      }));
+    let normalizedEglise = addResponsable(dataEglise).map((r) => ({
+      id: r.id,
+      nom: r.nom || "",
+      prenom: r.prenom || "",
+      nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
+      type_evangelisation: r.type_integration || "Integration",
+      status_suivis_evangelises: r.statut || "Inconnu",
+      date_evangelise: r.date_evangelise,
+      date_suivi: r.envoyer_au_suivi_le,
+      date_integration: r.date_integration,
+      date_baptise: r.bapteme_date,
+      ministere_date: r.debut_ministere,
+      cellule_full: r.cellule_full,
+    }));
 
-      let normalizedEglise = addResponsableName(dataEglise).map((r) => ({
-        id: r.id,
-        nom: r.nom || "",
-        prenom: r.prenom || "",
-        nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
-        type_evangelisation: r.type_integration || "Integration",
-        status_suivis_evangelises: r.statut || "Inconnu",
-        date_evangelise: r.date_evangelise,
-        date_suivi: r.envoyer_au_suivi_le,
-        date_integration: r.date_integration,
-        date_baptise: r.bapteme_date,
-        ministere_date: r.debut_ministere,
-        cellule_full: r.cellule_full,
-        responsable_cellule: r.responsable_cellule,
-      }));
+    // Combiner datasets
+    let combined = [...normalizedCellule, ...normalizedEglise];
 
-      // Combiner datasets
-      let combined = [...normalizedCellule, ...normalizedEglise];
+    // Filtrer contacts sans cellule
+    combined = combined.filter((r) => r.cellule_full);
 
-      // Supprimer doublons
+    // Filtrer selon le rôle
+    if (userRole !== "Administrateur") {
       combined = combined.filter(
-        (v, i, a) => a.findIndex((t) => t.id === v.id) === i
+        (r) => r.responsable_cellule?.includes(`${profile.prenom} ${profile.nom}`)
       );
-
-      // Filtrer contacts sans cellule
-      combined = combined.filter((r) => r.cellule_full);
-
-      // Filtrer selon le rôle
-      if (!userProfile.roles?.includes("Administrateur")) {
-        combined = combined.filter(
-          (r) =>
-            cellules.find((c) => c.cellule_full === r.cellule_full)
-              ?.responsable_id === userProfile.id
-        );
-      }
-
-      // Filtrer par date si besoin
-      if (filterDebut) {
-        combined = combined.filter(
-          (r) => new Date(r.date_evangelise) >= new Date(filterDebut)
-        );
-      }
-      if (filterFin) {
-        combined = combined.filter(
-          (r) => new Date(r.date_evangelise) <= new Date(filterFin)
-        );
-      }
-
-      setReports(combined);
-      setShowTable(true);
-    } catch (error) {
-      console.error("Erreur fetch :", error);
-      setReports([]);
-      setShowTable(false);
     }
-  };
+
+    // Filtrer par date si besoin
+    if (filterDebut) {
+      combined = combined.filter(
+        (r) => new Date(r.date_evangelise) >= new Date(filterDebut)
+      );
+    }
+    if (filterFin) {
+      combined = combined.filter(
+        (r) => new Date(r.date_evangelise) <= new Date(filterFin)
+      );
+    }
+
+    // Trier par date décroissante
+    combined.sort((a, b) => new Date(b.date_evangelise) - new Date(a.date_evangelise));
+
+    setReports(combined);
+    setShowTable(true);
+  } catch (error) {
+    console.error("Erreur fetch :", error);
+    setReports([]);
+    setShowTable(false);
+  }
+};
 
   // ================= UTIL =================
   const getStatusStyles = (status) => {
@@ -262,7 +253,7 @@ function EtatCellule() {
             <div className="hidden md:block w-full overflow-x-auto">
               <div className="w-max mx-auto space-y-2 bg-white/5 p-2 rounded-xl">
                 <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-                  <div className="min-w-[150px]">Date Evangelisé</div>
+                  <div className="min-w-[150px]">Date</div>
                   <div className="min-w-[200px] text-center">Nom Complet</div>
                   <div className="min-w-[200px] text-center">Type</div>
                   <div className="min-w-[200px] text-center">Statut</div>

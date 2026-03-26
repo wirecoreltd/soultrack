@@ -20,44 +20,58 @@ function EtatCellule() {
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
   const [showTable, setShowTable] = useState(false);
-
-  // Infos utilisateur connecté
   const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data?.user) return;
-
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, roles")
-        .eq("id", data.user.id)
-        .single();
-
-      if (profileError) return console.error(profileError);
-      setUserProfile(profileData);
-    };
-
-    fetchProfile();
+    fetchUserProfile();
   }, []);
+
+  const fetchUserProfile = async () => {
+    const user = supabase.auth.getUser
+      ? (await supabase.auth.getUser()).data.user
+      : null;
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      console.error("Erreur fetch user profile:", error);
+      return;
+    }
+
+    setUserProfile(data);
+  };
 
   // ================= FETCH DATA =================
   const fetchReports = async () => {
-    if (!userProfile) return; // attendre profil
-
     try {
+      if (!userProfile) return; // attendre profil
+
       setShowTable(false);
 
       // Récupérer toutes les cellules
-      const { data: cellules } = await supabase
+      const { data: cellules, error: cellulesError } = await supabase
         .from("cellules")
-        .select("id, responsable_id, cellule_full");
+        .select("id, cellule_full, responsable_id");
+
+      if (cellulesError) throw cellulesError;
+
+      // Récupérer profils pour responsables
+      const { data: allProfiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom");
+
+      if (profilesError) throw profilesError;
 
       // Récupérer etat_cellule
       const { data: dataCellule, error: errorCellule } = await supabase
         .from("etat_cellule")
         .select("*")
+        .not("cellule_id", "is", null)
         .order("date_evangelise", { ascending: false });
 
       if (errorCellule) throw errorCellule;
@@ -70,14 +84,23 @@ function EtatCellule() {
 
       if (errorEglise) throw errorEglise;
 
-      // Ajouter responsable_cellule à chaque entrée
-      const addResponsable = (arr) =>
+      // Fonction pour ajouter le nom du responsable
+      const addResponsableName = (arr) =>
         (arr || []).map((r) => {
           const cellule = cellules.find((c) => c.id === r.cellule_id);
-          return { ...r, responsable_cellule: cellule?.responsable_id || null, cellule_full: cellule?.cellule_full || r.cellule_full };
+          const responsableProfile = allProfiles.find(
+            (p) => p.id === cellule?.responsable_id
+          );
+          return {
+            ...r,
+            responsable_cellule: responsableProfile
+              ? `${responsableProfile.prenom} ${responsableProfile.nom}`
+              : "Inconnu",
+            cellule_full: cellule?.cellule_full || r.cellule_full,
+          };
         });
 
-      let normalizedCellule = addResponsable(dataCellule).map((r) => ({
+      let normalizedCellule = addResponsableName(dataCellule).map((r) => ({
         id: r.id,
         nom: r.nom,
         prenom: r.prenom,
@@ -93,7 +116,7 @@ function EtatCellule() {
         responsable_cellule: r.responsable_cellule,
       }));
 
-      let normalizedEglise = addResponsable(dataEglise).map((r) => ({
+      let normalizedEglise = addResponsableName(dataEglise).map((r) => ({
         id: r.id,
         nom: r.nom || "",
         prenom: r.prenom || "",
@@ -112,23 +135,33 @@ function EtatCellule() {
       // Combiner datasets
       let combined = [...normalizedCellule, ...normalizedEglise];
 
-      // Supprimer doublons par id
-      combined = combined.filter((v, i, a) => a.findIndex((t) => t.id === v.id) === i);
+      // Supprimer doublons
+      combined = combined.filter(
+        (v, i, a) => a.findIndex((t) => t.id === v.id) === i
+      );
 
       // Filtrer contacts sans cellule
       combined = combined.filter((r) => r.cellule_full);
 
-      // Filtrer selon le rôle si pas Admin
+      // Filtrer selon le rôle
       if (!userProfile.roles?.includes("Administrateur")) {
-        combined = combined.filter((r) => r.responsable_cellule === userProfile.id);
+        combined = combined.filter(
+          (r) =>
+            cellules.find((c) => c.cellule_full === r.cellule_full)
+              ?.responsable_id === userProfile.id
+        );
       }
 
-      // Filtrer par date
+      // Filtrer par date si besoin
       if (filterDebut) {
-        combined = combined.filter((r) => new Date(r.date_evangelise) >= new Date(filterDebut));
+        combined = combined.filter(
+          (r) => new Date(r.date_evangelise) >= new Date(filterDebut)
+        );
       }
       if (filterFin) {
-        combined = combined.filter((r) => new Date(r.date_evangelise) <= new Date(filterFin));
+        combined = combined.filter(
+          (r) => new Date(r.date_evangelise) <= new Date(filterFin)
+        );
       }
 
       setReports(combined);
@@ -139,10 +172,6 @@ function EtatCellule() {
       setShowTable(false);
     }
   };
-
-  useEffect(() => {
-    fetchReports();
-  }, [userProfile, filterDebut, filterFin]);
 
   // ================= UTIL =================
   const getStatusStyles = (status) => {
@@ -157,7 +186,10 @@ function EtatCellule() {
   };
 
   const getMonthNameFR = (monthIndex) => {
-    const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+    const months = [
+      "Janvier","Février","Mars","Avril","Mai","Juin",
+      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
+    ];
     return months[monthIndex] || "";
   };
 

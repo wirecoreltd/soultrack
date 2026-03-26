@@ -82,7 +82,10 @@ function EtatCellule() {
               .select("*")
               .in("cellule_id", celluleIds)
               .in("status_suivis_evangelises", ["Intégré", "Refus", "En cours"])
+              .eq("eglise_id", userEgliseId)
+              .eq("branche_id", userBrancheId)
               .order("date_evangelise", { ascending: false });
+            
       
             data = res.data;
             error = res.error;

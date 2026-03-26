@@ -48,10 +48,6 @@ function EtatCellule() {
 
   // ================= FETCH DATA =================
   const fetchReports = async () => {
-    try {
-      if (!userProfile) return; // attendre profil
-
-      const fetchReports = async () => {
   try {
     setShowTable(false);
 

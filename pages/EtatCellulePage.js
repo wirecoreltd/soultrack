@@ -28,11 +28,19 @@ function EtatCellule() {
       const session = await supabase.auth.getSession();
       const userId = session.data.session?.user?.id;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("cellule_id")
-        .eq("id", userId)
-        .single();
+      // Pour récupérer le profil
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("cellule_id")
+          .eq("id", userId) // userId doit être un UUID exact
+          .single();
+        
+        // Pour récupérer les membres_venus_par_eglise
+        const { data: dataEglise, error: errorEglise } = await supabase
+          .from("membres_venus_par_eglise")
+          .select("*")
+          .not("cellule_id", "is", null) // JS client correct
+          .order("date_venu", { ascending: false });
 
       const celluleId = profile?.cellule_id;
 

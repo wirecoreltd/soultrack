@@ -22,63 +22,62 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
 
-      // ================== KPI ==================
-    const totalEvangelises = reports.length;
-    
-    const totalIntegration = reports.filter(
-      (r) => r.type_evangelisation === "Integration"
-    ).length;
-    
-    const totalMinistere = reports.filter(
-      (r) => r.ministere_date
-    ).length;
-    
-    const totalBapteme = reports.filter(
-      (r) => r.date_baptise
-    ).length;
-    
-    const totalEnCours = reports.filter(
-      (r) =>
-        r.status_suivis_evangelises &&
-        r.status_suivis_evangelises.toLowerCase().includes("cours")
-    ).length;
-
   const [kpis, setKpis] = useState({
-  totalEvangelises: 0,
-  totalVenus: 0,
-  totalIntegration: 0,
-  totalBapteme: 0,
-  totalMinistere: 0,
-  totalRefus: 0,
-  totalEncours: 0,
-  totalAttente: 0,
-});
-    // % sécurisés
-    const percIntegration =
-      totalEvangelises > 0
-        ? Math.round((totalIntegration / totalEvangelises) * 100)
-        : 0;
-    
-    const percMinistere =
-      totalEvangelises + totalIntegration > 0
-        ? Math.round(
-            (totalMinistere / (totalEvangelises + totalIntegration)) * 100
-          )
-        : 0;
-    
-    const percBapteme =
-      totalEvangelises + totalIntegration > 0
-        ? Math.round(
-            (totalBapteme / (totalEvangelises + totalIntegration)) * 100
-          )
-        : 0;
-    
-    const percEnCours =
-      totalEvangelises > 0
-        ? Math.round((totalEnCours / totalEvangelises) * 100)
-        : 0;
+    totalEvangelises: 0,
+    totalVenus: 0,
+    totalIntegration: 0,
+    totalBapteme: 0,
+    totalMinistere: 0,
+    totalRefus: 0,
+    totalEncours: 0,
+    totalAttente: 0,
+  });
 
-//========================
+  // ================= UTILS =================
+  const getStatusStyles = (status) => {
+    if (!status) return { border: "border-gray-400", text: "text-gray-300" };
+    const s = status.toLowerCase();
+    if (s.includes("intégr") || s.includes("integre"))
+      return { border: "border-green-500", text: "text-green-400" };
+    if (s.includes("refus")) return { border: "border-red-500", text: "text-red-400" };
+    if (s.includes("cours") || s.includes("suivi"))
+      return { border: "border-orange-500", text: "text-orange-400" };
+    return { border: "border-blue-500", text: "text-blue-400" };
+  };
+
+  const getMonthNameFR = (monthIndex) => {
+    const months = [
+      "Janvier","Février","Mars","Avril","Mai","Juin",
+      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
+    ];
+    return months[monthIndex] || "";
+  };
+
+  const formatDateFR = (dateString) => {
+    if (!dateString) return "";
+    const d = new Date(dateString);
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const groupByMonth = (reports) => {
+    const map = {};
+    reports.forEach((r) => {
+      const d = new Date(r.date_evangelise);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(r);
+    });
+    return map;
+  };
+
+  const toggleMonth = (monthKey) => {
+    setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
+  };
+
+  // ================= FETCH USER PROFILE =================
   useEffect(() => {
     fetchUserProfile();
   }, []);
@@ -103,28 +102,25 @@ function EtatCellule() {
     setUserProfile(data);
   };
 
-  // ================= FETCH DATA =================
+  // ================= FETCH REPORTS =================
   const fetchReports = async () => {
     try {
-      if (!userProfile) return; // attendre profil
+      if (!userProfile) return;
 
       setShowTable(false);
 
-      // Récupérer toutes les cellules
       const { data: cellules, error: cellulesError } = await supabase
         .from("cellules")
         .select("id, cellule_full, responsable_id");
 
       if (cellulesError) throw cellulesError;
 
-      // Récupérer profils pour responsables
       const { data: allProfiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, prenom, nom");
 
       if (profilesError) throw profilesError;
 
-      // Récupérer etat_cellule
       const { data: dataCellule, error: errorCellule } = await supabase
         .from("etat_cellule")
         .select("*")
@@ -133,7 +129,6 @@ function EtatCellule() {
 
       if (errorCellule) throw errorCellule;
 
-      // Récupérer membres_venus_par_eglise
       const { data: dataEglise, error: errorEglise } = await supabase
         .from("membres_venus_par_eglise")
         .select("*")
@@ -141,7 +136,6 @@ function EtatCellule() {
 
       if (errorEglise) throw errorEglise;
 
-      // Fonction pour ajouter le nom du responsable
       const addResponsableName = (arr) =>
         (arr || []).map((r) => {
           const cellule = cellules.find((c) => c.id === r.cellule_id);
@@ -189,18 +183,14 @@ function EtatCellule() {
         responsable_cellule: r.responsable_cellule,
       }));
 
-      // Combiner datasets
       let combined = [...normalizedCellule, ...normalizedEglise];
 
-      // Supprimer doublons
       combined = combined.filter(
         (v, i, a) => a.findIndex((t) => t.id === v.id) === i
       );
 
-      // Filtrer contacts sans cellule
       combined = combined.filter((r) => r.cellule_full);
 
-      // Filtrer selon le rôle
       if (!userProfile.roles?.includes("Administrateur")) {
         combined = combined.filter(
           (r) =>
@@ -209,7 +199,6 @@ function EtatCellule() {
         );
       }
 
-      // Filtrer par date si besoin
       if (filterDebut) {
         combined = combined.filter(
           (r) => new Date(r.date_evangelise) >= new Date(filterDebut)
@@ -221,51 +210,49 @@ function EtatCellule() {
         );
       }
 
-      // ================= KPI =================
+      // ================= KPI dynamiques =================
+      const totalEvangelises = combined.filter(
+        (r) => r.type_evangelisation === "Evangélisation"
+      ).length;
 
-const totalEvangelises = combined.filter(
-  (r) => r.type_evangelisation === "Evangélisation"
-).length;
+      const totalVenus = combined.filter(
+        (r) => r.type_evangelisation === "Integration"
+      ).length;
 
-const totalVenus = combined.filter(
-  (r) => r.type_evangelisation === "Integration"
-).length;
+      const totalIntegration = combined.filter(
+        (r) => r.date_integration
+      ).length;
 
-const totalIntegration = combined.filter(
-  (r) => r.date_integration
-).length;
+      const totalBapteme = combined.filter(
+        (r) => r.date_baptise
+      ).length;
 
-const totalBapteme = combined.filter(
-  (r) => r.date_baptise
-).length;
+      const totalMinistere = combined.filter(
+        (r) => r.ministere_date
+      ).length;
 
-const totalMinistere = combined.filter(
-  (r) => r.ministere_date
-).length;
+      const totalRefus = combined.filter(
+        (r) => r.status_suivis_evangelises?.toLowerCase().includes("refus")
+      ).length;
 
-const totalRefus = combined.filter(
-  (r) => r.status_suivis_evangelises?.toLowerCase().includes("refus")
-).length;
+      const totalEncours = combined.filter(
+        (r) => r.status_suivis_evangelises?.toLowerCase().includes("cours")
+      ).length;
 
-const totalEncours = combined.filter(
-  (r) => r.status_suivis_evangelises?.toLowerCase().includes("cours")
-).length;
+      const totalAttente = combined.filter(
+        (r) => r.status_suivis_evangelises?.toLowerCase().includes("attente")
+      ).length;
 
-const totalAttente = combined.filter(
-  (r) => r.status_suivis_evangelises?.toLowerCase().includes("attente")
-).length;
-
-setKpis({
-  totalEvangelises,
-  totalVenus,
-  totalIntegration,
-  totalBapteme,
-  totalMinistere,
-  totalRefus,
-  totalEncours,
-  totalAttente,
-});
-      
+      setKpis({
+        totalEvangelises,
+        totalVenus,
+        totalIntegration,
+        totalBapteme,
+        totalMinistere,
+        totalRefus,
+        totalEncours,
+        totalAttente,
+      });
 
       setReports(combined);
       setShowTable(true);
@@ -274,50 +261,6 @@ setKpis({
       setReports([]);
       setShowTable(false);
     }
-  };
-
-  // ================= UTIL =================
-  const getStatusStyles = (status) => {
-    if (!status) return { border: "border-gray-400", text: "text-gray-300" };
-    const s = status.toLowerCase();
-    if (s.includes("intégr") || s.includes("integre"))
-      return { border: "border-green-500", text: "text-green-400" };
-    if (s.includes("refus")) return { border: "border-red-500", text: "text-red-400" };
-    if (s.includes("cours") || s.includes("suivi"))
-      return { border: "border-orange-500", text: "text-orange-400" };
-    return { border: "border-blue-500", text: "text-blue-400" };
-  };
-
-  const getMonthNameFR = (monthIndex) => {
-    const months = [
-      "Janvier","Février","Mars","Avril","Mai","Juin",
-      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
-    ];
-    return months[monthIndex] || "";
-  };
-
-  const formatDateFR = (dateString) => {
-    if (!dateString) return "";
-    const d = new Date(dateString);
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
-  const groupByMonth = (reports) => {
-    const map = {};
-    reports.forEach((r) => {
-      const d = new Date(r.date_evangelise);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (!map[key]) map[key] = [];
-      map[key].push(r);
-    });
-    return map;
-  };
-
-  const toggleMonth = (monthKey) => {
-    setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
   };
 
   const groupedReports = Object.entries(groupByMonth(reports))
@@ -357,73 +300,58 @@ setKpis({
         </button>
       </div>
 
-  
-<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
+      {/* KPI CARDS */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
+        <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
+          <div className="text-sm">Total Évangélisés</div>
+        </div>
 
-  {/* Total évangélisés */}
-  <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
-    <div className="text-sm">Total Évangélisés</div>
-  </div>
+        <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalVenus}</div>
+          <div className="text-sm">Total Venus Église</div>
+        </div>
 
-  {/* Total venus */}
-  <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalVenus}</div>
-    <div className="text-sm">Total Venus Église</div>
-  </div>
+        <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
+          <div className="text-sm">Intégrés</div>
+          <div className="text-sm">
+            {kpis.totalEvangelises > 0
+              ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
+              : 0}%
+          </div>
+        </div>
 
-  {/* Intégration */}
-  <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
-    <div className="text-sm">Intégrés</div>
-    <div className="text-sm">
-      {kpis.totalEvangelises > 0
-        ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
-        : 0}%
-    </div>
-  </div>
+        <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
+          <div className="text-sm">Baptêmes</div>
+          <div className="text-sm">
+            {kpis.totalEvangelises + kpis.totalVenus > 0
+              ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
+              : 0}%
+          </div>
+        </div>
 
-  {/* Baptême */}
-  <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
-    <div className="text-sm">Baptêmes</div>
-    <div className="text-sm">
-      {kpis.totalEvangelises + kpis.totalVenus > 0
-        ? Math.round(
-            (kpis.totalBapteme /
-              (kpis.totalEvangelises + kpis.totalVenus)) *
-              100
-          )
-        : 0}%
-    </div>
-  </div>
+        <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
+          <div className="text-sm">Ministère</div>
+        </div>
 
-  {/* Ministère */}
-  <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
-    <div className="text-sm">Ministère</div>
-  </div>
+        <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalRefus}</div>
+          <div className="text-sm">Refus</div>
+        </div>
 
-  {/* Refus */}
-  <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalRefus}</div>
-    <div className="text-sm">Refus</div>
-  </div>
+        <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalEncours}</div>
+          <div className="text-sm">En cours</div>
+        </div>
 
-  {/* En cours */}
-  <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalEncours}</div>
-    <div className="text-sm">En cours</div>
-  </div>
-
-  {/* En attente */}
-  <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalAttente}</div>
-    <div className="text-sm">En attente</div>
-  </div>
-
-</div>
-  
+        <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalAttente}</div>
+          <div className="text-sm">En attente</div>
+        </div>
+      </div>
 
       {/* TABLEAU */}
       {showTable && (

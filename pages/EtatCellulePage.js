@@ -22,18 +22,51 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
 
-  // ================== Calcul KPI ==================
-const totalEvangelises = combined.length;
-const totalIntegration = combined.filter(r => r.type_evangelisation === 'Integration').length;
-const totalMinistere = combined.filter(r => r.ministere_date).length;
-const totalBapteme = combined.filter(r => r.date_baptise).length;
-const totalEnCours = combined.filter(r => r.status_suivis_evangelises?.toLowerCase().includes('cours')).length;
-
-// Pourcentage par rapport aux évangélisés ou total + venu si demandé
-const percIntegration = totalEvangelises > 0 ? Math.round((totalIntegration / totalEvangelises) * 100) : 0;
-const percMinistere = totalEvangelises + totalIntegration > 0 ? Math.round((totalMinistere / (totalEvangelises + totalIntegration)) * 100) : 0;
-const percBapteme = totalEvangelises + totalIntegration > 0 ? Math.round((totalBapteme / (totalEvangelises + totalIntegration)) * 100) : 0;
-const percEnCours = totalEvangelises > 0 ? Math.round((totalEnCours / totalEvangelises) * 100) : 0;
+      // ================== KPI ==================
+    const totalEvangelises = reports.length;
+    
+    const totalIntegration = reports.filter(
+      (r) => r.type_evangelisation === "Integration"
+    ).length;
+    
+    const totalMinistere = reports.filter(
+      (r) => r.ministere_date
+    ).length;
+    
+    const totalBapteme = reports.filter(
+      (r) => r.date_baptise
+    ).length;
+    
+    const totalEnCours = reports.filter(
+      (r) =>
+        r.status_suivis_evangelises &&
+        r.status_suivis_evangelises.toLowerCase().includes("cours")
+    ).length;
+    
+    // % sécurisés
+    const percIntegration =
+      totalEvangelises > 0
+        ? Math.round((totalIntegration / totalEvangelises) * 100)
+        : 0;
+    
+    const percMinistere =
+      totalEvangelises + totalIntegration > 0
+        ? Math.round(
+            (totalMinistere / (totalEvangelises + totalIntegration)) * 100
+          )
+        : 0;
+    
+    const percBapteme =
+      totalEvangelises + totalIntegration > 0
+        ? Math.round(
+            (totalBapteme / (totalEvangelises + totalIntegration)) * 100
+          )
+        : 0;
+    
+    const percEnCours =
+      totalEvangelises > 0
+        ? Math.round((totalEnCours / totalEvangelises) * 100)
+        : 0;
 
 //========================
   useEffect(() => {

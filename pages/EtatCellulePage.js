@@ -84,13 +84,14 @@ function EtatCellule() {
       }
 
       const res = await supabase
-        .from("etat_cellule")
-        .select("*")
-        .in("cellule_id", celluleIds)
-        .in("status_suivis_evangelises", ["Intégré", "Refus", "En cours"])
-        .eq("eglise_id", userEgliseId)
-        .eq("branche_id", userBrancheId)
-        .order("date_evangelise", { ascending: false });
+  .from("etat_cellule")
+  .select("*")
+  .in("cellule_id", celluleIds)
+  .in("status_suivis_evangelises", ["Intégré", "Refus", "En cours"])
+  .eq("eglise_id", userEgliseId)
+  .eq("branche_id", userBrancheId)
+  .neq("etat_contact", "supprime") // <-- filtrage ici
+  .order("date_evangelise", { ascending: false });
 
       data = res.data;
       error = res.error;

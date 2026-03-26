@@ -211,48 +211,66 @@ function EtatCellule() {
       }
 
       // ================= KPI dynamiques =================
-      const totalEvangelises = combined.filter(
-        (r) => r.type_evangelisation === "Evangélisation"
-      ).length;
+      // ================= KPI CORRECTS =================
 
-      const totalVenus = combined.filter(
-        (r) => r.type_evangelisation === "Integration"
-      ).length;
+// Filtrer selon cellule et période
+const filteredReports = combined.filter((r) => {
+  // Filtre cellule (ici Curepipe, tu peux adapter)
+  const isCurepipe = r.cellule_full.toLowerCase().includes("curepipe");
 
-      const totalIntegration = combined.filter(
-        (r) => r.date_integration
-      ).length;
+  // Filtre période
+  const dateEvangelise = new Date(r.date_evangelise);
+  const afterDebut = filterDebut ? dateEvangelise >= new Date(filterDebut) : true;
+  const beforeFin = filterFin ? dateEvangelise <= new Date(filterFin) : true;
 
-      const totalBapteme = combined.filter(
-        (r) => r.date_baptise
-      ).length;
+  return isCurepipe && afterDebut && beforeFin;
+});
 
-      const totalMinistere = combined.filter(
-        (r) => r.ministere_date
-      ).length;
+// Total évangélisés
+const totalEvangelises = filteredReports.filter((r) =>
+  r.type_evangelisation.toLowerCase().includes("évangélisation")
+).length;
 
-      const totalRefus = combined.filter(
-        (r) => r.status_suivis_evangelises?.toLowerCase().includes("refus")
-      ).length;
+// Total venus à l'église (type Integration)
+const totalVenus = filteredReports.filter((r) =>
+  r.type_evangelisation.toLowerCase().includes("integration")
+).length;
 
-      const totalEncours = combined.filter(
-        (r) => r.status_suivis_evangelises?.toLowerCase().includes("cours")
-      ).length;
+// Total intégration
+const totalIntegration = filteredReports.filter((r) => r.date_integration).length;
 
-      const totalAttente = combined.filter(
-        (r) => r.status_suivis_evangelises?.toLowerCase().includes("attente")
-      ).length;
+// Total baptême
+const totalBapteme = filteredReports.filter((r) => r.date_baptise).length;
 
-      setKpis({
-        totalEvangelises,
-        totalVenus,
-        totalIntegration,
-        totalBapteme,
-        totalMinistere,
-        totalRefus,
-        totalEncours,
-        totalAttente,
-      });
+// Total ministère
+const totalMinistere = filteredReports.filter((r) => r.ministere_date).length;
+
+// Total refus
+const totalRefus = filteredReports.filter((r) =>
+  r.status_suivis_evangelises?.toLowerCase().includes("refus")
+).length;
+
+// Total en cours
+const totalEncours = filteredReports.filter((r) =>
+  r.status_suivis_evangelises?.toLowerCase().includes("cours")
+).length;
+
+// Total en attente
+const totalAttente = filteredReports.filter((r) =>
+  r.status_suivis_evangelises?.toLowerCase().includes("attente")
+).length;
+
+// Mise à jour des KPI
+setKpis({
+  totalEvangelises,
+  totalVenus,
+  totalIntegration,
+  totalBapteme,
+  totalMinistere,
+  totalRefus,
+  totalEncours,
+  totalAttente,
+});
 
       setReports(combined);
       setShowTable(true);

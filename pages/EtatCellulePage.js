@@ -21,6 +21,16 @@ function EtatCellule() {
   const [filterFin, setFilterFin] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
+  const [kpis, setKpis] = useState({
+  totalEvangelises: 0,
+  totalVenus: 0,
+  totalIntegration: 0,
+  totalBapteme: 0,
+  totalMinistere: 0,
+  totalRefus: 0,
+  totalEncours: 0,
+  totalAttente: 0,
+});
 
      const fetchReports = async () => {
   try {
@@ -151,18 +161,7 @@ function EtatCellule() {
     ).length;
     const totalAttente = combined.filter((r) =>
       r.status_suivis_evangelises?.toLowerCase().includes("attente")
-    ).length;
-
-    setKpis({
-      totalEvangelises,
-      totalVenus,
-      totalIntegration,
-      totalBapteme,
-      totalMinistere,
-      totalRefus,
-      totalEncours,
-      totalAttente,
-    });
+    ).length; 
 
     setReports(combined);
     setShowTable(true);

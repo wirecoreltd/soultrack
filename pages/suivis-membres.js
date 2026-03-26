@@ -265,7 +265,7 @@ export default function SuivisMembres() {
 
 return (
       <div className="text-black text-sm space-y-2 w-full">
-        <p>📅 {m.sexe === "Femme" ? "Arrivée" : "Arrivé"} le : {formatDateFr(m.created_at)}</p> 
+        <p>📅 {m.sexe === "Femme" ? "Arrivée" : "Arrivé"} le : {formatDateFr(m.date_venu)}</p> 
         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
         <p>🎗️ Civilité : {m.sexe || ""}</p>
         <p>⏳ Age : {m.age || ""}</p>

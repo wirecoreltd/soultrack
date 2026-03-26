@@ -76,7 +76,6 @@ function EtatCellule() {
         .select("id, prenom, nom");
       if (profilesError) throw profilesError;
 
-     //============================
  // ================= ETAT_CELLULE =================
 const { data: dataCellule, error: errorCellule } = await supabase
   .from("etat_cellule")
@@ -158,15 +157,93 @@ const { data: dataCellule, error: errorCellule } = await supabase
       setReports(combined);
 
       // ================= KPI =================
-      setKpis({
-  totalEvangelises: dataCellule.length,
-  totalVenus: dataEglise.length,
-  totalIntegration: combined.filter((r) => r.date_integration).length,
-  totalBapteme: combined.filter((r) => r.date_baptise).length,
-  totalMinistere: combined.filter((r) => r.ministere_date).length,
-  totalRefus: combined.filter((r) => r.status_suivis_evangelises?.toLowerCase().includes("refus")).length,
-  totalEncours: combined.filter((r) => r.status_suivis_evangelises?.toLowerCase().includes("cours")).length,
-  totalAttente: combined.filter((r) => r.status_suivis_evangelises?.toLowerCase().includes("attente")).length,
+     // ================= KPI (SOURCE PROPRE) =================
+
+// ===== EVANGELISES =====
+let queryEvangelises = supabase
+  .from("etat_cellule")
+  .select("*", { count: "exact", head: true });
+
+if (filterDebut) queryEvangelises = queryEvangelises.gte("date_evangelise", filterDebut);
+if (filterFin) queryEvangelises = queryEvangelises.lte("date_evangelise", filterFin);
+
+const { count: totalEvangelises } = await queryEvangelises;
+
+
+// ===== VENUS EGLISE =====
+let queryVenus = supabase
+  .from("membres_venus_par_eglise")
+  .select("*", { count: "exact", head: true });
+
+if (filterDebut) queryVenus = queryVenus.gte("date_evangelise", filterDebut);
+if (filterFin) queryVenus = queryVenus.lte("date_evangelise", filterFin);
+
+const { count: totalVenus } = await queryVenus;
+
+
+// ===== INTEGRATION =====
+let queryIntegration = supabase
+  .from("etat_cellule")
+  .select("*", { count: "exact", head: true })
+  .not("date_integration", "is", null);
+
+if (filterDebut) queryIntegration = queryIntegration.gte("date_evangelise", filterDebut);
+if (filterFin) queryIntegration = queryIntegration.lte("date_evangelise", filterFin);
+
+const { count: totalIntegration } = await queryIntegration;
+
+
+// ===== BAPTEME =====
+let queryBapteme = supabase
+  .from("etat_cellule")
+  .select("*", { count: "exact", head: true })
+  .not("date_baptise", "is", null);
+
+const { count: totalBapteme } = await queryBapteme;
+
+
+// ===== MINISTERE =====
+let queryMinistere = supabase
+  .from("etat_cellule")
+  .select("*", { count: "exact", head: true })
+  .not("ministere_date", "is", null);
+
+const { count: totalMinistere } = await queryMinistere;
+
+
+// ===== STATUT =====
+let queryRefus = supabase
+  .from("etat_cellule")
+  .select("*", { count: "exact", head: true })
+  .ilike("status_suivis_evangelises", "%refus%");
+
+const { count: totalRefus } = await queryRefus;
+
+let queryEncours = supabase
+  .from("etat_cellule")
+  .select("*", { count: "exact", head: true })
+  .ilike("status_suivis_evangelises", "%cours%");
+
+const { count: totalEncours } = await queryEncours;
+
+let queryAttente = supabase
+  .from("etat_cellule")
+  .select("*", { count: "exact", head: true })
+  .ilike("status_suivis_evangelises", "%attente%");
+
+const { count: totalAttente } = await queryAttente;
+
+
+// ===== SET KPI =====
+setKpis({
+  totalEvangelises: totalEvangelises || 0,
+  totalVenus: totalVenus || 0,
+  totalIntegration: totalIntegration || 0,
+  totalBapteme: totalBapteme || 0,
+  totalMinistere: totalMinistere || 0,
+  totalRefus: totalRefus || 0,
+  totalEncours: totalEncours || 0,
+  totalAttente: totalAttente || 0,
 });
 
       setShowTable(true);

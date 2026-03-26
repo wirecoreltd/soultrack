@@ -247,14 +247,15 @@ function EtatCellule() {
         />
             
         <button
-  onClick={fetchReports}
-  disabled={!userProfile}
-  className={`bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] ${!userProfile ? 'opacity-50 cursor-not-allowed' : ''}`}
->
-  Générer
-</button>
- </div>
-
+          onClick={fetchReports}
+          disabled={!userProfile}
+          className={`bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] ${
+            !userProfile ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
+          Générer
+        </button>
+     </div>
   
           {/* ================= KPIs ================= */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mt-6 w-full max-w-7xl mx-auto">

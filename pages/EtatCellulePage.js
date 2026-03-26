@@ -21,80 +21,100 @@ function EtatCellule() {
   const [filterFin, setFilterFin] = useState("");
   const [showTable, setShowTable] = useState(false);
 
-  // ================= FETCH DATA =================
-  // Pour récupérer le profil
-const { data: profile } = await supabase
-  .from("profiles")
-  .select("cellule_id")
-  .eq("id", userId) // userId doit être un UUID exact
-  .single();
-
-// Pour récupérer les membres_venus_par_eglise
-const { data: dataEglise, error: errorEglise } = await supabase
-  .from("membres_venus_par_eglise")
-  .select("*")
-  .not("cellule_id", "is", null) // JS client correct
-  .order("date_venu", { ascending: false });
-
-      // Normaliser les deux datasets pour avoir les mêmes champs
-      const normalizedCellule = dataCellule.map((r) => ({
-        id: r.id,
-        nom: r.nom,
-        prenom: r.prenom,
-        nom_complet: `${r.prenom} ${r.nom}`,
-        type_evangelisation: r.type_evangelisation || "Evangélisation",
-        status_suivis_evangelises: r.status_suivis_evangelises,
-        date_evangelise: r.date_evangelise,
-        date_suivi: r.date_suivi,
-        date_integration: r.date_integration,
-        date_baptise: r.date_baptise,
-        ministere_date: r.ministere_date,
-        cellule_full: r.cellule_full,
-        responsable_cellule: r.responsable_cellule,
-      }));
-
-      const normalizedEglise = dataEglise.map((r) => ({
-        id: r.id,
-        nom: r.nom || "",
-        prenom: r.prenom || "",
-        nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
-        type_evangelisation: r.type_integration || "Integration",
-        status_suivis_evangelises: r.statut || "Inconnu",
-        date_evangelise: r.date_venu,
-        date_suivi: r.envoyer_au_suivi_le,
-        date_integration: r.date_integration,
-        date_baptise: r.bapteme_date,
-        ministere_date: r.debut_ministere,
-        cellule_full: r.cellule_full || "",
-        responsable_cellule: r.responsable_cellule || "",
-      }));
-
-      // Combiner les deux datasets
-      let combined = [...normalizedCellule, ...normalizedEglise];
-
-      // Filtrer par date
-      if (filterDebut) {
-        combined = combined.filter(
-          (r) => new Date(r.date_evangelise) >= new Date(filterDebut)
-        );
+    // ================= FETCH DATA =================
+    const fetchReports = async () => {
+      try {
+        // 1️⃣ Récupérer l'ID de l'utilisateur
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (!userId) throw new Error("Utilisateur non connecté");
+  
+        // 2️⃣ Récupérer la cellule du responsable
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("cellule_id")
+          .eq("id", userId)
+          .single();
+        if (profileError) throw profileError;
+        const celluleId = profile?.cellule_id;
+        if (!celluleId) throw new Error("Le responsable n'a pas de cellule assignée");
+  
+        // 3️⃣ Récupérer les membres venus par l'église
+        const { data: dataEglise, error: errorEglise } = await supabase
+          .from("membres_venus_par_eglise")
+          .select("*")
+          .eq("cellule_id", celluleId)
+          .order("date_venu", { ascending: false });
+        if (errorEglise) throw errorEglise;
+  
+        // 4️⃣ Récupérer l'état cellule
+        const { data: dataCellule, error: errorCellule } = await supabase
+          .from("etat_cellule")
+          .select("*")
+          .eq("cellule_id", celluleId)
+          .order("date_evangelise", { ascending: false });
+        if (errorCellule) throw errorCellule;
+  
+        // 5️⃣ Normaliser les deux datasets
+        const normalizedCellule = dataCellule.map((r) => ({
+          id: r.id,
+          nom: r.nom,
+          prenom: r.prenom,
+          nom_complet: `${r.prenom} ${r.nom}`,
+          type_evangelisation: r.type_evangelisation || "Evangélisation",
+          status_suivis_evangelises: r.status_suivis_evangelises,
+          date_evangelise: r.date_evangelise,
+          date_suivi: r.date_suivi,
+          date_integration: r.date_integration,
+          date_baptise: r.date_baptise,
+          ministere_date: r.ministere_date,
+          cellule_full: r.cellule_full,
+          responsable_cellule: r.responsable_cellule,
+        }));
+  
+        const normalizedEglise = dataEglise.map((r) => ({
+          id: r.id,
+          nom: r.nom || "",
+          prenom: r.prenom || "",
+          nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
+          type_evangelisation: r.type_integration || "Integration",
+          status_suivis_evangelises: r.statut || "Inconnu",
+          date_evangelise: r.date_venu,
+          date_suivi: r.envoyer_au_suivi_le,
+          date_integration: r.date_integration,
+          date_baptise: r.bapteme_date,
+          ministere_date: r.debut_ministere,
+          cellule_full: r.cellule_full || "",
+          responsable_cellule: r.responsable_cellule || "",
+        }));
+  
+        // 6️⃣ Fusionner
+        let combined = [...normalizedCellule, ...normalizedEglise];
+  
+        // 7️⃣ Filtrer par date
+        if (filterDebut) {
+          combined = combined.filter(
+            (r) => new Date(r.date_evangelise) >= new Date(filterDebut)
+          );
+        }
+        if (filterFin) {
+          combined = combined.filter(
+            (r) => new Date(r.date_evangelise) <= new Date(filterFin)
+          );
+        }
+  
+        // 8️⃣ Mettre à jour le state
+        setReports(combined);
+        setShowTable(true);
+      } catch (error) {
+        console.error("Erreur fetch :", error);
       }
-      if (filterFin) {
-        combined = combined.filter(
-          (r) => new Date(r.date_evangelise) <= new Date(filterFin)
-        );
-      }
-
-      // Filtrer uniquement les membres de la cellule du responsable
-      if (celluleId) {
-        combined = combined.filter((r) => r.cellule_id === celluleId || r.cellule_full?.includes(celluleId));
-      }
-
-      setReports(combined);
-      setShowTable(true);
-    } catch (error) {
-      console.error("Erreur fetch :", error);
-    }
-  };
+    };
+  
+    // ⚡️ useEffect pour lancer le fetch au montage
+    useEffect(() => {
+      fetchReports();
+    }, [filterDebut, filterFin]);
 
   //======================= Styles statut =================
   const getStatusStyles = (status) => {

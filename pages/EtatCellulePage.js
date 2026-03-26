@@ -22,6 +22,28 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
 
+  // Fonction pour regrouper automatiquement par cellule et mois
+function getTotalEvangelisesByCelluleAndMonth(reports) {
+  const totals = {};
+
+  reports.forEach((r) => {
+    if (!r.cellule_full || !r.date_evangelise) return;
+
+    const date = new Date(r.date_evangelise);
+    const key = `${r.cellule_full}-${date.getFullYear()}-${date.getMonth() + 1}`;
+
+    if (!totals[key]) totals[key] = 0;
+    totals[key] += 1;
+  });
+
+  return totals; // { "Malherbes - Curepipe-2026-3": 2, ... }
+}
+
+// Exemple d'utilisation
+const totalsEvangelises = getTotalEvangelisesByCelluleAndMonth(reports);
+
+console.log(totalsEvangelises);
+
       // ================== KPI ==================
     const totalEvangelises = reports.length;
     

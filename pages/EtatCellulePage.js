@@ -34,15 +34,17 @@ function EtatCellule() {
           }
       
           // ================= PROFILE =================
-          const { data: userProfile } = await supabase
+          const { data: userProfile, error: userProfileError } = await supabase
             .from("profiles")
             .select("eglise_id, branche_id")
             .eq("id", userId)
             .single();
           
+          if (userProfileError) throw userProfileError;
+          
           const userEgliseId = userProfile?.eglise_id;
           const userBrancheId = userProfile?.branche_id;
-      
+                
           if (profileError) throw profileError;
       
           const roles = profile?.roles || [];

@@ -230,17 +230,17 @@ function EtatCellule() {
                       <div className="min-w-[200px] text-center text-white">
                         {r.type_evangelisation}
                       </div>
-                
-                      {/* SUIVI */}
-                      <div className="min-w-[150px] text-center text-white">
-                        {r.date_suivi ? formatDateFR(r.date_suivi) : "—"}
-                      </div>
-                
-                      {/* STATUT */}
+
+                       {/* STATUT */}
                       <div className={`min-w-[200px] text-center font-semibold ${statusStyle.text}`}>
                         {r.status_suivis_evangelises}
                       </div>
                 
+                      {/* SUIVI */}
+                      <div className="min-w-[150px] text-center text-white">
+                        {r.date_suivi ? formatDateFR(r.date_suivi) : "—"}
+                      </div>             
+                                      
                       {/* INTEGRATION */}
                       <div className="min-w-[150px] text-center text-white">
                         {formatDateFR(r.date_integration)}

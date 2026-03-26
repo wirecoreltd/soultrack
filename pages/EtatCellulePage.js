@@ -29,11 +29,13 @@ function EtatCellule() {
       setShowTable(false);
 
       // ===================== Récupérer utilisateur et rôle =====================
+      useEffect(() => {
+  const init = async () => {
+    try {
+      // Récupérer l'utilisateur et son profil
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) throw authError;
       if (!user) throw new Error("Utilisateur non connecté");
-
-      setUserId(user.id);
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -42,7 +44,18 @@ function EtatCellule() {
         .single();
       if (profileError) throw profileError;
 
+      setUserId(user.id);
       setUserRole(profile?.role);
+
+      // Ensuite, fetch les rapports
+      fetchReports(user.id, profile?.role);
+    } catch (err) {
+      console.error("Erreur init :", err);
+    }
+  };
+
+  init();
+}, []);
 
       // ===================== Récupérer toutes les cellules =====================
       const { data: cellules } = await supabase

@@ -34,21 +34,22 @@ function EtatCellule() {
           }
       
           // ================= PROFILE =================
-          const { data: userProfile, error: userProfileError } = await supabase
-            .from("profiles")
-            .select("eglise_id, branche_id")
-            .eq("id", userId)
-            .single();
-          
-          if (userProfileError) throw userProfileError;
-          
-          const userEgliseId = userProfile?.eglise_id;
-          const userBrancheId = userProfile?.branche_id;
-                
-          if (profileError) throw profileError;
-      
-          const roles = profile?.roles || [];
-          const isAdmin = roles.includes("Administrateur");
+          const { data: profile, error: profileError } = await supabase
+  .from("profiles")
+  .select("roles, eglise_id, branche_id")
+  .eq("id", userId)
+  .single();
+
+if (profileError) {
+  console.error("Erreur profile :", profileError);
+  return;
+}
+
+const roles = profile?.roles || [];
+const isAdmin = roles.includes("Administrateur");
+
+const userEgliseId = profile?.eglise_id;
+const userBrancheId = profile?.branche_id;
       
           let data = [];
           let error = null;

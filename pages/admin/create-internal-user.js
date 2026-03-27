@@ -158,18 +158,7 @@ function CreateInternalUserContent() {
         : [...prev.ministere, ministere];
       return { ...prev, ministere: list };
     });
-  };
-
-  //===============================
-  const { data: existing } = await supabaseAdmin
-  .from("membres_complets")
-  .select("id")
-  .eq("telephone", telephone)
-  .single();
-
-if (!existing) {
-  await supabaseAdmin.from("membres_complets").insert({ ... });
-}
+  }; 
 
   // ➤ Soumission du formulaire
   const handleSubmit = async (e, forceCreate = false) => {

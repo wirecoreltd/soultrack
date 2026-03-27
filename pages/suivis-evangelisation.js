@@ -275,6 +275,7 @@ export default function SuivisEvangelisation() {
       .update({
         commentaire_evangelises: newComment,
         status_suivis_evangelises: newStatus,
+        date_statut: new Date().toISOString(),
       })
       .eq("id", id);
 

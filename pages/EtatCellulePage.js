@@ -356,17 +356,14 @@ function EtatCellule() {
                         <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_ministere)}</div>
                         <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
                         <div className="min-w-[200px] text-center text-white">{r.responsable}</div>
-                      </div>
-                    );
-                  })}
-              </div>
-            );
-          })}
+                     </div>
+              );
+            })}
         </div>
-      </div>
-    </div>
+      );
+    })}
   </div>
-)}
+</div>
 
             {/* MOBILE */}
             <div className="md:hidden space-y-4">

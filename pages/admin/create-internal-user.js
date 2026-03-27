@@ -234,19 +234,7 @@ function CreateInternalUserContent() {
 
       // ➤ Ajout dans membres_complets pour serviteur
       if (body.addServiteur) {
-        await supabase
-          .from("membres_complets")
-          .upsert([{
-            prenom: formData.prenom,
-            nom: formData.nom,
-            telephone: formData.telephone,
-            email: formData.email || null,
-            star: true,
-            etat_contact: "existant",
-            Ministere: formData.ministere.length ? formData.ministere.join(",") : null,
-            eglise_id: profile.eglise_id,
-            branche_id: profile.branche_id,
-          }], { onConflict: ['telephone'] });
+        
       }
 
       setMessage("✅ Utilisateur créé avec succès !");

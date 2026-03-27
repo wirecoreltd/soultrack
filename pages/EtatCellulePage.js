@@ -382,7 +382,7 @@ function EtatCellule() {
                         <p><strong>Statut:</strong> {r.statut}</p>
                         <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.envoyer_au_suivi_le)}</p>
                         <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
-                        <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise}</p>
+                        <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
                         <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>
                         <p><strong>Cellule:</strong> {r.cellule_full}</p>
                         <p><strong>Responsable:</strong> {r.responsable}</p>

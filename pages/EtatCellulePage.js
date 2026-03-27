@@ -352,13 +352,13 @@ function EtatCellule() {
                         <p><strong>Date:</strong> {formatDateFR(r.date_evangelise)}</p>
                         <p><strong>Nom:</strong> {r.nom_complet}</p>
                         <p><strong>Type:</strong> {r.type_evangelisation}</p>
-                        <p><strong>Statut:</strong> {r.status_suivis_evangelises}</p>
+                        <p><strong>Statut:</strong> {r.statut}</p>
                         <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.date_suivi)}</p>
                         <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
                         <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
                         <p><strong>Début Ministère:</strong> {formatDateFR(r.ministere_date)}</p>
                         <p><strong>Cellule:</strong> {r.cellule_full}</p>
-                        <p><strong>Responsable:</strong> {r.responsable_cellule}</p>
+                        <p><strong>Responsable:</strong> {r.responsable}</p>
                       </div>
                     ))}
                   </div>

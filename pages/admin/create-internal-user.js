@@ -256,10 +256,11 @@ function CreateInternalUserContent() {
           ← Retour
         </button>
 
-        <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="Logo SoulTrack" width={80} height={80} />
+        <div className="flex justify-center mb-6 cursor-pointer" 
+          onClick={() => router.push("/index")}>
+          <Image  src="/logo.png"  alt="Logo SoulTrack"  width={80}  height={80} />
         </div>
-
+            
         <h1 className="text-3xl font-bold text-center mb-6">Créer un utilisateur</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -333,24 +334,36 @@ function CreateInternalUserContent() {
           </div>
         </form>
 
-        {message && <p className="mt-4 text-center">{message}</p>}
-
-        {duplicatePhone && (
+        {message && !duplicatePhone && (
+  <p className="mt-4 text-center">{message}</p>
+)}
   <div className="mt-4 p-4 border border-yellow-500 bg-yellow-100 rounded-lg text-center">
     <p>⚠️ Le numéro {formData.telephone} existe déjà pour {duplicatePhone.prenom} {duplicatePhone.nom}.</p>
     <div className="flex justify-center gap-4 mt-2">
-      <button 
-        type="button" 
-        onClick={(e) => handleSubmit(e, true)} 
-        className="bg-green-500 text-white py-2 px-4 rounded">
-        Créer quand même
-      </button>
-      <button 
-        type="button" 
-        onClick={() => setDuplicatePhone(null)} 
-        className="bg-gray-400 text-white py-2 px-4 rounded">
-        Annuler
-      </button>
+      <button
+  type="button"
+  onClick={handleCancel}
+  disabled={!!duplicatePhone}
+  className={`flex-1 py-3 rounded-xl text-white ${
+    duplicatePhone
+      ? "bg-gray-300 cursor-not-allowed"
+      : "bg-gray-400 hover:bg-gray-500"
+  }`}
+>
+  Annuler
+</button>
+
+<button
+  type="submit"
+  disabled={loading || !!duplicatePhone}
+  className={`flex-1 py-3 rounded-xl text-white ${
+    duplicatePhone
+      ? "bg-gray-300 cursor-not-allowed"
+      : "bg-blue-500 hover:bg-blue-600"
+  }`}
+>
+  {loading ? "Création..." : "Créer"}
+</button>
     </div>
   </div>
 )}

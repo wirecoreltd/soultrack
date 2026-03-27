@@ -4,88 +4,76 @@ import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
 
-export default function SendLinkPopup({ label, type, buttonColor, userId }) {
+export default function SendLinkPopup({ label, type, buttonColor }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [token, setToken] = useState("");
   const [churchName, setChurchName] = useState("");
   const [branchName, setBranchName] = useState("");
 
-  // 🔹 Récupération du token + église/branche
-  const fetchOrCreateToken = async () => {
+  // 🔹 Récupère automatiquement l'utilisateur connecté
+  const fetchUserAndToken = async () => {
     try {
-      let church_id = null;
-      let branch_id = null;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-      if (userId) {
-        // Récupérer l'église et la branche de l'utilisateur
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("eglise_id, branche_id")
-          .eq("id", userId)
-          .single();
+      // Récupère profil
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
 
-        if (profileError) {
-          console.error("Erreur fetch profile:", profileError);
-          return;
-        }
+      if (profileError || !profile) return;
 
-        church_id = profile.eglise_id;
-        branch_id = profile.branche_id;
+      // Récupère nom de l'église
+      const { data: churchData } = await supabase
+        .from("eglises")
+        .select("nom")
+        .eq("id", profile.eglise_id)
+        .single();
+      if (churchData) setChurchName(churchData.nom);
 
-        // Nom de l'église
-        const { data: churchData, error: churchError } = await supabase
-          .from("eglises")
-          .select("nom")
-          .eq("id", church_id)
-          .single();
-        if (!churchError && churchData) setChurchName(churchData.nom);
+      // Récupère nom de la branche
+      const { data: branchData } = await supabase
+        .from("branches")
+        .select("nom")
+        .eq("id", profile.branche_id)
+        .single();
+      if (branchData) setBranchName(branchData.nom);
 
-        // Nom de la branche
-        const { data: branchData, error: branchError } = await supabase
-          .from("branches")
-          .select("nom")
-          .eq("id", branch_id)
-          .single();
-        if (!branchError && branchData) setBranchName(branchData.nom);
-      }
-
-      // 🔹 Chercher un token existant
+      // Vérifie si un token valide existe déjà
       const now = new Date().toISOString();
       let query = supabase
         .from("access_tokens")
         .select("*")
         .eq("access_type", type)
         .gte("expires_at", now)
+        .eq("church_id", profile.eglise_id)
+        .eq("branch_id", profile.branche_id)
         .order("expires_at", { ascending: false })
         .limit(1)
         .single();
 
-      if (church_id) query = query.eq("church_id", church_id);
-      if (branch_id) query = query.eq("branch_id", branch_id);
-
       const { data, error } = await query;
-
-      if (!error && data) {
+      if (data && !error) {
         setToken(data.token);
         return;
       }
 
-      // 🔹 Créer un nouveau token si aucun existant
+      // Sinon créer un nouveau token
       const newToken = uuidv4();
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
       const { error: insertError } = await supabase
         .from("access_tokens")
-        .insert([
-          {
-            token: newToken,
-            access_type: type,
-            expires_at: expiresAt,
-            church_id,
-            branch_id,
-          },
-        ]);
+        .insert([{
+          token: newToken,
+          access_type: type,
+          expires_at: expiresAt,
+          church_id: profile.eglise_id,
+          branch_id: profile.branche_id,
+        }]);
 
       if (!insertError) setToken(newToken);
 
@@ -95,56 +83,22 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
   };
 
   useEffect(() => {
-    fetchOrCreateToken();
-  }, [type, userId]);
+    fetchUserAndToken();
+  }, [type]);
 
-  // 🔹 Génération du lien
   const getLink = () => {
-    if (typeof window === "undefined") return "";
     if (!token) return window.location.origin;
-
     if (type === "ajouter_membre") return `${window.location.origin}/add-member?token=${token}`;
     if (type === "ajouter_evangelise") return `${window.location.origin}/add-evangelise?token=${token}`;
-
     return window.location.origin;
   };
 
-  // 🔹 Envoi via WhatsApp
   const handleSend = () => {
     const link = getLink();
-    let message = "";
-
-    if (type === "ajouter_membre") {
-      message = `Bonjour 👋
-
-Voici le lien pour ajouter un nouveau membre.
-
-Église : ${churchName}
-Branche : ${branchName}
-
-Merci de prendre quelques instants pour remplir ce formulaire.
-
-Cliquez ici :
-${link}
-
-Merci pour votre service 🙏`;
-    }
-
-    if (type === "ajouter_evangelise") {
-      message = `Bonjour 👋
-
-Voici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.
-
-Église : ${churchName}
-Branche : ${branchName}
-
-Merci de remplir ce formulaire après votre rencontre.
-
-Cliquez ici :
-${link}
-
-Merci pour votre engagement dans l'œuvre 🙏`;
-    }
+    const message =
+      type === "ajouter_membre"
+        ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre.\n\nÉglise : ${churchName}\nBranche : ${branchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
+        : `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nÉglise : ${churchName}\nBranche : ${branchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`;
 
     const whatsappLink = phoneNumber
       ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
@@ -191,7 +145,6 @@ Merci pour votre engagement dans l'œuvre 🙏`;
               >
                 Annuler
               </button>
-
               <button
                 onClick={handleSend}
                 className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-semibold"

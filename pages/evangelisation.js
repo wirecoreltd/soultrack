@@ -285,23 +285,16 @@ export default function Evangelisation() {
           message += `👥 Personne ${i + 1}\n\n`;
         }
       
-        message += 
-      `👤 Nom : ${m.prenom} ${m.nom}
-      
-      🏙️ Ville : ${m.ville || "—"}
-      
-      💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}
-      
-      🎗️ Sexe : ${m.sexe || "—"}
-      
-      🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}
-      
-      ☀️ Type de conversion : ${m.type_conversion || "—"}
-      
-      📅 Date évangélisé : ${formatDateFr(m.date_evangelise)}
-      
-      ❓ Besoin : ${formatBesoin(m.besoin)}
-      
+        message +=           
+      `🎗️ Civilit : ${m.sexe || "—"}  
+      👤 Nom : ${m.prenom} ${m.nom}      
+      ⏳ Tranche d'age : ${m.age || "—"}  
+      🏙️ Ville : ${m.ville || "—"}      
+      💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}     
+      🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}      
+      ☀️ Type de conversion : ${m.type_conversion || "—"}      
+      📅 Date évangélisé : ${formatDateFr(m.date_evangelise)}      
+      ❓ Besoin : ${formatBesoin(m.besoin)}      
       📝 Infos : ${m.infos_supplementaires || "—"}
       
       `;

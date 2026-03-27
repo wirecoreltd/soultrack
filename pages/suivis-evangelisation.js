@@ -510,8 +510,8 @@ export default function SuivisEvangelisation() {
                       }`}
                     >
                       <option value="">-- Sélectionner un statut --</option>
-                      <option value="En cours">En cours</option>
-                      <option value="Intégré">Intégré</option>
+                      <option value="En cours">En Suivis</option>
+                      <option value="Intégré">Intégrer</option>
                       <option value="Refus">Refus</option>
                     </select>
                   

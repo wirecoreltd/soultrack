@@ -381,8 +381,15 @@ function CreateInternalUserContent() {
     </div>
   </div>
 )}
+
+{message && !duplicatePhone && (
+  <p className={`mt-4 text-center font-semibold ${
+    message.startsWith("❌") ? "text-red-600" : "text-green-600"
+  }`}>
+    {message}
+  </p>
+)}           
               
-                
 
         <style jsx>{`
           .input { width: 100%; border: 1px solid #ccc; border-radius: 12px; padding: 12px; }

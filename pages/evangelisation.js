@@ -279,14 +279,14 @@ export default function Evangelisation() {
         : "Nous te confions avec joie la personne suivante rencontrée lors de l’évangélisation.\n\n";
   
      contactsToSend.forEach((m, i) => {
-        message += "────────────────────\n\n";
+        message += "────────────────────\n";
       
         if (contactsToSend.length > 1) {
-          message += `👥 Personne ${i + 1}\n\n`;
+          message += `👥 Personne ${i + 1}\n`;
         }
       
         message +=           
-      `🎗️ Civilit : ${m.sexe || "—"}  
+        `🎗️ Civilit : ${m.sexe || "—"}  
       👤 Nom : ${m.prenom} ${m.nom}      
       ⏳ Tranche d'age : ${m.age || "—"}  
       🏙️ Ville : ${m.ville || "—"}      

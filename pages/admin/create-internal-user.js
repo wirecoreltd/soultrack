@@ -18,6 +18,7 @@ function CreateInternalUserContent() {
   const router = useRouter();
   const [members, setMembers] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [duplicatePhone, setDuplicatePhone] = useState(null);
 
   const [formData, setFormData] = useState({
     prenom: "",
@@ -159,76 +160,97 @@ function CreateInternalUserContent() {
     });
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  // ➤ Soumission du formulaire
+  const handleSubmit = async (e, forceCreate = false) => {
+    e.preventDefault();
 
-  if (formData.password !== formData.confirmPassword) {
-    setMessage("❌ Les mots de passe ne correspondent pas.");
-    return;
-  }
-
-  if (!formData.roles || formData.roles.length === 0) {
-    setMessage("❌ Sélectionnez au moins un rôle !");
-    return;
-  }
-
-  setLoading(true);
-  setMessage("⏳ Création en cours...");
-
-  try {
-    // ➤ Récupérer la session
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      setMessage("❌ Session expirée");
-      setLoading(false);
+    if (formData.password !== formData.confirmPassword) {
+      setMessage("❌ Les mots de passe ne correspondent pas.");
       return;
     }
 
-    // ➤ Récupérer eglise_id et branche_id du profil
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("eglise_id, branche_id")
-      .eq("id", session.user.id)
-      .single();
-
-    if (profileError || !profile) {
-      setMessage("❌ Impossible de récupérer l'église et la branche.");
-      setLoading(false);
+    if (!formData.roles || formData.roles.length === 0) {
+      setMessage("❌ Sélectionnez au moins un rôle !");
       return;
     }
 
-    const body = { ...formData, member_id: selectedMemberId, roles: formData.roles };
-    if (selectedMemberId === "add-serviteur") body.addServiteur = true;
+    setLoading(true);
+    setMessage("⏳ Vérification du numéro...");
 
-    // ➤ Créer le profile via API
-    const res = await fetch("/api/create-user", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify(body),
-    });
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setMessage("❌ Session expirée");
+        setLoading(false);
+        return;
+      }
 
-    const data = await res.json().catch(() => null);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", session.user.id)
+        .single();
 
-    if (res.ok) {
-      // ➤ Créer une ligne dans membres_complets avec eglise_id et branche_id
-      await supabase.from("membres_complets").insert([{
-        prenom: formData.prenom,
-        nom: formData.nom,
-        telephone: formData.telephone || null,
-        email: formData.email || null,
-        star: true,
-        etat_contact: "existant",
-        statut_initial: null, 
-        is_whatsapp: null,  
-        Ministere: formData.ministere.length ? formData.ministere.join(",") : null,
-        eglise_id: profile.eglise_id,
-        branche_id: profile.branche_id,
-      }]);
+      if (!profile) {
+        setMessage("❌ Impossible de récupérer l'église et la branche.");
+        setLoading(false);
+        return;
+      }
+
+      // ➤ Vérification doublon par téléphone
+      const { data: existing } = await supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("telephone", formData.telephone)
+        .single();
+
+      if (existing && !forceCreate) {
+        setDuplicatePhone(existing);
+        setMessage(`⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}.`);
+        setLoading(false);
+        return;
+      }
+
+      // ➤ Création du profil via API
+      const body = { ...formData, member_id: selectedMemberId, roles: formData.roles };
+      if (selectedMemberId === "add-serviteur") body.addServiteur = true;
+
+      const res = await fetch("/api/create-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setMessage(`❌ ${data?.error || "Erreur serveur"}`);
+        setLoading(false);
+        return;
+      }
+
+      // ➤ Ajout dans membres_complets pour serviteur
+      if (body.addServiteur) {
+        await supabase
+          .from("membres_complets")
+          .upsert([{
+            prenom: formData.prenom,
+            nom: formData.nom,
+            telephone: formData.telephone,
+            email: formData.email || null,
+            star: true,
+            etat_contact: "existant",
+            Ministere: formData.ministere.length ? formData.ministere.join(",") : null,
+            eglise_id: profile.eglise_id,
+            branche_id: profile.branche_id,
+          }], { onConflict: ['telephone'] });
+      }
 
       setMessage("✅ Utilisateur créé avec succès !");
+      setDuplicatePhone(null);
       setSelectedMemberId("");
       setFormData({
         prenom: "",
@@ -243,17 +265,12 @@ const handleSubmit = async (e) => {
         ministere: [],
       });
       setRolesToHide([]);
-    } else {
-      setMessage(`❌ ${data?.error || "Erreur serveur"}`);
+    } catch (err) {
+      setMessage("❌ " + err.message);
+    } finally {
       setLoading(false);
     }
-
-  } catch (err) {
-    setMessage("❌ " + err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleCancel = () => router.push("/admin/list-users");
 
@@ -342,6 +359,26 @@ const handleSubmit = async (e) => {
         </form>
 
         {message && <p className="mt-4 text-center">{message}</p>}
+
+        {duplicatePhone && (
+          <div className="mt-4 p-4 border border-yellow-500 bg-yellow-100 rounded-lg text-center">
+            <p>⚠️ Le numéro {formData.telephone} existe déjà pour {duplicatePhone.prenom} {duplicatePhone.nom}.</p>
+            <div className="flex justify-center gap-4 mt-2">
+              <button 
+                type="button" 
+                onClick={(e) => handleSubmit(e, true)} 
+                className="bg-green-500 text-white py-2 px-4 rounded">
+                Créer quand même
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setDuplicatePhone(null)} 
+                className="bg-gray-400 text-white py-2 px-4 rounded">
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
 
         <style jsx>{`
           .input { width: 100%; border: 1px solid #ccc; border-radius: 12px; padding: 12px; }

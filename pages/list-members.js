@@ -105,7 +105,7 @@ const canAddMember =
   };
 
   const statutSuiviLabels = {
-    1: "En attente",
+    1: "En Attente",
     2: "En Suivis",
     3: "Intégré",
     4: "Refus",

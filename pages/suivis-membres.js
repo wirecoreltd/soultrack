@@ -54,7 +54,7 @@ export default function SuivisMembres() {
     setDetailsOpen((prev) => (prev === id ? null : id));
 
   const statutIds = { envoye: 1, "En Suivis": 2, integrer: 3, refus: 4 };
-  const statutLabels = { 1: "En Suivis", 2: "En Suivis", 3: "Intégrer", 4: "Refus" };
+  const statutLabels = { 1: "En Attente", 2: "En Suivis", 3: "Intégrer", 4: "Refus" };
 
   useEffect(() => {localStorage.setItem("members_view", view);}, [view]);
 

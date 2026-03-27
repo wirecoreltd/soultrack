@@ -21,7 +21,7 @@ function EtatCellule() {
   const [filterFin, setFilterFin] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
-  const [filterCellule, setFilterCellule] = useState(""); // "" = toutes les cellules
+  const [filterCellule, setFilterCellule] = useState("");
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -33,6 +33,113 @@ function EtatCellule() {
     totalEncours: 0,
     totalAttente: 0,
   });
+
+  // ================= USER PROFILE =================
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    const userRes = await supabase.auth.getUser();
+    const user = userRes.data?.user;
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (error) return console.error("Erreur fetch user profile:", error);
+    setUserProfile(data);
+  };
+
+  // ================= FETCH DATA =================
+  const fetchReports = async () => {
+    if (!userProfile) return;
+    setShowTable(false);
+
+    try {
+      // On utilise directement la vue vue_flow_personnes
+      let query = supabase
+        .from("vue_flow_personnes")
+        .select("*")
+        .order("date_depart", { ascending: false });
+
+      // Filtrer par cellule si nécessaire et par rôle
+      if (!userProfile.roles?.includes("Administrateur")) {
+        query = query.ilike("responsable", `%${userProfile.prenom}%`);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Filtrer par date si besoin
+      let filtered = data;
+      if (filterDebut) {
+        filtered = filtered.filter(
+          (r) => new Date(r.date_depart) >= new Date(filterDebut)
+        );
+      }
+      if (filterFin) {
+        filtered = filtered.filter(
+          (r) => new Date(r.date_depart) <= new Date(filterFin)
+        );
+      }
+
+      // Filtrer par cellule si sélectionnée
+      if (filterCellule) {
+        filtered = filtered.filter((r) =>
+          r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
+        );
+      }
+
+      // ================= KPI =================
+      const normalize = (text) =>
+        text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+
+      const totalEvangelises = filtered.filter((r) =>
+        normalize(r.type_evangelisation).includes("evangelisation")
+      ).length;
+
+      const totalVenus = filtered.filter((r) =>
+        normalize(r.type_evangelisation).includes("integration")
+      ).length;
+
+      const totalIntegration = filtered.filter((r) => r.date_integration).length;
+      const totalBapteme = filtered.filter((r) => r.date_baptise).length;
+      const totalMinistere = filtered.filter((r) => r.debut_ministere).length;
+
+      const totalRefus = filtered.filter((r) =>
+        normalize(r.statut).includes("refus")
+      ).length;
+
+      const totalEncours = filtered.filter((r) =>
+        normalize(r.statut).includes("cours")
+      ).length;
+
+      const totalAttente = filtered.filter((r) =>
+        normalize(r.statut).includes("attente")
+      ).length;
+
+      setKpis({
+        totalEvangelises,
+        totalVenus,
+        totalIntegration,
+        totalBapteme,
+        totalMinistere,
+        totalRefus,
+        totalEncours,
+        totalAttente,
+      });
+
+      setReports(filtered);
+      setShowTable(true);
+    } catch (err) {
+      console.error("Erreur fetch:", err);
+      setReports([]);
+      setShowTable(false);
+    }
+  };
 
   // ================= UTIL =================
   const getStatusStyles = (status) => {
@@ -66,7 +173,7 @@ function EtatCellule() {
   const groupByMonth = (reports) => {
     const map = {};
     reports.forEach((r) => {
-      const d = new Date(r.date_evangelise_initial);
+      const d = new Date(r.date_depart);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       if (!map[key]) map[key] = [];
       map[key].push(r);
@@ -76,148 +183,6 @@ function EtatCellule() {
 
   const toggleMonth = (monthKey) => {
     setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
-  };
-
-  // ================= FETCH =================
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
-
-  useEffect(() => {
-    if (userProfile) fetchReports();
-  }, [userProfile, filterDebut, filterFin, filterCellule]);
-
-  const fetchUserProfile = async () => {
-    const user = supabase.auth.getUser
-      ? (await supabase.auth.getUser()).data.user
-      : null;
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-    if (error) {
-      console.error("Erreur fetch user profile:", error);
-      return;
-    }
-    setUserProfile(data);
-  };
-
-  const fetchReports = async () => {
-    try {
-      setShowTable(false);
-
-      // Récupérer toutes les cellules pour responsables
-      const { data: cellules, error: cellulesError } = await supabase
-        .from("cellules")
-        .select("id, cellule_full, responsable_id");
-      if (cellulesError) throw cellulesError;
-
-      // Récupérer profils pour responsables
-      const { data: allProfiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom");
-      if (profilesError) throw profilesError;
-
-      // Fetch depuis la nouvelle vue
-      const { data: flowData, error: flowError } = await supabase
-        .from("vue_flow_personnes")
-        .select("*")
-        .not("cellule_full", "is", null)
-        .order("date_evangelise_initial", { ascending: false });
-      if (flowError) throw flowError;
-
-      // Ajouter nom du responsable
-      const addResponsableName = (arr) =>
-        (arr || []).map((r) => {
-          const cellule = cellules.find((c) => c.cellule_full === r.cellule_full);
-          const responsableProfile = allProfiles.find(
-            (p) => p.id === cellule?.responsable_id
-          );
-          return {
-            ...r,
-            responsable_cellule: responsableProfile
-              ? `${responsableProfile.prenom} ${responsableProfile.nom}`
-              : "Inconnu",
-          };
-        });
-
-      let normalized = addResponsableName(flowData);
-
-      // Filtrer selon rôle
-      if (!userProfile.roles?.includes("Administrateur")) {
-        normalized = normalized.filter(
-          (r) =>
-            cellules.find((c) => c.cellule_full === r.cellule_full)
-              ?.responsable_id === userProfile.id
-        );
-      }
-
-      // Filtrer par date et cellule
-      normalized = normalized.filter((r) => {
-        const dateEvangelise = new Date(r.date_evangelise_initial);
-        const afterDebut = filterDebut ? dateEvangelise >= new Date(filterDebut) : true;
-        const beforeFin = filterFin ? dateEvangelise <= new Date(filterFin) : true;
-        const matchesCellule = filterCellule
-          ? r.cellule_full.toLowerCase().includes(filterCellule.toLowerCase())
-          : true;
-        return afterDebut && beforeFin && matchesCellule;
-      });
-
-      // Déduplication par personne_id
-      normalized = normalized.filter(
-        (v, i, a) => a.findIndex((t) => t.personne_id === v.personne_id) === i
-      );
-
-      // ================= KPI =================
-      const normalizeText = (text) =>
-        text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
-
-      const totalEvangelises = normalized.filter((r) =>
-        normalizeText(r.type_flow).includes("evangelisation")
-      ).length;
-
-      const totalVenus = normalized.filter((r) =>
-        normalizeText(r.type_flow).includes("integration")
-      ).length;
-
-      const totalIntegration = normalized.filter((r) => r.date_integration).length;
-      const totalBapteme = normalized.filter((r) => r.date_bapteme).length;
-      const totalMinistere = normalized.filter((r) => r.debut_ministere).length;
-
-      const totalRefus = normalized.filter((r) =>
-        normalizeText(r.statut).includes("refus")
-      ).length;
-
-      const totalEncours = normalized.filter((r) =>
-        normalizeText(r.statut).includes("cours")
-      ).length;
-
-      const totalAttente = normalized.filter((r) =>
-        normalizeText(r.statut).includes("attente")
-      ).length;
-
-      setKpis({
-        totalEvangelises,
-        totalVenus,
-        totalIntegration,
-        totalBapteme,
-        totalMinistere,
-        totalRefus,
-        totalEncours,
-        totalAttente,
-      });
-
-      setReports(normalized);
-      setShowTable(true);
-    } catch (error) {
-      console.error("Erreur fetch :", error);
-      setReports([]);
-      setShowTable(false);
-    }
   };
 
   const groupedReports = Object.entries(groupByMonth(reports))

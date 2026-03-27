@@ -185,11 +185,11 @@ function CreateInternalUserContent() {
     }
 
     // ✅ 1. VERIFICATION TELEPHONE
-    const { data: existingMembers } = await supabase
+        const { data: existingMembers } = await supabase
       .from("membres_complets")
-      .select("prenom, nom, telephone")
+      .select("prenom, nom, telephone, etat_contact")
       .eq("telephone", formData.telephone)
-      .neq("etat_contact", "supprime");
+      .not("etat_contact", "eq", "supprime");
 
     if (existingMembers && existingMembers.length > 0 && !forceCreate) {
       const existing = existingMembers[0];

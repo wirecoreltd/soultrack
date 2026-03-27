@@ -189,6 +189,7 @@ function CreateInternalUserContent() {
       .from("membres_complets")
       .select("prenom, nom, telephone")
       .eq("telephone", formData.telephone);
+      .neq("etat_contact", "supprime")
 
     if (existingMembers && existingMembers.length > 0 && !forceCreate) {
       const existing = existingMembers[0];

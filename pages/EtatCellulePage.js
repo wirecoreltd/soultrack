@@ -353,7 +353,7 @@ function EtatCellule() {
                         <div className={`min-w-[200px] text-center font-semibold ${textColor}`}>{r.statut}</div>
                         <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_suivi)}</div>
                         <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
-                        <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_bapteme)}</div>
+                        <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
                         <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_ministere)}</div>
                         <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
                         <div className="min-w-[200px] text-center text-white">{r.responsable}</div>

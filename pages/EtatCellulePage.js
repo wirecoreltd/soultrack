@@ -284,7 +284,7 @@ function EtatCellule() {
             <div className="hidden md:block w-full overflow-x-auto">
               <div className="w-max mx-auto space-y-2 bg-white/5 p-2 rounded-xl">
                 <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-                  <div className="min-w-[150px]">Date Evangelisé</div>
+                  <div className="min-w-[150px]">Date Depart</div>
                   <div className="min-w-[200px] text-center">Nom Complet</div>
                   <div className="min-w-[200px] text-center">Type</div>
                   <div className="min-w-[200px] text-center">Statut</div>
@@ -320,7 +320,7 @@ function EtatCellule() {
                               key={i}
                               className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${statusStyle.border}`}
                             >
-                              <div className="min-w-[150px] text-white">{formatDateFR(r.date_evangelise)}</div>
+                              <div className="min-w-[150px] text-white">{formatDateFR(r.date_depart)}</div>
                               <div className="min-w-[200px] text-center text-white">{r.nom_complet}</div>
                               <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
                               <div className={`min-w-[200px] text-center font-semibold ${statusStyle.text}`}>{r.status_suivis_evangelises}</div>

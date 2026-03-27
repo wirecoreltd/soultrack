@@ -334,36 +334,44 @@ function CreateInternalUserContent() {
           </div>
         </form>
           {duplicatePhone && (
-            <div className="mt-4 p-4 border border-yellow-500 bg-yellow-100 rounded-lg text-center">
-              <p>
-                ⚠️ Le numéro {formData.telephone} existe déjà pour {duplicatePhone.prenom} {duplicatePhone.nom}.
-              </p>
-          
-              <div className="flex justify-center gap-4 mt-2">
+  <div className="mt-4 p-4 border border-yellow-500 bg-yellow-100 rounded-lg text-center">
+    <p>
+      ⚠️ Le numéro {formData.telephone} existe déjà pour {duplicatePhone.prenom} {duplicatePhone.nom}.
+    </p>
+
+    <div className="flex justify-center gap-4 mt-2">
+
+      <button
+        type="button"
+        onClick={() => setDuplicatePhone(null)}
+        className="bg-gray-500 text-white py-2 px-4 rounded"
+      >
+        Annuler
+      </button>
+
+      <button
+        type="button"
+        onClick={(e) => handleSubmit(e, true)}
+        className="bg-green-500 text-white py-2 px-4 rounded"
+      >
+        Continuer quand même
+      </button>
+
+    </div>
+  </div>
+)}
+              
                 <button
-            type="button"
-            onClick={handleCancel}
-            disabled={!!duplicatePhone}
-            className={`flex-1 py-3 rounded-xl text-white ${
-              duplicatePhone
-                ? "bg-gray-300 cursor-not-allowed"
-                : "bg-gray-400 hover:bg-gray-500"
-            }`}
-          >
-            Annuler
-          </button>
-          
-          <button
-            type="submit"
-            disabled={loading || !!duplicatePhone}
-            className={`flex-1 py-3 rounded-xl text-white ${
-              duplicatePhone
-                ? "bg-gray-300 cursor-not-allowed"
-                : "bg-blue-500 hover:bg-blue-600"
-            }`}
-          >
-            {loading ? "Création..." : "Créer"}
-          </button>
+                  type="submit"
+                  disabled={loading || !!duplicatePhone}
+                  className={`flex-1 py-3 rounded-xl text-white ${
+                    duplicatePhone
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-blue-500 hover:bg-blue-600"
+                  }`}
+                >
+                  {loading ? "Création..." : "Créer"}
+                </button>
               </div>
             </div>
           )}

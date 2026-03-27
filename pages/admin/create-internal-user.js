@@ -198,11 +198,18 @@ function CreateInternalUserContent() {
       }
 
       // ➤ Vérification doublon par téléphone
-      const { data: existing } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("telephone", formData.telephone)
-        .single();
+      const { data: existingMembers } = await supabase
+  .from("membres_complets")
+  .select("*")
+  .eq("telephone", formData.telephone);
+
+if (existingMembers?.length && !forceCreate) {
+  const existing = existingMembers[0]; // on prend le premier pour l'affichage
+  setDuplicatePhone(existing);
+  setMessage(`⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}.`);
+  setLoading(false);
+  return;
+}
 
       if (existing && !forceCreate) {
         setDuplicatePhone(existing);

@@ -285,11 +285,13 @@ export default function Evangelisation() {
           message += `👥 Personne ${i + 1}\n`;
         }
       
-        message +=           
-        `🎗️ Civilit : ${m.sexe || "—"}  
+        message += 
+       `📣 Type d'Evangélisation : ${m.type_evangelisation || "—"}
+      🎗️ Civilité : ${m.sexe || "—"}  
       👤 Nom : ${m.prenom} ${m.nom}      
       ⏳ Tranche d'age : ${m.age || "—"}  
       🏙️ Ville : ${m.ville || "—"}      
+      📞 Téléphone: ${m.telephone || "—"}  
       💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}     
       🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}      
       ☀️ Type de conversion : ${m.type_conversion || "—"}      

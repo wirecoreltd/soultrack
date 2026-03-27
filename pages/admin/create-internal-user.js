@@ -162,103 +162,90 @@ function CreateInternalUserContent() {
 
   // ➤ Soumission du formulaire
   const handleSubmit = async (e, forceCreate = false) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      setMessage("❌ Les mots de passe ne correspondent pas.");
-      return;
-    }
+  if (formData.password !== formData.confirmPassword) {
+    setMessage("❌ Les mots de passe ne correspondent pas.");
+    return;
+  }
 
-    if (!formData.roles || formData.roles.length === 0) {
-      setMessage("❌ Sélectionnez au moins un rôle !");
-      return;
-    }
+  if (!formData.roles || formData.roles.length === 0) {
+    setMessage("❌ Sélectionnez au moins un rôle !");
+    return;
+  }
 
-    setLoading(true);
-    setMessage("⏳ Vérification du numéro...");
+  setLoading(true);
 
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setMessage("❌ Session expirée");
-        setLoading(false);
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("eglise_id, branche_id")
-        .eq("id", session.user.id)
-        .single();
-
-      if (!profile) {
-        setMessage("❌ Impossible de récupérer l'église et la branche.");
-        setLoading(false);
-        return;
-      }
-
-      // ➤ Vérification doublon par téléphone
-      const { data: existingMembers, error } = await supabase
-  .from("membres_complets")
-  .select("*")
-  .eq("telephone", formData.telephone);
-
-if (existingMembers && existingMembers.length > 0 && !forceCreate) {
-  const existing = existingMembers[0];
-  setDuplicatePhone(existing);
-  setMessage(`⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}.`);
-  setLoading(false);
-  return;
-}
-
-      // ➤ Création du profil via API
-      const body = { ...formData, member_id: selectedMemberId, roles: formData.roles };
-      if (selectedMemberId === "add-serviteur") body.addServiteur = true;
-
-      const res = await fetch("/api/create-user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        setMessage(`❌ ${data?.error || "Erreur serveur"}`);
-        setLoading(false);
-        return;
-      }
-
-      // ➤ Ajout dans membres_complets pour serviteur
-      if (body.addServiteur) {
-        
-      }
-
-      setMessage("✅ Utilisateur créé avec succès !");
-      setDuplicatePhone(null);
-      setSelectedMemberId("");
-      setFormData({
-        prenom: "",
-        nom: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        telephone: "",
-        roles: [],
-        cellule_nom: "",
-        cellule_zone: "",
-        ministere: [],
-      });
-      setRolesToHide([]);
-    } catch (err) {
-      setMessage("❌ " + err.message);
-    } finally {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setMessage("❌ Session expirée");
       setLoading(false);
+      return;
     }
-  };
+
+    // ✅ 1. VERIFICATION TELEPHONE
+    const { data: existingMembers } = await supabase
+      .from("membres_complets")
+      .select("prenom, nom, telephone")
+      .eq("telephone", formData.telephone);
+
+    if (existingMembers && existingMembers.length > 0 && !forceCreate) {
+      const existing = existingMembers[0];
+
+      setDuplicatePhone(existing);
+      setMessage(
+        `⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}`
+      );
+
+      setLoading(false);
+      return; // 🚨 BLOQUE ICI (IMPORTANT)
+    }
+
+    // ✅ 2. CREATION UTILISATEUR
+    const res = await fetch("/api/create-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        ...formData,
+        member_id: selectedMemberId,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setMessage(`❌ ${data?.error}`);
+      setLoading(false);
+      return;
+    }
+
+    // ✅ SUCCESS
+    setMessage("✅ Utilisateur créé !");
+    setDuplicatePhone(null);
+
+    setFormData({
+      prenom: "",
+      nom: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      telephone: "",
+      roles: [],
+      cellule_nom: "",
+      cellule_zone: "",
+      ministere: [],
+    });
+
+  } catch (err) {
+    setMessage("❌ " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCancel = () => router.push("/admin/list-users");
 

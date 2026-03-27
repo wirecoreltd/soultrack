@@ -329,9 +329,31 @@ function CreateInternalUserContent() {
           )}
 
           <div className="flex gap-4 mt-4">
-            <button type="button" onClick={handleCancel} className="flex-1 bg-gray-400 hover:bg-gray-500 text-white py-3 rounded-xl">Annuler</button>
-            <button type="submit" disabled={loading} className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl">{loading ? "Création..." : "Créer"}</button>
-          </div>
+  <button
+    type="button"
+    onClick={handleCancel}
+    disabled={!!duplicatePhone}
+    className={`flex-1 py-3 rounded-xl text-white ${
+      duplicatePhone
+        ? "bg-gray-300 cursor-not-allowed"
+        : "bg-gray-400 hover:bg-gray-500"
+    }`}
+  >
+    Annuler
+  </button>
+
+  <button
+    type="submit"
+    disabled={loading || !!duplicatePhone}
+    className={`flex-1 py-3 rounded-xl text-white ${
+      duplicatePhone
+        ? "bg-gray-300 cursor-not-allowed"
+        : "bg-blue-500 hover:bg-blue-600"
+    }`}
+  >
+    {loading ? "Création..." : "Créer"}
+  </button>
+</div>
         </form>
           {duplicatePhone && (
   <div className="mt-4 p-4 border border-yellow-500 bg-yellow-100 rounded-lg text-center">
@@ -340,7 +362,6 @@ function CreateInternalUserContent() {
     </p>
 
     <div className="flex justify-center gap-4 mt-2">
-
       <button
         type="button"
         onClick={() => setDuplicatePhone(null)}
@@ -356,25 +377,11 @@ function CreateInternalUserContent() {
       >
         Continuer quand même
       </button>
-
     </div>
   </div>
 )}
               
-                <button
-                  type="submit"
-                  disabled={loading || !!duplicatePhone}
-                  className={`flex-1 py-3 rounded-xl text-white ${
-                    duplicatePhone
-                      ? "bg-gray-300 cursor-not-allowed"
-                      : "bg-blue-500 hover:bg-blue-600"
-                  }`}
-                >
-                  {loading ? "Création..." : "Créer"}
-                </button>
-              </div>
-            </div>
-          )}
+                
 
         <style jsx>{`
           .input { width: 100%; border: 1px solid #ccc; border-radius: 12px; padding: 12px; }

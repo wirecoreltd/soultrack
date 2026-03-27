@@ -23,272 +23,16 @@ function EtatCellule() {
   const [userProfile, setUserProfile] = useState(null);
   const [filterCellule, setFilterCellule] = useState(""); // "" = toutes les cellules
 
-      // ================== KPI ==================
-    const totalEvangelises = reports.length;
-    
-    const totalIntegration = reports.filter(
-      (r) => r.type_evangelisation === "Integration"
-    ).length;
-    
-    const totalMinistere = reports.filter(
-      (r) => r.ministere_date
-    ).length;
-    
-    const totalBapteme = reports.filter(
-      (r) => r.date_baptise
-    ).length;
-    
-    const totalEnCours = reports.filter(
-      (r) =>
-        r.status_suivis_evangelises &&
-        r.status_suivis_evangelises.toLowerCase().includes("cours")
-    ).length;
-
   const [kpis, setKpis] = useState({
-  totalEvangelises: 0,
-  totalVenus: 0,
-  totalIntegration: 0,
-  totalBapteme: 0,
-  totalMinistere: 0,
-  totalRefus: 0,
-  totalEncours: 0,
-  totalAttente: 0,
-});
-    // % sécurisés
-    const percIntegration =
-      totalEvangelises > 0
-        ? Math.round((totalIntegration / totalEvangelises) * 100)
-        : 0;
-    
-    const percMinistere =
-      totalEvangelises + totalIntegration > 0
-        ? Math.round(
-            (totalMinistere / (totalEvangelises + totalIntegration)) * 100
-          )
-        : 0;
-    
-    const percBapteme =
-      totalEvangelises + totalIntegration > 0
-        ? Math.round(
-            (totalBapteme / (totalEvangelises + totalIntegration)) * 100
-          )
-        : 0;
-    
-    const percEnCours =
-      totalEvangelises > 0
-        ? Math.round((totalEnCours / totalEvangelises) * 100)
-        : 0;
-
-//========================
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
-
-  const fetchUserProfile = async () => {
-    const user = supabase.auth.getUser
-      ? (await supabase.auth.getUser()).data.user
-      : null;
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-    if (error) {
-      console.error("Erreur fetch user profile:", error);
-      return;
-    }
-
-    setUserProfile(data);
-  };
-
-  // ================= FETCH DATA =================
-  const fetchReports = async () => {
-    try {
-      if (!userProfile) return; // attendre profil
-
-      setShowTable(false);
-
-      // Récupérer toutes les cellules
-      const { data: cellules, error: cellulesError } = await supabase
-        .from("cellules")
-        .select("id, cellule_full, responsable_id");
-
-      if (cellulesError) throw cellulesError;
-
-      // Récupérer profils pour responsables
-      const { data: allProfiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom");
-
-      if (profilesError) throw profilesError;
-
-      // Récupérer etat_cellule
-      const { data: dataCellule, error: errorCellule } = await supabase
-        .from("etat_cellule")
-        .select("*")
-        .not("cellule_id", "is", null)
-        .order("date_evangelise", { ascending: false });
-
-      if (errorCellule) throw errorCellule;
-
-      // Récupérer membres_venus_par_eglise
-      const { data: dataEglise, error: errorEglise } = await supabase
-        .from("membres_venus_par_eglise")
-        .select("*")
-        .order("date_evangelise", { ascending: false });
-
-      if (errorEglise) throw errorEglise;
-
-      // Fonction pour ajouter le nom du responsable
-      const addResponsableName = (arr) =>
-        (arr || []).map((r) => {
-          const cellule = cellules.find((c) => c.id === r.cellule_id);
-          const responsableProfile = allProfiles.find(
-            (p) => p.id === cellule?.responsable_id
-          );
-          return {
-            ...r,
-            responsable_cellule: responsableProfile
-              ? `${responsableProfile.prenom} ${responsableProfile.nom}`
-              : "Inconnu",
-            cellule_full: cellule?.cellule_full || r.cellule_full,
-          };
-        });
-
-      let normalizedCellule = addResponsableName(dataCellule).map((r) => ({
-        id: r.id,
-        nom: r.nom,
-        prenom: r.prenom,
-        nom_complet: `${r.prenom} ${r.nom}`,
-        type_evangelisation: r.type_evangelisation || "Evangélisation",
-        status_suivis_evangelises: r.status_suivis_evangelises,
-        date_evangelise: r.date_evangelise,
-        date_suivi: r.date_suivi,
-        date_integration: r.date_integration,
-        date_baptise: r.date_baptise,
-        ministere_date: r.ministere_date,
-        cellule_full: r.cellule_full,
-        responsable_cellule: r.responsable_cellule,
-      }));
-
-      let normalizedEglise = addResponsableName(dataEglise).map((r) => ({
-        id: r.id,
-        nom: r.nom || "",
-        prenom: r.prenom || "",
-        nom_complet: r.nom_complet || `${r.prenom} ${r.nom}`,
-        type_evangelisation: r.type_integration || "Integration",
-        status_suivis_evangelises: r.statut || "Inconnu",
-        date_evangelise: r.date_evangelise,
-        date_suivi: r.envoyer_au_suivi_le,
-        date_integration: r.date_integration,
-        date_baptise: r.bapteme_date,
-        ministere_date: r.debut_ministere,
-        cellule_full: r.cellule_full,
-        responsable_cellule: r.responsable_cellule,
-      }));
-
-      // Combiner datasets
-      let combined = [...normalizedCellule, ...normalizedEglise];
-
-      // Supprimer doublons
-      combined = combined.filter(
-        (v, i, a) => a.findIndex((t) => t.id === v.id) === i
-      );
-
-      // Filtrer contacts sans cellule
-      combined = combined.filter((r) => r.cellule_full);
-
-      // Filtrer selon le rôle
-      if (!userProfile.roles?.includes("Administrateur")) {
-        combined = combined.filter(
-          (r) =>
-            cellules.find((c) => c.cellule_full === r.cellule_full)
-              ?.responsable_id === userProfile.id
-        );
-      }
-
-      // Filtrer par date si besoin
-      if (filterDebut) {
-        combined = combined.filter(
-          (r) => new Date(r.date_evangelise) >= new Date(filterDebut)
-        );
-      }
-      if (filterFin) {
-        combined = combined.filter(
-          (r) => new Date(r.date_evangelise) <= new Date(filterFin)
-        );
-      }
-
-      // ================= KPI =================
-
-// ================= KPI =================
-
-// Filtrer selon cellule sélectionnée (ou toutes pour l'admin)
-const filteredReports = combined.filter((r) => {
-  const matchesCellule = filterCellule
-    ? r.cellule_full.toLowerCase().includes(filterCellule.toLowerCase())
-    : true;
-
-  const dateEvangelise = new Date(r.date_evangelise);
-  const afterDebut = filterDebut ? dateEvangelise >= new Date(filterDebut) : true;
-  const beforeFin = filterFin ? dateEvangelise <= new Date(filterFin) : true;
-
-  return matchesCellule && afterDebut && beforeFin;
-});
-
-// Fonction pour normaliser texte (minuscule + retirer accents)
-const normalizeText = (text) =>
-  text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
-
-// KPI dynamiques
-const totalEvangelises = filteredReports.filter((r) =>
-  normalizeText(r.type_evangelisation).includes("evangelisation")
-).length;
-
-const totalVenus = filteredReports.filter((r) =>
-  normalizeText(r.type_evangelisation).includes("integration")
-).length;
-
-const totalIntegration = filteredReports.filter((r) => r.date_integration).length;
-const totalBapteme = filteredReports.filter((r) => r.date_baptise).length;
-const totalMinistere = filteredReports.filter((r) => r.ministere_date).length;
-
-const totalRefus = filteredReports.filter((r) =>
-  normalizeText(r.status_suivis_evangelises).includes("refus")
-).length;
-
-const totalEncours = filteredReports.filter((r) =>
-  normalizeText(r.status_suivis_evangelises).includes("cours")
-).length;
-
-const totalAttente = filteredReports.filter((r) =>
-  normalizeText(r.status_suivis_evangelises).includes("attente")
-).length;
-
-// Mise à jour des KPI
-setKpis({
-  totalEvangelises,
-  totalVenus,
-  totalIntegration,
-  totalBapteme,
-  totalMinistere,
-  totalRefus,
-  totalEncours,
-  totalAttente,
-});
-      
-
-      setReports(combined);
-      setShowTable(true);
-    } catch (error) {
-      console.error("Erreur fetch :", error);
-      setReports([]);
-      setShowTable(false);
-    }
-  };
+    totalEvangelises: 0,
+    totalVenus: 0,
+    totalIntegration: 0,
+    totalBapteme: 0,
+    totalMinistere: 0,
+    totalRefus: 0,
+    totalEncours: 0,
+    totalAttente: 0,
+  });
 
   // ================= UTIL =================
   const getStatusStyles = (status) => {
@@ -322,7 +66,7 @@ setKpis({
   const groupByMonth = (reports) => {
     const map = {};
     reports.forEach((r) => {
-      const d = new Date(r.date_evangelise);
+      const d = new Date(r.date_evangelise_initial);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       if (!map[key]) map[key] = [];
       map[key].push(r);
@@ -332,6 +76,148 @@ setKpis({
 
   const toggleMonth = (monthKey) => {
     setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
+  };
+
+  // ================= FETCH =================
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  useEffect(() => {
+    if (userProfile) fetchReports();
+  }, [userProfile, filterDebut, filterFin, filterCellule]);
+
+  const fetchUserProfile = async () => {
+    const user = supabase.auth.getUser
+      ? (await supabase.auth.getUser()).data.user
+      : null;
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      console.error("Erreur fetch user profile:", error);
+      return;
+    }
+    setUserProfile(data);
+  };
+
+  const fetchReports = async () => {
+    try {
+      setShowTable(false);
+
+      // Récupérer toutes les cellules pour responsables
+      const { data: cellules, error: cellulesError } = await supabase
+        .from("cellules")
+        .select("id, cellule_full, responsable_id");
+      if (cellulesError) throw cellulesError;
+
+      // Récupérer profils pour responsables
+      const { data: allProfiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom");
+      if (profilesError) throw profilesError;
+
+      // Fetch depuis la nouvelle vue
+      const { data: flowData, error: flowError } = await supabase
+        .from("vue_flow_personnes")
+        .select("*")
+        .not("cellule_full", "is", null)
+        .order("date_evangelise_initial", { ascending: false });
+      if (flowError) throw flowError;
+
+      // Ajouter nom du responsable
+      const addResponsableName = (arr) =>
+        (arr || []).map((r) => {
+          const cellule = cellules.find((c) => c.cellule_full === r.cellule_full);
+          const responsableProfile = allProfiles.find(
+            (p) => p.id === cellule?.responsable_id
+          );
+          return {
+            ...r,
+            responsable_cellule: responsableProfile
+              ? `${responsableProfile.prenom} ${responsableProfile.nom}`
+              : "Inconnu",
+          };
+        });
+
+      let normalized = addResponsableName(flowData);
+
+      // Filtrer selon rôle
+      if (!userProfile.roles?.includes("Administrateur")) {
+        normalized = normalized.filter(
+          (r) =>
+            cellules.find((c) => c.cellule_full === r.cellule_full)
+              ?.responsable_id === userProfile.id
+        );
+      }
+
+      // Filtrer par date et cellule
+      normalized = normalized.filter((r) => {
+        const dateEvangelise = new Date(r.date_evangelise_initial);
+        const afterDebut = filterDebut ? dateEvangelise >= new Date(filterDebut) : true;
+        const beforeFin = filterFin ? dateEvangelise <= new Date(filterFin) : true;
+        const matchesCellule = filterCellule
+          ? r.cellule_full.toLowerCase().includes(filterCellule.toLowerCase())
+          : true;
+        return afterDebut && beforeFin && matchesCellule;
+      });
+
+      // Déduplication par personne_id
+      normalized = normalized.filter(
+        (v, i, a) => a.findIndex((t) => t.personne_id === v.personne_id) === i
+      );
+
+      // ================= KPI =================
+      const normalizeText = (text) =>
+        text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+
+      const totalEvangelises = normalized.filter((r) =>
+        normalizeText(r.type_flow).includes("evangelisation")
+      ).length;
+
+      const totalVenus = normalized.filter((r) =>
+        normalizeText(r.type_flow).includes("integration")
+      ).length;
+
+      const totalIntegration = normalized.filter((r) => r.date_integration).length;
+      const totalBapteme = normalized.filter((r) => r.date_bapteme).length;
+      const totalMinistere = normalized.filter((r) => r.debut_ministere).length;
+
+      const totalRefus = normalized.filter((r) =>
+        normalizeText(r.statut).includes("refus")
+      ).length;
+
+      const totalEncours = normalized.filter((r) =>
+        normalizeText(r.statut).includes("cours")
+      ).length;
+
+      const totalAttente = normalized.filter((r) =>
+        normalizeText(r.statut).includes("attente")
+      ).length;
+
+      setKpis({
+        totalEvangelises,
+        totalVenus,
+        totalIntegration,
+        totalBapteme,
+        totalMinistere,
+        totalRefus,
+        totalEncours,
+        totalAttente,
+      });
+
+      setReports(normalized);
+      setShowTable(true);
+    } catch (error) {
+      console.error("Erreur fetch :", error);
+      setReports([]);
+      setShowTable(false);
+    }
   };
 
   const groupedReports = Object.entries(groupByMonth(reports))
@@ -371,73 +257,59 @@ setKpis({
         </button>
       </div>
 
-  
-<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
-
-  {/* Total évangélisés */}
-  <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
-    <div className="text-sm">Total Évangélisés</div>
-  </div>
-
-  {/* Total venus */}
-  <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalVenus}</div>
-    <div className="text-sm">Total Venus Église</div>
-  </div>
-
-  {/* Intégration */}
-  <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
-    <div className="text-sm">Intégrés</div>
-    <div className="text-sm">
-      {kpis.totalEvangelises > 0
-        ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
-        : 0}%
-    </div>
-  </div>
-
-  {/* Baptême */}
-  <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
-    <div className="text-sm">Baptêmes</div>
-    <div className="text-sm">
-      {kpis.totalEvangelises + kpis.totalVenus > 0
-        ? Math.round(
-            (kpis.totalBapteme /
-              (kpis.totalEvangelises + kpis.totalVenus)) *
-              100
-          )
-        : 0}%
-    </div>
-  </div>
-
-  {/* Ministère */}
-  <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
-    <div className="text-sm">Ministère</div>
-  </div>
-
-  {/* Refus */}
-  <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalRefus}</div>
-    <div className="text-sm">Refus</div>
-  </div>
-
-  {/* En cours */}
-  <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalEncours}</div>
-    <div className="text-sm">En cours</div>
-  </div>
-
-  {/* En attente */}
-  <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalAttente}</div>
-    <div className="text-sm">En attente</div>
-  </div>
-
-</div>
-  
+      {/* KPI */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
+        {/* Total évangélisés */}
+        <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
+          <div className="text-sm">Total Évangélisés</div>
+        </div>
+        {/* Total venus */}
+        <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalVenus}</div>
+          <div className="text-sm">Total Venus Église</div>
+        </div>
+        {/* Intégration */}
+        <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
+          <div className="text-sm">Intégrés</div>
+          <div className="text-sm">
+            {kpis.totalEvangelises > 0
+              ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
+              : 0}%
+          </div>
+        </div>
+        {/* Baptême */}
+        <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
+          <div className="text-sm">Baptêmes</div>
+          <div className="text-sm">
+            {kpis.totalEvangelises + kpis.totalVenus > 0
+              ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
+              : 0}%
+          </div>
+        </div>
+        {/* Ministère */}
+        <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
+          <div className="text-sm">Ministère</div>
+        </div>
+        {/* Refus */}
+        <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalRefus}</div>
+          <div className="text-sm">Refus</div>
+        </div>
+        {/* En cours */}
+        <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalEncours}</div>
+          <div className="text-sm">En cours</div>
+        </div>
+        {/* En attente */}
+        <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalAttente}</div>
+          <div className="text-sm">En attente</div>
+        </div>
+      </div>
 
       {/* TABLEAU */}
       {showTable && (

@@ -11,45 +11,47 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
   const [churchName, setChurchName] = useState("");
   const [branchName, setBranchName] = useState("");
 
-  // 🔹 Récupère l'église et la branche de l'utilisateur
-  const fetchUserChurchAndBranch = async (userId) => {
-    if (!userId) return { churchId: null, branchId: null };
-
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("eglise_id, branche_id")
-      .eq("id", userId)
-      .single();
-
-    if (profileError || !profile) return { churchId: null, branchId: null };
-
-    const { eglise_id, branche_id } = profile;
-
-    // Récupération des noms
-    const { data: churchData } = await supabase
-      .from("eglises")
-      .select("nom")
-      .eq("id", eglise_id)
-      .single();
-    if (churchData) setChurchName(churchData.nom);
-
-    const { data: branchData } = await supabase
-      .from("branches")
-      .select("nom")
-      .eq("id", branche_id)
-      .single();
-    if (branchData) setBranchName(branchData.nom);
-
-    return { churchId: eglise_id, branchId: branche_id };
-  };
-
-  // 🔹 Récupère ou crée un token
+  // 🔹 Récupération du token + église/branche
   const fetchOrCreateToken = async () => {
     try {
-      const { churchId, branchId } = await fetchUserChurchAndBranch(userId);
+      let church_id = null;
+      let branch_id = null;
 
+      if (userId) {
+        // Récupérer l'église et la branche de l'utilisateur
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("eglise_id, branche_id")
+          .eq("id", userId)
+          .single();
+
+        if (profileError) {
+          console.error("Erreur fetch profile:", profileError);
+          return;
+        }
+
+        church_id = profile.eglise_id;
+        branch_id = profile.branche_id;
+
+        // Nom de l'église
+        const { data: churchData, error: churchError } = await supabase
+          .from("eglises")
+          .select("nom")
+          .eq("id", church_id)
+          .single();
+        if (!churchError && churchData) setChurchName(churchData.nom);
+
+        // Nom de la branche
+        const { data: branchData, error: branchError } = await supabase
+          .from("branches")
+          .select("nom")
+          .eq("id", branch_id)
+          .single();
+        if (!branchError && branchData) setBranchName(branchData.nom);
+      }
+
+      // 🔹 Chercher un token existant
       const now = new Date().toISOString();
-
       let query = supabase
         .from("access_tokens")
         .select("*")
@@ -59,8 +61,8 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
         .limit(1)
         .single();
 
-      if (churchId) query = query.eq("church_id", churchId);
-      if (branchId) query = query.eq("branch_id", branchId);
+      if (church_id) query = query.eq("church_id", church_id);
+      if (branch_id) query = query.eq("branch_id", branch_id);
 
       const { data, error } = await query;
 
@@ -69,7 +71,7 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
         return;
       }
 
-      // Crée un nouveau token si aucun existant
+      // 🔹 Créer un nouveau token si aucun existant
       const newToken = uuidv4();
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -80,12 +82,13 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
             token: newToken,
             access_type: type,
             expires_at: expiresAt,
-            church_id: churchId,
-            branch_id: branchId,
+            church_id,
+            branch_id,
           },
         ]);
 
       if (!insertError) setToken(newToken);
+
     } catch (err) {
       console.error("Erreur token :", err.message);
     }
@@ -95,9 +98,10 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
     fetchOrCreateToken();
   }, [type, userId]);
 
-  // 🔹 Génère le lien
+  // 🔹 Génération du lien
   const getLink = () => {
-    if (!token || typeof window === "undefined") return window.location.origin;
+    if (typeof window === "undefined") return "";
+    if (!token) return window.location.origin;
 
     if (type === "ajouter_membre") return `${window.location.origin}/add-member?token=${token}`;
     if (type === "ajouter_evangelise") return `${window.location.origin}/add-evangelise?token=${token}`;
@@ -105,12 +109,13 @@ export default function SendLinkPopup({ label, type, buttonColor, userId }) {
     return window.location.origin;
   };
 
-  // 🔹 Envoi WhatsApp
+  // 🔹 Envoi via WhatsApp
   const handleSend = () => {
     const link = getLink();
+    let message = "";
 
-    const message = type === "ajouter_membre"
-      ? `Bonjour 👋
+    if (type === "ajouter_membre") {
+      message = `Bonjour 👋
 
 Voici le lien pour ajouter un nouveau membre.
 
@@ -122,8 +127,11 @@ Merci de prendre quelques instants pour remplir ce formulaire.
 Cliquez ici :
 ${link}
 
-Merci pour votre service 🙏`
-      : `Bonjour 👋
+Merci pour votre service 🙏`;
+    }
+
+    if (type === "ajouter_evangelise") {
+      message = `Bonjour 👋
 
 Voici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.
 
@@ -136,6 +144,7 @@ Cliquez ici :
 ${link}
 
 Merci pour votre engagement dans l'œuvre 🙏`;
+    }
 
     const whatsappLink = phoneNumber
       ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`

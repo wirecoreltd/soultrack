@@ -277,67 +277,96 @@ function EtatCellule() {
       </div>
 
       {/* TABLEAU */}
-      {showTable && (
-        <div className="w-full flex justify-center mt-6 mb-6">
-          <div className="w-full max-w-7xl">
-            {/* DESKTOP */}
-            <div className="hidden md:block w-full overflow-x-auto">
-              <div className="w-max mx-auto space-y-2 bg-white/5 p-2 rounded-xl">
-                <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-                  <div className="min-w-[150px]">Date Depart</div>
-                  <div className="min-w-[200px] text-center">Nom Complet</div>
-                  <div className="min-w-[200px] text-center">Type</div>
-                  <div className="min-w-[200px] text-center">Statut</div>
-                  <div className="min-w-[150px] text-center">Envoyer au Suivi Le</div>
-                  <div className="min-w-[150px] text-center">Date Intégration</div>
-                  <div className="min-w-[150px] text-center">Date Baptême</div>
-                  <div className="min-w-[150px] text-center">Début Ministère</div>
-                  <div className="min-w-[220px] text-center">Cellule</div>
-                  <div className="min-w-[200px] text-center">Responsable</div>
+{showTable && (
+  <div className="w-full flex justify-center mt-6 mb-6">
+    <div className="w-full max-w-7xl">
+      {/* DESKTOP */}
+      <div className="hidden md:block w-full overflow-x-auto">
+        <div className="w-max mx-auto space-y-2 bg-white/5 p-2 rounded-xl">
+          {/* Header */}
+          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+            <div className="min-w-[150px]">Date Depart</div>
+            <div className="min-w-[200px] text-center">Nom Complet</div>
+            <div className="min-w-[200px] text-center">Type</div>
+            <div className="min-w-[200px] text-center">Statut</div>
+            <div className="min-w-[150px] text-center">Envoyer au Suivi Le</div>
+            <div className="min-w-[150px] text-center">Date Intégration</div>
+            <div className="min-w-[150px] text-center">Date Baptême</div>
+            <div className="min-w-[150px] text-center">Début Ministère</div>
+            <div className="min-w-[220px] text-center">Cellule</div>
+            <div className="min-w-[200px] text-center">Responsable</div>
+          </div>
+
+          {groupedReports.map(([monthKey, rows]) => {
+            const [year, monthIndex] = monthKey.split("-").map(Number);
+            const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+            const isExpanded = expandedMonths[monthKey] || false;
+
+            return (
+              <div key={monthKey} className="space-y-1">
+                <div
+                  className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer"
+                  onClick={() => toggleMonth(monthKey)}
+                >
+                  <div className="min-w-[150px] text-white font-semibold">
+                    {isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})
+                  </div>
                 </div>
 
-                {groupedReports.map(([monthKey, rows]) => {
-                  const [year, monthIndex] = monthKey.split("-").map(Number);
-                  const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-                  const isExpanded = expandedMonths[monthKey] || false;
+                {isExpanded &&
+                  rows.map((r, i) => {
+                    // Définir la couleur de la bordure selon le statut
+                    let borderColor = "";
+                    let textColor = "";
+                    switch (r.statut?.toLowerCase()) {
+                      case "intégré":
+                        borderColor = "border-green-500";
+                        textColor = "text-green-400";
+                        break;
+                      case "en attente":
+                        borderColor = "border-gray-500";
+                        textColor = "text-gray-400";
+                        break;
+                      case "refus":
+                        borderColor = "border-red-500";
+                        textColor = "text-red-400";
+                        break;
+                      case "en cours":
+                      case "en suivis":
+                        borderColor = "border-orange-500";
+                        textColor = "text-orange-400";
+                        break;
+                      default:
+                        borderColor = "border-white/30";
+                        textColor = "text-white";
+                    }
 
-                  return (
-                    <div key={monthKey} className="space-y-1">
+                    return (
                       <div
-                        className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer"
-                        onClick={() => toggleMonth(monthKey)}
+                        key={i}
+                        className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
                       >
-                        <div className="min-w-[150px] text-white font-semibold">
-                          {isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})
-                        </div>
+                        <div className="min-w-[150px] text-white">{formatDateFR(r.date_depart)}</div>
+                        <div className="min-w-[200px] text-center text-white">{r.nom_complet}</div>
+                        <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
+                        <div className={`min-w-[200px] text-center font-semibold ${textColor}`}>{r.statut}</div>
+                        <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_suivi)}</div>
+                        <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
+                        <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_bapteme)}</div>
+                        <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_ministere)}</div>
+                        <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
+                        <div className="min-w-[200px] text-center text-white">{r.responsable}</div>
                       </div>
-
-                      {isExpanded &&
-                        rows.map((r, i) => {
-                          const statusStyle = getStatusStyles(r.status_suivis_evangelises);
-                          return (
-                            <div
-                              key={i}
-                              className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${statusStyle.border}`}
-                            >
-                              <div className="min-w-[150px] text-white">{formatDateFR(r.date_depart)}</div>
-                              <div className="min-w-[200px] text-center text-white">{r.nom_complet}</div>
-                              <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
-                              <div className={`min-w-[200px] text-center font-semibold ${statusStyle.text}`}>{r.statut}</div>
-                              <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_suivi)}</div>
-                              <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
-                              <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
-                              <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_ministere)}</div>
-                              <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
-                              <div className="min-w-[200px] text-center text-white">{r.responsable}</div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
-            </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
             {/* MOBILE */}
             <div className="md:hidden space-y-4">

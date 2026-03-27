@@ -22,6 +22,7 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [filterCellule, setFilterCellule] = useState("");
+  const getDate = (row, key) => row[key] ? formatDateFR(row[key]) : "-";
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -381,8 +382,8 @@ function EtatCellule() {
                         <p><strong>Statut:</strong> {r.statut}</p>
                         <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.date_suivi)}</p>
                         <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
-                        <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
-                        <p><strong>Début Ministère:</strong> {formatDateFR(r.ministere_date)}</p>
+                        <p><strong>Baptême:</strong> {formatDateFR(r.date_bapteme)}</p>
+                        <p><strong>Début Ministère:</strong> {formatDateFR(r.date_ministere)}</p>
                         <p><strong>Cellule:</strong> {r.cellule_full}</p>
                         <p><strong>Responsable:</strong> {r.responsable}</p>
                       </div>

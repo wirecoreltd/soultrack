@@ -376,14 +376,14 @@ function EtatCellule() {
                     <h3 className="text-white font-bold">{monthLabel}</h3>
                     {rows.map((r, i) => (
                       <div key={i} className="bg-white/10 rounded-xl p-4 text-white space-y-1">
-                        <p><strong>Date:</strong> {formatDateFR(r.date_evangelise)}</p>
+                        <p><strong>Date:</strong> {formatDateFR(r.date_depart)}</p>
                         <p><strong>Nom:</strong> {r.nom_complet}</p>
                         <p><strong>Type:</strong> {r.type_evangelisation}</p>
                         <p><strong>Statut:</strong> {r.statut}</p>
-                        <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.date_suivi)}</p>
+                        <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.envoyer_au_suivi_le)}</p>
                         <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
-                        <p><strong>Baptême:</strong> {formatDateFR(r.date_bapteme)}</p>
-                        <p><strong>Début Ministère:</strong> {formatDateFR(r.date_ministere)}</p>
+                        <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise}</p>
+                        <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>
                         <p><strong>Cellule:</strong> {r.cellule_full}</p>
                         <p><strong>Responsable:</strong> {r.responsable}</p>
                       </div>

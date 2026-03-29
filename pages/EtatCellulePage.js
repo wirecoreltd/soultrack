@@ -108,40 +108,29 @@ function EtatCellule() {
   ].some(t => type.includes(t));
 }).length;
 
-      const totalVenus = filtered.filter((r) =>
-        normalize(r.type_evangelisation).includes("integration")
-      ).length;
-
-      const totalIntegration = filtered.filter((r) => r.statut_suivis === 3).length;
-      const totalBapteme = filtered.filter((r) => r.date_baptise).length;
-      const totalMinistere = filtered.filter((r) => r.debut_ministere).length;
-
-      const totalRefus = filtered.filter((r) =>
-        normalize(r.statut).includes("refus")
-      ).length;
-
-      const totalEncours = filtered.filter((r) =>
-        normalize(r.statut).includes("cours")
-      ).length;
-
-// ================= KPI =================
-const totalAttente = filtered.filter((r) =>
-  r.statut_suivis === 2 || r.statut_suivis === "Envoyé" // 2 = statut "En attente"
+const totalVenus = filtered.filter((r) =>
+  normalize(r.type_evangelisation).includes("integration")
 ).length;
 
-// Pour totalEvangelises si tu veux inclure les envoyés aussi
-const totalEvangelisesWithEnvoye = filtered.filter((r) => {
-  const type = normalize(r.type_evangelisation);
-  return [
-    "individuel",
-    "sortie de groupe",
-    "Campagne d’évangélisation",
-    "Évangélisation de rue",
-    "Évangélisation maison",
-    "Évangélisation stade",
-    "evangelisation"
-  ].some(t => type.includes(t));
-}).length;
+// ✅ INTÉGRÉS
+const totalIntegration = filtered.filter((r) =>
+  r.statut_suivis === 3
+).length;
+
+// ✅ EN COURS
+const totalEncours = filtered.filter((r) =>
+  r.statut_suivis === 2
+).length;
+
+// ✅ REFUS
+const totalRefus = filtered.filter((r) =>
+  r.statut_suivis === 4
+).length;
+
+// ✅ EN ATTENTE (Envoyé uniquement)
+const totalAttente = filtered.filter((r) =>
+  r.statut_suivis === "Envoyé"
+).length;
       
       setKpis({
         totalEvangelises,

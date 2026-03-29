@@ -130,12 +130,15 @@ const totalAttente = filtered.filter((r) =>
 ).length;
 
 // Pour totalEvangelises si tu veux inclure les envoyés aussi
-totalEvangelises = filtered.filter((r) => {
+const totalEvangelisesWithEnvoye = filtered.filter((r) => {
   const type = normalize(r.type_evangelisation);
   return [
     "individuel",
     "sortie de groupe",
-    "campagne",
+    "Campagne d’évangélisation",
+    "Évangélisation de rue",
+    "Évangélisation maison",
+    "Évangélisation stade",
     "evangelisation"
   ].some(t => type.includes(t));
 }).length;

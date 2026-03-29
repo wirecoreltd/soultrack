@@ -130,7 +130,7 @@ const totalAttente = filtered.filter((r) =>
 ).length;
 
 // Pour totalEvangelises si tu veux inclure les envoyés aussi
-const totalEvangelises = filtered.filter((r) => {
+totalEvangelises = filtered.filter((r) => {
   const type = normalize(r.type_evangelisation);
   return [
     "individuel",
@@ -139,7 +139,7 @@ const totalEvangelises = filtered.filter((r) => {
     "evangelisation"
   ].some(t => type.includes(t));
 }).length;
-
+      
       setKpis({
         totalEvangelises,
         totalVenus,

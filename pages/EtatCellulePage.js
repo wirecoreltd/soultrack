@@ -98,7 +98,15 @@ function EtatCellule() {
       const normalize = (text) =>
         text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
 
-      const totalEvangelises = filtered.length;
+      const totalEvangelises = filtered.filter((r) => {
+  const type = normalize(r.type_evangelisation);
+  return [
+    "individuel",
+    "sortie de groupe",
+    "campagne",
+    "evangelisation"
+  ].some(t => type.includes(t));
+}).length;
 
       const totalVenus = filtered.filter((r) =>
         normalize(r.type_evangelisation).includes("integration")

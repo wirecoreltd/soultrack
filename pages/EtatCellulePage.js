@@ -94,6 +94,14 @@ function EtatCellule() {
         );
       }
 
+      //==========================
+      const getStatut = (r) => {
+  if (r.statut_suivis === "Envoyé") return "attente";
+  if (Number(r.statut_suivis) === 2) return "encours";
+  if (Number(r.statut_suivis) === 3) return "integre";
+  if (Number(r.statut_suivis) === 4) return "refus";
+  return "autre";
+};
       // ================= KPI =================
       const normalize = (text) =>
         text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
@@ -327,33 +335,29 @@ const totalAttente = filtered.filter((r) =>
                 {isExpanded &&
                   rows.map((r, i) => {
                     // Définir la couleur de la bordure selon le statut
-                   let borderColor = "";
-let textColor = "";
-const statutAffiche = r.statut_suivis === "Envoyé" ? "En attente" : r.statut;
+                   const statut = getStatut(r);
 
-switch (statutAffiche?.toLowerCase()) {
-  case "intégré":
+switch (statut) {
+  case "integre":
     borderColor = "border-green-500";
     textColor = "text-green-400";
     break;
-  case "en attente":
-    borderColor = "border-gray-500";
-    textColor = "text-gray-400";
+  case "encours":
+    borderColor = "border-orange-500";
+    textColor = "text-orange-400";
     break;
   case "refus":
     borderColor = "border-red-500";
     textColor = "text-red-400";
     break;
-  case "en cours":
-  case "en suivis":
-    borderColor = "border-orange-500";
-    textColor = "text-orange-400";
+  case "attente":
+    borderColor = "border-gray-500";
+    textColor = "text-gray-400";
     break;
   default:
     borderColor = "border-white/30";
     textColor = "text-white";
 }
-
                     return (
                       <div
                         key={i}
@@ -393,7 +397,13 @@ switch (statutAffiche?.toLowerCase()) {
                         <p><strong>Date:</strong> {formatDateFR(r.date_depart)}</p>
                         <p><strong>Nom:</strong> {r.nom_complet}</p>
                         <p><strong>Type:</strong> {r.type_evangelisation}</p>
-                        <p><strong>Statut:</strong> {r.statut}</p>
+                        <p><strong>Statut:</strong> {
+  getStatut(r) === "integre" ? "Intégré" :
+  getStatut(r) === "encours" ? "En cours" :
+  getStatut(r) === "refus" ? "Refus" :
+  getStatut(r) === "attente" ? "En attente" :
+  "-"
+}</p>
                         <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.envoyer_au_suivi_le)}</p>
                         <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
                         <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>

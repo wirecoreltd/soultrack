@@ -124,9 +124,21 @@ function EtatCellule() {
         normalize(r.statut).includes("cours")
       ).length;
 
-      const totalAttente = filtered.filter((r) =>
-        normalize(r.statut).includes("attente")
-      ).length;
+// ================= KPI =================
+const totalAttente = filtered.filter((r) =>
+  r.statut_suivis === 2 || r.statut_suivis === "Envoyé" // 2 = statut "En attente"
+).length;
+
+// Pour totalEvangelises si tu veux inclure les envoyés aussi
+const totalEvangelises = filtered.filter((r) => {
+  const type = normalize(r.type_evangelisation);
+  return [
+    "individuel",
+    "sortie de groupe",
+    "campagne",
+    "evangelisation"
+  ].some(t => type.includes(t));
+}).length;
 
       setKpis({
         totalEvangelises,

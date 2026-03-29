@@ -127,9 +127,10 @@ function EtatCellule() {
         normalize(r.statut).includes("cours")
       ).length;
 
-      const totalAttente = filtered.filter((r) =>
-        normalize(r.statut).includes("attente")
-      ).length;
+      const totalAttente = filtered.filter((r) => {
+  const s = normalize(r.statut);
+  return s.includes("attente") || s.includes("envoye");
+}).length;
 
       setKpis({
         totalEvangelises,

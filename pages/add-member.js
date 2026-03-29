@@ -219,11 +219,6 @@ export default function AddMember() {
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
-          <label className="text-sm sm:text-base font-semibold">Prénom</label>
-          <input type="text" value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} className="input" required />
-          <label className="text-sm sm:text-base font-semibold">Nom</label>
-          <input type="text" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} className="input" required />
-
           {/* Date de venue */}
           <label className="text-sm sm:text-base font-semibold">Date de venue</label>
           <input
@@ -232,7 +227,11 @@ export default function AddMember() {
             onChange={e => setFormData({...formData, date_venu: e.target.value})}
             className="input"
             required
-          />
+          />  
+          <label className="text-sm sm:text-base font-semibold">Prénom</label>
+          <input type="text" value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} className="input" required />
+          <label className="text-sm sm:text-base font-semibold">Nom</label>
+          <input type="text" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} className="input" required />          
 
           <div className="mb-4">
             <label className="block font-medium mb-1">Téléphone</label>

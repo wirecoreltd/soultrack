@@ -17,6 +17,7 @@ export default function AddContact() {
     sexe: "",
     age: "",
     statut: "",
+    date_venu: new Date().toISOString().slice(0, 10),
     venu: "",
     priere_salut: "",
     type_conversion: "",
@@ -105,6 +106,7 @@ export default function AddContact() {
         sexe: "",
         age: "",
         statut: "",
+        date_venu: new Date().toISOString().slice(0, 10),
         venu: "",
         priere_salut: "",
         type_conversion: "",
@@ -138,6 +140,16 @@ export default function AddContact() {
         <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>
+
+                {/* Date de venue */}
+                  <label className="text-sm sm:text-base font-semibold">Date de venue</label>
+                  <input
+                    type="date"
+                    value={formData.date_venu}
+                    onChange={e => setFormData({...formData, date_venu: e.target.value})}
+                    className="input"
+                    required
+                />
 
         {/* État du contact */}
         <label className="text-sm sm:text-base font-semibold mb-1">État du contact</label>

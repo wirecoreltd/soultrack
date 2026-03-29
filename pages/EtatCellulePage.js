@@ -101,9 +101,12 @@ function EtatCellule() {
       const totalEvangelises = filtered.filter((r) => {
   const type = normalize(r.type_evangelisation);
   return [
-    "individuel",
-    "sortie de groupe",
-    "campagne",
+    "Individuel",
+    "Sortie de groupe",
+    "Campagne d’évangélisation",
+    "Évangélisation de rue",
+    "Évangélisation maison",
+    "Évangélisation stade",
     "evangelisation"
   ].some(t => type.includes(t));
 }).length;

@@ -95,19 +95,22 @@ function EtatCellule() {
       }
 
       // ================= KPI =================
+      const normalize = (text) =>
+        text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+
       const totalEvangelises = filtered.filter((r) => {
-        const type = normalize(r.type_evangelisation);
-      
-        return [
-          "individuel",
-          "sortie de groupe",
-          "campagne d’evangelisation",
-          "evangelisation de rue",
-          "evangelisation maison",
-          "evangelisation stade",
-          "evangelisation"
-        ].some(t => type.includes(normalize(t)));
-      }).length;
+  const type = normalize(r.type_evangelisation);
+
+  return [
+    "individuel",
+    "sortie de groupe",
+    "campagne d’evangelisation",
+    "evangelisation de rue",
+    "evangelisation maison",
+    "evangelisation stade",
+    "evangelisation"
+  ].some(t => type.includes(normalize(t)));
+}).length;
 
       const totalVenus = filtered.filter((r) =>
         normalize(r.type_evangelisation).includes("integration")
@@ -125,10 +128,9 @@ function EtatCellule() {
         normalize(r.statut).includes("cours")
       ).length;
 
-      const totalAttente = filtered.filter((r) => {
-  const s = normalize(r.statut);
-  return s.includes("attente") || s.includes("envoye");
-}).length;
+      const totalAttente = filtered.filter((r) =>
+        normalize(r.statut).includes("attente")
+      ).length;
 
       setKpis({
         totalEvangelises,

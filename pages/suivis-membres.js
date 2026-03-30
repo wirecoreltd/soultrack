@@ -155,42 +155,59 @@ export default function SuivisMembres() {
 
   // 🔹 Mettre à jour statut/commentaire
   const updateSuivi = async (id) => {
-    const newComment = commentChanges[id];
-    const newStatus = statusChanges[id];
-    if (newComment === undefined && newStatus === undefined) return;
+  const newComment = commentChanges[id];
+  const newStatus = statusChanges[id];
 
-    setUpdating(prev => ({ ...prev, [id]: true }));
+  if (newComment === undefined && newStatus === undefined) return;
 
-    try {
-      const payload = { updated_at: new Date() };
-      if (newComment !== undefined) payload.commentaire_suivis = newComment;
-      //if (newStatus !== undefined) payload.statut_suivis = Number(newStatus);
-      if (newStatus !== undefined) {
-  const statusNum = Number(newStatus);
-  payload.statut_suivis = statusNum;
+  setUpdating(prev => ({ ...prev, [id]: true }));
 
-  // 🔥 IMPORTANT : écrire la date seulement pour Intégrer ou Refus
-  if (statusNum === 3 || statusNum === 4) {
-    payload.date_statut_def = new Date().toISOString();
-  }
-}
+  try {
+    // On récupère l'ancien membre
+    const member = members.find(m => m.id === id);
+    if (!member) throw new Error("Membre introuvable");
 
-      const { data: updatedMember, error } = await supabase
-        .from("membres_complets")
-        .update(payload)
-        .eq("id", id)
-        .select()
-        .single();
+    const payload = { updated_at: new Date().toISOString() };
 
-      if (error) throw error;
+    // Commentaire
+    if (newComment !== undefined) payload.commentaire_suivis = newComment;
 
-      setAllMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setUpdating(prev => ({ ...prev, [id]: false }));
+    // Statut
+    if (newStatus !== undefined) {
+      const statusNum = Number(newStatus);
+      payload.statut_suivis = statusNum;
+
+      // ✅ Si Intégrer ou Refus, mettre la date
+      if (statusNum === 3 || statusNum === 4) {
+        payload.date_statut_def = new Date().toISOString();
+      } else {
+        // Si on repasse à autre statut, on efface la date
+        payload.date_statut_def = null;
+      }
     }
-  };
+
+    const { data: updatedMember, error } = await supabase
+      .from("membres_complets")
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // 🔹 Mise à jour locale
+    setAllMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
+
+    // 🔹 Nettoyer statusChanges/commentChanges après update
+    setStatusChanges(prev => ({ ...prev, [id]: undefined }));
+    setCommentChanges(prev => ({ ...prev, [id]: undefined }));
+
+  } catch (err) {
+    console.error("Erreur updateSuivi :", err);
+  } finally {
+    setUpdating(prev => ({ ...prev, [id]: false }));
+  }
+};
 
   const reactivateMember = async (id) => {
     setUpdating(prev => ({ ...prev, [id]: true }));

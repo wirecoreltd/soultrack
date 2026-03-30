@@ -153,6 +153,16 @@ function EtatCellule() {
     }
   };
 
+  //==================
+  const getStatutNormalise = (statut) => {
+  if (!statut) return "";
+
+  const s = statut.toLowerCase();
+
+  if (s.includes("envoy")) return "en attente";
+  return s;
+};
+
   // ================= UTIL =================
   const getStatusStyles = (status) => {
     if (!status) return { border: "border-gray-400", text: "text-gray-300" };
@@ -335,30 +345,38 @@ function EtatCellule() {
                 {isExpanded &&
                   rows.map((r, i) => {
                     // Définir la couleur de la bordure selon le statut
-                    let borderColor = "";
-                    let textColor = "";
-                    switch (r.statut?.toLowerCase()) {
-                      case "intégré":
-                        borderColor = "border-green-500";
-                        textColor = "text-green-400";
-                        break;
-                      case "en attente":
-                        borderColor = "border-gray-500";
-                        textColor = "text-gray-400";
-                        break;
-                      case "refus":
-                        borderColor = "border-red-500";
-                        textColor = "text-red-400";
-                        break;
-                      case "en cours":
-                      case "en suivis":
-                        borderColor = "border-orange-500";
-                        textColor = "text-orange-400";
-                        break;
-                      default:
-                        borderColor = "border-white/30";
-                        textColor = "text-white";
-                    }
+                    const statutNormalise = getStatutNormalise(r.statut);
+
+                      let borderColor = "";
+                      let textColor = "";
+                      
+                      switch (statutNormalise) {
+                        case "intégré":
+                        case "integre":
+                          borderColor = "border-green-500";
+                          textColor = "text-green-400";
+                          break;
+                      
+                        case "en attente":
+                          borderColor = "border-gray-500";
+                          textColor = "text-gray-400";
+                          break;
+                      
+                        case "refus":
+                          borderColor = "border-red-500";
+                          textColor = "text-red-400";
+                          break;
+                      
+                        case "en cours":
+                        case "en suivis":
+                          borderColor = "border-orange-500";
+                          textColor = "text-orange-400";
+                          break;
+                      
+                        default:
+                          borderColor = "border-white/30";
+                          textColor = "text-white";
+                      }
 
                     return (
                       <div

@@ -122,11 +122,7 @@ function EtatCellule() {
 }).length;
       const totalBapteme = filtered.filter((r) => r.date_baptise).length;
       const totalMinistere = filtered.filter((r) => r.debut_ministere).length;
-
-      const totalRefus = filtered.filter((r) =>
-        normalize(r.statut).includes("refus")
-      ).length;
-
+      
       const totalRefus = filtered.filter((r) => {
         const s = normalize(r.statut);
         return s === "refus";

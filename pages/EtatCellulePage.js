@@ -94,6 +94,16 @@ function EtatCellule() {
         );
       }
 
+      //========================================
+      const formatStatut = (statut) => {
+        if (!statut) return "—";
+      
+        const s = statut.toLowerCase();
+      
+        if (s.includes("envoy")) return "En attente";
+        return statut;
+      };
+
       // ================= KPI =================
       const normalize = (text) =>
         text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
@@ -128,9 +138,10 @@ function EtatCellule() {
         normalize(r.statut).includes("cours")
       ).length;
 
-      const totalAttente = filtered.filter((r) =>
-        normalize(r.statut).includes("attente")
-      ).length;
+      const totalAttente = filtered.filter((r) => {
+        const s = normalize(r.statut);
+        return s.includes("attente") || s.includes("envoye");
+      }).length;
 
       setKpis({
         totalEvangelises,
@@ -360,7 +371,7 @@ function EtatCellule() {
                         <div className="min-w-[150px] text-white">{formatDateFR(r.date_depart)}</div>
                         <div className="min-w-[200px] text-center text-white">{r.nom_complet}</div>
                         <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
-                        <div className={`min-w-[200px] text-center font-semibold ${textColor}`}>{r.statut}</div>
+                        <div className={`min-w-[200px] text-center font-semibold ${textColor}`}>{formatStatut(r.statut)}</div>
                         <div className="min-w-[150px] text-center text-white">{formatDateFR(r.envoyer_au_suivi_le)}</div>
                         <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
                         <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>

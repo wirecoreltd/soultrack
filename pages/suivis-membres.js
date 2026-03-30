@@ -154,39 +154,41 @@ export default function SuivisMembres() {
 
 
   // 🔹 Mettre à jour statut/commentaire
-  const updateSuivi = async (id) => {
-    const newComment = commentChanges[id];
-    const newStatus = statusChanges[id];
-    if (newComment === undefined && newStatus === undefined) return;
+const updateSuivi = async (id) => {
+  const newComment = commentChanges[id];
+  const newStatus = statusChanges[id];
+  if (newComment === undefined && newStatus === undefined) return;
 
-    setUpdating(prev => ({ ...prev, [id]: true }));
+  setUpdating(prev => ({ ...prev, [id]: true }));
 
-    try {
-      const payload = { updated_at: new Date() };
-      if (newComment !== undefined) payload.commentaire_suivis = newComment;
-      if (newStatus !== undefined) payload.statut_suivis = Number(newStatus);
+  try {
+    const payload = { updated_at: new Date() };
+    if (newComment !== undefined) payload.commentaire_suivis = newComment;
+    if (newStatus !== undefined) {
+      payload.statut_suivis = Number(newStatus);
+
       // 🔹 Si le statut est Intégrer (3) ou Refus (4), écrire la date dans date_statut_Def
       if (Number(newStatus) === 3 || Number(newStatus) === 4) {
         payload.date_statut_def = new Date(); // date actuelle
       }
     }
 
-      const { data: updatedMember, error } = await supabase
-        .from("membres_complets")
-        .update(payload)
-        .eq("id", id)
-        .select()
-        .single();
+    const { data: updatedMember, error } = await supabase
+      .from("membres_complets")
+      .update(payload)
+      .eq("id", id)
+      .select("*")
+      .single();
 
-      if (error) throw error;
+    if (error) throw error;
 
-      setAllMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setUpdating(prev => ({ ...prev, [id]: false }));
-    }
-  };
+    setAllMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
+  } catch (err) {
+    console.error("❌ updateSuivi error:", err);
+  } finally {
+    setUpdating(prev => ({ ...prev, [id]: false }));
+  }
+};
 
   const reactivateMember = async (id) => {
     setUpdating(prev => ({ ...prev, [id]: true }));

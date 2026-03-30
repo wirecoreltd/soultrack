@@ -174,9 +174,9 @@ const updateSuivi = async (id) => {
       payload.statut_suivis = statusNum;
 
       // 🔹 Si statut = Intégrer (3) ou Refus (4), écrire la date
-      if (statusNum === 3 || statusNum === 4) {
-        payload.date_statut_def = new Date();
-      }
+      if ((statusNum === 3 || statusNum === 4) && 'date_statut_def' in payload) {
+  payload.date_statut_def = new Date();
+}
     }
 
     // 🔹 Log pour debug

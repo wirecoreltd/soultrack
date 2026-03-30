@@ -173,10 +173,9 @@ const updateSuivi = async (id) => {
       payload.statut_suivis = statusNum;
 
       // 🔹 Si le statut est Intégrer (3) ou Refus (4), écrire la date dans date_statut_Def
-      if (Number(newStatus) === 3 || Number(newStatus) === 4) {
-  // pour type date, on garde seulement YYYY-MM-DD
-  payload.date_statut_Def = new Date().toISOString().split("T")[0];
-}
+     if (Number(newStatus) === 2 || Number(newStatus) === 3 || Number(newStatus) === 4) {
+        payload.date_statut_Def = new Date().toISOString().split("T")[0];
+      }
     }
 
     const { data: updatedMember, error } = await supabase

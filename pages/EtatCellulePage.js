@@ -92,18 +92,8 @@ function EtatCellule() {
         filtered = filtered.filter((r) =>
           r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
         );
-      }
-
-      //========================================
-      const formatStatut = (statut) => {
-        if (!statut) return "—";
+      }    
       
-        const s = statut.toLowerCase();
-      
-        if (s.includes("envoy")) return "En attente";
-        return statut;
-      };
-
       // ================= KPI =================
       const normalize = (text) =>
         text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
@@ -191,6 +181,13 @@ function EtatCellule() {
     const year = d.getFullYear();
     return `${day}/${month}/${year}`;
   };
+
+  const formatStatut = (statut) => {
+  if (!statut) return "—";
+  const s = statut.toLowerCase();
+  if (s.includes("envoy")) return "En attente";
+  return statut;
+};
 
   const groupByMonth = (reports) => {
     const map = {};

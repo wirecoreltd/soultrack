@@ -157,6 +157,7 @@ export default function SuivisMembres() {
 const updateSuivi = async (id) => {
   const newComment = commentChanges[id];
   const newStatus = statusChanges[id];
+
   if (newComment === undefined && newStatus === undefined) return;
 
   setUpdating(prev => ({ ...prev, [id]: true }));
@@ -164,27 +165,30 @@ const updateSuivi = async (id) => {
   try {
     const payload = { updated_at: new Date() };
 
+    // 🔹 commentaire
     if (newComment !== undefined) {
       payload.commentaire_suivis = newComment;
     }
 
+    // 🔥 récupérer le membre actuel
+    const member = members.find(m => m.id === id);
+
+    // 🔥 déterminer le bon statut
+    const statusNum = newStatus !== undefined
+      ? Number(newStatus)
+      : Number(member?.statut_suivis);
+
+    // 🔹 mettre à jour le statut si changé
     if (newStatus !== undefined) {
-      
-// 🔥 prendre le bon statut (nouveau OU actuel)
-const member = members.find(m => m.id === id);
-const statusNum = newStatus !== undefined
-  ? Number(newStatus)
-  : Number(member?.statut_suivis);
+      payload.statut_suivis = statusNum;
+    }
 
-// 🔹 mettre à jour le statut seulement si changé
-if (newStatus !== undefined) {
-  payload.statut_suivis = statusNum;
-}
+    // 🔹 écrire la date si statut 2, 3 ou 4
+    if ([2, 3, 4].includes(statusNum)) {
+      payload.date_statut_Def = new Date().toISOString().split("T")[0];
+    }
 
-// 🔹 écrire la date pour 2, 3, 4 (même si pas changé)
-if ([2, 3, 4].includes(statusNum) && !member?.date_statut_Def) {
-  payload.date_statut_Def = new Date().toISOString().split("T")[0];
-}
+    // ✅ requête SUPABASE
     const { data: updatedMember, error } = await supabase
       .from("membres_complets")
       .update(payload)
@@ -194,7 +198,10 @@ if ([2, 3, 4].includes(statusNum) && !member?.date_statut_Def) {
 
     if (error) throw error;
 
-    setAllMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
+    setAllMembers(prev =>
+      prev.map(m => (m.id === id ? updatedMember : m))
+    );
+
   } catch (err) {
     console.error("❌ updateSuivi error:", err);
   } finally {

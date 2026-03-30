@@ -220,6 +220,19 @@ function EtatCellule() {
       const [yearB, monthB] = b[0].split("-").map(Number);
       return new Date(yearB, monthB) - new Date(yearA, monthA);
     });
+
+  const totalIntegration = allMembers.filter(m => m.statut_suivis === 3).length;
+
+const kpis = {
+  totalEvangelises: allMembers.length,
+  totalVenus: allMembers.filter(m => m.venu === 'oui').length,
+  totalIntegration: totalIntegration, // uniquement statut 3
+  totalBapteme: allMembers.filter(m => m.bapteme_eau === true).length,
+  totalMinistere: allMembers.filter(m => m.formation === 'Ministère').length,
+  totalRefus: allMembers.filter(m => m.statut_suivis === 4).length,
+  totalEncours: allMembers.filter(m => m.statut_suivis === 2).length,
+  totalAttente: allMembers.filter(m => m.statut_suivis === 1).length,
+};
  
   // ================= RENDER =================
   return (
@@ -251,70 +264,66 @@ function EtatCellule() {
         </button>
       </div>
 
-   const kpis = {
-  totalEvangelises: allMembers.length,
-  totalVenus: allMembers.filter(m => m.venu === 'oui').length,
-  totalIntegration: totalIntegration, // uniquement statut 3
-  totalBapteme: allMembers.filter(m => m.bapteme_eau === true).length,
-  totalMinistere: allMembers.filter(m => m.formation === 'Ministère').length,
-  totalRefus: totalRefus, // uniquement statut 4
-  totalEncours: allMembers.filter(m => m.statut_suivis === 2).length,
-  totalAttente: allMembers.filter(m => m.statut_suivis === 1).length,
-};
-
       {/* KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
-        {/* Total évangélisés */}
-        <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
-          <div className="text-sm">Total Évangélisés</div>
-        </div>
-        {/* Total venus */}
-        <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalVenus}</div>
-          <div className="text-sm">Total Venus Église</div>
-        </div>
-        {/* Intégration */}
-        <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
-          <div className="text-sm">Intégrés</div>
-          <div className="text-sm">
-            {kpis.totalEvangelises > 0
-              ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
-              : 0}%
-          </div>
-        </div>
-        {/* Baptême */}
-        <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
-          <div className="text-sm">Baptêmes</div>
-          <div className="text-sm">
-            {kpis.totalEvangelises + kpis.totalVenus > 0
-              ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
-              : 0}%
-          </div>
-        </div>
-        {/* Ministère */}
-        <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
-          <div className="text-sm">Ministère</div>
-        </div>
-        {/* Refus */}
-        <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalRefus}</div>
-          <div className="text-sm">Refus</div>
-        </div>
-        {/* En cours */}
-        <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalEncours}</div>
-          <div className="text-sm">En cours</div>
-        </div>
-        {/* En attente */}
-        <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalAttente}</div>
-          <div className="text-sm">En attente</div>
-        </div>
-      </div>
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
+  {/* Total évangélisés */}
+  <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
+    <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
+    <div className="text-sm">Total Évangélisés</div>
+  </div>
+
+  {/* Total venus */}
+  <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
+    <div className="text-2xl font-bold">{kpis.totalVenus}</div>
+    <div className="text-sm">Total Venus Église</div>
+  </div>
+
+  {/* Intégration */}
+  <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
+    <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
+    <div className="text-sm">Intégrés</div>
+    <div className="text-sm">
+      {kpis.totalEvangelises > 0
+        ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
+        : 0}%
+    </div>
+  </div>
+
+  {/* Baptême */}
+  <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
+    <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
+    <div className="text-sm">Baptêmes</div>
+    <div className="text-sm">
+      {kpis.totalEvangelises + kpis.totalVenus > 0
+        ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
+        : 0}%
+    </div>
+  </div>
+
+  {/* Ministère */}
+  <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
+    <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
+    <div className="text-sm">Ministère</div>
+  </div>
+
+  {/* Refus */}
+  <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
+    <div className="text-2xl font-bold">{kpis.totalRefus}</div>
+    <div className="text-sm">Refus</div>
+  </div>
+
+  {/* En cours */}
+  <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
+    <div className="text-2xl font-bold">{kpis.totalEncours}</div>
+    <div className="text-sm">En cours</div>
+  </div>
+
+  {/* En attente */}
+  <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
+    <div className="text-2xl font-bold">{kpis.totalAttente}</div>
+    <div className="text-sm">En attente</div>
+  </div>
+</div>
 
       {/* TABLEAU */}
 {showTable && (

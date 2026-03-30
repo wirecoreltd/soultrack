@@ -95,21 +95,19 @@ function EtatCellule() {
       }
 
       // ================= KPI =================
-      const normalize = (text) =>
-        text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
-
       const totalEvangelises = filtered.filter((r) => {
-  const type = normalize(r.type_evangelisation);
-  return [
-    "Individuel",
-    "Sortie de groupe",
-    "Campagne d’évangélisation",
-    "Évangélisation de rue",
-    "Évangélisation maison",
-    "Évangélisation stade",
-    "evangelisation"
-  ].some(t => type.includes(t));
-}).length;
+        const type = normalize(r.type_evangelisation);
+      
+        return [
+          "individuel",
+          "sortie de groupe",
+          "campagne d’evangelisation",
+          "evangelisation de rue",
+          "evangelisation maison",
+          "evangelisation stade",
+          "evangelisation"
+        ].some(t => type.includes(normalize(t)));
+      }).length;
 
       const totalVenus = filtered.filter((r) =>
         normalize(r.type_evangelisation).includes("integration")

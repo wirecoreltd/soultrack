@@ -163,28 +163,17 @@ export default function SuivisMembres() {
   setUpdating(prev => ({ ...prev, [id]: true }));
 
   try {
-    // On récupère l'ancien membre
     const member = members.find(m => m.id === id);
     if (!member) throw new Error("Membre introuvable");
 
-    const payload = { updated_at: new Date().toISOString() };
+    const statusNum = newStatus !== undefined ? Number(newStatus) : member.statut_suivis;
 
-    // Commentaire
-    if (newComment !== undefined) payload.commentaire_suivis = newComment;
-
-    // Statut
-    if (newStatus !== undefined) {
-      const statusNum = Number(newStatus);
-      payload.statut_suivis = statusNum;
-
-      // ✅ Si Intégrer ou Refus, mettre la date
-      if (statusNum === 3 || statusNum === 4) {
-        payload.date_statut_def = new Date().toISOString();
-      } else {
-        // Si on repasse à autre statut, on efface la date
-        payload.date_statut_def = null;
-      }
-    }
+    const payload = {
+      updated_at: new Date().toISOString(),
+      statut_suivis: statusNum,
+      commentaire_suivis: newComment ?? member.commentaire_suivis,
+      date_statut_def: (statusNum === 3 || statusNum === 4) ? new Date().toISOString() : null
+    };
 
     const { data: updatedMember, error } = await supabase
       .from("membres_complets")
@@ -198,12 +187,12 @@ export default function SuivisMembres() {
     // 🔹 Mise à jour locale
     setAllMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
 
-    // 🔹 Nettoyer statusChanges/commentChanges après update
+    // 🔹 Reset changements
     setStatusChanges(prev => ({ ...prev, [id]: undefined }));
     setCommentChanges(prev => ({ ...prev, [id]: undefined }));
 
   } catch (err) {
-    console.error("Erreur updateSuivi :", err);
+    console.error(err);
   } finally {
     setUpdating(prev => ({ ...prev, [id]: false }));
   }
@@ -448,15 +437,23 @@ return (
                       </select>
                     ) : (
                       <select
-                        value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")}
-                        onChange={(e) => setStatusChanges(prev => ({ ...prev, [m.id]: e.target.value }))}
-                        className="w-full border rounded-lg p-2 mb-2"
-                      >
-                        <option value="">-- Sélectionner un statut --</option>
-                        <option value="2">En Suivis</option>
-                        <option value="3">Intégrer</option>
-                        <option value="4">Refus</option>
-                      </select>
+                      value={statusChanges[m.id] ?? String(m.statut_suivis ?? "")} // valeur actuelle ou modifiée
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setStatusChanges(prev => ({ ...prev, [m.id]: val }));
+                    
+                        // 🔹 Mise à jour immédiate pour afficher l'effet
+                        setAllMembers(prev => prev.map(mem => 
+                          mem.id === m.id ? { ...mem, statut_suivis: Number(val) } : mem
+                        ));
+                      }}
+                      className="w-full border rounded-lg p-2 mb-2"
+                    >
+                      <option value="">-- Sélectionner un statut --</option>
+                      <option value="2">En Suivis</option>
+                      <option value="3">Intégrer</option>
+                      <option value="4">Refus</option>
+                    </select>
                     )}
         
                     {showRefus ? (

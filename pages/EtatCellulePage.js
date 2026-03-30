@@ -128,6 +128,10 @@ function EtatCellule() {
         return s === "refus";
       }).length;
 
+      const totalEncours = filtered.filter((r) =>
+        normalize(r.statut).includes("cours")
+      ).length;
+
       const totalAttente = filtered.filter((r) => {
         const s = normalize(r.statut);
         return s.includes("attente") || s.includes("envoye");

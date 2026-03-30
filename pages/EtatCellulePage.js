@@ -220,17 +220,7 @@ function EtatCellule() {
       const [yearB, monthB] = b[0].split("-").map(Number);
       return new Date(yearB, monthB) - new Date(yearA, monthA);
     });
-
-  const kpis = {
-  totalEvangelises: allMembers.length,
-  totalVenus: allMembers.filter(m => m.venu === 'oui').length,
-  totalIntegration: totalIntegration, // uniquement statut 3
-  totalBapteme: allMembers.filter(m => m.bapteme_eau === true).length,
-  totalMinistere: allMembers.filter(m => m.formation === 'Ministère').length,
-  totalRefus: totalRefus, // uniquement statut 4
-  totalEncours: allMembers.filter(m => m.statut_suivis === 2).length,
-  totalAttente: allMembers.filter(m => m.statut_suivis === 1).length,
-};
+ 
   // ================= RENDER =================
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -260,6 +250,17 @@ function EtatCellule() {
           Générer
         </button>
       </div>
+
+   const kpis = {
+  totalEvangelises: allMembers.length,
+  totalVenus: allMembers.filter(m => m.venu === 'oui').length,
+  totalIntegration: totalIntegration, // uniquement statut 3
+  totalBapteme: allMembers.filter(m => m.bapteme_eau === true).length,
+  totalMinistere: allMembers.filter(m => m.formation === 'Ministère').length,
+  totalRefus: totalRefus, // uniquement statut 4
+  totalEncours: allMembers.filter(m => m.statut_suivis === 2).length,
+  totalAttente: allMembers.filter(m => m.statut_suivis === 1).length,
+};
 
       {/* KPI */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">

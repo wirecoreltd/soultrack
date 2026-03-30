@@ -22,8 +22,6 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [filterCellule, setFilterCellule] = useState("");
-  const getDate = (row, key) => row[key] ? formatDateFR(row[key]) : "-";
-
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
     totalVenus: 0,
@@ -61,77 +59,59 @@ function EtatCellule() {
     setShowTable(false);
 
     try {
-      // On utilise directement la vue vue_flow_personnes
       let query = supabase
         .from("vue_flow_personnes")
         .select("*")
         .order("date_depart", { ascending: false });
 
-      // Filtrer par cellule si nécessaire et par rôle
       if (!userProfile.roles?.includes("Administrateur")) {
         query = query.ilike("responsable", `%${userProfile.prenom}%`);
       }
+
       const { data, error } = await query;
       if (error) throw error;
 
-      // Filtrer par date si besoin
+      // Filtrer par dates
       let filtered = data;
-      if (filterDebut) {
-        filtered = filtered.filter(
-          (r) => new Date(r.date_depart) >= new Date(filterDebut)
-        );
-      }
-      if (filterFin) {
-        filtered = filtered.filter(
-          (r) => new Date(r.date_depart) <= new Date(filterFin)
-        );
-      }
+      if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
+      if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
 
       // Filtrer par cellule si sélectionnée
       if (filterCellule) {
-        filtered = filtered.filter((r) =>
-          r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
-        );
-      }    
-      
+        filtered = filtered.filter(r => r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase()));
+      }
+
       // ================= KPI =================
       const normalize = (text) =>
         text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
 
       const totalEvangelises = filtered.filter((r) => {
-  const type = normalize(r.type_evangelisation);
+        const type = normalize(r.type_evangelisation);
+        return [
+          "individuel",
+          "sortie de groupe",
+          "campagne d’evangelisation",
+          "evangelisation de rue",
+          "evangelisation maison",
+          "evangelisation stade",
+          "evangelisation"
+        ].some(t => type.includes(normalize(t)));
+      }).length;
 
-  return [
-    "individuel",
-    "sortie de groupe",
-    "campagne d’evangelisation",
-    "evangelisation de rue",
-    "evangelisation maison",
-    "evangelisation stade",
-    "evangelisation"
-  ].some(t => type.includes(normalize(t)));
-}).length;
-
-      const totalVenus = filtered.filter((r) =>
+      const totalVenus = filtered.filter(r =>
         normalize(r.type_evangelisation).includes("integration")
       ).length;
 
-      const totalIntegration = allMembers.filter(m => m.statut_suivis === 3).length;
-      const totalBapteme = filtered.filter((r) => r.date_baptise).length;
-      const totalMinistere = filtered.filter((r) => r.debut_ministere).length;
-
-      const totalRefus = filtered.filter((r) =>
-        normalize(r.statut).includes("refus")
-      ).length;
-
-      const totalEncours = filtered.filter((r) =>
-        normalize(r.statut).includes("cours")
-      ).length;
-
-      const totalAttente = filtered.filter((r) => {
+      const totalBapteme = filtered.filter(r => r.date_baptise).length;
+      const totalMinistere = filtered.filter(r => r.debut_ministere).length;
+      const totalRefus = filtered.filter(r => normalize(r.statut).includes("refus")).length;
+      const totalEncours = filtered.filter(r => normalize(r.statut).includes("cours")).length;
+      const totalAttente = filtered.filter(r => {
         const s = normalize(r.statut);
         return s.includes("attente") || s.includes("envoye");
       }).length;
+
+      const totalIntegration = allMembers?.filter(m => m.statut_suivis === 3).length || 0;
 
       setKpis({
         totalEvangelises,
@@ -153,25 +133,20 @@ function EtatCellule() {
     }
   };
 
-  //==================
-  const getStatutNormalise = (statut) => {
-  if (!statut) return "";
-
-  const s = statut.toLowerCase();
-
-  if (s.includes("envoy")) return "en attente";
-  return s;
-};
-
   // ================= UTIL =================
+  const getStatutNormalise = (statut) => {
+    if (!statut) return "";
+    const s = statut.toLowerCase();
+    if (s.includes("envoy")) return "en attente";
+    return s;
+  };
+
   const getStatusStyles = (status) => {
     if (!status) return { border: "border-gray-400", text: "text-gray-300" };
     const s = status.toLowerCase();
-    if (s.includes("intégr") || s.includes("integre"))
-      return { border: "border-green-500", text: "text-green-400" };
+    if (s.includes("intégr") || s.includes("integre")) return { border: "border-green-500", text: "text-green-400" };
     if (s.includes("refus")) return { border: "border-red-500", text: "text-red-400" };
-    if (s.includes("cours") || s.includes("suivi"))
-      return { border: "border-orange-500", text: "text-orange-400" };
+    if (s.includes("cours") || s.includes("suivi")) return { border: "border-orange-500", text: "text-orange-400" };
     return { border: "border-blue-500", text: "text-blue-400" };
   };
 
@@ -193,11 +168,11 @@ function EtatCellule() {
   };
 
   const formatStatut = (statut) => {
-  if (!statut) return "—";
-  const s = statut.toLowerCase();
-  if (s.includes("envoy")) return "En attente";
-  return statut;
-};
+    if (!statut) return "—";
+    const s = statut.toLowerCase();
+    if (s.includes("envoy")) return "En attente";
+    return statut;
+  };
 
   const groupByMonth = (reports) => {
     const map = {};
@@ -211,7 +186,7 @@ function EtatCellule() {
   };
 
   const toggleMonth = (monthKey) => {
-    setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
+    setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
   };
 
   const groupedReports = Object.entries(groupByMonth(reports))
@@ -221,22 +196,8 @@ function EtatCellule() {
       return new Date(yearB, monthB) - new Date(yearA, monthA);
     });
 
-  const totalIntegration = allMembers.filter(m => m.statut_suivis === 3).length;
-
-const kpis = {
-  totalEvangelises: allMembers.length,
-  totalVenus: allMembers.filter(m => m.venu === 'oui').length,
-  totalIntegration: totalIntegration, // uniquement statut 3
-  totalBapteme: allMembers.filter(m => m.bapteme_eau === true).length,
-  totalMinistere: allMembers.filter(m => m.formation === 'Ministère').length,
-  totalRefus: allMembers.filter(m => m.statut_suivis === 4).length,
-  totalEncours: allMembers.filter(m => m.statut_suivis === 2).length,
-  totalAttente: allMembers.filter(m => m.statut_suivis === 1).length,
-};
- 
-  // ================= RENDER =================
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+    <div>
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
         État de <span className="text-amber-300">Cellule</span>

@@ -22,6 +22,8 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [filterCellule, setFilterCellule] = useState("");
+  const getDate = (row, key) => row[key] ? formatDateFR(row[key]) : "-";
+
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
     totalVenus: 0,
@@ -59,59 +61,77 @@ function EtatCellule() {
     setShowTable(false);
 
     try {
+      // On utilise directement la vue vue_flow_personnes
       let query = supabase
         .from("vue_flow_personnes")
         .select("*")
         .order("date_depart", { ascending: false });
 
+      // Filtrer par cellule si nécessaire et par rôle
       if (!userProfile.roles?.includes("Administrateur")) {
         query = query.ilike("responsable", `%${userProfile.prenom}%`);
       }
-
       const { data, error } = await query;
       if (error) throw error;
 
-      // Filtrer par dates
+      // Filtrer par date si besoin
       let filtered = data;
-      if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
-      if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
+      if (filterDebut) {
+        filtered = filtered.filter(
+          (r) => new Date(r.date_depart) >= new Date(filterDebut)
+        );
+      }
+      if (filterFin) {
+        filtered = filtered.filter(
+          (r) => new Date(r.date_depart) <= new Date(filterFin)
+        );
+      }
 
       // Filtrer par cellule si sélectionnée
       if (filterCellule) {
-        filtered = filtered.filter(r => r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase()));
-      }
-
+        filtered = filtered.filter((r) =>
+          r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
+        );
+      }    
+      
       // ================= KPI =================
       const normalize = (text) =>
         text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
 
       const totalEvangelises = filtered.filter((r) => {
-        const type = normalize(r.type_evangelisation);
-        return [
-          "individuel",
-          "sortie de groupe",
-          "campagne d’evangelisation",
-          "evangelisation de rue",
-          "evangelisation maison",
-          "evangelisation stade",
-          "evangelisation"
-        ].some(t => type.includes(normalize(t)));
-      }).length;
+  const type = normalize(r.type_evangelisation);
 
-      const totalVenus = filtered.filter(r =>
+  return [
+    "individuel",
+    "sortie de groupe",
+    "campagne d’evangelisation",
+    "evangelisation de rue",
+    "evangelisation maison",
+    "evangelisation stade",
+    "evangelisation"
+  ].some(t => type.includes(normalize(t)));
+}).length;
+
+      const totalVenus = filtered.filter((r) =>
         normalize(r.type_evangelisation).includes("integration")
       ).length;
 
-      const totalBapteme = filtered.filter(r => r.date_baptise).length;
-      const totalMinistere = filtered.filter(r => r.debut_ministere).length;
-      const totalRefus = filtered.filter(r => normalize(r.statut).includes("refus")).length;
-      const totalEncours = filtered.filter(r => normalize(r.statut).includes("cours")).length;
-      const totalAttente = filtered.filter(r => {
+      const totalIntegration = allMembers.filter(m => m.statut_suivis === 3).length;
+      const totalBapteme = filtered.filter((r) => r.date_baptise).length;
+      const totalMinistere = filtered.filter((r) => r.debut_ministere).length;
+
+      const totalRefus = filtered.filter((r) =>
+        normalize(r.statut).includes("refus")
+      ).length;
+
+      const totalEncours = filtered.filter((r) =>
+        normalize(r.statut).includes("cours")
+      ).length;
+
+      const totalAttente = filtered.filter((r) => {
         const s = normalize(r.statut);
         return s.includes("attente") || s.includes("envoye");
       }).length;
-
-      const totalIntegration = allMembers?.filter(m => m.statut_suivis === 3).length || 0;
 
       setKpis({
         totalEvangelises,
@@ -133,20 +153,25 @@ function EtatCellule() {
     }
   };
 
-  // ================= UTIL =================
+  //==================
   const getStatutNormalise = (statut) => {
-    if (!statut) return "";
-    const s = statut.toLowerCase();
-    if (s.includes("envoy")) return "en attente";
-    return s;
-  };
+  if (!statut) return "";
 
+  const s = statut.toLowerCase();
+
+  if (s.includes("envoy")) return "en attente";
+  return s;
+};
+
+  // ================= UTIL =================
   const getStatusStyles = (status) => {
     if (!status) return { border: "border-gray-400", text: "text-gray-300" };
     const s = status.toLowerCase();
-    if (s.includes("intégr") || s.includes("integre")) return { border: "border-green-500", text: "text-green-400" };
+    if (s.includes("intégr") || s.includes("integre"))
+      return { border: "border-green-500", text: "text-green-400" };
     if (s.includes("refus")) return { border: "border-red-500", text: "text-red-400" };
-    if (s.includes("cours") || s.includes("suivi")) return { border: "border-orange-500", text: "text-orange-400" };
+    if (s.includes("cours") || s.includes("suivi"))
+      return { border: "border-orange-500", text: "text-orange-400" };
     return { border: "border-blue-500", text: "text-blue-400" };
   };
 
@@ -168,11 +193,11 @@ function EtatCellule() {
   };
 
   const formatStatut = (statut) => {
-    if (!statut) return "—";
-    const s = statut.toLowerCase();
-    if (s.includes("envoy")) return "En attente";
-    return statut;
-  };
+  if (!statut) return "—";
+  const s = statut.toLowerCase();
+  if (s.includes("envoy")) return "En attente";
+  return statut;
+};
 
   const groupByMonth = (reports) => {
     const map = {};
@@ -186,7 +211,7 @@ function EtatCellule() {
   };
 
   const toggleMonth = (monthKey) => {
-    setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
+    setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
   };
 
   const groupedReports = Object.entries(groupByMonth(reports))
@@ -196,8 +221,9 @@ function EtatCellule() {
       return new Date(yearB, monthB) - new Date(yearA, monthA);
     });
 
+  // ================= RENDER =================
   return (
-    <div>
+    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
         État de <span className="text-amber-300">Cellule</span>
@@ -226,65 +252,58 @@ function EtatCellule() {
       </div>
 
       {/* KPI */}
-<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
-  {/* Total évangélisés */}
-  <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
-    <div className="text-sm">Total Évangélisés</div>
-  </div>
-
-  {/* Total venus */}
-  <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalVenus}</div>
-    <div className="text-sm">Total Venus Église</div>
-  </div>
-
-  {/* Intégration */}
-  <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
-    <div className="text-sm">Intégrés</div>
-    <div className="text-sm">
-      {kpis.totalEvangelises > 0
-        ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
-        : 0}%
-    </div>
-  </div>
-
-  {/* Baptême */}
-  <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
-    <div className="text-sm">Baptêmes</div>
-    <div className="text-sm">
-      {kpis.totalEvangelises + kpis.totalVenus > 0
-        ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
-        : 0}%
-    </div>
-  </div>
-
-  {/* Ministère */}
-  <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
-    <div className="text-sm">Ministère</div>
-  </div>
-
-  {/* Refus */}
-  <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalRefus}</div>
-    <div className="text-sm">Refus</div>
-  </div>
-
-  {/* En cours */}
-  <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalEncours}</div>
-    <div className="text-sm">En cours</div>
-  </div>
-
-  {/* En attente */}
-  <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
-    <div className="text-2xl font-bold">{kpis.totalAttente}</div>
-    <div className="text-sm">En attente</div>
-  </div>
-</div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
+        {/* Total évangélisés */}
+        <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
+          <div className="text-sm">Total Évangélisés</div>
+        </div>
+        {/* Total venus */}
+        <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalVenus}</div>
+          <div className="text-sm">Total Venus Église</div>
+        </div>
+        {/* Intégration */}
+        <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
+          <div className="text-sm">Intégrés</div>
+          <div className="text-sm">
+            {kpis.totalEvangelises > 0
+              ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
+              : 0}%
+          </div>
+        </div>
+        {/* Baptême */}
+        <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
+          <div className="text-sm">Baptêmes</div>
+          <div className="text-sm">
+            {kpis.totalEvangelises + kpis.totalVenus > 0
+              ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
+              : 0}%
+          </div>
+        </div>
+        {/* Ministère */}
+        <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
+          <div className="text-sm">Ministère</div>
+        </div>
+        {/* Refus */}
+        <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalRefus}</div>
+          <div className="text-sm">Refus</div>
+        </div>
+        {/* En cours */}
+        <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalEncours}</div>
+          <div className="text-sm">En cours</div>
+        </div>
+        {/* En attente */}
+        <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
+          <div className="text-2xl font-bold">{kpis.totalAttente}</div>
+          <div className="text-sm">En attente</div>
+        </div>
+      </div>
 
       {/* TABLEAU */}
 {showTable && (

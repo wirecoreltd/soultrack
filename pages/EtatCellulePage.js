@@ -336,74 +336,106 @@ function EtatCellule() {
             const isExpanded = expandedMonths[monthKey] || false;
 
             return (
-              <div key={monthKey} className="space-y-1">
-                <div
-                  className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer"
-                  onClick={() => toggleMonth(monthKey)}
-                >
-                  <div className="min-w-[150px] text-white font-semibold">
-                    {isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})
-                  </div>
-                </div>
+              <div key={monthKey} className="w-full">
 
-                {isExpanded &&
-                  rows.map((r, i) => {
-                    // Définir la couleur de la bordure selon le statut
-                    const statutNormalise = getStatutNormalise(r.statut);
-
-                      let borderColor = "";
-                      let textColor = "";
-                      
-                      switch (statutNormalise) {
-                        case "intégré":
-                        case "integre":
-                          borderColor = "border-green-500";
-                          textColor = "text-green-400";
-                          break;
-                      
-                        case "en attente":
-                          borderColor = "border-gray-500";
-                          textColor = "text-gray-400";
-                          break;
-                      
-                        case "refus":
-                          borderColor = "border-red-500";
-                          textColor = "text-red-400";
-                          break;
-                      
-                        case "en cours":
-                        case "en suivis":
-                          borderColor = "border-orange-500";
-                          textColor = "text-orange-400";
-                          break;
-                      
-                        default:
-                          borderColor = "border-white/30";
-                          textColor = "text-white";
-                      }
-
-                    return (
-                      <div
-                        key={i}
-                        className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
-                      >
-                        <div className="min-w-[150px] text-white">{formatDateFR(r.date_depart)}</div>
-                        <div className="min-w-[200px] text-center text-white">{r.nom_complet}</div>
-                        <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
-                        <div className={`min-w-[200px] text-center font-semibold ${textColor}`}>{formatStatut(r.statut)}</div>
-                        <div className="min-w-[150px] text-center text-white">{formatDateFR(r.envoyer_au_suivi_le)}</div>
-                        <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
-                        <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
-                        <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>
-                        <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
-                        <div className="min-w-[200px] text-center text-white">{r.responsable}</div>
-                     </div>
-              );
-            })}
-        </div>
-      );
-    })}
+  {/* 🔹 LIGNE MOIS */}
+  <div
+    className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer"
+    onClick={() => toggleMonth(monthKey)}
+  >
+    <div className="min-w-[150px] text-white font-semibold">
+      {isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})
+    </div>
   </div>
+
+  {/* 🔹 CONTENU INDENTÉ */}
+  {isExpanded && (
+    <div className="ml-6 mt-2 space-y-2">
+      {rows.map((r, i) => {
+
+        const statutNormalise = getStatutNormalise(r.statut);
+
+        let borderColor = "";
+        let textColor = "";
+
+        switch (statutNormalise) {
+          case "intégré":
+          case "integre":
+            borderColor = "border-green-500";
+            textColor = "text-green-400";
+            break;
+
+          case "en attente":
+            borderColor = "border-gray-500";
+            textColor = "text-gray-400";
+            break;
+
+          case "refus":
+            borderColor = "border-red-500";
+            textColor = "text-red-400";
+            break;
+
+          case "en cours":
+          case "en suivis":
+            borderColor = "border-orange-500";
+            textColor = "text-orange-400";
+            break;
+
+          default:
+            borderColor = "border-white/30";
+            textColor = "text-white";
+        }
+
+        return (
+          <div
+            key={i}
+            className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
+          >
+            <div className="min-w-[150px] text-white">
+              {formatDateFR(r.date_depart)}
+            </div>
+
+            <div className="min-w-[200px] text-center text-white">
+              {r.nom_complet}
+            </div>
+
+            <div className="min-w-[200px] text-center text-white">
+              {r.type_evangelisation}
+            </div>
+
+            <div className={`min-w-[200px] text-center font-semibold ${textColor}`}>
+              {formatStatut(r.statut)}
+            </div>
+
+            <div className="min-w-[150px] text-center text-white">
+              {formatDateFR(r.envoyer_au_suivi_le)}
+            </div>
+
+            <div className="min-w-[150px] text-center text-white">
+              {formatDateFR(r.date_integration)}
+            </div>
+
+            <div className="min-w-[150px] text-center text-white">
+              {formatDateFR(r.date_baptise)}
+            </div>
+
+            <div className="min-w-[150px] text-center text-white">
+              {formatDateFR(r.debut_ministere)}
+            </div>
+
+            <div className="min-w-[220px] text-center text-white">
+              {r.cellule_full}
+            </div>
+
+            <div className="min-w-[200px] text-center text-white">
+              {r.responsable}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  )}
+</div>
 </div>
 
             {/* MOBILE */}

@@ -117,8 +117,8 @@ function EtatCellule() {
       ).length;
 
       const totalIntegration = filtered.filter((r) => {
-  const status = Number(r.statut_suivis ?? r.suivi_statut);
-  return status === 3;
+  const s = normalize(r.statut);
+  return s === "integre";
 }).length;
       const totalBapteme = filtered.filter((r) => r.date_baptise).length;
       const totalMinistere = filtered.filter((r) => r.debut_ministere).length;
@@ -127,9 +127,10 @@ function EtatCellule() {
         normalize(r.statut).includes("refus")
       ).length;
 
-      const totalEncours = filtered.filter((r) =>
-        normalize(r.statut).includes("cours")
-      ).length;
+      const totalRefus = filtered.filter((r) => {
+        const s = normalize(r.statut);
+        return s === "refus";
+      }).length;
 
       const totalAttente = filtered.filter((r) => {
         const s = normalize(r.statut);

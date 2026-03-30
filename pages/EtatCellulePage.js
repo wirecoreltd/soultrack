@@ -437,7 +437,7 @@ function EtatCellule() {
   )}
 </div>
 </div>
-
+)}
             {/* MOBILE */}
             <div className="md:hidden space-y-4">
               {groupedReports.map(([monthKey, rows]) => {

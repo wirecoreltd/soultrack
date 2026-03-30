@@ -313,10 +313,12 @@ function EtatCellule() {
 {showTable && (
   <div className="w-full flex justify-center mt-6 mb-6">
     <div className="w-full max-w-7xl">
+
       {/* DESKTOP */}
       <div className="hidden md:block w-full overflow-x-auto">
         <div className="w-max mx-auto space-y-2 bg-white/5 p-2 rounded-xl">
-          {/* Header */}
+
+          {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
             <div className="min-w-[150px]">Date Depart</div>
             <div className="min-w-[200px] text-center">Nom Complet</div>
@@ -330,6 +332,7 @@ function EtatCellule() {
             <div className="min-w-[200px] text-center">Responsable</div>
           </div>
 
+          {/* MONTHS */}
           {groupedReports.map(([monthKey, rows]) => {
             const [year, monthIndex] = monthKey.split("-").map(Number);
             const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
@@ -338,136 +341,111 @@ function EtatCellule() {
             return (
               <div key={monthKey} className="w-full">
 
-  {/* 🔹 LIGNE MOIS */}
-  <div
-    className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer"
-    onClick={() => toggleMonth(monthKey)}
-  >
-    <div className="min-w-[150px] text-white font-semibold">
-      {isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})
+                {/* LIGNE MOIS */}
+                <div
+                  className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer"
+                  onClick={() => toggleMonth(monthKey)}
+                >
+                  <div className="text-white font-semibold">
+                    {isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})
+                  </div>
+                </div>
+
+                {/* CONTENU */}
+                {isExpanded && (
+                  <div className="ml-6 mt-2 space-y-2">
+                    {rows.map((r, i) => {
+
+                      const statutNormalise = getStatutNormalise(r.statut);
+
+                      let borderColor = "";
+                      let textColor = "";
+
+                      switch (statutNormalise) {
+                        case "intégré":
+                        case "integre":
+                          borderColor = "border-green-500";
+                          textColor = "text-green-400";
+                          break;
+                        case "en attente":
+                          borderColor = "border-gray-500";
+                          textColor = "text-gray-400";
+                          break;
+                        case "refus":
+                          borderColor = "border-red-500";
+                          textColor = "text-red-400";
+                          break;
+                        case "en cours":
+                        case "en suivis":
+                          borderColor = "border-orange-500";
+                          textColor = "text-orange-400";
+                          break;
+                        default:
+                          borderColor = "border-white/30";
+                          textColor = "text-white";
+                      }
+
+                      return (
+                        <div
+                          key={i}
+                          className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
+                        >
+                          <div className="min-w-[150px] text-white">{formatDateFR(r.date_depart)}</div>
+                          <div className="min-w-[200px] text-center text-white">{r.nom_complet}</div>
+                          <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
+                          <div className={`min-w-[200px] text-center font-semibold ${textColor}`}>
+                            {formatStatut(r.statut)}
+                          </div>
+                          <div className="min-w-[150px] text-center text-white">{formatDateFR(r.envoyer_au_suivi_le)}</div>
+                          <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
+                          <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
+                          <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>
+                          <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
+                          <div className="min-w-[200px] text-center text-white">{r.responsable}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+        </div>
+      </div>
+
     </div>
   </div>
-
-  {/* 🔹 CONTENU INDENTÉ */}
-  {isExpanded && (
-    <div className="ml-6 mt-2 space-y-2">
-      {rows.map((r, i) => {
-
-        const statutNormalise = getStatutNormalise(r.statut);
-
-        let borderColor = "";
-        let textColor = "";
-
-        switch (statutNormalise) {
-          case "intégré":
-          case "integre":
-            borderColor = "border-green-500";
-            textColor = "text-green-400";
-            break;
-
-          case "en attente":
-            borderColor = "border-gray-500";
-            textColor = "text-gray-400";
-            break;
-
-          case "refus":
-            borderColor = "border-red-500";
-            textColor = "text-red-400";
-            break;
-
-          case "en cours":
-          case "en suivis":
-            borderColor = "border-orange-500";
-            textColor = "text-orange-400";
-            break;
-
-          default:
-            borderColor = "border-white/30";
-            textColor = "text-white";
-        }
-
-        return (
-          <div
-            key={i}
-            className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
-          >
-            <div className="min-w-[150px] text-white">
-              {formatDateFR(r.date_depart)}
-            </div>
-
-            <div className="min-w-[200px] text-center text-white">
-              {r.nom_complet}
-            </div>
-
-            <div className="min-w-[200px] text-center text-white">
-              {r.type_evangelisation}
-            </div>
-
-            <div className={`min-w-[200px] text-center font-semibold ${textColor}`}>
-              {formatStatut(r.statut)}
-            </div>
-
-            <div className="min-w-[150px] text-center text-white">
-              {formatDateFR(r.envoyer_au_suivi_le)}
-            </div>
-
-            <div className="min-w-[150px] text-center text-white">
-              {formatDateFR(r.date_integration)}
-            </div>
-
-            <div className="min-w-[150px] text-center text-white">
-              {formatDateFR(r.date_baptise)}
-            </div>
-
-            <div className="min-w-[150px] text-center text-white">
-              {formatDateFR(r.debut_ministere)}
-            </div>
-
-            <div className="min-w-[220px] text-center text-white">
-              {r.cellule_full}
-            </div>
-
-            <div className="min-w-[200px] text-center text-white">
-              {r.responsable}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  )}
-</div>
-</div>
-</div>
 )}
-            {/* MOBILE */}
-            <div className="md:hidden space-y-4">
-              {groupedReports.map(([monthKey, rows]) => {
-                const [year, monthIndex] = monthKey.split("-").map(Number);
-                const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-                return (
-                  <div key={monthKey} className="space-y-2">
-                    <h3 className="text-white font-bold">{monthLabel}</h3>
-                    {rows.map((r, i) => (
-                      <div key={i} className="bg-white/10 rounded-xl p-4 text-white space-y-1">
-                        <p><strong>Date:</strong> {formatDateFR(r.date_depart)}</p>
-                        <p><strong>Nom:</strong> {r.nom_complet}</p>
-                        <p><strong>Type:</strong> {r.type_evangelisation}</p>
-                        <p><strong>Statut:</strong> {r.statut}</p>
-                        <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.envoyer_au_suivi_le)}</p>
-                        <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
-                        <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
-                        <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>
-                        <p><strong>Cellule:</strong> {r.cellule_full}</p>
-                        <p><strong>Responsable:</strong> {r.responsable}</p>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
+
+{/* MOBILE */}
+<div className="md:hidden space-y-4">
+  {groupedReports.map(([monthKey, rows]) => {
+    const [year, monthIndex] = monthKey.split("-").map(Number);
+    const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+
+    return (
+      <div key={monthKey} className="space-y-2">
+        <h3 className="text-white font-bold">{monthLabel}</h3>
+
+        {rows.map((r, i) => (
+          <div key={i} className="bg-white/10 rounded-xl p-4 text-white space-y-1">
+            <p><strong>Date:</strong> {formatDateFR(r.date_depart)}</p>
+            <p><strong>Nom:</strong> {r.nom_complet}</p>
+            <p><strong>Type:</strong> {r.type_evangelisation}</p>
+            <p><strong>Statut:</strong> {formatStatut(r.statut)}</p>
+            <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.envoyer_au_suivi_le)}</p>
+            <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
+            <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
+            <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>
+            <p><strong>Cellule:</strong> {r.cellule_full}</p>
+            <p><strong>Responsable:</strong> {r.responsable}</p>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
+    );
+  })}
+</div>
 
       <Footer />
     </div>

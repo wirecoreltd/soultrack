@@ -460,7 +460,7 @@ return (
                         onChange={(e) => setStatusChanges(prev => ({ ...prev, [m.id]: e.target.value }))}
                         className="w-full border rounded-lg p-2 mb-2"
                       >
-                        <option value="0">-- Sélectionner un statut --</option>
+                        <option value="1">-- Sélectionner un statut --</option>
                         <option value="2">En Suivis</option>
                         <option value="3">Intégrer</option>
                         <option value="4">Refus</option>

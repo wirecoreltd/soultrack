@@ -437,8 +437,6 @@ function EtatCellule() {
   )}
 </div>
 </div>
-</div>
-
 
             {/* MOBILE */}
             <div className="md:hidden space-y-4">

@@ -116,7 +116,10 @@ function EtatCellule() {
         normalize(r.type_evangelisation).includes("integration")
       ).length;
 
-      const totalIntegration = filtered.filter((r) => r.date_integration).length;
+      const totalIntegration = filtered.filter((r) => {
+  const status = Number(r.statut_suivis ?? r.suivi_statut);
+  return status === 3;
+}).length;
       const totalBapteme = filtered.filter((r) => r.date_baptise).length;
       const totalMinistere = filtered.filter((r) => r.debut_ministere).length;
 

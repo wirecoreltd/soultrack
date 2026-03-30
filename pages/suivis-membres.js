@@ -169,15 +169,22 @@ const updateSuivi = async (id) => {
     }
 
     if (newStatus !== undefined) {
-      const statusNum = Number(newStatus);
-      payload.statut_suivis = statusNum;
+      
+// 🔥 prendre le bon statut (nouveau OU actuel)
+const member = members.find(m => m.id === id);
+const statusNum = newStatus !== undefined
+  ? Number(newStatus)
+  : Number(member?.statut_suivis);
 
-      // 🔹 Si le statut est Intégrer (3) ou Refus (4), écrire la date dans date_statut_Def
-     if (Number(newStatus) === 2 || Number(newStatus) === 3 || Number(newStatus) === 4) {
-        payload.date_statut_Def = new Date().toISOString().split("T")[0];
-      }
-    }
+// 🔹 mettre à jour le statut seulement si changé
+if (newStatus !== undefined) {
+  payload.statut_suivis = statusNum;
+}
 
+// 🔹 écrire la date pour 2, 3, 4 (même si pas changé)
+if ([2, 3, 4].includes(statusNum) && !member?.date_statut_Def) {
+  payload.date_statut_Def = new Date().toISOString().split("T")[0];
+}
     const { data: updatedMember, error } = await supabase
       .from("membres_complets")
       .update(payload)

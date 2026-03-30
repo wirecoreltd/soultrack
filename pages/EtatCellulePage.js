@@ -436,6 +436,8 @@ function EtatCellule() {
     </div>
   )}
 </div>
+</div>
+</div>
 
 
             {/* MOBILE */}

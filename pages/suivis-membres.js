@@ -164,16 +164,7 @@ export default function SuivisMembres() {
     try {
       const payload = { updated_at: new Date() };
       if (newComment !== undefined) payload.commentaire_suivis = newComment;
-      if (newStatus !== undefined) {
-  const statusNum = Number(newStatus);
-  payload.statut_suivis = statusNum;
-
-  if (statusNum === 3 || statusNum === 4) {
-    payload.date_statut_def = new Date().toISOString();
-  } else {
-    payload.date_statut_def = null;
-  }
-}
+      if (newStatus !== undefined) payload.statut_suivis = Number(newStatus);
 
       const { data: updatedMember, error } = await supabase
         .from("membres_complets")
@@ -540,8 +531,7 @@ return (
           reactivateMember={reactivateMember}
           showRefus={showRefus}
         />
-      )}
-      
+      )}      
 
       {/* Edit Member Popup */}
       {editMember && (
@@ -557,4 +547,3 @@ return (
     </div>
   );
 }
-

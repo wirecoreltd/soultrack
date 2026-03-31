@@ -6,6 +6,14 @@ import EditMemberCellulePopup from "./EditMemberCellulePopup";
 export default function DetailsCelluleMemberPopup({ member, onClose, getCelluleNom, onEdit }) {
   if (!member) return null;
 
+const formatDateFr = (dateString) => {
+    if (!dateString) return "—";
+    const d = new Date(dateString);
+    const day = d.getDate().toString().padStart(2, "0");
+    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
+  
   const statutSuiviLabels = {
     1: "En attente",
     2: "En Suivis",

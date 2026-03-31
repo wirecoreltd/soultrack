@@ -481,25 +481,24 @@ function EtatConseiller() {
   })}
 </div>
 
-    {selectedMember && (
-  <DetailsConseillerMemberPopup
-  member={selectedMember}
-  onClose={() => setSelectedMember(null)}
-  onEdit={(member) => {
-    setSelectedMember(null);   // ferme details
-    setEditMember(member);     // ouvre edit 💥
-  }}
-/>
+  {selectedMember && (
+  <DetailsCelluleMemberPopup
+    member={selectedMember}
+    onClose={() => setSelectedMember(null)}
+    onEdit={(member) => {
+      setSelectedMember(null);
+      setEditMember(member);
+    }}
+  />
 )}
 
 {editMember && (
-  <EditMemberConseillerPopup
+  <EditMemberCellulePopup
     member={editMember}
     onClose={() => setEditMember(null)}
     onUpdateMember={(updated) => {
       handleUpdateMember(updated);
       setEditMember(null);
-      setDetailsMember(null);
     }}
   />
 )}

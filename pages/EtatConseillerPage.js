@@ -28,6 +28,7 @@ function EtatConseillerP() {
   const [filterCellule, setFilterCellule] = useState("");
   const getDate = (row, key) => row[key] ? formatDateFR(row[key]) : "-";
   const [selectedMember, setSelectedMember] = useState(null);
+  const [conseillers, setConseillers] = useState([]);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,

@@ -6,6 +6,7 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
 
 export default function EtatCellulePage() {
   return (

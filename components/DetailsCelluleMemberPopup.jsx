@@ -26,12 +26,16 @@ export default function DetailsCelluleMemberPopup({ member, onClose, getCelluleN
           <p>🏠 Cellule : {getCelluleNom ? getCelluleNom(member.cellule_id) : member.cellule_nom || "—"}</p>
         </div>   
 
-        <div className="flex flex-col gap-2 text-sm mt-3">         
+        <div className="flex flex-col gap-2 text-sm mt-3">        
+          <p>🎗️ Civilité : {member.sexe || "—"}</p>
+          <p>⏳ Tranche d'age : {member.age || ""}</p>
           <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-          <p>🎗️ Sexe : {member.sexe || "—"}</p>
           <p>💧 Baptême d’Eau : {member.bapteme_eau ? "Oui" : "Non"}</p>
           <p>🔥 Baptême de Feu : {member.bapteme_esprit ? "Oui" : "Non"}</p>
-          <p>❓ Besoin : {member.besoin ? JSON.parse(member.besoin).join(", ") : "—"}</p>
+          <p>✒️ Formation : {member.Formation || ""}</p>
+          <p>❤️‍🩹 Soin Pastoral : {member.Soin_Pastoral || ""}</p>
+          <p>❓ Difficultés / Besoins : {member.besoin ? JSON.parse(member.besoin).join(", ") : "—"}</p>
+          <p>💢 Ministère : {formatMinistere(member.Ministere, member.Autre_Ministere)}</p>
           <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
           <p>🧩 Comment est-il venu : {member.venu || ""}</p>                    
           <p>📝 Commentaire Suivis : {member.commentaire_suivis || ""}</p>

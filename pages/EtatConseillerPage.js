@@ -10,13 +10,13 @@ import EditMemberPopup from "../components/EditMemberPopup";
 
 export default function EtatConseillerPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule"]}>
-      <EtatCellule />
+    <ProtectedRoute allowedRoles={["Administrateur","Conseiller", "esponsableIntegration"]}>
+      <EtatConseillerP/>
     </ProtectedRoute>
   );
 }
 
-function EtatCellule() {
+function EtatConseillerP() {
   const [reports, setReports] = useState([]);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [filterDebut, setFilterDebut] = useState("");
@@ -462,9 +462,8 @@ function EtatCellule() {
             <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.envoyer_au_suivi_le)}</p>
             <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
             <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
-            <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>
-            <p><strong>Cellule:</strong> {r.cellule_full}</p>
-            <p><strong>Responsable:</strong> {r.responsable}</p>
+            <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>            
+            <p><strong>Responsable:</strong> {r.conseiller}</p>
           </div>
         ))}
       </div>
@@ -476,8 +475,7 @@ function EtatCellule() {
       {selectedMember && (
         <DetailsMemberPopup
           membre={selectedMember}
-          onClose={() => setselectedMember(null)}
-          cellules={cellules}
+          onClose={() => setselectedMember(null)}         
           conseillers={conseillers}
           session={session}
           userRole={userRole} 
@@ -493,8 +491,7 @@ function EtatCellule() {
       )}
 
      <EditMemberPopup
-      member={editMember}
-      cellules={cellules}
+      member={editMember}     
       conseillers={conseillers}
       onClose={() => setEditMember(null)}
       onUpdateMember={async (updatedMember) => {

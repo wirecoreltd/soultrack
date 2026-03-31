@@ -1,34 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
-import DetailsMemberPopup from "../components/DetailsMemberPopup";
-import EditMemberPopup from "../components/EditMemberPopup";
+import DetailsConseillerMemberPopup from "../components/DetailsConseillerMemberPopup";
+import EditMemberConseillerPopup from "../components/EditMemberConseillerPopup";
 
 export default function EtatConseillerPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur","Conseiller", "esponsableIntegration"]}>
-      <EtatConseillerP/>
+    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller","ResponsableIntegration"]}>
+      <EtatConseiller />
     </ProtectedRoute>
   );
 }
 
-function EtatConseillerP() {
+function EtatConseiller() {
+  const router = useRouter();
   const [reports, setReports] = useState([]);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
   const [showTable, setShowTable] = useState(false);
-  const [popupMember, setPopupMember] = useState(null);
-  const [editMember, setEditMember] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
-  const [filterCellule, setFilterCellule] = useState("");
+  const [filterConseiller, setFilterConseiller] = useState("");
   const getDate = (row, key) => row[key] ? formatDateFR(row[key]) : "-";
+  const [membres, setMembres] = useState([]);  
   const [selectedMember, setSelectedMember] = useState(null);
-  const [conseillers, setConseillers] = useState([]);
+  const [editMember, setEditMember] = useState(null);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -67,13 +68,13 @@ function EtatConseillerP() {
     setShowTable(false);
 
     try {
-      // On utilise directement la vue vue_flow_conseillers
+      // On utilise directement la vue vue_flow_personnes
       let query = supabase
-        .from("vue_flow_conseillers")
+        .from("vue_flow_personnes")
         .select("*")
         .order("date_depart", { ascending: false });
 
-      // Filtrer par cellule si nécessaire et par rôle
+      // Filtrer par Conseiller si nécessaire et par rôle
       if (!userProfile.roles?.includes("Administrateur")) {
         query = query.ilike("responsable", `%${userProfile.prenom}%`);
       }
@@ -93,10 +94,10 @@ function EtatConseillerP() {
         );
       }
 
-      // Filtrer par cellule si sélectionnée
-      if (filterCellule) {
+      // Filtrer par Conseiller si sélectionnée
+      if (filterConseiller) {
         filtered = filtered.filter((r) =>
-          r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
+          r.Conseiller_full?.toLowerCase().includes(filterConseiller.toLowerCase())
         );
       }    
       
@@ -231,33 +232,27 @@ function EtatConseillerP() {
       return new Date(yearB, monthB) - new Date(yearA, monthA);
     });
 
-  //==============================
   const handleDetailsClick = async (member) => {
-  const id = member.personne_id || member.id; // fallback
-  console.log("Fetching member with id:", id);
-
   try {
     const { data, error } = await supabase
       .from("membres_complets")
       .select("*")
-      .eq("id", id)
-      .maybeSingle();
+      .eq("id", member.personne_id) // ⚠️ IMPORTANT : utiliser personne_id
+      .single();
 
     if (error) throw error;
 
-    console.log("Data fetched:", data);
     setSelectedMember(data);
   } catch (err) {
     console.error("Erreur récupération membre :", err);
   }
 };
-
   // ================= RENDER =================
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        Suivi des <span className="text-amber-300">Ames</span>
+        Suivis de l'evolution <span className="text-amber-300">des Ames</span>
       </h1>
 
       {/* FILTRES */}
@@ -348,15 +343,15 @@ function EtatConseillerP() {
           {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
             <div className="min-w-[150px] ml-6">Date Depart</div>
-            <div className="min-w-[200px] text-center">Nom Complet</div>
+            <div className="min-w-[200px] text-center ml-2">Nom Complet</div>
             <div className="min-w-[200px] text-center">Type</div>
             <div className="min-w-[200px] text-center">Statut</div>
             <div className="min-w-[150px] text-center">Assigné le</div>
             <div className="min-w-[150px] text-center">Date évolution</div>
             <div className="min-w-[150px] text-center">Date Baptême</div>
             <div className="min-w-[150px] text-center">Début Ministère</div>
-            <div className="min-w-[220px] text-center">Conseiller</div>   
-            <div className="min-w-[220px] text-center">Action</div>  
+            <div className="min-w-[220px] text-center">Conseiller</div>            
+            <div className="min-w-[200px] text-center">Action</div>
           </div>
 
           {/* MONTHS */}
@@ -426,14 +421,15 @@ function EtatConseillerP() {
                           <div className="min-w-[150px] text-center text-white">{formatDateFR(r.envoyer_au_suivi_le)}</div>
                           <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
                           <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
-                          <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>
-                          <div className="min-w-[220px] text-center text-white">{r.conseiller}</div>  
+                          <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>                          
+                          <div className="min-w-[200px] text-center text-white">{r.conseiller}</div>
                           <div className="min-w-[100px] text-center">
                             <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)} >
                             Détails
-                          </button>  
+                          </button>
+                          </div>
+
                         </div>
-                       </div>
                       );
                     })}
                   </div>
@@ -469,7 +465,7 @@ function EtatConseillerP() {
             <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
             <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
             <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>            
-            <p><strong>Responsable:</strong> {r.conseiller}</p>
+            <p><strong>Responsable:</strong> {r.conseiller}</p>            
           </div>
         ))}
       </div>
@@ -477,40 +473,28 @@ function EtatConseillerP() {
   })}
 </div>
 
-     {/* Popups */}
-      {selectedMember && (
-        <DetailsMemberPopup
-          membre={selectedMember}
-          onClose={() => setselectedMember(null)}         
-          conseillers={conseillers}
-          session={session}
-          userRole={userRole} 
-          onDelete={handleSupprimerMembre}
-          commentChanges={commentChanges}
-          handleCommentChange={handleCommentChange}
-          statusChanges={statusChanges}
-          setStatusChanges={setStatusChanges}
-          updateSuivi={updateSuivi}
-          setAllMembers={setAllMembers} 
-          updating={updating}
-        />
-      )}
+    {selectedMember && (
+  <DetailsConseillerMemberPopup
+  member={selectedMember}
+  onClose={() => setSelectedMember(null)}
+  onEdit={(member) => {
+    setSelectedMember(null);   // ferme details
+    setEditMember(member);     // ouvre edit 💥
+  }}
+/>
+)}
 
-     <EditMemberPopup
-      member={editMember}     
-      conseillers={conseillers}
-      onClose={() => setEditMember(null)}
-      onUpdateMember={async (updatedMember) => {
-        await logStats(editMember, updatedMember, userProfile);
-    
-        setAllMembers(prev =>
-          prev.map(m => (m.id === updatedMember.id ? updatedMember : m))
-        );
-    
-        setEditMember(null);
-        showToast("✅ Contact mis à jour !");
-      }}
-    />   
+{editMember && (
+  <EditMemberConseillerPopup
+    member={editMember}
+    onClose={() => setEditMember(null)}
+    onUpdateMember={(updated) => {
+      handleUpdateMember(updated);
+      setEditMember(null);
+      setDetailsMember(null);
+    }}
+  />
+)}
 
       <Footer />
     </div>

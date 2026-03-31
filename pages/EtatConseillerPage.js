@@ -234,19 +234,29 @@ function EtatConseiller() {
 
   const handleDetailsClick = async (member) => {
   try {
+    const id = member.personne_id || member.id; // fallback
+    console.log("Fetching member with id:", id);
+
     const { data, error } = await supabase
       .from("membres_complets")
       .select("*")
-      .eq("id", member.personne_id) // ⚠️ IMPORTANT : utiliser personne_id
-      .single();
+      .eq("id", id)
+      .maybeSingle(); // ✅ ici
 
     if (error) throw error;
+
+    if (!data) {
+      alert("Aucun membre trouvé pour cet ID");
+      return;
+    }
 
     setSelectedMember(data);
   } catch (err) {
     console.error("Erreur récupération membre :", err);
+    alert("Erreur lors de la récupération des détails");
   }
 };
+  
   // ================= RENDER =================
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">

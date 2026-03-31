@@ -20,6 +20,7 @@ export default function MembresCellule() {
 function MembresCelluleContent() {
   const router = useRouter();
   const { memberId } = router.query;
+  const memberIdStr = Array.isArray(memberId) ? memberId[0] : memberId;
 
   const [membres, setMembres] = useState([]);
   const [cellules, setCellules] = useState([]);
@@ -33,6 +34,7 @@ function MembresCelluleContent() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
+  const memberRefs = useRef({}); // pour focus sur membre
 
   // ------------------- Helpers -------------------
   const parseJsonArray = (value) => {
@@ -83,36 +85,36 @@ function MembresCelluleContent() {
 
   // ------------------- Fetch membre unique si memberId -------------------
   useEffect(() => {
-  if (!memberId) return;
+    if (!memberIdStr) return;
 
-  const fetchMembreUnique = async () => {
-    setLoading(true);
-    try {
-      const { data: member, error } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("id", memberId)
-        .single();
+    const fetchMembreUnique = async () => {
+      setLoading(true);
+      try {
+        const { data: member, error } = await supabase
+          .from("membres_complets")
+          .select("*")
+          .eq("id", memberIdStr)
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      setMembres([member]); // remplace la liste par un seul membre
-      setMessage("");
-    } catch (err) {
-      console.error(err);
-      setMessage("Membre non trouvé");
-      setMembres([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+        setMembres([member]);
+        setMessage("");
+      } catch (err) {
+        console.error(err);
+        setMessage("Membre non trouvé");
+        setMembres([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchMembreUnique();
-}, [memberId]);
+    fetchMembreUnique();
+  }, [memberIdStr]);
 
   // ------------------- Fetch data général -------------------
   useEffect(() => {
-    if (memberId) return; // si membre unique, on ne charge pas tout
+    if (memberIdStr) return;
 
     const fetchData = async () => {
       setLoading(true);
@@ -164,7 +166,15 @@ function MembresCelluleContent() {
     };
 
     fetchData();
-  }, [memberId]);
+  }, [memberIdStr]);
+
+  // ------------------- Scroll automatique sur membre ciblé -------------------
+  useEffect(() => {
+    if (memberIdStr && memberRefs.current[memberIdStr]) {
+      memberRefs.current[memberIdStr].scrollIntoView({ behavior: "smooth", block: "center" });
+      setDetailsOpen((prev) => ({ ...prev, [memberIdStr]: true }));
+    }
+  }, [memberIdStr, membres]);
 
   // ------------------- Click outside phone menu -------------------
   const handleClickOutside = useCallback((e) => {
@@ -243,7 +253,12 @@ function MembresCelluleContent() {
                   const besoins = parseJsonArray(m.besoin).join(", ") || "—";
                   const isOpen = detailsOpen[m.id];
                   return (
-                    <div key={m.id} className="bg-white p-4 rounded-2xl shadow-xl border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+                    <div
+                      key={m.id}
+                      ref={(el) => (memberRefs.current[m.id] = el)}
+                      className="bg-white p-4 rounded-2xl shadow-xl border-l-4"
+                      style={{ borderLeftColor: getBorderColor(m) }}
+                    >
                       <h2 className="text-center font-bold text-lg">{m.prenom} {m.nom}</h2>
 
                       <div className="relative text-center">

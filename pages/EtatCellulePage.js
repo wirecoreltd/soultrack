@@ -16,6 +16,7 @@ export default function EtatCellulePage() {
 }
 
 function EtatCellule() {
+  const router = useRouter();
   const [reports, setReports] = useState([]);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [filterDebut, setFilterDebut] = useState("");
@@ -24,7 +25,7 @@ function EtatCellule() {
   const [userProfile, setUserProfile] = useState(null);
   const [filterCellule, setFilterCellule] = useState("");
   const getDate = (row, key) => row[key] ? formatDateFR(row[key]) : "-";
-  const [membres, setMembres] = useState([]);
+  const [membres, setMembres] = useState([]);  
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -411,8 +412,8 @@ function EtatCellule() {
                           <div className="min-w-[200px] text-center text-white">{r.responsable}</div>
                           <div className="min-w-[100px] text-center">
                             <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)} >
-                              Détails
-                            </button>
+                            Détails
+                          </button>
                           </div>
 
                         </div>

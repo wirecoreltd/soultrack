@@ -20,7 +20,7 @@ export default function MembresCellule() {
 function MembresCelluleContent() {
   const router = useRouter();
   const { memberId } = router.query;
-  const memberIdStr = Array.isArray(memberId) ? memberId[0] : memberId;  
+  const memberIdStr = memberId ? (Array.isArray(memberId) ? memberId[0] : memberId) : null;
   const [membres, setMembres] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [filterCellule, setFilterCellule] = useState("");
@@ -83,8 +83,8 @@ function MembresCelluleContent() {
   };
 
   // ------------------- Fetch membre unique si memberId -------------------
- useEffect(() => {
-  if (!memberIdStr) return; // on sort si pas de memberId
+useEffect(() => {
+  if (!memberIdStr) return; // pas de fetch si memberId invalide
 
   const fetchMembreUnique = async () => {
     setLoading(true);
@@ -112,59 +112,65 @@ function MembresCelluleContent() {
 }, [memberIdStr]);
   // ------------------- Fetch data général -------------------
   useEffect(() => {
-    if (memberIdStr) return;
+  if (memberIdStr) return; // si on a un membre spécifique, pas besoin de fetch général
 
-    const fetchData = async () => {
-      setLoading(true);
-      setMessage("");
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const user = sessionData?.session?.user;
-        if (!user) throw new Error("Non connecté");
+  const fetchData = async () => {
+    setLoading(true);
+    setMessage("");
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id, role, eglise_id, branche_id")
-          .eq("id", user.id)
-          .single();
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) throw new Error("Non connecté");
 
-        let celluleQuery = supabase.from("cellules").select("id, cellule_full, responsable_id");
-        if (profile.role === "ResponsableCellule") celluleQuery = celluleQuery.eq("responsable_id", profile.id);
-        const { data: cellulesData } = await celluleQuery;
-        setCellules(cellulesData || []);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, role, eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
 
-        const celluleIds = (cellulesData || []).map((c) => c.id);
-        if (celluleIds.length === 0) {
-          setMembres([]);
-          setMessage("Aucun membre intégré");
-          return;
-        }
+      // Récupération des cellules selon le rôle
+      let celluleQuery = supabase.from("cellules").select("id, cellule_full, responsable_id");
+      if (profile.role === "ResponsableCellule") celluleQuery = celluleQuery.eq("responsable_id", profile.id);
+      const { data: cellulesData } = await celluleQuery;
 
-        let membresQuery = supabase
-          .from("membres_complets")
-          .select("*")
-          .in("cellule_id", celluleIds)
-          .eq("eglise_id", profile.eglise_id)
-          .eq("branche_id", profile.branche_id)
-          .eq("statut_suivis", "3")
-          .order("created_at", { ascending: false });
+      setCellules(cellulesData || []);
 
-        if (profile.role === "Conseiller") membresQuery = membresQuery.eq("conseiller_id", profile.id);
-        const { data: membresData, error } = await membresQuery;
-        if (error) throw error;
-
-        setMembres(membresData || []);
-        if (!membresData || membresData.length === 0) setMessage("Aucun membre intégré trouvé");
-      } catch (err) {
-        console.error(err);
-        setMessage("Erreur de chargement");
-      } finally {
-        setLoading(false);
+      const celluleIds = (cellulesData || []).map(c => c.id);
+      if (celluleIds.length === 0) {
+        setMembres([]);
+        setMessage("Aucun membre intégré");
+        return;
       }
-    };
 
-    fetchData();
-  }, [memberIdStr]);
+      // Récupération des membres
+      let membresQuery = supabase
+        .from("membres_complets")
+        .select("*")
+        .in("cellule_id", celluleIds)
+        .eq("eglise_id", profile.eglise_id)
+        .eq("branche_id", profile.branche_id)
+        .eq("statut_suivis", 3)
+        .order("created_at", { ascending: false });
+
+      if (profile.role === "Conseiller") membresQuery = membresQuery.eq("conseiller_id", profile.id);
+
+      const { data: membresData, error } = await membresQuery;
+      if (error) throw error;
+
+      setMembres(membresData || []);
+      if (!membresData || membresData.length === 0) setMessage("Aucun membre intégré trouvé");
+
+    } catch (err) {
+      console.error(err);
+      setMessage("Erreur de chargement");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, [memberIdStr]);
 
   // ------------------- Scroll automatique sur membre ciblé -------------------
   useEffect(() => {

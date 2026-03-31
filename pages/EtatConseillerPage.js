@@ -11,6 +11,7 @@ import DetailEvangeliseSuivisPopup from "../components/DetailEvangeliseSuivisPop
 import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 
+
 export default function EtatConseillerPage() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "Conseiller","ResponsableIntegration"]}>
@@ -33,6 +34,8 @@ function EtatConseiller() {
   const [selectedMember, setSelectedMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
   const [selectedEvangelise, setSelectedEvangelise] = useState(null);
+  const [comment, setComment] = useState(member?.commentaire_evangelises ?? "");
+const [status, setStatus] = useState(member?.status_suivis_evangelises ?? "");
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,

@@ -232,15 +232,23 @@ function EtatConseiller() {
       return new Date(yearB, monthB) - new Date(yearA, monthA);
     });
 
-  const handleDetailsClick = async (member) => {
+ const handleDetailsClick = async (member) => {
   try {
     const { data, error } = await supabase
       .from("membres_complets")
       .select("*")
-      .eq("id", member.personne_id) // ⚠️ IMPORTANT : utiliser personne_id
-      .single();
+      .eq("id", member.personne_id)
+      .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Erreur Supabase :", error);
+      return;
+    }
+
+    if (!data) {
+      console.warn("Aucun membre trouvé");
+      return;
+    }
 
     setSelectedMember(data);
   } catch (err) {

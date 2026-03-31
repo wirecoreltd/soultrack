@@ -80,10 +80,10 @@ function MembresCelluleContent() {
   };
 
   // ------------------- Fetch data -------------------
-  useEffect(() => {
-    const fetchMembreUnique = async () => {
-    if (!memberId) return;
+useEffect(() => {
+  if (!memberId) return;
 
+  const fetchMembreUnique = async () => {
     setLoading(true);
     try {
       const { data: member, error } = await supabase
@@ -94,7 +94,7 @@ function MembresCelluleContent() {
 
       if (error) throw error;
 
-      setMembres([member]); // remplace la liste par un seul membre
+      setMembres([member]);
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -108,59 +108,62 @@ function MembresCelluleContent() {
   fetchMembreUnique();
 }, [memberId]);
 
-  
-    const fetchData = async () => {
-      setLoading(true);
-      setMessage("");
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const user = sessionData?.session?.user;
-        if (!user) throw new Error("Non connecté");
+  // ------------------- Charger tous les membres si pas de memberId -------------------
+useEffect(() => {
+  if (memberId) return; // on ne charge pas la liste si un membre est sélectionné
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id, role, eglise_id, branche_id")
-          .eq("id", user.id)
-          .single();
+  const fetchData = async () => {
+    setLoading(true);
+    setMessage("");
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) throw new Error("Non connecté");
 
-        let celluleQuery = supabase.from("cellules").select("id, cellule_full, responsable_id");
-        if (profile.role === "ResponsableCellule") celluleQuery = celluleQuery.eq("responsable_id", profile.id);
-        const { data: cellulesData } = await celluleQuery;
-        setCellules(cellulesData || []);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, role, eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
 
-        const celluleIds = (cellulesData || []).map((c) => c.id);
-        if (celluleIds.length === 0) {
-          setMembres([]);
-          setMessage("Aucun membre intégré");
-          return;
-        }
+      let celluleQuery = supabase.from("cellules").select("id, cellule_full, responsable_id");
+      if (profile.role === "ResponsableCellule") celluleQuery = celluleQuery.eq("responsable_id", profile.id);
+      const { data: cellulesData } = await celluleQuery;
+      setCellules(cellulesData || []);
 
-        let membresQuery = supabase
-          .from("membres_complets")
-          .select("*")
-          .in("cellule_id", celluleIds)
-          .eq("eglise_id", profile.eglise_id)
-          .eq("branche_id", profile.branche_id)
-          .eq("statut_suivis", "3")
-          .order("created_at", { ascending: false });
-
-        if (profile.role === "Conseiller") membresQuery = membresQuery.eq("conseiller_id", profile.id);
-        const { data: membresData, error } = await membresQuery;
-        if (error) throw error;
-
-        setMembres(membresData || []);
-        if (!membresData || membresData.length === 0) setMessage("Aucun membre intégré trouvé");
-      } catch (err) {
-        console.error(err);
-        setMessage("Erreur de chargement");
-      } finally {
-        setLoading(false);
+      const celluleIds = (cellulesData || []).map((c) => c.id);
+      if (celluleIds.length === 0) {
+        setMembres([]);
+        setMessage("Aucun membre intégré");
+        return;
       }
-    };
 
-    fetchData();
-  }, []);
+      let membresQuery = supabase
+        .from("membres_complets")
+        .select("*")
+        .in("cellule_id", celluleIds)
+        .eq("eglise_id", profile.eglise_id)
+        .eq("branche_id", profile.branche_id)
+        .eq("statut_suivis", "3")
+        .order("created_at", { ascending: false });
 
+      if (profile.role === "Conseiller") membresQuery = membresQuery.eq("conseiller_id", profile.id);
+      const { data: membresData, error } = await membresQuery;
+      if (error) throw error;
+
+      setMembres(membresData || []);
+      if (!membresData || membresData.length === 0) setMessage("Aucun membre intégré trouvé");
+    } catch (err) {
+      console.error(err);
+      setMessage("Erreur de chargement");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, [memberId]);
+  
   // ------------------- Click outside phone menu -------------------
   const handleClickOutside = useCallback((e) => {
     if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {

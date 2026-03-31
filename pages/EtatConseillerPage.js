@@ -6,8 +6,8 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
-import DetailsConseillerMemberPopup from "../components/DetailsConseillerMemberPopup";
-import EditMemberConseillerPopup from "../components/EditMemberConseillerPopup";
+import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
+import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 
 export default function EtatConseillerPage() {
   return (
@@ -68,9 +68,9 @@ function EtatConseiller() {
     setShowTable(false);
 
     try {
-      // On utilise directement la vue vue_flow_personnes
+      // On utilise directement la vue vue_flow_conseillers
       let query = supabase
-        .from("vue_flow_personnes")
+        .from("vue_flow_conseillers")
         .select("*")
         .order("date_depart", { ascending: false });
 

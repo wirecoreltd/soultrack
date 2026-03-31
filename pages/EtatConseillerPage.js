@@ -233,23 +233,19 @@ function EtatConseillerP() {
 
   //==============================
   const handleDetailsClick = async (member) => {
-  try {
-    if (!member?.personne_id) {
-      console.error("personne_id manquant !");
-      return;
-    }
+  const id = member.personne_id || member.id; // fallback
+  console.log("Fetching member with id:", id);
 
+  try {
     const { data, error } = await supabase
       .from("membres_complets")
       .select("*")
-      .eq("id", member.personne_id)
+      .eq("id", id)
       .maybeSingle();
 
-    if (error) {
-      console.error("Supabase error:", error.message);
-      return;
-    }
+    if (error) throw error;
 
+    console.log("Data fetched:", data);
     setSelectedMember(data);
   } catch (err) {
     console.error("Erreur récupération membre :", err);

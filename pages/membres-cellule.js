@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
+import { useRouter } from "next/router";
 
 export default function MembresCellule() {
   return (
@@ -30,7 +31,8 @@ function MembresCelluleContent() {
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
   const searchParams = useSearchParams();
-  const memberId = searchParams.get("memberId"); // récupère l'ID depuis l'URL
+  const router = useRouter();
+  const { memberId } = router.query;// récupère l'ID depuis l'URL
 
   // ------------------- Helpers -------------------
   const parseJsonArray = (value) => {
@@ -81,7 +83,7 @@ function MembresCelluleContent() {
 
   // ------------------- Fetch data -------------------
 useEffect(() => {
-  if (!memberId) return;
+  if (!memberId) return; // Si pas de memberId, on ne charge pas le membre unique
 
   const fetchMembreUnique = async () => {
     setLoading(true);

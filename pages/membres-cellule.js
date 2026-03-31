@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
-import LogoutLink from "../components/LogoutLink";
-import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
-import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
-import ProtectedRoute from "../components/ProtectedRoute";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
+import ProtectedRoute from "../components/ProtectedRoute";
+import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
+import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
 
 export default function MembresCellule() {
   return (
@@ -22,47 +20,61 @@ function MembresCelluleContent() {
   const [membres, setMembres] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [filterCellule, setFilterCellule] = useState("");
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [view, setView] = useState("card");
-  const [search, setSearch] = useState("");
   const [editMember, setEditMember] = useState(null);
   const [detailsMember, setDetailsMember] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState({});
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
 
-  // ------------------- Close both popups -------------------
-  const closeAllPopups = () => {
-    setEditMember(null);
-    setDetailsMember(null);
+  // ------------------- Helpers -------------------
+  const parseJsonArray = (value) => {
+    if (!value) return [];
+    try {
+      const parsed = typeof value === "string" ? JSON.parse(value) : value;
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      return [value];
+    }
   };
 
-  // ------------------- Click outside for phone menu -------------------
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
-        setOpenPhoneId(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // ------------------- Format Ministère -------------------
   const formatMinistere = (ministereJson, autreMinistere) => {
-    let ministereList = [];
-    if (ministereJson) {
-      try {
-        const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
-        ministereList = Array.isArray(parsed) ? parsed : [parsed];
-        ministereList = ministereList.filter((m) => m.toLowerCase() !== "autre");
-      } catch {
-        if (ministereJson.toLowerCase() !== "autre") ministereList = [ministereJson];
-      }
+    let list = parseJsonArray(ministereJson).filter((m) => m.toLowerCase() !== "autre");
+    if (autreMinistere?.trim()) list.push(autreMinistere.trim());
+    return list.join(", ") || "—";
+  };
+
+  const formatDateFr = (dateString) => {
+    if (!dateString) return "—";
+    const d = new Date(dateString);
+    const day = d.getDate().toString().padStart(2, "0");
+    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
+  const statutSuiviLabels = {
+    1: "En attente",
+    2: "En Suivis",
+    3: "Intégré",
+    4: "Refus",
+  };
+
+  const getCelluleNom = (celluleId) => cellules.find((c) => c.id === celluleId)?.cellule_full || "—";
+
+  const getBorderColor = (member) => {
+    switch ((member?.etat_contact || "").toLowerCase().trim()) {
+      case "nouveau": return "#fb923c";
+      case "existant": return "#4ade80";
+      case "inactif": return "#9ca3af";
+      default: return "#9ca3af";
     }
-    if (autreMinistere?.trim()) ministereList.push(autreMinistere.trim());
-    return ministereList.join(", ");
+  };
+
+  const handleUpdateMember = (updated) => {
+    setMembres((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
   };
 
   // ------------------- Fetch data -------------------
@@ -70,7 +82,6 @@ function MembresCelluleContent() {
     const fetchData = async () => {
       setLoading(true);
       setMessage("");
-
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const user = sessionData?.session?.user;
@@ -83,16 +94,11 @@ function MembresCelluleContent() {
           .single();
 
         let celluleQuery = supabase.from("cellules").select("id, cellule_full, responsable_id");
-
-        if (profile.role === "ResponsableCellule") {
-          celluleQuery = celluleQuery.eq("responsable_id", profile.id);
-        }
-
+        if (profile.role === "ResponsableCellule") celluleQuery = celluleQuery.eq("responsable_id", profile.id);
         const { data: cellulesData } = await celluleQuery;
         setCellules(cellulesData || []);
 
         const celluleIds = (cellulesData || []).map((c) => c.id);
-
         if (celluleIds.length === 0) {
           setMembres([]);
           setMessage("Aucun membre intégré");
@@ -108,17 +114,12 @@ function MembresCelluleContent() {
           .eq("statut_suivis", "3")
           .order("created_at", { ascending: false });
 
-        if (profile.role === "Conseiller") {
-          membresQuery = membresQuery.eq("conseiller_id", profile.id);
-        }
-
+        if (profile.role === "Conseiller") membresQuery = membresQuery.eq("conseiller_id", profile.id);
         const { data: membresData, error } = await membresQuery;
         if (error) throw error;
 
         setMembres(membresData || []);
-        if (!membresData || membresData.length === 0) {
-          setMessage("Aucun membre intégré trouvé");
-        }
+        if (!membresData || membresData.length === 0) setMessage("Aucun membre intégré trouvé");
       } catch (err) {
         console.error(err);
         setMessage("Erreur de chargement");
@@ -130,41 +131,19 @@ function MembresCelluleContent() {
     fetchData();
   }, []);
 
-  // ------------------- Helpers -------------------
-  const statutSuiviLabels = {
-    1: "En attente",
-    2: "En Suivis",
-    3: "Intégré",
-    4: "Refus",
-  };
-
-  const formatDateFr = (dateString) => {
-    if (!dateString) return "—";
-    const d = new Date(dateString);
-    const day = d.getDate().toString().padStart(2, "0");
-    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
-    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
-  };
-
-  const getCelluleNom = (celluleId) => {
-    const c = cellules.find((c) => c.id === celluleId);
-    return c?.cellule_full || "—";
-  };
-
-  const getBorderColor = (member) => {
-    const etat = (member?.etat_contact || "").toLowerCase().trim();
-    switch (etat) {
-      case "nouveau": return "#fb923c";
-      case "existant": return "#4ade80";
-      case "inactif": return "#9ca3af";
-      default: return "#9ca3af";
+  // ------------------- Click outside phone menu -------------------
+  const handleClickOutside = useCallback((e) => {
+    if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+      setOpenPhoneId(null);
     }
-  };
+  }, []);
 
-  const handleUpdateMember = (updated) => {
-    setMembres((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
-  };
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [handleClickOutside]);
 
+  // ------------------- Filtered members -------------------
   const filteredMembres = membres.filter(
     (m) =>
       (!filterCellule || m.cellule_id === filterCellule) &&
@@ -178,7 +157,6 @@ function MembresCelluleContent() {
   return (
     <div className="min-h-screen p-6" style={{ backgroundColor: "#333699" }}>
       <HeaderPages />
-
       <h1 className="text-white text-2xl font-bold text-center mb-4">
         {cellules.length > 1 ? "Membres de mes cellules" : "Membre de ma cellule"}
       </h1>
@@ -205,16 +183,14 @@ function MembresCelluleContent() {
               >
                 <option value="">-- Toutes les cellules --</option>
                 {cellules.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.cellule_full}
-                  </option>
+                  <option key={c.id} value={c.id}>{c.cellule_full}</option>
                 ))}
               </select>
               <span className="text-white text-sm">{filteredMembres.length} membres</span>
             </div>
           </div>
 
-          {/* Toggle Vue Carte / Vue Table */}
+          {/* Toggle Vue Carte / Table */}
           <div className="w-full max-w-6xl flex justify-center mb-6">
             <button
               onClick={() => setView(view === "card" ? "table" : "card")}
@@ -229,29 +205,11 @@ function MembresCelluleContent() {
             <div className="flex justify-center">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
                 {filteredMembres.map((m) => {
-                  const besoins = !m.besoin
-                    ? "—"
-                    : Array.isArray(m.besoin)
-                    ? m.besoin.join(", ")
-                    : (() => {
-                        try {
-                          const arr = JSON.parse(m.besoin);
-                          return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-                        } catch {
-                          return m.besoin;
-                        }
-                      })();
+                  const besoins = parseJsonArray(m.besoin).join(", ") || "—";
                   const isOpen = detailsOpen[m.id];
-
                   return (
-                    <div
-                      key={m.id}
-                      className="bg-white p-4 rounded-2xl shadow-xl border-l-4"
-                      style={{ borderLeftColor: getBorderColor(m) }}
-                    >
-                      <h2 className="text-center font-bold text-lg">
-                        {m.prenom} {m.nom}
-                      </h2>
+                    <div key={m.id} className="bg-white p-4 rounded-2xl shadow-xl border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+                      <h2 className="text-center font-bold text-lg">{m.prenom} {m.nom}</h2>
 
                       <div className="relative text-center">
                         <p
@@ -263,40 +221,13 @@ function MembresCelluleContent() {
                         >
                           {m.telephone || "—"}
                         </p>
+
                         {openPhoneId === m.id && (
-                          <div
-                            ref={phoneMenuRef}
-                            className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <a
-                              href={`tel:${m.telephone}`}
-                              className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                            >
-                              📞 Appeler
-                            </a>
-                            <a
-                              href={`sms:${m.telephone}`}
-                              className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                            >
-                              ✉️ SMS
-                            </a>
-                            <a
-                              href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}?call`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                            >
-                              📱 Appel WhatsApp
-                            </a>
-                            <a
-                              href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                            >
-                              💬 Message WhatsApp
-                            </a>
+                          <div ref={phoneMenuRef} className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56" onClick={(e) => e.stopPropagation()}>
+                            <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+                            <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+                            <a href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
+                            <a href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
                           </div>
                         )}
                       </div>
@@ -304,13 +235,9 @@ function MembresCelluleContent() {
                       <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
                       <p className="text-center text-sm">🏠 {getCelluleNom(m.cellule_id)}</p>
 
-                      <button
-                        onClick={() =>
-                          setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))
-                        }
-                        className="text-orange-500 underline mt-2 block mx-auto text-sm"
-                      >
-                        {detailsOpen[m.id] ? "Fermer détails" : "Détails"}
+                      <button onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
+                        className="text-orange-500 underline mt-2 block mx-auto text-sm">
+                        {isOpen ? "Fermer détails" : "Détails"}
                       </button>
 
                       {isOpen && (
@@ -329,22 +256,9 @@ function MembresCelluleContent() {
                           <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
                           <p>✒️ Formation : {m.Formation || ""}</p>
                           <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>
-                          <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}</p>
+                          <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
                           <p>❓ Difficultés / Besoins : {besoins}</p>
-                          <p>📝 Infos : {m.infos_supplementaires || ""}</p>
-                          <p>🧩 Comment est-il venu : {m.venu || ""}</p>
-                          <p>✨ Raison de la venue : {m.statut_initial || ""}</p>
-                          <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
-                          <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
-                          <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
-                          <p>📑 Commentaire Suivis Evangelisation : {m.Commentaire_Suivi_Evangelisation || ""}</p>
-
-                          <button
-                            onClick={() => setEditMember(m)}
-                            className="text-blue-600 text-sm mt-2 block mx-auto underline"
-                          >
-                            ✏️ Modifier le contact
-                          </button>
+                          <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 block mx-auto underline">✏️ Modifier le contact</button>
                         </div>
                       )}
                     </div>
@@ -365,25 +279,13 @@ function MembresCelluleContent() {
                   <div className="flex-[1] flex justify-center items-center">Cellule</div>
                   <div className="flex-[1]">Action</div>
                 </div>
-
                 {filteredMembres.map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4"
-                    style={{ borderLeftColor: getBorderColor(m) }}
-                  >
+                  <div key={m.id} className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
                     <div className="flex-[2] text-white flex items-center gap-1">{m.prenom} {m.nom}</div>
                     <div className="flex-[1] text-white">{m.telephone || "—"}</div>
                     <div className="flex-[1] text-white">{m.ville || "—"}</div>
                     <div className="flex-[1] text-white flex justify-center items-center">{getCelluleNom(m.cellule_id)}</div>
-                    <div className="flex-[1]">
-                      <button
-                        onClick={() => setDetailsMember(m)}
-                        className="text-orange-500 underline text-sm"
-                      >
-                        Détails
-                      </button>
-                    </div>
+                    <div className="flex-[1]"><button onClick={() => setDetailsMember(m)} className="text-orange-500 underline text-sm">Détails</button></div>
                   </div>
                 ))}
               </div>

@@ -225,6 +225,12 @@ function EtatCellule() {
       return new Date(yearB, monthB) - new Date(yearA, monthA);
     });
 
+  const handleDetailsClick = (member) => {
+    router.push({
+      pathname: "/membres-cellule", 
+      query: { memberId: member.id }  // on passe l'id en query
+    });
+  };
   // ================= RENDER =================
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -330,6 +336,7 @@ function EtatCellule() {
             <div className="min-w-[150px] text-center">Début Ministère</div>
             <div className="min-w-[220px] text-center">Cellule</div>
             <div className="min-w-[200px] text-center">Responsable</div>
+            <div className="min-w-[200px] text-center">Action</div>
           </div>
 
           {/* MONTHS */}
@@ -402,6 +409,13 @@ function EtatCellule() {
                           <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>
                           <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
                           <div className="min-w-[200px] text-center text-white">{r.responsable}</div>
+                          <div>
+      {membresCellule.map((m) => (
+        <button key={m.id} onClick={() => handleDetailsClick(m)}>
+          Détails
+        </button>
+      ))}
+    </div>  
                         </div>
                       );
                     })}

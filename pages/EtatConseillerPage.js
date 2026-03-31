@@ -30,6 +30,7 @@ function EtatConseiller() {
   const [membres, setMembres] = useState([]);  
   const [selectedMember, setSelectedMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
+  const [selectedEvangelise, setSelectedEvangelise] = useState(null);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -236,32 +237,33 @@ function EtatConseiller() {
     setMembres((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
   };
 
- const handleDetailsClick = async (member) => {
-  if (!member.is_real_member) {
-    alert("Pas de détails disponible pour cet évangélisé");
-    return;
-  }
+ const handleDetailsClick = async (row) => {
+  if (row.source === "integration") {
+    // Pour les vrais membres
+    try {
+      const { data, error } = await supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("id", row.personne_id)
+        .maybeSingle();
 
-  try {
-    const { data, error } = await supabase
-      .from("membres_complets")
-      .select("*")
-      .eq("id", member.personne_id)
-      .maybeSingle();
+      if (error) {
+        console.error("Erreur Supabase :", error);
+        return;
+      }
 
-    if (error) {
-      console.error("Erreur Supabase :", error);
-      return;
+      if (!data) {
+        console.warn("Aucun membre trouvé");
+        return;
+      }
+
+      setSelectedMember(data);
+    } catch (err) {
+      console.error("Erreur récupération membre :", err);
     }
-
-    if (!data) {
-      console.warn("Aucun membre trouvé");
-      return;
-    }
-
-    setSelectedMember(data);
-  } catch (err) {
-    console.error("Erreur récupération membre :", err);
+  } else if (row.source === "evangelisation") {
+    // Pour les évangélisés
+    setSelectedEvangelise(row); // nouveau state
   }
 };
   // ================= RENDER =================
@@ -498,6 +500,14 @@ function EtatConseiller() {
       setSelectedMember(null);
       setEditMember(member);
     }}
+  />
+)}
+
+{/* Popup pour évangélisés */}
+{selectedEvangelise && (
+  <DetailEvangeliseSuivisPopup
+    evangelise={selectedEvangelise}
+    onClose={() => setSelectedEvangelise(null)}
   />
 )}
 

@@ -78,6 +78,14 @@ export default function DetailsMemberPopup({
     return list.join(", ") || "—";
   };
 
+  const formatDateFr = (dateString) => {
+    if (!dateString) return "—";
+    const d = new Date(dateString);
+    const day = d.getDate().toString().padStart(2, "0");
+    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
       {/* Popup scrollable */}
@@ -242,8 +250,9 @@ export default function DetailsMemberPopup({
           <p className="font-semibold text-center text-blue-700">
             💡 Statut Suivi : {statutSuiviLabels[membre.statut_suivis] || ""}
           </p>         
+          <p>📆 Envoyé en suivi : {formatDateFr(member.date_envoi_suivi)}</p>  
           <p>🎗️ Civilité : {membre.sexe || ""}</p>
-          <p>⏳ Age : {membre.age || ""}</p>
+          <p>⏳ Tranche d'age : {membre.age || ""}</p>
            <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>  
           <p>💧 Baptême d’Eau : {membre.bapteme_eau ? "Oui" : "Non"}</p>          
                 {membre.bapteme_eau === "Non" && membre.veut_se_faire_baptiser === "Oui" && (

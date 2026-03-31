@@ -84,7 +84,7 @@ function MembresCelluleContent() {
 
   // ------------------- Fetch membre unique si memberId -------------------
  useEffect(() => {
-  if (!memberIdStr) return; // stop si pas défini
+  if (!memberIdStr) return; // on sort si pas de memberId
 
   const fetchMembreUnique = async () => {
     setLoading(true);

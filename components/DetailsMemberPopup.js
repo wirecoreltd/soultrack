@@ -241,10 +241,10 @@ export default function DetailsMemberPopup({
         <div className="mt-5 text-sm space-y-1">
           <p className="font-semibold text-center text-blue-700">
             💡 Statut Suivi : {statutSuiviLabels[membre.statut_suivis] || ""}
-          </p>
-          <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>
+          </p>         
           <p>🎗️ Civilité : {membre.sexe || ""}</p>
           <p>⏳ Age : {membre.age || ""}</p>
+           <p>💬 WhatsApp : {membre.is_whatsapp ? "Oui" : "Non"}</p>  
           <p>💧 Baptême d’Eau : {membre.bapteme_eau ? "Oui" : "Non"}</p>          
                 {membre.bapteme_eau === "Non" && membre.veut_se_faire_baptiser === "Oui" && (
                   <p className="ml-6">💦 Veut se faire baptiser</p>

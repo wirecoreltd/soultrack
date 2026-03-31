@@ -478,9 +478,13 @@ function EtatCellule() {
 
     {selectedMember && (
   <DetailsCelluleMemberPopup
-    member={selectedMember}
-    onClose={() => setSelectedMember(null)}
-  />
+  member={selectedMember}
+  onClose={() => setSelectedMember(null)}
+  onEdit={(member) => {
+    setSelectedMember(null);   // ferme details
+    setEditMember(member);     // ouvre edit 💥
+  }}
+/>
 )}
 
 {editMember && (

@@ -232,6 +232,10 @@ function EtatConseiller() {
       return new Date(yearB, monthB) - new Date(yearA, monthA);
     });
 
+   const handleUpdateMember = (updated) => {
+    setMembres((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+  };
+
  const handleDetailsClick = async (member) => {
   if (!member.is_real_member) {
     alert("Pas de détails disponible pour cet évangélisé");

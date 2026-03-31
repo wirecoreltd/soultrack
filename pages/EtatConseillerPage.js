@@ -243,7 +243,7 @@ function EtatConseillerP() {
       .from("membres_complets")
       .select("*")
       .eq("id", member.personne_id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("Supabase error:", error.message);

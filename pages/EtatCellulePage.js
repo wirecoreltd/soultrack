@@ -29,6 +29,7 @@ function EtatCellule() {
   const getDate = (row, key) => row[key] ? formatDateFR(row[key]) : "-";
   const [membres, setMembres] = useState([]);  
   const [selectedMember, setSelectedMember] = useState(null);
+  const [editMember, setEditMember] = useState(null);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,

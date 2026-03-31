@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
@@ -227,10 +228,8 @@ function EtatCellule() {
     });
 
   const handleDetailsClick = (member) => {
-    router.push({
-      pathname: "/membres-cellule",
-      query: { memberId: member.id }  // on passe l'id du membre
-    });
+    // redirection vers MembresCellule avec l'ID du membre
+    router.push(`/membres-cellule?memberId=${member.id}`);
   };
   // ================= RENDER =================
   return (

@@ -29,6 +29,8 @@ function MembresCelluleContent() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
+  const searchParams = useSearchParams();
+  const memberId = searchParams.get("memberId"); // récupère l'ID depuis l'URL
 
   // ------------------- Helpers -------------------
   const parseJsonArray = (value) => {
@@ -79,6 +81,34 @@ function MembresCelluleContent() {
 
   // ------------------- Fetch data -------------------
   useEffect(() => {
+    const fetchMembreUnique = async () => {
+    if (!memberId) return;
+
+    setLoading(true);
+    try {
+      const { data: member, error } = await supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("id", memberId)
+        .single();
+
+      if (error) throw error;
+
+      setMembres([member]); // remplace la liste par un seul membre
+      setMessage("");
+    } catch (err) {
+      console.error(err);
+      setMessage("Membre non trouvé");
+      setMembres([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchMembreUnique();
+}, [memberId]);
+
+  
     const fetchData = async () => {
       setLoading(true);
       setMessage("");

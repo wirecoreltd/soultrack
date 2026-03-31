@@ -30,6 +30,7 @@ function EtatCellule() {
   const [membres, setMembres] = useState([]);  
   const [selectedMember, setSelectedMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
+   const [detailsMember, setDetailsMember] = useState(null);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,

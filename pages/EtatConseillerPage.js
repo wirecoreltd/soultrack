@@ -324,7 +324,7 @@ function EtatCellule() {
             <div className="min-w-[200px] text-center">Nom Complet</div>
             <div className="min-w-[200px] text-center">Type</div>
             <div className="min-w-[200px] text-center">Statut</div>
-            <div className="min-w-[150px] text-center">Envoyer au </br>Suivi Le</div>
+            <div className="min-w-[150px] text-center">Envoyer au Suivi Le</div>
             <div className="min-w-[150px] text-center">Date Intégration</div>
             <div className="min-w-[150px] text-center">Date Baptême</div>
             <div className="min-w-[150px] text-center">Début Ministère</div>

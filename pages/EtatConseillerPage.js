@@ -240,8 +240,9 @@ function EtatConseiller() {
   };
 
  const handleDetailsClick = async (row) => {
+  if (!row.source) return;
+
   if (row.source === "integration") {
-    // Pour les vrais membres
     try {
       const { data, error } = await supabase
         .from("membres_complets")
@@ -260,12 +261,15 @@ function EtatConseiller() {
       }
 
       setSelectedMember(data);
+
     } catch (err) {
       console.error("Erreur récupération membre :", err);
     }
+
   } else if (row.source === "evangelisation") {
-    // Pour les évangélisés
-    setSelectedEvangelise(row); // nouveau state
+    // ici on passe directement la ligne de la vue pour l'évangélisé
+    // car elle contient déjà tout ce dont DetailEvangeliseSuivisPopup a besoin
+    setSelectedEvangelise(row);
   }
 };
   // ================= RENDER =================
@@ -494,7 +498,8 @@ function EtatConseiller() {
   })}
 </div>
 
-  {selectedMember && (
+  {/* Popup pour intégration */}
+{selectedMember && (
   <DetailsCelluleMemberPopup
     member={selectedMember}
     onClose={() => setSelectedMember(null)}
@@ -505,7 +510,7 @@ function EtatConseiller() {
   />
 )}
 
-{/* Popup pour évangélisés */}
+{/* Popup pour évangélisation */}
 {selectedEvangelise && (
   <DetailEvangeliseSuivisPopup
     evangelise={selectedEvangelise}
@@ -513,6 +518,7 @@ function EtatConseiller() {
   />
 )}
 
+{/* Popup pour édition */}
 {editMember && (
   <EditMemberCellulePopup
     member={editMember}

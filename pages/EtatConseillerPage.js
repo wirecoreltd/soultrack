@@ -6,6 +6,8 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+import EditEvangeliseSuiviPopup from "../components/EditEvangeliseSuiviPopup";
+import DetailEvangeliseSuivisPopup from "../components/DetailEvangeliseSuivisPopup";
 import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 

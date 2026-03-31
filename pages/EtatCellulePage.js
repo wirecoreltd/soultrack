@@ -174,6 +174,11 @@ function EtatCellule() {
   return s;
 };
 
+  const handleUpdateMember = (updated) => {
+    setMembres((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+  };
+
+
   // ================= UTIL =================
   const getStatusStyles = (status) => {
     if (!status) return { border: "border-gray-400", text: "text-gray-300" };

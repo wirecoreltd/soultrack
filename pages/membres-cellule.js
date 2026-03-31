@@ -20,8 +20,7 @@ export default function MembresCellule() {
 function MembresCelluleContent() {
   const router = useRouter();
   const { memberId } = router.query;
-  const memberIdStr = Array.isArray(memberId) ? memberId[0] : memberId;
-
+  const memberIdStr = Array.isArray(memberId) ? memberId[0] : memberId;  
   const [membres, setMembres] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [filterCellule, setFilterCellule] = useState("");
@@ -84,9 +83,8 @@ function MembresCelluleContent() {
   };
 
   // ------------------- Fetch membre unique si memberId -------------------
-  useEffect(() => {
-  // ✅ Ne rien faire si memberId n'existe pas ou est undefined
-  if (!memberIdStr) return;
+ useEffect(() => {
+  if (!memberIdStr) return; // stop si pas défini
 
   const fetchMembreUnique = async () => {
     setLoading(true);
@@ -95,7 +93,7 @@ function MembresCelluleContent() {
         .from("membres_complets")
         .select("*")
         .eq("id", memberIdStr)
-        .single(); // fetch unique
+        .single();
 
       if (error) throw error;
 
@@ -112,7 +110,6 @@ function MembresCelluleContent() {
 
   fetchMembreUnique();
 }, [memberIdStr]);
-
   // ------------------- Fetch data général -------------------
   useEffect(() => {
     if (memberIdStr) return;

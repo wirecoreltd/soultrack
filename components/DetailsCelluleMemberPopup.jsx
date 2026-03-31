@@ -6,6 +6,16 @@ import EditMemberCellulePopup from "./EditMemberCellulePopup";
 export default function DetailsCelluleMemberPopup({ member, onClose, getCelluleNom, onEdit }) {
   if (!member) return null;
 
+  const parseJsonArray = (value) => {
+    if (!value) return [];
+    try {
+      const parsed = typeof value === "string" ? JSON.parse(value) : value;
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      return [value];
+    }
+  };
+
   const formatMinistere = (ministereJson, autreMinistere) => {
     let list = parseJsonArray(ministereJson).filter((m) => m.toLowerCase() !== "autre");
     if (autreMinistere?.trim()) list.push(autreMinistere.trim());

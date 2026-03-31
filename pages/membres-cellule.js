@@ -266,8 +266,12 @@ function MembresCelluleContent() {
                           <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
                           <p>✒️ Formation : {m.Formation || ""}</p>
                           <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>
+                          <p>❓ Difficultés / Besoins : {besoins}</p>  
                           <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
-                          <p>❓ Difficultés / Besoins : {besoins}</p>
+                          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                          <p>🧩 Comment est-il venu : {m.venu || ""}</p>                    
+                          <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
+                          
                           <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 block mx-auto underline">✏️ Modifier le contact</button>
                         </div>
                       )}

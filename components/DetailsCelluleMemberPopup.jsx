@@ -26,14 +26,17 @@ export default function DetailsCelluleMemberPopup({ member, onClose, getCelluleN
           <p>🏠 Cellule : {getCelluleNom ? getCelluleNom(member.cellule_id) : member.cellule_nom || "—"}</p>
         </div>   
 
-        <div className="flex flex-col gap-2 text-sm mt-3">        
+        <div className="flex flex-col gap-2 text-sm mt-3">
+          <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
+           💡 Statut Suivi : {statutSuiviLabels[member.statut_suivis] || member.suivi_statut || ""} </p>
+          <p>📆 Envoyé en suivi : {formatDateFr(member.date_envoi_suivi)}</p>
           <p>🎗️ Civilité : {member.sexe || "—"}</p>
-          <p>⏳ Tranche d'age : {member.age || ""}</p>
-          <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+          <p>⏳ Tranche d'age : {member.age || "—"}</p>
+          <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>          
           <p>💧 Baptême d’Eau : {member.bapteme_eau ? "Oui" : "Non"}</p>
           <p>🔥 Baptême de Feu : {member.bapteme_esprit ? "Oui" : "Non"}</p>
-          <p>✒️ Formation : {member.Formation || ""}</p>
-          <p>❤️‍🩹 Soin Pastoral : {member.Soin_Pastoral || ""}</p>
+          <p>✒️ Formation : {member.Formation || "—"}</p>
+          <p>❤️‍🩹 Soin Pastoral : {member.Soin_Pastoral || "—"}</p>
           <p>❓ Difficultés / Besoins : {member.besoin ? JSON.parse(member.besoin).join(", ") : "—"}</p>
           <p>💢 Ministère : {formatMinistere(member.Ministere, member.Autre_Ministere)}</p>
           <p>📝 Infos : {member.infos_supplementaires || "—"}</p>

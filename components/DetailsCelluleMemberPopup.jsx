@@ -6,6 +6,12 @@ import EditMemberCellulePopup from "./EditMemberCellulePopup";
 export default function DetailsCelluleMemberPopup({ member, onClose, getCelluleNom, onEdit }) {
   if (!member) return null;
 
+  const formatMinistere = (ministereJson, autreMinistere) => {
+    let list = parseJsonArray(ministereJson).filter((m) => m.toLowerCase() !== "autre");
+    if (autreMinistere?.trim()) list.push(autreMinistere.trim());
+    return list.join(", ") || "—";
+  };
+
 const formatDateFr = (dateString) => {
     if (!dateString) return "—";
     const d = new Date(dateString);

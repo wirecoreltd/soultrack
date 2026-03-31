@@ -467,7 +467,7 @@ function EtatCellule() {
             <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
             <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>
             <p><strong>Cellule:</strong> {r.cellule_full}</p>
-            <p><strong>Responsable:</strong> {r.responsable}</p>
+            <p><strong>Responsable:</strong> {r.responsable}</p>            
           </div>
         ))}
       </div>
@@ -483,18 +483,16 @@ function EtatCellule() {
 )}
 
 {editMember && (
-            <EditMemberCellulePopup
-              member={editMember}
-              onClose={() => setEditMember(null)}
-              onUpdateMember={(updated) => {
-                handleUpdateMember(updated);
-                setEditMember(null);
-                setDetailsMember(null);
-              }}
-            />
-          )}
-        </>
-      )}
+  <EditMemberCellulePopup
+    member={editMember}
+    onClose={() => setEditMember(null)}
+    onUpdateMember={(updated) => {
+      handleUpdateMember(updated);
+      setEditMember(null);
+      setDetailsMember(null);
+    }}
+  />
+)}
 
       <Footer />
     </div>

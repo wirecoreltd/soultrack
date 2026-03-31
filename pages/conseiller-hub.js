@@ -76,6 +76,16 @@ export default function MembresHub() {
           <div className="text-4xl mb-2">📋</div>
           <div className="text-lg font-bold text-gray-800 text-center">Suivis Evangélisation</div>
         </Link>    
+          <Link
+                href="/EtatConseillerPage"
+                className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+              >
+                <div className="text-5xl mb-2">🌱</div>
+                <div className="text-lg font-bold text-gray-800 text-center">
+                  Etat Conseiller
+                </div>
+              </Link>       
+            
       </div>
 
       {/* 🔹 Verset biblique sous les cartes */}

@@ -70,9 +70,14 @@ const formatDateFr = (dateString) => {
           <p>❤️‍🩹 Soin Pastoral : {member.Soin_Pastoral || "—"}</p>
           <p>❓ Difficultés / Besoins : {member.besoin ? JSON.parse(member.besoin).join(", ") : "—"}</p>
           <p>💢 Ministère : {formatMinistere(member.Ministere, member.Autre_Ministere)}</p>
-          <p>📝 Infos : {member.infos_supplementaires || "—"}</p>
-          <p>🧩 Comment est-il venu : {member.venu || ""}</p>                    
+          <p>📝 Infos : {member.infos_supplementaires || "—"}</p>          
+          <p>🧩 Comment est-il venu : {member.venu || ""}</p>
+          <p>✨ Raison de la venue : {member.statut_initial || ""}</p>
+          <p>🙏 Prière du salut : {member.priere_salut || ""}</p>
+          <p>☀️ Type de conversion : {member.type_conversion || ""}</p>          
           <p>📝 Commentaire Suivis : {member.commentaire_suivis || ""}</p>
+          <p>📑 Commentaire Suivis Evangelisation : {member.Commentaire_Suivi_Evangelisation || ""}</p>
+        </div
         </div>
 
         {/* Bouton Modifier */}

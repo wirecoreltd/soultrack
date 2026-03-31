@@ -5,6 +5,8 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+import DetailsMemberPopup from "../components/DetailsMemberPopup";
+import EditMemberPopup from "../components/EditMemberPopup";
 
 export default function EtatConseillerPage() {
   return (
@@ -225,6 +227,22 @@ function EtatCellule() {
       return new Date(yearB, monthB) - new Date(yearA, monthA);
     });
 
+  const handleDetailsClick = async (member) => {
+  try {
+    const { data, error } = await supabase
+      .from("membres_complets")
+      .select("*")
+      .eq("id", member.personne_id) // ⚠️ IMPORTANT : utiliser personne_id
+      .single();
+
+    if (error) throw error;
+
+    setSelectedMember(data);
+  } catch (err) {
+    console.error("Erreur récupération membre :", err);
+  }
+};
+
   // ================= RENDER =================
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -328,7 +346,8 @@ function EtatCellule() {
             <div className="min-w-[150px] text-center">Date évolution</div>
             <div className="min-w-[150px] text-center">Date Baptême</div>
             <div className="min-w-[150px] text-center">Début Ministère</div>
-            <div className="min-w-[220px] text-center">Conseiller</div>            
+            <div className="min-w-[220px] text-center">Conseiller</div>   
+            <div className="min-w-[220px] text-center">Action</div>  
           </div>
 
           {/* MONTHS */}
@@ -399,7 +418,11 @@ function EtatCellule() {
                           <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
                           <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
                           <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>
-                          <div className="min-w-[220px] text-center text-white">{r.conseiller}</div>                          
+                          <div className="min-w-[220px] text-center text-white">{r.conseiller}</div>  
+                          <div className="min-w-[100px] text-center">
+                            <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)} >
+                            Détails
+                          </button>  
                         </div>
                       );
                     })}
@@ -444,6 +467,43 @@ function EtatCellule() {
     );
   })}
 </div>
+
+     {/* Popups */}
+      {popupMember && (
+        <DetailsMemberPopup
+          membre={popupMember}
+          onClose={() => setPopupMember(null)}
+          cellules={cellules}
+          conseillers={conseillers}
+          session={session}
+          userRole={userRole} 
+          onDelete={handleSupprimerMembre}
+          commentChanges={commentChanges}
+          handleCommentChange={handleCommentChange}
+          statusChanges={statusChanges}
+          setStatusChanges={setStatusChanges}
+          updateSuivi={updateSuivi}
+          setAllMembers={setAllMembers} 
+          updating={updating}
+        />
+      )}
+
+     <EditMemberPopup
+      member={editMember}
+      cellules={cellules}
+      conseillers={conseillers}
+      onClose={() => setEditMember(null)}
+      onUpdateMember={async (updatedMember) => {
+        await logStats(editMember, updatedMember, userProfile);
+    
+        setAllMembers(prev =>
+          prev.map(m => (m.id === updatedMember.id ? updatedMember : m))
+        );
+    
+        setEditMember(null);
+        showToast("✅ Contact mis à jour !");
+      }}
+    />   
 
       <Footer />
     </div>

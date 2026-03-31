@@ -228,8 +228,8 @@ function EtatCellule() {
 
   const handleDetailsClick = (member) => {
     router.push({
-      pathname: "/membres-cellule", 
-      query: { memberId: member.id }  // on passe l'id en query
+      pathname: "/membres-cellule",
+      query: { memberId: member.id }  // on passe l'id du membre
     });
   };
   // ================= RENDER =================
@@ -410,13 +410,8 @@ function EtatCellule() {
                           <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>
                           <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
                           <div className="min-w-[200px] text-center text-white">{r.responsable}</div>
-                          <div>
-      {membresCellule.map((m) => (
-        <button key={m.id} onClick={() => handleDetailsClick(m)}>
-          Détails
-        </button>
-      ))}
-    </div>  
+                         <div> {membres.map((m) => (<button key={m.id} onClick={() => handleDetailsClick(m)}>Détails</button>))}</div>
+
                         </div>
                       );
                     })}

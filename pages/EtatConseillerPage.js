@@ -231,15 +231,24 @@ function EtatConseillerP() {
       return new Date(yearB, monthB) - new Date(yearA, monthA);
     });
 
+  //==============================
   const handleDetailsClick = async (member) => {
   try {
+    if (!member?.personne_id) {
+      console.error("personne_id manquant !");
+      return;
+    }
+
     const { data, error } = await supabase
       .from("membres_complets")
       .select("*")
-      .eq("id", member.personne_id) // ⚠️ IMPORTANT : utiliser personne_id
+      .eq("id", member.personne_id)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error:", error.message);
+      return;
+    }
 
     setSelectedMember(data);
   } catch (err) {

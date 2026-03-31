@@ -22,6 +22,8 @@ function EtatCellule() {
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
   const [showTable, setShowTable] = useState(false);
+  const [popupMember, setPopupMember] = useState(null);
+  const [editMember, setEditMember] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [filterCellule, setFilterCellule] = useState("");
   const getDate = (row, key) => row[key] ? formatDateFR(row[key]) : "-";

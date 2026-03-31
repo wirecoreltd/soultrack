@@ -20,7 +20,10 @@ export default function MembresCellule() {
 function MembresCelluleContent() {
   const router = useRouter();
   const { memberId } = router.query;
+
+  // normalisation du memberId pour éviter undefined ou tableau
   const memberIdStr = memberId ? (Array.isArray(memberId) ? memberId[0] : memberId) : null;
+
   const [membres, setMembres] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [filterCellule, setFilterCellule] = useState("");
@@ -33,7 +36,6 @@ function MembresCelluleContent() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
-  const memberRefs = useRef({}); // pour focus sur membre
 
   // ------------------- Helpers -------------------
   const parseJsonArray = (value) => {
@@ -83,102 +85,89 @@ function MembresCelluleContent() {
   };
 
   // ------------------- Fetch membre unique si memberId -------------------
-useEffect(() => {
-  if (!memberIdStr) return; // pas de fetch si memberId invalide
-
-  const fetchMembreUnique = async () => {
-    setLoading(true);
-    try {
-      const { data: member, error } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("id", memberIdStr)
-        .single();
-
-      if (error) throw error;
-
-      setMembres([member]);
-      setMessage("");
-    } catch (err) {
-      console.error(err);
-      setMessage("Membre non trouvé");
-      setMembres([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchMembreUnique();
-}, [memberIdStr]);
-  // ------------------- Fetch data général -------------------
   useEffect(() => {
-  if (memberIdStr) return; // si on a un membre spécifique, pas besoin de fetch général
+    if (!memberIdStr) return; // ❌ si pas de memberId, ne fait rien ici
 
-  const fetchData = async () => {
-    setLoading(true);
-    setMessage("");
+    const fetchMembreUnique = async () => {
+      setLoading(true);
+      try {
+        const { data: member, error } = await supabase
+          .from("membres_complets")
+          .select("*")
+          .eq("id", memberIdStr)
+          .single();
 
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData?.session?.user;
-      if (!user) throw new Error("Non connecté");
+        if (error) throw error;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, role, eglise_id, branche_id")
-        .eq("id", user.id)
-        .single();
-
-      // Récupération des cellules selon le rôle
-      let celluleQuery = supabase.from("cellules").select("id, cellule_full, responsable_id");
-      if (profile.role === "ResponsableCellule") celluleQuery = celluleQuery.eq("responsable_id", profile.id);
-      const { data: cellulesData } = await celluleQuery;
-
-      setCellules(cellulesData || []);
-
-      const celluleIds = (cellulesData || []).map(c => c.id);
-      if (celluleIds.length === 0) {
+        setMembres([member]);
+        setMessage("");
+      } catch (err) {
+        console.error(err);
+        setMessage("Membre non trouvé");
         setMembres([]);
-        setMessage("Aucun membre intégré");
-        return;
+      } finally {
+        setLoading(false);
       }
+    };
 
-      // Récupération des membres
-      let membresQuery = supabase
-        .from("membres_complets")
-        .select("*")
-        .in("cellule_id", celluleIds)
-        .eq("eglise_id", profile.eglise_id)
-        .eq("branche_id", profile.branche_id)
-        .eq("statut_suivis", 3)
-        .order("created_at", { ascending: false });
+    fetchMembreUnique();
+  }, [memberIdStr]);
 
-      if (profile.role === "Conseiller") membresQuery = membresQuery.eq("conseiller_id", profile.id);
-
-      const { data: membresData, error } = await membresQuery;
-      if (error) throw error;
-
-      setMembres(membresData || []);
-      if (!membresData || membresData.length === 0) setMessage("Aucun membre intégré trouvé");
-
-    } catch (err) {
-      console.error(err);
-      setMessage("Erreur de chargement");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchData();
-}, [memberIdStr]);
-
-  // ------------------- Scroll automatique sur membre ciblé -------------------
+  // ------------------- Fetch data général si pas de memberId -------------------
   useEffect(() => {
-    if (memberIdStr && memberRefs.current[memberIdStr]) {
-      memberRefs.current[memberIdStr].scrollIntoView({ behavior: "smooth", block: "center" });
-      setDetailsOpen((prev) => ({ ...prev, [memberIdStr]: true }));
-    }
-  }, [memberIdStr, membres]);
+    if (memberIdStr) return; // si un membre spécifique est demandé, ne charge pas tout
+
+    const fetchData = async () => {
+      setLoading(true);
+      setMessage("");
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const user = sessionData?.session?.user;
+        if (!user) throw new Error("Non connecté");
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, role, eglise_id, branche_id")
+          .eq("id", user.id)
+          .single();
+
+        let celluleQuery = supabase.from("cellules").select("id, cellule_full, responsable_id");
+        if (profile.role === "ResponsableCellule") celluleQuery = celluleQuery.eq("responsable_id", profile.id);
+        const { data: cellulesData } = await celluleQuery;
+        setCellules(cellulesData || []);
+
+        const celluleIds = (cellulesData || []).map((c) => c.id);
+        if (celluleIds.length === 0) {
+          setMembres([]);
+          setMessage("Aucun membre intégré");
+          return;
+        }
+
+        let membresQuery = supabase
+          .from("membres_complets")
+          .select("*")
+          .in("cellule_id", celluleIds)
+          .eq("eglise_id", profile.eglise_id)
+          .eq("branche_id", profile.branche_id)
+          .eq("statut_suivis", 3)
+          .order("created_at", { ascending: false });
+
+        if (profile.role === "Conseiller") membresQuery = membresQuery.eq("conseiller_id", profile.id);
+        const { data: membresData, error } = await membresQuery;
+        if (error) throw error;
+
+        setMembres(membresData || []);
+        if (!membresData || membresData.length === 0) setMessage("Aucun membre intégré trouvé");
+      } catch (err) {
+        console.error(err);
+        setMessage("Erreur de chargement");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [memberIdStr]);
 
   // ------------------- Click outside phone menu -------------------
   const handleClickOutside = useCallback((e) => {
@@ -257,14 +246,9 @@ useEffect(() => {
                   const besoins = parseJsonArray(m.besoin).join(", ") || "—";
                   const isOpen = detailsOpen[m.id];
                   return (
-                    <div
-                      key={m.id}
-                      ref={(el) => (memberRefs.current[m.id] = el)}
-                      className="bg-white p-4 rounded-2xl shadow-xl border-l-4"
-                      style={{ borderLeftColor: getBorderColor(m) }}
-                    >
+                    <div key={m.id} className="bg-white p-4 rounded-2xl shadow-xl border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
                       <h2 className="text-center font-bold text-lg">{m.prenom} {m.nom}</h2>
-
+                      {/* téléphone et menu */}
                       <div className="relative text-center">
                         <p
                           className="text-orange-500 underline cursor-pointer font-semibold"
@@ -275,7 +259,6 @@ useEffect(() => {
                         >
                           {m.telephone || "—"}
                         </p>
-
                         {openPhoneId === m.id && (
                           <div ref={phoneMenuRef} className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56" onClick={(e) => e.stopPropagation()}>
                             <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
@@ -285,7 +268,6 @@ useEffect(() => {
                           </div>
                         )}
                       </div>
-
                       <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
                       <p className="text-center text-sm">🏠 {getCelluleNom(m.cellule_id)}</p>
 

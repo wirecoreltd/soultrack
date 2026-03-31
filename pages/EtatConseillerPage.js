@@ -470,10 +470,10 @@ function EtatCellule() {
 </div>
 
      {/* Popups */}
-      {popupMember && (
+      {selectedMember && (
         <DetailsMemberPopup
-          membre={popupMember}
-          onClose={() => setPopupMember(null)}
+          membre={selectedMember}
+          onClose={() => setselectedMember(null)}
           cellules={cellules}
           conseillers={conseillers}
           session={session}

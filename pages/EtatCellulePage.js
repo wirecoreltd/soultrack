@@ -26,6 +26,7 @@ function EtatCellule() {
   const [filterCellule, setFilterCellule] = useState("");
   const getDate = (row, key) => row[key] ? formatDateFR(row[key]) : "-";
   const [membres, setMembres] = useState([]);  
+  const [selectedMember, setSelectedMember] = useState(null);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -228,10 +229,21 @@ function EtatCellule() {
       return new Date(yearB, monthB) - new Date(yearA, monthA);
     });
 
-  const handleDetailsClick = (member) => {
-    // redirection vers MembresCellule avec l'ID du membre
-    router.push(`/membres-cellule?memberId=${member.id}`);
-  };
+  const handleDetailsClick = async (member) => {
+  try {
+    const { data, error } = await supabase
+      .from("membres_complets")
+      .select("*")
+      .eq("id", member.personne_id) // ⚠️ IMPORTANT : utiliser personne_id
+      .single();
+
+    if (error) throw error;
+
+    setSelectedMember(data);
+  } catch (err) {
+    console.error("Erreur récupération membre :", err);
+  }
+};
   // ================= RENDER =================
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -460,6 +472,13 @@ function EtatCellule() {
     );
   })}
 </div>
+
+    {selectedMember && (
+  <DetailsCelluleMemberPopup
+    member={selectedMember}
+    onClose={() => setSelectedMember(null)}
+  />
+)}
 
       <Footer />
     </div>

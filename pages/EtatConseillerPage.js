@@ -233,6 +233,11 @@ function EtatConseiller() {
     });
 
  const handleDetailsClick = async (member) => {
+  if (!member.is_real_member) {
+    alert("Pas de détails disponible pour cet évangélisé");
+    return;
+  }
+
   try {
     const { data, error } = await supabase
       .from("membres_complets")

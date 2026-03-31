@@ -76,8 +76,7 @@ const formatDateFr = (dateString) => {
           <p>🙏 Prière du salut : {member.priere_salut || ""}</p>
           <p>☀️ Type de conversion : {member.type_conversion || ""}</p>          
           <p>📝 Commentaire Suivis : {member.commentaire_suivis || ""}</p>
-          <p>📑 Commentaire Suivis Evangelisation : {member.Commentaire_Suivi_Evangelisation || ""}</p>
-        </div
+          <p>📑 Commentaire Suivis Evangelisation : {member.Commentaire_Suivi_Evangelisation || ""}</p>       
         </div>
 
         {/* Bouton Modifier */}

@@ -23,6 +23,7 @@ function EtatCellule() {
   const [userProfile, setUserProfile] = useState(null);
   const [filterCellule, setFilterCellule] = useState("");
   const getDate = (row, key) => row[key] ? formatDateFR(row[key]) : "-";
+  const [membres, setMembres] = useState([]);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,

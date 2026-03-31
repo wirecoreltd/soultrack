@@ -85,32 +85,33 @@ function MembresCelluleContent() {
 
   // ------------------- Fetch membre unique si memberId -------------------
   useEffect(() => {
-    if (!memberIdStr) return;
+  // ✅ Ne rien faire si memberId n'existe pas ou est undefined
+  if (!memberIdStr) return;
 
-    const fetchMembreUnique = async () => {
-      setLoading(true);
-      try {
-        const { data: member, error } = await supabase
-          .from("membres_complets")
-          .select("*")
-          .eq("id", memberIdStr)
-          .single();
+  const fetchMembreUnique = async () => {
+    setLoading(true);
+    try {
+      const { data: member, error } = await supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("id", memberIdStr)
+        .single(); // fetch unique
 
-        if (error) throw error;
+      if (error) throw error;
 
-        setMembres([member]);
-        setMessage("");
-      } catch (err) {
-        console.error(err);
-        setMessage("Membre non trouvé");
-        setMembres([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+      setMembres([member]);
+      setMessage("");
+    } catch (err) {
+      console.error(err);
+      setMessage("Membre non trouvé");
+      setMembres([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchMembreUnique();
-  }, [memberIdStr]);
+  fetchMembreUnique();
+}, [memberIdStr]);
 
   // ------------------- Fetch data général -------------------
   useEffect(() => {

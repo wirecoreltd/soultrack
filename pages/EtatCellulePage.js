@@ -7,6 +7,7 @@ import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
+import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 
 export default function EtatCellulePage() {
   return (
@@ -480,6 +481,20 @@ function EtatCellule() {
     onClose={() => setSelectedMember(null)}
   />
 )}
+
+{editMember && (
+            <EditMemberCellulePopup
+              member={editMember}
+              onClose={() => setEditMember(null)}
+              onUpdateMember={(updated) => {
+                handleUpdateMember(updated);
+                setEditMember(null);
+                setDetailsMember(null);
+              }}
+            />
+          )}
+        </>
+      )}
 
       <Footer />
     </div>

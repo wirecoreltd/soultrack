@@ -424,6 +424,7 @@ function EtatCellule() {
                             Détails
                           </button>  
                         </div>
+                       </div>
                       );
                     })}
                   </div>

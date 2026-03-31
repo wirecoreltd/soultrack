@@ -14,38 +14,36 @@ export default function DetailEvangeliseSuivisPopup({
   const popupRef = useRef(null);
   const phoneMenuRef = useRef(null);
 
+  // ✅ On sécurise member avec un objet vide par défaut
+  const safeMember = member || {};
+
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
-  const [comment, setComment] = useState(member.commentaire_evangelises || "");
-  const [status, setStatus] = useState(member.status_suivis_evangelises || "");
+  const [comment, setComment] = useState(safeMember.commentaire_evangelises ?? "");
+  const [status, setStatus] = useState(safeMember.status_suivis_evangelises ?? "");
   const [saving, setSaving] = useState(false);
   const [editingEvangelise, setEditingEvangelise] = useState(null);
 
-  const isRefus = member.status_suivis_evangelises === "Refus";
+  const isRefus = status === "Refus";
 
-  const cellule = cellules?.find((c) => c.id === member.cellule_id);
-  const conseiller = conseillers?.find((c) => c.id === member.conseiller_id);
+  const cellule = cellules?.find((c) => c.id === safeMember.cellule_id);
+  const conseiller = conseillers?.find((c) => c.id === safeMember.conseiller_id);
 
-  /* ================= CLOSE PHONE MENU ON OUTSIDE CLICK ================= */
+  // ================= CLOSE PHONE MENU ON OUTSIDE CLICK =================
   useEffect(() => {
-  const handleClickOutside = (e) => {
-    if (
-      phoneMenuRef.current &&
-      !phoneMenuRef.current.contains(e.target)
-    ) {
-      setOpenPhoneMenu(false);
-    }
-  };
+    const handleClickOutside = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+        setOpenPhoneMenu(false);
+      }
+    };
 
-  window.addEventListener("mousedown", handleClickOutside, true); // 👈 capture
-  return () =>
-    window.removeEventListener("mousedown", handleClickOutside, true);
-}, []);
+    window.addEventListener("mousedown", handleClickOutside, true);
+    return () =>
+      window.removeEventListener("mousedown", handleClickOutside, true);
+  }, []);
 
-
-
-  /* ================= SAVE ================= */
+  // ================= SAVE =================
   const handleSave = async () => {
-    if (!member.id) return;
+    if (!safeMember.id) return;
     setSaving(true);
 
     try {
@@ -55,12 +53,12 @@ export default function DetailEvangeliseSuivisPopup({
           commentaire_evangelises: comment,
           status_suivis_evangelises: status,
         })
-        .eq("id", member.id);
+        .eq("id", safeMember.id);
 
       if (error) throw error;
 
       onUpdate &&
-        onUpdate(member.id, {
+        onUpdate(safeMember.id, {
           commentaire_evangelises: comment,
           status_suivis_evangelises: status,
         });
@@ -84,7 +82,6 @@ export default function DetailEvangeliseSuivisPopup({
     }
   };
 
-  /* ================= RENDER ================= */
   return (
     <>
       {/* OVERLAY */}
@@ -104,29 +101,35 @@ export default function DetailEvangeliseSuivisPopup({
           </button>
 
           <h2 className="text-lg font-bold text-center mb-3">
-            {member.prenom} {member.nom}
+            {safeMember.prenom || "—"} {safeMember.nom || ""}
           </h2>
 
           {/* PHONE */}
-          {member.telephone && (
+          {safeMember.telephone && (
             <div ref={phoneMenuRef} className="relative text-center">
               <button
                 onClick={() => setOpenPhoneMenu((prev) => !prev)}
                 className="text-orange-500 font-semibold underline"
               >
-                {member.telephone}
+                {safeMember.telephone}
               </button>
-          
+
               {openPhoneMenu && (
                 <div className="absolute left-1/2 -translate-x-1/2 mt-2 bg-white border rounded-lg shadow w-56 z-50">
-                  <a href={`tel:${member.telephone}`} className="block px-4 py-2 hover:bg-gray-100">
+                  <a
+                    href={`tel:${safeMember.telephone}`}
+                    className="block px-4 py-2 hover:bg-gray-100"
+                  >
                     📞 Appeler
                   </a>
-                  <a href={`sms:${member.telephone}`} className="block px-4 py-2 hover:bg-gray-100">
+                  <a
+                    href={`sms:${safeMember.telephone}`}
+                    className="block px-4 py-2 hover:bg-gray-100"
+                  >
                     ✉️ SMS
                   </a>
                   <a
-                    href={`https://wa.me/${member.telephone.replace(/\D/g, "")}`}
+                    href={`https://wa.me/${safeMember.telephone.replace(/\D/g, "")}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block px-4 py-2 hover:bg-gray-100"
@@ -138,8 +141,6 @@ export default function DetailEvangeliseSuivisPopup({
             </div>
           )}
 
-
-
           {/* INFOS */}
           <div className="text-sm text-center mt-3 space-y-1">
             <p>🏠 Cellule : {cellule?.cellule_full || "—"}</p>
@@ -149,7 +150,7 @@ export default function DetailEvangeliseSuivisPopup({
                 ? `${conseiller.prenom} ${conseiller.nom}`
                 : "—"}
             </p>
-            <p>🏙️ Ville : {member.ville || "—"}</p>
+            <p>🏙️ Ville : {safeMember.ville || "—"}</p>
           </div>
 
           {/* COMMENT / STATUS */}
@@ -193,20 +194,20 @@ export default function DetailEvangeliseSuivisPopup({
 
           {/* EXTRA */}
           <div className="mt-4 text-sm space-y-1">
-            <p>🎗️ Sexe : {member.sexe || "—"}</p>
-            <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "Non"}</p>
-            <p>☀️ Type : {member.type_conversion || "—"}</p>
-            <p>❓ Besoin : {formatBesoin(member.besoin)}</p>
+            <p>🎗️ Sexe : {safeMember.sexe || "—"}</p>
+            <p>🙏 Prière du salut : {safeMember.priere_salut ? "Oui" : "Non"}</p>
+            <p>☀️ Type : {safeMember.type_conversion || "—"}</p>
+            <p>❓ Besoin : {formatBesoin(safeMember.besoin)}</p>
             <p>
               📝 Infos supplémentaires :{" "}
-              {member.infos_supplementaires || "—"}
+              {safeMember.infos_supplementaires || "—"}
             </p>
           </div>
 
           {!isRefus && (
             <div className="mt-4 rounded-xl w-full p-4 bg-white">
               <button
-                onClick={() => setEditingEvangelise(member)}
+                onClick={() => setEditingEvangelise(safeMember)}
                 className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
               >
                 ✏️ Modifier le contact
@@ -222,7 +223,7 @@ export default function DetailEvangeliseSuivisPopup({
           member={editingEvangelise}
           onClose={() => setEditingEvangelise(null)}
           onUpdateMember={(updates) => {
-            if (onUpdate) onUpdate(member.id, updates);
+            if (onUpdate) onUpdate(safeMember.id, updates);
             setEditingEvangelise(null);
             onClose();
           }}

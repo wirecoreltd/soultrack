@@ -6,6 +6,13 @@ import EditMemberCellulePopup from "./EditMemberCellulePopup";
 export default function DetailsCelluleMemberPopup({ member, onClose, getCelluleNom, onEdit }) {
   if (!member) return null;
 
+  const statutSuiviLabels = {
+    1: "En attente",
+    2: "En Suivis",
+    3: "Intégré",
+    4: "Refus",
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl overflow-y-auto max-h-[95vh] relative">

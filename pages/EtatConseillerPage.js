@@ -230,7 +230,7 @@ function EtatCellule() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        État de <span className="text-amber-300">Cellule</span>
+        Suivi des <span className="text-amber-300">Ames</span>
       </h1>
 
       {/* FILTRES */}
@@ -324,8 +324,8 @@ function EtatCellule() {
             <div className="min-w-[200px] text-center">Nom Complet</div>
             <div className="min-w-[200px] text-center">Type</div>
             <div className="min-w-[200px] text-center">Statut</div>
-            <div className="min-w-[150px] text-center">Envoyer au Suivi Le</div>
-            <div className="min-w-[150px] text-center">Date Intégration</div>
+            <div className="min-w-[150px] text-center">Assigné le</div>
+            <div className="min-w-[150px] text-center">Date évolution</div>
             <div className="min-w-[150px] text-center">Date Baptême</div>
             <div className="min-w-[150px] text-center">Début Ministère</div>
             <div className="min-w-[220px] text-center">Conseiller</div>            

@@ -410,7 +410,11 @@ function EtatCellule() {
                           <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>
                           <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
                           <div className="min-w-[200px] text-center text-white">{r.responsable}</div>
-                         <div> {membres.map((m) => (<button key={m.id} onClick={() => handleDetailsClick(m)}>Détails</button>))}</div>
+                          <div className="min-w-[100px] text-center">
+                            <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)} >
+                              Détails
+                            </button>
+                          </div>
 
                         </div>
                       );

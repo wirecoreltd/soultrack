@@ -556,7 +556,7 @@ export default function SuivisEvangelisation() {
                     <p>📣 Type d'Evangélisation : {m.type_evangelisation || ""}</p>
                     <p>🎗️ Civilité : {m.sexe || ""}</p>
                     <p>⏳ Tranche d'age : {m.age || ""}</p>
-                    <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}  
+                    <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🙏 Prière salut : {m.priere_salut ? "Oui" : "Non"}</p>
                     <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
                     <p>❓ Difficultés / Besoins : {formatBesoin(m.besoin)}</p>

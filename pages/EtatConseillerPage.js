@@ -180,23 +180,30 @@ function EtatConseiller() {
   };
 
   const handleDetailsClick = async (row) => {
-    if (!row.source) return;
+  try {
+    if (!row) return;
 
-    if (row.source === "integration") {
+    // Type Evangelisation → ouvre DetailsEtatConseillerPopup
+    if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
+      setSelectedEvangelise(row); // passe tout l'objet à ton nouveau popup
+    }
+    // Type Integration → ouvre DetailsCelluleMemberPopup
+    else if (row.type_evangelisation && row.type_evangelisation.toLowerCase() === "integration") {
       const { data, error } = await supabase
         .from("membres_complets")
         .select("*")
         .eq("id", row.personne_id)
         .maybeSingle();
 
-      if (error) return console.error("Erreur Supabase :", error);
-      if (!data) return console.warn("Aucun membre trouvé");
+      if (error) throw error;
+      if (!data) return;
 
       setSelectedMember(data);
-    } else if (row.source === "evangelisation") {
-      setSelectedEvangelise(row);
     }
-  };
+  } catch (err) {
+    console.error("Erreur fetch details:", err);
+  }
+};
 
   const groupedReports = Object.entries(groupByMonth(reports))
     .sort((a, b) => {
@@ -368,9 +375,8 @@ function EtatConseiller() {
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>                          
                                   <div className="min-w-[200px] text-center text-white">{r.conseiller}</div>
                                   <div className="min-w-[100px] text-center">
-                                    <button className="text-orange-500 underline text-sm" onClick={() => setSelectedEvangeliseId(member.id)}>Détails</button>
-                                  </div>
-        
+                                    <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)}>Détails</button>
+                                  </div>        
                                 </div>
                               );
                             })}
@@ -416,22 +422,23 @@ function EtatConseiller() {
         </div>
         
           {/* POPUPS */}
-      {selectedEvangeliseId && (
+      {selectedEvangelise && (
         <DetailsEtatConseillerPopup
-          memberId={selectedEvangeliseId}
-          onClose={() => setSelectedEvangeliseId(null)}
+          member={selectedEvangelise}
+          onClose={() => setSelectedEvangelise(null)}
           onUpdate={(id, updates) => {
-            // Si tu veux mettre à jour localement la table après modification
-            // Par exemple refetch ou modifier le state qui contient la liste
+            setReports((prev) =>
+              prev.map((r) => (r.id === id ? { ...r, ...updates } : r))
+            );
           }}
         />
       )}
-
+      
       {selectedMember && (
         <DetailsCelluleMemberPopup
           member={selectedMember}
-          onClose={()=>setSelectedMember(null)}
-          onEdit={(member)=>{ setSelectedMember(null); setEditMember(member); }}
+          onClose={() => setSelectedMember(null)}
+          onEdit={(member) => setSelectedMember(null)}
         />
       )}
 

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
-import EditMemberCellulePopup from "./EditMemberCellulePopup";
 
 export default function DetailsEtatCellulePopup({ member, onClose, getCelluleNom, onEdit }) {
   if (!member) return null;

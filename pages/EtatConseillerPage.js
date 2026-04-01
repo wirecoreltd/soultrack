@@ -191,11 +191,27 @@ const fetchConseillers = async () => {
   try {
     if (!row) return;
 
-    // Type Evangelisation → ouvre DetailsEtatConseillerPopup
+    // 🔥 CAS EVANGELISATION → on garde le flow MAIS on enrichit
     if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
-      setSelectedEvangelise(row); // passe tout l'objet à ton nouveau popup
+
+      const { data, error } = await supabase
+        .from("suivis_des_evangelises")
+        .select("*")
+        .eq("id", row.personne_id) // 🔥 clé du flow
+        .maybeSingle();
+
+      if (error) throw error;
+
+      // 🔥 fusion FLOW + DATA réelle
+      const enriched = {
+        ...row,
+        ...data, // 🔥 overwrite avec les bons champs
+      };
+
+      setSelectedEvangelise(enriched);
     }
-    // Type Integration → ouvre DetailsCelluleMemberPopup
+
+    // 🔵 CAS INTEGRATION (tu gardes tel quel)
     else if (row.type_evangelisation && row.type_evangelisation.toLowerCase() === "integration") {
       const { data, error } = await supabase
         .from("membres_complets")
@@ -208,6 +224,7 @@ const fetchConseillers = async () => {
 
       setSelectedMember(data);
     }
+
   } catch (err) {
     console.error("Erreur fetch details:", err);
   }

@@ -68,8 +68,14 @@ function EtatCellule() {
         setSelectedMember(null);
         setPopupType(null);
       };
-      
 
+  //=============================
+const getCelluleNom = (id) => {
+        // si tu veux récupérer le nom de la cellule à partir d'un id
+        const member = membres.find(m => m.id === id);
+        return member?.cellule_full || "—";
+      };
+  
   // ================= FETCH DATA =================
   const fetchReports = async () => {
     if (!userProfile) return;
@@ -107,13 +113,8 @@ function EtatCellule() {
         filtered = filtered.filter((r) =>
           r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
         );
-      }   
+      }         
       
-      const getCelluleNom = (id) => {
-        // si tu veux récupérer le nom de la cellule à partir d'un id
-        const member = membres.find(m => m.id === id);
-        return member?.cellule_full || "—";
-      };
       // ================= KPI =================
       const normalize = (text) =>
         text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";

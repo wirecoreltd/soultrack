@@ -268,11 +268,30 @@ function EtatConseiller() {
       console.error("Erreur récupération membre :", err);
     }
 
-  } else if (row.source === "evangelisation") {
-    // ici on passe directement la ligne de la vue pour l'évangélisé
-    // car elle contient déjà tout ce dont DetailEvangeliseSuivisPopup a besoin
-    setSelectedEvangelise(row);
+  else if (row.source === "evangelisation") {
+  try {
+    const { data, error } = await supabase
+      .from("suivis_des_evangelises")
+      .select("*")
+      .eq("id", row.personne_id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Erreur évangélisé :", error);
+      return;
+    }
+
+    if (!data) {
+      console.warn("Aucun évangélisé trouvé");
+      return;
+    }
+
+    setSelectedEvangelise(data);
+
+  } catch (err) {
+    console.error("Erreur récupération évangélisé :", err);
   }
+}
 };
   // ================= RENDER =================
   return (

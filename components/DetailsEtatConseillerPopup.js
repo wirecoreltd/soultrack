@@ -142,8 +142,7 @@ export default function DetailsEtatConseillerPopup({
           )}
 
           {/* INFOS */}
-          <div className="text-sm text-center mt-3 space-y-1">
-            <p>🏠 Cellule : {cellule?.cellule_full || "—"}</p>
+          <div className="text-sm text-center mt-3 space-y-1">            
             <p>
               👤 Conseiller :{" "}
               {conseiller
@@ -151,84 +150,20 @@ export default function DetailsEtatConseillerPopup({
                 : "—"}
             </p>
             <p>🏙️ Ville : {safeMember.ville || "—"}</p>
-          </div>
-
-          {/* COMMENT / STATUS */}
-          <div className="mt-4">
-            <label className="block text-center font-semibold mb-1">
-              Commentaire
-            </label>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              disabled={isRefus}
-              className="w-full border rounded p-2"
-              rows={2}
-            />
-
-            <label className="block text-center font-semibold mt-2 mb-1">
-              Statut
-            </label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              disabled={isRefus}
-              className="w-full border rounded p-2"
-            >
-              <option value="">-- Choisir --</option>
-              <option value="En cours">En cours</option>
-              <option value="Intégré">Intégré</option>
-              <option value="Refus">Refus</option>
-            </select>
-
-            {!isRefus && (
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="mt-3 w-full bg-blue-500 text-white py-2 rounded"
-              >
-                {saving ? "Enregistrement..." : "Sauvegarder"}
-              </button>
-            )}
-          </div>
-
-          {/* EXTRA */}
+          </div>          
           <div className="mt-4 text-sm space-y-1">
-            <p>🎗️ Sexe : {safeMember.sexe || "—"}</p>
+            <p>📣 Type d'Evangélisation : {safeMember.type_evangelisation|| "—"}</p>  
+            <p>🎗️ Civilité : {safeMember.sexe || "—"}</p>
+            <p>⏳ Tranche d'age : {safeMember.age || "—"}</p>  
             <p>🙏 Prière du salut : {safeMember.priere_salut ? "Oui" : "Non"}</p>
-            <p>☀️ Type : {safeMember.type_conversion || "—"}</p>
-            <p>❓ Besoin : {formatBesoin(safeMember.besoin)}</p>
-            <p>
-              📝 Infos supplémentaires :{" "}
-              {safeMember.infos_supplementaires || "—"}
-            </p>
+            <p>☀️ Type de conversion : {safeMember.type_conversion || "—"}</p>
+            <p>❓ Difficultés / Besoins : {formatBesoin(safeMember.besoin)}</p>
+            <p>📝 Infos supplémentaires :{" "}{safeMember.infos_supplementaires || "—"}</p>
+            <p>📝 Commentaire Suivis :{" "}{safeMember.commentaire_evangelises || "—"}</p>  
           </div>
-
-          {!isRefus && (
-            <div className="mt-4 rounded-xl w-full p-4 bg-white">
-              <button
-                onClick={() => setEditingEvangelise(safeMember)}
-                className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
-              >
-                ✏️ Modifier le contact
-              </button>
-            </div>
-          )}
+                   )}
         </div>
-      </div>
-
-      {/* SOUS-POPUP */}
-      {editingEvangelise && (
-        <EditEvangeliseSuiviPopup
-          member={editingEvangelise}
-          onClose={() => setEditingEvangelise(null)}
-          onUpdateMember={(updates) => {
-            if (onUpdate) onUpdate(safeMember.id, updates);
-            setEditingEvangelise(null);
-            onClose();
-          }}
-        />
-      )}
+      </div>      
     </>
   );
 }

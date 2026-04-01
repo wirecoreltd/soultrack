@@ -79,7 +79,7 @@ const formatDateFr = (dateString) => {
           <p>📞 Téléphone : {member.telephone || "—"}</p>
           <p>🏙️ Ville : {member.ville || "—"}</p>
           <p>🏠 Cellule : {getCelluleNom ? getCelluleNom(member.cellule_id) : member.cellule_nom || "—"}</p>
-          <p>👤 Conseiller :{" "}{conseillerData ? `${conseillerData.prenom} ${conseillerData.nom}` : "—"}</span></p>
+          <p>👤 Conseiller :{" "}{conseillerData ? `${conseillerData.prenom} ${conseillerData.nom}` : "—"}</p>
         </div>   
 
         <div className="flex flex-col gap-2 text-sm mt-3">

@@ -7,7 +7,7 @@ import EditMemberCellulePopup from "./EditMemberCellulePopup";
 export default function DetailsEtatCellulePopup({ member, onClose, getCelluleNom, onEdit }) {
   if (!member) return null;
 
-  const [conseillerData, setConseillerData] = useState(null);
+ const [celluleData, setCelluleData] = useState(null);
 
   const parseJsonArray = (value) => {
     if (!value) return [];
@@ -41,25 +41,25 @@ const formatDateFr = (dateString) => {
   };
 
   useEffect(() => {
-  const fetchConseiller = async () => {
-    if (!member?.conseiller_id) return;
+  const fetchCellule = async () => {
+    if (!member?.cellule_id) return;
 
     const { data, error } = await supabase
-      .from("profiles")
-      .select("prenom, nom")
-      .eq("id", member.conseiller_id)
+      .from("cellules")
+      .select("cellule_full")
+      .eq("id", member.cellule_id)
       .maybeSingle();
 
     if (error) {
-      console.error("Erreur conseiller:", error);
+      console.error("Erreur cellule:", error);
       return;
     }
 
-    setConseillerData(data);
+    setCelluleData(data);
   };
 
-  fetchConseiller();
-}, [member?.conseiller_id]);
+  fetchCellule();
+}, [member?.cellule_id]);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -78,7 +78,7 @@ const formatDateFr = (dateString) => {
         <div className="text-center text-sm space-y-1 mb-3">
           <p>📞 Téléphone : {member.telephone || "—"}</p>
           <p>🏙️ Ville : {member.ville || "—"}</p>          
-          <p>👤 Conseiller :{" "}{conseillerData ? `${conseillerData.prenom} ${conseillerData.nom}` : "—"}</p>
+          <p>🏠 Cellule :{" "}{celluleData?.cellule_full || "—"}</p>
         </div>   
 
         <div className="flex flex-col gap-2 text-sm mt-3">

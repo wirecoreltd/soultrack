@@ -926,8 +926,7 @@ const canAddMember =
           >
             ➕ Ajouter un membre
           </button>
-        )}
-      </div>
+        )}      
 
       {/* ==================== VUE CARTE ==================== */}
         {view === "card" && (

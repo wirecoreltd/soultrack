@@ -238,17 +238,24 @@ function EtatCellule() {
       return new Date(yearB, monthB) - new Date(yearA, monthA);
     });
 
-  const handleDetailsClick = async (member) => {
+ const handleDetailsClick = async (member) => {
   try {
     const { data, error } = await supabase
       .from("membres_complets")
       .select("*")
-      .eq("id", member.personne_id) // ⚠️ IMPORTANT : utiliser personne_id
+      .eq("id", member.personne_id)
       .single();
 
     if (error) throw error;
 
     setSelectedMember(data);
+
+    if (member.type_conversion) {
+      setPopupType("evange");
+    } else {
+      setPopupType("integration");
+    }
+
   } catch (err) {
     console.error("Erreur récupération membre :", err);
   }
@@ -433,15 +440,15 @@ function EtatCellule() {
                           <div className="min-w-[200px] text-center text-white">{r.responsable}</div>
                           <div className="min-w-[100px] text-center">
                             <button className="text-orange-500 underline text-sm" onClick={() => {
-                              setSelectedMember(item);
-                        
-                            if (member.type_conversion) {
-                              setPopupType("evange");
-                            } else {
-                              setPopupType("integration");
-                            }
-                          }}
-                        >
+                              setSelectedMember(r);
+                            
+                              if (r.type_conversion) {
+                                setPopupType("evange");
+                              } else {
+                                setPopupType("integration");
+                              }
+                            }}
+                            >
                           Détails
                         </button>
                           </div>

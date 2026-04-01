@@ -201,10 +201,10 @@ const fetchCellules = async () => {
     if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
 
       const { data, error } = await supabase
-        .from("suivis_des_evangelises")
-        .select("*")
-        .eq("id", row.personne_id)
-        .maybeSingle();
+  .from("suivis_des_evangelises")
+  .select("*")
+  .eq("id_personne", row.personne_id)
+  .maybeSingle();
 
       if (error) throw error;
 

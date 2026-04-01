@@ -372,17 +372,7 @@ export default function Evangelisation() {
             </button>
           </>
         )}
-      </div>
-
-      {/* Toggle Vue Carte / Vue Table */}
-      <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
-        <button
-          onClick={() => setView(view === "card" ? "table" : "card")}
-          className="text-sm font-semibold underline text-white"
-        >
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
-      </div>
+      </div>      
 
       {/* ================= AFFICHAGE CONTACTS ================= */}
       <div className="w-full max-w-6xl flex flex-col items-center">
@@ -459,7 +449,7 @@ export default function Evangelisation() {
               </div>
             ))}
           </div>
-        )}
+        )}        
 
       {/* POPUPS EDIT */}
       {editMember && (
@@ -472,6 +462,14 @@ export default function Evangelisation() {
             setContacts((prev) => prev.map((c) => (c.id === updatedMember.id ? updatedMember : c)));
             setEditMember(null);
           }}
+        />
+      )}
+
+      {popupMember && (
+        <DetailsEvangePopup
+          member={popupMember}
+          onClose={() => setPopupMember(null)}
+          onEdit={(m) => { setEditMember(m); setPopupMember(null); }}
         />
       )}
 

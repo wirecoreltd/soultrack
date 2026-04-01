@@ -27,6 +27,7 @@ export default function DetailsEtatConseillerPopup({
 
   const cellule = cellules?.find((c) => c.id === safeMember.cellule_id);
   const conseiller = conseillers?.find((c) => c.id === safeMember.conseiller_id);
+  const [conseillerData, setConseillerData] = useState(null);
 
   // ================= CLOSE PHONE MENU ON OUTSIDE CLICK =================
   useEffect(() => {
@@ -40,6 +41,28 @@ export default function DetailsEtatConseillerPopup({
     return () =>
       window.removeEventListener("mousedown", handleClickOutside, true);
   }, []);
+
+  //============================
+  useEffect(() => {
+  const fetchConseiller = async () => {
+    if (!safeMember.conseiller_id) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("prenom, nom")
+      .eq("id", safeMember.conseiller_id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Erreur conseiller:", error);
+      return;
+    }
+
+    setConseillerData(data);
+  };
+
+  fetchConseiller();
+}, [safeMember.conseiller_id]);
 
   // ================= SAVE =================
   const handleSave = async () => {
@@ -152,14 +175,9 @@ export default function DetailsEtatConseillerPopup({
           )}
 
           {/* INFOS */}
-          <div className="text-sm text-center mt-3 space-y-1">            
-            <p>
-              👤 Conseiller :{" "}
-              {conseiller
-                ? `${conseiller.prenom} ${conseiller.nom}`
-                : "—"}
-            </p>
+          <div className="text-sm text-center mt-3 space-y-1">           
             <p>🏙️ Ville : {safeMember.ville || "—"}</p>
+            <p>👤 Conseiller : {conseillerData ? `${conseillerData.prenom} ${conseillerData.nom}`: "—"}</p>
           </div>          
           <div className="mt-4 text-sm space-y-1">
             <p>📅 {safeMember.sexe === "Femme" ? "Évangélisée" : "Évangélisé"} le : {formatDateFr(safeMember.date_evangelise)}</p>    

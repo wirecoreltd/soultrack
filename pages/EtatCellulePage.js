@@ -63,6 +63,13 @@ function EtatCellule() {
     setUserProfile(data);
   };
 
+  //=============================
+      const closePopup = () => {
+        setSelectedMember(null);
+        setPopupType(null);
+      };
+      
+
   // ================= FETCH DATA =================
   const fetchReports = async () => {
     if (!userProfile) return;
@@ -100,13 +107,7 @@ function EtatCellule() {
         filtered = filtered.filter((r) =>
           r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
         );
-      }    
-
-      //=============================
-      const closePopup = () => {
-        setSelectedMember(null);
-        setPopupType(null);
-      };
+      }   
       
       const getCelluleNom = (id) => {
         // si tu veux récupérer le nom de la cellule à partir d'un id

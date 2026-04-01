@@ -82,6 +82,16 @@ export default function DetailsEtatConseillerPopup({
     }
   };
 
+   const formatDateFr = (dateString) => {
+  if (!dateString) return "—";
+  const d = new Date(dateString);
+
+  const day = d.getDate().toString().padStart(2, "0");
+  const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+
+  return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+};
+
   return (
     <>
       {/* OVERLAY */}
@@ -152,6 +162,7 @@ export default function DetailsEtatConseillerPopup({
             <p>🏙️ Ville : {safeMember.ville || "—"}</p>
           </div>          
           <div className="mt-4 text-sm space-y-1">
+            <p>📅 {safeMember.sexe === "Femme" ? "Évangélisée" : "Évangélisé"} le : {formatDateFr(safeMember.date_evangelise)}</p>    
             <p>📣 Type d'Evangélisation : {safeMember.type_evangelisation|| "—"}</p>  
             <p>🎗️ Civilité : {safeMember.sexe || "—"}</p>
             <p>⏳ Tranche d'age : {safeMember.age || "—"}</p>  

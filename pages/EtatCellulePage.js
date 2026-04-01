@@ -6,8 +6,7 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
-import DetailsEtatConsEvangePopup from "../components/DetailsEtatConsEvangePopup";
-import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
+import DetailsEtatCellulePopup from "../components/DetailsEtatCellulePopup";
 
 export default function EtatCellulePage() {
   return (
@@ -483,7 +482,7 @@ function EtatCellule() {
 </div>
 
     {selectedMember && (
-  <DetailsEtatConsEvangePopup
+  <DetailsEtatCellulePopup
   member={selectedMember}
   onClose={() => setSelectedMember(null)}
   onEdit={(member) => {
@@ -491,18 +490,6 @@ function EtatCellule() {
     setEditMember(member);     // ouvre edit 💥
   }}
 />
-)}
-
-{editMember && (
-  <EditMemberCellulePopup
-    member={editMember}
-    onClose={() => setEditMember(null)}
-    onUpdateMember={(updated) => {
-      handleUpdateMember(updated);
-      setEditMember(null);
-      setDetailsMember(null);
-    }}
-  />
 )}
 
       <Footer />

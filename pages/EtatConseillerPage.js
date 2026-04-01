@@ -502,8 +502,7 @@ function EtatConseiller() {
   {/* 🔵 POPUP EVANGELISATION */}
 {selectedEvangelise && (
   <DetailEvangeliseSuivisPopup
-    member={selectedEvangelise}
-    cellules={cellules}
+    member={selectedEvangelise}   
     conseillers={conseillers}
     onClose={() => setSelectedEvangelise(null)}
     onUpdate={(id, updates) => {

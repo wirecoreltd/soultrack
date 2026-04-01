@@ -371,7 +371,18 @@ export default function Evangelisation() {
               {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
             </button>
           </>
-        )}    
+        )}
+      </div>
+
+      {/* Toggle Vue Carte / Vue Table */}
+      <div className="w-full max-w-6xl flex justify-center gap-4 mb-4">
+        <button
+          onClick={() => setView(view === "card" ? "table" : "card")}
+          className="text-sm font-semibold underline text-white"
+        >
+          {view === "card" ? "Vue Table" : "Vue Carte"}
+        </button>
+      </div>
 
       {/* ================= AFFICHAGE CONTACTS ================= */}
       <div className="w-full max-w-6xl flex flex-col items-center">
@@ -448,7 +459,32 @@ export default function Evangelisation() {
               </div>
             ))}
           </div>
-        )}        
+        )}
+
+        {/* VUE TABLE */}
+        {contacts && view === "table" && (
+          <div className="w-full max-w-6xl overflow-x-auto py-2">
+            <div className="min-w-[700px] space-y-2">
+              <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
+                <div className="flex-[2]">Nom complet</div>
+                <div className="flex-[1]">Téléphone</div>
+                <div className="flex-[1]">Ville</div>
+                <div className="flex-[1] flex justify-center items-center">Sélectionner</div>
+                <div className="flex-[1]">Action</div>
+              </div>
+              {contacts.map((m) => (
+                <div key={m.id} className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+                  <div className="flex-[2] text-white flex items-center gap-1">{m.prenom} {m.nom}</div>
+                  <div className="flex-[1] text-white">{m.telephone || "—"}</div>
+                  <div className="flex-[1] text-white">{m.ville || "—"}</div>
+                  <div className="flex-[1] flex justify-center items-center"><input type="checkbox" checked={checkedContacts[m.id] || false} onChange={() => handleCheck(m.id)} /></div>
+                  <div className="flex-[1]"><button onClick={() => setPopupMember(m)} className="text-orange-500 underline text-sm">Détails</button></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* POPUPS EDIT */}
       {editMember && (
@@ -462,7 +498,15 @@ export default function Evangelisation() {
             setEditMember(null);
           }}
         />
-      )}     
+      )}
+
+      {popupMember && (
+        <DetailsEvangePopup
+          member={popupMember}
+          onClose={() => setPopupMember(null)}
+          onEdit={(m) => { setEditMember(m); setPopupMember(null); }}
+        />
+      )}
 
       {/* 🔹 Popup Doublon - Moderne */}
       {showDoublonPopup && doublonsDetected.length > 0 && (

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import EditMemberCellulePopup from "./EditMemberCellulePopup";
 
-export default function DetailsEtatCellulePopup({ member, onClose, getCelluleNom, onEdit }) {
+export default function DetailsEtatConsEvangePopup({ member, onClose, getCelluleNom, onEdit }) {
   if (!member) return null;
 
   const parseJsonArray = (value) => {

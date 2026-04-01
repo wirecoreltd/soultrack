@@ -34,7 +34,7 @@ function EtatConseiller() {
   const [selectedMember, setSelectedMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
   const [selectedEvangelise, setSelectedEvangelise] = useState(null);  
-  const [conseillers, setConseillers] = useState([]);
+  const [conseillers, setConseillers] = useState([]);  
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -538,7 +538,7 @@ function EtatConseiller() {
 )}
 
 {/* 🟢 POPUP INTEGRATION */}
-{detailsTable && (
+{selectedMember && (
   <UniversalMemberPopup
     type="evangelisation"
     mode="view"

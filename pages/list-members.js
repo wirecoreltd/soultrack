@@ -918,11 +918,7 @@ const canAddMember =
         <span className="text-white text-sm ml-2">{filteredMembers.length} membres</span>
       </div>
 
-      <div className="w-full max-w-6xl flex justify-between items-center mb-4">
-        {/* Toggle Carte/Table */}
-        <button onClick={() => setView(view === "card" ? "table" : "card")} className="text-sm font-semibold underline text-white">
-          {view === "card" ? "Vue Table" : "Vue Carte"}
-        </button>
+      <div className="w-full max-w-6xl flex justify-between items-center mb-4">       
       
         {/* 🔥 Bouton visible seulement si l'utilisateur N'EST PAS Conseiller */}        
        {canAddMember && (

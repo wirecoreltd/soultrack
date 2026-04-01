@@ -191,52 +191,73 @@ const fetchCellules = async () => {
   try {
     if (!row) return;
 
-    // 🔥 Protection critique
+    // Protection critique
     if (!row.personne_id) {
       console.warn("personne_id est NULL", row);
       alert("Impossible d'ouvrir : donnée incomplète");
       return;
     }
 
+    let data = null;
+    let celluleData = null;
+
     if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
-      
-      // ✅ Assure-toi que evangelise_id existe
       const evangeliseId = row.evangelise_id;
       if (!evangeliseId) {
         console.warn("evangelise_id est undefined pour cette personne", row);
         alert("Aucun suivi disponible pour cette personne.");
-        return; // on stoppe la requête pour éviter l'erreur 400
+        return;
       }
 
-      const { data, error } = await supabase
+      const { data: suivi, error } = await supabase
         .from("suivis_des_evangelises")
         .select("*")
         .eq("evangelise_id", evangeliseId)
         .maybeSingle();
 
       if (error) throw error;
-
-      if (!data) {
-        console.warn("Aucun suivi disponible pour cette personne.");
+      if (!suivi) {
         alert("Aucun suivi disponible pour cette personne.");
         return;
       }
+      data = suivi;
 
-      const enriched = { ...row, ...data };
-      setSelectedEvangelise(enriched);
+      // Récup cellule + responsable depuis cellules
+      if (suivi.cellule_id) {
+        const { data: cellule } = await supabase
+          .from("cellules")
+          .select("cellule_full, responsable")
+          .eq("id", suivi.cellule_id)
+          .maybeSingle();
+        celluleData = cellule;
+      }
 
     } else if (row.type_evangelisation?.toLowerCase() === "integration") {
-      const { data, error } = await supabase
+      const { data: membre } = await supabase
         .from("membres_complets")
         .select("*")
         .eq("id", row.personne_id)
         .maybeSingle();
+      data = membre;
 
-      if (error) throw error;
-      if (!data) return;
-
-      setSelectedMember(data);
+      if (membre?.cellule_id) {
+        const { data: cellule } = await supabase
+          .from("cellules")
+          .select("cellule_full, responsable")
+          .eq("id", membre.cellule_id)
+          .maybeSingle();
+        celluleData = cellule;
+      }
     }
+
+    const enriched = {
+      ...row,
+      ...data,
+      Cellule: celluleData?.cellule_full ?? data?.cellule_full ?? "—",
+      Responsable: celluleData?.responsable ?? "—",
+    };
+
+    setSelectedEvangelise(enriched);
 
   } catch (err) {
     console.error("Erreur fetch details:", err);
@@ -340,7 +361,8 @@ const fetchCellules = async () => {
                     <div className="min-w-[150px] text-center">Date évolution</div>
                     <div className="min-w-[150px] text-center">Date Baptême</div>
                     <div className="min-w-[150px] text-center">Début Ministère</div>
-                    <div className="min-w-[220px] text-center">Cellule</div>            
+                    <div className="min-w-[220px] text-center">Cellule</div>
+                    <div className="min-w-[220px] text-center">Responsable</div>  
                     <div className="min-w-[200px] text-center">Action</div>
                   </div>
         
@@ -413,6 +435,7 @@ const fetchCellules = async () => {
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>                          
                                   <div className="min-w-[200px] text-center text-white">{r.Cellule}</div>
+                                  <div className="min-w-[200px] text-center text-white">{r.Reponsable}</div>  
                                   <div className="min-w-[100px] text-center">
                                     <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)}>Détails</button>
                                   </div>        
@@ -452,7 +475,8 @@ const fetchCellules = async () => {
                     <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
                     <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
                     <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>            
-                    <p><strong>Responsable:</strong> {r.Cellule}</p>            
+                    <p><strong>Cellule:</strong> {r.Cellule}</p>
+                    <p><strong>Responsable:</strong> {r.Responsable}</p>         
                   </div>
                 ))}
               </div>

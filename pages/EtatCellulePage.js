@@ -202,11 +202,11 @@ const fetchCellules = async () => {
     if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
 
       // On fetch depuis suivis_des_evangelises où evangelise_id correspond à personne_id
-      const { data, error } = await supabase
-        .from("suivis_des_evangelises")
-        .select("*")
-        .eq("evangelise_id", row.personne_id) // 🔑 Correct link
-        .maybeSingle(); // Retourne un seul enregistrement
+     const { data, error } = await supabase
+  .from("suivis_des_evangelises")
+  .select("*")
+  .eq("evangelise_id", row.personne_id) // <-- ici
+  .maybeSingle();
 
       if (error) throw error;
 

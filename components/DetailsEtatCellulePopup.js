@@ -60,6 +60,7 @@ const formatDateFr = (dateString) => {
         <div className="flex flex-col gap-2 text-sm mt-3">
           <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
            💡 Statut Suivi : {statutSuiviLabels[member.statut_suivis] || member.suivi_statut || ""} </p>
+          <p>📅 {member.sexe === "Femme" ? "Arrivée" : "Arrivé"} le : {formatDateFr(member.date_venu)}</p>    
           <p>📆 Envoyé en suivi : {formatDateFr(member.date_envoi_suivi)}</p>
           <p>🎗️ Civilité : {member.sexe || "—"}</p>
           <p>⏳ Tranche d'age : {member.age || "—"}</p>
@@ -78,16 +79,7 @@ const formatDateFr = (dateString) => {
           <p>📝 Commentaire Suivis : {member.commentaire_suivis || ""}</p>
           <p>📑 Commentaire Suivis Evangelisation : {member.Commentaire_Suivi_Evangelisation || ""}</p>       
         </div>
-
-        {/* Bouton Modifier */}
-        <div className="mt-4 rounded-xl w-full p-4 bg-white">
-          <button
-            onClick={() => onEdit(member)} // <-- on passe au parent
-            className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
-            >
-            ✏️ Modifier le contact
-          </button>
-        </div>
+        
       </div>
     </div>
   );

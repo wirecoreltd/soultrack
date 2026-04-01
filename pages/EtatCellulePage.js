@@ -433,7 +433,7 @@ function EtatCellule() {
                           <div className="min-w-[200px] text-center text-white">{r.responsable}</div>
                           <div className="min-w-[100px] text-center">
                             <button className="text-orange-500 underline text-sm" onClick={() => {
-                              setSelectedMember(member);
+                              setSelectedMember(item);
                         
                             if (member.type_conversion) {
                               setPopupType("evange");

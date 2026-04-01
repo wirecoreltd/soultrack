@@ -198,31 +198,36 @@ const fetchCellules = async () => {
       return;
     }
 
-    // ----------------- Évangélisation -----------------
+    // Vérifie si c'est une évangélisation
     if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
+
+      // ✅ Assure-toi d'utiliser evangelise_id si dispo
+      const evangeliseId = row.evangelise_id || row.personne_id;
 
       const { data, error } = await supabase
         .from("suivis_des_evangelises")
         .select("*")
-        .eq("evangelise_id", row.evangelise_id) // <-- corrigé ici
+        .eq("evangelise_id", evangeliseId)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur fetch suivis_des_evangelises:", error);
+        alert("Impossible de charger le suivi de cette personne");
+        return;
+      }
 
       if (!data) {
+        console.warn("Aucun suivi disponible pour cette personne.");
         alert("Aucun suivi disponible pour cette personne.");
         return;
       }
 
-      const enriched = {
-        ...row,
-        ...data,
-      };
-
+      // Merge row + suivi
+      const enriched = { ...row, ...data };
       setSelectedEvangelise(enriched);
-    } 
+    }
 
-    // ----------------- Intégration -----------------
+    // Si c'est une intégration
     else if (row.type_evangelisation?.toLowerCase() === "integration") {
       const { data, error } = await supabase
         .from("membres_complets")
@@ -230,7 +235,10 @@ const fetchCellules = async () => {
         .eq("id", row.personne_id)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erreur fetch membre:", error);
+        return;
+      }
       if (!data) return;
 
       setSelectedMember(data);
@@ -238,6 +246,7 @@ const fetchCellules = async () => {
 
   } catch (err) {
     console.error("Erreur fetch details:", err);
+    alert("Une erreur est survenue lors de la récupération des détails");
   }
 };
 

@@ -4,7 +4,7 @@ import React, { useRef, useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import EditEvangeliseSuiviPopup from "./EditEvangeliseSuiviPopup";
 
-export default function DetailsEtatConseillerPopup.js({
+export default function DetailsEtatConseillerPopup({
   member,
   cellules,
   conseillers,

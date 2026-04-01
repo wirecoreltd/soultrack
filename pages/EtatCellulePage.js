@@ -497,22 +497,22 @@ function EtatCellule() {
     );
   })}
 </div>
+ {/* Popups */}
+      {selectedMember && popupType === "integration" && (
+        <DetailsEtatCellulePopup
+          member={selectedMember}
+          onClose={closePopup}
+          getCelluleNom={getCelluleNom}
+        />
+      )}
 
-    {/* 🔥 EVANGELISATION */}
-{popupType === "evange" && (
-  <DetailsEtatCelluleEvangePopup
-    member={selectedMember}
-    onClose={() => setPopupType(null)}
-  />
-)}
-
-{/* 🟢 INTEGRATION */}
-{popupType === "integration" && (
-  <DetailsEtatCellulePopup
-    member={selectedMember}
-    onClose={() => setPopupType(null)}
-  />
-)}
+      {selectedMember && popupType === "evange" && (
+        <DetailsEtatCelluleEvangePopup
+          member={selectedMember}
+          onClose={closePopup}
+          getCelluleNom={getCelluleNom}
+        />
+      )}
 
       <Footer />
     </div>

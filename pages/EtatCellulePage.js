@@ -199,22 +199,17 @@ const fetchCellules = async () => {
     }
 
     if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
+  const { data, error } = await supabase
+    .from("suivis_des_evangelises")
+    .select("*")
+    .eq("evangelise_id", row.personne_id) // ← remplacer id_personne par evangelise_id
+    .maybeSingle();
 
-      const { data, error } = await supabase
-  .from("suivis_des_evangelises")
-  .select("*")
-  .eq("id_personne", row.personne_id)
-  .maybeSingle();
+  if (error) throw error;
 
-      if (error) throw error;
-
-      const enriched = {
-        ...row,
-        ...data,
-      };
-
-      setSelectedEvangelise(enriched);
-    }
+  const enriched = { ...row, ...data };
+  setSelectedEvangelise(enriched);
+}
 
     else if (row.type_evangelisation?.toLowerCase() === "integration") {
       const { data, error } = await supabase

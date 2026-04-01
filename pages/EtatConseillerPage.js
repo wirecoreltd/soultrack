@@ -268,30 +268,11 @@ function EtatConseiller() {
       console.error("Erreur récupération membre :", err);
     }
 
+  } // ✅ FERMETURE MANQUANTE ICI
+
   else if (row.source === "evangelisation") {
-  try {
-    const { data, error } = await supabase
-      .from("suivis_des_evangelises")
-      .select("*")
-      .eq("id", row.personne_id)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Erreur évangélisé :", error);
-      return;
-    }
-
-    if (!data) {
-      console.warn("Aucun évangélisé trouvé");
-      return;
-    }
-
-    setSelectedEvangelise(data);
-
-  } catch (err) {
-    console.error("Erreur récupération évangélisé :", err);
+    setSelectedEvangelise(row);
   }
-}
 };
   // ================= RENDER =================
   return (

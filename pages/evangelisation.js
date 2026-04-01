@@ -287,6 +287,7 @@ export default function Evangelisation() {
       
         message += 
        `📣 Type d'Evangélisation : ${m.type_evangelisation || "—"}
+       📅 Date évangélisé : ${formatDateFr(m.date_evangelise)}  
       🎗️ Civilité : ${m.sexe || "—"}  
       👤 Nom : ${m.prenom} ${m.nom}      
       ⏳ Tranche d'age : ${m.age || "—"}  
@@ -294,9 +295,8 @@ export default function Evangelisation() {
       📞 Téléphone: ${m.telephone || "—"}  
       💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}     
       🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}      
-      ☀️ Type de conversion : ${m.type_conversion || "—"}      
-      📅 Date évangélisé : ${formatDateFr(m.date_evangelise)}      
-      ❓ Besoin : ${formatBesoin(m.besoin)}      
+      ☀️ Type de conversion : ${m.type_conversion || "—"}               
+      ❓ Difficultés / Besoins : ${formatBesoin(m.besoin)}      
       📝 Infos : ${m.infos_supplementaires || "—"}
       
       `;
@@ -417,7 +417,7 @@ export default function Evangelisation() {
                     <p>⏳ Tranche d'age : {member.age || "—"}</p>
                     <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
                     <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
-                    <p>☀️ Type : {member.type_conversion || "—"}</p>
+                    <p>☀️ Type de conversion : {member.type_conversion || "—"}</p>
                     <p>❓ Difficultés / Besoins : {formatBesoin(member.besoin)}</p>
                     <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
                 

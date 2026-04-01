@@ -554,9 +554,11 @@ export default function SuivisEvangelisation() {
                   <div className="rounded-xl p-3 text-sm space-y-2">
                     <p>📅 {m.sexe === "Femme" ? "Évangélisée" : "Évangélisé"} le : {formatDateFr(m.date_evangelise)}</p>       
                     <p>📣 Type d'Evangélisation : {m.type_evangelisation || ""}</p>
-                    <p>🎗️ Sexe : {m.sexe || ""}</p>
+                    <p>🎗️ Civilité : {m.sexe || ""}</p>
+                    <p>⏳ Tranche d'age : {m.age || ""}</p>
+                    <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}  
                     <p>🙏 Prière salut : {m.priere_salut ? "Oui" : "Non"}</p>
-                    <p>☀️ Type : {m.type_conversion || ""}</p>
+                    <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
                     <p>❓ Difficultés / Besoins : {formatBesoin(m.besoin)}</p>
                     <p>📝 Infos : {m.infos_supplementaires || ""}</p>
 

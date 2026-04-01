@@ -6,9 +6,9 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
-import DetailEvangeliseSuivisPopup from "../components/DetailEvangeliseSuivisPopup";
 import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
+import DetailsEtatConseillerPopup from "../components/DetailsEtatConseillerPopup";
 
 export default function EtatConseillerPage() {
   return (
@@ -25,6 +25,7 @@ function EtatConseiller() {
   const [selectedMember, setSelectedMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
   const [selectedEvangelise, setSelectedEvangelise] = useState(null);
+  const [selectedEvangeliseId, setSelectedEvangeliseId] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
@@ -367,9 +368,7 @@ function EtatConseiller() {
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>                          
                                   <div className="min-w-[200px] text-center text-white">{r.conseiller}</div>
                                   <div className="min-w-[100px] text-center">
-                                    <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)} >
-                                    Détails
-                                  </button>
+                                    <button className="text-orange-500 underline text-sm" onClick={() => setSelectedEvangeliseId(member.id)}>Détails</button>
                                   </div>
         
                                 </div>
@@ -417,13 +416,13 @@ function EtatConseiller() {
         </div>
         
           {/* POPUPS */}
-      {selectedEvangelise && (
-        <DetailEvangeliseSuivisPopup
-          member={selectedEvangelise}
-          conseillers={conseillers}
-          onClose={()=>setSelectedEvangelise(null)}
+      {selectedEvangeliseId && (
+        <DetailsEtatConseillerPopup
+          memberId={selectedEvangeliseId}
+          onClose={() => setSelectedEvangeliseId(null)}
           onUpdate={(id, updates) => {
-            setReports(prev=>prev.map(r=>r.id===id ? {...r, ...updates} : r));
+            // Si tu veux mettre à jour localement la table après modification
+            // Par exemple refetch ou modifier le state qui contient la liste
           }}
         />
       )}

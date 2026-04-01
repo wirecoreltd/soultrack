@@ -372,10 +372,7 @@ export default function Evangelisation() {
             </button>
           </>
         )}
-      </div>
-
-      {/* Toggle Vue Carte / Vue Table */}
-      <div className="w-full max-w-6xl flex justify-center gap-4 mb-4"> </div>
+      </div>      
 
       {/* ================= AFFICHAGE CONTACTS ================= */}
       <div className="w-full max-w-6xl flex flex-col items-center">

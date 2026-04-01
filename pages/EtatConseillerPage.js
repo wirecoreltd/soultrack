@@ -6,7 +6,7 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
-import DetailsEtatCellulePopup from "../components/DetailsEtatCellulePopup";
+import DetailsEtatConsEvangePopup from "../components/DetailsEtatConsEvangePopup";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 import DetailsEtatConseillerPopup from "../components/DetailsEtatConseillerPopup";
 
@@ -464,7 +464,7 @@ const fetchConseillers = async () => {
       )}
       
       {selectedMember && (
-        <DetailsEtatCellulePopup
+        <DetailsEtatConsEvangePopup
           member={selectedMember}
           onClose={() => setSelectedMember(null)}
           onEdit={(member) => setEditMember(member)} // ouvre popup édition

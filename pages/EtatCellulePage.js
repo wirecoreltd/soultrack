@@ -28,6 +28,7 @@ function EtatCellule() {
   const getDate = (row, key) => row[key] ? formatDateFR(row[key]) : "-";
   const [membres, setMembres] = useState([]);  
   const [selectedMember, setSelectedMember] = useState(null);
+  const [popupType, setPopupType] = useState(null);
   const [editMember, setEditMember] = useState(null);
    const [detailsMember, setDetailsMember] = useState(null);
 
@@ -431,9 +432,18 @@ function EtatCellule() {
                           <div className="min-w-[220px] text-center text-white">{r.cellule_full}</div>
                           <div className="min-w-[200px] text-center text-white">{r.responsable}</div>
                           <div className="min-w-[100px] text-center">
-                            <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)} >
-                            Détails
-                          </button>
+                            <button className="text-orange-500 underline text-sm" onClick={() => {
+                              setSelectedMember(member);
+                        
+                            if (member.type_conversion) {
+                              setPopupType("evange");
+                            } else {
+                              setPopupType("integration");
+                            }
+                          }}
+                        >
+                          Détails
+                        </button>
                           </div>
 
                         </div>
@@ -481,15 +491,20 @@ function EtatCellule() {
   })}
 </div>
 
-    {selectedMember && (
+    {/* 🔥 EVANGELISATION */}
+{popupType === "evange" && (
+  <DetailsEtatCelluleEvangePopup
+    member={selectedMember}
+    onClose={() => setPopupType(null)}
+  />
+)}
+
+{/* 🟢 INTEGRATION */}
+{popupType === "integration" && (
   <DetailsEtatCellulePopup
-  member={selectedMember}
-  onClose={() => setSelectedMember(null)}
-  onEdit={(member) => {
-    setSelectedMember(null);   // ferme details
-    setEditMember(member);     // ouvre edit 💥
-  }}
-/>
+    member={selectedMember}
+    onClose={() => setPopupType(null)}
+  />
 )}
 
       <Footer />

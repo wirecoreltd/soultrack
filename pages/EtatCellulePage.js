@@ -198,19 +198,31 @@ const fetchCellules = async () => {
       return;
     }
 
+    // Cas évangélisation
     if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
-  const { data, error } = await supabase
-    .from("suivis_des_evangelises")
-    .select("*")
-    .eq("evangelise_id", row.personne_id) // ← remplacer id_personne par evangelise_id
-    .maybeSingle();
 
-  if (error) throw error;
+      // On fetch depuis suivis_des_evangelises où evangelise_id correspond à personne_id
+      const { data, error } = await supabase
+        .from("suivis_des_evangelises")
+        .select("*")
+        .eq("evangelise_id", row.personne_id) // 🔑 Correct link
+        .maybeSingle(); // Retourne un seul enregistrement
 
-  const enriched = { ...row, ...data };
-  setSelectedEvangelise(enriched);
-}
+      if (error) throw error;
 
+      if (!data) {
+        console.warn("Aucun suivi trouvé pour cette personne", row.personne_id);
+        alert("Aucun suivi disponible pour cette personne.");
+        return;
+      }
+
+      // Merge les infos de la vue et du suivi
+      const enriched = { ...row, ...data };
+
+      setSelectedEvangelise(enriched);
+    }
+
+    // Cas intégration
     else if (row.type_evangelisation?.toLowerCase() === "integration") {
       const { data, error } = await supabase
         .from("membres_complets")
@@ -226,6 +238,7 @@ const fetchCellules = async () => {
 
   } catch (err) {
     console.error("Erreur fetch details:", err);
+    alert("Erreur lors de la récupération des détails. Vérifiez la console.");
   }
 };
 

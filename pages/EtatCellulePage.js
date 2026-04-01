@@ -8,7 +8,7 @@ import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 import DetailsEtatConsEvangePopup from "../components/DetailsEtatConsEvangePopup";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
-import DetailsEtatCellulePopup from "../components/DetailsEtatCellulePopup";
+import DetailsEtatConseillerPopup from "../components/DetailsEtatConseillerPopup";
 
 export default function EtatCellulePage() {
   return (
@@ -452,7 +452,7 @@ const fetchCellules = async () => {
         
           {/* POPUPS */}
       {selectedEvangelise && (
-        <DetailsEtatCellulePopup
+        <DetailsEtatConseillerPopup
           member={selectedEvangelise}
           onClose={() => setSelectedEvangelise(null)}
           onUpdate={(id, updates) => {
@@ -462,7 +462,8 @@ const fetchCellules = async () => {
           }}
         />
       )}
-      
+
+       {/* INTEGRATION */}
       {selectedMember && (
         <DetailsEtatConsEvangePopup
           member={selectedMember}

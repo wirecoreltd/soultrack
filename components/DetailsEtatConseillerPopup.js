@@ -160,8 +160,7 @@ export default function DetailsEtatConseillerPopup({
             <p>❓ Difficultés / Besoins : {formatBesoin(safeMember.besoin)}</p>
             <p>📝 Infos supplémentaires :{" "}{safeMember.infos_supplementaires || "—"}</p>
             <p>📝 Commentaire Suivis :{" "}{safeMember.commentaire_evangelises || "—"}</p>  
-          </div>
-                   )}
+          </div>                  
         </div>
       </div>      
     </>

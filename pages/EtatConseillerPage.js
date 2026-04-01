@@ -538,14 +538,15 @@ function EtatConseiller() {
 )}
 
 {/* 🟢 POPUP INTEGRATION */}
-{selectedMember && (
-  <DetailsCelluleMemberPopup
-    member={selectedMember}
-    onClose={() => setSelectedMember(null)}
-    onEdit={(member) => {
-      setSelectedMember(null);
-      setEditMember(member);
-    }}
+{detailsTable && (
+  <UniversalMemberPopup
+    type="evangelisation"
+    mode="view"
+    data={detailsTable}
+    cellules={cellules}
+    conseillers={conseillers}
+    onClose={() => setDetailsTable(null)}
+    onUpdate={updateSuiviLocal}
   />
 )}
 

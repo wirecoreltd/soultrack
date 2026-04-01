@@ -510,20 +510,18 @@ const getCelluleNom = (id) => {
 </div>
  {/* Popups */}
       {selectedMember && popupType === "integration" && (
-        <DetailsEtatCellulePopup
-          member={selectedMember}
-          onClose={closePopup}
-          getCelluleNom={getCelluleNom}
-        />
-      )}
+  <DetailsEtatCellulePopup
+    member={selectedMember}
+    onClose={closePopup}
+  />
+)}
 
-      {selectedMember && popupType === "evange" && (
-        <DetailsEtatCelluleEvangePopup
-          member={selectedMember}
-          onClose={closePopup}
-          getCelluleNom={getCelluleNom}
-        />
-      )}
+{selectedMember && popupType === "evange" && (
+  <DetailsEtatCelluleEvangePopup
+    member={selectedMember}
+    onClose={closePopup}
+  />
+)}
 
       <Footer />
     </div>

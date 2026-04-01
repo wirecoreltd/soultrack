@@ -6,7 +6,7 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
-import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
+import DetailsEtatConsEvangePopup from "../components/DetailsEtatConsEvangePopup";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 
 export default function EtatCellulePage() {
@@ -483,7 +483,7 @@ function EtatCellule() {
 </div>
 
     {selectedMember && (
-  <DetailsCelluleMemberPopup
+  <DetailsEtatConsEvangePopup
   member={selectedMember}
   onClose={() => setSelectedMember(null)}
   onEdit={(member) => {

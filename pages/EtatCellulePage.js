@@ -435,7 +435,7 @@ const fetchCellules = async () => {
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>                          
                                   <div className="min-w-[200px] text-center text-white">{r.cellule_full}</div>
-                                  <div className="min-w-[200px] text-center text-white">{r.reponsable}</div>  
+                                  <div className="min-w-[200px] text-center text-white">{r.responsable}</div>  
                                   <div className="min-w-[100px] text-center">
                                     <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)}>Détails</button>
                                   </div>        

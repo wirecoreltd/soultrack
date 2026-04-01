@@ -6,15 +6,13 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
-import EditEvangeliseSuiviPopup from "../components/EditEvangeliseSuiviPopup";
 import DetailEvangeliseSuivisPopup from "../components/DetailEvangeliseSuivisPopup";
 import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
 
-
 export default function EtatConseillerPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller","ResponsableIntegration"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableIntegration"]}>
       <EtatConseiller />
     </ProtectedRoute>
   );
@@ -23,17 +21,17 @@ export default function EtatConseillerPage() {
 function EtatConseiller() {
   const router = useRouter();
   const [reports, setReports] = useState([]);
-  const [expandedMonths, setExpandedMonths] = useState({});
-  const [filterDebut, setFilterDebut] = useState("");
-  const [filterFin, setFilterFin] = useState("");
-  const [showTable, setShowTable] = useState(false);
-  const [userProfile, setUserProfile] = useState(null);
-  const [filterConseiller, setFilterConseiller] = useState("");
-  const getDate = (row, key) => row[key] ? formatDateFR(row[key]) : "-";
-  const [membres, setMembres] = useState([]);  
+  const [membres, setMembres] = useState([]);
   const [selectedMember, setSelectedMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
-  const [selectedEvangelise, setSelectedEvangelise] = useState(null);  
+  const [selectedEvangelise, setSelectedEvangelise] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [filterDebut, setFilterDebut] = useState("");
+  const [filterFin, setFilterFin] = useState("");
+  const [filterConseiller, setFilterConseiller] = useState("");
+  const [showTable, setShowTable] = useState(false);
+  const [expandedMonths, setExpandedMonths] = useState({});
+  const [conseillers, setConseillers] = useState([]);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -49,6 +47,7 @@ function EtatConseiller() {
   // ================= USER PROFILE =================
   useEffect(() => {
     fetchUserProfile();
+    fetchConseillers();
   }, []);
 
   const fetchUserProfile = async () => {
@@ -66,97 +65,66 @@ function EtatConseiller() {
     setUserProfile(data);
   };
 
-  // ================= FETCH DATA =================
+  const fetchConseillers = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .in("roles", ["Conseiller", "ResponsableIntegration"]);
+
+    if (error) {
+      console.error("Erreur fetch conseillers:", error);
+      return;
+    }
+    setConseillers(data);
+  };
+
+  // ================= FETCH REPORTS =================
   const fetchReports = async () => {
     if (!userProfile) return;
     setShowTable(false);
 
     try {
-      // On utilise directement la vue vue_flow_conseillers
       let query = supabase
         .from("vue_flow_conseillers")
         .select("*")
         .order("date_depart", { ascending: false });
 
-      // Filtrer par Conseiller si nécessaire et par rôle
       if (!userProfile.roles?.includes("Administrateur")) {
         query = query.ilike("responsable", `%${userProfile.prenom}%`);
       }
+
       const { data, error } = await query;
       if (error) throw error;
 
-      // Filtrer par date si besoin
       let filtered = data;
-      if (filterDebut) {
-        filtered = filtered.filter(
-          (r) => new Date(r.date_depart) >= new Date(filterDebut)
-        );
-      }
-      if (filterFin) {
-        filtered = filtered.filter(
-          (r) => new Date(r.date_depart) <= new Date(filterFin)
-        );
-      }
 
-      // Filtrer par Conseiller si sélectionnée
-      if (filterConseiller) {
-        filtered = filtered.filter((r) =>
-          r.Conseiller_full?.toLowerCase().includes(filterConseiller.toLowerCase())
-        );
-      }    
-      
+      if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
+      if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
+      if (filterConseiller) filtered = filtered.filter(r =>
+        r.Conseiller_full?.toLowerCase().includes(filterConseiller.toLowerCase())
+      );
+
       // ================= KPI =================
-      const normalize = (text) =>
-        text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
-
-      const totalEvangelises = filtered.filter((r) => {
-  const type = normalize(r.type_evangelisation);
-
-  return [
-    "individuel",
-    "sortie de groupe",
-    "campagne d’evangelisation",
-    "evangelisation de rue",
-    "evangelisation maison",
-    "evangelisation stade",
-    "evangelisation"
-  ].some(t => type.includes(normalize(t)));
-}).length;
-
-      const totalVenus = filtered.filter((r) =>
-        normalize(r.type_evangelisation).includes("integration")
-      ).length;
-
-      const totalIntegration = filtered.filter((r) => {
-  const s = normalize(r.statut);
-  return s === "integre";
-}).length;
-      const totalBapteme = filtered.filter((r) => r.date_baptise).length;
-      const totalMinistere = filtered.filter((r) => r.debut_ministere).length;
-      
-      const totalRefus = filtered.filter((r) => {
-        const s = normalize(r.statut);
-        return s === "refus";
-      }).length;
-
-      const totalEncours = filtered.filter((r) =>
-        normalize(r.statut).includes("cours")
-      ).length;
-
-      const totalAttente = filtered.filter((r) => {
-        const s = normalize(r.statut);
-        return s.includes("attente") || s.includes("envoye");
-      }).length;
+      const normalize = (text) => text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
 
       setKpis({
-        totalEvangelises,
-        totalVenus,
-        totalIntegration,
-        totalBapteme,
-        totalMinistere,
-        totalRefus,
-        totalEncours,
-        totalAttente,
+        totalEvangelises: filtered.filter(r =>
+          ["individuel","sortie de groupe","campagne d’evangelisation","evangelisation de rue","evangelisation maison","evangelisation stade","evangelisation"]
+            .some(t => normalize(r.type_evangelisation).includes(normalize(t)))
+        ).length,
+        totalVenus: filtered.filter(r => normalize(r.type_evangelisation).includes("integration")).length,
+        totalIntegration: filtered.filter(r => {
+          const s = normalize(r.statut);
+          return s === "integre";
+        }).length,
+        totalBapteme: filtered.filter(r => r.date_baptise).length,
+        totalMinistere: filtered.filter(r => r.debut_ministere).length,
+        totalRefus: filtered.filter(r => normalize(r.statut) === "refus").length,
+        totalEncours: filtered.filter(r => normalize(r.statut).includes("cours")).length,
+        totalAttente: filtered.filter(r => {
+          const s = normalize(r.statut);
+          return s.includes("attente") || s.includes("envoye");
+        }).length,
       });
 
       setReports(filtered);
@@ -168,55 +136,34 @@ function EtatConseiller() {
     }
   };
 
-  //==================
-  const getStatutNormalise = (statut) => {
-  if (!statut) return "";
-
-  const s = statut.toLowerCase();
-
-  if (s.includes("envoy")) return "en attente";
-  return s;
-};
-
-  // ================= UTIL =================
-  const getStatusStyles = (status) => {
-    if (!status) return { border: "border-gray-400", text: "text-gray-300" };
-    const s = status.toLowerCase();
-    if (s.includes("intégr") || s.includes("integre"))
-      return { border: "border-green-500", text: "text-green-400" };
-    if (s.includes("refus")) return { border: "border-red-500", text: "text-red-400" };
-    if (s.includes("cours") || s.includes("suivi"))
-      return { border: "border-orange-500", text: "text-orange-400" };
-    return { border: "border-blue-500", text: "text-blue-400" };
-  };
-
-  const getMonthNameFR = (monthIndex) => {
-    const months = [
-      "Janvier","Février","Mars","Avril","Mai","Juin",
-      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
-    ];
-    return months[monthIndex] || "";
-  };
+  // ================= UTILITIES =================
+  const getMonthNameFR = (monthIndex) => [
+    "Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"
+  ][monthIndex] || "";
 
   const formatDateFR = (dateString) => {
-    if (!dateString) return "";
+    if (!dateString) return "-";
     const d = new Date(dateString);
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
+    return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
+  };
+
+  const getStatutNormalise = (statut) => {
+    if (!statut) return "";
+    const s = statut.toLowerCase();
+    if (s.includes("envoy")) return "en attente";
+    return s;
   };
 
   const formatStatut = (statut) => {
-  if (!statut) return "—";
-  const s = statut.toLowerCase();
-  if (s.includes("envoy")) return "En attente";
-  return statut;
-};
+    if (!statut) return "—";
+    const s = statut.toLowerCase();
+    if (s.includes("envoy")) return "En attente";
+    return statut;
+  };
 
   const groupByMonth = (reports) => {
     const map = {};
-    reports.forEach((r) => {
+    reports.forEach(r => {
       const d = new Date(r.date_depart);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       if (!map[key]) map[key] = [];
@@ -225,8 +172,29 @@ function EtatConseiller() {
     return map;
   };
 
-  const toggleMonth = (monthKey) => {
-    setExpandedMonths((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
+  const toggleMonth = (monthKey) => setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
+
+  const handleUpdateMember = (updated) => {
+    setMembres(prev => prev.map(m => m.id === updated.id ? updated : m));
+  };
+
+  const handleDetailsClick = async (row) => {
+    if (!row.source) return;
+
+    if (row.source === "integration") {
+      const { data, error } = await supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("id", row.personne_id)
+        .maybeSingle();
+
+      if (error) return console.error("Erreur Supabase :", error);
+      if (!data) return console.warn("Aucun membre trouvé");
+
+      setSelectedMember(data);
+    } else if (row.source === "evangelisation") {
+      setSelectedEvangelise(row);
+    }
   };
 
   const groupedReports = Object.entries(groupByMonth(reports))
@@ -236,72 +204,21 @@ function EtatConseiller() {
       return new Date(yearB, monthB) - new Date(yearA, monthA);
     });
 
-   const handleUpdateMember = (updated) => {
-    setMembres((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
-  };
-
- const handleDetailsClick = async (row) => {
-  if (!row.source) return;
-
-  if (row.source === "integration") {
-    try {
-      const { data, error } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("id", row.personne_id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Erreur Supabase :", error);
-        return;
-      }
-
-      if (!data) {
-        console.warn("Aucun membre trouvé");
-        return;
-      }
-
-      setSelectedMember(data);
-
-    } catch (err) {
-      console.error("Erreur récupération membre :", err);
-    }
-
-  } else if (row.source === "evangelisation") {
-    // ici on passe directement la ligne de la vue pour l'évangélisé
-    // car elle contient déjà tout ce dont DetailEvangeliseSuivisPopup a besoin
-    setSelectedEvangelise(row);
-  }
-};
   // ================= RENDER =================
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        Suivis de l'evolution <span className="text-amber-300">des Ames</span>
+        Suivis de l'évolution <span className="text-amber-300">des Ames</span>
       </h1>
 
       {/* FILTRES */}
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
-        <input
-          type="date"
-          value={filterDebut}
-          onChange={(e) => setFilterDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <input
-          type="date"
-          value={filterFin}
-          onChange={(e) => setFilterFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <button
-          onClick={fetchReports}
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-        >
-          Générer
-        </button>
+        <input type="date" value={filterDebut} onChange={(e)=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+        <input type="date" value={filterFin} onChange={(e)=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+        <button onClick={fetchReports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
       </div>
+
 
       {/* KPI */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
@@ -499,44 +416,33 @@ function EtatConseiller() {
           })}
         </div>
         
-          {/* 🔵 POPUP EVANGELISATION */}
-        {selectedEvangelise && (
-          <DetailEvangeliseSuivisPopup
-            member={selectedEvangelise}   
-            conseillers={conseillers}
-            onClose={() => setSelectedEvangelise(null)}
-            onUpdate={(id, updates) => {
-              setReports(prev =>
-                prev.map(r =>
-                  r.id === id ? { ...r, ...updates } : r
-                )
-              );
-            }}
-          />
-        )}
-        
-        {/* 🟢 POPUP INTEGRATION */}
-        {selectedMember && (
-          <DetailsCelluleMemberPopup
-            member={selectedMember}
-            onClose={() => setSelectedMember(null)}
-            onEdit={(member) => {
-              setSelectedMember(null);
-              setEditMember(member);
-            }}
-          />
-        )}
-        
-          {editMember && (
-          <EditMemberCellulePopup
-            member={editMember}
-            onClose={() => setEditMember(null)}
-            onUpdateMember={(updated) => {
-              handleUpdateMember(updated);
-              setEditMember(null);
-            }}
-          />
-        )}
+          {/* POPUPS */}
+      {selectedEvangelise && (
+        <DetailEvangeliseSuivisPopup
+          member={selectedEvangelise}
+          conseillers={conseillers}
+          onClose={()=>setSelectedEvangelise(null)}
+          onUpdate={(id, updates) => {
+            setReports(prev=>prev.map(r=>r.id===id ? {...r, ...updates} : r));
+          }}
+        />
+      )}
+
+      {selectedMember && (
+        <DetailsCelluleMemberPopup
+          member={selectedMember}
+          onClose={()=>setSelectedMember(null)}
+          onEdit={(member)=>{ setSelectedMember(null); setEditMember(member); }}
+        />
+      )}
+
+      {editMember && (
+        <EditMemberCellulePopup
+          member={editMember}
+          onClose={()=>setEditMember(null)}
+          onUpdateMember={handleUpdateMember}
+        />
+      )}
 
       <Footer />
     </div>

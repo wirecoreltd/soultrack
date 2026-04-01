@@ -33,9 +33,7 @@ function EtatConseiller() {
   const [membres, setMembres] = useState([]);  
   const [selectedMember, setSelectedMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
-  const [selectedEvangelise, setSelectedEvangelise] = useState(null);
-  const [comment, setComment] = useState(member?.commentaire_evangelises ?? "");
-const [status, setStatus] = useState(member?.status_suivis_evangelises ?? "");
+  const [selectedEvangelise, setSelectedEvangelise] = useState(null);  
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -501,40 +499,31 @@ const [status, setStatus] = useState(member?.status_suivis_evangelises ?? "");
   })}
 </div>
 
-  {/* Popup pour intégration */}
-{/* POPUP DETAILS */}
-{selectedMember && selectedMember.type_evangelisation ? (
-  selectedMember.type_evangelisation.toLowerCase().includes("evangelisation") ? (
-    <DetailEvangeliseSuivisPopup
-      member={selectedMember}       // ✅ member est défini
-      cellules={cellules}
-      conseillers={conseillers}
-      onClose={() => setSelectedMember(null)}
-      onUpdate={handleUpdateMember}
-    />
-  ) : (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white p-6 rounded-lg shadow-lg text-center max-w-sm">
-        <p>Pas de détails disponible pour cet évangélisé</p>
-        <button
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-          onClick={() => setSelectedMember(null)}
-        >
-          Fermer
-        </button>
-      </div>
-    </div>
-  )
-) : null}
+  {/* 🔵 POPUP EVANGELISATION */}
+{selectedEvangelise && (
+  <DetailEvangeliseSuivisPopup
+    member={selectedEvangelise}
+    cellules={cellules}
+    conseillers={conseillers}
+    onClose={() => setSelectedEvangelise(null)}
+    onUpdate={(id, updates) => {
+      setReports(prev =>
+        prev.map(r =>
+          r.id === id ? { ...r, ...updates } : r
+        )
+      );
+    }}
+  />
+)}
 
-{/* Popup pour édition */}
-{editMember && (
-  <EditMemberCellulePopup
-    member={editMember}
-    onClose={() => setEditMember(null)}
-    onUpdateMember={(updated) => {
-      handleUpdateMember(updated);
-      setEditMember(null);
+{/* 🟢 POPUP INTEGRATION */}
+{selectedMember && (
+  <DetailsCelluleMemberPopup
+    member={selectedMember}
+    onClose={() => setSelectedMember(null)}
+    onEdit={(member) => {
+      setSelectedMember(null);
+      setEditMember(member);
     }}
   />
 )}

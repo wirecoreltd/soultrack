@@ -271,8 +271,29 @@ function EtatConseiller() {
   } // ✅ FERMETURE MANQUANTE ICI
 
   else if (row.source === "evangelisation") {
-    setSelectedEvangelise(row);
+  try {
+    const { data, error } = await supabase
+      .from("suivis_des_evangelises")
+      .select("*")
+      .eq("id", row.personne_id) // ⚠️ IMPORTANT
+      .maybeSingle();
+
+    if (error) {
+      console.error("Erreur suivi:", error);
+      return;
+    }
+
+    if (!data) {
+      console.warn("Aucun suivi trouvé");
+      return;
+    }
+
+    setSelectedEvangelise(data);
+
+  } catch (err) {
+    console.error("Erreur récupération suivi :", err);
   }
+}
 };
   // ================= RENDER =================
   return (

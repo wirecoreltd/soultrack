@@ -191,28 +191,32 @@ const fetchConseillers = async () => {
   try {
     if (!row) return;
 
-    // 🔥 CAS EVANGELISATION → on garde le flow MAIS on enrichit
+    // 🔥 PROTECTION CRITIQUE
+    if (!row.personne_id) {
+      console.warn("personne_id est NULL", row);
+      alert("Impossible d'ouvrir : donnée incomplète");
+      return;
+    }
+
     if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
 
       const { data, error } = await supabase
         .from("suivis_des_evangelises")
         .select("*")
-        .eq("id", row.personne_id) // 🔥 clé du flow
+        .eq("id", row.personne_id)
         .maybeSingle();
 
       if (error) throw error;
 
-      // 🔥 fusion FLOW + DATA réelle
       const enriched = {
         ...row,
-        ...data, // 🔥 overwrite avec les bons champs
+        ...data,
       };
 
       setSelectedEvangelise(enriched);
     }
 
-    // 🔵 CAS INTEGRATION (tu gardes tel quel)
-    else if (row.type_evangelisation && row.type_evangelisation.toLowerCase() === "integration") {
+    else if (row.type_evangelisation?.toLowerCase() === "integration") {
       const { data, error } = await supabase
         .from("membres_complets")
         .select("*")

@@ -66,18 +66,26 @@ function EtatConseiller() {
     setUserProfile(data);
   };
 
-  const fetchConseillers = async () => {
+  // ================= FETCH CONSEILLERS =================
+const fetchConseillers = async () => {
+  try {
+    // On veut tous les profils qui ont au moins un rôle "Conseiller" ou "ResponsableIntegration"
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .in("roles", ["Conseiller", "ResponsableIntegration"]);
+      .or("roles.cs.{Conseiller},roles.cs.{ResponsableIntegration}"); 
 
     if (error) {
       console.error("Erreur fetch conseillers:", error);
       return;
     }
-    setConseillers(data);
-  };
+
+    // Mettre dans le state
+    setConseillers(data || []);
+  } catch (err) {
+    console.error("Erreur fetch conseillers:", err);
+  }
+};
 
   // ================= FETCH REPORTS =================
   const fetchReports = async () => {

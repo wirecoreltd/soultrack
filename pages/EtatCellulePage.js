@@ -198,11 +198,15 @@ const fetchCellules = async () => {
       return;
     }
 
-    // Vérifie si c'est une évangélisation
     if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
-
-      // ✅ Assure-toi d'utiliser evangelise_id si dispo
-      const evangeliseId = row.evangelise_id || row.personne_id;
+      
+      // ✅ Assure-toi que evangelise_id existe
+      const evangeliseId = row.evangelise_id;
+      if (!evangeliseId) {
+        console.warn("evangelise_id est undefined pour cette personne", row);
+        alert("Aucun suivi disponible pour cette personne.");
+        return; // on stoppe la requête pour éviter l'erreur 400
+      }
 
       const { data, error } = await supabase
         .from("suivis_des_evangelises")
@@ -210,11 +214,7 @@ const fetchCellules = async () => {
         .eq("evangelise_id", evangeliseId)
         .maybeSingle();
 
-      if (error) {
-        console.error("Erreur fetch suivis_des_evangelises:", error);
-        alert("Impossible de charger le suivi de cette personne");
-        return;
-      }
+      if (error) throw error;
 
       if (!data) {
         console.warn("Aucun suivi disponible pour cette personne.");
@@ -222,23 +222,17 @@ const fetchCellules = async () => {
         return;
       }
 
-      // Merge row + suivi
       const enriched = { ...row, ...data };
       setSelectedEvangelise(enriched);
-    }
 
-    // Si c'est une intégration
-    else if (row.type_evangelisation?.toLowerCase() === "integration") {
+    } else if (row.type_evangelisation?.toLowerCase() === "integration") {
       const { data, error } = await supabase
         .from("membres_complets")
         .select("*")
         .eq("id", row.personne_id)
         .maybeSingle();
 
-      if (error) {
-        console.error("Erreur fetch membre:", error);
-        return;
-      }
+      if (error) throw error;
       if (!data) return;
 
       setSelectedMember(data);

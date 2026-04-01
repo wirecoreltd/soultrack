@@ -77,8 +77,7 @@ const formatDateFr = (dateString) => {
 
         <div className="text-center text-sm space-y-1 mb-3">
           <p>📞 Téléphone : {member.telephone || "—"}</p>
-          <p>🏙️ Ville : {member.ville || "—"}</p>
-          <p>🏠 Cellule : {getCelluleNom ? getCelluleNom(member.cellule_id) : member.cellule_nom || "—"}</p>
+          <p>🏙️ Ville : {member.ville || "—"}</p>          
           <p>👤 Conseiller :{" "}{conseillerData ? `${conseillerData.prenom} ${conseillerData.nom}` : "—"}</p>
         </div>   
 

@@ -204,7 +204,7 @@ const fetchCellules = async () => {
       const { data, error } = await supabase
         .from("suivis_des_evangelises")
         .select("*")
-        .eq("evangelise_id", row.personne_id) // <-- corrigé ici
+        .eq("evangelise_id", row.evangelise_id) // <-- corrigé ici
         .maybeSingle();
 
       if (error) throw error;

@@ -101,7 +101,18 @@ function EtatCellule() {
           r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
         );
       }    
+
+      //=============================
+      const closePopup = () => {
+        setSelectedMember(null);
+        setPopupType(null);
+      };
       
+      const getCelluleNom = (id) => {
+        // si tu veux récupérer le nom de la cellule à partir d'un id
+        const member = membres.find(m => m.id === id);
+        return member?.cellule_full || "—";
+      };
       // ================= KPI =================
       const normalize = (text) =>
         text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
@@ -168,9 +179,7 @@ function EtatCellule() {
   //==================
   const getStatutNormalise = (statut) => {
   if (!statut) return "";
-
   const s = statut.toLowerCase();
-
   if (s.includes("envoy")) return "en attente";
   return s;
 };

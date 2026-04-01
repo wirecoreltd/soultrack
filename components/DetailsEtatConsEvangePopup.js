@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import supabase from "../lib/supabaseClient";
 import EditMemberCellulePopup from "./EditMemberCellulePopup";
 
 export default function DetailsEtatConsEvangePopup({ member, onClose, getCelluleNom, onEdit }) {
   if (!member) return null;
+
+  const [conseillerData, setConseillerData] = useState(null);
 
   const parseJsonArray = (value) => {
     if (!value) return [];
@@ -37,6 +40,27 @@ const formatDateFr = (dateString) => {
     4: "Refus",
   };
 
+  useEffect(() => {
+  const fetchConseiller = async () => {
+    if (!member?.conseiller_id) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("prenom, nom")
+      .eq("id", member.conseiller_id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Erreur conseiller:", error);
+      return;
+    }
+
+    setConseillerData(data);
+  };
+
+  fetchConseiller();
+}, [member?.conseiller_id]);
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-3xl w-full max-w-md shadow-xl overflow-y-auto max-h-[95vh] relative">
@@ -55,6 +79,7 @@ const formatDateFr = (dateString) => {
           <p>📞 Téléphone : {member.telephone || "—"}</p>
           <p>🏙️ Ville : {member.ville || "—"}</p>
           <p>🏠 Cellule : {getCelluleNom ? getCelluleNom(member.cellule_id) : member.cellule_nom || "—"}</p>
+          <p>👤 Conseiller :{" "}{conseillerData ? `${conseillerData.prenom} ${conseillerData.nom}` : "—"}</span></p>
         </div>   
 
         <div className="flex flex-col gap-2 text-sm mt-3">

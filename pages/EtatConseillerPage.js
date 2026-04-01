@@ -446,18 +446,23 @@ const fetchConseillers = async () => {
         <DetailsCelluleMemberPopup
           member={selectedMember}
           onClose={() => setSelectedMember(null)}
-          onEdit={(member) => setEditMember(member)} // <-- ouvre le popup d'édition
+          onEdit={(member) => setEditMember(member)} // ouvre popup édition
         />
       )}
-
+      
       {editMember && (
         <EditMemberCellulePopup
           member={editMember}
-          onClose={() => setEditMember(null)}
+          onClose={() => {
+            setEditMember(null);      // ferme édition
+            setSelectedMember(null);   // ferme details
+          }}
           onUpdateMember={(updated) => {
-            // met à jour la liste si besoin
+            // Met à jour instantanément les données dans le tableau
+            setReports(prev => prev.map(r => r.id === updated.id ? updated : r));
             setMembres(prev => prev.map(m => m.id === updated.id ? updated : m));
             setEditMember(null);
+            setSelectedMember(null);
           }}
         />
       )}

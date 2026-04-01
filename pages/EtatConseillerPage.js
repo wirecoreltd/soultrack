@@ -81,7 +81,7 @@ function EtatConseiller() {
 
       // Filtrer par Conseiller si nécessaire et par rôle
       if (!userProfile.roles?.includes("Administrateur")) {
-        query = query.ilike("responsable", `%${userProfile.prenom}%`);
+        query = query.ilike("conseiller", `%${userProfile.prenom}%`);
       }
       const { data, error } = await query;
       if (error) throw error;

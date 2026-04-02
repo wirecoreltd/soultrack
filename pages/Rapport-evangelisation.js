@@ -348,13 +348,13 @@ const handleConseillerClick = () => {
           onChange={(e) => setTypeFilter(e.target.value)}
           className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4 text-white"
         >
-          <option value="" className="text-black">Tous</option>
-          <option value="Individuel" className="text-black">Individuel</option>
-          <option value="Sortie de groupe" className="text-black">Sortie de groupe</option>
-          <option value="Campagne d’évangélisation" className="text-black">Campagne d’évangélisation</option>
-          <option value="Évangélisation de rue" className="text-black">Évangélisation de rue</option>
-          <option value="Évangélisation maison" className="text-black">Évangélisation maison</option>
-          <option value="Évangélisation stade" className="text-black">Évangélisation stade</option>
+          <option value="">Tous</option>
+          <option value="Individuel">Individuel</option>
+          <option value="Sortie de groupe">Sortie de groupe</option>
+          <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
+          <option value="Évangélisation de rue">Évangélisation de rue</option>
+          <option value="Évangélisation maison">Évangélisation maison</option>
+          <option value="Évangélisation stade">Évangélisation stade</option>
         </select>
       </div>
     )}
@@ -527,7 +527,7 @@ const handleConseillerClick = () => {
                         {isExpanded ? "➖ " : "➕ "} {monthLabel}
                       </div>
                       <div className="flex ml-auto text-white font-semibold text-sm">
-                        <div className="min-w-[110px] text-center">{monthTotals.hommes}</div>
+                        <div className="min-w-[110px] text-center ml-3">{monthTotals.hommes}</div>
                         <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>  
                         <div className="min-w-[110px] text-center text-orange-400 font-semibold">
                        {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)} </div>
@@ -543,10 +543,10 @@ const handleConseillerClick = () => {
                     <div className="md:hidden text-white">
                       <div className="font-semibold">{isExpanded ? "➖ " : "➕ "} {monthLabel}</div>
                       <div className="grid grid-cols-2 gap-1 text-sm mt-1">
-                        <div className="ml-1">Hommes: {monthTotals.hommes}</div>
+                        <div>Hommes: {monthTotals.hommes}</div>
                         <div>Femmes: {monthTotals.femmes}</div>  
                         <div className="font-semibold text-orange-400">Total: {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)}</div>
-                        <div className="font-semibold text-orange-400">Prières: {monthTotals.priere}</div>
+                        <div>Prières: {monthTotals.priere}</div>
                         <div>NouvConv: {monthTotals.nouveau}</div>
                         <div>Recon: {monthTotals.reconciliation}</div>
                         <div>Moiss: {monthTotals.moissonneurs}</div>
@@ -578,7 +578,7 @@ const handleConseillerClick = () => {
                                 <div className="min-w-[110px] text-center text-orange-400 font-semibold">
                                   {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}
                                 </div>                                  
-                                <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.priere}</div>
+                                <div className="min-w-[120px] text-center">{typeTotals.priere}</div>
                                 <div className="min-w-[140px] text-center">{typeTotals.nouveau}</div>
                                 <div className="min-w-[130px] text-center">{typeTotals.reconciliation}</div>
                                 <div className="min-w-[130px] text-center">{typeTotals.moissonneurs}</div>

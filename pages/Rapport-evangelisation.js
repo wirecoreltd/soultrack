@@ -515,7 +515,7 @@ const handleConseillerClick = () => {
                         {isExpanded ? "➖ " : "➕ "} {monthLabel}
                       </div>
                       <div className="flex ml-auto text-white font-semibold text-sm">
-                        <div className="min-w-[110px] text-center ml-1">{monthTotals.hommes}</div>
+                        <div className="min-w-[110px] text-center ml-2">{monthTotals.hommes}</div>
                         <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>  
                         <div className="min-w-[110px] text-center text-orange-400 font-semibold">
                        {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)} </div>

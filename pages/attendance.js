@@ -682,39 +682,41 @@ useEffect(() => {
   })}
 </div>
 
-      <Footer />
-
      <Footer />
 
+{/* Styles pour le select et les options */}
 <style jsx>{`
   .input {
     border: 1px solid #ccc;
-    padding: 12px 14px;
+    padding: 12px 14px; /* plus large pour agrandir le champ */
     border-radius: 12px;
-    background: white;
-    color: black;
+    background: white; /* fond du select blanc */
+    color: black; /* texte par défaut noir */
     font-size: 16px;
-    height: 48px;
-    -webkit-appearance: none;
+    height: 48px; /* hauteur plus grande */
+    -webkit-appearance: none; /* supprime la flèche */
     -moz-appearance: none;
     appearance: none;
     cursor: pointer;
   }
 
+  /* Option spéciale AUTRE */
   select.input option[value='AUTRE'] {
     color: #333699;
   }
 
+  /* Hover sur toutes les options sauf AUTRE */
   select.input option:hover {
     background: #e0e0e0;
     color: black;
   }
 
+  /* Hover pour AUTRE */
   select.input option[value='AUTRE']:hover {
     background: #333699;
     color: white;
   }
 `}</style>
-    </div>
-  );
-}
+</div> // <-- correspond à l'ouverture principale du composant
+);
+} // <-- fermeture de la fonction du composant

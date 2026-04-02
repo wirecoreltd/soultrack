@@ -641,40 +641,41 @@ useEffect(() => {
     </div>
 
     {/* ================= MOBILE ================= */}
-    <div className="md:hidden space-y-4">
-      {Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj]) => {
-        const [year, monthIndex] = monthKey.split("-").map(Number);
-        const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+    {/* MOBILE */}
+<div className="md:hidden space-y-4">
+  {Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj]) => {
+    const [year, monthIndex] = monthKey.split("-").map(Number);
+    const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
 
-        return (
-          <div key={monthKey} className="space-y-2 border-l-4 border-red-500 rounded-lg">
+    return (
+      <div key={monthKey} className="space-y-2 border-l-4 border-red-500 rounded-lg">
+        {/* MOIS */}
+        <h3 className="text-white font-bold px-4 py-2">{monthLabel}</h3>
 
-            {/* MOIS */}
-            <h3 className="text-white font-bold px-4 py-2">{monthLabel}</h3>
+        {Object.entries(typesObj).map(([typeTemps, rows]) => {
+          const typeTotals = calculateTypeTotals(rows);
+          const typeColorIndex = availableTypes.indexOf(typeTemps) % borderColors.length;
+          const typeBorderColor = borderColors[typeColorIndex];
 
-            {Object.entries(typesObj).map(([typeTemps, rows]) => {
-              const typeTotals = calculateTypeTotals(rows);
-              const typeColorIndex = availableTypes.indexOf(typeTemps) % borderColors.length;
-              const typeBorderColor = borderColors[typeColorIndex];
-
-              return (
-                <div key={typeTemps} className={`space-y-1 border-l-4 ${typeBorderColor} rounded-lg`}>
-                  <div className="px-4 py-2 text-white font-semibold">{typeTemps}</div>
-                  {rows.map(r => (
-                    <div key={r.id} className="px-4 py-1 text-white flex justify-between">
-                      <span>{formatDateFR(r.date)}</span>
-                      <span>{r.hommes + r.femmes + r.jeunes}</span>
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        );
-      })}
-    </div>
-  </div>
-)}
+          return (
+            <div key={typeTemps} className={`space-y-2 border-l-4 ${typeBorderColor} rounded-lg p-2`}>
+              {/* Lignes */}
+              {rows.map(r => {
+                const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+                return (
+                  <div key={r.id} className="bg-white/10 p-2 rounded-lg text-white flex justify-between">
+                    <span>{formatDateFR(r.date)}</span>
+                    <span>{total}</span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    );
+  })}
+</div>
 
       <Footer />
 

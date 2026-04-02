@@ -561,100 +561,93 @@ useEffect(() => {
         return (
           <div key={monthKey} className="space-y-1">
 
-            {/* MOIS */}
-            <div
-              className={`flex items-center px-4 py-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition cursor-pointer`}
-              onClick={() => toggleMonth(monthKey)}
-            >
-              <div className="min-w-[220px] text-white font-semibold flex items-center gap-2">
-                <span className="text-lg">{monthExpanded ? "➖" : "➕"}</span>
-                {monthLabel}
-              </div>
-            
-              <div className="flex ml-auto text-orange-400 font-semibold text-sm">
-                <div className="min-w-[120px] text-center">{monthTotals.hommes}</div>
-                <div className="min-w-[120px] text-center">{monthTotals.femmes}</div>
-                <div className="min-w-[120px] text-center">{monthTotals.jeunes}</div>
-                <div className="min-w-[130px] text-center">{monthTotals.total}</div>
-                <div className="min-w-[120px] text-center">{monthTotals.enfants}</div>
-                <div className="min-w-[140px] text-center">{monthTotals.connectes}</div>
-                <div className="min-w-[150px] text-center">{monthTotals.nouveauxVenus}</div>
-                <div className="min-w-[180px] text-center">{monthTotals.nouveauxConvertis}</div>
+           {/* MOIS */}
+<div
+  className={`flex flex-col md:flex-row items-center px-4 py-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition cursor-pointer`}
+  onClick={() => toggleMonth(monthKey)}
+>
+  <div className="min-w-[220px] text-white font-semibold flex items-center gap-2">
+    <span className="text-lg">{monthExpanded ? "➖" : "➕"}</span>
+    {monthLabel}
+  </div>
+
+  <div className="flex flex-wrap md:flex-nowrap ml-auto text-orange-400 font-semibold gap-2 mt-2 md:mt-0">
+    <div className="min-w-[120px] text-center">{monthTotals.hommes}</div>
+    <div className="min-w-[120px] text-center">{monthTotals.femmes}</div>
+    <div className="min-w-[120px] text-center">{monthTotals.jeunes}</div>
+    <div className="min-w-[130px] text-center">{monthTotals.total}</div>
+    <div className="min-w-[120px] text-center">{monthTotals.enfants}</div>
+    <div className="min-w-[140px] text-center">{monthTotals.connectes}</div>
+    <div className="min-w-[150px] text-center">{monthTotals.nouveauxVenus}</div>
+    <div className="min-w-[180px] text-center">{monthTotals.nouveauxConvertis}</div>
+  </div>
+</div>
+
+{/* TYPES PAR MOIS */}
+{monthExpanded && Object.entries(typesObj).map(([typeTemps, rows]) => {
+  const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
+  const typeTotals = calculateTypeTotals(rows);
+
+  const typeColorIndex = availableTypes.indexOf(typeTemps) % borderColors.length;
+  const typeBorderColor = borderColors[typeColorIndex];
+
+  return (
+    <div key={typeTemps} className="space-y-1">
+
+      {/* HEADER TYPE */}
+      <div
+        className={`flex flex-col md:flex-row items-center px-4 py-2 rounded-xl bg-white/5 backdrop-blur-sm border-l-4 border-${typeBorderColor} ml-4 cursor-pointer hover:bg-white/10 transition`}
+        onClick={() => setTypeCollapsedDesktop(prev => ({ ...prev, [typeTemps]: !prev[typeTemps] }))}
+      >
+        <div className="min-w-[220px] text-white flex items-center gap-2">
+          <span>{typeExpanded ? "➖" : "➕"}</span>
+          <span className="whitespace-pre-line break-words">{splitTypeName(typeTemps, 15)}</span>
+        </div>
+
+        <div className="flex flex-wrap md:flex-nowrap ml-auto text-orange-400 text-sm font-semibold gap-2 mt-2 md:mt-0">
+          <div className="min-w-[120px] text-center">{typeTotals.hommes}</div>
+          <div className="min-w-[120px] text-center">{typeTotals.femmes}</div>
+          <div className="min-w-[120px] text-center">{typeTotals.jeunes}</div>
+          <div className="min-w-[130px] text-center">{typeTotals.total}</div>
+          <div className="min-w-[120px] text-center">{typeTotals.enfants}</div>
+          <div className="min-w-[140px] text-center">{typeTotals.connectes}</div>
+          <div className="min-w-[150px] text-center">{typeTotals.nouveauxVenus}</div>
+          <div className="min-w-[180px] text-center">{typeTotals.nouveauxConvertis}</div>
+        </div>
+      </div>
+
+      {/* LIGNES */}
+      {typeExpanded && rows.map(r => {
+        const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+        return (
+          <div
+            key={r.id}
+            className="flex flex-col md:flex-row items-center px-4 py-2 rounded-xl bg-white/10 border border-white/10 ml-8 hover:bg-white/20 transition"
+          >
+            <div className="min-w-[220px] text-white">{formatDateFR(r.date)}</div>
+
+            <div className="flex flex-wrap md:flex-nowrap ml-auto text-white text-sm gap-2 mt-2 md:mt-0">
+              <div className="min-w-[120px] text-center">{r.hommes}</div>
+              <div className="min-w-[120px] text-center">{r.femmes}</div>
+              <div className="min-w-[120px] text-center">{r.jeunes}</div>
+              <div className="min-w-[130px] text-center font-semibold">{total}</div>
+              <div className="min-w-[120px] text-center">{r.enfants}</div>
+              <div className="min-w-[140px] text-center">{r.connectes}</div>
+              <div className="min-w-[150px] text-center">{r.nouveauxVenus}</div>
+              <div className="min-w-[180px] text-center">{r.nouveauxConvertis}</div>
+
+              <div className="min-w-[140px] flex justify-center gap-2">
+                <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-500">✏️</button>
+                <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 hover:text-red-500">🗑️</button>
               </div>
             </div>
+          </div>
+        );
+      })}
 
-            {/* TYPES PAR MOIS */}
-            {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows]) => {
-              const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
-              const typeTotals = calculateTypeTotals(rows);
-
-              // couleur par type stable
-              const typeColorIndex = availableTypes.indexOf(typeTemps) % borderColors.length;
-              const typeBorderColor = borderColors[typeColorIndex];
-
-              return (
-                <div key={typeTemps} className="space-y-1">
-
-                  {/* HEADER TYPE */}
-                  <div
-                    className="flex items-center px-4 py-2 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 ml-4 cursor-pointer hover:bg-white/10 transition"
-                    onClick={() => setTypeCollapsedDesktop(prev => ({ ...prev, [typeTemps]: !prev[typeTemps] }))}
-                  >
-                    <div className="min-w-[220px] text-white flex items-center gap-2">
-                      <span>{typeExpanded ? "➖" : "➕"}</span>
-                      <span className="whitespace-pre-line break-words">
-                        {splitTypeName(typeTemps, 15)}
-                      </span>
-                    </div>
-                  
-                    <div className="flex ml-auto text-orange-400 text-sm font-semibold">
-                      <div className="min-w-[120px] text-center">{typeTotals.hommes}</div>
-                      <div className="min-w-[120px] text-center">{typeTotals.femmes}</div>
-                      <div className="min-w-[120px] text-center">{typeTotals.jeunes}</div>
-                      <div className="min-w-[130px] text-center">{typeTotals.total}</div>
-                      <div className="min-w-[120px] text-center">{typeTotals.enfants}</div>
-                      <div className="min-w-[140px] text-center">{typeTotals.connectes}</div>
-                      <div className="min-w-[150px] text-center">{typeTotals.nouveauxVenus}</div>
-                      <div className="min-w-[180px] text-center">{typeTotals.nouveauxConvertis}</div>
-                    </div>
-                  </div>
-
-                  {/* LIGNES */}
-                  {typeExpanded && rows.map(r => {
-                    const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-                    return (
-                      <div
-                        key={r.id}
-                        className="flex items-center px-4 py-2 rounded-xl bg-white/10 border border-white/10 ml-8 hover:bg-white/20 transition"
-                      >
-                      <div className="min-w-[220px] text-white">
-                        {formatDateFR(r.date)}
-                      </div>
-                    
-                      <div className="flex ml-auto text-white text-sm">
-                        <div className="min-w-[120px] text-center">{r.hommes}</div>
-                        <div className="min-w-[120px] text-center">{r.femmes}</div>
-                        <div className="min-w-[120px] text-center">{r.jeunes}</div>
-                        <div className="min-w-[130px] text-center font-semibold">
-                          {Number(r.hommes) + Number(r.femmes) + Number(r.jeunes)}
-                        </div>
-                        <div className="min-w-[120px] text-center">{r.enfants}</div>
-                        <div className="min-w-[140px] text-center">{r.connectes}</div>
-                        <div className="min-w-[150px] text-center">{r.nouveauxVenus}</div>
-                        <div className="min-w-[180px] text-center">{r.nouveauxConvertis}</div>
-                    
-                        <div className="min-w-[140px] flex justify-center gap-2">
-                          <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-500">✏️</button>
-                          <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 hover:text-red-500">🗑️</button>
-                        </div>
-                      </div>
-                    </div>
-                    );
-                  })}
-
-                </div>
-              );
-            })}
+    </div>
+  );
+})}
 
           </div>
         );

@@ -589,7 +589,7 @@ useEffect(() => {
                           </div>
                         </div>
                 
-                        <div className="min-w-[120px] text-center text-orange-400 font-semibold -ml-12">{typeTotals.hommes}</div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.hommes}</div>
                         <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.femmes}</div>
                         <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.jeunes}</div>
                         <div className="min-w-[130px] text-center text-orange-400 font-semibold">{typeTotals.total}</div>
@@ -609,7 +609,7 @@ useEffect(() => {
                             className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColorClass} cursor-pointer ml-12`}
                           >
                             <div className="min-w-[220px] text-white">{formatDateFR(r.date)}</div>
-                            <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                            <div className="min-w-[120px] text-center text-white -ml-12">{r.hommes}</div>
                             <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
                             <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
                             <div className="min-w-[130px] text-center text-white">{total}</div>

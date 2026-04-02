@@ -346,15 +346,15 @@ const handleConseillerClick = () => {
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
+          className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4 text-white"
         >
-          <option value="">Tous</option>
-          <option value="Individuel">Individuel</option>
-          <option value="Sortie de groupe">Sortie de groupe</option>
-          <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
-          <option value="Évangélisation de rue">Évangélisation de rue</option>
-          <option value="Évangélisation maison">Évangélisation maison</option>
-          <option value="Évangélisation stade">Évangélisation stade</option>
+          <option value="" className="text-black">Tous</option>
+          <option value="Individuel" className="text-black">Individuel</option>
+          <option value="Sortie de groupe" className="text-black">Sortie de groupe</option>
+          <option value="Campagne d’évangélisation" className="text-black">Campagne d’évangélisation</option>
+          <option value="Évangélisation de rue" className="text-black">Évangélisation de rue</option>
+          <option value="Évangélisation maison" className="text-black">Évangélisation maison</option>
+          <option value="Évangélisation stade" className="text-black">Évangélisation stade</option>
         </select>
       </div>
     )}

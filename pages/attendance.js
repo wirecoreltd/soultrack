@@ -5,6 +5,7 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+import { useMemo } from "react";
 
 export default function AttendancePage() {
   return (
@@ -25,8 +26,7 @@ function Attendance() {
   const [expandedMonths, setExpandedMonths] = useState({});
   const [typeCollapsedDesktop, setTypeCollapsedDesktop] = useState({});
   const [availableTypes, setAvailableTypes] = useState([]);
-  const [filterType, setFilterType] = useState("");
-  import { useMemo } from "react";
+  const [filterType, setFilterType] = useState("");  
   const [formData, setFormData] = useState({
     date: "",
     typeTemps: "",

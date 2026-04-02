@@ -31,8 +31,6 @@ export default function SuivisEvangelisation() {
   const [phoneMenuId, setPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);   
 
-  useEffect(() => {localStorage.setItem("members_view", view);}, [view]);
-
     // ================= INIT =================
 
     useEffect(() => {
@@ -565,8 +563,7 @@ export default function SuivisEvangelisation() {
       );
     })}
   </div>
-)}   
-
+   
     {editingContact && (
       <EditEvangeliseSuiviPopup
         member={editingContact}

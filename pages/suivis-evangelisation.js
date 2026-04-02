@@ -5,7 +5,6 @@ import supabase from "../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditEvangeliseSuiviPopup from "../components/EditEvangeliseSuiviPopup";
-import DetailEvangeliseSuivisPopup from "../components/DetailEvangeliseSuivisPopup";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
@@ -23,21 +22,14 @@ export default function SuivisEvangelisation() {
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);  
   const [updating, setUpdating] = useState({});
-  const [detailsCarteId, setDetailsCarteId] = useState(null);
-  const [detailsTable, setDetailsTable] = useState(null);
+  const [detailsCarteId, setDetailsCarteId] = useState(null); 
   const [editingContact, setEditingContact] = useState(null);
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
   const [showRefus, setShowRefus] = useState(false);
   const [user, setUser] = useState(null);
   const [phoneMenuId, setPhoneMenuId] = useState(null);
-  const phoneMenuRef = useRef(null); 
-  const [view, setView] = useState(() => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("members_view") || "card";
-  }
-  return "card";
-});
+  const phoneMenuRef = useRef(null);   
 
   useEffect(() => {localStorage.setItem("members_view", view);}, [view]);
 
@@ -186,14 +178,7 @@ export default function SuivisEvangelisation() {
   const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
 
   return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
-};
-
-  const switchView = () => {
-    setView(view === "card" ? "table" : "card");
-    setDetailsCarteId(null);
-    setDetailsTable(null);
-    setEditingContact(null);
-  };
+}; 
 
   const suivisAffiches = allSuivis.filter((m) => {
   if (showRefus) return m.status_suivis_evangelises === "Refus";
@@ -377,11 +362,7 @@ export default function SuivisEvangelisation() {
     <h1 className="text-3xl font-bold text-white mb-6">Suivis des Évangélisés</h1>
 
     {/* Toggle Vue / Refus */}
-    <div className="mb-6 flex justify-between w-full max-w-6xl">
-      <button onClick={switchView} className="text-white underline">
-        {view === "card" ? "Vue Table" : "Vue Carte"}
-      </button>
-
+    <div className="mb-6 flex justify-between w-full max-w-6xl">     
       <button
         onClick={() => setShowRefus(!showRefus)}
         className="text-orange-400 text-sm underline hover:text-orange-500"
@@ -390,8 +371,7 @@ export default function SuivisEvangelisation() {
       </button>
     </div>
 
-    {/* ================= VUE CARTE ================= */}
-    {view === "card" && (
+    {/* ================= VUE CARTE ================= */}    
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
         {suivisAffiches.map((m) => {
           const ouvert = detailsCarteId === m.id;
@@ -585,110 +565,7 @@ export default function SuivisEvangelisation() {
       );
     })}
   </div>
-)}
-    {/* ================= VUE TABLE ================= */}
-      {view === "table" && (
-        <div className="w-full max-w-6xl overflow-x-auto py-2 mx-auto">
-          <div className="min-w-[900px] space-y-2">
-      
-            {/* Header */}
-            <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-gray-400">
-              <div className="flex-[2]">Nom complet</div>
-              <div className="flex-[1]">Téléphone</div>
-              <div className="flex-[1]">Attribué à</div>
-              <div className="flex-[1]">Ville</div>
-              < div className="flex-[1]">Statut</div>
-              <div className="flex-[1] text-center">Actions</div>
-            </div>
-      
-            {/* Lignes */}
-            {suivisAffiches.map((m) => {
-              const cellule = cellules.find(c => c.id === m.cellule_id);
-              const conseiller = conseillers.find(c => c.id === m.conseiller_id);      
-              const attribueA = cellule
-                ? `🏠 ${cellule.cellule_full}`
-                : conseiller
-                  ? `👤 ${conseiller.prenom} ${conseiller.nom}`
-                  : "—";              
-      
-              return (
-                <div
-                  key={m.id}
-                  className="flex flex-col sm:flex-row items-start sm:items-center px-3 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition gap-2 border-l-4"
-                  style={{ borderLeftColor: getBorderColor(m) }}
-                >
-      
-                  {/* Nom */}
-                  <div className="flex-[2] font-bold text-white">
-                    <span className="sm:hidden text-xs text-gray-300 block">Nom</span>
-                    {m.prenom} {m.nom}
-                  </div>      
-                 
-                  {/* Téléphone */}  
-                   <div className="flex-[1] text-sm text-white">
-                    <span className="sm:hidden text-xs text-gray-300 block">Téléphone</span>
-                    {m.telephone || "—"}
-                  </div>
-                         
-                  {/* Attribué à */}
-                  <div className="flex-[1] text-sm text-white">
-                    <span className="sm:hidden text-xs text-gray-300 block">Attribué à</span>
-                    {attribueA}
-                  </div>
-      
-                  {/* Ville */}
-                  <div className="flex-[1] text-sm text-white">
-                    <span className="sm:hidden text-xs text-gray-300 block">Ville</span>
-                    {m.ville || "—"}
-                  </div>
-
-                  {/* Statut */}
-                  <div className="flex-[1] text-sm text-white">
-                    <span className="sm:hidden text-xs text-gray-300 block">Statut</span>
-                    {m.status_suivis_evangelises || "—"}
-                  </div>
-      
-                  {/* Actions */}
-                  <div className="flex-[1] flex sm:justify-center gap-3 text-sm">
-                    <button
-                      onClick={() => setDetailsTable(m)}
-                      className="text-orange-400 underline"
-                    >
-                      Détails
-                    </button>      
-                    
-                  </div>      
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-   {view === "table" && detailsTable && (
-    <DetailEvangeliseSuivisPopup
-      member={detailsTable}
-      cellules={cellules}
-      conseillers={conseillers}
-       onClose={() => {
-      setEditingContact(null);      // ferme Edit
-      setDetailsTable(null);        // ferme Details aussi
-    }}
-      onUpdate={(id, updates) => {
-        // 🔹 Met à jour localement la liste
-        updateSuiviLocal(id, updates);
-  
-        // 🔹 Ferme le popup principal
-        setDetailsTable(null);
-      }}
-      // 🔹 sous-popup éditer
-      onEdit={(member) => {
-        // 🔹 ouvre le sous-popup
-        setEditingContact(member);
-      }}
-    />
-  )}
-
+)}   
 
     {editingContact && (
       <EditEvangeliseSuiviPopup

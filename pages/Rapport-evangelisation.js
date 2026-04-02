@@ -578,7 +578,7 @@ const handleConseillerClick = () => {
                                 <div className="min-w-[110px] text-center text-orange-400 font-semibold">
                                   {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}
                                 </div>                                  
-                                <div className="min-w-[120px] text-center">{typeTotals.priere}</div>
+                                <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.priere}</div>
                                 <div className="min-w-[140px] text-center">{typeTotals.nouveau}</div>
                                 <div className="min-w-[130px] text-center">{typeTotals.reconciliation}</div>
                                 <div className="min-w-[130px] text-center">{typeTotals.moissonneurs}</div>

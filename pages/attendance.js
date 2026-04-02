@@ -522,198 +522,188 @@ useEffect(() => {
           </div>
         </div>
      
- {/* TABLEAU / CARDS DESKTOP + MOBILE */}
+  {/* TABLEAU / CARDS DESKTOP + MOBILE */}
 {showTable && (
   <div className="max-w-5xl w-full mt-6 mb-6">
 
-    {/* ================= DESKTOP ================= */}
-    <div className="hidden md:block overflow-x-auto w-full max-w-5xl mt-6 mb-6">   
-      <div className="w-max space-y-2">
+   {/* ================= DESKTOP ================= */}
+{showTable && (
+  <div className="hidden md:block overflow-x-auto w-full max-w-5xl mt-6 mb-6">   
 
-        {/* HEADER TABLE */}
-        <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-          <div className="min-w-[220px]">Type / Date</div>
-          <div className="min-w-[120px] text-center">Hommes</div>
-          <div className="min-w-[120px] text-center">Femmes</div>
-          <div className="min-w-[120px] text-center">Jeunes</div>
-          <div className="min-w-[130px] text-center">Total</div>
-          <div className="min-w-[120px] text-center">Enfants</div>
-          <div className="min-w-[140px] text-center">Connectés</div>
-          <div className="min-w-[150px] text-center">Nouveaux venus</div>
-          <div className="min-w-[180px] text-center">Nouveaux convertis</div>
-          <div className="min-w-[140px] text-center">Actions</div>
-        </div>
+    <div className="w-max space-y-2">
 
-        {Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj]) => {
-          const [year, monthIndex] = monthKey.split("-").map(Number);
-          const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-          const monthExpanded = expandedMonths[monthKey] || false;
-
-          const monthTotals = calculateMonthTotals(typesObj);
-
-          return (
-            <div key={monthKey} className="space-y-1">
-
-              {/* MOIS */}
-              <div
-                className="flex items-center px-4 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 transition border-l-4 border-red-500 cursor-pointer shadow-md"
-                onClick={() => toggleMonth(monthKey)}
-              >
-                <div className="min-w-[220px] text-white font-bold flex items-center gap-2">
-                  <span className="text-lg">{monthExpanded ? "➖" : "➕"}</span>
-                  {monthLabel}
-                </div>
-                <div className="flex ml-auto text-white font-semibold text-sm">
-                  <div className="min-w-[120px] text-center">{monthTotals.hommes}</div>
-                  <div className="min-w-[120px] text-center">{monthTotals.femmes}</div>
-                  <div className="min-w-[120px] text-center">{monthTotals.jeunes}</div>
-                  <div className="min-w-[130px] text-center">{monthTotals.total}</div>
-                  <div className="min-w-[120px] text-center">{monthTotals.enfants}</div>
-                  <div className="min-w-[140px] text-center">{monthTotals.connectes}</div>
-                  <div className="min-w-[150px] text-center">{monthTotals.nouveauxVenus}</div>
-                  <div className="min-w-[180px] text-center">{monthTotals.nouveauxConvertis}</div>
-                </div>
-              </div>
-
-              {/* TYPES PAR MOIS */}
-              {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows]) => {
-                const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
-                const typeTotals = calculateTypeTotals(rows);
-
-                // Couleur stable par type
-                const typeColors = [
-                  "border-blue-500", "border-green-500",
-                  "border-yellow-500", "border-purple-500",
-                  "border-pink-500", "border-indigo-500"
-                ];
-                const typeColorIndex = availableTypes.indexOf(typeTemps) % typeColors.length;
-                const typeBorderColor = typeColors[typeColorIndex];
-                const typeBg = typeBorderColor.replace("border", "bg").replace("500", "500/20");
-
-                return (
-                  <div key={typeTemps} className="space-y-1">
-
-                    {/* HEADER TYPE */}
-                    <div
-                      className={`flex items-center px-4 py-2 rounded-xl ${typeBg} hover:brightness-110 transition border-l-4 ${typeBorderColor} cursor-pointer`}
-                      onClick={() => setTypeCollapsedDesktop(prev => ({ ...prev, [typeTemps]: !prev[typeTemps] }))}
-                    >
-                      <div className="min-w-[220px] text-white font-semibold ml-6 flex items-center gap-2">
-                        <span>{typeExpanded ? "➖" : "➕"}</span>
-                        <span className="whitespace-pre-line break-words">{splitTypeName(typeTemps, 15)}</span>
-                      </div>
-                      <div className="flex ml-auto text-white text-sm font-semibold">
-                        <div className="min-w-[120px] text-center">{typeTotals.hommes}</div>
-                        <div className="min-w-[120px] text-center">{typeTotals.femmes}</div>
-                        <div className="min-w-[120px] text-center">{typeTotals.jeunes}</div>
-                        <div className="min-w-[130px] text-center">{typeTotals.total}</div>
-                        <div className="min-w-[120px] text-center">{typeTotals.enfants}</div>
-                        <div className="min-w-[140px] text-center">{typeTotals.connectes}</div>
-                        <div className="min-w-[150px] text-center">{typeTotals.nouveauxVenus}</div>
-                        <div className="min-w-[180px] text-center">{typeTotals.nouveauxConvertis}</div>
-                      </div>
-                    </div>
-
-                    {/* LIGNES */}
-                    {typeExpanded && rows.map(r => {
-                      const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-                      return (
-                        <div
-                          key={r.id}
-                          className={`flex items-center px-4 py-2 rounded-xl ${typeBg} hover:brightness-125 transition border-l-4 ${typeBorderColor} ml-8`}
-                        >
-                          <div className="min-w-[220px] text-white">{formatDateFR(r.date)}</div>
-                          <div className="flex ml-auto text-white text-sm">
-                            <div className="min-w-[120px] text-center">{r.hommes}</div>
-                            <div className="min-w-[120px] text-center">{r.femmes}</div>
-                            <div className="min-w-[120px] text-center">{r.jeunes}</div>
-                            <div className="min-w-[130px] text-center font-semibold">{total}</div>
-                            <div className="min-w-[120px] text-center">{r.enfants}</div>
-                            <div className="min-w-[140px] text-center">{r.connectes}</div>
-                            <div className="min-w-[150px] text-center">{r.nouveauxVenus}</div>
-                            <div className="min-w-[180px] text-center">{r.nouveauxConvertis}</div>
-                            <div className="min-w-[140px] flex justify-center gap-2">
-                              <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-500">✏️</button>
-                              <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 hover:text-red-500">🗑️</button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                  </div>
-                );
-              })}
-
-            </div>
-          );
-        })}
-
+      {/* HEADER TABLE */}
+      <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+        <div className="min-w-[220px]">Type / Date</div>
+        <div className="min-w-[120px] text-center">Hommes</div>
+        <div className="min-w-[120px] text-center">Femmes</div>
+        <div className="min-w-[120px] text-center">Jeunes</div>
+        <div className="min-w-[130px] text-center">Total</div>
+        <div className="min-w-[120px] text-center">Enfants</div>
+        <div className="min-w-[140px] text-center">Connectés</div>
+        <div className="min-w-[150px] text-center">Nouveaux venus</div>
+        <div className="min-w-[180px] text-center">Nouveaux convertis</div>
+        <div className="min-w-[140px] text-center">Actions</div>
       </div>
-    </div>
 
-    {/* MOBILE TABLE */}
-<div className="md:hidden space-y-2 mt-4">
-  {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
-    const [year, monthIndex] = monthKey.split("-").map(Number);
-    const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-    const isExpanded = expandedMonths[monthKey] || false;
-    const monthTotals = getTotals(monthReports);
+      {Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj]) => {
+        const [year, monthIndex] = monthKey.split("-").map(Number);
+        const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+        const monthExpanded = expandedMonths[monthKey] || false;
 
-    return (
-      <div key={monthKey} className="bg-white/10 rounded-xl p-3">
-        <div
-          className="flex justify-between items-center cursor-pointer"
-          onClick={() => toggleMonth(monthKey)}
-        >
-          <span className="font-semibold text-white">{isExpanded ? "➖ " : "➕ "} {monthLabel}</span>
-          <span className="text-white font-semibold">{monthTotals.hommes + monthTotals.femmes} Total</span>
-        </div>
+        // border color basé sur le premier type du mois (stable par type)
+        const firstType = Object.keys(typesObj)[0];
+        const colorIndex = availableTypes.indexOf(firstType) % borderColors.length;
+        const monthBorderColor = borderColors[colorIndex];
 
-        {isExpanded && (
-          <div className="mt-2 space-y-1">
-            {Object.entries(groupByType(monthReports)).map(([type, typeReports]) => {
-              const typeKey = `${monthKey}-${type}`;
-              const typeExpanded = expandedTypes[typeKey] || false;
-              const typeTotals = getTotals(typeReports);
+        const monthTotals = calculateMonthTotals(typesObj);
+
+        return (
+          <div key={monthKey} className="space-y-1">
+
+            {/* MOIS */}
+            <div
+              className={`flex items-center px-4 py-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition cursor-pointer`}
+              onClick={() => toggleMonth(monthKey)}
+            >
+              <div className="min-w-[220px] text-white font-semibold flex items-center gap-2">
+                <span className="text-lg">{monthExpanded ? "➖" : "➕"}</span>
+                {monthLabel}
+              </div>
+            
+              <div className="flex ml-auto text-orange-400 font-semibold text-sm">
+                <div className="min-w-[120px] text-center">{monthTotals.hommes}</div>
+                <div className="min-w-[120px] text-center">{monthTotals.femmes}</div>
+                <div className="min-w-[120px] text-center">{monthTotals.jeunes}</div>
+                <div className="min-w-[130px] text-center">{monthTotals.total}</div>
+                <div className="min-w-[120px] text-center">{monthTotals.enfants}</div>
+                <div className="min-w-[140px] text-center">{monthTotals.connectes}</div>
+                <div className="min-w-[150px] text-center">{monthTotals.nouveauxVenus}</div>
+                <div className="min-w-[180px] text-center">{monthTotals.nouveauxConvertis}</div>
+              </div>
+            </div>
+
+            {/* TYPES PAR MOIS */}
+            {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows]) => {
+              const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
+              const typeTotals = calculateTypeTotals(rows);
+
+              // couleur par type stable
+              const typeColorIndex = availableTypes.indexOf(typeTemps) % borderColors.length;
+              const typeBorderColor = borderColors[typeColorIndex];
 
               return (
-                <div key={typeKey} className="bg-white/15 rounded-lg p-2 ml-2">
+                <div key={typeTemps} className="space-y-1">
+
+                  {/* HEADER TYPE */}
                   <div
-                    className="flex justify-between items-center cursor-pointer"
-                    onClick={() => toggleType(typeKey)}
+                    className="flex items-center px-4 py-2 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 ml-4 cursor-pointer hover:bg-white/10 transition"
+                    onClick={() => setTypeCollapsedDesktop(prev => ({ ...prev, [typeTemps]: !prev[typeTemps] }))}
                   >
-                    <span className="font-medium text-white">{typeExpanded ? "➖ " : "➕ "} {type}</span>
-                    <span className="text-white font-medium">{typeTotals.hommes + typeTotals.femmes} Total</span>
+                    <div className="min-w-[220px] text-white flex items-center gap-2">
+                      <span>{typeExpanded ? "➖" : "➕"}</span>
+                      <span className="whitespace-pre-line break-words">
+                        {splitTypeName(typeTemps, 15)}
+                      </span>
+                    </div>
+                  
+                    <div className="flex ml-auto text-orange-400 text-sm font-semibold">
+                      <div className="min-w-[120px] text-center">{typeTotals.hommes}</div>
+                      <div className="min-w-[120px] text-center">{typeTotals.femmes}</div>
+                      <div className="min-w-[120px] text-center">{typeTotals.jeunes}</div>
+                      <div className="min-w-[130px] text-center">{typeTotals.total}</div>
+                      <div className="min-w-[120px] text-center">{typeTotals.enfants}</div>
+                      <div className="min-w-[140px] text-center">{typeTotals.connectes}</div>
+                      <div className="min-w-[150px] text-center">{typeTotals.nouveauxVenus}</div>
+                      <div className="min-w-[180px] text-center">{typeTotals.nouveauxConvertis}</div>
+                    </div>
                   </div>
 
-                  {typeExpanded && (
-                    <div className="mt-2 space-y-1">
-                      {typeReports.map((r) => (
-                        <div key={r.id} className="grid grid-cols-2 gap-2 bg-white/10 rounded p-2">
-                          <div className="text-white font-medium">Date: {new Date(r.date_evangelise).toLocaleDateString()}</div>
-                          <div className="text-white text-right">Hommes: {r.hommes ?? 0}</div>
-                          <div className="text-white font-medium">Femmes: {r.femmes ?? 0}</div>
-                          <div className="text-orange-400 font-semibold text-right">
-                            Total: {(r.hommes || 0) + (r.femmes || 0)}
-                          </div>
-                          <div className="text-white">Prières: {r.priere}</div>
-                          <div className="text-white">NouvConv: {r.nouveau_converti}</div>
-                          <div className="text-white">Recon: {r.reconciliation}</div>
-                          <div className="text-white">Moiss: {r.moissonneurs}</div>
+                  {/* LIGNES */}
+                  {typeExpanded && rows.map(r => {
+                    const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+                    return (
+                      <div
+                        key={r.id}
+                        className="flex items-center px-4 py-2 rounded-xl bg-white/10 border border-white/10 ml-8 hover:bg-white/20 transition"
+                      >
+                      <div className="min-w-[220px] text-white">
+                        {formatDateFR(r.date)}
+                      </div>
+                    
+                      <div className="flex ml-auto text-white text-sm">
+                        <div className="min-w-[120px] text-center">{r.hommes}</div>
+                        <div className="min-w-[120px] text-center">{r.femmes}</div>
+                        <div className="min-w-[120px] text-center">{r.jeunes}</div>
+                        <div className="min-w-[130px] text-center font-semibold">
+                          {Number(r.hommes) + Number(r.femmes) + Number(r.jeunes)}
                         </div>
-                      ))}
+                        <div className="min-w-[120px] text-center">{r.enfants}</div>
+                        <div className="min-w-[140px] text-center">{r.connectes}</div>
+                        <div className="min-w-[150px] text-center">{r.nouveauxVenus}</div>
+                        <div className="min-w-[180px] text-center">{r.nouveauxConvertis}</div>
+                    
+                        <div className="min-w-[140px] flex justify-center gap-2">
+                          <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-500">✏️</button>
+                          <button onClick={() => handleDeleteTemps(r.typeTemps)} className="text-red-400 hover:text-red-500">🗑️</button>
+                        </div>
+                      </div>
                     </div>
-                  )}
+                    );
+                  })}
+
                 </div>
               );
             })}
+
           </div>
-        )}
-      </div>
-    );
-  })}
-</div>
+        );
+      })}
+
+    </div>
+  </div>
+)}
+
+    {/* ================= MOBILE ================= */}
+    <div className="md:hidden space-y-4">
+      {Object.entries(groupByMonthAndType(reports)).map(([monthKey, typesObj]) => {
+        const [year, monthIndex] = monthKey.split("-").map(Number);
+        const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+
+        return (
+          <div key={monthKey} className="space-y-2">
+
+            <h3 className="text-white font-bold">{monthLabel}</h3>
+
+            {Object.entries(typesObj).map(([typeTemps, rows]) => {
+              const typeTotals = calculateTypeTotals(rows);
+
+              return (
+                <div key={typeTemps} className="space-y-2 bg-white/10 rounded-xl p-2">
+                  <h4 className="text-orange-400 font-semibold flex justify-between">
+                    <span>{typeTemps}</span>
+                    <span>Total: {typeTotals.total}</span>
+                  </h4>
+                  {rows.map(r => (
+                    <div key={r.id} className="bg-white/5 rounded-xl p-4 text-white space-y-1">
+                      <p>{formatDateFR(r.date)}</p>
+                      <p>Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
+                      <p>Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
+                      <p>Enfants: {r.enfants} | Connectés: {r.connectes}</p>
+                      <p>Nouveaux venus: {r.nouveauxVenus} | Nouveaux convertis: {r.nouveauxConvertis}</p>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+
+          </div>
+        );
+      })}
+    </div>
+
+  </div>
+)}
 
       <Footer />
 

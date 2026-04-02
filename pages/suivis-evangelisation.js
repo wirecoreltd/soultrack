@@ -360,7 +360,7 @@ export default function SuivisEvangelisation() {
     <h1 className="text-3xl font-bold text-white mb-6">Suivis des Évangélisés</h1>
 
     {/* Toggle Vue / Refus */}
-    <div className="mb-6 flex justify-between w-full max-w-6xl">     
+    <div className="mb-6 flex justify-end w-full max-w-6xl">     
       <button
         onClick={() => setShowRefus(!showRefus)}
         className="text-orange-400 text-sm underline hover:text-orange-500"

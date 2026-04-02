@@ -597,7 +597,7 @@ useEffect(() => {
                         className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${typeBorderColor} cursor-pointer`}
                       >
                         <div className="min-w-[220px] text-white ml-12 break-words">{formatDateFR(r.date)}</div>
-                        <div className="min-w-[120px] text-center text-white -ml-5">{r.hommes}</div>
+                        <div className="min-w-[120px] text-center text-white -ml-9">{r.hommes}</div>
                         <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
                         <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
                         <div className="min-w-[130px] text-center text-white">{total}</div>

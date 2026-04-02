@@ -7,7 +7,6 @@ import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
-import DetailsCelluleMemberPopup from "../components/DetailsCelluleMemberPopup";
 
 export default function MembresCellule() {
   return (
@@ -28,8 +27,7 @@ function MembresCelluleContent() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [view, setView] = useState("card");
-  const [editMember, setEditMember] = useState(null);
-  const [detailsMember, setDetailsMember] = useState(null);
+  const [editMember, setEditMember] = useState(null);  
   const [detailsOpen, setDetailsOpen] = useState({});
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
@@ -198,17 +196,7 @@ function MembresCelluleContent() {
               </select>
               <span className="text-white text-sm">{filteredMembres.length} membres</span>
             </div>
-          </div>
-
-          {/* Toggle Vue Carte / Table */}
-          <div className="w-full max-w-6xl flex justify-center mb-6">
-            <button
-              onClick={() => setView(view === "card" ? "table" : "card")}
-              className="text-sm font-semibold underline text-white"
-            >
-              {view === "card" ? "Vue Table" : "Vue Carte"}
-            </button>
-          </div>
+          </div>          
 
           {/* ================= VUE CARTE ================= */}
           {view === "card" && (
@@ -280,43 +268,8 @@ function MembresCelluleContent() {
                 })}
               </div>
             </div>
-          )}
-
-          {/* ================= VUE TABLE ================= */}
-          {view === "table" && (
-            <div className="w-full max-w-6xl overflow-x-auto py-2 mx-auto">
-              <div className="min-w-[700px] space-y-2">
-                <div className="hidden sm:flex text-sm font-semibold uppercase text-white px-2 py-1 border-b border-gray-400 bg-transparent">
-                  <div className="flex-[2]">Nom complet</div>
-                  <div className="flex-[1]">Téléphone</div>
-                  <div className="flex-[1]">Ville</div>
-                  <div className="flex-[1] flex justify-center items-center">Cellule</div>
-                  <div className="flex-[1]">Action</div>
-                </div>
-                {filteredMembres.map((m) => (
-                  <div key={m.id} className="flex flex-row items-center px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition duration-150 gap-2 border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
-                    <div className="flex-[2] text-white flex items-center gap-1">{m.prenom} {m.nom}</div>
-                    <div className="flex-[1] text-white">{m.telephone || "—"}</div>
-                    <div className="flex-[1] text-white">{m.ville || "—"}</div>
-                    <div className="flex-[1] text-white flex justify-center items-center">{getCelluleNom(m.cellule_id)}</div>
-                    <div className="flex-[1]"><button onClick={() => setDetailsMember(m)} className="text-orange-500 underline text-sm">Détails</button></div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ================= POPUPS ================= */}
-          <DetailsCelluleMemberPopup
-            member={detailsMember}
-            onClose={() => setDetailsMember(null)}
-            getCelluleNom={getCelluleNom}
-            onEdit={(m) => {
-              setEditMember(m);
-              setDetailsMember(null);
-            }}
-          />
-
+          )}         
+          
           {editMember && (
             <EditMemberCellulePopup
               member={editMember}

@@ -334,7 +334,7 @@ const handleConseillerClick = () => {
     <button
       onClick={fetchRapports}
       disabled={loading}
-      className="h-10 w-full bg-amber-400 text-black font-bold px-6 rounded-lg hover:bg-amber-300 transition disabled:opacity-50"
+      className="h-10 w-full bg-amber-400 text-white font-semibold px-6 rounded-lg hover:bg-amber-300 transition disabled:opacity-50"
     >
       {loading ? "Chargement..." : "Générer le rapport"}
     </button>

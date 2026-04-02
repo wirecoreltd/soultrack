@@ -24,6 +24,7 @@ function Attendance() {
   const selectRef = useRef(null);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [typeCollapsedDesktop, setTypeCollapsedDesktop] = useState({});
+  const [availableTypes, setAvailableTypes] = useState([]);
 
   const [formData, setFormData] = useState({
     date: "",
@@ -321,6 +322,14 @@ const calculateTypeTotals = (rows) => {
   const groupedReports = groupByMonth(reports);
   const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500","border-pink-500","border-indigo-500"];
 
+  // pour remplir le dropdown de type
+useEffect(() => {
+  if (reports.length > 0) {
+    const types = [...new Set(reports.map(r => r.typeTemps))];
+    setAvailableTypes(types);
+  }
+}, [reports]);     
+  
   /* ================= RENDER ================= */
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">

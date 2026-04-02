@@ -196,7 +196,18 @@ function MembresCelluleContent() {
               </select>
               <span className="text-white text-sm">{filteredMembres.length} membres</span>
             </div>
-          </div>          
+          </div>     
+        
+             //=========================
+               <div className="w-full flex justify-end">                
+                    <button
+                      onClick={() => router.push("/ajouter-membre-cellule")}
+                      className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+                    >
+                      ➕ Ajouter un membre
+                    </button>
+                  
+                </div>
 
           {/* ================= VUE CARTE ================= */}
           {view === "card" && (

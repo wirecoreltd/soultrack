@@ -918,13 +918,11 @@ const canAddMember =
         <span className="text-white text-sm ml-2">{filteredMembers.length} membres</span>
       </div>
 
-      <div className="w-full max-w-6xl flex justify-between items-center mb-4">       
-      
-        {/* 🔥 Bouton visible seulement si l'utilisateur N'EST PAS Conseiller */}        
-       {canAddMember && (
+      <div className="w-full flex justify-end">
+        {canAddMember && (
           <button
             onClick={() => router.push("/AddContact")}
-            className="text-white justify-end font-semibold px-4 py-2 rounded shadow text-sm"
+            className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
           >
             ➕ Ajouter un membre
           </button>

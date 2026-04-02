@@ -924,7 +924,7 @@ const canAddMember =
        {canAddMember && (
           <button
             onClick={() => router.push("/AddContact")}
-            className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+            className="text-white justify-end font-semibold px-4 py-2 rounded shadow text-sm"
           >
             ➕ Ajouter un membre
           </button>

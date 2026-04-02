@@ -25,7 +25,8 @@ function Attendance() {
   const [expandedMonths, setExpandedMonths] = useState({});
   const [typeCollapsedDesktop, setTypeCollapsedDesktop] = useState({});
   const [availableTypes, setAvailableTypes] = useState([]);
-  const [filterType, setFilterType] = useState(""); 
+  const [filterType, setFilterType] = useState("");
+  import { useMemo } from "react";
   const [formData, setFormData] = useState({
     date: "",
     typeTemps: "",
@@ -340,7 +341,29 @@ useEffect(() => {
     const types = [...new Set(reports.map(r => r.typeTemps))];
     setAvailableTypes(types);
   }
-}, [reports]);                      
+}, [reports]);          
+
+  const Calendar = ({ reports }) => {
+  // 1️⃣ Grouper par mois
+  const groupedReports = useMemo(() => {
+    return reports.reduce((acc, report) => {
+      const month = new Date(report.date).toLocaleString("default", { month: "long" });
+      if (!acc[month]) acc[month] = [];
+      acc[month].push(report);
+      return acc;
+    }, {});
+  }, [reports]);
+
+  // 2️⃣ Créer dynamiquement la map type -> couleur
+  const typeColorMap = useMemo(() => {
+    const types = [...new Set(reports.map(r => r.typeTemps))];
+    const map = {};
+    types.forEach((type, idx) => {
+      const color = borderColors[idx % borderColors.length];
+      map[type] = `bg-opacity-30 ${color} text-${color.split("-")[1]}-800 bg-${color.split("-")[1]}-200`;
+    });
+    return map;
+  }, [reports]);
 
   /* ================= RENDER ================= */
   return (
@@ -485,7 +508,7 @@ useEffect(() => {
 {showTable && (
   <div className="max-w-5xl w-full mt-6 mb-6">
 
-   {/* ================= DESKTOP ================= */}
+  {/* ================= DESKTOP ================= */}
 {showTable && (
   <div className="hidden md:block overflow-x-auto w-full max-w-5xl mt-6 mb-6">
 
@@ -527,11 +550,6 @@ useEffect(() => {
         const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
         const monthExpanded = expandedMonths[monthKey] || false;
 
-        // border color basé sur le premier type du mois (stable par type)
-        const firstType = Object.keys(typesObj)[0];
-        const colorIndex = availableTypes.indexOf(firstType) % borderColors.length;
-        const monthBorderColor = borderColors[colorIndex];
-
         const monthTotals = calculateMonthTotals(typesObj);
 
         return (
@@ -539,7 +557,7 @@ useEffect(() => {
 
             {/* MOIS */}
             <div
-              className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${monthBorderColor} cursor-pointer`}
+              className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-red-500 cursor-pointer`}
               onClick={() => toggleMonth(monthKey)}
             >
               <div className="min-w-[220px] text-white font-semibold flex items-center gap-2">
@@ -561,7 +579,7 @@ useEffect(() => {
               const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
               const typeTotals = calculateTypeTotals(rows);
 
-              // couleur par type stable
+              // couleur dynamique basée sur le type
               const typeColorIndex = availableTypes.indexOf(typeTemps) % borderColors.length;
               const typeBorderColor = borderColors[typeColorIndex];
 
@@ -570,7 +588,7 @@ useEffect(() => {
 
                   {/* HEADER TYPE */}
                   <div
-                    className={`flex items-center px-4 py-2 rounded-lg bg-white/5 cursor-pointer border-l-4 ${typeBorderColor}`}
+                    className={`flex items-center px-4 py-2 rounded-lg bg-opacity-30 cursor-pointer border-l-4 ${typeBorderColor}`}
                     onClick={() => setTypeCollapsedDesktop(prev => ({ ...prev, [typeTemps]: !prev[typeTemps] }))}
                   >
                     <div className="min-w-[220px] max-w-[220px] text-white">
@@ -579,14 +597,14 @@ useEffect(() => {
                       </div>
                     </div>
 
-                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.hommes}</div>
-                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.femmes}</div>
-                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.jeunes}</div>
-                    <div className="min-w-[130px] text-center text-orange-400 font-semibold">{typeTotals.total}</div>
-                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.enfants}</div>
-                    <div className="min-w-[140px] text-center text-orange-400 font-semibold">{typeTotals.connectes}</div>
-                    <div className="min-w-[150px] text-center text-orange-400 font-semibold">{typeTotals.nouveauxVenus}</div>
-                    <div className="min-w-[180px] text-center text-orange-400 font-semibold">{typeTotals.nouveauxConvertis}</div>
+                    <div className="min-w-[120px] text-center text-white font-semibold">{typeTotals.hommes}</div>
+                    <div className="min-w-[120px] text-center text-white font-semibold">{typeTotals.femmes}</div>
+                    <div className="min-w-[120px] text-center text-white font-semibold">{typeTotals.jeunes}</div>
+                    <div className="min-w-[130px] text-center text-white font-semibold">{typeTotals.total}</div>
+                    <div className="min-w-[120px] text-center text-white font-semibold">{typeTotals.enfants}</div>
+                    <div className="min-w-[140px] text-center text-white font-semibold">{typeTotals.connectes}</div>
+                    <div className="min-w-[150px] text-center text-white font-semibold">{typeTotals.nouveauxVenus}</div>
+                    <div className="min-w-[180px] text-center text-white font-semibold">{typeTotals.nouveauxConvertis}</div>
                     <div className="min-w-[140px]"></div>
                   </div>
 
@@ -596,7 +614,7 @@ useEffect(() => {
                     return (
                       <div
                         key={r.id}
-                        className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${typeBorderColor} cursor-pointer`}
+                        className={`flex items-center px-4 py-2 rounded-lg bg-opacity-30 hover:bg-opacity-40 transition border-l-4 ${typeBorderColor} cursor-pointer`}
                       >
                         <div className="min-w-[220px] text-white ml-12 break-words">{formatDateFR(r.date)}</div>
                         <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
@@ -628,45 +646,58 @@ useEffect(() => {
 )}
 
     {/* ================= MOBILE ================= */}
-    <div className="md:hidden space-y-4">
-      {Object.entries(groupByMonthAndType(reports)).map(([monthKey, typesObj]) => {
-        const [year, monthIndex] = monthKey.split("-").map(Number);
-        const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+<div className="md:hidden space-y-4">
+  {Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj]) => {
+    const [year, monthIndex] = monthKey.split("-").map(Number);
+    const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
 
-        return (
-          <div key={monthKey} className="space-y-2">
+    return (
+      <div key={monthKey} className="space-y-2 border-l-4 border-red-500 rounded-lg">
 
-            <h3 className="text-white font-bold">{monthLabel}</h3>
+        {/* MOIS */}
+        <h3 className="text-white font-bold px-4 py-2">{monthLabel}</h3>
 
-            {Object.entries(typesObj).map(([typeTemps, rows]) => {
-              const typeTotals = calculateTypeTotals(rows);
+        {Object.entries(typesObj).map(([typeTemps, rows]) => {
+          const typeTotals = calculateTypeTotals(rows);
 
-              return (
-                <div key={typeTemps} className="space-y-2 bg-white/10 rounded-xl p-2">
-                  <h4 className="text-orange-400 font-semibold flex justify-between">
-                    <span>{typeTemps}</span>
-                    <span>Total: {typeTotals.total}</span>
-                  </h4>
-                  {rows.map(r => (
-                    <div key={r.id} className="bg-white/5 rounded-xl p-4 text-white space-y-1">
-                      <p>{formatDateFR(r.date)}</p>
-                      <p>Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
-                      <p>Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
-                      <p>Enfants: {r.enfants} | Connectés: {r.connectes}</p>
-                      <p>Nouveaux venus: {r.nouveauxVenus} | Nouveaux convertis: {r.nouveauxConvertis}</p>
-                    </div>
-                  ))}
+          // couleur dynamique par type
+          const typeColorIndex = availableTypes.indexOf(typeTemps) % borderColors.length;
+          const typeBorderColor = borderColors[typeColorIndex];
+
+          return (
+            <div key={typeTemps} className="space-y-2 rounded-xl overflow-hidden">
+
+              {/* HEADER TYPE */}
+              <div
+                className={`flex justify-between items-center px-4 py-2 cursor-pointer bg-opacity-30 border-l-4 ${typeBorderColor}`}
+                onClick={() => setTypeCollapsedMobile(prev => ({ ...prev, [typeTemps]: !prev[typeTemps] }))}
+              >
+                <span className="text-white font-semibold">{typeTemps}</span>
+                <span className="text-white font-semibold">Total: {typeTotals.total}</span>
+              </div>
+
+              {/* ROWS */}
+              {!(typeCollapsedMobile[typeTemps] || false) && rows.map(r => (
+                <div
+                  key={r.id}
+                  className={`bg-opacity-20 hover:bg-opacity-40 transition px-4 py-3 rounded-lg border-l-4 ${typeBorderColor} text-white space-y-1`}
+                >
+                  <p>{formatDateFR(r.date)}</p>
+                  <p>Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
+                  <p>Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
+                  <p>Enfants: {r.enfants} | Connectés: {r.connectes}</p>
+                  <p>Nouveaux venus: {r.nouveauxVenus} | Nouveaux convertis: {r.nouveauxConvertis}</p>
                 </div>
-              );
-            })}
+              ))}
 
-          </div>
-        );
-      })}
-    </div>
+            </div>
+          );
+        })}
 
-  </div>
-)}
+      </div>
+    );
+  })}
+</div>
 
       <Footer />
 

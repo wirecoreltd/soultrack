@@ -563,7 +563,7 @@ useEffect(() => {
 
            {/* MOIS */}
 <div
-  className={`flex flex-col md:flex-row items-center px-4 py-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition cursor-pointer`}
+  className={`flex flex-col md:flex-row items-center px-4 py-3 rounded-xl bg-white/10 backdrop-blur-md border-2 border-red-500 hover:bg-white/20 transition cursor-pointer`}
   onClick={() => toggleMonth(monthKey)}
 >
   <div className="min-w-[220px] text-white font-semibold flex items-center gap-2">
@@ -572,7 +572,7 @@ useEffect(() => {
   </div>
 
   <div className="flex flex-wrap md:flex-nowrap ml-auto text-orange-400 font-semibold gap-2 mt-2 md:mt-0">
-    <div className="min-w-[120px] text-center">{monthTotals.hommes}</div>
+    <div className="min-w-[120px] text-center -ml-28">{monthTotals.hommes}</div>
     <div className="min-w-[120px] text-center">{monthTotals.femmes}</div>
     <div className="min-w-[120px] text-center">{monthTotals.jeunes}</div>
     <div className="min-w-[130px] text-center">{monthTotals.total}</div>

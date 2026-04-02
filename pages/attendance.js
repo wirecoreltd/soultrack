@@ -25,6 +25,7 @@ function Attendance() {
   const [expandedMonths, setExpandedMonths] = useState({});
   const [typeCollapsedDesktop, setTypeCollapsedDesktop] = useState({});
   const [availableTypes, setAvailableTypes] = useState([]);
+  const [filterType, setFilterType] = useState(""); 
 
   const [formData, setFormData] = useState({
     date: "",
@@ -322,6 +323,10 @@ const calculateTypeTotals = (rows) => {
   const groupedReports = groupByMonth(reports);
   const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500","border-pink-500","border-indigo-500"];
 
+const filteredReports = filterType
+  ? reports.filter(r => r.typeTemps === filterType)
+  : reports;
+  
   // pour remplir le dropdown de type
 useEffect(() => {
   if (reports.length > 0) {

@@ -502,22 +502,23 @@ useEffect(() => {
             </button>
         
             {/* Type */}
-            {availableTypes.length > 0 && (
-              <div className="flex flex-col w-full">
-                <label className="text-sm font-semibold mb-1">Type de temps</label>
-                <select
-                  className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4 text-black"
-                  value={filterType}
-                  onChange={e => setFilterType(e.target.value)}
-                >
-                  <option value="">Tous</option>
-                  {availableTypes.map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-        
+              {availableTypes.length > 0 && (
+                <div className="flex flex-col w-full">
+                  <label className="text-sm font-semibold mb-1 text-white">Type de temps</label>
+                  <select
+                    className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4 text-white focus:outline-none focus:ring-2 focus:ring-amber-300"
+                    value={filterType}
+                    onChange={e => setFilterType(e.target.value)}
+                  >
+                    <option value="" className="text-black">Tous</option>
+                    {availableTypes.map(t => (
+                      <option key={t} value={t} className="text-black">
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}        
           </div>
         </div>
      

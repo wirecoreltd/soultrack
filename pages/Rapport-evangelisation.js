@@ -515,7 +515,7 @@ const handleConseillerClick = () => {
                         {isExpanded ? "➖ " : "➕ "} {monthLabel}
                       </div>
                       <div className="flex ml-auto text-white font-semibold text-sm">
-                        <div className="min-w-[110px] text-center">{monthTotals.hommes}</div>
+                        <div className="min-w-[110px] text-center ml-1">{monthTotals.hommes}</div>
                         <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>  
                         <div className="min-w-[110px] text-center text-orange-400 font-semibold">
                        {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)} </div>
@@ -580,7 +580,7 @@ const handleConseillerClick = () => {
                               <div className="grid grid-cols-2 gap-1 text-sm mt-1">
                                 <div>Hommes: {typeTotals.hommes}</div>
                                 <div>Femmes: {typeTotals.femmes}</div>  
-                                <div>Total: {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}</div>
+                                <div className="font-semibold" "text-orange-400">Total: {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}</div>
                                 <div>Prières: {typeTotals.priere}</div>
                                 <div>NouvConv: {typeTotals.nouveau}</div>
                                 <div>Recon: {typeTotals.reconciliation}</div>
@@ -616,7 +616,7 @@ const handleConseillerClick = () => {
                                   <div className="grid grid-cols-2 gap-1">
                                     <div>Hommes: {r.hommes ?? "-"}</div>
                                     <div>Femmes: {r.femmes ?? "-"}</div>     
-                                    <div className=" text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</div>  
+                                    <div className="font-semibold" "text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</div>  
                                     <div>Prières: {r.priere ?? "-"}</div>
                                     <div>NouvConv: {r.nouveau_converti ?? "-"}</div>
                                     <div>Recon: {r.reconciliation ?? "-"}</div>

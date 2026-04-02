@@ -504,7 +504,7 @@ useEffect(() => {
       </div>
 
      
- {/* ================= TABLEAU / CARDS DESKTOP + MOBILE ================= */}
+{/* ================= TABLEAU / CARDS DESKTOP + MOBILE ================= */}
 {showTable && (
   <div className="max-w-5xl w-full mt-6 mb-6">
 
@@ -555,7 +555,7 @@ useEffect(() => {
 
               {/* MOIS */}
               <div
-                className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-red-500 cursor-pointer`}
+                className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-red-500 cursor-pointer"
                 onClick={() => toggleMonth(monthKey)}
               >
                 <div className="min-w-[220px] text-white font-semibold flex items-center gap-2">
@@ -641,82 +641,79 @@ useEffect(() => {
     </div>
 
     {/* ================= MOBILE ================= */}
-<div className="md:hidden space-y-4">
-  {Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj]) => {
-    const [year, monthIndex] = monthKey.split("-").map(Number);
-    const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-    const monthExpanded = expandedMonths[monthKey] || false;
+    <div className="md:hidden space-y-4">
+      {Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj]) => {
+        const [year, monthIndex] = monthKey.split("-").map(Number);
+        const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+        const monthExpanded = expandedMonths[monthKey] || false;
 
-    return (
-      <div key={monthKey} className="bg-white/10 rounded-xl p-3">
-        <div
-          className="flex justify-between items-center cursor-pointer"
-          onClick={() => toggleMonth(monthKey)}
-        >
-          <span className="text-white font-semibold">{monthExpanded ? "➖" : "➕"} {monthLabel}</span>
-        </div>
-
-        {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows]) => {
-          const typeTotals = calculateTypeTotals(rows);
-          return (
-            <div key={typeTemps} className="mt-2 bg-white/20 rounded-xl p-2">
-              <div className="flex justify-between text-white font-semibold">
-                <span>{typeTemps}</span>
-                <span>Total: {typeTotals.total}</span>
-              </div>
-
-              {rows.map(r => {
-                const total = r.hommes + r.femmes + r.jeunes;
-                return (
-                  <div key={r.id} className="flex justify-between text-white mt-1">
-                    <span>{formatDateFR(r.date)}</span>
-                    <span>{total}</span>
-                  </div>
-                );
-              })}
+        return (
+          <div key={monthKey} className="bg-white/10 rounded-xl p-3">
+            <div
+              className="flex justify-between items-center cursor-pointer"
+              onClick={() => toggleMonth(monthKey)}
+            >
+              <span className="text-white font-semibold">{monthExpanded ? "➖" : "➕"} {monthLabel}</span>
             </div>
-          );
-        })}
-      </div>
-    );
-  })}
-</div>
 
-     <Footer />
+            {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows]) => {
+              const typeTotals = calculateTypeTotals(rows);
+              return (
+                <div key={typeTemps} className="mt-2 bg-white/20 rounded-xl p-2">
+                  <div className="flex justify-between text-white font-semibold">
+                    <span>{typeTemps}</span>
+                    <span>Total: {typeTotals.total}</span>
+                  </div>
 
-{/* Styles pour le select et les options */}
-<style jsx>{`
-  .input {
-    border: 1px solid #ccc;
-    padding: 12px 14px; /* plus large pour agrandir le champ */
-    border-radius: 12px;
-    background: white; /* fond du select blanc */
-    color: black; /* texte par défaut noir */
-    font-size: 16px;
-    height: 48px; /* hauteur plus grande */
-    -webkit-appearance: none; /* supprime la flèche */
-    -moz-appearance: none;
-    appearance: none;
-    cursor: pointer;
-  }
+                  {rows.map(r => {
+                    const total = r.hommes + r.femmes + r.jeunes;
+                    return (
+                      <div key={r.id} className="flex justify-between text-white mt-1">
+                        <span>{formatDateFR(r.date)}</span>
+                        <span>{total}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
 
-  /* Option spéciale AUTRE */
-  select.input option[value='AUTRE'] {
-    color: #333699;
-  }
+    <Footer />
 
-  /* Hover sur toutes les options sauf AUTRE */
-  select.input option:hover {
-    background: #e0e0e0;
-    color: black;
-  }
+    {/* Styles pour le select et les options */}
+    <style jsx>{`
+      .input {
+        border: 1px solid #ccc;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: white;
+        color: black;
+        font-size: 16px;
+        height: 48px;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        cursor: pointer;
+      }
 
-  /* Hover pour AUTRE */
-  select.input option[value='AUTRE']:hover {
-    background: #333699;
-    color: white;
-  }
-`}</style>
-</div> // <-- correspond à l'ouverture principale du composant
-);
-} // <-- fermeture de la fonction du composant
+      select.input option[value='AUTRE'] {
+        color: #333699;
+      }
+
+      select.input option:hover {
+        background: #e0e0e0;
+        color: black;
+      }
+
+      select.input option[value='AUTRE']:hover {
+        background: #333699;
+        color: white;
+      }
+    `}</style>
+
+  </div>
+)}

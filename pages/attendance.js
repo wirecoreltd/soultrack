@@ -589,7 +589,7 @@ useEffect(() => {
                           </div>
                         </div>
                 
-                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.hommes}</div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold -ml-12">{typeTotals.hommes}</div>
                         <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.femmes}</div>
                         <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.jeunes}</div>
                         <div className="min-w-[130px] text-center text-orange-400 font-semibold">{typeTotals.total}</div>

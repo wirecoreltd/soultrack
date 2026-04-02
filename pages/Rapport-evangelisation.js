@@ -301,54 +301,66 @@ const handleConseillerClick = () => {
         <span className="text-amber-300">Evangélisation</span>
       </h1>
 
-      {/* FILTRES */}
-      <div id="rapport-filtres" className="w-full max-w-4xl bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-white">
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold mb-1">Date de début</label>
-            <input
-              type="date"
-              value={dateDebut}
-              onChange={(e)=>setDateDebut(e.target.value)}
-              className="bg-white/10 border border-white/30 rounded-lg px-4 py-2"
-            />
-          </div>
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold mb-1">Date de fin</label>
-            <input
-              type="date"
-              value={dateFin}
-              onChange={(e)=>setDateFin(e.target.value)}
-              className="bg-white/10 border border-white/30 rounded-lg px-4 py-2"
-            />
-          </div>
-          <button
-            onClick={fetchRapports}
-            disabled={loading}
-            className="bg-amber-400 text-black font-bold px-6 py-2 rounded-lg hover:bg-amber-300 transition disabled:opacity-50"
-          >
-            {loading ? "Chargement..." : "Générer le rapport"}
-          </button>
-         {showTable && (
-            <div className="flex flex-col">
-              <label className="text-sm font-semibold mb-1">Type</label>
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="bg-white/10 border border-white/30 rounded-lg px-4 py-2 text-black"
-              >
-                <option value="">Tous</option>
-                <option value="Individuel">Individuel</option>
-                <option value="Sortie de groupe">Sortie de groupe</option>
-                <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
-                <option value="Évangélisation de rue">Évangélisation de rue</option>
-                <option value="Évangélisation maison">Évangélisation maison</option>
-                <option value="Évangélisation stade">Évangélisation stade</option>
-              </select>
-            </div>
-          )}
-        </div>
+     {/* FILTRES */}
+<div
+  id="rapport-filtres"
+  className="w-full max-w-4xl bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6"
+>
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-white">
+    
+    {/* Date début */}
+    <div className="flex flex-col w-full">
+      <label className="text-sm font-semibold mb-1">Date de début</label>
+      <input
+        type="date"
+        value={dateDebut}
+        onChange={(e) => setDateDebut(e.target.value)}
+        className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
+      />
+    </div>
+
+    {/* Date fin */}
+    <div className="flex flex-col w-full">
+      <label className="text-sm font-semibold mb-1">Date de fin</label>
+      <input
+        type="date"
+        value={dateFin}
+        onChange={(e) => setDateFin(e.target.value)}
+        className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
+      />
+    </div>
+
+    {/* Bouton */}
+    <button
+      onClick={fetchRapports}
+      disabled={loading}
+      className="h-10 w-full bg-amber-400 text-black font-bold px-6 rounded-lg hover:bg-amber-300 transition disabled:opacity-50"
+    >
+      {loading ? "Chargement..." : "Générer le rapport"}
+    </button>
+
+    {/* Type */}
+    {showTable && (
+      <div className="flex flex-col w-full">
+        <label className="text-sm font-semibold mb-1">Type Evangélisation</label>
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4 text-white"
+        >
+          <option value="">Tous</option>
+          <option value="Individuel">Individuel</option>
+          <option value="Sortie de groupe">Sortie de groupe</option>
+          <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
+          <option value="Évangélisation de rue">Évangélisation de rue</option>
+          <option value="Évangélisation maison">Évangélisation maison</option>
+          <option value="Évangélisation stade">Évangélisation stade</option>
+        </select>
       </div>
+    )}
+
+  </div>
+</div>
      
       {showTable && (
         <div className="w-full max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 mt-6">
@@ -489,7 +501,7 @@ const handleConseillerClick = () => {
               <div className="min-w-[110px] text-center ml-28">Hommes</div>
               <div className="min-w-[110px] text-center">Femmes</div>
               <div className="min-w-[110px] text-center text-orange-400 font-semibold">Total</div> 
-              <div className="min-w-[120px] text-center">Prières</div>
+              <div className="min-w-[120px] text-center text-orange-400 font-semibold">Prières</div>
               <div className="min-w-[140px] text-center">Nouv. conv</div>
               <div className="min-w-[130px] text-center">Recon</div>
               <div className="min-w-[130px] text-center">Moiss</div>
@@ -519,7 +531,7 @@ const handleConseillerClick = () => {
                         <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>  
                         <div className="min-w-[110px] text-center text-orange-400 font-semibold">
                        {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)} </div>
-                        <div className="min-w-[120px] text-center">{monthTotals.priere}</div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotals.priere}</div>
                         <div className="min-w-[140px] text-center">{monthTotals.nouveau}</div>
                         <div className="min-w-[130px] text-center">{monthTotals.reconciliation}</div>
                         <div className="min-w-[130px] text-center">{monthTotals.moissonneurs}</div>

@@ -371,12 +371,12 @@ export default function Evangelisation() {
             </button>
           </>
         )}
-      </div>      
-
+      </div>
+    
       {/* ================= AFFICHAGE CONTACTS ================= */}
       <div className="w-full max-w-6xl flex flex-col items-center">
         {/* VUE CARTE */}
-        {contacts && view === "card" && (
+        {contacts && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
             {contacts.map((member) => (
               <div key={member.id} className="bg-white rounded-2xl shadow-xl p-4 border-l-4 relative" style={{ borderLeftColor: getBorderColor(member) }}>
@@ -443,12 +443,11 @@ export default function Evangelisation() {
                     </div>
                   </div>
                 )}
-
-
               </div>
             ))}
           </div>
-        )}      
+        )}       
+      </div>
 
       {/* POPUPS EDIT */}
       {editMember && (
@@ -463,7 +462,7 @@ export default function Evangelisation() {
           }}
         />
       )}
-      
+     
       {/* 🔹 Popup Doublon - Moderne */}
       {showDoublonPopup && doublonsDetected.length > 0 && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">

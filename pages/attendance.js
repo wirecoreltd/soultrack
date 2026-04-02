@@ -652,46 +652,68 @@ useEffect(() => {
       </div>
     </div>
 
-    {/* ================= MOBILE ================= */}
-    <div className="md:hidden space-y-4">
-      {Object.entries(groupByMonthAndType(reports)).map(([monthKey, typesObj]) => {
-        const [year, monthIndex] = monthKey.split("-").map(Number);
-        const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+    {/* MOBILE TABLE */}
+<div className="md:hidden space-y-2 mt-4">
+  {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
+    const [year, monthIndex] = monthKey.split("-").map(Number);
+    const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+    const isExpanded = expandedMonths[monthKey] || false;
+    const monthTotals = getTotals(monthReports);
 
-        return (
-          <div key={monthKey} className="space-y-2">
+    return (
+      <div key={monthKey} className="bg-white/10 rounded-xl p-3">
+        <div
+          className="flex justify-between items-center cursor-pointer"
+          onClick={() => toggleMonth(monthKey)}
+        >
+          <span className="font-semibold text-white">{isExpanded ? "➖ " : "➕ "} {monthLabel}</span>
+          <span className="text-white font-semibold">{monthTotals.hommes + monthTotals.femmes} Total</span>
+        </div>
 
-            <h3 className="text-red-500 font-bold">{monthLabel}</h3>
-
-            {Object.entries(typesObj).map(([typeTemps, rows]) => {
-              const typeTotals = calculateTypeTotals(rows);
+        {isExpanded && (
+          <div className="mt-2 space-y-1">
+            {Object.entries(groupByType(monthReports)).map(([type, typeReports]) => {
+              const typeKey = `${monthKey}-${type}`;
+              const typeExpanded = expandedTypes[typeKey] || false;
+              const typeTotals = getTotals(typeReports);
 
               return (
-                <div key={typeTemps} className="space-y-2 bg-white/10 rounded-xl p-2">
-                  <h4 className="text-orange-400 font-semibold flex justify-between">
-                    <span>{typeTemps}</span>
-                    <span>Total: {typeTotals.total}</span>
-                  </h4>
-                  {rows.map(r => (
-                    <div key={r.id} className="bg-white/5 rounded-xl p-4 text-white space-y-1">
-                      <p>{formatDateFR(r.date)}</p>
-                      <p>Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
-                      <p>Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
-                      <p>Enfants: {r.enfants} | Connectés: {r.connectes}</p>
-                      <p>Nouveaux venus: {r.nouveauxVenus} | Nouveaux convertis: {r.nouveauxConvertis}</p>
+                <div key={typeKey} className="bg-white/15 rounded-lg p-2 ml-2">
+                  <div
+                    className="flex justify-between items-center cursor-pointer"
+                    onClick={() => toggleType(typeKey)}
+                  >
+                    <span className="font-medium text-white">{typeExpanded ? "➖ " : "➕ "} {type}</span>
+                    <span className="text-white font-medium">{typeTotals.hommes + typeTotals.femmes} Total</span>
+                  </div>
+
+                  {typeExpanded && (
+                    <div className="mt-2 space-y-1">
+                      {typeReports.map((r) => (
+                        <div key={r.id} className="grid grid-cols-2 gap-2 bg-white/10 rounded p-2">
+                          <div className="text-white font-medium">Date: {new Date(r.date_evangelise).toLocaleDateString()}</div>
+                          <div className="text-white text-right">Hommes: {r.hommes ?? 0}</div>
+                          <div className="text-white font-medium">Femmes: {r.femmes ?? 0}</div>
+                          <div className="text-orange-400 font-semibold text-right">
+                            Total: {(r.hommes || 0) + (r.femmes || 0)}
+                          </div>
+                          <div className="text-white">Prières: {r.priere}</div>
+                          <div className="text-white">NouvConv: {r.nouveau_converti}</div>
+                          <div className="text-white">Recon: {r.reconciliation}</div>
+                          <div className="text-white">Moiss: {r.moissonneurs}</div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               );
             })}
-
           </div>
-        );
-      })}
-    </div>
-
-  </div>
-)}
+        )}
+      </div>
+    );
+  })}
+</div>
 
       <Footer />
 

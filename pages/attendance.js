@@ -478,18 +478,8 @@ useEffect(() => {
           <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} className="input"/>
         </div>
         <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end">Générer</button>
-      </div>
 
-     
-  {/* TABLEAU / CARDS DESKTOP + MOBILE */}
-{showTable && (
-  <div className="max-w-5xl w-full mt-6 mb-6">
-
-   {/* ================= DESKTOP ================= */}
-{showTable && (
-  <div className="hidden md:block overflow-x-auto w-full max-w-5xl mt-6 mb-6">
-
-    {/* FILTRE TYPE TEMPS */}
+        {/* FILTRE TYPE TEMPS */}
     {availableTypes.length > 0 && (
       <div className="flex gap-4 mb-4">
         <label className="text-white font-semibold">Filtrer par type :</label>
@@ -505,6 +495,16 @@ useEffect(() => {
         </select>
       </div>
     )}
+      </div>
+
+     
+  {/* TABLEAU / CARDS DESKTOP + MOBILE */}
+{showTable && (
+  <div className="max-w-5xl w-full mt-6 mb-6">
+
+   {/* ================= DESKTOP ================= */}
+{showTable && (
+  <div className="hidden md:block overflow-x-auto w-full max-w-5xl mt-6 mb-6">   
 
     <div className="w-max space-y-2">
 

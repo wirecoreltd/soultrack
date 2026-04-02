@@ -330,6 +330,27 @@ const calculateTypeTotals = (rows) => {
   "border-indigo-500"  // <- fermer la chaîne
 ];
 
+  const typeColors = {
+  Culte: "border-blue-500",
+  ADP: "border-green-500",
+  Reunion: "border-purple-500",
+  Priere: "border-yellow-500",
+};
+
+  const getTypeColor = (type) => {
+  const colors = [
+    "border-blue-500",
+    "border-green-500",
+    "border-purple-500",
+    "border-yellow-500",
+    "border-pink-500",
+    "border-indigo-500",
+  ];
+
+  const index = availableTypes.indexOf(type);
+  return colors[index % colors.length];
+};
+
   const filteredReports = filterType
   ? reports.filter(r => r.typeTemps === filterType)
   : reports;
@@ -596,7 +617,7 @@ useEffect(() => {
 
       {/* HEADER TYPE */}
       <div
-        className={`flex flex-col md:flex-row items-center px-4 py-2 rounded-xl bg-white/5 backdrop-blur-sm border-l-4 border-${typeBorderColor} ml-4 cursor-pointer hover:bg-white/10 transition`}
+        className={`flex flex-col md:flex-row items-center px-4 py-2 rounded-xl bg-white/5 backdrop-blur-sm ${getTypeColor(typeTemps)} ml-4 cursor-pointer hover:bg-white/10 transition`}
         onClick={() => setTypeCollapsedDesktop(prev => ({ ...prev, [typeTemps]: !prev[typeTemps] }))}
       >
         <div className="min-w-[220px] text-white flex items-center gap-2">

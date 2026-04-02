@@ -684,38 +684,37 @@ useEffect(() => {
 
       <Footer />
 
-     <style jsx>{`
-        .input {
-          border: 1px solid #ccc;
-          padding: 12px 14px; /* plus large pour agrandir le champ */
-          border-radius: 12px;
-          background: white; /* fond du select blanc */
-          color: black; /* texte par défaut noir */
-          font-size: 16px;
-          height: 48px; /* hauteur plus grande */
-          -webkit-appearance: none; /* supprime la flèche */
-          -moz-appearance: none;
-          appearance: none;
-          cursor: pointer;
-        }
-      
-        /* + Ajouter un temps en couleur spéciale */
-        select.input option[value='AUTRE'] {
-          color: #333699;
-        }
-      
-        /* Hover sur toutes les options sauf + Ajouter un temps */
-        select.input option:hover {
-          background: #e0e0e0; /* hover gris clair */
-          color: black;
-        }
-      
-        /* Hover pour + Ajouter un temps */
-        select.input option[value='AUTRE']:hover {
-          background: #333699;
-          color: white;
-        }
-      `}</style>
+     <Footer />
+
+<style jsx>{`
+  .input {
+    border: 1px solid #ccc;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: white;
+    color: black;
+    font-size: 16px;
+    height: 48px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+  }
+
+  select.input option[value='AUTRE'] {
+    color: #333699;
+  }
+
+  select.input option:hover {
+    background: #e0e0e0;
+    color: black;
+  }
+
+  select.input option[value='AUTRE']:hover {
+    background: #333699;
+    color: white;
+  }
+`}</style>
     </div>
   );
 }

@@ -346,7 +346,7 @@ const handleConseillerClick = () => {
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4 text-white"
+          className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
         >
           <option value="">Tous</option>
           <option value="Individuel">Individuel</option>

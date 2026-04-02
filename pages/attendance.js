@@ -538,7 +538,7 @@ useEffect(() => {
           <div className="min-w-[140px] text-center">Actions</div>
         </div>
 
-        {Object.entries(groupByMonthAndType(reports)).map(([monthKey, typesObj], idx) => {
+       Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj], idx) => {
           const [year, monthIndex] = monthKey.split("-").map(Number);
           const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
           const monthExpanded = expandedMonths[monthKey] || false;

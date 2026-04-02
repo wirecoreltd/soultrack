@@ -467,33 +467,27 @@ const calculateTypeTotals = (rows) => {
 
    {/* ================= DESKTOP ================= */}
 {showTable && (
-  <div className="hidden md:block overflow-x-auto mt-4">
-    {/* Filtre par type */}
+  <div className="hidden md:block overflow-x-auto w-full max-w-5xl mt-6 mb-6">
+
+    {/* FILTRE TYPE TEMPS */}
     {availableTypes.length > 0 && (
-      <div className="bg-white/10 p-4 rounded-2xl shadow-lg mb-4 flex items-center gap-4 max-w-5xl w-full justify-start">
+      <div className="flex gap-4 mb-4">
         <label className="text-white font-semibold">Filtrer par type :</label>
         <select
+          className="input w-64"
           value={filterType}
           onChange={e => setFilterType(e.target.value)}
-          className="input w-48"
         >
           <option value="">-- Tous les types --</option>
           {availableTypes.map(t => (
             <option key={t} value={t}>{t}</option>
           ))}
         </select>
-        {filterType && (
-          <button
-            onClick={() => setFilterType("")}
-            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-          >
-            Réinitialiser
-          </button>
-        )}
       </div>
     )}
 
     <div className="w-max space-y-2">
+
       {/* HEADER TABLE */}
       <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
         <div className="min-w-[220px]">Type / Date</div>
@@ -513,15 +507,19 @@ const calculateTypeTotals = (rows) => {
         const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
         const monthExpanded = expandedMonths[monthKey] || false;
 
-        // Totaux par mois (tous types combinés)
+        // border color basé sur le premier type du mois (stable par type)
+        const firstType = Object.keys(typesObj)[0];
+        const colorIndex = availableTypes.indexOf(firstType) % borderColors.length;
+        const monthBorderColor = borderColors[colorIndex];
+
         const monthTotals = calculateMonthTotals(typesObj);
 
         return (
           <div key={monthKey} className="space-y-1">
+
             {/* MOIS */}
             <div
-              className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer`}
-              style={{ borderColor: "orange" }} // couleur fixe ou tu peux calculer dynamique
+              className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${monthBorderColor} cursor-pointer`}
               onClick={() => toggleMonth(monthKey)}
             >
               <div className="min-w-[220px] text-white font-semibold flex items-center gap-2">
@@ -543,16 +541,16 @@ const calculateTypeTotals = (rows) => {
               const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
               const typeTotals = calculateTypeTotals(rows);
 
-              // Choisir couleur fixe par type (par exemple index du type dans availableTypes)
-              const colorIndex = availableTypes.indexOf(typeTemps) % borderColors.length;
-              const borderColor = borderColors[colorIndex];
+              // couleur par type stable
+              const typeColorIndex = availableTypes.indexOf(typeTemps) % borderColors.length;
+              const typeBorderColor = borderColors[typeColorIndex];
 
               return (
                 <div key={typeTemps} className="space-y-1">
+
                   {/* HEADER TYPE */}
                   <div
-                    className={`flex items-center px-4 py-2 rounded-lg bg-white/5 cursor-pointer border-l-4`}
-                    style={{ borderColor }}
+                    className={`flex items-center px-4 py-2 rounded-lg bg-white/5 cursor-pointer border-l-4 ${typeBorderColor}`}
                     onClick={() => setTypeCollapsedDesktop(prev => ({ ...prev, [typeTemps]: !prev[typeTemps] }))}
                   >
                     <div className="min-w-[220px] max-w-[220px] text-white">
@@ -578,12 +576,9 @@ const calculateTypeTotals = (rows) => {
                     return (
                       <div
                         key={r.id}
-                        className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer"
-                        style={{ borderColor }}
+                        className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${typeBorderColor} cursor-pointer`}
                       >
-                        <div className="min-w-[220px] text-white">
-                          <div className="ml-12 break-words">{formatDateFR(r.date)}</div>
-                        </div>
+                        <div className="min-w-[220px] text-white ml-12 break-words">{formatDateFR(r.date)}</div>
                         <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
                         <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
                         <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
@@ -607,6 +602,7 @@ const calculateTypeTotals = (rows) => {
           </div>
         );
       })}
+
     </div>
   </div>
 )}

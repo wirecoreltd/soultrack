@@ -616,7 +616,7 @@ const handleConseillerClick = () => {
                                   <div className="grid grid-cols-2 gap-1">
                                     <div>Hommes: {r.hommes ?? "-"}</div>
                                     <div>Femmes: {r.femmes ?? "-"}</div>     
-                                    <div>Total: {(r.hommes || 0) + (r.femmes || 0)}</div>  
+                                    <div className=" text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</div>  
                                     <div>Prières: {r.priere ?? "-"}</div>
                                     <div>NouvConv: {r.nouveau_converti ?? "-"}</div>
                                     <div>Recon: {r.reconciliation ?? "-"}</div>

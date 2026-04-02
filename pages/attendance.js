@@ -641,29 +641,34 @@ useEffect(() => {
     </div>
 
     {/* ================= MOBILE ================= */}
-    {/* MOBILE */}
 <div className="md:hidden space-y-4">
   {Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj]) => {
     const [year, monthIndex] = monthKey.split("-").map(Number);
     const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+    const monthExpanded = expandedMonths[monthKey] || false;
 
     return (
-      <div key={monthKey} className="space-y-2 border-l-4 border-red-500 rounded-lg">
-        {/* MOIS */}
-        <h3 className="text-white font-bold px-4 py-2">{monthLabel}</h3>
+      <div key={monthKey} className="bg-white/10 rounded-xl p-3">
+        <div
+          className="flex justify-between items-center cursor-pointer"
+          onClick={() => toggleMonth(monthKey)}
+        >
+          <span className="text-white font-semibold">{monthExpanded ? "➖" : "➕"} {monthLabel}</span>
+        </div>
 
-        {Object.entries(typesObj).map(([typeTemps, rows]) => {
+        {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows]) => {
           const typeTotals = calculateTypeTotals(rows);
-          const typeColorIndex = availableTypes.indexOf(typeTemps) % borderColors.length;
-          const typeBorderColor = borderColors[typeColorIndex];
-
           return (
-            <div key={typeTemps} className={`space-y-2 border-l-4 ${typeBorderColor} rounded-lg p-2`}>
-              {/* Lignes */}
+            <div key={typeTemps} className="mt-2 bg-white/20 rounded-xl p-2">
+              <div className="flex justify-between text-white font-semibold">
+                <span>{typeTemps}</span>
+                <span>Total: {typeTotals.total}</span>
+              </div>
+
               {rows.map(r => {
-                const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
+                const total = r.hommes + r.femmes + r.jeunes;
                 return (
-                  <div key={r.id} className="bg-white/10 p-2 rounded-lg text-white flex justify-between">
+                  <div key={r.id} className="flex justify-between text-white mt-1">
                     <span>{formatDateFR(r.date)}</span>
                     <span>{total}</span>
                   </div>

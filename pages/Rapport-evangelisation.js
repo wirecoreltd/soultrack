@@ -543,7 +543,7 @@ const handleConseillerClick = () => {
                     <div className="md:hidden text-white">
                       <div className="font-semibold">{isExpanded ? "➖ " : "➕ "} {monthLabel}</div>
                       <div className="grid grid-cols-2 gap-1 text-sm mt-1">
-                        <div>Hommes: {monthTotals.hommes}</div>
+                        <div className="ml-1">Hommes: {monthTotals.hommes}</div>
                         <div>Femmes: {monthTotals.femmes}</div>  
                         <div className="font-semibold text-orange-400">Total: {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)}</div>
                         <div className="font-semibold text-orange-400">Prières: {monthTotals.priere}</div>

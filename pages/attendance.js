@@ -445,19 +445,61 @@ const calculateTypeTotals = (rows) => {
         </form>
         {message && <p className="mt-4 text-center text-white font-medium">{message}</p>}
       </div>
-
-      {/* FILTRE DATE */}
-      <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-4 flex flex-wrap justify-center gap-4 text-white w-full max-w-3xl">
-        <div className="flex flex-col w-full sm:w-auto">
-          <label>Date de début</label>
-          <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} className="input" />
+ {/* FILTRE DATE */}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-white space-y-1">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-white">
+        
+            {/* Date début */}
+            <div className="flex flex-col w-full">
+              <label className="text-sm font-semibold mb-1">Date de début</label>
+              <input
+                type="date"
+                value={dateDebut}
+                onChange={e => setDateDebut(e.target.value)}
+                className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
+              />
+            </div>
+        
+            {/* Date fin */}
+            <div className="flex flex-col w-full">
+              <label className="text-sm font-semibold mb-1">Date de fin</label>
+              <input
+                type="date"
+                value={dateFin}
+                onChange={e => setDateFin(e.target.value)}
+                className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
+              />
+            </div>
+        
+            {/* Bouton */}
+            <button
+              onClick={fetchRapports}
+              className="h-10 w-full bg-amber-400 text-white font-semibold px-6 rounded-lg hover:bg-amber-300 transition"
+            >
+              Générer
+            </button>
+        
+            {/* Type */}
+              {availableTypes.length > 0 && (
+                <div className="flex flex-col w-full">
+                  <label className="text-sm font-semibold mb-1 text-white">Type de temps</label>
+                  <select
+                    className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4 text-white focus:outline-none focus:ring-2 focus:ring-amber-300"
+                    value={filterType}
+                    onChange={e => setFilterType(e.target.value)}
+                  >
+                    <option value="" className="text-black">Tous</option>
+                    {availableTypes.map(t => (
+                      <option key={t} value={t} className="text-black">
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}        
+          </div>
         </div>
-        <div className="flex flex-col w-full sm:w-auto">
-          <label>Date de fin</label>
-          <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} className="input"/>
-        </div>
-        <button onClick={fetchRapports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full sm:w-auto self-end">Générer</button>
-      </div>
+     
 
      
   {/* TABLEAU / CARDS DESKTOP + MOBILE */}

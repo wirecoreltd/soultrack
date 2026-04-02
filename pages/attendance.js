@@ -25,9 +25,7 @@ function Attendance() {
   const [expandedMonths, setExpandedMonths] = useState({});
   const [typeCollapsedDesktop, setTypeCollapsedDesktop] = useState({});
   const [availableTypes, setAvailableTypes] = useState([]);
-  const [filterType, setFilterType] = useState("");
-  const [availableTypes, setAvailableTypes] = useState([]);
-
+  const [filterType, setFilterType] = useState(""); 
   const [formData, setFormData] = useState({
     date: "",
     typeTemps: "",

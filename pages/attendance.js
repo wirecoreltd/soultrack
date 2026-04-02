@@ -24,6 +24,7 @@ function Attendance() {
   const selectRef = useRef(null);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [typeCollapsedDesktop, setTypeCollapsedDesktop] = useState({});
+  const [availableTypes, setAvailableTypes] = useState([]);
 
   const [formData, setFormData] = useState({
     date: "",

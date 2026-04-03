@@ -612,7 +612,7 @@ const handleConseillerClick = () => {
 
   {/* 🔥 IMPORTANT */}
   {typeExpanded && (
-    <div className="grid grid-cols-2 gap-1 text-sm mt-1">
+    //<div className="grid grid-cols-2 gap-1 text-sm mt-1">
       <div>Hommes: {typeTotals.hommes}</div>
       <div>Femmes: {typeTotals.femmes}</div>  
       <div className="font-semibold text-orange-400">

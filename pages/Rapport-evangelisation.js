@@ -543,7 +543,7 @@ const handleConseillerClick = () => {
                     <div className="md:hidden text-white">
                       <div className="font-semibold">{isExpanded ? "➖ " : "➕ "} {monthLabel}</div>
                       <div className="grid grid-cols-2 gap-1 text-sm mt-1">
-                        <div>Hommes: {monthTotals.hommes}</div>
+                        <div>Hommu: {monthTotals.hommes}</div>
                         <div>Femmes: {monthTotals.femmes}</div>  
                         <div className="font-semibold text-orange-400">Total: {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)}</div>
                         <div>Prières: {monthTotals.priere}</div>
@@ -590,7 +590,7 @@ const handleConseillerClick = () => {
                             <div className="md:hidden text-white">
                               <div className="font-semibold">{typeExpanded ? "➖ " : "➕ "} {type}</div>
                               <div className="grid grid-cols-2 gap-1 text-sm mt-1">
-                                <div>Hommes: {typeTotals.hommes}</div>
+                                <div>Houmes: {typeTotals.hommes}</div>
                                 <div>Femmes: {typeTotals.femmes}</div>  
                                 <div className="font-semibold text-orange-400">Total: {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}</div>
                                 <div className="font-semibold text-orange-400">Prières: {typeTotals.priere}</div>

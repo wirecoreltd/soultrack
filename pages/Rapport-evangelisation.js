@@ -292,6 +292,12 @@ const handleConseillerClick = () => {
   router.push("/SuiviAmesPage?conseiller=true");
 };
 
+  const typeColors = {
+  "Sortie de groupe": "border-yellow-400",
+  "Individuel": "border-blue-400",
+  "Suivi": "border-green-400",
+  "Autres": "border-gray-400",
+};
   // ---------------- UI ----------------
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
@@ -574,7 +580,9 @@ const handleConseillerClick = () => {
                           {/* TYPE */}
                           <div
                             onClick={() => toggleType(typeKey)}
-                            className="px-4 py-2 rounded-lg bg-white/15 cursor-pointer border-l-4 border-yellow-400 ml-4"
+                            className={`px-4 py-2 rounded-lg bg-white/15 cursor-pointer border-l-4 ml-4 ${
+                              typeColors[type] || "border-white"
+                            }`}
                           >
                             <div className="hidden md:flex items-center">
                               <div className="min-w-[150px] text-white font-semibold">

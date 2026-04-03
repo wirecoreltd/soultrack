@@ -613,6 +613,7 @@ const handleConseillerClick = () => {
     );
   })}
 </div>
+)}
 
       {selectedRapport && (
         <EditEvanRapportLine

@@ -517,93 +517,102 @@ const handleConseillerClick = () => {
             </div>
 
             {/* MOBILE VIEW */}
-              <div className="md:hidden w-full mt-6 space-y-3">
-                {Object.entries(groupedReports).map(([monthKey, monthReports]) => {
-                  const reportsByType = groupByType(monthReports);
-              
-                  return (
-                    <div key={monthKey} className="bg-white/10 border border-white/20 rounded-2xl p-3">
-                      
-                      {/* MOIS */}
-                      <div
-                        onClick={() => toggleMonth(monthKey)}
-                        className="flex justify-between items-center cursor-pointer px-3 py-2 rounded-lg hover:bg-white/20"
-                      >
-                        <span className="font-semibold text-white">{monthKey}</span>
-                        <span className="text-white">
-                          {expandedMonths[monthKey] ? "▼" : "▶"}
-                        </span>
-                      </div>
-              
-                      {/* TYPES */}
-                      {expandedMonths[monthKey] && (
-                        <div className="mt-2 space-y-2 pl-2">
-                          {Object.entries(reportsByType).map(([type, typeReports]) => {
-                            const typeKey = `${monthKey}-${type}`;
-              
-                            return (
-                              <div key={typeKey}>
-                                
-                                {/* TYPE */}
-                                <div
-                                  onClick={() => toggleType(typeKey)}
-                                  className={`flex justify-between items-center cursor-pointer px-3 py-2 rounded-lg text-white ${typeColors[type] || "bg-white/10"}`}
-                                >
-                                  <span className="font-medium">{type}</span>
-                                  <span>
-                                    {expandedTypes[typeKey] ? "▼" : "▶"}
-                                  </span>
-                                </div>
-              
-                                {/* DETAILS */}
-                                {expandedTypes[typeKey] && (
-                                  <div className="mt-2 space-y-2 pl-4">
-                                    {typeReports.map((r) => (
-                                      <div
-                                        key={r.id}
-                                        className="bg-white/20 rounded-lg p-3 text-white text-sm"
-                                      >
-                                        <div className="flex justify-between">
-                                          <span>{new Date(r.date_evangelise).toLocaleDateString()}</span>
-                                          <span className="font-bold">
-                                            {(r.hommes || 0) + (r.femmes || 0)}
-                                          </span>
-                                        </div>
-              
-                                        <div className="text-xs mt-1 opacity-80">
-                                          H: {r.hommes || 0} | F: {r.femmes || 0}
-                                        </div>
-              
-                                        <div className="text-xs opacity-80">
-                                          Prière: {r.priere || 0} | NC: {r.nouveau_converti || 0}
-                                        </div>
-              
-                                        <div className="text-xs opacity-80">
-                                          Recon: {r.reconciliation || 0} | Moiss: {r.moissonneurs || 0}
-                                        </div>
-              
-                                        <button
-                                          onClick={() => {
-                                            setSelectedRapport(r);
-                                            setEditOpen(true);
-                                          }}
-                                          className="text-orange-400 underline mt-2 text-xs"
-                                        >
-                                          Modifier
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
+<div className="md:hidden w-full mt-6 space-y-3">
+  {Object.entries(groupedReports).map(([monthKey, monthReports]) => {
+    const reportsByType = groupByType(monthReports);
+
+    return (
+      <div
+        key={monthKey}
+        className="bg-white/10 border border-white/20 rounded-2xl p-3"
+      >
+        {/* MOIS */}
+        <div
+          onClick={() => toggleMonth(monthKey)}
+          className="flex justify-between items-center cursor-pointer px-3 py-2 rounded-lg hover:bg-white/20"
+        >
+          <span className="font-semibold text-white">{monthKey}</span>
+          <span className="text-white">
+            {expandedMonths[monthKey] ? "▼" : "▶"}
+          </span>
+        </div>
+
+        {/* TYPES */}
+        {expandedMonths[monthKey] && (
+          <div className="mt-2 space-y-2 pl-2">
+            {Object.entries(reportsByType).map(([type, typeReports]) => {
+              const typeKey = `${monthKey}-${type}`;
+
+              return (
+                <div key={typeKey}>
+                  {/* TYPE */}
+                  <div
+                    onClick={() => toggleType(typeKey)}
+                    className={`flex justify-between items-center cursor-pointer px-3 py-2 rounded-lg text-white ${
+                      typeColors[type] || "bg-white/10"
+                    }`}
+                  >
+                    <span className="font-medium">{type}</span>
+                    <span>
+                      {expandedTypes[typeKey] ? "▼" : "▶"}
+                    </span>
+                  </div>
+
+                  {/* DETAILS */}
+                  {expandedTypes[typeKey] && (
+                    <div className="mt-2 space-y-2 pl-4">
+                      {typeReports.map((r) => (
+                        <div
+                          key={r.id}
+                          className="bg-white/20 rounded-lg p-3 text-white text-sm"
+                        >
+                          <div className="flex justify-between">
+                            <span>
+                              {new Date(
+                                r.date_evangelise
+                              ).toLocaleDateString()}
+                            </span>
+                            <span className="font-bold">
+                              {(r.hommes || 0) + (r.femmes || 0)}
+                            </span>
+                          </div>
+
+                          <div className="text-xs mt-1 opacity-80">
+                            H: {r.hommes || 0} | F: {r.femmes || 0}
+                          </div>
+
+                          <div className="text-xs opacity-80">
+                            Prière: {r.priere || 0} | NC:{" "}
+                            {r.nouveau_converti || 0}
+                          </div>
+
+                          <div className="text-xs opacity-80">
+                            Recon: {r.reconciliation || 0} | Moiss:{" "}
+                            {r.moissonneurs || 0}
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setSelectedRapport(r);
+                              setEditOpen(true);
+                            }}
+                            className="text-orange-400 underline mt-2 text-xs"
+                          >
+                            Modifier
+                          </button>
                         </div>
-                      )}
+                      ))}
                     </div>
-                  );
-                })}
-              </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  })}
+</div>
 
       {selectedRapport && (
         <EditEvanRapportLine

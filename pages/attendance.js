@@ -690,10 +690,8 @@ useEffect(() => {
   const totalGlobal =
     typeTotals.total +
     typeTotals.enfants +
-    typeTotals.connectes +
-    typeTotals.nouveauxVenus +
-    typeTotals.nouveauxConvertis;
-
+    typeTotals.connectes;   
+         
           return (
             <div key={typeTemps} className="ml-3 space-y-2">
 
@@ -708,7 +706,7 @@ useEffect(() => {
                 <span>{typeExpanded ? "➖" : "➕"} {typeTemps}</span>
                 <div className="text-right leading-tight">
                 <p className="text-sm font-bold text-amber-300">Total (H+F+J): {totalHFJ} </p>
-                <p className="text-sm font-bold text-orange-300">Total Global: {totalGlobal} </p>
+                <p className="text-sm font-bold text-orange-400">Total Global: {totalGlobal} </p>
               </div>
               </div>
 

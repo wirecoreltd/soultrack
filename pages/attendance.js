@@ -575,27 +575,16 @@ useEffect(() => {
   const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
   const borderColorClass = borderColors[typeIdx % borderColors.length];
 
-  const totalHFJ = rows.reduce(
-    (acc, r) =>
-      acc +
-      Number(r.hommes || 0) +
-      Number(r.femmes || 0) +
-      Number(r.jeunes || 0),
-    0
-  );
+  const typeTotals = calculateTypeTotals(rows);
 
-  const totalGlobal = rows.reduce(
-    (acc, r) =>
-      acc +
-      Number(r.hommes || 0) +
-      Number(r.femmes || 0) +
-      Number(r.jeunes || 0) +
-      Number(r.enfants || 0) +
-      Number(r.connectes || 0) +
-      Number(r.nouveauxVenus || 0) +
-      Number(r.nouveauxConvertis || 0),
-    0
-  );
+  const totalHFJ = typeTotals.total;
+
+  const totalGlobal =
+    typeTotals.total +
+    typeTotals.enfants +
+    typeTotals.connectes +
+    typeTotals.nouveauxVenus +
+    typeTotals.nouveauxConvertis;
                 
                   return (
                     <div key={typeTemps} className="space-y-1">

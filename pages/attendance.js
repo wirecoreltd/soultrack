@@ -118,10 +118,7 @@ const calculateTypeTotals = (rows) => {
 };
   
   /* ================= TEMPS ================= */
-  useEffect(() => {
-    const loadTemps = async () => {
-      useEffect(() => {
-  if (!superviseur.eglise_id || !superviseur.branche_id) return;
+  useEffect(() => {    
 
   const loadTemps = async () => {
     const { data, error } = await supabase

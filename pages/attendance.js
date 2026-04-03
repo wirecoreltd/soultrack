@@ -402,35 +402,35 @@ useEffect(() => {
           </div>
         
           {/* Nouveau temps si AUTRE */}
-{formData.typeTemps === "AUTRE" && (
-  <>
-    <div className="flex flex-col col-span-1 md:col-span-2">
-      <label className="text-white mb-1">Nom du temps</label>
-      <input
-        type="text"
-        name="nouveauTemps"
-        value={formData.nouveauTemps}
-        onChange={(e) => {
-          // Limite à 30 caractères
-          const value = e.target.value.slice(0, 30);
-          setFormData(prev => ({ ...prev, nouveauTemps: value }));
-        }}
-        className="input w-full"
-        placeholder="Ex: ADP"
-        maxLength={30} // limite côté HTML
-      />
-    </div>
-    <div className="flex items-center gap-2 col-span-1 md:col-span-2">
-      <input
-        type="checkbox"
-        name="enregistrerTemps"
-        checked={formData.enregistrerTemps}
-        onChange={e => setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))}
-      />
-      <label className="text-amber-300 text-sm">Enregistrer ce temps pour le futur</label>
-    </div>
-  </>
-)}
+          {formData.typeTemps === "AUTRE" && (
+            <>
+              <div className="flex flex-col col-span-1 md:col-span-2">
+                <label className="text-white mb-1">Nom du temps</label>
+                <input
+                  type="text"
+                  name="nouveauTemps"
+                  value={formData.nouveauTemps}
+                  onChange={(e) => {
+                    // Limite à 30 caractères
+                    const value = e.target.value.slice(0, 30);
+                    setFormData(prev => ({ ...prev, nouveauTemps: value }));
+                  }}
+                  className="input w-full"
+                  placeholder="Ex: ADP"
+                  maxLength={30} // limite côté HTML
+                />
+              </div>
+              <div className="flex items-center gap-2 col-span-1 md:col-span-2">
+                <input
+                  type="checkbox"
+                  name="enregistrerTemps"
+                  checked={formData.enregistrerTemps}
+                  onChange={e => setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))}
+                />
+                <label className="text-amber-300 text-sm">Enregistrer ce temps pour le futur</label>
+              </div>
+            </>
+          )}
         
           {/* Numéro de culte si Culte */}
           {formData.typeTemps === "Culte" && (
@@ -688,7 +688,7 @@ useEffect(() => {
                   <p className="text-amber-300 text-right">{formatDateFR(r.date)}</p>
                   <p>Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
                   <p className="font-semibold text-orange-400">Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
-                  <p>Enfants: {r.enfants} | Connectés: {r.connectes}</p>                
+                  <p className="mt-2">Enfants: {r.enfants} | Connectés: {r.connectes}</p>                
                   <p>Nouveaux Venus: {r.nouveauxVenus} | Nouveaux Convertis: {r.nouveauxConvertis}</p>
                 </div>
               ))}

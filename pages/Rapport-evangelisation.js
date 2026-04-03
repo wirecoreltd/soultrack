@@ -552,6 +552,8 @@ const handleConseillerClick = () => {
                         <div className="font-semibold">
                           {isExpanded ? "➖ " : "➕ "} {monthLabel}
                         </div>
+                      </div>
+                    </div>
                    
 
                   {/* TYPES */}

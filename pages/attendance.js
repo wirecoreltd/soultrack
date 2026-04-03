@@ -640,101 +640,72 @@ useEffect(() => {
       </div>
     </div>
 
-       {/* MOBILE */}
-          <div className="md:hidden space-y-4">
-            {Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj]) => {
-              const [year, monthIndex] = monthKey.split("-").map(Number);
-              const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-              const monthExpanded = expandedMonths[monthKey] || false;
-          
-              // Totaux du mois
-              const monthTotalHFJ = Object.values(typesObj).flat().reduce(
-                (acc, rows) => acc + rows.reduce((a, r) => a + Number(r.hommes) + Number(r.femmes) + Number(r.jeunes), 0),
-                0
-              );
-              const monthTotalGlobal = Object.values(typesObj).flat().reduce(
-                (acc, rows) => acc + rows.reduce((a, r) => a + Number(r.hommes) + Number(r.femmes) + Number(r.jeunes) + Number(r.enfants) + Number(r.connectes) + Number(r.nouveauxVenus) + Number(r.nouveauxConvertis), 0),
-                0
-              );
-          
-              return (
-                <div key={monthKey} className="space-y-2">
-          
-                  {/* MOIS */}
-                  <div
-                    className="bg-white/10 rounded-xl p-3 text-white font-bold flex flex-col cursor-pointer border-l-4 border-red-500"
-                    onClick={() => toggleMonth(monthKey)}
-                  >
-                    <span className="flex justify-between items-center">
-                      {monthExpanded ? "➖" : "➕"} {monthLabel}
-                    </span>
-          
-                    {/* Totaux mois */}
-                    {monthExpanded && (
-                      <div className="mt-2 space-y-1">
-                        <p className="text-orange-400 font-semibold">
-                          Total fréquentation (H+F+J): {monthTotalHFJ}
-                        </p>
-                        <p className="text-orange-400 font-semibold">
-                          Total global (H+F+J+E+C+NV+NC): {monthTotalGlobal}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-          
-                  {/* TYPES */}
-                  {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows], typeIdx) => {
-                    const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
-                    const borderColorClass = borderColors[typeIdx % borderColors.length];
-          
-                    // Calcul du total complet pour le type
-                    const typeTotal = rows.reduce(
-                      (acc, r) =>
-                        acc + Number(r.hommes) + Number(r.femmes) + Number(r.jeunes) + Number(r.enfants) + Number(r.connectes),
-                      0
-                    );
-          
-                    return (
-                      <div key={typeTemps} className="ml-3 space-y-2">
-          
-                        {/* TYPE */}
-                        <div
-                          className={`bg-white/5 rounded-lg p-3 text-orange-400 font-semibold flex justify-between items-center cursor-pointer border-l-4 ${borderColorClass}`}
-                          onClick={() =>
-                            setTypeCollapsedDesktop(prev => ({
-                              ...prev,
-                              [typeTemps]: !prev[typeTemps],
-                            }))
-                          }
-                        >
-                          <span>{typeExpanded ? "➖" : "➕"} {typeTemps}</span>
-                          <span>{typeTotal}</span>
-                        </div>
-          
-                        {/* DATES */}
-                        {typeExpanded && rows.map(r => (
-                          <div
-                            key={r.id}
-                            className={`ml-4 bg-white/10 rounded-lg p-3 text-white border-l-4 ${borderColorClass}`}
-                          >
-                            <p className="text-amber-300 text-right">{formatDateFR(r.date)}</p>
-                            <p className="mt-2">Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
-                            <p className="font-semibold text-orange-400">Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
-                            <p className="mt-2">Enfants: {r.enfants} | Connectés: {r.connectes}</p>
-                            <p className="mt-1">Nouveaux Venus: {r.nouveauxVenus} | Nouveaux Convertis: {r.nouveauxConvertis}</p>
-                          </div>
-                        ))}
-          
-                      </div>
-                    );
-                  })}
-          
-                </div>
-              );
-            })}
-          </div>
+        {/* MOBILE */}
+<div className="md:hidden space-y-4">
+  {Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj]) => {
+    const [year, monthIndex] = monthKey.split("-").map(Number);
+    const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+    const monthExpanded = expandedMonths[monthKey] || false;
+
+    return (
+      <div key={monthKey} className="space-y-2">
+
+        {/* MOIS */}
+        <div
+          className="bg-white/10 rounded-xl p-3 text-white font-bold flex justify-between items-center cursor-pointer border-l-4 border-red-500"
+          onClick={() => toggleMonth(monthKey)}
+        >
+          <span>{monthExpanded ? "➖" : "➕"} {monthLabel}</span>
         </div>
-      )}
+
+        {/* TYPES */}
+        {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows], typeIdx) => {
+          const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
+          const borderColorClass = borderColors[typeIdx % borderColors.length];
+
+          // Calcul du total complet pour le type
+          const typeTotal = rows.reduce((acc, r) => acc + Number(r.hommes) + Number(r.femmes) + Number(r.jeunes) + Number(r.enfants) + Number(r.connectes), 0);
+
+          return (
+            <div key={typeTemps} className="ml-3 space-y-2">
+
+              {/* TYPE */}
+              <div
+                className={`bg-white/5 rounded-lg p-3 text-orange-400 font-semibold flex justify-between items-center cursor-pointer border-l-4 ${borderColorClass}`}
+                onClick={() => setTypeCollapsedDesktop(prev => ({
+                  ...prev,
+                  [typeTemps]: !prev[typeTemps]
+                }))}
+              >
+                <span>{typeExpanded ? "➖" : "➕"} {typeTemps}</span>
+                <span>{typeTotal}</span>
+              </div>
+
+              {/* DATES */}
+              {typeExpanded && rows.map(r => (
+                <div
+                  key={r.id}
+                  className={`ml-4 bg-white/10 rounded-lg p-3 text-white border-l-4 ${borderColorClass}`}
+                >
+                  <p className="text-amber-300 text-right">{formatDateFR(r.date)}</p>
+                  <p className="mt-2">Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
+                  <p className="font-semibold text-orange-400">Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
+                  <p className="mt-2">Enfants: {r.enfants} | Connectés: {r.connectes}</p>                
+                  <p className="mt-1">Nouveaux Venus: {r.nouveauxVenus} | Nouveaux Convertis: {r.nouveauxConvertis}</p>
+                </div>
+              ))}
+
+            </div>
+          );
+        })}
+
+      </div>
+    );
+  })}
+</div>
+
+  </div>
+)}
 
       <Footer />
 

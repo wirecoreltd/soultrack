@@ -560,6 +560,7 @@ const handleConseillerClick = () => {
                           </div>
                         )}   
                       </div>
+                    </div>
 
                   {/* TYPES */}
                   {isExpanded &&

@@ -641,7 +641,7 @@ useEffect(() => {
     </div>
 
         {/* MOBILE */}
-    <div className="md:hidden space-y-4">
+<div className="md:hidden space-y-4">
   {Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj]) => {
     const [year, monthIndex] = monthKey.split("-").map(Number);
     const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
@@ -661,8 +661,10 @@ useEffect(() => {
         {/* TYPES */}
         {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows], typeIdx) => {
           const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
-          const typeTotals = calculateTypeTotals(rows);
           const borderColorClass = borderColors[typeIdx % borderColors.length];
+
+          // Calcul du total complet pour le type
+          const typeTotal = rows.reduce((acc, r) => acc + Number(r.hommes) + Number(r.femmes) + Number(r.jeunes) + Number(r.enfants) + Number(r.connectes), 0);
 
           return (
             <div key={typeTemps} className="ml-3 space-y-2">
@@ -676,7 +678,7 @@ useEffect(() => {
                 }))}
               >
                 <span>{typeExpanded ? "➖" : "➕"} {typeTemps}</span>
-                <span>{typeTotals.total}</span>
+                <span>{typeTotal}</span>
               </div>
 
               {/* DATES */}
@@ -686,10 +688,10 @@ useEffect(() => {
                   className={`ml-4 bg-white/10 rounded-lg p-3 text-white border-l-4 ${borderColorClass}`}
                 >
                   <p className="text-amber-300 text-right">{formatDateFR(r.date)}</p>
-                  <p>Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
+                  <pp className="mt-2>Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
                   <p className="font-semibold text-orange-400">Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
                   <p className="mt-2">Enfants: {r.enfants} | Connectés: {r.connectes}</p>                
-                  <p>Nouveaux Venus: {r.nouveauxVenus} | Nouveaux Convertis: {r.nouveauxConvertis}</p>
+                  <pp className="mt-1>Nouveaux Venus: {r.nouveauxVenus} | Nouveaux Convertis: {r.nouveauxConvertis}</p>
                 </div>
               ))}
 

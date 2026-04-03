@@ -640,8 +640,9 @@ useEffect(() => {
       </div>
     </div>
 
+        {/* MOBILE */}
     <div className="md:hidden space-y-4">
-  {Object.entries(groupByMonthAndType(reports)).map(([monthKey, typesObj]) => {
+  {Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj]) => {
     const [year, monthIndex] = monthKey.split("-").map(Number);
     const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
     const monthExpanded = expandedMonths[monthKey] || false;

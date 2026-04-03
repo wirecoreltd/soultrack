@@ -572,9 +572,30 @@ useEffect(() => {
 
               {/* TYPES PAR MOIS */}
                 {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows], typeIdx) => {
-                  const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
-                  const typeTotals = calculateTypeTotals(rows);
-                  const borderColorClass = borderColors[typeIdx % borderColors.length]; // couleur dynamique par type
+  const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
+  const borderColorClass = borderColors[typeIdx % borderColors.length];
+
+  const totalHFJ = rows.reduce(
+    (acc, r) =>
+      acc +
+      Number(r.hommes || 0) +
+      Number(r.femmes || 0) +
+      Number(r.jeunes || 0),
+    0
+  );
+
+  const totalGlobal = rows.reduce(
+    (acc, r) =>
+      acc +
+      Number(r.hommes || 0) +
+      Number(r.femmes || 0) +
+      Number(r.jeunes || 0) +
+      Number(r.enfants || 0) +
+      Number(r.connectes || 0) +
+      Number(r.nouveauxVenus || 0) +
+      Number(r.nouveauxConvertis || 0),
+    0
+  );
                 
                   return (
                     <div key={typeTemps} className="space-y-1">

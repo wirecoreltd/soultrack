@@ -208,68 +208,99 @@ const calculateTypeTotals = (rows) => {
 };
   
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setMessage("⏳ Enregistrement en cours...");
+  e.preventDefault();
+  setMessage("⏳ Enregistrement en cours...");
 
-    let typeTempsFinal = formData.typeTemps === "AUTRE" ? formData.nouveauTemps : formData.typeTemps;
+  // 1️⃣ Vérifier que superviseur est chargé
+  if (!superviseur.eglise_id || !superviseur.branche_id) {
+    setMessage("❌ Les informations de l’église ne sont pas encore chargées.");
+    return;
+  }
 
-    if (formData.enregistrerTemps && formData.typeTemps === "AUTRE" && !tempsOptions.includes(typeTempsFinal)) {
-      setTempsOptions(prev => [...prev, typeTempsFinal]);
-      await supabase.from("attendance").insert([{ 
+  // 2️⃣ Déterminer le typeTemps final
+  let typeTempsFinal =
+    formData.typeTemps === "AUTRE" ? formData.nouveauTemps.trim() : formData.typeTemps;
+
+  if (!typeTempsFinal) {
+    setMessage("❌ Le nom du temps ne peut pas être vide.");
+    return;
+  }
+
+  // 3️⃣ Ajouter le temps si "AUTRE" et case cochée
+  if (formData.enregistrerTemps && formData.typeTemps === "AUTRE" && !tempsOptions.includes(typeTempsFinal)) {
+    setTempsOptions(prev => [...prev, typeTempsFinal]);
+    try {
+      const { error } = await supabase.from("attendance").insert([{
         typeTemps: typeTempsFinal,
         eglise_id: superviseur.eglise_id,
-        branche_id: superviseur.branche_id  
+        branche_id: superviseur.branche_id
       }]);
-    }
-
-    const rapportAvecEglise = {
-      ...formData,
-      typeTemps: typeTempsFinal,
-      eglise_id: superviseur.eglise_id,
-      branche_id: superviseur.branche_id,
-      hommes: Number(formData.hommes) || 0,
-      femmes: Number(formData.femmes) || 0,
-      jeunes: Number(formData.jeunes) || 0,
-      enfants: Number(formData.enfants) || 0,
-      connectes: Number(formData.connectes) || 0,
-      nouveauxVenus: Number(formData.nouveauxVenus) || 0,
-      nouveauxConvertis: Number(formData.nouveauxConvertis) || 0,
-      numero_culte: Number(formData.numero_culte) || 1
-    };
-
-    try {
-      if (editId) {
-        const { error } = await supabase.from("attendance").update(rapportAvecEglise).eq("id", editId);
-        if (error) throw error;
-        setMessage("✅ Rapport mis à jour !");
-      } else {
-        const { error } = await supabase.from("attendance").insert([rapportAvecEglise]);
-        if (error) throw error;
-        setMessage("✅ Rapport ajouté !");
-      }
-
-      setTimeout(() => setMessage(""), 3000);
-      setFormData({
-        date: "",
-        typeTemps: "",
-        nouveauTemps: "",
-        enregistrerTemps: false,
-        numero_culte: 1,
-        hommes: 0,
-        femmes: 0,
-        jeunes: 0,
-        enfants: 0,
-        connectes: 0,
-        nouveauxVenus: 0,
-        nouveauxConvertis: 0,
-      });
-      setEditId(null);
-      fetchRapports();
+      if (error) throw error;
     } catch (err) {
-      console.error(err);
-      setMessage("❌ " + err.message);
+      console.error("Erreur ajout nouveau temps :", err.message);
+      setMessage("❌ Impossible d’ajouter le nouveau temps.");
+      return;
     }
+  }
+
+  // 4️⃣ Construire le rapport complet
+  const rapportAvecEglise = {
+    ...formData,
+    typeTemps: typeTempsFinal,
+    eglise_id: superviseur.eglise_id,
+    branche_id: superviseur.branche_id,
+    hommes: Number(formData.hommes) || 0,
+    femmes: Number(formData.femmes) || 0,
+    jeunes: Number(formData.jeunes) || 0,
+    enfants: Number(formData.enfants) || 0,
+    connectes: Number(formData.connectes) || 0,
+    nouveauxVenus: Number(formData.nouveauxVenus) || 0,
+    nouveauxConvertis: Number(formData.nouveauxConvertis) || 0,
+    numero_culte: Number(formData.numero_culte) || 1
   };
+
+  // 5️⃣ Nettoyer les champs vides pour Supabase
+  const rapportClean = Object.fromEntries(
+    Object.entries(rapportAvecEglise).filter(([_, v]) => v !== "" && v !== null)
+  );
+
+  console.log("Insert vers Supabase :", rapportClean); // pour debug
+
+  // 6️⃣ Insert ou update
+  try {
+    if (editId) {
+      const { error } = await supabase.from("attendance").update(rapportClean).eq("id", editId);
+      if (error) throw error;
+      setMessage("✅ Rapport mis à jour !");
+    } else {
+      const { error } = await supabase.from("attendance").insert([rapportClean]);
+      if (error) throw error;
+      setMessage("✅ Rapport ajouté !");
+    }
+
+    // 7️⃣ Reset form et reload
+    setTimeout(() => setMessage(""), 3000);
+    setFormData({
+      date: "",
+      typeTemps: "",
+      nouveauTemps: "",
+      enregistrerTemps: false,
+      numero_culte: 1,
+      hommes: 0,
+      femmes: 0,
+      jeunes: 0,
+      enfants: 0,
+      connectes: 0,
+      nouveauxVenus: 0,
+      nouveauxConvertis: 0,
+    });
+    setEditId(null);
+    fetchRapports();
+  } catch (err) {
+    console.error(err);
+    setMessage("❌ " + err.message);
+  }
+};
 
   const handleEdit = (r) => {
   setEditId(r.id);

@@ -529,24 +529,8 @@ const handleConseillerClick = () => {
                   <div
                     className={`px-4 py-3 rounded-lg bg-white/25 cursor-pointer border-l-4 ${borderColor}`}
                     onClick={() => toggleMonth(monthKey)}
-                  >
-                    <div className="hidden md:flex items-center">
-                      <div className="min-w-[150px] text-white font-semibold">
-                        {isExpanded ? "➖ " : "➕ "} {monthLabel}
-                      </div>
-                      <div className="flex ml-auto text-white font-semibold text-sm">
-                        <div className="min-w-[110px] text-center ml-3">{monthTotals.hommes}</div>
-                        <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>  
-                        <div className="min-w-[110px] text-center text-orange-400 font-semibold">
-                       {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)} </div>
-                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotals.priere}</div>
-                        <div className="min-w-[140px] text-center">{monthTotals.nouveau}</div>
-                        <div className="min-w-[130px] text-center">{monthTotals.reconciliation}</div>
-                        <div className="min-w-[130px] text-center">{monthTotals.moissonneurs}</div>
-                        <div className="min-w-[120px]"></div>
-                      </div>
-                    </div>
-
+                  >               
+                     
                     {/* MOBILE */}
                     <div className="md:hidden text-white">
                         <div className="font-semibold">
@@ -612,7 +596,7 @@ const handleConseillerClick = () => {
 
   {/* 🔥 IMPORTANT */}
   {typeExpanded && (
-    //<div className="grid grid-cols-2 gap-1 text-sm mt-1">
+    <div className="grid grid-cols-2 gap-1 text-sm mt-1">
       <div>Hommes: {typeTotals.hommes}</div>
       <div>Femmes: {typeTotals.femmes}</div>  
       <div className="font-semibold text-orange-400">

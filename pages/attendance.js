@@ -128,8 +128,7 @@ const calculateTypeTotals = (rows) => {
         .not("typeTemps", "is", null);
       if (error) console.error(error);
       else {
-        const uniqueTemps = ["Culte", ...new Set(data.map(t => t.typeTemps).filter(t => t && t !== "Culte"))];
-        setTempsOptions(uniqueTemps);
+        const uniqueTemps = ["Culte", ...new Set(data.map(t => t.typeTemps?.trim()).filter(t => t && t !== "" && t !== "Culte"))];setTempsOptions(uniqueTemps);
       }
     };
     loadTemps();
@@ -330,7 +329,13 @@ const filteredReports = filterType
   // pour remplir le dropdown de type
 useEffect(() => {
   if (reports.length > 0) {
-    const types = [...new Set(reports.map(r => r.typeTemps))];
+    const types = [
+  ...new Set(
+    reports
+      .map(r => r.typeTemps?.trim())
+      .filter(t => t && t !== "")
+  )
+];
     setAvailableTypes(types);
   }
 }, [reports]);     
@@ -470,7 +475,7 @@ useEffect(() => {
                 type="date"
                 value={dateDebut}
                 onChange={e => setDateDebut(e.target.value)}
-                className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
+                className="h-10 w-fit bg-white/10 border border-white/30 rounded-lg px-4"
               />
             </div>
         
@@ -481,14 +486,14 @@ useEffect(() => {
                 type="date"
                 value={dateFin}
                 onChange={e => setDateFin(e.target.value)}
-                className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
+                className="h-10 w-fit bg-white/10 border border-white/30 rounded-lg px-4"
               />
             </div>
         
             {/* Bouton */}
             <button
               onClick={fetchRapports}
-              className="h-10 w-full bg-amber-400 text-white font-semibold px-6 rounded-lg hover:bg-amber-300 transition"
+              className="h-10 w-fit bg-amber-400 text-white font-semibold px-6 rounded-lg hover:bg-amber-300 transition"
             >
               Générer
             </button>
@@ -498,7 +503,7 @@ useEffect(() => {
                 <div className="flex flex-col w-full">
                   <label className="text-sm font-semibold mb-1 text-white">Type de temps</label>
                   <select
-                    className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4 text-white focus:outline-none focus:ring-2 focus:ring-amber-300"
+                    className="h-10 w-fit bg-white/10 border border-white/30 rounded-lg px-4 text-white"
                     value={filterType}
                     onChange={e => setFilterType(e.target.value)}
                   >

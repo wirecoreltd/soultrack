@@ -685,12 +685,12 @@ useEffect(() => {
                   key={r.id}
                   className={`ml-4 bg-white/10 rounded-lg p-3 text-white border-l-4 ${borderColorClass}`}
                 >
-                  <p className="font-semibold">{formatDateFR(r.date)}</p>
-                  <p>H: {r.hommes} | F: {r.femmes} | J: {r.jeunes}</p>
-                  <p>Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
+                  <p className="text-amber-300 text-right">{formatDateFR(r.date)}</p>
+                  <p>Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
+                  <p className="font-semibold text-orange-400">Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
                   <p>Enfants: {r.enfants}</p>
                   <p>Connectés: {r.connectes}</p>
-                  <p>NV: {r.nouveauxVenus} | NC: {r.nouveauxConvertis}</p>
+                  <p>Nouveaux Venus: {r.nouveauxVenus} | Nouveaux Convertis: {r.nouveauxConvertis}</p>
                 </div>
               ))}
 

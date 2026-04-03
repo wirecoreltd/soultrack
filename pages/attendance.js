@@ -465,7 +465,7 @@ useEffect(() => {
         {message && <p className="mt-4 text-center text-white font-medium">{message}</p>}
       </div>
  {/* FILTRE DATE */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-white space-y-1">
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl p-4 text-white space-y-1">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-white">
         
             {/* Date début */}

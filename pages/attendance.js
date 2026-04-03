@@ -494,7 +494,7 @@ useEffect(() => {
                     {/* Bouton */}
                     <button
                       onClick={fetchRapports}
-                      className="h-10 w-fit bg-amber-400 text-white font-semibold px-6 rounded-lg hover:bg-amber-300 transition"
+                      className="h-10 w-fit bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-300 transition"
                     >
                       Générer
                     </button>
@@ -688,8 +688,7 @@ useEffect(() => {
                   <p className="text-amber-300 text-right">{formatDateFR(r.date)}</p>
                   <p>Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
                   <p className="font-semibold text-orange-400">Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
-                  <p>Enfants: {r.enfants}</p>
-                  <p>Connectés: {r.connectes}</p>
+                  <p>Enfants: {r.enfants} | Connectés: {r.connectes}</p>                
                   <p>Nouveaux Venus: {r.nouveauxVenus} | Nouveaux Convertis: {r.nouveauxConvertis}</p>
                 </div>
               ))}

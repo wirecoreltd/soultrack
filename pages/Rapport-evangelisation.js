@@ -293,10 +293,12 @@ const handleConseillerClick = () => {
 };
 
   const typeColors = {
-  "Sortie de groupe": "border-yellow-400",
-  "Individuel": "border-blue-400",
-  "Suivi": "border-green-400",
-  "Autres": "border-gray-400",
+   "Individuel": "border-blue-400 bg-blue-400/10",
+  "Sortie de groupe": "border-yellow-400 bg-yellow-400/10",
+  "Campagne d’évangélisation": "border-purple-400 bg-purple-400/10",
+  "Évangélisation de rue": "border-green-400 bg-green-400/10",
+  "Évangélisation maison": "border-pink-400 bg-pink-400/10",
+  "Évangélisation stade": "border-red-400 bg-red-400/10",
 };
   // ---------------- UI ----------------
   return (

@@ -508,6 +508,7 @@ const handleConseillerClick = () => {
               <div className="min-w-[120px] text-center">Actions</div>
             </div>
 
+       
             {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
               const [year, monthIndex] = monthKey.split("-").map(Number);
               const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
@@ -587,19 +588,31 @@ const handleConseillerClick = () => {
                             </div>
 
                             {/* MOBILE */}
-                            <div className="md:hidden text-white">
-                              <div className="font-semibold">{typeExpanded ? "➖ " : "➕ "} {type}</div>
-                              <div className="grid grid-cols-2 gap-1 text-sm mt-1">
-                                <div>Hommes: {typeTotals.hommes}</div>
-                                <div>Femmes: {typeTotals.femmes}</div>  
-                                <div className="font-semibold text-orange-400">Total: {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}</div>
-                                <div className="font-semibold text-orange-400">Prières: {typeTotals.priere}</div>
-                                <div>NouvConv: {typeTotals.nouveau}</div>
-                                <div>Recon: {typeTotals.reconciliation}</div>
-                                <div>Moiss: {typeTotals.moissonneurs}</div>
-                              </div>
-                            </div>
-                          </div>
+<div className="md:hidden text-white">
+  <div
+    className="font-semibold cursor-pointer"
+    onClick={() => toggleType(typeKey)}
+  >
+    {typeExpanded ? "➖ " : "➕ "} {type}
+  </div>
+
+  {/* ✅ STATS visibles SEULEMENT si expand */}
+  {typeExpanded && (
+    <div className="grid grid-cols-2 gap-1 text-sm mt-1">
+      <div>Hommes: {typeTotals.hommes}</div>
+      <div>Femmes: {typeTotals.femmes}</div>  
+      <div className="font-semibold text-orange-400">
+        Total: {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}
+      </div>
+      <div className="font-semibold text-orange-400">
+        Prières: {typeTotals.priere}
+      </div>
+      <div>NouvConv: {typeTotals.nouveau}</div>
+      <div>Recon: {typeTotals.reconciliation}</div>
+      <div>Moiss: {typeTotals.moissonneurs}</div>
+    </div>
+  )}
+</div>
 
                           {/* RAPPORTS */}
                           {typeExpanded &&

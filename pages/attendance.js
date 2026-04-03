@@ -691,7 +691,7 @@ useEffect(() => {
                   <pp className="mt-2>Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
                   <p className="font-semibold text-orange-400">Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
                   <p className="mt-2">Enfants: {r.enfants} | Connectés: {r.connectes}</p>                
-                  <pp className="mt-1>Nouveaux Venus: {r.nouveauxVenus} | Nouveaux Convertis: {r.nouveauxConvertis}</p>
+                  <p className="mt-1>Nouveaux Venus: {r.nouveauxVenus} | Nouveaux Convertis: {r.nouveauxConvertis}</p>
                 </div>
               ))}
 

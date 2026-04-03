@@ -522,7 +522,7 @@ useEffect(() => {
      
   {/* TABLEAU / CARDS DESKTOP + MOBILE */}
 {showTable && (
-  <div className="max-w-5xl w-full mt-6 mb-6">
+  <div className="w-full px-4 mt-6 mb-6">
 
     {/* ================= DESKTOP ================= */}
     <div className="hidden md:block overflow-x-auto">
@@ -640,43 +640,67 @@ useEffect(() => {
       </div>
     </div>
 
-    {/* ================= MOBILE ================= */}
     <div className="md:hidden space-y-4">
-      {Object.entries(groupByMonthAndType(reports)).map(([monthKey, typesObj]) => {
-        const [year, monthIndex] = monthKey.split("-").map(Number);
-        const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+  {Object.entries(groupByMonthAndType(reports)).map(([monthKey, typesObj]) => {
+    const [year, monthIndex] = monthKey.split("-").map(Number);
+    const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+    const monthExpanded = expandedMonths[monthKey] || false;
 
-        return (
-          <div key={monthKey} className="space-y-2">
+    return (
+      <div key={monthKey} className="space-y-2">
 
-            <h3 className="text-white font-bold">{monthLabel}</h3>
+        {/* MOIS */}
+        <div
+          className="bg-white/10 rounded-xl p-3 text-white font-bold flex justify-between items-center cursor-pointer border-l-4 border-red-500"
+          onClick={() => toggleMonth(monthKey)}
+        >
+          <span>{monthExpanded ? "➖" : "➕"} {monthLabel}</span>
+        </div>
 
-            {Object.entries(typesObj).map(([typeTemps, rows]) => {
-              const typeTotals = calculateTypeTotals(rows);
+        {/* TYPES */}
+        {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows], typeIdx) => {
+          const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
+          const typeTotals = calculateTypeTotals(rows);
+          const borderColorClass = borderColors[typeIdx % borderColors.length];
 
-              return (
-                <div key={typeTemps} className="space-y-2 bg-white/10 rounded-xl p-2">
-                  <h4 className="text-orange-400 font-semibold flex justify-between">
-                    <span>{typeTemps}</span>
-                    <span>Total: {typeTotals.total}</span>
-                  </h4>
-                  {rows.map(r => (
-                    <div key={r.id} className="bg-white/5 rounded-xl p-4 text-white space-y-1">
-                      <p>{formatDateFR(r.date)}</p>
-                      <p>Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
-                      <p>Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
-                      <p>Enfants: {r.enfants} | Connectés: {r.connectes}</p>
-                      <p>Nouveaux venus: {r.nouveauxVenus} | Nouveaux convertis: {r.nouveauxConvertis}</p>
-                    </div>
-                  ))}
+          return (
+            <div key={typeTemps} className="ml-3 space-y-2">
+
+              {/* TYPE */}
+              <div
+                className={`bg-white/5 rounded-lg p-3 text-orange-400 font-semibold flex justify-between items-center cursor-pointer border-l-4 ${borderColorClass}`}
+                onClick={() => setTypeCollapsedDesktop(prev => ({
+                  ...prev,
+                  [typeTemps]: !prev[typeTemps]
+                }))}
+              >
+                <span>{typeExpanded ? "➖" : "➕"} {typeTemps}</span>
+                <span>{typeTotals.total}</span>
+              </div>
+
+              {/* DATES */}
+              {typeExpanded && rows.map(r => (
+                <div
+                  key={r.id}
+                  className={`ml-4 bg-white/10 rounded-lg p-3 text-white border-l-4 ${borderColorClass}`}
+                >
+                  <p className="font-semibold">{formatDateFR(r.date)}</p>
+                  <p>H: {r.hommes} | F: {r.femmes} | J: {r.jeunes}</p>
+                  <p>Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
+                  <p>Enfants: {r.enfants}</p>
+                  <p>Connectés: {r.connectes}</p>
+                  <p>NV: {r.nouveauxVenus} | NC: {r.nouveauxConvertis}</p>
                 </div>
-              );
-            })}
+              ))}
 
-          </div>
-        );
-      })}
-    </div>
+            </div>
+          );
+        })}
+
+      </div>
+    );
+  })}
+</div>
 
   </div>
 )}

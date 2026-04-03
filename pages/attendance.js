@@ -678,7 +678,10 @@ useEffect(() => {
                 }))}
               >
                 <span>{typeExpanded ? "➖" : "➕"} {typeTemps}</span>
-                <span>{typeTotal}</span>
+                <div className="text-right">
+                  <p className="text-[11px] text-gray-300">Total (H+F+J): {totalHFJ}</p>
+                  <p className="text-sm font-semibold text-orange-400">Toal Global{totalGlobal}</p>
+                </div>
               </div>
 
               {/* DATES */}

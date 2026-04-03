@@ -558,7 +558,8 @@ const handleConseillerClick = () => {
                             <div>Recon: {monthTotals.reconciliation}</div>
                             <div>Moiss: {monthTotals.moissonneurs}</div>
                           </div>
-                        )}                      
+                        )}   
+                      </div>
 
                   {/* TYPES */}
                   {isExpanded &&

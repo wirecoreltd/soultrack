@@ -524,47 +524,35 @@ const handleConseillerClick = () => {
               <div className="min-w-[120px] text-center">Actions</div>
             </div>
 
-            {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
-  const [year, monthIndex] = monthKey.split("-").map(Number);
-  const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-  const isExpanded = expandedMonths[monthKey] || false;
-  const borderColor = borderColors[idx % borderColors.length];
-  const monthTotals = getTotals(monthReports);
+           {/* TYPES */}
+{isExpanded &&
+  Object.entries(groupByType(monthReports)).map(([type, typeReports]) => {
+    const typeKey = `${monthKey}-${type}`;
+    const typeExpanded = expandedTypes[typeKey] || false;
 
-  return (
-    <div key={monthKey} className="space-y-1">
-      
-      {/* MOIS */}
-      <div
-        className={`px-4 py-3 rounded-lg bg-white/25 cursor-pointer border-l-4 ${borderColor}`}
-        onClick={() => toggleMonth(monthKey)}
-      >
-        <div className="hidden md:flex items-center">
-          <div className="min-w-[150px] text-white font-semibold">
-            {isExpanded ? "➖ " : "➕ "} {monthLabel}
-          </div>
+    return (
+      <div key={typeKey} className="ml-4">
 
-          <div className="flex ml-auto text-white font-semibold text-sm">
-            <div className="min-w-[110px] text-center ml-3">{monthTotals.hommes}</div>
-            <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>
-            <div className="min-w-[110px] text-center text-orange-400 font-semibold">
-              {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)}
-            </div>
-            <div className="min-w-[120px] text-center text-orange-400 font-semibold">
-              {monthTotals.priere}
-            </div>
-            <div className="min-w-[140px] text-center">{monthTotals.nouveau}</div>
-            <div className="min-w-[130px] text-center">{monthTotals.reconciliation}</div>
-            <div className="min-w-[130px] text-center">{monthTotals.moissonneurs}</div>
-            <div className="min-w-[120px]"></div>
-          </div>
+        {/* TYPE */}
+        <div
+          onClick={() => toggleType(typeKey)}
+          className="px-4 py-2 rounded-lg bg-white/15 cursor-pointer border-l-4 border-white"
+        >
+          <span className="text-white font-semibold">
+            {typeExpanded ? "➖ " : "➕ "} {type}
+          </span>
         </div>
 
-        {/* MOBILE */}
-        <div className="md:hidden text-white font-semibold">
-          {isExpanded ? "➖ " : "➕ "} {monthLabel}
-        </div>
+        {/* LIGNES */}
+        {typeExpanded &&
+          typeReports.map((r) => (
+            <div key={r.id} className="ml-6 text-white">
+              {new Date(r.date_evangelise).toLocaleDateString()}
+            </div>
+          ))}
       </div>
+    );
+  })}
 
       {/* TYPES */}
       {isExpanded &&

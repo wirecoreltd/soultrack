@@ -195,7 +195,9 @@ const [integrationPercent, setIntegrationPercent] = useState(0);
   };
 
   // ---------------- COLLAPSE ----------------
-  const toggleMonth = (monthKey) => setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
+  const toggleMonth = (monthKey) => {setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey]}));
+  setExpandedTypes({});
+};
   const toggleType = (typeKey) => setExpandedTypes(prev => ({ ...prev, [typeKey]: !prev[typeKey] }));
 
   // ---------------- GROUPING ----------------

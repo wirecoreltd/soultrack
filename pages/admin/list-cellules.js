@@ -25,6 +25,8 @@ function CelluleRow({ c, router }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const phoneClean = (c.telephone || "").replace(/[^0-9]/g, "");
+
   return (
     <>
       {/* ================= DESKTOP ================= */}
@@ -50,23 +52,20 @@ function CelluleRow({ c, router }) {
           {openPhoneMenu && (
             <div
               ref={phoneMenuRef}
-              className="absolute top-full mt-1 bg-white rounded-lg shadow-lg border z-50 w-56"
+              className="absolute top-full mt-1 bg-white rounded-lg shadow-lg border z-[9999] w-56"
             >
               <a href={`tel:${c.telephone}`} className="block px-4 py-2 hover:bg-gray-100">📞 Appeler</a>
               <a href={`sms:${c.telephone}`} className="block px-4 py-2 hover:bg-gray-100">✉️ SMS</a>
-              <a href={`https://wa.me/${c.telephone?.replace(/\D/g, "")}?call`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">📱 Appel WhatsApp</a>
-              <a href={`https://wa.me/${c.telephone?.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">💬 WhatsApp</a>
+              <a href={`https://wa.me/${phoneClean}?call`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">📱 Appel WhatsApp</a>
+              <a href={`https://wa.me/${phoneClean}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">💬 WhatsApp</a>
             </div>
-            </div>
-          )}        
-         </div>
+          )}
+        </div>
 
-        {/* Count */}
         <div className="flex-[1] flex justify-center text-white text-sm">
           {c.membre_count}
         </div>
 
-        {/* Action */}
         <div className="flex-[1] flex justify-center">
           <span
             className="text-orange-400 underline cursor-pointer text-sm"
@@ -77,36 +76,40 @@ function CelluleRow({ c, router }) {
         </div>
       </div>
 
-      {/* ================= MOBILE ================= */}    
-
-        <div className="sm:hidden bg-white/10 backdrop-blur-md rounded-xl p-4 border-l-4 mb-2 relative overflow-visible">
+      {/* ================= MOBILE ================= */}
+      <div
+        className="sm:hidden bg-white/10 backdrop-blur-md rounded-xl p-4 border-l-4 mb-2 relative overflow-visible"
         style={{ borderLeftColor: "#F59E0B" }}
       >
-        {/* Nom cellule */}
+        {/* Nom */}
         <div className="text-white font-semibold text-lg">
           {c.cellule_full}
         </div>
 
         {/* Ville */}
-       <div className="text-white text-sm mb-2 mt-3">
-           📍 Ville : <span className="font-semibold">{c.ville}</span>
-         </div>
+        <div className="text-white text-sm mb-2 mt-3">
+          📍 Ville : <span className="font-semibold">{c.ville}</span>
+        </div>
 
         {/* Responsable */}
-       <div className="text-white text-sm mb-2">
-           👤 Responsable :{" "}
-           <span className="text-amber-300 font-semibold">
-             {c.responsable || "—"}
-           </span>
-         </div>
+        <div className="text-white text-sm mb-2">
+          👤 Responsable :{" "}
+          <span className="text-amber-300 font-semibold">
+            {c.responsable || "—"}
+          </span>
+        </div>
 
         {/* Téléphone */}
-        <span className="text-sm cursor-pointer" onClick={() => setOpenPhoneMenu(!openPhoneMenu)}>
-           📞{" "}
-           <span className="text-orange-400 underline">
-             {c.telephone || "—"}
-           </span>
-         </span>
+        <div className="relative mb-2">
+          <span
+            className="text-sm cursor-pointer"
+            onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
+          >
+            📞{" "}
+            <span className="text-orange-400 underline">
+              {c.telephone || "—"}
+            </span>
+          </span>
 
           {openPhoneMenu && (
             <div
@@ -115,8 +118,8 @@ function CelluleRow({ c, router }) {
             >
               <a href={`tel:${c.telephone}`} className="block px-4 py-2 hover:bg-gray-100">📞 Appeler</a>
               <a href={`sms:${c.telephone}`} className="block px-4 py-2 hover:bg-gray-100">✉️ SMS</a>
-              <a href={`https://wa.me/${c.telephone?.replace(/\D/g, "")}?call`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">📱 Appel WhatsApp</a>
-              <a href={`https://wa.me/${c.telephone?.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">💬 WhatsApp</a>
+              <a href={`https://wa.me/${phoneClean}?call`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">📱 Appel WhatsApp</a>
+              <a href={`https://wa.me/${phoneClean}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">💬 WhatsApp</a>
             </div>
           )}
         </div>

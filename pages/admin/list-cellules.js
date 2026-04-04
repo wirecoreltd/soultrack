@@ -76,8 +76,7 @@ function CelluleRow({ c, router }) {
         </div>
       </div>
 
-      {/* ================= MOBILE ================= */}
-      <div
+      {/* ================= MOBILE ================= */}    
         <div className="sm:hidden bg-white/10 backdrop-blur-md rounded-xl p-4 border-l-4 mb-2 relative overflow-visible">
         style={{ borderLeftColor: "#F59E0B" }}
       >

@@ -18,7 +18,7 @@ export default function MembresCellule() {
 
 function MembresCelluleContent() {
   const router = useRouter();
-  const { memberId } = router.query;
+  const { memberId, celluleId } = router.query;
 
   const [membres, setMembres] = useState([]);
   const [cellules, setCellules] = useState([]);
@@ -118,11 +118,18 @@ function MembresCelluleContent() {
     const fetchAllMembers = async () => {
       setLoading(true);
       try {
-        const { data: membresData, error } = await supabase
-          .from("membres_complets")
-          .select("*")
-          .eq("statut_suivis", 3)
-          .order("created_at", { ascending: false });
+        let query = supabase
+  .from("membres_complets")
+  .select("*")
+  .eq("statut_suivis", 3)
+  .order("created_at", { ascending: false });
+
+// 🔥 si celluleId présent → filtrer
+if (celluleId) {
+  query = query.eq("cellule_id", celluleId);
+}
+
+const { data: membresData, error } = await query;
 
         if (error) throw error;
 
@@ -150,6 +157,12 @@ function MembresCelluleContent() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [handleClickOutside]);
+
+  useEffect(() => {
+  if (celluleId) {
+    setFilterCellule(celluleId);
+  }
+}, [celluleId]);
 
   // ------------------- Filtered members -------------------
   const filteredMembres = membres.filter(

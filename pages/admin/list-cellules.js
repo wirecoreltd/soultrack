@@ -57,8 +57,9 @@ function CelluleRow({ c, router }) {
               <a href={`https://wa.me/${c.telephone?.replace(/\D/g, "")}?call`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">📱 Appel WhatsApp</a>
               <a href={`https://wa.me/${c.telephone?.replace(/\D/g, "")}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">💬 WhatsApp</a>
             </div>
-          )}
-        </div>
+            </div>
+          )}        
+         </div>
 
         {/* Count */}
         <div className="flex-[1] flex justify-center text-white text-sm">
@@ -77,6 +78,7 @@ function CelluleRow({ c, router }) {
       </div>
 
       {/* ================= MOBILE ================= */}    
+
         <div className="sm:hidden bg-white/10 backdrop-blur-md rounded-xl p-4 border-l-4 mb-2 relative overflow-visible">
         style={{ borderLeftColor: "#F59E0B" }}
       >

@@ -524,7 +524,7 @@ const handleConseillerClick = () => {
               <div className="min-w-[120px] text-center">Actions</div>
             </div>
 
-            {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
+            {isExpanded && Object.entries(groupByType(monthReports)).map(([type, reports]) => (
               const [year, monthIndex] = monthKey.split("-").map(Number);
               const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
               const isExpanded = expandedMonths[monthKey] || false;

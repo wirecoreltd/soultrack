@@ -194,6 +194,12 @@ const [integrationPercent, setIntegrationPercent] = useState(0);
     setTimeout(() => setMessage(""), 3000);
   };
 
+  //========================
+  useEffect(() => {
+  setExpandedMonths({});
+  setExpandedTypes({});
+}, []);
+
   // ---------------- COLLAPSE ----------------
   const toggleMonth = (monthKey) => {setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey]}));
   setExpandedTypes({});

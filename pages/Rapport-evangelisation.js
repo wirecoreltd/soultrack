@@ -560,10 +560,8 @@ const handleConseillerClick = () => {
                         <div className="font-semibold">
                           {isExpanded ? "➖ " : "➕ "} {monthLabel}
                         </div>
-                      </div>
-                    </div>
+                      </div>                  
                    
-
                   {/* TYPES */}
                   {isExpanded &&
                     Object.entries(groupByType(monthReports)).map(([type, typeReports]) => {

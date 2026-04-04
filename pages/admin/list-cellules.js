@@ -69,7 +69,7 @@ function CelluleRow({ c, router }) {
         <div className="flex-[1] flex justify-center">
           <span
             className="text-orange-400 underline cursor-pointer text-sm"
-            onClick={() => router.push(`/admin/cellules/${c.id}/membres`)}
+            onClick={() => router.push(`/membres-cellule?celluleId=${c.id}`)}
           >
             Détails
           </span>

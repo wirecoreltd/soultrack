@@ -87,12 +87,12 @@ function CelluleRow({ c, router }) {
         </div>
 
         {/* Ville */}
-        <div className="text-white/70 text-sm mb-2">
+        <div className="text-white/70 text-sm mb-2 mt-3">
           📍 Ville : {c.ville}
         </div>
 
         {/* Responsable */}
-        <div className="text-white text-sm mb-2">
+        <div className="text-white text-sm mb-2 text-semibold">
           👤 Responsable : {c.responsable || "—"}
         </div>
 
@@ -121,7 +121,7 @@ function CelluleRow({ c, router }) {
         {/* Footer */}
         <div className="flex justify-between items-center mt-3">
           <div className="text-white text-sm">
-            👥 {c.membre_count} membres
+            👥 {c.membre_count} membre{c.membre_count > 1 ? "s" : ""}
           </div>
 
           <button

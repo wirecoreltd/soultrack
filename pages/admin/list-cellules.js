@@ -78,7 +78,7 @@ function CelluleRow({ c, router }) {
 
       {/* ================= MOBILE ================= */}
       <div
-        className="sm:hidden bg-white/10 backdrop-blur-md rounded-xl p-4 border-l-4 mb-2"
+        <div className="sm:hidden bg-white/10 backdrop-blur-md rounded-xl p-4 border-l-4 mb-2 relative overflow-visible">
         style={{ borderLeftColor: "#F59E0B" }}
       >
         {/* Nom cellule */}
@@ -87,28 +87,30 @@ function CelluleRow({ c, router }) {
         </div>
 
         {/* Ville */}
-        <div className="text-white/70 text-sm mb-2 mt-3">
-          📍 Ville : {c.ville}
-        </div>
+       <div className="text-white text-sm mb-2 mt-3">
+           📍 Ville : <span className="font-semibold">{c.ville}</span>
+         </div>
 
         {/* Responsable */}
-        <div className="text-white text-sm mb-2 text-semibold">
-          👤 Responsable : {c.responsable || "—"}
-        </div>
+       <div className="text-white text-sm mb-2">
+           👤 Responsable :{" "}
+           <span className="text-amber-300 font-semibold">
+             {c.responsable || "—"}
+           </span>
+         </div>
 
         {/* Téléphone */}
-        <div className="relative mb-2">
-          <span
-            className="text-orange-400 underline cursor-pointer text-sm"
-            onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
-          >
-            📞 {c.telephone || "—"}
-          </span>
+        <span className="text-sm cursor-pointer" onClick={() => setOpenPhoneMenu(!openPhoneMenu)}>
+           📞{" "}
+           <span className="text-orange-400 underline">
+             {c.telephone || "—"}
+           </span>
+         </span>
 
           {openPhoneMenu && (
             <div
               ref={phoneMenuRef}
-              className="absolute z-50 mt-1 bg-white rounded-lg shadow-lg border w-56"
+              className="absolute z-[9999] mt-2 bg-white rounded-lg shadow-xl border w-56"
             >
               <a href={`tel:${c.telephone}`} className="block px-4 py-2 hover:bg-gray-100">📞 Appeler</a>
               <a href={`sms:${c.telephone}`} className="block px-4 py-2 hover:bg-gray-100">✉️ SMS</a>

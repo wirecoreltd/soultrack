@@ -223,12 +223,13 @@ const { data: membresData, error } = await query;
           {/* ================= VUE CARTE ================= */}
           {view === "card" && (
             <div className="flex justify-center">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl relative">
                 {filteredMembres.map((m) => {
                   const besoins = parseJsonArray(m.besoin).join(", ") || "—";
                   const isOpen = detailsOpen[m.id];
                   return (
-                    <div key={m.id} className="bg-white p-4 rounded-2xl shadow-xl border-l-4" style={{ borderLeftColor: getBorderColor(m) }}>
+                    <div key={m.id} className="bg-white p-4 rounded-2xl shadow-xl border-l-4 relative overflow-visible"
+> style={{ borderLeftColor: getBorderColor(m) }}>
                       <h2 className="text-center font-bold text-lg">{m.prenom} {m.nom}</h2>
 
                       <div className="relative text-center">
@@ -243,7 +244,7 @@ const { data: membresData, error } = await query;
                         </p>
 
                         {openPhoneId === m.id && (
-                          <div ref={phoneMenuRef} className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56" onClick={(e) => e.stopPropagation()}>
+                          <div ref={phoneMenuRef} className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-xl border z-[9999] w-56" onClick={(e) => e.stopPropagation()}>
                             <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
                             <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
                             <a href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>

@@ -35,6 +35,7 @@ export default function AjouterMembreCellule() {
     autreBesoin: "",
     cellule_id: "", // ✅ TOUJOURS vide par défaut
     infos_supplementaires: "",
+    date_venu: new Date().toISOString().slice(0, 10),
     is_whatsapp: false,
   });
 
@@ -126,12 +127,13 @@ useEffect(() => {
           eglise_id: userScope.eglise_id,
           branche_id: userScope.branche_id,
           statut_suivis: 3, // Intégrer
-          etat_contact: "Existant", 
+          etat_contact: "existant", 
           is_whatsapp: formData.is_whatsapp,
           infos_supplementaires: formData.infos_supplementaires,
           besoin: formData.besoin.join(", "),
           autrebesoin: formData.autreBesoin || null,
           sexe: formData.sexe || null,
+          date_venu: formData.date_venu || null,
           bapteme_eau: false,
           bapteme_esprit: false,
           statut_initial: formData.statut_initial || null,
@@ -162,6 +164,7 @@ useEffect(() => {
         venu: "",
         priere_salut: "",
         type_conversion: "",
+        date_venu: "",
         besoin: [],
         autreBesoin: "",
         cellule_id: cellules.length === 1 ? cellules[0].id : "",
@@ -183,6 +186,7 @@ useEffect(() => {
       venu: "",
       priere_salut: "",
       type_conversion: "",
+      date_venu: "",
       besoin: [],
       autreBesoin: "",
       cellule_id: cellules.length === 1 ? cellules[0].id : "",
@@ -230,12 +234,21 @@ useEffect(() => {
               ))}
             </select>
           )}
+          {/* Date de venue */}
+                  <label className="text-sm sm:text-base font-semibold">Date de venue</label>
+                  <input
+                    type="date"
+                    value={formData.date_venu}
+                    onChange={e => setFormData({...formData, date_venu: e.target.value})}
+                    className="input"
+                    required
+                />  
 
           <input name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" required />
           <input name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" required />
 
           <select className="input" value={formData.sexe} onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}required>
-            <option value="">-- Sexe --</option>
+            <option value="">-- Civilité --</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
           </select>

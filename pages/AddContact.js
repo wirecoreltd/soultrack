@@ -133,7 +133,12 @@ export default function AddContact() {
         </button>
 
         <div className="flex justify-center mb-4 sm:mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={70} height={70} className="sm:w-[80px] sm:h-[60px]" />
+          <img
+          src="/logo.png"
+          alt="Logo SoulTrack"
+          className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
+          onClick={() => router.push("/index")}
+        />
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">Ajouter un nouveau membre</h1>
@@ -142,7 +147,7 @@ export default function AddContact() {
         </p>
 
                 {/* Date de venue */}
-                  <label className="text-sm sm:text-base font-semibold">Date de venue</label>
+                  <label className="text-sm sm:text-base font-semibold mb-1">Date de venue</label>
                   <input
                     type="date"
                     value={formData.date_venu}

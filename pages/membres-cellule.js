@@ -228,8 +228,11 @@ const { data: membresData, error } = await query;
                   const besoins = parseJsonArray(m.besoin).join(", ") || "—";
                   const isOpen = detailsOpen[m.id];
                   return (
-                    <div key={m.id} className="bg-white p-4 rounded-2xl shadow-xl border-l-4 relative overflow-visible"
-> style={{ borderLeftColor: getBorderColor(m) }}>
+                   <div 
+  key={m.id} 
+  className="bg-white p-4 rounded-2xl shadow-xl border-l-4 relative overflow-visible"
+  style={{ borderLeftColor: getBorderColor(m) }}
+>
                       <h2 className="text-center font-bold text-lg">{m.prenom} {m.nom}</h2>
 
                       <div className="relative text-center">

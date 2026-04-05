@@ -39,6 +39,9 @@ export default function AjouterMembreCellule() {
     is_whatsapp: false,
   });
 
+    const besoinsOptions = ["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
+  "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"];
+
   const [success, setSuccess] = useState(false);
 
     const [userScope, setUserScope] = useState({
@@ -308,63 +311,44 @@ useEffect(() => {
             </select>
           )}
         
-          {/* Besoin */}
-          <div className="text-left">
-            <p className="font-semibold mb-2">Besoin :</p>
-            {["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
-            "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"].map(
-              (item) => (
-                <label key={item} className="flex items-center gap-3 mb-2 cursor-pointer">
+            {/* Besoins */}
+            <label className="text-sm sm:text-base font-bold mb-1">Difficultés / Besoins</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {besoinsOptions.map((item) => (
+                <label key={item} className="flex items-center gap-1 text-sm">
                   <input
                     type="checkbox"
                     value={item}
                     checked={formData.besoin.includes(item)}
-                    onChange={(e) => {
-                      const { checked } = e.target;
-                      setFormData((prev) => ({
-                        ...prev,
-                        besoin: checked
-                          ? [...prev.besoin, item]
-                          : prev.besoin.filter((b) => b !== item),
-                      }));
-                    }}
-                    className="w-5 h-5 accent-indigo-600 rounded cursor-pointer"
+                    onChange={handleBesoinChange}
+                    className="w-4 h-4 sm:w-5 sm:h-5"
                   />
                   {item}
                 </label>
-              )
-            )}
-        
-            <label className="flex items-center gap-3 mb-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.besoin.includes("Autre")}
-                onChange={(e) => {
-                  const checked = e.target.checked;
-                  setFormData((prev) => ({
-                    ...prev,
-                    besoin: checked
-                      ? [...prev.besoin, "Autre"]
-                      : prev.besoin.filter((b) => b !== "Autre"),
-                  }));
-                }}
-                className="w-5 h-5 accent-indigo-600 rounded cursor-pointer"
-              />
-              Autre
-            </label>
-        
-            {formData.besoin.includes("Autre") && (
+              ))}
+              <label className="flex items-center gap-1 text-sm">
+                <input
+                  type="checkbox"
+                  value="Autre"
+                  checked={showBesoinLibre}
+                  onChange={handleBesoinChange}
+                  className="w-4 h-4 sm:w-5 sm:h-5"
+                />
+                Autre
+              </label>
+            </div>
+            
+            {showBesoinLibre && (
               <input
                 type="text"
                 placeholder="Précisez..."
-                value={formData.autreBesoin || ""}
+                value={formData.besoinLibre}
                 onChange={(e) =>
-                  setFormData({ ...formData, autreBesoin: e.target.value })
+                  setFormData({ ...formData, besoinLibre: e.target.value })
                 }
-                className="input mt-1"
+                className="input mb-2"
               />
-            )}     
-            </div>
+            )}
           <textarea
             name="infos_supplementaires"
             placeholder="Informations supplémentaires..."

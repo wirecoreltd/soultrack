@@ -122,7 +122,7 @@ function MembresCelluleContent() {
   .from("membres_complets")
   .select("*")
   .eq("statut_suivis", 3)
-  .not("cellule_id", "is", null);      
+  .not("cellule_id", "is", null)     
   .order("created_at", { ascending: false });
 
 // 🔥 si celluleId présent → filtrer

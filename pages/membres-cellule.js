@@ -118,10 +118,11 @@ function MembresCelluleContent() {
     const fetchAllMembers = async () => {
       setLoading(true);
       try {
-        let query = supabase
+       let query = supabase
   .from("membres_complets")
   .select("*")
   .eq("statut_suivis", 3)
+  .not("cellule_id", "is", null);      
   .order("created_at", { ascending: false });
 
 // 🔥 si celluleId présent → filtrer

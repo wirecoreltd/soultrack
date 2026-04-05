@@ -311,7 +311,8 @@ useEffect(() => {
           {/* Besoin */}
           <div className="text-left">
             <p className="font-semibold mb-2">Besoin :</p>
-            {["Finances", "Santé", "Travail", "Les Enfants", "La Famille"].map(
+            {["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
+            "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"].map(
               (item) => (
                 <label key={item} className="flex items-center gap-3 mb-2 cursor-pointer">
                   <input

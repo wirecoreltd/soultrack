@@ -105,6 +105,22 @@ useEffect(() => {
   fetchCellules();
 }, [userScope]);
 
+    
+  const handleBesoinChange = (e) => {
+    const { value, checked } = e.target;
+    if (value === "Autre") {
+      setShowBesoinLibre(checked);
+      if (!checked) setFormData((prev) => ({ ...prev, besoinLibre: "" }));
+    }
+    setFormData((prev) => {
+      const updatedBesoin = checked
+        ? [...prev.besoin, value]
+        : prev.besoin.filter((b) => b !== value);
+      return { ...prev, besoin: updatedBesoin };
+    });
+  };
+
+
 
   // ================== HANDLERS ==================
   const handleChange = (e) => {

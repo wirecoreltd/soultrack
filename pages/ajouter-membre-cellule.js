@@ -208,7 +208,12 @@ useEffect(() => {
         </button>
 
         <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
+          <img
+          src="/logo.png"
+          alt="Logo SoulTrack"
+          className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
+          onClick={() => router.push("/index")}
+        />
         </div>
 
         <h1 className="text-3xl font-bold text-center mb-6">

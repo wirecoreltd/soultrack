@@ -544,13 +544,16 @@ const handleConseillerClick = () => {
                 <div className="min-w-[150px] text-white font-semibold">
                   {isExpanded ? "➖ " : "➕ "} {monthLabel}
                 </div>
+
                 <div className="flex ml-auto text-white font-semibold text-sm">
                   <div className="min-w-[110px] text-center ml-3">{monthTotals.hommes}</div>
                   <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>
                   <div className="min-w-[110px] text-center text-orange-400 font-semibold">
                     {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)}
                   </div>
-                  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotals.priere}</div>
+                  <div className="min-w-[120px] text-center text-orange-400 font-semibold">
+                    {monthTotals.priere}
+                  </div>
                   <div className="min-w-[140px] text-center">{monthTotals.nouveau}</div>
                   <div className="min-w-[130px] text-center">{monthTotals.reconciliation}</div>
                   <div className="min-w-[130px] text-center">{monthTotals.moissonneurs}</div>
@@ -585,6 +588,7 @@ const handleConseillerClick = () => {
                         <div className="min-w-[150px] text-white font-semibold">
                           {typeExpanded ? "➖ " : "➕ "} {type}
                         </div>
+
                         <div className="flex ml-auto text-white text-sm">
                           <div className="min-w-[110px] text-center">{typeTotals.hommes}</div>
                           <div className="min-w-[110px] text-center">{typeTotals.femmes}</div>
@@ -601,6 +605,10 @@ const handleConseillerClick = () => {
 
                       {/* MOBILE */}
                       <div className="md:hidden text-white">
+                        <div className="font-semibold">
+                          {typeExpanded ? "➖ " : "➕ "} {type}
+                        </div>
+
                         {typeExpanded && (
                           <div className="grid grid-cols-2 gap-1 text-sm mt-1">
                             <div>Hommes: {typeTotals.hommes}</div>
@@ -612,23 +620,12 @@ const handleConseillerClick = () => {
                             <div>NouvConv: {typeTotals.nouveau}</div>
                             <div>Recon: {typeTotals.reconciliation}</div>
                             <div>Moiss: {typeTotals.moissonneurs}</div>
-                            <div className="col-span-2 text-center mt-2">
-                              <button
-                                onClick={() => {
-                                  setSelectedRapport(r);
-                                  setEditOpen(true);
-                                }}
-                                className="text-amber-300 underline"
-                              >
-                                Modifier
-                              </button>
-                            </div>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    {/* LIGNES DES RAPPORTS */}
+                    {/* LIGNES */}
                     {typeExpanded &&
                       typeReports.map((r) => (
                         <div
@@ -637,7 +634,6 @@ const handleConseillerClick = () => {
                             typeColors[type] || "border-white"
                           }`}
                         >
-                          {/* DESKTOP */}
                           <div className="hidden md:flex items-center">
                             <div className="min-w-[150px] text-white">
                               {new Date(r.date_evangelise).toLocaleDateString()}
@@ -661,6 +657,26 @@ const handleConseillerClick = () => {
                               </button>
                             </div>
                           </div>
+
+                          {/* MOBILE */}
+                          <div className="ml-0 rounded-lg p-3 text-white">
+                            <p className="text-amber-300 text-right">{new Date(r.date_evangelise).toLocaleDateString()}</p>
+                            <p className="mt-2">Hommes: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}</p>                              
+                            <p className="font-semibold text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</p>                           
+                            <p className="mt-2">NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"}</p>   
+                            <p className="font-semibold text-orange-400">Prière du Salut: {r.priere ?? "-"}</p>
+                            <p className="mt-2">Moiss: {r.moissonneurs ?? "-"}</p>                          
+
+                            <button
+                              onClick={() => {
+                                setSelectedRapport(r);
+                                setEditOpen(true);
+                              }}
+                              className="text-amber-300 underline mt-2 text-center"
+                            >
+                              Modifier
+                            </button>
+                          </div>
                         </div>
                       ))}
                   </div>
@@ -673,13 +689,16 @@ const handleConseillerClick = () => {
   </div>
 )}
 
-{selectedRapport && (
-  <EditEvanRapportLine
-    isOpen={editOpen}
-    onClose={() => setEditOpen(false)}
-    rapport={selectedRapport}
-    onSave={handleSaveRapport}
-  />
-)}
+      {selectedRapport && (
+        <EditEvanRapportLine
+          isOpen={editOpen}
+          onClose={()=>setEditOpen(false)}
+          rapport={selectedRapport}
+          onSave={handleSaveRapport}
+        />
+      )}
 
-<Footer />
+      <Footer />
+    </div>
+  );
+}

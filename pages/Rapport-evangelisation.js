@@ -661,22 +661,13 @@ const handleConseillerClick = () => {
                           </div>
 
                           {/* MOBILE */}
-                          <div className="md:hidden text-white text-sm">
-                            <div className="font-semibold mb-1">
-                              {new Date(r.date_evangelise).toLocaleDateString()}
-                            </div>
-                            <div className="grid grid-cols-2 gap-1">
-                              <div>Hommes: {r.hommes ?? "-"}</div>
-                              <div>Femmes: {r.femmes ?? "-"}</div>
-                              <div className="font-semibold text-orange-400">
-                                Total: {(r.hommes || 0) + (r.femmes || 0)}
-                              </div>
-                              <div className="font-semibold text-orange-400">
-                                Prières: {r.priere ?? "-"}
-                              </div>
-                              <div>NouvConv: {r.nouveau_converti ?? "-"}</div>
-                              <div>Recon: {r.reconciliation ?? "-"}</div>
-                              <div>Moiss: {r.moissonneurs ?? "-"}</div>
+                          <div className="md:hidden text-white">
+                            <p className="text-amber-300 text-right">{new Date(r.date_evangelise).toLocaleDateString()}</p>                            
+                            <p className="mt-2">Hommes: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}</p>                            
+                            <p className="font-semibold text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</p>
+                            <p className="mt-2">NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"}</p>
+                            <p className="font-semibold text-orange-400">Prière du Salut: {r.priere ?? "-"}
+                            <p className="mt-2">Moiss: {r.moissonneurs ?? "-"}</p>
                             </div>
 
                             <button
@@ -684,7 +675,7 @@ const handleConseillerClick = () => {
                                 setSelectedRapport(r);
                                 setEditOpen(true);
                               }}
-                              className="text-orange-400 underline mt-2"
+                              className="text-orange-400 underline mt-2 text-center"
                             >
                               Modifier
                             </button>

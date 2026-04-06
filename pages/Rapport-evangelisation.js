@@ -608,19 +608,16 @@ const handleConseillerClick = () => {
                           <div className="flex justify-between items-center font-semibold">
                             
                             {/* Type évangélisation */}
-                            <div>
-                              {typeExpanded ? "➖ " : "➕ "} {type}
-                            </div>
+                            <div>{typeExpanded ? "➖ " : "➕ "} {type}</div>
                         
                             {/* Total aligné à droite */}
-                            <div className="text-orange-400">
-  Total: {((typeTotals?.hommes || 0) + (typeTotals?.femmes || 0))}
-</div>
-                          </div>
+                            <div className="text-sm font-bold text-amber-300"> Total: {((typeTotals?.hommes || 0) + (typeTotals?.femmes || 0))}
+                                </div>
+                              </div>
                            </div> 
-  </div>    
+                        </div>    
 
-                                           {/* LIGNES */}
+                                    {/* LIGNES */}
                     {typeExpanded &&
                       typeReports.map((r) => (
                         <div

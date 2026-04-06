@@ -88,6 +88,15 @@ function MembresCelluleContent() {
 
 useEffect(() => {
   const fetchProfileAndCellules = async () => {
+
+    // ✅ AJOUTER ÇA
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      console.error("User non connecté");
+      return;
+    }
+
     const { data: profile } = await supabase
       .from("profiles")
       .select("id, role, eglise_id, branche_id")
@@ -297,13 +306,8 @@ const { data: membresData, error } = await query;
                       </div>
 
                       <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
-                      <p className="text-center text-sm mt-1">
-  🏠 {m.cellules?.cellule_full || "—"}
-</p>
-
-<p className="text-center text-sm mt-1">
-  👤 {m.cellules?.responsable || "—"}
-</p>  
+                      <p className="text-center text-sm mt-1">🏠 {m.cellules?.cellule_full}</p>
+                      <p className="text-center text-sm mt-1">👤 {m.cellules?.responsable}</p>  
 
                       <button onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
                         className="text-orange-500 underline mt-2 block mx-auto text-sm">

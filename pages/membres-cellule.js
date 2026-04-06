@@ -264,6 +264,17 @@ function MembresCelluleContent() {
         </>
       )}
 
+        {editMember && (
+  <EditMemberCellulePopup
+    member={editMember}
+    onClose={() => setEditMember(null)}
+    onUpdateMember={(updated) => {
+      handleUpdateMember(updated);
+      setEditMember(null);
+    }}
+  />
+)}
+  
       <Footer />
     </div>
   );

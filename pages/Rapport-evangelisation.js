@@ -640,9 +640,7 @@ const handleConseillerClick = () => {
                             </div>
                             <div className="min-w-[110px] text-center text-white ml-20">{r.hommes ?? "-"}</div>
                             <div className="min-w-[110px] text-center text-white">{r.femmes ?? "-"}</div>
-                            <div className="min-w-[110px] text-center text-orange-400 font-semibold">
-                              {(r.hommes || 0) + (r.femmes || 0)}
-                            </div>
+                            <div className="min-w-[110px] text-center text-orange-400 font-semibold">{(r.hommes || 0) + (r.femmes || 0)}</div>
                             <div className="min-w-[120px] text-center text-orange-400 font-semibold">{r.priere ?? "-"}</div>
                             <div className="min-w-[140px] text-center text-white">{r.nouveau_converti ?? "-"}</div>
                             <div className="min-w-[130px] text-center text-white">{r.reconciliation ?? "-"}</div>
@@ -661,13 +659,13 @@ const handleConseillerClick = () => {
                           </div>
 
                           {/* MOBILE */}
-                          <div className="ml-4 rounded-lg p-3 text-white">
+                          <div className="ml-0 rounded-lg p-3 text-white">
                             <p className="text-amber-300 text-right">{new Date(r.date_evangelise).toLocaleDateString()}</p>
                             <p className="mt-2">Hommes: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}</p>                              
                             <p className="font-semibold text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</p>                           
-                            <p className="mt-2">NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"}</p>                           
-                             <p className="font-semibold text-orange-400">Prière du Salut: {r.priere ?? "-"}</p>
-                            <p className="mt-2">Moiss: {r.moissonneurs ?? "-"}</p> 
+                            <p className="mt-2">NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"}</p>   
+                            <p className="font-semibold text-orange-400">Prière du Salut: {r.priere ?? "-"}</p>
+                            <p className="mt-2">Moiss: {r.moissonneurs ?? "-"}</p>                          
 
                             <button
                               onClick={() => {

@@ -153,7 +153,13 @@ useEffect(() => {
       try {
        let query = supabase
   .from("membres_complets")
-  .select("*")
+  .select(`
+  *,
+  cellules (
+    cellule_full,
+    responsable
+  )
+`)
   .eq("statut_suivis", 3)
   .not("cellule_id", "is", null)     
   .order("created_at", { ascending: false });
@@ -291,8 +297,13 @@ const { data: membresData, error } = await query;
                       </div>
 
                       <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
-                      <p className="text-center text-sm mt-1">🏠 {m.cellule_full|| ""}</p>
-                      <p className="text-center text-sm mt-1">👤 {m.responsable || ""}</p>   
+                      <p className="text-center text-sm mt-1">
+  🏠 {m.cellules?.cellule_full || "—"}
+</p>
+
+<p className="text-center text-sm mt-1">
+  👤 {m.cellules?.responsable || "—"}
+</p>  
 
                       <button onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
                         className="text-orange-500 underline mt-2 block mx-auto text-sm">

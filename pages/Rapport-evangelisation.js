@@ -159,8 +159,7 @@ const [integrationPercent, setIntegrationPercent] = useState(0);
           setIntegrationPercent(totalEvangelises > 0 ? ((filteredSuivisFinal.filter(s => normalize(s.status_suivis_evangelises) === "Intégré").length / totalEvangelises) * 100).toFixed(2) : 0);
       
           // Expansion du dernier mois
-          const lastMonth = getLastMonthKey(rapportsData || []);
-          if (lastMonth) setExpandedMonths({ [lastMonth]: true });
+          setExpandedMonths({});
       
         } catch (err) {
           console.error("Erreur fetchRapports:", err);
@@ -529,7 +528,7 @@ const handleConseillerClick = () => {
       {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
         const [year, monthIndex] = monthKey.split("-").map(Number);
         const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-        const isExpanded = expandedMonths[monthKey] || false;
+        const isExpanded = expandedMonths[monthKey] ?? false;
         const borderColor = borderColors[idx % borderColors.length];
         const monthTotals = getTotals(monthReports);
 

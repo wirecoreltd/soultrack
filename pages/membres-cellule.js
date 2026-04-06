@@ -86,35 +86,31 @@ function MembresCelluleContent() {
 
   // ------------------- FETCH USER + CELLULES -------------------
   useEffect(() => {
-    const fetchCellules = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  const fetchCellules = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, role, eglise_id, branche_id")
-        .eq("id", user.id)
-        .single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, role, eglise_id, branche_id")
+      .eq("id", user.id)
+      .single();
 
-      if (!profile) return;
+    if (!profile) return;
 
-      let query = supabase
-        .from("cellules")
-        .select("*")
-        .eq("eglise_id", profile.eglise_id)
-        .eq("branche_id", profile.branche_id)
-        .order("cellule_full");
+    // ✅ PAS DE FILTRE ICI
+    const { data } = await supabase
+      .from("cellules")
+      .select("*")
+      .eq("eglise_id", profile.eglise_id)
+      .eq("branche_id", profile.branche_id)
+      .order("cellule_full");
 
-      if (profile.role === "ResponsableCellule") {
-        query = query.eq("responsable_id", profile.id);
-      }
+    setCellules(data || []);
+  };
 
-      const { data } = await query;
-      setCellules(data || []);
-    };
-
-    fetchCellules();
-  }, []);
+  fetchCellules();
+}, []);
 
   // ------------------- FETCH MEMBRES -------------------
   useEffect(() => {

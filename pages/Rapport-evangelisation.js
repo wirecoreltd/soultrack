@@ -614,8 +614,8 @@ const handleConseillerClick = () => {
                         
                             {/* Total aligné à droite */}
                             <div className="text-orange-400">
-                              Total: {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}
-                            </div>
+  Total: {((typeTotals?.hommes || 0) + (typeTotals?.femmes || 0))}
+</div>
                           </div>
                            </div>                       
 

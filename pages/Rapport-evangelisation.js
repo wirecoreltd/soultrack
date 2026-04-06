@@ -669,6 +669,7 @@ const handleConseillerClick = () => {
                             <p className="font-semibold text-orange-400">Prière du Salut: {r.priere ?? "-"}
                             <p className="mt-2">Moiss: {r.moissonneurs ?? "-"}</p>
                             </div>
+                           </div>     
 
                             <button
                               onClick={() => {

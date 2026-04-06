@@ -685,22 +685,17 @@ const handleConseillerClick = () => {
                               className="text-amber-300 underline mt-2 text-center"
                             >
                               Modifier
-                                 </button>
-                            </div>
-                          </div>
-                        ))}
+                        </button>
                       </div>
-                    )}
+                    </div>
                   </div>
-                );
-              })}
-          </div>
-        );
-      })}
+                ))}
+            </div>
+          );
+        })}
     </div>
-  </div>
-)}
-
+  );
+})}
       {selectedRapport && (
         <EditEvanRapportLine
           isOpen={editOpen}

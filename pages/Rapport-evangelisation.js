@@ -659,13 +659,26 @@ const handleConseillerClick = () => {
                           </div>
 
                           {/* MOBILE */}
-                          <div className="ml-0 rounded-lg p-3 text-white">
-                            <p className="text-amber-300 text-right">{new Date(r.date_evangelise).toLocaleDateString()}</p>
-                            <p className="mt-2">Hommes: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}</p>                              
-                            <p className="font-semibold text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</p>                           
-                            <p className="mt-2">NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"}</p>   
-                            <p className="font-semibold text-orange-400">Prière du Salut: {r.priere ?? "-"}</p>
-                            <p className="mt-2">Moiss: {r.moissonneurs ?? "-"}</p>                          
+                             <div className="md:hidden text-white">
+                              <div className="font-semibold">
+                                {typeExpanded ? "➖ " : "➕ "} {type}
+                              </div>
+                            
+                              {/* Afficher les détails uniquement si le type est expand */}
+                              {typeExpanded && (
+                                <div className="grid grid-cols-2 gap-1 text-sm mt-1">
+                                  <div>Hommes: {typeTotals.hommes}</div>
+                                  <div>Femmes: {typeTotals.femmes}</div>
+                                  <div className="font-semibold text-orange-400">
+                                    Total: {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}
+                                  </div>
+                                  <div>Prières: {typeTotals.priere}</div>
+                                  <div>NouvConv: {typeTotals.nouveau}</div>
+                                  <div>Recon: {typeTotals.reconciliation}</div>
+                                  <div>Moiss: {typeTotals.moissonneurs}</div>
+                                </div>
+                              )}
+                            </div>      
 
                             <button
                               onClick={() => {

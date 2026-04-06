@@ -604,7 +604,7 @@ const handleConseillerClick = () => {
                       </div>
 
                       {/* MOBILE */}
-                      <div className="md:hidden text-white bg-white/20 hover:bg-white/20">
+                      <div className="md:hidden text-white bg-red hover:bg-white/20">
                         <div className="font-semibold">
                           {typeExpanded ? "➖ " : "➕ "} {type}
                         </div>

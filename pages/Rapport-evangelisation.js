@@ -691,8 +691,7 @@ const handleConseillerClick = () => {
                       ))}
                     </>
                   )}
-                </div>
-                  </div>
+                </div>                 
                 );
               })}
           </div>

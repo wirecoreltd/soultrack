@@ -610,16 +610,10 @@ const handleConseillerClick = () => {
                         </div>
 
                         {typeExpanded && (
-                          <div className="grid grid-cols-2 gap-1 text-sm mt-1">
-                            <div>Hommeszz: {typeTotals.hommes}</div>
-                            <div>Femmes: {typeTotals.femmes}</div>
+                          <div className="grid grid-cols-2 gap-1 text-sm mt-1 bg-white/20 hover:bg-white/20">                            
                             <div className="font-semibold text-orange-400">
                               Total: {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}
-                            </div>
-                            <div>Prières: {typeTotals.priere}</div>
-                            <div>NouvConv: {typeTotals.nouveau}</div>
-                            <div>Recon: {typeTotals.reconciliation}</div>
-                            <div>Moiss: {typeTotals.moissonneurs}</div>
+                            </div>                            
                           </div>
                         )}
                       </div>
@@ -630,7 +624,7 @@ const handleConseillerClick = () => {
                       typeReports.map((r) => (
                         <div
                           key={r.id}
-                          className={`px-4 py-2 rounded-lg bg-red/20 hover:bg-white/20 border-l-4 mt-2 ml-8 ${
+                          className={`px-4 py-2 rounded-lg bg-white/20 hover:bg-white/20 border-l-4 mt-2 ml-8 ${
                             typeColors[type] || "border-white"
                           }`}
                         >

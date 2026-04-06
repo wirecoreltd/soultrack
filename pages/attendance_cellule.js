@@ -382,7 +382,7 @@ useEffect(() => {
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Date */}
           <div className="flex flex-col">
-            <label className="text-white mb-1">Date du Cellule</label>
+            <label className="text-white mb-1">Date de la recontre</label>
             <input type="date" name="date" value={formData.date} onChange={handleChange} className="input w-full" required />
           </div>
         
@@ -447,7 +447,7 @@ useEffect(() => {
                     setFormData(prev => ({ ...prev, nouveauTemps: value }));
                   }}
                   className="input w-full"
-                  placeholder="Ex: ADP"
+                  placeholder="Ex: Tour de Prière"
                   maxLength={30} // limite côté HTML
                 />
               </div>

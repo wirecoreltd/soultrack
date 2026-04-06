@@ -617,9 +617,9 @@ const handleConseillerClick = () => {
                               Total: {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}
                             </div>
                           </div>
-                       
+                           </div>                       
 
-                    {/* LIGNES */}
+                                           {/* LIGNES */}
                     {typeExpanded &&
                       typeReports.map((r) => (
                         <div

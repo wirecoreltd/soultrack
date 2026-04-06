@@ -19,7 +19,7 @@ function Attendance() {
   const [loading, setLoading] = useState(false);
   const [showTable, setShowTable] = useState(false);
   const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
-  const [tempsOptions, setTempsOptions] = useState(["Culte"]);
+  const [tempsOptions, setTempsOptions] = useState(["Cellule"]);
   const formRef = useRef(null);
   const selectRef = useRef(null);
   const [expandedMonths, setExpandedMonths] = useState({});
@@ -127,10 +127,10 @@ const calculateTypeTotals = (rows) => {
     if (error) console.error(error);
     else {
       const uniqueTemps = [
-        "Culte",
+        "Cellule",
         ...new Set(
           data.map(t => t.typeTemps?.trim())
-              .filter(t => t && t !== "" && t !== "Culte")
+              .filter(t => t && t !== "" && t !== "Cellule")
         )
       ];
       setTempsOptions(uniqueTemps);
@@ -250,8 +250,7 @@ const calculateTypeTotals = (rows) => {
     jeunes: Number(formData.jeunes) || 0,
     enfants: Number(formData.enfants) || 0,   
     nouveauxVenus: Number(formData.nouveauxVenus) || 0,
-    nouveauxConvertis: Number(formData.nouveauxConvertis) || 0,
-    numero_culte: Number(formData.numero_culte) || 1
+    nouveauxConvertis: Number(formData.nouveauxConvertis) || 0,    
   };
 
   // 5️⃣ Nettoyer les champs vides pour Supabase
@@ -383,7 +382,7 @@ useEffect(() => {
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Date */}
           <div className="flex flex-col">
-            <label className="text-white mb-1">Date du culte</label>
+            <label className="text-white mb-1">Date du Cellule</label>
             <input type="date" name="date" value={formData.date} onChange={handleChange} className="input w-full" required />
           </div>
         
@@ -409,7 +408,7 @@ useEffect(() => {
                     }}
                   >
                     <span>{t}</span>
-                    {t !== "Culte" && (
+                    {t !== "Cellule" && (
                       <div className="flex gap-2">
                         <button
                           onClick={(e)=>{ e.stopPropagation(); handleRenameTemps(t, prompt("Nouveau nom ?", t)) }}

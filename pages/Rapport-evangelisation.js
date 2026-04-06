@@ -659,12 +659,13 @@ const handleConseillerClick = () => {
                           </div>
 
                           {/* MOBILE */}
-                          <div className="ml-0 rounded-lg p-3 text-white">
+                          <div className="ml-4 bg-white/10 rounded-lg p-3 text-white border-l-4">
                             <p className="text-amber-300 text-right">{new Date(r.date_evangelise).toLocaleDateString()}</p>
                             <p className="mt-2">Hommes: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}</p>                              
-                            <p className="font-semibold text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</p>                           
-                            <p className="mt-2">NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"}</p>   
+                            <p className="font-semibold text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</p>
                             <p className="font-semibold text-orange-400">Prière du Salut: {r.priere ?? "-"}</p>
+                            <p className="mt-2">NouvConv: {r.nouveau_converti ?? "-"}</p>
+                            <p className="mt-2">Recon: {r.reconciliation ?? "-"}</p>
                             <p className="mt-2">Moiss: {r.moissonneurs ?? "-"}</p>                          
 
                             <button
@@ -672,7 +673,7 @@ const handleConseillerClick = () => {
                                 setSelectedRapport(r);
                                 setEditOpen(true);
                               }}
-                              className="text-amber-300 underline mt-2 text-center"
+                              className="text-orange-400 underline mt-2"
                             >
                               Modifier
                             </button>

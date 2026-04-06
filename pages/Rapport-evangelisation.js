@@ -203,12 +203,7 @@ const [integrationPercent, setIntegrationPercent] = useState(0);
   const toggleMonth = (monthKey) => {setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey]}));
   setExpandedTypes({});
 };
-  const toggleType = (typeKey) => {
-  setExpandedTypes(prev => ({
-    ...prev,
-    [typeKey]: !prev[typeKey]
-  }));
-};
+  const toggleType = (typeKey) => setExpandedTypes(prev => ({ ...prev, [typeKey]: !prev[typeKey] }));
 
   // ---------------- GROUPING ----------------
   const groupByMonth = (data) => {
@@ -576,7 +571,7 @@ const handleConseillerClick = () => {
             {isExpanded &&
               Object.entries(groupByType(monthReports)).map(([type, typeReports]) => {
                 const typeKey = `${monthKey}-${type}`;
-                const typeExpanded = expandedTypes[typeKey] === true;
+                const typeExpanded = expandedTypes[typeKey] || false;
                 const typeTotals = getTotals(typeReports);
 
                 return (

@@ -31,8 +31,7 @@ function Attendance() {
     date: "",
     typeTemps: "",
     nouveauTemps: "",
-    enregistrerTemps: false,
-    numero_culte: "",
+    enregistrerTemps: false,    
     hommes: 0,
     femmes: 0,
     jeunes: 0,
@@ -93,8 +92,7 @@ const calculateMonthTotals = (typesObj) => {
       totals.femmes += Number(r.femmes||0);
       totals.jeunes += Number(r.jeunes||0);
       totals.total += Number(r.hommes||0)+Number(r.femmes||0)+Number(r.jeunes||0);
-      totals.enfants += Number(r.enfants||0);
-      totals.connectes += Number(r.connectes||0);
+      totals.enfants += Number(r.enfants||0);      
       totals.nouveauxVenus += Number(r.nouveauxVenus||0);
       totals.nouveauxConvertis += Number(r.nouveauxConvertis||0);
     });
@@ -109,8 +107,7 @@ const calculateTypeTotals = (rows) => {
     totals.femmes += Number(r.femmes||0);
     totals.jeunes += Number(r.jeunes||0);
     totals.total += Number(r.hommes||0)+Number(r.femmes||0)+Number(r.jeunes||0);
-    totals.enfants += Number(r.enfants||0);
-    totals.connectes += Number(r.connectes||0);
+    totals.enfants += Number(r.enfants||0);    
     totals.nouveauxVenus += Number(r.nouveauxVenus||0);
     totals.nouveauxConvertis += Number(r.nouveauxConvertis||0);
   });
@@ -252,8 +249,7 @@ const calculateTypeTotals = (rows) => {
     hommes: Number(formData.hommes) || 0,
     femmes: Number(formData.femmes) || 0,
     jeunes: Number(formData.jeunes) || 0,
-    enfants: Number(formData.enfants) || 0,
-    connectes: Number(formData.connectes) || 0,
+    enfants: Number(formData.enfants) || 0,   
     nouveauxVenus: Number(formData.nouveauxVenus) || 0,
     nouveauxConvertis: Number(formData.nouveauxConvertis) || 0,
     numero_culte: Number(formData.numero_culte) || 1
@@ -284,13 +280,11 @@ const calculateTypeTotals = (rows) => {
       date: "",
       typeTemps: "",
       nouveauTemps: "",
-      enregistrerTemps: false,
-      numero_culte: 1,
+      enregistrerTemps: false,      
       hommes: 0,
       femmes: 0,
       jeunes: 0,
-      enfants: 0,
-      connectes: 0,
+      enfants: 0,      
       nouveauxVenus: 0,
       nouveauxConvertis: 0,
     });
@@ -307,14 +301,12 @@ const calculateTypeTotals = (rows) => {
 
   setFormData({
     date: r.date,
-    typeTemps: r.typeTemps === "Culte" ? "Culte" : "AUTRE", // <-- ici
-    nouveauTemps: r.typeTemps !== "Culte" ? r.typeTemps : "", // <-- ici
-    numero_culte: r.numero_culte || 1,
+    typeTemps: r.typeTemps === "Cellule" ? "Cellule" : "AUTRE", // <-- ici
+    nouveauTemps: r.typeTemps !== "Cellule" ? r.typeTemps : "", // <-- ici   
     hommes: r.hommes,
     femmes: r.femmes,
     jeunes: r.jeunes,
-    enfants: r.enfants,
-    connectes: r.connectes,
+    enfants: r.enfants,    
     nouveauxVenus: r.nouveauxVenus,
     nouveauxConvertis: r.nouveauxConvertis,
     enregistrerTemps: false, // par défaut
@@ -471,19 +463,8 @@ useEffect(() => {
                 <label className="text-amber-300 text-sm">Enregistrer ce temps pour le futur</label>
               </div>
             </>
-          )}
-        
-          {/* Numéro de culte si Culte */}
-          {formData.typeTemps === "Culte" && (
-            <div className="flex flex-col w-full">
-              <label className="text-white mb-1">Numéro de culte</label>
-              <select name="numero_culte" value={formData.numero_culte} onChange={handleChange} className="input w-full appearance-none pr-8 cursor-pointer">
-                <option value="">--- Sélectionner un numéro ---</option>
-                {[1,2,3,4,5,6,7].map(n => <option key={n} value={n}>{n} {n===1?"er":"ème"} Culte</option>)}
-              </select>
-            </div>
-          )}
-        
+          )}       
+                 
           {/* Détails chiffrés */}
           {["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].map(field => (
             <div className="flex flex-col w-full" key={field}>
@@ -576,8 +557,7 @@ useEffect(() => {
                             <div className="min-w-[120px] text-center">Femmes</div>
                             <div className="min-w-[120px] text-center">Jeunes</div>
                             <div className="min-w-[130px] text-center">Total</div>
-                            <div className="min-w-[120px] text-center">Enfants</div>
-                            <div className="min-w-[140px] text-center">Connectés</div>
+                            <div className="min-w-[120px] text-center">Enfants</div>                            
                             <div className="min-w-[150px] text-center">Nouveaux venus</div>
                             <div className="min-w-[180px] text-center">Nouveaux convertis</div>
                             <div className="min-w-[140px] text-center">Actions</div>
@@ -604,8 +584,7 @@ useEffect(() => {
                                   <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotals.femmes}</div>
                                   <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotals.jeunes}</div>
                                   <div className="min-w-[130px] text-center text-orange-400 font-semibold">{monthTotals.total}</div>
-                                  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotals.enfants}</div>
-                                  <div className="min-w-[140px] text-center text-orange-400 font-semibold">{monthTotals.connectes}</div>
+                                  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotals.enfants}</div>                                  
                                   <div className="min-w-[150px] text-center text-orange-400 font-semibold">{monthTotals.nouveauxVenus}</div>
                                   <div className="min-w-[180px] text-center text-orange-400 font-semibold">{monthTotals.nouveauxConvertis}</div>
                                   <div className="min-w-[140px]"></div>
@@ -622,8 +601,7 @@ useEffect(() => {
                   
                     const totalGlobal =
                       typeTotals.total +
-                      typeTotals.enfants +
-                      typeTotals.connectes +
+                      typeTotals.enfants +                      
                       typeTotals.nouveauxVenus +
                       typeTotals.nouveauxConvertis;
                 
@@ -648,8 +626,7 @@ useEffect(() => {
                         <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.femmes}</div>
                         <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.jeunes}</div>
                         <div className="min-w-[130px] text-center text-orange-400 font-semibold">{typeTotals.total}</div>
-                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.enfants}</div>
-                        <div className="min-w-[140px] text-center text-orange-400 font-semibold">{typeTotals.connectes}</div>
+                        <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.enfants}</div>                        
                         <div className="min-w-[150px] text-center text-orange-400 font-semibold">{typeTotals.nouveauxVenus}</div>
                         <div className="min-w-[180px] text-center text-orange-400 font-semibold">{typeTotals.nouveauxConvertis}</div>
                         <div className="min-w-[140px]"></div>
@@ -668,8 +645,7 @@ useEffect(() => {
                             <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
                             <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
                             <div className="min-w-[130px] text-center text-white">{total}</div>
-                            <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-                            <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
+                            <div className="min-w-[120px] text-center text-white">{r.enfants}</div>                            
                             <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
                             <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
                             <div className="min-w-[140px] flex justify-center gap-2">
@@ -750,7 +726,7 @@ useEffect(() => {
                   <p className="text-amber-300 text-right">{formatDateFR(r.date)}</p>
                   <p className="mt-2">Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
                   <p className="font-semibold text-orange-400">Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
-                  <p className="mt-2">Enfants: {r.enfants} | Connectés: {r.connectes}</p>                
+                  <p className="mt-2">Enfants: {r.enfants}</p>                
                   <p className="mt-1">Nouveaux Venus: {r.nouveauxVenus} | Nouveaux Convertis: {r.nouveauxConvertis}</p>
                 </div>
               ))}

@@ -604,7 +604,7 @@ const handleConseillerClick = () => {
                       </div>
 
                       {/* MOBILE */}
-                      <div className="md:hidden text-white">
+                      <div className="md:hidden text-white bg-white/20 hover:bg-white/20">
                         <div className="font-semibold">
                           {typeExpanded ? "➖ " : "➕ "} {type}
                         </div>
@@ -663,7 +663,7 @@ const handleConseillerClick = () => {
                         </div>
                       
                         {/* Contenu */}
-                        <div className="space-y-1">                          
+                        <div className="space-y-1 bg-white/20 hover:bg-white/20">                          
                           <div> HommeYY: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"} </div>
                           <div className="font-semibold text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</div>
                           <div className="mt-2">NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"} </div>

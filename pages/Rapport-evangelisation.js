@@ -512,7 +512,7 @@ const handleConseillerClick = () => {
     <div className="w-full md:w-max space-y-2">
 
       {/* HEADER DESKTOP */}
-      <div className="hidden md:flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+      <div className="hidden md:flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/20 rounded-t-xl whitespace-nowrap">
         <div className="min-w-[150px] ml-2">Type / Date</div>
         <div className="min-w-[110px] text-center ml-28">Hommes</div>
         <div className="min-w-[110px] text-center">Femmes</div>

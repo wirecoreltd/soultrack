@@ -544,16 +544,13 @@ const handleConseillerClick = () => {
                 <div className="min-w-[150px] text-white font-semibold">
                   {isExpanded ? "➖ " : "➕ "} {monthLabel}
                 </div>
-
                 <div className="flex ml-auto text-white font-semibold text-sm">
                   <div className="min-w-[110px] text-center ml-3">{monthTotals.hommes}</div>
                   <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>
                   <div className="min-w-[110px] text-center text-orange-400 font-semibold">
                     {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)}
                   </div>
-                  <div className="min-w-[120px] text-center text-orange-400 font-semibold">
-                    {monthTotals.priere}
-                  </div>
+                  <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotals.priere}</div>
                   <div className="min-w-[140px] text-center">{monthTotals.nouveau}</div>
                   <div className="min-w-[130px] text-center">{monthTotals.reconciliation}</div>
                   <div className="min-w-[130px] text-center">{monthTotals.moissonneurs}</div>
@@ -588,7 +585,6 @@ const handleConseillerClick = () => {
                         <div className="min-w-[150px] text-white font-semibold">
                           {typeExpanded ? "➖ " : "➕ "} {type}
                         </div>
-
                         <div className="flex ml-auto text-white text-sm">
                           <div className="min-w-[110px] text-center">{typeTotals.hommes}</div>
                           <div className="min-w-[110px] text-center">{typeTotals.femmes}</div>
@@ -605,10 +601,6 @@ const handleConseillerClick = () => {
 
                       {/* MOBILE */}
                       <div className="md:hidden text-white">
-                        <div className="font-semibold">
-                          {typeExpanded ? "➖ " : "➕ "} {type}
-                        </div>
-
                         {typeExpanded && (
                           <div className="grid grid-cols-2 gap-1 text-sm mt-1">
                             <div>Hommes: {typeTotals.hommes}</div>
@@ -620,12 +612,23 @@ const handleConseillerClick = () => {
                             <div>NouvConv: {typeTotals.nouveau}</div>
                             <div>Recon: {typeTotals.reconciliation}</div>
                             <div>Moiss: {typeTotals.moissonneurs}</div>
+                            <div className="col-span-2 text-center mt-2">
+                              <button
+                                onClick={() => {
+                                  setSelectedRapport(r);
+                                  setEditOpen(true);
+                                }}
+                                className="text-amber-300 underline"
+                              >
+                                Modifier
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    {/* LIGNES */}
+                    {/* LIGNES DES RAPPORTS */}
                     {typeExpanded &&
                       typeReports.map((r) => (
                         <div
@@ -634,6 +637,7 @@ const handleConseillerClick = () => {
                             typeColors[type] || "border-white"
                           }`}
                         >
+                          {/* DESKTOP */}
                           <div className="hidden md:flex items-center">
                             <div className="min-w-[150px] text-white">
                               {new Date(r.date_evangelise).toLocaleDateString()}
@@ -657,55 +661,25 @@ const handleConseillerClick = () => {
                               </button>
                             </div>
                           </div>
-
-                          {/* MOBILE */}
-                             <div className="md:hidden text-white">
-                              <div className="font-semibold">
-                                {typeExpanded ? "➖ " : "➕ "} {type}
-                              </div>
-                            
-                              {/* Afficher les détails uniquement si le type est expand */}
-                              {typeExpanded && (
-                                <div className="grid grid-cols-2 gap-1 text-sm mt-1">
-                                  <div>Hommes: {typeTotals.hommes}</div>
-                                  <div>Femmes: {typeTotals.femmes}</div>
-                                  <div className="font-semibold text-orange-400">
-                                    Total: {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}
-                                  </div>
-                                  <div>Prières: {typeTotals.priere}</div>
-                                  <div>NouvConv: {typeTotals.nouveau}</div>
-                                  <div>Recon: {typeTotals.reconciliation}</div>
-                                  <div>Moiss: {typeTotals.moissonneurs}</div>                                   
-
-                            <button
-                              onClick={() => {
-                                setSelectedRapport(r);
-                                setEditOpen(true);
-                              }}
-                              className="text-amber-300 underline mt-2 text-center"
-                            >
-                              Modifier
-                        </button>
-                      </div>
-                    </div>
+                        </div>
+                      ))}
                   </div>
-                ))}
-            </div>
-          );
-        })}
+                );
+              })}
+          </div>
+        );
+      })}
     </div>
-  );
-})}
-      {selectedRapport && (
-        <EditEvanRapportLine
-          isOpen={editOpen}
-          onClose={()=>setEditOpen(false)}
-          rapport={selectedRapport}
-          onSave={handleSaveRapport}
-        />
-      )}
+  </div>
+)}
 
-      <Footer />
-    </div>
-  );
-}
+{selectedRapport && (
+  <EditEvanRapportLine
+    isOpen={editOpen}
+    onClose={() => setEditOpen(false)}
+    rapport={selectedRapport}
+    onSave={handleSaveRapport}
+  />
+)}
+
+<Footer />

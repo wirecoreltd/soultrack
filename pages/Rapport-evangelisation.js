@@ -537,7 +537,7 @@ const handleConseillerClick = () => {
 
             {/* HEADER MOIS */}
             <div
-              className={`px-4 py-3 rounded-lg bg-yellow cursor-pointer border-l-4 ${borderColor}`}
+              className={`px-4 py-3 rounded-lg bg-white/20 cursor-pointer border-l-4 ${borderColor}`}
               onClick={() => toggleMonth(monthKey)}
             >
               <div className="hidden md:flex items-center">
@@ -604,16 +604,22 @@ const handleConseillerClick = () => {
                       </div>
 
                       {/* MOBILE */}
-                      <div className="md:hidden text-white bg-red hover:bg-white/20">
+                      <div className="md:hidden text-white">
                         <div className="font-semibold">
                           {typeExpanded ? "➖ " : "➕ "} {type}
                         </div>
 
                         {typeExpanded && (
-                          <div className="grid grid-cols-2 gap-1 text-sm mt-1 bg-white/20 hover:bg-white/20">                            
+                          <div className="grid grid-cols-2 gap-1 text-sm mt-1">
+                            <div>Hommes: {typeTotals.hommes}</div>
+                            <div>Femmes: {typeTotals.femmes}</div>
                             <div className="font-semibold text-orange-400">
                               Total: {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}
-                            </div>                            
+                            </div>
+                            <div>Prières: {typeTotals.priere}</div>
+                            <div>NouvConv: {typeTotals.nouveau}</div>
+                            <div>Recon: {typeTotals.reconciliation}</div>
+                            <div>Moiss: {typeTotals.moissonneurs}</div>
                           </div>
                         )}
                       </div>
@@ -624,7 +630,7 @@ const handleConseillerClick = () => {
                       typeReports.map((r) => (
                         <div
                           key={r.id}
-                          className={`px-4 py-2 rounded-lg bg-green hover:bg-white/20 border-l-4 mt-2 ml-8 ${
+                          className={`px-4 py-2 rounded-lg bg-white/20 hover:bg-white/20 border-l-4 mt-2 ml-8 ${
                             typeColors[type] || "border-white"
                           }`}
                         >
@@ -655,28 +661,31 @@ const handleConseillerClick = () => {
                           </div>
 
                           {/* MOBILE */}
-                          <div className="md:hidden text-white">
-  
-                        {/* Date alignée à droite */}
-                        <div className="text-amber-300 mb-2 text-right">
-                          {new Date(r.date_evangelise).toLocaleDateString()}
-                        </div>
-                      
-                        {/* Contenu */}
-                        <div className="space-y-1 bg-white/20">                          
-                          <div> HommeYY: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"} </div>
-                          <div className="font-semibold text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</div>
-                          <div className="mt-2">NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"} </div>
-                          <div className="font-semibold text-orange-400">Priere: {r.priere ?? "-"} </div>
-                          <div className="mt-2">Moiss: {r.moissonneurs ?? "-"}</div>
-                        </div>
+                          <div className="md:hidden text-white text-sm">
+                            <div className="font-semibold mb-1">
+                              {new Date(r.date_evangelise).toLocaleDateString()}
+                            </div>
+                            <div className="grid grid-cols-2 gap-1">
+                              <div>Hommes: {r.hommes ?? "-"}</div>
+                              <div>Femmes: {r.femmes ?? "-"}</div>
+                              <div className="font-semibold text-orange-400">
+                                Total: {(r.hommes || 0) + (r.femmes || 0)}
+                              </div>
+                              <div className="font-semibold text-orange-400">
+                                Prières: {r.priere ?? "-"}
+                              </div>
+                              <div>NouvConv: {r.nouveau_converti ?? "-"}</div>
+                              <div>Recon: {r.reconciliation ?? "-"}</div>
+                              <div>Moiss: {r.moissonneurs ?? "-"}</div>
+                            </div>
 
                             <button
                               onClick={() => {
                                 setSelectedRapport(r);
                                 setEditOpen(true);
                               }}
-                              className="block mx-auto text-amber-300 underline mt-3">
+                              className="text-orange-400 underline mt-2"
+                            >
                               Modifier
                             </button>
                           </div>

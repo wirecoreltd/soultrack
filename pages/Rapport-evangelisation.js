@@ -659,32 +659,46 @@ const handleConseillerClick = () => {
                               </button>
                             </div>
                           </div>
-
+                         
                           {/* MOBILE */}
-                          <div className="md:hidden text-white text-sm">
-                            <div className="font-semibold mb-1">
+                          <div className="md:hidden text-white">
+                            
+                            {/* Date alignée à droite */}
+                            <div className="text-amber-300 mb-2 text-right">
                               {new Date(r.date_evangelise).toLocaleDateString()}
                             </div>
-                            <div className="grid grid-cols-2 gap-1">
-                              <div>Hommes: {r.hommes ?? "-"}</div>
-                              <div>Femmes: {r.femmes ?? "-"}</div>
+                          
+                            {/* Contenu */}
+                            <div className="space-y-1">
+                              
+                              <div>
+                                Hommes: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}
+                              </div>
+                          
                               <div className="font-semibold text-orange-400">
                                 Total: {(r.hommes || 0) + (r.femmes || 0)}
                               </div>
-                              <div className="font-semibold text-orange-400">
-                                Prières: {r.priere ?? "-"}
+                          
+                              <div>
+                                NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"}
                               </div>
-                              <div>NouvConv: {r.nouveau_converti ?? "-"}</div>
-                              <div>Recon: {r.reconciliation ?? "-"}</div>
-                              <div>Moiss: {r.moissonneurs ?? "-"}</div>
+                          
+                              <div>
+                                Priere: {r.priere ?? "-"}
+                              </div>
+                          
+                              <div>
+                                Moiss: {r.moissonneurs ?? "-"}
+                              </div>
                             </div>
-
-                            <button
+  
+                            
+                              <button
                               onClick={() => {
                                 setSelectedRapport(r);
                                 setEditOpen(true);
                               }}
-                              className="text-orange-400 underline mt-2"
+                              className="block mx-auto text-amber-300 underline mt-3"
                             >
                               Modifier
                             </button>

@@ -200,7 +200,20 @@ const [integrationPercent, setIntegrationPercent] = useState(0);
 //}, []);
 
   // ---------------- COLLAPSE ----------------
-  const toggleMonth = (monthKey) => {setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey]}));
+  const toggleMonth = (monthKey) => {
+  setExpandedMonths(prev => {
+    const isOpening = !prev[monthKey];
+
+    if (isOpening) {
+      setExpandedTypes({}); // reset seulement quand on ouvre
+    }
+
+    return {
+      ...prev,
+      [monthKey]: isOpening
+    };
+  });
+};
   setExpandedTypes({});
 };
   const toggleType = (typeKey) => setExpandedTypes(prev => ({ ...prev, [typeKey]: !prev[typeKey] }));
@@ -571,7 +584,7 @@ const handleConseillerClick = () => {
             {isExpanded &&
               Object.entries(groupByType(monthReports)).map(([type, typeReports]) => {
                 const typeKey = `${monthKey}-${type}`;
-                const typeExpanded = expandedTypes[typeKey] || false;
+                const typeExpanded = expandedTypes[typeKey] === true;
                 const typeTotals = getTotals(typeReports);
 
                 return (

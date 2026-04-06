@@ -215,8 +215,8 @@ const [integrationPercent, setIntegrationPercent] = useState(0);
   });
 };
   setExpandedTypes({});
-};
-  const toggleType = (typeKey) => setExpandedTypes(prev => ({ ...prev, [typeKey]: !prev[typeKey] }));
+//};
+  //const toggleType = (typeKey) => setExpandedTypes(prev => ({ ...prev, [typeKey]: !prev[typeKey] }));
 
   // ---------------- GROUPING ----------------
   const groupByMonth = (data) => {

@@ -84,7 +84,11 @@ function MembresCelluleContent() {
 
 
   //=======================
-  const { data: profile } = await supabase
+ const [userRole, setUserRole] = useState(null);
+
+useEffect(() => {
+  const fetchProfileAndCellules = async () => {
+    const { data: profile } = await supabase
       .from("profiles")
       .select("id, role, eglise_id, branche_id")
       .eq("id", user.id)
@@ -103,6 +107,14 @@ function MembresCelluleContent() {
 
     if (profile.role === "ResponsableCellule") {
       query = query.eq("responsable_id", profile.id);
+    }
+
+    const { data: cellulesData } = await query;
+    setCellules(cellulesData || []);
+  };
+
+  fetchProfileAndCellules();
+}, []);
   // ------------------- Fetch membre unique si memberId -------------------
   useEffect(() => {
     if (!memberIdStr) return;
@@ -280,7 +292,7 @@ const { data: membresData, error } = await query;
 
                       <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
                       <p className="text-center text-sm mt-1">🏠 {m.cellule_full|| ""}</p>
-                      <p className="text-center text-sm mt-1">👤 {m.responsable| ""}</p>    
+                      <p className="text-center text-sm mt-1">👤 {m.responsable || ""}</p>   
 
                       <button onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
                         className="text-orange-500 underline mt-2 block mx-auto text-sm">

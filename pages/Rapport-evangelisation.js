@@ -663,43 +663,26 @@ const handleConseillerClick = () => {
                           {/* MOBILE */}
                           <div className="md:hidden text-white">
   
-  {/* Date alignée à droite */}
-  <div className="text-amber-300 mb-2 text-right">
-    {new Date(r.date_evangelise).toLocaleDateString()}
-  </div>
-
-  {/* Contenu */}
-  <div className="space-y-1">
-    
-    <div>
-      Hommes: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}
-    </div>
-
-    <div className="font-semibold text-orange-400">
-      Total: {(r.hommes || 0) + (r.femmes || 0)}
-    </div>
-
-    <div>
-      NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"}
-    </div>
-
-    <div>
-      Priere: {r.priere ?? "-"}
-    </div>
-
-    <div>
-      Moiss: {r.moissonneurs ?? "-"}
-    </div>
-
-  </div>
+                        {/* Date alignée à droite */}
+                        <div className="text-amber-300 mb-2 text-right">
+                          {new Date(r.date_evangelise).toLocaleDateString()}
+                        </div>
+                      
+                        {/* Contenu */}
+                        <div className="space-y-1">                          
+                          <div> Hommes: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"} </div>
+                          <div className="font-semibold text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</div>
+                          <div className="mt-2">NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"} </div>
+                          <div className="font-semibold text-orange-400">Priere: {r.priere ?? "-"} </div>
+                          <div className="mt-2">Moiss: {r.moissonneurs ?? "-"}</div>
+                        </div>
 
                             <button
                               onClick={() => {
                                 setSelectedRapport(r);
                                 setEditOpen(true);
                               }}
-                              className="text-orange-400 underline mt-2 text-center"
-                            >
+                              className="text-orange-400 underline mt-2 text-center">
                               Modifier
                             </button>
                           </div>

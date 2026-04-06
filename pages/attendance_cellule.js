@@ -695,7 +695,7 @@ useEffect(() => {
 
   const totalGlobal =
     typeTotals.total +
-    typeTotals.enfants +     
+    typeTotals.enfants;     
          
           return (
             <div key={typeTemps} className="ml-3 space-y-2">

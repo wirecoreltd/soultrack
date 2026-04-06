@@ -675,10 +675,7 @@ const handleConseillerClick = () => {
                                   <div>Prières: {typeTotals.priere}</div>
                                   <div>NouvConv: {typeTotals.nouveau}</div>
                                   <div>Recon: {typeTotals.reconciliation}</div>
-                                  <div>Moiss: {typeTotals.moissonneurs}</div>
-                                </div>
-                              )}
-                            </div>      
+                                  <div>Moiss: {typeTotals.moissonneurs}</div>                                   
 
                             <button
                               onClick={() => {

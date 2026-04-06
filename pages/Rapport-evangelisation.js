@@ -682,7 +682,7 @@ const handleConseillerClick = () => {
                                 setSelectedRapport(r);
                                 setEditOpen(true);
                               }}
-                              className="text-orange-400 underline mt-2 text-center">
+                              className="block mx-auto text-amber-300 underline mt-3">
                               Modifier
                             </button>
                           </div>

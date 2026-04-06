@@ -661,7 +661,7 @@ const handleConseillerClick = () => {
                           </div>
 
                           {/* MOBILE */}
-                          <div className="ml-4 rounded-lg p-3 text-white">
+                          <div className="ml-0 rounded-lg p-3 text-white bg-white/5">
                             <p className="text-amber-300 text-right">{new Date(r.date_evangelise).toLocaleDateString()}</p>
                             <p className="mt-2">Hommes: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}</p>                              
                             <p className="font-semibold text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</p>                           

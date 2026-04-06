@@ -35,8 +35,7 @@ function Attendance() {
     hommes: 0,
     femmes: 0,
     jeunes: 0,
-    enfants: 0,
-    connectes: 0,
+    enfants: 0,    
     nouveauxVenus: 0,
     nouveauxConvertis: 0,
   });
@@ -85,7 +84,7 @@ const splitTypeName = (name, lineLength = 15) => {
 };
 
 const calculateMonthTotals = (typesObj) => {
-  const totals = {hommes:0,femmes:0,jeunes:0,total:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0};
+  const totals = {hommes:0,femmes:0,jeunes:0,total:0,enfants:0,nouveauxVenus:0,nouveauxConvertis:0};
   Object.values(typesObj).forEach(rows => {
     rows.forEach(r => {
       totals.hommes += Number(r.hommes||0);
@@ -101,7 +100,7 @@ const calculateMonthTotals = (typesObj) => {
 };
 
 const calculateTypeTotals = (rows) => {
-  const totals = {hommes:0,femmes:0,jeunes:0,total:0,enfants:0,connectes:0,nouveauxVenus:0,nouveauxConvertis:0};
+  const totals = {hommes:0,femmes:0,jeunes:0,total:0,enfants:0,nouveauxVenus:0,nouveauxConvertis:0};
   rows.forEach(r => {
     totals.hommes += Number(r.hommes||0);
     totals.femmes += Number(r.femmes||0);
@@ -198,7 +197,7 @@ const calculateTypeTotals = (rows) => {
 
   setFormData(prev => ({
     ...prev,
-    [name]: ["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].includes(name)
+    [name]: ["hommes","femmes","jeunes","enfants","nouveauxVenus","nouveauxConvertis"].includes(name)
       ? Number(value) || 0 // transforme "" en 0
       : value
   }));
@@ -466,7 +465,7 @@ useEffect(() => {
           )}       
                  
           {/* Détails chiffrés */}
-          {["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"].map(field => (
+          {["hommes","femmes","jeunes","enfants","nouveauxVenus","nouveauxConvertis"].map(field => (
             <div className="flex flex-col w-full" key={field}>
               <label className="text-white mb-1">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
               <input
@@ -696,8 +695,7 @@ useEffect(() => {
 
   const totalGlobal =
     typeTotals.total +
-    typeTotals.enfants +
-    typeTotals.connectes;   
+    typeTotals.enfants +     
          
           return (
             <div key={typeTemps} className="ml-3 space-y-2">

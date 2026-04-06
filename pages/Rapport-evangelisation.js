@@ -662,20 +662,23 @@ const handleConseillerClick = () => {
 
                           {/* MOBILE */}
                           <div className="md:hidden text-white">
-                            <p className="text-amber-300 text-right">{new Date(r.date_evangelise).toLocaleDateString()}</p>                            
-                            <p className="mt-2">Hommes: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}</p>                            
-                            <p className="font-semibold text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</p>
-                            <p className="mt-2">NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"}</p>
-                            <p className="font-semibold text-orange-400">Prière du Salut: {r.priere ?? "-"}
-                            <p className="mt-2">Moiss: {r.moissonneurs ?? "-"}</p>
-                              
+                            <div className="text-amber-300 mb-1 text-right">
+                              {new Date(r.date_evangelise).toLocaleDateString()}
+                            </div>
+                            <div className="grid grid-cols-2 gap-1">
+                              <div>Hommes: {r.hommes ?? "-"}<br/> | Femmes: {r.femmes ?? "-"}</div>                              
+                              <div className="font-semibold text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</div>
+                              <div className = "mt-2">NouvConv: {r.nouveau_converti ?? "-"}<br/> | Recon: {r.reconciliation ?? "-"}</div>                              
+                              <div className="font-semibold text-orange-400">Prières: {r.priere ?? "-"} </div>                              
+                              <div>Moiss: {r.moissonneurs ?? "-"}</div>
+                            </div>
 
                             <button
                               onClick={() => {
                                 setSelectedRapport(r);
                                 setEditOpen(true);
                               }}
-                              className="text-orange-400 underline mt-2 text-center"
+                              className="text-orange-400 underline mt-2"
                             >
                               Modifier
                             </button>

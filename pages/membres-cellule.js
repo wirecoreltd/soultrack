@@ -82,6 +82,27 @@ function MembresCelluleContent() {
   // ------------------- Normalisation du memberId -------------------
   const memberIdStr = typeof memberId === "string" ? memberId : (Array.isArray(memberId) ? memberId[0] : null);
 
+
+  //=======================
+  const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, role, eglise_id, branche_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile) return;
+
+    setUserRole(profile.role);
+
+    let query = supabase
+      .from("cellules")
+      .select("*")
+      .eq("eglise_id", profile.eglise_id)
+      .eq("branche_id", profile.branche_id)
+      .order("cellule_full");
+
+    if (profile.role === "ResponsableCellule") {
+      query = query.eq("responsable_id", profile.id);
   // ------------------- Fetch membre unique si memberId -------------------
   useEffect(() => {
     if (!memberIdStr) return;
@@ -120,16 +141,7 @@ function MembresCelluleContent() {
       try {
        let query = supabase
   .from("membres_complets")
-  .select(`
-  *,
-  cellules (
-    cellule_full,
-    profiles:responsable_id (
-      prenom,
-      nom
-    )
-  )
-`)
+  .select("*")
   .eq("statut_suivis", 3)
   .not("cellule_id", "is", null)     
   .order("created_at", { ascending: false });
@@ -267,10 +279,8 @@ const { data: membresData, error } = await query;
                       </div>
 
                       <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
-                      <p className="text-center text-sm">🏠 {m.cellules?.cellule_full || "—"}</p>                      
-                      <p className="text-center text-sm">👤 {m.cellules?.profiles
-  ? `${m.cellules.profiles.prenom} ${m.cellules.profiles.nom}`
-  : "—"}</p>
+                      <p className="text-center text-sm mt-1">🏠 {m.cellule_full|| ""}</p>
+                      <p className="text-center text-sm mt-1">👤 {m.responsable| ""}</p>    
 
                       <button onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
                         className="text-orange-500 underline mt-2 block mx-auto text-sm">

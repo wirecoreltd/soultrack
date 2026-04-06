@@ -319,7 +319,7 @@ const handleConseillerClick = () => {
      {/* FILTRES */}
 <div
   id="rapport-filtres"
-  className="w-full max-w-4xl bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6"
+  className="w-full max-w-4xl bg-white/20 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6"
 >
   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-white">
     
@@ -361,7 +361,7 @@ const handleConseillerClick = () => {
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="h-10 w-full bg-white/20 border border-white/20 rounded-lg px-4 text-white"
+          className="h-10 w-full bg-white/20 border border-white/20 rounded-lg px-4 text-black"
         >
           <option value="">Tous</option>
           <option value="Individuel">Individuel</option>

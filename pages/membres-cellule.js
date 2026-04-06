@@ -32,6 +32,13 @@ function MembresCelluleContent() {
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
 
+  const memberIdStr =
+    typeof memberId === "string"
+      ? memberId
+      : Array.isArray(memberId)
+      ? memberId[0]
+      : null;
+
   // ------------------- Helpers -------------------
   const parseJsonArray = (value) => {
     if (!value) return [];
@@ -64,8 +71,6 @@ function MembresCelluleContent() {
     4: "Refus",
   };
 
-  const getCelluleNom = (celluleId) => cellules.find((c) => c.id === celluleId)?.cellule_full || "—";
-
   const getBorderColor = (member) => {
     switch ((member?.etat_contact || "").toLowerCase().trim()) {
       case "nouveau": return "#fb923c";
@@ -79,111 +84,62 @@ function MembresCelluleContent() {
     setMembres((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
   };
 
-  // ------------------- Normalisation du memberId -------------------
-  const memberIdStr = typeof memberId === "string" ? memberId : (Array.isArray(memberId) ? memberId[0] : null);
-
-
-  //=======================
- const [userRole, setUserRole] = useState(null);
-
-useEffect(() => {
-  const fetchProfileAndCellules = async () => {
-
-    // ✅ AJOUTER ÇA
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      console.error("User non connecté");
-      return;
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, role, eglise_id, branche_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile) return;
-
-    setUserRole(profile.role);
-
-    let query = supabase
-      .from("cellules")
-      .select("*")
-      .eq("eglise_id", profile.eglise_id)
-      .eq("branche_id", profile.branche_id)
-      .order("cellule_full");
-
-    if (profile.role === "ResponsableCellule") {
-      query = query.eq("responsable_id", profile.id);
-    }
-
-    const { data: cellulesData } = await query;
-    setCellules(cellulesData || []);
-  };
-
-  fetchProfileAndCellules();
-}, []);
-  // ------------------- Fetch membre unique si memberId -------------------
+  // ------------------- FETCH USER + CELLULES -------------------
   useEffect(() => {
-    if (!memberIdStr) return;
+    const fetchCellules = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const fetchMembreUnique = async () => {
-      setLoading(true);
-      try {
-        const { data: member, error } = await supabase
-          .from("membres_complets")
-          .select("*")
-          .eq("id", memberIdStr)
-          .single();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, role, eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
 
-        if (error) throw error;
+      if (!profile) return;
 
-        setMembres([member]);
-        setMessage("");
-      } catch (err) {
-        console.error(err);
-        setMessage("Membre non trouvé");
-        setMembres([]);
-      } finally {
-        setLoading(false);
+      let query = supabase
+        .from("cellules")
+        .select("*")
+        .eq("eglise_id", profile.eglise_id)
+        .eq("branche_id", profile.branche_id)
+        .order("cellule_full");
+
+      if (profile.role === "ResponsableCellule") {
+        query = query.eq("responsable_id", profile.id);
       }
+
+      const { data } = await query;
+      setCellules(data || []);
     };
 
-    fetchMembreUnique();
-  }, [memberIdStr]);
+    fetchCellules();
+  }, []);
 
-  // ------------------- Fetch tous les membres intégrés si pas de memberId -------------------
+  // ------------------- FETCH MEMBRES -------------------
   useEffect(() => {
     if (memberIdStr) return;
 
     const fetchAllMembers = async () => {
       setLoading(true);
       try {
-       let query = supabase
-  .from("membres_complets")
-  .select(`
-  *,
-  cellules (
-    cellule_full,
-    responsable
-  )
-`)
-  .eq("statut_suivis", 3)
-  .not("cellule_id", "is", null)     
-  .order("created_at", { ascending: false });
+        let query = supabase
+          .from("membres_complets")
+          .select("*")
+          .eq("statut_suivis", 3)
+          .not("cellule_id", "is", null)
+          .order("created_at", { ascending: false });
 
-// 🔥 si celluleId présent → filtrer
-if (celluleId) {
-  query = query.eq("cellule_id", celluleId);
-}
+        if (celluleId) {
+          query = query.eq("cellule_id", celluleId);
+        }
 
-const { data: membresData, error } = await query;
+        const { data, error } = await query;
 
         if (error) throw error;
 
-        setMembres(membresData || []);
-        if (!membresData || membresData.length === 0) setMessage("Aucun membre trouvé");
+        setMembres(data || []);
+        if (!data || data.length === 0) setMessage("Aucun membre trouvé");
       } catch (err) {
         console.error(err);
         setMessage("Erreur de chargement");
@@ -193,9 +149,9 @@ const { data: membresData, error } = await query;
     };
 
     fetchAllMembers();
-  }, [memberIdStr]);
+  }, [memberIdStr, celluleId]);
 
-  // ------------------- Click outside phone menu -------------------
+  // ------------------- CLICK OUTSIDE -------------------
   const handleClickOutside = useCallback((e) => {
     if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
       setOpenPhoneId(null);
@@ -208,12 +164,10 @@ const { data: membresData, error } = await query;
   }, [handleClickOutside]);
 
   useEffect(() => {
-  if (celluleId) {
-    setFilterCellule(celluleId);
-  }
-}, [celluleId]);
+    if (celluleId) setFilterCellule(celluleId);
+  }, [celluleId]);
 
-  // ------------------- Filtered members -------------------
+  // ------------------- FILTER -------------------
   const filteredMembres = membres.filter(
     (m) =>
       (!filterCellule || m.cellule_id === filterCellule) &&
@@ -223,140 +177,94 @@ const { data: membresData, error } = await query;
         (m.telephone && m.telephone.includes(search)))
   );
 
-  // ------------------- Render -------------------
+  // ------------------- RENDER -------------------
   return (
     <div className="min-h-screen p-6" style={{ backgroundColor: "#333699" }}>
       <HeaderPages />
+
       <h1 className="text-white text-2xl font-bold text-center mb-4">
         {cellules.length > 1 ? "Membres de mes cellules" : "Membre de ma cellule"}
       </h1>
 
-      {loading && <div className="text-center mt-10 text-white">Chargement...</div>}
-      {!loading && message && <div className="text-center mt-10 text-white">{message}</div>}
+      {loading && <div className="text-white text-center mt-10">Chargement...</div>}
+      {!loading && message && <div className="text-white text-center mt-10">{message}</div>}
 
       {!loading && !message && (
         <>
-          {/* Recherche + filtre */}
-          <div className="w-full flex flex-col items-center mb-4 gap-2">
-            <input
-              type="text"
-              placeholder="Recherche..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full max-w-md px-3 py-2 rounded-md border text-black focus:outline-none"
-            />
-            <div className="flex items-center gap-3">
-              <select
-                value={filterCellule}
-                onChange={(e) => setFilterCellule(e.target.value)}
-                className="px-3 py-2 rounded-md border text-black text-sm"
-              >
-                <option value="">-- Toutes les cellules --</option>
-                {cellules.map((c) => (
-                  <option key={c.id} value={c.id}>{c.cellule_full}</option>
-                ))}
-              </select>
-              <span className="text-white text-sm">{filteredMembres.length} membres</span>
-            </div>
-          </div>             
-        
-               <div className="w-full flex justify-end mb-6">                
+          <div className="flex justify-center">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
+
+              {filteredMembres.map((m) => {
+                const cellule = cellules.find(c => c.id === m.cellule_id);
+                const besoins = parseJsonArray(m.besoin).join(", ") || "—";
+                const isOpen = detailsOpen[m.id];
+
+                return (
+                  <div key={m.id} className="bg-white p-4 rounded-2xl shadow-xl border-l-4"
+                    style={{ borderLeftColor: getBorderColor(m) }}>
+
+                    <h2 className="text-center font-bold text-lg">
+                      {m.prenom} {m.nom}
+                    </h2>
+
+                    <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
+
+                    <p className="text-center text-sm mt-1">
+                      🏠 {cellule?.cellule_full || "—"}
+                    </p>
+
+                    <p className="text-center text-sm mt-1">
+                      👤 {cellule?.responsable || "—"}
+                    </p>
+
                     <button
-                      onClick={() => router.push("/ajouter-membre-cellule")}
-                      className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+                      onClick={() =>
+                        setDetailsOpen((prev) => ({
+                          ...prev,
+                          [m.id]: !prev[m.id],
+                        }))
+                      }
+                      className="text-orange-500 underline mt-2 block mx-auto text-sm"
                     >
-                      ➕ Ajouter un membre
-                    </button>                  
-                </div>
+                      {isOpen ? "Fermer détails" : "Détails"}
+                    </button>
 
-          {/* ================= VUE CARTE ================= */}
-          {view === "card" && (
-            <div className="flex justify-center">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl relative">
-                {filteredMembres.map((m) => {
-                  const besoins = parseJsonArray(m.besoin).join(", ") || "—";
-                  const isOpen = detailsOpen[m.id];
-                  return (
-                   <div 
-  key={m.id} 
-  className="bg-white p-4 rounded-2xl shadow-xl border-l-4 relative overflow-visible"
-  style={{ borderLeftColor: getBorderColor(m) }}
->
-                      <h2 className="text-center font-bold text-lg">{m.prenom} {m.nom}</h2>
-
-                      <div className="relative text-center">
-                        <p
-                          className="text-orange-500 underline cursor-pointer font-semibold"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenPhoneId(openPhoneId === m.id ? null : m.id);
-                          }}
-                        >
-                          {m.telephone || "—"}
+                    {isOpen && (
+                      <div className="text-black text-sm mt-2 w-full space-y-1">
+                        <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
+                          💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}
                         </p>
-
-                        {openPhoneId === m.id && (
-                          <div ref={phoneMenuRef} className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-xl border z-[9999] w-56" onClick={(e) => e.stopPropagation()}>
-                            <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
-                            <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
-                            <a href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
-                            <a href={`https://wa.me/${m.telephone?.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
-                          </div>
+                        <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
+                        <p>🎗️ Civilité : {m.sexe || ""}</p>
+                        <p>⏳ Tranche d'age : {m.age || ""}</p>
+                        <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                        <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>
+                        {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
+                          <p className="ml-6">💦 Veut se faire baptiser</p>
                         )}
+                        <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
+                        <p>✒️ Formation : {m.Formation || ""}</p>
+                        <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>
+                        <p>❓ Difficultés / Besoins : {besoins}</p>  
+                        <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
+                        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                        <p>🧩 Comment est-il venu : {m.venu || ""}</p>                    
+                        <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
+
+                        <button
+                          onClick={() => setEditMember(m)}
+                          className="text-blue-600 text-sm mt-2 block mx-auto underline"
+                        >
+                          ✏️ Modifier le contact
+                        </button>
                       </div>
+                    )}
+                  </div>
+                );
+              })}
 
-                      <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
-                      <p className="text-center text-sm mt-1">🏠 {m.cellules?.cellule_full}</p>
-                      <p className="text-center text-sm mt-1">👤 {m.cellules?.responsable}</p>  
-
-                      <button onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
-                        className="text-orange-500 underline mt-2 block mx-auto text-sm">
-                        {isOpen ? "Fermer détails" : "Détails"}
-                      </button>
-
-                      {isOpen && (
-                        <div className="text-black text-sm mt-2 w-full space-y-1">
-                          <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
-                            💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}
-                          </p>
-                          <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
-                          <p>🎗️ Civilité : {m.sexe || ""}</p>
-                          <p>⏳ Tranche d'age : {m.age || ""}</p>
-                          <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                          <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>
-                          {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
-                            <p className="ml-6">💦 Veut se faire baptiser</p>
-                          )}
-                          <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
-                          <p>✒️ Formation : {m.Formation || ""}</p>
-                          <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>
-                          <p>❓ Difficultés / Besoins : {besoins}</p>  
-                          <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
-                          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                          <p>🧩 Comment est-il venu : {m.venu || ""}</p>                    
-                          <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
-                          
-                          <button onClick={() => setEditMember(m)} className="text-blue-600 text-sm mt-2 block mx-auto underline">✏️ Modifier le contact</button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
             </div>
-          )}         
-          
-          {editMember && (
-            <EditMemberCellulePopup
-              member={editMember}
-              onClose={() => setEditMember(null)}
-              onUpdateMember={(updated) => {
-                handleUpdateMember(updated);
-                setEditMember(null);
-                setDetailsMember(null);
-              }}
-            />
-          )}
+          </div>
         </>
       )}
 

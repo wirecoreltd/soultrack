@@ -537,7 +537,7 @@ const handleConseillerClick = () => {
 
             {/* HEADER MOIS */}
             <div
-              className={`px-4 py-3 rounded-lg bg-white/20 cursor-pointer border-l-4 ${borderColor}`}
+              className={`px-4 py-3 rounded-lg bg-yellow cursor-pointer border-l-4 ${borderColor}`}
               onClick={() => toggleMonth(monthKey)}
             >
               <div className="hidden md:flex items-center">
@@ -624,7 +624,7 @@ const handleConseillerClick = () => {
                       typeReports.map((r) => (
                         <div
                           key={r.id}
-                          className={`px-4 py-2 rounded-lg bg-white/20 hover:bg-white/20 border-l-4 mt-2 ml-8 ${
+                          className={`px-4 py-2 rounded-lg bg-green hover:bg-white/20 border-l-4 mt-2 ml-8 ${
                             typeColors[type] || "border-white"
                           }`}
                         >
@@ -663,7 +663,7 @@ const handleConseillerClick = () => {
                         </div>
                       
                         {/* Contenu */}
-                        <div className="space-y-1 bg-white/20 hover:bg-white/20">                          
+                        <div className="space-y-1 bg-red hover:bg-white/20">                          
                           <div> HommeYY: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"} </div>
                           <div className="font-semibold text-orange-400">Total: {(r.hommes || 0) + (r.femmes || 0)}</div>
                           <div className="mt-2">NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"} </div>

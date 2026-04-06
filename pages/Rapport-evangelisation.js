@@ -604,26 +604,20 @@ const handleConseillerClick = () => {
                       </div>
 
                       {/* MOBILE */}
-                      <div className="md:hidden text-white">
-                        <div className="font-semibold">
-                          {typeExpanded ? "➖ " : "➕ "} {type}
-                        </div>
-
-                        {typeExpanded && (
-                          <div className="grid grid-cols-2 gap-1 text-sm mt-1">
-                            <div>HommesOO: {typeTotals.hommes}</div>
-                            <div>Femmes: {typeTotals.femmes}</div>
-                            <div className="font-semibold text-orange-400">
+                        <div className="md:hidden text-white">  
+                          <div className="flex justify-between items-center font-semibold">
+                            
+                            {/* Type évangélisation */}
+                            <div>
+                              {typeExpanded ? "➖ " : "➕ "} {type}
+                            </div>
+                        
+                            {/* Total aligné à droite */}
+                            <div className="text-orange-400">
                               Total: {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}
                             </div>
-                            <div>Prières: {typeTotals.priere}</div>
-                            <div>NouvConv: {typeTotals.nouveau}</div>
-                            <div>Recon: {typeTotals.reconciliation}</div>
-                            <div>Moiss: {typeTotals.moissonneurs}</div>
                           </div>
-                        )}
-                      </div>
-                    </div>
+                        </div>
 
                     {/* LIGNES */}
                     {typeExpanded &&

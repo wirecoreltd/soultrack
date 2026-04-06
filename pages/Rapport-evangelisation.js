@@ -537,7 +537,7 @@ const handleConseillerClick = () => {
 
             {/* HEADER MOIS */}
             <div
-              className={`px-4 py-3 rounded-lg bg-white/25 cursor-pointer border-l-4 ${borderColor}`}
+              className={`px-4 py-3 rounded-lg bg-white/5 cursor-pointer border-l-4 ${borderColor}`}
               onClick={() => toggleMonth(monthKey)}
             >
               <div className="hidden md:flex items-center">
@@ -545,7 +545,7 @@ const handleConseillerClick = () => {
                   {isExpanded ? "➖ " : "➕ "} {monthLabel}
                 </div>
 
-                <div className="flex ml-auto text-white font-semibold text-sm">
+                <div className="flex ml-auto text-white font-semibold">
                   <div className="min-w-[110px] text-center ml-3">{monthTotals.hommes}</div>
                   <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>
                   <div className="min-w-[110px] text-center text-orange-400 font-semibold">
@@ -580,7 +580,7 @@ const handleConseillerClick = () => {
                     {/* HEADER TYPE */}
                     <div
                       onClick={() => toggleType(typeKey)}
-                      className={`px-4 py-2 rounded-lg bg-white/15 cursor-pointer border-l-4 ml-4 ${
+                      className={`px-4 py-2 bg-white/5 cursor-pointer border-l-4 ml-4 ${
                         typeColors[type] || "border-white"
                       }`}
                     >
@@ -589,7 +589,7 @@ const handleConseillerClick = () => {
                           {typeExpanded ? "➖ " : "➕ "} {type}
                         </div>
 
-                        <div className="flex ml-auto text-white text-sm">
+                        <div className="flex ml-auto text-white">
                           <div className="min-w-[110px] text-center">{typeTotals.hommes}</div>
                           <div className="min-w-[110px] text-center">{typeTotals.femmes}</div>
                           <div className="min-w-[110px] text-center text-orange-400 font-semibold">
@@ -630,7 +630,7 @@ const handleConseillerClick = () => {
                       typeReports.map((r) => (
                         <div
                           key={r.id}
-                          className={`px-4 py-2 rounded-lg bg-white/5 hover:bg-white/5 border-l-4 mt-1 ml-8 ${
+                          className={`px-4 py-2 bg-white/5 hover:bg-white/5 border-l-4 mt-1 ml-8 ${
                             typeColors[type] || "border-white"
                           }`}
                         >

@@ -611,7 +611,7 @@ const handleConseillerClick = () => {
 
                         {typeExpanded && (
                           <div className="grid grid-cols-2 gap-1 text-sm mt-1">
-                            <div>Hommes: {typeTotals.hommes}</div>
+                            <div>HommesOO: {typeTotals.hommes}</div>
                             <div>Femmes: {typeTotals.femmes}</div>
                             <div className="font-semibold text-orange-400">
                               Total: {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}
@@ -672,10 +672,10 @@ const handleConseillerClick = () => {
                             <div className="space-y-1">
                               
                               <div>
-                                Hommes: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}
+                                HommesYY: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}
                               </div>
                           
-                              <div className="font-semibold text-orange-400">
+                              <div className="font-semibold text-orange-400 mt-1">
                                 Total: {(r.hommes || 0) + (r.femmes || 0)}
                               </div>
                           
@@ -683,7 +683,7 @@ const handleConseillerClick = () => {
                                 NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"}
                               </div>
                           
-                              <div>
+                               <div className="font-semibold text-orange-400 mt-1">
                                 Priere: {r.priere ?? "-"}
                               </div>
                           

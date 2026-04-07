@@ -132,12 +132,7 @@ const fetchConseillers = async () => {
         return s.includes("attente") || s.includes("envoye");
       }).length,
     });
-
-    //=========================
-    const displayedReports = filterConseiller
-  ? reports.filter(r => r.conseiller === filterConseiller)
-  : reports;
-
+   
 // KPI recalculés en fonction du conseiller sélectionné
 const displayedKpis = (() => {
   const normalize = (text) => text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
@@ -270,6 +265,11 @@ const displayedKpis = (() => {
       const [yearB, monthB] = b[0].split("-").map(Number);
       return new Date(yearB, monthB) - new Date(yearA, monthA);
     });
+
+   //=========================
+    const displayedReports = filterConseiller
+  ? reports.filter(r => r.conseiller === filterConseiller)
+  : reports;
 
   // ================= RENDER =================
   return (

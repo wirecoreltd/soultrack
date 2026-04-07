@@ -281,47 +281,45 @@ const fetchCellules = async () => {
         L'évolution des Ames<span className="text-amber-300">par Cellule</span>
       </h1>
 
-      {/* FILTRES */}
-<div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
-  <input
-    type="date"
-    value={filterDebut}
-    onChange={(e) => setFilterDebut(e.target.value)}
-    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-  />
-  <input
-    type="date"
-    value={filterFin}
-    onChange={(e) => setFilterFin(e.target.value)}
-    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-  />
-  <button
-    onClick={fetchReports}
-    className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-  >
-    Générer
-  </button>
-</div>
+          {/* FILTRES */}
+            <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+              <input
+                type="date"
+                value={filterDebut}
+                onChange={(e) => setFilterDebut(e.target.value)}
+                className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+              />
+              <input
+                type="date"
+                value={filterFin}
+                onChange={(e) => setFilterFin(e.target.value)}
+                className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+              />
+              <button
+                onClick={fetchReports}
+                className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+              >
+                Générer
+              </button>
+            </div>
 
-{/* FILTRE CELLULE - seulement après génération */}
-{showTable && (
-  <div className="mt-4 w-full max-w-7xl flex justify-start">
-    <select
-      value={filterCellule}
-      onChange={(e) => setFilterCellule(e.target.value)}
-      className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-    >
-      <option value="">Toutes les Cellules</option>
-      {Cellules.map((c) => (
-        <option key={c.id} value={c.cellule_full}>
-          {c.cellule_full}
-        </option>
-      ))}
-    </select>
-  </div>
-)}
-
-
+              {/* FILTRE CELLULE - seulement après génération */}
+              {showTable && (
+                <div className="mt-4 w-full max-w-7xl flex justify-start">
+                  <select
+                    value={filterCellule}
+                    onChange={(e) => setFilterCellule(e.target.value)}
+                    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-black"
+                  >
+                    <option value="">Toutes les Cellules</option>
+                    {Cellules.map((c) => (
+                      <option key={c.id} value={c.cellule_full}>
+                        {c.cellule_full}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
       {/* KPI */}
 {showTable && (
@@ -490,9 +488,8 @@ const fetchCellules = async () => {
         
             </div>
           </div>
-        )}
-        
-        {/* MOBILE */}
+        )}        
+     
 {/* MOBILE */}
 <div className="md:hidden space-y-4 w-full">
   {groupedReports.map(([monthKey, rows]) => {

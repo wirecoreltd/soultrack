@@ -32,6 +32,7 @@ function EtatConseiller() {
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [Conseillers, setConseillers] = useState([]);
+  const [conseillers, setConseillers] = useState([]);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -168,6 +169,11 @@ useEffect(() => {
     });
   };
 
+  useEffect(() => {
+  fetchUserProfile();
+  fetchConseillers();
+}, []);
+
   // ================= UTILITIES =================
   const getMonthNameFR = (monthIndex) => [
     "Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"
@@ -241,18 +247,18 @@ useEffect(() => {
   />
 
   {/* Sélection conseiller */}
-  <select
-    value={filterConseiller}
-    onChange={(e) => setFilterConseiller(e.target.value)}
-    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-  >
-    <option value="">Tous les conseillers</option>
-    {conseillers.map((c) => (
-      <option key={c.id} value={c.prenom}>
-        {c.prenom} {c.nom}
-      </option>
-    ))}
-  </select>
+ <select
+  value={filterConseiller}
+  onChange={(e) => setFilterConseiller(e.target.value)}
+  className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+>
+  <option value="">Tous les conseillers</option>
+  {conseillers.map((c) => (
+    <option key={c.id} value={c.prenom}>
+      {c.prenom} {c.nom}
+    </option>
+  ))}
+</select>
 
   {/* Bouton Générer */}
   <button

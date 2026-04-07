@@ -33,6 +33,7 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [Cellules, setCellules] = useState([]);
+  const [expandedTypes, setExpandedTypes] = useState({});
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -44,6 +45,14 @@ function EtatCellule() {
     totalEncours: 0,
     totalAttente: 0,
   });
+
+  //-----
+  const toggleType = (typeKey) => {
+  setExpandedTypes(prev => ({
+    ...prev,
+    [typeKey]: !prev[typeKey]
+  }));
+};
 
   // Regroupe les rapports par type d'évangélisation
 const groupByType = (data) => {

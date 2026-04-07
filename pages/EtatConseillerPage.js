@@ -269,7 +269,7 @@ function EtatConseiller() {
   {/* BOUTON GENERER */}
   <button 
     onClick={fetchReports} 
-    className="bg-amber-300 px-6 py-2 rounded-xl hover:bg-bg-amber-300"
+    className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
   >
     Générer
   </button>
@@ -288,7 +288,6 @@ function EtatConseiller() {
     </select>
   )}
 </div>
-
     {/* KPI */}
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
       <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
@@ -333,8 +332,7 @@ function EtatConseiller() {
         <div className="text-2xl font-bold">{kpis.totalAttente}</div>
         <div className="text-sm">En attente</div>
       </div>
-    </div>
-  </>
+    </div> 
 )}
 
       {/* TABLEAU */}

@@ -89,7 +89,7 @@ const fetchConseillers = async () => {
 };
 
   // ================= FETCH REPORTS =================
-  const fetchReports = async () => {
+ const fetchReports = async () => {
   if (!userProfile) return;
   setShowTable(false);
 
@@ -106,44 +106,68 @@ const fetchConseillers = async () => {
     const { data, error } = await query;
     if (error) throw error;
 
-    // ================= FILTRAGE =================
-    let filtered = data;
+    // Filtre par date seulement ici
+    let filteredByDate = data;
+    if (filterDebut) filteredByDate = filteredByDate.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
+    if (filterFin) filteredByDate = filteredByDate.filter(r => new Date(r.date_depart) <= new Date(filterFin));
 
-    if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
-    if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
-    if (filterConseiller) filtered = filtered.filter(r =>
-      r.conseiller?.toLowerCase().includes(filterConseiller.toLowerCase())
-    );
+    // Mettre à jour la table complète et les KPI
+    setReports(filteredByDate);
 
-    // Mettre à jour les conseillers disponibles selon plage de date
-    const conseillersDisponibles = Array.from(
-      new Set(filtered.map(r => r.conseiller).filter(Boolean))
-    );
-    setAvailableConseillers(conseillersDisponibles);
-
-    // ================= KPI =================
+    // KPI pour la plage de dates
     const normalize = (text) => text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
-
     setKpis({
-      totalEvangelises: filtered.filter(r =>
+      totalEvangelises: filteredByDate.filter(r =>
         ["individuel","sortie de groupe","campagne d’evangelisation","evangelisation de rue","evangelisation maison","evangelisation stade","evangelisation"]
           .some(t => normalize(r.type_evangelisation).includes(normalize(t)))
       ).length,
-      totalVenus: filtered.filter(r => normalize(r.type_evangelisation).includes("integration")).length,
-      totalIntegration: filtered.filter(r => normalize(r.statut) === "integre").length,
-      totalBapteme: filtered.filter(r => r.date_baptise).length,
-      totalMinistere: filtered.filter(r => r.debut_ministere).length,
-      totalRefus: filtered.filter(r => normalize(r.statut) === "refus").length,
-      totalEncours: filtered.filter(r => normalize(r.statut).includes("cours")).length,
-      totalAttente: filtered.filter(r => {
+      totalVenus: filteredByDate.filter(r => normalize(r.type_evangelisation).includes("integration")).length,
+      totalIntegration: filteredByDate.filter(r => normalize(r.statut) === "integre").length,
+      totalBapteme: filteredByDate.filter(r => r.date_baptise).length,
+      totalMinistere: filteredByDate.filter(r => r.debut_ministere).length,
+      totalRefus: filteredByDate.filter(r => normalize(r.statut) === "refus").length,
+      totalEncours: filteredByDate.filter(r => normalize(r.statut).includes("cours")).length,
+      totalAttente: filteredByDate.filter(r => {
         const s = normalize(r.statut);
         return s.includes("attente") || s.includes("envoye");
       }).length,
     });
 
-    setReports(filtered);
-    setShowTable(true);
+    //=========================
+    const displayedReports = filterConseiller
+  ? reports.filter(r => r.conseiller === filterConseiller)
+  : reports;
 
+// KPI recalculés en fonction du conseiller sélectionné
+const displayedKpis = (() => {
+  const normalize = (text) => text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+  return {
+    totalEvangelises: displayedReports.filter(r =>
+      ["individuel","sortie de groupe","campagne d’evangelisation","evangelisation de rue","evangelisation maison","evangelisation stade","evangelisation"]
+        .some(t => normalize(r.type_evangelisation).includes(normalize(t)))
+    ).length,
+    totalVenus: displayedReports.filter(r => normalize(r.type_evangelisation).includes("integration")).length,
+    totalIntegration: displayedReports.filter(r => normalize(r.statut) === "integre").length,
+    totalBapteme: displayedReports.filter(r => r.date_baptise).length,
+    totalMinistere: displayedReports.filter(r => r.debut_ministere).length,
+    totalRefus: displayedReports.filter(r => normalize(r.statut) === "refus").length,
+    totalEncours: displayedReports.filter(r => normalize(r.statut).includes("cours")).length,
+    totalAttente: displayedReports.filter(r => {
+      const s = normalize(r.statut);
+      return s.includes("attente") || s.includes("envoye");
+    }).length,
+  };
+})();
+    // Conseillers disponibles pour la plage sélectionnée
+    const conseillersDisponibles = Array.from(
+      new Set(filteredByDate.map(r => r.conseiller).filter(Boolean))
+    );
+    setAvailableConseillers(conseillersDisponibles);
+
+    // Réinitialiser le filtre conseiller
+    setFilterConseiller("");
+
+    setShowTable(true);
   } catch (err) {
     console.error("Erreur fetch:", err);
     setReports([]);
@@ -255,24 +279,43 @@ const fetchConseillers = async () => {
         L'évolution des Ames par <span className="text-amber-300">Conseiller</span>
       </h1>
 
-      {/* FILTRES */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
-  <input type="date" value={filterDebut} onChange={(e)=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-  <input type="date" value={filterFin} onChange={(e)=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-  
-  <select
-    value={filterConseiller}
-    onChange={(e) => setFilterConseiller(e.target.value)}
+      {/* FILTRES DATE + BOUTON GENERER */}
+<div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+  <input 
+    type="date" 
+    value={filterDebut} 
+    onChange={(e) => setFilterDebut(e.target.value)} 
     className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
+  <input 
+    type="date" 
+    value={filterFin} 
+    onChange={(e) => setFilterFin(e.target.value)} 
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
+  <button 
+    onClick={fetchReports} 
+    className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
   >
-    <option value="">Tous les conseillers</option>
-    {availableConseillers.map((c, i) => (
-      <option key={i} value={c}>{c}</option>
-    ))}
-  </select>
-
-  <button onClick={fetchReports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
+    Générer
+  </button>
 </div>
+
+{/* SELECT CONSEILLER (après génération) */}
+{reports.length > 0 && (
+  <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+    <select
+      value={filterConseiller}
+      onChange={(e) => setFilterConseiller(e.target.value)}
+      className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+    >
+      <option value="">Tous les conseillers</option>
+      {availableConseillers.map((c, i) => (
+        <option key={i} value={c}>{c}</option>
+      ))}
+    </select>
+  </div>
+)}
 
 
       {/* KPI */}

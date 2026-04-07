@@ -70,16 +70,21 @@ function EtatCellule() {
   // ================= FETCH CelluleS =================
 const fetchCellules = async () => {
   try {
-    // On veut tous les profils qui ont au moins un rôle "Cellule" ou "ResponsableIntegration"
     const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .or("roles.cs.{Cellule},roles.cs.{ResponsableIntegration}"); 
+      .from("cellules")
+      .select("id, cellule_full")
+      .order("cellule_full", { ascending: true });
 
     if (error) {
       console.error("Erreur fetch Cellules:", error);
       return;
     }
+
+    setCellules(data || []);
+  } catch (err) {
+    console.error("Erreur fetch Cellules:", err);
+  }
+};
 
     // Mettre dans le state
     setCellules(data || []);

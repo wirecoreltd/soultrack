@@ -246,7 +246,7 @@ const fetchConseillers = async () => {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        L'évolution des Ames par<span className="text-amber-300">Conseiller</span>
+        L'évolution des Ames par <span className="text-amber-300">Conseiller</span>
       </h1>
 
       {/* FILTRES */}
@@ -402,7 +402,7 @@ const fetchConseillers = async () => {
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>                          
-                                  <div className="min-w-[200px] text-center text-white">{r.responsable}</div>
+                                  <div className="min-w-[200px] text-center text-white">{r.conseiller}</div>
                                   <div className="min-w-[100px] text-center">
                                     <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)}>Détails</button>
                                   </div>        
@@ -485,7 +485,7 @@ const fetchConseillers = async () => {
                   <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
                   <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
                   <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>            
-                  <p><strong>Cellule:</strong> {r.responsable}</p>                        
+                  <p><strong>Cellule:</strong> {r.conseiller}</p>                        
                 </div>
               );
             })}

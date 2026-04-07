@@ -25,7 +25,6 @@ function EtatCellule() {
   const [selectedMember, setSelectedMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
   const [selectedEvangelise, setSelectedEvangelise] = useState(null);
-  const [selectedEvangeliseId, setSelectedEvangeliseId] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
@@ -33,7 +32,6 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [Cellules, setCellules] = useState([]);
-  const [filteredReports, setFilteredReports] = useState([]);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -67,31 +65,24 @@ function EtatCellule() {
     setUserProfile(data);
   };
 
-  // ================= FETCH CelluleS =================
-const fetchCellules = async () => {
-  try {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("id, cellule_full")
-      .order("cellule_full", { ascending: true });
+  // ================= FETCH Cellules =================
+  const fetchCellules = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("cellules")
+        .select("id, cellule_full")
+        .order("cellule_full", { ascending: true });
 
-    if (error) {
-      console.error("Erreur fetch Cellules:", error);
-      return;
+      if (error) {
+        console.error("Erreur fetch Cellules:", error);
+        return;
+      }
+
+      setCellules(data || []);
+    } catch (err) {
+      console.error("Erreur fetch Cellules:", err);
     }
-
-    setCellules(data || []);
-  } catch (err) {
-    console.error("Erreur fetch Cellules:", err);
-  }
-};
-
-    // Mettre dans le state
-    setCellules(data || []);
-  } catch (err) {
-    console.error("Erreur fetch Cellules:", err);
-  }
-};
+  };
 
   // ================= FETCH REPORTS =================
   const fetchReports = async () => {
@@ -116,7 +107,7 @@ const fetchCellules = async () => {
       if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
       if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
       if (filterCellule) filtered = filtered.filter(r =>
-        r.Cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
+        r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
       );
 
       // ================= KPI =================
@@ -189,88 +180,6 @@ const fetchCellules = async () => {
 
   const toggleMonth = (monthKey) => setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
 
-  const handleUpdateMember = (updated) => {
-    setMembres(prev => prev.map(m => m.id === updated.id ? updated : m));
-  };
-
-  const handleDetailsClick = async (row) => {
-  try {
-    if (!row) return;
-
-    // Protection critique
-    if (!row.personne_id) {
-      console.warn("personne_id est NULL", row);
-      alert("Impossible d'ouvrir : donnée incomplète");
-      return;
-    }
-
-    let data = null;
-    let celluleData = null;
-
-    if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
-      const evangeliseId = row.evangelise_id;
-      if (!evangeliseId) {
-        console.warn("evangelise_id est undefined pour cette personne", row);
-        alert("Aucun suivi disponible pour cette personne.");
-        return;
-      }
-
-      const { data: suivi, error } = await supabase
-        .from("suivis_des_evangelises")
-        .select("*")
-        .eq("evangelise_id", evangeliseId)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!suivi) {
-        alert("Aucun suivi disponible pour cette personne.");
-        return;
-      }
-      data = suivi;
-
-      // Récup cellule + responsable depuis cellules
-      if (suivi.cellule_id) {
-        const { data: cellule } = await supabase
-          .from("cellules")
-          .select("cellule_full, responsable")
-          .eq("id", suivi.cellule_id)
-          .maybeSingle();
-        celluleData = cellule;
-      }
-
-    } else if (row.type_evangelisation?.toLowerCase() === "integration") {
-      const { data: membre } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("id", row.personne_id)
-        .maybeSingle();
-      data = membre;
-
-      if (membre?.cellule_id) {
-        const { data: cellule } = await supabase
-          .from("cellules")
-          .select("cellule_full, responsable")
-          .eq("id", membre.cellule_id)
-          .maybeSingle();
-        celluleData = cellule;
-      }
-    }
-
-    const enriched = {
-      ...row,
-      ...data,
-      Cellule: celluleData?.cellule_full ?? data?.cellule_full ?? "—",
-      Responsable: celluleData?.responsable ?? "—",
-    };
-
-    setSelectedEvangelise(enriched);
-
-  } catch (err) {
-    console.error("Erreur fetch details:", err);
-    alert("Une erreur est survenue lors de la récupération des détails");
-  }
-};
-
   const groupedReports = Object.entries(groupByMonth(reports))
     .sort((a, b) => {
       const [yearA, monthA] = a[0].split("-").map(Number);
@@ -283,104 +192,72 @@ const fetchCellules = async () => {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        L'évolution des Ames<span className="text-amber-300">par Cellule</span>
+        Suivis de l'évolution <span className="text-amber-300">des Ames</span>
       </h1>
 
-          {/* FILTRES */}
-            <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
-              <input
-                type="date"
-                value={filterDebut}
-                onChange={(e) => setFilterDebut(e.target.value)}
-                className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-              />
-              <input
-                type="date"
-                value={filterFin}
-                onChange={(e) => setFilterFin(e.target.value)}
-                className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-              />
-              <button
-                onClick={fetchReports}
-                className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-              >
-                Générer
-              </button>
-            </div>
-
-              {/* FILTRE CELLULE - seulement après génération */}
-              {showTable && (
-                <div className="mt-4 w-full max-w-7xl flex justify-start">
-                  <select
-                    value={filterCellule}
-                    onChange={(e) => setFilterCellule(e.target.value)}
-                    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-                  >
-                    <option value="">Toutes les Cellules</option>
-                    {Cellules.map((c) => (
-                      <option key={c.id} value={c.cellule_full} className="text-black">
-                        {c.cellule_full}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-      {/* KPI */}
-{showTable && (
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
-    {/* Total évangélisés */}
-    <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
-      <div className="text-sm">Total Évangélisés</div>
-    </div>
-    {/* Total venus */}
-    <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalVenus}</div>
-      <div className="text-sm">Total Venus Église</div>
-    </div>
-    {/* Intégration */}
-    <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
-      <div className="text-sm">Intégrés</div>
-      <div className="text-sm">
-        {kpis.totalEvangelises > 0
-          ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
-          : 0}%
+      {/* FILTRES DE DATES */}
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+        <input type="date" value={filterDebut} onChange={(e)=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+        <input type="date" value={filterFin} onChange={(e)=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+        <button onClick={fetchReports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
       </div>
-    </div>
-    {/* Baptême */}
-    <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
-      <div className="text-sm">Baptêmes</div>
-      <div className="text-sm">
-        {kpis.totalEvangelises + kpis.totalVenus > 0
-          ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
-          : 0}%
-      </div>
-    </div>
-    {/* Ministère */}
-    <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
-      <div className="text-sm">Ministère</div>
-    </div>
-    {/* Refus */}
-    <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalRefus}</div>
-      <div className="text-sm">Refus</div>
-    </div>
-    {/* En cours */}
-    <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalEncours}</div>
-      <div className="text-sm">En cours</div>
-    </div>
-    {/* En attente */}
-    <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalAttente}</div>
-      <div className="text-sm">En attente</div>
-    </div>
-  </div>
-)}
+
+      {/* FILTRE CELLULE (après génération) */}
+      {showTable && (
+        <div className="mt-4 w-full max-w-6xl flex justify-center">
+          <select
+            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+            value={filterCellule}
+            onChange={(e) => setFilterCellule(e.target.value)}
+          >
+            <option value="">Toutes les cellules</option>
+            {Cellules.map(c => (
+              <option key={c.id} value={c.cellule_full}>{c.cellule_full}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* KPI (après génération) */}
+      {showTable && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
+          <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
+            <div className="text-sm">Total Évangélisés</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalVenus}</div>
+            <div className="text-sm">Total Venus Église</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
+            <div className="text-sm">Intégrés</div>
+            <div className="text-sm">{kpis.totalEvangelises > 0 ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100) : 0}%</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
+            <div className="text-sm">Baptêmes</div>
+            <div className="text-sm">{kpis.totalEvangelises + kpis.totalVenus > 0 ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100) : 0}%</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
+            <div className="text-sm">Ministère</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalRefus}</div>
+            <div className="text-sm">Refus</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalEncours}</div>
+            <div className="text-sm">En cours</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalAttente}</div>
+            <div className="text-sm">En attente</div>
+          </div>
+        </div>
+      )}
+
 
       {/* TABLEAU */}
         {showTable && (

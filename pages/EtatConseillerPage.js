@@ -402,7 +402,7 @@ const fetchConseillers = async () => {
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>                          
-                                  <div className="min-w-[200px] text-center text-white">{r.conseiller}</div>
+                                  <div className="min-w-[200px] text-center text-white">{r.responsable}</div>
                                   <div className="min-w-[100px] text-center">
                                     <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)}>Détails</button>
                                   </div>        
@@ -485,8 +485,7 @@ const fetchConseillers = async () => {
                   <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
                   <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
                   <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>            
-                  <p><strong>Cellule:</strong> {r.cellule_full}</p>
-                  <p><strong>Responsable:</strong> {r.responsable}</p>         
+                  <p><strong>Cellule:</strong> {r.responsable}</p>                        
                 </div>
               );
             })}

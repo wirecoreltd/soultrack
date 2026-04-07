@@ -221,45 +221,40 @@ useEffect(() => {
         Suivis de l'évolution <span className="text-amber-300">des Ames</span>
       </h1>
 
-      {/* ================= FILTRES ================= */}
+      {/* FILTRES DATE + CONSEILLER + BOUTON GENERER */}
 <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
-              <input
-                type="date"
-                value={filterDebut}
-                onChange={(e) => setFilterDebut(e.target.value)}
-                className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-              />
-              <input
-                type="date"
-                value={filterFin}
-                onChange={(e) => setFilterFin(e.target.value)}
-                className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-              />
-              <button
-                onClick={fetchReports}
-                className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-              >
-                Générer
-              </button>
-            </div>
+  <input 
+    type="date" 
+    value={filterDebut} 
+    onChange={(e) => setFilterDebut(e.target.value)} 
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
+  <input 
+    type="date" 
+    value={filterFin} 
+    onChange={(e) => setFilterFin(e.target.value)} 
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
+  
+  {/* Sélecteur Conseiller */}
+  <select
+    value={filterConseiller}
+    onChange={(e) => setFilterConseiller(e.target.value)}
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-white text-black"
+  >
+    <option value="">Tous les conseillers</option>
+    {availableConseillers.map((c, i) => (
+      <option key={i} value={c}>{c}</option>
+    ))}
+  </select>
 
-              {/* FILTRE CELLULE - seulement après génération */}
-              {showTable && (
-                <div className="mt-4 w-full max-w-7xl flex justify-start">
-                  <select
-                    value={filterCellule}
-                    onChange={(e) => setFilterCellule(e.target.value)}
-                    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-                  >
-                    <option value="">Toutes les Cellules</option>
-                    {Cellules.map((c) => (
-                      <option key={c.id} value={c.cellule_full} className="text-black">
-                        {c.cellule_full}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+  <button 
+    onClick={fetchReports} 
+    className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+  >
+    Générer
+  </button>
+</div>
 
 {/* ================= KPI ================= */}
 {showTable && (

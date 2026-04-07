@@ -31,8 +31,7 @@ function EtatConseiller() {
   const [filterConseiller, setFilterConseiller] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
-  const [Conseillers, setConseillers] = useState([]);
-  const [conseillers, setconseillers] = useState([]);
+  const [Conseillers, setConseillers] = useState([]);  
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -66,24 +65,24 @@ function EtatConseiller() {
     setUserProfile(data);
   };
 
-  // ================= FETCH Conseillers =================
-  const fetchConseillers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("profile")
-        .select("*")
-        .order("id", { ascending: true });
-
-      if (error) {
-        console.error("Erreur fetch Conseillers:", error);
-        return;
-      }
-
-      setConseillers(data || []);
-    } catch (err) {
-      console.error("Erreur fetch Conseillers:", err);
-    }
-  };
+  // ================= FETCH Conseillers =================  
+      const fetchConseillers = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("profile")
+            .select("*")
+            .order("id", { ascending: true });
+      
+          if (error) {
+            console.error("Erreur fetch Conseillers:", error);
+            return;
+          }
+      
+          setConseillers(data || []);
+        } catch (err) {
+          console.error("Erreur fetch Conseillers:", err);
+        }
+      };
 
   // ================= FETCH REPORTS =================
   const [allReports, setAllReports] = useState([]); // <-- tous les rapports chargés
@@ -110,9 +109,9 @@ const fetchReports = async () => {
     if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
     if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
 
-    // Mettre à jour la liste des Conseillers disponibles selon la plage
-    const ConseillersDisponibles = Array.from(new Set(filtered.map(r => r.Conseiller_full))).sort();
-    setConseillers(ConseillersDisponibles.map(c => ({ id: c, Conseiller_full: c })));
+    // Mettre à jour la liste des Conseillers disponibles selon la plage  
+      const ConseillersDisponibles = Array.from(new Set(filtered.map(r => r.Conseiller_full))).sort();
+      setConseillers(ConseillersDisponibles.map(c => ({ id: c, prenom: c, nom: "" })));
 
     setAllReports(filtered);
     setReports(filtered); // Initialement toutes les Conseillers
@@ -246,19 +245,19 @@ useEffect(() => {
     className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
   />
 
-  {/* Sélection conseiller */}
- <select
-  value={filterConseiller}
-  onChange={(e) => setFilterConseiller(e.target.value)}
-  className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
->
-  <option value="">Tous les conseillers</option>
-  {conseillers.map((c) => (
-    <option key={c.id} value={c.prenom}>
-      {c.prenom} {c.nom}
-    </option>
-  ))}
-</select>
+    {/* Sélection conseiller */}
+       <select
+        value={filterConseiller}
+        onChange={(e) => setFilterConseiller(e.target.value)}
+        className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+      >
+        <option value="">Tous les conseillers</option>
+        {conseillers.map((c) => (
+          <option key={c.id} value={c.prenom}>
+            {c.prenom} {c.nom}
+          </option>
+        ))}
+      </select>  
 
   {/* Bouton Générer */}
   <button

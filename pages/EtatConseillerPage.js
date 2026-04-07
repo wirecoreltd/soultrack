@@ -92,7 +92,7 @@ const fetchReports = async () => {
     // Mettre à jour la liste des Conseillers disponibles selon la plage  
       // Mettre à jour la liste des Conseillers disponibles selon la plage
 const conseillersDisponibles = Array.from(
-  new Set(filtered.map(r => r.Conseiller_full).filter(Boolean))
+  new Set(filtered.map(r => r.responsable).filter(Boolean))
 ).sort();
 
 setConseillers(
@@ -124,7 +124,7 @@ useEffect(() => {
 
   if (filterConseiller) {
     filtered = filtered.filter(r =>
-      r.Conseiller_full === filterConseiller
+      r.responsable === filterConseiller
     );
   }
 

@@ -273,7 +273,27 @@ function EtatConseiller() {
         </select>
         <button onClick={fetchReports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
       </div>
-
+           
+{/* FILTRE CONSEILLER (après génération) */}
+{showTable && (
+  <div className="mt-4 w-full max-w-6xl flex justify-center">
+    <select
+      className="border border-gray-400 rounded-lg px-3 py-2 bg-black text-white"
+      value={filterConseiller}
+      onChange={(e) => setFilterConseiller(e.target.value)}
+    >
+      <option value="">Tous les conseillers</option>
+      {conseillers
+        // 🔹 On ne garde que ceux qui ont des rapports dans la plage de date
+        .filter(c => reports.some(r => r.conseiller?.toLowerCase() === c.prenom?.toLowerCase()))
+        .map(c => (
+          <option key={c.id} value={c.prenom}>
+            {c.prenom} {c.nom}
+          </option>
+        ))}
+    </select>
+  </div>
+)}
 
       {/* KPI */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">

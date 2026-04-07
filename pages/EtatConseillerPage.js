@@ -32,7 +32,7 @@ function EtatConseiller() {
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [Conseillers, setConseillers] = useState([]);
-  const [conseillers, setConseillers] = useState([]);
+  const [conseillers, setconseillers] = useState([]);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,

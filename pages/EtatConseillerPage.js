@@ -333,7 +333,7 @@ function EtatConseiller() {
         <div className="text-sm">En attente</div>
       </div>
     </div> 
-)}
+
 
       {/* TABLEAU */}
         {showTable && (

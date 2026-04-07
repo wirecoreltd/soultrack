@@ -622,7 +622,7 @@ const handleConseillerClick = () => {
                       typeReports.map((r) => (
                         <div
                           key={r.id}
-                          className={`px-4 py-2 rounded-lg bg-white/20 hover:bg-white/20 border-l-4 mt-2 ml-8 ${
+                          className={`px-4 py-2 rounded-lg border-l-4 mt-2 ml-8 ${
                             typeColors[type] || "border-white"
                           }`}
                         >

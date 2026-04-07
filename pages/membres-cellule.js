@@ -182,6 +182,13 @@ function MembresCelluleContent() {
         {cellules.length > 1 ? "Membres de mes cellules" : "Membre de ma cellule"}
       </h1>
 
+                <button
+                    onClick={() => router.push("/ajouter-membre-cellule")}
+                    className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+                  >
+                    ➕ Ajouter un membre
+                  </button>
+
       {loading && <div className="text-white text-center mt-10">Chargement...</div>}
       {!loading && message && <div className="text-white text-center mt-10">{message}</div>}
 

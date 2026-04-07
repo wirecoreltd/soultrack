@@ -33,6 +33,7 @@ function EtatConseiller() {
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [conseillers, setConseillers] = useState([]);
+  const [availableConseillers, setAvailableConseillers] = useState([]);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -114,6 +115,11 @@ const fetchConseillers = async () => {
     r.conseiller?.toLowerCase() === filterConseiller.toLowerCase()
   );
 }
+
+      const conseillersDisponibles = Array.from(
+  new Set(filtered.map(r => r.conseiller).filter(Boolean))
+);
+setAvailableConseillers(conseillersDisponibles);
 
       // ================= KPI =================
       const normalize = (text) => text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";

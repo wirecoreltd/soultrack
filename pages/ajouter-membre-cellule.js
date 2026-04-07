@@ -20,7 +20,8 @@ export default function AjouterMembreCellule() {
   function AjouterMembreCelluleContent() {
   const router = useRouter();
   const { setAllMembers } = useMembers();
-
+    
+  const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [cellules, setCellules] = useState([]);
   const [formData, setFormData] = useState({
     nom: "",

@@ -21,6 +21,7 @@ export default function EtatConseillerPage() {
 function EtatConseiller() {
   const router = useRouter();
   const [reports, setReports] = useState([]);
+  const [allReports, setAllReports] = useState([]); // Tous les rapports filtrés par date
   const [membres, setMembres] = useState([]);
   const [selectedMember, setSelectedMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
@@ -33,6 +34,7 @@ function EtatConseiller() {
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [conseillers, setConseillers] = useState([]);
+  const [allConseillers, setAllConseillers] = useState([]); // Conseillers disponibles selon date
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -67,25 +69,23 @@ function EtatConseiller() {
   };
 
   // ================= FETCH CONSEILLERS =================
-const fetchConseillers = async () => {
-  try {
-    // On veut tous les profils qui ont au moins un rôle "Conseiller" ou "ResponsableIntegration"
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .or("roles.cs.{Conseiller},roles.cs.{ResponsableIntegration}"); 
+  const fetchConseillers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .or("roles.cs.{Conseiller},roles.cs.{ResponsableIntegration}"); 
 
-    if (error) {
-      console.error("Erreur fetch conseillers:", error);
-      return;
+      if (error) {
+        console.error("Erreur fetch conseillers:", error);
+        return;
+      }
+
+      setConseillers(data || []);
+    } catch (err) {
+      console.error("Erreur fetch conseillers:", err);
     }
-
-    // Mettre dans le state
-    setConseillers(data || []);
-  } catch (err) {
-    console.error("Erreur fetch conseillers:", err);
-  }
-};
+  };
 
   // ================= FETCH REPORTS =================
   const fetchReports = async () => {
@@ -107,42 +107,70 @@ const fetchConseillers = async () => {
 
       let filtered = data;
 
+      // Filtre par date
       if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
       if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
-      if (filterConseiller) filtered = filtered.filter(r =>
-        r.Conseiller_full?.toLowerCase().includes(filterConseiller.toLowerCase())
-      );
 
-      // ================= KPI =================
-      const normalize = (text) => text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+      // Mettre à jour la liste des conseillers disponibles pour le filtre
+      const conseillersDisponibles = Array.from(new Set(filtered.map(r => r.Conseiller_full))).sort();
+      setAllConseillers(conseillersDisponibles);
 
-      setKpis({
-        totalEvangelises: filtered.filter(r =>
-          ["individuel","sortie de groupe","campagne d’evangelisation","evangelisation de rue","evangelisation maison","evangelisation stade","evangelisation"]
-            .some(t => normalize(r.type_evangelisation).includes(normalize(t)))
-        ).length,
-        totalVenus: filtered.filter(r => normalize(r.type_evangelisation).includes("integration")).length,
-        totalIntegration: filtered.filter(r => {
-          const s = normalize(r.statut);
-          return s === "integre";
-        }).length,
-        totalBapteme: filtered.filter(r => r.date_baptise).length,
-        totalMinistere: filtered.filter(r => r.debut_ministere).length,
-        totalRefus: filtered.filter(r => normalize(r.statut) === "refus").length,
-        totalEncours: filtered.filter(r => normalize(r.statut).includes("cours")).length,
-        totalAttente: filtered.filter(r => {
-          const s = normalize(r.statut);
-          return s.includes("attente") || s.includes("envoye");
-        }).length,
-      });
+      // Stocker tous les rapports filtrés par date mais non par conseiller
+      setAllReports(filtered);
 
+      // Initialiser reports à tous les rapports filtrés par date
       setReports(filtered);
+
+      // KPI
+      updateKpis(filtered);
+
+      setFilterConseiller(""); // reset filtre conseiller
       setShowTable(true);
     } catch (err) {
       console.error("Erreur fetch:", err);
+      setAllReports([]);
       setReports([]);
+      setAllConseillers([]);
       setShowTable(false);
     }
+  };
+
+  // ================= Filtre par conseiller =================
+  useEffect(() => {
+    if (!showTable) return;
+
+    let filtered = allReports; // TOUJOURS filtrer sur allReports
+
+    if (filterConseiller) {
+      filtered = allReports.filter(r =>
+        r.Conseiller_full?.toLowerCase().includes(filterConseiller.toLowerCase())
+      );
+    }
+
+    setReports(filtered);
+    updateKpis(filtered);
+  }, [filterConseiller, showTable, allReports]);
+
+  // ================= KPI UTILS =================
+  const updateKpis = (filtered) => {
+    const normalize = (text) => text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+
+    setKpis({
+      totalEvangelises: filtered.filter(r =>
+        ["individuel","sortie de groupe","campagne d’evangelisation","evangelisation de rue","evangelisation maison","evangelisation stade","evangelisation"]
+          .some(t => normalize(r.type_evangelisation).includes(normalize(t)))
+      ).length,
+      totalVenus: filtered.filter(r => normalize(r.type_evangelisation).includes("integration")).length,
+      totalIntegration: filtered.filter(r => normalize(r.statut) === "integre").length,
+      totalBapteme: filtered.filter(r => r.date_baptise).length,
+      totalMinistere: filtered.filter(r => r.debut_ministere).length,
+      totalRefus: filtered.filter(r => normalize(r.statut) === "refus").length,
+      totalEncours: filtered.filter(r => normalize(r.statut).includes("cours")).length,
+      totalAttente: filtered.filter(r => {
+        const s = normalize(r.statut);
+        return s.includes("attente") || s.includes("envoye");
+      }).length,
+    });
   };
 
   // ================= UTILITIES =================
@@ -188,51 +216,37 @@ const fetchConseillers = async () => {
   };
 
   const handleDetailsClick = async (row) => {
-  try {
-    if (!row) return;
+    try {
+      if (!row) return;
 
-    // 🔥 PROTECTION CRITIQUE
-    if (!row.personne_id) {
-      console.warn("personne_id est NULL", row);
-      alert("Impossible d'ouvrir : donnée incomplète");
-      return;
+      if (!row.personne_id) {
+        console.warn("personne_id est NULL", row);
+        alert("Impossible d'ouvrir : donnée incomplète");
+        return;
+      }
+
+      if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
+        const { data, error } = await supabase
+          .from("suivis_des_evangelises")
+          .select("*")
+          .eq("id", row.personne_id)
+          .maybeSingle();
+        if (error) throw error;
+        setSelectedEvangelise({ ...row, ...data });
+      } else if (row.type_evangelisation?.toLowerCase() === "integration") {
+        const { data, error } = await supabase
+          .from("membres_complets")
+          .select("*")
+          .eq("id", row.personne_id)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) return;
+        setSelectedMember(data);
+      }
+    } catch (err) {
+      console.error("Erreur fetch details:", err);
     }
-
-    if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
-
-      const { data, error } = await supabase
-        .from("suivis_des_evangelises")
-        .select("*")
-        .eq("id", row.personne_id)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      const enriched = {
-        ...row,
-        ...data,
-      };
-
-      setSelectedEvangelise(enriched);
-    }
-
-    else if (row.type_evangelisation?.toLowerCase() === "integration") {
-      const { data, error } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("id", row.personne_id)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!data) return;
-
-      setSelectedMember(data);
-    }
-
-  } catch (err) {
-    console.error("Erreur fetch details:", err);
-  }
-};
+  };
 
   const groupedReports = Object.entries(groupByMonth(reports))
     .sort((a, b) => {
@@ -253,6 +267,10 @@ const fetchConseillers = async () => {
       <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
         <input type="date" value={filterDebut} onChange={(e)=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
         <input type="date" value={filterFin} onChange={(e)=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
+        <select value={filterConseiller} onChange={(e)=>setFilterConseiller(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white">
+          <option value="">Tous les conseillers</option>
+          {allConseillers.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
         <button onClick={fetchReports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
       </div>
 

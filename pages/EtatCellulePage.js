@@ -456,17 +456,18 @@ const fetchCellules = async () => {
         )}
         
         {/* MOBILE */}
-<div className="md:hidden space-y-4">
+{/* MOBILE */}
+<div className="md:hidden space-y-4 w-full">
   {groupedReports.map(([monthKey, rows]) => {
     const [year, monthIndex] = monthKey.split("-").map(Number);
     const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
     const isExpanded = expandedMonths[monthKey] || false;
 
     return (
-      <div key={monthKey} className="space-y-2">
+      <div key={monthKey} className="space-y-2 w-full">
         {/* Ligne mois collapsable */}
         <div
-          className="flex items-center justify-between px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer"
+          className="flex items-center justify-between px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer w-full"
           onClick={() => toggleMonth(monthKey)}
         >
           <span className="text-white font-semibold">{isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})</span>
@@ -474,21 +475,55 @@ const fetchCellules = async () => {
 
         {/* Contenu du mois */}
         {isExpanded && (
-          <div className="mt-2 space-y-2">
-            {rows.map((r, i) => (
-              <div key={i} className="bg-white/10 rounded-xl p-4 text-white space-y-1">
-                <p><strong>Date:</strong> {formatDateFR(r.date_depart)}</p>
-                <p><strong>Nom:</strong> {r.nom_complet}</p>
-                <p><strong>Type:</strong> {r.type_evangelisation}</p>
-                <p><strong>Statut:</strong> {formatStatut(r.statut)}</p>
-                <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.envoyer_au_suivi_le)}</p>
-                <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
-                <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
-                <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>            
-                <p><strong>Cellule:</strong> {r.cellule_full}</p>
-                <p><strong>Responsable:</strong> {r.responsable}</p>         
-              </div>
-            ))}
+          <div className="mt-2 space-y-2 w-full">
+            {rows.map((r, i) => {
+              const statutNormalise = getStatutNormalise(r.statut);
+
+              let borderColor = "";
+              let textColor = "";
+
+              switch (statutNormalise) {
+                case "intégré":
+                case "integre":
+                  borderColor = "border-green-500";
+                  textColor = "text-green-400";
+                  break;
+                case "en attente":
+                  borderColor = "border-gray-500";
+                  textColor = "text-gray-400";
+                  break;
+                case "refus":
+                  borderColor = "border-red-500";
+                  textColor = "text-red-400";
+                  break;
+                case "en cours":
+                case "en suivis":
+                  borderColor = "border-orange-500";
+                  textColor = "text-orange-400";
+                  break;
+                default:
+                  borderColor = "border-white/30";
+                  textColor = "text-white";
+              }
+
+              return (
+                <div
+                  key={i}
+                  className={`bg-white/10 rounded-xl p-4 text-white space-y-1 border-l-4 ${borderColor}`}
+                >
+                  <p><strong>Date:</strong> {formatDateFR(r.date_depart)}</p>
+                  <p><strong>Nom:</strong> {r.nom_complet}</p>
+                  <p><strong>Type:</strong> {r.type_evangelisation}</p>
+                  <p className={`font-semibold ${textColor}`}><strong>Statut:</strong> {formatStatut(r.statut)}</p>
+                  <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.envoyer_au_suivi_le)}</p>
+                  <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
+                  <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
+                  <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>            
+                  <p><strong>Cellule:</strong> {r.cellule_full}</p>
+                  <p><strong>Responsable:</strong> {r.responsable}</p>         
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

@@ -73,7 +73,7 @@ const fetchReports = async () => {
 
   try {
     let query = supabase
-      .from("vue_flow_conseillers")
+      .from("vue_flow_personnes")
       .select("*")
       .order("date_depart", { ascending: false });
 
@@ -157,7 +157,7 @@ useEffect(() => {
         return s.includes("attente") || s.includes("envoye");
       }).length,
     });
-  };  
+  }; 
 
   // ================= UTILITIES =================
   const getMonthNameFR = (monthIndex) => [

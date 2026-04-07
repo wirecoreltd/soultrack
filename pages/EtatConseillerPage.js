@@ -32,7 +32,6 @@ function EtatConseiller() {
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [conseillers, setConseillers] = useState([]);
- 
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -214,61 +213,48 @@ useEffect(() => {
       </h1>
 
       {/* ================= FILTRES ================= */}
-<div className="w-full max-w-4xl bg-white/20 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6">
+<div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
 
-  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-white">
+  {/* Date début */}
+  <input
+    type="date"
+    value={filterDebut}
+    onChange={(e) => setFilterDebut(e.target.value)}
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
 
-    {/* Date début */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold mb-1">Date de début</label>
-      <input
-        type="date"
-        value={filterDebut}
-        onChange={(e) => setFilterDebut(e.target.value)}
-        className="h-10 bg-white/10 border border-white/30 rounded-lg px-4"
-      />
-    </div>
+  {/* Date fin */}
+  <input
+    type="date"
+    value={filterFin}
+    onChange={(e) => setFilterFin(e.target.value)}
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />  
 
-    {/* Date fin */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold mb-1">Date de fin</label>
-      <input
-        type="date"
-        value={filterFin}
-        onChange={(e) => setFilterFin(e.target.value)}
-        className="h-10 bg-white/10 border border-white/30 rounded-lg px-4"
-      />
-    </div>
+  {/* Bouton Générer */}
+  <button
+    onClick={fetchReports}
+    className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+  >
+    Générer
+  </button>
 
-    {/* Bouton */}
-    <button
-      onClick={fetchReports}
-      className="h-10 bg-amber-400 text-white font-semibold rounded-lg hover:bg-amber-300 transition"
-    >
-      Générer le rapport
-    </button>
+       {/* Sélection conseiller */}
+       {showTable && (
+  <select
+    value={filterConseiller}
+    onChange={(e) => setFilterConseiller(e.target.value)}
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-white text-black mt-4"
+  >
+    <option value="">Tous les conseillers</option>
 
-    {/* Conseiller */}
-    {showTable && (
-      <div className="flex flex-col">
-        <label className="text-sm font-semibold mb-1">Conseiller</label>
-        <select
-          value={filterConseiller}
-          onChange={(e) => setFilterConseiller(e.target.value)}
-          className="h-10 bg-white/20 border border-white/20 rounded-lg px-4 text-black"
-        >
-          <option value="">Tous</option>
-
-          {conseillers.map((c) => (
-            <option key={c.id} value={c.nom_complet}>
-              {c.nom_complet}
-            </option>
-          ))}
-        </select>
-      </div>
-    )}
-
-  </div>
+    {conseillers.map((c) => (
+      <option key={c.id} value={c.nom_complet} className="text-black">
+        {c.nom_complet}
+      </option>
+    ))}
+  </select>
+)}
 </div>
 
 {/* ================= KPI ================= */}

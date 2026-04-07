@@ -726,21 +726,23 @@ useEffect(() => {
                   <p className="mt-2">Enfants: {r.enfants}</p>                
                   <p className="mt-1">Nouveaux Venus: {r.nouveauxVenus} | Nouveaux Convertis: {r.nouveauxConvertis}</p>
 
-                  <div className="flex justify-end gap-3 mt-3">
-                    <button
-                      onClick={() => handleEdit(r)}
-                      className="text-blue-400 hover:text-blue-500"
-                    >
-                      ✏️
-                    </button>
-              
-                    <button
-                      onClick={() => handleDeleteReport(r.id)}
-                      className="text-red-400 hover:text-red-500"
-                    >
-                      🗑️
-                    </button>
-                  </div>
+                 <div className="flex justify-center gap-4 mt-3">
+                  <button
+                    onClick={() => handleEdit(r)}
+                    className="text-blue-400 hover:text-blue-500 text-lg" // taille légèrement réduite
+                    style={{ fontSize: '1rem' }}
+                  >
+                    ✏️
+                  </button>
+                
+                  <button
+                    onClick={() => handleDeleteReport(r.id)}
+                    className="text-red-600 hover:text-red-700 text-lg" // rouge vif
+                    style={{ fontSize: '1rem' }}
+                  >
+                    🗑️
+                  </button>
+                </div>  
                 </div>
               ))}
 

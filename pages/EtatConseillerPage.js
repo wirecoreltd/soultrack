@@ -249,88 +249,92 @@ function EtatConseiller() {
       </h1>
 
       {/* FILTRES DATE + BOUTON GENERER */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
-        <input 
-          type="date" 
-          value={filterDebut} 
-          onChange={(e) => setFilterDebut(e.target.value)} 
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <input 
-          type="date" 
-          value={filterFin} 
-          onChange={(e) => setFilterFin(e.target.value)} 
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-        />
-        <button 
-          onClick={fetchReports} 
-          className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-        >
-          Générer
-        </button>
+      {/* FILTRES DATE + BOUTON GENERER */}
+<div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+  <input 
+    type="date" 
+    value={filterDebut} 
+    onChange={(e) => setFilterDebut(e.target.value)} 
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
+  <input 
+    type="date" 
+    value={filterFin} 
+    onChange={(e) => setFilterFin(e.target.value)} 
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
+  <button 
+    onClick={fetchReports} 
+    className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+  >
+    Générer
+  </button>
+</div>
+
+{/* SHOW FILTER CONSEILLER ET KPI APRES GENERATION */}
+{showTable && (
+  <>
+    {/* SELECT CONSEILLER */}
+    <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+      <select
+        value={filterConseiller}
+        onChange={(e) => setFilterConseiller(e.target.value)}
+        className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+      >
+        <option value="">Tous les conseillers</option>
+        {availableConseillers.map((c, i) => (
+          <option key={i} value={c}>{c}</option>
+        ))}
+      </select>
+    </div>
+
+    {/* KPI */}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
+      <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
+        <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
+        <div className="text-sm">Total Évangélisés</div>
       </div>
-
-      {/* SELECT CONSEILLER */}
-      {reports.length > 0 && (
-        <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
-          <select
-            value={filterConseiller}
-            onChange={(e) => setFilterConseiller(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-          >
-            <option value="">Tous les conseillers</option>
-            {availableConseillers.map((c, i) => (
-              <option key={i} value={c}>{c}</option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
-        <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
-          <div className="text-sm">Total Évangélisés</div>
-        </div>
-        <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalVenus}</div>
-          <div className="text-sm">Total Venus Église</div>
-        </div>
-        <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
-          <div className="text-sm">Intégrés</div>
-          <div className="text-sm">
-            {kpis.totalEvangelises > 0
-              ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
-              : 0}%
-          </div>
-        </div>
-        <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
-          <div className="text-sm">Baptêmes</div>
-          <div className="text-sm">
-            {kpis.totalEvangelises + kpis.totalVenus > 0
-              ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
-              : 0}%
-          </div>
-        </div>
-        <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
-          <div className="text-sm">Ministère</div>
-        </div>
-        <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalRefus}</div>
-          <div className="text-sm">Refus</div>
-        </div>
-        <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalEncours}</div>
-          <div className="text-sm">En cours</div>
-        </div>
-        <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalAttente}</div>
-          <div className="text-sm">En attente</div>
+      <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
+        <div className="text-2xl font-bold">{kpis.totalVenus}</div>
+        <div className="text-sm">Total Venus Église</div>
+      </div>
+      <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
+        <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
+        <div className="text-sm">Intégrés</div>
+        <div className="text-sm">
+          {kpis.totalEvangelises > 0
+            ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
+            : 0}%
         </div>
       </div>
+      <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
+        <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
+        <div className="text-sm">Baptêmes</div>
+        <div className="text-sm">
+          {kpis.totalEvangelises + kpis.totalVenus > 0
+            ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
+            : 0}%
+        </div>
+      </div>
+      <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
+        <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
+        <div className="text-sm">Ministère</div>
+      </div>
+      <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
+        <div className="text-2xl font-bold">{kpis.totalRefus}</div>
+        <div className="text-sm">Refus</div>
+      </div>
+      <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
+        <div className="text-2xl font-bold">{kpis.totalEncours}</div>
+        <div className="text-sm">En cours</div>
+      </div>
+      <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
+        <div className="text-2xl font-bold">{kpis.totalAttente}</div>
+        <div className="text-sm">En attente</div>
+      </div>
+    </div>
+  </>
+)}
 
       {/* TABLEAU */}
         {showTable && (

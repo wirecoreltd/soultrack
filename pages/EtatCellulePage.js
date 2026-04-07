@@ -33,6 +33,7 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [Cellules, setCellules] = useState([]);
+  const [filteredReports, setFilteredReports] = useState([]);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -282,35 +283,35 @@ const fetchCellules = async () => {
 
       {/* FILTRES */}
 <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
-  <input 
-    type="date" 
-    value={filterDebut} 
-    onChange={(e)=>setFilterDebut(e.target.value)} 
+  <input
+    type="date"
+    value={filterDebut}
+    onChange={(e) => setFilterDebut(e.target.value)}
     className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
   />
-  <input 
-    type="date" 
-    value={filterFin} 
-    onChange={(e)=>setFilterFin(e.target.value)} 
+  <input
+    type="date"
+    value={filterFin}
+    onChange={(e) => setFilterFin(e.target.value)}
     className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
   />
-  <button 
-    onClick={fetchReports} 
+  <button
+    onClick={fetchReports}
     className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
   >
     Générer
   </button>
 </div>
 
-{/* FILTRE CELLULE (après génération) */}
+{/* FILTRE CELLULE - seulement après génération */}
 {showTable && (
-  <div className="mt-4 flex justify-center w-full max-w-6xl">
+  <div className="mt-4 w-full max-w-7xl flex justify-start">
     <select
       value={filterCellule}
       onChange={(e) => setFilterCellule(e.target.value)}
-      className="bg-white/10 text-white border border-gray-400 rounded-lg px-3 py-2 w-full max-w-xs"
+      className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
     >
-      <option value="">Toutes les cellules</option>
+      <option value="">Toutes les Cellules</option>
       {Cellules.map((c) => (
         <option key={c.id} value={c.cellule_full}>
           {c.cellule_full}
@@ -319,6 +320,7 @@ const fetchCellules = async () => {
     </select>
   </div>
 )}
+
 
 
       {/* KPI */}

@@ -31,6 +31,7 @@ function MembresCelluleContent() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
+  const [showBesoinLibre, setShowBesoinLibre] = useState(false);
 
   const memberIdStr =
     typeof memberId === "string"

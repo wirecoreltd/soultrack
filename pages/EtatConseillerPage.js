@@ -249,26 +249,44 @@ function EtatConseiller() {
       </h1>
 
       {/* FILTRES DATE + BOUTON GENERER */}
-      {/* FILTRES DATE + BOUTON GENERER */}
-<div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+  {/* DATE DEBUT */}
   <input 
     type="date" 
     value={filterDebut} 
     onChange={(e) => setFilterDebut(e.target.value)} 
     className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
   />
+
+  {/* DATE FIN */}
   <input 
     type="date" 
     value={filterFin} 
     onChange={(e) => setFilterFin(e.target.value)} 
     className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
   />
+
+  {/* BOUTON GENERER */}
   <button 
     onClick={fetchReports} 
     className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
   >
     Générer
   </button>
+
+  {/* SELECT CONSEILLER (après génération) */}
+  {showTable && (
+    <select
+      value={filterConseiller}
+      onChange={(e) => setFilterConseiller(e.target.value)}
+      className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+    >
+      <option value="">Tous les conseillers</option>
+      {availableConseillers.map((c, i) => (
+        <option key={i} value={c}>{c}</option>
+      ))}
+    </select>
+  )}
 </div>
 
 {/* SHOW FILTER CONSEILLER ET KPI APRES GENERATION */}

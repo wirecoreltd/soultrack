@@ -457,14 +457,13 @@ const fetchCellules = async () => {
         
        {/* MOBILE */}
 <div className="md:hidden">
-  {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
+  {Object.entries(groupedReports).map(([monthKey, monthReports]) => {
     const [year, monthIndex] = monthKey.split("-").map(Number);
     const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
     const isMonthExpanded = expandedMonths[monthKey] ?? false;
 
     return (
-      <div key={monthKey} className="mb-2">
-        {/* HEADER MOIS */}
+      <div key={monthKey}>
         <div
           onClick={() => toggleMonth(monthKey)}
           className="px-4 py-3 rounded-lg bg-white/20 cursor-pointer text-white font-semibold"
@@ -472,7 +471,6 @@ const fetchCellules = async () => {
           {isMonthExpanded ? "➖ " : "➕ "} {monthLabel}
         </div>
 
-        {/* TYPES ET LIGNES */}
         {isMonthExpanded &&
           Object.entries(groupByType(monthReports)).map(([type, typeReports]) => {
             const typeKey = `${monthKey}-${type}`;
@@ -480,7 +478,6 @@ const fetchCellules = async () => {
 
             return (
               <div key={typeKey} className="ml-4 mt-2">
-                {/* HEADER TYPE */}
                 <div
                   onClick={() => toggleType(typeKey)}
                   className="px-3 py-2 rounded-lg bg-white/20 cursor-pointer text-white font-semibold"
@@ -488,7 +485,6 @@ const fetchCellules = async () => {
                   {isTypeExpanded ? "➖ " : "➕ "} {type}
                 </div>
 
-                {/* LIGNES */}
                 {isTypeExpanded &&
                   typeReports.map((r) => (
                     <div key={r.id} className="px-4 py-2 rounded-lg bg-white/20 mt-2">

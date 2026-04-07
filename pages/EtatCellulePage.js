@@ -309,11 +309,11 @@ const fetchCellules = async () => {
                   <select
                     value={filterCellule}
                     onChange={(e) => setFilterCellule(e.target.value)}
-                    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-black"
+                    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
                   >
                     <option value="">Toutes les Cellules</option>
                     {Cellules.map((c) => (
-                      <option key={c.id} value={c.cellule_full}>
+                      <option key={c.id} value={c.cellule_full} className="text-black">
                         {c.cellule_full}
                       </option>
                     ))}

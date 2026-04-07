@@ -73,7 +73,7 @@ const fetchReports = async () => {
 
   try {
     let query = supabase
-      .from("vue_flow_Conseillers")
+      .from("vue_flow_conseillers")
       .select("*")
       .order("date_depart", { ascending: false });
 

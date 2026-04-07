@@ -7,12 +7,12 @@ import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 import DetailsEtatConsEvangePopup from "../components/DetailsEtatConsEvangePopup";
-import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
+import EditMemberConseillerPopup from "../components/EditMemberConseillerPopup";
 import DetailsEtatConseillerPopup from "../components/DetailsEtatConseillerPopup";
 
 export default function EtatConseillerPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableIntegration"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "SuperviseurIntegration"]}>
       <EtatConseiller />
     </ProtectedRoute>
   );
@@ -21,20 +21,17 @@ export default function EtatConseillerPage() {
 function EtatConseiller() {
   const router = useRouter();
   const [reports, setReports] = useState([]);
-  const [allReports, setAllReports] = useState([]); // Tous les rapports filtrés par date
   const [membres, setMembres] = useState([]);
   const [selectedMember, setSelectedMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
   const [selectedEvangelise, setSelectedEvangelise] = useState(null);
-  const [selectedEvangeliseId, setSelectedEvangeliseId] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
   const [filterConseiller, setFilterConseiller] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
-  const [conseillers, setConseillers] = useState([]);
-  const [allConseillers, setAllConseillers] = useState([]); // Conseillers disponibles selon date
+  const [Conseillers, setConseillers] = useState([]);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -68,92 +65,87 @@ function EtatConseiller() {
     setUserProfile(data);
   };
 
-  // ================= FETCH CONSEILLERS =================
+  // ================= FETCH Conseillers =================
   const fetchConseillers = async () => {
     try {
       const { data, error } = await supabase
-        .from("profiles")
+        .from("profile")
         .select("*")
-        .or("roles.cs.{Conseiller},roles.cs.{ResponsableIntegration}"); 
+        .order("id", { ascending: true });
 
       if (error) {
-        console.error("Erreur fetch conseillers:", error);
+        console.error("Erreur fetch Conseillers:", error);
         return;
       }
 
       setConseillers(data || []);
     } catch (err) {
-      console.error("Erreur fetch conseillers:", err);
+      console.error("Erreur fetch Conseillers:", err);
     }
   };
 
   // ================= FETCH REPORTS =================
-  const fetchReports = async () => {
-    if (!userProfile) return;
-    setShowTable(false);
+  const [allReports, setAllReports] = useState([]); // <-- tous les rapports chargés
 
-    try {
-      let query = supabase
-        .from("vue_flow_conseillers")
-        .select("*")
-        .order("date_depart", { ascending: false });
+const fetchReports = async () => {
+  if (!userProfile) return;
+  setShowTable(false);
 
-      if (!userProfile.roles?.includes("Administrateur")) {
-        query = query.ilike("responsable", `%${userProfile.prenom}%`);
-      }
+  try {
+    let query = supabase
+      .from("vue_flow_personnes")
+      .select("*")
+      .order("date_depart", { ascending: false });
 
-      const { data, error } = await query;
-      if (error) throw error;
-
-      let filtered = data;
-
-      // Filtre par date
-      if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
-      if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
-
-      // Mettre à jour la liste des conseillers disponibles pour le filtre
-      const conseillersDisponibles = Array.from(new Set(filtered.map(r => r.Conseiller_full))).sort();
-      setAllConseillers(conseillersDisponibles);
-
-      // Stocker tous les rapports filtrés par date mais non par conseiller
-      setAllReports(filtered);
-
-      // Initialiser reports à tous les rapports filtrés par date
-      setReports(filtered);
-
-      // KPI
-      updateKpis(filtered);
-
-      setFilterConseiller(""); // reset filtre conseiller
-      setShowTable(true);
-    } catch (err) {
-      console.error("Erreur fetch:", err);
-      setAllReports([]);
-      setReports([]);
-      setAllConseillers([]);
-      setShowTable(false);
-    }
-  };
-
-  // ================= Filtre par conseiller =================
-  useEffect(() => {
-    if (!showTable) return;
-
-    let filtered = allReports; // TOUJOURS filtrer sur allReports
-
-    if (filterConseiller) {
-      filtered = allReports.filter(r =>
-        r.Conseiller_full?.toLowerCase().includes(filterConseiller.toLowerCase())
-      );
+    if (!userProfile.roles?.includes("Administrateur")) {
+      query = query.ilike("responsable", `%${userProfile.prenom}%`);
     }
 
-    setReports(filtered);
+    const { data, error } = await query;
+    if (error) throw error;
+
+    let filtered = data;
+
+    if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
+    if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
+
+    // Mettre à jour la liste des Conseillers disponibles selon la plage
+    const ConseillersDisponibles = Array.from(new Set(filtered.map(r => r.Conseiller_full))).sort();
+    setConseillers(ConseillersDisponibles.map(c => ({ id: c, Conseiller_full: c })));
+
+    setAllReports(filtered);
+    setReports(filtered); // Initialement toutes les Conseillers
     updateKpis(filtered);
-  }, [filterConseiller, showTable, allReports]);
+    setFilterConseiller(""); // Reset filtre Conseiller
+    setShowTable(true);
+  } catch (err) {
+    console.error("Erreur fetch:", err);
+    setAllReports([]);
+    setReports([]);
+    setConseillers([]);
+    setShowTable(false);
+  }
+};
 
-  // ================= KPI UTILS =================
+// ================= FILTRE PAR Conseiller =================
+useEffect(() => {
+  if (!showTable) return;
+  let filtered = allReports; // <-- TOUJOURS filtrer sur allReports
+
+  if (filterConseiller) {
+    filtered = allReports.filter(r =>
+      r.Conseiller_full?.toLowerCase().includes(filterConseiller.toLowerCase())
+    );
+  }
+
+  setReports(filtered);
+  updateKpis(filtered);
+}, [filterConseiller, showTable]);
+  
+  // ================= KPI FUNCTION =================
   const updateKpis = (filtered) => {
-    const normalize = (text) => text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+    const normalize = (text) =>
+      text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
 
     setKpis({
       totalEvangelises: filtered.filter(r =>
@@ -161,7 +153,10 @@ function EtatConseiller() {
           .some(t => normalize(r.type_evangelisation).includes(normalize(t)))
       ).length,
       totalVenus: filtered.filter(r => normalize(r.type_evangelisation).includes("integration")).length,
-      totalIntegration: filtered.filter(r => normalize(r.statut) === "integre").length,
+      totalIntegration: filtered.filter(r => {
+        const s = normalize(r.statut);
+        return s === "integre";
+      }).length,
       totalBapteme: filtered.filter(r => r.date_baptise).length,
       totalMinistere: filtered.filter(r => r.debut_ministere).length,
       totalRefus: filtered.filter(r => normalize(r.statut) === "refus").length,
@@ -211,43 +206,6 @@ function EtatConseiller() {
 
   const toggleMonth = (monthKey) => setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
 
-  const handleUpdateMember = (updated) => {
-    setMembres(prev => prev.map(m => m.id === updated.id ? updated : m));
-  };
-
-  const handleDetailsClick = async (row) => {
-    try {
-      if (!row) return;
-
-      if (!row.personne_id) {
-        console.warn("personne_id est NULL", row);
-        alert("Impossible d'ouvrir : donnée incomplète");
-        return;
-      }
-
-      if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
-        const { data, error } = await supabase
-          .from("suivis_des_evangelises")
-          .select("*")
-          .eq("id", row.personne_id)
-          .maybeSingle();
-        if (error) throw error;
-        setSelectedEvangelise({ ...row, ...data });
-      } else if (row.type_evangelisation?.toLowerCase() === "integration") {
-        const { data, error } = await supabase
-          .from("membres_complets")
-          .select("*")
-          .eq("id", row.personne_id)
-          .maybeSingle();
-        if (error) throw error;
-        if (!data) return;
-        setSelectedMember(data);
-      }
-    } catch (err) {
-      console.error("Erreur fetch details:", err);
-    }
-  };
-
   const groupedReports = Object.entries(groupByMonth(reports))
     .sort((a, b) => {
       const [yearA, monthA] = a[0].split("-").map(Number);
@@ -260,94 +218,99 @@ function EtatConseiller() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        L'évolution des Ames par<span className="text-amber-300">Conseiller</span>
+        Suivis de l'évolution <span className="text-amber-300">des Ames</span>
       </h1>
 
-      {/* FILTRES */}
-      <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
-        <input type="date" value={filterDebut} onChange={(e)=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-        <input type="date" value={filterFin} onChange={(e)=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
-        <select value={filterConseiller} onChange={(e)=>setFilterConseiller(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white">
-          <option value="">Tous les conseillers</option>
-          {allConseillers.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <button onClick={fetchReports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
-      </div>
-           
-{/* FILTRE CONSEILLER (après génération) */}
+      {/* ================= FILTRES ================= */}
+<div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+
+  {/* Date début */}
+  <input
+    type="date"
+    value={filterDebut}
+    onChange={(e) => setFilterDebut(e.target.value)}
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
+
+  {/* Date fin */}
+  <input
+    type="date"
+    value={filterFin}
+    onChange={(e) => setFilterFin(e.target.value)}
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
+
+  {/* Sélection conseiller */}
+  <select
+    value={filterConseiller}
+    onChange={(e) => setFilterConseiller(e.target.value)}
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  >
+    <option value="">Tous les conseillers</option>
+    {conseillers.map((c) => (
+      <option key={c.id} value={c.prenom}>
+        {c.prenom} {c.nom}
+      </option>
+    ))}
+  </select>
+
+  {/* Bouton Générer */}
+  <button
+    onClick={fetchReports}
+    className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+  >
+    Générer
+  </button>
+</div>
+
+{/* ================= KPI ================= */}
 {showTable && (
-  <div className="mt-4 w-full max-w-6xl flex justify-center">
-    <select
-      className="border border-gray-400 rounded-lg px-3 py-2 bg-black text-white"
-      value={filterConseiller}
-      onChange={(e) => setFilterConseiller(e.target.value)}
-    >
-      <option value="">Tous les conseillers</option>
-      {conseillers
-        // 🔹 On ne garde que ceux qui ont des rapports dans la plage de date
-        .filter(c => reports.some(r => r.conseiller?.toLowerCase() === c.prenom?.toLowerCase()))
-        .map(c => (
-          <option key={c.id} value={c.prenom}>
-            {c.prenom} {c.nom}
-          </option>
-        ))}
-    </select>
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
+    <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
+      <div className="text-sm">Total Évangélisés</div>
+    </div>
+    <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalVenus}</div>
+      <div className="text-sm">Total Venus Église</div>
+    </div>
+    <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
+      <div className="text-sm">Intégrés</div>
+      <div className="text-sm">
+        {kpis.totalEvangelises > 0
+          ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
+          : 0}%
+      </div>
+    </div>
+    <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
+      <div className="text-sm">Baptêmes</div>
+      <div className="text-sm">
+        {kpis.totalEvangelises + kpis.totalVenus > 0
+          ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
+          : 0}%
+      </div>
+    </div>
+    <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
+      <div className="text-sm">Ministère</div>
+    </div>
+    <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalRefus}</div>
+      <div className="text-sm">Refus</div>
+    </div>
+    <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalEncours}</div>
+      <div className="text-sm">En cours</div>
+    </div>
+    <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalAttente}</div>
+      <div className="text-sm">En attente</div>
+    </div>
   </div>
 )}
 
-      {/* KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
-        {/* Total évangélisés */}
-        <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
-          <div className="text-sm">Total Évangélisés</div>
-        </div>
-        {/* Total venus */}
-        <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalVenus}</div>
-          <div className="text-sm">Total Venus Église</div>
-        </div>
-        {/* Intégration */}
-        <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
-          <div className="text-sm">Intégrés</div>
-          <div className="text-sm">
-            {kpis.totalEvangelises > 0
-              ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
-              : 0}%
-          </div>
-        </div>
-        {/* Baptême */}
-        <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
-          <div className="text-sm">Baptêmes</div>
-          <div className="text-sm">
-            {kpis.totalEvangelises + kpis.totalVenus > 0
-              ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
-              : 0}%
-          </div>
-        </div>
-        {/* Ministère */}
-        <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
-          <div className="text-sm">Ministère</div>
-        </div>
-        {/* Refus */}
-        <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalRefus}</div>
-          <div className="text-sm">Refus</div>
-        </div>
-        {/* En cours */}
-        <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalEncours}</div>
-          <div className="text-sm">En cours</div>
-        </div>
-        {/* En attente */}
-        <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
-          <div className="text-2xl font-bold">{kpis.totalAttente}</div>
-          <div className="text-sm">En attente</div>
-        </div>
-      </div>
 
       {/* TABLEAU */}
         {showTable && (
@@ -368,7 +331,7 @@ function EtatConseiller() {
                     <div className="min-w-[150px] text-center">Date évolution</div>
                     <div className="min-w-[150px] text-center">Date Baptême</div>
                     <div className="min-w-[150px] text-center">Début Ministère</div>
-                    <div className="min-w-[220px] text-center">Conseiller</div>            
+                    <div className="min-w-[220px] text-center">Conseiller</div>                    
                     <div className="min-w-[200px] text-center">Action</div>
                   </div>
         
@@ -440,7 +403,7 @@ function EtatConseiller() {
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>                          
-                                  <div className="min-w-[200px] text-center text-white">{r.conseiller}</div>
+                                  <div className="min-w-[200px] text-center text-white">{r.conseiller}</div>                                  
                                   <div className="min-w-[100px] text-center">
                                     <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)}>Détails</button>
                                   </div>        
@@ -458,9 +421,9 @@ function EtatConseiller() {
         
             </div>
           </div>
-        )}
-        
-        {/* MOBILE */}
+        )}        
+     
+{/* MOBILE */}
 <div className="md:hidden space-y-4 w-full">
   {groupedReports.map(([monthKey, rows]) => {
     const [year, monthIndex] = monthKey.split("-").map(Number);
@@ -523,8 +486,7 @@ function EtatConseiller() {
                   <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
                   <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
                   <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>            
-                  <p><strong>Cellule:</strong> {r.cellule_full}</p>
-                  <p><strong>Responsable:</strong> {r.responsable}</p>         
+                  <p><strong>conseiller:</strong> {r.responsable}</p>                    
                 </div>
               );
             })}
@@ -547,7 +509,8 @@ function EtatConseiller() {
           }}
         />
       )}
-      
+
+       {/* INTEGRATION */}
       {selectedMember && (
         <DetailsEtatConsEvangePopup
           member={selectedMember}

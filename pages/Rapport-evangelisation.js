@@ -316,61 +316,66 @@ const handleConseillerClick = () => {
         <span className="text-amber-300">Evangélisation</span>
       </h1>
 
-     <div className="w-full max-w-4xl bg-white/20 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-white">
-          
-              {/* Date début */}
-              <div className="flex flex-col w-full">
-                <label className="text-sm font-semibold mb-1">Date de début</label>
-                <input
-                  type="date"
-                  value={filterDebut}
-                  onChange={(e) => setFilterDebut(e.target.value)}
-                  className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
-                />
-              </div>
-          
-              {/* Date fin */}
-              <div className="flex flex-col w-full">
-                <label className="text-sm font-semibold mb-1">Date de fin</label>
-                <input
-                  type="date"
-                  value={filterFin}
-                  onChange={(e) => setFilterFin(e.target.value)}
-                  className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
-                />
-              </div>
-          
-              {/* Bouton Générer */}
-              <button
-                onClick={fetchReports}
-                className="h-10 w-full bg-amber-400 text-white font-semibold px-6 rounded-lg hover:bg-amber-300 transition"
-              >
-                Générer
-              </button>
-          
-              {/* Conseiller (APRÈS génération) */}
-              {showTable && (
-                <div className="flex flex-col w-full">
-                  <label className="text-sm font-semibold mb-1">Conseiller</label>
-                  <select
-                    value={filterConseiller}
-                    onChange={(e) => setFilterConseiller(e.target.value)}
-                    className="h-10 w-full bg-white/20 border border-white/20 rounded-lg px-4 text-black"
-                  >
-                    <option value="">Tous les conseillers</option>
-          
-                    {conseillers.map((c) => (
-                      <option key={c.id} value={c.nom_complet}>
-                        {c.nom_complet}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-          
-            </div>
-          </div>
+     {/* FILTRES */}
+<div
+  id="rapport-filtres"
+  className="w-full max-w-4xl bg-white/20 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6"
+>
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-white">
+    
+    {/* Date début */}
+    <div className="flex flex-col w-full">
+      <label className="text-sm font-semibold mb-1">Date de début</label>
+      <input
+        type="date"
+        value={dateDebut}
+        onChange={(e) => setDateDebut(e.target.value)}
+        className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
+      />
+    </div>
+
+    {/* Date fin */}
+    <div className="flex flex-col w-full">
+      <label className="text-sm font-semibold mb-1">Date de fin</label>
+      <input
+        type="date"
+        value={dateFin}
+        onChange={(e) => setDateFin(e.target.value)}
+        className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
+      />
+    </div>
+
+    {/* Bouton */}
+    <button
+      onClick={fetchRapports}
+      disabled={loading}
+      className="h-10 w-full bg-amber-400 text-white font-semibold px-6 rounded-lg hover:bg-amber-300 transition disabled:opacity-50"
+    >
+      {loading ? "Chargement..." : "Générer le rapport"}
+    </button>
+
+    {/* Type */}
+    {showTable && (
+      <div className="flex flex-col w-full">
+        <label className="text-sm font-semibold mb-1">Type Evangélisation</label>
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="h-10 w-full bg-white/20 border border-white/20 rounded-lg px-4 text-black"
+        >
+          <option value="">Tous</option>
+          <option value="Individuel">Individuel</option>
+          <option value="Sortie de groupe">Sortie de groupe</option>
+          <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
+          <option value="Évangélisation de rue">Évangélisation de rue</option>
+          <option value="Évangélisation maison">Évangélisation maison</option>
+          <option value="Évangélisation stade">Évangélisation stade</option>
+        </select>
+      </div>
+    )}
+
+  </div>
+</div>
      
       {showTable && (
         <div className="w-full max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 mt-6">

@@ -157,12 +157,7 @@ useEffect(() => {
         return s.includes("attente") || s.includes("envoye");
       }).length,
     });
-  };
-
-  useEffect(() => {
-  fetchUserProfile();
-  fetchConseillers();
-}, []);
+  };  
 
   // ================= UTILITIES =================
   const getMonthNameFR = (monthIndex) => [

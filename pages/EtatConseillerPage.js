@@ -213,28 +213,33 @@ useEffect(() => {
       </h1>
 
       {/* ================= FILTRES ================= */}
-<div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
+<div className="w-full max-w-4xl bg-white/20 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6">
 
   {/* Date début */}
-  <input
-    type="date"
+  <div className="flex flex-col w-full">
+      <label className="text-sm font-semibold mb-1">Date de début</label>
+      <input
     value={filterDebut}
     onChange={(e) => setFilterDebut(e.target.value)}
-    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+    className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
   />
+  </div>    
 
   {/* Date fin */}
-  <input
+  <div className="flex flex-col w-full">
+      <label className="text-sm font-semibold mb-1">Date de fin</label>
+      <input
     type="date"
     value={filterFin}
     onChange={(e) => setFilterFin(e.target.value)}
-    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-  />  
+     className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
+      />
+    </div>  
 
   {/* Bouton Générer */}
   <button
     onClick={fetchReports}
-    className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+    className="h-10 w-full bg-amber-400 text-white font-semibold px-6 rounded-lg hover:bg-amber-300 transition disabled:opacity-50"
   >
     Générer
   </button>
@@ -244,7 +249,7 @@ useEffect(() => {
   <select
     value={filterConseiller}
     onChange={(e) => setFilterConseiller(e.target.value)}
-    className="border border-gray-400 rounded-lg px-3 py-2 bg-white text-black mt-4"
+    className="h-10 w-full bg-white/20 border border-white/20 rounded-lg px-4 text-white"
   >
     <option value="">Tous les conseillers</option>
 

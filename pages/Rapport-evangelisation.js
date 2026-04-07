@@ -674,6 +674,7 @@ const handleConseillerClick = () => {
     {r.moissonneurs === 1 ? "Moissonneur" : "Moissonneurs"}: {r.moissonneurs ?? "-"}
   </div>
     </div>
+    </div>
 
                          
                             

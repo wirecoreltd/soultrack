@@ -109,9 +109,11 @@ const fetchConseillers = async () => {
 
       if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
       if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
-      if (filterConseiller) filtered = filtered.filter(r =>
-        r.Conseiller_full?.toLowerCase().includes(filterConseiller.toLowerCase())
-      );
+      if (filterConseiller) {
+  filtered = filtered.filter(r =>
+    r.conseiller?.toLowerCase() === filterConseiller.toLowerCase()
+  );
+}
 
       // ================= KPI =================
       const normalize = (text) => text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
@@ -254,15 +256,18 @@ const fetchConseillers = async () => {
         <input type="date" value={filterDebut} onChange={(e)=>setFilterDebut(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
         <input type="date" value={filterFin} onChange={(e)=>setFilterFin(e.target.value)} className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
         <button onClick={fetchReports} className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]">Générer</button>
-          <select value={filterConseiller}onChange={(e) => setFilterConseiller(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white">
-            <option value="">Tous les conseillers</option>
-            {conseillers.map((c) => (
-              <option key={c.id} value={c.prenom}>
-                {c.prenom} {c.nom || ""}
-              </option>
-            ))}
-          </select>
+          <select
+  value={filterConseiller}
+  onChange={(e) => setFilterConseiller(e.target.value)}
+  className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+>
+  <option value="">Tous les conseillers</option>
+  {availableConseillers.map((c, index) => (
+    <option key={index} value={c}>
+      {c}
+    </option>
+  ))}
+</select>
                 </div>
 
 

@@ -653,37 +653,27 @@ const handleConseillerClick = () => {
                           </div>
                          
                           {/* MOBILE */}
-                          <div className="md:hidden text-white">
-                            
-                            {/* Date alignée à droite */}
-                            <div className="text-amber-300 mb-2 text-right">
-                              {new Date(r.date_evangelise).toLocaleDateString()}
+                          <div className="text-amber-300 mb-2 text-right">
+                            {new Date(r.date_evangelise).toLocaleDateString()}
+                          </div>
+                          <div className="space-y-1">
+                            <div>
+                              {r.hommes === 1 ? "Homme" : "Hommes"}: {r.hommes ?? "-"} |{" "}
+                              {r.femmes === 1 ? "Femme" : "Femmes"}: {r.femmes ?? "-"}
                             </div>
-                          
-                            {/* Contenu */}
-                            <div className="space-y-1">
-                              
-                              <div>
-                                HommesYY: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}
-                              </div>
-                          
-                              <div className="font-semibold text-orange-400 mt-1">
-                                Total: {(r.hommes || 0) + (r.femmes || 0)}
-                              </div>
-                          
-                              <div>
-                                NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"}
-                              </div>
-                          
-                               <div className="font-semibold text-orange-400 mt-1">
-                                Priere: {r.priere ?? "-"}
-                              </div>
-                          
-                              <div>
-                                Moiss: {r.moissonneurs ?? "-"}
-                              </div>
+                            <div className="font-semibold text-orange-400 mt-1">
+                              Total: {(r.hommes || 0) + (r.femmes || 0)}
                             </div>
-  
+                            <div>
+                              {r.nouveau_converti === 1 ? "Nouveau Converti" : "Nouveaux Convertis"}: {r.nouveau_converti ?? "-"} | Reconciliation: {r.reconciliation ?? "-"}
+                            </div>
+                            <div className="font-semibold text-orange-400 mt-1">
+                              Priere: {r.priere ?? "-"}
+                            </div>
+                            <div>
+                              {r.moissonneurs === 1 ? "Moissonneur" : "Moissonneurs"}: {r.moissonneurs ?? "-"}
+                            </div>
+                          </div>  
                             
                               <button
                               onClick={() => {

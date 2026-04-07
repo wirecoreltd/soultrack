@@ -45,6 +45,16 @@ function EtatCellule() {
     totalAttente: 0,
   });
 
+  // Regroupe les rapports par type d'évangélisation
+const groupByType = (data) => {
+  const map = {};
+  (data || []).forEach((r) => {
+    const type = r.type_evangelisation || "Non défini";
+    if (!map[type]) map[type] = [];
+    map[type].push(r);
+  });
+  return map;
+};
   // ================= USER PROFILE =================
   useEffect(() => {
     fetchUserProfile();

@@ -85,54 +85,63 @@ function EtatCellule() {
   };
 
   // ================= FETCH REPORTS =================
-  const fetchReports = async () => {
-    if (!userProfile) return;
-    setShowTable(false);
+  const [allReports, setAllReports] = useState([]); // <-- tous les rapports chargés
 
-    try {
-      let query = supabase
-        .from("vue_flow_personnes")
-        .select("*")
-        .order("date_depart", { ascending: false });
+const fetchReports = async () => {
+  if (!userProfile) return;
+  setShowTable(false);
 
-      if (!userProfile.roles?.includes("Administrateur")) {
-        query = query.ilike("responsable", `%${userProfile.prenom}%`);
-      }
+  try {
+    let query = supabase
+      .from("vue_flow_personnes")
+      .select("*")
+      .order("date_depart", { ascending: false });
 
-      const { data, error } = await query;
-      if (error) throw error;
-
-      let filtered = data;
-
-      if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
-      if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
-
-      setReports(filtered); // initial load before cellule filter
-      updateKpis(filtered); // KPI init
-
-      setShowTable(true);
-    } catch (err) {
-      console.error("Erreur fetch:", err);
-      setReports([]);
-      setShowTable(false);
-    }
-  };
-
-  // ================= FILTRE PAR CELLULE =================
-  useEffect(() => {
-    if (!showTable) return;
-    let filtered = reports;
-
-    if (filterCellule) {
-      filtered = reports.filter(r =>
-        r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
-      );
+    if (!userProfile.roles?.includes("Administrateur")) {
+      query = query.ilike("responsable", `%${userProfile.prenom}%`);
     }
 
+    const { data, error } = await query;
+    if (error) throw error;
+
+    let filtered = data;
+
+    if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
+    if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
+
+    // Mettre à jour la liste des cellules disponibles selon la plage
+    const cellulesDisponibles = Array.from(new Set(filtered.map(r => r.cellule_full))).sort();
+    setCellules(cellulesDisponibles.map(c => ({ id: c, cellule_full: c })));
+
+    setAllReports(filtered);
+    setReports(filtered); // Initialement toutes les cellules
     updateKpis(filtered);
-    setReports(filtered);
-  }, [filterCellule]);
+    setFilterCellule(""); // Reset filtre cellule
+    setShowTable(true);
+  } catch (err) {
+    console.error("Erreur fetch:", err);
+    setAllReports([]);
+    setReports([]);
+    setCellules([]);
+    setShowTable(false);
+  }
+};
 
+// ================= FILTRE PAR CELLULE =================
+useEffect(() => {
+  if (!showTable) return;
+  let filtered = allReports; // <-- TOUJOURS filtrer sur allReports
+
+  if (filterCellule) {
+    filtered = allReports.filter(r =>
+      r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
+    );
+  }
+
+  setReports(filtered);
+  updateKpis(filtered);
+}, [filterCellule, showTable]);
+  
   // ================= KPI FUNCTION =================
   const updateKpis = (filtered) => {
     const normalize = (text) =>

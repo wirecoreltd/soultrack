@@ -304,7 +304,7 @@ const handleConseillerClick = () => {
   "Sortie de groupe": "border-yellow-400 bg-blue-400/10",
   "Campagne d’évangélisation": "border-purple-400 bg-blue-400/10",
   "Évangélisation de rue": "border-green-400 bg-blue-400/10",
-  "Évangélisation maison": "border-pink-400 bg-blue-40010",
+  "Évangélisation maison": "border-pink-400 bg-blue-400/10",
   "Évangélisation stade": "border-red-400 bg-blue-400/10",
 };
   // ---------------- UI ----------------

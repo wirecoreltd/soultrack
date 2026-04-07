@@ -31,7 +31,7 @@ function EtatConseiller() {
   const [filterConseiller, setFilterConseiller] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
-  const [Conseillers, setConseillers] = useState([]);  
+  const [conseillers, setConseillers] = useState([]);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -69,7 +69,7 @@ function EtatConseiller() {
       const fetchConseillers = async () => {
         try {
           const { data, error } = await supabase
-            .from("profile")
+            .from("profiles")
             .select("*")
             .order("id", { ascending: true });
       
@@ -110,8 +110,17 @@ const fetchReports = async () => {
     if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
 
     // Mettre à jour la liste des Conseillers disponibles selon la plage  
-      const ConseillersDisponibles = Array.from(new Set(filtered.map(r => r.Conseiller_full))).sort();
-      setConseillers(ConseillersDisponibles.map(c => ({ id: c, prenom: c, nom: "" })));
+      const ConseillersDisponibles = Array.from(
+  new Set(filtered.map(r => r.Conseiller_full))
+).sort();
+
+setConseillers(
+  ConseillersDisponibles.map(c => ({
+    id: c,
+    prenom: c,
+    nom: ""
+  }))
+);
 
     setAllReports(filtered);
     setReports(filtered); // Initialement toutes les Conseillers

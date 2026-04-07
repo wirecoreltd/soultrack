@@ -92,7 +92,7 @@ const fetchReports = async () => {
     // Mettre à jour la liste des Conseillers disponibles selon la plage  
       // Mettre à jour la liste des Conseillers disponibles selon la plage
 const conseillersDisponibles = Array.from(
-  new Set(filtered.map(r => r.Conseiller_full).filter(Boolean))
+  new Set(filtered.map(r => r.responsable).filter(Boolean))
 ).sort();
 
 setConseillers(
@@ -124,7 +124,7 @@ useEffect(() => {
 
   if (filterConseiller) {
     filtered = filtered.filter(r =>
-      r.Conseiller_full === filterConseiller
+      r.responsable === filterConseiller
     );
   }
 
@@ -229,9 +229,17 @@ useEffect(() => {
     value={filterFin}
     onChange={(e) => setFilterFin(e.target.value)}
     className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-  />
+  />  
 
-    {/* Sélection conseiller */}
+  {/* Bouton Générer */}
+  <button
+    onClick={fetchReports}
+    className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+  >
+    Générer
+  </button>
+
+       {/* Sélection conseiller */}
        {showTable && (
   <select
     value={filterConseiller}
@@ -247,14 +255,6 @@ useEffect(() => {
     ))}
   </select>
 )}
-
-  {/* Bouton Générer */}
-  <button
-    onClick={fetchReports}
-    className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-  >
-    Générer
-  </button>
 </div>
 
 {/* ================= KPI ================= */}

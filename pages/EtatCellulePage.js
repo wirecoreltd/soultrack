@@ -456,33 +456,45 @@ const fetchCellules = async () => {
         )}
         
         {/* MOBILE */}
-        <div className="md:hidden space-y-4">
-          {groupedReports.map(([monthKey, rows]) => {
-            const [year, monthIndex] = monthKey.split("-").map(Number);
-            const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-        
-            return (
-              <div key={monthKey} className="space-y-2">
-                <h3 className="text-white font-bold">{monthLabel}</h3>
-        
-                {rows.map((r, i) => (
-                  <div key={i} className="bg-white/10 rounded-xl p-4 text-white space-y-1">
-                    <p><strong>Date:</strong> {formatDateFR(r.date_depart)}</p>
-                    <p><strong>Nom:</strong> {r.nom_complet}</p>
-                    <p><strong>Type:</strong> {r.type_evangelisation}</p>
-                    <p><strong>Statut:</strong> {formatStatut(r.statut)}</p>
-                    <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.envoyer_au_suivi_le)}</p>
-                    <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
-                    <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
-                    <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>            
-                    <p><strong>Cellule:</strong> {r.cellule_full}</p>
-                    <p><strong>Responsable:</strong> {r.responsable}</p>         
-                  </div>
-                ))}
-              </div>
-            );
-          })}
+<div className="md:hidden space-y-4">
+  {groupedReports.map(([monthKey, rows]) => {
+    const [year, monthIndex] = monthKey.split("-").map(Number);
+    const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+    const isExpanded = expandedMonths[monthKey] || false;
+
+    return (
+      <div key={monthKey} className="space-y-2">
+        {/* Ligne mois collapsable */}
+        <div
+          className="flex items-center justify-between px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer"
+          onClick={() => toggleMonth(monthKey)}
+        >
+          <span className="text-white font-semibold">{isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})</span>
         </div>
+
+        {/* Contenu du mois */}
+        {isExpanded && (
+          <div className="mt-2 space-y-2">
+            {rows.map((r, i) => (
+              <div key={i} className="bg-white/10 rounded-xl p-4 text-white space-y-1">
+                <p><strong>Date:</strong> {formatDateFR(r.date_depart)}</p>
+                <p><strong>Nom:</strong> {r.nom_complet}</p>
+                <p><strong>Type:</strong> {r.type_evangelisation}</p>
+                <p><strong>Statut:</strong> {formatStatut(r.statut)}</p>
+                <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.envoyer_au_suivi_le)}</p>
+                <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
+                <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
+                <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>            
+                <p><strong>Cellule:</strong> {r.cellule_full}</p>
+                <p><strong>Responsable:</strong> {r.responsable}</p>         
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  })}
+</div>
         
           {/* POPUPS */}
       {selectedEvangelise && (

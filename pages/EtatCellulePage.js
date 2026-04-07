@@ -241,7 +241,7 @@ useEffect(() => {
               >
                 Générer
               </button>
-            </div>
+            
 
               {/* FILTRE CELLULE - seulement après génération */}
               {showTable && (
@@ -260,6 +260,7 @@ useEffect(() => {
                   </select>
                 </div>
               )}
+</div>
 
 {/* ================= KPI ================= */}
 {showTable && (

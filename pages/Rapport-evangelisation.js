@@ -356,7 +356,7 @@ const handleConseillerClick = () => {
 
     {/* Type */}
     {showTable && (
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col w-full bg-white/20">
         <label className="text-sm font-semibold mb-1">Type Evangélisation</label>
         <select
           value={typeFilter}

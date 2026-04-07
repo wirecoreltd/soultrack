@@ -656,34 +656,14 @@ const handleConseillerClick = () => {
                           <div className="md:hidden text-white">
                             
                             {/* Date alignée à droite */}
-                            <div className="text-amber-300 mb-2 text-right">
-                              {new Date(r.date_evangelise).toLocaleDateString()}
-                            </div>
-                          
-                            {/* Contenu */}
-                            <div className="space-y-1">
-                              
-                              <div>
-                                HommesYY: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}
-                              </div>
-                          
-                              <div className="font-semibold text-orange-400 mt-1">
-                                Total: {(r.hommes || 0) + (r.femmes || 0)}
-                              </div>
-                          
-                              <div>
-                                NouvConv: {r.nouveau_converti ?? "-"} | Recon: {r.reconciliation ?? "-"}
-                              </div>
-                          
-                               <div className="font-semibold text-orange-400 mt-1">
-                                Priere: {r.priere ?? "-"}
-                              </div>
-                          
-                              <div>
-                                Moiss: {r.moissonneurs ?? "-"}
-                              </div>
-                            </div>
-  
+                            <div className="text-amber-300 mb-2 text-right"> {new Date(r.date_evangelise).toLocaleDateString()}</div>
+                            <div className="space-y-1">                              
+                            <div> Hommes: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}</div>
+                            <div className="font-semibold text-orange-400 mt-1">Total: {(r.hommes || 0) + (r.femmes || 0)}</div>
+                            <div className= "mt-2"> Nouveaux Convertis: {r.nouveau_converti ?? "-"} | Réconciliation: {r.reconciliation ?? "-"} </div>
+                            <div className="font-semibold text-orange-400 mt-1"> Prière du Salut: {r.priere ?? "-"} </div>
+                            <div className= "mt-2"> Moissonneurs: {r.moissonneurs ?? "-"}</div>
+                            </div>  
                             
                               <button
                               onClick={() => {

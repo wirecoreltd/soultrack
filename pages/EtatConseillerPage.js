@@ -92,7 +92,7 @@ const fetchReports = async () => {
     // Mettre à jour la liste des Conseillers disponibles selon la plage  
       // Mettre à jour la liste des Conseillers disponibles selon la plage
 const conseillersDisponibles = Array.from(
-  new Set(filtered.map(r => r.responsable).filter(Boolean))
+  new Set(filtered.map(r => r.Conseiller_full).filter(Boolean))
 ).sort();
 
 setConseillers(
@@ -124,7 +124,7 @@ useEffect(() => {
 
   if (filterConseiller) {
     filtered = filtered.filter(r =>
-      r.responsable === filterConseiller
+      r.Conseiller_full === filterConseiller
     );
   }
 
@@ -213,43 +213,30 @@ useEffect(() => {
       </h1>
 
       {/* ================= FILTRES ================= */}
-<div className="w-full max-w-4xl bg-white/20 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6">
+<div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
 
   {/* Date début */}
-  <div className="flex flex-col w-full">
-      <label className="text-sm font-semibold mb-1">Date de début</label>
-      <input
+  <input
+    type="date"
     value={filterDebut}
     onChange={(e) => setFilterDebut(e.target.value)}
-    className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
   />
-  </div>    
 
   {/* Date fin */}
-  <div className="flex flex-col w-full">
-      <label className="text-sm font-semibold mb-1">Date de fin</label>
-      <input
+  <input
     type="date"
     value={filterFin}
     onChange={(e) => setFilterFin(e.target.value)}
-     className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
-      />
-    </div>  
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
 
-  {/* Bouton Générer */}
-  <button
-    onClick={fetchReports}
-    className="h-10 w-full bg-amber-400 text-white font-semibold px-6 rounded-lg hover:bg-amber-300 transition disabled:opacity-50"
-  >
-    Générer
-  </button>
-
-       {/* Sélection conseiller */}
+    {/* Sélection conseiller */}
        {showTable && (
   <select
     value={filterConseiller}
     onChange={(e) => setFilterConseiller(e.target.value)}
-    className="h-10 w-full bg-white/20 border border-white/20 rounded-lg px-4 text-white"
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-white text-black mt-4"
   >
     <option value="">Tous les conseillers</option>
 
@@ -260,6 +247,14 @@ useEffect(() => {
     ))}
   </select>
 )}
+
+  {/* Bouton Générer */}
+  <button
+    onClick={fetchReports}
+    className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+  >
+    Générer
+  </button>
 </div>
 
 {/* ================= KPI ================= */}

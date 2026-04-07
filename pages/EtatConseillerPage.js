@@ -46,8 +46,7 @@ function EtatConseiller() {
 
   // ================= USER PROFILE =================
   useEffect(() => {
-    fetchUserProfile();
-    fetchConseillers();
+    fetchUserProfile();    
   }, []);
 
   const fetchUserProfile = async () => {
@@ -63,26 +62,7 @@ function EtatConseiller() {
 
     if (error) return console.error("Erreur fetch user profile:", error);
     setUserProfile(data);
-  };
-
-  // ================= FETCH Conseillers =================  
-      const fetchConseillers = async () => {
-        try {
-          const { data, error } = await supabase
-            .from("profiles")
-            .select("*")
-            .order("id", { ascending: true });
-      
-          if (error) {
-            console.error("Erreur fetch Conseillers:", error);
-            return;
-          }
-      
-          setConseillers(data || []);
-        } catch (err) {
-          console.error("Erreur fetch Conseillers:", err);
-        }
-      };
+  };      
 
   // ================= FETCH REPORTS =================
   const [allReports, setAllReports] = useState([]); // <-- tous les rapports chargés
@@ -110,15 +90,15 @@ const fetchReports = async () => {
     if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
 
     // Mettre à jour la liste des Conseillers disponibles selon la plage  
-      const ConseillersDisponibles = Array.from(
-  new Set(filtered.map(r => r.Conseiller_full))
+      // Mettre à jour la liste des Conseillers disponibles selon la plage
+const conseillersDisponibles = Array.from(
+  new Set(filtered.map(r => r.Conseiller_full).filter(Boolean))
 ).sort();
 
 setConseillers(
-  ConseillersDisponibles.map(c => ({
+  conseillersDisponibles.map(c => ({
     id: c,
-    prenom: c,
-    nom: ""
+    nom_complet: c
   }))
 );
 
@@ -139,17 +119,19 @@ setConseillers(
 // ================= FILTRE PAR Conseiller =================
 useEffect(() => {
   if (!showTable) return;
-  let filtered = allReports; // <-- TOUJOURS filtrer sur allReports
+
+  let filtered = [...allReports];
 
   if (filterConseiller) {
-    filtered = allReports.filter(r =>
-      r.Conseiller_full?.toLowerCase().includes(filterConseiller.toLowerCase())
+    filtered = filtered.filter(r =>
+      r.Conseiller_full === filterConseiller
     );
   }
 
   setReports(filtered);
   updateKpis(filtered);
-}, [filterConseiller, showTable]);
+
+}, [filterConseiller]);
   
   // ================= KPI FUNCTION =================
   const updateKpis = (filtered) => {
@@ -255,18 +237,21 @@ useEffect(() => {
   />
 
     {/* Sélection conseiller */}
-       <select
-        value={filterConseiller}
-        onChange={(e) => setFilterConseiller(e.target.value)}
-        className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-      >
-        <option value="">Tous les conseillers</option>
-        {conseillers.map((c) => (
-          <option key={c.id} value={c.prenom}>
-            {c.prenom} {c.nom}
-          </option>
-        ))}
-      </select>  
+       {showTable && (
+  <select
+    value={filterConseiller}
+    onChange={(e) => setFilterConseiller(e.target.value)}
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-white text-black mt-4"
+  >
+    <option value="">Tous les conseillers</option>
+
+    {conseillers.map((c) => (
+      <option key={c.id} value={c.nom_complet} className="text-black">
+        {c.nom_complet}
+      </option>
+    ))}
+  </select>
+)}
 
   {/* Bouton Générer */}
   <button
@@ -417,7 +402,7 @@ useEffect(() => {
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
                                   <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>                          
-                                  <div className="min-w-[200px] text-center text-white">{r.conseiller}</div>                                  
+                                  <div className="min-w-[200px] text-center text-white">{r.responsable}</div>                                  
                                   <div className="min-w-[100px] text-center">
                                     <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)}>Détails</button>
                                   </div>        

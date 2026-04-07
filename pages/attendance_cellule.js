@@ -725,6 +725,22 @@ useEffect(() => {
                   <p className="font-semibold text-orange-400">Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
                   <p className="mt-2">Enfants: {r.enfants}</p>                
                   <p className="mt-1">Nouveaux Venus: {r.nouveauxVenus} | Nouveaux Convertis: {r.nouveauxConvertis}</p>
+
+                  <div className="flex justify-end gap-3 mt-3">
+                    <button
+                      onClick={() => handleEdit(r)}
+                      className="text-blue-400 hover:text-blue-500"
+                    >
+                      ✏️
+                    </button>
+              
+                    <button
+                      onClick={() => handleDeleteReport(r.id)}
+                      className="text-red-400 hover:text-red-500"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
               ))}
 

@@ -106,40 +106,57 @@ function EtatCellule() {
 
       if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
       if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
-      if (filterCellule) filtered = filtered.filter(r =>
-        r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
-      );
 
-      // ================= KPI =================
-      const normalize = (text) => text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+      setReports(filtered); // initial load before cellule filter
+      updateKpis(filtered); // KPI init
 
-      setKpis({
-        totalEvangelises: filtered.filter(r =>
-          ["individuel","sortie de groupe","campagne d’evangelisation","evangelisation de rue","evangelisation maison","evangelisation stade","evangelisation"]
-            .some(t => normalize(r.type_evangelisation).includes(normalize(t)))
-        ).length,
-        totalVenus: filtered.filter(r => normalize(r.type_evangelisation).includes("integration")).length,
-        totalIntegration: filtered.filter(r => {
-          const s = normalize(r.statut);
-          return s === "integre";
-        }).length,
-        totalBapteme: filtered.filter(r => r.date_baptise).length,
-        totalMinistere: filtered.filter(r => r.debut_ministere).length,
-        totalRefus: filtered.filter(r => normalize(r.statut) === "refus").length,
-        totalEncours: filtered.filter(r => normalize(r.statut).includes("cours")).length,
-        totalAttente: filtered.filter(r => {
-          const s = normalize(r.statut);
-          return s.includes("attente") || s.includes("envoye");
-        }).length,
-      });
-
-      setReports(filtered);
       setShowTable(true);
     } catch (err) {
       console.error("Erreur fetch:", err);
       setReports([]);
       setShowTable(false);
     }
+  };
+
+  // ================= FILTRE PAR CELLULE =================
+  useEffect(() => {
+    if (!showTable) return;
+    let filtered = reports;
+
+    if (filterCellule) {
+      filtered = reports.filter(r =>
+        r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
+      );
+    }
+
+    updateKpis(filtered);
+    setReports(filtered);
+  }, [filterCellule]);
+
+  // ================= KPI FUNCTION =================
+  const updateKpis = (filtered) => {
+    const normalize = (text) =>
+      text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
+
+    setKpis({
+      totalEvangelises: filtered.filter(r =>
+        ["individuel","sortie de groupe","campagne d’evangelisation","evangelisation de rue","evangelisation maison","evangelisation stade","evangelisation"]
+          .some(t => normalize(r.type_evangelisation).includes(normalize(t)))
+      ).length,
+      totalVenus: filtered.filter(r => normalize(r.type_evangelisation).includes("integration")).length,
+      totalIntegration: filtered.filter(r => {
+        const s = normalize(r.statut);
+        return s === "integre";
+      }).length,
+      totalBapteme: filtered.filter(r => r.date_baptise).length,
+      totalMinistere: filtered.filter(r => r.debut_ministere).length,
+      totalRefus: filtered.filter(r => normalize(r.statut) === "refus").length,
+      totalEncours: filtered.filter(r => normalize(r.statut).includes("cours")).length,
+      totalAttente: filtered.filter(r => {
+        const s = normalize(r.statut);
+        return s.includes("attente") || s.includes("envoye");
+      }).length,
+    });
   };
 
   // ================= UTILITIES =================
@@ -206,7 +223,7 @@ function EtatCellule() {
       {showTable && (
         <div className="mt-4 w-full max-w-6xl flex justify-center">
           <select
-            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+            className="border border-gray-400 rounded-lg px-3 py-2 bg-white text-black"
             value={filterCellule}
             onChange={(e) => setFilterCellule(e.target.value)}
           >

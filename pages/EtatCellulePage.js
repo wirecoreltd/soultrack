@@ -33,7 +33,6 @@ function EtatCellule() {
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [Cellules, setCellules] = useState([]);
-  const [expandedTypes, setExpandedTypes] = useState({});
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0,
@@ -46,24 +45,6 @@ function EtatCellule() {
     totalAttente: 0,
   });
 
-  //-----
-  const toggleType = (typeKey) => {
-  setExpandedTypes(prev => ({
-    ...prev,
-    [typeKey]: !prev[typeKey]
-  }));
-};
-
-  // Regroupe les rapports par type d'évangélisation
-const groupByType = (data) => {
-  const map = {};
-  (data || []).forEach((r) => {
-    const type = r.type_evangelisation || "Non défini";
-    if (!map[type]) map[type] = [];
-    map[type].push(r);
-  });
-  return map;
-};
   // ================= USER PROFILE =================
   useEffect(() => {
     fetchUserProfile();
@@ -474,78 +455,34 @@ const fetchCellules = async () => {
           </div>
         )}
         
-       {/* MOBILE */}
-<div className="md:hidden">
-  {Object.entries(groupedReports).map(([monthKey, monthReports]) => {
-    const [year, monthIndex] = monthKey.split("-").map(Number);
-    const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-    const isMonthExpanded = expandedMonths[monthKey] ?? false;
-
-    return (
-      <div key={monthKey}>
-        <div
-          onClick={() => toggleMonth(monthKey)}
-          className="px-4 py-3 rounded-lg bg-white/20 cursor-pointer text-white font-semibold"
-        >
-          {isMonthExpanded ? "➖ " : "➕ "} {monthLabel}
-        </div>
-
-        {isMonthExpanded &&
-          Object.entries(groupByType(monthReports)).map(([type, typeReports]) => {
-            const typeKey = `${monthKey}-${type}`;
-            const isTypeExpanded = expandedTypes[typeKey] ?? false;
-
+        {/* MOBILE */}
+        <div className="md:hidden space-y-4">
+          {groupedReports.map(([monthKey, rows]) => {
+            const [year, monthIndex] = monthKey.split("-").map(Number);
+            const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+        
             return (
-              <div key={typeKey} className="ml-4 mt-2">
-                <div
-                  onClick={() => toggleType(typeKey)}
-                  className="px-3 py-2 rounded-lg bg-white/20 cursor-pointer text-white font-semibold"
-                >
-                  {isTypeExpanded ? "➖ " : "➕ "} {type}
-                </div>
-
-                {isTypeExpanded &&
-                  typeReports.map((r) => (
-                    <div key={r.id} className="px-4 py-2 rounded-lg bg-white/20 mt-2">
-                      <div className="text-amber-300 mb-2 text-right">
-                        {new Date(r.date_evangelise).toLocaleDateString()}
-                      </div>
-                      <div className="space-y-1">
-                        <div>
-                          {r.hommes === 1 ? "Homme" : "Hommes"}: {r.hommes ?? "-"} |{" "}
-                          {r.femmes === 1 ? "Femme" : "Femmes"}: {r.femmes ?? "-"}
-                        </div>
-                        <div className="font-semibold text-orange-400 mt-1">
-                          Total: {(r.hommes || 0) + (r.femmes || 0)}
-                        </div>
-                        <div>
-                          {r.nouveau_converti === 1 ? "Nouveau Converti" : "Nouveaux Convertis"}: {r.nouveau_converti ?? "-"} | Reconciliation: {r.reconciliation ?? "-"}
-                        </div>
-                        <div className="font-semibold text-orange-400 mt-1">
-                          Priere: {r.priere ?? "-"}
-                        </div>
-                        <div>
-                          {r.moissonneurs === 1 ? "Moissonneur" : "Moissonneurs"}: {r.moissonneurs ?? "-"}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setSelectedRapport(r);
-                          setEditOpen(true);
-                        }}
-                        className="block mx-auto text-amber-300 underline mt-3"
-                      >
-                        Modifier
-                      </button>
-                    </div>
-                  ))}
+              <div key={monthKey} className="space-y-2">
+                <h3 className="text-white font-bold">{monthLabel}</h3>
+        
+                {rows.map((r, i) => (
+                  <div key={i} className="bg-white/10 rounded-xl p-4 text-white space-y-1">
+                    <p><strong>Date:</strong> {formatDateFR(r.date_depart)}</p>
+                    <p><strong>Nom:</strong> {r.nom_complet}</p>
+                    <p><strong>Type:</strong> {r.type_evangelisation}</p>
+                    <p><strong>Statut:</strong> {formatStatut(r.statut)}</p>
+                    <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.envoyer_au_suivi_le)}</p>
+                    <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
+                    <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
+                    <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>            
+                    <p><strong>Cellule:</strong> {r.cellule_full}</p>
+                    <p><strong>Responsable:</strong> {r.responsable}</p>         
+                  </div>
+                ))}
               </div>
             );
           })}
-      </div>
-    );
-  })}
-</div>
+        </div>
         
           {/* POPUPS */}
       {selectedEvangelise && (

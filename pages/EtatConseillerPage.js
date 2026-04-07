@@ -246,7 +246,7 @@ const fetchConseillers = async () => {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        Suivis de l'évolution <span className="text-amber-300">des Ames</span>
+        L'évolution des Ames par<span className="text-amber-300">Conseiller</span>
       </h1>
 
       {/* FILTRES */}

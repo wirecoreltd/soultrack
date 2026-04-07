@@ -485,7 +485,7 @@ const fetchConseillers = async () => {
                   <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
                   <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
                   <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>            
-                  <p><strong>Cellule:</strong> {r.conseiller}</p>                        
+                  <p><strong>Conseiller:</strong> {r.conseiller}</p>                        
                 </div>
               );
             })}

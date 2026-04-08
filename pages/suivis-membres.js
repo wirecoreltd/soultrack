@@ -347,8 +347,8 @@ return (
       </div>
 
       {/* View & Filter Buttons */}
-      <div className="mb-4 flex justify-between w-full max-w-6xl">        
-        <button onClick={() => setShowRefus(prev => !prev)} className="text-orange-400 text-sm underline hover:text-orange-500">{showRefus ? "Voir tous les suivis" : "Voir les refus"}</button>
+      <div className="mb-4 flex justify-end w-full max-w-6xl">        
+        <button onClick={() => setShowRefus(prev => !prev)} className="text-orange-400 text-sm underline hover:text-orange-500 ">{showRefus ? "Voir tous les suivis" : "Voir les refus"}</button>
       </div>
 
       {message && <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>{message.text}</div>}

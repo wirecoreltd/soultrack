@@ -306,7 +306,7 @@ function EtatConseiller() {
   </div>
 </div>
         
-        {/* KPI (après génération) */}
+    
         {showTable && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
             {/* Chaque KPI */}

@@ -264,6 +264,22 @@ const [integrationPercent, setIntegrationPercent] = useState(0);
     return true;
   });
 
+  // Créer un tableau des types disponibles selon la plage de date sélectionnée
+const availableTypes = Array.from(
+  new Set(
+    (allEvangelises || [])
+      .filter((e) => {
+        const evangeliseDate = e.date_evangelise ? new Date(e.date_evangelise) : null;
+        const startDate = dateDebut ? new Date(dateDebut) : null;
+        const endDate = dateFin ? new Date(dateFin) : null;
+        if (endDate) endDate.setHours(23, 59, 59, 999);
+        const afterStart = !startDate || (evangeliseDate && evangeliseDate >= startDate);
+        const beforeEnd = !endDate || (evangeliseDate && evangeliseDate <= endDate);
+        return afterStart && beforeEnd;
+      })
+      .map((e) => e.type_evangelisation || "Non défini")
+  )
+);
   //-------------------------//
   // filtrer les évangélisés selon le type
 const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
@@ -355,24 +371,23 @@ const handleConseillerClick = () => {
     </button>
 
     {/* Type */}
-    {showTable && (
-      <div className="flex flex-col w-full">
-        <label className="text-sm font-semibold mb-1">Type Evangélisation</label>
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="h-10 w-full bg-white/20 border border-white/20 rounded-lg px-4 text-black"
-        >
-          <option value="">Tous</option>
-          <option value="Individuel">Individuel</option>
-          <option value="Sortie de groupe">Sortie de groupe</option>
-          <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
-          <option value="Évangélisation de rue">Évangélisation de rue</option>
-          <option value="Évangélisation maison">Évangélisation maison</option>
-          <option value="Évangélisation stade">Évangélisation stade</option>
-        </select>
-      </div>
-    )}
+{showTable && (
+  <div className="flex flex-col w-full">
+    <label className="text-sm font-semibold mb-1">Type Evangélisation</label>
+    <select
+      value={typeFilter}
+      onChange={(e) => setTypeFilter(e.target.value)}
+      className="h-10 w-full bg-white/20 border border-white/20 rounded-lg px-4 text-black"
+    >
+      <option value="">Tous</option>
+      {availableTypes.map((type) => (
+        <option key={type} value={type}>
+          {type}
+        </option>
+      ))}
+    </select>
+  </div>
+)}
 
   </div>
 </div>

@@ -299,12 +299,9 @@ function EtatConseiller() {
                     </option>
                   ))}
                 </select>
-              </div>
-            )}
-          
-          </div>
-          )}
-        
+              </div>          
+         </div>
+          )}        
         </div>
         
         {/* KPI (après génération) */}

@@ -21,6 +21,14 @@ const roleColors = {
 };
 
 /* =========================
+   Format date
+========================= */
+const formatDate = (date) => {
+  if (!date) return "";
+  return new Date(date).toLocaleDateString("fr-FR");
+};
+
+/* =========================
    Ligne utilisateur
 ========================= */
 function UserRow({ u, setSelectedUser, setDeleteUser }) {
@@ -34,7 +42,6 @@ function UserRow({ u, setSelectedUser, setDeleteUser }) {
   };
 
   const roles = u.roles || [];
-
   const rolesDisplay =
     roles.length > 0
       ? roles.map((r) => roleLabels[r] || r).join(" / ")
@@ -47,7 +54,7 @@ function UserRow({ u, setSelectedUser, setDeleteUser }) {
     <>
       {/* ================= DESKTOP ================= */}
       <div
-        className="hidden sm:flex flex-row items-center px-4 py-3 rounded-lg gap-2 bg-white/10 backdrop-blur border-l-4 text-sm hover:bg-white/20 transition"
+        className="hidden sm:flex flex-row items-center px-4 py-3 rounded-lg gap-2 bg-white/10 border-l-4 text-sm"
         style={{ borderLeftColor: borderColor }}
       >
         <div className="flex-[2] text-white font-semibold">
@@ -56,28 +63,24 @@ function UserRow({ u, setSelectedUser, setDeleteUser }) {
 
         <div className="flex-[2] text-white">{u.email}</div>
 
-        <div className="flex-[2] flex flex-wrap gap-1">
-          {roles.map((r) => (
-            <span
-              key={r}
-              className="px-2 py-1 text-xs rounded-full text-white"
-              style={{ backgroundColor: roleColors[r] || "#999" }}
-            >
-              {roleLabels[r] || r}
-            </span>
-          ))}
+        <div className="flex-[2] text-white">{u.telephone || "-"}</div>
+
+        <div className="flex-[2] text-white">{rolesDisplay}</div>
+
+        <div className="flex-[2] text-amber-300 text-sm">
+          {formatDate(u.created_at)}
         </div>
 
         <div className="flex-[1] flex justify-center gap-2">
           <button
             onClick={() => setSelectedUser(u)}
-            className="text-blue-400 hover:text-blue-600 text-lg"
+            className="text-blue-400 hover:text-blue-600"
           >
             ✏️
           </button>
           <button
             onClick={() => setDeleteUser(u)}
-            className="text-red-400 hover:text-red-600 text-lg"
+            className="text-red-400 hover:text-red-600"
           >
             🗑️
           </button>
@@ -86,39 +89,33 @@ function UserRow({ u, setSelectedUser, setDeleteUser }) {
 
       {/* ================= MOBILE ================= */}
       <div
-        className="sm:hidden flex flex-col p-4 rounded-xl bg-white/10 backdrop-blur border-l-4 gap-3 shadow-md"
+        className="sm:hidden flex flex-col p-4 rounded-xl bg-white/10 border-l-4 gap-2"
         style={{ borderLeftColor: borderColor }}
       >
-        <div className="text-white font-semibold text-lg">
-          {u.prenom} {u.nom}
+        {/* Date à droite */}
+        <div className="text-right text-amber-300 text-xs">
+          {formatDate(u.created_at)}
         </div>
 
-        <div className="text-white text-sm opacity-90">
-          📧 {u.email}
+        {/* Infos */}
+        <div className="text-white text-sm">
+          <p><span className="font-semibold">Nom Complet :</span> {u.prenom} {u.nom}</p>
+          <p><span className="font-semibold">Téléphone :</span> {u.telephone || "-"}</p>
+          <p><span className="font-semibold">Email :</span> {u.email}</p>
+          <p><span className="font-semibold">Rôle :</span> {rolesDisplay}</p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {roles.map((r) => (
-            <span
-              key={r}
-              className="px-2 py-1 text-xs rounded-full text-white"
-              style={{ backgroundColor: roleColors[r] || "#999" }}
-            >
-              {roleLabels[r] || r}
-            </span>
-          ))}
-        </div>
-
-        <div className="flex justify-end gap-3 pt-2 border-t border-white/20">
+        {/* Actions centrées */}
+        <div className="flex justify-center gap-6 pt-2">
           <button
             onClick={() => setSelectedUser(u)}
-            className="text-blue-400 text-xl"
+            className="text-blue-400 text-lg"
           >
             ✏️
           </button>
           <button
             onClick={() => setDeleteUser(u)}
-            className="text-red-400 text-xl"
+            className="text-red-400 text-lg"
           >
             🗑️
           </button>
@@ -154,9 +151,6 @@ function ListUsersContent() {
     branche_id: null,
   });
 
-  /* =========================
-     Scope utilisateur
-  ========================== */
   useEffect(() => {
     const fetchUserScope = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -179,9 +173,6 @@ function ListUsersContent() {
     fetchUserScope();
   }, []);
 
-  /* =========================
-     Fetch users
-  ========================== */
   useEffect(() => {
     if (!userScope.eglise_id || !userScope.branche_id) return;
     fetchUsers();
@@ -207,9 +198,6 @@ function ListUsersContent() {
     setLoading(false);
   };
 
-  /* =========================
-     Delete
-  ========================== */
   const handleDelete = async () => {
     if (!deleteUser?.id) return;
 
@@ -219,18 +207,12 @@ function ListUsersContent() {
     setDeleteUser(null);
   };
 
-  /* =========================
-     Update
-  ========================== */
   const handleUpdated = (updatedUser) => {
     setUsers((prev) =>
       prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
     );
   };
 
-  /* =========================
-     Filter
-  ========================== */
   const filteredUsers = users
     .filter((u) => (role ? u.roles?.includes(role) : true))
     .filter(
@@ -240,11 +222,7 @@ function ListUsersContent() {
     );
 
   if (loading)
-    return (
-      <p className="text-center mt-10 text-white text-lg">
-        Chargement...
-      </p>
-    );
+    return <p className="text-center mt-10 text-white">Chargement...</p>;
 
   return (
     <div className="min-h-screen p-6 bg-[#333699]">
@@ -254,11 +232,10 @@ function ListUsersContent() {
         Gestion des utilisateurs
       </h1>
 
-      {/* Search */}
       <div className="max-w-6xl w-full mx-auto mb-6 flex flex-col gap-3">
         <input
           type="text"
-          placeholder="Chercher un utilisateur..."
+          placeholder="Chercher..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full sm:w-1/2 mx-auto px-4 py-2 rounded-md text-black"
@@ -284,19 +261,21 @@ function ListUsersContent() {
         <div className="flex justify-end">
           <button
             onClick={() => router.push("/admin/create-internal-user")}
-            className="text-white px-4 py-2 rounded"
+            className="text-white px-4 py-2"
           >
             ➕ Ajouter
           </button>
         </div>
       </div>
 
-      {/* Table */}
+      {/* TABLE HEADER */}
       <div className="max-w-6xl mx-auto space-y-2">
         <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
           <div className="flex-[2]">Nom</div>
           <div className="flex-[2]">Email</div>
+          <div className="flex-[2]">Téléphone</div>
           <div className="flex-[2]">Rôles</div>
+          <div className="flex-[2]">Créé le</div>
           <div className="flex-[1] text-center">Actions</div>
         </div>
 

@@ -385,7 +385,18 @@ useEffect(() => {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">Rapport <span className="text-amber-300">Présence / Temps</span></h1>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">Rapport de <span className="text-amber-300">Présences & Statistiques</span></h1>
+
+    /* ================= text explicatif ================= */
+          <div className="max-w-3xl w-full bg-white/10 backdrop-blur-md rounded-xl p-4 mb-6 text-white text-center">
+        <p className="italic text-base">
+          Suivez et gérez facilement les <span className="text-amber-300 font-semibold">présences</span> 
+          de tous les rassemblements spirituels. 
+          Enregistrez les <span className="text-amber-300 font-semibold">nouveaux venus</span> et 
+          <span className="text-amber-300 font-semibold"> convertis</span>, et générez des 
+          <span className="text-amber-300 font-semibold"> rapports clairs</span> pour mieux accompagner chaque membre.
+        </p>
+      </div>
 
       {/* FORMULAIRE */}
       <div ref={formRef} className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">

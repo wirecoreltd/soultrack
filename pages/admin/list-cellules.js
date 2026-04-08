@@ -271,9 +271,9 @@ function ListCellulesContent() {
       <div className="max-w-6xl mx-auto flex justify-end mb-3">
         <button
           onClick={() => router.push("/admin/create-cellule")}
-          className="text-white px-4 py-2"
+          className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
         >
-          ➕ Ajouter
+          ➕ Ajouter une Cellule
         </button>
       </div>
 

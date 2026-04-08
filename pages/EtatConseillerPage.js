@@ -30,6 +30,7 @@ function EtatConseiller() {
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
   const [filterConseiller, setFilterConseiller] = useState("");
+  const [loading, setLoading] = useState(false);
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
   const [conseillers, setConseillers] = useState([]);

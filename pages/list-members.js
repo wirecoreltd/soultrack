@@ -900,10 +900,21 @@ const canAddMember =
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       {/* Top Bar */}
       <HeaderPages />
-      <h1 className="text-2xl sm:text-3xl font-bold text-white text-center mb-2">Liste des Membres</h1>
+       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Liste des <span className="text-emerald-300">Membres</span></h1>
+
+        <div className="max-w-3xl w-full mb-6 text-center">
+  <p className="italic text-base text-white/90">
+    <span className="text-blue-300 font-semibold">Visualisez et gérez</span> tous les membres, 
+    <span className="text-blue-300 font-semibold"> nouveaux contacts</span> et 
+    <span className="text-blue-300 font-semibold"> membres existants</span>. 
+    Vous pouvez filtrer par état, consulter les détails, 
+    <span className="text-blue-300 font-semibold"> envoyer des suivis</span> et mettre à jour les informations 
+    en toute sécurité selon votre rôle.
+  </p>
+</div>
 
       {/* Barre de recherche */}
-      <div className="w-full max-w-4xl flex justify-center mb-2">
+      <div className="mt-3 w-full max-w-4xl flex justify-center mb-2">
         <input type="text" placeholder="🔍Recherche..." value={search} onChange={e => setSearch(e.target.value)} className="w-full sm:w-2/3 px-3 py-1 rounded-md border text-black"/>
       </div>
 

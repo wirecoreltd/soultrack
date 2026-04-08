@@ -364,21 +364,23 @@ const handleConseillerClick = () => {
             </button>
         
             {/* Type */}
-        {showTable && (  
-            <label className="text-sm font-semibold mb-1">Type Evangélisation</label>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-               className="order-4 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-            >
-              <option value="">Tous</option>
-              {availableTypes.map((type) => (
-                <option key={type} value={type}className="text-black">
-                  {type}
-                </option>
-              ))}
-            </select>  
-          )}
+        {showTable && (
+  <div className="flex flex-col md:flex-row items-center gap-2">
+    <label className="text-sm font-semibold mb-1">Type Evangélisation</label>
+    <select
+      value={typeFilter}
+      onChange={(e) => setTypeFilter(e.target.value)}
+      className="order-4 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+    >
+      <option value="">Tous</option>
+      {availableTypes.map((type) => (
+        <option key={type} value={type} className="text-black">
+          {type}
+        </option>
+      ))}
+    </select>
+  </div>
+)}
       </div>
      
       {showTable && (

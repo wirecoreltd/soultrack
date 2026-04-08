@@ -236,9 +236,15 @@ useEffect(() => {
         />
         </div>
 
-        <h1 className="text-3xl font-bold text-center mb-6">
-          Ajouter un membre à ma cellule
-        </h1>
+         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">Ajouter un membre à ma <span className="text-[#333699]">Cellule</span></h1>
+
+          <div className="max-w-3xl w-full mb-6 text-center">
+            <p className="italic text-base text-black/90">
+              <span className="text-[#FFB07C] font-semibold">Ajoutez</span> facilement un membre à  <span className="text-[#FFB07C] font-semibold">votre cellule</span>. Renseignez ses informations, ses 
+             <span className="text-[#FFB07C] font-semibold">besoins et son parcours spirituel</span>, puis associez-le à une cellule 
+              pour assurer  <span className="text-[#FFB07C] font-semibold">un suivi structuré et personnalisé</span>.            
+             </p>
+          </div>    
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
@@ -259,8 +265,7 @@ useEffect(() => {
               ))}
             </select>
           )}
-          {/* Date de venue */}
-                  <label className="text-sm sm:text-base font-semibold">Date de venue</label>
+          {/* Date de venue */}                  
                   <input
                     type="date"
                     value={formData.date_venu}

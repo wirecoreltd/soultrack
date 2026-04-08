@@ -108,11 +108,16 @@ function ListConseillers() {
       <HeaderPages />
 
       <div className="text-center mb-6">
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Liste des Conseillers</h1>
-        <p className="text-white text-sm sm:text-lg max-w-xl mx-auto italic">
-          Chaque personne a une valeur infinie. Ensemble, nous avançons ❤️
-        </p>
-      </div>
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Liste des <span className="text-emerald-300"> Conseillers</span></h1>
+          
+         <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-white/90">   
+            Retrouvez tous les <span className="text-blue-300 font-semibold">Conseillers </span> de votre assemblée en un seul endroit.
+            Vous pouvez <span className="text-blue-300 font-semibold">rechercher </span> un conseiller, <span className="text-blue-300 font-semibold"> consulter</span> ses informations 
+              de contact et voir <span className="text-blue-300 font-semibold">le nombre de membres qu’il accompagne</span>.
+          </p>
+        </div> 
+     </div>
 
       {/* Barre de recherche */}
       <div className="w-full max-w-4xl flex justify-center mb-4">

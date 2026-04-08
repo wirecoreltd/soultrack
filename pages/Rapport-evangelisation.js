@@ -336,18 +336,16 @@ const handleConseillerClick = () => {
         <div id="rapport-filtres"
           className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col md:flex-row items-center gap-3 md:gap-4 text-white">  
             
-            {/* Date début */}    
-              <label className="text-sm font-semibold mb-1">Date de début</label>
-              <input 
+            {/* Date début */}   
+                            <input 
                     type="date" 
                     value={dateDebut}
                 onChange={(e) => setDateDebut(e.target.value)}
                     className="order-1 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
                   />   
         
-            {/* Date fin */}    
-              <label className="text-sm font-semibold mb-1">Date de fin</label>
-              <input 
+            {/* Date fin */}   
+                            <input 
                     type="date" 
                      value={dateFin} 
                     onChange={(e) => setDateFin(e.target.value)}
@@ -365,8 +363,7 @@ const handleConseillerClick = () => {
         
             {/* Type */}
         {showTable && (
-  <div className="flex flex-col md:flex-row items-center gap-2">
-    <label className="text-sm font-semibold mb-1">Type Evangélisation</label>
+  <div className="flex flex-col md:flex-row items-center gap-2">    
     <select
       value={typeFilter}
       onChange={(e) => setTypeFilter(e.target.value)}

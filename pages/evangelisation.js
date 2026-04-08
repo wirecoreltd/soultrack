@@ -324,7 +324,16 @@ export default function Evangelisation() {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-4xl text-white text-center mb-4">Évangélisation</h1>
+     <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Gestion des contacts <span className="text-emerald-300"> Evangélisés</span></h1>
+    <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-white/90">
+                Cette page <span className="text-blue-300 font-semibold">centralise </span> tous les contacts évangélisés et facilite la 
+    <span className="text-blue-300 font-semibold"> gestion de leur suivi.</span>
+Vous pouvez transmettre chaque contact à un conseiller ou à une cellule, et envoyer les informations directement via WhatsApp.
+Chaque contact peut être consulté en détail, modifié ou supprimé, <span className="text-blue-300 font-semibold">garantissant un suivi précis et organisé de l’évangélisation au sein de votre église</span>.
+    
+          </p>
+        </div>     
 
       {/* Sélection cible */}
       <div className="w-full max-w-md mb-6">

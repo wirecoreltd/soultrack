@@ -537,7 +537,7 @@ useEffect(() => {
                       onClick={fetchRapports}
                       className="h-10 w-fit bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-300 transition"
                     >
-                      Générer
+                    {loading ? "Chargement..." : "Générer le rapport"}
                     </button>
                 
                     {/* Type */}

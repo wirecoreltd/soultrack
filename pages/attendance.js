@@ -385,12 +385,11 @@ useEffect(() => {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-xl font-bold mt-4 mb-6 text-center text-white">Rapport de <span className="text-amber-300">Présences & Statistiques</span></h1>
-
+      <h1 className="text-xl font-bold mt-4 mb-6 text-blue-300 text-white">Rapport de <span className="text-emerald-300">Présences & Statistiques</span></h1>
   
           <div className="max-w-3xl w-full mb-6 text-center">
-            <p className="italic text-lg text-white/90">
-              Suivez et gérez facilement les <span className="text-blue-300 font-semibold">présences</span> 
+            <p className="italic text-base text-white/90">
+              Suivez et gérez facilement les <span className="text-blue-300 font-semibold">présences </span> 
               de tous les rassemblements spirituels. 
               Enregistrez l’ensemble des <span className="text-blue-300 font-semibold">participants</span>, y compris les 
               <span className="text-blue-300 font-semibold"> nouveaux venus</span> et les 

@@ -341,7 +341,7 @@ return (
             Ici, vous pouvez voir,<span className="text-blue-300 font-semibold"> suivre et accompagner </span>  chaque membre de votre Assemblée. 
             <span className="text-blue-300 font-semibold">Chaque Personne est précieuse </span>  : cette page vous permet de gérer les nouveaux venus, 
            de <span className="text-blue-300 font-semibold">soutenir</span> chaque membre de la famille, et de cultiver la croissance de chaque 
-             membre avec <span className="text-blue-300 font-semibold">amour et discipline/span>.
+             membre avec <span className="text-blue-300 font-semibold">amour et discipline</span>.
           </p>
         </div>        
       </div>

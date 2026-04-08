@@ -40,13 +40,10 @@ function EvangelisationHubContent() {
 
       {/* 🔹 Titre + texte motivant */}
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          Espace Évangélisation
-        </h1>
-        <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
-          Va, fais de toutes les nations des disciples.  
-          Chaque rencontre compte, chaque âme est précieuse. ✨
-        </p>
+         <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Espace Évangélisation</h1>
+        <p className="italic text-base text-white/90">
+            Accédez à votre hub d’évangélisation pour consulter la liste des évangélisés, <span className="text-blue-300 font-semibold">suivre leurs progrès et générer des rapports détaillés avec KPIs et statistiques clés</span>.
+          </p>
       </div>
 
       {/* 🔹 Cartes principales */}

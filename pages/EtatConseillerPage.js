@@ -268,7 +268,7 @@ function EtatConseiller() {
 
   <button 
     onClick={fetchReports} 
-    className="order-1 h-10 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+    className="order-1 h-10 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-amber-300 text-white hover:bg-amber-300 transition"
   >
     {loading ? "Chargement..." : "Générer le rapport"}
   </button>
@@ -278,7 +278,7 @@ function EtatConseiller() {
     <select
     value={filterConseiller}
     onChange={(e) => setFilterConseiller(e.target.value)}
-    className="order-4 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+    className="order-4 h10 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
   >
     <option value="" className="text-black">Tous les conseillers</option>
     {availableConseillers.map((c, i) => (<option key={i} value={c} className="text-black">{c}

@@ -236,7 +236,7 @@ useEffect(() => {
         />
         </div>
 
-         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">Ajouter un membre à ma <span className="text-[#333699]">Cellule</span></h1>
+         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">Ajouter un membre</br> à ma <span className="text-[#333699]">Cellule</span></h1>
 
           <div className="max-w-3xl w-full mb-6 text-center">
             <p className="italic text-base text-black/90">

@@ -52,7 +52,7 @@ function EvangelisationHubContent() {
         {/* Liste des évangélisés */}
         <Link
           href="/evangelisation"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#34a853] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
         >
           <div className="text-4xl mb-2">🌿</div>
           <div className="text-lg font-bold text-gray-800 text-center">
@@ -63,9 +63,9 @@ function EvangelisationHubContent() {
         {/* Suivis des évangélisés */}
         <Link
           href="/suivis-evangelisation"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#38BDF8] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
         >
-          <div className="text-4xl mb-2">📋</div>
+          <div className="text-4xl mb-2">💌</div>
           <div className="text-lg font-bold text-gray-800 text-center">
             Suivis des évangélisés
           </div>
@@ -74,9 +74,9 @@ function EvangelisationHubContent() {
           {/* Rapport évangélisés */}
         <Link
           href="/Rapport-evangelisation"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#ff9800] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#84CC16] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
         >
-          <div className="text-4xl mb-2">🌱</div>
+          <div className="text-4xl mb-2">🗒️</div>
           <div className="text-lg font-bold text-gray-800 text-center">
             Rapport Evangélisation
           </div>
@@ -94,7 +94,7 @@ function EvangelisationHubContent() {
       </div>
 
       {/* 🔹 Verset biblique inspirant */}
-      <div className="mt-auto mb-4 text-center text-white text-lg italic max-w-2xl leading-relaxed tracking-wide font-light">
+      <div className="mt-auto mb-4 text-center text-white text-base italic max-w-2xl leading-relaxed tracking-wide font-light">
         Va, fais de toutes les nations des disciples. Chaque rencontre compte, chaque âme est précieuse. ✨         
       </div>
         <Footer />

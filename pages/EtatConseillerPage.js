@@ -249,42 +249,56 @@ function EtatConseiller() {
       </h1>
 
       {/* FILTRES + GENERER + SELECT CONSEILLER */}
-<div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex flex-col md:flex-row justify-center gap-4 flex-wrap text-white items-center">
-  {/* DATE DEBUT */}
+<div className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full flex flex-col md:flex-row gap-3 md:gap-4 text-white">
+
   <input 
     type="date" 
     value={filterDebut} 
     onChange={(e) => setFilterDebut(e.target.value)} 
-    className="h-10 w-fit border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+    className="w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
   />
 
-  {/* DATE FIN */}
   <input 
     type="date" 
     value={filterFin} 
     onChange={(e) => setFilterFin(e.target.value)} 
-    className="h-10 w-fit border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+    className="h-10 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
   />
 
-  {/* BOUTON GENERER */}
+  <select
+    value={filterConseiller}
+    onChange={(e) => setFilterConseiller(e.target.value)}
+    className="h-10 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  >
+    <option value="" className="text-black">
+      Tous les conseillers
+    </option>
+    {availableConseillers.map((c, i) => (
+      <option key={i} value={c} className="text-black">
+        {c}
+      </option>
+    ))}
+  </select>
+
   <button 
     onClick={fetchReports} 
-    className="h-10 w-fit bg-amber-300 px-3 py-2 rounded-xl hover:bg-amber-300">
+    className="h-10 w-full md:w-auto bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
+  >
     Générer
   </button>
 
   {/* SELECT CONSEILLER (après génération) */}
   {showTable && (
     <select
-      value={filterConseiller}
-      onChange={(e) => setFilterConseiller(e.target.value)}
-      className="h-10 w-fit border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-black"
-    >
-      <option value="">Tous les conseillers</option>
-      {availableConseillers.map((c, i) => (
-        <option key={i} value={c}>{c}</option>
-      ))}
-    </select>
+    value={filterConseiller}
+    onChange={(e) => setFilterConseiller(e.target.value)}
+    className="h-10 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  >
+    <option value="" className="text-black">Tous les conseillers</option>
+    {availableConseillers.map((c, i) => (<option key={i} value={c} className="text-black">{c}
+      </option>
+    ))}
+  </select>
   )}
 </div>
 

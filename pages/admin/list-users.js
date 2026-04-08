@@ -98,25 +98,28 @@ function UserRow({ u, setSelectedUser, setDeleteUser }) {
         </div>
 
         {/* Infos */}
-        <div className="text-white text-sm space-y-2">
-           <div className="flex gap-2">
-             <span className="justify-center font-semibold min-w-[110px]">Nom Complet :</span>
-             <span>{u.prenom} {u.nom}</span>
+        <div className="text-center text-sm space-y-1.5">
+           {/* Nom */}
+           <div className="text-white font-semibold">
+             {u.prenom} {u.nom}
            </div>
          
-           <div className="flex gap-2">
-             <span className="font-semibold min-w-[110px]">📞 Téléphone :</span>
+           {/* Téléphone */}
+           <div className="text-white flex justify-center items-center gap-1">
+             <span>📞</span>
              <span>{u.telephone || "-"}</span>
            </div>
          
-           <div className="flex gap-2">
-             <span className="font-semibold min-w-[110px]">📧 Email :</span>
-             <span className="break-all">{u.email}</span>
+           {/* Email */}
+           <div className="text-white flex justify-center items-center gap-1 break-all">
+             <span>📧</span>
+             <span>{u.email}</span>
            </div>
          
-           <div className="flex gap-2">
-             <span className="font-semibold min-w-[110px] text-orange-400">🎖️ Rôle :</span>
-             <span className="text-orange-400 font-medium">{rolesDisplay}</span>
+           {/* Rôle */}
+           <div className="flex justify-center items-center gap-1 text-orange-400 font-semibold">
+             <span>🎖️</span>
+             <span>{rolesDisplay}</span>
            </div>
          </div>
 

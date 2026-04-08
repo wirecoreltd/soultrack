@@ -335,17 +335,16 @@ return (
 
       {/* Title */}
       <div className="text-center mb-6">
-         <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Liste des <span className="text-emerald-300">Membres</span></h1>
-        
-        div className="max-w-3xl w-full mb-6 text-center">
-  <p className="italic text-base text-white/90">
-     <span className="text-blue-300 font-semibold">Visualisez et gérez</span> tous les membres de votre communauté.  
-    Suivez les <span className="text-blue-300 font-semibold">nouveaux contacts</span> et les <span className="text-blue-300 font-semibold">membres existants</span>,  
-    notez leurs besoins spirituels, <span className="text-blue-300 font-semibold">envoyer des suivis</span>,  
-    et accompagnez-les à chaque étape de leur cheminement.  
-    <span className="text-blue-300 font-semibold">Un suivi organisé, fiable et bienveillant</span> pour que chacun se sente vu, entendu et soutenu.
-  </p>
-</div>
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Suivis des <span className="text-emerald-300">Membres</span></h1>
+        <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-white/90">
+            <span className="text-blue-300 font-semibold">Visualisez et gérez</span> tous les membres de votre communauté.  
+            Suivez les <span className="text-blue-300 font-semibold">nouveaux contacts</span> et les <span className="text-blue-300 font-semibold">membres existants</span>,  
+            notez leurs besoins spirituels, <span className="text-blue-300 font-semibold">envoyer des suivis</span>,  
+            et accompagnez-les à chaque étape de leur cheminement.  
+            <span className="text-blue-300 font-semibold">Un suivi organisé, fiable et bienveillant</span> pour que chacun se sente vu, entendu et soutenu.
+          </p>
+        </div>        
       </div>
 
       {/* View & Filter Buttons */}

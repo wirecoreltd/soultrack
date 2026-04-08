@@ -333,64 +333,53 @@ const handleConseillerClick = () => {
       </h1>
 
      {/* FILTRES */}
-<div
-  id="rapport-filtres"
-  className="w-full max-w-4xl bg-white/20 backdrop-blur-md border border-white/20 p-6 rounded-2xl shadow-xl mt-6"
->
-  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-white">
-    
-    {/* Date début */}
-    <div className="flex flex-col w-full">
-      <label className="text-sm font-semibold mb-1">Date de début</label>
-      <input
-        type="date"
-        value={dateDebut}
-        onChange={(e) => setDateDebut(e.target.value)}
-        className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
-      />
-    </div>
-
-    {/* Date fin */}
-    <div className="flex flex-col w-full">
-      <label className="text-sm font-semibold mb-1">Date de fin</label>
-      <input
-        type="date"
-        value={dateFin}
-        onChange={(e) => setDateFin(e.target.value)}
-        className="h-10 w-full bg-white/10 border border-white/30 rounded-lg px-4"
-      />
-    </div>
-
-    {/* Bouton */}
-    <button
-      onClick={fetchRapports}
-      disabled={loading}
-      className="h-10 w-full bg-amber-400 text-white font-semibold px-6 rounded-lg hover:bg-amber-300 transition disabled:opacity-50"
-    >
-      {loading ? "Chargement..." : "Générer le rapport"}
-    </button>
-
-    {/* Type */}
-{showTable && (
-  <div className="flex flex-col w-full">
-    <label className="text-sm font-semibold mb-1">Type Evangélisation</label>
-    <select
-      value={typeFilter}
-      onChange={(e) => setTypeFilter(e.target.value)}
-      className="h-10 w-full bg-white/20 border border-white/20 rounded-lg px-4 text-black"
-    >
-      <option value="">Tous</option>
-      {availableTypes.map((type) => (
-        <option key={type} value={type}>
-          {type}
-        </option>
-      ))}
-    </select>
-  </div>
-)}
-
-  </div>
-</div>
+        <div id="rapport-filtres"
+          className= className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col md:flex-row items-center gap-3 md:gap-4 text-white">  
+            
+            {/* Date début */}    
+              <label className="text-sm font-semibold mb-1">Date de début</label>
+              <input 
+                    type="date" 
+                    value={dateDebut}
+                onChange={(e) => setDateDebut(e.target.value)}
+                    className="order-1 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+                  />   
+        
+            {/* Date fin */}    
+              <label className="text-sm font-semibold mb-1">Date de fin</label>
+              <input 
+                    type="date" 
+                     value={filterFin} 
+                    onChange={(e) => setFilterFin(e.target.value)} 
+                    className="order-2 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+                  />   
+        
+            {/* Bouton */}
+            <button
+              onClick={fetchRapports}
+              disabled={loading}
+              className="order-3 w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
+            >
+              {loading ? "Chargement..." : "Générer le rapport"}
+            </button>
+        
+            {/* Type */}
+        {showTable && (  
+            <label className="text-sm font-semibold mb-1">Type Evangélisation</label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+               className="order-4 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+            >
+              <option value="">Tous</option>
+              {availableTypes.map((type) => (
+                <option key={type} value={type}className="text-black">
+                  {type}
+                </option>
+              ))}
+            </select>  
+          )}
+      </div>
      
       {showTable && (
         <div className="w-full max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 mt-6">

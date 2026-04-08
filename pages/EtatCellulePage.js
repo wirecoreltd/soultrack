@@ -222,45 +222,47 @@ useEffect(() => {
       </h1>
 
       {/* ================= FILTRES ================= */}
-<div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-2 flex justify-center gap-4 flex-wrap text-white">
-              <input
-                type="date"
-                value={filterDebut}
-                onChange={(e) => setFilterDebut(e.target.value)}
-                className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-              />
-              <input
-                type="date"
-                value={filterFin}
-                onChange={(e) => setFilterFin(e.target.value)}
-                className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-              />
-              <button
-                onClick={fetchReports}
-                className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-              >
-                Générer
-              </button>
-            
+<div className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col md:flex-row items-center gap-3 md:gap-4 text-white">
+              {/* DATE DEBUT */}
+          <input 
+            type="date" 
+            value={filterDebut} 
+            onChange={(e) => setFilterDebut(e.target.value)} 
+            className="order-1 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          />
+        
+          {/* DATE FIN */}
+          <input 
+            type="date" 
+            value={filterFin} 
+            onChange={(e) => setFilterFin(e.target.value)} 
+            className="order-2 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          />
+              
+            {/* BOUTON GENERER */}
+          <button 
+            onClick={fetchReports} 
+            className="order-3 w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
+          >
+            Générer
+          </button>            
 
               {/* FILTRE CELLULE - seulement après génération */}
-              {showTable && (
-                <div className="mt-4 w-full max-w-7xl flex justify-start">
+              {showTable && (               
                   <select
                     value={filterCellule}
                     onChange={(e) => setFilterCellule(e.target.value)}
-                    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-                  >
+                    className="order-4 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+            >
                     <option value="">Toutes les Cellules</option>
                     {Cellules.map((c) => (
                       <option key={c.id} value={c.cellule_full} className="text-black">
                         {c.cellule_full}
                       </option>
                     ))}
-                  </select>
-                </div>
+                  </select>                
               )}
-</div>
+        </div>
 
 {/* ================= KPI ================= */}
 {showTable && (

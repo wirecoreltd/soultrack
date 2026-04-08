@@ -51,8 +51,18 @@ export default function LoginPage() {
       localStorage.setItem("userEmail", email);
       localStorage.setItem("userId", user.id);
 
-      // 4️⃣ Redirection unique vers index
-      router.push("/");
+      // 4️⃣ Redirection automatique selon rôle
+      if (roles.includes("ResponsableCellule") || roles.includes("SuperviseurCellule")) {
+        router.replace("/cellules-hub");
+      } else if (roles.includes("Administrateur")) {
+        router.replace("/admin-hub"); // modifier si tu as une autre page admin
+      } else if (roles.includes("ResponsableEvangelisation")) {
+        router.replace("/evangelisation-hub");
+      } else if (roles.includes("Conseiller")) {
+        router.replace("/conseiller-hub");
+      } else {
+        router.replace("/"); // fallback
+      }
 
     } catch (err) {
       console.error(err);

@@ -93,12 +93,12 @@ function UserRow({ u, setSelectedUser, setDeleteUser }) {
         style={{ borderLeftColor: borderColor }}
       >
         {/* Date à droite */}
-        <div className="text-right text-amber-300 text-xs">
+        <div className="text-right text-amber-300 text-xs">Créer le : 
           {formatDate(u.created_at)}
         </div>
 
         {/* Infos */}
-        <div className="text-center text-sm space-y-1.5">
+        <div className="text-center space-y-1.5">
            {/* Nom */}
            <div className="text-white font-semibold">
              {u.prenom} {u.nom}
@@ -117,17 +117,17 @@ function UserRow({ u, setSelectedUser, setDeleteUser }) {
            </div>
          
            {/* Rôle */}
-           <div className="flex justify-center items-center gap-1 text-orange-400 font-semibold">
+           <div className="flex justify-center items-center gap-1 text-orange-400 font-semibold mt-1">
              <span>🎖️</span>
              <span>{rolesDisplay}</span>
            </div>
          </div>
 
         {/* Actions centrées */}
-         <div className="flex justify-center gap-3 pt-0.5">
+         <div className="mt-2 flex justify-center gap-3 pt-2">
            <button
              onClick={() => setSelectedUser(u)}
-             className="text-blue-400 text-base leading-none"
+             className="text-blue-400 text-sm leading-none"
            >
              ✏️
            </button>
@@ -289,7 +289,7 @@ function ListUsersContent() {
       {/* TABLE HEADER */}
       <div className="max-w-6xl mx-auto space-y-2">
         <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
-          <div className="flex-[2]">Nom</div>
+          <div className="flex-[2] ml-2">Nom</div>
           <div className="flex-[2]">Email</div>
           <div className="flex-[2]">Téléphone</div>
           <div className="flex-[2]">Rôles</div>

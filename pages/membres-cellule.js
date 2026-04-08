@@ -179,9 +179,22 @@ function MembresCelluleContent() {
     <div className="min-h-screen p-6" style={{ backgroundColor: "#333699" }}>
       <HeaderPages />
 
-      <h1 className="text-white text-2xl font-bold text-center mb-4">
-        {cellules.length > 1 ? "Membres de mes cellules" : "Membre de ma cellule"}
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+        <span className="text-white">
+    {cellules.length > 1 ? "Membres de mes " : "Membres de ma "}
+  </span>
+  <span className="text-emerald-300">
+    {cellules.length > 1 ? "cellules" : "cellule"}
+  </span>
       </h1>
+
+<div className="max-w-3xl w-full mb-6 text-center">
+  <p className="italic text-base text-white/90">
+   Consultez et gérez facilement les membres de vos cellules.
+   <span className="text-blue-300 font-semibold">Recherchez</span>, filtrez par cellule, <span className="text-blue-300 font-semibold">accédez aux détails complets</span> 
+   et mettez à jour les informations pour un <span className="text-blue-300 font-semibold">suivi précis et personnalisé</span>.
+  </p>
+</div>
 
       {loading && <div className="text-white text-center mt-10">Chargement...</div>}
       {!loading && message && <div className="text-white text-center mt-10">{message}</div>}

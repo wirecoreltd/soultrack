@@ -349,8 +349,8 @@ const handleConseillerClick = () => {
               <label className="text-sm font-semibold mb-1">Date de fin</label>
               <input 
                     type="date" 
-                     value={filterFin} 
-                    onChange={(e) => setFilterFin(e.target.value)} 
+                     value={dateFin} 
+                    onChange={(e) => setDateFin(e.target.value)}
                     className="order-2 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
                   />   
         

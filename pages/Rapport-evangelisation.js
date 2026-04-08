@@ -334,7 +334,7 @@ const handleConseillerClick = () => {
 
      {/* FILTRES */}
         <div id="rapport-filtres"
-          className= className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col md:flex-row items-center gap-3 md:gap-4 text-white">  
+          className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col md:flex-row items-center gap-3 md:gap-4 text-white">  
             
             {/* Date début */}    
               <label className="text-sm font-semibold mb-1">Date de début</label>

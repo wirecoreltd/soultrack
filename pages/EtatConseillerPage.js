@@ -245,111 +245,97 @@ function EtatConseiller() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        L'Evolution des Ames par <span className="text-amber-300">Conseiller</span>
+        L'évolution des Ames par <span className="text-amber-300">Conseiller</span>
       </h1>
 
       {/* FILTRES + GENERER + SELECT CONSEILLER */}
-        
-        <div className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col md:flex-row items-center gap-3 md:gap-4 text-white">
+<div className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-fit mx-auto flex flex-col md:flex-row items-center gap-3 md:gap-4 text-white">
 
-          {/* DATE DEBUT */}
-          <div className="flex flex-col">
-                      <label className="text-sm font-semibold mb-1">Date de début</label>
-          <input 
-            type="date" 
-            value={filterDebut} 
-            onChange={(e) => setFilterDebut(e.target.value)} 
-            className="order-1 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-          />
-               </div>
-        
-          {/* DATE FIN */}
-  <div className="flex flex-col">
-                      <label className="text-sm font-semibold mb-1">Date de fin</label>
-          <input 
-            type="date" 
-            value={filterFin} 
-            onChange={(e) => setFilterFin(e.target.value)} 
-            className="order-2 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-          />
-                </div>
-        
-          {/* BOUTON GENERER */}
-          <button 
-            onClick={fetchReports} 
-            className="order-3 w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
-          >
-            Générer
-          </button>
-        
-          {/* SELECT CONSEILLER */}
-          {showTable && (
-            <div className="flex flex-col">
-                          <label className="text-sm font-semibold mb-1 text-white">Type de temps</label>
-            <select
-              value={filterConseiller}
-              onChange={(e) => setFilterConseiller(e.target.value)}
-              className="order-4 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-            >
-              <option value="" className="text-black">Tous les conseillers</option>
-              {availableConseillers.map((c, i) => (
-                <option key={i} value={c} className="text-black">
-                  {c}
-                </option>
-              ))}
-            </select>
-            </div>
-          )}        
-        </div>
-        
-        {/* KPI (après génération) */}
-        {showTable && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
-            {/* Chaque KPI */}
-            <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
-              <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
-              <div className="text-sm">Total Évangélisés</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
-              <div className="text-2xl font-bold">{kpis.totalVenus}</div>
-              <div className="text-sm">Total Venus Église</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
-              <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
-              <div className="text-sm">Intégrés</div>
-              <div className="text-sm">
-                {kpis.totalEvangelises > 0
-                  ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
-                  : 0}%
-              </div>
-            </div>
-            <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
-              <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
-              <div className="text-sm">Baptêmes</div>
-              <div className="text-sm">
-                {kpis.totalEvangelises + kpis.totalVenus > 0
-                  ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
-                  : 0}%
-              </div>
-            </div>
-            <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
-              <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
-              <div className="text-sm">Ministère</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
-              <div className="text-2xl font-bold">{kpis.totalRefus}</div>
-              <div className="text-sm">Refus</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
-              <div className="text-2xl font-bold">{kpis.totalEncours}</div>
-              <div className="text-sm">En cours</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
-              <div className="text-2xl font-bold">{kpis.totalAttente}</div>
-              <div className="text-sm">En attente</div>
-            </div>
-          </div>
-        )}
+  <input 
+    type="date" 
+    value={filterDebut} 
+    onChange={(e) => setFilterDebut(e.target.value)} 
+    className="h-10 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
+
+  <input 
+    type="date" 
+    value={filterFin} 
+    onChange={(e) => setFilterFin(e.target.value)} 
+    className="h-10 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />  
+
+  <button 
+    onClick={fetchReports} 
+    className="h-10 w-fit bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-300 transition"
+  >
+    Générer
+  </button>
+
+  {/* SELECT CONSEILLER (après génération) */}
+  {showTable && (
+    <select
+    value={filterConseiller}
+    onChange={(e) => setFilterConseiller(e.target.value)}
+    className="h-10 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  >
+    <option value="" className="text-black">Tous les conseillers</option>
+    {availableConseillers.map((c, i) => (<option key={i} value={c} className="text-black">{c}
+      </option>
+    ))}
+  </select>
+  )}
+</div>
+
+{/* KPI (après génération) */}
+{showTable && (
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
+    {/* Chaque KPI */}
+    <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
+      <div className="text-sm">Total Évangélisés</div>
+    </div>
+    <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalVenus}</div>
+      <div className="text-sm">Total Venus Église</div>
+    </div>
+    <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
+      <div className="text-sm">Intégrés</div>
+      <div className="text-sm">
+        {kpis.totalEvangelises > 0
+          ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
+          : 0}%
+      </div>
+    </div>
+    <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
+      <div className="text-sm">Baptêmes</div>
+      <div className="text-sm">
+        {kpis.totalEvangelises + kpis.totalVenus > 0
+          ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
+          : 0}%
+      </div>
+    </div>
+    <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
+      <div className="text-sm">Ministère</div>
+    </div>
+    <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalRefus}</div>
+      <div className="text-sm">Refus</div>
+    </div>
+    <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalEncours}</div>
+      <div className="text-sm">En cours</div>
+    </div>
+    <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
+      <div className="text-2xl font-bold">{kpis.totalAttente}</div>
+      <div className="text-sm">En attente</div>
+    </div>
+  </div>
+)}
+
 
       {/* TABLEAU */}
         {showTable && (

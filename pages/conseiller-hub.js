@@ -45,7 +45,7 @@ export default function MembresHub() {
 
       {/* 🔹 Titre + texte motivant */}
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Espace Membres</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">Espace Conseiller</h1>
         <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
           Bienvenue ! Chaque membre compte et ensemble, nous grandissons plus fort. 🌟
         </p>
@@ -55,18 +55,18 @@ export default function MembresHub() {
       <div className="w-full max-w-5xl flex flex-col sm:flex-row justify-between gap-6 mb-6">
         <Link
           href="/suivis-membres"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#FBBF24] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#38BDF8] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
         >
-          <div className="text-4xl mb-2">📋</div>
+          <div className="text-4xl mb-2">💌</div>
           <div className="text-lg font-bold text-gray-800 text-center">Suivis des membres</div>
         </Link>
 
         <Link
           href="/list-members"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#10B981] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
         >
-          <div className="text-4xl mb-2">👔</div>
-          <div className="text-lg font-bold text-gray-800 text-center">Liste des membres</div>
+          <div className="text-4xl mb-2">🏛️</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Gérer les membres</div>
         </Link>
 
         <Link
@@ -74,7 +74,7 @@ export default function MembresHub() {
           className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#10B981] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
         >
           <div className="text-4xl mb-2">📋</div>
-          <div className="text-lg font-bold text-gray-800 text-center">Suivis Evangélisation</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Suivis des évangélisés</div>
         </Link>    
           <Link
                 href="/EtatConseillerPage"

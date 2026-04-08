@@ -88,7 +88,7 @@ function MembresHubContent() {
 
       <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Link href="/attendance" className="bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#84CC16] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
-          <div className="text-4xl mb-2">⛪</div>
+          <div className="text-4xl mb-2">🗒️</div>
           <div className="text-lg font-bold text-gray-800 text-center">Présences & Rapports</div>
         </Link>
       </div>

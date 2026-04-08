@@ -327,7 +327,7 @@ const handleConseillerClick = () => {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Tableau de Bord<span className="text-emerald-300"> Évangélisatio</span></h1>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Tableau de Bord<span className="text-emerald-300"> Évangélisation</span></h1>
 
     <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-white/90">                

@@ -58,10 +58,11 @@ function MembresHubContent() {
 
       <div className="text-center mb-6">
          <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Espace Membres</h1>
-        <div className="max-w-3xl w-full mb-6 text-center">
-          Accédez facilement à toutes les <span className="text-blue-300 font-semibold"> fonctionnalités</span> de votre 
-         équipe : gestion des membres, suivi des familles, création et suivi des conseillers, ainsi que les rapports et présences. <span className="text-blue-300 font-semibold"> Tout votre suivi au même endroit</span>.
       
+        <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-white/90">
+          Accédez facilement à toutes les <span className="text-blue-300 font-semibold"> fonctionnalités</span> de votre 
+         équipe : gestion des membres, suivi des familles, création et suivi des conseillers, ainsi que les rapports et présences. <span className="text-blue-300 font-semibold"> Tout votre suivi au même endroit</span>.      
           </p>
         </div>
       </div>   

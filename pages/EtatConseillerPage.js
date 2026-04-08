@@ -249,7 +249,7 @@ function EtatConseiller() {
       </h1>
 
       {/* FILTRES + GENERER + SELECT CONSEILLER */}
-<div className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full flex flex-col md:flex-row gap-3 md:gap-4 text-white">
+<div className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-fit mx-auto flex flex-col md:flex-row items-center gap-3 md:gap-4 text-white">
 
   <input 
     type="date" 
@@ -263,22 +263,7 @@ function EtatConseiller() {
     value={filterFin} 
     onChange={(e) => setFilterFin(e.target.value)} 
     className="h-10 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-  />
-
-  <select
-    value={filterConseiller}
-    onChange={(e) => setFilterConseiller(e.target.value)}
-    className="h-10 w-full md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-  >
-    <option value="" className="text-black">
-      Tous les conseillers
-    </option>
-    {availableConseillers.map((c, i) => (
-      <option key={i} value={c} className="text-black">
-        {c}
-      </option>
-    ))}
-  </select>
+  />  
 
   <button 
     onClick={fetchReports} 

@@ -57,7 +57,7 @@ function MembresHubContent() {
       <HeaderPages />
 
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Espace Membres</h1>
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-emerald-300 text-center text-white">Espace Membres</h1>
         <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
           Bienvenue {userName} ! Chaque membre compte et ensemble, nous grandissons plus fort. 🌟
         </p>
@@ -66,8 +66,8 @@ function MembresHubContent() {
       {/* Cartes principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-5xl mb-6">
         <Link href="/list-members" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
-          <div className="text-4xl mb-2">👥</div>
-          <div className="text-lg font-bold text-gray-800 text-center">Liste des membres</div>
+          <div className="text-4xl mb-2">🏛️</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Gérer les membres</div>
         </Link>
 
         <Link href="/suivis-membres" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#38BDF8] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">

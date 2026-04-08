@@ -8,14 +8,14 @@ import Footer from "../components/Footer";
 
 const roleCards = {
   Administrateur: [
-    { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0E7490" },
+    { path: "/membres-hub", label: "Gestion des membres", emoji: "🧭", color: "#0E7490" },
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#F97316" },
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#10B981" },
     { path: "/rapport-hub", label: "Rapport", emoji: "📈", color: "#FBBF24" },
     { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" },
   ],
   ResponsableIntegration: [
-    { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0284C7" },
+    { path: "/membres-hub", label: "Gestion des membres", emoji: "🧭", color: "#0284C7" },
   ],
   ResponsableEvangelisation: [
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" },

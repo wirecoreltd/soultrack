@@ -9,10 +9,21 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
 
 /* =========================
+   Couleurs rôles
+========================= */
+const roleColors = {
+  Administrateur: "#EF4444",
+  ResponsableIntegration: "#3B82F6",
+  ResponsableCellule: "#10B981",
+  ResponsableEvangelisation: "#8B5CF6",
+  SuperviseurCellule: "#F59E0B",
+  Conseiller: "#14B8A6",
+};
+
+/* =========================
    Ligne utilisateur
 ========================= */
 function UserRow({ u, setSelectedUser, setDeleteUser }) {
-  // Table de correspondance pour l'affichage lisible des rôles
   const roleLabels = {
     Administrateur: "Administrateur",
     ResponsableIntegration: "Responsable Intégration",
@@ -22,25 +33,100 @@ function UserRow({ u, setSelectedUser, setDeleteUser }) {
     Conseiller: "Conseiller",
   };
 
-  // Construire la chaîne à afficher pour les rôles
-  const rolesDisplay = (u.roles && u.roles.length > 0)
-    ? u.roles.map(role => roleLabels[role] || role).join(" / ")
-    : roleLabels[u.role] || u.role || "";
+  const roles = u.roles || [];
+
+  const rolesDisplay =
+    roles.length > 0
+      ? roles.map((r) => roleLabels[r] || r).join(" / ")
+      : "";
+
+  const mainRole = roles[0];
+  const borderColor = roleColors[mainRole] || "#F59E0B";
 
   return (
-    <div className="flex flex-row items-center px-4 py-2 rounded-lg gap-2 bg-white/15 border-l-4 text-sm" style={{ borderLeftColor: "#F59E0B" }}>
-      <div className="flex-[2] text-white font-semibold">{u.prenom} {u.nom}</div>
-      <div className="flex-[2] text-white">{u.email}</div>
-      <div className="flex-[2] text-white font-medium">{rolesDisplay}</div>
-      {/* Actions */}
-      <div className="flex-[1] flex justify-center gap-2">
-        <button onClick={() => setSelectedUser(u)} className="text-blue-400 hover:text-blue-600 text-lg">✏️</button>
-        <button onClick={() => setDeleteUser(u)} className="text-red-400 hover:text-red-600 text-lg">🗑️</button>
+    <>
+      {/* ================= DESKTOP ================= */}
+      <div
+        className="hidden sm:flex flex-row items-center px-4 py-3 rounded-lg gap-2 bg-white/10 backdrop-blur border-l-4 text-sm hover:bg-white/20 transition"
+        style={{ borderLeftColor: borderColor }}
+      >
+        <div className="flex-[2] text-white font-semibold">
+          {u.prenom} {u.nom}
+        </div>
+
+        <div className="flex-[2] text-white">{u.email}</div>
+
+        <div className="flex-[2] flex flex-wrap gap-1">
+          {roles.map((r) => (
+            <span
+              key={r}
+              className="px-2 py-1 text-xs rounded-full text-white"
+              style={{ backgroundColor: roleColors[r] || "#999" }}
+            >
+              {roleLabels[r] || r}
+            </span>
+          ))}
+        </div>
+
+        <div className="flex-[1] flex justify-center gap-2">
+          <button
+            onClick={() => setSelectedUser(u)}
+            className="text-blue-400 hover:text-blue-600 text-lg"
+          >
+            ✏️
+          </button>
+          <button
+            onClick={() => setDeleteUser(u)}
+            className="text-red-400 hover:text-red-600 text-lg"
+          >
+            🗑️
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* ================= MOBILE ================= */}
+      <div
+        className="sm:hidden flex flex-col p-4 rounded-xl bg-white/10 backdrop-blur border-l-4 gap-3 shadow-md"
+        style={{ borderLeftColor: borderColor }}
+      >
+        <div className="text-white font-semibold text-lg">
+          {u.prenom} {u.nom}
+        </div>
+
+        <div className="text-white text-sm opacity-90">
+          📧 {u.email}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {roles.map((r) => (
+            <span
+              key={r}
+              className="px-2 py-1 text-xs rounded-full text-white"
+              style={{ backgroundColor: roleColors[r] || "#999" }}
+            >
+              {roleLabels[r] || r}
+            </span>
+          ))}
+        </div>
+
+        <div className="flex justify-end gap-3 pt-2 border-t border-white/20">
+          <button
+            onClick={() => setSelectedUser(u)}
+            className="text-blue-400 text-xl"
+          >
+            ✏️
+          </button>
+          <button
+            onClick={() => setDeleteUser(u)}
+            className="text-red-400 text-xl"
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
-
 
 /* =========================
    Page principale
@@ -69,7 +155,7 @@ function ListUsersContent() {
   });
 
   /* =========================
-     Récupération scope utilisateur
+     Scope utilisateur
   ========================== */
   useEffect(() => {
     const fetchUserScope = async () => {
@@ -77,13 +163,13 @@ function ListUsersContent() {
       const user = sessionData?.session?.user;
       if (!user) return;
 
-      const { data: profile, error } = await supabase
+      const { data: profile } = await supabase
         .from("profiles")
         .select("eglise_id, branche_id")
         .eq("id", user.id)
         .single();
 
-      if (!error && profile) {
+      if (profile) {
         setUserScope({
           eglise_id: profile.eglise_id,
           branche_id: profile.branche_id,
@@ -94,7 +180,7 @@ function ListUsersContent() {
   }, []);
 
   /* =========================
-     Récupération utilisateurs
+     Fetch users
   ========================== */
   useEffect(() => {
     if (!userScope.eglise_id || !userScope.branche_id) return;
@@ -103,128 +189,152 @@ function ListUsersContent() {
 
   const fetchUsers = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+
+    const { data } = await supabase
       .from("profiles")
       .select("id, prenom, nom, email, telephone, roles, created_at")
       .eq("eglise_id", userScope.eglise_id)
       .eq("branche_id", userScope.branche_id)
       .order("created_at", { ascending: true });
 
-    if (error) {
-      console.error(error);
-      setLoading(false);
-      return;
-    }
-
     setUsers(data || []);
 
-    // Liste unique de tous les rôles pour le filtre
-    const allRoles = Array.from(new Set((data || []).flatMap(u => u.roles || [])));
+    const allRoles = Array.from(
+      new Set((data || []).flatMap((u) => u.roles || []))
+    );
     setRoles(allRoles);
+
     setLoading(false);
   };
 
   /* =========================
-     Delete utilisateur
+     Delete
   ========================== */
   const handleDelete = async () => {
     if (!deleteUser?.id) return;
-    const { error } = await supabase.from("profiles").delete().eq("id", deleteUser.id);
-    if (!error) {
-      setUsers(users.filter(u => u.id !== deleteUser.id));
-      setDeleteUser(null);
-    }
+
+    await supabase.from("profiles").delete().eq("id", deleteUser.id);
+
+    setUsers(users.filter((u) => u.id !== deleteUser.id));
+    setDeleteUser(null);
   };
 
   /* =========================
-     Update utilisateur
+     Update
   ========================== */
   const handleUpdated = (updatedUser) => {
-    if (!updatedUser || !updatedUser.id) return;
-    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+    setUsers((prev) =>
+      prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+    );
   };
 
   /* =========================
-     Filtrage + recherche
+     Filter
   ========================== */
   const filteredUsers = users
-    .filter(u => role ? u.roles?.includes(role) : true)
-    .filter(u => u.prenom.toLowerCase().includes(search.toLowerCase()) || u.nom.toLowerCase().includes(search.toLowerCase()));
+    .filter((u) => (role ? u.roles?.includes(role) : true))
+    .filter(
+      (u) =>
+        u.prenom.toLowerCase().includes(search.toLowerCase()) ||
+        u.nom.toLowerCase().includes(search.toLowerCase())
+    );
 
-  if (loading) return <p className="text-center mt-10 text-white text-lg">Chargement...</p>;
+  if (loading)
+    return (
+      <p className="text-center mt-10 text-white text-lg">
+        Chargement...
+      </p>
+    );
 
   return (
     <div className="min-h-screen p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-4xl text-white text-center mb-6 font-bold">Gestion des utilisateurs</h1>
+      <h1 className="text-4xl text-white text-center mb-6 font-bold">
+        Gestion des utilisateurs
+      </h1>
 
-      {/* Barre recherche / filtre / actions */}
+      {/* Search */}
       <div className="max-w-6xl w-full mx-auto mb-6 flex flex-col gap-3">
-        <div className="flex justify-center">
-          <input
-            type="text"
-            placeholder="Chercher un utilisateur..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-1/2 px-4 py-2 rounded-md text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-          />
-        </div>
+        <input
+          type="text"
+          placeholder="Chercher un utilisateur..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full sm:w-1/2 mx-auto px-4 py-2 rounded-md text-black"
+        />
 
         <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="px-4 py-2 rounded-md text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="px-4 py-2 rounded-md text-black"
           >
             <option value="">Tous les rôles</option>
-            {roles.map(r => <option key={r} value={r}>{r}</option>)}
+            {roles.map((r) => (
+              <option key={r}>{r}</option>
+            ))}
           </select>
 
-          <span className="text-white text-sm font-medium">
+          <span className="text-white text-sm">
             Total : {filteredUsers.length}
           </span>
         </div>
 
         <div className="flex justify-end">
           <button
-             onClick={() => router.push("/admin/create-internal-user")}
-             className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-           >
-             ➕ Ajouter un utilisateur
-           </button>
+            onClick={() => router.push("/admin/create-internal-user")}
+            className="text-white px-4 py-2 rounded"
+          >
+            ➕ Ajouter
+          </button>
         </div>
       </div>
 
-      {/* Liste des utilisateurs */}
+      {/* Table */}
       <div className="max-w-6xl mx-auto space-y-2">
         <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
-          <div className="flex-[2]">Nom complet</div>
+          <div className="flex-[2]">Nom</div>
           <div className="flex-[2]">Email</div>
           <div className="flex-[2]">Rôles</div>
           <div className="flex-[1] text-center">Actions</div>
         </div>
 
-        {filteredUsers.length === 0 ? (
-          <p className="text-white text-center mt-6">Aucun utilisateur</p>
-        ) : (
-          filteredUsers.map(u => (
-            <UserRow key={u.id} u={u} setSelectedUser={setSelectedUser} setDeleteUser={setDeleteUser} />
-          ))
-        )}
+        {filteredUsers.map((u) => (
+          <UserRow
+            key={u.id}
+            u={u}
+            setSelectedUser={setSelectedUser}
+            setDeleteUser={setDeleteUser}
+          />
+        ))}
       </div>
 
       {/* Modals */}
-      {selectedUser && <EditUserModal user={selectedUser} onClose={() => setSelectedUser(null)} onUpdated={handleUpdated} />}
+      {selectedUser && (
+        <EditUserModal
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onUpdated={handleUpdated}
+        />
+      )}
 
       {deleteUser && (
-        <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/50">
-          <div className="bg-white p-8 rounded-3xl shadow-xl w-[90%] max-w-md text-center">
-            <h2 className="text-xl font-bold mb-4">Voulez-vous vraiment supprimer :</h2>
-            <p className="text-lg font-semibold text-red-600 mb-6">{deleteUser.prenom} {deleteUser.nom}</p>
-            <div className="flex gap-4 justify-center">
-              <button onClick={() => setDeleteUser(null)} className="bg-gray-300 px-5 py-2 rounded-xl font-semibold hover:bg-gray-400">Annuler</button>
-              <button onClick={handleDelete} className="bg-red-500 text-white px-5 py-2 rounded-xl font-semibold hover:bg-red-600">Supprimer</button>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50">
+          <div className="bg-white p-6 rounded-xl text-center">
+            <p>
+              Supprimer {deleteUser.prenom} {deleteUser.nom} ?
+            </p>
+            <div className="flex gap-3 justify-center mt-4">
+              <button onClick={() => setDeleteUser(null)}>
+                Annuler
+              </button>
+              <button
+                onClick={handleDelete}
+                className="text-red-500"
+              >
+                Supprimer
+              </button>
             </div>
           </div>
         </div>

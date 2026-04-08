@@ -245,7 +245,7 @@ function EtatConseiller() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        L'évolution des Ames par <span className="text-amber-300">Conseiller</span>
+        L'Evolution des Ames par <span className="text-amber-300">Conseiller</span>
       </h1>
 
       {/* FILTRES + GENERER + SELECT CONSEILLER */}

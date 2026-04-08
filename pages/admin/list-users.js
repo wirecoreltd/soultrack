@@ -99,14 +99,14 @@ function UserRow({ u, setSelectedUser, setDeleteUser }) {
 
         {/* Infos */}
         <div className="text-white text-sm">
-          <p><span className="font-semibold">Nom Complet :</span> {u.prenom} {u.nom}</p>
-          <p><span className="font-semibold">Téléphone :</span> {u.telephone || "-"}</p>
-          <p><span className="font-semibold">Email :</span> {u.email}</p>
-          <p><span className="font-semibold">Rôle :</span> {rolesDisplay}</p>
+          <p><span className="font-semibold mt-1">Nom Complet :</span> {u.prenom} {u.nom}</p>
+          <p><span className="font-semibold mt-1">Téléphone :</span> {u.telephone || "-"}</p>
+          <p><span className="font-semibold mt-1">Email :</span> {u.email}</p>
+          <p><span className="font-semibold mt-1 text-orange 400">Rôle :</span> {rolesDisplay}</p>
         </div>
 
         {/* Actions centrées */}
-        <div className="flex justify-center gap-6 pt-2">
+        <div className="flex justify-center gap-3 pt-2">
           <button
             onClick={() => setSelectedUser(u)}
             className="text-blue-400 text-lg"

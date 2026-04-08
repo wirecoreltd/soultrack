@@ -99,42 +99,42 @@ function UserRow({ u, setSelectedUser, setDeleteUser }) {
 
         {/* Infos */}
         <div className="text-white text-sm space-y-2">
-  <div className="flex gap-2">
-    <span className="font-semibold min-w-[110px]">Nom Complet :</span>
-    <span>{u.prenom} {u.nom}</span>
-  </div>
-
-  <div className="flex gap-2">
-    <span className="font-semibold min-w-[110px]">Téléphone :</span>
-    <span>{u.telephone || "-"}</span>
-  </div>
-
-  <div className="flex gap-2">
-    <span className="font-semibold min-w-[110px]">Email :</span>
-    <span className="break-all">{u.email}</span>
-  </div>
-
-  <div className="flex gap-2">
-    <span className="font-semibold min-w-[110px]">Rôle :</span>
-    <span className="text-orange-400 font-medium">{rolesDisplay}</span>
-  </div>
-</div>
+           <div className="flex gap-2">
+             <span className="justify-center font-semibold min-w-[110px]">Nom Complet :</span>
+             <span>{u.prenom} {u.nom}</span>
+           </div>
+         
+           <div className="flex gap-2">
+             <span className="font-semibold min-w-[110px]">📞 Téléphone :</span>
+             <span>{u.telephone || "-"}</span>
+           </div>
+         
+           <div className="flex gap-2">
+             <span className="font-semibold min-w-[110px]">📧 Email :</span>
+             <span className="break-all">{u.email}</span>
+           </div>
+         
+           <div className="flex gap-2">
+             <span className="font-semibold min-w-[110px] text-orange-400">🎖️ Rôle :</span>
+             <span className="text-orange-400 font-medium">{rolesDisplay}</span>
+           </div>
+         </div>
 
         {/* Actions centrées */}
-<div className="flex justify-center gap-3 pt-0.5">
-  <button
-    onClick={() => setSelectedUser(u)}
-    className="text-blue-400 text-base leading-none"
-  >
-    ✏️
-  </button>
-  <button
-    onClick={() => setDeleteUser(u)}
-    className="text-red-400 text-base leading-none"
-  >
-    🗑️
-  </button>
-</div>
+         <div className="flex justify-center gap-3 pt-0.5">
+           <button
+             onClick={() => setSelectedUser(u)}
+             className="text-blue-400 text-base leading-none"
+           >
+             ✏️
+           </button>
+           <button
+             onClick={() => setDeleteUser(u)}
+             className="text-red-400 text-base leading-none"
+           >
+             🗑️
+           </button>
+         </div>
       </div>
     </>
   );

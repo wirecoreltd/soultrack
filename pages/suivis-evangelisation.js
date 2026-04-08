@@ -357,7 +357,15 @@ export default function SuivisEvangelisation() {
     
     <HeaderPages />
     
-    <h1 className="text-3xl font-bold text-white mb-6">Suivis des Évangélisés</h1>
+   <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Suivis des <span className="text-emerald-300">Evangélisés</span></h1>
+
+    <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-white/90">
+            Suivez facilement tous vos<span className="text-blue-300 font-semibold"> contacts évangélisés et leur progression</span>.
+            Attribuez-les à un conseiller ou à une cellule, partagez leurs informations via WhatsApp, et <span className="text-blue-300 font-semibold"> consultez chaque contact en détail</span>.
+            Vous pouvez modifier ou supprimer des contacts, <span className="text-blue-300 font-semibold">assurant un suivi clair et structuré de l’évangélisation dans votre église</span>.
+          </p>
+        </div>
 
     {/* Toggle Vue / Refus */}
     <div className="mb-6 flex justify-end w-full max-w-6xl">     

@@ -136,15 +136,14 @@ function CreateConseiller() {
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
         <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700 hover:text-gray-900">← Retour</button>
         <div className="flex justify-center mb-6"><Image src="/logo.png" alt="Logo" width={80} height={80} /></div>        
-        <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">Créer un <span className="text-[#E6DAF8]">Conseiller</span></h1>
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">Créer un <span className="text-[#333699]">Conseiller</span></h1>
 
           <div className="max-w-3xl w-full mb-6 text-center">
             <p className="italic text-base text-black/90">
               <span className="text-[#FFB07C] font-semibold">Transformez </span>
-              un serviteur disponible en <span className="text-[#FFB07C] font-semibold">Conseiller</span> 
+              un serviteur disponible en <span className="text-[#FFB07C] font-semibold">Conseiller </span> 
               au sein de votre équipe. Remplissez ses <span className="text-[#FFB07C] font-semibold">informations</span>, 
-              assignez-lui un rôle et un mot de passe 
-              <span className="text-[#FFB07C] font-semibold">sécurisé</span>. Chaque création est guidée pour que le Conseiller 
+              assignez-lui un rôle et un mot de passe <span className="text-[#FFB07C] font-semibold">sécurisé</span>. Chaque création est guidée pour que le Conseiller 
               commence <span className="text-[#FFB07C] font-semibold">son rôle en toute sérénité</span>.
             </p>
           </div>    

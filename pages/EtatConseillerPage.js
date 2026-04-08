@@ -255,7 +255,7 @@ function EtatConseiller() {
     type="date" 
     value={filterDebut} 
     onChange={(e) => setFilterDebut(e.target.value)} 
-    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+    className="h-10 w-fit border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
   />
 
   {/* DATE FIN */}
@@ -263,14 +263,13 @@ function EtatConseiller() {
     type="date" 
     value={filterFin} 
     onChange={(e) => setFilterFin(e.target.value)} 
-    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+    className="h-10 w-fit border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
   />
 
   {/* BOUTON GENERER */}
   <button 
     onClick={fetchReports} 
-    className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366]"
-  >
+    className="h-10 w-fit bg-amber-300 px-3 py-2 rounded-xl hover:bg-amber-300">
     Générer
   </button>
 
@@ -279,7 +278,7 @@ function EtatConseiller() {
     <select
       value={filterConseiller}
       onChange={(e) => setFilterConseiller(e.target.value)}
-      className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-black"
+      className="h-10 w-fit border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-black"
     >
       <option value="">Tous les conseillers</option>
       {availableConseillers.map((c, i) => (

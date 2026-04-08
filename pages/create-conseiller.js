@@ -136,7 +136,16 @@ function CreateConseiller() {
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
         <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700 hover:text-gray-900">← Retour</button>
         <div className="flex justify-center mb-6"><Image src="/logo.png" alt="Logo" width={80} height={80} /></div>
-        <h1 className="text-3xl font-bold text-center mb-6">Créer un Conseiller</h1>
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-black">Créer un <span className="text-emerald-300">Conseiller</h1></span></h1>
+
+          <div className="max-w-3xl w-full mb-6 text-center">
+            <p className="italic text-base text-white/90">
+               <span className="text-blue-300 font-semibold">Transformez </span> un serviteur disponible en <span className="text-blue-300 font-semibold">Conseiller </span>
+               au sein de votre équipe. Remplissez ses <span className="text-blue-300 font-semibold">informations </span>, assignez-lui un rôle et un mot de passe 
+                <span className="text-blue-300 font-semibold">sécurisé</span>. Chaque création est guidée pour que le Conseiller 
+    commence <span className="text-blue-300 font-semibold"son rôle en toute sérénité</span>.
+            </p>
+          </div>    
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
           <select value={selectedMemberId} onChange={(e) => setSelectedMemberId(e.target.value)} className="input" required>

@@ -6,6 +6,7 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 
+// Définition des cartes par rôle
 const roleCards = {
   Administrateur: [
     { path: "/membres-hub", label: "Gestion des membres", emoji: "👥", color: "#0E7490" },
@@ -39,14 +40,14 @@ export default function IndexPage() {
 
   useEffect(() => {
     const init = async () => {
-      // 1️⃣ Vérifier session Supabase
+      // Vérifier la session Supabase
       const { data } = await supabase.auth.getSession();
       if (!data?.session) {
         router.replace("/SignupEglise");
         return;
       }
 
-      // 2️⃣ Récupérer les rôles depuis localStorage
+      // Récupérer les rôles depuis localStorage
       const storedRoles = localStorage.getItem("userRole");
       if (storedRoles) {
         try {
@@ -59,21 +60,24 @@ export default function IndexPage() {
 
       setLoading(false);
     };
+
     init();
   }, [router]);
 
   if (loading) return null;
 
-  // 3️⃣ Construire la liste des cartes à afficher
+  // Construire la liste des cartes à afficher
   let cardsToShow = [];
 
   if (roles.includes("Administrateur")) {
+    // Les Admins voient toutes les cartes uniques
     Object.values(roleCards).forEach((cards) => {
       cards.forEach((card) => {
         if (!cardsToShow.find((c) => c.path === card.path)) cardsToShow.push(card);
       });
     });
   } else {
+    // Tous les autres rôles
     roles.forEach((role) => {
       const roleKey = role.trim();
       if (roleCards[roleKey]) {
@@ -83,6 +87,22 @@ export default function IndexPage() {
       }
     });
   }
+
+  // Trier les cartes pour mettre en premier celles les plus pertinentes pour le rôle
+  const priorityPaths = [];
+  if (roles.includes("ResponsableCellule") || roles.includes("SuperviseurCellule")) priorityPaths.push("/cellules-hub");
+  if (roles.includes("ResponsableEvangelisation")) priorityPaths.push("/evangelisation-hub");
+  if (roles.includes("Conseiller")) priorityPaths.push("/conseiller-hub");
+
+  cardsToShow.sort((a, b) => {
+    const aIndex = priorityPaths.indexOf(a.path);
+    const bIndex = priorityPaths.indexOf(b.path);
+
+    if (aIndex === -1 && bIndex === -1) return 0;
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+    return aIndex - bIndex;
+  });
 
   const handleRedirect = (path) => {
     router.push(path.startsWith("/") ? path : "/" + path);

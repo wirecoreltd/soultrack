@@ -55,7 +55,7 @@ export default function LoginPage() {
       if (roles.includes("ResponsableCellule") || roles.includes("SuperviseurCellule")) {
         router.replace("/cellules-hub");
       } else if (roles.includes("Administrateur")) {
-        router.replace("/admin-hub"); // modifier si tu as une autre page admin
+        router.replace("/index"); // modifier si tu as une autre page admin
       } else if (roles.includes("ResponsableEvangelisation")) {
         router.replace("/evangelisation-hub");
       } else if (roles.includes("Conseiller")) {

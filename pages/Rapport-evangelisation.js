@@ -340,10 +340,16 @@ const handleConseillerClick = () => {
      {/* FILTRES */}
         <div id="rapport-filtres"
           className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col md:flex-row items-center gap-3 md:gap-4 text-white">  
+
+              <div className="w-full mb-2 md:mb-0">
+                <p className="text-white font-semibold text-center md:text-center">
+                  Veuillez choisir vos paramètres ci-dessous pour générer le rapport.
+                </p>
+              </div>
+                        
             
             {/* Date début */}   
-            <div className="flex flex-col">
-                      <label className="text-sm font-semibold mb-1">Date de début</label>
+            <div className="flex flex-col">                      
                             <input 
                     type="date" 
                     value={dateDebut}
@@ -353,8 +359,7 @@ const handleConseillerClick = () => {
                       </div>
         
             {/* Date fin */}   
-              <div className="flex flex-col">
-                      <label className="text-sm font-semibold mb-1">Date de fin</label>
+              <div className="flex flex-col">                      
                             <input 
                     type="date" 
                      value={dateFin} 

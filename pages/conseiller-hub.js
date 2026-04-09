@@ -120,6 +120,6 @@ function ConseillerHubContent() {
 
         <Footer />
       </div>
-    </AccessGuard>
+    <AccessGuard allowedRoles={["Administrateur", "Conseiller", "ResponsableIntegration"]}>
   );
 }

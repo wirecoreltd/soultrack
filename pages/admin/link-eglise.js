@@ -229,7 +229,10 @@ Que Dieu vous bénisse 🙏
   
   <div className="max-w-3xl w-full text-center">
     <p className="italic text-base text-white/90 mb-4">
-      Relier une église vous permet de placer une église sous votre supervision et de voir ses statistiques dans <span className="text-blue-300 font-semibold">Stats Globales</span>. <br /> 
+      Relier une église vous permet de placer une église sous votre supervision et de voir ses statistiques dans <span className="text-blue-300 font-semibold">Stats Globales</span>.
+      </p>
+       
+    <p className="text-white/80 mb-2">
       Dans cette interface, vous pouvez :
     </p>
     

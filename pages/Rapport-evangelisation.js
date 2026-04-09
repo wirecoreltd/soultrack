@@ -340,7 +340,7 @@ const handleConseillerClick = () => {
     {/* FILTRES */}
 <div
   id="rapport-filtres"
-  className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white"
+  className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white">
   
   {/* TEXTE AU-DESSUS */}
   <p className="text-white font-semibold text-center mb-4">

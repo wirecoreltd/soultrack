@@ -94,7 +94,7 @@ function EtatConseiller() {
 
     try {
       let query = supabase
-        .from("vue_flow_conseillers")
+        .from("vue_flow_conseillers_v2")
         .select("*")
         .order("date_depart", { ascending: false });
 
@@ -179,7 +179,9 @@ function EtatConseiller() {
         return;
       }
 
-      if (row.type_evangelisation && row.type_evangelisation.toLowerCase() !== "integration") {
+      const type = row.type_evangelisation?.toLowerCase().trim();
+
+if (type !== "integration"){
         const { data, error } = await supabase
           .from("suivis_des_evangelises")
           .select("*")

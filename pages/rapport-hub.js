@@ -131,7 +131,7 @@ function RapportHubContent() {
       <div className="max-w-3xl w-full mb-6 text-center">
         <p className="italic text-base text-white/90">
           Et le Seigneur ajoutait chaque jour à l’Église ceux qui étaient sauvés. <br />
-          Actes 2:47 ✨
+          Actes 2:47
         </p>
       </div>
     </div>

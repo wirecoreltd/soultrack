@@ -232,10 +232,10 @@ Que Dieu vous bénisse 🙏
       </p>
        
     <p className="text-white 3xl mb-2 text-semibold">
-      Dans cette interface, vous pouvez :
+      Dans cette <span className="text-blue-300 font-semibold">interface</span>, vous pouvez :
     </p>
     
-    <ul className="list-none space-y-2">
+    <ul className="mt-2 list-none space-y-2">
       <li className="text-green-400">✉️ <strong>Envoyer une invitation</strong> à une église</li>  
       <li className="text-gray-400">🔗 <strong>Casser le lien</strong> avec une église supervisée</li>
       <li className="text-red-500">🗑️ <strong>Supprimer</strong> une invitation envoyée</li>

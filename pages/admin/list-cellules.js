@@ -228,7 +228,7 @@ function ListCellulesContent() {
 
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Liste des <span className="text-emerald-300">Cellules</span></h1>
       
-    <div className="max-w-3xl w-full mb-6 text-center">
+    <div className="max-w-3xl w-full mb-6 text-center mx-auto">
           <p className="italic text-base text-white/90">
      <span className="text-blue-300 font-semibold">Gérez et consultez facilement vos cellules</span>.
                Recherchez par nom, filtrez rapidement, visualisez les responsables et le nombre de membres, 

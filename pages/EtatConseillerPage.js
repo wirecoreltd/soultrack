@@ -94,7 +94,7 @@ function EtatConseiller() {
 
     try {
       let query = supabase
-        .from("vue_flow_conseillers_v2")
+        .from("vue_flow_conseillers")
         .select("*")
         .order("date_depart", { ascending: false });
 

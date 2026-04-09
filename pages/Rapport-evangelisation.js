@@ -340,7 +340,7 @@ const handleConseillerClick = () => {
     {/* FILTRES */}
 <div
   id="rapport-filtres"
-  className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white"
+  className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full flex flex-col text-white"
 >
   {/* TEXTE AU-DESSUS */}
   <p className="text-white font-semibold text-center mb-4">
@@ -349,42 +349,49 @@ const handleConseillerClick = () => {
 
   {/* CONTAINER DES FILTRES */}
   <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
+
     {/* Date début */}
-    <div className="flex flex-col">     
+    <div className="flex flex-col w-full md:w-auto">
+      <label className="text-xs text-center mb-1">Date début</label>
       <input
         type="date"
         value={dateDebut}
         onChange={(e) => setDateDebut(e.target.value)}
-        className="w-full h-10 md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
       />
     </div>
 
     {/* Date fin */}
-    <div className="flex flex-col">     
+    <div className="flex flex-col w-full md:w-auto">
+      <label className="text-xs text-center mb-1">Date fin</label>
       <input
         type="date"
         value={dateFin}
         onChange={(e) => setDateFin(e.target.value)}
-        className="w-full h-10 md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+        className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
       />
     </div>
 
     {/* Bouton */}
-    <button
-      onClick={fetchRapports}
-      disabled={loading}
-      className="w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
-    >
-      {loading ? "Chargement..." : "Générer le rapport"}
-    </button>
+    <div className="flex flex-col w-full md:w-auto">
+      <label className="text-xs text-center mb-1 opacity-0">btn</label>
+      <button
+        onClick={fetchRapports}
+        disabled={loading}
+        className="w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
+      >
+        {loading ? "Chargement..." : "Générer le rapport"}
+      </button>
+    </div>
 
-    {/* Type */}
+    {/* TYPE (reste bien après le bouton) */}
     {showTable && (
-      <div className="flex flex-col md:flex-row items-center gap-2">
-         <select
+      <div className="flex flex-col w-full md:w-auto">
+        <label className="text-xs text-center mb-1">Type</label>
+        <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="w-full h-10 md:w-auto border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
         >
           <option value="">Tous</option>
           {availableTypes.map((type) => (
@@ -395,6 +402,7 @@ const handleConseillerClick = () => {
         </select>
       </div>
     )}
+
   </div>
 </div>
      

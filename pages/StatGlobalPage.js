@@ -439,49 +439,58 @@ cellulesData.forEach(c => {
 
       <div className="flex justify-center mb-8">
   <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl flex gap-6 flex-wrap items-end w-fit shadow-lg">
-    
-    <div className="flex flex-col">
-      <label className="text-sm mb-1">Date début</label>
+
+    {/* DATE DEBUT */}
+    <div className="flex flex-col w-full md:w-auto">
+      <label className="text-sm text-center mb-1">Date début</label>
       <input
         type="date"
         value={dateDebut}
         onChange={(e) => setDateDebut(e.target.value)}
-        className="px-3 py-2 rounded-lg text-black"
+        className="px-3 py-2 rounded-lg text-black w-full md:w-auto"
       />
     </div>
 
-    <div className="flex flex-col">
-      <label className="text-sm mb-1">Date fin</label>
+    {/* DATE FIN */}
+    <div className="flex flex-col w-full md:w-auto">
+      <label className="text-sm text-center mb-1">Date fin</label>
       <input
         type="date"
         value={dateFin}
         onChange={(e) => setDateFin(e.target.value)}
-        className="px-3 py-2 rounded-lg text-black"
+        className="px-3 py-2 rounded-lg text-black w-full md:w-auto"
       />
     </div>
 
-    <div className="flex flex-col">
-      <label className="text-sm mb-1">Superviseur</label>
-      <select
-        value={superviseurFilter}
-        onChange={(e) => setSuperviseurFilter(e.target.value)}
-        className="px-3 py-2 rounded-lg text-black"
+    {/* BOUTON GENERER */}
+    <div className="flex flex-col w-full md:w-auto">
+      <label className="text-sm text-center mb-1 opacity-0">btn</label>
+      <button
+        onClick={fetchStats}
+        className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition text-white w-full md:w-auto"
       >
-        <option value="">Tous</option>
-        {superviseurOptions.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.nom}
-          </option>
-        ))}
-      </select>
+        {loading ? "Générer..." : "Générer"}
+      </button>
     </div>
 
-    <button
-      onClick={fetchStats}
-      className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition text-white"
-          >
-      {loading ? "Générer..." : "Générer"}
-    </button>
+    {/* SELECT SUPERVISEUR (après génération) */}
+    {superviseurOptions.length > 0 && (
+      <div className="flex flex-col w-full md:w-auto">
+        <label className="text-sm text-center mb-1">Superviseur</label>
+        <select
+          value={superviseurFilter}
+          onChange={(e) => setSuperviseurFilter(e.target.value)}
+          className="px-3 py-2 rounded-lg text-black w-full md:w-auto text-center"
+        >
+          <option value="">Tous</option>
+          {superviseurOptions.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.nom}
+            </option>
+          ))}
+        </select>
+      </div>
+    )}
 
   </div>
 </div>

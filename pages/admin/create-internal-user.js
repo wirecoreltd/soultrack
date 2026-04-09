@@ -262,22 +262,48 @@ function CreateInternalUserContent() {
           <Image  src="/logo.png"  alt="Logo SoulTrack"  width={80}  height={80} />
         </div>
             
-        <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">Créer un <br />à ma <span className="text-[#333699]">Utilisateur</span></h1>
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">
+  Créer un <br />
+  <span className="text-[#333699]">Utilisateur</span>
+</h1>
 
-        <div className="max-w-3xl w-full mb-6 text-center">
-            <p className="italic text-base text-black/90">
-            Créez un utilisateur en sélectionnant un membre existant ou en ajoutant un nouveau serviteur.
-            Chaque utilisateur doit se voir attribuer au moins un <span className="text-[#FFB07C] font-semibold">rôle</span>. Selon le rôle choisi, il aura accès à son <span className="text-[#FFB07C] font-semibold">hub dédié</span> :  
-             </p>
-            <p className="italic text-base text-black/90">
-            Administrateur – <span className="text-[#FFB07C] font-semibold">gestion complète du système</span>
-            Responsable Intégration – <span className="text-[#FFB07C] font-semibold">gestion des membres</span> (Espace Membres)
-            Responsable Évangélisation – <span className="text-[#FFB07C] font-semibold">suivi des activités d’évangélisation</span> (Espace Évangélisation)
-            Responsable Cellule – <span className="text-[#FFB07C] font-semibold">gestion des cellules</span> (Espace Cellule)
-            Conseiller – <span className="text-[#FFB07C] font-semibold">accompagnement des membres</span> (Espace Conseiller)
-            Superviseur Cellule – <span className="text-[#FFB07C] font-semibold">supervision des cellules et possibilité de créer des responsables</span> (Espace Cellule)
-            </p>
-          </div>      
+<div className="max-w-3xl w-full mb-6 text-center space-y-3">
+  <p className="italic text-base text-black/90">
+    Créez un utilisateur en sélectionnant un membre existant ou en ajoutant un nouveau serviteur.
+    Chaque utilisateur doit se voir attribuer au moins un{" "}
+    <span className="text-[#FFB07C] font-semibold">rôle</span>.  
+    Selon le rôle choisi, il aura accès à son{" "}
+    <span className="text-[#FFB07C] font-semibold">hub dédié</span> :
+  </p>
+
+  <div className="italic text-sm text-black/90 space-y-1">
+    <p>
+      • Administrateur –{" "}
+      <span className="text-[#FFB07C] font-semibold">gestion complète du système</span> (Hub Admin)
+    </p>
+    <p>
+      • Responsable Intégration –{" "}
+      <span className="text-[#FFB07C] font-semibold">gestion des membres</span> (Hub Membres)
+    </p>
+    <p>
+      • Responsable Évangélisation –{" "}
+      <span className="text-[#FFB07C] font-semibold">suivi de l’évangélisation</span> (Hub Évangélisation)
+    </p>
+    <p>
+      • Responsable Cellule –{" "}
+      <span className="text-[#FFB07C] font-semibold">gestion des cellules</span> (Hub Cellule)
+    </p>
+    <p>
+      • Conseiller –{" "}
+      <span className="text-[#FFB07C] font-semibold">accompagnement des membres</span> (Hub Conseiller)
+    </p>
+    <p>
+      • Superviseur Cellule –{" "}
+      <span className="text-[#FFB07C] font-semibold">supervision et création de responsables</span> (Hub Cellule)
+    </p>
+  </div>
+</div>
+        
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <select

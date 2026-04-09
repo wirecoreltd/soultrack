@@ -262,7 +262,22 @@ function CreateInternalUserContent() {
           <Image  src="/logo.png"  alt="Logo SoulTrack"  width={80}  height={80} />
         </div>
             
-        <h1 className="text-3xl font-bold text-center mb-6">Créer un utilisateur</h1>
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">Créer un <br />à ma <span className="text-[#333699]">Utilisateur</span></h1>
+
+        <div className="max-w-3xl w-full mb-6 text-center">
+            <p className="italic text-base text-black/90">
+            Créez un utilisateur en sélectionnant un membre existant ou en ajoutant un nouveau serviteur.
+            Chaque utilisateur doit se voir attribuer au moins un <span className="text-[#FFB07C] font-semibold">rôle</span>. Selon le rôle choisi, il aura accès à son <span className="text-[#FFB07C] font-semibold">hub dédié</span> :  
+             </p>
+            <p className="italic text-base text-black/90">
+            Administrateur – <span className="text-[#FFB07C] font-semibold">gestion complète du système</span>
+            Responsable Intégration – <span className="text-[#FFB07C] font-semibold">gestion des membres</span> (Espace Membres)
+            Responsable Évangélisation – <span className="text-[#FFB07C] font-semibold">suivi des activités d’évangélisation</span> (Espace Évangélisation)
+            Responsable Cellule – <span className="text-[#FFB07C] font-semibold">gestion des cellules</span> (Espace Cellule)
+            Conseiller – <span className="text-[#FFB07C] font-semibold">accompagnement des membres</span> (Espace Conseiller)
+            Superviseur Cellule – <span className="text-[#FFB07C] font-semibold">supervision des cellules et possibilité de créer des responsables</span> (Espace Cellule)
+            </p>
+          </div>      
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <select

@@ -101,13 +101,13 @@ export default function IndexPage() {
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Tableau de bord</h1>
 
+        <div className="max-w-3xl w-full mb-6 text-center">
+        <p className="italic text-base text-white/90">
+      
       <span className="text-blue-300 font-semibold">Bienvenue dans votre espace</span>.  
       Selon votre rôle, accédez aux différents hubs pour servir, organiser et accompagner <span className="text-blue-300 font-semibold">la croissance de l’église</span>.  
-      Chaque action contribue à <span className="text-blue-300 font-semibold">bâtir</span> et faire grandir les <span className="text-blue-300 font-semibold">vies</span>.
-        <div className="max-w-3xl w-full mb-6 text-center">
-          <p className="italic text-base text-white/90">
-        
-          </p>
+      Chaque action contribue à <span className="text-blue-300 font-semibold">bâtir</span> et faire grandir les <span className="text-blue-300 font-semibold">vies</span>.      
+           </p>
         </div>
       </div>
 
@@ -126,10 +126,11 @@ export default function IndexPage() {
         ))}
       </div>
 
-      <div className="text-white text-lg italic max-w-2xl mt-6 leading-relaxed tracking-wide font-light">
-        Car le corps ne se compose pas d’un seul membre, mais de plusieurs. <br />
-        1 Corinthiens 12:14 ❤️
-      </div>
+       <div className="max-w-3xl w-full mb-6 text-center">
+        <p className="italic text-base text-white/90">      
+      Une vision, plusieurs rôles, un même objectif : voir des vies transformées.      
+           </p>
+        </div>
 
       <Footer />
     </div>

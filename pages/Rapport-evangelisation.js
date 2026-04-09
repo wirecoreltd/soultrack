@@ -344,14 +344,13 @@ const handleConseillerClick = () => {
 >
   {/* TEXTE AU-DESSUS */}
   <p className="text-white font-semibold text-center mb-4">
-    Veuillez choisir vos paramètres ci-dessous pour générer le rapport
+    Choisissez les paramètres pour générer le rapport
   </p>
 
   {/* CONTAINER DES FILTRES */}
   <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
     {/* Date début */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold mb-1 text-white">Date début</label>
+    <div className="flex flex-col">     
       <input
         type="date"
         value={dateDebut}
@@ -361,8 +360,7 @@ const handleConseillerClick = () => {
     </div>
 
     {/* Date fin */}
-    <div className="flex flex-col">
-      <label className="text-sm font-semibold mb-1 text-white">Date fin</label>
+    <div className="flex flex-col">     
       <input
         type="date"
         value={dateFin}

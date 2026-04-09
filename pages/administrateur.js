@@ -113,32 +113,8 @@ export default function Administrateur() {
             <div className="text-lg font-bold text-gray-800 text-center">
               Invitations & Liens d’églises
             </div>
-          </Link>
-
-          {/* 🔹 Carte : Liste des Cellules */}
-          <Link
-            href="/admin/list-cellules"
-            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-            style={{ borderTopColor: "#10B981" }}
-          >
-            <div className="text-4xl mb-1">🏠</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Liste des Cellules
-            </div>
-          </Link>
-
-          {/* 🔹 Carte : Créer une Cellule */}
-          <Link
-            href="/admin/create-cellule"
-            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-            style={{ borderTopColor: "#F97316" }}
-          >
-            <div className="text-4xl mb-1">🛠️</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Créer une Cellule
-            </div>
-          </Link>
-
+          </Link>      
+          
           {/* 🔹 Carte : Créer un Utilisateur */}
           <Link
             href="/admin/create-internal-user"

@@ -224,14 +224,9 @@ Que Dieu vous bénisse 🙏
     <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Invitations & Liens <span className="text-emerald-300">d’Eglises</span></h1>
     <div className="max-w-3xl w-full mb-6 text-center mx-auto">
           <p className="italic text-base text-white/90">
-   Relier une église vous permet de placer une église sous votre supervision et de voir ses statistiques dans <strong>Stats Globales</strong>.
-     </p>
-        </div>
-
-    <div className="max-w-3xl w-full mb-6 text-center mx-auto">
-          <p className="italic text-base text-white/90">
-   Dans cette interface, vous pouvez :
-     </p>
+   Relier une église vous permet de placer une église sous votre supervision et de voir ses statistiques dans <span className="text-blue-300 font-semibold">Stats Globales</span>. <br /> Dans cette interface, vous pouvez :
+     </p>      
+   
        <ul className="list-none space-y-2 ml-0">
               <li className="text-green-400">✉️ <strong>Envoyer une invitation</strong> à une église</li>  
               <li className="text-gray-400">🔗 <strong>Casser le lien</strong> avec une église supervisée</li>
@@ -243,6 +238,7 @@ Que Dieu vous bénisse 🙏
               Toutes les actions sont suivies ici et visibles dans votre tableau.
             </p>
         </div>    
+     </div>
 
   <h5 className="text-2xl font-bold mb-6 text-center w-full max-w-5xl">
         {modeAction === "rappel" ? "Envoyer un rappel" :

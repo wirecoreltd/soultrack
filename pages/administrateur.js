@@ -61,17 +61,10 @@ export default function Administrateur() {
          <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Espace Administrateur</h1>  
 
   <div className="max-w-3xl w-full mb-6 text-center">
-          <p className="italic text-base text-white/90">
-        Gérez l’ensemble de votre plateforme en toute simplicité.  
-    Depuis cet espace, vous pouvez organiser les{" "}
-    <span className="text-amber-300 font-semibold">utilisateurs</span>, structurer les{" "}
-    <span className="text-amber-300 font-semibold">cellules</span> et gérer les{" "}
-    <span className="text-amber-300 font-semibold">liens entre églises</span>.  
-  </p>
-
-  <p className="italic text-base text-white/90 mt-2">
-    Chaque action contribue à une meilleure organisation et à une croissance harmonieuse de l’ensemble.
-  </p>
+          <p className="italic text-base text-white/90">            
+            Cet espace vous permet de <span className="text-blue-300 font-semibold">gérer</span> les utilisateurs, <span className="text-blue-300 font-semibold">organiser</span> les rôles et établir les <span className="text-blue-300 font-semibold">liens entre églises</span>.
+            Vous êtes au cœur de la <span className="text-blue-300 font-semibold">structure et du bon fonctionnement</span> de l’ensemble.
+          </p>
         </div>
 
         {/* 🔹 Cartes principales */}

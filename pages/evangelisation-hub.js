@@ -95,7 +95,7 @@ function EvangelisationHubContent() {
 
       {/* 🔹 Verset biblique inspirant */}
       <div className="mt-auto mb-4 text-center text-white text-base italic max-w-2xl leading-relaxed tracking-wide font-light">
-        Va, fais de toutes les nations des disciples. Chaque rencontre compte, chaque âme est précieuse. ✨         
+        Va, fais de toutes les nations des disciples. Chaque rencontre compte, chaque âme est précieuse.        
       </div>
         <Footer />
     </div>

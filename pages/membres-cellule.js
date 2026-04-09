@@ -188,7 +188,7 @@ function MembresCelluleContent() {
   </span>
       </h1>
 
-<div className="max-w-3xl w-full mb-6 text-center">
+<div className="max-w-3xl w-full mb-6 text-center mx-auto">
   <p className="italic text-base text-white/90">
    Consultez et gérez facilement les membres de vos cellules.
    <span className="text-blue-300 font-semibold">Recherchez</span>, filtrez par cellule, <span className="text-blue-300 font-semibold">accédez aux détails complets</span> 

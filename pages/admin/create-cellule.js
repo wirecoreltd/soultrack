@@ -153,9 +153,12 @@ function CreateCelluleContent() {
           <Image src="/logo.png" alt="SoulTrack" width={80} height={80} />
         </div>
 
-        <h1 className="text-3xl font-bold text-center mb-6">
-          Créer une cellule
-        </h1>
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black"> Créer une <br />à ma <span className="text-[#333699]">Cellule</span></h1>
+         <div className="max-w-3xl w-full mb-6 text-center">
+            <p className="italic text-base text-black/90">
+              Chaque cellule doit être créée avec un responsable pour guider et soutenir le groupe        
+             </p>
+          </div>    
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input

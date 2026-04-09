@@ -217,9 +217,17 @@ useEffect(() => {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        L'Evolution des Ames par <span className="text-amber-300">Cellule</span>
-      </h1>
+       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+L'Évolution des Âmes par <span className="text-emerald-300">Cellule</span></h1>
+
+  <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-white/90">   
+          <span className="text-blue-300 font-semibold">Cette page est un outil de vision et de gestion spirituelle.</span>
+          Les âmes viennent de <span className="text-blue-300 font-semibold">l’évangélisation ou de l’église</span>, puis sont orientées vers les cellules pour grandir
+          <span className="text-blue-300 font-semibold">Chaque donnée représente une vie précieuse</span>, chaque progression témoigne de <span className="text-blue-300 font-semibold">l’œuvre de Dieu</span>.
+          Soyons de bons intendants, veillant avec fidélité, amour et discernement sur le parcours de ceux que le Seigneur nous <span className="text-blue-300 font-semibold">confie</span>.
+          </p>
+        </div>
 
       {/* ================= FILTRES ================= */}
 <div className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col md:flex-row items-center gap-3 md:gap-4 text-white">

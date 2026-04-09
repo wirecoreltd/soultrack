@@ -170,44 +170,45 @@ function EtatConseiller() {
   };
 
   const handleDetailsClick = async (row) => {
-    try {
-      if (!row) return;
+  try {
+    if (!row || !row.personne_id) {
+      alert("Donnée invalide");
+      return;
+    }
 
-      if (!row.personne_id) {
-        console.warn("personne_id est NULL", row);
-        alert("Impossible d'ouvrir : donnée incomplète");
+    // 🔥 UTILISER source au lieu de type_evangelisation
+    if (row.source === "evangelisation") {
+      const { data, error } = await supabase
+        .from("suivis_des_evangelises")
+        .select("*")
+        .eq("id", row.personne_id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      setSelectedEvangelise({ ...row, ...data });
+
+    } else if (row.source === "integration") {
+      const { data, error } = await supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("id", row.personne_id)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) {
+        alert("Membre introuvable");
         return;
       }
 
-      const type = row.type_evangelisation?.toLowerCase().trim();
-
-if (type !== "integration"){
-        const { data, error } = await supabase
-          .from("suivis_des_evangelises")
-          .select("*")
-          .eq("id", row.personne_id)
-          .maybeSingle();
-
-        if (error) throw error;
-
-        setSelectedEvangelise({ ...row, ...data });
-      } else if (row.type_evangelisation?.toLowerCase() === "integration") {
-        const { data, error } = await supabase
-          .from("membres_complets")
-          .select("*")
-          .eq("id", row.personne_id)
-          .maybeSingle();
-
-        if (error) throw error;
-        if (!data) return;
-
-        setSelectedMember(data);
-      }
-
-    } catch (err) {
-      console.error("Erreur fetch details:", err);
+      setSelectedMember(data);
     }
-  };
+
+  } catch (err) {
+    console.error("Erreur details:", err);
+    alert("Erreur lors de l'ouverture");
+  }
+};
 
   const displayedReports = filterConseiller
     ? reports.filter(r => r.conseiller === filterConseiller)

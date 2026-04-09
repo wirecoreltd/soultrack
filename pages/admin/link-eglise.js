@@ -236,12 +236,12 @@ Que Dieu vous bénisse 🙏
       Dans cette <span className="text-blue-300 font-semibold">interface</span>, vous pouvez :
     </p>
 
-    <ul className="list-none space-y-3 mt-3 text-base">
-      <li className="text-green-400 italic">✉️ <strong>Envoyer une invitation</strong> à une église</li>  
-      <li className="text-gray-400 italic">🔗 <strong>Casser le lien</strong> avec une église supervisée</li>
-      <li className="text-red-500 italic">🗑️ <strong>Supprimer</strong> une invitation envoyée</li>
-      <li className="text-green-400 italic">🔄 <strong>Renvoyer le lien</strong> si nécessaire</li>
-      <li className="text-yellow-300 italic">⏳ <strong>Envoyer un rappel</strong> pour une invitation en attente</li>
+    <ul className="list-none space-y-3 text-base">
+      <li className="text-green-400 italic mt-3">✉️ <strong>Envoyer une invitation</strong> à une église</li>  
+      <li className="text-gray-400 italic mt-1">🔗 <strong>Casser le lien</strong> avec une église supervisée</li>
+      <li className="text-red-500 italic mt-1">🗑️ <strong>Supprimer</strong> une invitation envoyée</li>
+      <li className="text-green-400 italic mt-1">🔄 <strong>Renvoyer le lien</strong> si nécessaire</li>
+      <li className="text-yellow-300 italic mt-1">⏳ <strong>Envoyer un rappel</strong> pour une invitation en attente</li>
     </ul>
     
     <p className="mt-3 text-gray-300 text-sm italic">

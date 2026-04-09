@@ -55,7 +55,7 @@ function RapportHubContent() {
           <Link
             href="/Rapport-evangelisation"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
-            border-t-4 border-[#3B82F6] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+            border-t-4 border-[#38BDF8] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
             <div className="text-4xl mb-2">🗣️</div>
             <div className="text-lg font-bold text-gray-800 text-center">Évangélisation</div>
@@ -64,7 +64,7 @@ function RapportHubContent() {
           <Link
             href="/RapportBaptemePage"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
-            border-t-4 border-[#14B8A6] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+            border-t-4 border-[#10B981] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
             <div className="text-4xl mb-2">💧</div>
             <div className="text-lg font-bold text-gray-800 text-center">Baptêmes</div>
@@ -73,7 +73,7 @@ function RapportHubContent() {
           <Link
             href="/RapportFormationPage"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
-            border-t-4 border-[#10B981] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+            border-t-4 border-[#FBBF24] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
             <div className="text-4xl mb-2">✒️</div>
             <div className="text-lg font-bold text-gray-800 text-center">Formation</div>
@@ -82,7 +82,7 @@ function RapportHubContent() {
           <Link
             href="/RapportMinisterePage"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
-            border-t-4 border-[#A78BFA] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+            border-t-4 border-[#3B82F6] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
             <div className="text-4xl mb-2">💢</div>
             <div className="text-lg font-bold text-gray-800 text-center">Ministère</div>
@@ -91,7 +91,7 @@ function RapportHubContent() {
           <Link
             href="/RapportBesoinPage"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
-            border-t-4 border-[#8B5CF6] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+            border-t-4 border-[#F472B6] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
             <div className="text-4xl mb-2">❓</div>
             <div className="text-lg font-bold text-gray-800 text-center">Difficultés / Besoins</div>
@@ -100,7 +100,7 @@ function RapportHubContent() {
           <Link
             href="/EtatConseillerPage"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
-            border-t-4 border-[#F43F5E] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+            border-t-4 border-[#22D3EE] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
             <div className="text-4xl mb-2">🌱</div>
             <div className="text-lg font-bold text-gray-800 text-center">Évolution des Âmes par Conseiller</div>
@@ -109,7 +109,7 @@ function RapportHubContent() {
           <Link
             href="/EtatCellulePage"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
-            border-t-4 border-[#EAB308] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+            border-t-4 border-[#A78BFA] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
             <div className="text-4xl mb-2">🪴</div>
             <div className="text-lg font-bold text-gray-800 text-center">État Cellule</div>
@@ -118,7 +118,7 @@ function RapportHubContent() {
           <Link
             href="/StatGlobalPage"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
-            border-t-4 border-[#6366F1] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+            border-t-4 border-[#84CC16] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
             <div className="text-4xl mb-2">📊</div>
             <div className="text-lg font-bold text-gray-800 text-center">Statistiques Globales</div>

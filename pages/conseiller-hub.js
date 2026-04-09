@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import LogoutLink from "../components/LogoutLink";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import supabase from "../lib/supabaseClient";
+import HeaderPages from "../components/HeaderPages";
+import ProtectedRoute from "../components/ProtectedRoute"; 
+import AccessGuard from "../components/AccessGuard";
+import Footer from "../components/Footer";
 
-export default function MembresHub() {
+export default function ConseillerHub() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
 

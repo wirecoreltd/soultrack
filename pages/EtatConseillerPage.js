@@ -94,12 +94,12 @@ function EtatConseiller() {
 
     try {
       let query = supabase
-        .from("vue_flow_conseillers")
+        .from("vue_flow_conseillers_v2")
         .select("*")
         .order("date_depart", { ascending: false });
 
       if (!userProfile.roles?.includes("Administrateur")) {
-        query = query.ilike("responsable", `%${userProfile.prenom}%`);
+        query = query.eq("conseiller_id", userProfile.id);
       }
 
       const { data, error } = await query;

@@ -70,7 +70,7 @@ export default function Administrateur() {
   </p>
 
   <p className="italic text-base text-white/90 mt-2">
-    Chaque action contribue à une meilleure organisation et à une croissance harmonieuse de l’ensemble. ⚙️
+    Chaque action contribue à une meilleure organisation et à une croissance harmonieuse de l’ensemble.
   </p>
         </div>
 

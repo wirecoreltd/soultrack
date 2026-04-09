@@ -343,9 +343,9 @@ const handleConseillerClick = () => {
   className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white">
   
   {/* TEXTE AU-DESSUS */}
-  <p className="text-red-400 font-semibold text-center mb-4">
+  <p className="text-base text-red-400 font-semibold text-center mb-4">
     Choisissez les paramètres pour générer le rapport
-  </p>
+  </p> 
 
   {/* CONTAINER DES FILTRES */}
   <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">

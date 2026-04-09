@@ -220,7 +220,7 @@ Que Dieu vous bénisse 🙏
     <div className="min-h-screen bg-[#333699] text-white p-4 flex flex-col items-center">
       <HeaderPages />     
 
-         {/* TEXTE EXPLICATIF FULL WIDTH, CENTRÉ, COULEURS POUR ACTIONS */}    
+         {/* TEXTE EXPLICATIF FULL WIDTH, CENTRÉ, COULEURS POUR ACTIONS */}
 <div className="w-full flex flex-col items-center mb-8">
   <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
     Invitations & Liens <span className="text-emerald-300">d’Eglises</span>
@@ -229,21 +229,22 @@ Que Dieu vous bénisse 🙏
   <div className="max-w-3xl w-full text-center">
     <p className="italic text-base text-white/90 mb-4">
       Relier une église vous permet de placer une église sous votre supervision et de voir ses statistiques dans <span className="text-blue-300 font-semibold">Stats Globales</span>.
-      </p>
-       
-    <p className="text-white 3xl mb-2 text-semibold">
-      Dans cette <span className="text-blue-300 font-semibold">interface</span>, vous pouvez :
     </p>
     
-    <ul className="mt-2 list-none space-y-2">
-      <li className="text-green-400">✉️ <strong>Envoyer une invitation</strong> à une église</li>  
+    {/* Petit paragraphe plus bas */}
+    <p className="italic text-base text-white/90 mb-4">
+      Dans cette interface, vous pouvez :
+    </p>
+
+    <ul className="list-none space-y-3 mt-2">
+      <li className="text-green-400 italic">✉️ <strong>Envoyer une invitation</strong> à une église</li>  
       <li className="text-gray-400">🔗 <strong>Casser le lien</strong> avec une église supervisée</li>
       <li className="text-red-500">🗑️ <strong>Supprimer</strong> une invitation envoyée</li>
-      <li className="text-orange-400">🔄 <strong>Renvoyer le lien</strong> si nécessaire</li>
+      <li className="text-green-400">🔄 <strong>Renvoyer le lien</strong> si nécessaire</li>
       <li className="text-yellow-300">⏳ <strong>Envoyer un rappel</strong> pour une invitation en attente</li>
     </ul>
     
-    <p className="mt-3 text-gray-300 text-sm">
+    <p className="mt-3 text-gray-300 text-sm italic">
       Toutes les actions sont suivies ici et visibles dans votre tableau.
     </p>
   </div>

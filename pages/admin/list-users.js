@@ -246,9 +246,16 @@ function ListUsersContent() {
     <div className="min-h-screen p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-4xl text-white text-center mb-6 font-bold">
-        Gestion des utilisateurs
-      </h1>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Gestion des <span className="text-emerald-300">utilisateurs</span></h1>
+     
+          <div className="max-w-3xl w-full mb-6 text-center mx-auto">
+          <p className="italic text-base text-white/90">
+           Visualiser, filtrer et gérer tous les utilisateurs de votre église. Chaque  <span className="text-blue-300 font-semibold">rôle a une responsabilité spécifique</span>, et 
+           chaque utilisateur contribue à la croissance et au soutien des membres. Utilisez cette interface  <span className="text-blue-300 font-semibold">pour accompagner, 
+            encadrer et développer une communauté solide et fraternelle</span>.
+  
+         </p>
+        </div>
 
       <div className="max-w-6xl w-full mx-auto mb-6 flex flex-col gap-3">
         <input

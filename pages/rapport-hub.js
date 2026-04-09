@@ -40,7 +40,7 @@ function RapportHubContent() {
 
       {/* 🔹 Liste des rapports */}
       <div className="text-center mb-6 max-w-5xl w-full">
-        <h2 className="text-xl font-bold mb-4 text-[#F43F5E]">Liste des Rapports</h2>
+        <h2 className="text-xl font-bold mb-4 text-amber-300">Liste des Rapports</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           <Link

@@ -10,6 +10,14 @@ import AccessGuard from "../components/AccessGuard";
 import Footer from "../components/Footer";
 
 export default function ConseillerHub() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableIntegration"]}>
+      <ConseillerHubContent />
+    </ProtectedRoute>
+  );
+}
+
+function ConseillerHubContent() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
 

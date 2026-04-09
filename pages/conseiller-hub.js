@@ -79,7 +79,7 @@ function ConseillerHubContent() {
               >
                 <div className="text-5xl mb-2">🌱</div>
                 <div className="text-lg font-bold text-gray-800 text-center">
-                  Etat Conseiller
+                  L'évolution des Ames
                 </div>
               </Link>       
             

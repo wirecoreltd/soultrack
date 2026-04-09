@@ -1,4 +1,343 @@
-{/* FILTRES */}
+"use client";
+
+import { useEffect, useState, useRef } from "react";
+import supabase from "../lib/supabaseClient"; // default export
+import EditEvanRapportLine from "../components/EditEvanRapportLine";
+import HeaderPages from "../components/HeaderPages";
+import Footer from "../components/Footer";
+import { useRouter } from "next/navigation";
+
+export default function RapportEvangelisation() {
+  const formRef = useRef(null);
+  const [rapports, setRapports] = useState([]);
+  const [filteredEvangelises, setFilteredEvangelises] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedRapport, setSelectedRapport] = useState(null);
+  const [egliseId, setEgliseId] = useState(null);
+  const [brancheId, setBrancheId] = useState(null);
+  const [dateDebut, setDateDebut] = useState("");
+  const [dateFin, setDateFin] = useState("");
+  const [message, setMessage] = useState("");
+  const [expandedMonths, setExpandedMonths] = useState({});
+  const [expandedTypes, setExpandedTypes] = useState({});
+  const [showTable, setShowTable] = useState(false);
+  const [statusFilter, setStatusFilter] = useState(null);
+  const [typeFilter, setTypeFilter] = useState("");
+  const router = useRouter();
+  const [filteredSuivisState, setFilteredSuivisState] = useState([]);
+  // KPI
+  const [totalEnvoyes, setTotalEnvoyes] = useState(0);
+  const [totalNonEnvoyes, setTotalNonEnvoyes] = useState(0); 
+  const [totalIntegres, setTotalIntegres] = useState(0);
+  const [totalEncour, setTotalEncour] = useState(0);
+  const [totalRefus, setTotalRefus] = useState(0);
+  const [totalCellule, setTotalCellule] = useState(0);
+  const [totalEglise, setTotalEglise] = useState(0);
+  const [totalPriereSalut, setTotalPriereSalut] = useState(0);
+  const [allEvangelises, setAllEvangelises] = useState([]);
+  const [allSuivis, setAllSuivis] = useState([]);
+  // ---------------- KPI CALCULS EN POURCENTAGES ----------------
+const [convertisPercent, setConvertisPercent] = useState(0);
+const [integrationPercent, setIntegrationPercent] = useState(0);
+
+  // ---------------- PROFIL USER ----------------
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profile) {
+        setEgliseId(profile.eglise_id);
+        setBrancheId(profile.branche_id);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+      // ---------------- FETCH RAPPORTS ----------------
+      const fetchRapports = async () => {
+        if (!egliseId || !brancheId) return;
+        setLoading(true);
+        setShowTable(false);
+      
+        try {
+          // 🔹 Récupérer tous les évangélisés (exclure les supprimés)
+          let { data: evangelisesData } = await supabase
+            .from("evangelises")
+            .select("*")
+            .eq("eglise_id", egliseId)
+            .eq("branche_id", brancheId)
+            .neq("status_suivi", "supprime");
+      
+          setAllEvangelises(evangelisesData || []);
+      
+          // Définir les dates correctement
+          const startDate = dateDebut ? new Date(dateDebut) : null;
+          const endDate = dateFin ? new Date(dateFin) : null;
+          if (endDate) endDate.setHours(23, 59, 59, 999); // inclure tout le dernier jour
+      
+          // 🔹 Filtrer évangélisés selon date et type
+          const filtered = (evangelisesData || []).filter((e) => {
+            const evangeliseDate = e.date_evangelise ? new Date(e.date_evangelise) : null;
+      
+            const afterStart = !startDate || (evangeliseDate && evangeliseDate >= startDate);
+            const beforeEnd = !endDate || (evangeliseDate && evangeliseDate <= endDate);
+      
+            const typeOk =
+              !typeFilter || typeFilter === "Tous" || e.type_evangelisation === typeFilter;
+      
+            return afterStart && beforeEnd && typeOk;
+          });
+      
+          setFilteredEvangelises(filtered);
+      
+          // 🔹 KPI à partir des évangélisés
+          const totalEvangelises = filtered.length;
+          const totalEnvoyes = filtered.filter(e => e.status_suivi === "Envoyé").length;
+          const totalNonEnvoyes = filtered.filter(e => e.status_suivi === "Non envoyé" || e.status_suivi === null).length;
+          const totalConvertis = filtered.filter(e => e.priere_salut === true).length;
+      
+          setTotalEnvoyes(totalEnvoyes);
+          setTotalNonEnvoyes(totalNonEnvoyes);
+          setTotalPriereSalut(totalConvertis);
+          setConvertisPercent(totalEvangelises > 0 ? ((totalConvertis / totalEvangelises) * 100).toFixed(2) : 0);
+      
+          // 🔹 Récupérer les rapports
+          let query = supabase
+            .from("rapport_evangelisation")
+            .select("*")
+            .eq("eglise_id", egliseId)
+            .eq("branche_id", brancheId)
+            .in("evangelise_member_id", filtered.map(e => e.id))
+            .order("date_evangelise", { ascending: true });
+      
+          if (startDate) query = query.gte("date_evangelise", startDate.toISOString());
+          if (endDate) query = query.lte("date_evangelise", endDate.toISOString());
+      
+          const { data: rapportsData } = await query;
+          setRapports(rapportsData || []);
+      
+          // 🔹 KPI Suivis
+          const evangeliseIds = filtered.map(e => e.id);
+          let { data: suivisData } = await supabase
+            .from("suivis_des_evangelises")
+            .select("*")
+            .eq("eglise_id", egliseId)
+            .eq("branche_id", brancheId);
+      
+          const filteredSuivisFinal = (suivisData || []).filter((s) => {
+            const suiviDate = s.date_suivi ? new Date(s.date_suivi) : null;
+            const matchEvangelise = evangeliseIds.includes(s.evangelise_id);
+      
+            const afterStart = !startDate || (suiviDate && suiviDate >= startDate);
+            const beforeEnd = !endDate || (suiviDate && suiviDate <= endDate);
+      
+            const typeOk =
+              !typeFilter || typeFilter === "Tous" || s.type_evangelisation === typeFilter;
+      
+            return matchEvangelise && afterStart && beforeEnd && typeOk;
+          });
+      
+          setFilteredSuivisState(filteredSuivisFinal);
+      
+          const normalize = (str) => (str ? str.trim() : "");
+      
+          setTotalIntegres(filteredSuivisFinal.filter(s => normalize(s.status_suivis_evangelises) === "Intégré").length);
+          setTotalEncour(filteredSuivisFinal.filter(s => normalize(s.status_suivis_evangelises) === "En cours").length);
+          setTotalRefus(filteredSuivisFinal.filter(s => normalize(s.status_suivis_evangelises) === "Refus").length);
+          setTotalCellule(filteredSuivisFinal.filter(s => s.cellule_id != null).length);
+          setTotalEglise(filteredSuivisFinal.filter(s => s.conseiller_id != null).length);
+      
+          setIntegrationPercent(totalEvangelises > 0 ? ((filteredSuivisFinal.filter(s => normalize(s.status_suivis_evangelises) === "Intégré").length / totalEvangelises) * 100).toFixed(2) : 0);
+      
+          // Expansion du dernier mois
+          setExpandedMonths({});
+      
+        } catch (err) {
+          console.error("Erreur fetchRapports:", err);
+        }
+      
+        setLoading(false);
+        setShowTable(true);
+      
+        setTimeout(() => {
+          document.getElementById("rapport-filtres")?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }, 100);
+      };
+  // ---------------- KPI PRIERE ----------------
+  useEffect(() => {
+    const totalEvangelises = filteredRapports.reduce(
+      (acc, r) => acc + (Number(r.hommes) || 0) + (Number(r.femmes) || 0),
+      0
+    );
+    const nbPriere = filteredEvangelises.filter((e) => e.priere_salut === true).length;
+    setTotalPriereSalut(nbPriere);
+  }, [filteredEvangelises]);  
+
+  // ---------------- EDIT RAPPORT ----------------
+  const handleSaveRapport = async (updated) => {
+    await supabase.from("rapport_evangelisation").upsert(updated);
+    fetchRapports();
+    setMessage("✅ Rapport mis à jour !");
+    setTimeout(() => setMessage(""), 3000);
+  };
+
+  //========================
+  useEffect(() => {
+  setExpandedMonths({});
+  setExpandedTypes({});
+}, []);
+
+  // ---------------- COLLAPSE ----------------
+  const toggleMonth = (monthKey) => {setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey]}));
+  setExpandedTypes({});
+};
+  const toggleType = (typeKey) => setExpandedTypes(prev => ({ ...prev, [typeKey]: !prev[typeKey] }));
+
+  // ---------------- GROUPING ----------------
+  const groupByMonth = (data) => {
+    const map = {};
+    (data || []).forEach((r) => {
+      const d = new Date(r.date_evangelise);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(r);
+    });
+    return map;
+  };
+
+  const groupByType = (data) => {
+    const map = {};
+    (data || []).forEach((r) => {
+      const type = r.type_evangelisation || "Non défini";
+      if (!map[type]) map[type] = [];
+      map[type].push(r);
+    });
+    return map;
+  };
+
+  // -------- TOTALS --------
+  const getTotals = (reports) => {
+    let hommes = 0, femmes = 0, priere = 0, nouveau = 0, reconciliation = 0, moissonneurs = 0;
+    (reports || []).forEach(r => {
+      hommes += Number(r.hommes) || 0;
+      femmes += Number(r.femmes) || 0;
+      priere += Number(r.priere) || 0;
+      nouveau += Number(r.nouveau_converti) || 0;
+      reconciliation += Number(r.reconciliation) || 0;
+      moissonneurs += Number(r.moissonneurs) || 0;
+    });
+    return { hommes, femmes, total: hommes+femmes, priere, nouveau, reconciliation, moissonneurs };
+  };
+
+  // ---------------- LAST MONTH ----------------
+  const getLastMonthKey = (data) => {
+    if (!data || data.length === 0) return null;
+    const dates = data.map(r => new Date(r.date_evangelise));
+    const lastDate = new Date(Math.max(...dates));
+    return `${lastDate.getFullYear()}-${lastDate.getMonth()}`;
+  };
+
+  // ---------------- UTILS ----------------
+  const getMonthNameFR = (monthIndex) => {
+    const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+    return months[monthIndex] || "";
+  };        
+
+  const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"];
+
+  // ================= KPI =================  
+  const filteredRapports = rapports.filter((r) => {
+    if (typeFilter && r.type_evangelisation !== typeFilter) return false;
+    if (statusFilter && r.status_suivi !== statusFilter) return false;
+    return true;
+  });
+
+  // Créer un tableau des types disponibles selon la plage de date sélectionnée
+const availableTypes = Array.from(
+  new Set(
+    (allEvangelises || [])
+      .filter((e) => {
+        const evangeliseDate = e.date_evangelise ? new Date(e.date_evangelise) : null;
+        const startDate = dateDebut ? new Date(dateDebut) : null;
+        const endDate = dateFin ? new Date(dateFin) : null;
+        if (endDate) endDate.setHours(23, 59, 59, 999);
+        const afterStart = !startDate || (evangeliseDate && evangeliseDate >= startDate);
+        const beforeEnd = !endDate || (evangeliseDate && evangeliseDate <= endDate);
+        return afterStart && beforeEnd;
+      })
+      .map((e) => e.type_evangelisation || "Non défini")
+  )
+);
+  //-------------------------//
+  // filtrer les évangélisés selon le type
+const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
+  if (!typeFilter) return true;
+  return e.type_evangelisation === typeFilter;
+});
+  //------------------------
+
+  const groupedReports = groupByMonth(filteredRapports);
+  const totalEvangelises = filteredEvangelisesByType.length;
+  const tauxIntegration = totalEvangelises > 0 ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
+
+  // Ajouter ids filtrés pour que SuiviAmesPage sache quoi afficher
+    const handleKpiClick = (status) => {
+      // ids des évangélisés filtrés selon les critères actuels
+      const evangeliseIds = filteredEvangelises.map(e => e.id);
+    
+      router.push({
+        pathname: "/SuiviAmesPage",
+        query: {
+          status: status || "all",
+          ids: evangeliseIds.join(","), // passer les IDs en CSV
+        },
+      });
+    };
+
+  //==================
+  const handleCelluleClick = () => {
+  router.push("/SuiviAmesPage?cellule=true");
+};
+
+const handleConseillerClick = () => {
+  router.push("/SuiviAmesPage?conseiller=true");
+};
+
+  const typeColors = {
+   "Individuel": "border-blue-400 bg-blue-400/10",
+  "Sortie de groupe": "border-yellow-400 bg-blue-400/10",
+  "Campagne d’évangélisation": "border-purple-400 bg-blue-400/10",
+  "Évangélisation de rue": "border-green-400 bg-blue-400/10",
+  "Évangélisation maison": "border-pink-400 bg-blue-400/10",
+  "Évangélisation stade": "border-red-400 bg-blue-400/10",
+};
+  // ---------------- UI ----------------
+  return (
+    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+      <HeaderPages />
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Tableau de Bord<span className="text-emerald-300"> Évangélisation</span></h1>
+
+    <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-white/90">                
+           Suivez et analysez facilement vos activités d’évangélisation. 
+         Filtrez par date et type, visualisez les rapports détaillés et 
+           consultez rapidement les KPIs :  <span className="text-blue-300 font-semibold">évangélisés, convertis, intégrés en cellule ou à l’église, et suivis en cours</span>.
+          </p>
+        </div>
+  
+    {/* FILTRES */}
 <div
   id="rapport-filtres"
   className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white"

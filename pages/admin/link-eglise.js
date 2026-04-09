@@ -236,7 +236,7 @@ Que Dieu vous bénisse 🙏
       Dans cette <span className="text-blue-300 font-semibold">interface</span>, vous pouvez :
     </p>
 
-    <ul className="list-none space-y-3 mt-2">
+    <ul className="list-none space-y-3 mt-3 text-base">
       <li className="text-green-400 italic">✉️ <strong>Envoyer une invitation</strong> à une église</li>  
       <li className="text-gray-400 italic">🔗 <strong>Casser le lien</strong> avec une église supervisée</li>
       <li className="text-red-500 italic">🗑️ <strong>Supprimer</strong> une invitation envoyée</li>

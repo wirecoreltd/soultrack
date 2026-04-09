@@ -25,14 +25,16 @@ import ProtectedRoute from "../components/ProtectedRoute";
     >
       <HeaderPages />
 
-      {/* 🔹 Titre */}
-      <div className="text-center mb-4">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          Espace Rapports
-        </h1>
-        <p className="text-white text-lg max-w-xl mx-auto leading-relaxed tracking-wide font-light italic">
-          Suivez l’évolution de votre assemblée et célébrez chaque victoire 🙌
-        </p>
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Espace Rapport</h1>
+      
+        <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-white/90">
+           Chaque rapport <span className="text-blue-300 font-semibold">raconte</span> une étape de la <span className="text-blue-300 font-semibold">vie spirituelle</span> : <span className="text-blue-300 font-semibold">les conseillers</span> qui accompagnent, <span className="text-blue-300 font-semibold">les cellules</span> qui soutiennent, 
+           les âmes qui se rapprochent, <span className="text-blue-300 font-semibold">les baptêmes</span> qui marquent l’engagement, et les <span className="text-blue-300 font-semibold">formations</span> qui font grandir. Suivre ces 
+           évolutions nous aide à construire ensemble des vies solides, à célébrer chaque <span className="text-blue-300 font-semibold">progrès</span>.
+          </p>
+        </div>
       </div>
 
       {/* 🔹 Cartes */}

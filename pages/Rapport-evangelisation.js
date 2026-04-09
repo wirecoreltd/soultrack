@@ -340,8 +340,8 @@ const handleConseillerClick = () => {
     {/* FILTRES */}
 <div
   id="rapport-filtres"
-  className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full flex flex-col text-white"
->
+  className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white"
+  
   {/* TEXTE AU-DESSUS */}
   <p className="text-white font-semibold text-center mb-4">
     Choisissez les paramètres pour générer le rapport
@@ -391,7 +391,7 @@ const handleConseillerClick = () => {
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white text-center"
         >
           <option value="">Tous</option>
           {availableTypes.map((type) => (

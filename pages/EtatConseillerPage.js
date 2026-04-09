@@ -162,7 +162,7 @@ function EtatConseiller() {
     });
     return map;
   };
-
+  
   const toggleMonth = (monthKey) => setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
 
   const handleUpdateMember = (updated) => {
@@ -181,11 +181,13 @@ function EtatConseiller() {
       const { data, error } = await supabase
         .from("suivis_des_evangelises")
         .select("*")
-        .eq("id", row.personne_id)
-        .maybeSingle();
+        .eq("evangelise_id", row.personne_id)
+        .maybeSingle();      
 
       if (error) throw error;
-
+      
+      console.log("ROW CLICKED:", row);
+      
       setSelectedEvangelise({ ...row, ...data });
 
     } else if (row.source === "integration") {

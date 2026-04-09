@@ -375,8 +375,16 @@ useEffect(() => {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">Rapport <span className="text-amber-300">Présence / Temps</span></h1>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white"Suivi des Âmes & Présences <span className="text-emerald-300">des Cellules</span></h1>
 
+    <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-white/90">   
+          Ce module a pour but <span className="text-blue-300 font-semibold">d’accompagner </span> l’Église dans sa <span className="text-blue-300 font-semibold">mission de croissance </span>, de <span className="text-blue-300 font-semibold">suivi et de transformation des vies</span>.
+          À travers le suivi des <span className="text-blue-300 font-semibold">présences </span> dans les cellules, il ne s’agit pas simplement de compter des personnes, mais de 
+          reconnaître <span className="text-blue-300 font-semibold">chaque âme comme précieuse et importante devant Dieu</span> .
+         </p>
+        </div>
+  
       {/* FORMULAIRE */}
       <div ref={formRef} className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">

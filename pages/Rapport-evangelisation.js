@@ -343,7 +343,7 @@ const handleConseillerClick = () => {
   className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white">
   
   {/* TEXTE AU-DESSUS */}
-  <p className="text-white font-semibold text-center mb-4">
+  <p className="text-red-500 font-semibold text-center mb-4">
     Choisissez les paramètres pour générer le rapport
   </p>
 
@@ -363,7 +363,7 @@ const handleConseillerClick = () => {
 
     {/* Date fin */}
     <div className="flex flex-col w-full md:w-auto">
-      <label className="text-xs text-center mb-1">Date fin</label>
+      <label className="text-base text-center mb-1">Date fin</label>
       <input
         type="date"
         value={dateFin}
@@ -374,7 +374,7 @@ const handleConseillerClick = () => {
 
     {/* Bouton */}
     <div className="flex flex-col w-full md:w-auto">
-      <label className="text-xs text-center mb-1 opacity-0">btn</label>
+      <label className="text-base text-center mb-1 opacity-0">btn</label>
       <button
         onClick={fetchRapports}
         disabled={loading}
@@ -387,7 +387,7 @@ const handleConseillerClick = () => {
     {/* TYPE (reste bien après le bouton) */}
     {showTable && (
       <div className="flex flex-col w-full md:w-auto">
-        <label className="text-xs text-center mb-1">Type</label>
+        <label className="text-base text-center mb-1">Type Evangélisation</label>
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}

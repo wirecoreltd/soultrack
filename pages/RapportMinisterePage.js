@@ -167,14 +167,14 @@ function RapportMinistere() {
     type="date"
     value={dateDebut}
     onChange={(e) => setDateDebut(e.target.value)}
-    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto h-10"
   />
 
   <input
     type="date"
     value={dateFin}
     onChange={(e) => setDateFin(e.target.value)}
-    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto h-10"
   />
 
   <button

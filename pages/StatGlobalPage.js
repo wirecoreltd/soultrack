@@ -437,61 +437,69 @@ cellulesData.forEach(c => {
         Rapport <span className="text-amber-300">Statistiques Globales</span>
       </h1>
 
-      <div className="flex justify-center mb-8">
-  <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl flex gap-6 flex-wrap items-end w-fit shadow-lg">
+     <div className="flex justify-center mb-8">
+  <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl flex flex-col gap-6 w-fit shadow-lg">
 
-    {/* DATE DEBUT */}
-    <div className="flex flex-col w-full md:w-auto">
-      <label className="text-sm text-center mb-1">Date début</label>
-      <input
-        type="date"
-        value={dateDebut}
-        onChange={(e) => setDateDebut(e.target.value)}
-        className="px-3 py-2 rounded-lg text-black w-full md:w-auto"
-      />
-    </div>
+    {/* TEXTE AU-DESSUS */}
+    <p className="text-base text-red-400 font-semibold text-center mb-4">
+      Choisissez les paramètres pour générer le rapport
+    </p>
 
-    {/* DATE FIN */}
-    <div className="flex flex-col w-full md:w-auto">
-      <label className="text-sm text-center mb-1">Date fin</label>
-      <input
-        type="date"
-        value={dateFin}
-        onChange={(e) => setDateFin(e.target.value)}
-        className="px-3 py-2 rounded-lg text-black w-full md:w-auto"
-      />
-    </div>
+    <div className="flex flex-wrap items-end gap-6 justify-center">
 
-    {/* BOUTON GENERER */}
-    <div className="flex flex-col w-full md:w-auto">
-      <label className="text-sm text-center mb-1 opacity-0">btn</label>
-      <button
-        onClick={fetchStats}
-        className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition text-white w-full md:w-auto"
-      >
-        {loading ? "Générer..." : "Générer"}
-      </button>
-    </div>
-
-    {/* SELECT SUPERVISEUR (après génération) */}
-    {superviseurOptions.length > 0 && (
+      {/* DATE DEBUT */}
       <div className="flex flex-col w-full md:w-auto">
-        <label className="text-sm text-center mb-1">Superviseur</label>
-        <select
-          value={superviseurFilter}
-          onChange={(e) => setSuperviseurFilter(e.target.value)}
-          className="px-3 py-2 rounded-lg text-black w-full md:w-auto text-center"
-        >
-          <option value="">Tous</option>
-          {superviseurOptions.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nom}
-            </option>
-          ))}
-        </select>
+        <label className="text-sm text-center mb-1">Date début</label>
+        <input
+          type="date"
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+          className="h-10 w-full md:w-auto px-3 py-2 rounded-lg bg-white/10 border border-white/30 text-black"
+        />
       </div>
-    )}
 
+      {/* DATE FIN */}
+      <div className="flex flex-col w-full md:w-auto">
+        <label className="text-sm text-center mb-1">Date fin</label>
+        <input
+          type="date"
+          value={dateFin}
+          onChange={(e) => setDateFin(e.target.value)}
+          className="h-10 w-full md:w-auto px-3 py-2 rounded-lg bg-white/10 border border-white/30 text-black"
+        />
+      </div>
+
+      {/* BOUTON GENERER */}
+      <div className="flex flex-col w-full md:w-auto">
+        <label className="text-sm text-center mb-1 opacity-0">btn</label>
+        <button
+          onClick={fetchStats}
+          className="h-10 w-full md:w-auto px-6 bg-[#2a2f85] text-white rounded-xl hover:bg-[#1f2366] transition font-semibold"
+        >
+          {loading ? "Générer..." : "Générer"}
+        </button>
+      </div>
+
+      {/* SELECT SUPERVISEUR (après génération) */}
+      {superviseurOptions.length > 0 && (
+        <div className="flex flex-col w-full md:w-auto">
+          <label className="text-sm text-center mb-1">Superviseur</label>
+          <select
+            value={superviseurFilter}
+            onChange={(e) => setSuperviseurFilter(e.target.value)}
+            className="h-10 w-full md:w-auto px-3 py-2 rounded-lg bg-white/10 border border-white/30 text-black text-center"
+          >
+            <option value="">Tous</option>
+            {superviseurOptions.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nom}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+    </div>
   </div>
 </div>
 

@@ -328,7 +328,7 @@ function RapportBaptemes() {
 <div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-4 flex flex-col sm:flex-row justify-center gap-4 w-full max-w-lg mx-auto text-white">
 
   <div className="flex flex-col w-full sm:w-auto">
-    <label className="text-sm mb-1">Date de Début</label>
+    <label className="text-center text-base mb-1">Date de Début</label>
     <input
       type="date"
       value={filterDebut}
@@ -337,8 +337,8 @@ function RapportBaptemes() {
     />
   </div>
 
-  <div className="flex flex-col w-full sm:w-auto">
-    <label className="text-sm mb-1">Date de Fin</label>
+  <div className="text-center flex flex-col w-full sm:w-auto">
+    <label className="text-center text-base mb-1">Date de Fin</label>
     <input
       type="date"
       value={filterFin}
@@ -490,15 +490,15 @@ function RapportBaptemes() {
                           key={r.id}
                           className="bg-white/10 text-white rounded-xl p-4 flex flex-col gap-1 shadow"
                         >
-                          <div className="text-amber-300 text-right">{formatDateFR(r.date)}</div>
-                          <div>Baptisé par: {r.baptise_par}</div>
+                          <div className="text-sm text-amber-300 text-right">{formatDateFR(r.date)}</div>
+                          <div>Baptisé par : {r.baptise_par}</div>
                           <div className="flex justify-between text-sm">
-                            <span>Hommes: {r.hommes} | Femmes: {r.femmes}</span>                            
+                            <span>Hommes : {r.hommes} | Femmes : {r.femmes}</span>                            
                             <p className="font-semibold text-orange-400">Total: {total}</p>
                           </div>
                           <button
                             onClick={() => handleEdit(r)}
-                            className="lock mx-auto text-amber-300 underline mt-3"
+                            className="lock mx-auto text-amber-300 mt-3"
                           >
                             ✏️
                           </button>

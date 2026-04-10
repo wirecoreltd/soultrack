@@ -494,13 +494,13 @@ function RapportBaptemes() {
                           <div>Baptisé par: {r.baptise_par}</div>
                           <div className="flex justify-between text-sm">
                             <span>Hommes: {r.hommes} | Femmes: {r.femmes}</span>                            
-                            <span className="font-semibold text-orange-400">Total: {total}</span>
+                            <p className="font-semibold text-orange-400">Total: {total}</p>
                           </div>
                           <button
                             onClick={() => handleEdit(r)}
                             className="lock mx-auto text-amber-300 underline mt-3"
                           >
-                            Modifier
+                            ✏️
                           </button>
                         </div>
                       );

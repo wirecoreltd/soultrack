@@ -117,13 +117,30 @@ function RapportMinistere() {
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl sm:text-3xl font-bold mt-4 mb-6 text-center">
-        <span className="text-white">Rapport </span>
-        <span className="text-amber-300">Ministère</span>
-      </h1>
+     h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+Rapport <span className="text-emerald-300">Ministère</span></h1>
+
+  <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-white/90">   
+          Suivez en un coup d’œil le nombre  <span className="text-blue-300 font-semibold">total de serviteurs</span>, leur  <span className="text-blue-300 font-semibold">répartition par ministère</span> 
+            et le  <span className="text-blue-300 font-semibold">niveau d’engagement global dans l’église</span>. Analysez le poids de chaque ministère 
+              et le  <span className="text-blue-300 font-semibold">pourcentage de serviteurs</span> par rapport à l’ensemble des membres pour mieux 
+                orienter vos décisions et renforcer la  <span className="text-blue-300 font-semibold">dynamique du service</span>.
+
+          </p>
+        </div>
 
       {/* 🔹 Filtres */}
-      <div className="bg-white/10 p-4 sm:p-6 rounded-2xl shadow-lg mt-6 flex flex-wrap justify-center gap-3">
+      <div className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white">
+
+  {/* TEXTE AU-DESSUS */}
+  <p className="text-base text-red-400 font-semibold text-center mb-4">
+    Choisissez les paramètres pour générer le rapport
+  </p>
+
+  {/* CONTAINER DES FILTRES */}
+  <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
+        
         <input
           type="date"
           value={dateDebut}
@@ -136,15 +153,18 @@ function RapportMinistere() {
           onChange={(e) => setDateFin(e.target.value)}
           className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"
         />
+          <div className="flex flex-col w-full md:w-auto">  
+            <label className="text-base text-center mb-1 opacity-0">btn</label>
         <button
           onClick={fetchRapport}
           disabled={!egliseId || !brancheId || loading}
-          className={`bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] ${
+          className={w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition ${
             !egliseId || !brancheId || loading ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
           Générer
         </button>
+      </div>
       </div>
 
       {/* 🔹 Résumé */}

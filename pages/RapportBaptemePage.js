@@ -202,10 +202,15 @@ function RapportBaptemes() {
     <div className="min-h-screen flex flex-col items-center px-4 sm:px-6 py-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
-        <span className="text-white">Rapport </span>
-        <span className="text-amber-300">Baptêmes</span>
-      </h1>    
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Rapport <span className="text-emerald-300">Baptêmes</span></h1>
+  
+          <div className="max-w-3xl w-full mb-6 text-center">
+            <p className="italic text-base text-white/90">
+    <span className="text-blue-300 font-semibold">Créez et suivez</span> les rapports de baptêmes ainsi que le suivi des <span className="text-blue-300 font-semibold">nouveaux baptisés</span>.
+Enregistrez les données, <span className="text-blue-300 font-semibold">analysez</span> les volumes et la répartition hommes/femmes pour mesurer <span className="text-blue-300 font-semibold">l’impact et structurer la croissance de l’église</span>
+             </p>
+          </div>
+   
       
       {/* BOITE INFO CANDIDATS */}
       <div className="w-full flex flex-col gap-4 mt-4">

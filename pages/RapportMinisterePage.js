@@ -92,6 +92,7 @@ function RapportMinistere() {
         if (!s.membre_id) return;
         serviteursSet.add(s.membre_id);
         if (!s.valeur) return;
+
         s.valeur.split(",").forEach((ministere) => {
           const m = ministere.trim();
           if (!counts[m]) counts[m] = 0;
@@ -102,8 +103,12 @@ function RapportMinistere() {
       setTotalServiteurs(serviteursSet.size);
 
       setRapports(
-        Object.entries(counts).map(([ministere, total]) => ({ ministere, total }))
+        Object.entries(counts).map(([ministere, total]) => ({
+          ministere,
+          total,
+        }))
       );
+
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -117,63 +122,89 @@ function RapportMinistere() {
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-[#333699]">
       <HeaderPages />
 
-     h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
-Rapport <span className="text-emerald-300">Ministère</span></h1>
+      {/* 🔥 TITRE */}
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+        Rapport <span className="text-emerald-300">Ministère</span>
+      </h1>
 
-  <div className="max-w-3xl w-full mb-6 text-center">
-          <p className="italic text-base text-white/90">   
-          Suivez en un coup d’œil le nombre  <span className="text-blue-300 font-semibold">total de serviteurs</span>, leur  <span className="text-blue-300 font-semibold">répartition par ministère</span> 
-            et le  <span className="text-blue-300 font-semibold">niveau d’engagement global dans l’église</span>. Analysez le poids de chaque ministère 
-              et le  <span className="text-blue-300 font-semibold">pourcentage de serviteurs</span> par rapport à l’ensemble des membres pour mieux 
-                orienter vos décisions et renforcer la  <span className="text-blue-300 font-semibold">dynamique du service</span>.
+      {/* 🔥 DESCRIPTION */}
+      <div className="max-w-3xl w-full mb-6 text-center">
+        <p className="italic text-base text-white/90">
+          Suivez en un coup d’œil le nombre{" "}
+          <span className="text-blue-300 font-semibold">
+            total de serviteurs
+          </span>
+          , leur{" "}
+          <span className="text-blue-300 font-semibold">
+            répartition par ministère
+          </span>{" "}
+          et le{" "}
+          <span className="text-blue-300 font-semibold">
+            niveau d’engagement global dans l’église
+          </span>
+          . Analysez le poids de chaque ministère et le{" "}
+          <span className="text-blue-300 font-semibold">
+            pourcentage de serviteurs
+          </span>{" "}
+          par rapport à l’ensemble des membres pour mieux orienter vos décisions
+          et renforcer la{" "}
+          <span className="text-blue-300 font-semibold">
+            dynamique du service
+          </span>
+          .
+        </p>
+      </div>
 
-          </p>
-        </div>
-
-      {/* 🔹 Filtres */}
+      {/* 🔹 FILTRES */}
       <div className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white">
+        <p className="text-base text-red-400 font-semibold text-center mb-4">
+          Choisissez les paramètres pour générer le rapport
+        </p>
 
-  {/* TEXTE AU-DESSUS */}
-  <p className="text-base text-red-400 font-semibold text-center mb-4">
-    Choisissez les paramètres pour générer le rapport
-  </p>
+        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
+          <input
+            type="date"
+            value={dateDebut}
+            onChange={(e) => setDateDebut(e.target.value)}
+            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"
+          />
 
-  {/* CONTAINER DES FILTRES */}
-  <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
-        
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"
-        />
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"
-        />
-          <div className="flex flex-col w-full md:w-auto">  
-            <label className="text-base text-center mb-1 opacity-0">btn</label>
-        <button
-          onClick={fetchRapport}
-          disabled={!egliseId || !brancheId || loading}
-          className={w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition ${
-            !egliseId || !brancheId || loading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-        >
-          Générer
-        </button>
+          <input
+            type="date"
+            value={dateFin}
+            onChange={(e) => setDateFin(e.target.value)}
+            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"
+          />
+
+          <div className="flex flex-col w-full md:w-auto">
+            <label className="text-base text-center mb-1 opacity-0">
+              btn
+            </label>
+
+            <button
+              onClick={fetchRapport}
+              disabled={!egliseId || !brancheId || loading}
+              className={`w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition ${
+                !egliseId || !brancheId || loading
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
+            >
+              Générer
+            </button>
+          </div>
+        </div>
       </div>
-      </div>
 
-      {/* 🔹 Résumé */}
+      {/* 🔹 RÉSUMÉ */}
       <div className="flex flex-wrap gap-4 mt-6 justify-center w-full max-w-xl">
         <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center flex-1 min-w-[160px]">
           <div className="text-sm uppercase font-semibold mb-1">
             Nombre total de serviteurs
           </div>
-          <div className="text-2xl font-bold text-orange-400">{totalServiteurs}</div>
+          <div className="text-2xl font-bold text-orange-400">
+            {totalServiteurs}
+          </div>
         </div>
 
         <div className="bg-white/10 px-6 py-4 rounded-2xl text-white text-center flex-1 min-w-[160px]">
@@ -183,22 +214,26 @@ Rapport <span className="text-emerald-300">Ministère</span></h1>
           <div className="text-2xl font-bold text-orange-400">
             {totalMembres > 0
               ? ((totalServiteurs / totalMembres) * 100).toFixed(1)
-              : 0} %
+              : 0}{" "}
+            %
           </div>
         </div>
       </div>
 
-      {/* 🔹 Tableau ministères responsive avec style transparent et bordure colorée */}
+      {/* 🔹 TABLEAU */}
       <div className="w-full flex justify-center mt-6 mb-6">
         <div className="w-full max-w-2xl overflow-x-auto space-y-2">
-          {/* Header */}
           <div className="grid grid-cols-[2fr_1fr] text-sm md:text-base font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
             <div>Ministère</div>
-            <div className="text-center text-orange-400">Nombre de serviteurs</div>
+            <div className="text-center text-orange-400">
+              Nombre de serviteurs
+            </div>
           </div>
 
           {loading && (
-            <div className="text-white text-center py-4">Chargement...</div>
+            <div className="text-white text-center py-4">
+              Chargement...
+            </div>
           )}
 
           {rapports.map((r, index) => (
@@ -206,8 +241,12 @@ Rapport <span className="text-emerald-300">Ministère</span></h1>
               key={index}
               className="grid grid-cols-[2fr_1fr] items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
             >
-              <div className="text-white font-semibold">{r.ministere}</div>
-              <div className="text-center text-orange-400 font-bold">{r.total}</div>
+              <div className="text-white font-semibold">
+                {r.ministere}
+              </div>
+              <div className="text-center text-orange-400 font-bold">
+                {r.total}
+              </div>
             </div>
           ))}
         </div>

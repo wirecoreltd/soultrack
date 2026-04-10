@@ -490,16 +490,15 @@ function RapportBaptemes() {
                           key={r.id}
                           className="bg-white/10 text-white rounded-xl p-4 flex flex-col gap-1 shadow"
                         >
-                          <div className="font-semibold">{formatDateFR(r.date)}</div>
+                          <div className="text-amber-300 text-right">{formatDateFR(r.date)}</div>
                           <div>Baptisé par: {r.baptise_par}</div>
                           <div className="flex justify-between text-sm">
-                            <span>Hommes: {r.hommes}</span>
-                            <span>Femmes: {r.femmes}</span>
-                            <span>Total: {total}</span>
+                            <span>Hommes: {r.hommes} | Femmes: {r.femmes}</span>                            
+                            <span className="font-semibold text-orange-400">Total: {total}</span>
                           </div>
                           <button
                             onClick={() => handleEdit(r)}
-                            className="text-orange-400 underline mt-2 w-max"
+                            className="lock mx-auto text-amber-300 underline mt-3"
                           >
                             Modifier
                           </button>

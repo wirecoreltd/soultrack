@@ -250,9 +250,16 @@ function EtatConseiller() {
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-        L'évolution des Ames par <span className="text-amber-300">Conseiller</span>
-      </h1>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+L'Évolution des Âmes par <span className="text-emerald-300">Conseiller</span></h1>
+    <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-white/90">   
+          <span className="text-blue-300 font-semibold">Suivez l’évolution</span> des personnes accompagnées par les conseillers.
+          Visualisez les étapes, <span className="text-blue-300 font-semibold">analysez les parcours et mesurez les progrès 
+          dans le temps</span>, pour mieux comprendre, ajuster et faire <span className="text-blue-300 font-semibold">progresser 
+            chaque accompagnement</span>.
+          </p>
+        </div>
 
       {/* FILTRES + GENERER + SELECT CONSEILLER */}
 <div className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white">

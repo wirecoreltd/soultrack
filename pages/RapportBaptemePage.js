@@ -487,22 +487,39 @@ function RapportBaptemes() {
                       const total = Number(r.hommes) + Number(r.femmes);
                       return (
                         <div
-                          key={r.id}
-                          className="bg-white/10 text-white rounded-xl p-4 flex flex-col gap-1 shadow"
-                        >
-                          <div className="text-sm text-amber-300 text-right">{formatDateFR(r.date)}</div>
-                          <div>Baptisé par : {r.baptise_par}</div>
-                          <div className="flex justify-between text-sm">
-                            <span>Hommes : {r.hommes} | Femmes : {r.femmes}</span>                            
-                            <p className="font-semibold text-orange-400">Total: {total}</p>
-                          </div>
-                          <button
-                            onClick={() => handleEdit(r)}
-                            className="lock mx-auto text-amber-300 mt-3"
-                          >
-                            ✏️
-                          </button>
-                        </div>
+  key={r.id}
+  className="bg-white/10 text-white rounded-xl p-4 flex flex-col gap-2 shadow"
+>
+  {/* 📅 Date (plus petite et discrète) */}
+  <div className="text-xs text-amber-300 text-right opacity-80">
+    {formatDateFR(r.date)}
+  </div>
+
+  {/* 👤 Baptisé par */}
+  <div className="text-sm">
+    Baptisé par : <span className="font-semibold">{r.baptise_par}</span>
+  </div>
+
+  {/* 👨‍👩‍👧 Hommes / Femmes */}
+  <div className="flex justify-between text-sm mt-1">
+    <span>Hommes : <span className="font-semibold">{r.hommes}</span></span>
+    <span>Femmes : <span className="font-semibold">{r.femmes}</span></span>
+  </div>
+
+  {/* 🔢 Total en dessous */}
+  <div className="text-center mt-1">
+    <span className="text-xs uppercase opacity-70">Total</span>
+    <div className="font-bold text-orange-400 text-lg">{total}</div>
+  </div>
+
+  {/* ✏️ Bouton */}
+  <button
+    onClick={() => handleEdit(r)}
+    className="mx-auto text-amber-300 mt-2 hover:scale-110 transition"
+  >
+    ✏️
+  </button>
+</div>
                       );
                     })}
                 </div>

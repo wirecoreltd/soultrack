@@ -488,9 +488,9 @@ function RapportBaptemes() {
                       return (
                         <div
   key={r.id}
-  className="bg-white/10 text-white rounded-xl p-4 flex flex-col gap-2 shadow"
+  className="bg-white/10 text-white rounded-xl px-4 py-3 flex flex-col gap-2 shadow"
 >
-  {/* 📅 Date (plus petite et discrète) */}
+  {/* 📅 Date à droite */}
   <div className="text-xs text-amber-300 text-right opacity-80">
     {formatDateFR(r.date)}
   </div>
@@ -500,24 +500,24 @@ function RapportBaptemes() {
     Baptisé par : <span className="font-semibold">{r.baptise_par}</span>
   </div>
 
-  {/* 👨‍👩‍👧 Hommes / Femmes */}
-  <div className="flex justify-between text-sm mt-1">
-    <span>Hommes : <span className="font-semibold">{r.hommes}</span></span>
-    <span>Femmes : <span className="font-semibold">{r.femmes}</span></span>
+  {/* 👨‍👩‍👧 Hommes | Femmes */}
+  <div className="text-sm">
+    <span className="font-medium">
+      Hommes : {r.hommes} | Femmes : {r.femmes}
+    </span>
   </div>
 
-  {/* 🔢 Total en dessous */}
-  <div className="text-center mt-1">
-    <span className="text-xs uppercase opacity-70">Total</span>
-    <div className="font-bold text-orange-400 text-lg">{total}</div>
+  {/* 🔢 Total en dessous à gauche */}
+  <div className="text-sm font-semibold text-orange-400">
+    Total : {total}
   </div>
 
-  {/* ✏️ Bouton */}
+  {/* ✏️ Modifier centré */}
   <button
     onClick={() => handleEdit(r)}
     className="mx-auto text-amber-300 mt-2 hover:scale-110 transition"
   >
-    ✏️
+    ✏️ Modifier
   </button>
 </div>
                       );

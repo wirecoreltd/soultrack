@@ -433,9 +433,17 @@ cellulesData.forEach(c => {
     <div className="min-h-screen bg-[#333699] p-6 text-white">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold text-center mb-8">
-        Rapport <span className="text-amber-300">Statistiques Globales</span>
-      </h1>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+Rapport <span className="text-emerald-300">Statistiques Globales</span></h1>
+
+    <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-white/90">   
+          Pilotez votre assemblée avec une vision <span className="text-blue-300 font-semibold">globale et structurée</span>.
+Gardez une vue d’ensemble sur les églises sous votre <span className="text-blue-300 font-semibold">supervision</span>, suivez les <span className="text-blue-300 font-semibold">indicateurs clés</span>, 
+    analysez les <span className="text-blue-300 font-semibold">évolutions et accompagnez le développement</span> de chaque communauté 
+    avec clarté et cohérence
+          </p>
+        </div>
 
      <div className="flex justify-center mb-8">
   <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl flex flex-col gap-6 w-fit shadow-lg">

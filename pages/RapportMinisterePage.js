@@ -161,38 +161,34 @@ function RapportMinistere() {
           Choisissez les paramètres pour générer le rapport
         </p>
 
-        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
-          <input
-            type="date"
-            value={dateDebut}
-            onChange={(e) => setDateDebut(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"
-          />
+        <div className="flex flex-col md:flex-row items-stretch md:items-end gap-3 md:gap-4 w-full">
 
-          <input
-            type="date"
-            value={dateFin}
-            onChange={(e) => setDateFin(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"
-          />
+  <input
+    type="date"
+    value={dateDebut}
+    onChange={(e) => setDateDebut(e.target.value)}
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"
+  />
 
-          <div className="flex flex-col w-full md:w-auto">
-            <label className="text-base text-center mb-1 opacity-0">
-              btn
-            </label>
+  <input
+    type="date"
+    value={dateFin}
+    onChange={(e) => setDateFin(e.target.value)}
+    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto"
+  />
 
-            <button
-              onClick={fetchRapport}
-              disabled={!egliseId || !brancheId || loading}
-              className={`w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition ${
-                !egliseId || !brancheId || loading
-                  ? "opacity-50 cursor-not-allowed"
-                  : ""
-              }`}
-            >
-              Générer
-            </button>
-          </div>
+  <button
+    onClick={fetchRapport}
+    disabled={!egliseId || !brancheId || loading}
+    className={`w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition ${
+      !egliseId || !brancheId || loading
+        ? "opacity-50 cursor-not-allowed"
+        : ""
+    }`}
+  >
+    Générer
+  </button>
+</div>
         </div>
       </div>
 

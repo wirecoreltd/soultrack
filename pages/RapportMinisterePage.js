@@ -189,8 +189,7 @@ function RapportMinistere() {
     Générer
   </button>
 </div>
-        </div>
-      </div>
+        </div>     
 
       {/* 🔹 RÉSUMÉ */}
       <div className="flex flex-wrap gap-4 mt-6 justify-center w-full max-w-xl">

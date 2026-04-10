@@ -436,7 +436,7 @@ cellulesData.forEach(c => {
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
 Rapport <span className="text-emerald-300">Statistiques Globales</span></h1>
 
-    <div className="max-w-3xl w-full mb-6 text-center">
+    <div className="max-w-3xl w-full mb-6 text-center x-auto">
           <p className="italic text-base text-white/90">   
           Pilotez votre assemblée avec une vision <span className="text-blue-300 font-semibold">globale et structurée</span>.
 Gardez une vue d’ensemble sur les églises sous votre <span className="text-blue-300 font-semibold">supervision</span>, suivez les <span className="text-blue-300 font-semibold">indicateurs clés</span>, 

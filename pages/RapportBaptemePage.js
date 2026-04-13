@@ -382,14 +382,16 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
 </div>
 
       {/* --- TABLEAU --- */}
+{/* TABLEAU DESKTOP */}
 <div className="hidden md:block w-full mt-6">
+
   {sortedMonths.map((monthKey) => {
     const [year, month] = monthKey.split("-").map(Number);
     const isOpen = expandedMonths[monthKey];
 
     return (
       <div key={monthKey} className="mb-4">
-        
+
         {/* HEADER MOIS */}
         <div
           onClick={() => toggleMonth(monthKey)}
@@ -399,6 +401,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
           <span>{isOpen ? "−" : "+"}</span>
         </div>
 
+        {/* CONTENT */}
         {isOpen && (
           <div className="mt-2">
 
@@ -424,14 +427,18 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                   <div className="min-w-[200px] text-white">
                     {formatDateFR(r.date)}
                   </div>
+
                   <div className="min-w-[200px] text-center text-white">
                     {r.baptise_par}
                   </div>
+
                   <div className="min-w-[120px] text-center">{r.hommes}</div>
                   <div className="min-w-[120px] text-center">{r.femmes}</div>
+
                   <div className="min-w-[120px] text-center font-bold">
                     {total}
                   </div>
+
                   <div className="min-w-[150px] text-center">
                     <button
                       onClick={() => handleEdit(r)}
@@ -449,7 +456,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
       </div>
     );
   })}
-</div> 
+</div>
 
               {/* TOTAL GLOBAL */}
               <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">

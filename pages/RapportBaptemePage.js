@@ -449,7 +449,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                       return (
                         <div
                           key={r.id + r.baptise_par}
-                          className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500"
+                          className="flex items-center px-4 py-3 mx-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500"
                         >
                           <div className="min-w-[200px] text-white">
                             {formatDateFR(r.date)}

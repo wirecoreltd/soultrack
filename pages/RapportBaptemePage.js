@@ -432,14 +432,14 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                       onClick={() => toggleMonth(group.key)}
                       className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-orange-500 cursor-pointer"
                     >
-                      <div className="min-w-[220px] text-white font-semibold flex items-center gap-2">
+                      <div className="min-w-[220px] text-white font-semibold flex items-center gap-2 whitespace-pre-line break-words">
                         <span className="text-[10px]">{isOpen ? "➖" : "➕"}</span>
-                        <span className="text-emerald-300">{group.label}</span>
+                        <span className="text-white font-semibold">{group.label}</span>
                       </div>
                       <div className="min-w-[200px]"></div>
                       <div className="min-w-[120px] text-center text-orange-300 font-semibold text-sm">{monthTotal.hommes}</div>
                       <div className="min-w-[120px] text-center text-orange-300 font-semibold text-sm">{monthTotal.femmes}</div>
-                      <div className="min-w-[120px] text-center text-orange-300 font-semibold text-sm">{monthTotal.hommes + monthTotal.femmes}</div>
+                      <div className="min-w-[120px] text-center text-orange-300 font-semibold text-sm ml-4">{monthTotal.hommes + monthTotal.femmes}</div>
                       <div className="min-w-[150px]"></div>
                     </button>
 
@@ -457,7 +457,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                           <div className="min-w-[200px] text-center text-white">
                             {r.baptise_par}
                           </div>
-                          <div className="min-w-[120px] text-center text-white">
+                          <div className="min-w-[120px] text-center text-white ml-4">
                             {r.hommes}
                           </div>
                           <div className="min-w-[120px] text-center text-white">

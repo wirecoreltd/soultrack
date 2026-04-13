@@ -518,7 +518,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                       {group.label}
                     </span>
                     <span className="text-orange-400 font-semibold">
-                      H: {monthTotal.hommes} | F: {monthTotal.femmes} = {monthTotal.hommes + monthTotal.femmes}
+                      TOTAL (H: {monthTotal.hommes} + F: {monthTotal.femmes}): = {monthTotal.hommes + monthTotal.femmes}
                     </span>
                   </button>
 
@@ -558,8 +558,8 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
 
             {/* TOTAL GLOBAL MOBILE */}
             <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl justify-center">
-              <span className="text-white font-bold mr-4">TOTAL</span>
-              <span className="text-orange-400 font-semibold">Total (H:{totalGlobal.hommes} + F:{totalGlobal.femmes}) = {totalGlobal.hommes+totalGlobal.femmes}</span>
+              <span className="text-orange-400 font-semibold mr-4">TOTAL</span>
+              <span className="text-orange-400 font-semibold">(H:{totalGlobal.hommes} + F:{totalGlobal.femmes}) = {totalGlobal.hommes+totalGlobal.femmes}</span>
             </div>
 
           </div>

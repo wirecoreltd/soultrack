@@ -463,16 +463,13 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
         className="mx-auto text-amber-300 mt-2 hover:scale-110 transition"
       >
         ✏️ Modifier
-      </button>
-    </div>
-  );
-})}
-                </div>
-              );
-            })}
+            </button>
           </div>
-        </>
-      )}
+        );
+      })}
+    </div>
+  </>
+)}
 
       <Footer />
 

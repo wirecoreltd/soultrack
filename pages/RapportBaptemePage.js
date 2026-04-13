@@ -437,9 +437,9 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                         <span className="text-white font-semibold">{group.label}</span>
                       </div>
                       <div className="min-w-[200px]"></div>
-                      <div className="min-w-[120px] text-center text-orange-300 font-semibold text-sm">{monthTotal.hommes}</div>
-                      <div className="min-w-[120px] text-center text-orange-300 font-semibold text-sm">{monthTotal.femmes}</div>
-                      <div className="min-w-[120px] text-center text-orange-300 font-semibold text-sm ">{monthTotal.hommes + monthTotal.femmes}</div>
+                      <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.hommes}</div>
+                      <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.femmes}</div>
+                      <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.hommes + monthTotal.femmes}</div>
                       <div className="min-w-[150px]"></div>
                     </button>
 
@@ -457,7 +457,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                           <div className="min-w-[200px] text-center text-white">
                             {r.baptise_par}
                           </div>
-                          <div className="min-w-[120px] text-center text-white ml-5">
+                          <div className="min-w-[120px] text-center text-white">
                             {r.hommes}
                           </div>
                           <div className="min-w-[120px] text-center text-white">
@@ -486,7 +486,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
               <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
                 <div className="min-w-[200px] text-white font-bold">TOTAL</div>
                 <div className="min-w-[200px]"></div>
-                <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-5">{totalGlobal.hommes}</div>
+                <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes+totalGlobal.femmes}</div>
                 <div className="min-w-[150px]"></div>
@@ -514,7 +514,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                     className="w-full flex items-center justify-between px-4 py-3 bg-white/15 hover:bg-white/20 transition rounded-xl mb-1 border-l-4 border-emerald-400"
                   >
                     <span className="flex items-center gap-2 text-emerald-300 text-sm font-bold">
-                      <span className="text-[10px]">{isOpen ? "▼" : "▶"}</span>
+                      <span className="text-[10px]">{isOpen ? "➖" : "➕"}</span>
                       {group.label}
                     </span>
                     <span className="text-orange-300 font-semibold">
@@ -530,16 +530,16 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                         key={r.id + r.baptise_par}
                         className="bg-white/10 text-white rounded-xl px-4 py-3 flex flex-col gap-2 shadow mb-2"
                       >
-                        <div className="text-amber-300 text-right opacity-80">
+                        <div className="text-amber-300 text-right">
                           {formatDateFR(r.date)}
                         </div>
-                        <div className="text-sm">
+                        <div className="text-white">
                           Baptisé par : <span className="font-semibold">{r.baptise_par}</span>
                         </div>
-                        <div className="text-sm">
+                        <div className="text-white">
                           Hommes : {r.hommes} | Femmes : {r.femmes}
                         </div>
-                        <div className="text-sm font-semibold text-orange-400">
+                        <div className="text font-semibold text-orange-400">
                           Total : {total}
                         </div>
                         <button

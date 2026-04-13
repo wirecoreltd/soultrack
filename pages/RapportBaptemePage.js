@@ -383,7 +383,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
       type="date"
       value={filterFin}
       onChange={e => setFilterFin(e.target.value)}
-      className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+      className="border border-gray-400 rounded-lg px-1 py-1 bg-transparent text-white"
     />
   </div>
 
@@ -449,7 +449,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                       return (
                         <div
                           key={r.id + r.baptise_par}
-                          className="flex items-center px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
+                          className="flex items-center px-1 py-1 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
                           <div className="min-w-[200px] text-white">
                             {formatDateFR(r.date)}
                           </div>
@@ -482,7 +482,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
               })}
 
               {/* TOTAL GLOBAL — 100% identique à l'original */}
-              <div className="flex items-center px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
+              <div className="flex items-center px-4 py-1 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
                 <div className="min-w-[200px] text-white font-bold">TOTAL</div>
                 <div className="min-w-[200px]"></div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-3">{totalGlobal.hommes}</div>

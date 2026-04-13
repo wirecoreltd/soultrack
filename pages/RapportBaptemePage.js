@@ -449,7 +449,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                       return (
                         <div
                           key={r.id + r.baptise_par}
-                          className="flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
+                          className="flex items-center px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
                           <div className="min-w-[200px] text-white">
                             {formatDateFR(r.date)}
                           </div>
@@ -482,7 +482,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
               })}
 
               {/* TOTAL GLOBAL — 100% identique à l'original */}
-              <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
+              <div className="flex items-center px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
                 <div className="min-w-[200px] text-white font-bold">TOTAL</div>
                 <div className="min-w-[200px]"></div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-3">{totalGlobal.hommes}</div>
@@ -510,7 +510,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                   {/* LIGNE TITRE DU MOIS MOBILE */}
                   <button
                     onClick={() => toggleMonth(group.key)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-white/15 hover:bg-white/20 transition rounded-xl mb-1 border-l-4 border-emerald-400"
+                    className="w-full flex items-center justify-between px-4 py-2 bg-white/15 hover:bg-white/20 transition rounded-xl mb-1 border-l-4 border-emerald-400"
                   >
                     <span className="flex items-center gap-2 text-white font-bold">
                       <span className="text-[10px]">{isOpen ? "➖" : "➕"}</span>
@@ -527,7 +527,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                     return (
                       <div
                         key={r.id + r.baptise_par}
-                        className="bg-white/10 text-white rounded-xl px-4 py-3 flex flex-col gap-2 shadow mb-2"
+                        className="bg-white/10 text-white rounded-xl px-4 py-2 flex flex-col gap-2 shadow mb-2"
                       >
                         <div className="text-amber-300 text-right">
                           {formatDateFR(r.date)}
@@ -556,7 +556,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
             })}
 
             {/* TOTAL GLOBAL MOBILE */}
-            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
+            <div className="flex items-center px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
               <span className="text-orange-400 font-semibold mr-4">TOTAL</span>
               <span className="text-orange-400 font-semibold">(H:{totalGlobal.hommes} + F:{totalGlobal.femmes}) = {totalGlobal.hommes+totalGlobal.femmes}</span>
             </div>

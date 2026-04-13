@@ -337,8 +337,13 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
       </div>
 
       {/* FILTRES */}
-<div className="bg-white/10 p-6 rounded-2xl shadow-lg mt-4 flex flex-col sm:flex-row justify-center gap-4 w-full max-w-lg mx-auto text-white">
+<div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl p-4 md:p-6 mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white">
 
+  {/* TEXTE AU-DESSUS */}
+  <p className="text-base text-red-400 font-semibold text-center mb-4">
+    Choisissez les paramètres pour générer le rapport
+  </p>
+  
   <div className="flex flex-col w-full sm:w-auto">
     <label className="text-center text-base mb-1">Date de Début</label>
     <input
@@ -442,18 +447,15 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
       key={r.id + r.baptise_par}
       className="bg-white/10 text-white rounded-xl px-4 py-3 flex flex-col gap-2 shadow"
     >
-      <div className="text-xs text-amber-300 text-right opacity-80">
+      <div className="text-amber-300 text-right opacity-80">
         {formatDateFR(r.date)}
       </div>
-
       <div className="text-sm">
         Baptisé par : <span className="font-semibold">{r.baptise_par}</span>
       </div>
-
       <div className="text-sm">
         Hommes : {r.hommes} | Femmes : {r.femmes}
       </div>
-
       <div className="text-sm font-semibold text-orange-400">
         Total : {total}
       </div>

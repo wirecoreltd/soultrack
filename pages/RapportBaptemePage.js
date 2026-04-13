@@ -486,7 +486,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
               <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
                 <div className="min-w-[200px] text-white font-bold">TOTAL</div>
                 <div className="min-w-[200px]"></div>
-                <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
+                <div className="min-w-[120px] text-center text-orange-400 font-semibold -ml-5">{totalGlobal.hommes}</div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes+totalGlobal.femmes}</div>
                 <div className="min-w-[150px]"></div>
@@ -513,7 +513,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                     onClick={() => toggleMonth(group.key)}
                     className="w-full flex items-center justify-between px-4 py-3 bg-white/15 hover:bg-white/20 transition rounded-xl mb-1 border-l-4 border-emerald-400"
                   >
-                    <span className="flex items-center gap-2 text-emerald-300 text-sm font-bold">
+                    <span className="flex items-center gap-2 text-white font-bold">
                       <span className="text-[10px]">{isOpen ? "➖" : "➕"}</span>
                       {group.label}
                     </span>

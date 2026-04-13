@@ -125,9 +125,16 @@ function RapportBaptemes() {
   /* CRUD */
   const handleSubmit=async(e)=>{
     e.preventDefault();
-    if(editRapport) return handleUpdate();
+     if (!formData.baptise_par.trim()) {
+    alert("Le champ 'Baptisé par' est obligatoire.");
+    return;
+  }
 
-    if(selectedCandidats.length === 0) return alert("Veuillez sélectionner au moins un candidat.");
+  if (editRapport) return handleUpdate();
+
+  if (selectedCandidats.length === 0) {
+    return alert("Veuillez sélectionner au moins un candidat.");
+  }
 
     // 1️⃣ Insert dans baptemes pour chaque candidat
     for(const id of selectedCandidats){
@@ -165,6 +172,10 @@ function RapportBaptemes() {
   };
 
   const handleUpdate=async()=>{
+    if (!formData.baptise_par.trim()) {
+    alert("Le champ 'Baptisé par' est obligatoire.");
+    return;
+  }
     if(!editRapport) return;
     await supabase
       .from("baptemes")
@@ -321,7 +332,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
 
           <div className="flex flex-col">
             <label className="text-white mb-1">Baptisé par</label>
-            <input type="text" value={formData.baptise_par} onChange={e => setFormData({...formData, baptise_par: e.target.value})} className="input"/>
+            <input type="text" required value={formData.baptise_par} onChange={e => setFormData({...formData, baptise_par: e.target.value})} className="input"/>
           </div>
 
           <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:scale-[1.02] transition">

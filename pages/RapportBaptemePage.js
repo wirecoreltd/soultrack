@@ -344,7 +344,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
     Choisissez les paramètres pour générer le rapport
   </p>
   
-  <div className="flex flex-col w-full sm:w-auto">
+  <div className="flex flex-col w-full max-w-lg mx-auto mt-4 gap-3 md:gap-4">
     <label className="text-center text-base mb-1">Date de Début</label>
     <input
       type="date"
@@ -364,11 +364,12 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
     />
   </div>
 
-  <div className="flex items-end w-full sm:w-auto">
-    <button
-      onClick={fetchRapports}
-      className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] w-full"
-    >
+  <div className="flex flex-col w-full md:w-auto">
+      <label className="text-base text-center mb-1 opacity-0">btn</label>
+      <button
+        onClick={fetchRapports}
+        className="w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
+      >
       Générer
     </button>
   </div>

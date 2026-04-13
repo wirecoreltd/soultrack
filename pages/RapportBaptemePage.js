@@ -449,7 +449,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                       return (
                         <div
                           key={r.id + r.baptise_par}
-                          className="flex items-center px-4 py-3 rounded-lg gap-x-4 bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500"
+                          className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500"
                         >
                           <div className="min-w-[200px] text-white">
                             {formatDateFR(r.date)}
@@ -483,7 +483,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
               })}
 
               {/* TOTAL GLOBAL — 100% identique à l'original */}
-              <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 gap-x-4 bg-white/10 rounded-b-xl">
+              <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
                 <div className="min-w-[200px] text-white font-bold">TOTAL</div>
                 <div className="min-w-[200px]"></div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-3">{totalGlobal.hommes}</div>

@@ -457,7 +457,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                           <div className="min-w-[200px] text-center text-white">
                             {r.baptise_par}
                           </div>
-                          <div className="min-w-[120px] text-center text-white">
+                          <div className="min-w-[120px] text-center text-white ml-3">
                             {r.hommes}
                           </div>
                           <div className="min-w-[120px] text-center text-white">
@@ -486,7 +486,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
               <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
                 <div className="min-w-[200px] text-white font-bold">TOTAL</div>
                 <div className="min-w-[200px]"></div>
-                <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-2">{totalGlobal.hommes}</div>
+                <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-3">{totalGlobal.hommes}</div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes+totalGlobal.femmes}</div>
                 <div className="min-w-[150px]"></div>
@@ -559,7 +559,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
             {/* TOTAL GLOBAL MOBILE */}
             <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl justify-center">
               <span className="text-white font-bold mr-4">TOTAL</span>
-              <span className="text-orange-400 font-semibold">{totalGlobal.hommes}H / {totalGlobal.femmes}F = {totalGlobal.hommes+totalGlobal.femmes}</span>
+              <span className="text-orange-400 font-semibold">Total H + {totalGlobal.hommes} / F :{totalGlobal.femmes} = {totalGlobal.hommes+totalGlobal.femmes}</span>
             </div>
 
           </div>

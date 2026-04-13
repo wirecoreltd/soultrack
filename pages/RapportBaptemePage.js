@@ -407,7 +407,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
             <div className="w-max space-y-2">
 
               {/* HEADER — 100% identique à l'original */}
-              <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
                 <div className="min-w-[200px]">Date</div>
                 <div className="min-w-[200px] text-center">Baptisé par</div>
                 <div className="min-w-[120px] text-center">Hommes</div>
@@ -486,9 +486,9 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
               <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
                 <div className="min-w-[200px] text-white font-bold">TOTAL</div>
                 <div className="min-w-[200px]"></div>
-                <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
+                <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-4">{totalGlobal.hommes}</div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
-                <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-4">{totalGlobal.hommes+totalGlobal.femmes}</div>
+                <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes+totalGlobal.femmes}</div>
                 <div className="min-w-[150px]"></div>
               </div>
 

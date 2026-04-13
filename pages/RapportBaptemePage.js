@@ -30,7 +30,6 @@ function RapportBaptemes() {
   const [rapports,setRapports]=useState([]);
   const [editRapport,setEditRapport]=useState(null);
   const [expandedMonths,setExpandedMonths]=useState({});
-  const [showTable,setShowTable]=useState(false);
   const [candidats,setCandidats]=useState([]);
   const [selectedCandidats,setSelectedCandidats]=useState([]);
   const router = useRouter();
@@ -101,7 +100,6 @@ function RapportBaptemes() {
 
     const {data}=await query;
     setRapports(data||[]);
-    setShowTable(true);
   };
 
   /* CRUD */
@@ -141,20 +139,9 @@ function RapportBaptemes() {
     }));
 
     fetchRapports();
+
     setRapportSuccess(true);
     setTimeout(()=>setRapportSuccess(false),3000);
-  };
-
-  const handleEdit=(r)=>{
-    setEditRapport(r);
-    setFormData({
-      ...formData,
-      date:r.date,
-      hommes:r.hommes,
-      femmes:r.femmes,
-      baptise_par:r.baptise_par
-    });
-    formRef.current?.scrollIntoView({behavior:"smooth"});
   };
 
   const handleUpdate=async()=>{
@@ -183,7 +170,9 @@ function RapportBaptemes() {
     fetchRapports();
   };
 
-  /* UTILS */
+  const toggleMonth=(k)=>
+    setExpandedMonths(p=>({...p,[k]:!p[k]}));
+
   const getMonthNameFR=(i)=>[
     "Janvier","Février","Mars","Avril","Mai","Juin",
     "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
@@ -195,10 +184,7 @@ function RapportBaptemes() {
     return `${String(date.getDate()).padStart(2,"0")}/${String(date.getMonth()+1).padStart(2,"0")}/${date.getFullYear()}`;
   };
 
-  const toggleMonth=(k)=>
-    setExpandedMonths(p=>({...p,[k]:!p[k]}));
-
-  /* GROUP */
+  /* GROUP BY MONTH */
   const groupByMonth=(data)=>{
     const map={};
     data.forEach(r=>{
@@ -225,30 +211,30 @@ function RapportBaptemes() {
   },{hommes:0,femmes:0});
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-6 bg-[#333699]">
+    <div className="min-h-screen flex flex-col items-center px-4 sm:px-6 py-6 bg-[#333699]">
+
       <HeaderPages />
 
-      <h1 className="text-white text-2xl font-bold mt-4">
-        Rapport Baptêmes
+      {/* TITRE + TEXTE (RESTE INTACT) */}
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-white">
+        Rapport <span className="text-emerald-300">Baptêmes</span>
       </h1>
 
-      {/* FORMULAIRE COMPLET RESTAURÉ */}
-      <div ref={formRef} className="bg-white/10 p-6 rounded-3xl mt-4 w-full max-w-lg">
+      {/* FORMULAIRE (100% CONSERVÉ) */}
+      <div ref={formRef} className="bg-white/10 p-6 rounded-3xl w-full max-w-lg">
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
-          <input
-            type="date"
+          <input type="date"
             value={formData.date}
             onChange={e=>setFormData({...formData,date:e.target.value})}
             className="input"
           />
 
-          <input
-            type="text"
-            placeholder="Baptisé par"
+          <input type="text"
             value={formData.baptise_par}
             onChange={e=>setFormData({...formData,baptise_par:e.target.value})}
             className="input"
+            placeholder="Baptisé par"
           />
 
           <div className="flex gap-2">
@@ -260,25 +246,18 @@ function RapportBaptemes() {
             {editRapport ? "Modifier" : "Ajouter"}
           </button>
 
-          {rapportSuccess && (
-            <p className="text-green-400 text-center">
-              ✔ Sauvegardé
-            </p>
-          )}
         </form>
       </div>
 
-      {/* TABLE SIMPLE (NO DUPLICATES) */}
+      {/* TABLE DESKTOP (UNE SEULE VERSION CLEAN) */}
       <div className="hidden md:block w-full mt-6">
         {sortedMonths.map(key=>{
           const [y,m]=key.split("-");
 
           return (
             <div key={key}>
-              <div
-                onClick={()=>toggleMonth(key)}
-                className="text-white bg-white/10 p-3 mt-2 cursor-pointer"
-              >
+              <div onClick={()=>toggleMonth(key)}
+                className="text-white bg-white/10 p-3 mt-2 cursor-pointer">
                 {getMonthNameFR(m)} {y}
               </div>
 

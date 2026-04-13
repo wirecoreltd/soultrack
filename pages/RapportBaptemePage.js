@@ -382,15 +382,14 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
 </div>
 
       {/* --- TABLEAU --- */}
-     <div className="hidden md:block w-full mt-6">
-
+<div className="hidden md:block w-full mt-6">
   {sortedMonths.map((monthKey) => {
     const [year, month] = monthKey.split("-").map(Number);
     const isOpen = expandedMonths[monthKey];
 
     return (
       <div key={monthKey} className="mb-4">
-
+        
         {/* HEADER MOIS */}
         <div
           onClick={() => toggleMonth(monthKey)}
@@ -400,11 +399,10 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
           <span>{isOpen ? "−" : "+"}</span>
         </div>
 
-        {/* TABLE */}
         {isOpen && (
           <div className="mt-2">
 
-            {/* HEADER */}
+            {/* HEADER TABLE */}
             <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5">
               <div className="min-w-[200px]">Date</div>
               <div className="min-w-[200px] text-center">Baptisé par</div>
@@ -420,29 +418,20 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
 
               return (
                 <div
-                  key={r.id + r.baptise_par}
+                  key={r.id}
                   className="flex items-center px-4 py-3 bg-white/10 hover:bg-white/20 border-l-4 border-blue-500"
                 >
                   <div className="min-w-[200px] text-white">
                     {formatDateFR(r.date)}
                   </div>
-
                   <div className="min-w-[200px] text-center text-white">
                     {r.baptise_par}
                   </div>
-
-                  <div className="min-w-[120px] text-center text-white">
-                    {r.hommes}
-                  </div>
-
-                  <div className="min-w-[120px] text-center text-white">
-                    {r.femmes}
-                  </div>
-
-                  <div className="min-w-[120px] text-center text-white font-bold">
+                  <div className="min-w-[120px] text-center">{r.hommes}</div>
+                  <div className="min-w-[120px] text-center">{r.femmes}</div>
+                  <div className="min-w-[120px] text-center font-bold">
                     {total}
                   </div>
-
                   <div className="min-w-[150px] text-center">
                     <button
                       onClick={() => handleEdit(r)}
@@ -460,7 +449,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
       </div>
     );
   })}
-</div>     
+</div> 
 
               {/* TOTAL GLOBAL */}
               <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
@@ -474,17 +463,16 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
             </div>
           </div>
 
-          {/* --- TABLEAU MOBILE --- */}
-          <div className="md:hidden w-full mt-4 flex flex-col gap-3">
-
+          {/* --- TABLEAU --- */}
+<div className="hidden md:block w-full mt-6">
   {sortedMonths.map((monthKey) => {
     const [year, month] = monthKey.split("-").map(Number);
     const isOpen = expandedMonths[monthKey];
 
     return (
-      <div key={monthKey}>
-
-        {/* MONTH HEADER */}
+      <div key={monthKey} className="mb-4">
+        
+        {/* HEADER MOIS */}
         <div
           onClick={() => toggleMonth(monthKey)}
           className="cursor-pointer bg-white/10 px-4 py-3 rounded-xl text-white font-semibold flex justify-between"
@@ -493,34 +481,53 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
           <span>{isOpen ? "−" : "+"}</span>
         </div>
 
-        {/* ITEMS */}
-        {isOpen &&
-          grouped[monthKey].map((r) => {
-            const total = Number(r.hommes) + Number(r.femmes);
+        {isOpen && (
+          <div className="mt-2">
 
-            return (
-              <div key={r.id} className="bg-white/10 text-white rounded-xl p-3 mt-2">
+            {/* HEADER TABLE */}
+            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5">
+              <div className="min-w-[200px]">Date</div>
+              <div className="min-w-[200px] text-center">Baptisé par</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center">Total</div>
+              <div className="min-w-[150px] text-center">Actions</div>
+            </div>
 
-                <div className="text-xs text-amber-300">
-                  {formatDateFR(r.date)}
-                </div>
+            {/* ROWS */}
+            {grouped[monthKey].map((r) => {
+              const total = Number(r.hommes) + Number(r.femmes);
 
-                <div>Baptisé par: {r.baptise_par}</div>
-                <div>Hommes: {r.hommes} | Femmes: {r.femmes}</div>
-
-                <div className="text-orange-400 font-bold">
-                  Total: {total}
-                </div>
-
-                <button
-                  onClick={() => handleEdit(r)}
-                  className="text-amber-300 mt-2"
+              return (
+                <div
+                  key={r.id}
+                  className="flex items-center px-4 py-3 bg-white/10 hover:bg-white/20 border-l-4 border-blue-500"
                 >
-                  ✏️ Modifier
-                </button>
-              </div>
-            );
-          })}
+                  <div className="min-w-[200px] text-white">
+                    {formatDateFR(r.date)}
+                  </div>
+                  <div className="min-w-[200px] text-center text-white">
+                    {r.baptise_par}
+                  </div>
+                  <div className="min-w-[120px] text-center">{r.hommes}</div>
+                  <div className="min-w-[120px] text-center">{r.femmes}</div>
+                  <div className="min-w-[120px] text-center font-bold">
+                    {total}
+                  </div>
+                  <div className="min-w-[150px] text-center">
+                    <button
+                      onClick={() => handleEdit(r)}
+                      className="text-orange-400 underline"
+                    >
+                      Modifier
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+          </div>
+        )}
       </div>
     );
   })}

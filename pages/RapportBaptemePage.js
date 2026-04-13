@@ -344,7 +344,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
     Choisissez les paramètres pour générer le rapport
   </p>
   
-  <div className="flex flex-col w-full max-w-lg mx-auto mt-4 gap-3 md:gap-4">
+  <div className="text-center flex flex-col w-full sm:w-auto">
     <label className="text-center text-base mb-1">Date de Début</label>
     <input
       type="date"
@@ -354,7 +354,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
     />
   </div>
 
-  <div className="text-center flex flex-col w-full sm:w-auto">
+  <div className="text-center flex flex-col w-full sm:w-auto mt-2">
     <label className="text-center text-base mb-1">Date de Fin</label>
     <input
       type="date"

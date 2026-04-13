@@ -439,7 +439,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                       <div className="min-w-[200px]"></div>
                       <div className="min-w-[120px] text-center text-orange-300 font-semibold text-sm">{monthTotal.hommes}</div>
                       <div className="min-w-[120px] text-center text-orange-300 font-semibold text-sm">{monthTotal.femmes}</div>
-                      <div className="min-w-[120px] text-center text-orange-300 font-semibold text-sm ml-4">{monthTotal.hommes + monthTotal.femmes}</div>
+                      <div className="min-w-[120px] text-center text-orange-300 font-semibold text-sm ">{monthTotal.hommes + monthTotal.femmes}</div>
                       <div className="min-w-[150px]"></div>
                     </button>
 
@@ -457,7 +457,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                           <div className="min-w-[200px] text-center text-white">
                             {r.baptise_par}
                           </div>
-                          <div className="min-w-[120px] text-center text-white ml-4">
+                          <div className="min-w-[120px] text-center text-white ml-5">
                             {r.hommes}
                           </div>
                           <div className="min-w-[120px] text-center text-white">
@@ -488,7 +488,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                 <div className="min-w-[200px]"></div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
-                <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes+totalGlobal.femmes}</div>
+                <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-4">{totalGlobal.hommes+totalGlobal.femmes}</div>
                 <div className="min-w-[150px]"></div>
               </div>
 

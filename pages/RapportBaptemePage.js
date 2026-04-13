@@ -418,10 +418,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
       </div>
     </div>
   );
-})}
-                  </div>
-                );
-              })}
+})}                 
 
               {/* TOTAL GLOBAL */}
               <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">

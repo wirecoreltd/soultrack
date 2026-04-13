@@ -197,11 +197,7 @@ function RapportBaptemes() {
   const toggleMonth=(monthKey)=>setExpandedMonths(prev=>({...prev,[monthKey]:!prev[monthKey]}));
 
   const aggregated = aggregateRapports(rapports)
-  .sort((a, b) => new Date(b.date) - new Date(a.date));
-      const [yearA,monthA]=a[0].split("-").map(Number);
-      const [yearB,monthB]=b[0].split("-").map(Number);
-      return new Date(yearA,monthA)-new Date(yearB,monthB);
-    });
+  .sort((a, b) => new Date(b.date) - new Date(a.date));      
 
   const totalGlobal=rapports.reduce((acc,r)=>{
     acc.hommes+=Number(r.hommes||0);

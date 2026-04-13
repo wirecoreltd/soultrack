@@ -361,7 +361,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
       </div>
 
       {/* FILTRES */}
-<div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl p-4 md:p-6 mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white">
+<div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl p-4 md:p-6 mt-2 w-full max-w-lg md:w-fit md:mx-auto flex flex-col text-white">
 
   <p className="text-base text-red-400 font-semibold text-center mb-4">
     Choisissez les paramètres pour générer le rapport
@@ -486,7 +486,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
               <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
                 <div className="min-w-[200px] text-white font-bold">TOTAL</div>
                 <div className="min-w-[200px]"></div>
-                <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-4">{totalGlobal.hommes}</div>
+                <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-5">{totalGlobal.hommes}</div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes+totalGlobal.femmes}</div>
                 <div className="min-w-[150px]"></div>
@@ -517,7 +517,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                       <span className="text-[10px]">{isOpen ? "▼" : "▶"}</span>
                       {group.label}
                     </span>
-                    <span className="text-xs text-orange-300 font-semibold">
+                    <span className="text-orange-300 font-semibold">
                       {monthTotal.hommes}H / {monthTotal.femmes}F = {monthTotal.hommes + monthTotal.femmes}
                     </span>
                   </button>

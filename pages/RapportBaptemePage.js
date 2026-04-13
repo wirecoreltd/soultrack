@@ -84,29 +84,11 @@ function RapportBaptemes() {
   }, [selectedCandidats, candidats]);
 
    /* CALCUL PAR DATE + FUTUR BAPTISE */
-  const aggregateRapports = (rapports) => {
-  const map = {};
+  const aggregated = aggregateRapports(rapports)
+  .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  rapports.forEach(r => {
-    const key = `${r.date}__${r.baptise_par}`;
-
-    if (!map[key]) {
-      map[key] = {
-        ...r,
-        hommes: 0,
-        femmes: 0
-      };
-    }
-
-    map[key].hommes += Number(r.hommes || 0);
-    map[key].femmes += Number(r.femmes || 0);
-  });
-
-  return Object.values(map);
-};
-
-    /* collapse by month */
-  const groupByMonth = (data) => {
+// GROUP BY MONTH (CORRIGÉ)
+const groupByMonth = (data) => {
   const map = {};
 
   data.forEach((r) => {
@@ -114,14 +96,13 @@ function RapportBaptemes() {
     const key = `${d.getFullYear()}-${d.getMonth()}`;
 
     if (!map[key]) map[key] = [];
-
     map[key].push(r);
   });
 
   return map;
 };
 
-  const grouped = groupByMonth(aggregated);
+const grouped = groupByMonth(aggregated);
 
 const sortedMonths = Object.keys(grouped).sort((a, b) => {
   const [yA, mA] = a.split("-").map(Number);
@@ -401,75 +382,85 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
 </div>
 
       {/* --- TABLEAU --- */}
-     {sortedMonths.map((monthKey) => {
-  const [year, month] = monthKey.split("-").map(Number);
-  const isOpen = expandedMonths[monthKey];
+     <div className="hidden md:block w-full mt-6">
 
-  return (
-    <div key={monthKey} className="space-y-2 mb-4">
+  {sortedMonths.map((monthKey) => {
+    const [year, month] = monthKey.split("-").map(Number);
+    const isOpen = expandedMonths[monthKey];
 
-      {/* HEADER MOIS */}
-      <div
-        onClick={() => toggleMonth(monthKey)}
-        className="cursor-pointer bg-white/10 px-4 py-3 rounded-xl text-white font-semibold flex justify-between"
-      >
-        <span>
-          {getMonthNameFR(month)} {year}
-        </span>
-        <span>{isOpen ? "−" : "+"}</span>
-      </div>
+    return (
+      <div key={monthKey} className="mb-4">
 
-      {/* TABLE HEADER (visible seulement si ouvert) */}
-      {isOpen && (
-        <>
-          <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 whitespace-nowrap">
-            <div className="min-w-[200px]">Date</div>
-            <div className="min-w-[200px] text-center">Baptisé par</div>
-            <div className="min-w-[120px] text-center">Hommes</div>
-            <div className="min-w-[120px] text-center">Femmes</div>
-            <div className="min-w-[120px] text-center">Total</div>
-            <div className="min-w-[150px] text-center">Actions</div>
+        {/* HEADER MOIS */}
+        <div
+          onClick={() => toggleMonth(monthKey)}
+          className="cursor-pointer bg-white/10 px-4 py-3 rounded-xl text-white font-semibold flex justify-between"
+        >
+          <span>{getMonthNameFR(month)} {year}</span>
+          <span>{isOpen ? "−" : "+"}</span>
+        </div>
+
+        {/* TABLE */}
+        {isOpen && (
+          <div className="mt-2">
+
+            {/* HEADER */}
+            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5">
+              <div className="min-w-[200px]">Date</div>
+              <div className="min-w-[200px] text-center">Baptisé par</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center">Total</div>
+              <div className="min-w-[150px] text-center">Actions</div>
+            </div>
+
+            {/* ROWS */}
+            {grouped[monthKey].map((r) => {
+              const total = Number(r.hommes) + Number(r.femmes);
+
+              return (
+                <div
+                  key={r.id + r.baptise_par}
+                  className="flex items-center px-4 py-3 bg-white/10 hover:bg-white/20 border-l-4 border-blue-500"
+                >
+                  <div className="min-w-[200px] text-white">
+                    {formatDateFR(r.date)}
+                  </div>
+
+                  <div className="min-w-[200px] text-center text-white">
+                    {r.baptise_par}
+                  </div>
+
+                  <div className="min-w-[120px] text-center text-white">
+                    {r.hommes}
+                  </div>
+
+                  <div className="min-w-[120px] text-center text-white">
+                    {r.femmes}
+                  </div>
+
+                  <div className="min-w-[120px] text-center text-white font-bold">
+                    {total}
+                  </div>
+
+                  <div className="min-w-[150px] text-center">
+                    <button
+                      onClick={() => handleEdit(r)}
+                      className="text-orange-400 underline"
+                    >
+                      Modifier
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
           </div>
-
-          {grouped[monthKey].map((r) => {
-            const total = Number(r.hommes) + Number(r.femmes);
-
-            return (
-              <div
-                key={r.id + r.baptise_par}
-                className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 border-l-4 border-blue-500"
-              >
-                <div className="min-w-[200px] text-white">
-                  {formatDateFR(r.date)}
-                </div>
-                <div className="min-w-[200px] text-center text-white">
-                  {r.baptise_par}
-                </div>
-                <div className="min-w-[120px] text-center text-white">
-                  {r.hommes}
-                </div>
-                <div className="min-w-[120px] text-center text-white">
-                  {r.femmes}
-                </div>
-                <div className="min-w-[120px] text-center text-white font-bold">
-                  {total}
-                </div>
-                <div className="min-w-[150px] text-center">
-                  <button
-                    onClick={() => handleEdit(r)}
-                    className="text-orange-400 underline"
-                  >
-                    Modifier
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </>
-      )}
-    </div>
-  );
-})}               
+        )}
+      </div>
+    );
+  })}
+</div>     
 
               {/* TOTAL GLOBAL */}
               <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
@@ -485,13 +476,15 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
 
           {/* --- TABLEAU MOBILE --- */}
           <div className="md:hidden w-full mt-4 flex flex-col gap-3">
+
   {sortedMonths.map((monthKey) => {
     const [year, month] = monthKey.split("-").map(Number);
     const isOpen = expandedMonths[monthKey];
 
     return (
-      <div key={monthKey} className="space-y-2">
+      <div key={monthKey}>
 
+        {/* MONTH HEADER */}
         <div
           onClick={() => toggleMonth(monthKey)}
           className="cursor-pointer bg-white/10 px-4 py-3 rounded-xl text-white font-semibold flex justify-between"
@@ -500,28 +493,34 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
           <span>{isOpen ? "−" : "+"}</span>
         </div>
 
-        {isOpen && grouped[monthKey].map((r) => {
-          const total = Number(r.hommes) + Number(r.femmes);
+        {/* ITEMS */}
+        {isOpen &&
+          grouped[monthKey].map((r) => {
+            const total = Number(r.hommes) + Number(r.femmes);
 
-          return (
-            <div key={r.id} className="bg-white/10 text-white rounded-xl p-3">
-              <div className="text-xs text-amber-300">
-                {formatDateFR(r.date)}
+            return (
+              <div key={r.id} className="bg-white/10 text-white rounded-xl p-3 mt-2">
+
+                <div className="text-xs text-amber-300">
+                  {formatDateFR(r.date)}
+                </div>
+
+                <div>Baptisé par: {r.baptise_par}</div>
+                <div>Hommes: {r.hommes} | Femmes: {r.femmes}</div>
+
+                <div className="text-orange-400 font-bold">
+                  Total: {total}
+                </div>
+
+                <button
+                  onClick={() => handleEdit(r)}
+                  className="text-amber-300 mt-2"
+                >
+                  ✏️ Modifier
+                </button>
               </div>
-
-              <div>Baptisé par: {r.baptise_par}</div>
-              <div>H: {r.hommes} | F: {r.femmes}</div>
-              <div className="text-orange-400 font-bold">Total: {total}</div>
-
-              <button
-                onClick={() => handleEdit(r)}
-                className="text-amber-300 mt-2"
-              >
-                ✏️ Modifier
-              </button>
-            </div>
-          );
-        })}
+            );
+          })}
       </div>
     );
   })}

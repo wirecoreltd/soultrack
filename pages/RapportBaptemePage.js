@@ -449,8 +449,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                       return (
                         <div
                           key={r.id + r.baptise_par}
-                          className="flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20"
-                        >
+                          className="flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
                           <div className="min-w-[200px] text-white">
                             {formatDateFR(r.date)}
                           </div>
@@ -483,7 +482,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
               })}
 
               {/* TOTAL GLOBAL — 100% identique à l'original */}
-              className="flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20"
+              <className="flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
                 <div className="min-w-[200px] text-white font-bold">TOTAL</div>
                 <div className="min-w-[200px]"></div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-3">{totalGlobal.hommes}</div>
@@ -557,7 +556,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
             })}
 
             {/* TOTAL GLOBAL MOBILE */}
-            className="flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20"
+            <className="flex items-center px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
               <span className="text-orange-400 font-semibold mr-4">TOTAL</span>
               <span className="text-orange-400 font-semibold">(H:{totalGlobal.hommes} + F:{totalGlobal.femmes}) = {totalGlobal.hommes+totalGlobal.femmes}</span>
             </div>

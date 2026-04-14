@@ -445,37 +445,43 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
 
                     {/* LIGNES DONNÉES — 100% identiques à l'original */}
                     {isOpen && group.items.map((r) => {
-                        const total = Number(r.hommes) + Number(r.femmes);                      
-                        return (
-                          <div className="pl-6">
-                            <div
-                              key={r.id + r.baptise_par}
-                              className="flex items-stretch px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mb-1 border border-white/20"
-                            >
-                              <div className="min-w-[200px] text-white">
-                                {formatDateFR(r.date)}
-                              </div>                      
-                              <div className="min-w-[200px] text-center text-white">
-                                {r.baptise_par}
-                              </div>                      
-                              <div className="min-w-[120px] text-center text-white">
-                                {r.hommes}
-                              </div>                      
-                              <div className="min-w-[120px] text-center text-white">
-                                {r.femmes}
-                              </div>                      
-                              <div className="min-w-[120px] text-center text-white font-bold">
-                                {total}
-                              </div>                      
-                              <div className="min-w-[150px] text-center">
-                                <button className="text-orange-400 underline">
-                                  Modifier
-                                </button>
-                              </div>
-                            </div>
+                      const total = Number(r.hommes) + Number(r.femmes);
+                      return (
+                        <div className="pl-6">
+                        <div
+                          key={r.id + r.baptise_par}
+                          className="flex items-stretch px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mb-1 border border-white/20">
+                          <div className="min-w-[200px] text-white">
+                            {formatDateFR(r.date)}
                           </div>
-                        );
-                      })}
+                          <div className="min-w-[200px] text-center text-white">
+                            {r.baptise_par}
+                          </div>
+                          <div className="min-w-[120px] text-center text-white ml-3">
+                            {r.hommes}
+                          </div>
+                          <div className="min-w-[120px] text-center text-white">
+                            {r.femmes}
+                          </div>
+                          <div className="min-w-[120px] text-center text-white font-bold">
+                            {total}
+                          </div>
+                          <div className="min-w-[150px] text-center">
+                            <button
+                              onClick={() => handleEdit(r)}
+                              className="text-orange-400 underline hover:text-orange-500 px-4 py-1 rounded-xl"
+                            >
+                              Modifier
+                            </button>
+                          </div>
+                        </div>
+                     </div>
+                      );
+                    })}
+
+                  </div>
+                );
+              })}
 
               {/* TOTAL GLOBAL — 100% identique à l'original */}
               <div className="flex items-center px-4 py-1 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">

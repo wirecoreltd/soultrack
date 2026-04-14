@@ -522,10 +522,8 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes+totalGlobal.femmes}</div>
                 <div className="min-w-[150px]"></div>
-              </div>
-          
-          </div>
-
+              </div>        
+       
           {/* --- TABLEAU MOBILE --- */}
           <div className="md:hidden w-full mt-4 flex flex-col gap-3">
 

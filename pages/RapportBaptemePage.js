@@ -463,7 +463,7 @@ function RapportBaptemes() {
                     {formatDateFR(r.date)}
                   </div>
 
-                  <div className="w-[180px] text-center text-white">
+                  <div className="w-[180px] text-center text-white -ml-3">
                     {r.baptise_par}
                   </div>
 

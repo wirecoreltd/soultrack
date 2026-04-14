@@ -456,7 +456,7 @@ function RapportBaptemes() {
             const total = Number(r.hommes) + Number(r.femmes);
 
             return (
-              <div key={r.id + r.baptise_par} className="pl-4 mt-1">
+              <div key={r.id + r.baptise_par} className="pl-2 mt-1">
                 <div className={`flex items-center px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 transition pl-2 border-l-4 ml-4 ${borderColor}`}>
 
                   <div className="w-[180px] text-white">

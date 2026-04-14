@@ -396,8 +396,8 @@ function RapportBaptemes() {
       {showTable && (
         <>
           {/* TABLEAU DESKTOP */}
-<div className="hidden md:flex w-full overflow-x-auto mt-4 justify-start">
-  <div className="w-full max-w-6xl">
+<div className="hidden md:flex w-full overflow-x-auto mt-4 justify-center">
+  <div className="w-max">
 
     {/* HEADER */}
     <div className="flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-white/20 bg-white/5 rounded-t-lg whitespace-nowrap">

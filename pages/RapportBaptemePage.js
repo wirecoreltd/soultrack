@@ -531,7 +531,7 @@ function RapportBaptemes() {
 
       {/* HEADER UNE FOIS */}
       <div className="flex items-center w-full px-4 py-2 text-center font-semibold text-orange-300 uppercase bg-white/5 rounded-lg mb-3">
-        <div className="flex-1 ml-2">Mois</div>
+        <div className="flex-1">Mois</div>
         <div className="w-14">H</div>
         <div className="w-14">F</div>
         <div className="w-14">Total</div>
@@ -606,7 +606,11 @@ function RapportBaptemes() {
             {/* TOTAL GLOBAL MOBILE — une seule fois à la fin */}
             <div className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer mb-2 border-orange-400">
               <span className="text-orange-400 font-semibold mr-4 ml-9">TOTAL</span>
-              <span className="text-orange-400 font-semibold ml-5">                        {totalGlobal.hommes}           {totalGlobal.femmes}                    {totalGlobal.hommes + totalGlobal.femmes}</span>
+             <span className="text-orange-400 font-semibold ml-5 flex gap-4">
+  <span>{totalGlobal.hommes}</span>
+  <span>{totalGlobal.femmes}</span>
+  <span>{totalGlobal.hommes + totalGlobal.femmes}</span>
+</span>
             </div>
 
           </div>

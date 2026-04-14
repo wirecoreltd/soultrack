@@ -432,11 +432,11 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                       onClick={() => toggleMonth(group.key)}
                       className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-orange-500 cursor-pointer mb-2"
                     >
-                      <div className="min-w-[220px] text-white font-semibold flex items-center gap-2 whitespace-pre-line break-words">
+                      <div className="min-w-[250px] text-white font-semibold flex items-center gap-2 whitespace-pre-line break-words">
                         <span className="text-[10px]">{isOpen ? "➖" : "➕"}</span>
                         <span className="text-white font-semibold">{group.label}</span>
                       </div>
-                      <div className="min-w-[200px]"></div>
+                      <div className="min-w-[220px]"></div>
                       <div className="min-w-[120px] text-center text-orange-300 font-semibold -ml-2">{monthTotal.hommes}</div>
                       <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.femmes}</div>
                       <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.hommes + monthTotal.femmes}</div>

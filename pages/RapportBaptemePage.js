@@ -437,27 +437,26 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
               </div>
 
               {/* GROUPES PAR MOIS */}
-              groupedMonths.map(group => {
-              const isOpen = !!expandedMonths[group.key];
-              const borderColor = getMonthColor(group.key);
-            
-              const monthTotal = group.items.reduce(
-                (acc, r) => ({
-                  hommes: acc.hommes + Number(r.hommes || 0),
-                  femmes: acc.femmes + Number(r.femmes || 0)
-                }),
-                { hommes: 0, femmes: 0 }
-              );
-            
-              return (
-                <div key={group.key}>
+              {/* GROUPES PAR MOIS */}
+{groupedMonths.map(group => {
+  const isOpen = !!expandedMonths[group.key];
+  const borderColor = getMonthColor(group.key);
+
+  const monthTotal = group.items.reduce(
+    (acc, r) => ({
+      hommes: acc.hommes + Number(r.hommes || 0),
+      femmes: acc.femmes + Number(r.femmes || 0)
+    }),
+    { hommes: 0, femmes: 0 }
+  );
+
+  return (
+    <div key={group.key}>
 
       {/* MOIS */}
-      const borderColor = getMonthColor(group.key);
-
-          <button
-            onClick={() => toggleMonth(group.key)}
-            className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer mb-2 ${borderColor}`}>
+      <button
+        onClick={() => toggleMonth(group.key)}
+        className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer mb-2 ${borderColor}`}>
         <div className="min-w-[260px] text-white font-semibold flex items-center gap-2">
           <span>{isOpen ? "➖" : "➕"}</span>
           <span>{group.label}</span>
@@ -465,73 +464,47 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
         <div className="min-w-[180px]"></div>
         <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.hommes}</div>
         <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.femmes}</div>
-        <div className="min-w-[120px] text-center text-orange-300 font-semibold"> {monthTotal.hommes + monthTotal.femmes}</div>
+        <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.hommes + monthTotal.femmes}</div>
         <div className="min-w-[150px]"></div>
       </button>
 
       {/* DETAILS */}
       {isOpen && group.items.map((r) => {
-  const total = Number(r.hommes) + Number(r.femmes);
-  const borderColor = getMonthColor(group.key);
+        const total = Number(r.hommes) + Number(r.femmes);
+        return (
+          <div key={r.id + r.baptise_par} className="pl-6">
+            <div className={`flex items-stretch px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 mb-1 border border-white/20 ${borderColor}`}>
+              <div className="min-w-[180px] text-white">{formatDateFR(r.date)}</div>
+              <div className="min-w-[180px] text-center text-white">{r.baptise_par}</div>
+              <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+              <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+              <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
+              <div className="min-w-[150px] text-center">
+                <button
+                  onClick={() => handleEdit(r)}
+                  className="text-orange-400 underline hover:text-orange-500 px-4 py-1 rounded-xl"
+                >
+                  Modifier
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
 
-  return (
-    <div className="pl-6">
-      <div
-        key={r.id + r.baptise_par}
-        className={`flex items-stretch px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 mb-1 border border-white/20 ${borderColor}`}
-      >
-        <div className="min-w-[180px] text-white">
-          {formatDateFR(r.date)}
-        </div>
-
-        <div className="min-w-[180px] text-center text-white">
-          {r.baptise_par}
-        </div>
-
-        <div className="min-w-[120px] text-center text-white">
-          {r.hommes}
-        </div>
-
-        <div className="min-w-[120px] text-center text-white">
-          {r.femmes}
-        </div>
-
-        <div className="min-w-[120px] text-center text-white font-bold">
-          {total}
-        </div>
-
-        <div className="min-w-[150px] text-center">
-          <button
-            onClick={() => handleEdit(r)}
-            className="text-orange-400 underline hover:text-orange-500 px-4 py-1 rounded-xl"
-          >
-            Modifier
-          </button>
-        </div>
+      {/* TOTAL MOIS */}
+      <div className="flex items-center px-4 py-2 rounded-xl bg-white/10 border-l-4 border-blue-500 mb-2">
+        <div className="min-w-[200px] text-white font-bold">TOTAL</div>
+        <div className="min-w-[180px]"></div>
+        <div className="min-w-[120px] text-orange-400 font-semibold">{monthTotal.hommes}</div>
+        <div className="min-w-[120px] text-orange-400 font-semibold">{monthTotal.femmes}</div>
+        <div className="min-w-[120px] text-orange-400 font-semibold">{monthTotal.hommes + monthTotal.femmes}</div>
+        <div className="min-w-[150px]"></div>
       </div>
+
     </div>
   );
 })}
-
-      {/* TOTAL */}
-      <div className="flex items-center px-4 py-2 rounded-xl bg-white/10 border-l-4 border-blue-500 mb-2">
-        <div className="min-w-[200px] text-white font-bold">
-          TOTAL
-        </div>
-        <div className="min-w-[120px] text-orange-400 font-semibold">
-          {monthTotal.hommes}
-        </div>
-        <div className="min-w-[120px] text-orange-400 font-semibold">
-          {monthTotal.femmes}
-        </div>
-        <div className="min-w-[120px] text-orange-400 font-semibold">
-          {monthTotal.hommes + monthTotal.femmes}
-        </div>
-        <div className="min-w-[150px]"></div>
-      </div>
-    </div>
-  );
-})}      
        
           {/* --- TABLEAU MOBILE --- */}
           <div className="md:hidden w-full mt-4 flex flex-col gap-3">

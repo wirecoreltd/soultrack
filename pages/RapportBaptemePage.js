@@ -393,8 +393,7 @@ function RapportBaptemes() {
         </div>
       </div>
 
-      {/* TABLEAU */}
-      {showTable && (
+     {showTable && (
         <>
           {/* TABLEAU DESKTOP */}
 <div className="hidden md:flex w-full overflow-x-auto mt-4 justify-start">

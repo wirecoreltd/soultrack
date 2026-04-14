@@ -432,7 +432,7 @@ function RapportBaptemes() {
                         <span>{group.label}</span>
                       </div>
                       <div className="min-w-[180px]"></div>
-                      <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.hommes}</div>
+                      <div className="min-w-[120px] text-center text-orange-300 font-semibold -ml-3">{monthTotal.hommes}</div>
                       <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.femmes}</div>
                       <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.hommes + monthTotal.femmes}</div>
                       <div className="min-w-[150px]"></div>
@@ -468,7 +468,7 @@ function RapportBaptemes() {
 
               {/* TOTAL GLOBAL DESKTOP — une seule fois à la fin */}
               <div className="flex items-center px-4 py-2 rounded-xl bg-white/10 border-l-4 border-blue-500 mt-2 mb-2">
-                <div className="min-w-[200px] text-white font-bold">TOTAL</div>
+                <div className="min-w-[200px] text-orange font-semibold ml -3">TOTAL</div>
                 <div className="min-w-[180px]"></div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
                 <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>

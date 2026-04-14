@@ -507,7 +507,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                                 Modifier
                               </button>
                             </div>
-                          </div>
+                          
                         </div>
                       );
                     })}

@@ -463,7 +463,7 @@ function RapportBaptemes() {
                     {formatDateFR(r.date)}
                   </div>
 
-                  <div className="w-[180px] text-center text-white -ml-3">
+                  <div className="w-[180px] text-center text-white -ml-5">
                     {r.baptise_par}
                   </div>
 
@@ -555,19 +555,31 @@ function RapportBaptemes() {
                   </button>
 
                   {/* DETAILS — même couleur que le mois */}
-                  {isOpen && group.items.map(r => {
+                  {isOpen && group.items.map((r) => {
                     const total = Number(r.hommes) + Number(r.femmes);
                     return (
                       <div
                         key={r.id + r.baptise_par}
-                        className={`flex flex-col px-4 py-2 rounded-xl bg-white/10 border-l-4 mb-1 ${borderColor}`}
+                        className="bg-white/10 text-white rounded-xl px-4 py-2 flex flex-col gap-2 shadow mb-2"
                       >
-                        <div className="text-white font-semibold">{formatDateFR(r.date)} — {r.baptise_par}</div>
-                        <div className="flex gap-4 text-sm mt-1">
-                          <span className="text-white">H : {r.hommes}</span>
-                          <span className="text-white">F : {r.femmes}</span>
-                          <span className="text-white font-bold">Total : {total}</span>
+                        <div className="text-amber-300 text-right">
+                          {formatDateFR(r.date)}
                         </div>
+                        <div className="text-white">
+                          Baptisé par : <span className="font-semibold">{r.baptise_par}</span>
+                        </div>
+                        <div className="text-white">
+                          Hommes : {r.hommes} | Femmes : {r.femmes}
+                        </div>
+                        <div className="text font-semibold text-orange-400">
+                          Total : {total}
+                        </div>
+                        <button
+                          onClick={() => handleEdit(r)}
+                          className="mx-auto text-amber-300 mt-2 hover:scale-110 transition"
+                        >
+                          ✏️ Modifier
+                        </button>
                       </div>
                     );
                   })}

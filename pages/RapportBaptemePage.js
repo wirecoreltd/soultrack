@@ -437,21 +437,20 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
               </div>
 
               {/* GROUPES PAR MOIS */}
-              {groupedMonths.map(group => {
-  const isOpen = !!expandedMonths[group.key];
-
-  const monthTotal = group.items.reduce(
-    (acc, r) => ({
-      hommes: acc.hommes + Number(r.hommes || 0),
-      femmes: acc.femmes + Number(r.femmes || 0)
-    }),
-    { hommes: 0, femmes: 0 }
-  );
-
-  const borderColor = getMonthColor(group.key);
-
-  return (
-    <div key={group.key}>
+              groupedMonths.map(group => {
+              const isOpen = !!expandedMonths[group.key];
+              const borderColor = getMonthColor(group.key);
+            
+              const monthTotal = group.items.reduce(
+                (acc, r) => ({
+                  hommes: acc.hommes + Number(r.hommes || 0),
+                  femmes: acc.femmes + Number(r.femmes || 0)
+                }),
+                { hommes: 0, femmes: 0 }
+              );
+            
+              return (
+                <div key={group.key}>
 
       {/* MOIS */}
       const borderColor = getMonthColor(group.key);
@@ -550,7 +549,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                   {/* LIGNE TITRE DU MOIS MOBILE */}
                   <button
                     onClick={() => toggleMonth(group.key)}
-                    className="w-full flex items-center justify-between px-4 py-2 bg-white/15 hover:bg-white/20 transition rounded-xl mb-1 border-l-4 border-emerald-400"
+                    className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer mb-2 ${borderColor}`}
                   >
                     <span className="flex items-center gap-2 text-white font-bold">
                       <span className="text-[10px]">{isOpen ? "➖" : "➕"}</span>
@@ -596,7 +595,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
             })}
 
             {/* TOTAL GLOBAL MOBILE */}
-            <div className="flex items-center px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
+            <div className={`flex items-stretch px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 mb-1 border border-white/20 ${borderColor}`}>
               <span className="text-orange-400 font-semibold mr-4">TOTAL</span>
               <span className="text-orange-400 font-semibold">(H:{totalGlobal.hommes} + F:{totalGlobal.femmes}) = {totalGlobal.hommes+totalGlobal.femmes}</span>
             </div>

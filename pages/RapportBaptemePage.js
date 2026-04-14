@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
@@ -24,7 +23,6 @@ function RapportBaptemes() {
     eglise_id:null,
     branche_id:null
   });
-
   const [filterDebut,setFilterDebut]=useState("");
   const [filterFin,setFilterFin]=useState("");
   const [rapports,setRapports]=useState([]);
@@ -36,19 +34,17 @@ function RapportBaptemes() {
   const router = useRouter();
   const formRef=useRef(null);
   const [rapportSuccess, setRapportSuccess] = useState(false);
-  
+
   /* USER */
   useEffect(()=>{
     const fetchUser=async()=>{
       const {data:session}=await supabase.auth.getSession();
       if(!session?.session?.user) return;
-
       const {data:profile}=await supabase
         .from("profiles")
         .select("eglise_id,branche_id")
         .eq("id",session.session.user.id)
         .single();
-
       if(profile){
         setFormData(prev=>({...prev,eglise_id:profile.eglise_id,branche_id:profile.branche_id}));
         fetchCandidats(profile.eglise_id,profile.branche_id);
@@ -66,7 +62,6 @@ function RapportBaptemes() {
       .eq("branche_id",branche_id)
       .eq("veut_se_faire_baptiser","Oui")
       .eq("bapteme_eau","Non");
-
     setCandidats(data || []);
   };
 
@@ -75,7 +70,6 @@ function RapportBaptemes() {
     const selected = candidats.filter(c => selectedCandidats.includes(c.id));
     const hommes = selected.filter(c => c.sexe === "Homme").length;
     const femmes = selected.filter(c => c.sexe === "Femme").length;
-
     setFormData(prev => ({
       ...prev,
       hommes: hommes,
@@ -83,27 +77,23 @@ function RapportBaptemes() {
     }));
   }, [selectedCandidats, candidats]);
 
-   /* CALCUL PAR DATE + FUTUR BAPTISE */
+  /* CALCUL PAR DATE + FUTUR BAPTISE */
   const aggregateRapports = (rapports) => {
-  const map = {};
-
-  rapports.forEach(r => {
-    const key = `${r.date}__${r.baptise_par}`;
-
-    if (!map[key]) {
-      map[key] = {
-        ...r,
-        hommes: 0,
-        femmes: 0
-      };
-    }
-
-    map[key].hommes += Number(r.hommes || 0);
-    map[key].femmes += Number(r.femmes || 0);
-  });
-
-  return Object.values(map);
-};
+    const map = {};
+    rapports.forEach(r => {
+      const key = `${r.date}__${r.baptise_par}`;
+      if (!map[key]) {
+        map[key] = {
+          ...r,
+          hommes: 0,
+          femmes: 0
+        };
+      }
+      map[key].hommes += Number(r.hommes || 0);
+      map[key].femmes += Number(r.femmes || 0);
+    });
+    return Object.values(map);
+  };
 
   /* FETCH RAPPORTS */
   const fetchRapports=async()=>{
@@ -113,10 +103,8 @@ function RapportBaptemes() {
       .eq("eglise_id",formData.eglise_id)
       .eq("branche_id",formData.branche_id)
       .order("date",{ascending:false});
-
     if(filterDebut) query=query.gte("date",filterDebut);
     if(filterFin) query=query.lte("date",filterFin);
-
     const {data}=await query;
     setRapports(data||[]);
     setShowTable(true);
@@ -124,42 +112,38 @@ function RapportBaptemes() {
 
   /* COLOR BORDERS */
   const monthColors = [
-  "border-orange-500",
-  "border-blue-500",
-  "border-emerald-500",
-  "border-purple-500",
-  "border-pink-500",
-  "border-yellow-500",
-  "border-cyan-500",
-  "border-red-500"
-];
+    "border-orange-500",
+    "border-blue-500",
+    "border-emerald-500",
+    "border-purple-500",
+    "border-pink-500",
+    "border-yellow-500",
+    "border-cyan-500",
+    "border-red-500"
+  ];
 
   const getMonthColor = (key) => {
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) {
-    hash = key.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return monthColors[Math.abs(hash) % monthColors.length];
-};
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+      hash = key.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return monthColors[Math.abs(hash) % monthColors.length];
+  };
 
   /* CRUD */
   const handleSubmit=async(e)=>{
     e.preventDefault();
-     if (!formData.baptise_par.trim()) {
-    alert("Le champ 'Baptisé par' est obligatoire.");
-    return;
-  }
-
-  if (editRapport) return handleUpdate();
-
-  if (selectedCandidats.length === 0) {
-    return alert("Veuillez sélectionner au moins un candidat.");
-  }
-
+    if (!formData.baptise_par.trim()) {
+      alert("Le champ 'Baptisé par' est obligatoire.");
+      return;
+    }
+    if (editRapport) return handleUpdate();
+    if (selectedCandidats.length === 0) {
+      return alert("Veuillez sélectionner au moins un candidat.");
+    }
     for(const id of selectedCandidats){
       const membre = candidats.find(c => c.id === id);
       if(!membre) continue;
-
       await supabase.from("baptemes").insert([{
         ...formData,
         hommes: formData.hommes,
@@ -167,18 +151,15 @@ function RapportBaptemes() {
         baptise_par: formData.baptise_par,
         evangelise_member_id: membre.evangelise_member_id || membre.id
       }]);
-
       await supabase
         .from("membres_complets")
         .update({bapteme_eau:"Oui",veut_se_faire_baptiser:"Non"})
         .eq("id",id);
     }
-
     setSelectedCandidats([]);
     setFormData(prev=>({...prev,date:"",hommes:0,femmes:0,baptise_par:""}));
     fetchCandidats(formData.eglise_id,formData.branche_id);
     fetchRapports();
-
     setRapportSuccess(true);
     setTimeout(() => setRapportSuccess(false), 3000);
   };
@@ -191,9 +172,9 @@ function RapportBaptemes() {
 
   const handleUpdate=async()=>{
     if (!formData.baptise_par.trim()) {
-    alert("Le champ 'Baptisé par' est obligatoire.");
-    return;
-  }
+      alert("Le champ 'Baptisé par' est obligatoire.");
+      return;
+    }
     if(!editRapport) return;
     await supabase
       .from("baptemes")
@@ -204,7 +185,6 @@ function RapportBaptemes() {
         baptise_par:formData.baptise_par
       })
       .eq("id",editRapport.id);
-
     setEditRapport(null);
     setSelectedCandidats([]);
     setFormData(prev=>({...prev,date:"",hommes:0,femmes:0,baptise_par:""}));
@@ -221,7 +201,7 @@ function RapportBaptemes() {
     if(!dateString) return "";
     const d=new Date(dateString);
     return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
-  };  
+  };
 
   const toggleMonth=(monthKey)=>setExpandedMonths(prev=>({...prev,[monthKey]:!prev[monthKey]}));
 
@@ -253,16 +233,17 @@ function RapportBaptemes() {
     <div className="min-h-screen flex flex-col items-center px-4 sm:px-6 py-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Rapport <span className="text-emerald-300">Baptêmes</span></h1>
-  
-          <div className="max-w-3xl w-full mb-6 text-center">
-            <p className="italic text-base text-white/90">
-    <span className="text-blue-300 font-semibold">Créez et suivez</span> les rapports de baptêmes ainsi que le suivi des <span className="text-blue-300 font-semibold">nouveaux baptisés</span>.
-Enregistrez les données, <span className="text-blue-300 font-semibold">analysez</span> les volumes et la répartition hommes/femmes pour mesurer <span className="text-blue-300 font-semibold">l'impact et structurer la croissance de l'église</span>
-             </p>
-          </div>
-   
-      
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+        Rapport <span className="text-emerald-300">Baptêmes</span>
+      </h1>
+
+      <div className="max-w-3xl w-full mb-6 text-center">
+        <p className="italic text-base text-white/90">
+          <span className="text-blue-300 font-semibold">Créez et suivez</span> les rapports de baptêmes ainsi que le suivi des <span className="text-blue-300 font-semibold">nouveaux baptisés</span>.
+          Enregistrez les données, <span className="text-blue-300 font-semibold">analysez</span> les volumes et la répartition hommes/femmes pour mesurer <span className="text-blue-300 font-semibold">l'impact et structurer la croissance de l'église</span>
+        </p>
+      </div>
+
       {/* BOITE INFO CANDIDATS */}
       <div className="w-full flex flex-col gap-4 mt-4">
         <div className="bg-blue-900/40 border border-blue-300/30 text-white text-center text-sm p-4 rounded-2xl max-w-lg mx-auto">
@@ -277,7 +258,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
         </div>
       </div>
 
-      {/* --- MENU DEROU / Sélectionner les baptisés --- */}
+      {/* MENU DEROU / Sélectionner les baptisés */}
       <div className="bg-white/10 p-3 rounded-3xl shadow-lg text-white w-full max-w-lg mx-auto mt-4">
         <div className="flex justify-between items-center mb-2">
           <label className="font-semibold">Sélectionner les baptisés</label>
@@ -298,7 +279,8 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
           {candidats.map(c => (
             <div key={c.id} className="flex justify-between items-center w-full px-2 py-1 rounded hover:bg-white/20">
               <span>{c.prenom} {c.nom}</span>
-              <input type="checkbox"
+              <input
+                type="checkbox"
                 checked={selectedCandidats.includes(c.id)}
                 onChange={() => {
                   if (selectedCandidats.includes(c.id)) {
@@ -312,16 +294,13 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
             </div>
           ))}
         </div>
-
         <button
           onClick={() => router.push("/AddContactbaptise")}
           className="text-white font-semibold px-4 py-2 rounded shadow text-sm mt-2 w-full"
         >
           ➕ Ajouter un Baptisé
         </button>
-
         <hr className="border-t border-white/30 my-3" />
-
         {selectedCandidats.length > 0 && (
           <div>
             <h3 className="text-amber-300 font-semibold text-sm mb-1">
@@ -343,15 +322,14 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col">
             <label className="text-white mb-1">Date</label>
-            <input 
-              type="date" 
-              required 
-              value={formData.date} 
-              onChange={e => setFormData({...formData, date: e.target.value})} 
+            <input
+              type="date"
+              required
+              value={formData.date}
+              onChange={e => setFormData({...formData, date: e.target.value})}
               className="input"
             />
           </div>
-
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex-1 flex flex-col">
               <label className="text-white mb-1">Hommes</label>
@@ -362,16 +340,19 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
               <input type="number" value={formData.femmes} disabled className="input opacity-60"/>
             </div>
           </div>
-
           <div className="flex flex-col">
             <label className="text-white mb-1">Baptisé par</label>
-            <input type="text" required value={formData.baptise_par} onChange={e => setFormData({...formData, baptise_par: e.target.value})} className="input"/>
+            <input
+              type="text"
+              required
+              value={formData.baptise_par}
+              onChange={e => setFormData({...formData, baptise_par: e.target.value})}
+              className="input"
+            />
           </div>
-
           <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:scale-[1.02] transition">
             {editRapport ? "Modifier" : "Ajouter"}
           </button>
-
           {rapportSuccess && (
             <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
               ✅ Rapport ajouté !
@@ -381,52 +362,47 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
       </div>
 
       {/* FILTRES */}
-<div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl p-4 md:p-6 mt-2 w-full max-w-lg mx-auto flex flex-col text-white">
+      <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl p-4 md:p-6 mt-2 w-full max-w-lg mx-auto flex flex-col text-white">
+        <p className="text-base text-red-400 font-semibold text-center mb-4">
+          Choisissez les paramètres pour générer le rapport
+        </p>
+        <div className="text-center flex flex-col w-full sm:w-auto">
+          <label className="text-center text-base mb-1">Date de Début</label>
+          <input
+            type="date"
+            value={filterDebut}
+            onChange={e => setFilterDebut(e.target.value)}
+            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          />
+        </div>
+        <div className="text-center flex flex-col w-full sm:w-auto mt-2">
+          <label className="text-center text-base mb-1">Date de Fin</label>
+          <input
+            type="date"
+            value={filterFin}
+            onChange={e => setFilterFin(e.target.value)}
+            className="border border-gray-400 rounded-lg px-1 py-1 bg-transparent text-white"
+          />
+        </div>
+        <div className="flex flex-col w-full md:w-auto">
+          <label className="text-base text-center mb-1 opacity-0">btn</label>
+          <button
+            onClick={fetchRapports}
+            className="w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
+          >
+            Générer
+          </button>
+        </div>
+      </div>
 
-  <p className="text-base text-red-400 font-semibold text-center mb-4">
-    Choisissez les paramètres pour générer le rapport
-  </p>
-  
-  <div className="text-center flex flex-col w-full sm:w-auto">
-    <label className="text-center text-base mb-1">Date de Début</label>
-    <input
-      type="date"
-      value={filterDebut}
-      onChange={e => setFilterDebut(e.target.value)}
-      className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-    />
-  </div>
-
-  <div className="text-center flex flex-col w-full sm:w-auto mt-2">
-    <label className="text-center text-base mb-1">Date de Fin</label>
-    <input
-      type="date"
-      value={filterFin}
-      onChange={e => setFilterFin(e.target.value)}
-      className="border border-gray-400 rounded-lg px-1 py-1 bg-transparent text-white"
-    />
-  </div>
-
-  <div className="flex flex-col w-full md:w-auto">
-      <label className="text-base text-center mb-1 opacity-0">btn</label>
-      <button
-        onClick={fetchRapports}
-        className="w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
-      >
-      Générer
-    </button>
-  </div>
-
-</div>
-
-      {/* --- TABLEAU --- */}
+      {/* TABLEAU */}
       {showTable && (
         <>
-          {/* --- TABLEAU DESKTOP --- */}
+          {/* TABLEAU DESKTOP */}
           <div className="hidden md:flex w-full max-w-full overflow-x-auto mt-6 justify-center">
             <div className="w-max space-y-2">
 
-              {/* HEADER — 100% identique à l'original */}
+              {/* HEADER */}
               <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
                 <div className="min-w-[200px]">Date</div>
                 <div className="min-w-[200px] text-center">Baptisé par</div>
@@ -437,94 +413,18 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
               </div>
 
               {/* GROUPES PAR MOIS */}
-              {/* GROUPES PAR MOIS */}
-{groupedMonths.map(group => {
-  const isOpen = !!expandedMonths[group.key];
-  const borderColor = getMonthColor(group.key);
-
-  const monthTotal = group.items.reduce(
-    (acc, r) => ({
-      hommes: acc.hommes + Number(r.hommes || 0),
-      femmes: acc.femmes + Number(r.femmes || 0)
-    }),
-    { hommes: 0, femmes: 0 }
-  );
-
-  return (
-    <div key={group.key}>
-
-      {/* MOIS */}
-      <button
-        onClick={() => toggleMonth(group.key)}
-        className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer mb-2 ${borderColor}`}>
-        <div className="min-w-[260px] text-white font-semibold flex items-center gap-2">
-          <span>{isOpen ? "➖" : "➕"}</span>
-          <span>{group.label}</span>
-        </div>
-        <div className="min-w-[180px]"></div>
-        <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.hommes}</div>
-        <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.femmes}</div>
-        <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.hommes + monthTotal.femmes}</div>
-        <div className="min-w-[150px]"></div>
-      </button>
-
-      {/* DETAILS */}
-      {isOpen && group.items.map((r) => {
-        const total = Number(r.hommes) + Number(r.femmes);
-        return (
-          <div key={r.id + r.baptise_par} className="pl-6">
-            <div className={`flex items-stretch px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 mb-1 border border-white/20 ${borderColor}`}>
-              <div className="min-w-[180px] text-white">{formatDateFR(r.date)}</div>
-              <div className="min-w-[180px] text-center text-white">{r.baptise_par}</div>
-              <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-              <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-              <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
-              <div className="min-w-[150px] text-center">
-                <button
-                  onClick={() => handleEdit(r)}
-                  className="text-orange-400 underline hover:text-orange-500 px-4 py-1 rounded-xl"
-                >
-                  Modifier
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-
-      {/* TOTAL MOIS */}
-      <div className="flex items-center px-4 py-2 rounded-xl bg-white/10 border-l-4 border-blue-500 mb-2">
-        <div className="min-w-[200px] text-white font-bold">TOTAL</div>
-        <div className="min-w-[180px]"></div>
-        <div className="min-w-[120px] text-orange-400 font-semibold">{monthTotal.hommes}</div>
-        <div className="min-w-[120px] text-orange-400 font-semibold">{monthTotal.femmes}</div>
-        <div className="min-w-[120px] text-orange-400 font-semibold">{monthTotal.hommes + monthTotal.femmes}</div>
-        <div className="min-w-[150px]"></div>
-      </div>
-
-    </div>
-  );
-})}
-       
-          {/* --- TABLEAU MOBILE --- */}
-          <div className="md:hidden w-full mt-4 flex flex-col gap-3">
-
-            {/* GROUPES PAR MOIS */}
               {groupedMonths.map(group => {
-  const isOpen = !!expandedMonths[group.key];
-  const borderColor = getMonthColor(group.key);
-
-  const monthTotal = group.items.reduce(
-    (acc, r) => ({
-      hommes: acc.hommes + Number(r.hommes || 0),
-      femmes: acc.femmes + Number(r.femmes || 0)
-    }),
-    { hommes: 0, femmes: 0 }
-  );
-
-  return (
-    <div key={group.key}>
-              
+                const isOpen = !!expandedMonths[group.key];
+                const borderColor = getMonthColor(group.key);
+                const monthTotal = group.items.reduce(
+                  (acc, r) => ({
+                    hommes: acc.hommes + Number(r.hommes || 0),
+                    femmes: acc.femmes + Number(r.femmes || 0)
+                  }),
+                  { hommes: 0, femmes: 0 }
+                );
+                return (
+                  <div key={group.key}>
                     {/* MOIS */}
                     <button
                       onClick={() => toggleMonth(group.key)}
@@ -534,76 +434,122 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                         <span>{isOpen ? "➖" : "➕"}</span>
                         <span>{group.label}</span>
                       </div>
-              
-                      <div className="min-w-[120px] text-center text-orange-300 font-semibold">
-                        {monthTotal.hommes}
-                      </div>
-              
-                      <div className="min-w-[120px] text-center text-orange-300 font-semibold">
-                        {monthTotal.femmes}
-                      </div>
-              
-                      <div className="min-w-[120px] text-center text-orange-300 font-semibold">
-                        {monthTotal.hommes + monthTotal.femmes}
-                      </div>
+                      <div className="min-w-[180px]"></div>
+                      <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.hommes}</div>
+                      <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.femmes}</div>
+                      <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.hommes + monthTotal.femmes}</div>
+                      <div className="min-w-[150px]"></div>
                     </button>
-              
+
                     {/* DETAILS */}
-                    {isOpen && group.items.map(r => {
+                    {isOpen && group.items.map((r) => {
                       const total = Number(r.hommes) + Number(r.femmes);
-                      const borderColor = getMonthColor(group.key);
-              
                       return (
-                        <div
-                          key={r.id + r.baptise_par}
-                          className={`flex px-4 py-2 rounded-xl bg-white/10 border-l-4 mb-1 ${borderColor}`}
-                        >
-                          <div className="min-w-[180px] text-white">
-                            {formatDateFR(r.date)}
-                          </div>
-              
-                          <div className="min-w-[180px] text-center text-white">
-                            {r.baptise_par}
-                          </div>
-              
-                          <div className="min-w-[120px] text-center text-white">
-                            {r.hommes}
-                          </div>
-              
-                          <div className="min-w-[120px] text-center text-white">
-                            {r.femmes}
-                          </div>
-              
-                          <div className="min-w-[120px] text-center text-white font-bold">
-                            {total}
+                        <div key={r.id + r.baptise_par} className="pl-6">
+                          <div className={`flex items-stretch px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 mb-1 border border-white/20 ${borderColor}`}>
+                            <div className="min-w-[180px] text-white">{formatDateFR(r.date)}</div>
+                            <div className="min-w-[180px] text-center text-white">{r.baptise_par}</div>
+                            <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                            <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                            <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
+                            <div className="min-w-[150px] text-center">
+                              <button
+                                onClick={() => handleEdit(r)}
+                                className="text-orange-400 underline hover:text-orange-500 px-4 py-1 rounded-xl"
+                              >
+                                Modifier
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
                     })}
-              
+
+                    {/* TOTAL MOIS */}
+                    <div className="flex items-center px-4 py-2 rounded-xl bg-white/10 border-l-4 border-blue-500 mb-2">
+                      <div className="min-w-[200px] text-white font-bold">TOTAL</div>
+                      <div className="min-w-[180px]"></div>
+                      <div className="min-w-[120px] text-orange-400 font-semibold">{monthTotal.hommes}</div>
+                      <div className="min-w-[120px] text-orange-400 font-semibold">{monthTotal.femmes}</div>
+                      <div className="min-w-[120px] text-orange-400 font-semibold">{monthTotal.hommes + monthTotal.femmes}</div>
+                      <div className="min-w-[150px]"></div>
+                    </div>
                   </div>
                 );
               })}
 
+            </div>{/* fin w-max space-y-2 */}
+          </div>{/* fin hidden md:flex */}
+
+          {/* TABLEAU MOBILE */}
+          <div className="md:hidden w-full mt-4 flex flex-col gap-3">
+
+            {/* GROUPES PAR MOIS */}
+            {groupedMonths.map(group => {
+              const isOpen = !!expandedMonths[group.key];
+              const borderColor = getMonthColor(group.key);
+              const monthTotal = group.items.reduce(
+                (acc, r) => ({
+                  hommes: acc.hommes + Number(r.hommes || 0),
+                  femmes: acc.femmes + Number(r.femmes || 0)
+                }),
+                { hommes: 0, femmes: 0 }
+              );
+              return (
+                <div key={group.key}>
+                  {/* MOIS */}
+                  <button
+                    onClick={() => toggleMonth(group.key)}
+                    className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer mb-2 ${borderColor}`}
+                  >
+                    <div className="min-w-[260px] text-white font-semibold flex items-center gap-2">
+                      <span>{isOpen ? "➖" : "➕"}</span>
+                      <span>{group.label}</span>
+                    </div>
+                    <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.hommes}</div>
+                    <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.femmes}</div>
+                    <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.hommes + monthTotal.femmes}</div>
+                  </button>
+
+                  {/* DETAILS */}
+                  {isOpen && group.items.map(r => {
+                    const total = Number(r.hommes) + Number(r.femmes);
+                    return (
+                      <div
+                        key={r.id + r.baptise_par}
+                        className={`flex px-4 py-2 rounded-xl bg-white/10 border-l-4 mb-1 ${borderColor}`}
+                      >
+                        <div className="min-w-[180px] text-white">{formatDateFR(r.date)}</div>
+                        <div className="min-w-[180px] text-center text-white">{r.baptise_par}</div>
+                        <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
+                        <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
+                        <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+
             {/* TOTAL GLOBAL MOBILE */}
-            <div className={`flex items-stretch px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 mb-1 border border-white/20 ${borderColor}`}>
+            <div className="flex items-stretch px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 mb-1 border border-white/20 border-blue-500">
               <span className="text-orange-400 font-semibold mr-4">TOTAL</span>
               <span className="text-orange-400 font-semibold">(H:{totalGlobal.hommes} + F:{totalGlobal.femmes}) = {totalGlobal.hommes+totalGlobal.femmes}</span>
             </div>
 
-          </div>
+          </div>{/* fin md:hidden */}
         </>
       )}
 
       <Footer />
 
       <style jsx>{`
-        .input{
-          border:1px solid #ccc;
-          padding:10px;
-          border-radius:12px;
-          background:rgba(255,255,255,0.05);
-          color:white;
+        .input {
+          border: 1px solid #ccc;
+          padding: 10px;
+          border-radius: 12px;
+          background: rgba(255,255,255,0.05);
+          color: white;
         }
       `}</style>
     </div>

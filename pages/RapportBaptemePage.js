@@ -543,81 +543,100 @@ function RapportBaptemes() {
                 <div key={group.key}>
 
                              <div className="md:hidden w-full mt-4 flex flex-col overflow-hidden">
-                        {/* HEADER UNIQUE */}
-                        <div className="flex items-center w-full px-4 py-2 text-xs text-white/70 uppercase bg-white/5 rounded-lg mb-3">
-                          <div className="flex-1">Mois</div>
-                          <div className="w-14 text-center">H</div>
-                          <div className="w-14 text-center">F</div>
-                          <div className="w-14 text-center">Total</div>
-                        </div>
 
-                  {/* LIGNE MOIS */}
-                 <button
-                  onClick={() => toggleMonth(group.key)}
-                  className={`flex items-center w-full px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer mb-1 ${borderColor}`}
-                >
-                  <div className="flex-1 min-w-0 text-white font-semibold flex items-center gap-2">
-                    <span>{isOpen ? "➖" : "➕"}</span>
-                    <span className="truncate">{group.label}</span>
-                  </div>
-                
-                  <div className="w-14 text-center text-orange-300 font-semibold">
-                    {monthTotal.hommes}
-                  </div>
-                
-                  <div className="w-14 text-center text-orange-300 font-semibold">
-                    {monthTotal.femmes}
-                  </div>
-                
-                  <div className="w-14 text-center text-orange-300 font-semibold">
-                    {monthTotal.hommes + monthTotal.femmes}
-                  </div>
-                </button>
+  {/* HEADER UNE SEULE FOIS */}
+  <div className="flex items-center w-full px-4 py-2 text-xs text-white/70 uppercase bg-white/5 rounded-lg mb-3">
+    <div className="flex-1">Mois</div>
+    <div className="w-14 text-center">H</div>
+    <div className="w-14 text-center">F</div>
+    <div className="w-14 text-center">Total</div>
+  </div>
 
-                  {/* DETAILS — même couleur que le mois */}
-                  {isOpen && (
-  group.items.map((r) => {
-    const total = Number(r.hommes) + Number(r.femmes);
+  {/* MAP */}
+  {groupedMonths.map(group => {
+  const isOpen = !!expandedMonths[group.key];
+  const borderColor = getMonthColor(group.key);
 
-    return (
-      <div
-        key={r.id + r.baptise_par}
-        className="bg-white/10 text-white rounded-lg px-3 py-2 flex flex-col gap-1 shadow mb-1"
+  const monthTotal = group.items.reduce(
+    (acc, r) => ({
+      hommes: acc.hommes + Number(r.hommes || 0),
+      femmes: acc.femmes + Number(r.femmes || 0)
+    }),
+    { hommes: 0, femmes: 0 }
+  );
+
+  return (
+    <div key={group.key}>
+
+      {/* LIGNE MOIS */}
+      <button
+        onClick={() => toggleMonth(group.key)}
+        className={`flex items-center w-full px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 mb-1 ${borderColor}`}
       >
-        <div className="text-amber-300 text-right">
-          {formatDateFR(r.date)}
+        <div className="flex-1 min-w-0 text-white font-semibold flex items-center gap-2">
+          <span>{isOpen ? "➖" : "➕"}</span>
+          <span className="truncate">{group.label}</span>
         </div>
 
-        <div>
-          Baptisé par : <span className="font-semibold">{r.baptise_par}</span>
+        <div className="w-14 text-center text-orange-300 font-semibold">
+          {monthTotal.hommes}
         </div>
 
-        <div>
-          Hommes : {r.hommes} | Femmes : {r.femmes}
+        <div className="w-14 text-center text-orange-300 font-semibold">
+          {monthTotal.femmes}
         </div>
 
-        <div className="font-semibold text-orange-400">
-          Total : {total}
+        <div className="w-14 text-center text-orange-300 font-semibold">
+          {monthTotal.hommes + monthTotal.femmes}
         </div>
+      </button>
 
-        <button
-          onClick={() => handleEdit(r)}
-          className="mx-auto text-amber-300 mt-1 hover:scale-110 transition"
-        >
-          ✏️ Modifier
-        </button>
-      </div>
-    );
-  })
-)}
+      {/* DETAILS */}
+      {isOpen && group.items.map(r => {
+        const total = Number(r.hommes) + Number(r.femmes);
+
+        return (
+          <div
+            key={r.id + r.baptise_par}
+            className="bg-white/10 text-white rounded-lg px-3 py-2 flex flex-col gap-1 shadow mb-1"
+          >
+            <div className="text-amber-300 text-right">
+              {formatDateFR(r.date)}
+            </div>
+
+            <div>
+              Baptisé par : <span className="font-semibold">{r.baptise_par}</span>
+            </div>
+
+            <div>
+              Hommes : {r.hommes} | Femmes : {r.femmes}
+            </div>
+
+            <div className="font-semibold text-orange-400">
+              Total : {total}
+            </div>
+
+            <button
+              onClick={() => handleEdit(r)}
+              className="mx-auto text-amber-300 mt-1"
+            >
+              ✏️ Modifier
+            </button>
+          </div>
+        );
+      })}
+
+    </div>
+  );
+})}
 
             {/* TOTAL GLOBAL MOBILE — une seule fois à la fin */}
-            <div className="flex items-center px-3 py-2 rounded-lg bg-white/10 border-l-4 mb-1 border-orange-400">
-              <span className="text-orange-400 font-semibold mr-4">TOTAL</span>
-              <span className="text-orange-400 font-semibold">
-  (H: {totalGlobal.hommes} + F: {totalGlobal.femmes}) = {totalGlobal.hommes + totalGlobal.femmes}
-</span>
-            </div>
+           <div className="flex items-center px-3 py-2 rounded-lg bg-white/10 border-l-4 mb-1 border-orange-400 mt-2">
+  <span className="text-orange-400 font-semibold mr-4">TOTAL</span>
+  <span className="text-orange-400 font-semibold">
+    (H: {totalGlobal.hommes} + F: {totalGlobal.femmes}) = {totalGlobal.hommes + totalGlobal.femmes}
+  </span>
+</div>
 
           </div>{/* fin md:hidden */}
         </>

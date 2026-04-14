@@ -432,7 +432,7 @@ function RapportBaptemes() {
                         <span>{group.label}</span>
                       </div>
                       <div className="min-w-[180px]"></div>
-                      <div className="min-w-[120px] text-center text-orange-300 font-semibold ml-1">{monthTotal.hommes}</div>
+                      <div className="min-w-[120px] text-center text-orange-300 font-semibold -ml-5">{monthTotal.hommes}</div>
                       <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.femmes}</div>
                       <div className="min-w-[120px] text-center text-orange-300 font-semibold">{monthTotal.hommes + monthTotal.femmes}</div>
                       <div className="min-w-[150px]"></div>

@@ -536,15 +536,21 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
           {/* --- TABLEAU MOBILE --- */}
           <div className="md:hidden w-full mt-4 flex flex-col gap-3">
 
-            {groupedMonths.map(group => {
-              const isOpen = !!expandedMonths[group.key];
-              const monthTotal = group.items.reduce(
-                (acc, r) => ({ hommes: acc.hommes + Number(r.hommes||0), femmes: acc.femmes + Number(r.femmes||0) }),
-                { hommes: 0, femmes: 0 }
-              );
-
-              return (
-                <div key={group.key}>
+            {/* GROUPES PAR MOIS */}
+              {groupedMonths.map(group => {
+                const isOpen = !!expandedMonths[group.key];
+                const borderColor = getMonthColor(group.key);
+              
+                const monthTotal = group.items.reduce(
+                  (acc, r) => ({
+                    hommes: acc.hommes + Number(r.hommes || 0),
+                    femmes: acc.femmes + Number(r.femmes || 0)
+                  }),
+                  { hommes: 0, femmes: 0 }
+                );
+              
+                return (
+                  <div key={group.key}>
 
                   {/* LIGNE TITRE DU MOIS MOBILE */}
                   <button

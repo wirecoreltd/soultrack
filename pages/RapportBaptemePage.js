@@ -530,12 +530,12 @@ function RapportBaptemes() {
     <div className="md:hidden w-full mt-4 flex flex-col gap-3">
 
       {/* HEADER UNE FOIS */}
-      <div className="flex items-center w-full px-3 py-2 text-center font-semibold text-orange-400 uppercase bg-white/5 rounded-lg mb-3">
-        <div className="w-[180px] text-left ml 5">Mois</div>
-        <div className="w-14 ml-10">H</div>
-        <div className="w-14">F</div>
-        <div className="w-14">Total</div>
-      </div>
+      <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-3 py-2 font-semibold text-orange-400 uppercase bg-white/5 rounded-lg mb-3 text-center">
+  <div className="text-left">Mois</div>
+  <div>H</div>
+  <div>F</div>
+  <div>Total</div>
+</div>
 
       {/* UN SEUL MAP */}
       {groupedMonths.map(group => {
@@ -604,16 +604,21 @@ function RapportBaptemes() {
             })}
 
             {/* TOTAL GLOBAL MOBILE — une seule fois à la fin */}
-            <div className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer mb-2 border-orange-400">
-              <span className="text-orange-400 font-semibold mr-4 ml-11">TOTAL</span>
-             <span className="text-orange-400 font-semibold ml-15 flex gap-4">
-              <span className="ml-25">{totalGlobal.hommes}</span>
-              <span>{totalGlobal.femmes}</span>
-              <span>{totalGlobal.hommes + totalGlobal.femmes}</span>
-            </span>
-            </div>
+            <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-4 py-3 rounded-lg bg-white/10 border-l-4 border-orange-400 mt-2">
+  <div className="text-orange-400 font-semibold">TOTAL</div>
 
-          </div>
+  <div className="text-center text-orange-400 font-semibold">
+    {totalGlobal.hommes}
+  </div>
+
+  <div className="text-center text-orange-400 font-semibold">
+    {totalGlobal.femmes}
+  </div>
+
+  <div className="text-center text-orange-400 font-semibold">
+    {totalGlobal.hommes + totalGlobal.femmes}
+  </div>
+</div>
   </>
 )}
       

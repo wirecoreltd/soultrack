@@ -525,11 +525,7 @@ function RapportBaptemes() {
               </div>
             </div>
 
-         {showTable && (
-  <>
-    {/* TABLEAU DESKTOP */}
-    <div>...</div>
-
+        
     {/* TABLEAU MOBILE */}
     <div className="md:hidden w-full mt-4 flex flex-col gap-3">
 

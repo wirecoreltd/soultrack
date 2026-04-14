@@ -538,19 +538,19 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
 
             {/* GROUPES PAR MOIS */}
               {groupedMonths.map(group => {
-                const isOpen = !!expandedMonths[group.key];
-                const borderColor = getMonthColor(group.key);
-              
-                const monthTotal = group.items.reduce(
-                  (acc, r) => ({
-                    hommes: acc.hommes + Number(r.hommes || 0),
-                    femmes: acc.femmes + Number(r.femmes || 0)
-                  }),
-                  { hommes: 0, femmes: 0 }
-                );
-              
-                return (
-                  <div key={group.key}>
+  const isOpen = !!expandedMonths[group.key];
+  const borderColor = getMonthColor(group.key);
+
+  const monthTotal = group.items.reduce(
+    (acc, r) => ({
+      hommes: acc.hommes + Number(r.hommes || 0),
+      femmes: acc.femmes + Number(r.femmes || 0)
+    }),
+    { hommes: 0, femmes: 0 }
+  );
+
+  return (
+    <div key={group.key}>
               
                     {/* MOIS */}
                     <button

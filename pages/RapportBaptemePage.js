@@ -362,24 +362,25 @@ function RapportBaptemes() {
         <p className="text-base text-red-400 font-semibold text-center mb-4">
           Choisissez les paramètres pour générer le rapport
         </p>
-        <div className="text-center flex flex-col w-full sm:w-auto">
-          <label className="text-center text-base mb-1">Date de Début</label>
-          <input
-            type="date"
-            value={filterDebut}
-            onChange={e => setFilterDebut(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-          />
-        </div>
-        <div className="text-center flex flex-col w-full sm:w-auto mt-2">
-          <label className="text-center text-base mb-1">Date de Fin</label>
-          <input
-            type="date"
-            value={filterFin}
-            onChange={e => setFilterFin(e.target.value)}
-            className="border border-gray-400 rounded-lg px-1 py-1 bg-transparent text-white"
-          />
-        </div>
+        <div className="flex flex-col w-full">
+  <label className="text-center text-base mb-1">Date de Début</label>
+  <input
+    type="date"
+    value={filterDebut}
+    onChange={e => setFilterDebut(e.target.value)}
+    className="w-full border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
+</div>
+
+<div className="flex flex-col w-full mt-2">
+  <label className="text-center text-base mb-1">Date de Fin</label>
+  <input
+    type="date"
+    value={filterFin}
+    onChange={e => setFilterFin(e.target.value)}
+    className="w-full border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+  />
+</div>
         <div className="flex flex-col w-full md:w-auto">
           <label className="text-base text-center mb-1 opacity-0">btn</label>
           <button
@@ -395,8 +396,8 @@ function RapportBaptemes() {
       {showTable && (
         <>
           {/* TABLEAU DESKTOP */}
-<div className="hidden md:flex w-full overflow-x-auto mt-4 justify-center">
-  <div className="w-max">
+<div className="hidden md:flex w-full overflow-x-auto mt-4 justify-start">
+  <div className="w-full max-w-6xl">
 
     {/* HEADER */}
     <div className="flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-white/20 bg-white/5 rounded-t-lg whitespace-nowrap">

@@ -227,7 +227,7 @@ function RapportBaptemes() {
 
   return (
     //<div className="min-h-screen flex flex-col items-center px-4 sm:px-6 py-6 bg-[#333699]">
-    <div className="min-h-screen w-full flex flex-col bg-[#333699]">
+    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">

@@ -542,26 +542,37 @@ function RapportBaptemes() {
               return (
                 <div key={group.key}>
 
-                               <div className="flex items-center w-full px-4 py-2 text-xs text-white/70 uppercase bg-white/5 rounded-lg">
-  <div className="flex-1">Mois</div>
-  <div className="w-16 text-center">H</div>
-  <div className="w-16 text-center">F</div>
-  <div className="w-16 text-center">Total</div>
-</div>
+                             <div className="md:hidden w-full mt-4 flex flex-col overflow-hidden">
+                        {/* HEADER UNIQUE */}
+                        <div className="flex items-center w-full px-4 py-2 text-xs text-white/70 uppercase bg-white/5 rounded-lg mb-3">
+                          <div className="flex-1">Mois</div>
+                          <div className="w-14 text-center">H</div>
+                          <div className="w-14 text-center">F</div>
+                          <div className="w-14 text-center">Total</div>
+                        </div>
 
                   {/* LIGNE MOIS */}
-                  <button
-                    onClick={() => toggleMonth(group.key)}
-                    className={`flex items-center w-full px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer mb-2 ${borderColor}`}
-                  >
-                    <div className="flex-1 min-w-0 text-white font-semibold flex items-center gap-2">
-                      <span>{isOpen ? "➖" : "➕"}</span>
-                      <span>{group.label}</span>
-                    </div>
-                    <div className="min-w-16 text-center text-orange-300 font-semibold">{monthTotal.hommes}</div>
-                    <div className="min-w-16 text-center text-orange-300 font-semibold">{monthTotal.femmes}</div>
-                    <div className="min-w-16 text-center text-orange-300 font-semibold">{monthTotal.hommes + monthTotal.femmes}</div>
-                  </button>
+                 <button
+                  onClick={() => toggleMonth(group.key)}
+                  className={`flex items-center w-full px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer mb-1 ${borderColor}`}
+                >
+                  <div className="flex-1 min-w-0 text-white font-semibold flex items-center gap-2">
+                    <span>{isOpen ? "➖" : "➕"}</span>
+                    <span className="truncate">{group.label}</span>
+                  </div>
+                
+                  <div className="w-14 text-center text-orange-300 font-semibold">
+                    {monthTotal.hommes}
+                  </div>
+                
+                  <div className="w-14 text-center text-orange-300 font-semibold">
+                    {monthTotal.femmes}
+                  </div>
+                
+                  <div className="w-14 text-center text-orange-300 font-semibold">
+                    {monthTotal.hommes + monthTotal.femmes}
+                  </div>
+                </button>
 
                   {/* DETAILS — même couleur que le mois */}
                   {isOpen && group.items.map((r) => {
@@ -569,7 +580,7 @@ function RapportBaptemes() {
                     return (
                       <div
                         key={r.id + r.baptise_par}
-                        className="bg-white/10 text-white rounded-xl px-4 py-2 flex flex-col gap-2 shadow mb-2"
+                        className="bg-white/10 text-white rounded-lg px-3 py-2 flex flex-col gap-1 shadow mb-1"
                       >
                         <div className="text-amber-300 text-right">
                           {formatDateFR(r.date)}
@@ -598,7 +609,7 @@ function RapportBaptemes() {
             })}
 
             {/* TOTAL GLOBAL MOBILE — une seule fois à la fin */}
-            <div className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer mb-2 border-orange-400">
+            <div className="flex items-center px-3 py-2 rounded-lg bg-white/10 border-l-4 mb-1 border-orange-400">
               <span className="text-orange-400 font-semibold mr-4">TOTAL</span>
               <span className="text-orange-400 font-semibold">(H:{totalGlobal.hommes} + F:{totalGlobal.femmes}) = {totalGlobal.hommes + totalGlobal.femmes}</span>
             </div>

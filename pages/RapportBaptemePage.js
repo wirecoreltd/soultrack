@@ -542,6 +542,13 @@ function RapportBaptemes() {
               return (
                 <div key={group.key}>
 
+                               <div className="flex items-center w-full px-4 py-2 text-xs text-white/70 uppercase bg-white/5 rounded-lg">
+  <div className="flex-1">Mois</div>
+  <div className="w-16 text-center">H</div>
+  <div className="w-16 text-center">F</div>
+  <div className="w-16 text-center">Total</div>
+</div>
+
                   {/* LIGNE MOIS */}
                   <button
                     onClick={() => toggleMonth(group.key)}

@@ -485,9 +485,9 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
       {/* DETAILS */}
       {isOpen && group.items.map((r) => {
         const total = Number(r.hommes) + Number(r.femmes);
+        const borderColor = getMonthColor(group.key);
 
-        return (
-         const borderColor = getMonthColor(group.key);
+        return (         
 
               <div className="pl-6">
                 <div

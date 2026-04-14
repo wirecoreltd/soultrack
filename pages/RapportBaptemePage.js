@@ -361,7 +361,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
       </div>
 
       {/* FILTRES */}
-<div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl p-4 md:p-6 mt-2 w-full max-w-lg md:w-fit md:mx-auto flex flex-col text-white">
+<div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl p-4 md:p-6 mt-2 w-full max-w-lg mx-auto flex flex-col text-white">
 
   <p className="text-base text-red-400 font-semibold text-center mb-4">
     Choisissez les paramètres pour générer le rapport
@@ -449,7 +449,7 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
                       return (
                         <div
                           key={r.id + r.baptise_par}
-                          className="flex items-center px-1 py-1 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-2 border border-white/20">
+                          className="flex items-stretch px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 border-blue-500 mx-2 mb-1 border border-white/20">
                           <div className="min-w-[200px] text-white">
                             {formatDateFR(r.date)}
                           </div>

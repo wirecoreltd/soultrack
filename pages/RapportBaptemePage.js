@@ -575,43 +575,48 @@ function RapportBaptemes() {
                 </button>
 
                   {/* DETAILS — même couleur que le mois */}
-                  {isOpen && group.items.map((r) => {
-                    const total = Number(r.hommes) + Number(r.femmes);
-                    return (
-                      <div
-                        key={r.id + r.baptise_par}
-                        className="bg-white/10 text-white rounded-lg px-3 py-2 flex flex-col gap-1 shadow mb-1"
-                      >
-                        <div className="text-amber-300 text-right">
-                          {formatDateFR(r.date)}
-                        </div>
-                        <div className="text-white">
-                          Baptisé par : <span className="font-semibold">{r.baptise_par}</span>
-                        </div>
-                        <div className="text-white">
-                          Hommes : {r.hommes} | Femmes : {r.femmes}
-                        </div>
-                        <div className="text font-semibold text-orange-400">
-                          Total : {total}
-                        </div>
-                        <button
-                          onClick={() => handleEdit(r)}
-                          className="mx-auto text-amber-300 mt-2 hover:scale-110 transition"
-                        >
-                          ✏️ Modifier
-                        </button>
-                      </div>
-                    );
-                  })}
+                  {isOpen && (
+  group.items.map((r) => {
+    const total = Number(r.hommes) + Number(r.femmes);
 
-                </div>
-              );
-            })}
+    return (
+      <div
+        key={r.id + r.baptise_par}
+        className="bg-white/10 text-white rounded-lg px-3 py-2 flex flex-col gap-1 shadow mb-1"
+      >
+        <div className="text-amber-300 text-right">
+          {formatDateFR(r.date)}
+        </div>
+
+        <div>
+          Baptisé par : <span className="font-semibold">{r.baptise_par}</span>
+        </div>
+
+        <div>
+          Hommes : {r.hommes} | Femmes : {r.femmes}
+        </div>
+
+        <div className="font-semibold text-orange-400">
+          Total : {total}
+        </div>
+
+        <button
+          onClick={() => handleEdit(r)}
+          className="mx-auto text-amber-300 mt-1 hover:scale-110 transition"
+        >
+          ✏️ Modifier
+        </button>
+      </div>
+    );
+  })
+)}
 
             {/* TOTAL GLOBAL MOBILE — une seule fois à la fin */}
             <div className="flex items-center px-3 py-2 rounded-lg bg-white/10 border-l-4 mb-1 border-orange-400">
               <span className="text-orange-400 font-semibold mr-4">TOTAL</span>
-              <span className="text-orange-400 font-semibold">(H:{totalGlobal.hommes} + F:{totalGlobal.femmes}) = {totalGlobal.hommes + totalGlobal.femmes}</span>
+              <span className="text-orange-400 font-semibold">
+  (H: {totalGlobal.hommes} + F: {totalGlobal.femmes}) = {totalGlobal.hommes + totalGlobal.femmes}
+</span>
             </div>
 
           </div>{/* fin md:hidden */}

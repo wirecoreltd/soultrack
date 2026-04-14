@@ -537,68 +537,89 @@ Enregistrez les données, <span className="text-blue-300 font-semibold">analysez
           <div className="md:hidden w-full mt-4 flex flex-col gap-3">
 
             {/* GROUPES PAR MOIS */}
-              {groupedMonths.map(group => {
-                const isOpen = !!expandedMonths[group.key];
-                const borderColor = getMonthColor(group.key);
-              
-                const monthTotal = group.items.reduce(
-                  (acc, r) => ({
-                    hommes: acc.hommes + Number(r.hommes || 0),
-                    femmes: acc.femmes + Number(r.femmes || 0)
-                  }),
-                  { hommes: 0, femmes: 0 }
-                );
-              
-                return (
-                  <div key={group.key}>
+{groupedMonths.map(group => {
+  const isOpen = !!expandedMonths[group.key];
+  const borderColor = getMonthColor(group.key);
 
-                  {/* LIGNE TITRE DU MOIS MOBILE */}
-                  <button
-                    onClick={() => toggleMonth(group.key)}
-                    className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer mb-2 ${borderColor}`}
-                  >
-                    <span className="flex items-center gap-2 text-white font-bold">
-                      <span className="text-[10px]">{isOpen ? "➖" : "➕"}</span>
-                      {group.label}
-                    </span>
-                    <span className="text-orange-400 font-semibold">
-                      TOTAL (H: {monthTotal.hommes} + F: {monthTotal.femmes}): {monthTotal.hommes + monthTotal.femmes}
-                    </span>
-                  </button>
+  const monthTotal = group.items.reduce(
+    (acc, r) => ({
+      hommes: acc.hommes + Number(r.hommes || 0),
+      femmes: acc.femmes + Number(r.femmes || 0)
+    }),
+    { hommes: 0, femmes: 0 }
+  );
 
-                  {/* CARTES — 100% identiques à l'original */}
-                  {isOpen && group.items.map((r) => {
-                    const total = Number(r.hommes) + Number(r.femmes);
-                    return (
-                      <div
-                        key={r.id + r.baptise_par}
-                        className="bg-white/10 text-white rounded-xl px-4 py-2 flex flex-col gap-2 shadow mb-2"
-                      >
-                        <div className="text-amber-300 text-right">
-                          {formatDateFR(r.date)}
-                        </div>
-                        <div className="text-white">
-                          Baptisé par : <span className="font-semibold">{r.baptise_par}</span>
-                        </div>
-                        <div className="text-white">
-                          Hommes : {r.hommes} | Femmes : {r.femmes}
-                        </div>
-                        <div className="text font-semibold text-orange-400">
-                          Total : {total}
-                        </div>
-                        <button
-                          onClick={() => handleEdit(r)}
-                          className="mx-auto text-amber-300 mt-2 hover:scale-110 transition"
-                        >
-                          ✏️ Modifier
-                        </button>
-                      </div>
-                    );
-                  })}
+  return (
+    <div key={group.key}>
+      {/* MOIS */}
+      <button
+        onClick={() => toggleMonth(group.key)}
+        className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 mb-2 ${borderColor}`}
+      >
+        <div className="min-w-[320px] text-white font-semibold flex items-center gap-2">
+          <span>{isOpen ? "➖" : "➕"}</span>
+          <span>{group.label}</span>
+        </div>
 
-                </div>
-              );
-            })}
+        <div className="min-w-[180px]" />
+
+        <div className="min-w-[120px] text-center text-orange-300 font-semibold">
+          {monthTotal.hommes}
+        </div>
+
+        <div className="min-w-[120px] text-center text-orange-300 font-semibold">
+          {monthTotal.femmes}
+        </div>
+
+        <div className="min-w-[120px] text-center text-orange-300 font-semibold">
+          {monthTotal.hommes + monthTotal.femmes}
+        </div>
+
+        <div className="min-w-[150px]" />
+      </button>
+
+      {/* DETAILS */}
+      {isOpen && group.items.map(r => {
+        const total = Number(r.hommes) + Number(r.femmes);
+
+        return (
+          <div key={r.id + r.baptise_par} className={`pl-6`}>
+            <div className={`flex items-stretch px-4 py-2 rounded-xl bg-white/10 border-l-4 mb-1 ${borderColor}`}>
+              <div className="min-w-[160px] text-white">
+                {formatDateFR(r.date)}
+              </div>
+
+              <div className="min-w-[160px] text-center text-white">
+                {r.baptise_par}
+              </div>
+
+              <div className="min-w-[120px] text-center text-white">
+                {r.hommes}
+              </div>
+
+              <div className="min-w-[120px] text-center text-white">
+                {r.femmes}
+              </div>
+
+              <div className="min-w-[120px] text-center text-white font-bold">
+                {total}
+              </div>
+
+              <div className="min-w-[150px] text-center">
+                <button
+                  onClick={() => handleEdit(r)}
+                  className="text-orange-400 underline hover:text-orange-500"
+                >
+                  Modifier
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+})}
 
             {/* TOTAL GLOBAL MOBILE */}
             <div className={`flex items-stretch px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition border-l-4 mb-1 border border-white/20 ${borderColor}`}>

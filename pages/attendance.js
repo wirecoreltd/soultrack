@@ -663,7 +663,7 @@ useEffect(() => {
                         }))}
                       >
                         <div className="min-w-[220px] max-w-[220px] text-white">
-                          <div className="ml-6 flex items-center gap-2 whitespace-pre-line break-words">
+                          <div className="ml-6 flex items-center gap-2 whitespace-pre-line break-words ml-2">
                             {typeExpanded ? "➖" : "➕"} {splitTypeName(typeTemps, 15)}
                           </div>
                         </div>

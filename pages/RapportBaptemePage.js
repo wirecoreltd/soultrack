@@ -545,15 +545,15 @@ function RapportBaptemes() {
                   {/* LIGNE MOIS */}
                   <button
                     onClick={() => toggleMonth(group.key)}
-                    className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer mb-2 ${borderColor}`}
+                    className={`flex items-center w-full px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 cursor-pointer mb-2 ${borderColor}`}
                   >
-                    <div className="min-w-[160px] text-white font-semibold flex items-center gap-2">
+                    <div className="flex-1 min-w-0 text-white font-semibold flex items-center gap-2">
                       <span>{isOpen ? "➖" : "➕"}</span>
                       <span>{group.label}</span>
                     </div>
-                    <div className="min-w-[80px] text-center text-orange-300 font-semibold">{monthTotal.hommes}</div>
-                    <div className="min-w-[80px] text-center text-orange-300 font-semibold">{monthTotal.femmes}</div>
-                    <div className="min-w-[80px] text-center text-orange-300 font-semibold">{monthTotal.hommes + monthTotal.femmes}</div>
+                    <div className="min-w-16 text-center text-orange-300 font-semibold">{monthTotal.hommes}</div>
+                    <div className="min-w-16 text-center text-orange-300 font-semibold">{monthTotal.femmes}</div>
+                    <div className="min-w-16 text-center text-orange-300 font-semibold">{monthTotal.hommes + monthTotal.femmes}</div>
                   </button>
 
                   {/* DETAILS — même couleur que le mois */}

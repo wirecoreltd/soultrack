@@ -253,11 +253,11 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
     const percent =
       totalMembres > 0 ? ((data.total / totalMembres) * 100).toFixed(1) : 0;
 
-    return (
-      <div
-        key={b}
-        <div
-  className={`bg-white/10 rounded-lg px-4 py-3 text-white border-l-4 ${getBesoinColor(b)}`}
+    return (     
+  <div
+    key={b}
+    <div
+      className={`bg-white/10 rounded-lg px-4 py-3 text-white border-l-4 ${getBesoinColor(b)}`}
 >
 
         {/* HEADER MOBILE */}

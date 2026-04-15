@@ -526,101 +526,87 @@ function RapportBaptemes() {
             </div>
 
         
-    {/* TABLEAU MOBILE */}
-    <div className="md:hidden w-full mt-4 flex flex-col gap-3">
+   {/* TABLEAU MOBILE */}
+<div className="md:hidden w-full mt-4 flex flex-col gap-3">
 
-      {/* HEADER UNE FOIS */}
-      <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-3 py-2 font-semibold text-orange-400 uppercase bg-white/5 rounded-lg mb-3 text-center">
-  <div className="text-left">Mois</div>
-  <div>H</div>
-  <div>F</div>
-  <div>Total</div>
-</div>
+  {/* HEADER */}
+  <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-3 py-2 font-semibold text-orange-400 uppercase bg-white/5 rounded-lg mb-3 text-center">
+    <div className="text-left">Mois</div>
+    <div>H</div>
+    <div>F</div>
+    <div>Total</div>
+  </div>
 
-      {/* UN SEUL MAP */}
-      {groupedMonths.map(group => {
-        const isOpen = !!expandedMonths[group.key];
-        const borderColor = getMonthColor(group.key);
+  {/* LISTE */}
+  {groupedMonths.map(group => {
+    const isOpen = !!expandedMonths[group.key];
+    const borderColor = getMonthColor(group.key);
 
-        const monthTotal = group.items.reduce(
-          (acc, r) => ({
-            hommes: acc.hommes + Number(r.hommes || 0),
-            femmes: acc.femmes + Number(r.femmes || 0)
-          }),
-          { hommes: 0, femmes: 0 }
-        );
+    const monthTotal = group.items.reduce(
+      (acc, r) => ({
+        hommes: acc.hommes + Number(r.hommes || 0),
+        femmes: acc.femmes + Number(r.femmes || 0)
+      }),
+      { hommes: 0, femmes: 0 }
+    );
 
-        return (
-          <div key={group.key}>
+    return (
+      <div key={group.key}>
+        <button
+          onClick={() => toggleMonth(group.key)}
+          className={`flex items-center w-full px-3 py-2 rounded-lg bg-white/10 border-l-4 ${borderColor}`}
+        >
+          <div className="flex-1 text-white font-semibold flex items-center gap-2">
+            <span>{isOpen ? "➖" : "➕"}</span>
+            <span>{group.label}</span>
+          </div>
 
-            <button
-              onClick={() => toggleMonth(group.key)}
-              className={`flex items-center w-full px-3 py-2 rounded-lg bg-white/10 border-l-4 ${borderColor}`}
-            >
-              <div className="flex-1 text-white font-semibold flex items-center gap-2">
-                <span>{isOpen ? "➖" : "➕"}</span>
-                <span>{group.label}</span>
-              </div>
+          <div className="w-14 text-center text-orange-300">{monthTotal.hommes}</div>
+          <div className="w-14 text-center text-orange-300">{monthTotal.femmes}</div>
+          <div className="w-14 text-center text-orange-300">
+            {monthTotal.hommes + monthTotal.femmes}
+          </div>
+        </button>
 
-              <div className="w-14 text-center text-orange-300">{monthTotal.hommes}</div>
-              <div className="w-14 text-center text-orange-300">{monthTotal.femmes}</div>
-              <div className="w-14 text-center text-orange-300">
-                {monthTotal.hommes + monthTotal.femmes}
-              </div>
-            </button>
+        {isOpen &&
+          group.items.map((r) => {
+            const total = Number(r.hommes) + Number(r.femmes);
 
-             {/* DETAILS — même couleur que le mois */}
-                  {isOpen && group.items.map((r) => {
-                    const total = Number(r.hommes) + Number(r.femmes);
-                    return (
-                      <div
-                        key={r.id + r.baptise_par}
-                        className="bg-white/10 text-white rounded-xl px-4 py-2 flex flex-col gap-2 shadow mb-2"
-                      >
-                        <div className="text-amber-300 text-right">
-                          {formatDateFR(r.date)}
-                        </div>
-                        <div className="text-white">
-                          Baptisé par : <span className="font-semibold">{r.baptise_par}</span>
-                        </div>
-                        <div className="text-white">
-                          Hommes : {r.hommes} | Femmes : {r.femmes}
-                        </div>
-                        <div className="text font-semibold text-orange-400">
-                          Total : {total}
-                        </div>
-                        <button
-                          onClick={() => handleEdit(r)}
-                          className="mx-auto text-amber-300 mt-2 hover:scale-110 transition"
-                        >
-                          ✏️ Modifier
-                        </button>
-                      </div>
-                    );
-                  })}
-
+            return (
+              <div
+                key={r.id + r.baptise_par}
+                className="bg-white/10 text-white rounded-xl px-4 py-2 flex flex-col gap-2 shadow mb-2"
+              >
+                <div className="text-amber-300 text-right">
+                  {formatDateFR(r.date)}
                 </div>
-              );
-            })}
+                <div>
+                  Baptisé par : <span className="font-semibold">{r.baptise_par}</span>
+                </div>
+                <div>
+                  Hommes : {r.hommes} | Femmes : {r.femmes}
+                </div>
+                <div className="font-semibold text-orange-400">
+                  Total : {total}
+                </div>
+              </div>
+            );
+          })}
+      </div>
+    );
+  })}
 
-            {/* TOTAL GLOBAL MOBILE — une seule fois à la fin */}
-            <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-4 py-3 rounded-lg bg-white/10 border-l-4 border-orange-400 mt-2">
-  <div className="text-orange-400 font-semibold">TOTAL</div>
-
-  <div className="text-center text-orange-400 font-semibold">
-    {totalGlobal.hommes}
+  {/* TOTAL */}
+  <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-4 py-3 rounded-lg bg-white/10 border-l-4 border-orange-400 mt-2">
+    <div className="text-orange-400 font-semibold">TOTAL</div>
+    <div className="text-center text-orange-400 font-semibold">{totalGlobal.hommes}</div>
+    <div className="text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
+    <div className="text-center text-orange-400 font-semibold">
+      {totalGlobal.hommes + totalGlobal.femmes}
+    </div>
   </div>
 
-  <div className="text-center text-orange-400 font-semibold">
-    {totalGlobal.femmes}
-  </div>
-
-  <div className="text-center text-orange-400 font-semibold">
-    {totalGlobal.hommes + totalGlobal.femmes}
-  </div>
- 
-    </>
-)}
+</div>
 
       <Footer />
 

@@ -529,14 +529,6 @@ function RapportBaptemes() {
    {/* TABLEAU MOBILE */}
 <div className="md:hidden w-full mt-4 flex flex-col gap-3">
 
-  {/* HEADER */}
-  <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-3 py-2 font-semibold text-orange-400 uppercase bg-white/5 rounded-lg mb-3 text-center">
-    <div className="text-left ml-8">Mois</div>
-    <div>H</div>
-    <div>F</div>
-    <div>Total</div>
-  </div>
-
   {/* LISTE */}
   {groupedMonths.map(group => {
     const isOpen = !!expandedMonths[group.key];

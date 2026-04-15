@@ -26,6 +26,7 @@ function Attendance() {
   const [typeCollapsedDesktop, setTypeCollapsedDesktop] = useState({});
   const [availableTypes, setAvailableTypes] = useState([]);
   const [filterType, setFilterType] = useState("");  
+  const numeroCulte = rows[0]?.numero_culte || "-";
 
   const [formData, setFormData] = useState({
     date: "",
@@ -674,7 +675,7 @@ useEffect(() => {
                             <span>{typeExpanded ? "➖" : "➕"}</span>                        
                             <span>{splitTypeName(typeTemps, 15)}</span>                        
                             <span className="text-xs text-white/70">
-                              (Culte {rows[0]?.numero_culte || "-"})
+                              Culte {rows[0]?.numero_culte || "-"}
                             </span>                        
                           </div>
                         </div>

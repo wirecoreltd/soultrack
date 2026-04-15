@@ -589,10 +589,15 @@ function RapportBaptemes() {
                 <div>
                   Baptisé par : <span className="font-semibold">{r.baptise_par}</span>
                 </div>
-                <div>
-                  Hommes : {r.hommes} | Femmes : {r.femmes}
-                </div>
-                <div className="font-semibold text-orange-400">
+                <div className="mt-3 flex gap-4">
+          <span>
+            Hommes : <span className="text-white">{r.hommes}</span>
+          </span>
+          <span>
+            Femmes : <span className="text-white">{r.femmes}</span>
+          </span>
+        </div>
+                <div className="font-semibold text-orange-400 mt-1">
                   Total : {total}
                 </div>
                   <div className="flex justify-center mt-2">

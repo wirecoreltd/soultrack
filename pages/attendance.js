@@ -663,8 +663,12 @@ useEffect(() => {
                         }))}
                       >
                         <div className="min-w-[220px] max-w-[220px] text-white">
-                          <div className="ml-4 flex items-center gap-2 whitespace-pre-line break-words pl-2">
-                            {typeExpanded ? "➖" : "➕"} {splitTypeName(typeTemps, 15)}
+                          <div className="ml-4 flex items-center gap-2 whitespace-pre-line break-words pl-2">                            
+                            <span>{typeExpanded ? "➖" : "➕"}</span>                        
+                            <span>{splitTypeName(typeTemps, 15)}</span>                        
+                            <span className="text-xs text-white/70">
+                              (Culte {numero_culte})
+                            </span>                        
                           </div>
                         </div>
                 
@@ -772,9 +776,13 @@ const totalF = rows.reduce(
 >
 
   {/* MOIS (centré verticalement automatiquement) */}
-  <div className="text-white font-semibold flex items-center">
-    {typeExpanded ? "➖" : "➕"} {typeTemps}
-  </div>
+  <div className="text-white font-semibold flex items-center gap-2">
+  <span>{typeExpanded ? "➖" : "➕"}</span>
+  <span>{typeTemps}</span>
+  <span className="text-[11px] px-2 py-0.5 rounded bg-white/10 text-white/80">
+    Culte {numero_culte}
+  </span>
+</div>
 
   {/* DROITE (2 LIGNES) */}
   <div className="flex flex-col items-end text-sm leading-tight">
@@ -783,7 +791,7 @@ const totalF = rows.reduce(
     <div className="flex gap-3 text-amber-300 font-semibold">
       <span>H: {totalH}</span>
       <span>F: {totalF}</span>
-      <span>J: {totalJ}</span>>
+      <span>J: {totalJ}</span>
       <span>Total: {totalHFJ}</span>
     </div>
 

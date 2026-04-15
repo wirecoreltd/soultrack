@@ -533,7 +533,7 @@ function RapportFormation() {
         </div>
 
         {/* ================= STATS ================= */}
-        <div className="mt-3 flex justify-between text-sm text-white/90">
+        <div className="mt-3 flex gap-4 text-sm text-white/90">
           <span>
             Hommes : <span className="text-white font-medium">{r.hommes}</span>
           </span>

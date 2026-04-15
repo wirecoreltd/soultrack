@@ -819,6 +819,7 @@ const totalF = rows.reduce(
                   <p className="font-semibold text-orange-400">Total: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)}</p>
                   <p className="mt-2">Enfants: {r.enfants} | Connectés: {r.connectes}</p>                
                   <p className="mt-1">Nouveaux Venus: {r.nouveauxVenus} | Nouveaux Convertis: {r.nouveauxConvertis}</p>
+                  <p className="font-semibold text-orange-400">Total Global: {Number(r.hommes)+Number(r.femmes)+Number(r.jeunes)+Number(r.enfants)+Number(r.connectes)}</p>
 
                   <div className="flex justify-center gap-4 mt-3">
                     <button

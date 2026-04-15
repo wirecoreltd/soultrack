@@ -248,30 +248,30 @@ function RapportFormation() {
           </div>
 
          <div className="flex gap-4">
-  <div className="flex flex-col w-1/2">
-    <label className="text-white mb-1">Hommes</label>
-    <input
-      type="number"
-      value={formData.hommes}
-      onChange={(e) =>
-        setFormData({ ...formData, hommes: e.target.value })
-      }
-      className="input"
-    />
-  </div>
-
-  <div className="flex flex-col w-1/2">
-    <label className="text-white mb-1">Femmes</label>
-    <input
-      type="number"
-      value={formData.femmes}
-      onChange={(e) =>
-        setFormData({ ...formData, femmes: e.target.value })
-      }
-      className="input"
-    />
-  </div>
-</div>
+            <div className="flex flex-col w-1/2">
+              <label className="text-white mb-1">Hommes</label>
+              <input
+                type="number"
+                value={formData.hommes}
+                onChange={(e) =>
+                  setFormData({ ...formData, hommes: e.target.value })
+                }
+                className="input"
+              />
+            </div>
+          
+            <div className="flex flex-col w-1/2">
+              <label className="text-white mb-1">Femmes</label>
+              <input
+                type="number"
+                value={formData.femmes}
+                onChange={(e) =>
+                  setFormData({ ...formData, femmes: e.target.value })
+                }
+                className="input"
+              />
+            </div>
+          </div>
 
           <div className="col-span-2 flex justify-center mt-4">
             <button
@@ -293,24 +293,24 @@ function RapportFormation() {
           Choisissez les paramètres pour générer le rapport
         </p>
         <div className="flex flex-col w-full">
-  <label className="text-center text-base mb-1">Date de Début</label>
-  <input
-    type="date"
-    value={filterDebut}
-    onChange={e => setFilterDebut(e.target.value)}
-    className="w-full border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-  />
-</div>
-
-<div className="flex flex-col w-full mt-2">
-  <label className="text-center text-base mb-1">Date de Fin</label>
-  <input
-    type="date"
-    value={filterFin}
-    onChange={e => setFilterFin(e.target.value)}
-    className="w-full border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-  />
-</div>
+          <label className="text-center text-base mb-1">Date de Début</label>
+          <input
+            type="date"
+            value={filterDebut}
+            onChange={e => setFilterDebut(e.target.value)}
+            className="w-full border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          />
+        </div>
+        
+        <div className="flex flex-col w-full mt-2">
+          <label className="text-center text-base mb-1">Date de Fin</label>
+          <input
+            type="date"
+            value={filterFin}
+            onChange={e => setFilterFin(e.target.value)}
+            className="w-full border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+          />
+        </div>
         <div className="flex flex-col w-full md:w-auto">
           <label className="text-base text-center mb-1 opacity-0">btn</label>
           <button
@@ -322,107 +322,162 @@ function RapportFormation() {
         </div>
       </div>  
 
-      {/* ================= TABLEAU ================= */}
+     {showTable && (
+  <div className="w-full mt-4 space-y-3">
 
-      {showTable && (
-        <div className="hidden md:flex w-full overflow-x-auto mt-4 justify-center">
-          <div className="w-max">
+    {groupedReports.map(([monthKey, monthRapports], idx) => {
+      const [year, monthIndex] = monthKey.split("-").map(Number);
+      const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+      const isExpanded = expandedMonths[monthKey];
 
-              {/* HEADER */}
-            <div className="flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-white/20 bg-white/5 rounded-t-lg whitespace-nowrap">
-              <div className="min-w-[180px]">Date Début</div>
-              <div className="min-w-[180px]">Date Fin</div>
-              <div className="min-w-[180px] text-center">Nom Formation</div>
-              <div className="min-w-[100px] text-center">Hommes</div>
-              <div className="min-w-[100px] text-center">Femmes</div>
-              <div className="min-w-[100px] text-center">Total</div>
-              <div className="min-w-[140px] text-center">Actions</div>
+      const totalMonth = monthRapports.reduce(
+        (acc, r) => {
+          acc.hommes += Number(r.hommes || 0);
+          acc.femmes += Number(r.femmes || 0);
+          return acc;
+        },
+        { hommes: 0, femmes: 0 }
+      );
+
+      const borderColors = [
+        "border-red-500",
+        "border-green-500",
+        "border-blue-500",
+        "border-yellow-500",
+        "border-purple-500",
+      ];
+
+      const borderColor = borderColors[idx % borderColors.length];
+
+      return (
+        <div key={monthKey} className={`rounded-xl border-l-4 ${borderColor} bg-white/10`}>
+
+          {/* ================= HEADER MOIS ================= */}
+          <div
+            onClick={() => toggleMonth(monthKey)}
+            className="flex justify-between items-center p-3 cursor-pointer text-white"
+          >
+            <div className="font-bold">
+              {isExpanded ? "➖" : "➕"} {monthLabel}
             </div>
 
-            {groupedReports.map(([monthKey, monthRapports], idx) => {
-              const [year, monthIndex] = monthKey.split("-").map(Number);
-              const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+            <div className="flex gap-4 text-sm">
+              <span>H: {totalMonth.hommes}</span>
+              <span>F: {totalMonth.femmes}</span>
+              <span className="text-orange-300 font-semibold">
+                {totalMonth.hommes + totalMonth.femmes}
+              </span>
+            </div>
+          </div>
 
-              const totalMonth = monthRapports.reduce((acc, r) => {
-                acc.hommes += Number(r.hommes || 0);
-                acc.femmes += Number(r.femmes || 0);
-                return acc;
-              }, { hommes: 0, femmes: 0 });
+          {/* ================= CONTENU COLLAPSE ================= */}
+          {isExpanded && (
+            <div className="border-t border-white/10">
 
-              const isExpanded = expandedMonths[monthKey] || false;
+              {monthRapports.map((r) => {
+                const total = Number(r.hommes) + Number(r.femmes);
 
-              const borderColors = [
-                "border-red-500",
-                "border-green-500",
-                "border-blue-500",
-                "border-yellow-500",
-                "border-purple-500"
-              ];
+                return (
+                  <div
+                    key={r.id}
+                    className="flex flex-col md:flex-row md:items-center justify-between p-3 text-white text-sm gap-2"
+                  >
+                    <div className="flex flex-col md:flex-row md:gap-6">
+                      <span>📅 {formatDateFR(r.date_debut)} → {formatDateFR(r.date_fin)}</span>
+                      <span className="font-semibold">{r.nom_formation}</span>
+                    </div>
 
-              const borderColor = borderColors[idx % borderColors.length];
+                    <div className="flex gap-4">
+                      <span>H: {r.hommes}</span>
+                      <span>F: {r.femmes}</span>
+                      <span className="text-orange-300 font-bold">{total}</span>
+                    </div>
+
+                    <button
+                      onClick={() => handleEdit(r)}
+                      className="text-orange-300 underline"
+                    >
+                      Modifier
+                    </button>
+                  </div>
+                );
+              })}
+
+            </div>
+          )}
+
+        </div>
+      );
+    })}
+  </div>
+)}
+
+            {showTable && (
+  <div className="md:hidden w-full mt-4 space-y-4">
+
+    {groupedReports.map(([monthKey, monthRapports], idx) => {
+      const [year, monthIndex] = monthKey.split("-").map(Number);
+      const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+
+      const isExpanded = expandedMonths[monthKey];
+
+      return (
+        <div key={monthKey} className="bg-white/10 rounded-xl p-3 text-white">
+
+          {/* HEADER MOIS */}
+          <div
+            className="flex justify-between items-center cursor-pointer"
+            onClick={() => toggleMonth(monthKey)}
+          >
+            <h3 className="font-bold">
+              {isExpanded ? "➖" : "➕"} {monthLabel}
+            </h3>
+          </div>
+
+          {/* TOTAL MOIS */}
+          <div className="flex justify-between mt-2 text-sm text-orange-300">
+            <span>Hommes: {monthRapports.reduce((a,r)=>a+Number(r.hommes||0),0)}</span>
+            <span>Femmes: {monthRapports.reduce((a,r)=>a+Number(r.femmes||0),0)}</span>
+          </div>
+
+          {/* LISTE RAPPORTS */}
+          {isExpanded &&
+            monthRapports.map((r) => {
+              const total = Number(r.hommes) + Number(r.femmes);
 
               return (
-                <div key={monthKey} className="space-y-1">
-
-                  <div
-                    className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 ${borderColor}`}
-                    onClick={() => toggleMonth(monthKey)}
-                  >
-                    <div className="min-w-[200px] text-white font-semibold">
-                      {isExpanded ? "➖ " : "➕ "} {monthLabel}
-                    </div>
-                    <div className="min-w-[200px]"></div>
-                    <div className="min-w-[200px]"></div>
-                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.hommes}</div>
-                    <div className="min-w-[120px] text-center text-white font-bold">{totalMonth.femmes}</div>
-                    <div className="min-w-[120px] text-center text-orange-400 font-semibold">
-                      {totalMonth.hommes + totalMonth.femmes}
-                    </div>
-                    <div className="min-w-[150px]"></div>
+                <div
+                  key={r.id}
+                  className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10"
+                >
+                  <div className="text-sm">
+                    📅 {formatDateFR(r.date_debut)} → {formatDateFR(r.date_fin)}
                   </div>
 
-                  {(isExpanded || monthRapports.length === 1) &&
-                    monthRapports.map(r => {
-                      const total = Number(r.hommes) + Number(r.femmes);
-                      return (
-                        <div
-                          key={r.id}
-                          className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
-                        >
-                          <div className="min-w-[200px] text-white">{formatDateFR(r.date_debut)}</div>
-                          <div className="min-w-[200px] text-white">{formatDateFR(r.date_fin)}</div>
-                          <div className="min-w-[200px] text-center text-white">{r.nom_formation}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
-                          <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                          <div className="min-w-[120px] text-center text-white font-bold">{total}</div>
-                          <div className="min-w-[150px] text-center">
-                            <button
-                              onClick={() => handleEdit(r)}
-                              className="text-orange-400 underline hover:text-orange-500 px-4 py-1 rounded-xl"
-                            >
-                              Modifier
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="font-semibold mt-1">
+                    {r.nom_formation}
+                  </div>
+
+                  <div className="flex justify-between text-sm mt-2">
+                    <span>H: {r.hommes}</span>
+                    <span>F: {r.femmes}</span>
+                    <span>Total: {total}</span>
+                  </div>
+
+                  <button
+                    onClick={() => handleEdit(r)}
+                    className="mt-2 text-orange-300 underline text-sm"
+                  >
+                    Modifier
+                  </button>
                 </div>
               );
             })}
-
-            <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
-              <div className="min-w-[200px] text-white font-bold">TOTAL</div>
-              <div className="min-w-[200px]"></div>
-              <div className="min-w-[200px]"></div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold ml-2">{totalGlobal.hommes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
-              <div className="min-w-[120px] text-center text-orange-400 font-semibold">{totalGlobal.hommes + totalGlobal.femmes}</div>
-              <div className="min-w-[150px]"></div>
-            </div>
-
-          </div>
         </div>
-      )}
+      );
+    })}
+  </div>
+)}
 
       <Footer />
 

@@ -166,8 +166,8 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
               </p>
       </div>
 
-      {message && <p className="text-white mb-4">{message}</p>}
-<div className="hidden md:flex w-full overflow-x-auto mt-4 justify-center">
+
+  <div className="hidden md:flex w-full overflow-x-auto mt-4 justify-center">
   <div className="w-max">
 
     {/* HEADER */}
@@ -188,34 +188,35 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
           : 0;
 
       return (
-        <div
-          key={b}
-          className="flex items-center px-3 py-2 bg-white/10 hover:bg-white/20 transition border-b border-white/10"
-        >
+        <div key={b} className="mt-2">
 
-          {/* Catégorie */}
-          <div className="w-[220px] text-white font-medium">
-            {b}
-          </div>
+          <div className="flex items-center px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300">
 
-          {/* Hommes */}
-          <div className="w-[100px] text-center text-white">
-            {data.hommes}
-          </div>
+            {/* Catégorie */}
+            <div className="w-[220px] text-white font-medium">
+              {b}
+            </div>
 
-          {/* Femmes */}
-          <div className="w-[100px] text-center text-white">
-            {data.femmes}
-          </div>
+            {/* Hommes */}
+            <div className="w-[100px] text-center text-white">
+              {data.hommes}
+            </div>
 
-          {/* Total */}
-          <div className="w-[100px] text-center text-orange-400 font-semibold">
-            {data.total}
-          </div>
+            {/* Femmes */}
+            <div className="w-[100px] text-center text-white">
+              {data.femmes}
+            </div>
 
-          {/* % */}
-          <div className="w-[160px] text-center text-white font-semibold">
-            {percent} %
+            {/* Total */}
+            <div className="w-[100px] text-center text-orange-400 font-semibold">
+              {data.total}
+            </div>
+
+            {/* % */}
+            <div className="w-[160px] text-center text-white font-semibold">
+              {percent} %
+            </div>
+
           </div>
 
         </div>

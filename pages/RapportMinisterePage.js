@@ -118,6 +118,29 @@ function RapportMinistere() {
     setLoading(false);
   };
 
+  const ministereColors = {
+  "Intercession": "border-purple-400",
+  "Louange": "border-pink-400",
+  "Administration": "border-blue-400",
+  "Technique": "border-cyan-400",
+  "Communication": "border-indigo-400",
+  "Les Enfants": "border-yellow-400",
+  "Les ados": "border-orange-400",
+  "Les jeunes": "border-red-400",
+  "Finance": "border-green-400",
+  "Nettoyage": "border-gray-400",
+  "Conseiller": "border-emerald-400",
+  "Compassion": "border-rose-400",
+  "Visite": "border-amber-400",
+  "Berger": "border-lime-400",
+  "Modération": "border-sky-400",
+  "Autres": "border-white"
+};
+
+const getMinistereColor = (ministere) => {
+  return ministereColors[ministere] || ministereColors["Autres"];
+};
+  
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-[#333699]">
       <HeaderPages />
@@ -234,7 +257,7 @@ function RapportMinistere() {
           {rapports.map((r, index) => (
             <div
               key={index}
-              className="grid grid-cols-[2fr_1fr] items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-l-blue-500"
+              className={`grid grid-cols-[2fr_1fr] items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${getMinistereColor(r.ministere)} mt-2`}
             >
               <div className="text-white font-semibold">
                 {r.ministere}

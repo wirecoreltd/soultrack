@@ -625,9 +625,7 @@ function Attendance() {
                     {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows], typeIdx) => {
                       const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
                       const borderColorClass = borderColors[typeIdx % borderColors.length];
-                      const typeTotals = calculateTypeTotals(rows);
-                      // ✅ FIX 4 : numeroCulte calculé ici, dans le bon scope
-                      const numeroCulte = rows[0]?.numero_culte || "-";
+                      const typeTotals = calculateTypeTotals(rows);                     
 
                       const totalGlobal =
                         typeTotals.total +
@@ -730,9 +728,7 @@ function Attendance() {
                     const totalH = rows.reduce((acc, r) => acc + Number(r.hommes || 0), 0);
                     const totalF = rows.reduce((acc, r) => acc + Number(r.femmes || 0), 0);
                     // ✅ FIX 6 : totalJ défini
-                    const totalJ = rows.reduce((acc, r) => acc + Number(r.jeunes || 0), 0);
-                    // ✅ FIX 7 : numeroCulte calculé ici dans le bon scope
-                    const numeroCulte = rows[0]?.numero_culte || "-";
+                    const totalJ = rows.reduce((acc, r) => acc + Number(r.jeunes || 0), 0);                    
 
                     return (
                       <div key={typeTemps} className="ml-3 space-y-2">

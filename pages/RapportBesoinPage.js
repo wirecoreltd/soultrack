@@ -170,7 +170,7 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
 
       {/* TABLEAU */}
       {labels.length > 0 && (
-        <div className="w-full max-w-[700px] bg-white/10 rounded-2xl shadow-lg p-6 mb-8 mt-4">
+        <div className="hidden md:block w-full max-w-[700px] bg-white/10 rounded-2xl shadow-lg p-6 mb-8 mt-4">
           <div className="grid grid-cols-5 text-white font-bold border-b border-white/30 pb-2 mb-2 text-center">
             <div className="text-left pl-2">Catégorie</div>            
             <div>Homme</div>

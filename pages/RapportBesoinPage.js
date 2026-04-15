@@ -109,41 +109,50 @@ function RapportBesoin() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold text-white mt-4 mb-6">
-        <span className="text-white">Rapport</span>{" "}
-        <span className="text-amber-300">Difficultés / Besoins</span>       
-      </h1>
+      
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+        Rapport <span className="text-emerald-300">Difficultés / Besoins</span>
+      </h1>  
+
+   <div className="max-w-3xl w-full mb-6 text-center">
+        <p className="italic text-base text-white/90">
+          Comprenez <span className="text-blue-300 font-semibold">les besoins réels de votre assemblée</span>.
+Identifiez les difficultés <span className="text-blue-300 font-semibold">exprimées par les membres</span>, observez les tendances et accompagnez chaque personne avec <span className="text-blue-300 font-semibold">discernement et un suivi adapté à sa situation</span>.
+    </p>
+      </div>
+      
 
       {/* FILTRES */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <div className="flex flex-col">
-          <label htmlFor="dateDebut" className="font-medium mb-1 text-white">
-            Date de début
-          </label>
-          <input
-            type="date"
+      <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl p-4 md:p-6 mt-2 w-full max-w-lg mx-auto flex flex-col text-white">
+        <p className="text-base text-red-400 font-semibold text-center mb-4">
+          Choisissez les paramètres pour générer le rapport
+        </p>
+        <div className="flex flex-col w-full">
+  <label className="text-center text-base mb-1">Date de Début</label>
+  <input
+    type="date"
             value={dateDebut}
             onChange={(e) => setDateDebut(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+            className="w-full border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
           />
         </div>
 
-        <div className="flex flex-col">
-          <label htmlFor="dateFin" className="font-medium mb-1 text-white">
-            Date de fin
-          </label>
-          <input
+        <div className="flex flex-col w-full mt-2">
+  <label className="text-center text-base mb-1">Date de Fin</label>
+  <input
+    type="date"
             type="date"
             value={dateFin}
             onChange={(e) => setDateFin(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+            className="w-full border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
           />
         </div>
 
-        <div className="flex items-end">
+        <div className="flex flex-col w-full md:w-auto">
+          <label className="text-base text-center mb-1 opacity-0">btn</label>
           <button
             onClick={fetchRapport}
-            className="bg-[#2a2f85] px-6 py-2 rounded-xl hover:bg-[#1f2366] transition text-white"
+            className="w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
           >
             Générer
           </button>

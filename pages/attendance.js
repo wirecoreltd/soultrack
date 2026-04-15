@@ -604,6 +604,7 @@ useEffect(() => {
                             <div className="min-w-[140px] text-center">Connectés</div>
                             <div className="min-w-[150px] text-center">Nouveaux venus</div>
                             <div className="min-w-[180px] text-center">Nouveaux convertis</div>
+                            <div className="min-w-[180px] text-center">Total Global</div>
                             <div className="min-w-[140px] text-center">Actions</div>
                           </div>
                   
@@ -612,6 +613,11 @@ useEffect(() => {
                             const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
                             const monthExpanded = expandedMonths[monthKey] || false;
                             const monthTotals = calculateMonthTotals(typesObj);
+
+                           const totalGlobalMonth =
+                            (monthTotals.total || 0) +
+                            (monthTotals.enfants || 0) +
+                            (monthTotals.connectes || 0);
                   
                             return (
                               <div key={monthKey} className="space-y-1">
@@ -632,6 +638,7 @@ useEffect(() => {
                                   <div className="min-w-[140px] text-center text-orange-400 font-semibold">{monthTotals.connectes}</div>
                                   <div className="min-w-[150px] text-center text-orange-400 font-semibold">{monthTotals.nouveauxVenus}</div>
                                   <div className="min-w-[180px] text-center text-orange-400 font-semibold">{monthTotals.nouveauxConvertis}</div>
+                                  <div className="min-w-[130px] text-center text-orange-400 font-semibold">{totalGlobalMonth}</div>  
                                   <div className="min-w-[140px]"></div>
                                 </div>
                   

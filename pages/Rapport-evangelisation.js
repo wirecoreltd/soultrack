@@ -640,7 +640,13 @@ const handleConseillerClick = () => {
                             <div>{typeExpanded ? "➖ " : "➕ "} {type}</div>
                         
                             {/* Total aligné à droite */}
-                            <div className="text-sm font-bold text-orange-400"> Total (H+F): {((typeTotals?.hommes || 0) + (typeTotals?.femmes || 0))}
+                            <div className="flex gap-3 text-sm text-orange-400">
+                                <span>H: {typeTotals?.hommes || 0}</span>
+                                <span>F: {typeTotals?.femmes || 0}</span>
+                                <span className="text-orange-300 font-semibold">
+                                  Total: {(typeTotals?.hommes || 0) + (typeTotals?.femmes || 0)}
+                                </span>
+
                                 </div>
                               </div>
                            </div> 

@@ -746,6 +746,16 @@ useEffect(() => {
     typeTotals.total +
     typeTotals.enfants +
     typeTotals.connectes;   
+
+         const totalH = rows.reduce(
+  (acc, r) => acc + Number(r.hommes || 0),
+  0
+);
+
+const totalF = rows.reduce(
+  (acc, r) => acc + Number(r.femmes || 0),
+  0
+);
          
           return (
             <div key={typeTemps} className="ml-3 space-y-2">

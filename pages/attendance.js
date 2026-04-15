@@ -26,6 +26,7 @@ function Attendance() {
   const [typeCollapsedDesktop, setTypeCollapsedDesktop] = useState({});
   const [availableTypes, setAvailableTypes] = useState([]);
   const [filterType, setFilterType] = useState(""); 
+  const numero_culte = rows[0]?.numero_culte || "-";
 
   const [formData, setFormData] = useState({
     date: "",

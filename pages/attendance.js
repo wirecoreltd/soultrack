@@ -25,8 +25,7 @@ function Attendance() {
   const [expandedMonths, setExpandedMonths] = useState({});
   const [typeCollapsedDesktop, setTypeCollapsedDesktop] = useState({});
   const [availableTypes, setAvailableTypes] = useState([]);
-  const [filterType, setFilterType] = useState(""); 
-  const numero_culte = rows[0]?.numero_culte || "-";
+  const [filterType, setFilterType] = useState("");  
 
   const [formData, setFormData] = useState({
     date: "",
@@ -668,7 +667,7 @@ useEffect(() => {
                             <span>{typeExpanded ? "➖" : "➕"}</span>                        
                             <span>{splitTypeName(typeTemps, 15)}</span>                        
                             <span className="text-xs text-white/70">
-                              (Culte {numero_culte})
+                              (Culte {rows[0]?.numero_culte || "-"})
                             </span>                        
                           </div>
                         </div>
@@ -792,6 +791,10 @@ const totalF = rows.reduce(
     <div className="flex gap-3 text-amber-300 font-semibold">
       <span>H: {totalH}</span>
       <span>F: {totalF}</span>
+    const totalJ = rows.reduce(
+  (acc, r) => acc + Number(r.jeunes || 0),
+  0
+);
       <span>J: {totalJ}</span>
       <span>Total: {totalHFJ}</span>
     </div>

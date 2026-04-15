@@ -600,17 +600,7 @@ function RapportBaptemes() {
           })}
       </div>
     );
-  })}
-
-  {/* TOTAL */}
-  <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-4 py-3 rounded-lg bg-white/10 border-l-4 border-orange-400 mt-1">
-    <div className="text-orange-400 font-semibold ml-8">TOTAL</div>
-    <div className="text-center text-orange-400 font-semibold ml-2">{totalGlobal.hommes}</div>
-    <div className="text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
-    <div className="text-center text-orange-400 font-semibold">
-      {totalGlobal.hommes + totalGlobal.femmes}
-    </div>
-  </div>
+  })} 
 
 </div>
  </>

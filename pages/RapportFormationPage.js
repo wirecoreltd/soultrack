@@ -198,10 +198,9 @@ function RapportFormation() {
       </h1>
 
       <div className="max-w-3xl w-full mb-6 text-center">
-        <p className="italic text-base text-white/90">
-          <span className="text-blue-300 font-semibold">
+        <p className="italic text-base text-white/90">          
             <span className="text-blue-300 font-semibold">Créez et pilotez</span> les rapports de formation.  <span className="text-blue-300 font-semibold">Centralisez</span> les données, suivez la participation (hommes/femmes) 
-          et analysez l’impact des formations pour accompagner la  <span className="text-blue-300 font-semibold">croissance spirituelle et le développement des membres</span>.
+          et analysez l’impact des formations pour accompagner la <span className="text-blue-300 font-semibold">croissance spirituelle et le développement des membres</span>.
         </p>
       </div>
 

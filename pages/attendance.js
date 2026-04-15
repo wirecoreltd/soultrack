@@ -752,18 +752,41 @@ useEffect(() => {
 
               {/* TYPE */}
               <div
-                className={`bg-white/5 rounded-lg p-3 text-orange-400 font-semibold flex justify-between items-center cursor-pointer border-l-4 ${borderColorClass}`}
-                onClick={() => setTypeCollapsedDesktop(prev => ({
-                  ...prev,
-                  [typeTemps]: !prev[typeTemps]
-                }))}
-              >
-                <span>{typeExpanded ? "➖" : "➕"} {typeTemps}</span>
-                <div className="text-right leading-tight">
-                <p className="text-sm font-bold text-amber-300">Total (H+F+J): {totalHFJ} </p>
-                <p className="text-sm font-bold text-orange-400">Total Global: {totalGlobal} </p>
-              </div>
-              </div>
+  className={`relative bg-white/5 rounded-lg p-3 text-orange-400 font-semibold border-l-4 ${borderColorClass}`}
+  onClick={() =>
+    setTypeCollapsedDesktop((prev) => ({
+      ...prev,
+      [typeTemps]: !prev[typeTemps],
+    }))
+  }
+>
+
+  {/* ================= LINE 1 ================= */}
+  <div className="flex justify-end items-center">
+
+    {/* MONTH CENTERED */}
+    <div className="absolute left-1/2 -translate-x-1/2 text-white">
+      {typeExpanded ? "➖" : "➕"} {typeTemps}
+    </div>
+
+    {/* RIGHT STATS */}
+    <div className="flex gap-4 text-sm">
+      <span>H: {totalH}</span>
+      <span>F: {totalF}</span>
+      <span className="text-amber-300 font-semibold">
+        HFJ: {totalHFJ}
+      </span>
+    </div>
+  </div>
+
+  {/* ================= LINE 2 ================= */}
+  <div className="flex justify-end mt-1 text-sm">
+    <span className="text-orange-400 font-semibold">
+      Total Global: {totalGlobal}
+    </span>
+  </div>
+
+</div>
 
               {/* DATES */}
               {typeExpanded && rows.map(r => (

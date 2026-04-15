@@ -255,8 +255,7 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
 
     return (     
   <div
-    key={b}
-    <div
+    key={b}   
       className={`bg-white/10 rounded-lg px-4 py-3 text-white border-l-4 ${getBesoinColor(b)}`}
 >
 

@@ -480,17 +480,7 @@ function RapportFormation() {
       const isExpanded = expandedMonths[monthKey];
 
       return (
-        <div key={monthKey} className="bg-white/10 rounded-xl p-3 text-white">
-
-          {/* HEADER MOIS */}
-          <div
-            className="flex justify-between items-center cursor-pointer"
-            onClick={() => toggleMonth(monthKey)}
-          >
-            <h3 className="font-semibold">
-              {isExpanded ? "➖" : "➕"} {monthLabel}
-            </h3>
-          </div>
+        <div key={monthKey} className="bg-white/10 rounded-xl p-3 text-white">         
 
           {/* TOTAL MOIS */}
            <div

@@ -106,6 +106,24 @@ function RapportBesoin() {
   const labels = Object.keys(besoinsCount);
   const values = Object.values(besoinsCount);
 
+  const besoinColors = {
+  "Finances": "border-green-400",
+  "Santé": "border-red-400",
+  "Travail / Études": "border-blue-400",
+  "Famille / Enfants": "border-pink-400",
+  "Relations / Conflits": "border-orange-400",
+  "Addictions / Dépendances": "border-purple-400",
+  "Guidance spirituelle": "border-indigo-400",
+  "Logement / Sécurité": "border-yellow-400",
+  "Communauté / Isolement": "border-cyan-400",
+  "Dépression / Santé mentale": "border-rose-500",
+  "Autres": "border-gray-400"
+};
+
+  const getBesoinColor = (besoin) => {
+  return besoinColors[besoin] || besoinColors["Autres"];
+};
+
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
@@ -191,7 +209,7 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
       return (
         <div key={b} className="mt-2">
 
-          <div className="flex items-center px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300">
+         <div className={`flex items-center px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 transition border-l-4 ${getBesoinColor(b)}`}>
 
             {/* Catégorie */}
             <div className="w-[220px] text-white font-medium">
@@ -238,8 +256,9 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
     return (
       <div
         key={b}
-        className="bg-white/10 rounded-lg px-4 py-3 text-white border-l-4 border-amber-300"
-      >
+        <div
+  className={`bg-white/10 rounded-lg px-4 py-3 text-white border-l-4 ${getBesoinColor(b)}`}
+>
 
         {/* HEADER MOBILE */}
         <div className="flex justify-between items-center">

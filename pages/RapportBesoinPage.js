@@ -167,34 +167,63 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
       </div>
 
       {message && <p className="text-white mb-4">{message}</p>}
+<div className="hidden md:flex w-full overflow-x-auto mt-4 justify-center">
+  <div className="w-max">
 
-      {/* TABLEAU */}
-      {labels.length > 0 && (
-        <div className="hidden md:block w-full max-w-[700px] bg-white/10 rounded-2xl shadow-lg p-6 mb-8 mt-4">
-          <div className="grid grid-cols-5 text-white font-bold border-b border-white/30 pb-2 mb-2 text-center">
-            <div className="text-left pl-2">Catégorie</div>            
-            <div>Homme</div>
-            <div>Femme</div>
-            <div className="text-orange-400">Count</div>
-            <div>% du total membres</div>
+    {/* HEADER */}
+    <div className="flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-white/20 bg-white/5 rounded-t-lg whitespace-nowrap">
+      <div className="w-[220px]">Catégorie</div>
+      <div className="w-[100px] text-center">Hommes</div>
+      <div className="w-[100px] text-center">Femmes</div>
+      <div className="w-[100px] text-center">Total</div>
+      <div className="w-[160px] text-center">% Membres</div>
+    </div>
+
+    {/* LIGNES */}
+    {labels.map((b, i) => {
+      const data = values[i];
+      const percent =
+        totalMembres > 0
+          ? ((data.total / totalMembres) * 100).toFixed(1)
+          : 0;
+
+      return (
+        <div
+          key={b}
+          className="flex items-center px-3 py-2 bg-white/10 hover:bg-white/20 transition border-b border-white/10"
+        >
+
+          {/* Catégorie */}
+          <div className="w-[220px] text-white font-medium">
+            {b}
           </div>
 
-          {labels.map((b, i) => (
-            <div
-              key={b}
-              className="grid grid-cols-5 text-white py-2 border-b border-white/10 text-center"
-            >
-              <div className="text-left pl-2">{b}</div>              
-              <div className="font-semibold">{values[i].hommes}</div>
-              <div className="font-semibold">{values[i].femmes}</div>
-              <div className="text-orange-400 font-semibold">{values[i].total}</div>
-              <div className="font-semibold">
-                {totalMembres > 0 ? ((values[i].total / totalMembres) * 100).toFixed(1) : 0} %
-              </div>
-            </div>
-          ))}
+          {/* Hommes */}
+          <div className="w-[100px] text-center text-white">
+            {data.hommes}
+          </div>
+
+          {/* Femmes */}
+          <div className="w-[100px] text-center text-white">
+            {data.femmes}
+          </div>
+
+          {/* Total */}
+          <div className="w-[100px] text-center text-orange-400 font-semibold">
+            {data.total}
+          </div>
+
+          {/* % */}
+          <div className="w-[160px] text-center text-white font-semibold">
+            {percent} %
+          </div>
+
         </div>
-      )}
+      );
+    })}
+
+  </div>
+</div>
 
        {/* MOBILE */}
 <div className="md:hidden w-full mt-6 space-y-2">

@@ -526,18 +526,23 @@ function RapportBaptemes() {
             </div>
 
         
-   {/* TABLEAU MOBILE */}
+  {/* TABLEAU MOBILE */}
 <div className="md:hidden w-full mt-4 flex flex-col gap-3">
 
-  {/* HEADER */}
+  {/* ================= HEADER ================= */}
   <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-3 py-2 font-semibold text-orange-400 uppercase bg-white/5 rounded-lg mb-3 text-center">
-    <div className="text-left ml-8">Mois</div>
+
+    <div className="text-left">
+      Mois
+    </div>
+
     <div>H</div>
     <div>F</div>
     <div>Total</div>
+
   </div>
 
-  {/* LISTE */}
+  {/* ================= LISTE MOIS ================= */}
   {groupedMonths.map(group => {
     const isOpen = !!expandedMonths[group.key];
     const borderColor = getMonthColor(group.key);
@@ -552,22 +557,31 @@ function RapportBaptemes() {
 
     return (
       <div key={group.key}>
+
+        {/* ================= HEADER MOIS ================= */}
         <button
           onClick={() => toggleMonth(group.key)}
           className={`flex items-center w-full mt-1 px-3 py-2 rounded-lg bg-white/10 border-l-4 ${borderColor}`}
         >
-          <div className="flex-1 text-white font-semibold flex items-center gap-1">
+
+          {/* MOIS */}
+          <div className="flex-1 text-white font-semibold flex items-center gap-2">
             <span>{isOpen ? "➖" : "➕"}</span>
             <span>{group.label}</span>
           </div>
-
-          <div className="w-14 text-center text-orange-300">{monthTotal.hommes}</div>
-          <div className="w-14 text-center text-orange-300">{monthTotal.femmes}</div>
+          {/* TOTAL INLINE */}
           <div className="w-14 text-center text-orange-300">
+            {monthTotal.hommes}
+          </div>
+          <div className="w-14 text-center text-orange-300">
+            {monthTotal.femmes}
+          </div>
+          <div className="w-14 text-center text-orange-300 font-semibold">
             {monthTotal.hommes + monthTotal.femmes}
           </div>
         </button>
 
+        {/* ================= DETAILS ================= */}
         {isOpen &&
           group.items.map((r) => {
             const total = Number(r.hommes) + Number(r.femmes);
@@ -575,20 +589,27 @@ function RapportBaptemes() {
             return (
               <div
                 key={r.id + r.baptise_par}
-                className="bg-white/10 text-white rounded-xl px-4 py-2 flex flex-col gap-1 shadow mb-2"
+                className="bg-white/10 text-white rounded-xl px-4 py-3 flex flex-col gap-1 shadow mb-2"
               >
+                {/* DATE */}
                 <div className="text-amber-300 text-right">
                   {formatDateFR(r.date)}
                 </div>
+                {/* BAPTISÉ PAR */}
                 <div>
-                  Baptisé par : <span className="font-semibold">{r.baptise_par}</span>
+                  Baptisé par :{" "}
+                  <span className="font-semibold">{r.baptise_par}</span>
                 </div>
-                <div>
-                  Hommes : {r.hommes} | Femmes : {r.femmes}
+                {/* STATS CLEAN */}
+                <div className="flex gap-4 text-sm">
+                  <span>H: {r.hommes}</span>
+                  <span>F: {r.femmes}</span>
                 </div>
+                {/* TOTAL */}
                 <div className="font-semibold text-orange-400">
                   Total : {total}
                 </div>
+
               </div>
             );
           })}
@@ -596,19 +617,23 @@ function RapportBaptemes() {
     );
   })}
 
-  {/* TOTAL */}
+  {/* ================= TOTAL GLOBAL ================= */}
   <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-4 py-3 rounded-lg bg-white/10 border-l-4 border-orange-400 mt-1">
-    <div className="text-orange-400 font-semibold ml-8">TOTAL</div>
-    <div className="text-center text-orange-400 font-semibold ml-2">{totalGlobal.hommes}</div>
-    <div className="text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
+
+    <div className="text-orange-400 font-semibold">
+      TOTAL
+    </div>
+    <div className="text-center text-orange-400 font-semibold">
+      {totalGlobal.hommes}
+    </div>
+    <div className="text-center text-orange-400 font-semibold">
+      {totalGlobal.femmes}
+    </div>
     <div className="text-center text-orange-400 font-semibold">
       {totalGlobal.hommes + totalGlobal.femmes}
     </div>
   </div>
-
 </div>
- </>
-)}
       <Footer />
 
       <style jsx>{`

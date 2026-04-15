@@ -601,7 +601,7 @@ const handleConseillerClick = () => {
   </div>
 
   {/* RIGHT : stats */}
-  <div className="flex gap-3 text-sm text-orange-300 whitespace-nowrap">
+  <div className="flex gap-3 text-sm text-orange-400 whitespace-nowrap">
     <span>H: {monthTotals.hommes}</span>
     <span>F: {monthTotals.femmes}</span>
     <span className="text-orange-400 font-semibold">
@@ -659,7 +659,7 @@ const handleConseillerClick = () => {
                             <div className="flex gap-3 text-sm text-orange-400">
                                 <span>H: {typeTotals?.hommes || 0}</span>
                                 <span>F: {typeTotals?.femmes || 0}</span>
-                                <span className="text-orange-300 font-semibold">
+                                <span className="text-orange-400 font-semibold">
                                   Total: {(typeTotals?.hommes || 0) + (typeTotals?.femmes || 0)}
                                 </span>
 

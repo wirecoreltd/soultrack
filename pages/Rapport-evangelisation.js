@@ -592,8 +592,17 @@ const handleConseillerClick = () => {
 
               {/* MOBILE */}
               <div className="md:hidden text-white font-semibold">
-                {isExpanded ? "➖ " : "➕ "} {monthLabel}
-              </div>
+                <span>{isExpanded ? "➖" : "➕"}</span>
+    <span>{monthLabel}</span>
+  </div>
+                {/* RIGHT */}
+  <div className="flex gap-3 text-sm text-orange-300 whitespace-nowrap">
+    <span>H: {monthTotals.hommes}</span>
+    <span>F: {monthTotals.femmes}</span>
+    <span className="text-orange-400 font-semibold">
+      Total: {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)}
+    </span>
+  </div>
             </div>
 
             {/* TYPES (UNIQUEMENT SI MOIS OUVERT) */}

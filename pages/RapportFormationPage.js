@@ -370,7 +370,7 @@ function RapportFormation() {
 
             {/* ================= ROW MOIS (COLLAPSE HEADER) ================= */}
             <div
-              className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer pl-3 border-l-4 ${borderColor}`}
+              className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer pl-3 ml-4 border-l-4 ${borderColor}`}
               onClick={() => toggleMonth(monthKey)}
             >
               <div className="min-w-[180px] text-white font-semibold">

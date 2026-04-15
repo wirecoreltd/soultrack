@@ -545,20 +545,34 @@ function RapportBaptemes() {
     return (
       <div key={group.key}>
         <button
-          onClick={() => toggleMonth(group.key)}
-          className={`flex items-center w-full mt-1 px-3 py-2 rounded-lg bg-white/10 border-l-4 ${borderColor}`}
-        >
-          <div className="flex-1 text-white font-semibold flex items-center gap-1">
-            <span>{isOpen ? "➖" : "➕"}</span>
-            <span>{group.label}</span>
-          </div>
+  onClick={() => toggleMonth(group.key)}
+  className={`flex items-center justify-between w-full mt-1 px-3 py-2 rounded-lg bg-white/10 border-l-4 ${borderColor}`}
+>
 
-          <div className="w-14 text-center text-orange-300">{monthTotal.hommes}</div>
-          <div className="w-14 text-center text-orange-300">{monthTotal.femmes}</div>
-          <div className="w-14 text-center text-orange-300">
-            {monthTotal.hommes + monthTotal.femmes}
-          </div>
-        </button>
+  {/* LEFT : MOIS */}
+  <div className="flex items-center gap-2 text-white font-semibold">
+    <span>{isOpen ? "➖" : "➕"}</span>
+    <span>{group.label}</span>
+  </div>
+
+  {/* RIGHT : STATS INLINE */}
+  <div className="flex items-center gap-4 text-sm">
+
+    <span className="text-orange-300">
+      H: {monthTotal.hommes}
+    </span>
+
+    <span className="text-orange-300">
+      F: {monthTotal.femmes}
+    </span>
+
+    <span className="text-orange-300 font-semibold">
+      Total: {monthTotal.hommes + monthTotal.femmes}
+    </span>
+
+  </div>
+
+</button>
 
         {isOpen &&
           group.items.map((r) => {

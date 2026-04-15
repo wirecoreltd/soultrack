@@ -618,7 +618,7 @@ function RapportBaptemes() {
   <div className="text-center text-orange-400 font-semibold">
     {totalGlobal.hommes + totalGlobal.femmes}
   </div>
-</div>   
+ 
     </>
 )}
 

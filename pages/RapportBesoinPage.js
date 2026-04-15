@@ -178,7 +178,7 @@ Identifiez les difficultés <span className="text-blue-300 font-semibold">exprim
         </div>
       </div>
 
-  <div className="max-w-3xl w-full mb-6 text-center">
+  <div className="max-w-3xl w-full mb-6 text-center mt-4">
         <p className="italic text-base text-white/90">
           Analyse des besoins exprimés par les membres selon la période sélectionnée.  
 Les données sont réparties par catégorie avec la répartition Hommes / Femmes et le pourcentage du total des membres.

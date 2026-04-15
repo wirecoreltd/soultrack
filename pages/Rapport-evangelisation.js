@@ -591,11 +591,16 @@ const handleConseillerClick = () => {
               </div>
 
               {/* MOBILE */}
-              <div className="md:hidden text-white font-semibold">
-                <span>{isExpanded ? "➖" : "➕"}</span>
+              {/* MOBILE */}
+<div className="md:hidden text-white font-semibold flex items-center justify-between gap-3">
+
+  {/* LEFT : mois */}
+  <div className="flex items-center gap-2">
+    <span>{isExpanded ? "➖" : "➕"}</span>
     <span>{monthLabel}</span>
   </div>
-                {/* RIGHT */}
+
+  {/* RIGHT : stats */}
   <div className="flex gap-3 text-sm text-orange-300 whitespace-nowrap">
     <span>H: {monthTotals.hommes}</span>
     <span>F: {monthTotals.femmes}</span>
@@ -603,6 +608,8 @@ const handleConseillerClick = () => {
       Total: {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)}
     </span>
   </div>
+
+</div>
             </div>
 
             {/* TYPES (UNIQUEMENT SI MOIS OUVERT) */}

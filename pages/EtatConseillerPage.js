@@ -499,25 +499,11 @@ L'Évolution des Âmes par <span className="text-emerald-300">Conseiller</span><
       <div key={monthKey} className="space-y-2 w-full">
         {/* Ligne mois collapsable */}
         <div
-  className="flex items-center justify-between px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer w-full"
-  onClick={() => toggleMonth(monthKey)}
->
-
-  {/* LEFT */}
-  <div className="flex items-center gap-2 text-white font-semibold">
-    <span>{isExpanded ? "➖" : "➕"}</span>
-    <span>{monthLabel}</span>
-  </div>
-
-  {/* RIGHT */}
-  <div className="flex gap-3 text-sm text-orange-300 whitespace-nowrap">
-    <span>H: {monthTotals.hommes}</span>
-    <span>F: {monthTotals.femmes}</span>
-    <span className="text-orange-400 font-semibold">
-      Total: {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)}
-    </span>
-  </div>
-</div>
+          className="flex items-center justify-between px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer w-full"
+          onClick={() => toggleMonth(monthKey)}
+        >
+          <span className="text-white font-semibold">{isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})</span>
+        </div>
 
         {/* Contenu du mois */}
         {isExpanded && (

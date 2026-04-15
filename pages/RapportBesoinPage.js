@@ -163,7 +163,7 @@ Identifiez les difficultés <span className="text-blue-300 font-semibold">exprim
 
       {/* TABLEAU */}
       {labels.length > 0 && (
-        <div className="w-full max-w-[700px] bg-white/10 rounded-2xl shadow-lg p-6 mb-8">
+        <div className="w-full max-w-[700px] bg-white/10 rounded-2xl shadow-lg p-6 mb-8 mt-4">
           <div className="grid grid-cols-5 text-white font-bold border-b border-white/30 pb-2 mb-2 text-center">
             <div className="text-left pl-2">Catégorie</div>            
             <div>Homme</div>
@@ -188,6 +188,46 @@ Identifiez les difficultés <span className="text-blue-300 font-semibold">exprim
           ))}
         </div>
       )}
+
+        {/* MOBILE */}
+<div className="md:hidden w-full mt-6 space-y-2">
+
+  {labels.map((b, i) => {
+    const data = values[i];
+    const percent =
+      totalMembres > 0 ? ((data.total / totalMembres) * 100).toFixed(1) : 0;
+
+    return (
+      <div
+        key={b}
+        className="bg-white/10 rounded-lg px-4 py-3 text-white border-l-4 border-amber-300"
+      >
+
+        {/* LINE 1 */}
+        <div className="flex justify-between items-center">
+          <div className="font-semibold text-white">
+            {b}
+          </div>
+
+          <div className="flex gap-3 text-sm text-orange-300 whitespace-nowrap">
+            <span>H: {data.hommes}</span>
+            <span>F: {data.femmes}</span>
+            <span className="text-orange-400 font-semibold">
+              Total: {data.total}
+            </span>
+          </div>
+        </div>
+
+        {/* LINE 2 */}
+        <div className="mt-1 text-right text-sm text-white/80">
+          {percent} % du total membres
+        </div>
+
+      </div>
+    );
+  })}
+
+</div>
 
       <Footer />
     </div>

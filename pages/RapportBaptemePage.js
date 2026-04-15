@@ -526,23 +526,18 @@ function RapportBaptemes() {
             </div>
 
         
-  {/* TABLEAU MOBILE */}
+ {/* TABLEAU MOBILE */}
 <div className="md:hidden w-full mt-4 flex flex-col gap-3">
 
-  {/* ================= HEADER ================= */}
-  <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-3 py-2 font-semibold text-orange-400 uppercase bg-white/5 rounded-lg mb-3 text-center">
-
-    <div className="text-left">
-      Mois
-    </div>
-
+  {/* HEADER */}
+  <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-3 py-2 font-semibold text-orange-400 uppercase bg-white/5 rounded-lg text-center">
+    <div className="text-left">Mois</div>
     <div>H</div>
     <div>F</div>
     <div>Total</div>
-
   </div>
 
-  {/* ================= LISTE MOIS ================= */}
+  {/* LISTE */}
   {groupedMonths.map(group => {
     const isOpen = !!expandedMonths[group.key];
     const borderColor = getMonthColor(group.key);
@@ -558,18 +553,18 @@ function RapportBaptemes() {
     return (
       <div key={group.key}>
 
-        {/* ================= HEADER MOIS ================= */}
+        {/* HEADER MOIS */}
         <button
           onClick={() => toggleMonth(group.key)}
-          className={`flex items-center w-full mt-1 px-3 py-2 rounded-lg bg-white/10 border-l-4 ${borderColor}`}
+          className={`flex items-center w-full px-3 py-2 rounded-lg bg-white/10 border-l-4 ${borderColor}`}
         >
-
           {/* MOIS */}
           <div className="flex-1 text-white font-semibold flex items-center gap-2">
             <span>{isOpen ? "➖" : "➕"}</span>
             <span>{group.label}</span>
           </div>
-          {/* TOTAL INLINE */}
+
+          {/* INLINE TOTAL (COMPACT EXACT) */}
           <div className="w-14 text-center text-orange-300">
             {monthTotal.hommes}
           </div>
@@ -581,7 +576,7 @@ function RapportBaptemes() {
           </div>
         </button>
 
-        {/* ================= DETAILS ================= */}
+        {/* DETAILS */}
         {isOpen &&
           group.items.map((r) => {
             const total = Number(r.hommes) + Number(r.femmes);
@@ -589,25 +584,37 @@ function RapportBaptemes() {
             return (
               <div
                 key={r.id + r.baptise_par}
-                className="bg-white/10 text-white rounded-xl px-4 py-3 flex flex-col gap-1 shadow mb-2"
+                className={`bg-white/10 text-white rounded-xl px-4 py-3 flex flex-col gap-1 shadow border-l-4 ${borderColor}`}
               >
+
                 {/* DATE */}
-                <div className="text-amber-300 text-right">
+                <div className="text-right text-amber-300 text-sm">
                   {formatDateFR(r.date)}
                 </div>
-                {/* BAPTISÉ PAR */}
-                <div>
+
+                {/* FORMATION / BAPTISÉ */}
+                <div className="font-semibold">
                   Baptisé par :{" "}
-                  <span className="font-semibold">{r.baptise_par}</span>
+                  <span className="text-white">{r.baptise_par}</span>
                 </div>
-                {/* STATS CLEAN */}
-                <div className="flex gap-4 text-sm">
+
+                {/* INLINE STATS (SANS ESPACE INUTILE) */}
+                <div className="flex gap-3 text-sm">
                   <span>H: {r.hommes}</span>
                   <span>F: {r.femmes}</span>
+                  <span className="text-orange-400 font-semibold">
+                    Total: {total}
+                  </span>
                 </div>
-                {/* TOTAL */}
-                <div className="font-semibold text-orange-400">
-                  Total : {total}
+
+                {/* ACTION */}
+                <div className="text-center mt-2">
+                  <button
+                    onClick={() => handleEdit(r)}
+                    className="text-amber-300 underline text-sm"
+                  >
+                    Modifier
+                  </button>
                 </div>
 
               </div>
@@ -617,22 +624,25 @@ function RapportBaptemes() {
     );
   })}
 
-  {/* ================= TOTAL GLOBAL ================= */}
-  <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-4 py-3 rounded-lg bg-white/10 border-l-4 border-orange-400 mt-1">
+  {/* TOTAL GLOBAL */}
+  <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-4 py-3 rounded-lg bg-white/10 border-l-4 border-orange-400">
 
-    <div className="text-orange-400 font-semibold">
-      TOTAL
-    </div>
+    <div className="text-orange-400 font-semibold">TOTAL</div>
+
     <div className="text-center text-orange-400 font-semibold">
       {totalGlobal.hommes}
     </div>
+
     <div className="text-center text-orange-400 font-semibold">
       {totalGlobal.femmes}
     </div>
+
     <div className="text-center text-orange-400 font-semibold">
       {totalGlobal.hommes + totalGlobal.femmes}
     </div>
+
   </div>
+
 </div>
       <Footer />
 

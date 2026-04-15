@@ -762,7 +762,7 @@ const totalF = rows.reduce(
 
               {/* TYPE */}
               <div
-  className={`relative bg-white/5 rounded-lg p-3 text-orange-400 font-semibold border-l-4 ${borderColorClass}`}
+  className={`bg-white/5 rounded-lg p-3 text-orange-400 font-semibold flex justify-between items-center cursor-pointer border-l-4 ${borderColorClass}`}
   onClick={() =>
     setTypeCollapsedDesktop((prev) => ({
       ...prev,
@@ -771,29 +771,27 @@ const totalF = rows.reduce(
   }
 >
 
-  {/* ================= LINE 1 ================= */}
-  <div className="flex justify-end items-center">
-
-    {/* MONTH CENTERED */}
-    <div className="absolute left-1/2 -translate-x-1/2 text-white">
-      {typeExpanded ? "➖" : "➕"} {typeTemps}
-    </div>
-
-    {/* RIGHT STATS */}
-    <div className="flex gap-4 text-sm">
-      <span>H: {totalH}</span>
-      <span>F: {totalF}</span>
-      <span className="text-amber-300 font-semibold">
-        HFJ: {totalHFJ}
-      </span>
-    </div>
+  {/* MOIS (centré verticalement automatiquement) */}
+  <div className="text-white font-semibold flex items-center">
+    {typeExpanded ? "➖" : "➕"} {typeTemps}
   </div>
 
-  {/* ================= LINE 2 ================= */}
-  <div className="flex justify-end mt-1 text-sm">
-    <span className="text-orange-400 font-semibold">
+  {/* DROITE (2 LIGNES) */}
+  <div className="flex flex-col items-end text-sm leading-tight">
+
+    {/* LIGNE 1 */}
+    <div className="flex gap-3 text-amber-300 font-semibold">
+      <span>H:</span>
+      <span>F:</span>
+      <span>J:</span>
+      <span>Total: {totalHFJ}</span>
+    </div>
+
+    {/* LIGNE 2 */}
+    <div className="text-orange-400 font-semibold">
       Total Global: {totalGlobal}
-    </span>
+    </div>
+
   </div>
 
 </div>

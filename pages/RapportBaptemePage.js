@@ -581,7 +581,7 @@ function RapportBaptemes() {
             return (
               <div
                 key={r.id + r.baptise_par}
-                className="bg-white/10 text-white rounded-xl px-4 py-2 flex flex-col gap-1 shadow mb-2"
+                className="mt-3 p-4 bg-white/5 rounded-lg border border-white/10"
               >
                 <div className="text-amber-300 text-right">
                   {formatDateFR(r.date)}

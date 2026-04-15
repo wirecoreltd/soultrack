@@ -487,15 +487,13 @@ function RapportFormation() {
             className="flex justify-between items-center cursor-pointer"
             onClick={() => toggleMonth(monthKey)}
           >
-            <h3 className="font-bold">
+            <h3 className="font-semibold">
               {isExpanded ? "➖" : "➕"} {monthLabel}
             </h3>
           </div>
 
           {/* TOTAL MOIS */}
-          <div className="flex justify-between mt-2 text-sm text-orange-300">
-            <span>Hommes: {monthRapports.reduce((a,r)=>a+Number(r.hommes||0),0)}</span>
-            <span>Femmes: {monthRapports.reduce((a,r)=>a+Number(r.femmes||0),0)}</span>
+           <div className="text-sm font-bold text-orange-400"> Total (H: {monthRapports.reduce((a,r)=>a+Number(r.hommes||0),0)} + F: {monthRapports.reduce((a,r)=>a+Number(r.femmes||0),0)})            
           </div>
 
           {/* LISTE RAPPORTS */}
@@ -517,7 +515,7 @@ function RapportFormation() {
         {/* ================= FORMATION ================= */}
         <div className="mt-2 text-white font-semibold">
           Formation :{" "}
-          <span className="font-normal">
+          <span className="font-semibold">
             {r.nom_formation}
           </span>
         </div>
@@ -527,14 +525,13 @@ function RapportFormation() {
           <span>
             Hommes : <span className="text-white font-medium">{r.hommes}</span>
           </span>
-
           <span>
             Femmes : <span className="text-white font-medium">{r.femmes}</span>
           </span>
         </div>
 
         {/* ================= TOTAL ================= */}
-        <div className="mt-2 text-center text-orange-400 font-semibold">
+        <div className="mt-2 text-orange-400 font-semibold">
           Total : {total}
         </div>
 

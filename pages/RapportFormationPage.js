@@ -403,7 +403,7 @@ function RapportFormation() {
                 return (
                   <div
                     key={r.id}
-                    className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 ml-4 transition border-l-4 ${borderColor}`}
+                     className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer pl-3 mt-2 border-l-4 ${borderColor}`}
                   >
                     <div className="min-w-[180px] text-white">
                       {formatDateFR(r.date_debut)}
@@ -445,7 +445,7 @@ function RapportFormation() {
       })}
 
       {/* ================= TOTAL GLOBAL ================= */}
-      <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
+      <div className="flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer pl-3 mt-2 rounded-b-xl">
         <div className="min-w-[180px] text-white font-bold">TOTAL</div>
         <div className="min-w-[180px]"></div>
         <div className="min-w-[180px]"></div>

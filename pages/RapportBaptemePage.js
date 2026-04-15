@@ -556,7 +556,7 @@ function RapportBaptemes() {
           onClick={() => toggleMonth(group.key)}
           className={`flex items-center w-full mt-1 px-3 py-2 rounded-lg bg-white/10 border-l-4 ${borderColor}`}
         >
-          <div className="flex-1 text-white font-semibold flex items-center gap-2">
+          <div className="flex-1 text-white font-semibold flex items-center gap-1">
             <span>{isOpen ? "➖" : "➕"}</span>
             <span>{group.label}</span>
           </div>
@@ -575,7 +575,7 @@ function RapportBaptemes() {
             return (
               <div
                 key={r.id + r.baptise_par}
-                className="bg-white/10 text-white rounded-xl px-4 py-2 flex flex-col gap-2 shadow mb-2"
+                className="bg-white/10 text-white rounded-xl px-4 py-2 flex flex-col gap-1 shadow mb-2"
               >
                 <div className="text-amber-300 text-right">
                   {formatDateFR(r.date)}

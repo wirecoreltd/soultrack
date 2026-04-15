@@ -217,7 +217,7 @@ function RapportFormation() {
               onChange={(e) =>
                 setFormData({ ...formData, date_debut: e.target.value })
               }
-              className="input"
+              className="input w-full"
             />
           </div>
 
@@ -230,7 +230,7 @@ function RapportFormation() {
               onChange={(e) =>
                 setFormData({ ...formData, date_fin: e.target.value })
               }
-              className="input"
+              className="input w-full"
             />
           </div>
 
@@ -325,17 +325,18 @@ function RapportFormation() {
       {/* ================= TABLEAU ================= */}
 
       {showTable && (
-        <div className="w-full max-w-full overflow-x-auto mt-6 flex justify-center">
-          <div className="w-max space-y-2">
+        <div className="hidden md:flex w-full overflow-x-auto mt-4 justify-center">
+          <div className="w-max">
 
-            <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-              <div className="min-w-[200px]">Date Début</div>
-              <div className="min-w-[200px]">Date Fin</div>
-              <div className="min-w-[200px] text-center">Nom Formation</div>
-              <div className="min-w-[120px] text-center">Hommes</div>
-              <div className="min-w-[120px] text-center">Femmes</div>
-              <div className="min-w-[120px] text-center">Total</div>
-              <div className="min-w-[150px] text-center">Actions</div>
+              {/* HEADER */}
+            <div className="flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-white/20 bg-white/5 rounded-t-lg whitespace-nowrap">
+              <div className="min-w-[180px]">Date Début</div>
+              <div className="min-w-[180px]">Date Fin</div>
+              <div className="min-w-[180px] text-center">Nom Formation</div>
+              <div className="min-w-[100px] text-center">Hommes</div>
+              <div className="min-w-[100px] text-center">Femmes</div>
+              <div className="min-w-[100px] text-center">Total</div>
+              <div className="min-w-[140px] text-center">Actions</div>
             </div>
 
             {groupedReports.map(([monthKey, monthRapports], idx) => {

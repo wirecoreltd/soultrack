@@ -206,8 +206,8 @@ function RapportFormation() {
 
       {/* ================= FORMULAIRE ================= */}
 
-      <div ref={formRef} className="max-w-2xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
-        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+      <div ref={formRef} className="bg-white/10 rounded-3xl p-6 shadow-lg w-full max-w-lg mx-auto mt-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
           <div className="flex flex-col">
             <label className="text-white mb-1">Date Début</label>
@@ -235,7 +235,7 @@ function RapportFormation() {
             />
           </div>
 
-          <div className="flex flex-col col-span-2">
+          <div className="flex flex-col">
             <label className="text-white mb-1">Nom de la Formation</label>
             <input
               type="text"
@@ -275,7 +275,7 @@ function RapportFormation() {
           <div className="col-span-2 flex justify-center mt-4">
             <button
               type="submit"
-              className="w-full max-w-xl bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300"
+              className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:scale-[1.02] transition"
             >
               {editRapport ? "Modifier" : "Ajouter le rapport"}
             </button>

@@ -625,7 +625,9 @@ function Attendance() {
                     {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows], typeIdx) => {
                       const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
                       const borderColorClass = borderColors[typeIdx % borderColors.length];
-                      const typeTotals = calculateTypeTotals(rows);                     
+                      const typeTotals = calculateTypeTotals(rows);
+                      // ✅ FIX 4 : numeroCulte calculé ici, dans le bon scope
+                      const numeroCulte = rows[0]?.numero_culte || "-";
 
                       const totalGlobal =
                         typeTotals.total +
@@ -647,10 +649,7 @@ function Attendance() {
                             <div className="min-w-[220px] max-w-[220px] text-white">
                               <div className="ml-4 flex items-center gap-2 whitespace-pre-line break-words pl-2">
                                 <span>{typeExpanded ? "➖" : "➕"}</span>
-                                <span>{splitTypeName(typeTemps, 15)}</span>
-                                <span className="text-xs text-white/70">
-                                  Culte {numeroCulte}
-                                </span>
+                                <span>{splitTypeName(typeTemps, 15)}</span>                                
                               </div>
                             </div>
                             <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.hommes}</div>
@@ -728,7 +727,9 @@ function Attendance() {
                     const totalH = rows.reduce((acc, r) => acc + Number(r.hommes || 0), 0);
                     const totalF = rows.reduce((acc, r) => acc + Number(r.femmes || 0), 0);
                     // ✅ FIX 6 : totalJ défini
-                    const totalJ = rows.reduce((acc, r) => acc + Number(r.jeunes || 0), 0);                    
+                    const totalJ = rows.reduce((acc, r) => acc + Number(r.jeunes || 0), 0);
+                    // ✅ FIX 7 : numeroCulte calculé ici dans le bon scope
+                    const numeroCulte = rows[0]?.numero_culte || "-";
 
                     return (
                       <div key={typeTemps} className="ml-3 space-y-2">
@@ -744,10 +745,7 @@ function Attendance() {
                         >
                           <div className="text-white font-semibold flex items-center gap-2">
                             <span>{typeExpanded ? "➖" : "➕"}</span>
-                            <span>{typeTemps}</span>
-                            <span className="text-[11px] px-2 py-0.5 rounded bg-white/10 text-white/80">
-                              Culte {numeroCulte}
-                            </span>
+                            <span>{typeTemps}</span>                            
                           </div>
 
                           <div className="flex flex-col items-end text-sm leading-tight">

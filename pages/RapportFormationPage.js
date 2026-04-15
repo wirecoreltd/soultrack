@@ -502,7 +502,7 @@ function RapportFormation() {
       F: {monthRapports.reduce((a,r)=>a+Number(r.femmes||0),0)}
     </span>
 
-    <span className="text-orange-300 font-semibold">
+    <span className="text-orange-400 font-semibold">
       Total: {monthRapports.reduce((a,r)=>a+Number(r.hommes||0)+Number(r.femmes||0),0)}
     </span>
   </div>
@@ -533,12 +533,12 @@ function RapportFormation() {
         </div>
 
         {/* ================= STATS ================= */}
-        <div className="mt-3 flex gap-4 text-sm text-white/90">
+        <div className="mt-3 flex gap-4">
           <span>
-            Hommes : <span className="text-white font-medium">{r.hommes}</span>
+            Hommes : <span className="text-white">{r.hommes}</span>
           </span>
           <span>
-            Femmes : <span className="text-white font-medium">{r.femmes}</span>
+            Femmes : <span className="text-white">{r.femmes}</span>
           </span>
         </div>
 
@@ -551,7 +551,7 @@ function RapportFormation() {
         <div className="mt-3 flex justify-center">
           <button
             onClick={() => handleEdit(r)}
-            className="text-amber-300 underline hover:text-amber-400 text-sm"
+            className="text-amber-300 underline hover:text-amber-300 text-sm"
           >
             Modifier
           </button>

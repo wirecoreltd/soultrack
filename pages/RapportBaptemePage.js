@@ -531,7 +531,7 @@ function RapportBaptemes() {
 
   {/* HEADER */}
   <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-3 py-2 font-semibold text-orange-400 uppercase bg-white/5 rounded-lg mb-3 text-center">
-    <div className="text-left ml-4">Mois</div>
+    <div className="text-left ml-8">Mois</div>
     <div>H</div>
     <div>F</div>
     <div>Total</div>
@@ -554,7 +554,7 @@ function RapportBaptemes() {
       <div key={group.key}>
         <button
           onClick={() => toggleMonth(group.key)}
-          className={`flex items-center w-full px-3 py-2 rounded-lg bg-white/10 border-l-4 ${borderColor}`}
+          className={`flex items-center w-full mt-1 px-3 py-2 rounded-lg bg-white/10 border-l-4 ${borderColor}`}
         >
           <div className="flex-1 text-white font-semibold flex items-center gap-2">
             <span>{isOpen ? "➖" : "➕"}</span>
@@ -597,8 +597,8 @@ function RapportBaptemes() {
   })}
 
   {/* TOTAL */}
-  <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-4 py-3 rounded-lg bg-white/10 border-l-4 border-orange-400 mt-2">
-    <div className="text-orange-400 font-semibold">TOTAL</div>
+  <div className="grid grid-cols-[1fr_56px_56px_56px] w-full px-4 py-3 rounded-lg bg-white/10 border-l-4 border-orange-400 mt-1">
+    <div className="text-orange-400 font-semibold ml-8">TOTAL</div>
     <div className="text-center text-orange-400 font-semibold ml-1">{totalGlobal.hommes}</div>
     <div className="text-center text-orange-400 font-semibold">{totalGlobal.femmes}</div>
     <div className="text-center text-orange-400 font-semibold">

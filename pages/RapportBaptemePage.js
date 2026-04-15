@@ -595,6 +595,12 @@ function RapportBaptemes() {
                 <div className="font-semibold text-orange-400">
                   Total : {total}
                 </div>
+                  <button
+                          onClick={() => handleEdit(r)}
+                          className="mx-auto text-amber-300 mt-2 hover:scale-110 transition text-center"
+                        >
+                          ✏️
+                        </button>
               </div>
             );
           })}

@@ -516,7 +516,7 @@ function RapportFormation() {
     return (
       <div
         key={r.id}
-        className="mt-2 p-4 bg-white/5 rounded-lg border border-white/10"
+        className="mt-1 p-4 bg-white/5 rounded-lg border border-white/10"
       >
 
         {/* ================= DATE (RIGHT) ================= */}

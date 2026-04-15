@@ -480,12 +480,12 @@ function RapportFormation() {
       const isExpanded = expandedMonths[monthKey];
 
       return (
-        <div key={monthKey} className="bg-white/10 rounded-xl p-3 text-white">         
+        <div key={monthKey} className="bg-red/50 rounded-xl p-3 text-white">         
 
           {/* TOTAL MOIS */}
            <div
       onClick={() => toggleMonth(monthKey)}
-    className="flex items-center justify-between w-full mt-1 px-3 py-2 rounded-lg bg-white/10 border-l-4">
+    className="flex items-center justify-between w-full mt-1 px-3 py-2 rounded-lg bg-yello/50 border-l-4">
   
     {/* LEFT */}
   <div className="font-semibold">
@@ -516,7 +516,7 @@ function RapportFormation() {
     return (
       <div
         key={r.id}
-        className="mt-3 p-4 bg-white/5 rounded-lg border border-white/10"
+        className="mt-2 p-4 bg-white/5 rounded-lg border border-white/10"
       >
 
         {/* ================= DATE (RIGHT) ================= */}

@@ -295,7 +295,7 @@ function RapportBaptemes() {
           onClick={() => router.push("/AddContactbaptise")}
           className="text-white font-semibold px-4 py-2 rounded shadow text-sm mt-2 w-full"
         >
-          ➕ Ajouter un Baptisé
+          ➕ Ajouter un baptisé (s’il n’apparaît pas dans la liste)
         </button>
         <hr className="border-t border-white/30 my-3" />
         {selectedCandidats.length > 0 && (

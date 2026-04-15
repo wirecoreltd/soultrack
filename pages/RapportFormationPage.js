@@ -396,56 +396,53 @@ function RapportFormation() {
             </div>
 
             {/* ================= DETAILS ================= */}
-           {isExpanded && (
-  <div className="px-6 py-3 space-y-3">
+            {isExpanded &&
+              monthRapports.map((r) => {
+                const total = Number(r.hommes) + Number(r.femmes);
 
-    {monthRapports.map((r) => {
-      const total = Number(r.hommes) + Number(r.femmes);
+                return (
+                  <div
+                    key={r.id}
+                    className={`flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
+                  >
+                    <div className="min-w-[180px] text-white">
+                      {formatDateFR(r.date_debut)}
+                    </div>
 
-      return (
-        <div
-          key={r.id}
-          className="flex items-start justify-between bg-white/5 hover:bg-white/10 transition rounded-lg p-3"
-        >
+                    <div className="min-w-[180px] text-white">
+                      {formatDateFR(r.date_fin)}
+                    </div>
 
-          {/* ================= DATE + TITRE ================= */}
-          <div className="flex flex-col">
-            <span className="text-white font-medium">
-              {formatDateFR(r.date_debut)}
-            </span>
-            <span className="text-xs text-white/70">
-              {formatDateFR(r.date_fin)}
-            </span>
-            <span className="text-white mt-1">
-              {r.nom_formation}
-            </span>
+                    <div className="min-w-[180px] text-center text-white">
+                      {r.nom_formation}
+                    </div>
+
+                    <div className="min-w-[100px] text-center text-white">
+                      {r.hommes}
+                    </div>
+
+                    <div className="min-w-[100px] text-center text-white">
+                      {r.femmes}
+                    </div>
+
+                    <div className="min-w-[100px] text-center text-white font-bold">
+                      {total}
+                    </div>
+
+                    <div className="min-w-[140px] text-center">
+                      <button
+                        onClick={() => handleEdit(r)}
+                        className="text-orange-400 underline hover:text-orange-500 px-4 py-1 rounded-xl"
+                      >
+                        Modifier
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
-
-          {/* ================= STATS ================= */}
-          <div className="flex gap-6 text-white text-sm items-center">
-            <span>H: {r.hommes}</span>
-            <span>F: {r.femmes}</span>
-            <span className="text-orange-300 font-bold">
-              {total}
-            </span>
-          </div>
-
-          {/* ================= ACTION ================= */}
-          <div>
-            <button
-              onClick={() => handleEdit(r)}
-              className="text-orange-400 underline hover:text-orange-500"
-            >
-              Modifier
-            </button>
-          </div>
-
-        </div>
-      );
-    })}
-
-  </div>
-)}
+        );
+      })}
 
       {/* ================= TOTAL GLOBAL ================= */}
       <div className="flex items-center px-4 py-3 mt-2 border-t border-white/50 bg-white/10 rounded-b-xl">
@@ -503,37 +500,57 @@ function RapportFormation() {
 
           {/* LISTE RAPPORTS */}
           {isExpanded &&
-            monthRapports.map((r) => {
-              const total = Number(r.hommes) + Number(r.femmes);
+  monthRapports.map((r) => {
+    const total = Number(r.hommes) + Number(r.femmes);
 
-              return (
-                <div
-                  key={r.id}
-                  className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10"
-                >
-                  <div className="text-sm">
-                    📅 {formatDateFR(r.date_debut)} → {formatDateFR(r.date_fin)}
-                  </div>
+    return (
+      <div
+        key={r.id}
+        className="mt-3 p-4 bg-white/5 rounded-lg border border-white/10"
+      >
 
-                  <div className="font-semibold mt-1">
-                    {r.nom_formation}
-                  </div>
+        {/* ================= DATE (RIGHT) ================= */}
+        <div className="text-right text-amber-300 text-sm font-medium">
+          📅 {formatDateFR(r.date_debut)} → {formatDateFR(r.date_fin)}
+        </div>
 
-                  <div className="flex justify-between text-sm mt-2">
-                    <span>H: {r.hommes}</span>
-                    <span>F: {r.femmes}</span>
-                    <span>Total: {total}</span>
-                  </div>
+        {/* ================= FORMATION ================= */}
+        <div className="mt-2 text-white font-semibold">
+          Formation :{" "}
+          <span className="font-normal">
+            {r.nom_formation}
+          </span>
+        </div>
 
-                  <button
-                    onClick={() => handleEdit(r)}
-                    className="mt-2 text-orange-300 underline text-sm"
-                  >
-                    Modifier
-                  </button>
-                </div>
-              );
-            })}
+        {/* ================= STATS ================= */}
+        <div className="mt-3 flex justify-between text-sm text-white/90">
+          <span>
+            Hommes : <span className="text-white font-medium">{r.hommes}</span>
+          </span>
+
+          <span>
+            Femmes : <span className="text-white font-medium">{r.femmes}</span>
+          </span>
+        </div>
+
+        {/* ================= TOTAL ================= */}
+        <div className="mt-2 text-center text-orange-400 font-semibold">
+          Total : {total}
+        </div>
+
+        {/* ================= ACTION ================= */}
+        <div className="mt-3 flex justify-center">
+          <button
+            onClick={() => handleEdit(r)}
+            className="text-amber-300 underline hover:text-amber-400 text-sm"
+          >
+            Modifier
+          </button>
+        </div>
+
+      </div>
+    );
+  })}
         </div>
       );
     })}

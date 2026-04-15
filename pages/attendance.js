@@ -781,9 +781,9 @@ const totalF = rows.reduce(
 
     {/* LIGNE 1 */}
     <div className="flex gap-3 text-amber-300 font-semibold">
-      <span>H:</span>
-      <span>F:</span>
-      <span>J:</span>
+      <span>H: {totalH}</span>
+      <span>F: {totalF}</span>
+      <span>J: {totalJ}</span>>
       <span>Total: {totalHFJ}</span>
     </div>
 

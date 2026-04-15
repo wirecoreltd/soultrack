@@ -493,8 +493,30 @@ function RapportFormation() {
           </div>
 
           {/* TOTAL MOIS */}
-           <div className="text-sm font-bold text-orange-400"> Total (H: {monthRapports.reduce((a,r)=>a+Number(r.hommes||0),0)} + F: {monthRapports.reduce((a,r)=>a+Number(r.femmes||0),0)})            
-          </div>
+           <div
+  className="flex items-center justify-between cursor-pointer text-white"
+  onClick={() => toggleMonth(monthKey)}
+>
+  {/* LEFT */}
+  <div className="font-semibold">
+    {isExpanded ? "➖" : "➕"} {monthLabel}
+  </div>
+
+  {/* RIGHT (ALL STATS INLINE) */}
+  <div className="flex gap-3 text-sm text-orange-400 font-medium">
+    <span>
+      H: {monthRapports.reduce((a,r)=>a+Number(r.hommes||0),0)}
+    </span>
+
+    <span>
+      F: {monthRapports.reduce((a,r)=>a+Number(r.femmes||0),0)}
+    </span>
+
+    <span className="text-orange-300 font-semibold">
+      Total: {monthRapports.reduce((a,r)=>a+Number(r.hommes||0)+Number(r.femmes||0),0)}
+    </span>
+  </div>
+</div>
 
           {/* LISTE RAPPORTS */}
           {isExpanded &&

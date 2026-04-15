@@ -159,6 +159,13 @@ Identifiez les difficultés <span className="text-blue-300 font-semibold">exprim
         </div>
       </div>
 
+  <div className="max-w-3xl w-full mb-6 text-center">
+        <p className="italic text-base text-white/90">
+          Analyse des besoins exprimés par les membres selon la période sélectionnée.  
+Les données sont réparties par catégorie avec la répartition Hommes / Femmes et le pourcentage du total des membres.
+              </p>
+      </div>
+
       {message && <p className="text-white mb-4">{message}</p>}
 
       {/* TABLEAU */}
@@ -189,7 +196,7 @@ Identifiez les difficultés <span className="text-blue-300 font-semibold">exprim
         </div>
       )}
 
-        {/* MOBILE */}
+       {/* MOBILE */}
 <div className="md:hidden w-full mt-6 space-y-2">
 
   {labels.map((b, i) => {
@@ -203,12 +210,15 @@ Identifiez les difficultés <span className="text-blue-300 font-semibold">exprim
         className="bg-white/10 rounded-lg px-4 py-3 text-white border-l-4 border-amber-300"
       >
 
-        {/* LINE 1 */}
+        {/* HEADER MOBILE */}
         <div className="flex justify-between items-center">
+          
+          {/* catégorie */}
           <div className="font-semibold text-white">
             {b}
           </div>
 
+          {/* H F TOTAL */}
           <div className="flex gap-3 text-sm text-orange-300 whitespace-nowrap">
             <span>H: {data.hommes}</span>
             <span>F: {data.femmes}</span>
@@ -218,7 +228,7 @@ Identifiez les difficultés <span className="text-blue-300 font-semibold">exprim
           </div>
         </div>
 
-        {/* LINE 2 */}
+        {/* % ligne 2 */}
         <div className="mt-1 text-right text-sm text-white/80">
           {percent} % du total membres
         </div>

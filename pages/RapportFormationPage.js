@@ -192,9 +192,8 @@ function RapportFormation() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-            <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
-        <span className="text-white">Rapport </span>
-        <span className="text-amber-300">Formation</span>
+             <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+        Rapport <span className="text-emerald-300">Formation</span>
       </h1>
 
       <div className="max-w-3xl w-full mb-6 text-center">
@@ -210,7 +209,7 @@ function RapportFormation() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
           <div className="flex flex-col">
-            <label className="text-white mb-1">Date Début</label>
+            <label className="text-white mb-1 text-center">Date Début</label>
             <input
               type="date"
               required
@@ -223,7 +222,7 @@ function RapportFormation() {
           </div>
 
           <div className="flex flex-col">
-            <label className="text-white mb-1">Date Fin</label>
+            <label className="text-white mb-1 text-center">Date Fin</label>
             <input
               type="date"
               required
@@ -248,29 +247,31 @@ function RapportFormation() {
             />
           </div>
 
-          <div className="flex flex-col">
-            <label className="text-white mb-1">Hommes</label>
-            <input
-              type="number"
-              value={formData.hommes}
-              onChange={(e) =>
-                setFormData({ ...formData, hommes: e.target.value })
-              }
-              className="input"
-            />
-          </div>
+         <div className="flex gap-4">
+  <div className="flex flex-col w-1/2">
+    <label className="text-white mb-1">Hommes</label>
+    <input
+      type="number"
+      value={formData.hommes}
+      onChange={(e) =>
+        setFormData({ ...formData, hommes: e.target.value })
+      }
+      className="input"
+    />
+  </div>
 
-          <div className="flex flex-col">
-            <label className="text-white mb-1">Femmes</label>
-            <input
-              type="number"
-              value={formData.femmes}
-              onChange={(e) =>
-                setFormData({ ...formData, femmes: e.target.value })
-              }
-              className="input"
-            />
-          </div>
+  <div className="flex flex-col w-1/2">
+    <label className="text-white mb-1">Femmes</label>
+    <input
+      type="number"
+      value={formData.femmes}
+      onChange={(e) =>
+        setFormData({ ...formData, femmes: e.target.value })
+      }
+      className="input"
+    />
+  </div>
+</div>
 
           <div className="col-span-2 flex justify-center mt-4">
             <button

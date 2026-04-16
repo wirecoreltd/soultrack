@@ -214,7 +214,7 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
          <div
       key={b}
   onClick={() =>
-    router.push(`/ListMembers?besoin=${b}&dateDebut=${dateDebut}&dateFin=${dateFin}`)
+    router.push(`/list-members?besoin=${b}&dateDebut=${dateDebut}&dateFin=${dateFin}`)
   }
   className={`flex items-center px-3 py-2 cursor-pointer hover:bg-white/20 transition border-l-4 ${getBesoinColor(b)}`}
 >
@@ -264,7 +264,7 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
       <div
         key={b}
         onClick={() =>
-          router.push(`/ListMembers?besoin=${b}&dateDebut=${dateDebut}&dateFin=${dateFin}`)
+          router.push(`/list-members?besoin=${b}&dateDebut=${dateDebut}&dateFin=${dateFin}`)
         }
         className={`bg-white/10 rounded-lg px-4 py-3 text-white border-l-4 cursor-pointer ${getBesoinColor(b)}`}
       >

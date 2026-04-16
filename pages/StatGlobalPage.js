@@ -147,43 +147,52 @@ function StatGlobalPage() {
       });
 
       // ================= SERVITEURS =================
-      let serviteurQuery = supabase
-        .from("stats_ministere_besoin")
-        .select("membre_id, eglise_id")
-        .in("eglise_id", branchIds)
-        .in("type", ["serviteur", "ministere"])
-        .not("valeur", "is", null);
-
-      if (dateDebut) serviteurQuery = serviteurQuery.gte("date_action", dateDebut);
-      if (dateFin) serviteurQuery = serviteurQuery.lte("date_action", dateFin);
-
-      const { data: serviteurData } = await serviteurQuery;
-
-      const uniqueMap = {};
-      serviteurData?.forEach((s) => {
-        if (!uniqueMap[s.eglise_id]) uniqueMap[s.eglise_id] = new Set();
-        uniqueMap[s.eglise_id].add(s.membre_id);
-      });
-
-      const allMembreIds = [...new Set(serviteurData?.map((s) => s.membre_id) || [])];
-      if (allMembreIds.length > 0) {
-        const { data: membresData } = await supabase
-          .from("membres_complets")
-          .select("id, sexe")
-          .in("id", allMembreIds);
-
-        const sexeMap = {};
-        membresData?.forEach((m) => { sexeMap[m.id] = m.sexe; });
-
-        Object.keys(uniqueMap).forEach((egliseId) => {
-          if (!statsMap[egliseId]) return;
-          uniqueMap[egliseId].forEach((membreId) => {
-            const sexe = sexeMap[membreId];
-            if (sexe === "Homme") statsMap[egliseId].serviteurs.hommes++;
-            if (sexe === "Femme") statsMap[egliseId].serviteurs.femmes++;
-          });
+        let serviteurQuery = supabase
+          .from("stats_ministere_besoin")
+          .select("membre_id, eglise_id")
+          .in("eglise_id", branchIds)
+          .in("type", ["serviteur", "ministere"])
+          .not("valeur", "is", null);
+        
+        if (dateDebut) serviteurQuery = serviteurQuery.gte("date_action", dateDebut);
+        if (dateFin) serviteurQuery = serviteurQuery.lte("date_action", dateFin);
+        
+        const { data: serviteurData } = await serviteurQuery;
+        
+        const uniqueMap = {};
+        serviteurData?.forEach((s) => {
+          if (!uniqueMap[s.eglise_id]) uniqueMap[s.eglise_id] = new Set();
+          uniqueMap[s.eglise_id].add(s.membre_id);
         });
-      }
+        
+        const allMembreIds = [...new Set(serviteurData?.map((s) => s.membre_id) || [])];
+        
+        if (allMembreIds.length > 0) {
+          const { data: membres, error } = await supabase
+            .from("membres_complets")
+            .select("id, sexe")
+            .in("id", allMembreIds);
+        
+          if (error) {
+            console.error("Erreur membres_complets:", error);
+          }
+        
+          const sexeMap = {};
+          (membres || []).forEach((m) => {
+            sexeMap[m.id] = m.sexe;
+          });
+        
+          Object.keys(uniqueMap).forEach((egliseId) => {
+            if (!statsMap[egliseId]) return;
+        
+            uniqueMap[egliseId].forEach((membreId) => {
+              const sexe = sexeMap[membreId];
+        
+              if (sexe === "Homme") statsMap[egliseId].serviteurs.hommes += 1;
+              if (sexe === "Femme") statsMap[egliseId].serviteurs.femmes += 1;
+            });
+          });
+        }
 
       // ================= CELLULES =================
       cellulesData.forEach((c) => {

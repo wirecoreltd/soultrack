@@ -402,42 +402,39 @@ function RapportFormation() {
 
                 return (
                   <div
-  key={r.id}
-  className={`flex items-center px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 transition ml-4 border-l-4 ${borderColor} mt-1`}
->
-  <div className="w-[160px] text-white">
-    {formatDateFR(r.date_debut)}
-  </div>
-
-  <div className="w-[160px] text-white">
-    {formatDateFR(r.date_fin)}
-  </div>
-
-  <div className="w-[180px] text-center text-white">
-    {r.nom_formation}
-  </div>
-
-  <div className="w-[100px] text-center text-white">
-    {r.hommes}
-  </div>
-
-  <div className="w-[100px] text-center text-white">
-    {r.femmes}
-  </div>
-
-  <div className="w-[100px] text-center text-white font-bold">
-    {total}
-  </div>
-
-  <div className="w-[80px] text-center">
-    <button
-      onClick={() => handleEdit(r)}
-      className="text-orange-400 hover:text-orange-500 px-2 py-1 text-sm"
-    >
-      ✏️
-    </button>
-  </div>
-</div>
+                    key={r.id}
+                    className={`flex items-center px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 transition ml-4 border-l-4 ${borderColor} mt-1`}
+                  >
+                  
+                    {/* 🔥 COMPENSATION ICI */}
+                    <div className="w-[160px] text-white ml-5 -ml-4">
+                      {formatDateFR(r.date_debut)}
+                    </div>
+                  
+                    <div className="w-[160px] text-white">
+                      {formatDateFR(r.date_fin)}
+                    </div>                  
+                    <div className="w-[180px] text-center text-white">
+                      {r.nom_formation}
+                    </div>                  
+                    <div className="w-[100px] text-center text-white">
+                      {r.hommes}
+                    </div>                  
+                    <div className="w-[100px] text-center text-white">
+                      {r.femmes}
+                    </div>                  
+                    <div className="w-[100px] text-center text-white font-bold">
+                      {total}
+                    </div>                  
+                    <div className="w-[80px] text-center">
+                      <button
+                        onClick={() => handleEdit(r)}
+                        className="text-orange-400 hover:text-orange-500 px-2 py-1 text-sm"
+                      >
+                        ✏️
+                      </button>
+                    </div>                  
+                  </div>
                 );
               })}
           </div>

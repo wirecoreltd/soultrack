@@ -177,10 +177,11 @@ function StatGlobalPage() {
 
       const allMembreIds = [...new Set(serviteurData?.map(s => s.membre_id) || [])];
       if (allMembreIds.length > 0) {
-        const { data: membresData } = await supabase
-          .from("membres_complets")
-          .select("id, sexe")
-          .in("id", allMembreIds);
+       const { data: membresData } = await supabase
+  .from("membres_complets")
+  .select("id, sexe, branche_id")
+  .in("branche_id", branchIds)
+  .eq("star", true);
 
         const sexeMap = {};
         membresData?.forEach(m => { sexeMap[m.id] = m.sexe; });
@@ -193,6 +194,21 @@ function StatGlobalPage() {
           });
         });
       }
+
+      //============================================
+      const serviteurs = {
+  hommes: 0,
+  femmes: 0,
+};
+
+membresData?.forEach((m) => {
+  if (m.sexe === "Homme") serviteurs.hommes++;
+  if (m.sexe === "Femme") serviteurs.femmes++;
+});
+
+Object.keys(statsMap).forEach((id) => {
+  statsMap[id].serviteurs = { ...serviteurs };
+});
 
       // ================= CELLULES =================
       cellulesData.forEach(c => {
@@ -414,11 +430,7 @@ function StatGlobalPage() {
                 {branch.enfants.length} église(s)
               </p>
             </div>
-          </div>
-
-          <div className="text-amber-300 text-sm font-bold">
-            {stats.culte.hommes + stats.culte.femmes + stats.culte.jeunes}
-          </div>
+          </div>          
         </div>
 
         {/* DETAILS */}

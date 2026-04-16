@@ -431,7 +431,7 @@ function StatGlobalPage() {
     {/* ================= CULTE ================= */}
     <div>
       <div className="flex justify-between font-semibold">
-        <span className="text-sm">>Culte</span>
+        <span className="text-sm">Culte</span>
         <span className="text-emerald-300">
           {stats.culte.hommes +
             stats.culte.femmes +

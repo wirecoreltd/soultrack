@@ -57,11 +57,12 @@ function StatGlobalPage() {
       const { data: filteredBranchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
       let filteredfilteredBranchesData = filteredBranchesData;
 
-if (superviseurFilter) {
-  filteredfilteredBranchesData = filteredBranchesData.filter(
-    (b) => b.id === superviseurFilter
-  );
-}
+      if (superviseurFilter) {
+        filteredfilteredBranchesData = filteredBranchesData.filter(
+          (b) => b.id === superviseurFilter
+        );
+      }
+
       if (!filteredBranchesData?.length) {
         setBranchesTree([]);
         setAllBranches([]);
@@ -193,19 +194,15 @@ if (superviseurFilter) {
         });
       }
 
-    // ================= CELLULES =================
-cellulesData.forEach(c => {
-  // Utilise d'abord branche_id si présent, sinon eglise_id
-  const id = c.branche_id || c.eglise_id;
-
-  // Si id n’existe pas dans statsMap, essaie de retrouver la branche par superviseur
-  if (id && statsMap[id]) {
-    statsMap[id].cellules.total++;
-  } else {
-    // Debug : affiche les cellules qui ne correspondent pas
-    console.warn("Cellule non comptée (id non trouvé dans statsMap):", c);
-  }
-});
+      // ================= CELLULES =================
+      cellulesData.forEach(c => {
+        const id = c.branche_id || c.eglise_id;
+        if (id && statsMap[id]) {
+          statsMap[id].cellules.total++;
+        } else {
+          console.warn("Cellule non comptée (id non trouvé dans statsMap):", c);
+        }
+      });
 
       // ================= ARBRE =================
       const map = {};
@@ -228,372 +225,358 @@ cellulesData.forEach(c => {
     }
     setLoading(false);
   };
-  console.log(branchesTree)
 
- const renderBranch = (branch, level = 0) => {
-  const isExpanded = expandedBranches.includes(branch.id);
+  console.log(branchesTree);
 
-  // Calcul des totaux généraux si superviseur collapsed
-  const totalStats = branch.enfants.length > 0 && !isExpanded
-    ? branch.enfants.reduce((acc, child) => {
-        // Culte
-        acc.culte.hommes += child.stats.culte.hommes;
-        acc.culte.femmes += child.stats.culte.femmes;
-        acc.culte.jeunes += child.stats.culte.jeunes;
-        acc.culte.enfants += child.stats.culte.enfants;
-        acc.culte.connectes += child.stats.culte.connectes;
-        acc.culte.nouveaux_venus += child.stats.culte.nouveaux_venus;
-        acc.culte.nouveau_converti += child.stats.culte.nouveau_converti;
-        acc.culte.moissonneurs += child.stats.culte.moissonneurs;
+  // ================= RENDER BRANCH (DESKTOP) =================
+  const renderBranch = (branch, level = 0) => {
+    const isExpanded = expandedBranches.includes(branch.id);
 
-        // Formation
-        acc.formation.hommes += child.stats.formation.hommes;
-        acc.formation.femmes += child.stats.formation.femmes;
+    const totalStats = branch.enfants.length > 0 && !isExpanded
+      ? branch.enfants.reduce((acc, child) => {
+          acc.culte.hommes += child.stats.culte.hommes;
+          acc.culte.femmes += child.stats.culte.femmes;
+          acc.culte.jeunes += child.stats.culte.jeunes;
+          acc.culte.enfants += child.stats.culte.enfants;
+          acc.culte.connectes += child.stats.culte.connectes;
+          acc.culte.nouveaux_venus += child.stats.culte.nouveaux_venus;
+          acc.culte.nouveau_converti += child.stats.culte.nouveau_converti;
+          acc.culte.moissonneurs += child.stats.culte.moissonneurs;
+          acc.formation.hommes += child.stats.formation.hommes;
+          acc.formation.femmes += child.stats.formation.femmes;
+          acc.bapteme.hommes += child.stats.bapteme.hommes;
+          acc.bapteme.femmes += child.stats.bapteme.femmes;
+          acc.evangelisation.hommes += child.stats.evangelisation.hommes;
+          acc.evangelisation.femmes += child.stats.evangelisation.femmes;
+          acc.evangelisation.priere += child.stats.evangelisation.priere;
+          acc.evangelisation.nouveau_converti += child.stats.evangelisation.nouveau_converti;
+          acc.evangelisation.moissonneurs += child.stats.evangelisation.moissonneurs;
+          acc.serviteurs.hommes += child.stats.serviteurs.hommes;
+          acc.serviteurs.femmes += child.stats.serviteurs.femmes;
+          acc.cellules.total += child.stats.cellules.total;
+          return acc;
+        }, {
+          culte: { ...branch.stats.culte },
+          formation: { ...branch.stats.formation },
+          bapteme: { ...branch.stats.bapteme },
+          evangelisation: { ...branch.stats.evangelisation },
+          serviteurs: { ...branch.stats.serviteurs },
+          cellules: { ...branch.stats.cellules },
+        })
+      : branch.stats;
 
-        // Baptême
-        acc.bapteme.hommes += child.stats.bapteme.hommes;
-        acc.bapteme.femmes += child.stats.bapteme.femmes;
+    return (
+      <div key={branch.id} className="mt-8">
+        <div className="flex items-center mb-3">
+          {level >= 1 && branch.enfants.length > 0 && (
+            <button onClick={() => toggleExpand(branch.id)} className="mr-2 text-xl">
+              {isExpanded ? "➖" : "➕"}
+            </button>
+          )}
 
-        // Évangélisation
-        acc.evangelisation.hommes += child.stats.evangelisation.hommes;
-        acc.evangelisation.femmes += child.stats.evangelisation.femmes;
-        acc.evangelisation.priere += child.stats.evangelisation.priere;
-        acc.evangelisation.nouveau_converti += child.stats.evangelisation.nouveau_converti;
-        acc.evangelisation.moissonneurs += child.stats.evangelisation.moissonneurs;
-
-        // Serviteurs
-        acc.serviteurs.hommes += child.stats.serviteurs.hommes;
-        acc.serviteurs.femmes += child.stats.serviteurs.femmes;
-
-        // Cellules
-        acc.cellules.total += child.stats.cellules.total;
-
-        return acc;
-      }, {
-        culte: { ...branch.stats.culte },
-        formation: { ...branch.stats.formation },
-        bapteme: { ...branch.stats.bapteme },
-        evangelisation: { ...branch.stats.evangelisation },
-        serviteurs: { ...branch.stats.serviteurs },
-        cellules: { ...branch.stats.cellules },
-      })
-    : branch.stats;
-
-  return (
-    <div key={branch.id} className="mt-8">
-      <div className="flex items-center mb-3">
-        {level >= 1 && branch.enfants.length > 0 && (
-          <button onClick={() => toggleExpand(branch.id)} className="mr-2 text-xl">
-            {isExpanded ? "➖" : "➕"}
-          </button>
-        )}
-
-        <div className="flex items-center gap-2">
-          {/* Nom du superviseur */}
-          <span className={`text-xl font-semibold ${branch.enfants.length > 0 ? "text-amber-300" : "text-white"}`}>
-            {branch.nom}
-          </span>
-        
-          {/* Supervision de X église(s) */}
-          {branch.enfants.length > 0 && (
-            <span className="text-sm text-white">
-              (Supervision de {branch.enfants.length} église{branch.enfants.length > 1 ? "s" : ""})
+          <div className="flex items-center gap-2">
+            <span className={`text-xl font-semibold ${branch.enfants.length > 0 ? "text-amber-300" : "text-white"}`}>
+              {branch.nom}
             </span>
-          )}
-        
-          {/* Total général */}
-          {branch.enfants.length > 0 && !isExpanded && (
-            <span className="text-sm text-amber-300">• Total général</span>
-          )}
+
+            {branch.enfants.length > 0 && (
+              <span className="text-sm text-white">
+                (Supervision de {branch.enfants.length} église{branch.enfants.length > 1 ? "s" : ""})
+              </span>
+            )}
+
+            {branch.enfants.length > 0 && !isExpanded && (
+              <span className="text-sm text-amber-300">• Total général</span>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="w-full overflow-x-auto">
-        <div className="w-max space-y-2">
+        <div className="w-full overflow-x-auto">
+          <div className="w-max space-y-2">
 
-          {/* HEADER */}
-          <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-            <div className="min-w-[180px]">Type</div>
-            <div className="min-w-[100px] text-center">Nombres</div>
-            <div className="min-w-[120px] text-center">Hommes</div>
-            <div className="min-w-[120px] text-center">Femmes</div>
-            <div className="min-w-[120px] text-center">Jeunes</div>
-            <div className="min-w-[120px] text-center">Total</div>
-            <div className="min-w-[120px] text-center">Enfants</div>
-            <div className="min-w-[140px] text-center">Connectés</div>
-            <div className="min-w-[150px] text-center">Nouveaux Venus</div>
-            <div className="min-w-[180px] text-center">Nouveau Converti</div>
-            <div className="min-w-[160px] text-center">Moissonneurs</div>
+            {/* HEADER */}
+            <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+              <div className="min-w-[180px]">Type</div>
+              <div className="min-w-[100px] text-center">Nombres</div>
+              <div className="min-w-[120px] text-center">Hommes</div>
+              <div className="min-w-[120px] text-center">Femmes</div>
+              <div className="min-w-[120px] text-center">Jeunes</div>
+              <div className="min-w-[120px] text-center">Total</div>
+              <div className="min-w-[120px] text-center">Enfants</div>
+              <div className="min-w-[140px] text-center">Connectés</div>
+              <div className="min-w-[150px] text-center">Nouveaux Venus</div>
+              <div className="min-w-[180px] text-center">Nouveau Converti</div>
+              <div className="min-w-[160px] text-center">Moissonneurs</div>
+            </div>
+
+            {/* CULTE */}
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-green-400 whitespace-nowrap">
+              <div className="min-w-[180px] font-semibold">Culte</div>
+              <div className="min-w-[100px] text-center">-</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.culte.hommes}</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.culte.femmes}</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.culte.jeunes}</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.culte.hommes + totalStats.culte.femmes + totalStats.culte.jeunes}</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.culte.enfants}</div>
+              <div className="min-w-[140px] text-center font-bold">{totalStats.culte.connectes}</div>
+              <div className="min-w-[150px] text-center font-bold">{totalStats.culte.nouveaux_venus}</div>
+              <div className="min-w-[180px] text-center font-bold">{totalStats.culte.nouveau_converti}</div>
+              <div className="min-w-[160px] text-center font-bold">{totalStats.culte.moissonneurs}</div>
+            </div>
+
+            {/* FORMATION */}
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-blue-400 whitespace-nowrap">
+              <div className="min-w-[180px] font-semibold">Formation</div>
+              <div className="min-w-[100px] text-center">-</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.formation.hommes}</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.formation.femmes}</div>
+            </div>
+
+            {/* BAPTÊME */}
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-purple-400 whitespace-nowrap">
+              <div className="min-w-[180px] font-semibold">Baptême</div>
+              <div className="min-w-[100px] text-center">-</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.bapteme.hommes}</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.bapteme.femmes}</div>
+            </div>
+
+            {/* ÉVANGÉLISATION */}
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-pink-400 whitespace-nowrap">
+              <div className="min-w-[180px] font-semibold">Évangélisation</div>
+              <div className="min-w-[100px] text-center">-</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.hommes}</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.femmes}</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.priere}</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.hommes + totalStats.evangelisation.femmes}</div>
+              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[140px] text-center">-</div>
+              <div className="min-w-[150px] text-center">-</div>
+              <div className="min-w-[180px] text-center font-bold">{totalStats.evangelisation.nouveau_converti}</div>
+              <div className="min-w-[160px] text-center font-bold">{totalStats.evangelisation.moissonneurs}</div>
+            </div>
+
+            {/* SERVITEURS */}
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-yellow-400 whitespace-nowrap">
+              <div className="min-w-[180px] font-semibold">Serviteurs</div>
+              <div className="min-w-[100px] text-center">-</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.serviteurs.hommes}</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.serviteurs.femmes}</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.serviteurs.hommes + totalStats.serviteurs.femmes}</div>
+            </div>
+
+            {/* CELLULES */}
+            <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-orange-400 whitespace-nowrap">
+              <div className="min-w-[180px] font-semibold">Cellules</div>
+              <div className="min-w-[100px] text-center font-bold">{totalStats.cellules.total}</div>
+              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[140px] text-center">-</div>
+              <div className="min-w-[150px] text-center">-</div>
+              <div className="min-w-[180px] text-center">-</div>
+              <div className="min-w-[160px] text-center">-</div>
+            </div>
+
           </div>
-
-          {/* CULTE */}
-          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-green-400 whitespace-nowrap">
-            <div className="min-w-[180px] font-semibold">Culte</div>
-            <div className="min-w-[100px] text-center">-</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.culte.hommes}</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.culte.femmes}</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.culte.jeunes}</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.culte.hommes + totalStats.culte.femmes + totalStats.culte.jeunes}</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.culte.enfants}</div>
-            <div className="min-w-[140px] text-center font-bold">{totalStats.culte.connectes}</div>
-            <div className="min-w-[150px] text-center font-bold">{totalStats.culte.nouveaux_venus}</div>
-            <div className="min-w-[180px] text-center font-bold">{totalStats.culte.nouveau_converti}</div>
-            <div className="min-w-[160px] text-center font-bold">{totalStats.culte.moissonneurs}</div>
-          </div>
-
-          {/* FORMATION */}
-          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-blue-400 whitespace-nowrap">
-            <div className="min-w-[180px] font-semibold">Formation</div>
-            <div className="min-w-[100px] text-center">-</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.formation.hommes}</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.formation.femmes}</div>
-          </div>
-
-          {/* BAPTÊME */}
-          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-purple-400 whitespace-nowrap">
-            <div className="min-w-[180px] font-semibold">Baptême</div>
-            <div className="min-w-[100px] text-center">-</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.bapteme.hommes}</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.bapteme.femmes}</div>
-          </div>
-
-          {/* ÉVANGÉLISATION */}
-          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-pink-400 whitespace-nowrap">
-            <div className="min-w-[180px] font-semibold">Évangélisation</div>
-            <div className="min-w-[100px] text-center">-</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.hommes}</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.femmes}</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.priere}</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.hommes + totalStats.evangelisation.femmes}</div>
-            <div className="min-w-[120px] text-center">-</div>
-            <div className="min-w-[140px] text-center">-</div>
-            <div className="min-w-[150px] text-center">-</div>
-            <div className="min-w-[180px] text-center font-bold">{totalStats.evangelisation.nouveau_converti}</div>
-            <div className="min-w-[160px] text-center font-bold">{totalStats.evangelisation.moissonneurs}</div>
-          </div>
-
-          {/* SERVITEURS */}
-          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-yellow-400 whitespace-nowrap">
-            <div className="min-w-[180px] font-semibold">Serviteurs</div>
-            <div className="min-w-[100px] text-center">-</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.serviteurs.hommes}</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.serviteurs.femmes}</div>
-            <div className="min-w-[120px] text-center font-bold">{totalStats.serviteurs.hommes + totalStats.serviteurs.femmes}</div>
-          </div>
-
-          {/* CELLULES */}
-          <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-orange-400 whitespace-nowrap">
-            <div className="min-w-[180px] font-semibold">Cellules</div>
-            <div className="min-w-[100px] text-center font-bold">{totalStats.cellules.total}</div>
-            <div className="min-w-[120px] text-center">-</div>
-            <div className="min-w-[120px] text-center">-</div>
-            <div className="min-w-[120px] text-center">-</div>
-            <div className="min-w-[120px] text-center">-</div>
-            <div className="min-w-[120px] text-center">-</div>
-            <div className="min-w-[140px] text-center">-</div>
-            <div className="min-w-[150px] text-center">-</div>
-            <div className="min-w-[180px] text-center">-</div>
-            <div className="min-w-[160px] text-center">-</div>
-          </div>
-
         </div>
+
+        {/* RENDER CHILDREN */}
+        {branch.enfants.map((child) =>
+          level === 0 || isExpanded ? renderBranch(child, level + 1) : null
+        )}
       </div>
-
-      {/* RENDER CHILDREN */}
-      {branch.enfants.map((child) =>
-        level === 0 || isExpanded ? renderBranch(child, level + 1) : null
-      )}
-    </div>
-  );
-};
-
-  const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
-  const filteredBranches = (() => {
-  if (!superviseurFilter) return branchesTree;
-
-  const selectedId = superviseurFilter; // 🔥 PAS Number()
-
-  const findBranchInTree = (tree) => {
-    for (let branch of tree) {
-      if (branch.id === selectedId) {
-        return branch;
-      }
-      const found = findBranchInTree(branch.enfants || []);
-      if (found) return found;
-    }
-    return null;
+    );
   };
 
-  const foundBranch = findBranchInTree(branchesTree);
+  // ================= RENDER BRANCH (MOBILE) =================
+  const renderBranchMobile = (branch, level = 0) => {
+    const isExpanded = expandedBranches.includes(branch.id);
+    const stats = branch.stats;
 
-  return foundBranch ? [foundBranch] : [];
-})();
+    return (
+      <div className="mt-3" key={branch.id}>
+
+        {/* CARD HEADER */}
+        <div
+          onClick={() => toggleExpand(branch.id)}
+          className="bg-white/10 border-l-4 border-amber-400 rounded-xl p-3 flex justify-between items-center"
+          style={{ marginLeft: level * 10 }}
+        >
+          <div>
+            <p className="font-semibold text-white">{branch.nom}</p>
+            <p className="text-xs text-white/70">
+              {branch.enfants.length} église(s)
+            </p>
+          </div>
+
+          <div className="text-amber-300 text-sm font-bold">
+            {stats.culte.hommes + stats.culte.femmes + stats.culte.jeunes}
+          </div>
+        </div>
+
+        {/* DETAILS */}
+        {isExpanded && (
+          <div className="mt-2 space-y-2" style={{ marginLeft: level * 10 }}>
+
+            <div className="bg-white/5 border-l-4 border-green-400 rounded-lg p-3 text-sm text-white">
+              <p className="font-semibold">Culte</p>
+              <p>H: {stats.culte.hommes} | F: {stats.culte.femmes}</p>
+              <p>Jeunes: {stats.culte.jeunes} | Enfants: {stats.culte.enfants}</p>
+            </div>
+
+            <div className="bg-white/5 border-l-4 border-blue-400 rounded-lg p-3 text-sm text-white">
+              <p className="font-semibold">Formation</p>
+              <p>H: {stats.formation.hommes} | F: {stats.formation.femmes}</p>
+            </div>
+
+            <div className="bg-white/5 border-l-4 border-purple-400 rounded-lg p-3 text-sm text-white">
+              <p className="font-semibold">Baptême</p>
+              <p>H: {stats.bapteme.hommes} | F: {stats.bapteme.femmes}</p>
+            </div>
+
+            <div className="bg-white/5 border-l-4 border-pink-400 rounded-lg p-3 text-sm text-white">
+              <p className="font-semibold">Évangélisation</p>
+              <p>H: {stats.evangelisation.hommes} | F: {stats.evangelisation.femmes}</p>
+              <p>Prière: {stats.evangelisation.priere}</p>
+            </div>
+
+            <div className="bg-white/5 border-l-4 border-yellow-400 rounded-lg p-3 text-sm text-white">
+              <p className="font-semibold">Serviteurs</p>
+              <p>H: {stats.serviteurs.hommes} | F: {stats.serviteurs.femmes}</p>
+            </div>
+
+            <div className="bg-white/5 border-l-4 border-orange-400 rounded-lg p-3 text-sm text-white">
+              <p className="font-semibold">Cellules</p>
+              <p>Total: {stats.cellules.total}</p>
+            </div>
+
+          </div>
+        )}
+
+        {/* CHILDREN */}
+        {isExpanded &&
+          branch.enfants.map((child) =>
+            renderBranchMobile(child, level + 1)
+          )}
+      </div>
+    );
+  };
+
+  const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
+
+  const filteredBranches = (() => {
+    if (!superviseurFilter) return branchesTree;
+
+    const selectedId = superviseurFilter;
+
+    const findBranchInTree = (tree) => {
+      for (let branch of tree) {
+        if (branch.id === selectedId) {
+          return branch;
+        }
+        const found = findBranchInTree(branch.enfants || []);
+        if (found) return found;
+      }
+      return null;
+    };
+
+    const foundBranch = findBranchInTree(branchesTree);
+    return foundBranch ? [foundBranch] : [];
+  })();
 
   return (
     <div className="min-h-screen bg-[#333699] p-6 text-white">
       <HeaderPages />
 
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
-Rapport <span className="text-emerald-300">Statistiques Globales</span></h1>
+        Rapport <span className="text-emerald-300">Statistiques Globales</span>
+      </h1>
 
-    <div className="max-w-3xl w-full mb-6 text-center x-auto">
-          <p className="italic text-base text-white/90">   
+      <div className="max-w-3xl w-full mb-6 text-center x-auto">
+        <p className="italic text-base text-white/90">
           Pilotez votre assemblée avec une vision <span className="text-blue-300 font-semibold">globale et structurée</span>.
-Gardez une vue d’ensemble sur les églises sous votre <span className="text-blue-300 font-semibold">supervision</span>, suivez les <span className="text-blue-300 font-semibold">indicateurs clés</span>, 
-    analysez les <span className="text-blue-300 font-semibold">évolutions et accompagnez le développement</span> de chaque communauté 
-    avec clarté et cohérence
+          Gardez une vue d&apos;ensemble sur les églises sous votre <span className="text-blue-300 font-semibold">supervision</span>, suivez les <span className="text-blue-300 font-semibold">indicateurs clés</span>,
+          analysez les <span className="text-blue-300 font-semibold">évolutions et accompagnez le développement</span> de chaque communauté
+          avec clarté et cohérence
+        </p>
+      </div>
+
+      <div className="flex justify-center mb-8">
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl flex flex-col gap-6 w-fit shadow-lg">
+
+          <p className="text-base text-red-400 font-semibold text-center mb-4">
+            Choisissez les paramètres pour générer le rapport
           </p>
-        </div>
 
-     <div className="flex justify-center mb-8">
-  <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl flex flex-col gap-6 w-fit shadow-lg">
+          <div className="flex flex-wrap items-end gap-6 justify-center">
 
-    {/* TEXTE AU-DESSUS */}
-    <p className="text-base text-red-400 font-semibold text-center mb-4">
-      Choisissez les paramètres pour générer le rapport
-    </p>
+            {/* DATE DEBUT */}
+            <div className="flex flex-col w-full md:w-auto">
+              <label className="text-sm text-center mb-1">Date début</label>
+              <input
+                type="date"
+                value={dateDebut}
+                onChange={(e) => setDateDebut(e.target.value)}
+                className="h-10 w-full md:w-auto px-3 py-2 rounded-lg bg-white/10 border border-white/30 text-black"
+              />
+            </div>
 
-    <div className="flex flex-wrap items-end gap-6 justify-center">
+            {/* DATE FIN */}
+            <div className="flex flex-col w-full md:w-auto">
+              <label className="text-sm text-center mb-1">Date fin</label>
+              <input
+                type="date"
+                value={dateFin}
+                onChange={(e) => setDateFin(e.target.value)}
+                className="h-10 w-full md:w-auto px-3 py-2 rounded-lg bg-white/10 border border-white/30 text-black"
+              />
+            </div>
 
-      {/* DATE DEBUT */}
-      <div className="flex flex-col w-full md:w-auto">
-        <label className="text-sm text-center mb-1">Date début</label>
-        <input
-          type="date"
-          value={dateDebut}
-          onChange={(e) => setDateDebut(e.target.value)}
-          className="h-10 w-full md:w-auto px-3 py-2 rounded-lg bg-white/10 border border-white/30 text-black"
-        />
-      </div>
+            {/* BOUTON GENERER */}
+            <div className="flex flex-col w-full md:w-auto">
+              <label className="text-sm text-center mb-1 opacity-0">btn</label>
+              <button
+                onClick={fetchStats}
+                className="h-10 w-full md:w-auto px-6 bg-[#2a2f85] text-white rounded-xl hover:bg-[#1f2366] transition font-semibold"
+              >
+                {loading ? "Générer..." : "Générer"}
+              </button>
+            </div>
 
-      {/* DATE FIN */}
-      <div className="flex flex-col w-full md:w-auto">
-        <label className="text-sm text-center mb-1">Date fin</label>
-        <input
-          type="date"
-          value={dateFin}
-          onChange={(e) => setDateFin(e.target.value)}
-          className="h-10 w-full md:w-auto px-3 py-2 rounded-lg bg-white/10 border border-white/30 text-black"
-        />
-      </div>
+            {/* SELECT SUPERVISEUR */}
+            {superviseurOptions.length > 0 && (
+              <div className="flex flex-col w-full md:w-auto">
+                <label className="text-sm text-center mb-1">Superviseur</label>
+                <select
+                  value={superviseurFilter}
+                  onChange={(e) => setSuperviseurFilter(e.target.value)}
+                  className="h-10 w-full md:w-auto px-3 py-2 rounded-lg bg-white/10 border border-white/30 text-black text-center"
+                >
+                  <option value="">Tous</option>
+                  {superviseurOptions.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.nom}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
-      {/* BOUTON GENERER */}
-      <div className="flex flex-col w-full md:w-auto">
-        <label className="text-sm text-center mb-1 opacity-0">btn</label>
-        <button
-          onClick={fetchStats}
-          className="h-10 w-full md:w-auto px-6 bg-[#2a2f85] text-white rounded-xl hover:bg-[#1f2366] transition font-semibold"
-        >
-          {loading ? "Générer..." : "Générer"}
-        </button>
-      </div>
-
-      {/* SELECT SUPERVISEUR (après génération) */}
-      {superviseurOptions.length > 0 && (
-        <div className="flex flex-col w-full md:w-auto">
-          <label className="text-sm text-center mb-1">Superviseur</label>
-          <select
-            value={superviseurFilter}
-            onChange={(e) => setSuperviseurFilter(e.target.value)}
-            className="h-10 w-full md:w-auto px-3 py-2 rounded-lg bg-white/10 border border-white/30 text-black text-center"
-          >
-            <option value="">Tous</option>
-            {superviseurOptions.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.nom}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-    </div>
-  </div>
-</div>
-
-const renderBranchMobile = (branch, level = 0) => {
-  const isExpanded = expandedBranches.includes(branch.id);
-
-  const stats = branch.stats;
-
-  return (
-    <div className="mt-3" key={branch.id}>
-
-      {/* ================= CARD HEADER ================= */}
-      <div
-        onClick={() => toggleExpand(branch.id)}
-        className="bg-white/10 border-l-4 border-amber-400 rounded-xl p-3 flex justify-between items-center"
-        style={{ marginLeft: level * 10 }}
-      >
-        <div>
-          <p className="font-semibold text-white">{branch.nom}</p>
-          <p className="text-xs text-white/70">
-            {branch.enfants.length} église(s)
-          </p>
-        </div>
-
-        <div className="text-amber-300 text-sm font-bold">
-          {stats.culte.hommes + stats.culte.femmes + stats.culte.jeunes}
+          </div>
         </div>
       </div>
 
-      {/* ================= DETAILS ================= */}
-      {isExpanded && (
-        <div className="mt-2 space-y-2" style={{ marginLeft: level * 10 }}>
+      {/* ================= DESKTOP ================= */}
+      <div className="hidden md:block">
+        {filteredBranches.map((branch) => renderBranch(branch))}
+      </div>
 
-          <div className="bg-white/5 border-l-4 border-green-400 rounded-lg p-3 text-sm text-white">
-            <p className="font-semibold">Culte</p>
-            <p>H: {stats.culte.hommes} | F: {stats.culte.femmes}</p>
-            <p>Jeunes: {stats.culte.jeunes} | Enfants: {stats.culte.enfants}</p>
-          </div>
-
-          <div className="bg-white/5 border-l-4 border-blue-400 rounded-lg p-3 text-sm text-white">
-            <p className="font-semibold">Formation</p>
-            <p>H: {stats.formation.hommes} | F: {stats.formation.femmes}</p>
-          </div>
-
-          <div className="bg-white/5 border-l-4 border-purple-400 rounded-lg p-3 text-sm text-white">
-            <p className="font-semibold">Baptême</p>
-            <p>H: {stats.bapteme.hommes} | F: {stats.bapteme.femmes}</p>
-          </div>
-
-          <div className="bg-white/5 border-l-4 border-pink-400 rounded-lg p-3 text-sm text-white">
-            <p className="font-semibold">Évangélisation</p>
-            <p>H: {stats.evangelisation.hommes} | F: {stats.evangelisation.femmes}</p>
-            <p>Prière: {stats.evangelisation.priere}</p>
-          </div>
-
-          <div className="bg-white/5 border-l-4 border-yellow-400 rounded-lg p-3 text-sm text-white">
-            <p className="font-semibold">Serviteurs</p>
-            <p>H: {stats.serviteurs.hommes} | F: {stats.serviteurs.femmes}</p>
-          </div>
-
-          <div className="bg-white/5 border-l-4 border-orange-400 rounded-lg p-3 text-sm text-white">
-            <p className="font-semibold">Cellules</p>
-            <p>Total: {stats.cellules.total}</p>
-          </div>
-
-        </div>
-      )}
-
-      {/* ================= CHILDREN ================= */}
-      {isExpanded &&
-        branch.enfants.map((child) =>
-          renderBranchMobile(child, level + 1)
-        )}
-    </div>
-  );
-};
-
-     {/* ================= DESKTOP ================= */}
-<div className="hidden md:block">
-  {filteredBranches.map((branch) => renderBranch(branch))}
-</div>
-
-{/* ================= MOBILE ================= */}
-<div className="md:hidden space-y-3">
-  {filteredBranches.map((branch) => renderBranchMobile(branch))}
-</div>
+      {/* ================= MOBILE ================= */}
+      <div className="md:hidden space-y-3">
+        {filteredBranches.map((branch) => renderBranchMobile(branch))}
+      </div>
 
       <Footer />
     </div>

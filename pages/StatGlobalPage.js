@@ -423,15 +423,21 @@ function StatGlobalPage() {
 
         {/* DETAILS */}
         {isExpanded && (
-          <div className="mt-2 space-y-2 bg-white/5 border-l-4 rounded-lg p-3 text-white" style={{ marginLeft: level * 10 }}>
-            
-              <p className="font-semibold">Culte</p>
-              <p>H: {stats.culte.hommes} | F: {stats.culte.femmes}</p>
-              <p>Jeunes: {stats.culte.jeunes} | Enfants: {stats.culte.enfants}</p>          
+          <div className="mt-2 space-y-2 bg-white/5 border-l-4 rounded-lg p-3 ml-2 text-white" style={{ marginLeft: level * 10 }}>
 
+              <div className="flex justify-between items-center">
+                <p className="font-semibold">Culte</p>
+                <p>H: {stats.culte.hommes} | F: {stats.culte.femmes} | Jeunes: {stats.culte.jeunes} </p>
+                <p>Jeunes: {stats.culte.connectes} | Enfants: {stats.culte.enfants}</p>   
+                 <p className="text-orange-400 font-bold">Total : {stats.culte.hommes +stats.culte.femmes + stats.culte.jeunes}</p>
+              </div>
+
+              <div className="flex justify-between items-center">
               <p className="font-semibold">Formation</p>
-              <p>H: {stats.formation.hommes} | F: {stats.formation.femmes}</p>           
-
+              <p>H: {stats.formation.hommes} | F: {stats.formation.femmes}</p>    
+              <p className="text-orange-400 font-bold">Total : {stats.formation.hommes} + {stats.formation.femmes}
+              </div>
+          
               <p className="font-semibold">Baptême</p>
               <p>H: {stats.bapteme.hommes} | F: {stats.bapteme.femmes}</p>        
            

@@ -407,7 +407,7 @@ function RapportFormation() {
                   >
                   
                     {/* 🔥 COMPENSATION ICI */}
-                    <div className="w-[160px] text-white ml-5 -ml-4">
+                    <div className="w-[160px] text-white ml-3 -ml-4">
                       {formatDateFR(r.date_debut)}
                     </div>
                   
@@ -443,7 +443,7 @@ function RapportFormation() {
 
       {/* ================= TOTAL GLOBAL ================= */}
       <div className="flex items-center px-3 py-2 rounded-md bg-white/10 mt-2 border-l-4 border-orange-400 font-semibold">
-  <div className="w-[160px] text-orange-400 font-semibold ml-5">TOTAL</div>
+  <div className="w-[160px] text-orange-400 font-semibold ml-3">TOTAL</div>
   <div className="w-[160px]" />
   <div className="w-[180px]" />
 

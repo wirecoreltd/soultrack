@@ -205,7 +205,7 @@ function RapportBesoin() {
                 onClick={() =>
                   router.push(`/list-members?besoin=${encodeURIComponent(b)}`)
                 }
-                className={`flex items-center px-4 py-3 rounded-md bg-white/10 hover:bg-white/20 transition cursor-pointer border-l-4 ${getBesoinColor(b)}`}
+                className={`flex items-center px-4 py-3 rounded-md mt-2 bg-white/10 hover:bg-white/20 transition cursor-pointer border-l-4 ${getBesoinColor(b)}`}
               >
                 <div className="w-[220px] text-white font-medium">{b}</div>
                 <div className="w-[100px] text-center text-white">{data.hommes}</div>

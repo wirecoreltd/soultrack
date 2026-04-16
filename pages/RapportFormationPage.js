@@ -417,7 +417,7 @@ function RapportFormation() {
                     <div className="w-[180px] text-center text-white -ml-2">
                       {r.nom_formation}
                     </div>                  
-                    <div className="w-[100px] text-center text-white -ml-5">
+                    <div className="w-[100px] text-center text-white -ml-7">
                       {r.hommes}
                     </div>                  
                     <div className="w-[100px] text-center text-white">

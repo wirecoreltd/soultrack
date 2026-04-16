@@ -310,10 +310,10 @@ unique.forEach((row) => {
             {/* FORMATION */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-blue-400 whitespace-nowrap">
               <div className="min-w-[180px] font-semibold">Formation</div>
-              <div className="min-w-[100px] text-center">-</div>
+              <div className="min-w-[100px] text-center"></div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.formation.hommes}</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.formation.femmes}</div>
-              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[120px] text-center"></div>
                <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.formation.hommes + totalStats.formation.femmes}</div>
             </div>
 
@@ -323,7 +323,7 @@ unique.forEach((row) => {
               <div className="min-w-[100px] text-center">-</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.bapteme.hommes}</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.bapteme.femmes}</div>
-              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[120px] text-center"></div>
               <div className="min-w-[120px] text-center semibold text-orange-400">{totalStats.bapteme.hommes + totalStats.bapteme.femmes} </div>
             </div>
 
@@ -335,9 +335,9 @@ unique.forEach((row) => {
               <div className="min-w-[120px] text-center font-semibold">{totalStats.evangelisation.femmes}</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.evangelisation.priere}</div>
               <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.evangelisation.hommes + totalStats.evangelisation.femmes}</div>
-              <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[140px] text-center">-</div>
-              <div className="min-w-[150px] text-center">-</div>
+              <div className="min-w-[120px] text-center"></div>
+              <div className="min-w-[140px] text-center"></div>
+              <div className="min-w-[150px] text-center"></div>
               <div className="min-w-[180px] text-center font-semibold">{totalStats.evangelisation.nouveau_converti}</div>
               <div className="min-w-[160px] text-center font-semibold">{totalStats.evangelisation.moissonneurs}</div>
             </div>
@@ -348,7 +348,8 @@ unique.forEach((row) => {
               <div className="min-w-[100px] text-center">-</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.serviteurs.hommes}</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.serviteurs.femmes}</div>
-              <div className="min-w-[120x] text-center">-</div>
+              <div className="min-w-[120x] text-center"></div>
+              <div className="min-w-[120x] text-center"></div>
               <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.serviteurs.hommes + totalStats.serviteurs.femmes}</div>
             </div>
 
@@ -356,15 +357,10 @@ unique.forEach((row) => {
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-orange-400 whitespace-nowrap">
               <div className="min-w-[180px] font-semibold">Cellules</div>
               <div className="min-w-[100px] text-center font-semibold">{totalStats.cellules.total}</div>
-              <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.cellules.total}</div>
-              <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[140px] text-center">-</div>
-              <div className="min-w-[150px] text-center">-</div>
-              <div className="min-w-[180px] text-center">-</div>
-              <div className="min-w-[160px] text-center">-</div>
+              <div className="min-w-[120px] text-center"></div>
+              <div className="min-w-[120px] text-center"></div>
+              <div className="min-w-[120px] text-center"></div>
+              <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.cellules.total}</div>              
             </div>
           </div>
         </div>
@@ -599,11 +595,12 @@ unique.forEach((row) => {
                   onChange={(e) => setSuperviseurFilter(e.target.value)}
                    className="w-full h-10 bg-white/10 border border-white/30 rounded-lg px-3 text-white text-center"
         >
-                  <option value="">Tous</option>
-                  {superviseurOptions.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.nom}
-                    </option>
+                 <option value="">Tous</option>
+{superviseurOptions.map((s) => (
+  <option key={s.id} value={s.id} className="text-black">
+    {s.nom}
+  </option>
+))}
                   ))}
                 </select>
               </div>

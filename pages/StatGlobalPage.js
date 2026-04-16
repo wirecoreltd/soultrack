@@ -24,6 +24,7 @@ function StatGlobalPage() {
   const [rootId, setRootId] = useState(null);
   const [expandedBranches, setExpandedBranches] = useState([]);
   const [ministereMap, setMinistereMap] = useState({});
+  const ministeres = serviteurData.filter(s => s.type === "ministere");
 
   const toggleExpand = (branchId) => {
     setExpandedBranches((prev) =>
@@ -88,6 +89,7 @@ function StatGlobalPage() {
         };
       });
 
+      
       const tableFetch = async (table, branchField, dateField) => {
         let query = supabase.from(table).select("*").in(branchField, branchIds);
         if (dateDebut) query = query.gte(dateField, dateDebut);
@@ -163,6 +165,24 @@ if (error) {
 }
 
 console.log("SERVITEURS RAW:", serviteurData);
+
+      const uniqueServiteurs = {};
+
+ministeres.forEach((s) => {
+  const key = s.eglise_id + "_" + s.membre_id;
+
+  if (!uniqueServiteurs[key]) {
+    uniqueServiteurs[key] = s;
+  }
+});
+
+      Object.values(uniqueServiteurs).forEach((s) => {
+  const serv = statsMap[s.eglise_id]?.serviteurs;
+  if (!serv) return;
+
+  if (s.sexe === "Homme") serv.hommes += 1;
+  if (s.sexe === "Femme") serv.femmes += 1;
+});
 
       // ================= CELLULES =================
       cellulesData.forEach((c) => {

@@ -313,6 +313,8 @@ unique.forEach((row) => {
               <div className="min-w-[100px] text-center">-</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.formation.hommes}</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.formation.femmes}</div>
+              <div className="min-w-[120px] text-center">-</div>
+               <div className="min-w-[120px] text-center semibold text-orange-400">{totalStats.formation.hommes + totalStats.formation.femmes} </div>
             </div>
 
             {/* BAPTÊME */}
@@ -321,6 +323,8 @@ unique.forEach((row) => {
               <div className="min-w-[100px] text-center">-</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.bapteme.hommes}</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.bapteme.femmes}</div>
+              <div className="min-w-[100px] text-center">-</div>
+              <div className="min-w-[120px] text-center semibold text-orange-400">{totalStats.bapteme.hommes + totalStats.bapteme.femmes} </div>
             </div>
 
             {/* ÉVANGÉLISATION */}
@@ -330,7 +334,7 @@ unique.forEach((row) => {
               <div className="min-w-[120px] text-center font-semibold">{totalStats.evangelisation.hommes}</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.evangelisation.femmes}</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.evangelisation.priere}</div>
-              <div className="min-w-[120px] text-center font-semibold">{totalStats.evangelisation.hommes + totalStats.evangelisation.femmes}</div>
+              <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.evangelisation.hommes + totalStats.evangelisation.femmes}</div>
               <div className="min-w-[120px] text-center">-</div>
               <div className="min-w-[140px] text-center">-</div>
               <div className="min-w-[150px] text-center">-</div>
@@ -344,6 +348,7 @@ unique.forEach((row) => {
               <div className="min-w-[100px] text-center">-</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.serviteurs.hommes}</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.serviteurs.femmes}</div>
+              <div className="min-w-[100px] text-center">-</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.serviteurs.hommes + totalStats.serviteurs.femmes}</div>
             </div>
 
@@ -354,7 +359,7 @@ unique.forEach((row) => {
               <div className="min-w-[120px] text-center">-</div>
               <div className="min-w-[120px] text-center">-</div>
               <div className="min-w-[120px] text-center">-</div>
-              <div className="min-w-[120px] text-center">-</div>
+              <div className="min-w-[120px] text-center text-orange-400">{totalStats.cellules.total}</div>
               <div className="min-w-[120px] text-center">-</div>
               <div className="min-w-[140px] text-center">-</div>
               <div className="min-w-[150px] text-center">-</div>

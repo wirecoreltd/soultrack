@@ -6,6 +6,7 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+import { useRouter } from "next/navigation";
 
 export default function RapportBesoinPage() {
   return (
@@ -21,6 +22,7 @@ function RapportBesoin() {
   const [besoinsCount, setBesoinsCount] = useState({});
   const [totalMembres, setTotalMembres] = useState(0);
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   const fetchRapport = async () => {
     setMessage("⏳ Chargement...");
@@ -209,8 +211,12 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
       return (
         <div key={b} className="mt-2">
 
-         <div className={`flex items-center px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 transition border-l-4 ${getBesoinColor(b)}`}>
-
+         <div
+  onClick={() =>
+    router.push(`/ListMembers?besoin=${b}&dateDebut=${dateDebut}&dateFin=${dateFin}`)
+  }
+  className={`flex items-center px-3 py-2 cursor-pointer hover:bg-white/20 transition border-l-4 ${getBesoinColor(b)}`}
+>
             {/* Catégorie */}
             <div className="w-[220px] text-white font-medium">
               {b}
@@ -246,7 +252,12 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
 </div>
 
        {/* MOBILE */}
-<div className="md:hidden w-full mt-6 space-y-2">
+<div
+  onClick={() =>
+    router.push(`/ListMembers?besoin=${b}&dateDebut=${dateDebut}&dateFin=${dateFin}`)
+  }
+  className={`bg-white/10 rounded-lg px-4 py-3 text-white border-l-4 cursor-pointer ${getBesoinColor(b)}`}
+>
 
   {labels.map((b, i) => {
     const data = values[i];

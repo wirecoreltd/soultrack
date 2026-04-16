@@ -142,6 +142,25 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
       finalMinistere.push(autreMinistere.trim());
     }
 
+    // si devient serviteur
+if (formData.star) {
+  await supabase
+    .from("stats_ministere_besoin")
+    .upsert({
+      membre_id: member.id,
+      branche_id: formData.cellule_id || null,
+      sexe: formData.sexe,
+      type: "ministere",
+    });
+} else {
+  // si on retire serviteur
+  await supabase
+    .from("stats_ministere_besoin")
+    .delete()
+    .eq("membre_id", member.id)
+    .eq("type", "ministere");
+}
+
     const payload = {
       prenom: formData.prenom,
       nom: formData.nom,

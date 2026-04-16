@@ -423,29 +423,159 @@ function StatGlobalPage() {
 
         {/* DETAILS */}
         {isExpanded && (
-          <div className="mt-2 space-y-2 bg-white/5 border-l-4 rounded-lg p-3 text-white" style={{ marginLeft: level * 10 }}>
-            
-              <p className="font-semibold">Culte</p>
-              <p>H: {stats.culte.hommes} | F: {stats.culte.femmes}</p>
-              <p>Jeunes: {stats.culte.jeunes} | Enfants: {stats.culte.enfants}</p>          
+          
+<div className="mt-3" key={branch.id}>
 
-              <p className="font-semibold">Formation</p>
-              <p>H: {stats.formation.hommes} | F: {stats.formation.femmes}</p>           
+  {/* ================= HEADER BRANCHE ================= */}
+  <div
+    onClick={() => toggleExpand(branch.id)}
+    className="bg-white/10 border-l-4 border-amber-400 rounded-xl p-3 flex justify-between items-center cursor-pointer"
+    style={{ marginLeft: level * 10 }}
+  >
+    <div>
+      <p className="font-semibold text-white">{branch.nom}</p>
+      <p className="text-xs text-white/60">
+        {branch.enfants.length} église(s)
+      </p>
+    </div>
 
-              <p className="font-semibold">Baptême</p>
-              <p>H: {stats.bapteme.hommes} | F: {stats.bapteme.femmes}</p>        
-           
-              <p className="font-semibold">Évangélisation</p>
-              <p>H: {stats.evangelisation.hommes} | F: {stats.evangelisation.femmes}</p>
-              <p>Prière: {stats.evangelisation.priere}</p>           
-            
-              <p className="font-semibold">Serviteurs</p>
-              <p>H: {stats.serviteurs.hommes} | F: {stats.serviteurs.femmes}</p>
-                       
-              <p className="font-semibold">Cellules</p>
-              <p>Total: {stats.cellules.total}</p>            
+    <div className="text-amber-300 font-bold text-sm">
+      {stats.culte.hommes +
+        stats.culte.femmes +
+        stats.culte.jeunes +
+        stats.culte.enfants +
+        stats.culte.connectes}
+    </div>
+  </div>
 
-          </div>
+  {/* ================= DETAILS ================= */}
+  {isExpanded && (
+    <div className="mt-2 space-y-2" style={{ marginLeft: level * 10 }}>
+
+      {/* ================= CULTE ================= */}
+      <div className="bg-white/5 border-l-4 border-green-400 rounded-xl p-3 text-sm text-white space-y-1">
+
+        <div className="flex justify-between items-center">
+          <p className="font-semibold">Culte</p>
+          <p className="text-emerald-300 font-bold">
+            {stats.culte.hommes +
+              stats.culte.femmes +
+              stats.culte.jeunes}
+          </p>
+        </div>
+
+        <div className="text-white/80 text-xs">
+          H: <span className="text-white">{stats.culte.hommes}</span>
+          {" "} | F: <span className="text-white">{stats.culte.femmes}</span>
+          {" "} | J: <span className="text-white">{stats.culte.jeunes}</span>
+          {" "} | E: <span className="text-white">{stats.culte.enfants}</span>
+          {" "} | C: <span className="text-white">{stats.culte.connectes}</span>
+        </div>
+
+        <div className="pt-1 border-t border-white/10 flex justify-between text-xs">
+          <span className="text-white/60">Total global</span>
+          <span className="text-orange-300 font-bold">
+            {stats.culte.hommes +
+              stats.culte.femmes +
+              stats.culte.jeunes +
+              stats.culte.enfants +
+              stats.culte.connectes}
+          </span>
+        </div>
+
+      </div>
+
+      {/* ================= FORMATION ================= */}
+      <div className="bg-white/5 border-l-4 border-blue-400 rounded-xl p-3 text-sm text-white space-y-1">
+
+        <div className="flex justify-between items-center">
+          <p className="font-semibold">Formation</p>
+          <p className="text-blue-300 font-bold">
+            {stats.formation.hommes + stats.formation.femmes}
+          </p>
+        </div>
+
+        <div className="text-white/80 text-xs">
+          H: <span className="text-white">{stats.formation.hommes}</span>
+          {" "} | F: <span className="text-white">{stats.formation.femmes}</span>
+        </div>
+
+      </div>
+
+      {/* ================= BAPTÊME ================= */}
+      <div className="bg-white/5 border-l-4 border-purple-400 rounded-xl p-3 text-sm text-white space-y-1">
+
+        <div className="flex justify-between items-center">
+          <p className="font-semibold">Baptême</p>
+          <p className="text-purple-300 font-bold">
+            {stats.bapteme.hommes + stats.bapteme.femmes}
+          </p>
+        </div>
+
+        <div className="text-white/80 text-xs">
+          H: <span className="text-white">{stats.bapteme.hommes}</span>
+          {" "} | F: <span className="text-white">{stats.bapteme.femmes}</span>
+        </div>
+
+      </div>
+
+      {/* ================= EVANGÉLISATION ================= */}
+      <div className="bg-white/5 border-l-4 border-pink-400 rounded-xl p-3 text-sm text-white space-y-1">
+
+        <div className="flex justify-between items-center">
+          <p className="font-semibold">Évangélisation</p>
+          <p className="text-pink-300 font-bold">
+            {stats.evangelisation.hommes + stats.evangelisation.femmes}
+          </p>
+        </div>
+
+        <div className="text-white/80 text-xs">
+          H: <span className="text-white">{stats.evangelisation.hommes}</span>
+          {" "} | F: <span className="text-white">{stats.evangelisation.femmes}</span>
+          {" "} | P: <span className="text-white">{stats.evangelisation.priere}</span>
+        </div>
+
+      </div>
+
+      {/* ================= SERVITEURS ================= */}
+      <div className="bg-white/5 border-l-4 border-yellow-400 rounded-xl p-3 text-sm text-white space-y-1">
+
+        <div className="flex justify-between items-center">
+          <p className="font-semibold">Serviteurs</p>
+          <p className="text-yellow-300 font-bold">
+            {stats.serviteurs.hommes + stats.serviteurs.femmes}
+          </p>
+        </div>
+
+        <div className="text-white/80 text-xs">
+          H: <span className="text-white">{stats.serviteurs.hommes}</span>
+          {" "} | F: <span className="text-white">{stats.serviteurs.femmes}</span>
+        </div>
+
+      </div>
+
+      {/* ================= CELLULES ================= */}
+      <div className="bg-white/5 border-l-4 border-orange-400 rounded-xl p-3 text-sm text-white">
+
+        <div className="flex justify-between items-center">
+          <p className="font-semibold">Cellules</p>
+          <p className="text-orange-300 font-bold">
+            {stats.cellules.total}
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  )}
+
+  {/* ================= CHILDREN ================= */}
+  {isExpanded &&
+    branch.enfants.map((child) =>
+      renderBranchMobile(child, level + 1)
+    )}
+</div>
+          
         )}
 
         {/* CHILDREN */}

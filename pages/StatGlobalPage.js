@@ -25,6 +25,7 @@ function StatGlobalPage() {
   const [expandedBranches, setExpandedBranches] = useState([]);
   const [ministereMap, setMinistereMap] = useState({});
   const ministeres = serviteurData.filter(s => s.type === "ministere");
+  const { data: serviteurData, error } = await serviteurQuery;
 
   const toggleExpand = (branchId) => {
     setExpandedBranches((prev) =>

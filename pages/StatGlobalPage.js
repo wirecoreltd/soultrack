@@ -151,31 +151,32 @@ function StatGlobalPage() {
 if (sexe === "homme") serv.hommes += 1;
 if (sexe === "femme") serv.femmes += 1;
 
-      // ================= SERVITEURS =================
-      const serviteurQuery = supabase
-        .from("stats_ministere_besoin")
-        .select("membre_id, eglise_id, branche_id, sexe, type")
-        .in("branche_id", branchIds);
+     // ================= SERVITEURS =================
+const { data: serviteurData } = await supabase
+  .from("stats_ministere_besoin")
+  .select("membre_id, branche_id, sexe, type")
+  .in("branche_id", branchIds);
 
-      const { data: serviteurData } = await serviteurQuery;
+const unique = new Map();
 
-      const unique = new Map();
+serviteurData?.forEach((row) => {
+  if (row.type !== "ministere") return;
 
-      serviteurData?.forEach((s) => {
-        const key = `${s.branche_id}_${s.membre_id}`;
-        if (!unique.has(key)) {
-          unique.set(key, s);
-        }
-      });
+  const key = `${row.branche_id}_${row.membre_id}`;
 
-      unique.forEach((s) => {
-  if (!s.sexe) return; // 👈 ignore null / undefined / ""
+  if (!unique.has(key)) {
+    unique.set(key, row);
+  }
+});
 
-  const serv = statsMap[s.branche_id]?.serviteurs;
+unique.forEach((row) => {
+  const serv = statsMap[row.branche_id]?.serviteurs;
   if (!serv) return;
 
-  if (s.sexe.toLowerCase() === "homme") serv.hommes += 1;
-  else if (s.sexe.toLowerCase() === "femme") serv.femmes += 1;
+  const sexe = row.sexe?.toLowerCase()?.trim();
+
+  if (sexe === "homme") serv.hommes += 1;
+  else if (sexe === "femme") serv.femmes += 1;
 });
 
       // ================= CELLULES =================

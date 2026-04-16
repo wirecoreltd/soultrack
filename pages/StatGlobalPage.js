@@ -424,14 +424,14 @@ function StatGlobalPage() {
         {/* DETAILS */}
         {isExpanded && (
   <div
-    className="mt-2 bg-white/5 border-l-4 border-amber-400 rounded-xl p-3 text-xs text-white space-y-2"
+    className="mt-2 bg-white/5 border-l-4 border-amber-400 rounded-xl p-3 ml-2 text-sm text-white space-y-2"
     style={{ marginLeft: level * 10 }}
   >
 
     {/* ================= CULTE ================= */}
     <div>
       <div className="flex justify-between font-semibold">
-        <span>Culte</span>
+        <span className="text-sm">>Culte</span>
         <span className="text-emerald-300">
           {stats.culte.hommes +
             stats.culte.femmes +

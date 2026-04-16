@@ -511,7 +511,89 @@ Gardez une vue d’ensemble sur les églises sous votre <span className="text-bl
   </div>
 </div>
 
-      {filteredBranches.map((branch) => renderBranch(branch))}
+const renderBranchMobile = (branch, level = 0) => {
+  const isExpanded = expandedBranches.includes(branch.id);
+
+  const stats = branch.stats;
+
+  return (
+    <div className="mt-3" key={branch.id}>
+
+      {/* ================= CARD HEADER ================= */}
+      <div
+        onClick={() => toggleExpand(branch.id)}
+        className="bg-white/10 border-l-4 border-amber-400 rounded-xl p-3 flex justify-between items-center"
+        style={{ marginLeft: level * 10 }}
+      >
+        <div>
+          <p className="font-semibold text-white">{branch.nom}</p>
+          <p className="text-xs text-white/70">
+            {branch.enfants.length} église(s)
+          </p>
+        </div>
+
+        <div className="text-amber-300 text-sm font-bold">
+          {stats.culte.hommes + stats.culte.femmes + stats.culte.jeunes}
+        </div>
+      </div>
+
+      {/* ================= DETAILS ================= */}
+      {isExpanded && (
+        <div className="mt-2 space-y-2" style={{ marginLeft: level * 10 }}>
+
+          <div className="bg-white/5 border-l-4 border-green-400 rounded-lg p-3 text-sm text-white">
+            <p className="font-semibold">Culte</p>
+            <p>H: {stats.culte.hommes} | F: {stats.culte.femmes}</p>
+            <p>Jeunes: {stats.culte.jeunes} | Enfants: {stats.culte.enfants}</p>
+          </div>
+
+          <div className="bg-white/5 border-l-4 border-blue-400 rounded-lg p-3 text-sm text-white">
+            <p className="font-semibold">Formation</p>
+            <p>H: {stats.formation.hommes} | F: {stats.formation.femmes}</p>
+          </div>
+
+          <div className="bg-white/5 border-l-4 border-purple-400 rounded-lg p-3 text-sm text-white">
+            <p className="font-semibold">Baptême</p>
+            <p>H: {stats.bapteme.hommes} | F: {stats.bapteme.femmes}</p>
+          </div>
+
+          <div className="bg-white/5 border-l-4 border-pink-400 rounded-lg p-3 text-sm text-white">
+            <p className="font-semibold">Évangélisation</p>
+            <p>H: {stats.evangelisation.hommes} | F: {stats.evangelisation.femmes}</p>
+            <p>Prière: {stats.evangelisation.priere}</p>
+          </div>
+
+          <div className="bg-white/5 border-l-4 border-yellow-400 rounded-lg p-3 text-sm text-white">
+            <p className="font-semibold">Serviteurs</p>
+            <p>H: {stats.serviteurs.hommes} | F: {stats.serviteurs.femmes}</p>
+          </div>
+
+          <div className="bg-white/5 border-l-4 border-orange-400 rounded-lg p-3 text-sm text-white">
+            <p className="font-semibold">Cellules</p>
+            <p>Total: {stats.cellules.total}</p>
+          </div>
+
+        </div>
+      )}
+
+      {/* ================= CHILDREN ================= */}
+      {isExpanded &&
+        branch.enfants.map((child) =>
+          renderBranchMobile(child, level + 1)
+        )}
+    </div>
+  );
+};
+
+     {/* ================= DESKTOP ================= */}
+<div className="hidden md:block">
+  {filteredBranches.map((branch) => renderBranch(branch))}
+</div>
+
+{/* ================= MOBILE ================= */}
+<div className="md:hidden space-y-3">
+  {filteredBranches.map((branch) => renderBranchMobile(branch))}
+</div>
 
       <Footer />
     </div>

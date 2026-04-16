@@ -146,6 +146,11 @@ function StatGlobalPage() {
         ev.moissonneurs += Number(e.moissonneurs) || 0;
       });
 
+      const sexe = s.sexe?.trim()?.toLowerCase();
+
+if (sexe === "homme") serv.hommes += 1;
+if (sexe === "femme") serv.femmes += 1;
+
       // ================= SERVITEURS =================
       const serviteurQuery = supabase
         .from("stats_ministere_besoin")
@@ -164,11 +169,14 @@ function StatGlobalPage() {
       });
 
       unique.forEach((s) => {
-        const serv = statsMap[s.branche_id]?.serviteurs;
-        if (!serv) return;
-        if (s.sexe === "Homme") serv.hommes += 1;
-        if (s.sexe === "Femme") serv.femmes += 1;
-      });
+  if (!s.sexe) return; // 👈 ignore null / undefined / ""
+
+  const serv = statsMap[s.branche_id]?.serviteurs;
+  if (!serv) return;
+
+  if (s.sexe.toLowerCase() === "homme") serv.hommes += 1;
+  else if (s.sexe.toLowerCase() === "femme") serv.femmes += 1;
+});
 
       // ================= CELLULES =================
       cellulesData.forEach((c) => {

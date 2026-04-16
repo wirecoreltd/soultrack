@@ -329,8 +329,8 @@ function RapportFormation() {
     <div className="w-max mx-auto">
 
       {/* ================= HEADER ================= */}
-      <div className="flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-white/20 bg-white/5 rounded-t-lg whitespace-nowrap">
-        <div className="min-w-[180px] ml-7">Date Début</div>
+      <div className="flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-white/20 bg-white/5 cursor-pointer rounded-t-lg whitespace-nowrap">
+        <div className="min-w-[180px] ml-5">Date Début</div>
         <div className="min-w-[180px]">Date Fin</div>
         <div className="min-w-[180px] text-center">Nom Formation</div>
         <div className="min-w-[100px] text-center">Hommes</div>
@@ -370,7 +370,7 @@ function RapportFormation() {
 
             {/* ================= ROW MOIS (COLLAPSE HEADER) ================= */}
             <div
-  className={`flex items-center px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
+  className={`flex items-center px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 cursor-pointer transition border-l-4 ${borderColor}`}
   onClick={() => toggleMonth(monthKey)}
 >
               <div className="min-w-[180px] text-white font-semibold">
@@ -446,7 +446,7 @@ function RapportFormation() {
 
       {/* ================= TOTAL GLOBAL ================= */}
       <div className="flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer pl-3 mt-2 border-l-4 border-orange-400">
-        <div className="min-w-[180px] text-white font-bold ml-7">TOTAL</div>
+        <div className="min-w-[180px] text-white font-bold ml-5">TOTAL</div>
         <div className="min-w-[180px]"></div>
         <div className="min-w-[180px]"></div>
 

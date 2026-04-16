@@ -414,7 +414,7 @@ function RapportFormation() {
                     <div className="w-[160px] text-white">
                       {formatDateFR(r.date_fin)}
                     </div>                  
-                    <div className="w-[180px] text-center text-white -ml-2">
+                    <div className="w-[180px] text-center text-white">
                       {r.nom_formation}
                     </div>                  
                     <div className="w-[100px] text-center text-white -ml-7">

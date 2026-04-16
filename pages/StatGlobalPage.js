@@ -24,7 +24,6 @@ function StatGlobalPage() {
   const [rootId, setRootId] = useState(null);
   const [expandedBranches, setExpandedBranches] = useState([]);
   const [ministereMap, setMinistereMap] = useState({});  
-  const isExpanded = expandedBranches.includes(branch.id);
 
   const toggleExpand = (branchId) => {
     setExpandedBranches((prev) =>
@@ -209,13 +208,6 @@ unique.forEach((row) => {
     setLoading(false);
   };
 
-  const totalGlobal =
-  totalStats.culte.hommes +
-  totalStats.culte.femmes +
-  totalStats.culte.jeunes +
-  totalStats.culte.enfants +
-  totalStats.culte.connectes;
-
   // ================= RENDER BRANCH (DESKTOP) =================
   const renderBranch = (branch, level = 0) => {
     const isExpanded = expandedBranches.includes(branch.id);
@@ -289,13 +281,12 @@ unique.forEach((row) => {
               <div className="min-w-[120px] text-center">Hommes</div>
               <div className="min-w-[120px] text-center">Femmes</div>
               <div className="min-w-[120px] text-center">Jeunes</div>
-              <div className="min-w-[120px] text-center text-orange-400">Total</div>
+              <div className="min-w-[120px] text-center">Total</div>
               <div className="min-w-[120px] text-center">Enfants</div>
               <div className="min-w-[140px] text-center">Connectés</div>
               <div className="min-w-[150px] text-center">Nouveaux Venus</div>
               <div className="min-w-[180px] text-center">Nouveau Converti</div>
               <div className="min-w-[160px] text-center">Moissonneurs</div>
-              <div className="min-w-[120px] text-center text-orange-400">Total global</div>
             </div>
 
             {/* CULTE */}
@@ -305,8 +296,7 @@ unique.forEach((row) => {
               <div className="min-w-[120px] text-center font-bold">{totalStats.culte.hommes}</div>
               <div className="min-w-[120px] text-center font-bold">{totalStats.culte.femmes}</div>
               <div className="min-w-[120px] text-center font-bold">{totalStats.culte.jeunes}</div>
-              <div className="min-w-[120px] text-center font-bold text-orange-400">{totalStats.culte.hommes + totalStats.culte.femmes + totalStats.culte.jeunes}</div>
-              <div className="min-w-[140px] text-center font-bold text-orange-400">{totalGlobal}</div>
+              <div className="min-w-[120px] text-center font-bold">{totalStats.culte.hommes + totalStats.culte.femmes + totalStats.culte.jeunes}</div>
               <div className="min-w-[120px] text-center font-bold">{totalStats.culte.enfants}</div>
               <div className="min-w-[140px] text-center font-bold">{totalStats.culte.connectes}</div>
               <div className="min-w-[150px] text-center font-bold">{totalStats.culte.nouveaux_venus}</div>

@@ -253,12 +253,7 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
 </div>
 
        {/* MOBILE */}
-<div
-  onClick={() =>
-    router.push(`/ListMembers?besoin=${b}&dateDebut=${dateDebut}&dateFin=${dateFin}`)
-  }
-  className={`bg-white/10 rounded-lg px-4 py-3 text-white border-l-4 cursor-pointer ${getBesoinColor(b)}`}
->
+<div className="md:hidden w-full mt-6 space-y-2">
 
   {labels.map((b, i) => {
     const data = values[i];
@@ -266,30 +261,28 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
       totalMembres > 0 ? ((data.total / totalMembres) * 100).toFixed(1) : 0;
 
     return (     
-  <div
-    key={b}   
-      className={`bg-white/10 rounded-lg px-4 py-3 text-white border-l-4 ${getBesoinColor(b)}`}
->
+      <div
+        key={b}
+        onClick={() =>
+          router.push(`/ListMembers?besoin=${b}&dateDebut=${dateDebut}&dateFin=${dateFin}`)
+        }
+        className={`bg-white/10 rounded-lg px-4 py-3 text-white border-l-4 cursor-pointer ${getBesoinColor(b)}`}
+      >
 
         {/* HEADER MOBILE */}
         <div className="flex justify-between items-center">
           
-          {/* catégorie */}
           <div className="font-semibold text-white">
             {b}
           </div>
 
-          {/* H F TOTAL */}
           <div className="flex gap-3 text-sm text-orange-400 font-semibold whitespace-nowrap">
             <span>H: {data.hommes}</span>
             <span>F: {data.femmes}</span>
-            <span className="text-orange-400 font-semibold">
-              Total: {data.total}
-            </span>
+            <span>Total: {data.total}</span>
           </div>
         </div>
 
-        {/* % ligne 2 */}
         <div className="mt-1 text-right text-sm text-amber-300">
           {percent} % du total membres
         </div>

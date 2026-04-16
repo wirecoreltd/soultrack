@@ -330,7 +330,7 @@ function RapportFormation() {
 
       {/* ================= HEADER ================= */}
       <div className="flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-white/20 bg-white/5 rounded-t-lg whitespace-nowrap">
-  <div className="w-[160px] ml-5">Date Début</div>
+  <div className="w-[160px] ml-7">Date Début</div>
   <div className="w-[160px]">Date Fin</div>
   <div className="w-[180px] text-center">Nom Formation</div>
   <div className="w-[100px] text-center">Hommes</div>
@@ -414,7 +414,7 @@ function RapportFormation() {
                     <div className="w-[160px] text-white">
                       {formatDateFR(r.date_fin)}
                     </div>                  
-                    <div className="w-[180px] text-center text-white">
+                    <div className="w-[180px] text-center text-white -ml-2">
                       {r.nom_formation}
                     </div>                  
                     <div className="w-[100px] text-center text-white -ml-5">
@@ -443,11 +443,11 @@ function RapportFormation() {
 
       {/* ================= TOTAL GLOBAL ================= */}
       <div className="flex items-center px-3 py-2 rounded-md bg-white/10 mt-2 border-l-4 border-orange-400 font-semibold">
-  <div className="w-[160px] text-orange-400 font-semibold ml-3">TOTAL</div>
+  <div className="w-[160px] text-orange-400 font-semibold ml-5">TOTAL</div>
   <div className="w-[160px]" />
   <div className="w-[180px]" />
 
-  <div className="w-[100px] text-center text-orange-400 font-semibold">
+  <div className="w-[100px] text-center text-orange-400 font-semibold -ml-3">
     {totalGlobal.hommes}
   </div>
 

@@ -349,7 +349,7 @@ unique.forEach((row) => {
               <div className="min-w-[120px] text-center font-semibold">{totalStats.serviteurs.hommes}</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.serviteurs.femmes}</div>
               <div className="min-w-[120x] text-center">-</div>
-              <div className="min-w-[120px] text-center font-semibold text-orange-400"">{totalStats.serviteurs.hommes + totalStats.serviteurs.femmes}</div>
+              <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.serviteurs.hommes + totalStats.serviteurs.femmes}</div>
             </div>
 
             {/* CELLULES */}

@@ -330,14 +330,14 @@ function RapportFormation() {
 
       {/* ================= HEADER ================= */}
       <div className="flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-white/20 bg-white/5 rounded-t-lg whitespace-nowrap">
-        <div className="min-w-[160px] ml-5">Date Début</div>
-        <div className="min-w-[160px] -ml-5">Date Fin</div>
-        <div className="min-w-[180px] text-center">Nom Formation</div>
-        <div className="min-w-[100px] text-center">Hommes</div>
-        <div className="min-w-[100px] text-center">Femmes</div>
-        <div className="min-w-[100px] text-center">Total</div>
-        <div className="min-w-[80px] text-center">Action</div>
-      </div>
+  <div className="w-[160px]">Date Début</div>
+  <div className="w-[160px]">Date Fin</div>
+  <div className="w-[180px] text-center">Nom Formation</div>
+  <div className="w-[100px] text-center">Hommes</div>
+  <div className="w-[100px] text-center">Femmes</div>
+  <div className="w-[100px] text-center">Total</div>
+  <div className="w-[80px] text-center">Action</div>
+</div>
 
       {/* ================= GROUPES MOIS ================= */}
       {groupedReports.map(([monthKey, monthRapports], idx) => {
@@ -369,31 +369,31 @@ function RapportFormation() {
           <div key={monthKey} className="mt-2">
 
             {/* ================= ROW MOIS (COLLAPSE HEADER) ================= */}
-            <div
+           <div
   className={`flex items-center px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 cursor-pointer transition border-l-4 ${borderColor}`}
   onClick={() => toggleMonth(monthKey)}
 >
-              <div className="min-w-[180px] text-white font-semibold">
-                {isExpanded ? "➖ " : "➕ "} {monthLabel}
-              </div>
+  <div className="w-[160px] text-white font-semibold">
+    {isExpanded ? "➖ " : "➕ "} {monthLabel}
+  </div>
 
-              <div className="min-w-[180px]"></div>
-              <div className="min-w-[180px]"></div>
+  <div className="w-[160px]" />
+  <div className="w-[180px]" />
 
-              <div className="min-w-[100px] text-center text-white font-bold">
-                {totalMonth.hommes}
-              </div>
+  <div className="w-[100px] text-center text-white font-bold">
+    {totalMonth.hommes}
+  </div>
 
-              <div className="min-w-[100px] text-center text-white font-bold">
-                {totalMonth.femmes}
-              </div>
+  <div className="w-[100px] text-center text-white font-bold">
+    {totalMonth.femmes}
+  </div>
 
-              <div className="min-w-[100px] text-center text-orange-400 font-semibold">
-                {totalMonth.hommes + totalMonth.femmes}
-              </div>
+  <div className="w-[100px] text-center text-orange-400 font-semibold">
+    {totalMonth.hommes + totalMonth.femmes}
+  </div>
 
-              <div className="min-w-[140px]"></div>
-            </div>
+  <div className="w-[80px]" />
+</div>
 
             {/* ================= DETAILS ================= */}
             {isExpanded &&
@@ -403,41 +403,41 @@ function RapportFormation() {
                 return (
                   <div
   key={r.id}
-  className={`flex items-center px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor} ml-4 mt-1`}
+  className={`flex items-center px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor} mt-1`}
 >
-                    <div className="min-w-[180px] text-white">
-                      {formatDateFR(r.date_debut)}
-                    </div>
+  <div className="w-[160px] text-white">
+    {formatDateFR(r.date_debut)}
+  </div>
 
-                    <div className="min-w-[180px] text-white">
-                      {formatDateFR(r.date_fin)}
-                    </div>
+  <div className="w-[160px] text-white">
+    {formatDateFR(r.date_fin)}
+  </div>
 
-                    <div className="min-w-[180px] text-center text-white">
-                      {r.nom_formation}
-                    </div>
+  <div className="w-[180px] text-center text-white">
+    {r.nom_formation}
+  </div>
 
-                    <div className="min-w-[100px] text-center text-white">
-                      {r.hommes}
-                    </div>
+  <div className="w-[100px] text-center text-white">
+    {r.hommes}
+  </div>
 
-                    <div className="min-w-[100px] text-center text-white">
-                      {r.femmes}
-                    </div>
+  <div className="w-[100px] text-center text-white">
+    {r.femmes}
+  </div>
 
-                    <div className="min-w-[100px] text-center text-white font-bold">
-                      {total}
-                    </div>
+  <div className="w-[100px] text-center text-white font-bold">
+    {total}
+  </div>
 
-                    <div className="min-w-[140px] text-center">
-                      <button
-                        onClick={() => handleEdit(r)}
-                        className="text-orange-400 hover:text-orange-500 px-4 py-1 rounded-xl text-sm"
-                      >
-                        ✏️
-                      </button>
-                    </div>
-                  </div>
+  <div className="w-[80px] text-center">
+    <button
+      onClick={() => handleEdit(r)}
+      className="text-orange-400 hover:text-orange-500 px-2 py-1 text-sm"
+    >
+      ✏️
+    </button>
+  </div>
+</div>
                 );
               })}
           </div>
@@ -445,25 +445,25 @@ function RapportFormation() {
       })}
 
       {/* ================= TOTAL GLOBAL ================= */}
-      <div className="flex items-center px-4 py-2 rounded-lg bg-white/20 pl-3 mt-2 border-l-4 border-orange-400">
-        <div className="min-w-[180px] text-orange-400 font-semibold ml-5">TOTAL</div>
-        <div className="min-w-[180px]"></div>
-        <div className="min-w-[180px]"></div>
+      <div className="flex items-center px-3 py-2 rounded-md bg-white/10 mt-2 border-l-4 border-orange-400">
+  <div className="w-[160px] text-orange-400 font-semibold">TOTAL</div>
+  <div className="w-[160px]" />
+  <div className="w-[180px]" />
 
-        <div className="min-w-[100px] text-center text-orange-400 font-semibold">
-          {totalGlobal.hommes}
-        </div>
+  <div className="w-[100px] text-center text-orange-400 font-semibold">
+    {totalGlobal.hommes}
+  </div>
 
-        <div className="min-w-[100px] text-center text-orange-400 font-semibold">
-          {totalGlobal.femmes}
-        </div>
+  <div className="w-[100px] text-center text-orange-400 font-semibold">
+    {totalGlobal.femmes}
+  </div>
 
-        <div className="min-w-[100px] text-center text-orange-400 font-semibold">
-          {totalGlobal.hommes + totalGlobal.femmes}
-        </div>
+  <div className="w-[100px] text-center text-orange-400 font-semibold">
+    {totalGlobal.hommes + totalGlobal.femmes}
+  </div>
 
-        <div className="min-w-[140px]"></div>
-      </div>
+  <div className="w-[80px]" />
+</div>
 
     </div>
   </div>

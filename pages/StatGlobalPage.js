@@ -179,27 +179,35 @@ function StatGlobalPage() {
       if (allMembreIds.length > 0) {
        let membresData = [];
 
-const { data, error } = await supabase
-  .from("membres_complets")
-  .select("id, sexe, branche_id")
-  .in("branche_id", branchIds)
-  .eq("star", true);
+// ================= SERVITEURS =================
+let membresData = [];
 
-if (!error) {
+try {
+  const { data, error } = await supabase
+    .from("membres_complets")
+    .select("id, sexe, branche_id")
+    .in("branche_id", branchIds)
+    .eq("star", true);
+
+  if (error) throw error;
+
   membresData = data || [];
+} catch (err) {
+  console.error("Erreur membres:", err);
+  membresData = [];
 }
 
-        const sexeMap = {};
-        membresData?.forEach(m => { sexeMap[m.id] = m.sexe; });
+const serviteurs = { hommes: 0, femmes: 0 };
 
-        Object.keys(uniqueMap).forEach((egliseId) => {
-          uniqueMap[egliseId].forEach((membreId) => {
-            const sexe = sexeMap[membreId];
-            if (sexe === "Homme") statsMap[egliseId].serviteurs.hommes++;
-            if (sexe === "Femme") statsMap[egliseId].serviteurs.femmes++;
-          });
-        });
-      }
+membresData.forEach((m) => {
+  if (m.sexe === "Homme") serviteurs.hommes++;
+  if (m.sexe === "Femme") serviteurs.femmes++;
+});
+
+// inject dans toutes les branches (ou adapte si besoin)
+branchIds.forEach((id) => {
+  statsMap[id].serviteurs = { ...serviteurs };
+});
 
       //============================================
       const serviteurs = {

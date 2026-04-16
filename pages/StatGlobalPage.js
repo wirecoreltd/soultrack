@@ -548,21 +548,17 @@ unique.forEach((row) => {
         </p>
       </div>
 
+             {/* FILTRE DATE */}
       <div className="flex justify-center mb-8">
         <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl flex flex-col gap-6 w-fit shadow-lg">
           <p className="text-base text-red-400 font-semibold text-center mb-4">
             Choisissez les paramètres pour générer le rapport
           </p>
 
-{/* FILTRE DATE */}
-<div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl p-4 md:p-6 mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white">
-  <p className="text-base text-red-400 font-semibold text-center mb-4">
-    Choisissez les paramètres pour générer le rapport
-  </p>
-
-  <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
-    
-    {/* DATE DEBUT */}
+           
+          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
+            {/* DATE DEBUT */}
+            <{/* DATE DEBUT */}
     <div className="flex flex-col w-full md:w-auto">
       <label className="text-base text-center mb-1">Date de début</label>
       <input
@@ -589,32 +585,33 @@ unique.forEach((row) => {
       <label className="text-base text-center mb-1 opacity-0">btn</label>
       <button
         onClick={fetchStats}
-        className="w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
+                className="w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
       >
         {loading ? "Générer..." : "Générer le rapport"}
       </button>
     </div>
 
-    {/* SELECT SUPERVISEUR */}
-    {superviseurOptions.length > 0 && (
-      <div className="flex flex-col w-full md:w-auto">
-        <label className="text-sm text-center mb-1">Superviseur</label>
-        <select
-          value={superviseurFilter}
-          onChange={(e) => setSuperviseurFilter(e.target.value)}
-          className="w-full h-10 bg-white/10 border border-white/30 rounded-lg px-3 text-white text-center"
+            {/* SELECT SUPERVISEUR */}
+            {superviseurOptions.length > 0 && (
+              <div className="flex flex-col w-full md:w-auto">
+                <label className="text-sm text-center mb-1">Superviseur</label>
+                <select
+                  value={superviseurFilter}
+                  onChange={(e) => setSuperviseurFilter(e.target.value)}
+                   className="w-full h-10 bg-white/10 border border-white/30 rounded-lg px-3 text-white text-center"
         >
-          <option value="">Tous</option>
-          {superviseurOptions.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nom}
-            </option>
-          ))}
-        </select>
+                  <option value="">Tous</option>
+                  {superviseurOptions.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.nom}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    )}
-  </div>
-</div>
 
       {/* DESKTOP */}
       <div className="hidden md:block">

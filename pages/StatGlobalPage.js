@@ -557,8 +557,7 @@ unique.forEach((row) => {
 
            
           <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
-            {/* DATE DEBUT */}
-            <{/* DATE DEBUT */}
+            {/* DATE DEBUT */}           
     <div className="flex flex-col w-full md:w-auto">
       <label className="text-base text-center mb-1">Date de début</label>
       <input

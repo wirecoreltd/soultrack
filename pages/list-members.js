@@ -39,6 +39,9 @@ function ListMembersContent() {
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
   const toBoolean = (val) => val === true || val === "true";
   const [userRole, setUserRole] = useState(null);
+  const besoinFromUrl = searchParams.get("besoin");
+  const dateDebut = searchParams.get("dateDebut");
+  const dateFin = searchParams.get("dateFin");
 
   // -------------------- Nouveaux états --------------------
   const [commentChanges, setCommentChanges] = useState({});
@@ -455,10 +458,42 @@ const canAddMember =
  const { filteredMembers, filteredNouveaux, filteredAnciens, filteredInactifs } = useMemo(() => {
   const actifs = members.filter((m) => m.etat_contact !== "supprime");
 
+   //========================
+   const besoinFiltered = besoinFromUrl
+  ? actifs.filter((m) => {
+      if (!m.besoin) return false;
+
+      let besoinsArray = [];
+
+      try {
+        besoinsArray = Array.isArray(m.besoin)
+          ? m.besoin
+          : JSON.parse(m.besoin);
+      } catch {
+        besoinsArray = m.besoin.split(",");
+      }
+
+      return besoinsArray.map(b => b.trim()).includes(besoinFromUrl);
+    })
+  : actifs;
   // Filtrage par recherche
-  const searchFiltered = filter
-    ? actifs.filter((m) => m.etat_contact?.trim().toLowerCase() === filter.toLowerCase())
-    : actifs;
+ const besoinFiltered = besoinFromUrl
+  ? actifs.filter((m) => {
+      if (!m.besoin) return false;
+
+      let besoinsArray = [];
+
+      try {
+        besoinsArray = Array.isArray(m.besoin)
+          ? m.besoin
+          : JSON.parse(m.besoin);
+      } catch {
+        besoinsArray = m.besoin.split(",");
+      }
+
+      return besoinsArray.map(b => b.trim()).includes(besoinFromUrl);
+    })
+  : actifs;
 
   const searchAndNameFiltered = searchFiltered.filter((m) =>
     `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())

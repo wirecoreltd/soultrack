@@ -24,6 +24,7 @@ function StatGlobalPage() {
   const [rootId, setRootId] = useState(null);
   const [expandedBranches, setExpandedBranches] = useState([]);
   const [ministereMap, setMinistereMap] = useState({});  
+  const isExpanded = expandedBranches.includes(branch.id);
 
   const toggleExpand = (branchId) => {
     setExpandedBranches((prev) =>

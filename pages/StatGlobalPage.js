@@ -192,6 +192,9 @@ function StatGlobalPage() {
               if (sexe === "Femme") statsMap[egliseId].serviteurs.femmes += 1;
             });
           });
+          console.log("SERVITEURS RAW:", serviteurData);
+console.log("MEMBRES IDS:", allMembreIds);
+console.log("SEXE MAP:", sexeMap);
         }
 
       // ================= CELLULES =================

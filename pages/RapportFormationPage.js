@@ -331,8 +331,8 @@ function RapportFormation() {
       {/* ================= HEADER ================= */}
       <div className="flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-white/20 bg-white/5 rounded-t-lg whitespace-nowrap">
   <div className="w-[160px] ml-7">Date Début</div>
-  <div className="w-[160px] ml-2">Date Fin</div>
-  <div className="w-[180px] text-center">Nom Formation</div>
+  <div className="w-[140px] ml-3">Date Fin</div>
+  <div className="w-[180px] text-center -ml-2">Nom Formation</div>
   <div className="w-[100px] text-center">Hommes</div>
   <div className="w-[100px] text-center">Femmes</div>
   <div className="w-[100px] text-center">Total</div>

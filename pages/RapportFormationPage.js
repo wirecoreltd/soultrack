@@ -330,7 +330,7 @@ function RapportFormation() {
 
       {/* ================= HEADER ================= */}
       <div className="flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-white/20 bg-white/5 rounded-t-lg whitespace-nowrap">
-        <div className="min-w-[180px]">Date Début</div>
+        <div className="min-w-[180px] ml-4">Date Début</div>
         <div className="min-w-[180px]">Date Fin</div>
         <div className="min-w-[180px] text-center">Nom Formation</div>
         <div className="min-w-[100px] text-center">Hommes</div>
@@ -521,7 +521,7 @@ function RapportFormation() {
 
         {/* ================= DATE (RIGHT) ================= */}
         <div className="text-right text-amber-300 text-sm font-medium">
-          📅 {formatDateFR(r.date_debut)} → {formatDateFR(r.date_fin)}
+          {formatDateFR(r.date_debut)} → {formatDateFR(r.date_fin)}
         </div>
 
         {/* ================= FORMATION ================= */}
@@ -551,7 +551,7 @@ function RapportFormation() {
         <div className="mt-3 flex justify-center">
           <button
             onClick={() => handleEdit(r)}
-            className="text-amber-300 underline hover:text-amber-300 text-sm"
+            className="text-amber-300 hover:text-amber-300 text-sm"
           >
             ✏️
           </button>

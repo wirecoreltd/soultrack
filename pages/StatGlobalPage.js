@@ -88,7 +88,6 @@ function StatGlobalPage() {
         };
       });
 
-      
       const tableFetch = async (table, branchField, dateField) => {
         let query = supabase.from(table).select("*").in(branchField, branchIds);
         if (dateDebut) query = query.gte(dateField, dateDebut);
@@ -147,57 +146,29 @@ function StatGlobalPage() {
         ev.moissonneurs += Number(e.moissonneurs) || 0;
       });
 
-      const unique = new Map();
-
-serviteurData?.forEach((s) => {
-  const key = `${s.branche_id}_${s.membre_id}`;
-
-  if (!unique.has(key)) {
-    unique.set(key, s);
-  }
-});
-
-unique.forEach((s) => {
-  const serv = statsMap[s.branche_id]?.serviteurs;
-  if (!serv) return;
-
-  if (s.sexe === "Homme") serv.hommes += 1;
-  if (s.sexe === "Femme") serv.femmes += 1;
-});
-      
       // ================= SERVITEURS =================
-        let serviteurQuery = supabase
-          .from("stats_ministere_besoin")
-          .select("membre_id, eglise_id, branche_id, sexe, type")
-          .in("branche_id", branchIds);
-        
-        const { data: serviteurData } = await serviteurQuery;
-        
+      const serviteurQuery = supabase
+        .from("stats_ministere_besoin")
+        .select("membre_id, eglise_id, branche_id, sexe, type")
+        .in("branche_id", branchIds);
+
+      const { data: serviteurData } = await serviteurQuery;
+
       const unique = new Map();
 
-serviteurData?.forEach((s) => {
-  const key = `${s.branche_id}_${s.membre_id}`;
+      serviteurData?.forEach((s) => {
+        const key = `${s.branche_id}_${s.membre_id}`;
+        if (!unique.has(key)) {
+          unique.set(key, s);
+        }
+      });
 
-  if (!unique.has(key)) {
-    unique.set(key, s);
-  }
-});
-
-unique.forEach((s) => {
-  const serv = statsMap[s.branche_id]?.serviteurs;
-  if (!serv) return;
-
-  if (s.sexe === "Homme") serv.hommes += 1;
-  if (s.sexe === "Femme") serv.femmes += 1;
-});
-        
-        unique.forEach((s) => {
-          const serv = statsMap[s.branche_id]?.serviteurs;
-          if (!serv) return;
-        
-          if (s.sexe === "Homme") serv.hommes++;
-          if (s.sexe === "Femme") serv.femmes++;
-        });
+      unique.forEach((s) => {
+        const serv = statsMap[s.branche_id]?.serviteurs;
+        if (!serv) return;
+        if (s.sexe === "Homme") serv.hommes += 1;
+        if (s.sexe === "Femme") serv.femmes += 1;
+      });
 
       // ================= CELLULES =================
       cellulesData.forEach((c) => {

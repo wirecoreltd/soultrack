@@ -458,56 +458,33 @@ const canAddMember =
  const { filteredMembers, filteredNouveaux, filteredAnciens, filteredInactifs } = useMemo(() => {
   const actifs = members.filter((m) => m.etat_contact !== "supprime");
 
-   //========================
-   const besoinFiltered = besoinFromUrl
-  ? actifs.filter((m) => {
-      if (!m.besoin) return false;
+  const besoinFiltered = besoinFromUrl
+    ? actifs.filter((m) => {
+        if (!m.besoin) return false;
+        let besoinsArray = [];
+        try {
+          besoinsArray = Array.isArray(m.besoin) ? m.besoin : JSON.parse(m.besoin);
+        } catch {
+          besoinsArray = m.besoin.split(",");
+        }
+        return besoinsArray.map(b => b.trim()).includes(besoinFromUrl);
+      })
+    : actifs;
 
-      let besoinsArray = [];
-
-      try {
-        besoinsArray = Array.isArray(m.besoin)
-          ? m.besoin
-          : JSON.parse(m.besoin);
-      } catch {
-        besoinsArray = m.besoin.split(",");
-      }
-
-      return besoinsArray.map(b => b.trim()).includes(besoinFromUrl);
-    })
-  : actifs;
-  // Filtrage par recherche
- const besoinFiltered = besoinFromUrl
-  ? actifs.filter((m) => {
-      if (!m.besoin) return false;
-
-      let besoinsArray = [];
-
-      try {
-        besoinsArray = Array.isArray(m.besoin)
-          ? m.besoin
-          : JSON.parse(m.besoin);
-      } catch {
-        besoinsArray = m.besoin.split(",");
-      }
-
-      return besoinsArray.map(b => b.trim()).includes(besoinFromUrl);
-    })
-  : actifs;
+  const searchFiltered = filter
+    ? besoinFiltered.filter((m) => m.etat_contact?.trim().toLowerCase() === filter)
+    : besoinFiltered;
 
   const searchAndNameFiltered = searchFiltered.filter((m) =>
     `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Groupes par état
   const nouveaux = searchAndNameFiltered.filter(
     (m) => m.etat_contact?.trim().toLowerCase() === "nouveau"
   );
-
   const existants = searchAndNameFiltered.filter(
     (m) => ["existant", "ancien"].includes(m.etat_contact?.trim().toLowerCase())
   );
-
   const inactifs = searchAndNameFiltered.filter(
     (m) => m.etat_contact?.trim().toLowerCase() === "inactif"
   );
@@ -518,7 +495,7 @@ const canAddMember =
     filteredAnciens: existants,
     filteredInactifs: inactifs,
   };
-}, [members, filter, search]);
+}, [members, filter, search, besoinFromUrl]);
 
   // -------------------- Handlers --------------------
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));

@@ -401,14 +401,19 @@ function StatGlobalPage() {
         {/* CARD HEADER */}
         <div
           onClick={() => toggleExpand(branch.id)}
-          className="bg-white/10 border-l-4 border-amber-400 rounded-xl p-3 flex justify-between items-center"
+          className="bg-white/10 border-l-4 border-amber-400 rounded-xl p-3 flex justify-between items-center cursor-pointer"
           style={{ marginLeft: level * 10 }}
         >
-          <div>
-            <p className="font-semibold text-white">{branch.nom}</p>
-            <p className="text-xs text-white/70">
-              {branch.enfants.length} église(s)
-            </p>
+          <div className="flex items-center gap-2">
+            <span className="text-amber-300 text-lg font-bold">
+              {isExpanded ? "➖" : "➕"}
+            </span>
+            <div>
+              <p className="font-semibold text-white">{branch.nom}</p>
+              <p className="text-xs text-white/70">
+                {branch.enfants.length} église(s)
+              </p>
+            </div>
           </div>
 
           <div className="text-amber-300 text-sm font-bold">

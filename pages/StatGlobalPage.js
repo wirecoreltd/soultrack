@@ -601,7 +601,7 @@ unique.forEach((row) => {
     {s.nom}
   </option>
 ))}
-                  ))}
+                 
                 </select>
               </div>
             )}

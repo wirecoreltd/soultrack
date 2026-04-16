@@ -308,10 +308,6 @@ cellulesData.forEach(c => {
         </div>
       </div>
 
-          <div className="hidden md:block">
-  {filteredBranches.map((branch) => renderBranch(branch))}
-</div>
-
       <div className="w-full overflow-x-auto">
         <div className="w-max space-y-2">
 
@@ -515,58 +511,7 @@ Gardez une vue d’ensemble sur les églises sous votre <span className="text-bl
   </div>
 </div>
 
-{/* ================= MOBILE ================= */}
-<div className="md:hidden">
-  {filteredBranches.map((branch) => {
-    const stats = branch.stats;
-
-    return (
-      <div
-        key={branch.id}
-        className="bg-white/10 rounded-xl p-4 text-white border border-white/20 mt-4"
-      >
-        <div className="text-lg font-semibold text-amber-300 mb-3">
-          {branch.nom}
-        </div>
-
-        <div className="mt-2 p-3 rounded-lg bg-white/10 border-l-4 border-green-400">
-          <div className="font-semibold">Culte</div>
-          <div className="text-sm flex gap-3 flex-wrap">
-            <span>H: {stats.culte.hommes}</span>
-            <span>F: {stats.culte.femmes}</span>
-            <span>J: {stats.culte.jeunes}</span>
-          </div>
-        </div>
-
-        <div className="mt-2 p-3 rounded-lg bg-white/10 border-l-4 border-blue-400">
-          <div className="font-semibold">Formation</div>
-          <div className="text-sm flex gap-3">
-            <span>H: {stats.formation.hommes}</span>
-            <span>F: {stats.formation.femmes}</span>
-          </div>
-        </div>
-
-        <div className="mt-2 p-3 rounded-lg bg-white/10 border-l-4 border-purple-400">
-          <div className="font-semibold">Baptême</div>
-          <div className="text-sm flex gap-3">
-            <span>H: {stats.bapteme.hommes}</span>
-            <span>F: {stats.bapteme.femmes}</span>
-          </div>
-        </div>
-
-        <div className="mt-2 p-3 rounded-lg bg-white/10 border-l-4 border-yellow-400">
-          <div className="font-semibold">Serviteurs</div>
-          <div className="text-sm flex gap-3">
-            <span>H: {stats.serviteurs.hommes}</span>
-            <span>F: {stats.serviteurs.femmes}</span>
-          </div>
-        </div>
-      </div>
-    );
-  })}
-</div>
-
-      
+      {filteredBranches.map((branch) => renderBranch(branch))}
 
       <Footer />
     </div>

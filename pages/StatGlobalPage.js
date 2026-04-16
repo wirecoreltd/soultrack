@@ -144,12 +144,7 @@ function StatGlobalPage() {
         ev.nouveau_converti += Number(e.nouveau_converti) || 0;
         ev.reconciliation += Number(e.reconciliation) || 0;
         ev.moissonneurs += Number(e.moissonneurs) || 0;
-      });
-
-      const sexe = s.sexe?.trim()?.toLowerCase();
-
-if (sexe === "homme") serv.hommes += 1;
-if (sexe === "femme") serv.femmes += 1;
+      });      
 
      // ================= SERVITEURS =================
 const { data: serviteurData } = await supabase
@@ -170,10 +165,12 @@ serviteurData?.forEach((row) => {
 });
 
 unique.forEach((row) => {
+  if (!row.sexe) return;
+
   const serv = statsMap[row.branche_id]?.serviteurs;
   if (!serv) return;
 
-  const sexe = row.sexe?.toLowerCase()?.trim();
+  const sexe = row.sexe.trim().toLowerCase();
 
   if (sexe === "homme") serv.hommes += 1;
   else if (sexe === "femme") serv.femmes += 1;

@@ -177,11 +177,17 @@ function StatGlobalPage() {
 
       const allMembreIds = [...new Set(serviteurData?.map(s => s.membre_id) || [])];
       if (allMembreIds.length > 0) {
-       const { data: membresData } = await supabase
+       let membresData = [];
+
+const { data, error } = await supabase
   .from("membres_complets")
   .select("id, sexe, branche_id")
   .in("branche_id", branchIds)
   .eq("star", true);
+
+if (!error) {
+  membresData = data || [];
+}
 
         const sexeMap = {};
         membresData?.forEach(m => { sexeMap[m.id] = m.sexe; });

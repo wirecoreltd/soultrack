@@ -605,15 +605,15 @@ unique.forEach((row) => {
         </div>
       </div>
 
-      {/* DESKTOP */}
-      <div className="hidden md:block">
-        {filteredBranches.map((branch) => renderBranch(branch))}
-      </div>
+     {/* DESKTOP */}
+<div className="hidden md:block">
+  {filteredBranches.map((branch) => renderBranch(branch))}
+</div>
 
-      {/* MOBILE */}
-      <div className="md:hidden space-y-3">
-        {filteredBranches.map((branch) => renderBranchMobile(branch))}
-      </div>
+{/* MOBILE */}
+<div className="md:hidden space-y-3">
+  {filteredBranches.map((branch) => renderBranchMobile(branch))}
+</div>
 
       <Footer />
     </div>

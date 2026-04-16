@@ -23,8 +23,7 @@ function StatGlobalPage() {
   const [allBranches, setAllBranches] = useState([]);
   const [rootId, setRootId] = useState(null);
   const [expandedBranches, setExpandedBranches] = useState([]);
-  const [ministereMap, setMinistereMap] = useState({});
-  const ministeres = serviteurData.filter(s => s.type === "ministere");
+  const [ministereMap, setMinistereMap] = useState({});  
 
   const toggleExpand = (branchId) => {
     setExpandedBranches((prev) =>

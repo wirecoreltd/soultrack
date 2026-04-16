@@ -366,13 +366,13 @@ function RapportFormation() {
         const borderColor = borderColors[idx % borderColors.length];
 
         return (
-          <div key={monthKey} className="space-y-1">
+          <div key={monthKey} className="mt-2">
 
             {/* ================= ROW MOIS (COLLAPSE HEADER) ================= */}
             <div
-              className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer pl-3 mt-2 border-l-4 ${borderColor}`}
-              onClick={() => toggleMonth(monthKey)}
-            >
+  className={`flex items-center px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
+  onClick={() => toggleMonth(monthKey)}
+>
               <div className="min-w-[180px] text-white font-semibold">
                 {isExpanded ? "➖ " : "➕ "} {monthLabel}
               </div>
@@ -402,9 +402,9 @@ function RapportFormation() {
 
                 return (
                   <div
-                    key={r.id}
-                     className={`flex items-center px-4 py-2 rounded-lg bg-white/20 cursor-pointer pl-3 mt-2 border-l-4 ${borderColor}`}
-                  >
+  key={r.id}
+  className={`flex items-center px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor} ml-4 mt-1`}
+>
                     <div className="min-w-[180px] text-white">
                       {formatDateFR(r.date_debut)}
                     </div>

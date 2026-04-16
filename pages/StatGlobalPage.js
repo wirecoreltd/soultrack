@@ -594,7 +594,7 @@ unique.forEach((row) => {
                 >
                   <option value="">Tous</option>
                   {superviseurOptions.map((s) => (
-                    <option key={s.id} value={s.id} className="text-black>
+                    <option key={s.id} value={s.id} className="text-black">
                       {s.nom}
                     </option>
                   ))}

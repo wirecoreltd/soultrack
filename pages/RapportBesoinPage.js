@@ -42,7 +42,7 @@ function RapportBesoin() {
       // 🔹 Total membres valides pour %
       const { data: membres, error: errorMembres } = await supabase
         .from("membres_complets")
-        .select("id, etat_contact, sexe, created_at")
+        .select("id, etat_contact, sexe, created_at, besoin")
         .eq("eglise_id", profile.eglise_id)
         .eq("branche_id", profile.branche_id)
         .gte("created_at", dateDebut || "1900-01-01")
@@ -55,58 +55,45 @@ function RapportBesoin() {
       ).length;
       setTotalMembres(totalMembresLocal);
 
-      // 🔹 Compter besoins avec sexe
-      const { data: besoinsData, error: errorBesoins } = await supabase
-        .from("stats_ministere_besoin")
-        .select("membre_id, valeur, date_action")
-        .eq("eglise_id", profile.eglise_id)
-        .eq("branche_id", profile.branche_id)
-        .eq("type", "besoin")
-        .gte("date_action", dateDebut || "1900-01-01")
-        .lte("date_action", dateFin || "2999-12-31");
-
-      if (errorBesoins) throw errorBesoins;
-
-      const count = {}; // { besoin: { total: X, hommes: Y, femmes: Z } }
-
-      (besoinsData || []).forEach((r) => {
-        if (!r.valeur) return;
-
-        // trouver le membre correspondant pour le sexe
-        const membre = membres.find((m) => m.id === r.membre_id);
-        const sexe = membre?.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";
-
-        let besoinsArray = [];
-        try {
-          if (r.valeur.startsWith("[")) {
-            besoinsArray = JSON.parse(r.valeur);
-          } else {
-            besoinsArray = r.valeur.split(",");
-          }
-        } catch {
-          besoinsArray = r.valeur.split(",");
-        }
-
-        besoinsArray.forEach((b) => {
-          const clean = b.trim();
-          if (!clean) return;
-          if (!count[clean]) count[clean] = { total: 0, hommes: 0, femmes: 0 };
-          count[clean].total++;
-          if (sexe === "hommes") count[clean].hommes++;
-          else count[clean].femmes++;
-        });
-      });
-
-      setBesoinsCount(count);
-      setMessage("");
-    } catch (err) {
-      console.error(err);
-      setMessage("❌ " + err.message);
-    }
-  };
-
+     
   const labels = Object.keys(besoinsCount);
   const values = Object.values(besoinsCount);
+
+      const count = {};
+
+(membres || []).forEach((m) => {
+  if (!m.besoin) return;
+
+  const sexe = m.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";const sexe =
+  m.sexe?.toLowerCase() === "homme"
+    ? "hommes"
+    : m.sexe?.toLowerCase() === "femme"
+    ? "femmes"
+    : "femmes";
+  let besoinsArray = [];
+
+  try {
+    besoinsArray = Array.isArray(m.besoin)
+      ? m.besoin
+      : JSON.parse(m.besoin);
+  } catch {
+    besoinsArray = m.besoin.split(",");
+  }
+
+  besoinsArray.forEach((b) => {
+    const clean = b.trim();
+    if (!clean) return;
+
+    if (!count[clean]) {
+      count[clean] = { total: 0, hommes: 0, femmes: 0 };
+    }
+
+    count[clean].total++;
+
+    if (sexe === "hommes") count[clean].hommes++;
+    else count[clean].femmes++;
+  });
+});
 
   const besoinColors = {
   "Finances": "border-green-400",
@@ -214,7 +201,7 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
          <div
       key={b}
   onClick={() =>
-    router.push(`/list-members?besoin=${b}&dateDebut=${dateDebut}&dateFin=${dateFin}`)
+    router.push(`/list-members?besoin=${encodeURIComponent(b)}`)
   }
   className={`flex items-center px-3 py-2 cursor-pointer hover:bg-white/20 transition border-l-4 ${getBesoinColor(b)}`}
 >

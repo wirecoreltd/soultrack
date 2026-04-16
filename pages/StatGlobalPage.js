@@ -161,7 +161,7 @@ function StatGlobalPage() {
         .from("stats_ministere_besoin")
         .select("membre_id, eglise_id")
         .in("eglise_id", branchIds)
-        .in("type", ["serviteur", "ministere"])
+        .in("type", ["type", "ministere"])
         .not("valeur", "is", null);
 
       if (dateDebut) serviteurQuery = serviteurQuery.gte("date_action", dateDebut);

@@ -605,6 +605,7 @@ unique.forEach((row) => {
                   ))}
                 </select>
               </div>
+             </div> 
             )}
           </div>
         </div>

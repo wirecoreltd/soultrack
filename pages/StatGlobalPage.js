@@ -396,7 +396,11 @@ unique.forEach((row) => {
               <p className="text-xs text-white/70">
                 {branch.enfants.length} église(s)
               </p>
-            </div>          
+            </div>
+          </div>
+          <div className="text-amber-300 text-sm font-semibold">
+            {stats.culte.hommes + stats.culte.femmes + stats.culte.jeunes}
+          </div>
         </div>
 
         {/* DETAILS */}

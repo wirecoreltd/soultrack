@@ -148,40 +148,32 @@ function StatGlobalPage() {
       });
 
       // ================= SERVITEURS =================
-let serviteurQuery = supabase
-  .from("stats_ministere_besoin")
-  .select("membre_id, eglise_id, sexe, type")
-  .in("eglise_id", branchIds);
-
-if (dateDebut) serviteurQuery = serviteurQuery.gte("date_action", dateDebut);
-if (dateFin) serviteurQuery = serviteurQuery.lte("date_action", dateFin);
-
-const { data: serviteurData, error } = await serviteurQuery;
-
-if (error) {
-  console.error("SERVITEUR ERROR:", error);
-}
-
-// ✅ TRAITEMENT ICI (pas ailleurs !)
-const unique = new Map();
-
-serviteurData?.forEach((s) => {
-  if (s.type !== "ministere") return;
-
-  const key = s.eglise_id + "_" + s.membre_id;
-
-  if (!unique.has(key)) {
-    unique.set(key, s);
-  }
-});
-
-unique.forEach((s) => {
-  const serv = statsMap[s.eglise_id]?.serviteurs;
-  if (!serv) return;
-
-  if (s.sexe === "Homme") serv.hommes++;
-  if (s.sexe === "Femme") serv.femmes++;
-});
+        let serviteurQuery = supabase
+          .from("stats_ministere_besoin")
+          .select("membre_id, eglise_id, branche_id, sexe, type")
+          .in("eglise_id", branchIds);
+        
+        const { data: serviteurData } = await serviteurQuery;
+        
+        const unique = new Map();
+        
+        serviteurData?.forEach((s) => {
+          if (s.type !== "ministere") return;
+        
+          const key = s.branche_id + "_" + s.membre_id;
+        
+          if (!unique.has(key)) {
+            unique.set(key, s);
+          }
+        });
+        
+        unique.forEach((s) => {
+          const serv = statsMap[s.branche_id]?.serviteurs;
+          if (!serv) return;
+        
+          if (s.sexe === "Homme") serv.hommes++;
+          if (s.sexe === "Femme") serv.femmes++;
+        });
 
       // ================= CELLULES =================
       cellulesData.forEach((c) => {

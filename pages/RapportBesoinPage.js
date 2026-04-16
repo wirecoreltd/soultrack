@@ -194,7 +194,7 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
       <div className="w-[220px]">Catégorie</div>
       <div className="w-[100px] text-center">Hommes</div>
       <div className="w-[100px] text-center">Femmes</div>
-      <div className="w-[100px] text-center">Total</div>
+      <div className="w-[100px] text-center text-orange-400 font-semibold">Total</div>
       <div className="w-[160px] text-center">% Membres</div>
     </div>
 
@@ -268,7 +268,7 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
           </div>
 
           {/* H F TOTAL */}
-          <div className="flex gap-3 text-sm text-orange-300 whitespace-nowrap">
+          <div className="flex gap-3 text-sm text-orange-400 font-semibold whitespace-nowrap">
             <span>H: {data.hommes}</span>
             <span>F: {data.femmes}</span>
             <span className="text-orange-400 font-semibold">
@@ -278,7 +278,7 @@ Les données sont réparties par catégorie avec la répartition Hommes / Femmes
         </div>
 
         {/* % ligne 2 */}
-        <div className="mt-1 text-right text-sm text-white/80">
+        <div className="mt-1 text-right text-sm text-amber-300">
           {percent} % du total membres
         </div>
 

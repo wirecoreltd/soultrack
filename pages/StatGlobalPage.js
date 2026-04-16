@@ -147,25 +147,49 @@ function StatGlobalPage() {
         ev.moissonneurs += Number(e.moissonneurs) || 0;
       });
 
+      const unique = new Map();
+
+serviteurData?.forEach((s) => {
+  const key = `${s.branche_id}_${s.membre_id}`;
+
+  if (!unique.has(key)) {
+    unique.set(key, s);
+  }
+});
+
+unique.forEach((s) => {
+  const serv = statsMap[s.branche_id]?.serviteurs;
+  if (!serv) return;
+
+  if (s.sexe === "Homme") serv.hommes += 1;
+  if (s.sexe === "Femme") serv.femmes += 1;
+});
+      
       // ================= SERVITEURS =================
         let serviteurQuery = supabase
           .from("stats_ministere_besoin")
           .select("membre_id, eglise_id, branche_id, sexe, type")
-          .in("eglise_id", branchIds);
+          .in("branche_id", branchIds);
         
         const { data: serviteurData } = await serviteurQuery;
         
-        const unique = new Map();
-        
-        serviteurData?.forEach((s) => {
-          if (s.type !== "ministere") return;
-        
-          const key = s.branche_id + "_" + s.membre_id;
-        
-          if (!unique.has(key)) {
-            unique.set(key, s);
-          }
-        });
+      const unique = new Map();
+
+serviteurData?.forEach((s) => {
+  const key = `${s.branche_id}_${s.membre_id}`;
+
+  if (!unique.has(key)) {
+    unique.set(key, s);
+  }
+});
+
+unique.forEach((s) => {
+  const serv = statsMap[s.branche_id]?.serviteurs;
+  if (!serv) return;
+
+  if (s.sexe === "Homme") serv.hommes += 1;
+  if (s.sexe === "Femme") serv.femmes += 1;
+});
         
         unique.forEach((s) => {
           const serv = statsMap[s.branche_id]?.serviteurs;

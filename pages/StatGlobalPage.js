@@ -281,73 +281,76 @@ unique.forEach((row) => {
               <div className="min-w-[120px] text-center">Hommes</div>
               <div className="min-w-[120px] text-center">Femmes</div>
               <div className="min-w-[120px] text-center">Jeunes</div>
-              <div className="min-w-[120px] text-center">Total</div>
+              <div className="min-w-[120px] text-center text orange-400">Total</div>
               <div className="min-w-[120px] text-center">Enfants</div>
               <div className="min-w-[140px] text-center">Connectés</div>
               <div className="min-w-[150px] text-center">Nouveaux Venus</div>
               <div className="min-w-[180px] text-center">Nouveau Converti</div>
               <div className="min-w-[160px] text-center">Moissonneurs</div>
+            <div className="min-w-[120px] text-center text orange-400">Total Global</div>
             </div>
 
             {/* CULTE */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-green-400 whitespace-nowrap">
               <div className="min-w-[180px] font-semibold">Culte</div>
               <div className="min-w-[100px] text-center">-</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.culte.hommes}</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.culte.femmes}</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.culte.jeunes}</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.culte.hommes + totalStats.culte.femmes + totalStats.culte.jeunes}</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.culte.enfants}</div>
-              <div className="min-w-[140px] text-center font-bold">{totalStats.culte.connectes}</div>
-              <div className="min-w-[150px] text-center font-bold">{totalStats.culte.nouveaux_venus}</div>
-              <div className="min-w-[180px] text-center font-bold">{totalStats.culte.nouveau_converti}</div>
-              <div className="min-w-[160px] text-center font-bold">{totalStats.culte.moissonneurs}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.culte.hommes}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.culte.femmes}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.culte.jeunes}</div>
+              <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.culte.hommes + totalStats.culte.femmes + totalStats.culte.jeunes}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.culte.enfants}</div>
+              <div className="min-w-[140px] text-center font-semibold">{totalStats.culte.connectes}</div>
+              <div className="min-w-[150px] text-center font-semibold">{totalStats.culte.nouveaux_venus}</div>
+              <div className="min-w-[180px] text-center font-semibold">{totalStats.culte.nouveau_converti}</div>
+              <div className="min-w-[160px] text-center font-semibold">{totalStats.culte.moissonneurs}</div>
+              <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.culte.hommes + totalStats.culte.femmes + 
+              totalStats.culte.jeunes + totalStats.culte.enfants + totalStats.culte.connectes }</div>
             </div>
 
             {/* FORMATION */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-blue-400 whitespace-nowrap">
               <div className="min-w-[180px] font-semibold">Formation</div>
               <div className="min-w-[100px] text-center">-</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.formation.hommes}</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.formation.femmes}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.formation.hommes}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.formation.femmes}</div>
             </div>
 
             {/* BAPTÊME */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-purple-400 whitespace-nowrap">
               <div className="min-w-[180px] font-semibold">Baptême</div>
               <div className="min-w-[100px] text-center">-</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.bapteme.hommes}</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.bapteme.femmes}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.bapteme.hommes}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.bapteme.femmes}</div>
             </div>
 
             {/* ÉVANGÉLISATION */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-pink-400 whitespace-nowrap">
               <div className="min-w-[180px] font-semibold">Évangélisation</div>
               <div className="min-w-[100px] text-center">-</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.hommes}</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.femmes}</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.priere}</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.evangelisation.hommes + totalStats.evangelisation.femmes}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.evangelisation.hommes}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.evangelisation.femmes}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.evangelisation.priere}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.evangelisation.hommes + totalStats.evangelisation.femmes}</div>
               <div className="min-w-[120px] text-center">-</div>
               <div className="min-w-[140px] text-center">-</div>
               <div className="min-w-[150px] text-center">-</div>
-              <div className="min-w-[180px] text-center font-bold">{totalStats.evangelisation.nouveau_converti}</div>
-              <div className="min-w-[160px] text-center font-bold">{totalStats.evangelisation.moissonneurs}</div>
+              <div className="min-w-[180px] text-center font-semibold">{totalStats.evangelisation.nouveau_converti}</div>
+              <div className="min-w-[160px] text-center font-semibold">{totalStats.evangelisation.moissonneurs}</div>
             </div>
 
             {/* SERVITEURS */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-yellow-400 whitespace-nowrap">
               <div className="min-w-[180px] font-semibold">Serviteurs</div>
               <div className="min-w-[100px] text-center">-</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.serviteurs.hommes}</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.serviteurs.femmes}</div>
-              <div className="min-w-[120px] text-center font-bold">{totalStats.serviteurs.hommes + totalStats.serviteurs.femmes}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.serviteurs.hommes}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.serviteurs.femmes}</div>
+              <div className="min-w-[120px] text-center font-semibold">{totalStats.serviteurs.hommes + totalStats.serviteurs.femmes}</div>
             </div>
 
             {/* CELLULES */}
             <div className="flex items-center px-4 py-3 rounded-xl bg-white/10 border-l-4 border-orange-400 whitespace-nowrap">
               <div className="min-w-[180px] font-semibold">Cellules</div>
-              <div className="min-w-[100px] text-center font-bold">{totalStats.cellules.total}</div>
+              <div className="min-w-[100px] text-center font-semibold">{totalStats.cellules.total}</div>
               <div className="min-w-[120px] text-center">-</div>
               <div className="min-w-[120px] text-center">-</div>
               <div className="min-w-[120px] text-center">-</div>
@@ -384,7 +387,7 @@ unique.forEach((row) => {
           style={{ marginLeft: level * 10 }}
         >
           <div className="flex items-center gap-2">
-            <span className="text-amber-300 text-lg font-bold">
+            <span className="text-amber-300 text-lg font-semibold">
               {isExpanded ? "➖" : "➕"}
             </span>
             <div>
@@ -394,7 +397,7 @@ unique.forEach((row) => {
               </p>
             </div>
           </div>
-          <div className="text-amber-300 text-sm font-bold">
+          <div className="text-amber-300 text-sm font-semibold">
             {stats.culte.hommes + stats.culte.femmes + stats.culte.jeunes}
           </div>
         </div>
@@ -418,7 +421,7 @@ unique.forEach((row) => {
               </div>
               <div className="flex justify-between mt-1 border-t border-white/10 pt-1">
                 <span className="text-white/60">Enfants</span>
-                <span className="text-orange-300 font-bold">{stats.culte.enfants}</span>
+                <span className="text-orange-300 font-semibold">{stats.culte.enfants}</span>
               </div>
             </div>
 
@@ -524,7 +527,7 @@ unique.forEach((row) => {
     <div className="min-h-screen bg-[#333699] p-6 text-white">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
+      <h1 className="text-2xl font-semibold mt-4 mb-6 text-center text-white">
         Rapport <span className="text-emerald-300">Statistiques Globales</span>
       </h1>
 

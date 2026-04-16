@@ -423,36 +423,114 @@ function StatGlobalPage() {
 
         {/* DETAILS */}
         {isExpanded && (
-          <div className="mt-2 space-y-2 bg-white/5 border-l-4 rounded-lg p-3 ml-2 text-white" style={{ marginLeft: level * 10 }}>
+  <div
+    className="mt-2 bg-white/5 border-l-4 border-amber-400 rounded-xl p-3 text-xs text-white space-y-2"
+    style={{ marginLeft: level * 10 }}
+  >
 
-              <div className="flex justify-between items-center">
-                <p className="font-semibold">Culte</p>
-                <p>H: {stats.culte.hommes} | F: {stats.culte.femmes} | Jeunes: {stats.culte.jeunes} </p>
-                <p>Jeunes: {stats.culte.connectes} | Enfants: {stats.culte.enfants}</p>   
-                 <p className="text-orange-400 font-bold">Total : {stats.culte.hommes +stats.culte.femmes + stats.culte.jeunes}</p>
-              </div>
+    {/* ================= CULTE ================= */}
+    <div>
+      <div className="flex justify-between font-semibold">
+        <span>Culte</span>
+        <span className="text-emerald-300">
+          {stats.culte.hommes +
+            stats.culte.femmes +
+            stats.culte.jeunes}
+        </span>
+      </div>
 
-              <div className="flex justify-between items-center">
-                <p className="font-semibold">Formation</p>
-                <p>H: {stats.formation.hommes} | F: {stats.formation.femmes}</p>    
-                <p className="text-orange-400 font-bold">Total : {stats.formation.hommes} + {stats.formation.femmes}</p>
-              </div>
-          
-              <p className="font-semibold">Baptême</p>
-              <p>H: {stats.bapteme.hommes} | F: {stats.bapteme.femmes}</p>        
-           
-              <p className="font-semibold">Évangélisation</p>
-              <p>H: {stats.evangelisation.hommes} | F: {stats.evangelisation.femmes}</p>
-              <p>Prière: {stats.evangelisation.priere}</p>           
-            
-              <p className="font-semibold">Serviteurs</p>
-              <p>H: {stats.serviteurs.hommes} | F: {stats.serviteurs.femmes}</p>
-                       
-              <p className="font-semibold">Cellules</p>
-              <p>Total: {stats.cellules.total}</p>            
+      <div className="text-white/80">
+        H: {stats.culte.hommes} | F: {stats.culte.femmes} | J: {stats.culte.jeunes}
+      </div>
 
-          </div>
-        )}
+      <div className="flex justify-between mt-1 border-t border-white/10 pt-1">
+        <span className="text-white/60">Total global</span>
+        <span className="text-orange-300 font-bold">
+          {stats.culte.hommes +
+            stats.culte.femmes +
+            stats.culte.jeunes +
+            stats.culte.enfants +
+            stats.culte.connectes}
+        </span>
+      </div>
+    </div>
+
+    <div className="border-t border-white/10"></div>
+
+    {/* ================= FORMATION ================= */}
+    <div>
+      <div className="flex justify-between font-semibold">
+        <span>Formation</span>
+        <span className="text-blue-300">
+          {stats.formation.hommes + stats.formation.femmes}
+        </span>
+      </div>
+
+      <div className="text-white/80">
+        H: {stats.formation.hommes} | F: {stats.formation.femmes}
+      </div>
+    </div>
+
+    <div className="border-t border-white/10"></div>
+
+    {/* ================= BAPTÊME ================= */}
+    <div>
+      <div className="flex justify-between font-semibold">
+        <span>Baptême</span>
+        <span className="text-purple-300">
+          {stats.bapteme.hommes + stats.bapteme.femmes}
+        </span>
+      </div>
+
+      <div className="text-white/80">
+        H: {stats.bapteme.hommes} | F: {stats.bapteme.femmes}
+      </div>
+    </div>
+
+    <div className="border-t border-white/10"></div>
+
+    {/* ================= ÉVANGÉLISATION ================= */}
+    <div>
+      <div className="flex justify-between font-semibold">
+        <span>Évangélisation</span>
+        <span className="text-pink-300">
+          {stats.evangelisation.hommes + stats.evangelisation.femmes}
+        </span>
+      </div>
+
+      <div className="text-white/80">
+        H: {stats.evangelisation.hommes} | F: {stats.evangelisation.femmes}
+      </div>
+    </div>
+
+    <div className="border-t border-white/10"></div>
+
+    {/* ================= SERVITEURS ================= */}
+    <div>
+      <div className="flex justify-between font-semibold">
+        <span>Serviteurs</span>
+        <span className="text-yellow-300">
+          {stats.serviteurs.hommes + stats.serviteurs.femmes}
+        </span>
+      </div>
+
+      <div className="text-white/80">
+        H: {stats.serviteurs.hommes} | F: {stats.serviteurs.femmes}
+      </div>
+    </div>
+
+    <div className="border-t border-white/10"></div>
+
+    {/* ================= CELLULES ================= */}
+    <div className="flex justify-between font-semibold">
+      <span>Cellules</span>
+      <span className="text-orange-300">
+        {stats.cellules.total}
+      </span>
+    </div>
+
+  </div>
+)}
 
         {/* CHILDREN */}
         {isExpanded &&

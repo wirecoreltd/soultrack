@@ -433,9 +433,9 @@ function StatGlobalPage() {
               </div>
 
               <div className="flex justify-between items-center">
-              <p className="font-semibold">Formation</p>
-              <p>H: {stats.formation.hommes} | F: {stats.formation.femmes}</p>    
-              <p className="text-orange-400 font-bold">Total : {stats.formation.hommes} + {stats.formation.femmes}
+                <p className="font-semibold">Formation</p>
+                <p>H: {stats.formation.hommes} | F: {stats.formation.femmes}</p>    
+                <p className="text-orange-400 font-bold">Total : {stats.formation.hommes} + {stats.formation.femmes}</p>
               </div>
           
               <p className="font-semibold">Baptême</p>

@@ -424,7 +424,7 @@ function StatGlobalPage() {
         {/* DETAILS */}
         {isExpanded && (
   <div
-    className="mt-2 bg-white/5 border-l-4 border-amber-400 rounded-xl p-3 ml-2 text-sm text-white space-y-2"
+    className="ml-2 mt-2 bg-white/5 border-l-4 border-amber-400 rounded-xl p-3 text-sm text-white space-y-2"
     style={{ marginLeft: level * 10 }}
   >
 

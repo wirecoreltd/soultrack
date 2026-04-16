@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -25,14 +25,6 @@ function StatGlobalPage() {
   const [expandedBranches, setExpandedBranches] = useState([]);
   const [ministereMap, setMinistereMap] = useState({});
 
-  const getAllDescendants = (branch) => {
-    let descendants = [branch.id];
-    branch.enfants.forEach((child) => {
-      descendants = descendants.concat(getAllDescendants(child));
-    });
-    return descendants;
-  };
-
   const toggleExpand = (branchId) => {
     setExpandedBranches((prev) =>
       prev.includes(branchId)
@@ -55,13 +47,6 @@ function StatGlobalPage() {
       setRootId(rootIdValue);
 
       const { data: filteredBranchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
-      let filteredfilteredBranchesData = filteredBranchesData;
-
-      if (superviseurFilter) {
-        filteredfilteredBranchesData = filteredBranchesData.filter(
-          (b) => b.id === superviseurFilter
-        );
-      }
 
       if (!filteredBranchesData?.length) {
         setBranchesTree([]);
@@ -87,12 +72,10 @@ function StatGlobalPage() {
 
       const minMap = {};
       branchIds.forEach((id) => { minMap[id] = []; });
-      ministereData?.forEach((m) => {
-        minMap[m.branche_id].push(m.id);
-      });
+      ministereData?.forEach((m) => { minMap[m.branche_id].push(m.id); });
       setMinistereMap(minMap);
 
-      // ================= AUTRES STATS =================
+      // ================= STATS MAP =================
       const statsMap = {};
       branchIds.forEach((id) => {
         statsMap[id] = {
@@ -118,12 +101,13 @@ function StatGlobalPage() {
         tableFetch("formations", "branche_id", "date_debut"),
         tableFetch("baptemes", "branche_id", "date"),
         tableFetch("rapport_evangelisation", "branche_id", "date"),
-        tableFetch("cellules", "branche_id", "created_at")
+        tableFetch("cellules", "branche_id", "created_at"),
       ]);
 
-      // ================= REMPLISSAGE STATS =================
+      // ================= CULTE =================
       attendanceData.forEach((s) => {
-        const a = statsMap[s.branche_id].culte;
+        const a = statsMap[s.branche_id]?.culte;
+        if (!a) return;
         a.hommes += Number(s.hommes) || 0;
         a.femmes += Number(s.femmes) || 0;
         a.jeunes += Number(s.jeunes) || 0;
@@ -134,20 +118,26 @@ function StatGlobalPage() {
         a.moissonneurs += Number(s.moissonneurs) || 0;
       });
 
+      // ================= FORMATION =================
       formationData.forEach((f) => {
-        const form = statsMap[f.branche_id].formation;
+        const form = statsMap[f.branche_id]?.formation;
+        if (!form) return;
         form.hommes += Number(f.hommes) || 0;
         form.femmes += Number(f.femmes) || 0;
       });
 
+      // ================= BAPTÊME =================
       baptemeData.forEach((b) => {
-        const bap = statsMap[b.branche_id].bapteme;
+        const bap = statsMap[b.branche_id]?.bapteme;
+        if (!bap) return;
         bap.hommes += Number(b.hommes) || 0;
         bap.femmes += Number(b.femmes) || 0;
       });
 
+      // ================= ÉVANGÉLISATION =================
       evangeData.forEach((e) => {
-        const ev = statsMap[e.branche_id].evangelisation;
+        const ev = statsMap[e.branche_id]?.evangelisation;
+        if (!ev) return;
         ev.hommes += Number(e.hommes) || 0;
         ev.femmes += Number(e.femmes) || 0;
         ev.priere += Number(e.priere) || 0;
@@ -161,7 +151,7 @@ function StatGlobalPage() {
         .from("stats_ministere_besoin")
         .select("membre_id, eglise_id")
         .in("eglise_id", branchIds)
-        .in("type", ["type", "ministere"])
+        .in("type", ["serviteur", "ministere"])
         .not("valeur", "is", null);
 
       if (dateDebut) serviteurQuery = serviteurQuery.gte("date_action", dateDebut);
@@ -175,62 +165,33 @@ function StatGlobalPage() {
         uniqueMap[s.eglise_id].add(s.membre_id);
       });
 
-      const allMembreIds = [...new Set(serviteurData?.map(s => s.membre_id) || [])];
+      const allMembreIds = [...new Set(serviteurData?.map((s) => s.membre_id) || [])];
       if (allMembreIds.length > 0) {
-       let membresData = [];
+        const { data: membresData } = await supabase
+          .from("membres_complets")
+          .select("id, sexe")
+          .in("id", allMembreIds);
 
-// ================= SERVITEURS =================
-let membresData = [];
+        const sexeMap = {};
+        membresData?.forEach((m) => { sexeMap[m.id] = m.sexe; });
 
-try {
-  const { data, error } = await supabase
-    .from("membres_complets")
-    .select("id, sexe, branche_id")
-    .in("branche_id", branchIds)
-    .eq("star", true);
-
-  if (error) throw error;
-
-  membresData = data || [];
-} catch (err) {
-  console.error("Erreur membres:", err);
-  membresData = [];
-}
-
-const serviteurs = { hommes: 0, femmes: 0 };
-
-membresData.forEach((m) => {
-  if (m.sexe === "Homme") serviteurs.hommes++;
-  if (m.sexe === "Femme") serviteurs.femmes++;
-});
-
-// inject dans toutes les branches (ou adapte si besoin)
-branchIds.forEach((id) => {
-  statsMap[id].serviteurs = { ...serviteurs };
-});
-
-      //============================================
-      const serviteurs = {
-  hommes: 0,
-  femmes: 0,
-};
-
-membresData?.forEach((m) => {
-  if (m.sexe === "Homme") serviteurs.hommes++;
-  if (m.sexe === "Femme") serviteurs.femmes++;
-});
-
-Object.keys(statsMap).forEach((id) => {
-  statsMap[id].serviteurs = { ...serviteurs };
-});
+        Object.keys(uniqueMap).forEach((egliseId) => {
+          if (!statsMap[egliseId]) return;
+          uniqueMap[egliseId].forEach((membreId) => {
+            const sexe = sexeMap[membreId];
+            if (sexe === "Homme") statsMap[egliseId].serviteurs.hommes++;
+            if (sexe === "Femme") statsMap[egliseId].serviteurs.femmes++;
+          });
+        });
+      }
 
       // ================= CELLULES =================
-      cellulesData.forEach(c => {
+      cellulesData.forEach((c) => {
         const id = c.branche_id || c.eglise_id;
         if (id && statsMap[id]) {
           statsMap[id].cellules.total++;
         } else {
-          console.warn("Cellule non comptée (id non trouvé dans statsMap):", c);
+          console.warn("Cellule non comptée:", c);
         }
       });
 
@@ -256,44 +217,46 @@ Object.keys(statsMap).forEach((id) => {
     setLoading(false);
   };
 
-  console.log(branchesTree);
-
   // ================= RENDER BRANCH (DESKTOP) =================
   const renderBranch = (branch, level = 0) => {
     const isExpanded = expandedBranches.includes(branch.id);
 
-    const totalStats = branch.enfants.length > 0 && !isExpanded
-      ? branch.enfants.reduce((acc, child) => {
-          acc.culte.hommes += child.stats.culte.hommes;
-          acc.culte.femmes += child.stats.culte.femmes;
-          acc.culte.jeunes += child.stats.culte.jeunes;
-          acc.culte.enfants += child.stats.culte.enfants;
-          acc.culte.connectes += child.stats.culte.connectes;
-          acc.culte.nouveaux_venus += child.stats.culte.nouveaux_venus;
-          acc.culte.nouveau_converti += child.stats.culte.nouveau_converti;
-          acc.culte.moissonneurs += child.stats.culte.moissonneurs;
-          acc.formation.hommes += child.stats.formation.hommes;
-          acc.formation.femmes += child.stats.formation.femmes;
-          acc.bapteme.hommes += child.stats.bapteme.hommes;
-          acc.bapteme.femmes += child.stats.bapteme.femmes;
-          acc.evangelisation.hommes += child.stats.evangelisation.hommes;
-          acc.evangelisation.femmes += child.stats.evangelisation.femmes;
-          acc.evangelisation.priere += child.stats.evangelisation.priere;
-          acc.evangelisation.nouveau_converti += child.stats.evangelisation.nouveau_converti;
-          acc.evangelisation.moissonneurs += child.stats.evangelisation.moissonneurs;
-          acc.serviteurs.hommes += child.stats.serviteurs.hommes;
-          acc.serviteurs.femmes += child.stats.serviteurs.femmes;
-          acc.cellules.total += child.stats.cellules.total;
-          return acc;
-        }, {
-          culte: { ...branch.stats.culte },
-          formation: { ...branch.stats.formation },
-          bapteme: { ...branch.stats.bapteme },
-          evangelisation: { ...branch.stats.evangelisation },
-          serviteurs: { ...branch.stats.serviteurs },
-          cellules: { ...branch.stats.cellules },
-        })
-      : branch.stats;
+    const totalStats =
+      branch.enfants.length > 0 && !isExpanded
+        ? branch.enfants.reduce(
+            (acc, child) => {
+              acc.culte.hommes += child.stats.culte.hommes;
+              acc.culte.femmes += child.stats.culte.femmes;
+              acc.culte.jeunes += child.stats.culte.jeunes;
+              acc.culte.enfants += child.stats.culte.enfants;
+              acc.culte.connectes += child.stats.culte.connectes;
+              acc.culte.nouveaux_venus += child.stats.culte.nouveaux_venus;
+              acc.culte.nouveau_converti += child.stats.culte.nouveau_converti;
+              acc.culte.moissonneurs += child.stats.culte.moissonneurs;
+              acc.formation.hommes += child.stats.formation.hommes;
+              acc.formation.femmes += child.stats.formation.femmes;
+              acc.bapteme.hommes += child.stats.bapteme.hommes;
+              acc.bapteme.femmes += child.stats.bapteme.femmes;
+              acc.evangelisation.hommes += child.stats.evangelisation.hommes;
+              acc.evangelisation.femmes += child.stats.evangelisation.femmes;
+              acc.evangelisation.priere += child.stats.evangelisation.priere;
+              acc.evangelisation.nouveau_converti += child.stats.evangelisation.nouveau_converti;
+              acc.evangelisation.moissonneurs += child.stats.evangelisation.moissonneurs;
+              acc.serviteurs.hommes += child.stats.serviteurs.hommes;
+              acc.serviteurs.femmes += child.stats.serviteurs.femmes;
+              acc.cellules.total += child.stats.cellules.total;
+              return acc;
+            },
+            {
+              culte: { ...branch.stats.culte },
+              formation: { ...branch.stats.formation },
+              bapteme: { ...branch.stats.bapteme },
+              evangelisation: { ...branch.stats.evangelisation },
+              serviteurs: { ...branch.stats.serviteurs },
+              cellules: { ...branch.stats.cellules },
+            }
+          )
+        : branch.stats;
 
     return (
       <div key={branch.id} className="mt-8">
@@ -303,18 +266,15 @@ Object.keys(statsMap).forEach((id) => {
               {isExpanded ? "➖" : "➕"}
             </button>
           )}
-
           <div className="flex items-center gap-2">
             <span className={`text-xl font-semibold ${branch.enfants.length > 0 ? "text-amber-300" : "text-white"}`}>
               {branch.nom}
             </span>
-
             {branch.enfants.length > 0 && (
               <span className="text-sm text-white">
                 (Supervision de {branch.enfants.length} église{branch.enfants.length > 1 ? "s" : ""})
               </span>
             )}
-
             {branch.enfants.length > 0 && !isExpanded && (
               <span className="text-sm text-amber-300">• Total général</span>
             )}
@@ -323,7 +283,6 @@ Object.keys(statsMap).forEach((id) => {
 
         <div className="w-full overflow-x-auto">
           <div className="w-max space-y-2">
-
             {/* HEADER */}
             <div className="flex font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
               <div className="min-w-[180px]">Type</div>
@@ -408,7 +367,6 @@ Object.keys(statsMap).forEach((id) => {
               <div className="min-w-[180px] text-center">-</div>
               <div className="min-w-[160px] text-center">-</div>
             </div>
-
           </div>
         </div>
 
@@ -444,125 +402,111 @@ Object.keys(statsMap).forEach((id) => {
                 {branch.enfants.length} église(s)
               </p>
             </div>
-          </div>          
+          </div>
+          <div className="text-amber-300 text-sm font-bold">
+            {stats.culte.hommes + stats.culte.femmes + stats.culte.jeunes}
+          </div>
         </div>
 
         {/* DETAILS */}
         {isExpanded && (
-  <div
-    className="ml-2 mt-2 bg-white/5 border-l-4 border-amber-400 rounded-xl p-3 text-sm text-white space-y-2"
-    style={{ marginLeft: level * 10 }}
-  >
+          <div
+            className="mt-2 bg-white/5 border-l-4 border-amber-400 rounded-xl p-3 text-sm text-white space-y-2"
+            style={{ marginLeft: level * 10 }}
+          >
+            {/* CULTE */}
+            <div>
+              <div className="flex justify-between font-semibold">
+                <span>Culte</span>
+                <span className="text-emerald-300">
+                  {stats.culte.hommes + stats.culte.femmes + stats.culte.jeunes}
+                </span>
+              </div>
+              <div className="text-white/80">
+                H: {stats.culte.hommes} | F: {stats.culte.femmes} | J: {stats.culte.jeunes}
+              </div>
+              <div className="flex justify-between mt-1 border-t border-white/10 pt-1">
+                <span className="text-white/60">Enfants</span>
+                <span className="text-orange-300 font-bold">{stats.culte.enfants}</span>
+              </div>
+            </div>
 
-    {/* ================= CULTE ================= */}
-    <div>
-      <div className="flex justify-between font-semibold">
-        <span className="text-sm">Culte</span>
-        <span className="text-emerald-300">
-          {stats.culte.hommes +
-            stats.culte.femmes +
-            stats.culte.jeunes}
-        </span>
-      </div>
+            <div className="border-t border-white/10"></div>
 
-      <div className="text-white/80">
-        H: {stats.culte.hommes} | F: {stats.culte.femmes} | J: {stats.culte.jeunes}
-      </div>
+            {/* FORMATION */}
+            <div>
+              <div className="flex justify-between font-semibold">
+                <span>Formation</span>
+                <span className="text-blue-300">
+                  {stats.formation.hommes + stats.formation.femmes}
+                </span>
+              </div>
+              <div className="text-white/80">
+                H: {stats.formation.hommes} | F: {stats.formation.femmes}
+              </div>
+            </div>
 
-      <div className="flex justify-between mt-1 border-t border-white/10 pt-1">
-        <span className="text-white/60">Total global</span>
-        <span className="text-orange-300 font-bold">
-          {stats.culte.hommes +
-            stats.culte.femmes +
-            stats.culte.jeunes +
-            stats.culte.enfants +
-            stats.culte.connectes}
-        </span>
-      </div>
-    </div>
+            <div className="border-t border-white/10"></div>
 
-    <div className="border-t border-white/10"></div>
+            {/* BAPTÊME */}
+            <div>
+              <div className="flex justify-between font-semibold">
+                <span>Baptême</span>
+                <span className="text-purple-300">
+                  {stats.bapteme.hommes + stats.bapteme.femmes}
+                </span>
+              </div>
+              <div className="text-white/80">
+                H: {stats.bapteme.hommes} | F: {stats.bapteme.femmes}
+              </div>
+            </div>
 
-    {/* ================= FORMATION ================= */}
-    <div>
-      <div className="flex justify-between font-semibold">
-        <span>Formation</span>
-        <span className="text-blue-300">
-          {stats.formation.hommes + stats.formation.femmes}
-        </span>
-      </div>
+            <div className="border-t border-white/10"></div>
 
-      <div className="text-white/80">
-        H: {stats.formation.hommes} | F: {stats.formation.femmes}
-      </div>
-    </div>
+            {/* ÉVANGÉLISATION */}
+            <div>
+              <div className="flex justify-between font-semibold">
+                <span>Évangélisation</span>
+                <span className="text-pink-300">
+                  {stats.evangelisation.hommes + stats.evangelisation.femmes}
+                </span>
+              </div>
+              <div className="text-white/80">
+                H: {stats.evangelisation.hommes} | F: {stats.evangelisation.femmes}
+              </div>
+              <div className="text-white/80">
+                Prière: {stats.evangelisation.priere} | Convertis: {stats.evangelisation.nouveau_converti}
+              </div>
+            </div>
 
-    <div className="border-t border-white/10"></div>
+            <div className="border-t border-white/10"></div>
 
-    {/* ================= BAPTÊME ================= */}
-    <div>
-      <div className="flex justify-between font-semibold">
-        <span>Baptême</span>
-        <span className="text-purple-300">
-          {stats.bapteme.hommes + stats.bapteme.femmes}
-        </span>
-      </div>
+            {/* SERVITEURS */}
+            <div>
+              <div className="flex justify-between font-semibold">
+                <span>Serviteurs</span>
+                <span className="text-yellow-300">
+                  {stats.serviteurs.hommes + stats.serviteurs.femmes}
+                </span>
+              </div>
+              <div className="text-white/80">
+                H: {stats.serviteurs.hommes} | F: {stats.serviteurs.femmes}
+              </div>
+            </div>
 
-      <div className="text-white/80">
-        H: {stats.bapteme.hommes} | F: {stats.bapteme.femmes}
-      </div>
-    </div>
+            <div className="border-t border-white/10"></div>
 
-    <div className="border-t border-white/10"></div>
-
-    {/* ================= ÉVANGÉLISATION ================= */}
-    <div>
-      <div className="flex justify-between font-semibold">
-        <span>Évangélisation</span>
-        <span className="text-pink-300">
-          {stats.evangelisation.hommes + stats.evangelisation.femmes}
-        </span>
-      </div>
-
-      <div className="text-white/80">
-        H: {stats.evangelisation.hommes} | F: {stats.evangelisation.femmes}
-      </div>
-    </div>
-
-    <div className="border-t border-white/10"></div>
-
-    {/* ================= SERVITEURS ================= */}
-    <div>
-      <div className="flex justify-between font-semibold">
-        <span>Serviteurs</span>
-        <span className="text-yellow-300">
-          {stats.serviteurs.hommes + stats.serviteurs.femmes}
-        </span>
-      </div>
-
-      <div className="text-white/80">
-        H: {stats.serviteurs.hommes} | F: {stats.serviteurs.femmes}
-      </div>
-    </div>
-
-    <div className="border-t border-white/10"></div>
-
-    {/* ================= CELLULES ================= */}
-    <div className="flex justify-between font-semibold">
-      <span>Cellules</span>
-      <span className="text-orange-300">
-        {stats.cellules.total}
-      </span>
-    </div>
-
-  </div>
-)}
+            {/* CELLULES */}
+            <div className="flex justify-between font-semibold">
+              <span>Cellules</span>
+              <span className="text-orange-300">{stats.cellules.total}</span>
+            </div>
+          </div>
+        )}
 
         {/* CHILDREN */}
         {isExpanded &&
-          branch.enfants.map((child) =>
-            renderBranchMobile(child, level + 1)
-          )}
+          branch.enfants.map((child) => renderBranchMobile(child, level + 1))}
       </div>
     );
   };
@@ -572,13 +516,9 @@ Object.keys(statsMap).forEach((id) => {
   const filteredBranches = (() => {
     if (!superviseurFilter) return branchesTree;
 
-    const selectedId = superviseurFilter;
-
     const findBranchInTree = (tree) => {
       for (let branch of tree) {
-        if (branch.id === selectedId) {
-          return branch;
-        }
+        if (branch.id === superviseurFilter) return branch;
         const found = findBranchInTree(branch.enfants || []);
         if (found) return found;
       }
@@ -593,28 +533,29 @@ Object.keys(statsMap).forEach((id) => {
     <div className="min-h-screen bg-[#333699] p-6 text-white">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
         Rapport <span className="text-emerald-300">Statistiques Globales</span>
       </h1>
 
-      <div className="max-w-3xl w-full mb-6 text-center x-auto">
+      <div className="max-w-3xl w-full mb-6 text-center mx-auto">
         <p className="italic text-base text-white/90">
-          Pilotez votre assemblée avec une vision <span className="text-blue-300 font-semibold">globale et structurée</span>.
-          Gardez une vue d&apos;ensemble sur les églises sous votre <span className="text-blue-300 font-semibold">supervision</span>, suivez les <span className="text-blue-300 font-semibold">indicateurs clés</span>,
-          analysez les <span className="text-blue-300 font-semibold">évolutions et accompagnez le développement</span> de chaque communauté
-          avec clarté et cohérence
+          Pilotez votre assemblée avec une vision{" "}
+          <span className="text-blue-300 font-semibold">globale et structurée</span>.
+          Gardez une vue d&apos;ensemble sur les églises sous votre{" "}
+          <span className="text-blue-300 font-semibold">supervision</span>, suivez les{" "}
+          <span className="text-blue-300 font-semibold">indicateurs clés</span>, analysez les{" "}
+          <span className="text-blue-300 font-semibold">évolutions et accompagnez le développement</span> de chaque
+          communauté avec clarté et cohérence
         </p>
       </div>
 
       <div className="flex justify-center mb-8">
         <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl flex flex-col gap-6 w-fit shadow-lg">
-
           <p className="text-base text-red-400 font-semibold text-center mb-4">
             Choisissez les paramètres pour générer le rapport
           </p>
 
           <div className="flex flex-wrap items-end gap-6 justify-center">
-
             {/* DATE DEBUT */}
             <div className="flex flex-col w-full md:w-auto">
               <label className="text-sm text-center mb-1">Date début</label>
@@ -666,17 +607,16 @@ Object.keys(statsMap).forEach((id) => {
                 </select>
               </div>
             )}
-
           </div>
         </div>
       </div>
 
-      {/* ================= DESKTOP ================= */}
+      {/* DESKTOP */}
       <div className="hidden md:block">
         {filteredBranches.map((branch) => renderBranch(branch))}
       </div>
 
-      {/* ================= MOBILE ================= */}
+      {/* MOBILE */}
       <div className="md:hidden space-y-3">
         {filteredBranches.map((branch) => renderBranchMobile(branch))}
       </div>

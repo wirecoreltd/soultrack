@@ -9,7 +9,7 @@ export default function PublicHeader() {
   const [openMenu, setOpenMenu] = useState(false);
 
   const navItems = [
-    { label: "Accueil", path: "/HomePage" },
+    { label: "Accueil", path: "/site/HomePage" },
     { label: "Process", path: "/CommentCaMarche" },
     { label: "À propos", path: "/about" },
     { label: "Pricing", path: "/pricing" },
@@ -22,7 +22,7 @@ export default function PublicHeader() {
         {/* Logo */}
         <div
           className="flex items-center cursor-pointer"
-          onClick={() => router.push("/HomePage")}
+          onClick={() => router.push("/site/HomePage")}
         >
           <Image src="/logo.png" alt="Logo SoulTrack" width={50} height={50} />
           <span className="ml-3 text-2xl font-bold text-gray-800">SoulTrack</span>

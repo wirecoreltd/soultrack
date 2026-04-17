@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function TestimonialsSection() {
-  const containerRef = useRef(null);
-
   const testimonials = [
     {
       name: "Past. Jean",
@@ -42,67 +41,74 @@ export default function TestimonialsSection() {
     },
   ];
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+  const [index, setIndex] = useState(0);
 
-    let index = 0;
+  const prev = () => {
+    setIndex((i) => (i === 0 ? testimonials.length - 1 : i - 1));
+  };
 
-    const interval = setInterval(() => {
-      index++;
+  const next = () => {
+    setIndex((i) => (i === testimonials.length - 1 ? 0 : i + 1));
+  };
 
-      if (index >= testimonials.length) {
-        index = 0;
-      }
-
-      const card = container.children[index];
-
-      if (card) {
-        container.scrollTo({
-          left: card.offsetLeft - 20,
-          behavior: "smooth",
-        });
-      }
-    }, 2000); // 👉 toutes les 2 secondes
-
-    return () => clearInterval(interval);
-  }, []);
+  const t = testimonials[index];
 
   return (
     <section className="py-28 px-6 bg-gray-50">
-      <div className="max-w-6xl mx-auto space-y-12">
+      <div className="max-w-4xl mx-auto text-center space-y-10">
 
-        <h2 className="text-3xl font-bold text-center">
+        <h2 className="text-3xl font-bold">
           Ce que disent les responsables
         </h2>
 
-        {/* CAROUSEL */}
-        <div
-          ref={containerRef}
-          className="flex gap-6 overflow-x-auto scroll-smooth px-2 pb-4"
-        >
-          {testimonials.map((t, i) => (
+        {/* CAROUSEL BOX */}
+        <div className="relative bg-white rounded-2xl shadow-md p-10 transition-all duration-300">
+
+          {/* LEFT BUTTON */}
+          <button
+            onClick={prev}
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-gray-100 hover:bg-gray-200 p-2 rounded-full"
+          >
+            <ChevronLeft />
+          </button>
+
+          {/* RIGHT BUTTON */}
+          <button
+            onClick={next}
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-gray-100 hover:bg-gray-200 p-2 rounded-full"
+          >
+            <ChevronRight />
+          </button>
+
+          {/* CONTENT */}
+          <div className="space-y-4 px-10">
+            <Image
+              src={t.avatar}
+              alt={t.name}
+              width={70}
+              height={70}
+              className="rounded-full mx-auto"
+            />
+
+            <p className="text-gray-600 italic text-lg">
+              "{t.message}"
+            </p>
+
+            <div className="font-semibold">{t.name}</div>
+            <div className="text-sm text-gray-500">{t.church}</div>
+          </div>
+
+        </div>
+
+        {/* DOTS */}
+        <div className="flex justify-center gap-2">
+          {testimonials.map((_, i) => (
             <div
               key={i}
-              className="min-w-[320px] bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition flex-shrink-0"
-            >
-              <Image
-                src={t.avatar}
-                alt={t.name}
-                width={60}
-                height={60}
-                className="rounded-full mx-auto mb-4"
-              />
-
-              <p className="text-gray-600 italic mb-4 text-center">
-                "{t.message}"
-              </p>
-
-              <div className="text-center font-semibold">{t.name}</div>
-              <div className="text-sm text-gray-500 text-center">
-                {t.church}
-              </div>
-            </div>
+              className={`h-2 w-2 rounded-full transition ${
+                i === index ? "bg-blue-600 w-4" : "bg-gray-300"
+              }`}
+            />
           ))}
         </div>
 

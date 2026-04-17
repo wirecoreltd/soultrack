@@ -38,67 +38,52 @@ export default function TestimonialsSection() {
   ];
 
   const [index, setIndex] = useState(0);
-  const max = testimonials.length;
 
-  // 👉 AUTO : GAUCHE → DROITE
+  const CARD_WIDTH = 300; // taille carte + gap
+
+  // 👉 AUTO (GAUCHE → DROITE VISUELLE)
   useEffect(() => {
     const interval = setInterval(() => {
-      prev(); // 👈 IMPORTANT : inversion du sens
+      setIndex((prev) => prev + 1);
     }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
-  const next = () => {
-    setIndex((prev) => (prev + 1) % max);
-  };
+  const max = testimonials.length;
 
-  const prev = () => {
-    setIndex((prev) => (prev - 1 + max) % max);
-  };
+  // 👉 boucle infinie propre
+  const safeIndex = index % max;
 
-  // 4 cartes visibles
-  const visible = Array.from({ length: 4 }).map((_, i) =>
-    testimonials[(index + i) % max]
-  );
+  // 👉 duplication pour continuité fluide
+  const looped = [...testimonials, ...testimonials];
 
   return (
-    <section className="py-24 bg-gray-50">
+    <section className="py-24 bg-gray-50 overflow-hidden">
       <div className="max-w-6xl mx-auto text-center mb-12">
         <h2 className="text-3xl font-bold">
           Ce que disent les responsables
         </h2>
       </div>
 
-      {/* CONTAINER */}
-      <div className="relative max-w-6xl mx-auto px-10">
+      {/* VIEWPORT */}
+      <div className="relative max-w-6xl mx-auto overflow-hidden px-10">
 
-        {/* FLÈCHE GAUCHE */}
-        <button
-          onClick={next}   // 👈 inversé volontairement
-          className="absolute left-0 top-1/2 -translate-y-1/2 bg-white shadow-md rounded-full w-10 h-10 flex items-center justify-center hover:scale-110 transition"
+        {/* TRACK */}
+        <div
+          className="flex gap-6 transition-transform duration-700 ease-in-out"
+          style={{
+            transform: `translateX(-${safeIndex * CARD_WIDTH}px)`,
+          }}
         >
-          ←
-        </button>
 
-        {/* FLÈCHE DROITE */}
-        <button
-          onClick={prev}   // 👈 inversé volontairement
-          className="absolute right-0 top-1/2 -translate-y-1/2 bg-white shadow-md rounded-full w-10 h-10 flex items-center justify-center hover:scale-110 transition"
-        >
-          →
-        </button>
-
-        {/* GRID */}
-        <div className="grid grid-cols-4 gap-6 overflow-hidden">
-
-          {visible.map((t, i) => {
-            const isCenter = i === 1;
+          {looped.map((t, i) => {
+            const isCenter = i === safeIndex + 1;
 
             return (
               <div
                 key={i}
-                className={`bg-white p-6 rounded-2xl shadow-sm transition-all duration-500
+                className={`flex-shrink-0 w-[260px] bg-white p-6 rounded-2xl shadow-sm transition-all duration-500
                   ${isCenter ? "scale-110 shadow-xl z-10" : "scale-95 opacity-80"}
                 `}
               >

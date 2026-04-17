@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function TestimonialsSection() {
   const testimonials = [
@@ -37,17 +37,33 @@ export default function TestimonialsSection() {
     },
   ];
 
+  const containerRef = useRef(null);
   const [index, setIndex] = useState(0);
 
+  const CARD_WIDTH = 300; // largeur + gap
+
+  // AUTO MOVE GAUCHE → DROITE
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % testimonials.length);
+      setIndex((prev) => prev + 1);
     }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
-  const cardWidth = 280 + 24;
+  // RESET SANS SAUT (loop infini propre)
+  useEffect(() => {
+    if (index >= testimonials.length) {
+      setTimeout(() => {
+        containerRef.current.style.transition = "none";
+        setIndex(0);
+
+        setTimeout(() => {
+          containerRef.current.style.transition = "transform 0.7s ease-in-out";
+        }, 50);
+      }, 700);
+    }
+  }, [index]);
 
   return (
     <section className="py-24 bg-gray-50 overflow-hidden">
@@ -62,23 +78,24 @@ export default function TestimonialsSection() {
         
         {/* TRACK */}
         <div
+          ref={containerRef}
           className="flex gap-6 transition-transform duration-700 ease-in-out"
           style={{
-            transform: `translateX(-${index * cardWidth}px)`,
+            transform: `translateX(-${index * CARD_WIDTH}px)`,
           }}
         >
 
-          {/* IMPORTANT: duplication pour loop fluide */}
+          {/* CLONE POUR FLUIDITÉ */}
           {[...testimonials, ...testimonials].map((t, i) => {
 
-            // 👉 carte centrale (focus)
-            const isCenter = i === index + 1;
+            // 👉 carte centrale (4 visibles → 2e position = focus)
+            const isFocus = i % testimonials.length === index % testimonials.length + 1;
 
             return (
               <div
                 key={i}
-                className={`flex-shrink-0 w-[280px] bg-white p-6 rounded-2xl shadow-sm transition-all duration-500
-                  ${isCenter ? "scale-110 shadow-xl z-10" : "scale-95 opacity-80"}
+                className={`flex-shrink-0 w-[260px] bg-white p-6 rounded-2xl shadow-sm transition-all duration-500
+                  ${isFocus ? "scale-110 shadow-xl z-10" : "scale-95 opacity-80"}
                 `}
               >
                 <Image
@@ -93,9 +110,7 @@ export default function TestimonialsSection() {
                   "{t.message}"
                 </p>
 
-                <div className="font-semibold text-center">
-                  {t.name}
-                </div>
+                <div className="font-semibold text-center">{t.name}</div>
                 <div className="text-xs text-gray-500 text-center">
                   {t.church}
                 </div>

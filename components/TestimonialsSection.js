@@ -39,25 +39,17 @@ export default function TestimonialsSection() {
 
   const [index, setIndex] = useState(0);
 
-  // AUTO SLIDE toutes les 5 secondes
+  // AUTO SLIDE toutes les 5 sec
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % testimonials.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [testimonials.length]);
+  }, []);
 
-  // 4 visibles en boucle
-  const getVisible = () => {
-    const res = [];
-    for (let i = 0; i < 4; i++) {
-      res.push(testimonials[(index + i) % testimonials.length]);
-    }
-    return res;
-  };
-
-  const visible = getVisible();
+  // largeur d’une carte + gap
+  const cardWidth = 280 + 24; // w-[280px] + gap-6
 
   return (
     <section className="py-24 bg-gray-50 overflow-hidden">
@@ -67,40 +59,43 @@ export default function TestimonialsSection() {
         </h2>
       </div>
 
-      {/* TRACK */}
-      <div className="flex justify-center">
-        <div className="flex gap-6 transition-all duration-700 ease-in-out">
+      {/* VIEWPORT */}
+      <div className="overflow-hidden relative">
 
-          {visible.map((t, i) => {
-            const isMain = i === 1; // 👉 2ème carte = mise en avant
+        {/* TRACK */}
+        <div
+          className="flex gap-6 transition-transform duration-700 ease-in-out"
+          style={{
+            transform: `translateX(-${index * cardWidth}px)`,
+          }}
+        >
 
-            return (
-              <div
-                key={i}
-                className={`bg-white p-6 rounded-2xl shadow-sm transition-all duration-700
-                  ${isMain ? "scale-110 shadow-xl z-10" : "scale-95 opacity-80"}
-                  w-[260px]
-                `}
-              >
-                <Image
-                  src={t.avatar}
-                  alt={t.name}
-                  width={60}
-                  height={60}
-                  className="rounded-full mx-auto mb-4"
-                />
+          {/* DUPLICATION POUR LOOP FLUIDE */}
+          {[...testimonials, ...testimonials].map((t, i) => (
+            <div
+              key={i}
+              className="w-[280px] flex-shrink-0 bg-white p-6 rounded-2xl shadow-sm"
+            >
+              <Image
+                src={t.avatar}
+                alt={t.name}
+                width={60}
+                height={60}
+                className="rounded-full mx-auto mb-4"
+              />
 
-                <p className="text-gray-600 italic text-sm mb-4 text-center">
-                  "{t.message}"
-                </p>
+              <p className="text-gray-600 italic text-sm mb-4 text-center">
+                "{t.message}"
+              </p>
 
-                <div className="font-semibold text-center">{t.name}</div>
-                <div className="text-xs text-gray-500 text-center">
-                  {t.church}
-                </div>
+              <div className="font-semibold text-center">
+                {t.name}
               </div>
-            );
-          })}
+              <div className="text-xs text-gray-500 text-center">
+                {t.church}
+              </div>
+            </div>
+          ))}
 
         </div>
       </div>

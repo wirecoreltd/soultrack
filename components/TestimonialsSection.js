@@ -39,24 +39,29 @@ export default function TestimonialsSection() {
 
   const [index, setIndex] = useState(0);
 
+  const max = testimonials.length;
+
+  // AUTO SLIDE (droite → gauche)
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % testimonials.length);
+      next();
     }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // 🔥 4 éléments visibles propres (sans coupe)
-  const getVisible = () => {
-    const res = [];
-    for (let i = 0; i < 4; i++) {
-      res.push(testimonials[(index + i) % testimonials.length]);
-    }
-    return res;
+  const next = () => {
+    setIndex((prev) => (prev + 1) % max);
   };
 
-  const visible = getVisible();
+  const prev = () => {
+    setIndex((prev) => (prev - 1 + max) % max);
+  };
+
+  // 4 visibles propres
+  const visible = Array.from({ length: 4 }).map((_, i) =>
+    testimonials[(index + i) % max]
+  );
 
   return (
     <section className="py-24 bg-gray-50">
@@ -66,14 +71,30 @@ export default function TestimonialsSection() {
         </h2>
       </div>
 
-      {/* VIEWPORT FIXE */}
-      <div className="max-w-6xl mx-auto overflow-hidden px-4">
+      {/* WRAPPER */}
+      <div className="relative max-w-6xl mx-auto px-10">
 
-        {/* GRID 4 COLONNES STRICTES */}
-        <div className="grid grid-cols-4 gap-6">
+        {/* FLÈCHE GAUCHE */}
+        <button
+          onClick={prev}
+          className="absolute left-0 top-1/2 -translate-y-1/2 bg-white shadow-md rounded-full w-10 h-10 flex items-center justify-center hover:scale-110 transition"
+        >
+          ←
+        </button>
+
+        {/* FLÈCHE DROITE */}
+        <button
+          onClick={next}
+          className="absolute right-0 top-1/2 -translate-y-1/2 bg-white shadow-md rounded-full w-10 h-10 flex items-center justify-center hover:scale-110 transition"
+        >
+          →
+        </button>
+
+        {/* CARDS */}
+        <div className="grid grid-cols-4 gap-6 overflow-hidden">
 
           {visible.map((t, i) => {
-            const isCenter = i === 1; // carte focus (2e position)
+            const isCenter = i === 1;
 
             return (
               <div

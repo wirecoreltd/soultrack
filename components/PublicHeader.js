@@ -16,30 +16,15 @@ export default function PublicHeader() {
     { label: "Contact", path: "/contact" },
   ];
 
-const changeLanguage = (locale) => {
-  localStorage.setItem("lang", locale);
-  window.location.reload();
-};
-
-  const lang = typeof window !== "undefined" ? localStorage.getItem("lang") : "fr";
-
-const navItems = [
-  { label: lang === "en" ? "Home" : "Accueil", path: "/site/HomePage" },
-  { label: lang === "en" ? "Process" : "Process", path: "/CommentCaMarche" },
-  { label: lang === "en" ? "About" : "À propos", path: "/about" },
-  { label: lang === "en" ? "Pricing" : "Tarifs", path: "/pricing" },
-  { label: lang === "en" ? "Contact" : "Contact", path: "/contact" },
-];
-  
-  // remplace ou ajoute la langue en 1er segment
-  segments[1] = locale;
-
-  router.push(segments.join('/'));
-};
+  const changeLanguage = (locale) => {
+    localStorage.setItem("lang", locale);
+    window.location.reload();
+  };
 
   return (
     <header className="w-full bg-white shadow-md">
-      <div className="max-w-6xl mx-auto flex justify-between items-center p-4">
+      <div className="max-w-6xl mx-auto flex items-center p-4">
+        
         {/* Logo */}
         <div
           className="flex items-center cursor-pointer"
@@ -49,10 +34,11 @@ const navItems = [
           <span className="ml-3 text-2xl font-bold text-gray-800">SoulTrack</span>
         </div>
 
- <div className="ml-auto flex gap-2 mr-4 cursor-pointer">
-  <button onClick={() => changeLanguage('fr')}>🇫🇷 FR</button>
-  <button onClick={() => changeLanguage('en')}>🇬🇧 EN</button>
-</div>
+        {/* LANGUE */}
+        <div className="ml-auto flex gap-2 mr-4">
+          <button onClick={() => changeLanguage("fr")}>🇫🇷 FR</button>
+          <button onClick={() => changeLanguage("en")}>🇬🇧 EN</button>
+        </div>
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">
@@ -107,26 +93,6 @@ const navItems = [
               {item.label}
             </span>
           ))}
-
-          <button
-            onClick={() => {
-              router.push("/login");
-              setOpenMenu(false);
-            }}
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition font-semibold"
-          >
-            Connexion
-          </button>
-
-          <button
-            onClick={() => {
-              router.push("/SignupEglise");
-              setOpenMenu(false);
-            }}
-            className="mt-2 px-4 py-2 border border-blue-500 text-blue-500 rounded-2xl hover:bg-blue-500 hover:text-white transition font-semibold"
-          >
-            Inscription
-          </button>
         </div>
       )}
     </header>

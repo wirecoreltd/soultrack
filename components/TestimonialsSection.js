@@ -13,35 +13,29 @@ export default function TestimonialsSection() {
   ];
 
   const CARD_WIDTH = 300;
-  const visible = 3;
-
   const [index, setIndex] = useState(0);
   const trackRef = useRef(null);
 
   const looped = [...testimonials, ...testimonials];
   const max = testimonials.length;
 
-  // 👉 avance toujours dans le même sens
+  // auto scroll
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => prev + 1);
-    }, 3000);
+    }, 4000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // 👉 RESET INVISIBLE (clé anti-vide)
+  // reset invisible
   useEffect(() => {
     if (index >= max) {
       setTimeout(() => {
         if (trackRef.current) {
-          // coupe animation
           trackRef.current.style.transition = "none";
-
-          // reset position
           setIndex(0);
 
-          // réactive animation au frame suivant
           requestAnimationFrame(() => {
             trackRef.current.style.transition =
               "transform 700ms ease-in-out";
@@ -51,55 +45,79 @@ export default function TestimonialsSection() {
     }
   }, [index]);
 
+  const prev = () => setIndex((p) => Math.max(p - 1, 0));
+  const next = () => setIndex((p) => p + 1);
+
   return (
-    <section className="py-24 bg-gray-50 overflow-hidden">
+    <section className="py-24 bg-gray-50 overflow-hidden relative">
+
+      {/* TITLE */}
       <div className="max-w-6xl mx-auto text-center mb-12">
         <h2 className="text-3xl font-bold">
           Ce que disent les responsables
         </h2>
       </div>
 
-      {/* 3 CARTES VISIBLES */}
-      <div className="relative max-w-[900px] mx-auto overflow-hidden">
+      {/* CAROUSEL WRAPPER */}
+      <div className="relative max-w-[900px] mx-auto">
 
-        <div
-          ref={trackRef}
-          className="flex transition-transform duration-700 ease-in-out"
-          style={{
-            transform: `translateX(-${index * CARD_WIDTH}px)`,
-          }}
+        {/* LEFT ARROW */}
+        <button
+          onClick={prev}
+          className="absolute left-[-50px] top-1/2 -translate-y-1/2 bg-white shadow-md rounded-full w-10 h-10 flex items-center justify-center hover:scale-110 transition z-10"
         >
+          ◀
+        </button>
 
-          {looped.map((t, i) => {
-            const isCenter = i === index + 1;
+        {/* RIGHT ARROW */}
+        <button
+          onClick={next}
+          className="absolute right-[-50px] top-1/2 -translate-y-1/2 bg-white shadow-md rounded-full w-10 h-10 flex items-center justify-center hover:scale-110 transition z-10"
+        >
+          ▶
+        </button>
 
-            return (
-              <div key={i} className="flex-shrink-0 w-[300px] px-2">
-                <div
-                  className={`bg-white p-6 rounded-2xl shadow-sm transition-all duration-500
-                  ${isCenter ? "scale-110 shadow-xl" : "scale-95 opacity-80"}`}
-                >
-                  <Image
-                    src={t.avatar}
-                    alt={t.name}
-                    width={60}
-                    height={60}
-                    className="rounded-full mx-auto mb-4"
-                  />
+        {/* VIEWPORT */}
+        <div className="overflow-hidden px-8">
 
-                  <p className="text-gray-600 italic text-sm mb-4 text-center">
-                    "{t.message}"
-                  </p>
+          <div
+            ref={trackRef}
+            className="flex transition-transform duration-700 ease-in-out"
+            style={{
+              transform: `translateX(-${index * CARD_WIDTH}px)`,
+            }}
+          >
+            {looped.map((t, i) => {
+              const isCenter = i === index + 1;
 
-                  <div className="font-semibold text-center">{t.name}</div>
-                  <div className="text-xs text-gray-500 text-center">
-                    {t.church}
+              return (
+                <div key={i} className="flex-shrink-0 w-[300px] px-3">
+                  <div
+                    className={`bg-white p-6 rounded-2xl shadow-sm transition-all duration-500
+                    ${isCenter ? "scale-110 shadow-xl" : "scale-95 opacity-80"}`}
+                  >
+                    <Image
+                      src={t.avatar}
+                      alt={t.name}
+                      width={60}
+                      height={60}
+                      className="rounded-full mx-auto mb-4"
+                    />
+
+                    <p className="text-gray-600 italic text-sm mb-4 text-center">
+                      "{t.message}"
+                    </p>
+
+                    <div className="font-semibold text-center">{t.name}</div>
+                    <div className="text-xs text-gray-500 text-center">
+                      {t.church}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
+          </div>
         </div>
       </div>
     </section>

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function TestimonialsSection() {
   const testimonials = [
@@ -13,12 +13,15 @@ export default function TestimonialsSection() {
   ];
 
   const CARD_WIDTH = 300;
+  const visible = 3;
 
   const [index, setIndex] = useState(0);
+  const trackRef = useRef(null);
 
   const looped = [...testimonials, ...testimonials];
+  const max = testimonials.length;
 
-  // 👉 mouvement CONSTANT dans un seul sens
+  // 👉 avance toujours dans le même sens
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => prev + 1);
@@ -26,6 +29,27 @@ export default function TestimonialsSection() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // 👉 RESET INVISIBLE (clé anti-vide)
+  useEffect(() => {
+    if (index >= max) {
+      setTimeout(() => {
+        if (trackRef.current) {
+          // coupe animation
+          trackRef.current.style.transition = "none";
+
+          // reset position
+          setIndex(0);
+
+          // réactive animation au frame suivant
+          requestAnimationFrame(() => {
+            trackRef.current.style.transition =
+              "transform 700ms ease-in-out";
+          });
+        }
+      }, 700);
+    }
+  }, [index]);
 
   return (
     <section className="py-24 bg-gray-50 overflow-hidden">
@@ -35,10 +59,11 @@ export default function TestimonialsSection() {
         </h2>
       </div>
 
-      {/* VIEWPORT 3 CARTES */}
+      {/* 3 CARTES VISIBLES */}
       <div className="relative max-w-[900px] mx-auto overflow-hidden">
 
         <div
+          ref={trackRef}
           className="flex transition-transform duration-700 ease-in-out"
           style={{
             transform: `translateX(-${index * CARD_WIDTH}px)`,
@@ -76,7 +101,6 @@ export default function TestimonialsSection() {
           })}
 
         </div>
-
       </div>
     </section>
   );

@@ -3,44 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Head from "next/head";
 
-const testimonials = [
-  {
-    name: "Pasteur Jean-Marc L.",
-    role: "Responsable d'église — Paris",
-    text: "Avant SoulTrack, je perdais le fil de dizaines de nouveaux contacts chaque mois. Aujourd'hui j'ai une vision claire de chaque âme. Aucune ne passe entre les mailles.",
-    initials: "JM",
-    color: "#2E3192",
-  },
-  {
-    name: "Sœur Chantal M.",
-    role: "Responsable cellule — Lyon",
-    text: "La gestion de ma cellule est devenue fluide. Je sais exactement où en est chaque membre, leurs besoins, leur progression. C'est transformationnel.",
-    initials: "CM",
-    color: "#10b981",
-  },
-  {
-    name: "Ancien David K.",
-    role: "Coordinateur suivi — Bruxelles",
-    text: "Les rapports statistiques nous ont permis d'identifier les besoins réels de notre assemblée. On prend désormais des décisions pastorales basées sur des données concrètes.",
-    initials: "DK",
-    color: "#f59e0b",
-  },
-  {
-    name: "Pasteure Esther N.",
-    role: "Superviseure régionale — Abidjan",
-    text: "Gérer plusieurs branches simultanément était un défi immense. SoulTrack nous donne une vision globale instantanée. C'est exactement ce dont nous avions besoin.",
-    initials: "EN",
-    color: "#8b5cf6",
-  },
-  {
-    name: "Frère Samuel T.",
-    role: "Conseiller pastoral — Montréal",
-    text: "Le suivi individuel est devenu un vrai ministère structuré. Chaque membre que j'accompagne a un historique complet, je ne perds plus aucune information.",
-    initials: "ST",
-    color: "#ef4444",
-  },
-];
-
 const features = [
   {
     icon: "👥",

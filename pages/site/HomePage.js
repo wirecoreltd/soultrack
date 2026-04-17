@@ -12,10 +12,10 @@ export default function HomePage() {
   return (
     <div className="relative text-gray-900">
 
-      {/* TOP BRAND BAND */}
+      {/* 🔵 TOP BRAND BAR */}
       <div className="h-6 bg-[#333699]" />
 
-      {/* TOP GRADIENT TRANSITION */}
+      {/* 🌫 TOP GRADIENT TRANSITION */}
       <div className="h-24 bg-gradient-to-b from-[#333699] to-white" />
 
       <PublicHeader />
@@ -25,12 +25,14 @@ export default function HomePage() {
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.15),transparent)]" />
 
         <div className="relative max-w-5xl mx-auto text-center px-6 space-y-8">
+
           <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
             Voir chaque âme. Comprendre chaque mouvement. Guider chaque vie.
           </h1>
 
           <p className="text-lg md:text-xl text-white/80 leading-relaxed">
-            SoulTrack est un système complet de pilotage pastoral...
+            SoulTrack est un système complet de pilotage pastoral qui connecte votre église :
+            membres, cellules, conseillers, évangélisation, baptêmes et structure globale.
           </p>
 
           <p className="text-white/70 italic">
@@ -74,48 +76,42 @@ export default function HomePage() {
             <div className="bg-white p-6 rounded-2xl shadow-sm">
               <h3 className="font-semibold">👥 Membres Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Une vue centralisée de chaque membre pour suivre son parcours, son engagement et son évolution. 
-              Toutes les informations essentielles sont regroupées pour garder une vision claire du troupeau et agir au bon moment.
+                Une vue centralisée de chaque membre...
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm">
               <h3 className="font-semibold">🏠 Cellules Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Organise les groupes, les responsables et les présences hebdomadaires. Donne une vision vivante de la 
-              dynamique des cellules et aide à maintenir la connexion et la croissance.
+                Organise les groupes, les responsables...
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm">
               <h3 className="font-semibold">🧭 Conseillers Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Offre un suivi personnalisé par responsable. Chaque conseiller peut accompagner, noter, discerner les 
-                besoins et intervenir de manière ciblée sur les membres qui lui sont confiés.
+                Suivi personnalisé par responsable...
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm">
               <h3 className="font-semibold">✝️ Évangélisation Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Regroupe les nouvelles âmes, les décisions, les suivis et les baptêmes. Permet de ne laisser 
-              aucun contact sans accompagnement et d’assurer une progression spirituelle structurée.
+                Suivi des nouvelles âmes...
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm">
               <h3 className="font-semibold">⚙️ Admin Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Analyse toutes les données du ministère pour en ressortir des indicateurs clairs. Aide à 
-                prendre des décisions stratégiques basées sur des faits concrets et mesurables.
+                Analyse des données du ministère...
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm">
               <h3 className="font-semibold">📊 Rapports Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Analyse toutes les données du ministère pour en ressortir des indicateurs clairs. Aide à 
-                prendre des décisions stratégiques basées sur des faits concrets et mesurables.
+                Indicateurs clairs et décisions...
               </p>
             </div>
 
@@ -123,7 +119,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* MODULE DETAIL (plus profond = envie d’utiliser) */}
+      {/* MODULE DETAIL */}
       <section className="py-24 px-6">
         <div className="max-w-6xl mx-auto space-y-20">
 
@@ -132,11 +128,16 @@ export default function HomePage() {
               <h3 className="text-3xl font-bold">👥 Chaque âme compte</h3>
               <p className="text-gray-600">
                 Vous voyez qui est actif, absent, en croissance ou en danger spirituel.
-                Plus aucun membre n’est invisible.
               </p>
             </div>
             <div className="lg:w-1/2">
-              <Image src="/membres-hub.png" width={600} height={400} alt="membres" className="rounded-2xl shadow-lg"/>
+              <Image
+                src="/membres-hub.png"
+                width={600}
+                height={400}
+                alt="membres"
+                className="rounded-2xl shadow-lg"
+              />
             </div>
           </div>
 
@@ -144,7 +145,7 @@ export default function HomePage() {
             <div className="lg:w-1/2 space-y-4">
               <h3 className="text-3xl font-bold">🏠 Une église structurée</h3>
               <p className="text-gray-600">
-                Les cellules permettent un suivi proche et humain, avec des responsables identifiés.
+                Les cellules permettent un suivi proche et humain.
               </p>
             </div>
             <div className="lg:w-1/2">
@@ -157,7 +158,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* TESTIMONIALS COMPONENT */}
+      {/* TESTIMONIALS */}
       <TestimonialsSection />
 
       {/* CTA */}
@@ -175,12 +176,12 @@ export default function HomePage() {
       </section>
 
       <Footer />
-            <div className="h-24 bg-gradient-to-t from-[#333699] to-white" />
 
-      {/* BOTTOM BRAND BAND */}
+      {/* 🌫 BOTTOM GRADIENT TRANSITION */}
+      <div className="h-24 bg-gradient-to-t from-[#333699] to-white" />
+
+      {/* 🔵 BOTTOM BRAND BAR */}
       <div className="h-6 bg-[#333699]" />
     </div>
-    </div> 
-  
   );
 }

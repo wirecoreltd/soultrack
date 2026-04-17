@@ -28,6 +28,16 @@ export default function PublicHeader() {
           <span className="ml-3 text-2xl font-bold text-gray-800">SoulTrack</span>
         </div>
 
+  <div className="flex gap-2">
+    <button onClick={() => changeLanguage('fr')}>
+      🇫🇷 FR
+    </button>
+
+    <button onClick={() => changeLanguage('en')}>
+      🇬🇧 EN
+    </button>
+  </div>
+
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">
           {navItems.map((item) => (

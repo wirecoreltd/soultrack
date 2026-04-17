@@ -180,8 +180,7 @@ export default function HomePage() {
       {/* BOTTOM BRAND BAND */}
       <div className="h-6 bg-[#333699]" />
     </div>
-    </div>
-   </div>
+    </div> 
   
   );
 }

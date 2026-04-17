@@ -132,9 +132,7 @@ export default function HomePage() {
               </p>
             </div>
             <div className="lg:w-1/2 mt-6 lg:mt-0">
-              <div className="bg-gray-100 rounded-2xl h-64 flex items-center justify-center">
-                <span className="text-gray-400">Interface Membres</span>
-              </div>
+              <Image src="/membres.png" alt="Interface Membres SoulTrack" width={600} height={400} className="rounded-2xl shadow-lg border"/>
             </div>
           </div>
 

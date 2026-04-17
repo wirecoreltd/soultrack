@@ -70,42 +70,48 @@ export default function HomePage() {
             <div className="bg-white p-6 rounded-2xl shadow-sm">
               <h3 className="font-semibold">👥 Membres Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Suivi individuel de chaque âme, état spirituel, historique et progression.
+                Une vue centralisée de chaque membre pour suivre son parcours, son engagement et son évolution. 
+              Toutes les informations essentielles sont regroupées pour garder une vision claire du troupeau et agir au bon moment.
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm">
               <h3 className="font-semibold">🏠 Cellules Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Organisation des groupes de maison et suivi de la croissance communautaire.
+                Organise les groupes, les responsables et les présences hebdomadaires. Donne une vision vivante de la 
+              dynamique des cellules et aide à maintenir la connexion et la croissance.
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm">
               <h3 className="font-semibold">🧭 Conseillers Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Attribution et suivi des responsables pour un accompagnement spirituel réel.
+                Offre un suivi personnalisé par responsable. Chaque conseiller peut accompagner, noter, discerner les 
+                besoins et intervenir de manière ciblée sur les membres qui lui sont confiés.
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm">
               <h3 className="font-semibold">✝️ Évangélisation Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Nouvelles âmes, conversions et baptêmes suivis sans perte d’information.
+                Regroupe les nouvelles âmes, les décisions, les suivis et les baptêmes. Permet de ne laisser 
+              aucun contact sans accompagnement et d’assurer une progression spirituelle structurée.
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm">
-              <h3 className="font-semibold">🔗 Église Hub</h3>
+              <h3 className="font-semibold">⚙️ Admin Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Structure globale, branches et organisation multi-niveaux.
+                Analyse toutes les données du ministère pour en ressortir des indicateurs clairs. Aide à 
+                prendre des décisions stratégiques basées sur des faits concrets et mesurables.
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm">
               <h3 className="font-semibold">📊 Rapports Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Vision stratégique complète pour piloter l’église avec clarté.
+                Analyse toutes les données du ministère pour en ressortir des indicateurs clairs. Aide à 
+                prendre des décisions stratégiques basées sur des faits concrets et mesurables.
               </p>
             </div>
 

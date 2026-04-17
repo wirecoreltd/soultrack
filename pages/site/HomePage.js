@@ -10,7 +10,13 @@ export default function HomePage() {
   const router = useRouter();
 
   return (
-    <div className="bg-white text-gray-900">
+    <div className="relative text-gray-900">
+
+      {/* TOP BRAND BAND */}
+      <div className="h-6 bg-[#333699]" />
+
+      {/* TOP GRADIENT TRANSITION */}
+      <div className="h-24 bg-gradient-to-b from-[#333699] to-white" />
 
       <PublicHeader />
 
@@ -19,14 +25,12 @@ export default function HomePage() {
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.15),transparent)]" />
 
         <div className="relative max-w-5xl mx-auto text-center px-6 space-y-8">
-
           <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
             Voir chaque âme. Comprendre chaque mouvement. Guider chaque vie.
           </h1>
 
           <p className="text-lg md:text-xl text-white/80 leading-relaxed">
-            SoulTrack est un système complet de pilotage pastoral qui connecte votre église :
-            membres, cellules, conseillers, évangélisation, baptêmes et structure globale.
+            SoulTrack est un système complet de pilotage pastoral...
           </p>
 
           <p className="text-white/70 italic">
@@ -171,6 +175,13 @@ export default function HomePage() {
       </section>
 
       <Footer />
+            <div className="h-24 bg-gradient-to-t from-[#333699] to-white" />
+
+      {/* BOTTOM BRAND BAND */}
+      <div className="h-6 bg-[#333699]" />
     </div>
+    </div>
+   </div>
+  
   );
 }

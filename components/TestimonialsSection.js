@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function TestimonialsSection() {
   const testimonials = [
@@ -37,65 +37,49 @@ export default function TestimonialsSection() {
     },
   ];
 
-  const containerRef = useRef(null);
   const [index, setIndex] = useState(0);
 
-  const CARD_WIDTH = 300; // largeur + gap
-
-  // AUTO MOVE GAUCHE → DROITE
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => prev + 1);
+      setIndex((prev) => (prev + 1) % testimonials.length);
     }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // RESET SANS SAUT (loop infini propre)
-  useEffect(() => {
-    if (index >= testimonials.length) {
-      setTimeout(() => {
-        containerRef.current.style.transition = "none";
-        setIndex(0);
-
-        setTimeout(() => {
-          containerRef.current.style.transition = "transform 0.7s ease-in-out";
-        }, 50);
-      }, 700);
+  // 🔥 4 éléments visibles propres (sans coupe)
+  const getVisible = () => {
+    const res = [];
+    for (let i = 0; i < 4; i++) {
+      res.push(testimonials[(index + i) % testimonials.length]);
     }
-  }, [index]);
+    return res;
+  };
+
+  const visible = getVisible();
 
   return (
-    <section className="py-24 bg-gray-50 overflow-hidden">
+    <section className="py-24 bg-gray-50">
       <div className="max-w-6xl mx-auto text-center mb-12">
         <h2 className="text-3xl font-bold">
           Ce que disent les responsables
         </h2>
       </div>
 
-      {/* VIEWPORT */}
-      <div className="overflow-hidden">
-        
-        {/* TRACK */}
-        <div
-          ref={containerRef}
-          className="flex gap-6 transition-transform duration-700 ease-in-out"
-          style={{
-            transform: `translateX(-${index * CARD_WIDTH}px)`,
-          }}
-        >
+      {/* VIEWPORT FIXE */}
+      <div className="max-w-6xl mx-auto overflow-hidden px-4">
 
-          {/* CLONE POUR FLUIDITÉ */}
-          {[...testimonials, ...testimonials].map((t, i) => {
+        {/* GRID 4 COLONNES STRICTES */}
+        <div className="grid grid-cols-4 gap-6">
 
-            // 👉 carte centrale (4 visibles → 2e position = focus)
-            const isFocus = i % testimonials.length === index % testimonials.length + 1;
+          {visible.map((t, i) => {
+            const isCenter = i === 1; // carte focus (2e position)
 
             return (
               <div
                 key={i}
-                className={`flex-shrink-0 w-[260px] bg-white p-6 rounded-2xl shadow-sm transition-all duration-500
-                  ${isFocus ? "scale-110 shadow-xl z-10" : "scale-95 opacity-80"}
+                className={`bg-white p-6 rounded-2xl shadow-sm transition-all duration-500
+                  ${isCenter ? "scale-110 shadow-xl z-10" : "scale-95 opacity-80"}
                 `}
               >
                 <Image

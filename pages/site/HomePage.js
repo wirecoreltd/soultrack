@@ -12,17 +12,13 @@ export default function HomePage() {
   return (
     <div className="relative text-gray-900">
 
-      {/* 🔵 TOP BRAND BAR */}
-      <div className="h-6 bg-[#333699]" />
-
-      {/* 🌫 TOP GRADIENT TRANSITION */}
-      <div className="h-24 bg-gradient-to-b from-[#333699] to-white" />
-
       <PublicHeader />
 
-      {/* HERO */}
-      <section className="relative pt-28 pb-28 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white overflow-hidden">
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.15),transparent)]" />
+      {/* 🔵 HERO = SOLID BLEU ÉTENDU */}
+      <section className="relative pt-28 pb-40 bg-[#333699] text-white overflow-hidden">
+
+        {/* texture légère */}
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.2),transparent)]" />
 
         <div className="relative max-w-5xl mx-auto text-center px-6 space-y-8">
 
@@ -39,10 +35,11 @@ export default function HomePage() {
             Une église ne se gère pas. Elle se veille.
           </p>
 
+          {/* boutons */}
           <div className="flex flex-col md:flex-row gap-4 justify-center pt-4">
             <button
               onClick={() => router.push("/SignupEglise")}
-              className="bg-white text-blue-900 px-8 py-3 rounded-xl font-semibold hover:scale-105 transition"
+              className="bg-white text-[#333699] px-8 py-3 rounded-xl font-semibold hover:scale-105 transition"
             >
               Créer mon église
             </button>
@@ -56,10 +53,13 @@ export default function HomePage() {
           </div>
 
         </div>
+
+        {/* 🌫 TRANSITION VERS BLANC */}
+        <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-white to-transparent" />
       </section>
 
       {/* GLOBAL VISION */}
-      <section className="py-24 px-6 bg-gray-50">
+      <section className="py-24 px-6 bg-white">
         <div className="max-w-6xl mx-auto text-center space-y-12">
 
           <h2 className="text-3xl font-bold">
@@ -76,42 +76,21 @@ export default function HomePage() {
             <div className="bg-white p-6 rounded-2xl shadow-sm">
               <h3 className="font-semibold">👥 Membres Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Une vue centralisée de chaque membre...
+                Vue centralisée de chaque membre.
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm">
               <h3 className="font-semibold">🏠 Cellules Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Organise les groupes, les responsables...
+                Organisation des groupes.
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-sm">
               <h3 className="font-semibold">🧭 Conseillers Hub</h3>
               <p className="text-sm text-gray-600 mt-2">
-                Suivi personnalisé par responsable...
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
-              <h3 className="font-semibold">✝️ Évangélisation Hub</h3>
-              <p className="text-sm text-gray-600 mt-2">
-                Suivi des nouvelles âmes...
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
-              <h3 className="font-semibold">⚙️ Admin Hub</h3>
-              <p className="text-sm text-gray-600 mt-2">
-                Analyse des données du ministère...
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
-              <h3 className="font-semibold">📊 Rapports Hub</h3>
-              <p className="text-sm text-gray-600 mt-2">
-                Indicateurs clairs et décisions...
+                Suivi personnalisé.
               </p>
             </div>
 
@@ -141,24 +120,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="lg:flex lg:flex-row-reverse lg:items-center lg:gap-14">
-            <div className="lg:w-1/2 space-y-4">
-              <h3 className="text-3xl font-bold">🏠 Une église structurée</h3>
-              <p className="text-gray-600">
-                Les cellules permettent un suivi proche et humain.
-              </p>
-            </div>
-            <div className="lg:w-1/2">
-              <div className="bg-gray-100 rounded-2xl h-64 flex items-center justify-center">
-                Interface Cellules
-              </div>
-            </div>
-          </div>
-
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
       <TestimonialsSection />
 
       {/* CTA */}
@@ -176,12 +140,6 @@ export default function HomePage() {
       </section>
 
       <Footer />
-
-      {/* 🌫 BOTTOM GRADIENT TRANSITION */}
-      <div className="h-24 bg-gradient-to-t from-[#333699] to-white" />
-
-      {/* 🔵 BOTTOM BRAND BAR */}
-      <div className="h-6 bg-[#333699]" />
     </div>
   );
 }

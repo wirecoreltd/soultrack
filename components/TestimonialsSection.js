@@ -1,47 +1,23 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function TestimonialsSection() {
   const testimonials = [
-    {
-      name: "Past. Jean",
-      church: "Église Bethel",
-      message: "Avant SoulTrack, nous perdions la visibilité sur plusieurs membres.",
-      avatar: "/avatar1.png",
-    },
-    {
-      name: "Past. Marie",
-      church: "Église Grâce",
-      message: "Je peux enfin voir la réalité spirituelle de mon église.",
-      avatar: "/avatar2.png",
-    },
-    {
-      name: "Past. Paul",
-      church: "Église Agape",
-      message: "Excellent outil pour structurer notre ministère.",
-      avatar: "/avatar3.png",
-    },
-    {
-      name: "Bishop John",
-      church: "Potter House",
-      message: "Wonderful system for church management.",
-      avatar: "/avatar2.png",
-    },
-    {
-      name: "Samuel",
-      church: "Église Lumière",
-      message: "C’est devenu notre tableau de bord pastoral.",
-      avatar: "/avatar3.png",
-    },
+    { name: "Past. Jean", church: "Église Bethel", message: "Avant SoulTrack, nous perdions la visibilité sur plusieurs membres.", avatar: "/avatar1.png" },
+    { name: "Past. Marie", church: "Église Grâce", message: "Je peux enfin voir la réalité spirituelle de mon église.", avatar: "/avatar2.png" },
+    { name: "Past. Paul", church: "Église Agape", message: "Excellent outil pour structurer notre ministère.", avatar: "/avatar3.png" },
+    { name: "Bishop John", church: "Potter House", message: "Wonderful system for church management.", avatar: "/avatar2.png" },
+    { name: "Samuel", church: "Église Lumière", message: "C’est devenu notre tableau de bord pastoral.", avatar: "/avatar3.png" },
   ];
 
+  const CARD_WIDTH = 300;
+
   const [index, setIndex] = useState(0);
+  const max = testimonials.length;
 
-  const CARD_WIDTH = 300; // taille carte + gap
-
-  // 👉 AUTO (GAUCHE → DROITE VISUELLE)
+  // 👉 déplacement continu vers la droite VISUELLE (sens constant)
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => prev + 1);
@@ -50,12 +26,15 @@ export default function TestimonialsSection() {
     return () => clearInterval(interval);
   }, []);
 
-  const max = testimonials.length;
+  // 👉 reset invisible pour éviter overflow infini DOM
+  useEffect(() => {
+    if (index > max) {
+      setTimeout(() => {
+        setIndex(0);
+      }, 700); // attend fin transition
+    }
+  }, [index]);
 
-  // 👉 boucle infinie propre
-  const safeIndex = index % max;
-
-  // 👉 duplication pour continuité fluide
   const looped = [...testimonials, ...testimonials];
 
   return (
@@ -66,26 +45,21 @@ export default function TestimonialsSection() {
         </h2>
       </div>
 
-      {/* VIEWPORT */}
       <div className="relative max-w-6xl mx-auto overflow-hidden px-10">
-
-        {/* TRACK */}
         <div
           className="flex gap-6 transition-transform duration-700 ease-in-out"
           style={{
-            transform: `translateX(-${safeIndex * CARD_WIDTH}px)`,
+            transform: `translateX(-${index * CARD_WIDTH}px)`,
           }}
         >
-
           {looped.map((t, i) => {
-            const isCenter = i === safeIndex + 1;
+            const isCenter = i === index + 1;
 
             return (
               <div
                 key={i}
                 className={`flex-shrink-0 w-[260px] bg-white p-6 rounded-2xl shadow-sm transition-all duration-500
-                  ${isCenter ? "scale-110 shadow-xl z-10" : "scale-95 opacity-80"}
-                `}
+                ${isCenter ? "scale-110 shadow-xl z-10" : "scale-95 opacity-80"}`}
               >
                 <Image
                   src={t.avatar}
@@ -106,7 +80,6 @@ export default function TestimonialsSection() {
               </div>
             );
           })}
-
         </div>
       </div>
     </section>

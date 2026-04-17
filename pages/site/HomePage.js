@@ -132,7 +132,7 @@ export default function HomePage() {
               </p>
             </div>
             <div className="lg:w-1/2 mt-6 lg:mt-0">
-              <Image src="/membres.png" alt="Interface Membres SoulTrack" width={600} height={400} className="rounded-2xl shadow-lg border"/>
+              <Image src="/membres-hub.png" alt="Interface Membres SoulTrack" width={600} height={400} className="rounded-2xl shadow-lg border"/>
             </div>
           </div>
 

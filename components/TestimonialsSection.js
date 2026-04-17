@@ -19,6 +19,21 @@ export default function TestimonialsSection() {
       avatar: "/avatar2.png",
     },
     {
+      name: "Past. Jean",
+      church: "Église Agape",
+      message:
+        "Execellent !.",
+      avatar: "/avatar2.png",
+    },
+     {
+      name: "Bishop Td Jakes",
+      church: "Poter House",
+      message:
+        "Wonderful, Brillant.",
+      avatar: "/avatar2.png",
+    },
+
+    {
       name: "Responsable Samuel",
       church: "Église Lumière",
       message:

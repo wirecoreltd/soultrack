@@ -5,37 +5,77 @@ import { useEffect, useRef, useState } from "react";
 
 export default function TestimonialsSection() {
   const testimonials = [
-    { name: "Past. Jean", church: "Église Bethel", message: "Avant SoulTrack, nous perdions la visibilité sur plusieurs membres.", avatar: "/avatar1.png" },
-    { name: "Past. Marie", church: "Église Grâce", message: "Je peux enfin voir la réalité spirituelle de mon église.", avatar: "/avatar2.png" },
-    { name: "Past. Paul", church: "Église Agape", message: "Excellent outil pour structurer notre ministère.", avatar: "/avatar3.png" },
-    { name: "Bishop John", church: "Potter House", message: "Wonderful system for church management.", avatar: "/avatar2.png" },
-    { name: "Samuel", church: "Église Lumière", message: "C’est devenu notre tableau de bord pastoral.", avatar: "/avatar3.png" },
+    {
+      name: "Past. Jean",
+      church: "Église Bethel",
+      message: "Avant SoulTrack, nous perdions la visibilité sur plusieurs membres.",
+      avatar: "/avatar1.png",
+    },
+    {
+      name: "Past. Marie",
+      church: "Église Grâce",
+      message: "Je peux enfin voir la réalité spirituelle de mon église.",
+      avatar: "/avatar2.png",
+    },
+    {
+      name: "Past. Paul",
+      church: "Église Agape",
+      message: "Excellent outil pour structurer notre ministère.",
+      avatar: "/avatar3.png",
+    },
+    {
+      name: "Bishop John",
+      church: "Potter House",
+      message: "Wonderful system for church management.",
+      avatar: "/avatar2.png",
+    },
+    {
+      name: "Samuel",
+      church: "Église Lumière",
+      message: "C’est devenu notre tableau de bord pastoral.",
+      avatar: "/avatar3.png",
+    },
   ];
 
   const CARD_WIDTH = 300;
+  const SPEED = 1; // 1 step = 1 card
 
   const [index, setIndex] = useState(0);
+  const trackRef = useRef(null);
+
+  const looped = [...testimonials, ...testimonials];
   const max = testimonials.length;
 
-  // 👉 déplacement continu vers la droite VISUELLE (sens constant)
+  // 👉 mouvement automatique toujours dans le même sens (→ visuel fluide)
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => prev + 1);
+      setIndex((prev) => prev + SPEED);
     }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // 👉 reset invisible pour éviter overflow infini DOM
+  // 👉 reset invisible (clé du carousel infini parfait)
   useEffect(() => {
-    if (index > max) {
+    if (index >= max) {
+      // attendre fin animation
       setTimeout(() => {
+        if (trackRef.current) {
+          trackRef.current.style.transition = "none";
+        }
+
         setIndex(0);
-      }, 700); // attend fin transition
+
+        // réactiver transition après reset
+        requestAnimationFrame(() => {
+          if (trackRef.current) {
+            trackRef.current.style.transition =
+              "transform 700ms ease-in-out";
+          }
+        });
+      }, 700);
     }
   }, [index]);
-
-  const looped = [...testimonials, ...testimonials];
 
   return (
     <section className="py-24 bg-gray-50 overflow-hidden">
@@ -47,9 +87,11 @@ export default function TestimonialsSection() {
 
       <div className="relative max-w-6xl mx-auto overflow-hidden px-10">
         <div
-          className="flex gap-6 transition-transform duration-700 ease-in-out"
+          ref={trackRef}
+          className="flex gap-6"
           style={{
             transform: `translateX(-${index * CARD_WIDTH}px)`,
+            transition: "transform 700ms ease-in-out",
           }}
         >
           {looped.map((t, i) => {

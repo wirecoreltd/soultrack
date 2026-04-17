@@ -13,10 +13,10 @@ export default function TestimonialsSection() {
   ];
 
   const [index, setIndex] = useState(0);
-
   const max = testimonials.length;
 
-  // AUTO ROTATION → toujours vers la droite
+  const VISIBLE = 3;
+
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % max);
@@ -25,72 +25,82 @@ export default function TestimonialsSection() {
     return () => clearInterval(interval);
   }, []);
 
-  const prev = () => setIndex((prev) => (prev - 1 + max) % max);
   const next = () => setIndex((prev) => (prev + 1) % max);
+  const prev = () => setIndex((prev) => (prev - 1 + max) % max);
 
-  // 👉 récupérer 3 cartes autour de l’index
-  const getItem = (i) => testimonials[(i + max) % max];
+  // duplication pour effet infini fluide
+  const looped = [...testimonials, ...testimonials];
 
-  const left = getItem(index - 1);
-  const center = getItem(index);
-  const right = getItem(index + 1);
-
-  const Card = ({ item, isCenter }) => (
-    <div
-      className={`transition-all duration-700 ease-in-out transform
-        ${isCenter ? "scale-110 z-10" : "scale-95 opacity-70"}
-      `}
-    >
-      <div className="bg-white p-6 rounded-2xl shadow-md w-[280px]">
-        <Image
-          src={item.avatar}
-          alt={item.name}
-          width={60}
-          height={60}
-          className="rounded-full mx-auto mb-4"
-        />
-
-        <p className="text-gray-600 italic text-sm mb-4 text-center">
-          "{item.message}"
-        </p>
-
-        <div className="font-semibold text-center">{item.name}</div>
-        <div className="text-xs text-gray-500 text-center">
-          {item.church}
-        </div>
-      </div>
-    </div>
-  );
+  const CARD_PERCENT = 100 / VISIBLE;
 
   return (
-    <section className="py-24 bg-gray-50">
+    <section className="py-24 bg-gray-50 overflow-hidden">
       <div className="max-w-6xl mx-auto text-center mb-12">
         <h2 className="text-3xl font-bold">
           Ce que disent les responsables
         </h2>
       </div>
 
-      <div className="relative flex items-center justify-center gap-6">
+      {/* WRAPPER */}
+      <div className="relative max-w-5xl mx-auto px-10">
 
-        {/* LEFT */}
+        {/* VIEWPORT */}
+        <div className="overflow-hidden">
+          <div
+            className="flex transition-transform duration-700 ease-in-out"
+            style={{
+              transform: `translateX(-${index * CARD_PERCENT}%)`,
+              width: `${(looped.length / VISIBLE) * 100}%`,
+            }}
+          >
+            {looped.map((t, i) => {
+              const isCenter = i === index + 1;
+
+              return (
+                <div
+                  key={i}
+                  style={{ width: `${CARD_PERCENT}%` }}
+                  className="px-3 flex justify-center"
+                >
+                  <div
+                    className={`bg-white p-6 rounded-2xl shadow-md w-[260px] transition-all duration-500
+                      ${isCenter ? "scale-110" : "scale-95 opacity-70"}
+                    `}
+                  >
+                    <Image
+                      src={t.avatar}
+                      alt={t.name}
+                      width={60}
+                      height={60}
+                      className="rounded-full mx-auto mb-4"
+                    />
+
+                    <p className="text-gray-600 italic text-sm mb-4 text-center">
+                      "{t.message}"
+                    </p>
+
+                    <div className="font-semibold text-center">{t.name}</div>
+                    <div className="text-xs text-gray-500 text-center">
+                      {t.church}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 🔥 FLÈCHES PLUS PROCHE DES CARTES */}
         <button
           onClick={prev}
-          className="absolute left-4 bg-white shadow-lg w-10 h-10 rounded-full flex items-center justify-center"
+          className="absolute left-2 top-1/2 -translate-y-1/2 bg-white shadow-lg w-10 h-10 rounded-full flex items-center justify-center z-20"
         >
           ←
         </button>
 
-        {/* 3 CARDS FIXES */}
-        <div className="flex items-center gap-6">
-          <Card item={left} isCenter={false} />
-          <Card item={center} isCenter={true} />
-          <Card item={right} isCenter={false} />
-        </div>
-
-        {/* RIGHT */}
         <button
           onClick={next}
-          className="absolute right-4 bg-white shadow-lg w-10 h-10 rounded-full flex items-center justify-center"
+          className="absolute right-2 top-1/2 -translate-y-1/2 bg-white shadow-lg w-10 h-10 rounded-full flex items-center justify-center z-20"
         >
           →
         </button>

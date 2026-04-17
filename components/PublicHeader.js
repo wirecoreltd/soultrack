@@ -16,10 +16,21 @@ export default function PublicHeader() {
     { label: "Contact", path: "/contact" },
   ];
 
-  const changeLanguage = (locale) => {
-  const path = window.location.pathname;
-  const segments = path.split('/');
+const changeLanguage = (locale) => {
+  localStorage.setItem("lang", locale);
+  window.location.reload();
+};
 
+  const lang = typeof window !== "undefined" ? localStorage.getItem("lang") : "fr";
+
+const navItems = [
+  { label: lang === "en" ? "Home" : "Accueil", path: "/site/HomePage" },
+  { label: lang === "en" ? "Process" : "Process", path: "/CommentCaMarche" },
+  { label: lang === "en" ? "About" : "À propos", path: "/about" },
+  { label: lang === "en" ? "Pricing" : "Tarifs", path: "/pricing" },
+  { label: lang === "en" ? "Contact" : "Contact", path: "/contact" },
+];
+  
   // remplace ou ajoute la langue en 1er segment
   segments[1] = locale;
 

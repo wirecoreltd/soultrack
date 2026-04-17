@@ -10,15 +10,14 @@ export default function HomePage() {
   const router = useRouter();
 
   return (
-    <div className="relative text-gray-900">
+    <div className="min-h-screen bg-[#333699] text-white">
 
       <PublicHeader />
 
-      {/* 🔵 HERO = SOLID BLEU ÉTENDU */}
-      <section className="relative pt-28 pb-40 bg-[#333699] text-white overflow-hidden">
+      {/* HERO */}
+      <section className="relative pt-28 pb-28 overflow-hidden">
 
-        {/* texture légère */}
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.2),transparent)]" />
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.25),transparent)]" />
 
         <div className="relative max-w-5xl mx-auto text-center px-6 space-y-8">
 
@@ -35,7 +34,6 @@ export default function HomePage() {
             Une église ne se gère pas. Elle se veille.
           </p>
 
-          {/* boutons */}
           <div className="flex flex-col md:flex-row gap-4 justify-center pt-4">
             <button
               onClick={() => router.push("/SignupEglise")}
@@ -53,43 +51,40 @@ export default function HomePage() {
           </div>
 
         </div>
-
-        {/* 🌫 TRANSITION VERS BLANC */}
-        <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-white to-transparent" />
       </section>
 
       {/* GLOBAL VISION */}
-      <section className="py-24 px-6 bg-white">
+      <section className="py-24 px-6">
         <div className="max-w-6xl mx-auto text-center space-y-12">
 
           <h2 className="text-3xl font-bold">
             Une vision complète du troupeau, en un seul endroit
           </h2>
 
-          <p className="text-gray-600 max-w-3xl mx-auto">
+          <p className="text-white/80 max-w-3xl mx-auto">
             SoulTrack relie toutes les dimensions de votre ministère pour transformer des données dispersées
             en une vision claire et actionnable.
           </p>
 
           <div className="grid md:grid-cols-3 gap-8">
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
+            <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
               <h3 className="font-semibold">👥 Membres Hub</h3>
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-sm text-white/70 mt-2">
                 Vue centralisée de chaque membre.
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
+            <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
               <h3 className="font-semibold">🏠 Cellules Hub</h3>
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-sm text-white/70 mt-2">
                 Organisation des groupes.
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
+            <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
               <h3 className="font-semibold">🧭 Conseillers Hub</h3>
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-sm text-white/70 mt-2">
                 Suivi personnalisé.
               </p>
             </div>
@@ -105,10 +100,11 @@ export default function HomePage() {
           <div className="lg:flex lg:items-center lg:gap-14">
             <div className="lg:w-1/2 space-y-4">
               <h3 className="text-3xl font-bold">👥 Chaque âme compte</h3>
-              <p className="text-gray-600">
+              <p className="text-white/80">
                 Vous voyez qui est actif, absent, en croissance ou en danger spirituel.
               </p>
             </div>
+
             <div className="lg:w-1/2">
               <Image
                 src="/membres-hub.png"
@@ -123,17 +119,18 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* TESTIMONIALS */}
       <TestimonialsSection />
 
       {/* CTA */}
-      <section className="py-24 px-6 text-center bg-blue-900 text-white">
+      <section className="py-24 px-6 text-center">
         <h2 className="text-3xl font-bold mb-6">
           Commencez à voir votre église autrement
         </h2>
 
         <button
           onClick={() => router.push("/SignupEglise")}
-          className="bg-white text-blue-900 px-10 py-4 rounded-xl font-semibold hover:scale-105 transition"
+          className="bg-white text-[#333699] px-10 py-4 rounded-xl font-semibold hover:scale-105 transition"
         >
           Démarrer SoulTrack
         </button>

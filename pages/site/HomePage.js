@@ -52,7 +52,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* GLOBAL VISION */}
+      {/* GLOBAL VISION - CARDS AMÉLIORÉES */}
       <section className="py-24 px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto text-center space-y-12">
 
@@ -61,51 +61,50 @@ export default function HomePage() {
           </h2>
 
           <p className="text-gray-600 max-w-3xl mx-auto">
-            SoulTrack relie toutes les dimensions de votre ministère pour transformer des données dispersées
-            en une vision claire et actionnable.
+            SoulTrack transforme votre gestion pastorale en un système structuré, clair et actionnable.
           </p>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-10">
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
-              <h3 className="font-semibold">👥 Membres Hub</h3>
-              <p className="text-sm text-gray-600 mt-2">
-                Suivi individuel de chaque âme, état spirituel, historique et progression.
+            <div className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition text-left">
+              <h3 className="font-bold text-lg mb-2">👥 Membres Hub</h3>
+              <p className="text-sm text-gray-600">
+                Suivi complet de chaque membre : activité, présence, croissance spirituelle, historique, alertes et accompagnement personnalisé.
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
-              <h3 className="font-semibold">🏠 Cellules Hub</h3>
-              <p className="text-sm text-gray-600 mt-2">
-                Organisation des groupes de maison et suivi de la croissance communautaire.
+            <div className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition text-left">
+              <h3 className="font-bold text-lg mb-2">🏠 Cellules Hub</h3>
+              <p className="text-sm text-gray-600">
+                Organisation des groupes de maison avec suivi des responsables, des réunions et de la croissance communautaire.
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
-              <h3 className="font-semibold">🧭 Conseillers Hub</h3>
-              <p className="text-sm text-gray-600 mt-2">
-                Attribution et suivi des responsables pour un accompagnement spirituel réel.
+            <div className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition text-left">
+              <h3 className="font-bold text-lg mb-2">🧭 Conseillers Hub</h3>
+              <p className="text-sm text-gray-600">
+                Attribution intelligente des responsables avec suivi des visites, accompagnement et impact spirituel.
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
-              <h3 className="font-semibold">✝️ Évangélisation Hub</h3>
-              <p className="text-sm text-gray-600 mt-2">
-                Nouvelles âmes, conversions et baptêmes suivis sans perte d’information.
+            <div className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition text-left">
+              <h3 className="font-bold text-lg mb-2">✝️ Évangélisation Hub</h3>
+              <p className="text-sm text-gray-600">
+                Suivi des nouvelles âmes, décisions, baptêmes et parcours spirituel sans perte d’information.
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
-              <h3 className="font-semibold">🔗 Église Hub</h3>
-              <p className="text-sm text-gray-600 mt-2">
-                Structure globale, branches et organisation multi-niveaux.
+            <div className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition text-left">
+              <h3 className="font-bold text-lg mb-2">🔗 Église Hub</h3>
+              <p className="text-sm text-gray-600">
+                Vision globale de l’église : structure, départements, branches et organisation hiérarchique.
               </p>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
-              <h3 className="font-semibold">📊 Rapports Hub</h3>
-              <p className="text-sm text-gray-600 mt-2">
-                Vision stratégique complète pour piloter l’église avec clarté.
+            <div className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition text-left">
+              <h3 className="font-bold text-lg mb-2">📊 Rapports Hub</h3>
+              <p className="text-sm text-gray-600">
+                Analyse complète pour prendre des décisions stratégiques basées sur des données réelles.
               </p>
             </div>
 
@@ -113,42 +112,35 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* MODULE DETAIL (plus profond = envie d’utiliser) */}
-      <section className="py-24 px-6">
-        <div className="max-w-6xl mx-auto space-y-20">
+      {/* TESTIMONIALS - SCROLL HORIZONTAL */}
+      <section className="py-24 px-6 bg-white">
+        <div className="max-w-6xl mx-auto space-y-10">
 
-          <div className="lg:flex lg:items-center lg:gap-14">
-            <div className="lg:w-1/2 space-y-4">
-              <h3 className="text-3xl font-bold">👥 Chaque âme compte</h3>
-              <p className="text-gray-600">
-                Vous voyez qui est actif, absent, en croissance ou en danger spirituel.
-                Plus aucun membre n’est invisible.
-              </p>
+          <h2 className="text-3xl font-bold text-center">
+            Témoignages
+          </h2>
+
+          <div className="flex gap-6 overflow-x-auto pb-4 scroll-smooth">
+
+            <div className="min-w-[300px] bg-gray-50 p-6 rounded-2xl shadow">
+              “Un outil incroyable pour structurer notre église.”
             </div>
-            <div className="lg:w-1/2">
-              <Image src="/membres-hub.png" width={600} height={400} alt="membres" className="rounded-2xl shadow-lg"/>
+
+            <div className="min-w-[300px] bg-gray-50 p-6 rounded-2xl shadow">
+              “On ne perd plus aucune âme dans le suivi.”
             </div>
+
+            <div className="min-w-[300px] bg-gray-50 p-6 rounded-2xl shadow">
+              “Tout est clair, simple et puissant.”
+            </div>
+
+            <div className="min-w-[300px] bg-gray-50 p-6 rounded-2xl shadow">
+              “Nos cellules ont enfin une vraie structure.”
+            </div>
+
           </div>
-
-          <div className="lg:flex lg:flex-row-reverse lg:items-center lg:gap-14">
-            <div className="lg:w-1/2 space-y-4">
-              <h3 className="text-3xl font-bold">🏠 Une église structurée</h3>
-              <p className="text-gray-600">
-                Les cellules permettent un suivi proche et humain, avec des responsables identifiés.
-              </p>
-            </div>
-            <div className="lg:w-1/2">
-              <div className="bg-gray-100 rounded-2xl h-64 flex items-center justify-center">
-                Interface Cellules
-              </div>
-            </div>
-          </div>
-
         </div>
       </section>
-
-      {/* TESTIMONIALS COMPONENT */}
-      <TestimonialsSection />
 
       {/* CTA */}
       <section className="py-24 px-6 text-center bg-blue-900 text-white">

@@ -5,45 +5,20 @@ import { useEffect, useState } from "react";
 
 export default function TestimonialsSection() {
   const testimonials = [
-    {
-      name: "Past. Jean",
-      church: "Église Bethel",
-      message: "Avant SoulTrack, nous perdions la visibilité sur plusieurs membres.",
-      avatar: "/avatar1.png",
-    },
-    {
-      name: "Past. Marie",
-      church: "Église Grâce",
-      message: "Je peux enfin voir la réalité spirituelle de mon église.",
-      avatar: "/avatar2.png",
-    },
-    {
-      name: "Past. Paul",
-      church: "Église Agape",
-      message: "Excellent outil pour structurer notre ministère.",
-      avatar: "/avatar3.png",
-    },
-    {
-      name: "Bishop John",
-      church: "Potter House",
-      message: "Wonderful system for church management.",
-      avatar: "/avatar2.png",
-    },
-    {
-      name: "Samuel",
-      church: "Église Lumière",
-      message: "C’est devenu notre tableau de bord pastoral.",
-      avatar: "/avatar3.png",
-    },
+    { name: "Past. Jean", church: "Église Bethel", message: "Avant SoulTrack...", avatar: "/avatar1.png" },
+    { name: "Past. Marie", church: "Église Grâce", message: "Je peux enfin voir...", avatar: "/avatar2.png" },
+    { name: "Past. Paul", church: "Église Agape", message: "Excellent outil...", avatar: "/avatar3.png" },
+    { name: "Bishop John", church: "Potter House", message: "Wonderful system...", avatar: "/avatar2.png" },
+    { name: "Samuel", church: "Église Lumière", message: "Tableau de bord...", avatar: "/avatar3.png" },
   ];
 
   const CARD_WIDTH = 300;
 
   const [index, setIndex] = useState(0);
 
-  const max = testimonials.length;
+  const looped = [...testimonials, ...testimonials];
 
-  // 👉 déplacement constant vers la droite logique
+  // 👉 mouvement CONSTANT dans un seul sens
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => prev + 1);
@@ -51,12 +26,6 @@ export default function TestimonialsSection() {
 
     return () => clearInterval(interval);
   }, []);
-
-  // 👉 boucle invisible SANS saut arrière visible
-  const safeIndex = index % max;
-
-  // 👉 duplication pour effet infini
-  const looped = [...testimonials, ...testimonials];
 
   return (
     <section className="py-24 bg-gray-50 overflow-hidden">
@@ -66,23 +35,21 @@ export default function TestimonialsSection() {
         </h2>
       </div>
 
-      {/* VIEWPORT (3 CARTES UNIQUEMENT) */}
+      {/* VIEWPORT 3 CARTES */}
       <div className="relative max-w-[900px] mx-auto overflow-hidden">
 
         <div
           className="flex transition-transform duration-700 ease-in-out"
           style={{
-            transform: `translateX(-${safeIndex * CARD_WIDTH}px)`,
+            transform: `translateX(-${index * CARD_WIDTH}px)`,
           }}
         >
+
           {looped.map((t, i) => {
-            const isCenter = i === safeIndex + 1;
+            const isCenter = i === index + 1;
 
             return (
-              <div
-                key={i}
-                className="flex-shrink-0 w-[300px] px-2"
-              >
+              <div key={i} className="flex-shrink-0 w-[300px] px-2">
                 <div
                   className={`bg-white p-6 rounded-2xl shadow-sm transition-all duration-500
                   ${isCenter ? "scale-110 shadow-xl" : "scale-95 opacity-80"}`}
@@ -107,6 +74,7 @@ export default function TestimonialsSection() {
               </div>
             );
           })}
+
         </div>
 
       </div>

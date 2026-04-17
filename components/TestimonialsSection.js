@@ -1,117 +1,111 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 export default function TestimonialsSection() {
+  const containerRef = useRef(null);
+
   const testimonials = [
     {
       name: "Past. Jean",
       church: "Église Bethel",
       message:
-        "Avant SoulTrack, nous perdions la visibilité sur plusieurs membres. Aujourd’hui, chaque âme est suivie avec précision.",
+        "Avant SoulTrack, nous perdions la visibilité sur plusieurs membres.",
       avatar: "/avatar1.png",
     },
     {
       name: "Past. Marie",
       church: "Église Grâce",
       message:
-        "Je peux enfin voir la réalité spirituelle de mon église et agir au bon moment.",
+        "Je peux enfin voir la réalité spirituelle de mon église.",
       avatar: "/avatar2.png",
     },
     {
-      name: "Past. Jean",
+      name: "Past. Paul",
       church: "Église Agape",
       message: "Excellent outil pour structurer notre ministère.",
+      avatar: "/avatar3.png",
+    },
+    {
+      name: "Bishop John",
+      church: "Potter House",
+      message: "Wonderful system for church management.",
       avatar: "/avatar2.png",
     },
     {
-      name: "Bishop Td Jakes",
-      church: "Potter's House",
-      message: "Wonderful. Brilliant system for church management.",
-      avatar: "/avatar2.png",
-    },
-    {
-      name: "Responsable Samuel",
+      name: "Samuel",
       church: "Église Lumière",
       message:
-        "C’est devenu notre tableau de bord pastoral. Simple, clair et stratégique.",
+        "C’est devenu notre tableau de bord pastoral.",
       avatar: "/avatar3.png",
     },
   ];
 
-  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-  const prev = () => {
-    setIndex((i) => (i === 0 ? testimonials.length - 1 : i - 1));
-  };
+    let scrollAmount = 0;
 
-  const next = () => {
-    setIndex((i) => (i === testimonials.length - 1 ? 0 : i + 1));
-  };
+    const speed = 1; // vitesse
 
-  const t = testimonials[index];
+    const interval = setInterval(() => {
+      scrollAmount += speed;
+
+      if (
+        scrollAmount >=
+        container.scrollWidth / 2
+      ) {
+        scrollAmount = 0;
+      }
+
+      container.scrollLeft = scrollAmount;
+    }, 20);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <section className="py-28 px-6 bg-gray-50">
-      <div className="max-w-4xl mx-auto text-center space-y-10">
-
+    <section className="py-24 bg-gray-50 overflow-hidden">
+      <div className="max-w-6xl mx-auto text-center mb-12">
         <h2 className="text-3xl font-bold">
           Ce que disent les responsables
         </h2>
+      </div>
 
-        {/* CAROUSEL BOX */}
-        <div className="relative bg-white rounded-2xl shadow-md p-10 transition-all duration-300">
-
-          {/* LEFT BUTTON */}
-          <button
-            onClick={prev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 bg-gray-100 hover:bg-gray-200 p-2 rounded-full"
-          >
-            <ChevronLeft />
-          </button>
-
-          {/* RIGHT BUTTON */}
-          <button
-            onClick={next}
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-gray-100 hover:bg-gray-200 p-2 rounded-full"
-          >
-            <ChevronRight />
-          </button>
-
-          {/* CONTENT */}
-          <div className="space-y-4 px-10">
-            <Image
-              src={t.avatar}
-              alt={t.name}
-              width={70}
-              height={70}
-              className="rounded-full mx-auto"
-            />
-
-            <p className="text-gray-600 italic text-lg">
-              "{t.message}"
-            </p>
-
-            <div className="font-semibold">{t.name}</div>
-            <div className="text-sm text-gray-500">{t.church}</div>
-          </div>
-
-        </div>
-
-        {/* DOTS */}
-        <div className="flex justify-center gap-2">
-          {testimonials.map((_, i) => (
+      {/* CAROUSEL */}
+      <div className="relative overflow-hidden">
+        <div
+          ref={containerRef}
+          className="flex gap-6 w-max"
+        >
+          {[...testimonials, ...testimonials].map((t, i) => (
             <div
               key={i}
-              className={`h-2 w-2 rounded-full transition ${
-                i === index ? "bg-blue-600 w-4" : "bg-gray-300"
-              }`}
-            />
+              className="w-[280px] flex-shrink-0 bg-white p-6 rounded-2xl shadow-sm"
+            >
+              <Image
+                src={t.avatar}
+                alt={t.name}
+                width={60}
+                height={60}
+                className="rounded-full mx-auto mb-4"
+              />
+
+              <p className="text-gray-600 italic text-sm mb-4">
+                "{t.message}"
+              </p>
+
+              <div className="font-semibold text-center">
+                {t.name}
+              </div>
+              <div className="text-xs text-gray-500 text-center">
+                {t.church}
+              </div>
+            </div>
           ))}
         </div>
-
       </div>
     </section>
   );

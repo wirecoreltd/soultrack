@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import PublicHeader from "../components/PublicHeader";
-import Footer from "../components/Footer";
+import PublicHeader from "../../components/PublicHeader";
+import Footer from "../../components/Footer";
 
 export default function HomePage() {
   const router = useRouter();

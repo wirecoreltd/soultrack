@@ -32,13 +32,7 @@ export default function PublicHeader() {
         >
           <Image src="/logo.png" alt="Logo SoulTrack" width={50} height={50} />
           <span className="ml-3 text-2xl font-bold text-gray-800">SoulTrack</span>
-        </div>
-
-        {/* LANGUE */}
-        <div className="ml-auto flex gap-2 mr-4">
-          <button onClick={() => changeLanguage("fr")}>🇫🇷 FR</button>
-          <button onClick={() => changeLanguage("en")}>🇬🇧 EN</button>
-        </div>
+        </div>       
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">

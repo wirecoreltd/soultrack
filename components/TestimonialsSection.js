@@ -40,7 +40,9 @@ export default function TestimonialsSection() {
   const [index, setIndex] = useState(0);
   const max = testimonials.length;
 
-  // 👉 TOUJOURS dans le même sens (→)
+  const CARD_WIDTH = 280 + 24;
+
+  // 👉 AUTO = toujours vers la droite visuelle
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % max);
@@ -52,17 +54,11 @@ export default function TestimonialsSection() {
   const next = () => setIndex((prev) => (prev + 1) % max);
   const prev = () => setIndex((prev) => (prev - 1 + max) % max);
 
-  // 👉 3 cartes visibles
-  const getVisible = () => {
-    return Array.from({ length: 3 }).map(
-      (_, i) => testimonials[(index + i) % max]
-    );
-  };
-
-  const visible = getVisible();
+  // 👉 duplication pour continuité parfaite
+  const looped = [...testimonials, ...testimonials];
 
   return (
-    <section className="py-24 bg-gray-50">
+    <section className="py-24 bg-gray-50 overflow-hidden">
       
       <div className="max-w-6xl mx-auto text-center mb-12">
         <h2 className="text-3xl font-bold">
@@ -71,56 +67,66 @@ export default function TestimonialsSection() {
       </div>
 
       {/* WRAPPER */}
-      <div className="relative max-w-4xl mx-auto px-16">
+      <div className="relative max-w-6xl mx-auto px-16">
 
-        {/* FLÈCHES */}
+        {/* LEFT BUTTON */}
         <button
           onClick={prev}
-          className="absolute left-0 top-1/2 -translate-y-1/2 bg-white shadow-lg w-10 h-10 rounded-full flex items-center justify-center z-20"
+          className="absolute left-2 top-1/2 -translate-y-1/2 bg-white shadow-lg w-10 h-10 rounded-full flex items-center justify-center z-20"
         >
           ←
         </button>
 
+        {/* RIGHT BUTTON */}
         <button
           onClick={next}
-          className="absolute right-0 top-1/2 -translate-y-1/2 bg-white shadow-lg w-10 h-10 rounded-full flex items-center justify-center z-20"
+          className="absolute right-2 top-1/2 -translate-y-1/2 bg-white shadow-lg w-10 h-10 rounded-full flex items-center justify-center z-20"
         >
           →
         </button>
 
-        {/* 3 CARTES FIXES */}
-        <div className="grid grid-cols-3 gap-6 overflow-hidden">
+        {/* VIEWPORT */}
+        <div className="overflow-hidden">
 
-          {visible.map((t, i) => {
-            const isCenter = i === 1;
+          {/* TRACK (LE VRAI CAROUSEL) */}
+          <div
+            className="flex gap-6 transition-transform duration-700 ease-in-out"
+            style={{
+              transform: `translateX(-${index * CARD_WIDTH}px)`,
+            }}
+          >
 
-            return (
-              <div
-                key={i}
-                className={`bg-white p-6 rounded-2xl shadow-sm transition-all duration-500
-                  ${isCenter ? "scale-110 shadow-xl" : "scale-95 opacity-80"}
-                `}
-              >
-                <Image
-                  src={t.avatar}
-                  alt={t.name}
-                  width={60}
-                  height={60}
-                  className="rounded-full mx-auto mb-4"
-                />
+            {looped.map((t, i) => {
+              const isCenter = i === index + 1;
 
-                <p className="text-gray-600 italic text-sm mb-4 text-center">
-                  "{t.message}"
-                </p>
+              return (
+                <div
+                  key={i}
+                  className={`flex-shrink-0 w-[260px] bg-white p-6 rounded-2xl shadow-sm transition-all duration-500
+                    ${isCenter ? "scale-110 shadow-xl" : "scale-95 opacity-80"}
+                  `}
+                >
+                  <Image
+                    src={t.avatar}
+                    alt={t.name}
+                    width={60}
+                    height={60}
+                    className="rounded-full mx-auto mb-4"
+                  />
 
-                <div className="font-semibold text-center">{t.name}</div>
-                <div className="text-xs text-gray-500 text-center">
-                  {t.church}
+                  <p className="text-gray-600 italic text-sm mb-4 text-center">
+                    "{t.message}"
+                  </p>
+
+                  <div className="font-semibold text-center">{t.name}</div>
+                  <div className="text-xs text-gray-500 text-center">
+                    {t.church}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
+          </div>
         </div>
       </div>
     </section>

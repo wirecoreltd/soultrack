@@ -16,6 +16,16 @@ export default function PublicHeader() {
     { label: "Contact", path: "/contact" },
   ];
 
+  const changeLanguage = (locale) => {
+  const path = window.location.pathname;
+  const segments = path.split('/');
+
+  // remplace ou ajoute la langue en 1er segment
+  segments[1] = locale;
+
+  router.push(segments.join('/'));
+};
+
   return (
     <header className="w-full bg-white shadow-md">
       <div className="max-w-6xl mx-auto flex justify-between items-center p-4">
@@ -28,15 +38,10 @@ export default function PublicHeader() {
           <span className="ml-3 text-2xl font-bold text-gray-800">SoulTrack</span>
         </div>
 
-  <div className="flex gap-2">
-    <button onClick={() => changeLanguage('fr')}>
-      🇫🇷 FR
-    </button>
-
-    <button onClick={() => changeLanguage('en')}>
-      🇬🇧 EN
-    </button>
-  </div>
+ <div className="ml-auto flex gap-2 mr-4 cursor-pointer">
+  <button onClick={() => changeLanguage('fr')}>🇫🇷 FR</button>
+  <button onClick={() => changeLanguage('en')}>🇬🇧 EN</button>
+</div>
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">

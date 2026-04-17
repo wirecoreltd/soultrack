@@ -38,13 +38,12 @@ export default function TestimonialsSection() {
   ];
 
   const [index, setIndex] = useState(0);
-
   const max = testimonials.length;
 
-  // AUTO SLIDE (droite → gauche)
+  // 👉 AUTO : GAUCHE → DROITE
   useEffect(() => {
     const interval = setInterval(() => {
-      next();
+      prev(); // 👈 IMPORTANT : inversion du sens
     }, 5000);
 
     return () => clearInterval(interval);
@@ -58,7 +57,7 @@ export default function TestimonialsSection() {
     setIndex((prev) => (prev - 1 + max) % max);
   };
 
-  // 4 visibles propres
+  // 4 cartes visibles
   const visible = Array.from({ length: 4 }).map((_, i) =>
     testimonials[(index + i) % max]
   );
@@ -71,12 +70,12 @@ export default function TestimonialsSection() {
         </h2>
       </div>
 
-      {/* WRAPPER */}
+      {/* CONTAINER */}
       <div className="relative max-w-6xl mx-auto px-10">
 
         {/* FLÈCHE GAUCHE */}
         <button
-          onClick={prev}
+          onClick={next}   // 👈 inversé volontairement
           className="absolute left-0 top-1/2 -translate-y-1/2 bg-white shadow-md rounded-full w-10 h-10 flex items-center justify-center hover:scale-110 transition"
         >
           ←
@@ -84,13 +83,13 @@ export default function TestimonialsSection() {
 
         {/* FLÈCHE DROITE */}
         <button
-          onClick={next}
+          onClick={prev}   // 👈 inversé volontairement
           className="absolute right-0 top-1/2 -translate-y-1/2 bg-white shadow-md rounded-full w-10 h-10 flex items-center justify-center hover:scale-110 transition"
         >
           →
         </button>
 
-        {/* CARDS */}
+        {/* GRID */}
         <div className="grid grid-cols-4 gap-6 overflow-hidden">
 
           {visible.map((t, i) => {

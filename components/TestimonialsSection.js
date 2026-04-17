@@ -1,24 +1,20 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
 export default function TestimonialsSection() {
-  const containerRef = useRef(null);
-
   const testimonials = [
     {
       name: "Past. Jean",
       church: "Église Bethel",
-      message:
-        "Avant SoulTrack, nous perdions la visibilité sur plusieurs membres.",
+      message: "Avant SoulTrack, nous perdions la visibilité sur plusieurs membres.",
       avatar: "/avatar1.png",
     },
     {
       name: "Past. Marie",
       church: "Église Grâce",
-      message:
-        "Je peux enfin voir la réalité spirituelle de mon église.",
+      message: "Je peux enfin voir la réalité spirituelle de mon église.",
       avatar: "/avatar2.png",
     },
     {
@@ -36,35 +32,24 @@ export default function TestimonialsSection() {
     {
       name: "Samuel",
       church: "Église Lumière",
-      message:
-        "C’est devenu notre tableau de bord pastoral.",
+      message: "C’est devenu notre tableau de bord pastoral.",
       avatar: "/avatar3.png",
     },
   ];
 
+  const [index, setIndex] = useState(0);
+
+  // auto slide
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    let scrollAmount = 0;
-
-    const speed = 1; // vitesse
-
     const interval = setInterval(() => {
-      scrollAmount += speed;
-
-      if (
-        scrollAmount >=
-        container.scrollWidth / 2
-      ) {
-        scrollAmount = 0;
-      }
-
-      container.scrollLeft = scrollAmount;
-    }, 20);
+      setIndex((prev) => (prev + 1) % testimonials.length);
+    }, 3000); // toutes les 3 sec
 
     return () => clearInterval(interval);
-  }, []);
+  }, [testimonials.length]);
+
+  // clone pour effet infini propre
+  const extended = [...testimonials, ...testimonials];
 
   return (
     <section className="py-24 bg-gray-50 overflow-hidden">
@@ -74,13 +59,18 @@ export default function TestimonialsSection() {
         </h2>
       </div>
 
-      {/* CAROUSEL */}
-      <div className="relative overflow-hidden">
+      {/* VIEWPORT */}
+      <div className="overflow-hidden relative">
+        
+        {/* TRACK */}
         <div
-          ref={containerRef}
-          className="flex gap-6 w-max"
+          className="flex gap-6 transition-transform duration-700 ease-in-out"
+          style={{
+            transform: `translateX(-${index * 300}px)`,
+          }}
         >
-          {[...testimonials, ...testimonials].map((t, i) => (
+
+          {extended.map((t, i) => (
             <div
               key={i}
               className="w-[280px] flex-shrink-0 bg-white p-6 rounded-2xl shadow-sm"
@@ -93,18 +83,17 @@ export default function TestimonialsSection() {
                 className="rounded-full mx-auto mb-4"
               />
 
-              <p className="text-gray-600 italic text-sm mb-4">
+              <p className="text-gray-600 italic text-sm mb-4 text-center">
                 "{t.message}"
               </p>
 
-              <div className="font-semibold text-center">
-                {t.name}
-              </div>
+              <div className="font-semibold text-center">{t.name}</div>
               <div className="text-xs text-gray-500 text-center">
                 {t.church}
               </div>
             </div>
           ))}
+
         </div>
       </div>
     </section>

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
+import supabase from "../../lib/supabaseClient";
 
 import { Great_Vibes } from "next/font/google";
 const greatVibes = Great_Vibes({
@@ -16,20 +17,15 @@ export default function HomePage() {
   const fadeRefs = useRef([]);
   const pathname = usePathname();
 
-  const testimonials = [
-    { name: "Past. Jean", church: "Église Bethel", message: "Avant SoulTrack, je perdais le fil de chaque nouvelle âme. Aujourd'hui, chaque suivi est structuré et aucun membre n'est oublié.", avatar: "/avatar1.png" },
-    { name: "Past. Marie", church: "Église Grâce", message: "Je peux enfin voir d'un coup d'œil l'état de toutes mes cellules. C'est un outil qui change vraiment la façon de diriger une église.", avatar: "/avatar2.png" },
-    { name: "Past. Paul", church: "Église Agape", message: "Excellent outil pour piloter le ministère. Les rapports sont clairs et m'aident à prendre de meilleures décisions chaque semaine.", avatar: "/avatar3.png" },
-    { name: "Bishop John", church: "Potter House", message: "Wonderful system that brings clarity to every layer of church leadership. Our team adopted it immediately.", avatar: "/avatar2.png" },
-    { name: "Samuel", church: "Église Lumière", message: "Le tableau de bord est intuitif et puissant. Mes conseillers sont maintenant beaucoup plus efficaces dans leur accompagnement.", avatar: "/avatar3.png" },
-    { name: "Past. Clara", church: "Église Espoir", message: "SoulTrack nous a permis de doubler notre capacité de suivi sans doubler notre charge de travail. Indispensable.", avatar: "/avatar1.png" },
-  ];
+  const [testimonials, setTestimonials] = useState([]);
 
   const CARD_WIDTH = 300;
   const GAP = 16;
   const STEP = CARD_WIDTH + GAP;
-  const max = testimonials.length;
-  const looped = [...testimonials, ...testimonials, ...testimonials];
+  const max = testimonials.length || 1;
+  const looped = testimonials.length
+  ? [...testimonials, ...testimonials, ...testimonials]
+  : [];
   const [tIndex, setTIndex] = useState(max);
   const trackRef = useRef(null);
   const animating = useRef(false);
@@ -89,6 +85,33 @@ export default function HomePage() {
       }, 720);
     }
   }, [tIndex]);
+
+  useEffect(() => {
+  const fetchTestimonials = async () => {
+    const { data, error } = await supabase
+      .from("contact")
+      .select("*")
+      .eq("type", "temoignage")
+      .eq("status", "approved") // 🔥 IMPORTANT
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Erreur témoignages:", error);
+      return;
+    }
+
+    const formatted = data.map((t) => ({
+      name: t.nom,
+      church: t.nom_eglise,
+      message: t.message,
+      avatar: "/avatar1.png",
+    }));
+
+    setTestimonials(formatted);
+  };
+
+  fetchTestimonials();
+}, []);
 
   const addRef = (el) => {
     if (el && !fadeRefs.current.includes(el)) fadeRefs.current.push(el);

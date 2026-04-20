@@ -47,6 +47,8 @@ export default function ImportPage() {
     );
   }
 
+  console.log("USER:", user);
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-3xl mx-auto">

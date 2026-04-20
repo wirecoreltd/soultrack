@@ -106,7 +106,8 @@ export default function HomePage() {
   name: t.nom,
   church: t.nom_eglise,
   message: t.message,
-  note: t.note || 5, 
+  note: t.note || 5,
+  avatar: "/avatar1.png",
 }));
 
     setTestimonials(formatted);
@@ -317,74 +318,62 @@ export default function HomePage() {
 
           <div ref={trackRef} style={{ display: "flex", gap: `${GAP}px`, transform: `translateX(${offset}px)`, transition: "transform 700ms ease-in-out", alignItems: "center", padding: "24px 0" }}>
             {looped.map((t, i) => {
-  const isCenter = i === tIndex;
+              const isCenter = i === tIndex;
+              return (
+                <div key={i} style={{ flexShrink: 0, width: `${CARD_WIDTH}px`, transition: "transform 0.5s ease, opacity 0.5s ease", transform: isCenter ? "scale(1.08)" : "scale(0.92)", opacity: isCenter ? 1 : 0.5 }}>
+                  <div style={{
+                    background: isCenter ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
+                    border: isCenter ? "0.5px solid rgba(255,255,255,0.35)" : "0.5px solid rgba(255,255,255,0.1)",
+                    borderRadius: "18px", padding: "28px 24px", position: "relative", overflow: "hidden", backdropFilter: "blur(8px)",
+                  }}>
+                    {isCenter && <div style={{ position: "absolute", top: 0, left: "24px", right: "24px", height: "1px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)" }} />}
+                    {isCenter && <div style={{ position: "absolute", top: "-30px", left: "-30px", width: "140px", height: "140px", borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />}
 
-  return (
-    <div key={i} style={{
-      flexShrink: 0,
-      width: `${CARD_WIDTH}px`,
-      transition: "transform 0.5s ease, opacity 0.5s ease",
-      transform: isCenter ? "scale(1.08)" : "scale(0.92)",
-      opacity: isCenter ? 1 : 0.5,
-    }}>
-      
-      <div style={{
-        <div
+                    <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
+                      <div style={{ width: "52px", height: "52px", borderRadius: "50%", border: isCenter ? "1.5px solid rgba(255,255,255,0.4)" : "1px solid rgba(255,255,255,0.15)", overflow: "hidden" }}>
+                        <Image src={t.avatar} alt={t.name} width={52} height={52} style={{ objectFit: "cover" }} />
+                      </div>
+                    </div>
+
+                    <p
   style={{
-    background: isCenter ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
-    border: isCenter ? "0.5px solid rgba(255,255,255,0.35)" : "0.5px solid rgba(255,255,255,0.1)",
-    borderRadius: "18px",
-    padding: "28px 24px",
-    position: "relative",
-    overflow: "hidden",
-    backdropFilter: "blur(8px)",
-  }}
->
-  {isCenter && (
-    <div style={{ position: "absolute", top: 0, left: "24px", right: "24px", height: "1px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)" }} />
-  )}
-
-  {isCenter && (
-    <div style={{ position: "absolute", top: "-30px", left: "-30px", width: "140px", height: "140px", borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
-  )}
-
-  <p style={{
     color: isCenter ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
     fontSize: "13px",
     lineHeight: 1.7,
     fontStyle: "italic",
     textAlign: "center",
     marginBottom: "18px",
-  }}>
-    "{t.message}"
-  </p>
+  }}
+>
+  "{t.message}"
+</p>
 
-  {/* TITRE + NOM */}
-  <div style={{ textAlign: "center", marginBottom: "6px" }}>
-    <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600 }}>
-      {t.title ? `${t.title} ${t.name}` : t.name}
-    </div>
-  </div>
-
-  {/* EGLISE */}
-  <div style={{
-    color: "#ffffff",
-    fontSize: "15px",
-    fontWeight: 600,
-    marginBottom: "10px",
-    letterSpacing: "0.3px",
-    textAlign: "center"
-  }}>
-    {t.church}
-  </div>
-
-  {/* STARS */}
-  <div style={{ textAlign: "center" }}>
-    <div style={{ fontSize: "14px" }}>
-      {renderStars(t.note)}
-    </div>
+{/* TITRE + NOM */}
+<div style={{ textAlign: "center", marginBottom: "6px" }}>
+  <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600 }}>
+    {t.title ? `${t.title} ${t.name}` : t.name}
   </div>
 </div>
+
+{/* EGLISE */}
+<div style={{ textAlign: "center", marginBottom: "10px" }}>
+  <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>
+    ⛪ {t.church}
+  </div>
+</div>
+
+{/* STARS */}
+<div style={{ textAlign: "center" }}>
+  <div style={{ fontSize: "14px" }}>
+    {renderStars(t.note)}
+  </div>
+</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginTop: "36px", position: "relative", zIndex: 1 }}>
           {testimonials.map((_, i) => (

@@ -106,8 +106,7 @@ export default function HomePage() {
   name: t.nom,
   church: t.nom_eglise,
   message: t.message,
-  note: t.note || 5,
-  avatar: "/avatar1.png",
+  note: t.note || 5, 
 }));
 
     setTestimonials(formatted);
@@ -328,13 +327,7 @@ export default function HomePage() {
                   }}>
                     {isCenter && <div style={{ position: "absolute", top: 0, left: "24px", right: "24px", height: "1px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)" }} />}
                     {isCenter && <div style={{ position: "absolute", top: "-30px", left: "-30px", width: "140px", height: "140px", borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />}
-
-                    <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
-                      <div style={{ width: "52px", height: "52px", borderRadius: "50%", border: isCenter ? "1.5px solid rgba(255,255,255,0.4)" : "1px solid rgba(255,255,255,0.15)", overflow: "hidden" }}>
-                        <Image src={t.avatar} alt={t.name} width={52} height={52} style={{ objectFit: "cover" }} />
-                      </div>
-                    </div>
-
+                    
                     <p
   style={{
     color: isCenter ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",

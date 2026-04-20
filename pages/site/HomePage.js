@@ -393,8 +393,8 @@ export default function HomePage() {
 
       </div>
     </div>
-  );
-})}
+  //);
+//})}
 
         <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginTop: "36px", position: "relative", zIndex: 1 }}>
           {testimonials.map((_, i) => (

@@ -14,6 +14,7 @@ const roleCards = {
     { path: "/conseiller-hub", label: "Conseiller", emoji: "🤝", color: "#0EA5E9" },
     { path: "/rapport-hub", label: "Rapport", emoji: "📈", color: "#FBBF24" },
     { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" },
+    { path: "/administrateur", label: "Admin SoulTrack", emoji: "🔐", color: "#000000 " },
     
   ],
   ResponsableIntegration: [
@@ -30,6 +31,9 @@ const roleCards = {
   ],
   Conseiller: [
     { path: "/conseiller-hub", label: "Conseiller Hub", emoji: "🤝", color: "#F59E0B" },
+  ],
+  Conseiller: [
+    { path: "/admin/temoignages", label: "Admin SoulTrack", emoji: "🔐", color: "#000000" },
   ],
   Membre: [],
 };

@@ -101,11 +101,14 @@ export default function HomePage() {
     }
 
     const formatted = data.map((t) => ({
-      name: t.nom,
-      church: t.nom_eglise,
-      message: t.message,
-      avatar: "/avatar1.png",
-    }));
+  id: t.id,
+  title: t.titre || "",
+  name: t.nom,
+  church: t.nom_eglise,
+  message: t.message,
+  note: t.note || 5,
+  avatar: "/avatar1.png",
+}));
 
     setTestimonials(formatted);
   };
@@ -135,6 +138,10 @@ export default function HomePage() {
   ];
 
   const offset = -(tIndex * STEP) + CARD_WIDTH + GAP;
+
+  const renderStars = (note = 5) => {
+  return "⭐".repeat(note);
+};
 
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative" }}>
@@ -328,14 +335,39 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    <p style={{ color: isCenter ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)", fontSize: "13px", lineHeight: 1.7, fontStyle: "italic", textAlign: "center", marginBottom: "20px", position: "relative", zIndex: 1 }}>
-                      "{t.message}"
-                    </p>
+                    <p
+  style={{
+    color: isCenter ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
+    fontSize: "13px",
+    lineHeight: 1.7,
+    fontStyle: "italic",
+    textAlign: "center",
+    marginBottom: "18px",
+  }}
+>
+  "{t.message}"
+</p>
 
-                    <div style={{ textAlign: "center", position: "relative", zIndex: 1 }}>
-                      <div style={{ color: "#fff", fontSize: "14px", fontWeight: 500, marginBottom: "3px" }}>{t.name}</div>
-                      <div style={{ color: isCenter ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.3)", fontSize: "12px" }}>{t.church}</div>
-                    </div>
+{/* TITRE + NOM */}
+<div style={{ textAlign: "center", marginBottom: "6px" }}>
+  <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600 }}>
+    {t.title ? `${t.title} ${t.name}` : t.name}
+  </div>
+</div>
+
+{/* EGLISE */}
+<div style={{ textAlign: "center", marginBottom: "10px" }}>
+  <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>
+    ⛪ {t.church}
+  </div>
+</div>
+
+{/* STARS */}
+<div style={{ textAlign: "center" }}>
+  <div style={{ fontSize: "14px" }}>
+    {renderStars(t.note)}
+  </div>
+</div>
                   </div>
                 </div>
               );

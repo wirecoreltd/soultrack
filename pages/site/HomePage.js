@@ -350,7 +350,7 @@ export default function HomePage() {
 
 {/* EGLISE */}
 <div style={{ textAlign: "center", marginBottom: "10px" }}>
-  <div style={{ color: "#fffff", fontSize: "16px" }}>
+  <div style={{ color: "#FFFFFF", fontSize: "14px" }}>
      {t.church}
   </div>
 </div>

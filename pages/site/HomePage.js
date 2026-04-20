@@ -329,72 +329,62 @@ export default function HomePage() {
     }}>
       
       <div style={{
-        background: isCenter ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
-        border: isCenter ? "0.5px solid rgba(255,255,255,0.35)" : "0.5px solid rgba(255,255,255,0.1)",
-        borderRadius: "18px",
-        padding: "28px 24px",
-        position: "relative",
-        overflow: "hidden",
-        backdropFilter: "blur(8px)",
-      }}>
+        <div
+  style={{
+    background: isCenter ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
+    border: isCenter ? "0.5px solid rgba(255,255,255,0.35)" : "0.5px solid rgba(255,255,255,0.1)",
+    borderRadius: "18px",
+    padding: "28px 24px",
+    position: "relative",
+    overflow: "hidden",
+    backdropFilter: "blur(8px)",
+  }}
+>
+  {isCenter && (
+    <div style={{ position: "absolute", top: 0, left: "24px", right: "24px", height: "1px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)" }} />
+  )}
 
-        {/* glow */}
-        {isCenter && (
-          <div style={{
-            position: "absolute",
-            top: "-30px",
-            left: "-30px",
-            width: "140px",
-            height: "140px",
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)",
-            pointerEvents: "none"
-          }} />
-        )}
+  {isCenter && (
+    <div style={{ position: "absolute", top: "-30px", left: "-30px", width: "140px", height: "140px", borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
+  )}
 
-        {/* MESSAGE */}
-        <p style={{
-          color: isCenter ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
-          fontSize: "13px",
-          lineHeight: 1.7,
-          fontStyle: "italic",
-          textAlign: "center",
-          marginBottom: "18px",
-        }}>
-          "{t.message}"
-        </p>
+  <p style={{
+    color: isCenter ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
+    fontSize: "13px",
+    lineHeight: 1.7,
+    fontStyle: "italic",
+    textAlign: "center",
+    marginBottom: "18px",
+  }}>
+    "{t.message}"
+  </p>
 
-        {/* TITRE + NOM */}
-        <div style={{ textAlign: "center", marginBottom: "6px" }}>
-          <div style={{
-            color: "#fff",
-            fontSize: "14px",
-            fontWeight: 600
-          }}>
-            {t.title ? `${t.title} ${t.name}` : t.name}
-          </div>
-        </div>
-
-        {/* ÉGLISE */}
-        <div style={{
-          color: "#ffffff",
-          fontSize: "15px",
-          fontWeight: 600,
-          textAlign: "center",
-          marginBottom: "10px"
-        }}>
-          {t.church}
-        </div>
-
-        {/* STARS */}
-        <div style={{ textAlign: "center", fontSize: "14px" }}>
-          {renderStars(t.note)}
-        </div>
-
-      </div>
+  {/* TITRE + NOM */}
+  <div style={{ textAlign: "center", marginBottom: "6px" }}>
+    <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600 }}>
+      {t.title ? `${t.title} ${t.name}` : t.name}
     </div>
-  //);
-//})}
+  </div>
+
+  {/* EGLISE */}
+  <div style={{
+    color: "#ffffff",
+    fontSize: "15px",
+    fontWeight: 600,
+    marginBottom: "10px",
+    letterSpacing: "0.3px",
+    textAlign: "center"
+  }}>
+    {t.church}
+  </div>
+
+  {/* STARS */}
+  <div style={{ textAlign: "center" }}>
+    <div style={{ fontSize: "14px" }}>
+      {renderStars(t.note)}
+    </div>
+  </div>
+</div>
 
         <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginTop: "36px", position: "relative", zIndex: 1 }}>
           {testimonials.map((_, i) => (

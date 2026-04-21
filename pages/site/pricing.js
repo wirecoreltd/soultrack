@@ -37,12 +37,15 @@ export default function PricingPage() {
       price: "Gratuit",
       accent: "rgba(29,158,117,0.45)",
       features: [
-        "👥 Gestion des membres",
-        "🏠 Cellules",
-        "✝️ Suivi simple",
-      ],
-    },
-    {
+        "👥 Ajouter et gérer les membres (fiche simple et claire)",
+        "✝️ Ajouter des personnes évangélisées (liste de contacts / leads spirituels)",
+        "📋 Liste des évangélisés (sans suivi avancé, juste statut de contact)",
+        "📊 Rapports simples : présence des membres",
+        "📈 Statistiques basiques : membres actifs / absents / nouveaux",
+        "👤 Jusqu’à 3 utilisateurs en plus de l’admin (assistants ou responsables)",
+            ],
+          },
+          {
       name: "Croissance",
       emoji: "📈",
       range: "51 – 300 membres",

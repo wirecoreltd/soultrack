@@ -253,22 +253,22 @@ export default function PricingPage() {
             }}
           >
             {t.nav.map((item) => (
-  <span
-    key={item.path}
-    onClick={() => {
-      router.push(item.path);
-      setOpenMenu(false);
-    }}
-    style={{
-      color: pathname === item.path ? "#fbbf24" : "#fff",
-      fontSize: "15px",
-      fontWeight: 600,
-      cursor: "pointer",
-    }}
-  >
-    {item.label}
-  </span>
-))}
+              <span
+                key={item.path}
+                onClick={() => {
+                  router.push(item.path);
+                  setOpenMenu(false);
+                }}
+                style={{
+                  color: pathname === item.path ? "#fbbf24" : "#fff",
+                  fontSize: "15px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                {item.label}
+              </span>
+            ))}
           </nav>
 
           {/* BOUTONS + SWITCHER LANGUE */}
@@ -281,8 +281,7 @@ export default function PricingPage() {
               flexShrink: 0,
             }}
             className="nav-hide"
-          >         
-
+          >
             <button
               onClick={() => router.push("/login")}
               style={{
@@ -314,16 +313,15 @@ export default function PricingPage() {
             </button>
           </div>
 
-          
-                      {/* Switcher langue */}
-<div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-  <button onClick={() => setLang("fr")} title="Français" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "fr" ? 1 : 0.45, transition: "opacity 0.2s" }}>
-    <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="32" height="22" alt="Français" style={{ display: "block", borderRadius: "3px" }} />
-  </button>
-  <button onClick={() => setLang("en")} title="English" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "en" ? 1 : 0.45, transition: "opacity 0.2s" }}>
-    <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="32" height="22" alt="English" style={{ display: "block", borderRadius: "3px" }} />
-  </button>
-</div>
+          {/* Switcher langue */}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <button onClick={() => setLang("fr")} title="Français" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "fr" ? 1 : 0.45, transition: "opacity 0.2s" }}>
+              <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="32" height="22" alt="Français" style={{ display: "block", borderRadius: "3px" }} />
+            </button>
+            <button onClick={() => setLang("en")} title="English" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "en" ? 1 : 0.45, transition: "opacity 0.2s" }}>
+              <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="32" height="22" alt="English" style={{ display: "block", borderRadius: "3px" }} />
+            </button>
+          </div>
 
           {/* HAMBURGER */}
           <button
@@ -392,15 +390,16 @@ export default function PricingPage() {
               >
                 {item.label}
               </span>
-            ))}           
+            ))}
+          </div>
         )}
       </header>
 
 
       {/* ───── HERO ───── */}
       <section style={{ textAlign: "center", padding: "60px max(16px, 4vw) 40px",
-width: "100%",
-boxSizing: "border-box", position: "relative", zIndex: 1 }}>
+        width: "100%",
+        boxSizing: "border-box", position: "relative", zIndex: 1 }}>
         <h1 style={{ color: "#fff", fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 500, marginBottom: "10px" }}>
           {t.heroTitle} <span style={{ color: "#fbbf24" }}>{t.heroHighlight}</span>
         </h1>
@@ -414,7 +413,7 @@ boxSizing: "border-box", position: "relative", zIndex: 1 }}>
         <div style={{
           maxWidth: "1100px", margin: "0 auto",
           display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))",
-width: "100%", gap: "20px",
+          width: "100%", gap: "20px",
         }}>
           {t.plans.map((plan, i) => (
             <div key={i} style={{
@@ -435,7 +434,7 @@ width: "100%", gap: "20px",
               <p style={{ color: "#FFFFFF", fontSize: "13px", marginBottom: "14px", opacity: 0.85, alignSelf: "flex-start", textAlign: "left" }}>
                 {plan.range}
               </p>
-              <div style={{ color: "#fbbf24",  fontWeight: 600, fontSize: "22px", marginBottom: "20px", textAlign: "center", width: "100%" }}>
+              <div style={{ color: "#fbbf24", fontWeight: 600, fontSize: "22px", marginBottom: "20px", textAlign: "center", width: "100%" }}>
                 {plan.price}
               </div>
 

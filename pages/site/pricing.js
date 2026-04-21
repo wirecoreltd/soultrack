@@ -75,8 +75,8 @@ const translations = {
         ],
       },
       {
-        name: "Expansion",
-        emoji: "🌍",
+        name: "Réseaux",
+        emoji: "🔗",
         range: "501 - 1500 membres",
         price: "sur mesure",
         accent: "rgba(212,83,126,0.4)",
@@ -479,13 +479,13 @@ export default function PricingPage() {
                 background: `radial-gradient(circle, ${plan.accent} 0%, transparent 70%)`,
               }} />
 
-              <h3 style={{ color: "#fff", fontSize: "18px", marginBottom: "6px", alignSelf: "flex-start", textAlign: "left" }}>
+              <h3 style={{ color: "#FFFFFF", fontSize: "18px", marginBottom: "6px", alignSelf: "flex-start", textAlign: "left" }}>
                 {plan.emoji} {plan.name}
               </h3>
-              <p style={{ color: "#fff", fontSize: "13px", marginBottom: "14px", opacity: 0.85, alignSelf: "flex-start", textAlign: "left" }}>
+              <p style={{ color: "#FFFFFF", fontSize: "13px", marginBottom: "14px", opacity: 0.85, alignSelf: "flex-start", textAlign: "left" }}>
                 {plan.range}
               </p>
-              <div style={{ color: "#fbbf24", fontSize: "22px", fontWeight: 500, marginBottom: "20px", textAlign: "center", width: "100%" }}>
+              <div style={{ color: "#fbbf24",  fontWeight: 600, fontSize: "22px", fontWeight: 500, marginBottom: "20px", textAlign: "center", width: "100%" }}>
                 {plan.price}
               </div>
 

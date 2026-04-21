@@ -228,10 +228,28 @@ export default function PricingPage() {
 
               <p style={{ color: "#fff", fontSize: "13px", marginBottom: "14px",  opacity: 0.85 }}> {plan.range}</p>
               <div style={{color: "#fbbf24", fontSize: "22px", fontWeight: 500, marginBottom: "18px"}}> {plan.price}</div>
-              <ul style={{listStyle: "none", padding: 0, marginBottom: "22px" }}>
-                {plan.features.map((f, idx) => (<li key={idx} style={{ display: "flex", alignItems: "center", gap: "10px", color: "#fff", fontSize: "14.5px", lineHeight: 1.9
+              <ul style={{
+                listStyle: "none",
+                padding: 0,
+                marginBottom: "22px",
+                width: "100%"
+              }}>
+                {plan.features.map((f, idx) => (
+                  <li key={idx} style={{
+                    color: "#fff",
+                    fontSize: "14.5px",
+                    lineHeight: 1.8,
+                    padding: "10px 0",
+                    textAlign: "left",
+              
+                    borderBottom: idx !== plan.features.length - 1
+                      ? "1px solid rgba(255,255,255,0.12)" // 👈 ligne grise
+                      : "none"
                   }}>
-                    <span style={{ color: "#fff", fontSize: "14px" }}>✔</span> {f} </li> ))} </ul>
+                    {f}
+                  </li>
+                ))}
+              </ul>
 
               <button
                 onClick={() => router.push("/SignupEglise")}

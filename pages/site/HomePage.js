@@ -337,6 +337,7 @@ export default function HomePage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+gap: "10px",
             boxSizing: "border-box",
           }}
         >
@@ -440,10 +441,7 @@ export default function HomePage() {
           </div>
 
           {/* Switcher langue desktop */}
-          <div
-            style={{ display: "flex", gap: "8px", alignItems: "center" }}
-            className="nav-hide"
-          >
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", marginLeft: "8px"}}>
             <button
               onClick={() => setLang("fr")}
               title="Français"
@@ -555,40 +553,8 @@ export default function HomePage() {
               >
                 {item.label}
               </span>
-            ))}
-
-            {/* Switcher langue mobile */}
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <button
-                onClick={() => setLang("fr")}
-                title="Français"
-                style={langBtnStyle(lang === "fr")}
-              >
-                <img
-                  src="https://flagcdn.com/w20/fr.png"
-                  srcSet="https://flagcdn.com/w40/fr.png 2x"
-                  width="20"
-                  height="14"
-                  alt="Français"
-                  style={{ display: "block", borderRadius: "2px" }}
-                />
-              </button>
-              <button
-                onClick={() => setLang("en")}
-                title="English"
-                style={langBtnStyle(lang === "en")}
-              >
-                <img
-                  src="https://flagcdn.com/w20/gb.png"
-                  srcSet="https://flagcdn.com/w40/gb.png 2x"
-                  width="20"
-                  height="14"
-                  alt="English"
-                  style={{ display: "block", borderRadius: "2px" }}
-                />
-              </button>
-            </div>
-
+            ))}      
+           
             <div
               style={{
                 display: "flex",
@@ -1153,13 +1119,44 @@ export default function HomePage() {
       </footer>
 
       <style>{`
-        html, body { overflow-x: hidden; }
-        * { box-sizing: border-box; }
-        @media (max-width: 768px) {
-          .nav-hide { display: none !important; }
-          .nav-show { display: flex !important; }
-        }
-      `}</style>
+  html, body {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  @media (max-width: 768px) {
+
+    /* Cache le menu desktop */
+    .nav-hide {
+      display: none !important;
+    }
+
+    /* Affiche hamburger */
+    .nav-show {
+      display: flex !important;
+    }
+
+    /* Header plus compact */
+    header > div {
+      padding: 14px 12px !important;
+      height: auto !important;
+    }
+
+    /* Évite que les éléments débordent */
+    header div {
+      min-width: 0;
+    }
+  }
+`}</style>
     </div>
   );
 }

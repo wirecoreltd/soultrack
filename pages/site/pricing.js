@@ -208,7 +208,7 @@ export default function PricingPage() {
 
               display: "flex",
               flexDirection: "column",
-              alignItems: "left,   // 👉 centre horizontalement
+              alignItems: "left",   // 👉 centre horizontalement
               textAlign: "left"
               
             }}>

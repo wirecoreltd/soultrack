@@ -159,6 +159,7 @@ export default function ImportMembresCSV({ user }) {
               cellule_id: user.cellule_id,
               eglise_id: user.eglise_id,
               branche_id: user.branche_id,
+              statut_suivis: "3",
               etat_contact: "existant",
             });
           } else {

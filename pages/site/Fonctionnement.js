@@ -207,7 +207,7 @@ export default function Fonctionnement() {
   }, []);
 
   return (
-    <div style={{ background: "#333699", minHeight: "100vh", position: "relative" }}>
+    <div style={{ background: "#333699", minHeight: "100vh", position: "relative",overflowX: "hidden" }}>
 
       {/* GLOW 1 */}
       <div style={{
@@ -483,7 +483,7 @@ export default function Fonctionnement() {
       </header>
 
       {/* ───── HERO ───── */}
-      <section style={{ textAlign: "center", padding: "60px 24px 40px", position: "relative", zIndex: 1 }}>
+      <section style={{ textAlign: "center", padding: "60px 24px 40px",  zIndex: 1 }}>
         <p style={{
           color: "rgba(255,255,255,0.85)", fontSize: "clamp(0.9rem, 1.8vw, 1.05rem)",
           lineHeight: 1.8, maxWidth: "680px", margin: "0 auto 28px", fontWeight: 400,

@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import LogoutLink from "../components/LogoutLink";
-import SendLinkPopup from "../components/SendLinkPopup";
+import LogoutLink from "../../components/LogoutLink";
+import SendLinkPopup from "../../components/SendLinkPopup";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import HeaderPages from "../components/HeaderPages";
-import ProtectedRoute from "../components/ProtectedRoute";
-import Footer from "../components/Footer";
-import supabase from "../lib/supabaseClient"; // 🔹 importer supabase
+import HeaderPages from "../../components/HeaderPages";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import Footer from "../../components/Footer";
+import supabase from "../../lib/supabaseClient"; // 🔹 importer supabase
 
 export default function SuperadminHub() {
   return (

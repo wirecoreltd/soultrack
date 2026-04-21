@@ -639,12 +639,12 @@ export default function HomePage() {
           {t.heroSub}
         </p>
 
-        <div style={{ position: "relative", zIndex: 1, marginBottom: "5px" }}>
+        <div style={{ position: "relative", zIndex: 1, marginBottom: "3px" }}>
           <button
-            onClick={() => router.push("/comment-ca-marche")}
+            onClick={() => router.push("/site/Fonctionnement")}
             style={{
               background: "transparent",
-              color: "rgba(255,255,255,0.8)",
+              color: "#fbbf24",
               border: "0.5px solid rgba(255,255,255,0.35)",
               padding: "2px 28px",
               borderRadius: "10px",

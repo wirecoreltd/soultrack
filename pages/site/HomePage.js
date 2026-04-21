@@ -273,14 +273,10 @@ export default function HomePage() {
       ? "1px solid rgba(255,255,255,0.55)"
       : "1px solid rgba(255,255,255,0.2)",
     borderRadius: "6px",
-    padding: "4px 10px",
+    padding: "4px 6px",
     cursor: "pointer",
-    fontSize: "12px",
-    fontWeight: active ? 700 : 500,
-    letterSpacing: "0.05em",
-    color: active ? "#fff" : "rgba(255,255,255,0.55)",
-    lineHeight: 1,
-    transition: "background 0.2s, border-color 0.2s, color 0.2s",
+    lineHeight: 0,
+    transition: "background 0.2s, border-color 0.2s",
   });
 
   return (
@@ -422,19 +418,11 @@ export default function HomePage() {
           >
             {/* Switcher langue */}
             <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-              <button
-                onClick={() => setLang("fr")}
-                title="Français"
-                style={langBtnStyle(lang === "fr")}
-              >
-                FR
+              <button onClick={() => setLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
+                <img src="https://flagcdn.com/w20/fr.png" srcSet="https://flagcdn.com/w40/fr.png 2x" width="20" height="14" alt="Français" style={{ display: "block", borderRadius: "2px" }} />
               </button>
-              <button
-                onClick={() => setLang("en")}
-                title="English"
-                style={langBtnStyle(lang === "en")}
-              >
-                EN
+              <button onClick={() => setLang("en")} title="English" style={langBtnStyle(lang === "en")}>
+                <img src="https://flagcdn.com/w20/gb.png" srcSet="https://flagcdn.com/w40/gb.png 2x" width="20" height="14" alt="English" style={{ display: "block", borderRadius: "2px" }} />
               </button>
             </div>
 
@@ -540,19 +528,11 @@ export default function HomePage() {
 
             {/* Switcher langue dans le menu mobile */}
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <button
-                onClick={() => setLang("fr")}
-                title="Français"
-                style={langBtnStyle(lang === "fr")}
-              >
-                FR
+              <button onClick={() => setLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
+                <img src="https://flagcdn.com/w20/fr.png" srcSet="https://flagcdn.com/w40/fr.png 2x" width="20" height="14" alt="Français" style={{ display: "block", borderRadius: "2px" }} />
               </button>
-              <button
-                onClick={() => setLang("en")}
-                title="English"
-                style={langBtnStyle(lang === "en")}
-              >
-                EN
+              <button onClick={() => setLang("en")} title="English" style={langBtnStyle(lang === "en")}>
+                <img src="https://flagcdn.com/w20/gb.png" srcSet="https://flagcdn.com/w40/gb.png 2x" width="20" height="14" alt="English" style={{ display: "block", borderRadius: "2px" }} />
               </button>
             </div>
 

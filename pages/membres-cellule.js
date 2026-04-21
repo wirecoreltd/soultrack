@@ -202,14 +202,21 @@ function MembresCelluleContent() {
       {!loading && !message && (
         <>
         {/* BOUTON */}
-  <div className="flex justify-end mt-4 mb-4">
-    <button
-      onClick={() => router.push("/ajouter-membre-cellule")}
-      className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-    >
-      ➕ Ajouter un membre
-    </button>
-  </div>
+           <div className="flex justify-end mt-4 mb-4 gap-2">
+            <button
+              onClick={() => router.push("/admin/import")}
+              className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-blue-600 hover:bg-blue-700"
+            >
+              📥 Import Liste
+            </button>
+          
+            <button
+              onClick={() => router.push("/ajouter-membre-cellule")}
+              className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-green-600 hover:bg-green-700"
+            >
+              ➕ Ajouter un membre
+            </button>
+          </div>
           <div className="flex justify-center">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
 

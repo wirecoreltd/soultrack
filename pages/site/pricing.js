@@ -205,6 +205,12 @@ export default function PricingPage() {
               padding: "28px 24px",
               position: "relative",
               backdropFilter: "blur(8px)",
+
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",   // 👉 centre horizontalement
+              textAlign: "center"
+              
             }}>
               <div style={{
                 position: "absolute",
@@ -220,12 +226,8 @@ export default function PricingPage() {
                 {plan.emoji} {plan.name}
               </h3>
 
-              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", marginBottom: "16px" }}>
-                {plan.range}
-              </p>
-
+              <p style={{ color: "#fff", fontSize: "13px", marginBottom: "14px",  opacity: 0.85 }}> {plan.range}</p>
               <div style={{color: "#fbbf24", fontSize: "22px", fontWeight: 500, marginBottom: "18px"}}> {plan.price}</div>
-
               <ul style={{listStyle: "none", padding: 0, marginBottom: "22px" }}>
                 {plan.features.map((f, idx) => (<li key={idx} style={{ display: "flex", alignItems: "center", gap: "10px", color: "#fff", fontSize: "14.5px", lineHeight: 1.9
                   }}>

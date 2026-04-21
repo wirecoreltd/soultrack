@@ -333,6 +333,7 @@ export default function ContactPage() {
                 <div>
                   <label style={labelStyle}>Message</label>
                   <textarea
+                    maxLength={form.type === "temoignage" ? 120 : undefined}
                     placeholder={
                       form.type === "amelioration" ? "Partagez votre suggestion pour améliorer SoulTrack..." :
                       form.type === "question" ? "Posez votre question, nous vous répondrons avec soin..." :
@@ -345,6 +346,11 @@ export default function ContactPage() {
                     onFocus={e => e.target.style.borderColor = "rgba(255,255,255,0.45)"}
                     onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.18)"}
                   />
+                      {form.type === "temoignage" && (
+                    <div style={{ textAlign: "right", fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>
+                      {form.message.length}/120
+                    </div>
+                  )}
                 </div>
 
                 {/* Erreur */}

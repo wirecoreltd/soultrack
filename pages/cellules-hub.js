@@ -130,7 +130,7 @@ function CellulesHubContent() {
               >
                 <div className="text-5xl mb-2">👨‍👩‍👦‍👦</div>
                 <div className="text-lg font-bold text-gray-800 text-center">
-                  Présence Cellule
+                  Présences & statistiques
                 </div>
               </Link> 
                   
@@ -142,7 +142,18 @@ function CellulesHubContent() {
                 <div className="text-lg font-bold text-gray-800 text-center">
                   Etat Cellule
                 </div>
-              </Link>                      
+              </Link>   
+
+                <Link
+                  href="/admin/import"
+                  className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+                  style={{ borderTopColor: "#F97316" }}
+                >
+                  <div className="text-4xl mb-1">📤</div>
+                  <div className="text-lg font-bold text-gray-800 text-center">
+                    Import Une liste des membres
+                  </div>
+                </Link>
 
                 {/* 🔹 Carte : Créer une Cellule */}
                 <Link

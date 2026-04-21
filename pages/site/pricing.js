@@ -485,7 +485,7 @@ export default function PricingPage() {
               <p style={{ color: "#FFFFFF", fontSize: "13px", marginBottom: "14px", opacity: 0.85, alignSelf: "flex-start", textAlign: "left" }}>
                 {plan.range}
               </p>
-              <div style={{ color: "#fbbf24",  fontWeight: 600, fontSize: "22px", fontWeight: 500, marginBottom: "20px", textAlign: "center", width: "100%" }}>
+              <div style={{ color: "#fbbf24",  fontWeight: 600, fontSize: "22px", marginBottom: "20px", textAlign: "center", width: "100%" }}>
                 {plan.price}
               </div>
 

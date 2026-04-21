@@ -251,8 +251,7 @@ export default function Fonctionnement() {
             <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
               {t.signup}
             </button>
-          </div>
-
+              
            {/* BOUTONS + SWITCHER */}
                     <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
                       {/* Drapeaux */}
@@ -264,6 +263,8 @@ export default function Fonctionnement() {
                           <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="32" height="22" alt="English" style={{ display: "block", borderRadius: "3px" }} />
                         </button>
                       </div>
+          </div>
+
 
 
           {/* HAMBURGER */}

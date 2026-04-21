@@ -8,7 +8,8 @@ export default function ImportMembresCSV({ user }) {
   const [data, setData] = useState([]);
   const [errors, setErrors] = useState([]);
   const [duplicates, setDuplicates] = useState([]);
-  const [selectedDups, setSelectedDups] = useState({});
+  const [depsToUpdate, setDepsToUpdate] = useState({});
+  const [depsToAdd, setDepsToAdd] = useState({});
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -84,7 +85,8 @@ export default function ImportMembresCSV({ user }) {
 
     setSuccess(false);
     setDuplicates([]);
-    setSelectedDups({});
+    setDepsToUpdate({});
+    setDepsToAdd({});
     setData([]);
     setErrors([]);
 
@@ -168,11 +170,9 @@ export default function ImportMembresCSV({ user }) {
           return;
         }
 
-        // Verification doublons par telephone uniquement
         setChecking(true);
 
         const phones = validData.map((r) => r.telephone).filter(Boolean);
-
         let existingByPhone = {};
 
         if (phones.length > 0) {
@@ -193,7 +193,6 @@ export default function ImportMembresCSV({ user }) {
         const finalData = [];
 
         validData.forEach((row) => {
-          // Pas de telephone → import direct, pas de verification possible
           if (!row.telephone) {
             finalData.push(row);
             return;
@@ -214,7 +213,8 @@ export default function ImportMembresCSV({ user }) {
         });
 
         setDuplicates(dupList);
-        setSelectedDups({});
+        setDepsToUpdate({});
+        setDepsToAdd({});
         setData(finalData);
       },
     });
@@ -233,9 +233,21 @@ export default function ImportMembresCSV({ user }) {
       }
     }
 
-    // Doublons coches → update
-    const dupsToUpdate = duplicates.filter((d) => selectedDups[d.telephone]);
+    // Doublons coches "Ajouter" → insert
+    const dupsToInsert = duplicates.filter((d) => depsToAdd[d.telephone]);
+    if (dupsToInsert.length > 0) {
+      const { error } = await supabase
+        .from("membres_complets")
+        .insert(dupsToInsert.map((d) => d.rowData));
+      if (error) {
+        alert("Erreur insert doublon: " + error.message);
+        setLoading(false);
+        return;
+      }
+    }
 
+    // Doublons coches "Mettre a jour" → update
+    const dupsToUpdate = duplicates.filter((d) => depsToUpdate[d.telephone]);
     for (const dup of dupsToUpdate) {
       const { existingId, rowData } = dup;
       const { error } = await supabase
@@ -263,24 +275,27 @@ export default function ImportMembresCSV({ user }) {
     }
 
     setLoading(false);
-    setImportCount(data.length + dupsToUpdate.length);
+    setImportCount(data.length + dupsToInsert.length + dupsToUpdate.length);
     setSuccess(true);
     setData([]);
     setErrors([]);
     setDuplicates([]);
-    setSelectedDups({});
+    setDepsToUpdate({});
+    setDepsToAdd({});
   };
 
   const totalToImport =
-    data.length + Object.values(selectedDups).filter(Boolean).length;
+    data.length +
+    Object.values(depsToUpdate).filter(Boolean).length +
+    Object.values(depsToAdd).filter(Boolean).length;
 
   return (
     <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 space-y-5">
 
       {/* Template */}
       <div className="bg-white/10 border border-blue-300/40 rounded-xl p-4">
-        <p className="font-semibold white mb-1">Avant d'importer</p>
-        <p className="text-sm text-white/80 mb-1">
+        <p className="font-semibold text-white">Avant d'importer</p>
+        <p className="text-sm text-white mb-1">
           1. Telecharge le template et remplis-le avec tes donnees.
         </p>
         <p className="text-sm text-orange-400 font-semibold mb-3">
@@ -353,61 +368,120 @@ export default function ImportMembresCSV({ user }) {
             {duplicates.length} doublon(s) detecte(s) par telephone :
           </p>
           <p className="text-xs text-white/50 italic">
-            Coche les lignes que tu veux mettre a jour dans la base.
+            Choisis l'action a effectuer pour chaque doublon.
           </p>
 
           {duplicates.map((d, i) => (
             <div
               key={i}
-              className={`flex items-start gap-3 rounded-lg p-3 border transition ${
-                selectedDups[d.telephone]
-                  ? "bg-orange-400/20 border-orange-300/50"
-                  : "bg-white/5 border-white/10"
-              }`}
+              className="bg-white/5 border border-white/10 rounded-lg p-3 space-y-2"
             >
-              <input
-                type="checkbox"
-                id={`dup-${i}`}
-                checked={!!selectedDups[d.telephone]}
-                onChange={(e) =>
-                  setSelectedDups((prev) => ({
-                    ...prev,
-                    [d.telephone]: e.target.checked,
-                  }))
-                }
-                className="mt-1 accent-orange-400 w-4 h-4 cursor-pointer"
-              />
-              <label htmlFor={`dup-${i}`} className="cursor-pointer text-sm space-y-0.5">
-                <p className="text-white font-semibold">
+              <div>
+                <p className="text-white font-semibold text-sm">
                   {d.csv}
                   <span className="text-white/50 font-normal"> · {d.telephone}</span>
                 </p>
-                <p className="text-orange-200/80">
+                <p className="text-orange-200/80 text-xs mt-0.5">
                   Deja dans la base :
                   <span className="text-white font-semibold"> {d.existing}</span>
                 </p>
-                {selectedDups[d.telephone] && (
-                  <p className="text-orange-300 text-xs mt-1">
-                    Les donnees de cette personne seront mises a jour.
-                  </p>
-                )}
-              </label>
+              </div>
+
+              <div className="flex gap-3 flex-wrap">
+
+                {/* Mettre a jour */}
+                <label className={`flex items-center gap-2 cursor-pointer text-sm px-3 py-1.5 rounded-lg border transition ${
+                  depsToUpdate[d.telephone]
+                    ? "bg-blue-400/20 border-blue-300/50 text-blue-200"
+                    : "bg-white/5 border-white/10 text-white/60"
+                }`}>
+                  <input
+                    type="checkbox"
+                    checked={!!depsToUpdate[d.telephone]}
+                    onChange={(e) => {
+                      setDepsToUpdate((prev) => ({
+                        ...prev,
+                        [d.telephone]: e.target.checked,
+                      }));
+                      if (e.target.checked) {
+                        setDepsToAdd((prev) => ({ ...prev, [d.telephone]: false }));
+                      }
+                    }}
+                    className="accent-blue-400 w-4 h-4"
+                  />
+                  Mettre a jour
+                </label>
+
+                {/* Ajouter quand meme */}
+                <label className={`flex items-center gap-2 cursor-pointer text-sm px-3 py-1.5 rounded-lg border transition ${
+                  depsToAdd[d.telephone]
+                    ? "bg-emerald-400/20 border-emerald-300/50 text-emerald-200"
+                    : "bg-white/5 border-white/10 text-white/60"
+                }`}>
+                  <input
+                    type="checkbox"
+                    checked={!!depsToAdd[d.telephone]}
+                    onChange={(e) => {
+                      setDepsToAdd((prev) => ({
+                        ...prev,
+                        [d.telephone]: e.target.checked,
+                      }));
+                      if (e.target.checked) {
+                        setDepsToUpdate((prev) => ({ ...prev, [d.telephone]: false }));
+                      }
+                    }}
+                    className="accent-emerald-400 w-4 h-4"
+                  />
+                  Ajouter quand meme
+                </label>
+
+              </div>
+
+              {depsToUpdate[d.telephone] && (
+                <p className="text-blue-300 text-xs">
+                  Les donnees existantes seront ecrasees par celles du CSV.
+                </p>
+              )}
+              {depsToAdd[d.telephone] && (
+                <p className="text-emerald-300 text-xs">
+                  Une nouvelle entree sera creee meme si le numero existe deja.
+                </p>
+              )}
             </div>
           ))}
 
-          <button
-            onClick={() => {
-              const allChecked = duplicates.every((d) => selectedDups[d.telephone]);
-              const next = {};
-              if (!allChecked) duplicates.forEach((d) => (next[d.telephone] = true));
-              setSelectedDups(next);
-            }}
-            className="text-xs text-orange-300 underline"
-          >
-            {duplicates.every((d) => selectedDups[d.telephone])
-              ? "Tout décocher"
-              : "Tout cocher"}
-          </button>
+          {/* Boutons globaux */}
+          <div className="flex gap-4 pt-1 flex-wrap">
+            <button
+              onClick={() => {
+                const allChecked = duplicates.every((d) => depsToUpdate[d.telephone]);
+                const next = {};
+                if (!allChecked) duplicates.forEach((d) => (next[d.telephone] = true));
+                setDepsToUpdate(next);
+                setDepsToAdd({});
+              }}
+              className="text-xs text-blue-300 underline"
+            >
+              {duplicates.every((d) => depsToUpdate[d.telephone])
+                ? "Tout decocher (MAJ)"
+                : "Tout mettre a jour"}
+            </button>
+
+            <button
+              onClick={() => {
+                const allChecked = duplicates.every((d) => depsToAdd[d.telephone]);
+                const next = {};
+                if (!allChecked) duplicates.forEach((d) => (next[d.telephone] = true));
+                setDepsToAdd(next);
+                setDepsToUpdate({});
+              }}
+              className="text-xs text-emerald-300 underline"
+            >
+              {duplicates.every((d) => depsToAdd[d.telephone])
+                ? "Tout decocher (Ajout)"
+                : "Tout ajouter quand meme"}
+            </button>
+          </div>
         </div>
       )}
 

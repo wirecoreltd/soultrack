@@ -23,7 +23,7 @@ const roleCards = {
     { path: "/conseiller-hub", label: "Conseiller", emoji: "🤝", color: "#0EA5E9" },
     { path: "/rapport-hub", label: "Rapport", emoji: "📈", color: "#FBBF24" },
     { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" },
-    { path: "/admin/temoignages", label: "Admin SoulTrack", emoji: "🔐", color: "#000000" },
+    { path: "/Superadmin/temoignages", label: "Admin SoulTrack", emoji: "🔐", color: "#000000" },
   ],
   
     ResponsableIntegration: [{ path: "/membres-hub", label: "Gestion des membres", emoji: "🧭", color: "#0284C7" },],

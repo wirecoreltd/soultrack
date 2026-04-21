@@ -158,6 +158,15 @@ const translations = {
   },
 };
 
+const langBtnStyle = (active) => ({
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  padding: 0,
+  opacity: active ? 1 : 0.45,
+  transition: "opacity 0.2s",
+});
+
 export default function PricingPage() {
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState(false);
@@ -206,13 +215,10 @@ export default function PricingPage() {
       >
         <div
           style={{
-            width: "100%",
             maxWidth: "1100px",
             margin: "0 auto",
-            padding: "18px 16px",
-            height: "auto",
-            boxSizing: "border-box",
-            gap: "10px",
+            padding: "22px 24px",
+            height: "88px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -243,7 +249,7 @@ export default function PricingPage() {
             </span>
           </div>
 
-          {/* NAV */}
+          {/* NAV desktop */}
           <nav
             style={{
               display: "flex",
@@ -255,23 +261,22 @@ export default function PricingPage() {
             {t.nav.map((item) => (
               <span
                 key={item.path}
-                onClick={() => {
-                  router.push(item.path);
-                  setOpenMenu(false);
-                }}
+                onClick={() => router.push(item.path)}
                 style={{
                   color: pathname === item.path ? "#fbbf24" : "#fff",
-                  fontSize: "15px",
+                  fontSize: "14px",
                   fontWeight: 600,
                   cursor: "pointer",
+                  transition: "color 0.2s",
                 }}
+                className="nav-hide"
               >
                 {item.label}
               </span>
             ))}
           </nav>
 
-          {/* BOUTONS + SWITCHER LANGUE */}
+          {/* BOUTONS desktop */}
           <div
             style={{
               display: "flex",
@@ -313,12 +318,12 @@ export default function PricingPage() {
             </button>
           </div>
 
-          {/* Switcher langue */}
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <button onClick={() => setLang("fr")} title="Français" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "fr" ? 1 : 0.45, transition: "opacity 0.2s" }}>
+          {/* Switcher langue desktop */}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }} className="nav-hide">
+            <button onClick={() => setLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
               <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="32" height="22" alt="Français" style={{ display: "block", borderRadius: "3px" }} />
             </button>
-            <button onClick={() => setLang("en")} title="English" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "en" ? 1 : 0.45, transition: "opacity 0.2s" }}>
+            <button onClick={() => setLang("en")} title="English" style={langBtnStyle(lang === "en")}>
               <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="32" height="22" alt="English" style={{ display: "block", borderRadius: "3px" }} />
             </button>
           </div>
@@ -391,15 +396,62 @@ export default function PricingPage() {
                 {item.label}
               </span>
             ))}
+
+            {/* Switcher langue mobile */}
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <button onClick={() => setLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
+                <img src="https://flagcdn.com/w20/fr.png" srcSet="https://flagcdn.com/w40/fr.png 2x" width="20" height="14" alt="Français" style={{ display: "block", borderRadius: "2px" }} />
+              </button>
+              <button onClick={() => setLang("en")} title="English" style={langBtnStyle(lang === "en")}>
+                <img src="https://flagcdn.com/w20/gb.png" srcSet="https://flagcdn.com/w40/gb.png 2x" width="20" height="14" alt="English" style={{ display: "block", borderRadius: "2px" }} />
+              </button>
+            </div>
+
+            {/* Boutons mobile */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
+              <button
+                onClick={() => router.push("/login")}
+                style={{
+                  background: "transparent",
+                  color: "#fff",
+                  border: "0.5px solid rgba(255,255,255,0.35)",
+                  padding: "11px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                }}
+              >
+                {t.login}
+              </button>
+              <button
+                onClick={() => router.push("/SignupEglise")}
+                style={{
+                  background: "#fff",
+                  color: "#333699",
+                  border: "none",
+                  padding: "11px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                {t.signup}
+              </button>
+            </div>
           </div>
         )}
       </header>
 
-
       {/* ───── HERO ───── */}
-      <section style={{ textAlign: "center", padding: "60px max(16px, 4vw) 40px",
+      <section style={{
+        textAlign: "center",
+        padding: "60px max(16px, 4vw) 40px",
         width: "100%",
-        boxSizing: "border-box", position: "relative", zIndex: 1 }}>
+        boxSizing: "border-box",
+        position: "relative",
+        zIndex: 1,
+      }}>
         <h1 style={{ color: "#fff", fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 500, marginBottom: "10px" }}>
           {t.heroTitle} <span style={{ color: "#fbbf24" }}>{t.heroHighlight}</span>
         </h1>
@@ -411,16 +463,25 @@ export default function PricingPage() {
       {/* ───── PLANS ───── */}
       <section style={{ padding: "40px 24px 100px", position: "relative", zIndex: 1 }}>
         <div style={{
-          maxWidth: "1100px", margin: "0 auto",
-          display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))",
-          width: "100%", gap: "20px",
+          maxWidth: "1100px",
+          margin: "0 auto",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))",
+          width: "100%",
+          gap: "20px",
         }}>
           {t.plans.map((plan, i) => (
             <div key={i} style={{
-              background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.12)",
-              borderRadius: "20px", padding: "28px 24px", position: "relative",
-              backdropFilter: "blur(8px)", display: "flex", flexDirection: "column",
-              alignItems: "center", textAlign: "center",
+              background: "rgba(255,255,255,0.08)",
+              border: "0.5px solid rgba(255,255,255,0.12)",
+              borderRadius: "20px",
+              padding: "28px 24px",
+              position: "relative",
+              backdropFilter: "blur(8px)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
             }}>
               <div style={{
                 position: "absolute", top: "-40px", left: "-40px",
@@ -469,41 +530,18 @@ export default function PricingPage() {
       </footer>
 
       <style>{`
-  html, body {
-    width: 100%;
-    overflow-x: hidden;
-  }
+        html, body {
+          width: 100%;
+          overflow-x: hidden;
+        }
+        * { box-sizing: border-box; }
+        img { max-width: 100%; height: auto; }
 
-  * {
-    box-sizing: border-box;
-  }
-
-  img {
-    max-width: 100%;
-    height: auto;
-  }
-
-  @media (max-width: 768px) {
-
-    .nav-hide {
-      display: none !important;
-    }
-
-    .nav-show {
-      display: flex !important;
-    }
-
-    header > div {
-      padding: 14px 12px !important;
-      height: auto !important;
-    }
-
-    section {
-      padding-left: 16px !important;
-      padding-right: 16px !important;
-    }
-  }
-`}</style>
+        @media (max-width: 768px) {
+          .nav-hide { display: none !important; }
+          .nav-show { display: flex !important; }
+        }
+      `}</style>
     </div>
   );
 }

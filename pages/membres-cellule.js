@@ -99,14 +99,19 @@ function MembresCelluleContent() {
 
     if (!profile) return;
 
-    // ✅ PAS DE FILTRE ICI
-    const { data } = await supabase
+    let query = supabase
       .from("cellules")
       .select("*")
       .eq("eglise_id", profile.eglise_id)
       .eq("branche_id", profile.branche_id)
       .order("cellule_full");
 
+    // ✅ Si ResponsableCellule, filtrer uniquement ses cellules
+    if (profile.role === "ResponsableCellule") {
+      query = query.eq("responsable_id", profile.id);
+    }
+
+    const { data } = await query;
     setCellules(data || []);
   };
 
@@ -115,38 +120,65 @@ function MembresCelluleContent() {
 
   // ------------------- FETCH MEMBRES -------------------
   useEffect(() => {
-    if (memberIdStr) return;
+  if (memberIdStr) return;
 
-    const fetchAllMembers = async () => {
-      setLoading(true);
-      try {
-        let query = supabase
-          .from("membres_complets")
-          .select("*")
-          .eq("statut_suivis", 3)
-          .not("cellule_id", "is", null)
-          .order("created_at", { ascending: false });
+  const fetchAllMembers = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-        if (celluleId) {
-          query = query.eq("cellule_id", celluleId);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, role, eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
+
+      let query = supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("statut_suivis", 3)
+        .not("cellule_id", "is", null)
+        .order("created_at", { ascending: false });
+
+      if (celluleId) {
+        query = query.eq("cellule_id", celluleId);
+      }
+
+      // ✅ Si ResponsableCellule, récupérer ses cellules et filtrer
+      if (profile.role === "ResponsableCellule") {
+        const { data: mesCellules } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", profile.id);
+
+        const ids = (mesCellules || []).map((c) => c.id);
+
+        if (ids.length === 0) {
+          setMembres([]);
+          setMessage("Aucun membre trouvé");
+          setLoading(false);
+          return;
         }
 
-        const { data, error } = await query;
-
-        if (error) throw error;
-
-        setMembres(data || []);
-        if (!data || data.length === 0) setMessage("Aucun membre trouvé");
-      } catch (err) {
-        console.error(err);
-        setMessage("Erreur de chargement");
-      } finally {
-        setLoading(false);
+        query = query.in("cellule_id", ids);
       }
-    };
 
-    fetchAllMembers();
-  }, [memberIdStr, celluleId]);
+      const { data, error } = await query;
+      if (error) throw error;
+
+      setMembres(data || []);
+      if (!data || data.length === 0) setMessage("Aucun membre trouvé");
+    } catch (err) {
+      console.error(err);
+      setMessage("Erreur de chargement");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchAllMembers();
+}, [memberIdStr, celluleId]);
 
   // ------------------- CLICK OUTSIDE -------------------
   const handleClickOutside = useCallback((e) => {

@@ -270,14 +270,17 @@ export default function HomePage() {
   const langBtnStyle = (active) => ({
     background: active ? "rgba(255,255,255,0.18)" : "transparent",
     border: active
-      ? "1px solid rgba(255,255,255,0.5)"
+      ? "1px solid rgba(255,255,255,0.55)"
       : "1px solid rgba(255,255,255,0.2)",
     borderRadius: "6px",
-    padding: "3px 7px",
+    padding: "4px 10px",
     cursor: "pointer",
-    fontSize: "18px",
+    fontSize: "12px",
+    fontWeight: active ? 700 : 500,
+    letterSpacing: "0.05em",
+    color: active ? "#fff" : "rgba(255,255,255,0.55)",
     lineHeight: 1,
-    transition: "background 0.2s, border-color 0.2s",
+    transition: "background 0.2s, border-color 0.2s, color 0.2s",
   });
 
   return (
@@ -417,21 +420,21 @@ export default function HomePage() {
             }}
             className="nav-hide"
           >
-            {/* Switcher drapeaux */}
+            {/* Switcher langue */}
             <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
               <button
                 onClick={() => setLang("fr")}
                 title="Français"
                 style={langBtnStyle(lang === "fr")}
               >
-                🇫🇷
+                FR
               </button>
               <button
                 onClick={() => setLang("en")}
                 title="English"
                 style={langBtnStyle(lang === "en")}
               >
-                🇬🇧
+                EN
               </button>
             </div>
 
@@ -542,14 +545,14 @@ export default function HomePage() {
                 title="Français"
                 style={langBtnStyle(lang === "fr")}
               >
-                🇫🇷
+                FR
               </button>
               <button
                 onClick={() => setLang("en")}
                 title="English"
                 style={langBtnStyle(lang === "en")}
               >
-                🇬🇧
+                EN
               </button>
             </div>
 

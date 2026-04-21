@@ -37,13 +37,15 @@ export default function PricingPage() {
       price: "Gratuit",
       accent: "rgba(29,158,117,0.45)",
       features: [
-        "👥 Ajouter et gérer les membres",
-        "✝️ Ajouter des personnes évangélisées",
-        "📋 Liste des évangélisés",
-        "📊 Rapports présence et Statistiques",        
-        "👤 Jusqu’à 3 utilisateurs en plus de l’admin",
+        "Ajouter et gérer les membres",
+        "Ajouter des personnes évangélisées",
+        "Liste des évangélisés",
+        "Rapports présence et Statistiques",        
+        "Jusqu’à 3 utilisateurs en plus de l’admin",
             ],
           },
+
+    
           {
       name: "Croissance",
       emoji: "📈",
@@ -222,15 +224,12 @@ export default function PricingPage() {
                 {plan.range}
               </p>
 
-              <div style={{ color: "#fff", fontSize: "26px", fontWeight: 600, marginBottom: "20px" }}>
-                {plan.price}
-              </div>
+              <div style={{color: "#fbbf24", fontSize: "22px", fontWeight: 500, marginBottom: "18px"}}> {plan.price}</div>
 
-              <ul style={{ color: "rgba(255,255,255,0.7)", fontSize: "13px", lineHeight: 1.8, marginBottom: "20px" }}>
-                {plan.features.map((f, idx) => (
-                  <li key={idx}>{f}</li>
-                ))}
-              </ul>
+              <ul style={{listStyle: "none", padding: 0, marginBottom: "22px" }}>
+                {plan.features.map((f, idx) => (<li key={idx} style={{ display: "flex", alignItems: "center", gap: "10px", color: "#fff", fontSize: "14.5px", lineHeight: 1.9
+                  }}>
+                    <span style={{ color: "#fff", fontSize: "14px" }}>✔</span> {f} </li> ))} </ul>
 
               <button
                 onClick={() => router.push("/SignupEglise")}

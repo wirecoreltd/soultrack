@@ -30,8 +30,7 @@ const roleCards = {
     ResponsableEvangelisation: [{ path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" },],
     ResponsableCellule: [{ path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, ],
     SuperviseurCellule: [{ path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, ],
-    Conseiller: [{ path: "/conseiller-hub", label: "Conseiller Hub", emoji: "🤝", color: "#F59E0B" }, ],
-    Administrateur: [{ path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9"  },],
+    Conseiller: [{ path: "/conseiller-hub", label: "Conseiller Hub", emoji: "🤝", color: "#F59E0B" }, ],    
     Membre: [],
   };
 

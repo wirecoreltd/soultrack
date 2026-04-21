@@ -70,13 +70,22 @@ export default function IndexPage() {
   // 3️⃣ Construire la liste des cartes à afficher
   let cardsToShow = [];
 
-  if (roles.includes("Administrateur")) {
-    Object.values(roleCards).forEach((cards) => {
-      cards.forEach((card) => {
-        if (!cardsToShow.find((c) => c.path === card.path)) cardsToShow.push(card);
+  // 🔥 PRIORITÉ SUPERADMIN
+if (roles.includes("Superadmin")) {
+  cardsToShow = roleCards.Superadmin;
+} else {
+  roles.forEach((role) => {
+    const roleKey = role.trim();
+
+    if (roleCards[roleKey]) {
+      roleCards[roleKey].forEach((card) => {
+        if (!cardsToShow.find((c) => c.path === card.path)) {
+          cardsToShow.push(card);
+        }
       });
-    });
-  } else {
+    }
+  });
+}
     roles.forEach((role) => {
       const roleKey = role.trim();
       if (roleCards[roleKey]) {

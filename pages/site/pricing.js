@@ -37,12 +37,11 @@ export default function PricingPage() {
       price: "Gratuit",
       accent: "rgba(29,158,117,0.45)",
       features: [
-        "👥 Ajouter et gérer les membres (fiche simple et claire)",
-        "✝️ Ajouter des personnes évangélisées (liste de contacts / leads spirituels)",
-        "📋 Liste des évangélisés (sans suivi avancé, juste statut de contact)",
-        "📊 Rapports simples : présence des membres",
-        "📈 Statistiques basiques : membres actifs / absents / nouveaux",
-        "👤 Jusqu’à 3 utilisateurs en plus de l’admin (assistants ou responsables)",
+        "👥 Ajouter et gérer les membres",
+        "✝️ Ajouter des personnes évangélisées",
+        "📋 Liste des évangélisés",
+        "📊 Rapports présence et Statistiques",        
+        "👤 Jusqu’à 3 utilisateurs en plus de l’admin",
             ],
           },
           {

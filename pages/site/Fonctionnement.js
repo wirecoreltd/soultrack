@@ -178,6 +178,17 @@ const translations = {
   },
 };
 
+function langBtnStyle(active) {
+  return {
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: 0,
+    opacity: active ? 1 : 0.45,
+    transition: "opacity 0.2s",
+  };
+}
+
 export default function Fonctionnement() {
   const router = useRouter();
   const pathname = usePathname();
@@ -214,7 +225,7 @@ export default function Fonctionnement() {
         pointerEvents: "none", zIndex: 0,
       }} />
 
-     {/* ───── HEADER ───── */}
+      {/* ───── HEADER ───── */}
       <header
         style={{
           background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
@@ -308,8 +319,7 @@ export default function Fonctionnement() {
               flexShrink: 0,
             }}
             className="nav-hide"
-          >         
-
+          >
             <button
               onClick={() => router.push("/login")}
               style={{
@@ -341,16 +351,15 @@ export default function Fonctionnement() {
             </button>
           </div>
 
-          
-                      {/* Switcher langue */}
-<div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-  <button onClick={() => setLang("fr")} title="Français" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "fr" ? 1 : 0.45, transition: "opacity 0.2s" }}>
-    <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="32" height="22" alt="Français" style={{ display: "block", borderRadius: "3px" }} />
-  </button>
-  <button onClick={() => setLang("en")} title="English" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "en" ? 1 : 0.45, transition: "opacity 0.2s" }}>
-    <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="32" height="22" alt="English" style={{ display: "block", borderRadius: "3px" }} />
-  </button>
-</div>
+          {/* Switcher langue */}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <button onClick={() => setLang("fr")} title="Français" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "fr" ? 1 : 0.45, transition: "opacity 0.2s" }}>
+              <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="32" height="22" alt="Français" style={{ display: "block", borderRadius: "3px" }} />
+            </button>
+            <button onClick={() => setLang("en")} title="English" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "en" ? 1 : 0.45, transition: "opacity 0.2s" }}>
+              <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="32" height="22" alt="English" style={{ display: "block", borderRadius: "3px" }} />
+            </button>
+          </div>
 
           {/* HAMBURGER */}
           <button
@@ -514,27 +523,32 @@ export default function Fonctionnement() {
           </div>
 
           {/* STEPS */}
-          <div style={{ position: "relative", maxWidth: mIndex === t.modules.length - 1 ? "1050px" : "900px", margin: "0 auto" }}>
+          <div style={{ position: "relative", maxWidth: "1050px", margin: "0 auto" }}>
             <div className="connector-line" style={{
               position: "absolute", top: "36px", left: "10%", right: "10%", height: "1.5px",
               background: `linear-gradient(90deg, transparent, ${module.accent}, transparent)`,
               zIndex: 0,
             }} />
 
-            <div style={{
-              display: "flex", justifyContent: "center",
-              gap: mIndex === t.modules.length - 1 ? "8px" : "16px",
-              flexWrap: mIndex === t.modules.length - 1 ? "nowrap" : "wrap",
-            }}>
+            {/* Grid: sur desktop N colonnes égales, sur mobile 2 colonnes */}
+            <div
+              className="steps-grid"
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${module.steps.length}, 1fr)`,
+                gap: "8px",
+              }}
+            >
               {module.steps.map((step, i) => {
                 const isActive = active === `${mIndex}-${i}`;
                 return (
-                  <div key={i}
+                  <div
+                    key={i}
                     onMouseEnter={() => setActive(`${mIndex}-${i}`)}
                     onMouseLeave={() => setActive(null)}
                     style={{
                       display: "flex", flexDirection: "column", alignItems: "center",
-                      width: mIndex === t.modules.length - 1 ? "120px" : "150px", textAlign: "center",
+                      textAlign: "center",
                       transition: "transform 0.25s",
                       transform: isActive ? "translateY(-6px)" : "translateY(0)",
                     }}
@@ -579,13 +593,31 @@ export default function Fonctionnement() {
 
       <style>{`
         body { overflow-x: hidden; }
+
         @media (max-width: 768px) {
           .nav-hide { display: none !important; }
           .nav-show { display: flex !important; }
           .connector-line { display: none !important; }
+
+          /* 2 colonnes sur mobile : les 5 steps → 2+2+1 centré */
+          .steps-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 24px 16px !important;
+          }
+
+          /* Dernier item seul → centré sur toute la largeur */
+          .steps-grid > div:last-child:nth-child(odd) {
+            grid-column: 1 / -1;
+            max-width: 160px;
+            margin: 0 auto;
+          }
         }
-        @media (max-width: 600px) {
-          .connector-line { display: none !important; }
+
+        @media (max-width: 400px) {
+          .steps-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 20px 10px !important;
+          }
         }
       `}</style>
     </div>

@@ -33,7 +33,7 @@ export default function ImportMembresCSV({ user }) {
 
   const handleDownloadTemplate = () => {
     const headers = [
-      "nom *", "prenom *", "sexe *", "age *", "date_venu *",
+      "nom *", "prenom *", "civilite *", "age *", "date_venu *",
       "telephone", "ville",
       "bapteme_eau", "bapteme_esprit",
       "serviteur",
@@ -52,7 +52,7 @@ export default function ImportMembresCSV({ user }) {
     const notes = [
       "IMPORTANT: Effacez toutes les lignes commencant par # avant d'importer le fichier.",
       "Les colonnes avec * sont obligatoires.",
-      "sexe: Homme | Femme",
+      "civilite: Homme | Femme",
       "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
       "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
       "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
@@ -94,10 +94,18 @@ export default function ImportMembresCSV({ user }) {
           if (Object.values(row)[0]?.toString().trim().startsWith("#")) return;
 
           // Normalise les noms de colonnes (enlève le " *")
+          // Normalise les noms de colonnes ET civilite → sexe
           const normalized = {};
           Object.keys(row).forEach((key) => {
-            normalized[key.replace(" *", "").trim()] = row[key]?.toString().trim();
-          });
+            const cleanKey = key.replace(" *", "").trim();
+            const value = row[key]?.toString().trim();
+            // Renomme civilite en sexe pour correspondre à la table
+            if (cleanKey === "civilite") {
+              normalized["sexe"] = value;
+            } else {
+              normalized[cleanKey] = value;
+            }
+          });    
 
           let rowErrors = [];
 
@@ -138,10 +146,10 @@ export default function ImportMembresCSV({ user }) {
             rowErrors.push(`Ligne ${index + 1}: bapteme_esprit invalide (Oui ou Non)`);
           }
 
-          // Validation serviteur
-          if (normalized.serviteur && !["True", "False"].includes(normalized.serviteur)) {
-            rowErrors.push(`Ligne ${index + 1}: serviteur invalide (True ou False)`);
-          }
+          // Validation serviteur — accepte maintenant Oui et Non
+            if (normalized.serviteur && !["Oui", "Non"].includes(normalized.serviteur)) {
+              rowErrors.push(`Ligne ${index + 1}: serviteur invalide (Oui ou Non)`);
+            }
 
           if (rowErrors.length === 0) {
             validData.push({
@@ -154,7 +162,7 @@ export default function ImportMembresCSV({ user }) {
               ville: normalized.ville || null,
               bapteme_eau: normalized.bapteme_eau || null,
               bapteme_esprit: normalized.bapteme_esprit || null,
-              star: normalized.serviteur === "True",
+              star: normalized.serviteur === "Oui",
               infos_supplementaires: normalized.infos_supplementaires || null,
               cellule_id: user.cellule_id,
               eglise_id: user.eglise_id,

@@ -191,7 +191,7 @@ function MembresCelluleContent() {
 <div className="max-w-3xl w-full mb-6 text-center mx-auto">
   <p className="italic text-base text-white/90">
    Consultez et gérez facilement les membres de vos cellules.
-   <span className="text-blue-300 font-semibold">Recherchez</span>, filtrez par cellule, <span className="text-blue-300 font-semibold">accédez aux détails complets</span> 
+   <span className="text-blue-300 font-semibold">Recherchez</span>, filtrez par cellule, <span className="text-blue-300 font-semibold">accédez aux détails complets </span> 
    et mettez à jour les informations pour un <span className="text-blue-300 font-semibold">suivi précis et personnalisé</span>.
   </p>
 </div>
@@ -232,9 +232,67 @@ function MembresCelluleContent() {
                     style={{ borderLeftColor: getBorderColor(m) }}>
 
                     <h2 className="text-center font-bold text-lg">
-                      {m.prenom} {m.nom}
-                    </h2>
-
+                       <span>{m.prenom} {m.nom}</span>
+                          {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
+                            <span className="text-yellow-400">⭐</span>
+                          )}
+                        </h2>
+                      
+                    {/* Téléphone */}
+              <div className="relative text-center mt-2 phone-menu-container">
+                {m.telephone ? (
+                  <>
+                    <p
+                      className="text-orange-500 underline cursor-pointer font-semibold"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenPhoneId(openPhoneId === m.id ? null : m.id);
+                      }}
+                    >
+                      {m.telephone}
+                    </p>
+              
+                    {openPhoneId === m.id && (
+                      <div
+                        className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56"
+                        //onClick={(e) => e.stopPropagation()}
+                      >
+                        <a
+                          href={`tel:${m.telephone}`}
+                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                        >
+                          📞 Appeler
+                        </a>
+                        <a
+                          href={`sms:${m.telephone}`}
+                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                        >
+                          ✉️ SMS
+                        </a>
+                        <a
+                          href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                        >
+                          📱 Appel WhatsApp
+                        </a>
+                        <a
+                          href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                        >
+                          💬 Message WhatsApp
+                        </a>
+                      </div>                    
+                    )}
+                  </>
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </div>
+                  
                     <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
 
                     <p className="text-center text-sm mt-1">

@@ -222,34 +222,58 @@ export default function PricingPage() {
                 background: `radial-gradient(circle, ${plan.accent} 0%, transparent 70%)`,
               }} />
 
-              <h3 style={{ color: "#fff", fontSize: "18px", marginBottom: "6px" }}>
+             <h3 style={{
+                color: "#fff",
+                fontSize: "18px",
+                marginBottom: "6px",
+                alignSelf: "flex-start",
+                textAlign: "left"
+              }}>
                 {plan.emoji} {plan.name}
               </h3>
-
-              <p style={{ color: "#fff", fontSize: "13px", marginBottom: "14px",  opacity: 0.85 }}> {plan.range}</p>
-              <div style={{color: "#fbbf24", fontSize: "22px", fontWeight: 500, marginBottom: "18px"}}> {plan.price}</div>
-              <ul style={{
-                listStyle: "none",
-                padding: 0,
-                marginBottom: "22px",
+              
+              <p style={{
+                color: "#fff",
+                fontSize: "13px",
+                marginBottom: "14px",
+                opacity: 0.85,
+                alignSelf: "flex-start",
+                textAlign: "left"
+              }}>
+                {plan.range}
+              </p>
+              <div style={{
+                color: "#fbbf24",
+                fontSize: "22px",
+                fontWeight: 500, // 👉 semi-bold
+                marginBottom: "20px",
+                textAlign: "center",
                 width: "100%"
               }}>
-                {plan.features.map((f, idx) => (
-                  <li key={idx} style={{
-                    color: "#fff",
-                    fontSize: "14.5px",
-                    lineHeight: 1.8,
-                    padding: "10px 0",
-                    textAlign: "left",
-              
-                    borderBottom: idx !== plan.features.length - 1
-                      ? "1px solid rgba(255,255,255,0.12)" // 👈 ligne grise
-                      : "none"
-                  }}>
-                    {f}
-                  </li>
-                ))}
-              </ul>
+                {plan.price}
+              </div>
+              <ul style={{
+  listStyle: "none",
+  padding: 0,
+  marginBottom: "22px",
+  width: "100%"
+}}>
+  {plan.features.map((f, idx) => (
+    <li key={idx} style={{
+      color: "#fff",
+      fontSize: "14.5px",
+      lineHeight: 1.8,
+      padding: "10px 0",
+      textAlign: "center",
+
+      borderBottom: idx !== plan.features.length - 1
+        ? "1px solid rgba(255,255,255,0.12)"
+        : "none"
+    }}>
+      {f}
+    </li>
+  ))}
+</ul>
 
               <button
                 onClick={() => router.push("/SignupEglise")}

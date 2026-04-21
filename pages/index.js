@@ -31,7 +31,7 @@ const roleCards = {
     ResponsableCellule: [{ path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, ],
     SuperviseurCellule: [{ path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, ],
     Conseiller: [{ path: "/conseiller-hub", label: "Conseiller Hub", emoji: "🤝", color: "#F59E0B" }, ],
-    Conseiller: [{ path: "/admin/temoignages", label: "Admin SoulTrack", emoji: "🔐", color: "#000000" },],
+    Administrateur: [{ path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9"  },],
     Membre: [],
   };
 
@@ -68,9 +68,9 @@ export default function IndexPage() {
   if (loading) return null;
 
   // 3️⃣ Construire la liste des cartes à afficher
-  let cardsToShow = [];
+ let cardsToShow = [];
 
-  // 🔥 PRIORITÉ SUPERADMIN
+// 🔥 PRIORITÉ SUPERADMIN
 if (roles.includes("Superadmin")) {
   cardsToShow = roleCards.Superadmin;
 } else {
@@ -86,15 +86,6 @@ if (roles.includes("Superadmin")) {
     }
   });
 }
-    roles.forEach((role) => {
-      const roleKey = role.trim();
-      if (roleCards[roleKey]) {
-        roleCards[roleKey].forEach((card) => {
-          if (!cardsToShow.find((c) => c.path === card.path)) cardsToShow.push(card);
-        });
-      }
-    });
-  }
 
   const handleRedirect = (path) => {
     router.push(path.startsWith("/") ? path : "/" + path);

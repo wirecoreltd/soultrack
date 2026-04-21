@@ -272,7 +272,7 @@ export default function AddContact() {
                 required
               >
                 <option value="">-- Choisir --</option>
-                <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                <option value="veut rejoindre l'église">Veut rejoindre l'église</option>
                 <option value="a déjà son église">A déjà son église</option>
                 <option value="nouveau">Nouveau</option>
                 <option value="visiteur">Visiteur</option>

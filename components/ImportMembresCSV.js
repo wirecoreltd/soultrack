@@ -12,7 +12,6 @@ export default function ImportMembresCSV({ user }) {
 
   const requiredFields = ["nom", "prenom", "sexe", "age", "date_venu"];
 
-  // Convertit DD-MM-YY, DD-MM-YYYY, DD/MM/YYYY → YYYY-MM-DD
   const parseDate = (value) => {
     if (!value) return null;
     if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
@@ -44,11 +43,10 @@ export default function ImportMembresCSV({ user }) {
       "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15",
       "59700000", "Curepipe",
       "Oui", "Non",
-      "False",
+      "Oui",
       "Info supplementaire ici",
     ];
 
-    // Pas d'accents, pas d'emojis dans les notes
     const notes = [
       "IMPORTANT: Effacez toutes les lignes commencant par # avant d'importer le fichier.",
       "Les colonnes avec * sont obligatoires.",
@@ -56,7 +54,7 @@ export default function ImportMembresCSV({ user }) {
       "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
       "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
       "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
-      "serviteur: True | False",
+      "serviteur: Oui | Non",
     ];
 
     const csvContent = [
@@ -66,7 +64,6 @@ export default function ImportMembresCSV({ user }) {
       ...notes.map((n) => `# ${n}`),
     ].join("\n");
 
-    // UTF-8 BOM pour éviter les problèmes d'encodage
     const BOM = "\uFEFF";
     const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -90,38 +87,31 @@ export default function ImportMembresCSV({ user }) {
         const errorList = [];
 
         rows.forEach((row, index) => {
-          // Ignore les lignes de notes (commençant par #)
           if (Object.values(row)[0]?.toString().trim().startsWith("#")) return;
 
-          // Normalise les noms de colonnes (enlève le " *")
-          // Normalise les noms de colonnes ET civilite → sexe
           const normalized = {};
           Object.keys(row).forEach((key) => {
             const cleanKey = key.replace(" *", "").trim();
             const value = row[key]?.toString().trim();
-            // Renomme civilite en sexe pour correspondre à la table
             if (cleanKey === "civilite") {
               normalized["sexe"] = value;
             } else {
               normalized[cleanKey] = value;
             }
-          });    
+          });
 
           let rowErrors = [];
 
-          // Champs obligatoires
           requiredFields.forEach((field) => {
             if (!normalized[field]) {
               rowErrors.push(`Ligne ${index + 1}: ${field} manquant`);
             }
           });
 
-          // Validation sexe
           if (normalized.sexe && !["Homme", "Femme"].includes(normalized.sexe)) {
-            rowErrors.push(`Ligne ${index + 1}: sexe invalide (Homme ou Femme)`);
+            rowErrors.push(`Ligne ${index + 1}: civilite invalide (Homme ou Femme)`);
           }
 
-          // Validation age
           const validAges = [
             "12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans",
             "41-55 ans", "56-69 ans", "70 ans et plus",
@@ -130,26 +120,22 @@ export default function ImportMembresCSV({ user }) {
             rowErrors.push(`Ligne ${index + 1}: age invalide`);
           }
 
-          // Validation et conversion date_venu
           const dateVenu = parseDate(normalized.date_venu);
           if (normalized.date_venu && !dateVenu) {
-            rowErrors.push(`Ligne ${index + 1}: date_venu invalide (format attendu: YYYY-MM-DD ou JJ-MM-AA)`);
+            rowErrors.push(`Ligne ${index + 1}: date_venu invalide`);
           }
 
-          // Validation bapteme_eau
           if (normalized.bapteme_eau && !["Oui", "Non"].includes(normalized.bapteme_eau)) {
             rowErrors.push(`Ligne ${index + 1}: bapteme_eau invalide (Oui ou Non)`);
           }
 
-          // Validation bapteme_esprit
           if (normalized.bapteme_esprit && !["Oui", "Non"].includes(normalized.bapteme_esprit)) {
             rowErrors.push(`Ligne ${index + 1}: bapteme_esprit invalide (Oui ou Non)`);
           }
 
-          // Validation serviteur — accepte maintenant Oui et Non
-            if (normalized.serviteur && !["Oui", "Non"].includes(normalized.serviteur)) {
-              rowErrors.push(`Ligne ${index + 1}: serviteur invalide (Oui ou Non)`);
-            }
+          if (normalized.serviteur && !["Oui", "Non"].includes(normalized.serviteur)) {
+            rowErrors.push(`Ligne ${index + 1}: serviteur invalide (Oui ou Non)`);
+          }
 
           if (rowErrors.length === 0) {
             validData.push({
@@ -196,34 +182,39 @@ export default function ImportMembresCSV({ user }) {
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow space-y-4">
+    <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 space-y-5">
 
       {/* Template */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="font-semibold text-blue-800 mb-1">Avant d'importer</p>
-        <p className="text-sm text-blue-700 mb-1">
+      <div className="bg-white/10 border border-blue-300/40 rounded-xl p-4">
+        <p className="font-semibold text-blue-300 mb-1">Avant d'importer</p>
+        <p className="text-sm text-white/80 mb-1">
           1. Telecharge le template et remplis-le avec tes donnees.
         </p>
-        <p className="text-sm text-red-600 font-semibold mb-3">
+        <p className="text-sm text-orange-300 font-semibold mb-3">
           2. Efface toutes les lignes commencant par # avant d'importer.
         </p>
         <button
           onClick={handleDownloadTemplate}
-          className="bg-blue-600 text-white text-sm px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition"
         >
           Telecharger le template CSV
         </button>
       </div>
 
       {/* Upload */}
-      <div>
-        <p className="font-semibold mb-2">Importer un fichier CSV</p>
-        <input type="file" accept=".csv" onChange={handleFileChange} />
+      <div className="bg-white/10 border border-white/20 rounded-xl p-4">
+        <p className="font-semibold text-white mb-2">Importer un fichier CSV</p>
+        <input
+          type="file"
+          accept=".csv"
+          onChange={handleFileChange}
+          className="text-white/80 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white/20 file:text-white hover:file:bg-white/30"
+        />
       </div>
 
       {/* Erreurs */}
       {errors.length > 0 && (
-        <div className="bg-red-100 text-red-600 p-3 rounded">
+        <div className="bg-red-500/20 border border-red-400/40 text-red-200 p-4 rounded-xl">
           <p className="font-semibold mb-1">{errors.length} erreur(s) detectee(s) :</p>
           {errors.slice(0, 10).map((err, i) => (
             <p key={i} className="text-sm">{err}</p>
@@ -236,17 +227,19 @@ export default function ImportMembresCSV({ user }) {
 
       {/* Apercu */}
       {data.length > 0 && (
-        <div>
-          <p className="font-semibold">{data.length} ligne(s) prete(s) a etre importee(s)</p>
-          <div className="max-h-40 overflow-auto border mt-2 p-2 text-sm rounded">
+        <div className="bg-white/10 border border-white/20 rounded-xl p-4">
+          <p className="font-semibold text-emerald-300 mb-2">
+            {data.length} ligne(s) prete(s) a etre importee(s)
+          </p>
+          <div className="max-h-40 overflow-auto space-y-1">
             {data.slice(0, 5).map((row, i) => (
-              <div key={i} className="py-0.5">
+              <div key={i} className="text-white/80 text-sm bg-white/5 rounded px-3 py-1">
                 {row.nom} {row.prenom} — {row.age} — {row.date_venu}
-                {row.star ? " [Serviteur]" : ""}
+                {row.star ? " ★" : ""}
               </div>
             ))}
             {data.length > 5 && (
-              <p className="text-gray-400 italic">...et {data.length - 5} autres</p>
+              <p className="text-white/40 italic text-sm">...et {data.length - 5} autres</p>
             )}
           </div>
         </div>
@@ -256,13 +249,15 @@ export default function ImportMembresCSV({ user }) {
       <button
         onClick={handleImport}
         disabled={data.length === 0 || loading}
-        className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50 hover:bg-green-700"
+        className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white font-bold py-3 rounded-xl shadow transition"
       >
         {loading ? "Import en cours..." : "Importer"}
       </button>
 
       {success && (
-        <p className="text-green-600 font-semibold">Import reussi</p>
+        <p className="text-emerald-300 font-semibold text-center">
+          Import reussi !
+        </p>
       )}
     </div>
   );

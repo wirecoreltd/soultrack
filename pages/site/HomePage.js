@@ -158,9 +158,9 @@ export default function HomePage() {
 
   const [testimonials, setTestimonials] = useState([]);
 
-  const CARD_WIDTH = 300;
-  const GAP = 16;
-  const STEP = CARD_WIDTH + GAP;
+  const CARD_WIDTH = 280;
+const GAP = 16;
+const STEP = CARD_WIDTH + GAP;
   const max = testimonials.length || 1;
   const looped = testimonials.length
     ? [...testimonials, ...testimonials, ...testimonials]
@@ -838,65 +838,61 @@ export default function HomePage() {
           </h2>
         </div>
 
+        {/* Wrapper carousel */}
+<div
+  style={{
+    position: "relative",
+    width: "100%",
+    overflow: "hidden",
+    zIndex: 1,
+  }}
+>
+  {/* Fade gauche */}
+  <div style={{
+    position: "absolute", left: 0, top: 0, bottom: 0,
+    width: "60px",
+    background: "linear-gradient(90deg, #333699, transparent)",
+    zIndex: 2, pointerEvents: "none",
+  }} />
+  {/* Fade droite */}
+  <div style={{
+    position: "absolute", right: 0, top: 0, bottom: 0,
+    width: "60px",
+    background: "linear-gradient(270deg, #333699, transparent)",
+    zIndex: 2, pointerEvents: "none",
+  }} />
+
+  <div
+    ref={trackRef}
+    style={{
+      display: "flex",
+      gap: `${GAP}px`,
+      transform: `translateX(calc(50% - ${tIndex * STEP + CARD_WIDTH / 2}px))`,
+      transition: "transform 700ms ease-in-out",
+      alignItems: "center",
+      padding: "24px 0",
+      willChange: "transform",
+    }}
+  >
+    {looped.map((item, i) => {
+      const isCenter = i === tIndex;
+      return (
         <div
+          key={i}
           style={{
-             position: "relative",
-              maxWidth: `${CARD_WIDTH * 3 + GAP * 2}px`,
-              width: "100%",              // ← AJOUTER
-              margin: "0 auto",
-              overflow: "hidden",         // déjà présent ✓
-              zIndex: 1,
+            flexShrink: 0,
+            width: `${CARD_WIDTH}px`,
+            transition: "transform 0.5s ease, opacity 0.5s ease",
+            transform: isCenter ? "scale(1.05)" : "scale(0.9)",
+            opacity: isCenter ? 1 : 0.45,
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: "80px",
-              background: "linear-gradient(90deg, #333699, transparent)",
-              zIndex: 2,
-              pointerEvents: "none",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              right: 0,
-              top: 0,
-              bottom: 0,
-              width: "80px",
-              background: "linear-gradient(270deg, #333699, transparent)",
-              zIndex: 2,
-              pointerEvents: "none",
-            }}
-          />
-
-          <div
-            ref={trackRef}
-            style={{
-              display: "flex",
-              gap: `${GAP}px`,
-              transform: `translateX(${offset}px)`,
-              transition: "transform 700ms ease-in-out",
-              alignItems: "center",
-              padding: "24px 0",
-            }}
-          >
-            {looped.map((item, i) => {
-              const isCenter = i === tIndex;
-              return (
-                <div
-                  key={i}
-                  style={{
-                    flexShrink: 0,
-                    width: `${CARD_WIDTH}px`,
-                    transition: "transform 0.5s ease, opacity 0.5s ease",
-                    transform: isCenter ? "scale(1.08)" : "scale(0.92)",
-                    opacity: isCenter ? 1 : 0.5,
-                  }}
-                >
+          {/* ... contenu carte inchangé ... */}
+        </div>
+      );
+    })}
+  </div>
+</div>
                   <div
                     style={{
                       background: isCenter

@@ -253,28 +253,22 @@ export default function PricingPage() {
             }}
           >
             {t.nav.map((item) => (
-              <span
-                key={item.path}
-                onClick={() => router.push(item.path)}
-                style={{
-                  color: pathname === item.path ? "#fbbf24" : "#fff",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "color 0.2s",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.color = "#fff")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.color =
-                    pathname === item.path ? "#fbbf24" : "#fff")
-                }
-                className="nav-hide"
-              >
-                {item.label}
-              </span>
-            ))}
+  <span
+    key={item.path}
+    onClick={() => {
+      router.push(item.path);
+      setOpenMenu(false);
+    }}
+    style={{
+      color: pathname === item.path ? "#fbbf24" : "#fff",
+      fontSize: "15px",
+      fontWeight: 600,
+      cursor: "pointer",
+    }}
+  >
+    {item.label}
+  </span>
+))}
           </nav>
 
           {/* BOUTONS + SWITCHER LANGUE */}

@@ -208,12 +208,12 @@ export default function PricingPage() {
 
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",   // 👉 centre horizontalement
-              textAlign: "center"
+              alignItems: "left,   // 👉 centre horizontalement
+              textAlign: "left"
               
             }}>
               <div style={{
-                position: "absolute",
+                position: "center",
                 top: "-40px",
                 left: "-40px",
                 width: "160px",

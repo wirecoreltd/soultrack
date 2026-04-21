@@ -41,8 +41,8 @@ const translations = {
       {
         name: "Croissance",
         emoji: "📈",
-        range: "51 – 300 membres",
-        price: "$29/mois",
+        range: "51 – 150 membres",
+        price: "$39/mois",
         accent: "rgba(55,138,221,0.5)",
         features: [
           "✔ Tout dans Départ",
@@ -53,8 +53,8 @@ const translations = {
       {
         name: "Vision",
         emoji: "🔥",
-        range: "301 – 1000 membres",
-        price: "$59/mois",
+        range: "151 – 500 membres",
+        price: "$79/mois",
         accent: "rgba(251,191,36,0.4)",
         features: [
           "✔ Tout dans Croissance",
@@ -65,8 +65,20 @@ const translations = {
       {
         name: "Expansion",
         emoji: "🌍",
-        range: "1000+ membres",
-        price: "Sur mesure",
+        range: "501 - 1500 membres",
+        price: "$149/mois",
+        accent: "rgba(212,83,126,0.4)",
+        features: [
+          "⚙ Plan personnalisé",
+          "🤝 Support dédié",
+          "🏢 Multi-branches",
+        ],
+      },
+      {
+        name: "Expansion",
+        emoji: "🌍",
+        range: "501 - 1500 membres",
+        price: "sur mesure",
         accent: "rgba(212,83,126,0.4)",
         features: [
           "⚙ Plan personnalisé",

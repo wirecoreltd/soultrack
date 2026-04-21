@@ -639,14 +639,14 @@ export default function HomePage() {
           {t.heroSub}
         </p>
 
-        <div style={{ position: "relative", zIndex: 1, marginBottom: "3px" }}>
+        <div style={{ position: "relative", zIndex: 1, marginBottom: "5px" }}>
           <button
             onClick={() => router.push("/site/Fonctionnement")}
             style={{
               background: "transparent",
               color: "#fbbf24",
               border: "0.5px solid rgba(255,255,255,0.35)",
-              padding: "2px 28px",
+              padding: "2px 14px",
               borderRadius: "10px",
               fontSize: "15px",
               cursor: "pointer",

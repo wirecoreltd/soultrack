@@ -186,11 +186,11 @@ export default function ImportMembresCSV({ user }) {
 
       {/* Template */}
       <div className="bg-white/10 border border-blue-300/40 rounded-xl p-4">
-        <p className="font-semibold text-blue-300 mb-1">Avant d'importer</p>
+        <p className="font-semibold text-white mb-1">Avant d'importer</p>
         <p className="text-sm text-white/80 mb-1">
           1. Telecharge le template et remplis-le avec tes donnees.
         </p>
-        <p className="text-sm text-orange-300 font-semibold mb-3">
+        <p className="text-sm text-orange-400 font-semibold mb-3">
           2. Efface toutes les lignes commencant par # avant d'importer.
         </p>
         <button

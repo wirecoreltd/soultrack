@@ -10,7 +10,6 @@ const greatVibes = Great_Vibes({
   weight: "400",
 });
 
-// ─── DICTIONNAIRE DE TRADUCTIONS ───────────────────────────────────────────────
 const translations = {
   fr: {
     tagline:
@@ -23,8 +22,7 @@ const translations = {
     howItWorks: "Voir comment ça marche",
     modulesLabel:
       "Chaque espace a été conçu pour aider le berger à voir, comprendre et accompagner son troupeau avec sagesse, amour et vision.",
-    modulesTitle:
-      "Une structure complète pour accompagner chaque âme",
+    modulesTitle: "Une structure complète pour accompagner chaque âme",
     testimonialsTitle: "Ce que disent les responsables",
     ctaTitle: "Commencez dès aujourd'hui",
     ctaSub:
@@ -90,8 +88,7 @@ const translations = {
     howItWorks: "See how it works",
     modulesLabel:
       "Every space was designed to help the shepherd see, understand and guide their flock with wisdom, love and vision.",
-    modulesTitle:
-      "A complete structure to accompany every soul",
+    modulesTitle: "A complete structure to accompany every soul",
     testimonialsTitle: "What leaders are saying",
     ctaTitle: "Get started today",
     ctaSub:
@@ -155,12 +152,11 @@ export default function HomePage() {
   const fadeRefs = useRef([]);
   const pathname = usePathname();
   const [lang, setLang] = useState("fr");
-
   const [testimonials, setTestimonials] = useState([]);
 
   const CARD_WIDTH = 280;
-const GAP = 16;
-const STEP = CARD_WIDTH + GAP;
+  const GAP = 16;
+  const STEP = CARD_WIDTH + GAP;
   const max = testimonials.length || 1;
   const looped = testimonials.length
     ? [...testimonials, ...testimonials, ...testimonials]
@@ -169,7 +165,6 @@ const STEP = CARD_WIDTH + GAP;
   const trackRef = useRef(null);
   const animating = useRef(false);
 
-  // Raccourci vers le dictionnaire actif
   const t = translations[lang];
 
   useEffect(() => {
@@ -218,8 +213,7 @@ const STEP = CARD_WIDTH + GAP;
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
               if (trackRef.current) {
-                trackRef.current.style.transition =
-                  "transform 700ms ease-in-out";
+                trackRef.current.style.transition = "transform 700ms ease-in-out";
               }
               animating.current = false;
             });
@@ -262,11 +256,8 @@ const STEP = CARD_WIDTH + GAP;
     if (el && !fadeRefs.current.includes(el)) fadeRefs.current.push(el);
   };
 
-  const offset = -(tIndex * STEP) + CARD_WIDTH + GAP;
-
   const renderStars = (note = 5) => "⭐".repeat(note);
 
-  // Style commun pour les boutons de langue
   const langBtnStyle = (active) => ({
     background: active ? "rgba(255,255,255,0.18)" : "transparent",
     border: active
@@ -285,7 +276,7 @@ const STEP = CARD_WIDTH + GAP;
         background: "#333699",
         minHeight: "100vh",
         position: "relative",
-        overflowX: "hidden", 
+        overflowX: "hidden",
       }}
     >
       {/* GLOW 1 */}
@@ -309,8 +300,8 @@ const STEP = CARD_WIDTH + GAP;
       <div
         style={{
           position: "absolute",
-          width: "700px",
-          height: "700px",
+          width: "min(700px, 100vw)",
+          height: "min(700px, 100vw)",
           borderRadius: "50%",
           background:
             "radial-gradient(circle, rgba(251,191,36,0.08) 0%, rgba(255,255,255,0.03) 40%, transparent 65%)",
@@ -334,6 +325,7 @@ const STEP = CARD_WIDTH + GAP;
           zIndex: 100,
           backdropFilter: scrolled ? "blur(16px)" : "none",
           transition: "background 0.3s, border-color 0.3s",
+          width: "100%",
         }}
       >
         <div
@@ -345,6 +337,7 @@ const STEP = CARD_WIDTH + GAP;
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            boxSizing: "border-box",
           }}
         >
           {/* LOGO */}
@@ -372,7 +365,7 @@ const STEP = CARD_WIDTH + GAP;
             </span>
           </div>
 
-          {/* NAV */}
+          {/* NAV desktop */}
           <nav
             style={{
               display: "flex",
@@ -392,9 +385,7 @@ const STEP = CARD_WIDTH + GAP;
                   cursor: "pointer",
                   transition: "color 0.2s",
                 }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.color = "#fff")
-                }
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
                 onMouseLeave={(e) =>
                   (e.currentTarget.style.color =
                     pathname === item.path ? "#fbbf24" : "#fff")
@@ -406,7 +397,7 @@ const STEP = CARD_WIDTH + GAP;
             ))}
           </nav>
 
-          {/* BOUTONS + SWITCHER LANGUE */}
+          {/* BOUTONS + LANGUE desktop */}
           <div
             style={{
               display: "flex",
@@ -416,8 +407,7 @@ const STEP = CARD_WIDTH + GAP;
               flexShrink: 0,
             }}
             className="nav-hide"
-          >         
-
+          >
             <button
               onClick={() => router.push("/login")}
               style={{
@@ -449,18 +439,56 @@ const STEP = CARD_WIDTH + GAP;
             </button>
           </div>
 
-          
-                      {/* Switcher langue */}
-<div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-  <button onClick={() => setLang("fr")} title="Français" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "fr" ? 1 : 0.45, transition: "opacity 0.2s" }}>
-    <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="32" height="22" alt="Français" style={{ display: "block", borderRadius: "3px" }} />
-  </button>
-  <button onClick={() => setLang("en")} title="English" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "en" ? 1 : 0.45, transition: "opacity 0.2s" }}>
-    <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="32" height="22" alt="English" style={{ display: "block", borderRadius: "3px" }} />
-  </button>
-</div>
+          {/* Switcher langue desktop */}
+          <div
+            style={{ display: "flex", gap: "8px", alignItems: "center" }}
+            className="nav-hide"
+          >
+            <button
+              onClick={() => setLang("fr")}
+              title="Français"
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                opacity: lang === "fr" ? 1 : 0.45,
+                transition: "opacity 0.2s",
+              }}
+            >
+              <img
+                src="https://flagcdn.com/w40/fr.png"
+                srcSet="https://flagcdn.com/w80/fr.png 2x"
+                width="32"
+                height="22"
+                alt="Français"
+                style={{ display: "block", borderRadius: "3px" }}
+              />
+            </button>
+            <button
+              onClick={() => setLang("en")}
+              title="English"
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                opacity: lang === "en" ? 1 : 0.45,
+                transition: "opacity 0.2s",
+              }}
+            >
+              <img
+                src="https://flagcdn.com/w40/gb.png"
+                srcSet="https://flagcdn.com/w80/gb.png 2x"
+                width="32"
+                height="22"
+                alt="English"
+                style={{ display: "block", borderRadius: "3px" }}
+              />
+            </button>
+          </div>
 
-          {/* HAMBURGER */}
+          {/* HAMBURGER mobile */}
           <button
             onClick={() => setOpenMenu(!openMenu)}
             className="nav-show"
@@ -529,13 +557,35 @@ const STEP = CARD_WIDTH + GAP;
               </span>
             ))}
 
-            {/* Switcher langue dans le menu mobile */}
+            {/* Switcher langue mobile */}
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <button onClick={() => setLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
-                <img src="https://flagcdn.com/w20/fr.png" srcSet="https://flagcdn.com/w40/fr.png 2x" width="20" height="14" alt="Français" style={{ display: "block", borderRadius: "2px" }} />
+              <button
+                onClick={() => setLang("fr")}
+                title="Français"
+                style={langBtnStyle(lang === "fr")}
+              >
+                <img
+                  src="https://flagcdn.com/w20/fr.png"
+                  srcSet="https://flagcdn.com/w40/fr.png 2x"
+                  width="20"
+                  height="14"
+                  alt="Français"
+                  style={{ display: "block", borderRadius: "2px" }}
+                />
               </button>
-              <button onClick={() => setLang("en")} title="English" style={langBtnStyle(lang === "en")}>
-                <img src="https://flagcdn.com/w20/gb.png" srcSet="https://flagcdn.com/w40/gb.png 2x" width="20" height="14" alt="English" style={{ display: "block", borderRadius: "2px" }} />
+              <button
+                onClick={() => setLang("en")}
+                title="English"
+                style={langBtnStyle(lang === "en")}
+              >
+                <img
+                  src="https://flagcdn.com/w20/gb.png"
+                  srcSet="https://flagcdn.com/w40/gb.png 2x"
+                  width="20"
+                  height="14"
+                  alt="English"
+                  style={{ display: "block", borderRadius: "2px" }}
+                />
               </button>
             </div>
 
@@ -593,6 +643,8 @@ const STEP = CARD_WIDTH + GAP;
           padding: "80px max(16px, 4vw) 40px",
           position: "relative",
           zIndex: 1,
+          boxSizing: "border-box",
+          width: "100%",
         }}
       >
         <p
@@ -613,7 +665,7 @@ const STEP = CARD_WIDTH + GAP;
           style={{
             position: "relative",
             zIndex: 1,
-            fontSize: "clamp(2rem, 5vw, 3.2rem)",
+            fontSize: "clamp(1.6rem, 5vw, 3.2rem)",
             fontWeight: 500,
             color: "#fff",
             lineHeight: 1.15,
@@ -666,6 +718,8 @@ const STEP = CARD_WIDTH + GAP;
           padding: "20px 24px 20px",
           position: "relative",
           zIndex: 1,
+          boxSizing: "border-box",
+          width: "100%",
         }}
       >
         <p
@@ -684,7 +738,7 @@ const STEP = CARD_WIDTH + GAP;
         <h2
           style={{
             color: "#fbbf24",
-            fontSize: "clamp(1.4rem, 3vw, 1.9rem)",
+            fontSize: "clamp(1.2rem, 3vw, 1.9rem)",
             fontWeight: 500,
             maxWidth: "500px",
             margin: "0 auto",
@@ -697,12 +751,18 @@ const STEP = CARD_WIDTH + GAP;
 
       {/* ───── CARDS MODULES ───── */}
       <section
-        style={{ padding: "24px 24px 48px", position: "relative", zIndex: 1 }}
+        style={{
+          padding: "24px 24px 48px",
+          position: "relative",
+          zIndex: 1,
+          boxSizing: "border-box",
+          width: "100%",
+        }}
       >
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))",
             gap: "16px",
             maxWidth: "1050px",
             margin: "0 auto",
@@ -721,20 +781,17 @@ const STEP = CARD_WIDTH + GAP;
                 overflow: "hidden",
                 backdropFilter: "blur(8px)",
                 cursor: "default",
-                transition:
-                  "transform 0.25s, border-color 0.25s, background 0.25s",
+                transition: "transform 0.25s, border-color 0.25s, background 0.25s",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translateY(-5px)";
                 e.currentTarget.style.background = "rgba(255,255,255,0.13)";
-                e.currentTarget.style.borderColor =
-                  "rgba(255,255,255,0.25)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateY(0)";
                 e.currentTarget.style.background = "rgba(255,255,255,0.08)";
-                e.currentTarget.style.borderColor =
-                  "rgba(255,255,255,0.12)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
               }}
             >
               <div
@@ -797,13 +854,19 @@ const STEP = CARD_WIDTH + GAP;
 
       {/* ───── TÉMOIGNAGES ───── */}
       <section
-        style={{ padding: "40px 0 80px", position: "relative", zIndex: 1 }}
+        style={{
+          padding: "40px 0 80px",
+          position: "relative",
+          zIndex: 1,
+          width: "100%",
+          overflow: "hidden",
+        }}
       >
         <div
           style={{
             position: "absolute",
-            width: "700px",
-            height: "700px",
+            width: "min(700px, 100vw)",
+            height: "min(700px, 100vw)",
             borderRadius: "50%",
             background:
               "radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 65%)",
@@ -822,12 +885,13 @@ const STEP = CARD_WIDTH + GAP;
             marginBottom: "40px",
             position: "relative",
             zIndex: 1,
+            padding: "0 24px",
           }}
         >
           <h2
             style={{
               color: "#fbbf24",
-              fontSize: "clamp(1.5rem, 3vw, 2rem)",
+              fontSize: "clamp(1.3rem, 3vw, 2rem)",
               fontWeight: 500,
               maxWidth: "480px",
               margin: "0 auto",
@@ -838,61 +902,67 @@ const STEP = CARD_WIDTH + GAP;
           </h2>
         </div>
 
-        {/* Wrapper carousel */}
-<div
-  style={{
-    position: "relative",
-    width: "100%",
-    overflow: "hidden",
-    zIndex: 1,
-  }}
->
-  {/* Fade gauche */}
-  <div style={{
-    position: "absolute", left: 0, top: 0, bottom: 0,
-    width: "60px",
-    background: "linear-gradient(90deg, #333699, transparent)",
-    zIndex: 2, pointerEvents: "none",
-  }} />
-  {/* Fade droite */}
-  <div style={{
-    position: "absolute", right: 0, top: 0, bottom: 0,
-    width: "60px",
-    background: "linear-gradient(270deg, #333699, transparent)",
-    zIndex: 2, pointerEvents: "none",
-  }} />
-
-  <div
-    ref={trackRef}
-    style={{
-      display: "flex",
-      gap: `${GAP}px`,
-      transform: `translateX(calc(50% - ${tIndex * STEP + CARD_WIDTH / 2}px))`,
-      transition: "transform 700ms ease-in-out",
-      alignItems: "center",
-      padding: "24px 0",
-      willChange: "transform",
-    }}
-  >
-    {looped.map((item, i) => {
-      const isCenter = i === tIndex;
-      return (
+        {/* CAROUSEL */}
         <div
-          key={i}
           style={{
-            flexShrink: 0,
-            width: `${CARD_WIDTH}px`,
-            transition: "transform 0.5s ease, opacity 0.5s ease",
-            transform: isCenter ? "scale(1.05)" : "scale(0.9)",
-            opacity: isCenter ? 1 : 0.45,
+            position: "relative",
+            width: "100%",
+            overflow: "hidden",
+            zIndex: 1,
           }}
         >
-          {/* ... contenu carte inchangé ... */}
-        </div>
-      );
-    })}
-  </div>
-</div>
+          {/* Fade gauche */}
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: "60px",
+              background: "linear-gradient(90deg, #333699, transparent)",
+              zIndex: 2,
+              pointerEvents: "none",
+            }}
+          />
+          {/* Fade droite */}
+          <div
+            style={{
+              position: "absolute",
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: "60px",
+              background: "linear-gradient(270deg, #333699, transparent)",
+              zIndex: 2,
+              pointerEvents: "none",
+            }}
+          />
+
+          <div
+            ref={trackRef}
+            style={{
+              display: "flex",
+              gap: `${GAP}px`,
+              transform: `translateX(calc(50% - ${tIndex * STEP + CARD_WIDTH / 2}px))`,
+              transition: "transform 700ms ease-in-out",
+              alignItems: "center",
+              padding: "24px 0",
+              willChange: "transform",
+            }}
+          >
+            {looped.map((item, i) => {
+              const isCenter = i === tIndex;
+              return (
+                <div
+                  key={i}
+                  style={{
+                    flexShrink: 0,
+                    width: `${CARD_WIDTH}px`,
+                    transition: "transform 0.5s ease, opacity 0.5s ease",
+                    transform: isCenter ? "scale(1.05)" : "scale(0.9)",
+                    opacity: isCenter ? 1 : 0.45,
+                  }}
+                >
                   <div
                     style={{
                       background: isCenter
@@ -952,9 +1022,7 @@ const STEP = CARD_WIDTH + GAP;
                       "{item.message}"
                     </p>
 
-                    <div
-                      style={{ textAlign: "center", marginBottom: "6px" }}
-                    >
+                    <div style={{ textAlign: "center", marginBottom: "6px" }}>
                       <div
                         style={{
                           color: "#fff",
@@ -966,9 +1034,7 @@ const STEP = CARD_WIDTH + GAP;
                       </div>
                     </div>
 
-                    <div
-                      style={{ textAlign: "center", marginBottom: "10px" }}
-                    >
+                    <div style={{ textAlign: "center", marginBottom: "10px" }}>
                       <div style={{ color: "#FFFFFF", fontSize: "14px" }}>
                         {item.church}
                       </div>
@@ -986,6 +1052,7 @@ const STEP = CARD_WIDTH + GAP;
           </div>
         </div>
 
+        {/* DOTS */}
         <div
           style={{
             display: "flex",
@@ -1021,12 +1088,14 @@ const STEP = CARD_WIDTH + GAP;
           textAlign: "center",
           position: "relative",
           zIndex: 1,
+          boxSizing: "border-box",
+          width: "100%",
         }}
       >
         <h2
           style={{
             color: "#fff",
-            fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
+            fontSize: "clamp(1.4rem, 3vw, 2.2rem)",
             fontWeight: 500,
             marginBottom: "12px",
           }}
@@ -1066,6 +1135,8 @@ const STEP = CARD_WIDTH + GAP;
         style={{
           borderTop: "0.5px solid rgba(255,255,255,0.1)",
           padding: "20px 24px",
+          boxSizing: "border-box",
+          width: "100%",
         }}
       >
         <div
@@ -1082,8 +1153,8 @@ const STEP = CARD_WIDTH + GAP;
       </footer>
 
       <style>{`
-        body { overflow-x: hidden; }
-        html { overflow-x: hidden; } 
+        html, body { overflow-x: hidden; }
+        * { box-sizing: border-box; }
         @media (max-width: 768px) {
           .nav-hide { display: none !important; }
           .nav-show { display: flex !important; }

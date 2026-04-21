@@ -285,14 +285,15 @@ export default function HomePage() {
         background: "#333699",
         minHeight: "100vh",
         position: "relative",
+        overflowX: "hidden", 
       }}
     >
       {/* GLOW 1 */}
       <div
         style={{
           position: "absolute",
-          width: "800px",
-          height: "800px",
+          width: "min(800px, 100vw)",
+          height: "min(800px, 100vw)",
           borderRadius: "50%",
           background:
             "radial-gradient(circle, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 40%, transparent 65%)",
@@ -589,7 +590,7 @@ export default function HomePage() {
           alignItems: "center",
           justifyContent: "center",
           textAlign: "center",
-          padding: "80px 24px 40px",
+          padding: "80px max(16px, 4vw) 40px",
           position: "relative",
           zIndex: 1,
         }}
@@ -839,11 +840,12 @@ export default function HomePage() {
 
         <div
           style={{
-            position: "relative",
-            maxWidth: `${CARD_WIDTH * 3 + GAP * 2}px`,
-            margin: "0 auto",
-            overflow: "hidden",
-            zIndex: 1,
+             position: "relative",
+              maxWidth: `${CARD_WIDTH * 3 + GAP * 2}px`,
+              width: "100%",              // ← AJOUTER
+              margin: "0 auto",
+              overflow: "hidden",         // déjà présent ✓
+              zIndex: 1,
           }}
         >
           <div
@@ -1085,6 +1087,7 @@ export default function HomePage() {
 
       <style>{`
         body { overflow-x: hidden; }
+        html { overflow-x: hidden; } 
         @media (max-width: 768px) {
           .nav-hide { display: none !important; }
           .nav-show { display: flex !important; }

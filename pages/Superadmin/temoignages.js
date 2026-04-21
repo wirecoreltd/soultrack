@@ -8,7 +8,7 @@ import Footer from "../../components/Footer";
 
 export default function AdminTemoignagesPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
+    <ProtectedRoute allowedRoles={["Superadmin"]}>
       <AdminTemoignages />
     </ProtectedRoute>
   );

@@ -13,7 +13,7 @@ import supabase from "../lib/supabaseClient"; // 🔹 importer supabase
 
 export default function MembresHub() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "Superadmin", "ResponsableIntegration"]}>
       <MembresHubContent />
     </ProtectedRoute>
   );

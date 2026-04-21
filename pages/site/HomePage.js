@@ -415,16 +415,7 @@ export default function HomePage() {
               flexShrink: 0,
             }}
             className="nav-hide"
-          >
-            {/* Switcher langue */}
-            <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-              <button onClick={() => setLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
-                <img src="https://flagcdn.com/w20/fr.png" srcSet="https://flagcdn.com/w40/fr.png 2x" width="20" height="14" alt="Français" style={{ display: "block", borderRadius: "2px" }} />
-              </button>
-              <button onClick={() => setLang("en")} title="English" style={langBtnStyle(lang === "en")}>
-                <img src="https://flagcdn.com/w20/gb.png" srcSet="https://flagcdn.com/w40/gb.png 2x" width="20" height="14" alt="English" style={{ display: "block", borderRadius: "2px" }} />
-              </button>
-            </div>
+          >         
 
             <button
               onClick={() => router.push("/login")}
@@ -456,6 +447,17 @@ export default function HomePage() {
               {t.signup}
             </button>
           </div>
+
+          
+                      {/* Switcher langue */}
+<div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+  <button onClick={() => setLang("fr")} title="Français" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "fr" ? 1 : 0.45, transition: "opacity 0.2s" }}>
+    <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="32" height="22" alt="Français" style={{ display: "block", borderRadius: "3px" }} />
+  </button>
+  <button onClick={() => setLang("en")} title="English" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "en" ? 1 : 0.45, transition: "opacity 0.2s" }}>
+    <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="32" height="22" alt="English" style={{ display: "block", borderRadius: "3px" }} />
+  </button>
+</div>
 
           {/* HAMBURGER */}
           <button

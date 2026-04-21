@@ -12,33 +12,20 @@ export default function ImportMembresCSV({ user }) {
 
   const requiredFields = ["nom", "prenom", "sexe", "age", "date_venu"];
 
-  // 📥 Téléchargement du template CSV
   const handleDownloadTemplate = () => {
     const headers = [
-      "nom *",
-      "prenom *",
-      "sexe *",
-      "age *",
-      "date_venu *",
-      "telephone",
-      "ville",
-      "is_whatsapp",
-      "bapteme_eau",
-      "bapteme_esprit",
+      "nom *", "prenom *", "sexe *", "age *", "date_venu *",
+      "telephone", "ville",
+      "bapteme_eau", "bapteme_esprit",
+      "serviteur",
       "infos_supplementaires",
     ];
 
     const example = [
-      "Dupont",
-      "Marie",
-      "Femme",
-      "18-25 ans",
-      "2024-01-15",
-      "59700000",
-      "Curepipe",
-      "true",
-      "2020-06-01",
-      "",
+      "Dupont", "Marie", "Femme", "18-25 ans", "2024-01-15",
+      "59700000", "Curepipe",
+      "Oui", "Non",
+      "False",
       "Sœur de Jean Dupont",
     ];
 
@@ -48,11 +35,10 @@ export default function ImportMembresCSV({ user }) {
       "sexe: Homme | Femme",
       "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
       "date_venu: format YYYY-MM-DD",
-      "is_whatsapp: true | false",
-      "bapteme_eau / bapteme_esprit: date format YYYY-MM-DD ou vide",
+      "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
+      "serviteur: True | False",
     ];
 
-    // Ligne d'en-tête + ligne exemple + lignes de notes en commentaire
     const csvContent = [
       headers.join(","),
       example.join(","),
@@ -82,10 +68,7 @@ export default function ImportMembresCSV({ user }) {
         const errorList = [];
 
         rows.forEach((row, index) => {
-          // Ignore les lignes de notes (commençant par #)
           if (Object.values(row)[0]?.startsWith("#")) return;
-
-          let rowErrors = [];
 
           // Normalise les noms de colonnes (enlève le " *")
           const normalized = {};
@@ -93,23 +76,42 @@ export default function ImportMembresCSV({ user }) {
             normalized[key.replace(" *", "").trim()] = row[key];
           });
 
+          let rowErrors = [];
+
+          // Champs obligatoires
           requiredFields.forEach((field) => {
             if (!normalized[field]) {
               rowErrors.push(`Ligne ${index + 1}: ${field} manquant`);
             }
           });
 
+          // Validation sexe
           if (normalized.sexe && !["Homme", "Femme"].includes(normalized.sexe)) {
-            rowErrors.push(`Ligne ${index + 1}: sexe invalide`);
+            rowErrors.push(`Ligne ${index + 1}: sexe invalide (Homme ou Femme)`);
           }
 
+          // Validation age
           const validAges = [
             "12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans",
             "41-55 ans", "56-69 ans", "70 ans et plus",
           ];
-
           if (normalized.age && !validAges.includes(normalized.age)) {
             rowErrors.push(`Ligne ${index + 1}: âge invalide`);
+          }
+
+          // Validation bapteme_eau
+          if (normalized.bapteme_eau && !["Oui", "Non"].includes(normalized.bapteme_eau)) {
+            rowErrors.push(`Ligne ${index + 1}: bapteme_eau invalide (Oui ou Non)`);
+          }
+
+          // Validation bapteme_esprit
+          if (normalized.bapteme_esprit && !["Oui", "Non"].includes(normalized.bapteme_esprit)) {
+            rowErrors.push(`Ligne ${index + 1}: bapteme_esprit invalide (Oui ou Non)`);
+          }
+
+          // Validation serviteur
+          if (normalized.serviteur && !["True", "False"].includes(normalized.serviteur)) {
+            rowErrors.push(`Ligne ${index + 1}: serviteur invalide (True ou False)`);
           }
 
           if (rowErrors.length === 0) {
@@ -121,9 +123,9 @@ export default function ImportMembresCSV({ user }) {
               date_venu: normalized.date_venu,
               telephone: normalized.telephone || null,
               ville: normalized.ville || null,
-              is_whatsapp: normalized.is_whatsapp === "true",
               bapteme_eau: normalized.bapteme_eau || null,
               bapteme_esprit: normalized.bapteme_esprit || null,
+              star: normalized.serviteur === "True",  // ← colonne "star" dans la table
               infos_supplementaires: normalized.infos_supplementaires || null,
               cellule_id: user.cellule_id,
               eglise_id: user.eglise_id,
@@ -158,14 +160,11 @@ export default function ImportMembresCSV({ user }) {
   return (
     <div className="bg-white p-6 rounded-xl shadow space-y-4">
 
-      {/* 📥 Template */}
+      {/* Template */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="font-semibold text-blue-800 mb-1">
-          📄 Avant d'importer
-        </p>
+        <p className="font-semibold text-blue-800 mb-1">📄 Avant d'importer</p>
         <p className="text-sm text-blue-700 mb-3">
-          Télécharge le template CSV pour voir les colonnes attendues et un
-          exemple de données.
+          Télécharge le template CSV pour voir les colonnes attendues et un exemple de données.
         </p>
         <button
           onClick={handleDownloadTemplate}
@@ -175,51 +174,44 @@ export default function ImportMembresCSV({ user }) {
         </button>
       </div>
 
-      {/* 📤 Upload */}
+      {/* Upload */}
       <div>
         <p className="font-semibold mb-2">📤 Importer un fichier CSV</p>
         <input type="file" accept=".csv" onChange={handleFileChange} />
       </div>
 
-      {/* ❌ Erreurs */}
+      {/* Erreurs */}
       {errors.length > 0 && (
         <div className="bg-red-100 text-red-600 p-3 rounded">
-          <p className="font-semibold mb-1">
-            ⚠️ {errors.length} erreur(s) détectée(s) :
-          </p>
+          <p className="font-semibold mb-1">⚠️ {errors.length} erreur(s) détectée(s) :</p>
           {errors.slice(0, 10).map((err, i) => (
             <p key={i} className="text-sm">{err}</p>
           ))}
           {errors.length > 10 && (
-            <p className="text-sm mt-1 italic">
-              ...et {errors.length - 10} autres erreurs
-            </p>
+            <p className="text-sm mt-1 italic">...et {errors.length - 10} autres erreurs</p>
           )}
         </div>
       )}
 
-      {/* ✅ Aperçu */}
+      {/* Aperçu */}
       {data.length > 0 && (
         <div>
-          <p className="font-semibold">
-            ✅ {data.length} ligne(s) prête(s) à être importée(s)
-          </p>
+          <p className="font-semibold">✅ {data.length} ligne(s) prête(s) à être importée(s)</p>
           <div className="max-h-40 overflow-auto border mt-2 p-2 text-sm rounded">
             {data.slice(0, 5).map((row, i) => (
               <div key={i} className="py-0.5">
                 {row.nom} {row.prenom} — {row.age} — {row.date_venu}
+                {row.star ? " ⭐" : ""}
               </div>
             ))}
             {data.length > 5 && (
-              <p className="text-gray-400 italic">
-                ...et {data.length - 5} autres
-              </p>
+              <p className="text-gray-400 italic">...et {data.length - 5} autres</p>
             )}
           </div>
         </div>
       )}
 
-      {/* 🚀 Bouton import */}
+      {/* Bouton import */}
       <button
         onClick={handleImport}
         disabled={data.length === 0 || loading}

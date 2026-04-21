@@ -284,7 +284,7 @@ export default function AddMember() {
           <label className="text-sm sm:text-base font-semibold">Statut</label>
           <select value={formData.statut} onChange={e => setFormData({...formData, statut: e.target.value})} className="input" required>
             <option value="">-- Choisir --</option>
-            <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+            <option value="veut rejoindre l'église">Veut rejoindre l'élise</option>
             <option value="a déjà son église">A déjà son église</option>
             <option value="nouveau">Nouveau</option>
             <option value="visiteur">Visiteur</option>

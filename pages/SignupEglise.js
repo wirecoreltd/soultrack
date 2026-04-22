@@ -114,12 +114,11 @@ export default function SignupEglise() {
             placeholder="Ville"
             value={formData.ville}
             onChange={handleChange}
-            className="input"
-            required
+            className="input"            
           />
           <input
             name="localisation"
-            placeholder="France"
+            placeholder="Pays"
             value={formData.localisation}
             onChange={handleChange}
             className="input"

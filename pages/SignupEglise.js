@@ -10,6 +10,8 @@ export default function SignupEglise() {
   const [formData, setFormData] = useState({
     nomEglise: "",
     nomBranche: "",
+    denomination: "",
+    ville: "",
     localisation: "",
     adminPrenom: "",
     adminNom: "",
@@ -49,6 +51,8 @@ export default function SignupEglise() {
         setFormData({
           nomEglise: "",
           nomBranche: "",
+          denomination: "",
+          ville: "",
           localisation: "",
           adminPrenom: "",
           adminNom: "",
@@ -81,9 +85,17 @@ export default function SignupEglise() {
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
           {/* Église & branche */}
+           <input
+            name="denomination"
+            placeholder="Eglise de Christ"
+            value={formData.denomination}
+            onChange={handleChange}
+            className="input"
+            required
+          />
           <input
             name="nomEglise"
-            placeholder="Nom de l'Église"
+            placeholder="Centre Apostolique"
             value={formData.nomEglise}
             onChange={handleChange}
             className="input"
@@ -91,15 +103,23 @@ export default function SignupEglise() {
           />
           <input
             name="nomBranche"
-            placeholder="Nom de la Branche"
+            placeholder="Versaille"
             value={formData.nomBranche}
+            onChange={handleChange}
+            className="input"
+            required
+          />
+              <input
+            name="ville"
+            placeholder="Paris"
+            value={formData.ville}
             onChange={handleChange}
             className="input"
             required
           />
           <input
             name="localisation"
-            placeholder="Pays"
+            placeholder="France"
             value={formData.localisation}
             onChange={handleChange}
             className="input"

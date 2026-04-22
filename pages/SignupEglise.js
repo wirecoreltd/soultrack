@@ -87,7 +87,7 @@ export default function SignupEglise() {
           {/* Église & branche */}
            <input
             name="denomination"
-            placeholder="Eglise de Christ"
+            placeholder="Dénomination"
             value={formData.denomination}
             onChange={handleChange}
             className="input"
@@ -95,7 +95,7 @@ export default function SignupEglise() {
           />
           <input
             name="nomEglise"
-            placeholder="Centre Apostolique"
+            placeholder="Nom de l'église"
             value={formData.nomEglise}
             onChange={handleChange}
             className="input"
@@ -103,7 +103,7 @@ export default function SignupEglise() {
           />
           <input
             name="nomBranche"
-            placeholder="Versaille"
+            placeholder="Nom de la Branche"
             value={formData.nomBranche}
             onChange={handleChange}
             className="input"
@@ -111,7 +111,7 @@ export default function SignupEglise() {
           />
               <input
             name="ville"
-            placeholder="Paris"
+            placeholder="Ville"
             value={formData.ville}
             onChange={handleChange}
             className="input"

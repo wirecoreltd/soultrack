@@ -310,7 +310,7 @@ export default function AboutPage() {
           <SectionLabel>{t.introTitle}</SectionLabel>
           <p style={bodyText}>{t.introP1}</p>
           <p style={{ ...bodyText, marginTop: "14px" }}>{t.introP2}</p>
-          <p style={{ ...bodyText, marginTop: "14px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>{t.introP3}</p>
+          <p style={{ ...bodyText, marginTop: "14px", color: "#FFFFFF", fontStyle: "italic" }}>{t.introP3}</p>
         </div>
       </section>
 
@@ -326,7 +326,7 @@ export default function AboutPage() {
             background: "rgba(251,191,36,0.07)",
             borderRadius: "0 12px 12px 0",
           }}>
-            <p style={{ color: "rgba(255,255,255,0.85)", fontSize: "15px", lineHeight: 1.8, margin: 0, fontStyle: "italic" }}>
+            <p style={{ color: "rgba(255,255,255,0.85)", fontSize: "16px", lineHeight: 1.8, margin: 0, fontStyle: "italic" }}>
               {t.missionQuote}
             </p>
           </blockquote>
@@ -491,7 +491,7 @@ function SectionLabel({ children, color, centered }) {
 }
 
 const bodyText = {
-  color: "FFFFFF",
+  color: "#FFFFFF",
   fontSize: "16px",
   lineHeight: 1.85,
   margin: 0,

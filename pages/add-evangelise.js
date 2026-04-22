@@ -36,7 +36,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const [errorMsg, setErrorMsg] = useState("");
 
   const besoinsList = [
-    "Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits",
+    "Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits", "Miracle", "Délivrance",
     "Addictions / Dépendances","Guidance spirituelle","Logement / Sécurité",
     "Communauté / Isolement","Dépression / Santé mentale"
   ];

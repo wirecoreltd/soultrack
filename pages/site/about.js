@@ -324,7 +324,7 @@ export default function AboutPage() {
             padding: "20px 24px",
             borderLeft: "3px solid #fbbf24",
             background: "rgba(251,191,36,0.07)",
-            borderRadius: "0 12px 12px 0",
+            borderRadius: "12px",
           }}>
             <p style={{ color: "rgba(255,255,255,0.85)", fontSize: "16px", lineHeight: 1.8, margin: 0, fontStyle: "italic" }}>
               {t.missionQuote}

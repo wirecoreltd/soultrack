@@ -294,10 +294,7 @@ export default function AboutPage() {
       </header>
 
       {/* ───── HERO ───── */}
-      <section style={{ textAlign: "center", padding: "70px max(16px, 4vw) 60px", position: "relative", zIndex: 1 }}>
-        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: "16px" }}>
-          {t.heroLabel}
-        </p>
+      <section style={{ textAlign: "center", padding: "70px max(16px, 4vw) 60px", position: "relative", zIndex: 1 }}>       
         <h1 style={{ color: "#fff", fontSize: "clamp(2.2rem, 5vw, 3.2rem)", fontWeight: 500, lineHeight: 1.15, marginBottom: "20px" }}>
           {t.heroTitle} <span style={{ color: "#fbbf24" }}>{t.heroHighlight}</span>
         </h1>
@@ -494,8 +491,8 @@ function SectionLabel({ children, color, centered }) {
 }
 
 const bodyText = {
-  color: "rgba(255,255,255,0.7)",
-  fontSize: "15px",
+  color: "FFFFFF",
+  fontSize: "16px",
   lineHeight: 1.85,
   margin: 0,
 };

@@ -344,13 +344,13 @@ export default function AboutPage() {
             <p style={{ ...bodyText, marginBottom: "16px" }}>{t.problemIntro}</p>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
               {t.problems.map((p, i) => (
-                <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "10px", color: "rgba(255,255,255,0.75)", fontSize: "14.5px", lineHeight: 1.6 }}>
+                <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "10px", color: "rgba(255,255,255,0.75)", fontSize: "16px", lineHeight: 1.6 }}>
                   <span style={{ color: "rgba(239,68,68,0.7)", marginTop: "2px", flexShrink: 0 }}>✕</span>
                   {p}
                 </li>
               ))}
             </ul>
-            <p style={{ ...bodyText, marginTop: "20px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>{t.problemResult}</p>
+            <p style={{ ...bodyText, marginTop: "20px", color: "#fbbf24", fontStyle: "italic" }}>{t.problemResult}</p>
           </div>
 
           {/* Solution */}
@@ -360,13 +360,13 @@ export default function AboutPage() {
             <p style={{ ...bodyText, marginBottom: "16px" }}>{t.solutionIntro}</p>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
               {t.solutions.map((s, i) => (
-                <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "10px", color: "rgba(255,255,255,0.75)", fontSize: "14.5px", lineHeight: 1.6 }}>
+                <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "10px", color: "rgba(255,255,255,0.75)", fontSize: "16px", lineHeight: 1.6 }}>
                   <span style={{ color: "rgba(29,158,117,0.9)", marginTop: "2px", flexShrink: 0 }}>✓</span>
                   {s}
                 </li>
               ))}
             </ul>
-            <p style={{ ...bodyText, marginTop: "20px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>{t.solutionClose}</p>
+            <p style={{ ...bodyText, marginTop: "20px", color: "#fbbf24", fontStyle: "italic" }}>{t.solutionClose}</p>
           </div>
         </div>
       </section>
@@ -478,7 +478,7 @@ function SectionLabel({ children, color, centered }) {
   return (
     <p style={{
       color: color || "rgba(251,191,36,0.85)",
-      fontSize: "11px",
+      fontSize: "13px",
       letterSpacing: "0.13em",
       textTransform: "uppercase",
       fontWeight: 600,

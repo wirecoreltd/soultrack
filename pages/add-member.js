@@ -36,7 +36,7 @@ export default function AddMember() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const besoinsOptions = [
-    "Finances","Santé","Travail / Études","Famille / Enfants",
+    "Finances","Santé","Travail / Études","Famille / Enfants","Miracle", "Délivrance",
     "Relations / Conflits","Addictions / Dépendances","Guidance spirituelle",
     "Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"
   ];

@@ -9,26 +9,25 @@ export default function SuiviPopup({ member, onClose, user }) {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [currentUserName, setCurrentUserName] = useState("");
 
-  const parseMemberBesoins = () => {
-    if (!member?.besoin) return [];
+  const parseMemberBesoins = (source) => {
+    const val = source ?? member?.besoin;
+    if (!val) return [];
     try {
-      const parsed =
-        typeof member.besoin === "string"
-          ? JSON.parse(member.besoin)
-          : member.besoin;
+      const parsed = typeof val === "string" ? JSON.parse(val) : val;
       return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
   };
 
-  const memberBesoins = parseMemberBesoins();
+  // memberBesoins = besoins actuels du membre (peut changer après décocher)
+  const [memberBesoins, setMemberBesoins] = useState(parseMemberBesoins());
 
   const [form, setForm] = useState({
     date_action: "",
     type: "",
     statut: "En cours",
-    besoin: memberBesoins,
+    besoin: parseMemberBesoins(),
     commentaire: "",
   });
 
@@ -93,13 +92,39 @@ export default function SuiviPopup({ member, onClose, user }) {
     setSuivis(data || []);
   };
 
-  const toggleBesoin = (value) => {
-    setForm((prev) => ({
-      ...prev,
-      besoin: prev.besoin.includes(value)
-        ? prev.besoin.filter((b) => b !== value)
-        : [...prev.besoin, value],
-    }));
+  // Quand on coche/décoche un besoin
+  const toggleBesoin = async (value) => {
+    const isCurrentlyChecked = form.besoin.includes(value);
+    const isMemberBesoin = memberBesoins.includes(value);
+
+    // Nouveau état du form
+    const newFormBesoin = isCurrentlyChecked
+      ? form.besoin.filter((b) => b !== value)
+      : [...form.besoin, value];
+
+    setForm((prev) => ({ ...prev, besoin: newFormBesoin }));
+
+    // Si on décoche un besoin qui était dans membres_complets → on le retire de la DB
+    if (isCurrentlyChecked && isMemberBesoin) {
+      const newMemberBesoins = memberBesoins.filter((b) => b !== value);
+      setMemberBesoins(newMemberBesoins);
+
+      await supabase
+        .from("membres_complets")
+        .update({ besoin: JSON.stringify(newMemberBesoins) })
+        .eq("id", member.id);
+    }
+
+    // Si on coche un besoin qui n'était pas dans membres_complets → on l'ajoute
+    if (!isCurrentlyChecked && !isMemberBesoin) {
+      const newMemberBesoins = [...memberBesoins, value];
+      setMemberBesoins(newMemberBesoins);
+
+      await supabase
+        .from("membres_complets")
+        .update({ besoin: JSON.stringify(newMemberBesoins) })
+        .eq("id", member.id);
+    }
   };
 
   const handleSubmit = async () => {
@@ -160,6 +185,25 @@ export default function SuiviPopup({ member, onClose, user }) {
     return "text-orange-500 font-semibold";
   };
 
+  // Détermine l'apparence de la case
+  // - coché + membre   → orange + tick  (besoin actif confirmé)
+  // - décoché + membre → vert + tick    (besoin résolu / retiré)
+  // - coché + nouveau  → orange + tick  (nouveau besoin ajouté)
+  // - décoché + rien   → vide
+  const getCaseStyle = (b) => {
+    const isChecked = form.besoin.includes(b);
+    const wasMemberBesoin = memberBesoins.includes(b);
+
+    if (isChecked) {
+      return { bg: "bg-orange-400 border-orange-400", tick: true };
+    }
+    if (!isChecked && wasMemberBesoin) {
+      // Décoché mais était un besoin du membre → vert
+      return { bg: "bg-green-500 border-green-500", tick: true };
+    }
+    return { bg: "bg-white border-gray-300", tick: false };
+  };
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-full max-w-2xl p-5 rounded-xl max-h-[85vh] overflow-y-auto">
@@ -203,27 +247,22 @@ export default function SuiviPopup({ member, onClose, user }) {
             <option>Résolu</option>
           </select>
 
-          {/* BESOINS — cases custom orange */}
+          {/* BESOINS */}
           <div>
             <p className="font-semibold mb-2">Besoins</p>
             <div className="grid grid-cols-2 gap-2">
               {besoinsOptions.map((b) => {
-                const isChecked = form.besoin.includes(b);
+                const style = getCaseStyle(b);
                 return (
                   <label
                     key={b}
                     className="flex items-center gap-2 text-sm cursor-pointer select-none"
                     onClick={() => toggleBesoin(b)}
                   >
-                    {/* Case custom — orange quand coché */}
                     <div
-                      className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                        isChecked
-                          ? "bg-orange-400 border-orange-400"
-                          : "bg-white border-gray-300"
-                      }`}
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${style.bg}`}
                     >
-                      {isChecked && (
+                      {style.tick && (
                         <svg
                           className="w-3 h-3 text-white"
                           fill="none"
@@ -286,12 +325,10 @@ export default function SuiviPopup({ member, onClose, user }) {
             return (
               <div key={s.id} className="border-b py-3 text-sm space-y-1">
 
-                {/* Date + type d'action */}
                 <p className="font-semibold">
                   📅 {formatDate(s.date_action)} — {s.action_type}
                 </p>
 
-                {/* Chaque besoin avec son statut */}
                 {besoinsArr.length > 0 && (
                   <div className="space-y-0.5 mt-1">
                     {besoinsArr.map((b, i) => (
@@ -305,12 +342,10 @@ export default function SuiviPopup({ member, onClose, user }) {
                   </div>
                 )}
 
-                {/* Commentaire */}
                 {s.commentaire && (
                   <p className="text-gray-600">📝 {s.commentaire}</p>
                 )}
 
-                {/* Auteur */}
                 <p className="text-gray-400 text-xs">
                   👤 {s.profiles?.prenom} {s.profiles?.nom}
                 </p>

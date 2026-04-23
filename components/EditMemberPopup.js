@@ -81,15 +81,13 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
   const handleChange = (e) => {
   const { name, value, type, checked } = e.target;
 
-  if (type === "checkbox") {
+ if (type === "checkbox") {
     setFormData(prev => ({
       ...prev,
       [name]: checked,
-      // si on décoche "serviteur", on vide Ministere
       ...(name === "star" && !checked ? { Ministere: [] } : {}),
     }));
-
-  else {
+  } else {
     setFormData(prev => ({ ...prev, [name]: value }));
   }
 };

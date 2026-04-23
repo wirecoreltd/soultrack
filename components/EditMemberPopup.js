@@ -3,12 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 
-// Pass `currentUserRole` as a prop from the parent
-export default function EditMemberPopup({ member, cellules, conseillers, onClose, onUpdateMember, currentUserRole }) {
+// Pass `currentUserRoles` (array) as a prop from the parent
+export default function EditMemberPopup({ member, cellules, conseillers, onClose, onUpdateMember, currentUserRoles }) {
   if (!member) return null;
 
-  // Roles with access to restricted fields
-  const isPrivileged = ["Administrateur", "ResponsableIntegration"].includes(currentUserRole);
+
+  const isPrivileged = (currentUserRoles || []).some(r => ["Administrateur", "ResponsableIntegration"].includes(r));
 
   const [autreMinistere, setAutreMinistere] = useState("");
   const [search, setSearch] = useState("");

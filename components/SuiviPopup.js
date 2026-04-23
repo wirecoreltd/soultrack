@@ -22,11 +22,13 @@ export default function SuiviPopup({ member, onClose, user }) {
     }
   };
 
+  const memberBesoins = parseMemberBesoins();
+
   const [form, setForm] = useState({
     date_action: "",
     type: "",
     statut: "En cours",
-    besoin: parseMemberBesoins(),
+    besoin: memberBesoins,
     commentaire: "",
   });
 
@@ -44,8 +46,6 @@ export default function SuiviPopup({ member, onClose, user }) {
     "Communauté / Isolement",
     "Dépression / Santé mentale",
   ];
-
-  const memberBesoins = parseMemberBesoins();
 
   useEffect(() => {
     const resolveUser = async () => {
@@ -132,7 +132,7 @@ export default function SuiviPopup({ member, onClose, user }) {
         date_action: "",
         type: "",
         statut: "En cours",
-        besoin: parseMemberBesoins(),
+        besoin: memberBesoins,
         commentaire: "",
       });
       fetchSuivis();
@@ -140,26 +140,6 @@ export default function SuiviPopup({ member, onClose, user }) {
       console.error("Erreur supabase:", error);
       alert("Erreur lors de l'ajout du suivi : " + error.message);
     }
-  };
-
-  // Pour chaque besoin, trouver le dernier suivi qui le mentionne
-  const getLastSuiviForBesoin = (besoinLabel) => {
-    for (const s of suivis) {
-      if (!s.besoin) continue;
-      try {
-        const arr = JSON.parse(s.besoin);
-        if (Array.isArray(arr) && arr.includes(besoinLabel)) {
-          return s;
-        }
-      } catch {}
-    }
-    return null;
-  };
-
-  const statutColor = (statut) => {
-    if (statut === "Résolu") return "text-green-600 font-semibold";
-    if (statut === "En suivi") return "text-blue-600 font-semibold";
-    return "text-orange-500 font-semibold";
   };
 
   const formatDate = (dateStr) => {
@@ -174,40 +154,10 @@ export default function SuiviPopup({ member, onClose, user }) {
     }
   };
 
-  // Détermine l'état visuel d'une case
-  // - "member" : besoin du membre (orange si pas coché, vert si coché)
-  // - "new"    : pas besoin du membre mais coché maintenant (bleu)
-  // - "none"   : ni l'un ni l'autre
-  const getCaseStyle = (b) => {
-    const isMemberBesoin = memberBesoins.includes(b);
-    const isChecked = form.besoin.includes(b);
-
-    if (isMemberBesoin && isChecked) {
-      // Besoin du membre ET coché → vert plein sans tick
-      return {
-        box: "w-4 h-4 rounded border-2 border-green-500 bg-green-500 flex items-center justify-center flex-shrink-0",
-        tick: false,
-      };
-    }
-    if (isMemberBesoin && !isChecked) {
-      // Besoin du membre mais décoché → orange sans tick
-      return {
-        box: "w-4 h-4 rounded border-2 border-orange-400 bg-orange-400 flex items-center justify-center flex-shrink-0",
-        tick: false,
-      };
-    }
-    if (!isMemberBesoin && isChecked) {
-      // Nouveau besoin coché → bleu avec tick
-      return {
-        box: "w-4 h-4 rounded border-2 border-blue-500 bg-blue-500 flex items-center justify-center flex-shrink-0",
-        tick: true,
-      };
-    }
-    // Non coché, pas besoin du membre → case vide
-    return {
-      box: "w-4 h-4 rounded border-2 border-gray-300 bg-white flex-shrink-0",
-      tick: false,
-    };
+  const statutColor = (statut) => {
+    if (statut === "Résolu") return "text-green-600 font-semibold";
+    if (statut === "En suivi") return "text-blue-600 font-semibold";
+    return "text-orange-500 font-semibold";
   };
 
   return (
@@ -253,39 +203,44 @@ export default function SuiviPopup({ member, onClose, user }) {
             <option>Résolu</option>
           </select>
 
-          {/* BESOINS — cases custom */}
+          {/* BESOINS — cases custom orange */}
           <div>
             <p className="font-semibold mb-2">Besoins</p>
             <div className="grid grid-cols-2 gap-2">
               {besoinsOptions.map((b) => {
-                const style = getCaseStyle(b);
-                const lastSuivi = getLastSuiviForBesoin(b);
+                const isChecked = form.besoin.includes(b);
                 return (
-                  <div key={b}>
-                    <label
-                      className="flex items-center gap-2 text-sm cursor-pointer select-none"
-                      onClick={() => toggleBesoin(b)}
+                  <label
+                    key={b}
+                    className="flex items-center gap-2 text-sm cursor-pointer select-none"
+                    onClick={() => toggleBesoin(b)}
+                  >
+                    {/* Case custom — orange quand coché */}
+                    <div
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                        isChecked
+                          ? "bg-orange-400 border-orange-400"
+                          : "bg-white border-gray-300"
+                      }`}
                     >
-                      {/* Case custom */}
-                      <div className={style.box}>
-                        {style.tick && (
-                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                      <span>{b}</span>
-                    </label>
-                    {/* Dernier suivi pour ce besoin */}
-                    {lastSuivi && (
-                      <p className="text-xs text-gray-400 ml-6 mt-0.5">
-                        {formatDate(lastSuivi.date_action)} —{" "}
-                        <span className={statutColor(lastSuivi.statut)}>
-                          {lastSuivi.statut}
-                        </span>
-                      </p>
-                    )}
-                  </div>
+                      {isChecked && (
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={3}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                    <span>{b}</span>
+                  </label>
                 );
               })}
             </div>
@@ -314,7 +269,7 @@ export default function SuiviPopup({ member, onClose, user }) {
           </button>
         </div>
 
-        {/* HISTORIQUE COMPLET */}
+        {/* HISTORIQUE */}
         <div className="mt-4">
           <h3 className="font-bold mb-2">📅 Historique</h3>
 
@@ -330,17 +285,18 @@ export default function SuiviPopup({ member, onClose, user }) {
 
             return (
               <div key={s.id} className="border-b py-3 text-sm space-y-1">
-                <div className="flex justify-between">
-                  <p>📅 {formatDate(s.date_action)} — {s.action_type}</p>
-                  <p className={statutColor(s.statut)}>{s.statut}</p>
-                </div>
 
-                {/* Besoins ligne par ligne */}
+                {/* Date + type d'action */}
+                <p className="font-semibold">
+                  📅 {formatDate(s.date_action)} — {s.action_type}
+                </p>
+
+                {/* Chaque besoin avec son statut */}
                 {besoinsArr.length > 0 && (
                   <div className="space-y-0.5 mt-1">
                     {besoinsArr.map((b, i) => (
                       <p key={i} className="text-gray-700">
-                        • {b} —{" "}
+                        {b} —{" "}
                         <span className={statutColor(s.statut)}>
                           {s.statut}
                         </span>
@@ -349,11 +305,16 @@ export default function SuiviPopup({ member, onClose, user }) {
                   </div>
                 )}
 
-                {s.commentaire && <p className="text-gray-600">📝 {s.commentaire}</p>}
+                {/* Commentaire */}
+                {s.commentaire && (
+                  <p className="text-gray-600">📝 {s.commentaire}</p>
+                )}
 
+                {/* Auteur */}
                 <p className="text-gray-400 text-xs">
                   👤 {s.profiles?.prenom} {s.profiles?.nom}
                 </p>
+
               </div>
             );
           })}

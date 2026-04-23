@@ -60,14 +60,14 @@ export default function SuiviPopup({ member, onClose, user }) {
     setLoading(true);
 
     const { error } = await supabase.from("suivis").insert({
-      membre_id: member.id,
-      type: form.type,
-      statut: form.statut,
-      besoin: form.besoin.length ? JSON.stringify(form.besoin) : null,
-      commentaire: form.commentaire,
-      date_action: form.date_action,
-      created_by: user.id,
-    });
+  membre_id: member.id,
+  action_type: form.type,   // 🔥 IMPORTANT
+  statut: form.statut,
+  besoin: form.besoin.length ? JSON.stringify(form.besoin) : null,
+  commentaire: form.commentaire,
+  date_action: form.date_action,
+  created_by: user.id,
+});
 
     setLoading(false);
 

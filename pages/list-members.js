@@ -82,9 +82,15 @@ if (userProfile?.roles) {
 
 const roles = getRoles(userProfile);
 
-const canAddMember =
-  roles.includes("Administrateur") ||
+const isAdmin =
+  roles.includes("Administrateur");
+
+const isIntegration =
   roles.includes("ResponsableIntegration");
+
+const canAddMember = isAdmin || isIntegration;
+
+const canEditSensitiveFields = isAdmin || isIntegration;
 
 
   const [view, setView] = useState(() => {

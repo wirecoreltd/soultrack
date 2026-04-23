@@ -298,20 +298,46 @@ const reactivateMember = async (id) => {
 
 return (
       <div className="text-black text-sm space-y-2 w-full">
-        <p>📅 {m.sexe === "Femme" ? "Arrivée" : "Arrivé"} le : {formatDateFr(m.date_venu)}</p> 
-        <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+
+        <div>
+        <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
+          
         <p>🎗️ Civilité : {m.sexe || ""}</p>
-        <p>⏳ Age : {m.age || ""}</p>
+        <p>⏳ Age : {m.age || ""}</p>        
+        <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+        </div>  
+        <hr />
+
+        <div>
+        <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
+        <p>📅 {m.sexe === "Femme" ? "Arrivée" : "Arrivé"} le : {formatDateFr(m.date_venu)}</p> 
+        </div>
+        <hr />
+  
+        <div>
+        <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
         <p>💧 Baptême d'Eau : {m.bapteme_eau || ""}</p>
-        <p>🔥 Baptême de Feu : {m.bapteme_esprit || ""}</p>        
-        <p>✒️ Formation : {m.Formation || "—"}</p>  
-        <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>      
-        <p>❓ Difficultés / Besoins : {formatArrayField(m.besoin)}</p>
-        <p>📝 Infos : {m.infos_supplementaires || ""}</p>
-        <p>🧩 Comment est-il venu : {m.venu || ""}</p>
-        <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? ""}</p>
+        <p>🔥 Baptême de Feu : {m.bapteme_esprit || ""}</p>  
         <p>🙏 Prière du salut : {m.priere_salut || ""}</p>
         <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
+        <p>✒️ Formation : {m.Formation || "—"}</p>  
+        p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}</p>
+              </div>
+          <hr />
+          
+         {/* 4. PARCOURS */}
+          <div>
+          <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>
+          <p>🧩 Comment est-il venu : {m.venu || ""}</p>
+          <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? ""}</p>        
+          <p>📝 Infos : {m.infos_supplementaires || ""}</p>
+          </div>
+          <hr />
+          
+           <div>
+                <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
+        <p>❓ Difficultés / Besoins : {formatArrayField(m.besoin)}</p>
+        </div>       
 
         {!showRefus && (
           <div className="mt-4 rounded-xl w-full shadow-md p-4 bg-white">

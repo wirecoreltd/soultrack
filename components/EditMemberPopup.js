@@ -3,14 +3,11 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
-const safeCellules = cellules || [];
-const safeConseillers = conseillers || [];
-const [search, setSearch] = useState("");
-
 export default function EditMemberPopup({ member, cellules, conseillers, onClose, onUpdateMember }) {
   if (!member) return null;
-  
+
   const [autreMinistere, setAutreMinistere] = useState("");
+  const [search, setSearch] = useState("");
 
   const parseBesoin = (b) => {
     if (!b) return [];
@@ -53,13 +50,12 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
     Ministere: parseBesoin(member?.Ministere),
     veut_se_faire_baptiser: member?.veut_se_faire_baptiser || "",
     Commentaire_Suivi_Evangelisation: member?.Commentaire_Suivi_Evangelisation || "",
-
   });
-  
-    const ministereOptions = [
+
+  const ministereOptions = [
     "Intercession",
     "Louange",
-    "Administration",  
+    "Administration",
     "Technique",
     "Communication",
     "Les Enfants",
@@ -77,21 +73,41 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  
+  const [selectedConseillers, setSelectedConseillers] = useState([]);
+
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      const { data, error } = await supabase
+        .from("suivi_assignments")
+        .select("conseiller_id")
+        .eq("membre_id", member.id);
+
+      if (!error && data) {
+        setSelectedConseillers(data.map(d => d.conseiller_id));
+      }
+    };
+
+    fetchAssignments();
+  }, [member.id]);
+
+  const filteredConseillers = (conseillers || []).filter(c =>
+    `${c.prenom} ${c.nom}`.toLowerCase().includes(search.toLowerCase())
+  );
+
   // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
-  const { name, value, type, checked } = e.target;
+    const { name, value, type, checked } = e.target;
 
- if (type === "checkbox") {
-    setFormData(prev => ({
-      ...prev,
-      [name]: checked,
-      ...(name === "star" && !checked ? { Ministere: [] } : {}),
-    }));
-  } else {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  }
-};
+    if (type === "checkbox") {
+      setFormData(prev => ({
+        ...prev,
+        [name]: checked,
+        ...(name === "star" && !checked ? { Ministere: [] } : {}),
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
@@ -110,167 +126,134 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
     }));
   };
 
-  const filteredConseillers = conseillers.filter(c =>
-  `${c.prenom} ${c.nom}`.toLowerCase().includes(search.toLowerCase())
-);
-
   const handleConseillerChange = (id) => {
-  setFormData(prev => {
-    const exists = prev.conseillers_ids.includes(id);
-
-    return {
-      ...prev,
-      conseillers_ids: exists
-        ? prev.conseillers_ids.filter(c => c !== id)
-        : [...prev.conseillers_ids, id]
-    };
-  });
-};
-
-  //--------------------------
-  const [selectedConseillers, setSelectedConseillers] = useState([]);
-
-useEffect(() => {
-  const fetchAssignments = async () => {
-    const { data, error } = await supabase
-      .from("suivi_assignments")
-      .select("conseiller_id")
-      .eq("membre_id", member.id);
-
-    if (!error && data) {
-      setSelectedConseillers(data.map(d => d.conseiller_id));
-    }
+    setFormData(prev => {
+      const exists = prev.conseillers_ids.includes(id);
+      return {
+        ...prev,
+        conseillers_ids: exists
+          ? prev.conseillers_ids.filter(c => c !== id)
+          : [...prev.conseillers_ids, id]
+      };
+    });
   };
-
-  fetchAssignments();
-}, [member.id]);
 
   // -------------------- SUBMIT --------------------
   const handleSubmit = async () => {
-  setMessage("");
-  if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
-  if (!formData.nom.trim()) return setMessage("❌ Le nom est obligatoire.");
+    setMessage("");
+    if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
+    if (!formData.nom.trim()) return setMessage("❌ Le nom est obligatoire.");
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    let finalBesoin = [...formData.besoin];
-    if (showAutre && formData.autreBesoin.trim()) {
-      finalBesoin = finalBesoin.filter(b => b !== "Autre");
-      finalBesoin.push(formData.autreBesoin.trim());
-    } else {
-      finalBesoin = finalBesoin.filter(b => b !== "Autre");
+    try {
+      let finalBesoin = [...formData.besoin];
+      if (showAutre && formData.autreBesoin.trim()) {
+        finalBesoin = finalBesoin.filter(b => b !== "Autre");
+        finalBesoin.push(formData.autreBesoin.trim());
+      } else {
+        finalBesoin = finalBesoin.filter(b => b !== "Autre");
+      }
+
+      let finalMinistere = [...formData.Ministere];
+      if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
+        finalMinistere = finalMinistere.filter(m => m !== "Autre");
+        finalMinistere.push(autreMinistere.trim());
+      }
+
+      // si devient serviteur
+      if (formData.star) {
+        await supabase
+          .from("stats_ministere_besoin")
+          .upsert({
+            membre_id: member.id,
+            branche_id: formData.cellule_id || null,
+            sexe: formData.sexe,
+            type: "ministere",
+          });
+      } else {
+        // si on retire serviteur
+        await supabase
+          .from("stats_ministere_besoin")
+          .delete()
+          .eq("membre_id", member.id)
+          .eq("type", "ministere");
+      }
+
+      const payload = {
+        prenom: formData.prenom,
+        nom: formData.nom,
+        telephone: formData.telephone || null,
+        ville: formData.ville || null,
+        sexe: formData.sexe || null,
+        age: formData.age || null,
+        star: !!formData.star,
+        etat_contact: formData.etat_contact || "Nouveau",
+        bapteme_eau: formData.bapteme_eau,
+        bapteme_esprit: formData.bapteme_esprit,
+        priere_salut: formData.priere_salut || null,
+        type_conversion: formData.type_conversion || null,
+        cellule_id: formData.cellule_id || null,
+        besoin: JSON.stringify(finalBesoin),
+        venu: formData.venu || null,
+        infos_supplementaires: formData.infos_supplementaires || null,
+        statut_initial: formData.statut_initial || null,
+        suivi_statut: formData.suivi_statut || null,
+        commentaire_suivis: formData.commentaire_suivis || null,
+        is_whatsapp: !!formData.is_whatsapp,
+        Formation: formData.Formation || null,
+        Soin_Pastoral: formData.Soin_Pastoral || null,
+        veut_se_faire_baptiser: formData.veut_se_faire_baptiser || null,
+        Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
+        Ministere: formData.star ? JSON.stringify(finalMinistere) : null,
+      };
+
+      // 1️⃣ Update membre
+      const { error } = await supabase
+        .from("membres_complets")
+        .update(payload)
+        .eq("id", member.id);
+
+      if (error) throw error;
+
+      // 2️⃣ Supprimer anciens liens conseillers
+      await supabase
+        .from("suivi_assignments")
+        .delete()
+        .eq("membre_id", member.id);
+
+      // 3️⃣ Ajouter nouveaux liens conseillers
+      const rows = selectedConseillers.map((id, index) => ({
+        membre_id: member.id,
+        conseiller_id: id,
+        role: index === 0 ? "principal" : "assistant",
+        statut: "actif"
+      }));
+
+      if (rows.length > 0) {
+        await supabase.from("suivi_assignments").insert(rows);
+      }
+
+      // 4️⃣ Récupérer le membre exact depuis Supabase
+      const { data: updatedMember, error: selectError } = await supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("id", member.id)
+        .single();
+
+      if (selectError) throw selectError;
+
+      // 5️⃣ Passer au parent → mise à jour instantanée de la table
+      onUpdateMember(updatedMember);
+      onClose();
+
+    } catch (err) {
+      console.error(err);
+      setMessage("❌ Une erreur est survenue lors de l'enregistrement.");
+    } finally {
+      setLoading(false);
     }
-
-    let finalMinistere = [...formData.Ministere];
-    if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
-      finalMinistere = finalMinistere.filter(m => m !== "Autre");
-      finalMinistere.push(autreMinistere.trim());
-    }
-
-    // si devient serviteur
-if (formData.star) {
-  await supabase
-    .from("stats_ministere_besoin")
-    .upsert({
-      membre_id: member.id,
-      branche_id: formData.cellule_id || null,
-      sexe: formData.sexe,
-      type: "ministere",
-    });
-} else {
-  // si on retire serviteur
-  await supabase
-    .from("stats_ministere_besoin")
-    .delete()
-    .eq("membre_id", member.id)
-    .eq("type", "ministere");
-}
-
-    const payload = {
-      prenom: formData.prenom,
-      nom: formData.nom,
-      telephone: formData.telephone || null,
-      ville: formData.ville || null,
-      sexe: formData.sexe || null,
-      age: formData.age || null, 
-      star: !!formData.star,
-      etat_contact: formData.etat_contact || "Nouveau",
-      bapteme_eau: formData.bapteme_eau,
-      bapteme_esprit: formData.bapteme_esprit,
-      priere_salut: formData.priere_salut || null,
-      type_conversion: formData.type_conversion || null,
-      cellule_id: formData.cellule_id || null,      
-      besoin: JSON.stringify(finalBesoin),
-      venu: formData.venu || null,
-      infos_supplementaires: formData.infos_supplementaires || null,
-      statut_initial: formData.statut_initial || null,
-      suivi_statut: formData.suivi_statut || null,
-      commentaire_suivis: formData.commentaire_suivis || null,
-      is_whatsapp: !!formData.is_whatsapp,
-      Formation: formData.Formation || null,
-      Soin_Pastoral: formData.Soin_Pastoral || null,
-      veut_se_faire_baptiser: formData.veut_se_faire_baptiser || null,      
-      Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
-      Ministere: formData.star ? JSON.stringify(finalMinistere) : null,
-    };
-
-    const suivisToInsert = formData.conseillers_ids.map((id, index) => ({
-  member_id: member.id,
-  conseiller_id: id,
-  role: index === 0 ? "principal" : "assistant",
-  statut: "actif"
-}));
-
-await supabase.from("suivis").insert(suivisToInsert);
-
-    // 1️⃣ Update
-    const { error } = await supabase
-      .from("membres_complets")
-      .update(payload)
-      .eq("id", member.id);
-
-    if (error) throw error;
-
-    //========================
-    // 1. Supprimer anciens liens
-await supabase
-  .from("suivi_assignments")
-  .delete()
-  .eq("membre_id", member.id);
-
-// 2. Ajouter nouveaux
-const rows = selectedConseillers.map((id, index) => ({
-  membre_id: member.id,
-  conseiller_id: id,
-  role: index === 0 ? "principal" : "assistant",
-  statut: "actif"
-}));
-
-if (rows.length > 0) {
-  await supabase.from("suivi_assignments").insert(rows);
-}
-
-    // 2️⃣ Récupérer le membre exact depuis Supabase
-    const { data: updatedMember, error: selectError } = await supabase
-      .from("membres_complets")
-      .select("*")
-      .eq("id", member.id)
-      .single();
-
-    if (selectError) throw selectError;
-
-    // 3️⃣ Passer au parent → mise à jour instantanée de la table
-    onUpdateMember(updatedMember);
-    onClose();
-
-  } catch (err) {
-    console.error(err);
-    setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   // -------------------- UI --------------------
@@ -285,6 +268,7 @@ if (rows.length > 0) {
         <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
 
           <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
+
           {/* Sexe */}
           <div className="flex flex-col">
             <label className="font-medium">Civilité</label>
@@ -298,14 +282,12 @@ if (rows.length > 0) {
           {["prenom", "nom", "telephone", "ville"].map((f) => (
             <div key={f} className="flex flex-col">
               <label className="font-medium capitalize">{f}</label>
-          
               <input
                 name={f}
                 value={formData[f]}
                 onChange={handleChange}
                 className="input"
               />
-          
               {/* Checkbox WhatsApp sous téléphone */}
               {f === "telephone" && (
                 <div className="flex items-center gap-3 mt-3">
@@ -320,31 +302,26 @@ if (rows.length > 0) {
                 </div>
               )}
             </div>
-          ))}          
+          ))}
 
-            {/* Age */}
-            <div className="flex flex-col">
-              <label className="font-medium">Âge</label>
-              <select
-                name="age"
-                value={formData.age}
-                onChange={handleChange}
-                className="input"
-              >
-                <option value="">-- Choisir --</option>
-                <option value="12-17 ans">12-17 ans</option>
-                <option value="18-25 ans">18-25 ans</option>
-                <option value="26-30 ans">26-30 ans</option>
-                <option value="31-40 ans">31-40 ans</option>
-                <option value="41-55 ans">41-55 ans</option>
-                <option value="56-69 ans">56-69 ans</option>
-                <option value="70 ans et plus">70 ans et plus</option>
-              </select>
-            </div>  
+          {/* Age */}
+          <div className="flex flex-col">
+            <label className="font-medium">Âge</label>
+            <select name="age" value={formData.age} onChange={handleChange} className="input">
+              <option value="">-- Choisir --</option>
+              <option value="12-17 ans">12-17 ans</option>
+              <option value="18-25 ans">18-25 ans</option>
+              <option value="26-30 ans">26-30 ans</option>
+              <option value="31-40 ans">31-40 ans</option>
+              <option value="41-55 ans">41-55 ans</option>
+              <option value="56-69 ans">56-69 ans</option>
+              <option value="70 ans et plus">70 ans et plus</option>
+            </select>
+          </div>
 
-<p className="font-bold text-[#2E3192] mb-1">📌 Suivi par</p>
+          <p className="font-bold text-[#2E3192] mb-1">📌 Suivi par</p>
 
-                   {/* Cellule */}
+          {/* Cellule */}
           <div className="flex flex-col">
             <label className="font-medium">Cellule</label>
             <select
@@ -354,57 +331,58 @@ if (rows.length > 0) {
               className="input"
             >
               <option value="">-- Cellule --</option>
-              {cellules.map(c => (
+              {(cellules || []).map(c => (
                 <option key={c.id} value={c.id}>{c.cellule_full}</option>
               ))}
             </select>
           </div>
-          
+
+          {/* Conseillers */}
           <div className="flex flex-col gap-2">
-  <label className="font-medium">Ajouter conseiller</label>
+            <label className="font-medium">Ajouter conseiller</label>
+            <input
+              type="text"
+              placeholder="Rechercher..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="input"
+            />
+            <div className="max-h-40 overflow-y-auto">
+              {filteredConseillers.map(c => (
+                <div
+                  key={c.id}
+                  onClick={() => {
+                    if (!selectedConseillers.includes(c.id)) {
+                      setSelectedConseillers(prev => [...prev, c.id]);
+                    }
+                  }}
+                  className="cursor-pointer hover:bg-white/10 p-2 rounded"
+                >
+                  {c.prenom} {c.nom}
+                </div>
+              ))}
+            </div>
+          </div>
 
-  <input
-    type="text"
-    placeholder="Rechercher..."
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    className="input"
-  />
+          <div className="flex flex-wrap gap-2 mt-2">
+            {selectedConseillers.map(id => {
+              const c = (conseillers || []).find(x => x.id === id);
+              return (
+                <div key={id} className="bg-blue-500 px-3 py-1 rounded-full flex items-center gap-2">
+                  {c?.prenom} {c?.nom}
+                  <button onClick={() =>
+                    setSelectedConseillers(prev => prev.filter(x => x !== id))
+                  }>
+                    ✕
+                  </button>
+                </div>
+              );
+            })}
+          </div>
 
-  <div className="max-h-40 overflow-y-auto">
-    {filteredConseillers.map(c => (
-      <div
-        key={c.id}
-        onClick={() => {
-          if (!selectedConseillers.includes(c.id)) {
-            setSelectedConseillers(prev => [...prev, c.id]);
-          }
-        }}
-        className="cursor-pointer hover:bg-white/10 p-2 rounded"
-      >
-        {c.prenom} {c.nom}
-      </div>
-    ))}
-  </div>
-</div>            
-    <div className="flex flex-wrap gap-2 mt-2">
-  {selectedConseillers.map(id => {
-    const c = conseillers.find(x => x.id === id);
-    return (
-      <div key={id} className="bg-blue-500 px-3 py-1 rounded-full flex items-center gap-2">
-        {c?.prenom} {c?.nom}
-        <button onClick={() =>
-          setSelectedConseillers(prev => prev.filter(x => x !== id))
-        }>
-          ✕
-        </button>
-      </div>
-    );
-  })}
-</div>
-                  
           <p className="font-bold text-[#2E3192] mb-1">💝 Suivi</p>
-           {/* Suivi statut */}
+
+          {/* Suivi statut */}
           <div className="flex flex-col">
             <label className="font-medium">Suivi statut</label>
             <select
@@ -419,7 +397,7 @@ if (rows.length > 0) {
             </select>
           </div>
 
-{/* Commentaire suivis */}
+          {/* Commentaire suivis */}
           <div className="flex flex-col">
             <label className="font-medium">Commentaire suivis</label>
             <textarea
@@ -431,9 +409,9 @@ if (rows.length > 0) {
             />
           </div>
 
-                {/* Commentaire suivis Evangélisation */}
+          {/* Commentaire suivis Évangélisation */}
           <div className="flex flex-col">
-            <label className="font-medium">Commentaire suivis Evangélisation</label>
+            <label className="font-medium">Commentaire suivis Évangélisation</label>
             <textarea
               name="Commentaire_Suivi_Evangelisation"
               value={formData.Commentaire_Suivi_Evangelisation}
@@ -443,65 +421,65 @@ if (rows.length > 0) {
             />
           </div>
 
-        <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
-{/* Bapteme d'eau */}
-              <div className="flex flex-col">
-                <label className="font-medium">Baptême d'eau</label>
-                <select
-                  name="bapteme_eau"
-                  value={formData.bapteme_eau ?? ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setFormData(prev => ({
-                      ...prev,
-                      bapteme_eau: value,
-                      // reset veut_se_faire_baptiser si on met Oui
-                      veut_se_faire_baptiser: value === "Oui" ? "Non" : prev.veut_se_faire_baptiser
-                    }));
-                  }}
-                  className="input"
-                >
-                  <option value="">-- Sélectionner --</option>
-                  <option value="Oui">Oui</option>
-                  <option value="Non">Non</option>
-                </select>
-              </div>
-              
-              {/* Veut se faire baptiser – s'affiche seulement si bapteme_eau = "non" */}
-              {formData.bapteme_eau === "Non" && (
-                <div className="flex items-center font-medium gap-2 mt-2 ml-6">
-                  <input
-                    type="checkbox"
-                    name="veut_se_faire_baptiser"
-                    checked={formData.veut_se_faire_baptiser === "Oui"}
-                    onChange={(e) =>
-                      setFormData(prev => ({
-                        ...prev,
-                        veut_se_faire_baptiser: e.target.checked ? "Oui" : "Non"
-                      }))
-                    }
-                    className="accent-[#25297e]"
-                  />
-                  <span>💦 Veut se faire baptiser</span>
-                </div>
-              )}
+          <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
 
-          {/* Bapteme de feu */}
+          {/* Baptême d'eau */}
           <div className="flex flex-col">
-              <label className="font-medium">Baptême de feu</label>
-              <select
-                name="bapteme_esprit"
-                value={formData.bapteme_esprit ?? ""}
-                onChange={handleChange}
-                className="input"
-              >
-                <option value="">-- Sélectionner --</option>
-                <option value="Oui">Oui</option>
-                <option value="Non">Non</option>
-              </select>
-            </div>
+            <label className="font-medium">Baptême d'eau</label>
+            <select
+              name="bapteme_eau"
+              value={formData.bapteme_eau ?? ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData(prev => ({
+                  ...prev,
+                  bapteme_eau: value,
+                  veut_se_faire_baptiser: value === "Oui" ? "Non" : prev.veut_se_faire_baptiser
+                }));
+              }}
+              className="input"
+            >
+              <option value="">-- Sélectionner --</option>
+              <option value="Oui">Oui</option>
+              <option value="Non">Non</option>
+            </select>
+          </div>
 
- {/* Prière du salut */}
+          {/* Veut se faire baptiser */}
+          {formData.bapteme_eau === "Non" && (
+            <div className="flex items-center font-medium gap-2 mt-2 ml-6">
+              <input
+                type="checkbox"
+                name="veut_se_faire_baptiser"
+                checked={formData.veut_se_faire_baptiser === "Oui"}
+                onChange={(e) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    veut_se_faire_baptiser: e.target.checked ? "Oui" : "Non"
+                  }))
+                }
+                className="accent-[#25297e]"
+              />
+              <span>💦 Veut se faire baptiser</span>
+            </div>
+          )}
+
+          {/* Baptême de feu */}
+          <div className="flex flex-col">
+            <label className="font-medium">Baptême de feu</label>
+            <select
+              name="bapteme_esprit"
+              value={formData.bapteme_esprit ?? ""}
+              onChange={handleChange}
+              className="input"
+            >
+              <option value="">-- Sélectionner --</option>
+              <option value="Oui">Oui</option>
+              <option value="Non">Non</option>
+            </select>
+          </div>
+
+          {/* Prière du salut */}
           <div className="flex flex-col">
             <label className="font-medium">Prière du salut</label>
             <select
@@ -539,7 +517,7 @@ if (rows.length > 0) {
             )}
           </div>
 
- {/* Formation*/}
+          {/* Formation */}
           <div className="flex flex-col">
             <label className="font-medium">Formation</label>
             <textarea
@@ -549,13 +527,11 @@ if (rows.length > 0) {
               className="input"
               rows={2}
             />
-          </div>  
+          </div>
 
-          {/* Serviteur */}         
+          {/* Serviteur */}
           <div className="flex items-center gap-3 mt-3">
-            <label className="font-medium">
-              Définir en tant que serviteur
-            </label>
+            <label className="font-medium">Définir en tant que serviteur</label>
             <input
               type="checkbox"
               name="star"
@@ -564,17 +540,14 @@ if (rows.length > 0) {
               className="accent-[#25297e]"
             />
           </div>
-            
-          {/* Ministere */}    
+
+          {/* Ministère */}
           {formData.star && (
             <div className="flex flex-col gap-2">
               <label className="font-medium">Ministère</label>
-          
+
               {ministereOptions.map((m) => (
-                <label
-                  key={m}
-                  className="flex items-center gap-3"
-                >
+                <label key={m} className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     value={m}
@@ -593,8 +566,8 @@ if (rows.length > 0) {
                   <span>{m}</span>
                 </label>
               ))}
-          
-              {/* OPTION AUTRE */}
+
+              {/* Option Autre */}
               <label className="flex items-center gap-3 mt-2">
                 <input
                   type="checkbox"
@@ -613,8 +586,8 @@ if (rows.length > 0) {
                 />
                 <span>Autre</span>
               </label>
-          
-              {/* CHAMP TEXTE AUTRE */}
+
+              {/* Champ texte Autre */}
               {formData.Ministere.includes("Autre") && (
                 <input
                   type="text"
@@ -626,6 +599,7 @@ if (rows.length > 0) {
               )}
             </div>
           )}
+
           {/* État du contact */}
           <div className="flex flex-col">
             <label className="font-medium">État du contact</label>
@@ -635,9 +609,9 @@ if (rows.length > 0) {
               <option value="existant">Existant</option>
               <option value="inactif">Inactif</option>
             </select>
-          </div>                                
-                           
-                       {/* Comment est-il venu ? */}
+          </div>
+
+          {/* Comment est-il venu ? */}
           <div className="flex flex-col">
             <label className="font-medium">Comment est-il venu ?</label>
             <select name="venu" value={formData.venu} onChange={handleChange} className="input">
@@ -675,7 +649,8 @@ if (rows.length > 0) {
               <option value="a déjà son église">A déjà son église</option>
               <option value="visiteur">Visiteur</option>
             </select>
-          </div>               
+          </div>
+
         </div>
 
         {/* Buttons */}
@@ -697,7 +672,7 @@ if (rows.length > 0) {
           </button>
         </div>
 
-        {/* Message succès ou erreur sous les boutons */}
+        {/* Message succès ou erreur */}
         {message && (
           <p className="text-[#25297e] font-semibold text-center mt-3">
             {message}
@@ -707,7 +682,7 @@ if (rows.length > 0) {
         {/* Styles */}
         <style jsx>{`
           label {
-            font-weight: 600; /* semi-bold */
+            font-weight: 600;
             color: white;
           }
 

@@ -5,6 +5,7 @@ import supabase from "../lib/supabaseClient";
 
 const safeCellules = cellules || [];
 const safeConseillers = conseillers || [];
+const [search, setSearch] = useState("");
 
 export default function EditMemberPopup({ member, cellules, conseillers, onClose, onUpdateMember }) {
   if (!member) return null;
@@ -109,6 +110,10 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
     }));
   };
 
+  const filteredConseillers = conseillers.filter(c =>
+  `${c.prenom} ${c.nom}`.toLowerCase().includes(search.toLowerCase())
+);
+
   const handleConseillerChange = (id) => {
   setFormData(prev => {
     const exists = prev.conseillers_ids.includes(id);
@@ -121,6 +126,24 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
     };
   });
 };
+
+  //--------------------------
+  const [selectedConseillers, setSelectedConseillers] = useState([]);
+
+useEffect(() => {
+  const fetchAssignments = async () => {
+    const { data, error } = await supabase
+      .from("suivi_assignments")
+      .select("conseiller_id")
+      .eq("membre_id", member.id);
+
+    if (!error && data) {
+      setSelectedConseillers(data.map(d => d.conseiller_id));
+    }
+  };
+
+  fetchAssignments();
+}, [member.id]);
 
   // -------------------- SUBMIT --------------------
   const handleSubmit = async () => {
@@ -177,8 +200,7 @@ if (formData.star) {
       bapteme_esprit: formData.bapteme_esprit,
       priere_salut: formData.priere_salut || null,
       type_conversion: formData.type_conversion || null,
-      cellule_id: formData.cellule_id || null,
-      //conseiller_id: formData.conseiller_id || null,
+      cellule_id: formData.cellule_id || null,      
       besoin: JSON.stringify(finalBesoin),
       venu: formData.venu || null,
       infos_supplementaires: formData.infos_supplementaires || null,
@@ -209,6 +231,25 @@ await supabase.from("suivis").insert(suivisToInsert);
       .eq("id", member.id);
 
     if (error) throw error;
+
+    //========================
+    // 1. Supprimer anciens liens
+await supabase
+  .from("suivi_assignments")
+  .delete()
+  .eq("membre_id", member.id);
+
+// 2. Ajouter nouveaux
+const rows = selectedConseillers.map((id, index) => ({
+  membre_id: member.id,
+  conseiller_id: id,
+  role: index === 0 ? "principal" : "assistant",
+  statut: "actif"
+}));
+
+if (rows.length > 0) {
+  await supabase.from("suivi_assignments").insert(rows);
+}
 
     // 2️⃣ Récupérer le membre exact depuis Supabase
     const { data: updatedMember, error: selectError } = await supabase
@@ -319,19 +360,48 @@ await supabase.from("suivis").insert(suivisToInsert);
             </select>
           </div>
           
-          <div className="flex flex-col">
-             <label className="font-medium">Conseillers</label>
-              {conseillers.map(c => (
-                <label key={c.id} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.conseillers_ids.includes(c.id)}
-                    onChange={() => handleConseillerChange(c.id)}
-                  />
-                  {c.prenom} {c.nom}
-                </label>
-              ))}
-            </div>                
+          <div className="flex flex-col gap-2">
+  <label className="font-medium">Ajouter conseiller</label>
+
+  <input
+    type="text"
+    placeholder="Rechercher..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    className="input"
+  />
+
+  <div className="max-h-40 overflow-y-auto">
+    {filteredConseillers.map(c => (
+      <div
+        key={c.id}
+        onClick={() => {
+          if (!selectedConseillers.includes(c.id)) {
+            setSelectedConseillers(prev => [...prev, c.id]);
+          }
+        }}
+        className="cursor-pointer hover:bg-white/10 p-2 rounded"
+      >
+        {c.prenom} {c.nom}
+      </div>
+    ))}
+  </div>
+</div>            
+    <div className="flex flex-wrap gap-2 mt-2">
+  {selectedConseillers.map(id => {
+    const c = conseillers.find(x => x.id === id);
+    return (
+      <div key={id} className="bg-blue-500 px-3 py-1 rounded-full flex items-center gap-2">
+        {c?.prenom} {c?.nom}
+        <button onClick={() =>
+          setSelectedConseillers(prev => prev.filter(x => x !== id))
+        }>
+          ✕
+        </button>
+      </div>
+    );
+  })}
+</div>
                   
           <p className="font-bold text-[#2E3192] mb-1">💝 Suivi</p>
            {/* Suivi statut */}

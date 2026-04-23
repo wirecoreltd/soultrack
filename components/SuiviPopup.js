@@ -7,12 +7,27 @@ export default function SuiviPopup({ member, onClose, user }) {
   const [loading, setLoading] = useState(false);
   const [suivis, setSuivis] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentUserName, setCurrentUserName] = useState("");
+
+  // Pré-remplir les besoins depuis member.besoin
+  const parseMemberBesoins = () => {
+    if (!member?.besoin) return [];
+    try {
+      const parsed =
+        typeof member.besoin === "string"
+          ? JSON.parse(member.besoin)
+          : member.besoin;
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
 
   const [form, setForm] = useState({
     date_action: "",
     type: "",
     statut: "En cours",
-    besoin: [],
+    besoin: parseMemberBesoins(),
     commentaire: "",
   });
 
@@ -20,33 +35,43 @@ export default function SuiviPopup({ member, onClose, user }) {
     "Finances",
     "Santé",
     "Travail / Études",
-    "Famille",
-    "Relations",
-    "Spiritualité",
-    "Logement",
+    "Famille / Enfants",
+    "Miracle",
+    "Délivrance",
+    "Relations / Conflits",
+    "Addictions / Dépendances",
+    "Guidance spirituelle",
+    "Logement / Sécurité",
+    "Communauté / Isolement",
+    "Dépression / Santé mentale",
   ];
 
-  // Récupère l'ID utilisateur depuis plusieurs sources
+  // Résoudre l'utilisateur connecté
   useEffect(() => {
     const resolveUser = async () => {
-      // 1. Depuis la prop user (userProfile venant de list-members)
+      // 1. Depuis la prop user (userProfile)
       if (user?.id) {
         setCurrentUserId(user.id);
+        const name = [user.prenom, user.nom].filter(Boolean).join(" ");
+        setCurrentUserName(name || user.email || "Utilisateur connecté");
         return;
       }
 
-      // 2. Depuis la session Supabase
+      // 2. Depuis getSession
       try {
         const { data } = await supabase.auth.getSession();
         if (data?.session?.user?.id) {
           setCurrentUserId(data.session.user.id);
+          setCurrentUserName(
+            data.session.user.email || "Utilisateur connecté"
+          );
           return;
         }
       } catch (e) {
         console.warn("getSession échoué:", e);
       }
 
-      // 3. Fallback : lire directement le token stocké par Supabase dans localStorage
+      // 3. Fallback localStorage
       try {
         const keys = Object.keys(localStorage);
         const authKey = keys.find(
@@ -57,14 +82,15 @@ export default function SuiviPopup({ member, onClose, user }) {
           const id = stored?.user?.id;
           if (id) {
             setCurrentUserId(id);
+            setCurrentUserName(
+              stored?.user?.email || "Utilisateur connecté"
+            );
             return;
           }
         }
       } catch (e) {
         console.warn("localStorage fallback échoué:", e);
       }
-
-      console.error("Aucun utilisateur trouvé");
     };
 
     resolveUser();
@@ -124,7 +150,7 @@ export default function SuiviPopup({ member, onClose, user }) {
         date_action: "",
         type: "",
         statut: "En cours",
-        besoin: [],
+        besoin: parseMemberBesoins(),
         commentaire: "",
       });
       fetchSuivis();
@@ -147,9 +173,9 @@ export default function SuiviPopup({ member, onClose, user }) {
         {/* HEADER */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="font-bold text-lg">
-            💡 Suivi - {member.prenom} {member.nom}
+            💡 Suivi — {member.prenom} {member.nom}
           </h2>
-          <button onClick={onClose}>✕</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-black text-xl">✕</button>
         </div>
 
         {/* FORM */}
@@ -169,7 +195,7 @@ export default function SuiviPopup({ member, onClose, user }) {
             onChange={(e) => setForm({ ...form, type: e.target.value })}
             className="border p-2 w-full rounded"
           >
-            <option value="">Type</option>
+            <option value="">Type d'action</option>
             <option value="Appel">Appel</option>
             <option value="Visite">Visite</option>
             <option value="Entretien">Entretien</option>
@@ -186,21 +212,23 @@ export default function SuiviPopup({ member, onClose, user }) {
             <option>Résolu</option>
           </select>
 
-          {/* BESOINS */}
+          {/* BESOINS — Checkboxes */}
           <div>
-            <p className="font-semibold mb-1">Besoins</p>
-            <div className="flex flex-wrap gap-2">
+            <p className="font-semibold mb-2">Besoins</p>
+            <div className="grid grid-cols-2 gap-1">
               {besoinsOptions.map((b) => (
-                <button
+                <label
                   key={b}
-                  type="button"
-                  onClick={() => toggleBesoin(b)}
-                  className={`px-2 py-1 rounded text-sm border ${
-                    form.besoin.includes(b) ? "bg-orange-400 text-white" : ""
-                  }`}
+                  className="flex items-center gap-2 text-sm cursor-pointer"
                 >
+                  <input
+                    type="checkbox"
+                    checked={form.besoin.includes(b)}
+                    onChange={() => toggleBesoin(b)}
+                    className="accent-orange-400 w-4 h-4"
+                  />
                   {b}
-                </button>
+                </label>
               ))}
             </div>
           </div>
@@ -211,7 +239,15 @@ export default function SuiviPopup({ member, onClose, user }) {
             value={form.commentaire}
             onChange={(e) => setForm({ ...form, commentaire: e.target.value })}
             className="border p-2 w-full rounded"
+            rows={3}
           />
+
+          {/* USER CONNECTÉ */}
+          {currentUserName && (
+            <p className="text-center text-sm text-gray-400">
+              👤 {currentUserName}
+            </p>
+          )}
 
           {/* SUBMIT */}
           <button

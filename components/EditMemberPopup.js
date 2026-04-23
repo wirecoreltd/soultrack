@@ -287,6 +287,8 @@ if (formData.star) {
               </select>
             </div>  
 
+<p className="font-bold text-[#2E3192] mb-1">📌 Suivi par</p>
+
                    {/* Cellule */}
           <div className="flex flex-col">
             <label className="font-medium">Cellule</label>
@@ -319,7 +321,7 @@ if (formData.star) {
           </div>    
               
                   
-          <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
+          <p className="font-bold text-[#2E3192] mb-1">💝 Suivi</p>
 
            {/* Suivi statut */}
           <div className="flex flex-col">
@@ -552,11 +554,8 @@ if (formData.star) {
               <option value="existant">Existant</option>
               <option value="inactif">Inactif</option>
             </select>
-          </div>     
-                             
-         
-         
-          
+          </div>                                
+                           
                        {/* Comment est-il venu ? */}
           <div className="flex flex-col">
             <label className="font-medium">Comment est-il venu ?</label>
@@ -595,11 +594,7 @@ if (formData.star) {
               <option value="a déjà son église">A déjà son église</option>
               <option value="visiteur">Visiteur</option>
             </select>
-          </div>
-
-         
-
-          
+          </div>               
         </div>
 
         {/* Buttons */}

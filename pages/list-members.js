@@ -809,34 +809,88 @@ const canAddMember =
             >
               {isOpen ? "Fermer détails" : "Détails"}
             </button>
+
+              {/* Détails */}
+{isOpen && (
+  <div className="text-black text-sm mt-3 w-full space-y-4">
+
+    {/* =========================
+        1. IDENTITÉ
+    ========================= */}
+    <div>
+      <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
+      <p>🎗️ Civilité : {m.sexe || "—"}</p>
+      <p>⏳ Tranche d'âge : {m.age || "—"}</p>
+      <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+    </div>
+
+    <hr />
+
+    {/* =========================
+        2. SUIVI
+    ========================= */}
+    <div>
+      <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
+
+      <p className="font-semibold text-[#2E3192] text-center">
+        💡 Statut : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || "—"}
+      </p>
+
+      <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
+
+      <p>📝 Commentaire : {m.commentaire_suivis || "—"}</p>
+      <p>📑 Évangélisation : {m.Commentaire_Suivi_Evangelisation || "—"}</p>
+    </div>
+
+    <hr />
+
+    {/* =========================
+        3. VIE SPIRITUELLE
+    ========================= */}
+    <div>
+      <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
+
+      <p>💧 Baptême d’eau : {m.bapteme_eau || "—"}</p>
+
+      {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
+        <p className="ml-4">💦 Veut se faire baptiser</p>
+      )}
+
+      <p>🔥 Baptême de feu : {m.bapteme_esprit || "—"}</p>
+      <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
+      <p>✨ Conversion : {m.type_conversion || "—"}</p>
+
+      <p>✒️ Formation : {m.Formation || "—"}</p>
+      <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}</p>
+    </div>
+
+    <hr />
+
+    {/* =========================
+        4. PARCOURS
+    ========================= */}
+    <div>
+      <p className="font-bold text-[#2E3192] mb-1">🧩 Parcours</p>
+
+      <p>🧩 Comment venu : {m.venu || "—"}</p>
+      <p>✨ Raison : {m.statut_initial || "—"}</p>
+      <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+    </div>
+
+    <hr />
+
+    {/* =========================
+        5. SOIN PASTORAL
+    ========================= */}
+    <div>
+      <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
+
+      <p>❤️‍🩹 Suivi pastoral : {m.Soin_Pastoral || "—"}</p>
+      <p>❓ Besoins : {besoins}</p>
+    </div>
+
     
-            {/* Détails */}
-            {isOpen && (
-              <div className="text-black text-sm mt-2 w-full space-y-1">
-                <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
-                  💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}</p>
-                
-                <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
-                <p>🎗️ Civilité : {m.sexe || ""}</p>
-                <p>⏳ Tranche d'age : {m.age || ""}</p> 
-                <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>    
-                <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>
-                {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
-                  <p className="ml-6">💦 Veut se faire baptiser</p>
-                )}
-                <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
-                <p>✒️ Formation : {m.Formation || ""}</p>
-                <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>
-                <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}</p>
-                <p>❓ Difficultés / Besoins : {besoins}</p>
-                <p>📝 Infos : {m.infos_supplementaires || ""}</p>
-                <p>🧩 Comment est-il venu : {m.venu || ""}</p>
-                <p>✨ Raison de la venue : {m.statut_initial || ""}</p>
-                <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
-                <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
-                <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
-                <p>📑 Commentaire Suivis Evangelisation : {m.Commentaire_Suivi_Evangelisation || ""}</p>   
-                <div className="flex flex-col items-center">
+             <div className="flex flex-col items-center">
                     
                  <div className="flex flex-col items-center w-full p-4 bg-white rounded-lg shadow-md space-y-2">
                     {/* Modifier */}

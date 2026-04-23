@@ -29,17 +29,6 @@ export default function SuiviPopup({ member, onClose, user }) {
     fetchSuivis();
   }, []);
 
-  const { error } = await supabase.from("suivis").insert({
-  membre_id: member.id,
-  type: form.type,        // ← add this
-  action_type: form.type,
-  statut: form.statut,
-  besoin: form.besoin.length ? JSON.stringify(form.besoin) : null,
-  commentaire: form.commentaire,
-  date_action: form.date_action,
-  created_by: user?.id || null,
-});
-
   const fetchSuivis = async () => {
     const { data } = await supabase
       .from("suivis")
@@ -60,25 +49,27 @@ export default function SuiviPopup({ member, onClose, user }) {
   };
 
   const handleSubmit = async () => {
-  if (!form.date_action || !form.type) {
-    alert("Date et type sont obligatoires");
-    return;
-  }
-  if (!user?.id) {
-    alert("Vous devez être connecté pour ajouter un suivi");
-    return;
-  }
+    if (!form.date_action || !form.type) {
+      alert("Date et type sont obligatoires");
+      return;
+    }
+
+    if (!user?.id) {
+      alert("Vous devez être connecté pour ajouter un suivi");
+      return;
+    }
 
     setLoading(true);
 
     const { error } = await supabase.from("suivis").insert({
       membre_id: member.id,
+      type: form.type,
       action_type: form.type,
       statut: form.statut,
       besoin: form.besoin.length ? JSON.stringify(form.besoin) : null,
       commentaire: form.commentaire,
       date_action: form.date_action,
-      created_by: user?.id || null,
+      created_by: user.id,
     });
 
     setLoading(false);
@@ -92,6 +83,9 @@ export default function SuiviPopup({ member, onClose, user }) {
         commentaire: "",
       });
       fetchSuivis();
+    } else {
+      console.error("Erreur supabase:", error);
+      alert("Erreur lors de l'ajout du suivi : " + error.message);
     }
   };
 

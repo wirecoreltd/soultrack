@@ -9,6 +9,7 @@ export default function SuiviPopup({ member, onClose }) {
   const [suivis, setSuivis] = useState([]);
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState(null);
+  const [openSuivi, setOpenSuivi] = useState(false);
 
   const [form, setForm] = useState({
     action_type: "Appel",

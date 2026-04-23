@@ -8,9 +8,9 @@ export default function SuiviPopup({ member, onClose, user }) {
   const [suivis, setSuivis] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [currentUserName, setCurrentUserName] = useState("");
-  const [editingSuivi, setEditingSuivi] = useState(null); // suivi en cours d'édition
+  const [editingSuivi, setEditingSuivi] = useState(null);
 
-  const formTopRef = useRef(null); // référence pour scroller vers le haut
+  const formTopRef = useRef(null);
 
   const parseBesoinsList = (val) => {
     if (!val) return [];
@@ -136,7 +136,6 @@ export default function SuiviPopup({ member, onClose, user }) {
     setSuivis(data || []);
   };
 
-  // ─── Charger un suivi existant dans le formulaire pour édition ───
   const handleEditSuivi = (s) => {
     const besoinsArr = parseHistoriqueBesoin(s.besoin);
 
@@ -163,13 +162,11 @@ export default function SuiviPopup({ member, onClose, user }) {
       commentaire: s.commentaire || "",
     });
 
-    // Scroll vers le haut du formulaire
     setTimeout(() => {
       formTopRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 50);
   };
 
-  // ─── Annuler l'édition ───
   const handleCancelEdit = () => {
     setEditingSuivi(null);
     setResolvedBesoins([]);
@@ -220,7 +217,6 @@ export default function SuiviPopup({ member, onClose, user }) {
     }));
   };
 
-  // ─── Soumettre : création OU mise à jour ───
   const handleSubmit = async () => {
     if (!form.date_action || !form.type) {
       alert("Date et type sont obligatoires");
@@ -269,15 +265,34 @@ export default function SuiviPopup({ member, onClose, user }) {
       date_action: form.date_action,
     };
 
-    let error;
-
     if (editingSuivi) {
       // ─── MODE ÉDITION : UPDATE ───
       const { error: updateError } = await supabase
         .from("suivis")
         .update(payload)
         .eq("id", editingSuivi.id);
-      error = updateError;
+
+      if (updateError) {
+        setLoading(false);
+        console.error("Erreur update supabase:", updateError);
+        alert("Erreur : " + updateError.message);
+        return;
+      }
+
+      // 🔥 Re-fetch uniquement la ligne modifiée avec la jointure profiles
+      const { data: updatedRow } = await supabase
+        .from("suivis")
+        .select("*, profiles:created_by(prenom, nom)")
+        .eq("id", editingSuivi.id)
+        .single();
+
+      // 🔥 Remplacer directement dans le state local → mise à jour instantanée
+      if (updatedRow) {
+        setSuivis((prev) =>
+          prev.map((s) => (s.id === editingSuivi.id ? updatedRow : s))
+        );
+      }
+
     } else {
       // ─── MODE CRÉATION : INSERT ───
       const { error: insertError } = await supabase.from("suivis").insert({
@@ -285,16 +300,19 @@ export default function SuiviPopup({ member, onClose, user }) {
         membre_id: member.id,
         created_by: currentUserId,
       });
-      error = insertError;
+
+      if (insertError) {
+        setLoading(false);
+        console.error("Erreur insert supabase:", insertError);
+        alert("Erreur : " + insertError.message);
+        return;
+      }
+
+      // Re-fetch complet pour avoir la nouvelle ligne avec profiles
+      await fetchSuivis();
     }
 
-    if (error) {
-      setLoading(false);
-      console.error("Erreur supabase:", error);
-      alert("Erreur : " + error.message);
-      return;
-    }
-
+    // Mettre à jour membres_complets.besoin
     await supabase
       .from("membres_complets")
       .update({ besoin: JSON.stringify(newMemberBesoins) })
@@ -315,8 +333,6 @@ export default function SuiviPopup({ member, onClose, user }) {
       besoinStatuts: newStatuts,
       commentaire: "",
     });
-
-    fetchSuivis();
   };
 
   const formatDate = (dateStr) => {
@@ -520,7 +536,6 @@ export default function SuiviPopup({ member, onClose, user }) {
                     📅 {formatDate(s.date_action)} — {s.action_type}
                   </p>
 
-                  {/* Bouton Modifier */}
                   <button
                     onClick={() => handleEditSuivi(s)}
                     className={`text-xs px-2 py-1 rounded font-semibold border transition-colors ${

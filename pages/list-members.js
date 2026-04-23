@@ -62,7 +62,7 @@ function ListMembersContent() {
   const router = useRouter();
   const [userProfile, setUserProfile] = useState(null);  
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [openSuivi, setOpenSuivi] = useState(false);
+  const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
   
 //--------------------------------------//
    // 🔒 Sécurisation maximale des rôles
@@ -883,30 +883,30 @@ const canAddMember =
 
     {/* =========================
     5. SOIN PASTORAL
-========================= */}
-<div>
-  <p className="font-bold text-[#2E3192] mb-1">
-    ❤️‍🩹 Soin pastoral
-  </p>
-
-  <p>❤️‍🩹 Suivi pastoral : {m.Soin_Pastoral || "—"}</p>
-  <p>❓ Besoins : {besoins}</p>
-
-  <button
-    onClick={() => setOpenSuivi(true)}
-    className="mt-2 text-sm bg-[#25297e] text-white px-3 py-1 rounded"
-  >
-    💡 Ajouter / Voir suivis
-  </button>
-
-  {/* popup */}
-  {openSuivi && (
-    <SuiviPopup
-      member={m}
-      onClose={() => setOpenSuivi(false)}
-    />
-  )}
-</div> 
+      ========================= */}
+      <div>
+        <p className="font-bold text-[#2E3192] mb-1">
+          ❤️‍🩹 Soin pastoral
+        </p>
+      
+        <p>❤️‍🩹 Suivi pastoral : {m.Soin_Pastoral || "—"}</p>
+        <p>❓ Besoins : {besoins}</p>
+      
+        <button
+        onClick={() => setOpenSuiviMemberId(m.id)}
+        className="mt-2 text-sm bg-[#25297e] text-white px-3 py-1 rounded"
+      >
+        💡 Ajouter / Voir suivis
+      </button>
+      
+      {openSuiviMemberId === m.id && (
+        <SuiviPopup
+          member={m}
+          onClose={() => setOpenSuiviMemberId(null)}
+          user={userProfile}
+        />
+      )}
+      </div> 
              <div className="flex flex-col items-center">                    
                  <div className="flex flex-col items-center w-full p-4 bg-white rounded-lg shadow-md space-y-2">
                     {/* Modifier */}

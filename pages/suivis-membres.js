@@ -42,6 +42,7 @@ export default function SuivisMembres() {
   const [conseillers, setConseillers] = useState([]);
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
+  const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
 
     const [view, setView] = useState(() => {
     if (typeof window !== "undefined") {
@@ -346,6 +347,14 @@ return (
                     💡 Ajouter / Voir suivis
                   </button>
                 </div>
+                      {openSuiviMemberId === m.id && (
+                  <SuiviPopup
+                    member={m}
+                    onClose={() => setOpenSuiviMemberId(null)}
+                    user={userProfile}
+                  />
+                )}
+              </div>
         </div>       
 
         {!showRefus && (

@@ -62,6 +62,7 @@ function ListMembersContent() {
   const router = useRouter();
   const [userProfile, setUserProfile] = useState(null);  
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [openSuivi, setOpenSuivi] = useState(false);
   
 //--------------------------------------//
    // 🔒 Sécurisation maximale des rôles

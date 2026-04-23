@@ -19,19 +19,27 @@ export default function SuiviPopup({ member, onClose, user }) {
     }
   };
 
-  // memberBesoins = besoins actuels en base (source de vérité)
   const [memberBesoins, setMemberBesoins] = useState(
     parseBesoinsList(member?.besoin)
   );
 
-  // resolvedBesoins = besoins qui ont été décochés ET sauvegardés avec "Résolu"
+  // resolvedBesoins = besoins définitivement résolus (verts)
   const [resolvedBesoins, setResolvedBesoins] = useState([]);
+
+  // besoinStatuts = { "Santé": "En suivi", "Relations / Conflits": "Résolu", ... }
+  const initStatuts = () => {
+    const s = {};
+    parseBesoinsList(member?.besoin).forEach((b) => {
+      s[b] = "En suivi";
+    });
+    return s;
+  };
 
   const [form, setForm] = useState({
     date_action: "",
     type: "",
-    statut: "En cours",
-    besoin: parseBesoinsList(member?.besoin), // uniquement les besoins cochés pour CE suivi
+    besoin: parseBesoinsList(member?.besoin), // besoins cochés
+    besoinStatuts: initStatuts(),             // statut individuel par besoin
     commentaire: "",
   });
 
@@ -96,12 +104,37 @@ export default function SuiviPopup({ member, onClose, user }) {
     setSuivis(data || []);
   };
 
+  // Cocher / décocher un besoin
   const toggleBesoin = (value) => {
+    const isChecked = form.besoin.includes(value);
+    if (isChecked) {
+      // Décocher → retirer du form
+      setForm((prev) => ({
+        ...prev,
+        besoin: prev.besoin.filter((b) => b !== value),
+        besoinStatuts: Object.fromEntries(
+          Object.entries(prev.besoinStatuts).filter(([k]) => k !== value)
+        ),
+      }));
+    } else {
+      // Cocher → ajouter avec statut "En suivi" par défaut
+      setForm((prev) => ({
+        ...prev,
+        besoin: [...prev.besoin, value],
+        besoinStatuts: { ...prev.besoinStatuts, [value]: "En suivi" },
+      }));
+    }
+  };
+
+  // Changer le statut d'un besoin individuel
+  const toggleStatutBesoin = (besoin) => {
     setForm((prev) => ({
       ...prev,
-      besoin: prev.besoin.includes(value)
-        ? prev.besoin.filter((b) => b !== value)
-        : [...prev.besoin, value],
+      besoinStatuts: {
+        ...prev.besoinStatuts,
+        [besoin]:
+          prev.besoinStatuts[besoin] === "Résolu" ? "En suivi" : "Résolu",
+      },
     }));
   };
 
@@ -117,27 +150,39 @@ export default function SuiviPopup({ member, onClose, user }) {
 
     setLoading(true);
 
-    // Besoins qui ont été décochés dans ce suivi (étaient dans memberBesoins mais plus dans form.besoin)
-    const uncheckedBesoins = memberBesoins.filter(
-      (b) => !form.besoin.includes(b)
+    // Besoins résolus dans ce suivi
+    const newlyResolved = form.besoin.filter(
+      (b) => form.besoinStatuts[b] === "Résolu"
     );
 
-    // Mettre à jour membres_complets.besoin = uniquement les besoins encore cochés
-    const newMemberBesoins = memberBesoins.filter((b) =>
-      form.besoin.includes(b)
-    );
-    // Ajouter les nouveaux besoins cochés qui n'étaient pas en base
-    form.besoin.forEach((b) => {
-      if (!newMemberBesoins.includes(b)) newMemberBesoins.push(b);
-    });
+    // Nouveau membres_complets.besoin = retirer les résolus
+    const newMemberBesoins = [
+      ...memberBesoins.filter(
+        (b) => !newlyResolved.includes(b)
+      ),
+      // Ajouter les nouveaux besoins cochés non résolus qui n'étaient pas en base
+      ...form.besoin.filter(
+        (b) =>
+          !memberBesoins.includes(b) &&
+          form.besoinStatuts[b] !== "Résolu"
+      ),
+    ];
 
-    // Sauvegarder le suivi — uniquement les besoins cochés dans ce formulaire
+    // Sauvegarder le suivi avec besoins + statuts individuels
+    // On stocke besoin comme array JSON et statut global = statut le plus critique
+    // Pour l'historique on stocke besoinStatuts dans commentaire interne (on encode dans besoin)
+    // On sauvegarde besoin comme JSON d'objets {label, statut}
+    const besoinAvecStatut = form.besoin.map((b) => ({
+      label: b,
+      statut: form.besoinStatuts[b] || "En suivi",
+    }));
+
     const { error } = await supabase.from("suivis").insert({
       membre_id: member.id,
       type: form.type,
       action_type: form.type,
-      statut: form.statut,
-      besoin: form.besoin.length ? JSON.stringify(form.besoin) : null,
+      statut: newlyResolved.length === form.besoin.length ? "Résolu" : "En suivi",
+      besoin: JSON.stringify(besoinAvecStatut),
       commentaire: form.commentaire,
       date_action: form.date_action,
       created_by: currentUserId,
@@ -150,28 +195,34 @@ export default function SuiviPopup({ member, onClose, user }) {
       return;
     }
 
-    // Mettre à jour membres_complets.besoin en base
+    // Mettre à jour membres_complets.besoin
     await supabase
       .from("membres_complets")
       .update({ besoin: JSON.stringify(newMemberBesoins) })
       .eq("id", member.id);
 
-    // Si statut = Résolu → les besoins décochés passent en vert
-    if (form.statut === "Résolu" && uncheckedBesoins.length > 0) {
+    // Besoins résolus → passer en vert
+    if (newlyResolved.length > 0) {
       setResolvedBesoins((prev) => [
         ...prev,
-        ...uncheckedBesoins.filter((b) => !prev.includes(b)),
+        ...newlyResolved.filter((b) => !prev.includes(b)),
       ]);
     }
 
     setMemberBesoins(newMemberBesoins);
     setLoading(false);
 
+    // Reset form avec les besoins restants
+    const newStatuts = {};
+    newMemberBesoins.forEach((b) => {
+      newStatuts[b] = "En suivi";
+    });
+
     setForm({
       date_action: "",
       type: "",
-      statut: "En cours",
       besoin: newMemberBesoins,
+      besoinStatuts: newStatuts,
       commentaire: "",
     });
 
@@ -193,16 +244,29 @@ export default function SuiviPopup({ member, onClose, user }) {
     }
   };
 
+  // Parse les besoins de l'historique (nouveau format {label,statut} ou ancien format string)
+  const parseHistoriqueBesoin = (besoinJson) => {
+    if (!besoinJson) return [];
+    try {
+      const parsed = JSON.parse(besoinJson);
+      if (!Array.isArray(parsed)) return [];
+      // Nouveau format : [{label, statut}]
+      if (parsed.length > 0 && typeof parsed[0] === "object" && parsed[0].label) {
+        return parsed;
+      }
+      // Ancien format : ["Santé", "Relations / Conflits"]
+      return parsed.map((b) => ({ label: b, statut: "En suivi" }));
+    } catch {
+      return [];
+    }
+  };
+
   const statutColor = (statut) => {
     if (statut === "Résolu") return "text-green-600 font-semibold";
     if (statut === "En suivi") return "text-blue-600 font-semibold";
     return "text-orange-500 font-semibold";
   };
 
-  // Apparence des cases :
-  // - résolu (décoché + sauvegardé résolu) → vert
-  // - coché → orange
-  // - vide → gris
   const getCaseStyle = (b) => {
     const isChecked = form.besoin.includes(b);
     const isResolved = resolvedBesoins.includes(b);
@@ -249,49 +313,62 @@ export default function SuiviPopup({ member, onClose, user }) {
             <option value="Entretien">Entretien</option>
           </select>
 
-          <select
-            value={form.statut}
-            onChange={(e) => setForm({ ...form, statut: e.target.value })}
-            className="border p-2 w-full rounded"
-          >
-            <option>En cours</option>
-            <option>En suivi</option>
-            <option>Résolu</option>
-          </select>
-
-          {/* BESOINS */}
+          {/* BESOINS avec statut individuel */}
           <div>
             <p className="font-semibold mb-2">Besoins</p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-2">
               {besoinsOptions.map((b) => {
+                const isChecked = form.besoin.includes(b);
                 const style = getCaseStyle(b);
+                const statut = form.besoinStatuts[b] || "En suivi";
+
                 return (
-                  <label
-                    key={b}
-                    className="flex items-center gap-2 text-sm cursor-pointer select-none"
-                    onClick={() => toggleBesoin(b)}
-                  >
-                    <div
-                      className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${style.bg}`}
+                  <div key={b} className="flex items-center gap-3">
+
+                    {/* Checkbox custom */}
+                    <label
+                      className="flex items-center gap-2 text-sm cursor-pointer select-none flex-1"
+                      onClick={() => toggleBesoin(b)}
                     >
-                      {style.tick && (
-                        <svg
-                          className="w-3 h-3 text-white"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={3}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                    <span>{b}</span>
-                  </label>
+                      <div
+                        className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${style.bg}`}
+                      >
+                        {style.tick && (
+                          <svg
+                            className="w-3 h-3 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={3}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                      <span className={resolvedBesoins.includes(b) && !isChecked ? "line-through text-gray-400" : ""}>
+                        {b}
+                      </span>
+                    </label>
+
+                    {/* Bouton statut individuel — visible uniquement si coché */}
+                    {isChecked && (
+                      <button
+                        type="button"
+                        onClick={() => toggleStatutBesoin(b)}
+                        className={`text-xs px-2 py-0.5 rounded-full border font-semibold transition-colors ${
+                          statut === "Résolu"
+                            ? "bg-green-100 border-green-400 text-green-700"
+                            : "bg-blue-50 border-blue-300 text-blue-600"
+                        }`}
+                      >
+                        {statut === "Résolu" ? "✓ Résolu" : "En suivi"}
+                      </button>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -329,10 +406,7 @@ export default function SuiviPopup({ member, onClose, user }) {
           )}
 
           {suivis.map((s) => {
-            let besoinsArr = [];
-            try {
-              besoinsArr = s.besoin ? JSON.parse(s.besoin) : [];
-            } catch {}
+            const besoinsArr = parseHistoriqueBesoin(s.besoin);
 
             return (
               <div key={s.id} className="border-b py-3 text-sm space-y-1">
@@ -341,14 +415,13 @@ export default function SuiviPopup({ member, onClose, user }) {
                   📅 {formatDate(s.date_action)} — {s.action_type}
                 </p>
 
-                {/* Uniquement les besoins cochés lors de ce suivi */}
                 {besoinsArr.length > 0 && (
                   <div className="space-y-0.5 mt-1">
-                    {besoinsArr.map((b, i) => (
+                    {besoinsArr.map((item, i) => (
                       <p key={i} className="text-gray-700">
-                        {b} —{" "}
-                        <span className={statutColor(s.statut)}>
-                          {s.statut}
+                        {item.label} —{" "}
+                        <span className={statutColor(item.statut)}>
+                          {item.statut}
                         </span>
                       </p>
                     ))}

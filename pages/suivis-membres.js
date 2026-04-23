@@ -12,6 +12,7 @@ import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
 import useChurchScope from "../hooks/useChurchScope";
 import Footer from "../components/Footer";
+import SuiviPopup from "../components/SuiviPopup";
 
 
 export default function SuivisMembres() {
@@ -337,6 +338,14 @@ return (
            <div>
                 <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
         <p>❓ Difficultés / Besoins : {formatArrayField(m.besoin)}</p>
+        <div className="flex justify-center">
+                  <button
+                    onClick={() => setOpenSuiviMemberId(m.id)}
+                    className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
+                  >
+                    💡 Ajouter / Voir suivis
+                  </button>
+                </div>
         </div>       
 
         {!showRefus && (

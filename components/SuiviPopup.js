@@ -204,16 +204,14 @@ export default function SuiviPopup({ member, onClose, user }) {
 
               <p className="font-bold">❓ Besoins du membre</p>
 
-<div className="flex flex-wrap gap-2 mt-1">
-  {JSON.parse(m.besoin || "[]").map((b, i) => (
-    <span
-      key={i}
-      className="px-2 py-1 rounded bg-orange-400 text-white text-xs"
-    >
-      {b}
-    </span>
-  ))}
-</div>
+        <div className="flex flex-wrap gap-2 mt-1">
+          {JSON.parse(m.besoin || "[]").map((b, i) => (
+            <span
+              key={i}
+              className="px-2 py-1 rounded bg-orange-400 text-white text-xs"
+            >
+              {b}
+            </span>
           ))}
         </div>
       </div>

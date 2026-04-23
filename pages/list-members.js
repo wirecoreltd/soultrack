@@ -834,7 +834,7 @@ const canAddMember =
     <div>
       <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
 
-      <p className="font-semibold text-[#2E3192] text-center">
+      <p className="font-semibold text-[#2E3192]">
         💡 Statut : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || "—"}
       </p>
 
@@ -872,8 +872,7 @@ const canAddMember =
         4. PARCOURS
     ========================= */}
     <div>
-      <p className="font-bold text-[#2E3192] mb-1">🧩 Parcours</p>
-
+      <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>
       <p>🧩 Comment venu : {m.venu || "—"}</p>
       <p>✨ Raison : {m.statut_initial || "—"}</p>
       <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
@@ -885,20 +884,17 @@ const canAddMember =
     5. SOIN PASTORAL
       ========================= */}
       <div>
-        <p className="font-bold text-[#2E3192] mb-1">
-          ❤️‍🩹 Soin pastoral
-        </p>
-      
-        <p>❤️‍🩹 Suivi pastoral : {m.Soin_Pastoral || "—"}</p>
-        <p>❓ Besoins : {besoins}</p>
-      
+        <p className="font-bold text-[#2E3192] mb-1"> ❤️‍🩹 Soin pastoral</p>     
+        <p>❓ Besoins : {besoins}</p>      
+        <div className="flex justify-center">
         <button
         onClick={() => setOpenSuiviMemberId(m.id)}
-        className="mt-2 text-sm bg-[#25297e] text-white px-3 py-1 rounded"
+        className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
       >
         💡 Ajouter / Voir suivis
       </button>
-      
+      </div>
+ 
       {openSuiviMemberId === m.id && (
         <SuiviPopup
           member={m}

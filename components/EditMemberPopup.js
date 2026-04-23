@@ -8,9 +8,7 @@ const safeConseillers = conseillers || [];
 
 export default function EditMemberPopup({ member, cellules, conseillers, onClose, onUpdateMember }) {
   if (!member) return null;
-
-  const besoinsOptions = ["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
-  "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"];
+  
   const [autreMinistere, setAutreMinistere] = useState("");
 
   const parseBesoin = (b) => {
@@ -231,6 +229,17 @@ if (formData.star) {
 
         <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
 
+          <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
+          {/* Sexe */}
+          <div className="flex flex-col">
+            <label className="font-medium">Civilité</label>
+            <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
+              <option value="">-- Civilité --</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
+            </select>
+          </div>
+
           {["prenom", "nom", "telephone", "ville"].map((f) => (
             <div key={f} className="flex flex-col">
               <label className="font-medium capitalize">{f}</label>
@@ -256,17 +265,7 @@ if (formData.star) {
                 </div>
               )}
             </div>
-          ))}
-
-          {/* Sexe */}
-          <div className="flex flex-col">
-            <label className="font-medium">Civilité</label>
-            <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
-              <option value="">-- Civilité --</option>
-              <option value="Homme">Homme</option>
-              <option value="Femme">Femme</option>
-            </select>
-          </div>
+          ))}          
 
             {/* Age */}
             <div className="flex flex-col">
@@ -286,7 +285,188 @@ if (formData.star) {
                 <option value="56-69 ans">56-69 ans</option>
                 <option value="70 ans et plus">70 ans et plus</option>
               </select>
-            </div>              
+            </div>  
+
+                   {/* Cellule */}
+          <div className="flex flex-col">
+            <label className="font-medium">Cellule</label>
+            <select
+              name="cellule_id"
+              value={formData.cellule_id ?? ""}
+              onChange={handleChange}
+              className="input"
+            >
+              <option value="">-- Cellule --</option>
+              {cellules.map(c => (
+                <option key={c.id} value={c.id}>{c.cellule_full}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex flex-col">
+            <label className="font-medium">Conseiller</label>
+            <select
+              name="conseiller_id"
+              value={formData.conseiller_id ?? ""}
+              onChange={handleChange}
+              className="input"
+            >
+              <option value="">-- Conseiller --</option>
+              {conseillers.map(c => (
+                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
+              ))}
+            </select>
+          </div>    
+              
+                  
+          <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
+
+           {/* Suivi statut */}
+          <div className="flex flex-col">
+            <label className="font-medium">Suivi statut</label>
+            <select
+              value={formData.suivi_statut ?? ""}
+              onChange={(e) => setFormData(prev => ({ ...prev, suivi_statut: e.target.value }))}
+              className="input"
+            >
+              <option value="">-- Sélectionner un statut --</option>
+              <option value="En Attente">En Attente</option>
+              <option value="Intégrer">Intégrer</option>
+              <option value="Refus">Refus</option>
+            </select>
+          </div>
+
+{/* Commentaire suivis */}
+          <div className="flex flex-col">
+            <label className="font-medium">Commentaire suivis</label>
+            <textarea
+              name="commentaire_suivis"
+              value={formData.commentaire_suivis}
+              onChange={handleChange}
+              className="input"
+              rows={2}
+            />
+          </div>
+
+                {/* Commentaire suivis Evangélisation */}
+          <div className="flex flex-col">
+            <label className="font-medium">Commentaire suivis Evangélisation</label>
+            <textarea
+              name="Commentaire_Suivi_Evangelisation"
+              value={formData.Commentaire_Suivi_Evangelisation}
+              onChange={handleChange}
+              className="input"
+              rows={2}
+            />
+          </div>
+
+        <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
+{/* Bapteme d'eau */}
+              <div className="flex flex-col">
+                <label className="font-medium">Baptême d'eau</label>
+                <select
+                  name="bapteme_eau"
+                  value={formData.bapteme_eau ?? ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData(prev => ({
+                      ...prev,
+                      bapteme_eau: value,
+                      // reset veut_se_faire_baptiser si on met Oui
+                      veut_se_faire_baptiser: value === "Oui" ? "Non" : prev.veut_se_faire_baptiser
+                    }));
+                  }}
+                  className="input"
+                >
+                  <option value="">-- Sélectionner --</option>
+                  <option value="Oui">Oui</option>
+                  <option value="Non">Non</option>
+                </select>
+              </div>
+              
+              {/* Veut se faire baptiser – s'affiche seulement si bapteme_eau = "non" */}
+              {formData.bapteme_eau === "Non" && (
+                <div className="flex items-center font-medium gap-2 mt-2 ml-6">
+                  <input
+                    type="checkbox"
+                    name="veut_se_faire_baptiser"
+                    checked={formData.veut_se_faire_baptiser === "Oui"}
+                    onChange={(e) =>
+                      setFormData(prev => ({
+                        ...prev,
+                        veut_se_faire_baptiser: e.target.checked ? "Oui" : "Non"
+                      }))
+                    }
+                    className="accent-[#25297e]"
+                  />
+                  <span>💦 Veut se faire baptiser</span>
+                </div>
+              )}
+
+          {/* Bapteme de feu */}
+          <div className="flex flex-col">
+              <label className="font-medium">Baptême de feu</label>
+              <select
+                name="bapteme_esprit"
+                value={formData.bapteme_esprit ?? ""}
+                onChange={handleChange}
+                className="input"
+              >
+                <option value="">-- Sélectionner --</option>
+                <option value="Oui">Oui</option>
+                <option value="Non">Non</option>
+              </select>
+            </div>
+
+ {/* Prière du salut */}
+          <div className="flex flex-col">
+            <label className="font-medium">Prière du salut</label>
+            <select
+              className="input"
+              name="priere_salut"
+              value={formData.priere_salut}
+              required
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData({
+                  ...formData,
+                  priere_salut: value,
+                  type_conversion: value === "Oui" ? formData.type_conversion : "",
+                });
+              }}
+            >
+              <option value="">-- Prière du salut ? --</option>
+              <option value="Oui">Oui</option>
+              <option value="Non">Non</option>
+            </select>
+
+            {/* Type de conversion */}
+            {formData.priere_salut === "Oui" && (
+              <select
+                className="input mt-2"
+                name="type_conversion"
+                value={formData.type_conversion}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Type</option>
+                <option value="Nouveau converti">Nouveau converti</option>
+                <option value="Réconciliation">Réconciliation</option>
+              </select>
+            )}
+          </div>
+
+ {/* Formation*/}
+          <div className="flex flex-col">
+            <label className="font-medium">Formation</label>
+            <textarea
+              name="Formation"
+              value={formData.Formation}
+              onChange={handleChange}
+              className="input"
+              rows={2}
+            />
+          </div>  
 
           {/* Serviteur */}         
           <div className="flex items-center gap-3 mt-3">
@@ -372,175 +552,11 @@ if (formData.star) {
               <option value="existant">Existant</option>
               <option value="inactif">Inactif</option>
             </select>
-          </div>
-
-            {/* Bapteme d'eau */}
-              <div className="flex flex-col">
-                <label className="font-medium">Baptême d'eau</label>
-                <select
-                  name="bapteme_eau"
-                  value={formData.bapteme_eau ?? ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setFormData(prev => ({
-                      ...prev,
-                      bapteme_eau: value,
-                      // reset veut_se_faire_baptiser si on met Oui
-                      veut_se_faire_baptiser: value === "Oui" ? "Non" : prev.veut_se_faire_baptiser
-                    }));
-                  }}
-                  className="input"
-                >
-                  <option value="">-- Sélectionner --</option>
-                  <option value="Oui">Oui</option>
-                  <option value="Non">Non</option>
-                </select>
-              </div>
-              
-              {/* Veut se faire baptiser – s'affiche seulement si bapteme_eau = "non" */}
-              {formData.bapteme_eau === "Non" && (
-                <div className="flex items-center font-medium gap-2 mt-2 ml-6">
-                  <input
-                    type="checkbox"
-                    name="veut_se_faire_baptiser"
-                    checked={formData.veut_se_faire_baptiser === "Oui"}
-                    onChange={(e) =>
-                      setFormData(prev => ({
-                        ...prev,
-                        veut_se_faire_baptiser: e.target.checked ? "Oui" : "Non"
-                      }))
-                    }
-                    className="accent-[#25297e]"
-                  />
-                  <span>💦 Veut se faire baptiser</span>
-                </div>
-              )}
-
-          {/* Bapteme de feu */}
-          <div className="flex flex-col">
-              <label className="font-medium">Baptême de feu</label>
-              <select
-                name="bapteme_esprit"
-                value={formData.bapteme_esprit ?? ""}
-                onChange={handleChange}
-                className="input"
-              >
-                <option value="">-- Sélectionner --</option>
-                <option value="Oui">Oui</option>
-                <option value="Non">Non</option>
-              </select>
-            </div>
-
-           {/* Formation*/}
-          <div className="flex flex-col">
-            <label className="font-medium">Formation</label>
-            <textarea
-              name="Formation"
-              value={formData.Formation}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
-          </div>
-
-          {/* Soin Pastoral*/}
-          <div className="flex flex-col">
-            <label className="font-medium">Soin_Pastoral</label>
-            <textarea
-              name="Soin_Pastoral"
-              value={formData.Soin_Pastoral}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
-          </div>
-            
-          {/* Prière du salut */}
-          <div className="flex flex-col">
-            <label className="font-medium">Prière du salut</label>
-            <select
-              className="input"
-              name="priere_salut"
-              value={formData.priere_salut}
-              required
-              onChange={(e) => {
-                const value = e.target.value;
-                setFormData({
-                  ...formData,
-                  priere_salut: value,
-                  type_conversion: value === "Oui" ? formData.type_conversion : "",
-                });
-              }}
-            >
-              <option value="">-- Prière du salut ? --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
-            </select>
-
-            {/* Type de conversion */}
-            {formData.priere_salut === "Oui" && (
-              <select
-                className="input mt-2"
-                name="type_conversion"
-                value={formData.type_conversion}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Type</option>
-                <option value="Nouveau converti">Nouveau converti</option>
-                <option value="Réconciliation">Réconciliation</option>
-              </select>
-            )}
-          </div>
-
-          {/* Cellule */}
-          <div className="flex flex-col">
-            <label className="font-medium">Cellule</label>
-            <select
-              name="cellule_id"
-              value={formData.cellule_id ?? ""}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="">-- Cellule --</option>
-              {cellules.map(c => (
-                <option key={c.id} value={c.id}>{c.cellule_full}</option>
-              ))}
-            </select>
-          </div>
+          </div>     
+                             
+         
+         
           
-          <div className="flex flex-col">
-            <label className="font-medium">Conseiller</label>
-            <select
-              name="conseiller_id"
-              value={formData.conseiller_id ?? ""}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="">-- Conseiller --</option>
-              {conseillers.map(c => (
-                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
-              ))}
-            </select>
-          </div>      
-
-          {/* Besoins */}
-          <div className="flex flex-col">
-            <label className="font-medium">Difficultés / Besoins</label>
-            {besoinsOptions.map(b => (
-              <label key={b} className="flex items-center gap-2">
-                <input type="checkbox" value={b} checked={formData.besoin.includes(b)} onChange={handleBesoinChange} className="accent-[#25297e]" />
-                {b}
-              </label>
-            ))}
-            <label className="flex items-center gap-2">
-              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} className="accent-[#25297e]" />
-              Autre
-            </label>
-            {showAutre && (
-              <input name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input mt-2" placeholder="Précisez" />
-            )}
-          </div>
                        {/* Comment est-il venu ? */}
           <div className="flex flex-col">
             <label className="font-medium">Comment est-il venu ?</label>
@@ -581,44 +597,9 @@ if (formData.star) {
             </select>
           </div>
 
-          {/* Suivi statut */}
-          <div className="flex flex-col">
-            <label className="font-medium">Suivi statut</label>
-            <select
-              value={formData.suivi_statut ?? ""}
-              onChange={(e) => setFormData(prev => ({ ...prev, suivi_statut: e.target.value }))}
-              className="input"
-            >
-              <option value="">-- Sélectionner un statut --</option>
-              <option value="En Attente">En Attente</option>
-              <option value="Intégrer">Intégrer</option>
-              <option value="Refus">Refus</option>
-            </select>
-          </div>
+         
 
-          {/* Commentaire suivis */}
-          <div className="flex flex-col">
-            <label className="font-medium">Commentaire suivis</label>
-            <textarea
-              name="commentaire_suivis"
-              value={formData.commentaire_suivis}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
-          </div>
-
-                {/* Commentaire suivis Evangélisation */}
-          <div className="flex flex-col">
-            <label className="font-medium">Commentaire suivis Evangélisation</label>
-            <textarea
-              name="Commentaire_Suivi_Evangelisation"
-              value={formData.Commentaire_Suivi_Evangelisation}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
-          </div>
+          
         </div>
 
         {/* Buttons */}

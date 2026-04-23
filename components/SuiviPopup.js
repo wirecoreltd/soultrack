@@ -25,7 +25,6 @@ export default function SuiviPopup({ member, onClose, user }) {
     "Logement",
   ];
 
-  // 🔄 Load historique
   useEffect(() => {
     fetchSuivis();
   }, []);
@@ -40,7 +39,6 @@ export default function SuiviPopup({ member, onClose, user }) {
     setSuivis(data || []);
   };
 
-  // 🟠 toggle besoin
   const toggleBesoin = (value) => {
     setForm((prev) => ({
       ...prev,
@@ -50,7 +48,6 @@ export default function SuiviPopup({ member, onClose, user }) {
     }));
   };
 
-  // 💾 Ajouter suivi
   const handleSubmit = async () => {
     if (!form.date_action || !form.type) {
       alert("Date et type sont obligatoires");
@@ -60,14 +57,14 @@ export default function SuiviPopup({ member, onClose, user }) {
     setLoading(true);
 
     const { error } = await supabase.from("suivis").insert({
-  membre_id: member.id,
-  action_type: form.type,   // 🔥 IMPORTANT
-  statut: form.statut,
-  besoin: form.besoin.length ? JSON.stringify(form.besoin) : null,
-  commentaire: form.commentaire,
-  date_action: form.date_action,
-  created_by: user.id,
-});
+      membre_id: member.id,
+      action_type: form.type,
+      statut: form.statut,
+      besoin: form.besoin.length ? JSON.stringify(form.besoin) : null,
+      commentaire: form.commentaire,
+      date_action: form.date_action,
+      created_by: user.id,
+    });
 
     setLoading(false);
 
@@ -177,70 +174,55 @@ export default function SuiviPopup({ member, onClose, user }) {
             {loading ? "Ajout..." : "Ajouter suivi"}
           </button>
         </div>
-{/* BESOINS DU MEMBRE */}
-<div className="mt-4">
-  <h3 className="font-bold mb-1">❓ Besoins du membre</h3>
-
-  <div className="flex flex-wrap gap-2">
-    {JSON.parse(member.besoin || "[]").map((b, i) => (
-      <span
-        key={i}
-        className="px-2 py-1 rounded bg-orange-400 text-white text-xs"
-      >
-        {b}
-      </span>
-    ))}
-  </div>
-</div>
 
         {/* HISTORIQUE */}
-<div className="mt-4">
-  <h3 className="font-bold mb-2">📅 Historique</h3>
+        <div className="mt-4">
+          <h3 className="font-bold mb-2">📅 Historique</h3>
 
-  {suivis.length === 0 && (
-    <p className="text-sm text-gray-500">Aucun suivi pour le moment</p>
-  )}
+          {suivis.length === 0 && (
+            <p className="text-sm text-gray-500">
+              Aucun suivi pour le moment
+            </p>
+          )}
 
-  {suivis.map((s) => (
-    <div key={s.id} className="border-b py-3 text-sm space-y-1">
+          {suivis.map((s) => (
+            <div key={s.id} className="border-b py-3 text-sm space-y-1">
 
-      {/* ligne principale */}
-      <div className="flex justify-between">
-        <p>
-          📅 {s.date_action} — {s.action_type}
-        </p>
+              <div className="flex justify-between">
+                <p>
+                  📅 {s.date_action} — {s.action_type}
+                </p>
+                <p className={statutColor(s.statut)}>
+                  {s.statut}
+                </p>
+              </div>
 
-        <p className={statutColor(s.statut)}>
-          {s.statut}
-        </p>
-      </div>
+              {s.commentaire && (
+                <p>📝 {s.commentaire}</p>
+              )}
 
-      {/* commentaire */}
-      {s.commentaire && (
-        <p>📝 {s.commentaire}</p>
-      )}
+              <p className="text-gray-500 text-xs">
+                👤 {s.profiles?.prenom} {s.profiles?.nom}
+              </p>
 
-      {/* auteur */}
-      <p className="text-gray-500 text-xs">
-        👤 {s.profiles?.prenom} {s.profiles?.nom}
-      </p>
+              {s.besoin && (
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {JSON.parse(s.besoin).map((b, i) => (
+                    <span
+                      key={i}
+                      className="px-2 py-1 rounded bg-gray-200 text-xs"
+                    >
+                      {b}
+                    </span>
+                  ))}
+                </div>
+              )}
 
-      {/* besoins du SUVI (optionnel) */}
-      {s.besoin && (
-        <div className="flex flex-wrap gap-2 mt-1">
-          {JSON.parse(s.besoin).map((b, i) => (
-            <span
-              key={i}
-              className="px-2 py-1 rounded bg-gray-200 text-xs"
-            >
-              {b}
-            </span>
+            </div>
           ))}
         </div>
-      )}
 
+      </div>
     </div>
-  ))}
-</div>
   );
 }

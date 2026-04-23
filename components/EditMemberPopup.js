@@ -38,7 +38,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
     priere_salut: member?.priere_salut || "",
     type_conversion: member?.type_conversion || "",
     cellule_id: member?.cellule_id ?? "",
-    conseiller_id: member?.conseiller_id ?? "",
+    conseillers_ids: member?.conseillers_ids || [],
     besoin: initialBesoin,
     autreBesoin: "",
     venu: member?.venu || "",
@@ -89,13 +89,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
       ...(name === "star" && !checked ? { Ministere: [] } : {}),
     }));
 
-  } else if (name === "cellule_id" && value) {
-    setFormData(prev => ({ ...prev, cellule_id: value, conseiller_id: "" }));
-
-  } else if (name === "conseiller_id" && value) {
-    setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
-  
-  } else {
+  else {
     setFormData(prev => ({ ...prev, [name]: value }));
   }
 };
@@ -116,6 +110,19 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
       besoin: checked ? [...prev.besoin, value] : prev.besoin.filter(b => b !== value)
     }));
   };
+
+  const handleConseillerChange = (id) => {
+  setFormData(prev => {
+    const exists = prev.conseillers_ids.includes(id);
+
+    return {
+      ...prev,
+      conseillers_ids: exists
+        ? prev.conseillers_ids.filter(c => c !== id)
+        : [...prev.conseillers_ids, id]
+    };
+  });
+};
 
   // -------------------- SUBMIT --------------------
   const handleSubmit = async () => {
@@ -173,7 +180,7 @@ if (formData.star) {
       priere_salut: formData.priere_salut || null,
       type_conversion: formData.type_conversion || null,
       cellule_id: formData.cellule_id || null,
-      conseiller_id: formData.conseiller_id || null,
+      //conseiller_id: formData.conseiller_id || null,
       besoin: JSON.stringify(finalBesoin),
       venu: formData.venu || null,
       infos_supplementaires: formData.infos_supplementaires || null,
@@ -187,6 +194,15 @@ if (formData.star) {
       Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
       Ministere: formData.star ? JSON.stringify(finalMinistere) : null,
     };
+
+    const suivisToInsert = formData.conseillers_ids.map((id, index) => ({
+  member_id: member.id,
+  conseiller_id: id,
+  role: index === 0 ? "principal" : "assistant",
+  statut: "actif"
+}));
+
+await supabase.from("suivis").insert(suivisToInsert);
 
     // 1️⃣ Update
     const { error } = await supabase
@@ -306,23 +322,20 @@ if (formData.star) {
           </div>
           
           <div className="flex flex-col">
-            <label className="font-medium">Conseiller</label>
-            <select
-              name="conseiller_id"
-              value={formData.conseiller_id ?? ""}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="">-- Conseiller --</option>
+             <label className="font-medium">Conseillers</label>
               {conseillers.map(c => (
-                <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
+                <label key={c.id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.conseillers_ids.includes(c.id)}
+                    onChange={() => handleConseillerChange(c.id)}
+                  />
+                  {c.prenom} {c.nom}
+                </label>
               ))}
-            </select>
-          </div>    
-              
+            </div>                
                   
           <p className="font-bold text-[#2E3192] mb-1">💝 Suivi</p>
-
            {/* Suivi statut */}
           <div className="flex flex-col">
             <label className="font-medium">Suivi statut</label>

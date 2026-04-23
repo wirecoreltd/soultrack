@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from "react";
 import React from "react";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
 import LogoutLink from "../components/LogoutLink";
 import EditMemberSuivisPopup from "../components/EditMemberSuivisPopup";
 import { useMembers } from "../context/MembersContext";
@@ -14,6 +13,116 @@ import useChurchScope from "../hooks/useChurchScope";
 import Footer from "../components/Footer";
 import SuiviPopup from "../components/SuiviPopup";
 
+// ─────────────────────────────────────────────────────────────
+// DetailsPopup extrait HORS du composant parent pour éviter
+// le re-mount à chaque render (qui causait le scroll instable)
+// ─────────────────────────────────────────────────────────────
+const DetailsPopup = React.memo(function DetailsPopup({
+  m,
+  user,
+  showRefus,
+  openSuiviMemberId,
+  setOpenSuiviMemberId,
+  setEditMember,
+  cellules,
+  conseillers,
+}) {
+  const formatMinistere = (ministere) => {
+    if (!ministere) return "—";
+    try {
+      const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere;
+      return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+    } catch { return "—"; }
+  };
+
+  const formatArrayField = (field) => {
+    if (!field) return "—";
+    try {
+      const parsed = typeof field === "string" ? JSON.parse(field) : field;
+      return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+    } catch { return "—"; }
+  };
+
+  const formatDateFr = (dateString) => {
+    if (!dateString) return "—";
+    const d = new Date(dateString);
+    const day = d.getDate().toString().padStart(2, "0");
+    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
+  return (
+    <div className="text-black text-sm space-y-2 w-full">
+
+      <div>
+        <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
+        <p>🎗️ Civilité : {m.sexe || "—"}</p>
+        <p>⏳ Âge : {m.age || "—"}</p>
+        <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+      </div>
+      <hr />
+
+      <div>
+        <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
+        <p>📅 {m.sexe === "Femme" ? "Arrivée" : "Arrivé"} le : {formatDateFr(m.date_venu)}</p>
+      </div>
+      <hr />
+
+      <div>
+        <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
+        <p>💧 Baptême d'Eau : {m.bapteme_eau || "—"}</p>
+        <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
+        <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
+        <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
+        <p>✒️ Formation : {m.Formation || "—"}</p>
+        <p>💢 Ministère : {formatMinistere(m.Ministere) || "—"}</p>
+      </div>
+      <hr />
+
+      <div>
+        <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>
+        <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
+        <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? "—"}</p>
+        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+      </div>
+      <hr />
+
+      <div>
+        <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
+        <p>❓ Difficultés / Besoins : {formatArrayField(m.besoin)}</p>
+        <div className="flex justify-center">
+          <button
+            onClick={() => setOpenSuiviMemberId(m.id)}
+            className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
+          >
+            💡 Ajouter / Voir suivis
+          </button>
+        </div>
+
+        {openSuiviMemberId === m.id && (
+          <SuiviPopup
+            member={m}
+            onClose={() => setOpenSuiviMemberId(null)}
+            user={user}
+          />
+        )}
+      </div>
+
+      {!showRefus && (
+        <div className="mt-4 rounded-xl w-full shadow-md p-4 bg-white">
+          <button
+            onClick={() => setEditMember(m)}
+            className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
+          >
+            ✏️ Modifier le contact
+          </button>
+        </div>
+      )}
+    </div>
+  );
+});
+
+// ─────────────────────────────────────────────────────────────
 
 export default function SuivisMembres() {
   return (
@@ -30,7 +139,7 @@ function SuivisMembresContent() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
-  const [role, setRole] = useState([]);
+  const [userProfile, setUserProfile] = useState(null); // ← profil complet de l'utilisateur connecté
   const [DetailsSuivisPopupMember, setDetailsSuivisPopupMember] = useState(null);
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
@@ -54,9 +163,6 @@ function SuivisMembresContent() {
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => (prev === id ? null : id));
 
-  const statutIds = { envoye: 1, "En Suivis": 2, integrer: 3, refus: 4 };
-  const statutLabels = { 1: "En Attente", 2: "En Suivis", 3: "Intégrer", 4: "Refus" };
-
   useEffect(() => { localStorage.setItem("members_view", view); }, [view]);
 
   useEffect(() => {
@@ -78,15 +184,14 @@ function SuivisMembresContent() {
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, prenom, nom, role, eglise_id, branche_id")
+          .select("id, prenom, nom, role, roles, eglise_id, branche_id")
           .eq("id", user.id)
           .single();
         if (profileError || !profileData) throw profileError;
 
         setPrenom(profileData.prenom || "cher membre");
-        setRole(profileData.role);
+        setUserProfile(profileData); // ← stocker le profil complet
 
-        // 🔹 Fetch cellules pour l'église / branche
         const { data: cellulesData } = await supabase
           .from("cellules")
           .select("id, cellule_full, responsable_id")
@@ -94,7 +199,6 @@ function SuivisMembresContent() {
           .eq("branche_id", profileData.branche_id);
         setCellules(cellulesData || []);
 
-        // 🔹 Fetch conseillers pour l'église / branche
         const { data: conseillersData } = await supabase
           .from("profiles")
           .select("id, prenom, nom")
@@ -103,7 +207,6 @@ function SuivisMembresContent() {
           .eq("branche_id", profileData.branche_id);
         setConseillers(conseillersData || []);
 
-        // 🔹 Requête membres_complets filtrée
         let query = supabase
           .from("membres_complets")
           .select("*")
@@ -136,7 +239,6 @@ function SuivisMembresContent() {
     fetchMembresComplets();
   }, [setAllMembers]);
 
-
   const handleCommentChange = (id, value) => {
     setCommentChanges(prev => ({ ...prev, [id]: value }));
     const member = members.find(m => m.id === id);
@@ -153,35 +255,20 @@ function SuivisMembresContent() {
     return "#ccc";
   };
 
-  // 🔹 Mettre à jour statut/commentaire
   const updateSuivi = async (id) => {
     const newComment = commentChanges[id];
     const newStatus = statusChanges[id];
-
     if (newComment === undefined && newStatus === undefined) return;
 
     setUpdating(prev => ({ ...prev, [id]: true }));
-
     try {
       const payload = { updated_at: new Date() };
-
-      if (newComment !== undefined) {
-        payload.commentaire_suivis = newComment;
-      }
+      if (newComment !== undefined) payload.commentaire_suivis = newComment;
 
       const member = members.find(m => m.id === id);
-
-      const statusNum = newStatus !== undefined
-        ? Number(newStatus)
-        : Number(member?.statut_suivis);
-
-      if (newStatus !== undefined) {
-        payload.statut_suivis = statusNum;
-      }
-
-      if ([2, 3, 4].includes(statusNum)) {
-        payload.date_statut_Def = new Date().toISOString().split("T")[0];
-      }
+      const statusNum = newStatus !== undefined ? Number(newStatus) : Number(member?.statut_suivis);
+      if (newStatus !== undefined) payload.statut_suivis = statusNum;
+      if ([2, 3, 4].includes(statusNum)) payload.date_statut_Def = new Date().toISOString().split("T")[0];
 
       const { data: updatedMember, error } = await supabase
         .from("membres_complets")
@@ -189,13 +276,9 @@ function SuivisMembresContent() {
         .eq("id", id)
         .select("*")
         .single();
-
       if (error) throw error;
 
-      setAllMembers(prev =>
-        prev.map(m => (m.id === id ? updatedMember : m))
-      );
-
+      setAllMembers(prev => prev.map(m => (m.id === id ? updatedMember : m)));
     } catch (err) {
       console.error("❌ updateSuivi error:", err);
     } finally {
@@ -203,25 +286,19 @@ function SuivisMembresContent() {
     }
   };
 
-  // 🔹 Réactiver un membre
   const reactivateMember = async (id) => {
     setUpdating(prev => ({ ...prev, [id]: true }));
-
     try {
-      const payload = { statut_suivis: 2, updated_at: new Date() };
-
       const { data: updatedMember, error } = await supabase
         .from("membres_complets")
-        .update(payload)
+        .update({ statut_suivis: 2, updated_at: new Date() })
         .eq("id", id)
         .select("*")
         .single();
-
       if (error) throw error;
-
       setAllMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
     } catch (err) {
-      console.error("❌ reactivateMember error:", JSON.stringify(err, null, 2));
+      console.error("❌ reactivateMember error:", err);
     } finally {
       setUpdating(prev => ({ ...prev, [id]: false }));
     }
@@ -231,14 +308,8 @@ function SuivisMembresContent() {
     if (!dateString) return "—";
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
-    const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
-  };
-
-  const formatOuiNon = (value) => {
-    if (value === true || value === "Oui") return "Oui";
-    if (value === false || value === "Non") return "Non";
-    return "Non";
   };
 
   const filteredMembers = members.filter(m => {
@@ -250,121 +321,11 @@ function SuivisMembresContent() {
 
   const uniqueMembers = Array.from(new Map(filteredMembers.map(i => [i.id, i])).values());
 
-  // ✅ FIX: DetailsPopup reçoit maintenant `user` en prop
-  const DetailsPopup = ({ m, user }) => {
-    const commentRef = useRef(null);
-
-    useEffect(() => {
-      if (commentRef.current) {
-        commentRef.current.focus();
-        commentRef.current.selectionStart = commentRef.current.value.length;
-      }
-    }, [commentChanges[m.id]]);
-
-    const formatMinistere = (ministere) => {
-      if (!ministere) return "—";
-      try {
-        const parsed = typeof ministere === "string" ? JSON.parse(ministere) : ministere;
-        return Array.isArray(parsed) ? parsed.join(", ") : parsed;
-      } catch {
-        return "—";
-      }
-    };
-
-    const formatArrayField = (field) => {
-      if (!field) return "—";
-      try {
-        const parsed = typeof field === "string" ? JSON.parse(field) : field;
-        return Array.isArray(parsed) ? parsed.join(", ") : parsed;
-      } catch {
-        return "—";
-      }
-    };
-
-    if (scopeLoading) return <p className="text-white">Chargement...</p>;
-    if (scopeError) return <p className="text-red-400">Erreur : {scopeError}</p>;
-    if (!profile) return null;
-
-    return (
-      <div className="text-black text-sm space-y-2 w-full">
-
-        <div>
-          <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
-          <p>🎗️ Civilité : {m.sexe || ""}</p>
-          <p>⏳ Age : {m.age || ""}</p>
-          <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-        </div>
-        <hr />
-
-        <div>
-          <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
-          <p>📅 {m.sexe === "Femme" ? "Arrivée" : "Arrivé"} le : {formatDateFr(m.date_venu)}</p>
-        </div>
-        <hr />
-
-        <div>
-          <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
-          <p>💧 Baptême d'Eau : {m.bapteme_eau || ""}</p>
-          <p>🔥 Baptême de Feu : {m.bapteme_esprit || ""}</p>
-          <p>🙏 Prière du salut : {m.priere_salut || ""}</p>
-          <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
-          <p>✒️ Formation : {m.Formation || "—"}</p>
-          <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}</p>
-        </div>
-        <hr />
-
-        <div>
-          <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>
-          <p>🧩 Comment est-il venu : {m.venu || ""}</p>
-          <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? ""}</p>
-          <p>📝 Infos : {m.infos_supplementaires || ""}</p>
-        </div>
-        <hr />
-
-        <div>
-          <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
-          <p>❓ Difficultés / Besoins : {formatArrayField(m.besoin)}</p>
-          <div className="flex justify-center">
-            <button
-              onClick={() => setOpenSuiviMemberId(m.id)}
-              className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
-            >
-              💡 Ajouter / Voir suivis
-            </button>
-          </div>
-
-          {/* ✅ FIX: utilise `user` (prop) au lieu de `userProfile` (inexistant) */}
-          {openSuiviMemberId === m.id && (
-            <SuiviPopup
-              member={m}
-              onClose={() => setOpenSuiviMemberId(null)}
-              user={user}
-            />
-          )}
-        </div>
-
-        {!showRefus && (
-          <div className="mt-4 rounded-xl w-full shadow-md p-4 bg-white">
-            <button
-              onClick={() => setEditMember(m)}
-              className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
-            >
-              ✏️ Modifier le contact
-            </button>
-          </div>
-        )}
-
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "#333699" }}>
 
-      {/* Header */}
       <HeaderPages />
 
-      {/* Title */}
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
           Suivis des <span className="text-emerald-300">Membres</span>
@@ -379,7 +340,6 @@ function SuivisMembresContent() {
         </div>
       </div>
 
-      {/* View & Filter Buttons */}
       <div className="mb-4 flex justify-end w-full max-w-6xl">
         <button
           onClick={() => setShowRefus(prev => !prev)}
@@ -390,12 +350,11 @@ function SuivisMembresContent() {
       </div>
 
       {message && (
-        <div className={`mb-4 px-4 py-2 rounded-md text-sm ${message.type === "error" ? "bg-red-200 text-red-800" : message.type === "success" ? "bg-green-200 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
-          {message.text}
+        <div className="mb-4 px-4 py-2 rounded-md text-sm bg-yellow-100 text-yellow-800">
+          {typeof message === "string" ? message : message.text}
         </div>
       )}
 
-      {/* Cards View */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
           {uniqueMembers.map((m) => (
@@ -409,7 +368,6 @@ function SuivisMembresContent() {
                   {m.prenom} {m.nom}
                 </h2>
 
-                {/* 📞 Téléphone */}
                 {m.telephone && (
                   <div className="relative inline-block mt-1">
                     <p
@@ -421,67 +379,37 @@ function SuivisMembresContent() {
                     >
                       {m.telephone}
                     </p>
-
                     {openPhoneMenuId === m.id && (
                       <div
                         ref={phoneMenuRef}
                         className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-52 text-center"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <a href={`tel:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
-                          📞 Appeler
-                        </a>
-                        <a href={`sms:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">
-                          ✉️ SMS
-                        </a>
-                        <a
-                          href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block px-4 py-2 hover:bg-gray-100 text-black"
-                        >
-                          📱 Appel WhatsApp
-                        </a>
-                        <a
-                          href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block px-4 py-2 hover:bg-gray-100 text-black"
-                        >
-                          💬 Message WhatsApp
-                        </a>
+                        <a href={`tel:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
+                        <a href={`sms:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ SMS</a>
+                        <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Appel WhatsApp</a>
+                        <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 Message WhatsApp</a>
                       </div>
                     )}
                   </div>
                 )}
 
                 <p className="text-sm text-black-700 mb-1">
-                  🏠 Cellule : {m.cellule_id
-                    ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—")
-                    : "—"}
+                  🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}
                 </p>
                 <p className="text-sm text-black-700 mb-1">
                   👤 Conseiller : {m.conseiller_id
-                    ? (() => {
-                      const cons = conseillers.find(c => c.id === m.conseiller_id);
-                      return cons ? `${cons.prenom} ${cons.nom}` : "—";
-                    })()
+                    ? (() => { const cons = conseillers.find(c => c.id === m.conseiller_id); return cons ? `${cons.prenom} ${cons.nom}` : "—"; })()
                     : "—"}
                 </p>
 
                 <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(m.date_envoi_suivi)}</p>
 
-                {/* Commentaire & Statut */}
                 <div className="flex flex-col w-full mt-2">
                   <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis</label>
 
                   {showRefus ? (
-                    <textarea
-                      value={m.commentaire_suivis ?? ""}
-                      readOnly
-                      className="w-full border rounded-lg p-2 bg-gray-100 text-gray-600 cursor-not-allowed"
-                      rows={2}
-                    />
+                    <textarea value={m.commentaire_suivis ?? ""} readOnly className="w-full border rounded-lg p-2 bg-gray-100 text-gray-600 cursor-not-allowed" rows={2} />
                   ) : (
                     <textarea
                       value={commentChanges[m.id] ?? m.commentaire_suivis ?? ""}
@@ -494,11 +422,7 @@ function SuivisMembresContent() {
                   <label className="font-semibold mb-1 text-center mt-2">Statut Intégration</label>
 
                   {showRefus ? (
-                    <select
-                      value="4"
-                      disabled
-                      className="w-full border rounded-lg p-2 text-red-600 bg-gray-100 cursor-not-allowed"
-                    >
+                    <select value="4" disabled className="w-full border rounded-lg p-2 text-red-600 bg-gray-100 cursor-not-allowed">
                       <option value="4">Refus</option>
                     </select>
                   ) : (
@@ -515,39 +439,35 @@ function SuivisMembresContent() {
                   )}
 
                   {showRefus ? (
-                    <button
-                      onClick={() => reactivateMember(m.id)}
-                      disabled={updating[m.id]}
-                      className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"}`}
-                    >
+                    <button onClick={() => reactivateMember(m.id)} disabled={updating[m.id]} className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"}`}>
                       {updating[m.id] ? "Réactivation..." : "Réactiver"}
                     </button>
                   ) : (
-                    <button
-                      onClick={() => updateSuivi(m.id)}
-                      disabled={updating[m.id]}
-                      className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 text-white"}`}
-                    >
+                    <button onClick={() => updateSuivi(m.id)} disabled={updating[m.id]} className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 text-white"}`}>
                       {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
                     </button>
                   )}
                 </div>
 
-                {/* Bouton Détails */}
-                <button
-                  onClick={() => toggleDetails(m.id)}
-                  className="text-orange-500 underline text-sm mt-2"
-                >
+                <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">
                   {detailsOpen === m.id ? "Fermer détails" : "Détails"}
                 </button>
               </div>
 
-              {/* Contenu Détails */}
+              {/* Détails — DetailsPopup est maintenant stable (défini hors du parent) */}
               <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
-                {/* ✅ FIX: passage de `user={profile}` à DetailsPopup */}
                 {detailsOpen === m.id && (
                   <div className="pt-2">
-                    <DetailsPopup m={m} user={profile} />
+                    <DetailsPopup
+                      m={m}
+                      user={userProfile}           // ← profil complet avec id, prenom, nom, roles
+                      showRefus={showRefus}
+                      openSuiviMemberId={openSuiviMemberId}
+                      setOpenSuiviMemberId={setOpenSuiviMemberId}
+                      setEditMember={setEditMember}
+                      cellules={cellules}
+                      conseillers={conseillers}
+                    />
                   </div>
                 )}
               </div>
@@ -556,7 +476,6 @@ function SuivisMembresContent() {
         </div>
       )}
 
-      {/* Edit Member Popup */}
       {editMember && (
         <EditMemberSuivisPopup
           member={editMember}
@@ -564,6 +483,7 @@ function SuivisMembresContent() {
           conseillers={conseillers}
           onClose={() => setEditMember(null)}
           onUpdateMember={updateMember}
+          currentUserRoles={userProfile?.roles || []}   // ← passage du roles array
         />
       )}
 

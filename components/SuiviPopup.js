@@ -9,8 +9,7 @@ export default function SuiviPopup({ member, onClose, user }) {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [currentUserName, setCurrentUserName] = useState("");
 
-  const parseMemberBesoins = (source) => {
-    const val = source ?? member?.besoin;
+  const parseBesoinsList = (val) => {
     if (!val) return [];
     try {
       const parsed = typeof val === "string" ? JSON.parse(val) : val;
@@ -20,14 +19,19 @@ export default function SuiviPopup({ member, onClose, user }) {
     }
   };
 
-  // memberBesoins = besoins actuels du membre (peut changer après décocher)
-  const [memberBesoins, setMemberBesoins] = useState(parseMemberBesoins());
+  // memberBesoins = besoins actuels en base (source de vérité)
+  const [memberBesoins, setMemberBesoins] = useState(
+    parseBesoinsList(member?.besoin)
+  );
+
+  // resolvedBesoins = besoins qui ont été décochés ET sauvegardés avec "Résolu"
+  const [resolvedBesoins, setResolvedBesoins] = useState([]);
 
   const [form, setForm] = useState({
     date_action: "",
     type: "",
     statut: "En cours",
-    besoin: parseMemberBesoins(),
+    besoin: parseBesoinsList(member?.besoin), // uniquement les besoins cochés pour CE suivi
     commentaire: "",
   });
 
@@ -92,39 +96,13 @@ export default function SuiviPopup({ member, onClose, user }) {
     setSuivis(data || []);
   };
 
-  // Quand on coche/décoche un besoin
-  const toggleBesoin = async (value) => {
-    const isCurrentlyChecked = form.besoin.includes(value);
-    const isMemberBesoin = memberBesoins.includes(value);
-
-    // Nouveau état du form
-    const newFormBesoin = isCurrentlyChecked
-      ? form.besoin.filter((b) => b !== value)
-      : [...form.besoin, value];
-
-    setForm((prev) => ({ ...prev, besoin: newFormBesoin }));
-
-    // Si on décoche un besoin qui était dans membres_complets → on le retire de la DB
-    if (isCurrentlyChecked && isMemberBesoin) {
-      const newMemberBesoins = memberBesoins.filter((b) => b !== value);
-      setMemberBesoins(newMemberBesoins);
-
-      await supabase
-        .from("membres_complets")
-        .update({ besoin: JSON.stringify(newMemberBesoins) })
-        .eq("id", member.id);
-    }
-
-    // Si on coche un besoin qui n'était pas dans membres_complets → on l'ajoute
-    if (!isCurrentlyChecked && !isMemberBesoin) {
-      const newMemberBesoins = [...memberBesoins, value];
-      setMemberBesoins(newMemberBesoins);
-
-      await supabase
-        .from("membres_complets")
-        .update({ besoin: JSON.stringify(newMemberBesoins) })
-        .eq("id", member.id);
-    }
+  const toggleBesoin = (value) => {
+    setForm((prev) => ({
+      ...prev,
+      besoin: prev.besoin.includes(value)
+        ? prev.besoin.filter((b) => b !== value)
+        : [...prev.besoin, value],
+    }));
   };
 
   const handleSubmit = async () => {
@@ -139,6 +117,21 @@ export default function SuiviPopup({ member, onClose, user }) {
 
     setLoading(true);
 
+    // Besoins qui ont été décochés dans ce suivi (étaient dans memberBesoins mais plus dans form.besoin)
+    const uncheckedBesoins = memberBesoins.filter(
+      (b) => !form.besoin.includes(b)
+    );
+
+    // Mettre à jour membres_complets.besoin = uniquement les besoins encore cochés
+    const newMemberBesoins = memberBesoins.filter((b) =>
+      form.besoin.includes(b)
+    );
+    // Ajouter les nouveaux besoins cochés qui n'étaient pas en base
+    form.besoin.forEach((b) => {
+      if (!newMemberBesoins.includes(b)) newMemberBesoins.push(b);
+    });
+
+    // Sauvegarder le suivi — uniquement les besoins cochés dans ce formulaire
     const { error } = await supabase.from("suivis").insert({
       membre_id: member.id,
       type: form.type,
@@ -150,21 +143,39 @@ export default function SuiviPopup({ member, onClose, user }) {
       created_by: currentUserId,
     });
 
-    setLoading(false);
-
-    if (!error) {
-      setForm({
-        date_action: "",
-        type: "",
-        statut: "En cours",
-        besoin: memberBesoins,
-        commentaire: "",
-      });
-      fetchSuivis();
-    } else {
+    if (error) {
+      setLoading(false);
       console.error("Erreur supabase:", error);
       alert("Erreur lors de l'ajout du suivi : " + error.message);
+      return;
     }
+
+    // Mettre à jour membres_complets.besoin en base
+    await supabase
+      .from("membres_complets")
+      .update({ besoin: JSON.stringify(newMemberBesoins) })
+      .eq("id", member.id);
+
+    // Si statut = Résolu → les besoins décochés passent en vert
+    if (form.statut === "Résolu" && uncheckedBesoins.length > 0) {
+      setResolvedBesoins((prev) => [
+        ...prev,
+        ...uncheckedBesoins.filter((b) => !prev.includes(b)),
+      ]);
+    }
+
+    setMemberBesoins(newMemberBesoins);
+    setLoading(false);
+
+    setForm({
+      date_action: "",
+      type: "",
+      statut: "En cours",
+      besoin: newMemberBesoins,
+      commentaire: "",
+    });
+
+    fetchSuivis();
   };
 
   const formatDate = (dateStr) => {
@@ -172,7 +183,10 @@ export default function SuiviPopup({ member, onClose, user }) {
     try {
       const d = new Date(dateStr);
       const day = d.getDate().toString().padStart(2, "0");
-      const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
+      const months = [
+        "Janv","Févr","Mars","Avr","Mai","Juin",
+        "Juil","Août","Sept","Oct","Nov","Déc",
+      ];
       return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
     } catch {
       return dateStr;
@@ -185,21 +199,19 @@ export default function SuiviPopup({ member, onClose, user }) {
     return "text-orange-500 font-semibold";
   };
 
-  // Détermine l'apparence de la case
-  // - coché + membre   → orange + tick  (besoin actif confirmé)
-  // - décoché + membre → vert + tick    (besoin résolu / retiré)
-  // - coché + nouveau  → orange + tick  (nouveau besoin ajouté)
-  // - décoché + rien   → vide
+  // Apparence des cases :
+  // - résolu (décoché + sauvegardé résolu) → vert
+  // - coché → orange
+  // - vide → gris
   const getCaseStyle = (b) => {
     const isChecked = form.besoin.includes(b);
-    const wasMemberBesoin = memberBesoins.includes(b);
+    const isResolved = resolvedBesoins.includes(b);
 
+    if (isResolved && !isChecked) {
+      return { bg: "bg-green-500 border-green-500", tick: true };
+    }
     if (isChecked) {
       return { bg: "bg-orange-400 border-orange-400", tick: true };
-    }
-    if (!isChecked && wasMemberBesoin) {
-      // Décoché mais était un besoin du membre → vert
-      return { bg: "bg-green-500 border-green-500", tick: true };
     }
     return { bg: "bg-white border-gray-300", tick: false };
   };
@@ -329,6 +341,7 @@ export default function SuiviPopup({ member, onClose, user }) {
                   📅 {formatDate(s.date_action)} — {s.action_type}
                 </p>
 
+                {/* Uniquement les besoins cochés lors de ce suivi */}
                 {besoinsArr.length > 0 && (
                   <div className="space-y-0.5 mt-1">
                     {besoinsArr.map((b, i) => (

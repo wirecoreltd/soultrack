@@ -1,110 +1,126 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function SuiviPopup({ member, onClose }) {
-  if (!member) return null;
-
-  const [suivis, setSuivis] = useState([]);
+export default function SuiviPopup({ member, onClose, user }) {
   const [loading, setLoading] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [openSuivi, setOpenSuivi] = useState(false);
+  const [suivis, setSuivis] = useState([]);
 
   const [form, setForm] = useState({
-    action_type: "Appel",
+    date_action: "",
+    type: "",
     statut: "En cours",
-    besoin: "",
+    besoin: [],
     commentaire: "",
   });
 
-  // -------------------- LOAD USER + SUIVIS --------------------
+  const besoinsOptions = [
+    "Finances",
+    "Santé",
+    "Travail / Études",
+    "Famille",
+    "Relations",
+    "Spiritualité",
+    "Logement",
+  ];
+
+  // 🔄 Load historique
   useEffect(() => {
-    fetchUser();
     fetchSuivis();
   }, []);
-
-  const fetchUser = async () => {
-    const { data: auth } = await supabase.auth.getUser();
-
-    if (!auth?.user) return;
-
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom")
-      .eq("id", auth.user.id)
-      .single();
-
-    setProfile(data);
-  };
 
   const fetchSuivis = async () => {
     const { data } = await supabase
       .from("suivis")
       .select("*, profiles:created_by(prenom, nom)")
       .eq("membre_id", member.id)
-      .order("created_at", { ascending: false });
+      .order("date_action", { ascending: false });
 
     setSuivis(data || []);
   };
 
-  // -------------------- ADD SUIVI --------------------
-  const addSuivi = async () => {
-    if (!profile) return;
+  // 🟠 toggle besoin
+  const toggleBesoin = (value) => {
+    setForm((prev) => ({
+      ...prev,
+      besoin: prev.besoin.includes(value)
+        ? prev.besoin.filter((b) => b !== value)
+        : [...prev.besoin, value],
+    }));
+  };
 
-    if (!form.commentaire.trim()) return;
+  // 💾 Ajouter suivi
+  const handleSubmit = async () => {
+    if (!form.date_action || !form.type) {
+      alert("Date et type sont obligatoires");
+      return;
+    }
 
     setLoading(true);
 
     const { error } = await supabase.from("suivis").insert({
       membre_id: member.id,
-      action_type: form.action_type,
+      type: form.type,
       statut: form.statut,
-      besoin: form.besoin || null,
+      besoin: form.besoin.length ? JSON.stringify(form.besoin) : null,
       commentaire: form.commentaire,
-      created_by: profile.id,
-      date_action: new Date(),
+      date_action: form.date_action,
+      created_by: user.id,
     });
+
+    setLoading(false);
 
     if (!error) {
       setForm({
-        action_type: "Appel",
+        date_action: "",
+        type: "",
         statut: "En cours",
-        besoin: "",
+        besoin: [],
         commentaire: "",
       });
-
       fetchSuivis();
     }
-
-    setLoading(false);
   };
 
-  // -------------------- UI --------------------
+  const statutColor = (statut) => {
+    if (statut === "Résolu") return "text-green-600";
+    if (statut === "En suivi") return "text-blue-600";
+    return "text-orange-500";
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white w-full max-w-2xl rounded-xl shadow-lg p-5">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="bg-white w-full max-w-2xl p-5 rounded-xl max-h-[85vh] overflow-y-auto">
 
         {/* HEADER */}
-        <h2 className="text-xl font-bold mb-2 text-[#25297e]">
-          💡 Suivi pastoral
-        </h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="font-bold text-lg">
+            💡 Suivi - {member.prenom} {member.nom}
+          </h2>
+          <button onClick={onClose}>✕</button>
+        </div>
 
-        <p className="text-sm text-gray-600 mb-4">
-          {member.prenom} {member.nom}
-        </p>
+        {/* FORM */}
+        <div className="space-y-3 border-b pb-4">
 
-        {/* ---------------- FORMULAIRE ---------------- */}
-        <div className="space-y-3 border-b pb-4 mb-4">
+          {/* DATE */}
+          <input
+            type="date"
+            value={form.date_action}
+            onChange={(e) =>
+              setForm({ ...form, date_action: e.target.value })
+            }
+            className="border p-2 w-full rounded"
+          />
 
           {/* TYPE */}
           <select
-            value={form.action_type}
-            onChange={(e) =>
-              setForm({ ...form, action_type: e.target.value })
-            }
-            className="w-full border p-2 rounded"
+            value={form.type}
+            onChange={(e) => setForm({ ...form, type: e.target.value })}
+            className="border p-2 w-full rounded"
           >
+            <option value="">Type</option>
             <option value="Appel">Appel</option>
             <option value="Visite">Visite</option>
             <option value="Entretien">Entretien</option>
@@ -113,98 +129,87 @@ export default function SuiviPopup({ member, onClose }) {
           {/* STATUT */}
           <select
             value={form.statut}
-            onChange={(e) =>
-              setForm({ ...form, statut: e.target.value })
-            }
-            className="w-full border p-2 rounded"
+            onChange={(e) => setForm({ ...form, statut: e.target.value })}
+            className="border p-2 w-full rounded"
           >
-            <option value="En cours">En cours</option>
-            <option value="En suivi">En suivi</option>
-            <option value="Résolu">Résolu</option>
+            <option>En cours</option>
+            <option>En suivi</option>
+            <option>Résolu</option>
           </select>
 
-          {/* BESOIN */}
-          <input
-            placeholder="Besoin (optionnel)"
-            value={form.besoin}
-            onChange={(e) =>
-              setForm({ ...form, besoin: e.target.value })
-            }
-            className="w-full border p-2 rounded"
-          />
+          {/* BESOINS */}
+          <div>
+            <p className="font-semibold mb-1">Besoins</p>
+            <div className="flex flex-wrap gap-2">
+              {besoinsOptions.map((b) => (
+                <button
+                  key={b}
+                  type="button"
+                  onClick={() => toggleBesoin(b)}
+                  className={`px-2 py-1 rounded text-sm border ${
+                    form.besoin.includes(b)
+                      ? "bg-orange-400 text-white"
+                      : ""
+                  }`}
+                >
+                  {b}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* COMMENTAIRE */}
           <textarea
-            placeholder="Commentaire"
+            placeholder="Commentaire..."
             value={form.commentaire}
             onChange={(e) =>
               setForm({ ...form, commentaire: e.target.value })
             }
-            className="w-full border p-2 rounded"
-            rows={3}
+            className="border p-2 w-full rounded"
           />
 
-          {/* 👤 AUTEUR (READONLY IMPORTANT) */}
-          <div className="text-sm text-gray-500 bg-gray-100 p-2 rounded">
-            👤 Créé par :{" "}
-            <span className="font-semibold">
-              {profile?.prenom} {profile?.nom}
-            </span>
-          </div>
-
-          {/* BTN */}
+          {/* SUBMIT */}
           <button
-            onClick={addSuivi}
+            onClick={handleSubmit}
             disabled={loading}
-            className="w-full bg-[#25297e] text-white py-2 rounded"
+            className="bg-blue-600 text-white px-4 py-2 rounded w-full"
           >
-            {loading ? "Ajout..." : "Ajouter le suivi"}
+            {loading ? "Ajout..." : "Ajouter suivi"}
           </button>
         </div>
 
-        {/* ---------------- HISTORIQUE ---------------- */}
-        <div className="max-h-[250px] overflow-y-auto space-y-3">
-
-          {suivis.length === 0 && (
-            <p className="text-sm text-gray-400 text-center">
-              Aucun suivi pour ce contact
-            </p>
-          )}
+        {/* HISTORIQUE */}
+        <div className="mt-4">
+          <h3 className="font-bold mb-2">📅 Historique</h3>
 
           {suivis.map((s) => (
             <div
               key={s.id}
-              className="border rounded p-3 bg-gray-50"
+              className="border-b py-2 text-sm space-y-1"
             >
-              <div className="text-sm font-bold text-[#25297e]">
-                📅 {new Date(s.created_at).toLocaleDateString()} —{" "}
-                {s.action_type} — {s.statut}
+              <div className="flex justify-between">
+                <p>
+                  📅 {s.date_action} — {s.type}
+                </p>
+                <p className={statutColor(s.statut)}>
+                  {s.statut}
+                </p>
               </div>
 
-              <div className="text-xs text-gray-500">
+              {s.commentaire && <p>📝 {s.commentaire}</p>}
+
+              <p className="text-gray-500 text-xs">
                 👤 {s.profiles?.prenom} {s.profiles?.nom}
-              </div>
+              </p>
 
               {s.besoin && (
-                <div className="text-sm mt-1">
-                  ❓ {s.besoin}
-                </div>
+                <p className="text-xs text-gray-600">
+                  ❓ {JSON.parse(s.besoin).join(", ")}
+                </p>
               )}
-
-              <div className="text-sm mt-1">
-                📝 {s.commentaire}
-              </div>
             </div>
           ))}
         </div>
-
-        {/* CLOSE */}
-        <button
-          onClick={onClose}
-          className="mt-4 w-full bg-gray-200 py-2 rounded"
-        >
-          Fermer
-        </button>
       </div>
     </div>
   );

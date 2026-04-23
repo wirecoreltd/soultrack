@@ -9,7 +9,6 @@ export default function SuiviPopup({ member, onClose, user }) {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [currentUserName, setCurrentUserName] = useState("");
 
-  // Pré-remplir les besoins depuis member.besoin
   const parseMemberBesoins = () => {
     if (!member?.besoin) return [];
     try {
@@ -46,32 +45,24 @@ export default function SuiviPopup({ member, onClose, user }) {
     "Dépression / Santé mentale",
   ];
 
-  // Résoudre l'utilisateur connecté
+  const memberBesoins = parseMemberBesoins();
+
   useEffect(() => {
     const resolveUser = async () => {
-      // 1. Depuis la prop user (userProfile)
       if (user?.id) {
         setCurrentUserId(user.id);
         const name = [user.prenom, user.nom].filter(Boolean).join(" ");
         setCurrentUserName(name || user.email || "Utilisateur connecté");
         return;
       }
-
-      // 2. Depuis getSession
       try {
         const { data } = await supabase.auth.getSession();
         if (data?.session?.user?.id) {
           setCurrentUserId(data.session.user.id);
-          setCurrentUserName(
-            data.session.user.email || "Utilisateur connecté"
-          );
+          setCurrentUserName(data.session.user.email || "Utilisateur connecté");
           return;
         }
-      } catch (e) {
-        console.warn("getSession échoué:", e);
-      }
-
-      // 3. Fallback localStorage
+      } catch (e) {}
       try {
         const keys = Object.keys(localStorage);
         const authKey = keys.find(
@@ -79,20 +70,13 @@ export default function SuiviPopup({ member, onClose, user }) {
         );
         if (authKey) {
           const stored = JSON.parse(localStorage.getItem(authKey));
-          const id = stored?.user?.id;
-          if (id) {
-            setCurrentUserId(id);
-            setCurrentUserName(
-              stored?.user?.email || "Utilisateur connecté"
-            );
-            return;
+          if (stored?.user?.id) {
+            setCurrentUserId(stored.user.id);
+            setCurrentUserName(stored.user.email || "Utilisateur connecté");
           }
         }
-      } catch (e) {
-        console.warn("localStorage fallback échoué:", e);
-      }
+      } catch (e) {}
     };
-
     resolveUser();
   }, [user]);
 
@@ -106,7 +90,6 @@ export default function SuiviPopup({ member, onClose, user }) {
       .select("*, profiles:created_by(prenom, nom)")
       .eq("membre_id", member.id)
       .order("date_action", { ascending: false });
-
     setSuivis(data || []);
   };
 
@@ -124,7 +107,6 @@ export default function SuiviPopup({ member, onClose, user }) {
       alert("Date et type sont obligatoires");
       return;
     }
-
     if (!currentUserId) {
       alert("Session introuvable. Veuillez vous déconnecter et vous reconnecter.");
       return;
@@ -160,10 +142,72 @@ export default function SuiviPopup({ member, onClose, user }) {
     }
   };
 
+  // Pour chaque besoin, trouver le dernier suivi qui le mentionne
+  const getLastSuiviForBesoin = (besoinLabel) => {
+    for (const s of suivis) {
+      if (!s.besoin) continue;
+      try {
+        const arr = JSON.parse(s.besoin);
+        if (Array.isArray(arr) && arr.includes(besoinLabel)) {
+          return s;
+        }
+      } catch {}
+    }
+    return null;
+  };
+
   const statutColor = (statut) => {
-    if (statut === "Résolu") return "text-green-600";
-    if (statut === "En suivi") return "text-blue-600";
-    return "text-orange-500";
+    if (statut === "Résolu") return "text-green-600 font-semibold";
+    if (statut === "En suivi") return "text-blue-600 font-semibold";
+    return "text-orange-500 font-semibold";
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    try {
+      const d = new Date(dateStr);
+      const day = d.getDate().toString().padStart(2, "0");
+      const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
+      return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Détermine l'état visuel d'une case
+  // - "member" : besoin du membre (orange si pas coché, vert si coché)
+  // - "new"    : pas besoin du membre mais coché maintenant (bleu)
+  // - "none"   : ni l'un ni l'autre
+  const getCaseStyle = (b) => {
+    const isMemberBesoin = memberBesoins.includes(b);
+    const isChecked = form.besoin.includes(b);
+
+    if (isMemberBesoin && isChecked) {
+      // Besoin du membre ET coché → vert plein sans tick
+      return {
+        box: "w-4 h-4 rounded border-2 border-green-500 bg-green-500 flex items-center justify-center flex-shrink-0",
+        tick: false,
+      };
+    }
+    if (isMemberBesoin && !isChecked) {
+      // Besoin du membre mais décoché → orange sans tick
+      return {
+        box: "w-4 h-4 rounded border-2 border-orange-400 bg-orange-400 flex items-center justify-center flex-shrink-0",
+        tick: false,
+      };
+    }
+    if (!isMemberBesoin && isChecked) {
+      // Nouveau besoin coché → bleu avec tick
+      return {
+        box: "w-4 h-4 rounded border-2 border-blue-500 bg-blue-500 flex items-center justify-center flex-shrink-0",
+        tick: true,
+      };
+    }
+    // Non coché, pas besoin du membre → case vide
+    return {
+      box: "w-4 h-4 rounded border-2 border-gray-300 bg-white flex-shrink-0",
+      tick: false,
+    };
   };
 
   return (
@@ -181,7 +225,6 @@ export default function SuiviPopup({ member, onClose, user }) {
         {/* FORM */}
         <div className="space-y-3 border-b pb-4">
 
-          {/* DATE */}
           <input
             type="date"
             value={form.date_action}
@@ -189,7 +232,6 @@ export default function SuiviPopup({ member, onClose, user }) {
             className="border p-2 w-full rounded"
           />
 
-          {/* TYPE */}
           <select
             value={form.type}
             onChange={(e) => setForm({ ...form, type: e.target.value })}
@@ -201,7 +243,6 @@ export default function SuiviPopup({ member, onClose, user }) {
             <option value="Entretien">Entretien</option>
           </select>
 
-          {/* STATUT */}
           <select
             value={form.statut}
             onChange={(e) => setForm({ ...form, statut: e.target.value })}
@@ -212,28 +253,44 @@ export default function SuiviPopup({ member, onClose, user }) {
             <option>Résolu</option>
           </select>
 
-          {/* BESOINS — Checkboxes */}
+          {/* BESOINS — cases custom */}
           <div>
             <p className="font-semibold mb-2">Besoins</p>
-            <div className="grid grid-cols-2 gap-1">
-              {besoinsOptions.map((b) => (
-                <label
-                  key={b}
-                  className="flex items-center gap-2 text-sm cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={form.besoin.includes(b)}
-                    onChange={() => toggleBesoin(b)}
-                    className="accent-orange-400 w-4 h-4"
-                  />
-                  {b}
-                </label>
-              ))}
+            <div className="grid grid-cols-2 gap-2">
+              {besoinsOptions.map((b) => {
+                const style = getCaseStyle(b);
+                const lastSuivi = getLastSuiviForBesoin(b);
+                return (
+                  <div key={b}>
+                    <label
+                      className="flex items-center gap-2 text-sm cursor-pointer select-none"
+                      onClick={() => toggleBesoin(b)}
+                    >
+                      {/* Case custom */}
+                      <div className={style.box}>
+                        {style.tick && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <span>{b}</span>
+                    </label>
+                    {/* Dernier suivi pour ce besoin */}
+                    {lastSuivi && (
+                      <p className="text-xs text-gray-400 ml-6 mt-0.5">
+                        {formatDate(lastSuivi.date_action)} —{" "}
+                        <span className={statutColor(lastSuivi.statut)}>
+                          {lastSuivi.statut}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* COMMENTAIRE */}
           <textarea
             placeholder="Commentaire..."
             value={form.commentaire}
@@ -242,14 +299,12 @@ export default function SuiviPopup({ member, onClose, user }) {
             rows={3}
           />
 
-          {/* USER CONNECTÉ */}
           {currentUserName && (
             <p className="text-center text-sm text-gray-400">
               👤 {currentUserName}
             </p>
           )}
 
-          {/* SUBMIT */}
           <button
             onClick={handleSubmit}
             disabled={loading}
@@ -259,7 +314,7 @@ export default function SuiviPopup({ member, onClose, user }) {
           </button>
         </div>
 
-        {/* HISTORIQUE */}
+        {/* HISTORIQUE COMPLET */}
         <div className="mt-4">
           <h3 className="font-bold mb-2">📅 Historique</h3>
 
@@ -267,30 +322,41 @@ export default function SuiviPopup({ member, onClose, user }) {
             <p className="text-sm text-gray-500">Aucun suivi pour le moment</p>
           )}
 
-          {suivis.map((s) => (
-            <div key={s.id} className="border-b py-3 text-sm space-y-1">
-              <div className="flex justify-between">
-                <p>📅 {s.date_action} — {s.action_type}</p>
-                <p className={statutColor(s.statut)}>{s.statut}</p>
-              </div>
+          {suivis.map((s) => {
+            let besoinsArr = [];
+            try {
+              besoinsArr = s.besoin ? JSON.parse(s.besoin) : [];
+            } catch {}
 
-              {s.commentaire && <p>📝 {s.commentaire}</p>}
-
-              <p className="text-gray-500 text-xs">
-                👤 {s.profiles?.prenom} {s.profiles?.nom}
-              </p>
-
-              {s.besoin && (
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {JSON.parse(s.besoin).map((b, i) => (
-                    <span key={i} className="px-2 py-1 rounded bg-gray-200 text-xs">
-                      {b}
-                    </span>
-                  ))}
+            return (
+              <div key={s.id} className="border-b py-3 text-sm space-y-1">
+                <div className="flex justify-between">
+                  <p>📅 {formatDate(s.date_action)} — {s.action_type}</p>
+                  <p className={statutColor(s.statut)}>{s.statut}</p>
                 </div>
-              )}
-            </div>
-          ))}
+
+                {/* Besoins ligne par ligne */}
+                {besoinsArr.length > 0 && (
+                  <div className="space-y-0.5 mt-1">
+                    {besoinsArr.map((b, i) => (
+                      <p key={i} className="text-gray-700">
+                        • {b} —{" "}
+                        <span className={statutColor(s.statut)}>
+                          {s.statut}
+                        </span>
+                      </p>
+                    ))}
+                  </div>
+                )}
+
+                {s.commentaire && <p className="text-gray-600">📝 {s.commentaire}</p>}
+
+                <p className="text-gray-400 text-xs">
+                  👤 {s.profiles?.prenom} {s.profiles?.nom}
+                </p>
+              </div>
+            );
+          })}
         </div>
 
       </div>

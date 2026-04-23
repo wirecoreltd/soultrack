@@ -1082,6 +1082,7 @@ const canAddMember =
       member={editMember}
       cellules={cellules}
       conseillers={conseillers}
+      currentUserRoles={getRoles(userProfile)}
       onClose={() => setEditMember(null)}
       onUpdateMember={async (updatedMember) => {
         await logStats(editMember, updatedMember, userProfile);

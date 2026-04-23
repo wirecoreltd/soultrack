@@ -321,7 +321,7 @@ return (
         <p>🙏 Prière du salut : {m.priere_salut || ""}</p>
         <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
         <p>✒️ Formation : {m.Formation || "—"}</p>  
-        p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}</p>
+        <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}</p>
               </div>
           <hr />
           

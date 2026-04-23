@@ -8,7 +8,13 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
   if (!member) return null;
 
 
-  const isPrivileged = (currentUserRoles || []).some(r => ["Administrateur", "ResponsableIntegration"].includes(r));
+  const ADMIN_ROLES = new Set([
+  "Administrateur",
+  "ResponsableIntegration"
+]);
+
+const isPrivileged = (currentUserRoles || [])
+  .some(role => ADMIN_ROLES.has(role));
 
   const [autreMinistere, setAutreMinistere] = useState("");
   const [search, setSearch] = useState("");

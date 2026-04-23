@@ -15,6 +15,7 @@ import Footer from "../components/Footer";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/ProtectedRoute";
 import useChurchScope from "../hooks/useChurchScope";
+import SuiviPopup from "../components/SuiviPopup";
 
 export default function ListMembers() {
   return (
@@ -887,11 +888,16 @@ const canAddMember =
 
       <p>❤️‍🩹 Suivi pastoral : {m.Soin_Pastoral || "—"}</p>
       <p>❓ Besoins : {besoins}</p>
-    </div>
+        <button onClick={...}>
+      💡 Ajouter / Voir suivis
+    </button>
 
-    
-             <div className="flex flex-col items-center">
-                    
+    {/* popup */}
+    {openSuivi && (
+      <SuiviPopup member={m} onClose={...} />
+    )}  
+    </div>    
+             <div className="flex flex-col items-center">                    
                  <div className="flex flex-col items-center w-full p-4 bg-white rounded-lg shadow-md space-y-2">
                     {/* Modifier */}
                     <button

@@ -80,11 +80,11 @@ if (userProfile?.roles) {
 }
   //--------------------------------------//
 
-const role = userProfile?.role;
+const roles = getRoles(userProfile);
 
 const canAddMember =
-  role === "Administrateur" ||
-  role === "ResponsableIntegration";
+  roles.includes("Administrateur") ||
+  roles.includes("ResponsableIntegration");
 
 
   const [view, setView] = useState(() => {
@@ -201,6 +201,25 @@ const canAddMember =
     }
     return ministereList.join(", ");
   };
+
+  //=======================
+  const getRoles = (profile) => {
+  if (!profile) return [];
+
+  if (Array.isArray(profile.roles)) return profile.roles;
+
+  if (typeof profile.roles === "string") {
+    return profile.roles
+      .replace("{", "")
+      .replace("}", "")
+      .split(",")
+      .map(r => r.trim());
+  }
+
+  if (profile.role) return [profile.role];
+
+  return [];
+};
 
    // -------------------- Scroll to top--------------------
   useEffect(() => {

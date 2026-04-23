@@ -177,44 +177,70 @@ export default function SuiviPopup({ member, onClose, user }) {
             {loading ? "Ajout..." : "Ajouter suivi"}
           </button>
         </div>
+{/* BESOINS DU MEMBRE */}
+<div className="mt-4">
+  <h3 className="font-bold mb-1">❓ Besoins du membre</h3>
+
+  <div className="flex flex-wrap gap-2">
+    {JSON.parse(member.besoin || "[]").map((b, i) => (
+      <span
+        key={i}
+        className="px-2 py-1 rounded bg-orange-400 text-white text-xs"
+      >
+        {b}
+      </span>
+    ))}
+  </div>
+</div>
 
         {/* HISTORIQUE */}
-        <div className="mt-4">
-          <h3 className="font-bold mb-2">📅 Historique</h3>
+<div className="mt-4">
+  <h3 className="font-bold mb-2">📅 Historique</h3>
 
-          {suivis.map((s) => (
-            <div
-              key={s.id}
-              className="border-b py-2 text-sm space-y-1"
-            >
-              <div className="flex justify-between">
-                <p>
-                  📅 {s.date_action} — {s.type}
-                </p>
-                <p className={statutColor(s.statut)}>
-                  {s.statut}
-                </p>
-              </div>
+  {suivis.length === 0 && (
+    <p className="text-sm text-gray-500">Aucun suivi pour le moment</p>
+  )}
 
-              {s.commentaire && <p>📝 {s.commentaire}</p>}
+  {suivis.map((s) => (
+    <div key={s.id} className="border-b py-3 text-sm space-y-1">
 
-              <p className="text-gray-500 text-xs">
-                👤 {s.profiles?.prenom} {s.profiles?.nom}
-              </p>
+      {/* ligne principale */}
+      <div className="flex justify-between">
+        <p>
+          📅 {s.date_action} — {s.action_type}
+        </p>
 
-              <p className="font-bold">❓ Besoins du membre</p>
+        <p className={statutColor(s.statut)}>
+          {s.statut}
+        </p>
+      </div>
 
+      {/* commentaire */}
+      {s.commentaire && (
+        <p>📝 {s.commentaire}</p>
+      )}
+
+      {/* auteur */}
+      <p className="text-gray-500 text-xs">
+        👤 {s.profiles?.prenom} {s.profiles?.nom}
+      </p>
+
+      {/* besoins du SUVI (optionnel) */}
+      {s.besoin && (
         <div className="flex flex-wrap gap-2 mt-1">
-          {JSON.parse(m.besoin || "[]").map((b, i) => (
+          {JSON.parse(s.besoin).map((b, i) => (
             <span
               key={i}
-              className="px-2 py-1 rounded bg-orange-400 text-white text-xs"
+              className="px-2 py-1 rounded bg-gray-200 text-xs"
             >
               {b}
             </span>
           ))}
         </div>
-      </div>
+      )}
+
     </div>
+  ))}
+</div>
   );
 }

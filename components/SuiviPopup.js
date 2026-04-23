@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function SuiviPopup({ member, onClose, user }) {
@@ -8,6 +8,9 @@ export default function SuiviPopup({ member, onClose, user }) {
   const [suivis, setSuivis] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [currentUserName, setCurrentUserName] = useState("");
+  const [editingSuivi, setEditingSuivi] = useState(null); // suivi en cours d'édition
+
+  const formTopRef = useRef(null); // référence pour scroller vers le haut
 
   const parseBesoinsList = (val) => {
     if (!val) return [];
@@ -29,17 +32,15 @@ export default function SuiviPopup({ member, onClose, user }) {
     return s;
   };
 
-  // form.besoin = besoins cochés (orange)
-  // form.besoinStatuts = statut individuel par besoin
-  // resolvedBesoins = besoins décochés (vert, sans tick)
-  const [form, setForm] = useState({
+  const emptyForm = {
     date_action: "",
     type: "",
     besoin: parseBesoinsList(member?.besoin),
     besoinStatuts: initStatuts(parseBesoinsList(member?.besoin)),
     commentaire: "",
-  });
+  };
 
+  const [form, setForm] = useState(emptyForm);
   const [resolvedBesoins, setResolvedBesoins] = useState([]);
 
   const besoinsOptions = [
@@ -59,15 +60,12 @@ export default function SuiviPopup({ member, onClose, user }) {
 
   useEffect(() => {
     const resolveUser = async () => {
-      // 1. Depuis userProfile passé en prop → fetch profiles pour avoir prenom/nom
       if (user?.id) {
         setCurrentUserId(user.id);
-        // Si on a déjà prenom/nom dans la prop
         if (user.prenom || user.nom) {
           setCurrentUserName(`${user.prenom || ""} ${user.nom || ""}`.trim());
           return;
         }
-        // Sinon fetch depuis profiles
         const { data } = await supabase
           .from("profiles")
           .select("prenom, nom")
@@ -79,7 +77,6 @@ export default function SuiviPopup({ member, onClose, user }) {
         return;
       }
 
-      // 2. Depuis getSession
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         if (sessionData?.session?.user?.id) {
@@ -99,7 +96,6 @@ export default function SuiviPopup({ member, onClose, user }) {
         }
       } catch (e) {}
 
-      // 3. Fallback localStorage
       try {
         const keys = Object.keys(localStorage);
         const authKey = keys.find(
@@ -140,16 +136,51 @@ export default function SuiviPopup({ member, onClose, user }) {
     setSuivis(data || []);
   };
 
-  // Cliquer sur une case :
-  // - Si pas coché et pas résolu → cocher (orange, En suivi)
-  // - Si coché → décocher = résolu (vert sans tick)
-  // - Si résolu → re-cocher (orange, En suivi)
+  // ─── Charger un suivi existant dans le formulaire pour édition ───
+  const handleEditSuivi = (s) => {
+    const besoinsArr = parseHistoriqueBesoin(s.besoin);
+
+    const besoinChecked = [];
+    const besoinStatuts = {};
+    const resolved = [];
+
+    besoinsArr.forEach(({ label, statut }) => {
+      if (statut === "Résolu") {
+        resolved.push(label);
+      } else {
+        besoinChecked.push(label);
+        besoinStatuts[label] = statut || "En suivi";
+      }
+    });
+
+    setEditingSuivi(s);
+    setResolvedBesoins(resolved);
+    setForm({
+      date_action: s.date_action || "",
+      type: s.action_type || s.type || "",
+      besoin: besoinChecked,
+      besoinStatuts,
+      commentaire: s.commentaire || "",
+    });
+
+    // Scroll vers le haut du formulaire
+    setTimeout(() => {
+      formTopRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
+  };
+
+  // ─── Annuler l'édition ───
+  const handleCancelEdit = () => {
+    setEditingSuivi(null);
+    setResolvedBesoins([]);
+    setForm(emptyForm);
+  };
+
   const toggleBesoin = (value) => {
     const isChecked = form.besoin.includes(value);
     const isResolved = resolvedBesoins.includes(value);
 
     if (isResolved) {
-      // Résolu → re-cocher
       setResolvedBesoins((prev) => prev.filter((b) => b !== value));
       setForm((prev) => ({
         ...prev,
@@ -160,7 +191,6 @@ export default function SuiviPopup({ member, onClose, user }) {
     }
 
     if (isChecked) {
-      // Coché → décocher = Résolu (vert)
       setResolvedBesoins((prev) => [...prev, value]);
       setForm((prev) => ({
         ...prev,
@@ -172,7 +202,6 @@ export default function SuiviPopup({ member, onClose, user }) {
       return;
     }
 
-    // Pas coché, pas résolu → cocher
     setForm((prev) => ({
       ...prev,
       besoin: [...prev.besoin, value],
@@ -180,7 +209,6 @@ export default function SuiviPopup({ member, onClose, user }) {
     }));
   };
 
-  // Basculer le statut d'un besoin coché entre "En suivi" et "Résolu"
   const toggleStatutBesoin = (besoin) => {
     setForm((prev) => ({
       ...prev,
@@ -192,6 +220,7 @@ export default function SuiviPopup({ member, onClose, user }) {
     }));
   };
 
+  // ─── Soumettre : création OU mise à jour ───
   const handleSubmit = async () => {
     if (!form.date_action || !form.type) {
       alert("Date et type sont obligatoires");
@@ -204,13 +233,11 @@ export default function SuiviPopup({ member, onClose, user }) {
 
     setLoading(true);
 
-    // Besoins résolus = ceux décochés (resolvedBesoins) + ceux cochés marqués "Résolu"
     const resolvedFromChecked = form.besoin.filter(
       (b) => form.besoinStatuts[b] === "Résolu"
     );
     const allResolved = [...new Set([...resolvedBesoins, ...resolvedFromChecked])];
 
-    // Nouveau membres_complets.besoin = retirer les résolus, garder les actifs
     const newMemberBesoins = [
       ...memberBesoins.filter((b) => !allResolved.includes(b)),
       ...form.besoin.filter(
@@ -218,8 +245,6 @@ export default function SuiviPopup({ member, onClose, user }) {
       ),
     ];
 
-    // Construire la liste complète pour l'historique :
-    // besoins cochés avec leur statut + besoins décochés (résolu)
     const besoinAvecStatut = [
       ...form.besoin.map((b) => ({
         label: b,
@@ -231,23 +256,42 @@ export default function SuiviPopup({ member, onClose, user }) {
       })),
     ];
 
-    const { error } = await supabase.from("suivis").insert({
-      membre_id: member.id,
+    const payload = {
       type: form.type,
       action_type: form.type,
-      statut: allResolved.length > 0 && form.besoin.filter(b => form.besoinStatuts[b] !== "Résolu").length === 0
-        ? "Résolu"
-        : "En suivi",
+      statut:
+        allResolved.length > 0 &&
+        form.besoin.filter((b) => form.besoinStatuts[b] !== "Résolu").length === 0
+          ? "Résolu"
+          : "En suivi",
       besoin: besoinAvecStatut.length ? JSON.stringify(besoinAvecStatut) : null,
       commentaire: form.commentaire,
       date_action: form.date_action,
-      created_by: currentUserId,
-    });
+    };
+
+    let error;
+
+    if (editingSuivi) {
+      // ─── MODE ÉDITION : UPDATE ───
+      const { error: updateError } = await supabase
+        .from("suivis")
+        .update(payload)
+        .eq("id", editingSuivi.id);
+      error = updateError;
+    } else {
+      // ─── MODE CRÉATION : INSERT ───
+      const { error: insertError } = await supabase.from("suivis").insert({
+        ...payload,
+        membre_id: member.id,
+        created_by: currentUserId,
+      });
+      error = insertError;
+    }
 
     if (error) {
       setLoading(false);
       console.error("Erreur supabase:", error);
-      alert("Erreur lors de l'ajout du suivi : " + error.message);
+      alert("Erreur : " + error.message);
       return;
     }
 
@@ -258,6 +302,7 @@ export default function SuiviPopup({ member, onClose, user }) {
 
     setMemberBesoins(newMemberBesoins);
     setResolvedBesoins([]);
+    setEditingSuivi(null);
     setLoading(false);
 
     const newStatuts = {};
@@ -280,8 +325,8 @@ export default function SuiviPopup({ member, onClose, user }) {
       const d = new Date(dateStr);
       const day = d.getDate().toString().padStart(2, "0");
       const months = [
-        "Janv","Févr","Mars","Avr","Mai","Juin",
-        "Juil","Août","Sept","Oct","Nov","Déc",
+        "Janv", "Févr", "Mars", "Avr", "Mai", "Juin",
+        "Juil", "Août", "Sept", "Oct", "Nov", "Déc",
       ];
       return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
     } catch {
@@ -314,12 +359,27 @@ export default function SuiviPopup({ member, onClose, user }) {
       <div className="bg-white w-full max-w-2xl p-5 rounded-xl max-h-[85vh] overflow-y-auto">
 
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-4">
+        <div ref={formTopRef} className="flex justify-between items-center mb-4">
           <h2 className="font-bold text-lg">
             💡 Suivi — {member.prenom} {member.nom}
           </h2>
           <button onClick={onClose} className="text-gray-500 hover:text-black text-xl">✕</button>
         </div>
+
+        {/* Bandeau mode édition */}
+        {editingSuivi && (
+          <div className="mb-3 flex items-center justify-between bg-orange-50 border border-orange-300 rounded-lg px-3 py-2">
+            <p className="text-orange-700 text-sm font-semibold">
+              ✏️ Modification du suivi du {formatDate(editingSuivi.date_action)}
+            </p>
+            <button
+              onClick={handleCancelEdit}
+              className="text-xs text-gray-500 underline hover:text-gray-700"
+            >
+              Annuler
+            </button>
+          </div>
+        )}
 
         {/* FORM */}
         <div className="space-y-3 border-b pb-4">
@@ -351,20 +411,18 @@ export default function SuiviPopup({ member, onClose, user }) {
                 const isResolved = resolvedBesoins.includes(b);
                 const statut = form.besoinStatuts[b] || "En suivi";
 
-                // Style de la case
-                let boxStyle = "bg-white border-gray-300"; // vide
+                let boxStyle = "bg-white border-gray-300";
                 let showTick = false;
                 if (isResolved) {
-                  boxStyle = "bg-green-500 border-green-500"; // vert sans tick
+                  boxStyle = "bg-green-500 border-green-500";
                   showTick = false;
                 } else if (isChecked) {
-                  boxStyle = "bg-orange-400 border-orange-400"; // orange avec tick
+                  boxStyle = "bg-orange-400 border-orange-400";
                   showTick = true;
                 }
 
                 return (
                   <div key={b} className="flex items-center gap-3">
-                    {/* Case + label */}
                     <label
                       className="flex items-center gap-2 text-sm cursor-pointer select-none flex-1"
                       onClick={() => toggleBesoin(b)}
@@ -383,7 +441,6 @@ export default function SuiviPopup({ member, onClose, user }) {
                       </span>
                     </label>
 
-                    {/* Badge statut — visible si coché (orange) */}
                     {isChecked && (
                       <button
                         type="button"
@@ -398,7 +455,6 @@ export default function SuiviPopup({ member, onClose, user }) {
                       </button>
                     )}
 
-                    {/* Badge "Résolu" fixe — visible si décoché (vert) */}
                     {isResolved && (
                       <span className="text-xs px-2 py-0.5 rounded-full border bg-green-100 border-green-400 text-green-700 font-semibold whitespace-nowrap">
                         ✓ Résolu
@@ -418,7 +474,6 @@ export default function SuiviPopup({ member, onClose, user }) {
             rows={3}
           />
 
-          {/* Nom de l'utilisateur connecté */}
           {currentUserName && (
             <p className="text-center text-sm text-gray-400">
               👤 {currentUserName}
@@ -428,9 +483,16 @@ export default function SuiviPopup({ member, onClose, user }) {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded w-full"
+            className={`px-4 py-2 rounded w-full text-white font-semibold ${
+              editingSuivi
+                ? "bg-orange-500 hover:bg-orange-600"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
           >
-            {loading ? "Ajout..." : "Ajouter suivi"}
+            {loading
+              ? editingSuivi ? "Mise à jour..." : "Ajout..."
+              : editingSuivi ? "💾 Enregistrer les modifications" : "Ajouter suivi"
+            }
           </button>
         </div>
 
@@ -444,12 +506,32 @@ export default function SuiviPopup({ member, onClose, user }) {
 
           {suivis.map((s) => {
             const besoinsArr = parseHistoriqueBesoin(s.besoin);
-            return (
-              <div key={s.id} className="border-b py-3 text-sm space-y-1">
+            const isBeingEdited = editingSuivi?.id === s.id;
 
-                <p className="font-semibold">
-                  📅 {formatDate(s.date_action)} — {s.action_type}
-                </p>
+            return (
+              <div
+                key={s.id}
+                className={`border-b py-3 text-sm space-y-1 rounded-lg px-2 transition-colors ${
+                  isBeingEdited ? "bg-orange-50 border border-orange-300" : ""
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold">
+                    📅 {formatDate(s.date_action)} — {s.action_type}
+                  </p>
+
+                  {/* Bouton Modifier */}
+                  <button
+                    onClick={() => handleEditSuivi(s)}
+                    className={`text-xs px-2 py-1 rounded font-semibold border transition-colors ${
+                      isBeingEdited
+                        ? "bg-orange-100 border-orange-400 text-orange-700"
+                        : "bg-gray-100 border-gray-300 text-gray-600 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600"
+                    }`}
+                  >
+                    {isBeingEdited ? "✏️ En cours..." : "✏️ Modifier"}
+                  </button>
+                </div>
 
                 {besoinsArr.length > 0 && (
                   <div className="mt-1">
@@ -474,7 +556,6 @@ export default function SuiviPopup({ member, onClose, user }) {
                 <p className="text-gray-400 text-xs">
                   👤 {s.profiles?.prenom} {s.profiles?.nom}
                 </p>
-
               </div>
             );
           })}

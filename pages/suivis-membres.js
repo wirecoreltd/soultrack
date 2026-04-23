@@ -336,40 +336,41 @@ return (
           </div>
           <hr />
           
-           <div>
-                <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
+            <div>
+        <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
         <p>❓ Difficultés / Besoins : {formatArrayField(m.besoin)}</p>
         <div className="flex justify-center">
-                  <button
-                    onClick={() => setOpenSuiviMemberId(m.id)}
-                    className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
-                  >
-                    💡 Ajouter / Voir suivis
-                  </button>
-                </div>
-                      {openSuiviMemberId === m.id && (
-                  <SuiviPopup
-                    member={m}
-                    onClose={() => setOpenSuiviMemberId(null)}
-                    user={userProfile}
-                  />
-                )}
-              </div>
-        </div>       
-
-        {!showRefus && (
-          <div className="mt-4 rounded-xl w-full shadow-md p-4 bg-white">
-            <button
-              onClick={() => setEditMember(m)}
-              className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
-            >
-              ✏️ Modifier le contact
-            </button>
-          </div>
+          <button
+            onClick={() => setOpenSuiviMemberId(m.id)}
+            className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
+          >
+            💡 Ajouter / Voir suivis
+          </button>
+        </div>
+        {openSuiviMemberId === m.id && (
+          <SuiviPopup
+            member={m}
+            onClose={() => setOpenSuiviMemberId(null)}
+            user={userProfile}
+          />
         )}
       </div>
-    );
-  };
+
+      {/* ✅ This block must be INSIDE the return, before the closing </div> */}
+      {!showRefus && (
+        <div className="mt-4 rounded-xl w-full shadow-md p-4 bg-white">
+          <button
+            onClick={() => setEditMember(m)}
+            className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
+          >
+            ✏️ Modifier le contact
+          </button>
+        </div>
+      )}
+
+    </div> 
+  );
+};
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "#333699" }}>

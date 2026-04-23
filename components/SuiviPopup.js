@@ -63,7 +63,7 @@ export default function SuiviPopup({ member, onClose, user }) {
       besoin: form.besoin.length ? JSON.stringify(form.besoin) : null,
       commentaire: form.commentaire,
       date_action: form.date_action,
-      created_by: user.id,
+      created_by: user?.id || null,
     });
 
     setLoading(false);

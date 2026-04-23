@@ -6,6 +6,7 @@ import supabase from "../lib/supabaseClient";
 export default function SuiviPopup({ member, onClose, user }) {
   const [loading, setLoading] = useState(false);
   const [suivis, setSuivis] = useState([]);
+  const [currentUser, setCurrentUser] = useState(user || null);
 
   const [form, setForm] = useState({
     date_action: "",
@@ -24,6 +25,17 @@ export default function SuiviPopup({ member, onClose, user }) {
     "Spiritualité",
     "Logement",
   ];
+
+  // Si user n'est pas passé en prop, on le récupère directement depuis Supabase
+  useEffect(() => {
+    if (!user) {
+      supabase.auth.getUser().then(({ data }) => {
+        if (data?.user) setCurrentUser(data.user);
+      });
+    } else {
+      setCurrentUser(user);
+    }
+  }, [user]);
 
   useEffect(() => {
     fetchSuivis();
@@ -54,8 +66,8 @@ export default function SuiviPopup({ member, onClose, user }) {
       return;
     }
 
-    if (!user?.id) {
-      alert("Vous devez être connecté pour ajouter un suivi");
+    if (!currentUser?.id) {
+      alert("Impossible de récupérer votre session. Veuillez recharger la page.");
       return;
     }
 
@@ -69,7 +81,7 @@ export default function SuiviPopup({ member, onClose, user }) {
       besoin: form.besoin.length ? JSON.stringify(form.besoin) : null,
       commentaire: form.commentaire,
       date_action: form.date_action,
-      created_by: user.id,
+      created_by: currentUser.id,
     });
 
     setLoading(false);

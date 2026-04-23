@@ -1,10 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function EditMemberPopup({ member, cellules, conseillers, onClose, onUpdateMember }) {
+// Pass `currentUserRole` as a prop from the parent
+export default function EditMemberPopup({ member, cellules, conseillers, onClose, onUpdateMember, currentUserRole }) {
   if (!member) return null;
+
+  // Roles with access to restricted fields
+  const isPrivileged = ["Administrateur", "ResponsableIntegration"].includes(currentUserRole);
 
   const [autreMinistere, setAutreMinistere] = useState("");
   const [search, setSearch] = useState("");
@@ -53,21 +57,10 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
   });
 
   const ministereOptions = [
-    "Intercession",
-    "Louange",
-    "Administration",
-    "Technique",
-    "Communication",
-    "Les Enfants",
-    "Les ados",
-    "Les jeunes",
-    "Finance",
-    "Nettoyage",
-    "Conseiller",
-    "Compassion",
-    "Visite",
-    "Berger",
-    "Modération",
+    "Intercession", "Louange", "Administration", "Technique",
+    "Communication", "Les Enfants", "Les ados", "Les jeunes",
+    "Finance", "Nettoyage", "Conseiller", "Compassion",
+    "Visite", "Berger", "Modération",
   ];
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -75,20 +68,32 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
   const [message, setMessage] = useState("");
   const [selectedConseillers, setSelectedConseillers] = useState([]);
 
+  // Ref for click-outside detection
+  const modalRef = useRef(null);
+
   useEffect(() => {
     const fetchAssignments = async () => {
       const { data, error } = await supabase
         .from("suivi_assignments")
         .select("conseiller_id")
         .eq("membre_id", member.id);
-
       if (!error && data) {
         setSelectedConseillers(data.map(d => d.conseiller_id));
       }
     };
-
     fetchAssignments();
   }, [member.id]);
+
+  // Click outside handler
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (modalRef.current && !modalRef.current.contains(e.target)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
 
   const filteredConseillers = (conseillers || []).filter(c =>
     `${c.prenom} ${c.nom}`.toLowerCase().includes(search.toLowerCase())
@@ -97,7 +102,6 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
   // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
     if (type === "checkbox") {
       setFormData(prev => ({
         ...prev,
@@ -126,18 +130,6 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
     }));
   };
 
-  const handleConseillerChange = (id) => {
-    setFormData(prev => {
-      const exists = prev.conseillers_ids.includes(id);
-      return {
-        ...prev,
-        conseillers_ids: exists
-          ? prev.conseillers_ids.filter(c => c !== id)
-          : [...prev.conseillers_ids, id]
-      };
-    });
-  };
-
   // -------------------- SUBMIT --------------------
   const handleSubmit = async () => {
     setMessage("");
@@ -161,23 +153,18 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
         finalMinistere.push(autreMinistere.trim());
       }
 
-      // si devient serviteur
-      if (formData.star) {
-        await supabase
-          .from("stats_ministere_besoin")
-          .upsert({
+      if (isPrivileged) {
+        if (formData.star) {
+          await supabase.from("stats_ministere_besoin").upsert({
             membre_id: member.id,
             branche_id: formData.cellule_id || null,
             sexe: formData.sexe,
             type: "ministere",
           });
-      } else {
-        // si on retire serviteur
-        await supabase
-          .from("stats_ministere_besoin")
-          .delete()
-          .eq("membre_id", member.id)
-          .eq("type", "ministere");
+        } else {
+          await supabase.from("stats_ministere_besoin").delete()
+            .eq("membre_id", member.id).eq("type", "ministere");
+        }
       }
 
       const payload = {
@@ -187,13 +174,13 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
         ville: formData.ville || null,
         sexe: formData.sexe || null,
         age: formData.age || null,
-        star: !!formData.star,
+        star: isPrivileged ? !!formData.star : !!member.star,
         etat_contact: formData.etat_contact || "Nouveau",
         bapteme_eau: formData.bapteme_eau,
         bapteme_esprit: formData.bapteme_esprit,
         priere_salut: formData.priere_salut || null,
         type_conversion: formData.type_conversion || null,
-        cellule_id: formData.cellule_id || null,
+        cellule_id: isPrivileged ? (formData.cellule_id || null) : (member.cellule_id || null),
         besoin: JSON.stringify(finalBesoin),
         venu: formData.venu || null,
         infos_supplementaires: formData.infos_supplementaires || null,
@@ -205,48 +192,29 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
         Soin_Pastoral: formData.Soin_Pastoral || null,
         veut_se_faire_baptiser: formData.veut_se_faire_baptiser || null,
         Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
-        Ministere: formData.star ? JSON.stringify(finalMinistere) : null,
+        Ministere: (isPrivileged && formData.star) ? JSON.stringify(finalMinistere) : member.Ministere,
       };
 
-      // 1️⃣ Update membre
-      const { error } = await supabase
-        .from("membres_complets")
-        .update(payload)
-        .eq("id", member.id);
-
+      const { error } = await supabase.from("membres_complets").update(payload).eq("id", member.id);
       if (error) throw error;
 
-      // 2️⃣ Supprimer anciens liens conseillers
-      await supabase
-        .from("suivi_assignments")
-        .delete()
-        .eq("membre_id", member.id);
-
-      // 3️⃣ Ajouter nouveaux liens conseillers
-      const rows = selectedConseillers.map((id, index) => ({
-        membre_id: member.id,
-        conseiller_id: id,
-        role: index === 0 ? "principal" : "assistant",
-        statut: "actif"
-      }));
-
-      if (rows.length > 0) {
-        await supabase.from("suivi_assignments").insert(rows);
+      if (isPrivileged) {
+        await supabase.from("suivi_assignments").delete().eq("membre_id", member.id);
+        const rows = selectedConseillers.map((id, index) => ({
+          membre_id: member.id,
+          conseiller_id: id,
+          role: index === 0 ? "principal" : "assistant",
+          statut: "actif"
+        }));
+        if (rows.length > 0) await supabase.from("suivi_assignments").insert(rows);
       }
 
-      // 4️⃣ Récupérer le membre exact depuis Supabase
       const { data: updatedMember, error: selectError } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("id", member.id)
-        .single();
-
+        .from("membres_complets").select("*").eq("id", member.id).single();
       if (selectError) throw selectError;
 
-      // 5️⃣ Passer au parent → mise à jour instantanée de la table
       onUpdateMember(updatedMember);
       onClose();
-
     } catch (err) {
       console.error(err);
       setMessage("❌ Une erreur est survenue lors de l'enregistrement.");
@@ -255,177 +223,153 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
     }
   };
 
-
   // -------------------- UI --------------------
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">
-      <div className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl bg-gradient-to-b from-[rgba(46,49,146,0.16)] to-[rgba(46,49,146,0.4)]" style={{ backdropFilter: "blur(8px)" }}>
-        <button onClick={onClose} className="absolute top-4 right-4 text-red-600 font-bold text-xl">✕</button>
-        <h2 className="text-2xl font-bold text-center mb-6 text-white">
-          Modifier le profil {member.prenom} {member.nom}
-        </h2>
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: "rgba(30,35,90,0.35)", backdropFilter: "blur(6px)" }}>
+      <div
+        ref={modalRef}
+        className="relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
+        style={{ background: "#ffffff", border: "1px solid #e2e8f0" }}
+      >
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4" style={{ background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}>
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-white font-bold text-sm transition-all"
+            style={{ background: "rgba(255,255,255,0.2)" }}
+          >
+            ✕
+          </button>
+          <h2 className="text-xl font-bold text-white pr-10">
+            ✏️ {member.prenom} {member.nom}
+          </h2>
+          <p className="text-blue-100 text-sm mt-1 opacity-80">Modifier le profil</p>
+        </div>
 
-        <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
+        {/* Body */}
+        <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
 
-          <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
+          {/* Section: Identité */}
+          <SectionTitle>👤 Identité</SectionTitle>
 
-          {/* Sexe */}
-          <div className="flex flex-col">
-            <label className="font-medium">Civilité</label>
-            <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
+          <Field label="Civilité">
+            <select name="sexe" value={formData.sexe} onChange={handleChange} className="inp">
               <option value="">-- Civilité --</option>
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
             </select>
-          </div>
+          </Field>
 
           {["prenom", "nom", "telephone", "ville"].map((f) => (
-            <div key={f} className="flex flex-col">
-              <label className="font-medium capitalize">{f}</label>
-              <input
-                name={f}
-                value={formData[f]}
-                onChange={handleChange}
-                className="input"
-              />
-              {/* Checkbox WhatsApp sous téléphone */}
+            <Field key={f} label={f.charAt(0).toUpperCase() + f.slice(1)}>
+              <input name={f} value={formData[f]} onChange={handleChange} className="inp" />
               {f === "telephone" && (
-                <div className="flex items-center gap-3 mt-3">
-                  <label className="font-medium">Numéro Whatsapp</label>
-                  <input
-                    type="checkbox"
-                    name="is_whatsapp"
-                    checked={formData.is_whatsapp}
-                    onChange={handleChange}
-                    className="accent-[#25297e]"
-                  />
-                </div>
+                <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
+                  <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} className="accent-[#2E3192]" />
+                  Numéro WhatsApp
+                </label>
               )}
-            </div>
+            </Field>
           ))}
 
-          {/* Age */}
-          <div className="flex flex-col">
-            <label className="font-medium">Âge</label>
-            <select name="age" value={formData.age} onChange={handleChange} className="input">
+          <Field label="Âge">
+            <select name="age" value={formData.age} onChange={handleChange} className="inp">
               <option value="">-- Choisir --</option>
-              <option value="12-17 ans">12-17 ans</option>
-              <option value="18-25 ans">18-25 ans</option>
-              <option value="26-30 ans">26-30 ans</option>
-              <option value="31-40 ans">31-40 ans</option>
-              <option value="41-55 ans">41-55 ans</option>
-              <option value="56-69 ans">56-69 ans</option>
-              <option value="70 ans et plus">70 ans et plus</option>
-            </select>
-          </div>
-
-          <p className="font-bold text-[#2E3192] mb-1">📌 Suivi par</p>
-
-          {/* Cellule */}
-          <div className="flex flex-col">
-            <label className="font-medium">Cellule</label>
-            <select
-              name="cellule_id"
-              value={formData.cellule_id ?? ""}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="">-- Cellule --</option>
-              {(cellules || []).map(c => (
-                <option key={c.id} value={c.id}>{c.cellule_full}</option>
+              {["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"].map(v => (
+                <option key={v} value={v}>{v}</option>
               ))}
             </select>
-          </div>
+          </Field>
 
-          {/* Conseillers */}
-          <div className="flex flex-col gap-2">
-            <label className="font-medium">Ajouter conseiller</label>
-            <input
-              type="text"
-              placeholder="Rechercher..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="input"
-            />
-            <div className="max-h-40 overflow-y-auto">
-              {filteredConseillers.map(c => (
-                <div
-                  key={c.id}
-                  onClick={() => {
-                    if (!selectedConseillers.includes(c.id)) {
-                      setSelectedConseillers(prev => [...prev, c.id]);
-                    }
-                  }}
-                  className="cursor-pointer hover:bg-white/10 p-2 rounded"
-                >
-                  {c.prenom} {c.nom}
+          {/* Section: Suivi — restricted fields */}
+          <SectionTitle>📌 Suivi par</SectionTitle>
+
+          {isPrivileged ? (
+            <>
+              <Field label="Cellule">
+                <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="inp">
+                  <option value="">-- Cellule --</option>
+                  {(cellules || []).map(c => (
+                    <option key={c.id} value={c.id}>{c.cellule_full}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Ajouter conseiller">
+                <input
+                  type="text"
+                  placeholder="Rechercher un conseiller..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="inp mb-2"
+                />
+                <div className="max-h-36 overflow-y-auto rounded-xl border border-gray-200 divide-y divide-gray-100">
+                  {filteredConseillers.map(c => (
+                    <div
+                      key={c.id}
+                      onClick={() => {
+                        if (!selectedConseillers.includes(c.id)) {
+                          setSelectedConseillers(prev => [...prev, c.id]);
+                        }
+                      }}
+                      className="cursor-pointer px-3 py-2 text-sm hover:bg-blue-50 text-gray-700 transition-colors"
+                    >
+                      {c.prenom} {c.nom}
+                    </div>
+                  ))}
+                  {filteredConseillers.length === 0 && (
+                    <p className="text-xs text-gray-400 px-3 py-2">Aucun résultat</p>
+                  )}
                 </div>
-              ))}
-            </div>
-          </div>
+              </Field>
 
-          <div className="flex flex-wrap gap-2 mt-2">
-            {selectedConseillers.map(id => {
-              const c = (conseillers || []).find(x => x.id === id);
-              return (
-                <div key={id} className="bg-blue-500 px-3 py-1 rounded-full flex items-center gap-2">
-                  {c?.prenom} {c?.nom}
-                  <button onClick={() =>
-                    setSelectedConseillers(prev => prev.filter(x => x !== id))
-                  }>
-                    ✕
-                  </button>
+              {selectedConseillers.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedConseillers.map(id => {
+                    const c = (conseillers || []).find(x => x.id === id);
+                    return (
+                      <div key={id} className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white" style={{ background: "#2E3192" }}>
+                        {c?.prenom} {c?.nom}
+                        <button
+                          onClick={() => setSelectedConseillers(prev => prev.filter(x => x !== id))}
+                          className="ml-1 opacity-70 hover:opacity-100"
+                        >✕</button>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
+              🔒 La cellule et les conseillers sont gérés par un administrateur.
+            </p>
+          )}
 
-          <p className="font-bold text-[#2E3192] mb-1">💝 Suivi</p>
+          {/* Section: Suivi */}
+          <SectionTitle>💝 Suivi</SectionTitle>
 
-          {/* Suivi statut */}
-          <div className="flex flex-col">
-            <label className="font-medium">Suivi statut</label>
-            <select
-              value={formData.suivi_statut ?? ""}
-              onChange={(e) => setFormData(prev => ({ ...prev, suivi_statut: e.target.value }))}
-              className="input"
-            >
+          <Field label="Suivi statut">
+            <select value={formData.suivi_statut ?? ""} onChange={(e) => setFormData(prev => ({ ...prev, suivi_statut: e.target.value }))} className="inp">
               <option value="">-- Sélectionner un statut --</option>
               <option value="En Attente">En Attente</option>
               <option value="Intégrer">Intégrer</option>
               <option value="Refus">Refus</option>
             </select>
-          </div>
+          </Field>
 
-          {/* Commentaire suivis */}
-          <div className="flex flex-col">
-            <label className="font-medium">Commentaire suivis</label>
-            <textarea
-              name="commentaire_suivis"
-              value={formData.commentaire_suivis}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
-          </div>
+          <Field label="Commentaire suivis">
+            <textarea name="commentaire_suivis" value={formData.commentaire_suivis} onChange={handleChange} className="inp" rows={2} />
+          </Field>
 
-          {/* Commentaire suivis Évangélisation */}
-          <div className="flex flex-col">
-            <label className="font-medium">Commentaire suivis Évangélisation</label>
-            <textarea
-              name="Commentaire_Suivi_Evangelisation"
-              value={formData.Commentaire_Suivi_Evangelisation}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
-          </div>
+          <Field label="Commentaire suivis Évangélisation">
+            <textarea name="Commentaire_Suivi_Evangelisation" value={formData.Commentaire_Suivi_Evangelisation} onChange={handleChange} className="inp" rows={2} />
+          </Field>
 
-          <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
+          {/* Section: Vie spirituelle */}
+          <SectionTitle>🕊 Vie spirituelle</SectionTitle>
 
-          {/* Baptême d'eau */}
-          <div className="flex flex-col">
-            <label className="font-medium">Baptême d'eau</label>
+          <Field label="Baptême d'eau">
             <select
               name="bapteme_eau"
               value={formData.bapteme_eau ?? ""}
@@ -437,228 +381,158 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
                   veut_se_faire_baptiser: value === "Oui" ? "Non" : prev.veut_se_faire_baptiser
                 }));
               }}
-              className="input"
+              className="inp"
             >
               <option value="">-- Sélectionner --</option>
               <option value="Oui">Oui</option>
               <option value="Non">Non</option>
             </select>
-          </div>
+          </Field>
 
-          {/* Veut se faire baptiser */}
           {formData.bapteme_eau === "Non" && (
-            <div className="flex items-center font-medium gap-2 mt-2 ml-6">
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer ml-4">
               <input
                 type="checkbox"
-                name="veut_se_faire_baptiser"
                 checked={formData.veut_se_faire_baptiser === "Oui"}
-                onChange={(e) =>
-                  setFormData(prev => ({
-                    ...prev,
-                    veut_se_faire_baptiser: e.target.checked ? "Oui" : "Non"
-                  }))
-                }
-                className="accent-[#25297e]"
+                onChange={(e) => setFormData(prev => ({ ...prev, veut_se_faire_baptiser: e.target.checked ? "Oui" : "Non" }))}
+                className="accent-[#2E3192]"
               />
-              <span>💦 Veut se faire baptiser</span>
-            </div>
+              💦 Veut se faire baptiser
+            </label>
           )}
 
-          {/* Baptême de feu */}
-          <div className="flex flex-col">
-            <label className="font-medium">Baptême de feu</label>
-            <select
-              name="bapteme_esprit"
-              value={formData.bapteme_esprit ?? ""}
-              onChange={handleChange}
-              className="input"
-            >
+          <Field label="Baptême de feu">
+            <select name="bapteme_esprit" value={formData.bapteme_esprit ?? ""} onChange={handleChange} className="inp">
               <option value="">-- Sélectionner --</option>
               <option value="Oui">Oui</option>
               <option value="Non">Non</option>
             </select>
-          </div>
+          </Field>
 
-          {/* Prière du salut */}
-          <div className="flex flex-col">
-            <label className="font-medium">Prière du salut</label>
+          <Field label="Prière du salut">
             <select
-              className="input"
               name="priere_salut"
               value={formData.priere_salut}
-              required
               onChange={(e) => {
                 const value = e.target.value;
-                setFormData({
-                  ...formData,
-                  priere_salut: value,
-                  type_conversion: value === "Oui" ? formData.type_conversion : "",
-                });
+                setFormData({ ...formData, priere_salut: value, type_conversion: value === "Oui" ? formData.type_conversion : "" });
               }}
+              className="inp"
             >
               <option value="">-- Prière du salut ? --</option>
               <option value="Oui">Oui</option>
               <option value="Non">Non</option>
             </select>
-
-            {/* Type de conversion */}
             {formData.priere_salut === "Oui" && (
-              <select
-                className="input mt-2"
-                name="type_conversion"
-                value={formData.type_conversion}
-                onChange={handleChange}
-                required
-              >
+              <select name="type_conversion" value={formData.type_conversion} onChange={handleChange} className="inp mt-2">
                 <option value="">Type</option>
                 <option value="Nouveau converti">Nouveau converti</option>
                 <option value="Réconciliation">Réconciliation</option>
               </select>
             )}
-          </div>
+          </Field>
 
-          {/* Formation */}
-          <div className="flex flex-col">
-            <label className="font-medium">Formation</label>
-            <textarea
-              name="Formation"
-              value={formData.Formation}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
-          </div>
+          <Field label="Formation">
+            <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="inp" rows={2} />
+          </Field>
 
-          {/* Serviteur */}
-          <div className="flex items-center gap-3 mt-3">
-            <label className="font-medium">Définir en tant que serviteur</label>
-            <input
-              type="checkbox"
-              name="star"
-              checked={formData.star}
-              onChange={handleChange}
-              className="accent-[#25297e]"
-            />
-          </div>
-
-          {/* Ministère */}
-          {formData.star && (
-            <div className="flex flex-col gap-2">
-              <label className="font-medium">Ministère</label>
-
-              {ministereOptions.map((m) => (
-                <label key={m} className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    value={m}
-                    checked={formData.Ministere.includes(m)}
-                    onChange={(e) => {
-                      const { value, checked } = e.target;
-                      setFormData(prev => ({
-                        ...prev,
-                        Ministere: checked
-                          ? [...prev.Ministere, value]
-                          : prev.Ministere.filter(v => v !== value),
-                      }));
-                    }}
-                    className="accent-[#25297e]"
-                  />
-                  <span>{m}</span>
+          {/* Serviteur — restricted */}
+          {isPrivileged && (
+            <>
+              <div className="flex items-center gap-3 py-2">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
+                  <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} className="accent-[#2E3192] w-4 h-4" />
+                  ⭐ Définir en tant que serviteur
                 </label>
-              ))}
+              </div>
 
-              {/* Option Autre */}
-              <label className="flex items-center gap-3 mt-2">
-                <input
-                  type="checkbox"
-                  checked={formData.Ministere.includes("Autre")}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setFormData(prev => ({
-                      ...prev,
-                      Ministere: checked
-                        ? [...prev.Ministere, "Autre"]
-                        : prev.Ministere.filter(v => v !== "Autre"),
-                    }));
-                    if (!checked) setAutreMinistere("");
-                  }}
-                  className="accent-[#25297e]"
-                />
-                <span>Autre</span>
-              </label>
-
-              {/* Champ texte Autre */}
-              {formData.Ministere.includes("Autre") && (
-                <input
-                  type="text"
-                  className="input mt-2"
-                  placeholder="Précisez le ministère"
-                  value={autreMinistere}
-                  onChange={(e) => setAutreMinistere(e.target.value)}
-                />
+              {formData.star && (
+                <Field label="Ministère">
+                  <div className="grid grid-cols-2 gap-1 mt-1">
+                    {ministereOptions.map((m) => (
+                      <label key={m} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1">
+                        <input
+                          type="checkbox"
+                          value={m}
+                          checked={formData.Ministere.includes(m)}
+                          onChange={(e) => {
+                            const { value, checked } = e.target;
+                            setFormData(prev => ({
+                              ...prev,
+                              Ministere: checked ? [...prev.Ministere, value] : prev.Ministere.filter(v => v !== value),
+                            }));
+                          }}
+                          className="accent-[#2E3192]"
+                        />
+                        {m}
+                      </label>
+                    ))}
+                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1">
+                      <input
+                        type="checkbox"
+                        checked={formData.Ministere.includes("Autre")}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setFormData(prev => ({
+                            ...prev,
+                            Ministere: checked ? [...prev.Ministere, "Autre"] : prev.Ministere.filter(v => v !== "Autre"),
+                          }));
+                          if (!checked) setAutreMinistere("");
+                        }}
+                        className="accent-[#2E3192]"
+                      />
+                      Autre
+                    </label>
+                  </div>
+                  {formData.Ministere.includes("Autre") && (
+                    <input type="text" className="inp mt-2" placeholder="Précisez le ministère" value={autreMinistere} onChange={(e) => setAutreMinistere(e.target.value)} />
+                  )}
+                </Field>
               )}
-            </div>
+            </>
           )}
 
           {/* État du contact */}
-          <div className="flex flex-col">
-            <label className="font-medium">État du contact</label>
-            <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="input">
+          <Field label="État du contact">
+            <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="inp">
               <option value="">-- Sélectionner --</option>
               <option value="nouveau">Nouveau</option>
               <option value="existant">Existant</option>
               <option value="inactif">Inactif</option>
             </select>
-          </div>
+          </Field>
 
-          {/* Comment est-il venu ? */}
-          <div className="flex flex-col">
-            <label className="font-medium">Comment est-il venu ?</label>
-            <select name="venu" value={formData.venu} onChange={handleChange} className="input">
+          <Field label="Comment est-il venu ?">
+            <select name="venu" value={formData.venu} onChange={handleChange} className="inp">
               <option value="">-- Sélectionner --</option>
               <option value="invité">Invité</option>
               <option value="réseaux">Réseaux</option>
               <option value="evangélisation">Évangélisation</option>
               <option value="autre">Autre</option>
             </select>
-          </div>
+          </Field>
 
-          {/* Informations supplémentaires */}
-          <div className="flex flex-col">
-            <label className="font-medium">Informations supplémentaires</label>
-            <textarea
-              name="infos_supplementaires"
-              value={formData.infos_supplementaires}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
-          </div>
+          <Field label="Informations supplémentaires">
+            <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} className="inp" rows={2} />
+          </Field>
 
-          {/* Statut à l'arrivée */}
-          <div className="flex flex-col">
-            <label className="font-medium">Statut à l'arrivée</label>
-            <select
-              name="statut_initial"
-              value={formData.statut_initial}
-              onChange={handleChange}
-              className="input"
-            >
+          <Field label="Statut à l'arrivée">
+            <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="inp">
               <option value="">-- Sélectionner --</option>
               <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
               <option value="a déjà son église">A déjà son église</option>
               <option value="visiteur">Visiteur</option>
             </select>
-          </div>
+          </Field>
 
         </div>
 
-        {/* Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all"
           >
             Annuler
           </button>
@@ -666,48 +540,60 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
             type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
+            style={{ background: loading ? "#a0a0c0" : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}
           >
-            {loading ? "Enregistrement..." : "Sauvegarder"}
+            {loading ? "Enregistrement..." : "💾 Sauvegarder"}
           </button>
         </div>
 
-        {/* Message succès ou erreur */}
         {message && (
-          <p className="text-[#25297e] font-semibold text-center mt-3">
+          <p className="text-center text-sm font-semibold px-6 pb-4" style={{ color: message.includes("❌") ? "#dc2626" : "#2E3192" }}>
             {message}
           </p>
         )}
 
-        {/* Styles */}
         <style jsx>{`
-          label {
-            font-weight: 600;
-            color: white;
-          }
-
-          .input {
+          .inp {
             width: 100%;
-            border: 1px solid #a0c4ff;
-            border-radius: 14px;
-            padding: 12px;
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-weight: 400;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            color: #1e293b;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
           }
-
-          select.input {
-            font-weight: 400;
-            color: white;
+          .inp:focus {
+            border-color: #2E3192;
+            background: #fff;
           }
-
-          select.input option {
+          select.inp option {
             background: white;
-            color: black;
-            font-weight: 400;
+            color: #1e293b;
           }
         `}</style>
       </div>
+    </div>
+  );
+}
+
+// ---- Helper sub-components ----
+function SectionTitle({ children }) {
+  return (
+    <div className="flex items-center gap-2 pt-2">
+      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#2E3192" }}>{children}</span>
+      <div className="flex-1 h-px" style={{ background: "#e2e8f0" }} />
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#64748b" }}>{label}</label>
+      {children}
     </div>
   );
 }

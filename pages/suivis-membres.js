@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import React from "react";
 import supabase from "../lib/supabaseClient";
 import LogoutLink from "../components/LogoutLink";
@@ -26,6 +26,7 @@ const DetailsPopup = React.memo(function DetailsPopup({
   setEditMember,
   cellules,
   conseillers,
+  assignmentsMap,
 }) {
   const formatMinistere = (ministere) => {
     if (!ministere) return "—";
@@ -51,6 +52,21 @@ const DetailsPopup = React.memo(function DetailsPopup({
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
+  // Affiche les conseillers depuis assignmentsMap (même logique que ListMembers)
+  const getConseillersForMember = (memberId) => {
+    const assigned = assignmentsMap?.[memberId];
+    if (assigned && assigned.length > 0) {
+      return assigned.map((c, i) => (
+        <span key={c.id}>
+          {c.prenom} {c.nom}
+          {i === 0 && assigned.length > 1 ? " (principal)" : ""}
+          {i < assigned.length - 1 ? ", " : ""}
+        </span>
+      ));
+    }
+    return "—";
+  };
+
   return (
     <div className="text-black text-sm space-y-2 w-full">
 
@@ -65,6 +81,10 @@ const DetailsPopup = React.memo(function DetailsPopup({
       <div>
         <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
         <p>📅 {m.sexe === "Femme" ? "Arrivée" : "Arrivé"} le : {formatDateFr(m.date_venu)}</p>
+        <div className="mt-1">
+          <span className="font-semibold">👤 Conseiller(s) : </span>
+          {getConseillersForMember(m.id)}
+        </div>
       </div>
       <hr />
 
@@ -139,7 +159,7 @@ function SuivisMembresContent() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
-  const [userProfile, setUserProfile] = useState(null); // ← profil complet de l'utilisateur connecté
+  const [userProfile, setUserProfile] = useState(null);
   const [DetailsSuivisPopupMember, setDetailsSuivisPopupMember] = useState(null);
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
@@ -152,6 +172,9 @@ function SuivisMembresContent() {
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
+
+  // ─── assignmentsMap : même logique que ListMembers ───
+  const [assignmentsMap, setAssignmentsMap] = useState({});
 
   const [view, setView] = useState(() => {
     if (typeof window !== "undefined") {
@@ -175,6 +198,64 @@ function SuivisMembresContent() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ─── fetchAssignments : copie exacte de ListMembers ───
+  const fetchAssignments = useCallback(async () => {
+    const { data: assignments, error } = await supabase
+      .from("suivi_assignments")
+      .select("membre_id, conseiller_id, role");
+
+    if (error) { console.error("fetchAssignments error:", error); return; }
+    if (!assignments || assignments.length === 0) {
+      setAssignmentsMap({});
+      return;
+    }
+
+    const conseillerIds = [...new Set(assignments.map(a => a.conseiller_id).filter(Boolean))];
+
+    const { data: profilesData, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom")
+      .in("id", conseillerIds);
+
+    if (profilesError) { console.error("fetchAssignments profiles error:", profilesError); return; }
+
+    const profileMap = {};
+    (profilesData || []).forEach(p => { profileMap[p.id] = p; });
+
+    const map = {};
+    assignments.forEach((row) => {
+      const profile = profileMap[row.conseiller_id];
+      if (!profile) return;
+      if (!map[row.membre_id]) map[row.membre_id] = [];
+      if (!map[row.membre_id].some(c => c.id === profile.id)) {
+        map[row.membre_id].push(profile);
+      }
+    });
+
+    setAssignmentsMap(map);
+  }, []);
+
+  // Helper : affiche les conseillers depuis assignmentsMap
+  const getConseillersForMember = (memberId) => {
+    const assigned = assignmentsMap[memberId];
+    if (assigned && assigned.length > 0) {
+      return assigned.map((c) => `${c.prenom} ${c.nom}`).join(", ");
+    }
+    return "—";
+  };
+
+  // ─── Realtime : écoute suivi_assignments ───
+  useEffect(() => {
+    const channel = supabase
+      .channel("realtime:suivi_assignments_suivis")
+      .on("postgres_changes", { event: "*", schema: "public", table: "suivi_assignments" }, () => {
+        fetchAssignments();
+      })
+      .subscribe();
+
+    return () => { channel.unsubscribe(); };
+  }, [fetchAssignments]);
+
   useEffect(() => {
     const fetchMembresComplets = async () => {
       setLoading(true);
@@ -190,7 +271,7 @@ function SuivisMembresContent() {
         if (profileError || !profileData) throw profileError;
 
         setPrenom(profileData.prenom || "cher membre");
-        setUserProfile(profileData); // ← stocker le profil complet
+        setUserProfile(profileData);
 
         const { data: cellulesData } = await supabase
           .from("cellules")
@@ -228,6 +309,9 @@ function SuivisMembresContent() {
         setAllMembers(data || []);
         if (!data || data.length === 0) setMessage("Aucun membre à afficher.");
 
+        // Charger les assignments au démarrage
+        await fetchAssignments();
+
       } catch (err) {
         console.error("❌ Erreur fetchMembresComplets:", err);
         setMessage("Erreur lors de la récupération des membres.");
@@ -237,7 +321,7 @@ function SuivisMembresContent() {
     };
 
     fetchMembresComplets();
-  }, [setAllMembers]);
+  }, [setAllMembers, fetchAssignments]);
 
   const handleCommentChange = (id, value) => {
     setCommentChanges(prev => ({ ...prev, [id]: value }));
@@ -394,13 +478,14 @@ function SuivisMembresContent() {
                   </div>
                 )}
 
+                {/* Cellule */}
                 <p className="text-sm text-black-700 mb-1">
                   🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}
                 </p>
+
+                {/* ✅ Conseillers depuis assignmentsMap (aligné sur ListMembers) */}
                 <p className="text-sm text-black-700 mb-1">
-                  👤 Conseiller : {m.conseiller_id
-                    ? (() => { const cons = conseillers.find(c => c.id === m.conseiller_id); return cons ? `${cons.prenom} ${cons.nom}` : "—"; })()
-                    : "—"}
+                  👤 Conseiller(s) : {getConseillersForMember(m.id)}
                 </p>
 
                 <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(m.date_envoi_suivi)}</p>
@@ -454,19 +539,20 @@ function SuivisMembresContent() {
                 </button>
               </div>
 
-              {/* Détails — DetailsPopup est maintenant stable (défini hors du parent) */}
+              {/* Détails — DetailsPopup est stable (défini hors du parent) */}
               <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
                 {detailsOpen === m.id && (
                   <div className="pt-2">
                     <DetailsPopup
                       m={m}
-                      user={userProfile}           // ← profil complet avec id, prenom, nom, roles
+                      user={userProfile}
                       showRefus={showRefus}
                       openSuiviMemberId={openSuiviMemberId}
                       setOpenSuiviMemberId={setOpenSuiviMemberId}
                       setEditMember={setEditMember}
                       cellules={cellules}
                       conseillers={conseillers}
+                      assignmentsMap={assignmentsMap}
                     />
                   </div>
                 )}
@@ -482,8 +568,13 @@ function SuivisMembresContent() {
           cellules={cellules}
           conseillers={conseillers}
           onClose={() => setEditMember(null)}
-          onUpdateMember={updateMember}
-          currentUserRoles={userProfile?.roles || []}   // ← passage du roles array
+          onUpdateMember={async (updatedMember) => {
+            updateMember(updatedMember.id, updatedMember);
+            // ✅ Recharger les assignments après modification
+            await fetchAssignments();
+            setEditMember(null);
+          }}
+          currentUserRoles={userProfile?.roles || []}
         />
       )}
 

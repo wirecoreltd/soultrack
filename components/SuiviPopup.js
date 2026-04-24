@@ -401,9 +401,13 @@ export default function SuiviPopup({ member, onClose, user }) {
 
           <input
             type="date"
-            value={form.date_action}
-            onChange={(e) => setForm({ ...form, date_action: e.target.value })}
-            className="border p-2 w-full rounded"
+            value={formatDateForInput(formData.ma_date)}
+            onChange={(e) =>
+              setFormData(prev => ({
+                ...prev,
+                ma_date: e.target.value
+              }))
+            }
           />
 
           <select

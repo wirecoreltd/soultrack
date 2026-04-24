@@ -39,12 +39,13 @@ function ListConseillers() {
       const eglise_id = String(currentUserProfile.eglise_id);
       const branche_id = String(currentUserProfile.branche_id);
 
+      // 1️⃣ Fetch les conseillers de l'église/branche
       const { data: profiles, error: errConseillers } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom, email, telephone, roles, responsable_id")
-      .contains("roles", ["Conseiller"])
-      .eq("eglise_id", eglise_id)
-      .eq("branche_id", branche_id);
+        .from("profiles")
+        .select("id, prenom, nom, email, telephone, roles, responsable_id")
+        .contains("roles", ["Conseiller"])
+        .eq("eglise_id", eglise_id)
+        .eq("branche_id", branche_id);
 
       if (errConseillers) throw errConseillers;
       if (!profiles || profiles.length === 0) {
@@ -54,18 +55,24 @@ function ListConseillers() {
       }
 
       const conseillersIds = profiles.map((p) => p.id);
-      const { data: membres } = await supabase
-        .from("membres_complets")
-        .select("id, conseiller_id")
+
+      // 2️⃣ Compter depuis suivi_assignments (source de vérité)
+      const { data: assignments, error: errAssignments } = await supabase
+        .from("suivi_assignments")
+        .select("conseiller_id, membre_id")
         .in("conseiller_id", conseillersIds);
 
+      if (errAssignments) throw errAssignments;
+
+      // Construire map conseiller_id → Set de membre_id uniques
       const contactSetMap = {};
-      membres?.forEach((m) => {
-        if (!m.conseiller_id) return;
-        if (!contactSetMap[m.conseiller_id]) contactSetMap[m.conseiller_id] = new Set();
-        contactSetMap[m.conseiller_id].add(m.id);
+      (assignments || []).forEach((a) => {
+        if (!a.conseiller_id) return;
+        if (!contactSetMap[a.conseiller_id]) contactSetMap[a.conseiller_id] = new Set();
+        contactSetMap[a.conseiller_id].add(a.membre_id);
       });
 
+      // 3️⃣ Fetch les responsables
       const responsablesIds = profiles.map((p) => p.responsable_id).filter(Boolean);
       let responsableMap = {};
       if (responsablesIds.length > 0) {
@@ -78,11 +85,15 @@ function ListConseillers() {
         });
       }
 
+      // 4️⃣ Assembler la liste finale
       const list = profiles.map((p) => ({
         ...p,
         responsable_nom: p.responsable_id ? (responsableMap[p.responsable_id] || "Aucun") : "Aucun",
         totalContacts: contactSetMap[p.id]?.size || 0,
       }));
+
+      // Trier par nombre de contacts décroissant
+      list.sort((a, b) => b.totalContacts - a.totalContacts);
 
       setConseillers(list);
     } catch (err) {
@@ -108,16 +119,18 @@ function ListConseillers() {
       <HeaderPages />
 
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Liste des <span className="text-emerald-300"> Conseillers</span></h1>
-          
-         <div className="max-w-3xl w-full mb-6 text-center">
-          <p className="italic text-base text-white/90">   
-            Retrouvez tous les <span className="text-blue-300 font-semibold">Conseillers </span> de votre assemblée en un seul endroit.
-            Vous pouvez <span className="text-blue-300 font-semibold">rechercher </span> un conseiller, <span className="text-blue-300 font-semibold"> consulter</span> ses informations 
-              de contact et voir <span className="text-blue-300 font-semibold">le nombre de membres qu’il accompagne</span>.
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+          Liste des <span className="text-emerald-300">Conseillers</span>
+        </h1>
+        <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-white/90">
+            Retrouvez tous les <span className="text-blue-300 font-semibold">Conseillers</span> de votre assemblée en un seul endroit.
+            Vous pouvez <span className="text-blue-300 font-semibold">rechercher</span> un conseiller,{" "}
+            <span className="text-blue-300 font-semibold">consulter</span> ses informations de contact et voir{" "}
+            <span className="text-blue-300 font-semibold">le nombre de membres qu'il accompagne</span>.
           </p>
-        </div> 
-     </div>
+        </div>
+      </div>
 
       {/* Barre de recherche */}
       <div className="w-full max-w-4xl flex justify-center mb-4">
@@ -154,8 +167,12 @@ function ListConseillers() {
                 <h2 className="font-bold text-black text-base sm:text-lg text-center mb-1">{c.prenom} {c.nom}</h2>
                 <p className="text-sm sm:text-base text-gray-700 mb-1">📞 {c.telephone || "—"}</p>
                 <p className="text-sm sm:text-base text-gray-700 mb-1">✉️ {c.email || "—"}</p>
-                <p className="text-sm sm:text-base text-gray-700 mt-2">👤 Responsable : <span className="font-semibold">{c.responsable_nom}</span></p>
-                <p className="text-sm sm:text-base text-gray-800 mt-2 font-semibold">🔔 Contacts assignés : {c.totalContacts}</p>
+                <p className="text-sm sm:text-base text-gray-700 mt-2">
+                  👤 Responsable : <span className="font-semibold">{c.responsable_nom}</span>
+                </p>
+                <p className="text-sm sm:text-base text-gray-800 mt-2 font-semibold">
+                  🔔 Contacts assignés : {c.totalContacts}
+                </p>
                 <button
                   onClick={() => router.push(`/list-members?conseiller_id=${c.id}`)}
                   className="mt-2 px-3 py-1 bg-[#333699] text-white rounded-md hover:bg-blue-600 text-sm sm:text-base"

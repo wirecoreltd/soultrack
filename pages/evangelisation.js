@@ -489,7 +489,7 @@ function EvangelisationContent() {
                   <p>🎗️ Civilité : {member.sexe || "—"}</p>
                   <p>⏳ Tranche d'age : {member.age || "—"}</p>
                   <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>    
-                  <hr />
+                  <hr className="my-2" />
                   
                   <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
                   <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>

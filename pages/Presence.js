@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -21,221 +21,156 @@ function Presence() {
   const [search, setSearch] = useState("");
   const [view, setView] = useState("absents");
   const [userRole, setUserRole] = useState(null);
+  const profileRef = useRef(null); // cache du profil
+  const myIdsRef = useRef(null);   // cache des IDs du périmètre
 
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
 
-  const today = selectedDate;
+  // 🔥 INIT PROFIL + IDs DU PÉRIMÈTRE (une seule fois)
+  const initProfile = useCallback(async () => {
+    if (profileRef.current && myIdsRef.current !== undefined) return;
 
-  // 🔥 FETCH MEMBRES SELON LE RÔLE (liste unifiée)
-  const fetchMembers = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("eglise_id, branche_id, role, roles")
-        .eq("id", user.id)
-        .single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("eglise_id, branche_id, role, roles")
+      .eq("id", user.id)
+      .single();
 
-      setUserRole(profile.role);
+    profileRef.current = { ...profile, uid: user.id };
+    setUserRole(profile.role);
 
-      // IDs déjà présents aujourd'hui
-      const { data: presencesToday } = await supabase
-        .from("presences")
-        .select("membre_id")
-        .eq("date", today);
+    // Admin = null (pas de filtre)
+    if (profile.roles?.includes("Administrateur") || profile.roles?.includes("ResponsableIntegration")) {
+      myIdsRef.current = null;
+      return;
+    }
 
-      const presentIds = presencesToday?.map(p => p.membre_id) || [];
+    let ids = new Set();
 
-      let allMemberIds = null; // null = admin (pas de filtre)
+    // Lancer les deux requêtes en parallèle
+    const [assignmentsResult, celluleResult] = await Promise.all([
+      profile.roles?.includes("Conseiller")
+        ? supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", user.id).eq("statut", "actif")
+        : Promise.resolve({ data: [] }),
 
-      if (!profile.roles?.includes("Administrateur")) {
-        let ids = new Set();
+      profile.roles?.includes("ResponsableCellule")
+        ? supabase.from("cellules").select("id").eq("responsable_id", user.id).single()
+        : Promise.resolve({ data: null }),
+    ]);
 
-        // 👤 Membres via suivi_assignments (Conseiller)
-        if (profile.roles?.includes("Conseiller")) {
-          const { data: assignments } = await supabase
-            .from("suivi_assignments")
-            .select("membre_id")
-            .eq("conseiller_id", user.id)
-            .eq("statut", "actif");
+    assignmentsResult.data?.forEach(a => ids.add(a.membre_id));
 
-          assignments?.forEach(a => ids.add(a.membre_id));
-        }
-
-        // 🏠 Membres via cellule (ResponsableCellule)
-        if (profile.roles?.includes("ResponsableCellule")) {
-          const { data: cellule } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", user.id)
-            .single();
-
-          if (cellule) {
-            const { data: cellulesMembers } = await supabase
-              .from("membres_complets")
-              .select("id")
-              .eq("cellule_id", cellule.id);
-
-            cellulesMembers?.forEach(m => ids.add(m.id));
-          }
-        }
-
-        allMemberIds = [...ids];
-      }
-
-      // 🔍 REQUÊTE
-      let query = supabase
+    if (celluleResult.data?.id) {
+      const { data: cellulesMembers } = await supabase
         .from("membres_complets")
-        .select("id, prenom, nom, telephone")
-        .eq("eglise_id", profile.eglise_id)
-        .eq("branche_id", profile.branche_id);
-
-      if (allMemberIds !== null) {
-        if (allMemberIds.length === 0) {
-          setMembers([]);
-          return;
-        }
-        query = query.in("id", allMemberIds);
-      }
-
-      // Exclure les présents
-      if (presentIds.length > 0) {
-        query = query.not("id", "in", `(${presentIds.join(",")})`);
-      }
-
-      const { data } = await query;
-      setMembers(data || []);
-    } catch (err) {
-      console.error(err);
+        .select("id")
+        .eq("cellule_id", celluleResult.data.id);
+      cellulesMembers?.forEach(m => ids.add(m.id));
     }
-  };
 
-  // 🔥 FETCH PRÉSENTS (même périmètre que fetchMembers)
-  const fetchPresentMembers = async () => {
+    myIdsRef.current = [...ids];
+  }, []);
+
+  // 🔥 FETCH TOUT EN PARALLÈLE
+  const fetchAll = useCallback(async (date) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      await initProfile();
+      const profile = profileRef.current;
+      const myIds = myIdsRef.current;
+      const today = date || selectedDate;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, roles, eglise_id, branche_id")
-        .eq("id", user.id)
-        .single();
+      // Lancer présences + membres en parallèle
+      const [presencesResult, membresResult] = await Promise.all([
+        supabase
+          .from("presences")
+          .select("membre_id, checked_by, membres_complets(prenom, nom)")
+          .eq("date", today),
 
-      const { data: allPresences } = await supabase
-        .from("presences")
-        .select(`
-          membre_id,
-          checked_by,
-          membres_complets (prenom, nom)
-        `)
-        .eq("date", today);
+        (() => {
+          let q = supabase
+            .from("membres_complets")
+            .select("id, prenom, nom, telephone")
+            .eq("eglise_id", profile.eglise_id)
+            .eq("branche_id", profile.branche_id);
 
-      let filtered = allPresences || [];
-
-      if (!profile.roles?.includes("Administrateur")) {
-        let ids = new Set();
-
-        if (profile.roles?.includes("Conseiller")) {
-          const { data: assignments } = await supabase
-            .from("suivi_assignments")
-            .select("membre_id")
-            .eq("conseiller_id", user.id)
-            .eq("statut", "actif");
-
-          assignments?.forEach(a => ids.add(a.membre_id));
-        }
-
-        if (profile.roles?.includes("ResponsableCellule")) {
-          const { data: cellule } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", user.id)
-            .single();
-
-          if (cellule) {
-            const { data: cellulesMembers } = await supabase
-              .from("membres_complets")
-              .select("id")
-              .eq("cellule_id", cellule.id);
-
-            cellulesMembers?.forEach(m => ids.add(m.id));
+          if (myIds !== null) {
+            if (myIds.length === 0) return Promise.resolve({ data: [] });
+            q = q.in("id", myIds);
           }
-        }
+          return q;
+        })(),
+      ]);
 
-        filtered = filtered.filter(p => ids.has(p.membre_id));
-      }
+      const allPresences = presencesResult.data || [];
+      const allMembers = membresResult.data || [];
 
-      setPresentList(filtered);
+      // IDs présents aujourd'hui (tous, pas filtrés)
+      const presentIds = new Set(allPresences.map(p => p.membre_id));
+
+      // Absents = membres du périmètre PAS dans présences
+      const absents = allMembers.filter(m => !presentIds.has(m.id));
+
+      // Présents = présences filtrées par périmètre
+      const presents = myIds !== null
+        ? allPresences.filter(p => myIds.includes(p.membre_id))
+        : allPresences;
+
+      setMembers(absents);
+      setPresentList(presents);
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [selectedDate, initProfile]);
 
-  const fetchAll = async () => {
-    setLoading(true);
-    await fetchMembers();
-    await fetchPresentMembers();
-    setLoading(false);
-  };
-
-  // 🔄 LOAD INITIAL + REALTIME
   useEffect(() => {
-    fetchAll();
+    setLoading(true);
+    fetchAll(selectedDate).finally(() => setLoading(false));
 
     const channel = supabase
       .channel("presence-live")
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "presences",
-          filter: `date=eq.${selectedDate}`,
-        },
-        () => fetchAll()
+        { event: "*", schema: "public", table: "presences" },
+        () => fetchAll(selectedDate)
       )
       .subscribe();
 
     return () => supabase.removeChannel(channel);
   }, [selectedDate]);
 
-  // ✅ MARQUER PRÉSENT — source de vérité = DB, realtime + fetchAll sync tout
+  // ✅ MARQUER PRÉSENT
   const markPresent = async (membre) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
+      const { uid } = profileRef.current;
       await supabase.from("presences").insert({
         membre_id: membre.id,
-        date: today,
-        checked_by: user.id,
+        date: selectedDate,
+        checked_by: uid,
       });
-
-      // fetchAll resync toutes les listes (église + cellule + conseiller)
-      await fetchAll();
+      await fetchAll(selectedDate);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // ❌ MARQUER ABSENT — idem, fetchAll resync tout
+  // ❌ MARQUER ABSENT
   const markAbsent = async (memberId) => {
     try {
       await supabase
         .from("presences")
         .delete()
         .eq("membre_id", memberId)
-        .eq("date", today);
-
-      await fetchAll();
+        .eq("date", selectedDate);
+      await fetchAll(selectedDate);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // 🔍 FILTRES
   const filteredAbsents = members.filter(
     (m) =>
       m.prenom?.toLowerCase().includes(search.toLowerCase()) ||
@@ -249,7 +184,6 @@ function Presence() {
       p.membres_complets?.nom?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // 🏷️ LABEL selon le rôle
   const getRoleLabel = () => {
     if (userRole === "Conseiller") return "👤 Vos membres suivis";
     if (userRole === "ResponsableCellule") return "🏠 Membres de votre cellule";
@@ -265,12 +199,10 @@ function Presence() {
           Présences du <span className="text-emerald-300">jour</span>
         </h1>
 
-        {/* 🏷️ LABEL RÔLE */}
         {userRole && (
           <p className="text-white/70 text-sm mt-1">{getRoleLabel()}</p>
         )}
 
-        {/* 📅 DATE PICKER */}
         <div className="flex justify-center mt-4">
           <input
             type="date"
@@ -280,14 +212,12 @@ function Presence() {
           />
         </div>
 
-        {/* COMPTEURS */}
         <div className="flex gap-4 justify-center mt-3 text-sm">
           <span className="text-green-300">✔ Présents : {presentList.length}</span>
           <span className="text-white">⚪ Restants : {members.length}</span>
         </div>
       </div>
 
-      {/* TOGGLE */}
       <div className="flex gap-3 mb-6">
         <button
           onClick={() => setView("absents")}
@@ -307,7 +237,6 @@ function Presence() {
         </button>
       </div>
 
-      {/* SEARCH */}
       <div className="w-full max-w-4xl flex justify-center mb-6">
         <input
           type="text"
@@ -318,7 +247,6 @@ function Presence() {
         />
       </div>
 
-      {/* LIST */}
       <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-4">
         {loading ? (
           <p className="text-white text-center col-span-full">Chargement...</p>

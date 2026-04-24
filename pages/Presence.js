@@ -160,7 +160,7 @@ function Presence() {
       {/* HEADER */}
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold mt-4 text-white">
-          📋 Présences du <span className="text-emerald-300">jour</span>
+          Présences du <span className="text-emerald-300">jour</span>
         </h1>
 
         {/* 📅 DATE PICKER */}
@@ -172,13 +172,7 @@ function Presence() {
             className="px-3 py-2 rounded-md text-black"
           />
         </div>
-
-        <p className="text-white/80 mt-2">
-          {view === "absents"
-            ? "Cliquez pour marquer présent"
-            : "Corrigez les erreurs si besoin"}
-        </p>
-
+       
         {/* COMPTEURS */}
         <div className="flex gap-4 justify-center mt-3 text-sm">
           <span className="text-green-300">✔ Présents : {presentList.length}</span>
@@ -187,23 +181,14 @@ function Presence() {
       </div>
 
       {/* SWITCH */}
-      <div className="flex gap-3 mb-6">
-        <button
-          onClick={() => setView("absents")}
-          className={`px-4 py-2 rounded ${
-            view === "absents" ? "bg-white text-black" : "bg-white/20 text-white"
-          }`}
-        >
-          À pointer
-        </button>
-
+      <div className="flex gap-3 mb-6">        
         <button
           onClick={() => setView("presents")}
           className={`px-4 py-2 rounded ${
             view === "presents" ? "bg-green-400 text-black" : "bg-white/20 text-white"
           }`}
         >
-          Présents ✔
+          Lister comme Présents ✔
         </button>
       </div>
 
@@ -233,11 +218,7 @@ function Presence() {
                 className="bg-white rounded-xl shadow p-4 cursor-pointer hover:bg-green-100 transition"
               >
                 <h2 className="font-bold text-black text-lg">
-                  {m.prenom} {m.nom}
-                </h2>
-                <p className="text-gray-600 text-sm">
-                  📞 {m.telephone || "—"}
-                </p>
+                  {m.prenom} {m.nom}                </h2>              
 
                 <div className="mt-2 text-green-600 font-semibold text-sm">
                   ➕ Cliquer pour marquer présent

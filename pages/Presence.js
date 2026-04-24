@@ -16,27 +16,29 @@ export default function PresencePage() {
 
 function Presence() {
   const [members, setMembers] = useState([]);
+  const [presentList, setPresentList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [view, setView] = useState("absents");
 
-  const today = new Date().toISOString().split("T")[0];
+  // 📅 DATE SÉLECTIONNÉE
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
 
-  // 🔥 FETCH MEMBRES NON PRÉSENTS
+  const today = selectedDate;
+
+  // 🔥 FETCH ABSENTS
   const fetchMembers = async () => {
-    setLoading(true);
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Utilisateur non connecté");
 
-      // 1️⃣ récupérer église / branche
       const { data: profile } = await supabase
         .from("profiles")
         .select("eglise_id, branche_id")
         .eq("id", user.id)
         .single();
 
-      // 2️⃣ récupérer présences du jour
       const { data: presencesToday } = await supabase
         .from("presences")
         .select("membre_id")
@@ -44,7 +46,6 @@ function Presence() {
 
       const presentIds = presencesToday?.map(p => p.membre_id) || [];
 
-      // 3️⃣ récupérer membres NON présents
       let query = supabase
         .from("membres_complets")
         .select("id, prenom, nom, telephone")
@@ -55,40 +56,60 @@ function Presence() {
         query = query.not("id", "in", `(${presentIds.join(",")})`);
       }
 
-      const { data, error } = await query;
-
-      if (error) throw error;
-
+      const { data } = await query;
       setMembers(data || []);
     } catch (err) {
       console.error(err);
-      setMembers([]);
-    } finally {
-      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchMembers();
+  // 🔥 FETCH PRÉSENTS
+  const fetchPresentMembers = async () => {
+    try {
+      const { data } = await supabase
+        .from("presences")
+        .select(`
+          membre_id,
+          checked_by,
+          membres_complets (prenom, nom)
+        `)
+        .eq("date", today);
 
-    // 🔥 temps réel (update automatique)
+      setPresentList(data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchAll = async () => {
+    setLoading(true);
+    await fetchMembers();
+    await fetchPresentMembers();
+    setLoading(false);
+  };
+
+  // 🔄 LOAD INITIAL + REALTIME
+  useEffect(() => {
+    fetchAll();
+
     const channel = supabase
       .channel("presence-live")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "presences" },
-        () => {
-          fetchMembers(); // refresh auto
-        }
+        {
+          event: "*",
+          schema: "public",
+          table: "presences",
+          filter: `date=eq.${selectedDate}`,
+        },
+        () => fetchAll()
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+    return () => supabase.removeChannel(channel);
+  }, [selectedDate]);
 
-  // 🔥 CLICK → MARQUER PRÉSENT
+  // ✅ MARQUER PRÉSENT
   const markPresent = async (memberId) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -99,20 +120,37 @@ function Presence() {
         checked_by: user.id,
       });
 
-      // refresh local immédiat
       setMembers(prev => prev.filter(m => m.id !== memberId));
-
     } catch (err) {
-      console.error("Erreur présence :", err);
+      console.error(err);
     }
   };
 
-  // 🔍 filtre recherche
-  const filtered = members.filter(
+  // ❌ REMETTRE ABSENT
+  const markAbsent = async (memberId) => {
+    try {
+      await supabase
+        .from("presences")
+        .delete()
+        .eq("membre_id", memberId)
+        .eq("date", today);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // 🔍 FILTERS
+  const filteredAbsents = members.filter(
     (m) =>
       m.prenom.toLowerCase().includes(search.toLowerCase()) ||
       m.nom.toLowerCase().includes(search.toLowerCase()) ||
       (m.telephone || "").includes(search)
+  );
+
+  const filteredPresents = presentList.filter(
+    (p) =>
+      p.membres_complets?.prenom.toLowerCase().includes(search.toLowerCase()) ||
+      p.membres_complets?.nom.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -124,19 +162,59 @@ function Presence() {
         <h1 className="text-2xl font-bold mt-4 text-white">
           📋 Présences du <span className="text-emerald-300">jour</span>
         </h1>
+
+        {/* 📅 DATE PICKER */}
+        <div className="flex justify-center mt-4">
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="px-3 py-2 rounded-md text-black"
+          />
+        </div>
+
         <p className="text-white/80 mt-2">
-          Cliquez sur une personne pour la marquer présente
+          {view === "absents"
+            ? "Cliquez pour marquer présent"
+            : "Corrigez les erreurs si besoin"}
         </p>
+
+        {/* COMPTEURS */}
+        <div className="flex gap-4 justify-center mt-3 text-sm">
+          <span className="text-green-300">✔ Présents : {presentList.length}</span>
+          <span className="text-white">⚪ Restants : {members.length}</span>
+        </div>
+      </div>
+
+      {/* SWITCH */}
+      <div className="flex gap-3 mb-6">
+        <button
+          onClick={() => setView("absents")}
+          className={`px-4 py-2 rounded ${
+            view === "absents" ? "bg-white text-black" : "bg-white/20 text-white"
+          }`}
+        >
+          À pointer
+        </button>
+
+        <button
+          onClick={() => setView("presents")}
+          className={`px-4 py-2 rounded ${
+            view === "presents" ? "bg-green-400 text-black" : "bg-white/20 text-white"
+          }`}
+        >
+          Présents ✔
+        </button>
       </div>
 
       {/* SEARCH */}
       <div className="w-full max-w-4xl flex justify-center mb-6">
         <input
           type="text"
-          placeholder="🔍 Rechercher nom ou téléphone..."
+          placeholder="🔍 Rechercher..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:w-2/3 px-3 py-2 rounded-md border text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="w-full sm:w-2/3 px-3 py-2 rounded-md border text-black"
         />
       </div>
 
@@ -144,27 +222,51 @@ function Presence() {
       <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-4">
         {loading ? (
           <p className="text-white text-center col-span-full">Chargement...</p>
-        ) : filtered.length === 0 ? (
-          <p className="text-white text-center col-span-full">✅ Tout le monde est déjà présent !</p>
-        ) : (
-          filtered.map((m) => (
-            <div
-              key={m.id}
-              onClick={() => markPresent(m.id)}
-              className="bg-white rounded-xl shadow p-4 cursor-pointer hover:bg-green-100 transition"
-            >
-              <h2 className="font-bold text-black text-lg">
-                {m.prenom} {m.nom}
-              </h2>
-              <p className="text-gray-600 text-sm">
-                📞 {m.telephone || "—"}
-              </p>
+        ) : view === "absents" ? (
+          filteredAbsents.length === 0 ? (
+            <p className="text-white text-center col-span-full">✅ Tout le monde est présent</p>
+          ) : (
+            filteredAbsents.map((m) => (
+              <div
+                key={m.id}
+                onClick={() => markPresent(m.id)}
+                className="bg-white rounded-xl shadow p-4 cursor-pointer hover:bg-green-100 transition"
+              >
+                <h2 className="font-bold text-black text-lg">
+                  {m.prenom} {m.nom}
+                </h2>
+                <p className="text-gray-600 text-sm">
+                  📞 {m.telephone || "—"}
+                </p>
 
-              <div className="mt-2 text-sm text-green-600 font-semibold">
-                ➕ Cliquer pour marquer présent
+                <div className="mt-2 text-green-600 font-semibold text-sm">
+                  ➕ Cliquer pour marquer présent
+                </div>
               </div>
-            </div>
-          ))
+            ))
+          )
+        ) : (
+          filteredPresents.length === 0 ? (
+            <p className="text-white text-center col-span-full">Aucune présence</p>
+          ) : (
+            filteredPresents.map((p) => (
+              <div
+                key={p.membre_id}
+                className="bg-white rounded-xl shadow p-4"
+              >
+                <h2 className="font-bold text-black text-lg">
+                  ✔ {p.membres_complets?.prenom} {p.membres_complets?.nom}
+                </h2>
+
+                <button
+                  onClick={() => markAbsent(p.membre_id)}
+                  className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                >
+                  Remettre absent
+                </button>
+              </div>
+            ))
+          )
         )}
       </div>
 

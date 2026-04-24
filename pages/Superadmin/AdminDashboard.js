@@ -23,37 +23,50 @@ function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
 
-    const { data, error } = await supabase
+    // 🔥 1. récupérer membres
+    const { data: membres, error: err1 } = await supabase
       .from("membres_complets")
       .select("branche_id");
 
-    if (error) {
-      console.error(error);
+    if (err1) {
+      console.error(err1);
       setLoading(false);
       return;
     }
 
-    // 🔥 GROUP BY BRANCHE
-    const map = {};
+    // 🔥 2. récupérer branches
+    const { data: branches, error: err2 } = await supabase
+      .from("branches")
+      .select("id, nom, pays");
 
-    data.forEach((m) => {
-      if (!m.branche_id) return;
+    if (err2) {
+      console.error(err2);
+      setLoading(false);
+      return;
+    }
 
-      if (!map[m.branche_id]) {
-        map[m.branche_id] = {
-          branche_id: m.branche_id,
-          count: 0,
-        };
-      }
-
-      map[m.branche_id].count += 1;
+    // 🔥 3. MAP DES BRANCHES
+    const branchMap = {};
+    branches.forEach((b) => {
+      branchMap[b.id] = {
+        nom: b.nom,
+        pays: b.pays,
+        count: 0,
+      };
     });
 
-    const result = Object.values(map);
+    // 🔥 4. COMPTER MEMBRES
+    membres.forEach((m) => {
+      if (m.branche_id && branchMap[m.branche_id]) {
+        branchMap[m.branche_id].count += 1;
+      }
+    });
+
+    const result = Object.values(branchMap);
 
     setStats(result);
     setTotalBranches(result.length);
-    setTotalMembres(data.length);
+    setTotalMembres(membres.length);
 
     setLoading(false);
   };
@@ -70,15 +83,15 @@ function AdminDashboard() {
       {/* TITRE */}
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold text-white mt-4">
-          📊 Dashboard Réseau d'Églises
+          📊 Dashboard Réseau
         </h1>
 
         <p className="text-white/80 mt-2">
-          Vue par branche (ex: Impact Centre Chrétien - Cité Royale)
+          Vue globale des branches et des membres
         </p>
       </div>
 
-      {/* STATS GLOBAL */}
+      {/* GLOBAL */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 w-full max-w-4xl">
 
         <div className="bg-white rounded-xl p-6 text-center shadow">
@@ -92,12 +105,12 @@ function AdminDashboard() {
           <h2 className="text-3xl font-bold text-[#333699]">
             {totalMembres}
           </h2>
-          <p className="text-gray-600">Membres totaux</p>
+          <p className="text-gray-600">Membres</p>
         </div>
 
       </div>
 
-      {/* LISTE BRANCHES */}
+      {/* LISTE */}
       <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 
         {loading ? (
@@ -106,23 +119,26 @@ function AdminDashboard() {
           </p>
         ) : stats.length === 0 ? (
           <p className="text-white col-span-full text-center">
-            Aucune donnée disponible
+            Aucune donnée
           </p>
         ) : (
-          stats.map((b) => (
+          stats.map((b, i) => (
             <div
-              key={b.branche_id}
+              key={i}
               className="bg-white rounded-xl shadow p-5 text-center hover:shadow-xl transition"
             >
-              <h3 className="font-bold text-lg text-[#333699] mb-2">
-                🏢 Branche
+              {/* NOM */}
+              <h3 className="font-bold text-lg text-[#333699]">
+                {b.nom || "Nom inconnu"}
               </h3>
 
-              <p className="text-gray-700 text-xs mb-3 break-all">
-                ID: {b.branche_id}
+              {/* PAYS */}
+              <p className="text-gray-500 text-sm mb-3">
+                🌍 {b.pays || "Pays inconnu"}
               </p>
 
-              <div className="text-2xl font-bold text-emerald-600">
+              {/* COUNT */}
+              <div className="text-3xl font-bold text-emerald-600">
                 {b.count}
               </div>
 

@@ -341,7 +341,6 @@ const formatDateForInput = (date) => {
 // ✅ Pour affichage joli
 const formatDate = (dateStr) => {
   if (!dateStr) return "";
-
   try {
     const d = new Date(dateStr);
     const day = d.getDate().toString().padStart(2, "0");
@@ -405,16 +404,16 @@ const formatDate = (dateStr) => {
         {/* FORM */}
         <div className="space-y-3 border-b pb-4">
 
-          <input
-            type="date"
-            value={formatDateForInput(form.date_action)}
-              onChange={(e) =>
-                setForm(prev => ({
-                  ...prev,
-                  date_action: e.target.value
-                }))
-              }
-          />
+        <input
+          type="date"
+          value={formatDateForInput(form.date_action)}
+          onChange={(e) =>
+            setForm(prev => ({
+              ...prev,
+              date_action: e.target.value
+            }))
+          }
+        />
 
           <select
             value={form.type}

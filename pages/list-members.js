@@ -17,7 +17,6 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import useChurchScope from "../hooks/useChurchScope";
 import SuiviPopup from "../components/SuiviPopup";
 
-// ✅ OPTION 2 — getRoles défini au niveau module, en dehors du composant
 function getRoles(profile) {
   if (!profile) return [];
   if (Array.isArray(profile.roles)) return profile.roles;
@@ -59,7 +58,6 @@ function ListMembersContent() {
   const dateDebut = searchParams.get("dateDebut");
   const dateFin = searchParams.get("dateFin");
 
-  // -------------------- Nouveaux états --------------------
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
   const [updating, setUpdating] = useState({});
@@ -79,9 +77,10 @@ function ListMembersContent() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
 
-  // ✅ Utilisation de getRoles (défini au niveau module, toujours disponible)
-  const roles = getRoles(userProfile);
+  // 🔥 Map memberId → [{id, prenom, nom}] des conseillers assignés
+  const [assignmentsMap, setAssignmentsMap] = useState({});
 
+  const roles = getRoles(userProfile);
   const isAdmin = roles.includes("Administrateur");
   const isIntegration = roles.includes("ResponsableIntegration");
   const canAddMember = isAdmin || isIntegration;
@@ -96,7 +95,6 @@ function ListMembersContent() {
 
   const { scopedQuery } = useChurchScope();
 
-  // -------------------- Toast --------------------
   const showToast = (msg) => {
     setToastMessage(msg);
     setShowingToast(true);
@@ -118,16 +116,12 @@ function ListMembersContent() {
 
   const logStats = async (member, updatedMember, userProfile) => {
     if (!userProfile) return;
-
     const logs = [];
-
-    // 🔹 MINISTERE
     if (updatedMember.Ministere) {
       const ministeres =
         typeof updatedMember.Ministere === "string"
           ? JSON.parse(updatedMember.Ministere)
           : updatedMember.Ministere;
-
       ministeres.forEach((m) => {
         logs.push({
           membre_id: member.id,
@@ -138,14 +132,11 @@ function ListMembersContent() {
         });
       });
     }
-
-    // 🔹 BESOIN
     if (updatedMember.besoin) {
       const besoins =
         typeof updatedMember.besoin === "string"
           ? JSON.parse(updatedMember.besoin)
           : updatedMember.besoin;
-
       besoins.forEach((b) => {
         logs.push({
           membre_id: member.id,
@@ -156,8 +147,6 @@ function ListMembersContent() {
         });
       });
     }
-
-    // 🔹 SERVITEUR
     if (updatedMember.star === true && updatedMember.etat_contact === "existant") {
       logs.push({
         membre_id: member.id,
@@ -167,7 +156,6 @@ function ListMembersContent() {
         valeur: "true",
       });
     }
-
     if (logs.length > 0) {
       await supabase.from("stats_ministere_besoin").insert(logs);
     }
@@ -177,10 +165,7 @@ function ListMembersContent() {
     if (!dateString) return "—";
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
-    const months = [
-      "Janv","Févr","Mars","Avr","Mai","Juin",
-      "Juil","Août","Sept","Oct","Nov","Déc",
-    ];
+    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
@@ -188,55 +173,37 @@ function ListMembersContent() {
     let ministereList = [];
     if (ministereJson) {
       try {
-        const parsed =
-          typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
+        const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
         ministereList = Array.isArray(parsed) ? parsed : [parsed];
         ministereList = ministereList.filter((m) => m.toLowerCase() !== "autre");
       } catch {
         if (ministereJson.toLowerCase() !== "autre") ministereList = [ministereJson];
       }
     }
-    if (autreMinistere?.trim()) {
-      ministereList.push(autreMinistere.trim());
-    }
+    if (autreMinistere?.trim()) ministereList.push(autreMinistere.trim());
     return ministereList.join(", ");
   };
 
   // -------------------- Scroll to top --------------------
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 300) {
-        setShowScrollTop(true);
-      } else {
-        setShowScrollTop(false);
-      }
-    };
-
+    const handleScroll = () => setShowScrollTop(window.scrollY > 300);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
-  // -------------------- Supprimer un membre --------------------
+  // -------------------- Supprimer --------------------
   const handleSupprimerMembre = async (id) => {
     const { error } = await supabase
       .from("membres_complets")
       .update({ etat_contact: "supprime" })
       .eq("id", id);
-    if (error) {
-      console.error("Erreur suppression :", error);
-      return;
-    }
-    setAllMembers((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, etat_contact: "supprime" } : m))
-    );
+    if (error) { console.error("Erreur suppression :", error); return; }
+    setAllMembers((prev) => prev.map((m) => (m.id === id ? { ...m, etat_contact: "supprime" } : m)));
     showToast("❌ Contact supprimé");
   };
 
-  // -------------------- Commentaires / suivi --------------------
   const handleCommentChange = (id, value) => {
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
   };
@@ -244,7 +211,6 @@ function ListMembersContent() {
   const updateSuivi = async (id) => {
     setUpdating((prev) => ({ ...prev, [id]: true }));
     try {
-      console.log("Update suivi pour:", id, commentChanges[id], statusChanges[id]);
       setTimeout(() => {
         setUpdating((prev) => ({ ...prev, [id]: false }));
         showToast("✅ Suivi enregistré !");
@@ -255,19 +221,32 @@ function ListMembersContent() {
     }
   };
 
-  // -------------------- Après showToast --------------------
   const handleAfterSend = (memberId, type, cible) => {
-    console.log("Contact envoyé :", memberId, type, cible);
     showToast("✅ Contact envoyé !");
-
-    setAllMembers((prev) =>
-      prev.map((m) =>
-        m.id === memberId ? { ...m, suivi_envoye: true } : m
-      )
-    );
+    setAllMembers((prev) => prev.map((m) => m.id === memberId ? { ...m, suivi_envoye: true } : m));
   };
 
-  // -------------------- Fetch membres via scopedQuery avec multi-roles --------------------
+  // 🔥 Charger les suivi_assignments pour tous les membres de l'église
+  const fetchAssignments = async (profile) => {
+    if (!profile) return;
+    const { data, error } = await supabase
+      .from("suivi_assignments")
+      .select("membre_id, conseiller_id, profiles:conseiller_id(id, prenom, nom)")
+      .eq("statut", "actif");
+
+    if (error) { console.error("fetchAssignments error:", error); return; }
+
+    // Construire la map memberId → [{id, prenom, nom}]
+    const map = {};
+    (data || []).forEach((row) => {
+      if (!row.profiles) return;
+      if (!map[row.membre_id]) map[row.membre_id] = [];
+      map[row.membre_id].push(row.profiles);
+    });
+    setAssignmentsMap(map);
+  };
+
+  // -------------------- Fetch membres --------------------
   useEffect(() => {
     if (!scopedQuery || !userProfile) return;
 
@@ -279,36 +258,26 @@ function ListMembersContent() {
           .eq("eglise_id", userProfile.eglise_id)
           .eq("branche_id", userProfile.branche_id);
 
-        // 🔹 Si on vient d'un conseiller spécifique
         if (conseillerIdFromUrl) {
           query = query.eq("conseiller_id", conseillerIdFromUrl);
         } else {
-          // 🔐 Filtrage selon le rôle
           const rolesArray = getRoles(userProfile);
-
           if (rolesArray.includes("Conseiller") || rolesArray.includes("ResponsableIntegration")) {
             query = query.eq("conseiller_id", userProfile.id);
           }
-
           if (rolesArray.includes("ResponsableCellule")) {
             const { data: cellulesData } = await supabase
               .from("cellules")
               .select("id")
               .eq("responsable_id", userProfile.id);
-
             const celluleIds = cellulesData?.map((c) => c.id) || [];
             if (celluleIds.length > 0) query = query.in("cellule_id", celluleIds);
-            else {
-              setAllMembers([]);
-              setLoading(false);
-              return;
-            }
+            else { setAllMembers([]); setLoading(false); return; }
           }
         }
 
         const { data, error } = await query.order("created_at", { ascending: false });
         if (error) throw error;
-
         setAllMembers(data || []);
         setLoading(false);
       } catch (err) {
@@ -320,32 +289,21 @@ function ListMembersContent() {
     fetchMembers();
   }, [userProfile, scopedQuery, setAllMembers, conseillerIdFromUrl]);
 
-  // -------------------- Récupérer la session Supabase --------------------
+  // -------------------- Session --------------------
   useEffect(() => {
     const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
     };
     getSession();
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+    return () => listener.subscription.unsubscribe();
   }, []);
 
-  // -------------------- Fetch cellules et conseillers --------------------
+  // -------------------- Fetch cellules, conseillers, profile --------------------
   useEffect(() => {
     const fetchData = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: profile, error: profileError } = await supabase
@@ -353,7 +311,6 @@ function ListMembersContent() {
         .select("id, eglise_id, branche_id, roles, role")
         .eq("id", user.id)
         .single();
-
       if (profileError || !profile) return;
 
       setUserProfile(profile);
@@ -364,7 +321,6 @@ function ListMembersContent() {
         .eq("eglise_id", profile.eglise_id)
         .eq("branche_id", profile.branche_id)
         .order("cellule_full");
-
       if (cellulesData) setCellules(cellulesData);
 
       const { data: conseillersData } = await supabase
@@ -374,8 +330,10 @@ function ListMembersContent() {
         .eq("eglise_id", profile.eglise_id)
         .eq("branche_id", profile.branche_id)
         .order("prenom");
-
       if (conseillersData) setConseillers(conseillersData);
+
+      // 🔥 Charger les assignments après avoir le profil
+      await fetchAssignments(profile);
     };
 
     fetchData();
@@ -384,9 +342,7 @@ function ListMembersContent() {
   // -------------------- Realtime --------------------
   useEffect(() => {
     if (realtimeChannelRef.current) {
-      try {
-        realtimeChannelRef.current.unsubscribe();
-      } catch (e) {}
+      try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
       realtimeChannelRef.current = null;
     }
 
@@ -404,36 +360,16 @@ function ListMembersContent() {
       }
     };
 
-    channel.on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "membres_complets" },
-      fetchScopedMembers
-    );
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "membres_complets" }, fetchScopedMembers);
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, fetchScopedMembers);
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, fetchScopedMembers);
 
-    channel.on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "cellules" },
-      () => {
-        fetchCellules();
-        fetchScopedMembers();
-      }
-    );
+    // 🔥 Reload assignments en realtime aussi
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "suivi_assignments" }, () => {
+      fetchAssignments(userProfile);
+    });
 
-    channel.on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "profiles" },
-      () => {
-        fetchConseillers();
-        fetchScopedMembers();
-      }
-    );
-
-    try {
-      channel.subscribe();
-    } catch (err) {
-      console.warn("Erreur subscription realtime:", err);
-    }
-
+    try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
     realtimeChannelRef.current = channel;
 
     return () => {
@@ -444,7 +380,7 @@ function ListMembersContent() {
         }
       } catch (e) {}
     };
-  }, [scopedQuery, setAllMembers]);
+  }, [scopedQuery, setAllMembers, userProfile]);
 
   // -------------------- Filtrage --------------------
   const { filteredMembers, filteredNouveaux, filteredAnciens, filteredInactifs } = useMemo(() => {
@@ -454,11 +390,8 @@ function ListMembersContent() {
       ? actifs.filter((m) => {
           if (!m.besoin) return false;
           let besoinsArray = [];
-          try {
-            besoinsArray = Array.isArray(m.besoin) ? m.besoin : JSON.parse(m.besoin);
-          } catch {
-            besoinsArray = m.besoin.split(",");
-          }
+          try { besoinsArray = Array.isArray(m.besoin) ? m.besoin : JSON.parse(m.besoin); }
+          catch { besoinsArray = m.besoin.split(","); }
           return besoinsArray.map((b) => b.trim()).includes(besoinFromUrl);
         })
       : actifs;
@@ -471,98 +404,53 @@ function ListMembersContent() {
       `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
     );
 
-    const nouveaux = searchAndNameFiltered.filter(
-      (m) => m.etat_contact?.trim().toLowerCase() === "nouveau"
-    );
-    const existants = searchAndNameFiltered.filter((m) =>
-      ["existant", "ancien"].includes(m.etat_contact?.trim().toLowerCase())
-    );
-    const inactifs = searchAndNameFiltered.filter(
-      (m) => m.etat_contact?.trim().toLowerCase() === "inactif"
-    );
-
     return {
       filteredMembers: searchAndNameFiltered,
-      filteredNouveaux: nouveaux,
-      filteredAnciens: existants,
-      filteredInactifs: inactifs,
+      filteredNouveaux: searchAndNameFiltered.filter((m) => m.etat_contact?.trim().toLowerCase() === "nouveau"),
+      filteredAnciens: searchAndNameFiltered.filter((m) => ["existant", "ancien"].includes(m.etat_contact?.trim().toLowerCase())),
+      filteredInactifs: searchAndNameFiltered.filter((m) => m.etat_contact?.trim().toLowerCase() === "inactif"),
     };
   }, [members, filter, search, besoinFromUrl]);
 
-  // -------------------- Handlers --------------------
   const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
-
-  const handleMarquerCommeMembre = async (id) => {
-    try {
-      const { error } = await supabase
-        .from("membres_complets")
-        .update({ etat_contact: "existant" })
-        .eq("id", id);
-      if (error) throw error;
-
-      setAllMembers((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, etat_contact: "existant" } : m))
-      );
-      showToast("✅ Ce contact est maintenant membre existant");
-    } catch (err) {
-      console.error("Erreur mise à jour statut :", err);
-    }
-  };
 
   const getBorderColor = (member) => {
     const etat = (member?.etat_contact || "").toLowerCase().trim();
-
     switch (etat) {
-      case "nouveau":
-        return "#fb923c";
-      case "existant":
-        return "#4ade80";
-      case "inactif":
-        return "#9ca3af";
-      default:
-        return "#9ca3af";
+      case "nouveau": return "#fb923c";
+      case "existant": return "#4ade80";
+      case "inactif": return "#9ca3af";
+      default: return "#9ca3af";
     }
   };
 
   const formatDate = (dateStr) => {
-    try {
-      return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr });
-    } catch {
-      return "";
-    }
+    try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); }
+    catch { return ""; }
   };
 
   const today = new Date();
   const dateDuJour = today.toLocaleDateString("fr-FR", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
 
-  // -------------------- Gestion clic en dehors menu téléphone --------------------
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (!e.target.closest(".phone-menu-container")) {
-        setOpenPhoneId(null);
-      }
+      if (!e.target.closest(".phone-menu-container")) setOpenPhoneId(null);
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // -------------------- Sauvegarde de la vue --------------------
-  useEffect(() => {
-    localStorage.setItem("members_view", view);
-  }, [view]);
+  useEffect(() => { localStorage.setItem("members_view", view); }, [view]);
 
-  const getConseillerName = (id) => {
-    if (!id) return "—";
-    const conseiller = conseillers.find((c) => String(c.id) === String(id));
-    if (!conseiller) return "—";
-    return `${conseiller.prenom} ${conseiller.nom}`;
+  // 🔥 Nouvelle fonction : affiche les conseillers depuis assignmentsMap
+  const getConseillersForMember = (memberId) => {
+    const assigned = assignmentsMap[memberId];
+    if (assigned && assigned.length > 0) {
+      return assigned.map((c) => `${c.prenom} ${c.nom}`).join(", ");
+    }
+    return "—";
   };
 
   // -------------------- renderMemberCard --------------------
@@ -576,9 +464,7 @@ function ListMembersContent() {
           try {
             const arr = JSON.parse(m.besoin);
             return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-          } catch {
-            return m.besoin;
-          }
+          } catch { return m.besoin; }
         })();
 
     return (
@@ -587,7 +473,6 @@ function ListMembersContent() {
         className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative"
         style={{ borderLeftColor: getBorderColor(m) }}
       >
-        {/* Badge Nouveau */}
         {m.isNouveau && (
           <div className="absolute top-2 right-3 flex items-center gap-1">
             <span className="inline-flex items-center gap-2 text-xs font-semibold text-blue-600 bg-white px-3 py-1 rounded-md shadow">
@@ -597,12 +482,9 @@ function ListMembersContent() {
           </div>
         )}
 
-        {/* Nom */}
         <div className="flex flex-col items-center mt-8">
           <h2 className="text-base font-bold text-center flex items-center justify-center gap-1">
-            <span>
-              {m.prenom} {m.nom}
-            </span>
+            <span>{m.prenom} {m.nom}</span>
             {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
               <span className="text-yellow-400">⭐</span>
             )}
@@ -621,37 +503,12 @@ function ListMembersContent() {
                 >
                   {m.telephone}
                 </p>
-
                 {openPhoneId === m.id && (
                   <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56">
-                    <a
-                      href={`tel:${m.telephone}`}
-                      className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                    >
-                      📞 Appeler
-                    </a>
-                    <a
-                      href={`sms:${m.telephone}`}
-                      className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                    >
-                      ✉️ SMS
-                    </a>
-                    <a
-                      href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                    >
-                      📱 Appel WhatsApp
-                    </a>
-                    <a
-                      href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                    >
-                      💬 Message WhatsApp
-                    </a>
+                    <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+                    <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
+                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
                   </div>
                 )}
               </>
@@ -673,13 +530,13 @@ function ListMembersContent() {
                 ? cellules.find((c) => String(c.id) === String(m.cellule_id))?.cellule_full || "—"
                 : "—"}
             </p>
-            <p>👤 Conseiller : {getConseillerName(m.conseiller_id)}</p>
+            {/* 🔥 Affichage conseillers depuis assignmentsMap */}
+            <p>👤 Conseiller(s) : {getConseillersForMember(m.id)}</p>
           </div>
 
+          {/* Envoyer en suivi */}
           <div className="mt-2 w-full">
             <label className="font-semibold text-sm">Envoyer ce contact en suivi :</label>
-
-            {/* Sélecteur principal */}
             <select
               value={selectedTargetType[m.id] || ""}
               onChange={(e) => {
@@ -695,46 +552,30 @@ function ListMembersContent() {
               <option value="numero">Saisir un numéro</option>
             </select>
 
-            {/* Si Cellule ou Conseiller → afficher un select */}
-            {(selectedTargetType[m.id] === "cellule" ||
-              selectedTargetType[m.id] === "conseiller") && (
+            {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
               <select
                 value={selectedTargets[m.id] || ""}
-                onChange={(e) =>
-                  setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))
-                }
+                onChange={(e) => setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))}
                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
               >
                 <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
                 {selectedTargetType[m.id] === "cellule" &&
-                  cellules.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.cellule_full || "—"}
-                    </option>
-                  ))}
+                  cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)}
                 {selectedTargetType[m.id] === "conseiller" &&
-                  conseillers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.prenom || "—"} {c.nom || ""}
-                    </option>
-                  ))}
+                  conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)}
               </select>
             )}
 
-            {/* Si Numéro → afficher un input */}
             {selectedTargetType[m.id] === "numero" && (
               <input
                 type="tel"
                 placeholder="Saisir un numéro"
                 value={selectedTargets[m.id] || ""}
-                onChange={(e) =>
-                  setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))
-                }
+                onChange={(e) => setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))}
                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
               />
             )}
 
-            {/* Bouton Envoyer */}
             {selectedTargetType[m.id] && selectedTargets[m.id] && (
               <div className="pt-2">
                 <BoutonEnvoyer
@@ -765,35 +606,18 @@ function ListMembersContent() {
             )}
           </div>
 
-          {/* Bouton Marquer comme membre */}
+          {/* Marquer comme membre */}
           {m.etat_contact?.trim().toLowerCase() === "nouveau" && (
             <div className="w-full flex justify-end mt-4">
               <button
                 onClick={() => {
-                  if (
-                    window.confirm(
-                      "⚠️ Confirmation\n\nCe contact n'a plus besoin d'être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?"
-                    )
-                  ) {
-                    supabase
-                      .from("membres_complets")
-                      .update({ etat_contact: "existant" })
-                      .eq("id", m.id)
+                  if (window.confirm("⚠️ Confirmation\n\nCe contact n'a plus besoin d'être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?")) {
+                    supabase.from("membres_complets").update({ etat_contact: "existant" }).eq("id", m.id)
                       .then(({ error }) => {
-                        if (error) {
-                          console.error("Erreur mise à jour :", error);
-                          showToast("❌ Erreur lors du déplacement");
-                        } else {
-                          setAllMembers((prev) =>
-                            prev.map((mem) =>
-                              mem.id === m.id ? { ...mem, etat_contact: "existant" } : mem
-                            )
-                          );
-                          showToast(
-                            <span className="inline-block bg-white text-green-600 px-2 py-1 rounded shadow text-xs font-semibold">
-                              ✅ Contact déplacé dans membres existants
-                            </span>
-                          );
+                        if (error) { showToast("❌ Erreur lors du déplacement"); }
+                        else {
+                          setAllMembers((prev) => prev.map((mem) => mem.id === m.id ? { ...mem, etat_contact: "existant" } : mem));
+                          showToast("✅ Contact déplacé dans membres existants");
                         }
                       });
                   }
@@ -806,10 +630,7 @@ function ListMembersContent() {
           )}
 
           {/* Bouton Détails */}
-          <button
-            onClick={() => toggleDetails(m.id)}
-            className="text-orange-500 underline text-sm mt-3"
-          >
+          <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-3">
             {isOpen ? "Fermer détails" : "Détails"}
           </button>
 
@@ -817,30 +638,38 @@ function ListMembersContent() {
           {isOpen && (
             <div className="text-black text-sm mt-3 w-full space-y-4">
 
-              {/* 1. IDENTITÉ */}
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
                 <p>🎗️ Civilité : {m.sexe || "—"}</p>
                 <p>⏳ Tranche d'âge : {m.age || "—"}</p>
                 <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
               </div>
-
               <hr />
 
-              {/* 2. SUIVI */}
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
-                <p className="font-semibold text-[#2E3192]">
-                  💡 Statut : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || "—"}
-                </p>
+                <p className="font-semibold text-[#2E3192]">💡 Statut : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || "—"}</p>
                 <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
                 <p>📝 Commentaire : {m.commentaire_suivis || "—"}</p>
                 <p>📑 Évangélisation : {m.Commentaire_Suivi_Evangelisation || "—"}</p>
+                {/* 🔥 Affichage détaillé des conseillers dans les détails */}
+                <div className="mt-1">
+                  <span className="font-semibold">👤 Conseiller(s) : </span>
+                  {(assignmentsMap[m.id] && assignmentsMap[m.id].length > 0) ? (
+                    <span>
+                      {assignmentsMap[m.id].map((c, i) => (
+                        <span key={c.id}>
+                          {c.prenom} {c.nom}
+                          {i === 0 && assignmentsMap[m.id].length > 1 ? " (principal)" : ""}
+                          {i < assignmentsMap[m.id].length - 1 ? ", " : ""}
+                        </span>
+                      ))}
+                    </span>
+                  ) : "—"}
+                </div>
               </div>
-
               <hr />
 
-              {/* 3. VIE SPIRITUELLE */}
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
                 <p>💧 Baptême d'eau : {m.bapteme_eau || "—"}</p>
@@ -853,20 +682,16 @@ function ListMembersContent() {
                 <p>✒️ Formation : {m.Formation || "—"}</p>
                 <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}</p>
               </div>
-
               <hr />
 
-              {/* 4. PARCOURS */}
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>
                 <p>🧩 Comment venu : {m.venu || "—"}</p>
                 <p>✨ Raison : {m.statut_initial || "—"}</p>
                 <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
               </div>
-
               <hr />
 
-              {/* 5. SOIN PASTORAL */}
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
                 <p>❓ Besoins : {besoins}</p>
@@ -878,7 +703,6 @@ function ListMembersContent() {
                     💡 Ajouter / Voir suivis
                   </button>
                 </div>
-
                 {openSuiviMemberId === m.id && (
                   <SuiviPopup
                     member={m}
@@ -890,38 +714,20 @@ function ListMembersContent() {
 
               <div className="flex flex-col items-center">
                 <div className="flex flex-col items-center w-full p-4 bg-white rounded-lg shadow-md space-y-2">
-                  {/* Modifier */}
-                  <button
-                    onClick={() => setEditMember(m)}
-                    className="w-full text-orange-500 text-sm py-2 rounded-md"
-                  >
+                  <button onClick={() => setEditMember(m)} className="w-full text-orange-500 text-sm py-2 rounded-md">
                     ✏️ Modifier le contact
                   </button>
 
-                  {/* ✅ Intégration terminée */}
                   {userRole === "Conseiller" && m.integration_fini !== "fini" && (
                     <button
                       onClick={async () => {
-                        const confirmAction = window.confirm(
-                          "⚠️ Confirmation\n\nCe contact ne sera plus attribué à vous.\nVoulez-vous continuer ?"
-                        );
-                        if (!confirmAction) return;
-
+                        if (!window.confirm("⚠️ Confirmation\n\nCe contact ne sera plus attribué à vous.\nVoulez-vous continuer ?")) return;
                         try {
-                          const { error } = await supabase
-                            .from("membres_complets")
-                            .update({
-                              integration_fini: "fini",
-                              conseiller_id: null,
-                            })
-                            .eq("id", m.id);
-
+                          const { error } = await supabase.from("membres_complets").update({ integration_fini: "fini", conseiller_id: null }).eq("id", m.id);
                           if (error) throw error;
-
                           setAllMembers((prev) => prev.filter((mem) => mem.id !== m.id));
                           showToast("✅ Intégration terminée. Contact détaché.");
                         } catch (err) {
-                          console.error("Erreur intégration :", err);
                           showToast("❌ Erreur lors de l'opération");
                         }
                       }}
@@ -931,17 +737,9 @@ function ListMembersContent() {
                     </button>
                   )}
 
-                  {/* Supprimer */}
                   <button
                     onClick={() => {
-                      if (
-                        window.confirm(
-                          "⚠️ Suppression définitive\n\n" +
-                            "Voulez-vous vraiment supprimer ce contact ?\n\n" +
-                            "Cette action supprimera également TOUT l'historique du contact (suivi, commentaires, transferts).\n" +
-                            "Cette action est irréversible."
-                        )
-                      ) {
+                      if (window.confirm("⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?\n\nCette action supprimera également TOUT l'historique du contact.\nCette action est irréversible.")) {
                         handleSupprimerMembre(m.id);
                       }
                     }}
@@ -960,11 +758,7 @@ function ListMembersContent() {
 
   // -------------------- Rendu --------------------
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-4 sm:p-6"
-      style={{ background: "#333699" }}
-    >
-      {/* Top Bar */}
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
         Liste des <span className="text-emerald-300">Membres</span>
@@ -972,17 +766,13 @@ function ListMembersContent() {
 
       <div className="max-w-3xl w-full mb-6 text-center">
         <p className="italic text-base text-white/90">
-          <span className="text-blue-300 font-semibold">Visualisez et gérez</span> tous les
-          membres,{" "}
+          <span className="text-blue-300 font-semibold">Visualisez et gérez</span> tous les membres,{" "}
           <span className="text-blue-300 font-semibold"> nouveaux contacts</span> et{" "}
-          <span className="text-blue-300 font-semibold"> membres existants</span>. Vous pouvez
-          filtrer par état, consulter les détails,{" "}
-          <span className="text-blue-300 font-semibold"> envoyer des suivis</span> et mettre à jour
-          les informations en toute sécurité selon votre rôle.
+          <span className="text-blue-300 font-semibold"> membres existants</span>. Vous pouvez filtrer par état, consulter les détails,{" "}
+          <span className="text-blue-300 font-semibold"> envoyer des suivis</span> et mettre à jour les informations en toute sécurité selon votre rôle.
         </p>
       </div>
 
-      {/* Barre de recherche */}
       <div className="mt-3 w-full max-w-4xl flex justify-center mb-2">
         <input
           type="text"
@@ -993,7 +783,6 @@ function ListMembersContent() {
         />
       </div>
 
-      {/* Filtre */}
       <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
         <select
           value={filter}
@@ -1010,19 +799,14 @@ function ListMembersContent() {
 
       <div className="w-full flex justify-end">
         {canAddMember && (
-          <button
-            onClick={() => router.push("/AddContact")}
-            className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-          >
+          <button onClick={() => router.push("/AddContact")} className="text-white font-semibold px-4 py-2 rounded shadow text-sm">
             ➕ Ajouter un membre
           </button>
         )}
       </div>
 
-      {/* ==================== VUE CARTE ==================== */}
       {view === "card" && (
         <>
-          {/* Nouveaux */}
           {filteredNouveaux.length > 0 && (
             <>
               <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg text-sm">
@@ -1034,7 +818,6 @@ function ListMembersContent() {
             </>
           )}
 
-          {/* Existants */}
           {filteredAnciens.length > 0 && (
             <>
               <h2 className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-blue-500 to-gray-300 bg-clip-text text-transparent">
@@ -1046,7 +829,6 @@ function ListMembersContent() {
             </>
           )}
 
-          {/* Inactifs */}
           {filteredInactifs.length > 0 && (
             <>
               <h2 className="w-full max-w-6xl text-gray-400 font-bold mb-2 text-lg">
@@ -1068,17 +850,14 @@ function ListMembersContent() {
         onClose={() => setEditMember(null)}
         onUpdateMember={async (updatedMember) => {
           await logStats(editMember, updatedMember, userProfile);
-
-          setAllMembers((prev) =>
-            prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
-          );
-
+          setAllMembers((prev) => prev.map((m) => (m.id === updatedMember.id ? updatedMember : m)));
+          // 🔥 Recharger les assignments après modification
+          await fetchAssignments(userProfile);
           setEditMember(null);
           showToast("✅ Contact mis à jour !");
         }}
       />
 
-      {/* Toast */}
       {showingToast && (
         <div className="fixed bottom-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50">
           {toastMessage}

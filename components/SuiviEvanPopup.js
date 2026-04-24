@@ -10,6 +10,10 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
   const [currentUserName, setCurrentUserName] = useState("");
   const [editingSuivi, setEditingSuivi] = useState(null);
 
+  // ✅ ID réel dans la table `evangelises` (peut différer de member.id qui vient de membres_complets)
+  const [evangeliseId, setEvangeliseId] = useState(null);
+  const [evangeliseNotFound, setEvangeliseNotFound] = useState(false);
+
   const formTopRef = useRef(null);
 
   const parseBesoinsList = (val) => {
@@ -55,6 +59,74 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
     "Communauté / Isolement",
     "Dépression / Santé mentale",
   ];
+
+  // ─── Résolution de l'evangelise_id ───
+  // member.id peut venir de membres_complets. On cherche l'entrée correspondante
+  // dans evangelises via plusieurs stratégies : id direct, puis telephone, puis nom+prenom.
+  useEffect(() => {
+    const resolveEvangeliseId = async () => {
+      if (!member?.id) return;
+
+      // Stratégie 1 : l'id du membre existe directement dans evangelises
+      const { data: direct } = await supabase
+        .from("evangelises")
+        .select("id")
+        .eq("id", member.id)
+        .maybeSingle();
+
+      if (direct?.id) {
+        setEvangeliseId(direct.id);
+        return;
+      }
+
+      // Stratégie 2 : lier via membre_id (si la colonne existe dans evangelises)
+      const { data: byMembreId } = await supabase
+        .from("evangelises")
+        .select("id")
+        .eq("membre_id", member.id)
+        .maybeSingle();
+
+      if (byMembreId?.id) {
+        setEvangeliseId(byMembreId.id);
+        return;
+      }
+
+      // Stratégie 3 : lier via téléphone
+      if (member.telephone) {
+        const { data: byPhone } = await supabase
+          .from("evangelises")
+          .select("id")
+          .eq("telephone", member.telephone)
+          .maybeSingle();
+
+        if (byPhone?.id) {
+          setEvangeliseId(byPhone.id);
+          return;
+        }
+      }
+
+      // Stratégie 4 : lier via prénom + nom
+      if (member.prenom && member.nom) {
+        const { data: byName } = await supabase
+          .from("evangelises")
+          .select("id")
+          .eq("prenom", member.prenom)
+          .eq("nom", member.nom)
+          .maybeSingle();
+
+        if (byName?.id) {
+          setEvangeliseId(byName.id);
+          return;
+        }
+      }
+
+      // Aucune correspondance trouvée
+      console.warn("[SuiviEvanPopup] Aucun evangelise_id trouvé pour member.id =", member.id);
+      setEvangeliseNotFound(true);
+    };
+
+    resolveEvangeliseId();
+  }, [member]);
 
   // ─── Résolution utilisateur ───
   useEffect(() => {
@@ -110,15 +182,17 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
     resolveUser();
   }, [user]);
 
+  // ─── Fetch suivis une fois evangeliseId connu ───
   useEffect(() => {
-    fetchSuivis();
-  }, []);
+    if (evangeliseId) fetchSuivis();
+  }, [evangeliseId]);
 
   const fetchSuivis = async () => {
+    if (!evangeliseId) return;
     const { data } = await supabase
       .from("suivis_evangelises")
       .select("*, profiles:created_by(prenom, nom)")
-      .eq("evangelise_id", member.id)
+      .eq("evangelise_id", evangeliseId)
       .order("date_action", { ascending: false });
     setSuivis(data || []);
   };
@@ -212,6 +286,13 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
       alert("Session introuvable. Veuillez vous déconnecter et vous reconnecter.");
       return;
     }
+    if (!evangeliseId) {
+      alert(
+        "Ce membre ne possède pas encore d'entrée dans la table des évangélisés.\n" +
+        "Veuillez d'abord l'enregistrer comme évangélisé avant d'ajouter un suivi."
+      );
+      return;
+    }
 
     setLoading(true);
 
@@ -264,9 +345,10 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
         prev.map((s) => (s.id === editingSuivi.id ? { ...editingSuivi, ...payload } : s))
       );
     } else {
+      // ✅ On utilise evangeliseId (résolu) et non member.id directement
       const { error } = await supabase.from("suivis_evangelises").insert({
         ...payload,
-        evangelise_id: member.id,
+        evangelise_id: evangeliseId,
         created_by: currentUserId,
       });
 
@@ -279,10 +361,11 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
       await fetchSuivis();
     }
 
+    // Mettre à jour les besoins dans evangelises (et non membres_complets)
     await supabase
       .from("evangelises")
       .update({ besoin: JSON.stringify(newMemberBesoins) })
-      .eq("id", member.id);
+      .eq("id", evangeliseId);
 
     setMemberBesoins(newMemberBesoins);
     setResolvedBesoins([]);
@@ -366,6 +449,21 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
         {/* ── Body ── */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "72vh" }}>
 
+          {/* ✅ Bandeau erreur si evangelise_id introuvable */}
+          {evangeliseNotFound && (
+            <div className="bg-red-50 border border-red-300 rounded-xl px-4 py-3 text-sm text-red-700">
+              ⚠️ Ce membre n'est pas encore enregistré dans la liste des évangélisés.
+              Les suivis d'évangélisation ne peuvent pas être ajoutés.
+            </div>
+          )}
+
+          {/* Bandeau chargement evangeliseId */}
+          {!evangeliseId && !evangeliseNotFound && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-600">
+              🔄 Vérification du profil évangélisé...
+            </div>
+          )}
+
           {/* Bandeau édition */}
           {editingSuivi && (
             <div className="flex items-center justify-between bg-orange-50 border border-orange-300 rounded-xl px-4 py-2">
@@ -381,127 +479,131 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
             </div>
           )}
 
-          {/* ── Formulaire ── */}
-          <SectionTitle>📋 Nouveau suivi</SectionTitle>
+          {/* ── Formulaire (masqué si evangelise introuvable) ── */}
+          {!evangeliseNotFound && (
+            <>
+              <SectionTitle>📋 Nouveau suivi</SectionTitle>
 
-          <Field label="Date">
-            <input
-              type="date"
-              value={formatDateForInput(form.date_action)}
-              onChange={(e) => setForm((prev) => ({ ...prev, date_action: e.target.value }))}
-              className="inp"
-            />
-          </Field>
+              <Field label="Date">
+                <input
+                  type="date"
+                  value={formatDateForInput(form.date_action)}
+                  onChange={(e) => setForm((prev) => ({ ...prev, date_action: e.target.value }))}
+                  className="inp"
+                />
+              </Field>
 
-          <Field label="Type d'action">
-            <select
-              value={form.type}
-              onChange={(e) => setForm({ ...form, type: e.target.value })}
-              className="inp"
-            >
-              <option value="">-- Type d'action --</option>
-              <option value="Appel">Appel</option>
-              <option value="Visite">Visite</option>
-              <option value="Entretien">Entretien</option>
-              <option value="Message">Message</option>
-            </select>
-          </Field>
+              <Field label="Type d'action">
+                <select
+                  value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value })}
+                  className="inp"
+                >
+                  <option value="">-- Type d'action --</option>
+                  <option value="Appel">Appel</option>
+                  <option value="Visite">Visite</option>
+                  <option value="Entretien">Entretien</option>
+                  <option value="Message">Message</option>
+                </select>
+              </Field>
 
-          {/* Besoins */}
-          <SectionTitle>🙏 Besoins</SectionTitle>
+              {/* Besoins */}
+              <SectionTitle>🙏 Besoins</SectionTitle>
 
-          <div className="flex flex-col gap-2">
-            {besoinsOptions.map((b) => {
-              const isChecked = form.besoin.includes(b);
-              const isResolved = resolvedBesoins.includes(b);
-              const statut = form.besoinStatuts[b] || "En suivi";
+              <div className="flex flex-col gap-2">
+                {besoinsOptions.map((b) => {
+                  const isChecked = form.besoin.includes(b);
+                  const isResolved = resolvedBesoins.includes(b);
+                  const statut = form.besoinStatuts[b] || "En suivi";
 
-              let boxStyle = "bg-white border-gray-300";
-              let showTick = false;
-              if (isResolved) {
-                boxStyle = "bg-green-500 border-green-500";
-              } else if (isChecked) {
-                boxStyle = "bg-orange-400 border-orange-400";
-                showTick = true;
-              }
+                  let boxStyle = "bg-white border-gray-300";
+                  let showTick = false;
+                  if (isResolved) {
+                    boxStyle = "bg-green-500 border-green-500";
+                  } else if (isChecked) {
+                    boxStyle = "bg-orange-400 border-orange-400";
+                    showTick = true;
+                  }
 
-              return (
-                <div key={b} className="flex items-center gap-3">
-                  <label
-                    className="flex items-center gap-2 text-sm cursor-pointer select-none flex-1 text-gray-700"
-                    onClick={() => toggleBesoin(b)}
-                  >
-                    <div
-                      className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${boxStyle}`}
-                    >
-                      {showTick && (
-                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
+                  return (
+                    <div key={b} className="flex items-center gap-3">
+                      <label
+                        className="flex items-center gap-2 text-sm cursor-pointer select-none flex-1 text-gray-700"
+                        onClick={() => toggleBesoin(b)}
+                      >
+                        <div
+                          className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${boxStyle}`}
+                        >
+                          {showTick && (
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className={isResolved ? "line-through text-gray-400" : ""}>{b}</span>
+                      </label>
+
+                      {isChecked && (
+                        <button
+                          type="button"
+                          onClick={() => toggleStatutBesoin(b)}
+                          className={`text-xs px-2 py-0.5 rounded-full border font-semibold transition-colors whitespace-nowrap ${
+                            statut === "Résolu"
+                              ? "bg-green-100 border-green-400 text-green-700"
+                              : "bg-blue-50 border-blue-300 text-blue-600"
+                          }`}
+                        >
+                          {statut === "Résolu" ? "✓ Résolu" : "En suivi"}
+                        </button>
+                      )}
+
+                      {isResolved && (
+                        <span className="text-xs px-2 py-0.5 rounded-full border bg-green-100 border-green-400 text-green-700 font-semibold whitespace-nowrap">
+                          ✓ Résolu
+                        </span>
                       )}
                     </div>
-                    <span className={isResolved ? "line-through text-gray-400" : ""}>{b}</span>
-                  </label>
+                  );
+                })}
+              </div>
 
-                  {isChecked && (
-                    <button
-                      type="button"
-                      onClick={() => toggleStatutBesoin(b)}
-                      className={`text-xs px-2 py-0.5 rounded-full border font-semibold transition-colors whitespace-nowrap ${
-                        statut === "Résolu"
-                          ? "bg-green-100 border-green-400 text-green-700"
-                          : "bg-blue-50 border-blue-300 text-blue-600"
-                      }`}
-                    >
-                      {statut === "Résolu" ? "✓ Résolu" : "En suivi"}
-                    </button>
-                  )}
+              {/* Commentaire */}
+              <SectionTitle>📝 Commentaire</SectionTitle>
 
-                  {isResolved && (
-                    <span className="text-xs px-2 py-0.5 rounded-full border bg-green-100 border-green-400 text-green-700 font-semibold whitespace-nowrap">
-                      ✓ Résolu
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+              <Field label="Commentaire">
+                <textarea
+                  placeholder="Commentaire..."
+                  value={form.commentaire}
+                  onChange={(e) => setForm({ ...form, commentaire: e.target.value })}
+                  className="inp"
+                  rows={3}
+                />
+              </Field>
 
-          {/* Commentaire */}
-          <SectionTitle>📝 Commentaire</SectionTitle>
+              {currentUserName && (
+                <p className="text-center text-sm text-gray-400">👤 {currentUserName}</p>
+              )}
 
-          <Field label="Commentaire">
-            <textarea
-              placeholder="Commentaire..."
-              value={form.commentaire}
-              onChange={(e) => setForm({ ...form, commentaire: e.target.value })}
-              className="inp"
-              rows={3}
-            />
-          </Field>
-
-          {currentUserName && (
-            <p className="text-center text-sm text-gray-400">👤 {currentUserName}</p>
+              {/* ── Bouton submit ── */}
+              <button
+                onClick={handleSubmit}
+                disabled={loading || !evangeliseId}
+                className="w-full py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
+                style={{
+                  background: loading
+                    ? "#a0a0c0"
+                    : editingSuivi
+                    ? "linear-gradient(135deg, #ea580c 0%, #f97316 100%)"
+                    : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
+                }}
+              >
+                {loading
+                  ? editingSuivi ? "Mise à jour..." : "Ajout..."
+                  : editingSuivi ? "💾 Enregistrer les modifications" : "➕ Ajouter suivi"
+                }
+              </button>
+            </>
           )}
-
-          {/* ── Bouton submit ── */}
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
-            style={{
-              background: loading
-                ? "#a0a0c0"
-                : editingSuivi
-                ? "linear-gradient(135deg, #ea580c 0%, #f97316 100%)"
-                : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
-            }}
-          >
-            {loading
-              ? editingSuivi ? "Mise à jour..." : "Ajout..."
-              : editingSuivi ? "💾 Enregistrer les modifications" : "➕ Ajouter suivi"
-            }
-          </button>
 
           {/* ── Historique ── */}
           <SectionTitle>📅 Historique</SectionTitle>

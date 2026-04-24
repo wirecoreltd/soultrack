@@ -1,15 +1,17 @@
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember }) {
+// Pass `currentUserRoles` (array) as a prop from the parent
+export default function EditMemberSuivisPopup({ member, cellules, conseillers, onClose, onUpdateMember, currentUserRoles }) {
   if (!member) return null;
 
-  const besoinsOptions = ["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
-  "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"];
+
+  const isPrivileged = (currentUserRoles || []).some(r => ["Administrateur", "ResponsableIntegration"].includes(r));
+
   const [autreMinistere, setAutreMinistere] = useState("");
+  const [search, setSearch] = useState("");
 
   const parseBesoin = (b) => {
     if (!b) return [];
@@ -24,16 +26,13 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
 
   const initialBesoin = parseBesoin(member?.besoin);
 
-  const [cellules, setCellules] = useState([]);
-  const [conseillers, setConseillers] = useState([]);
-  const [loadingData, setLoadingData] = useState(true);
-
   const [formData, setFormData] = useState({
     prenom: member?.prenom || "",
     nom: member?.nom || "",
     telephone: member?.telephone || "",
     ville: member?.ville || "",
     sexe: member?.sexe || "",
+    age: member?.age || "",
     star: !!member?.star,
     etat_contact: member?.etat_contact || "Nouveau",
     bapteme_eau: member?.bapteme_eau ?? null,
@@ -41,7 +40,7 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
     priere_salut: member?.priere_salut || "",
     type_conversion: member?.type_conversion || "",
     cellule_id: member?.cellule_id ?? "",
-    conseiller_id: member?.conseiller_id ?? "",
+    conseillers_ids: member?.conseillers_ids || [],
     besoin: initialBesoin,
     autreBesoin: "",
     venu: member?.venu || "",
@@ -53,77 +52,78 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
     Formation: member?.Formation || "",
     Soin_Pastoral: member?.Soin_Pastoral || "",
     Ministere: parseBesoin(member?.Ministere),
+    veut_se_faire_baptiser: member?.veut_se_faire_baptiser || "",
     Commentaire_Suivi_Evangelisation: member?.Commentaire_Suivi_Evangelisation || "",
-
   });
-  
-    const ministereOptions = [
-    "Intercession",
-    "Louange",
-    "Technique",
-    "Communication",
-    "Les Enfants",
-    "Les ados",
-    "Les jeunes",
-    "Finance",
-    "Nettoyage",
-    "Conseiller",
-    "Compassion",
-    "Visite",
-    "Berger",
-    "Modération",
+
+  const ministereOptions = [
+    "Intercession", "Louange", "Administration", "Technique",
+    "Communication", "Les Enfants", "Les ados", "Les jeunes",
+    "Finance", "Nettoyage", "Conseiller", "Compassion",
+    "Visite", "Berger", "Modération",
   ];
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [selectedConseillers, setSelectedConseillers] = useState([]);
 
-  // -------------------- LOAD DATA --------------------
+  // Ref for click-outside detection
+  const modalRef = useRef(null);
+
   useEffect(() => {
-    let mounted = true;
-    const loadData = async () => {
-      try {
-        const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full");
-        const { data: conseillersData } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom")
-          .eq("role", "Conseiller");
-        if (!mounted) return;
-        setCellules(cellulesData || []);
-        setConseillers(conseillersData || []);
-        setLoadingData(false);
-      } catch (err) {
-        console.error("Erreur chargement cellules/conseillers:", err);
-        setLoadingData(false);
+    const fetchAssignments = async () => {
+      const { data, error } = await supabase
+        .from("suivi_assignments")
+        .select("conseiller_id, role, profiles:conseiller_id(id, prenom, nom)")
+        .eq("membre_id", member.id)
+        .eq("statut", "actif")
+        .order("created_at", { ascending: true });
+
+      if (error) { console.error("fetchAssignments error:", error); return; }
+
+      if (data) {
+        // Trier: principal en premier
+        const sorted = [...data].sort((a, b) => {
+          if (a.role === "principal") return -1;
+          if (b.role === "principal") return 1;
+          return 0;
+        });
+        const objects = sorted.map(d => d.profiles).filter(Boolean);
+        setSelectedConseillers(objects);
       }
     };
-    loadData();
-    return () => { mounted = false; };
-  }, []);
+    fetchAssignments();
+  }, [member.id]);
+
+  // Click outside handler
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (modalRef.current && !modalRef.current.contains(e.target)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
+  const filteredConseillers = (conseillers || []).filter(c =>
+    `${c.prenom} ${c.nom}`.toLowerCase().includes(search.toLowerCase())
+  );
 
   // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
-  const { name, value, type, checked } = e.target;
-
-  if (type === "checkbox") {
-    setFormData(prev => ({
-      ...prev,
-      [name]: checked,
-      // si on décoche "serviteur", on vide Ministere
-      ...(name === "star" && !checked ? { Ministere: [] } : {}),
-    }));
-
-  } else if (name === "cellule_id" && value) {
-    setFormData(prev => ({ ...prev, cellule_id: value, conseiller_id: "" }));
-
-  } else if (name === "conseiller_id" && value) {
-    setFormData(prev => ({ ...prev, conseiller_id: value, cellule_id: "" }));
-  
-  } else {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  }
-};
-
+    const { name, value, type, checked } = e.target;
+    if (type === "checkbox") {
+      setFormData(prev => ({
+        ...prev,
+        [name]: checked,
+        ...(name === "star" && !checked ? { Ministere: [] } : {}),
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
@@ -158,13 +158,26 @@ export default function EditMemberSuivisPopup({ member, onClose, onUpdateMember 
       } else {
         finalBesoin = finalBesoin.filter(b => b !== "Autre");
       }
+
       let finalMinistere = [...formData.Ministere];
+      if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
+        finalMinistere = finalMinistere.filter(m => m !== "Autre");
+        finalMinistere.push(autreMinistere.trim());
+      }
 
-if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
-  finalMinistere = finalMinistere.filter(m => m !== "Autre");
-  finalMinistere.push(autreMinistere.trim());
-}
-
+      if (isPrivileged) {
+        if (formData.star) {
+          await supabase.from("stats_ministere_besoin").upsert({
+            membre_id: member.id,
+            branche_id: member.branche_id || null,  // ← branche_id du membre, pas cellule_id
+            sexe: formData.sexe,
+            type: "ministere",
+          });
+        } else {
+          await supabase.from("stats_ministere_besoin").delete()
+            .eq("membre_id", member.id).eq("type", "ministere");
+        }
+      }
 
       const payload = {
         prenom: formData.prenom,
@@ -172,14 +185,14 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
         telephone: formData.telephone || null,
         ville: formData.ville || null,
         sexe: formData.sexe || null,
-        star: !!formData.star,
+        age: formData.age || null,
+        star: isPrivileged ? !!formData.star : !!member.star,
         etat_contact: formData.etat_contact || "Nouveau",
         bapteme_eau: formData.bapteme_eau,
         bapteme_esprit: formData.bapteme_esprit,
         priere_salut: formData.priere_salut || null,
         type_conversion: formData.type_conversion || null,
-        cellule_id: formData.cellule_id || null,
-        conseiller_id: formData.conseiller_id || null,
+        cellule_id: isPrivileged ? (formData.cellule_id || null) : (member.cellule_id || null),
         besoin: JSON.stringify(finalBesoin),
         venu: formData.venu || null,
         infos_supplementaires: formData.infos_supplementaires || null,
@@ -187,239 +200,210 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
         suivi_statut: formData.suivi_statut || null,
         commentaire_suivis: formData.commentaire_suivis || null,
         is_whatsapp: !!formData.is_whatsapp,
-        Formation: formData.Formation || null,        
+        Formation: formData.Formation || null,
+        Soin_Pastoral: formData.Soin_Pastoral || null,
+        veut_se_faire_baptiser: formData.veut_se_faire_baptiser || null,
         Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
-        Soin_Pastoral: formData.Soin_Pastoral || null,        
-        Ministere: formData.star? JSON.stringify(finalMinistere): null,
+        Ministere: (isPrivileged && formData.star) ? JSON.stringify(finalMinistere) : member.Ministere,
       };
 
-      const { error } = await supabase
-        .from("membres_complets")
-        .update(payload)
-        .eq("id", member.id);
-
+      const { error } = await supabase.from("membres_complets").update(payload).eq("id", member.id);
       if (error) throw error;
 
-      const { data } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("id", member.id)
-        .single();
+      if (isPrivileged) {
+        await supabase.from("suivi_assignments").delete().eq("membre_id", member.id);
+        // selectedConseillers est un tableau d objets {id, prenom, nom}
+        const rows = selectedConseillers.map((c, index) => ({
+          membre_id: member.id,
+          conseiller_id: c.id,   // ← c.id et non c entier
+          role: index === 0 ? "principal" : "assistant",
+          statut: "actif"
+        }));
+        if (rows.length > 0) await supabase.from("suivi_assignments").insert(rows);
+      }
 
-      onUpdateMember?.(data);
+      const { data: updatedMember, error: selectError } = await supabase
+        .from("membres_complets").select("*").eq("id", member.id).single();
+      if (selectError) throw selectError;
+
+      onUpdateMember(updatedMember);
       onClose();
     } catch (err) {
       console.error(err);
-      setMessage("❌ Une erreur est survenue lors de l’enregistrement.");
+      setMessage("❌ Une erreur est survenue lors de l'enregistrement.");
     } finally {
       setLoading(false);
     }
   };
+
   // -------------------- UI --------------------
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">
-      <div className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl bg-gradient-to-b from-[rgba(46,49,146,0.16)] to-[rgba(46,49,146,0.4)]" style={{ backdropFilter: "blur(8px)" }}>
-        <button onClick={onClose} className="absolute top-4 right-4 text-red-600 font-bold text-xl">✕</button>
-        <h2 className="text-2xl font-bold text-center mb-6 text-white">
-          Modifier le profil {member.prenom} {member.nom}
-        </h2>
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: "rgba(30,35,90,0.35)", backdropFilter: "blur(6px)" }}>
+      <div
+        ref={modalRef}
+        className="relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
+        style={{ background: "#ffffff", border: "1px solid #e2e8f0" }}
+      >
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4" style={{ background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}>
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-white font-bold text-sm transition-all"
+            style={{ background: "rgba(255,255,255,0.2)" }}
+          >
+            ✕
+          </button>
+          <h2 className="text-xl font-bold text-white pr-10">
+            ✏️ {member.prenom} {member.nom}
+          </h2>
+          <p className="text-blue-100 text-sm mt-1 opacity-80">Modifier le profil</p>
+        </div>
 
-        <div className="overflow-y-auto max-h-[70vh] flex flex-col gap-4 text-white">
+        {/* Body */}
+        <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
 
-          {["prenom", "nom", "telephone", "ville"].map((f) => (
-            <div key={f} className="flex flex-col">
-              <label className="font-medium capitalize">{f}</label>
-          
-              <input
-                name={f}
-                value={formData[f]}
-                onChange={handleChange}
-                className="input"
-              />
-          
-              {/* Checkbox WhatsApp sous téléphone */}
-              {f === "telephone" && (
-                <div className="flex items-center gap-3 mt-3">
-                  <label className="font-medium">Numéro Whatsapp</label>
-                  <input
-                    type="checkbox"
-                    name="is_whatsapp"
-                    checked={formData.is_whatsapp}
-                    onChange={handleChange}
-                    className="accent-[#25297e]"
-                  />
-                </div>
-              )}
-            </div>
-          ))}
+          {/* Section: Identité */}
+          <SectionTitle>👤 Identité</SectionTitle>
 
-          {/* Sexe */}
-          <div className="flex flex-col">
-            <label className="font-medium">Sexe</label>
-            <select name="sexe" value={formData.sexe} onChange={handleChange} className="input">
-              <option value="">-- Sexe --</option>
+          <Field label="Civilité">
+            <select name="sexe" value={formData.sexe} onChange={handleChange} className="inp">
+              <option value="">-- Civilité --</option>
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
             </select>
-          </div>
-          
-            {/* Bapteme de d'eau */}
-          <div className="flex flex-col">
-            <label className="font-medium">Baptême d'eau</label>
+          </Field>
+
+          {["prenom", "nom", "telephone", "ville"].map((f) => (
+            <Field key={f} label={f.charAt(0).toUpperCase() + f.slice(1)}>
+              <input name={f} value={formData[f]} onChange={handleChange} className="inp" />
+              {f === "telephone" && (
+                <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
+                  <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} className="accent-[#2E3192]" />
+                  Numéro WhatsApp
+                </label>
+              )}
+            </Field>
+          ))}
+
+          <Field label="Âge">
+            <select name="age" value={formData.age} onChange={handleChange} className="inp">
+              <option value="">-- Choisir --</option>
+              {["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"].map(v => (
+                <option key={v} value={v}>{v}</option>
+              ))}
+            </select>
+          </Field>
+          {/* Section: Vie spirituelle */}
+          <SectionTitle>🕊 Vie spirituelle</SectionTitle>
+
+          <Field label="Baptême d'eau">
             <select
               name="bapteme_eau"
               value={formData.bapteme_eau ?? ""}
-              onChange={handleChange}
-              className="input"
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData(prev => ({
+                  ...prev,
+                  bapteme_eau: value,
+                  veut_se_faire_baptiser: value === "Oui" ? "Non" : prev.veut_se_faire_baptiser
+                }));
+              }}
+              className="inp"
             >
               <option value="">-- Sélectionner --</option>
               <option value="Oui">Oui</option>
               <option value="Non">Non</option>
             </select>
-          </div>
+          </Field>
 
-          {/* Bapteme de feu */}
-          <div className="flex flex-col">
-              <label className="font-medium">Baptême de feu</label>
-              <select
-                name="bapteme_esprit"
-                value={formData.bapteme_esprit ?? ""}
-                onChange={handleChange}
-                className="input"
-              >
-                <option value="">-- Sélectionner --</option>
-                <option value="Oui">Oui</option>
-                <option value="Non">Non</option>
-              </select>
-            </div>
+          {formData.bapteme_eau === "Non" && (
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer ml-4">
+              <input
+                type="checkbox"
+                checked={formData.veut_se_faire_baptiser === "Oui"}
+                onChange={(e) => setFormData(prev => ({ ...prev, veut_se_faire_baptiser: e.target.checked ? "Oui" : "Non" }))}
+                className="accent-[#2E3192]"
+              />
+              💦 Veut se faire baptiser
+            </label>
+          )}
 
-           {/* Formation*/}
-          <div className="flex flex-col">
-            <label className="font-medium">Formation</label>
-            <textarea
-              name="Formation"
-              value={formData.Formation}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
-          </div>
+          <Field label="Baptême de feu">
+            <select name="bapteme_esprit" value={formData.bapteme_esprit ?? ""} onChange={handleChange} className="inp">
+              <option value="">-- Sélectionner --</option>
+              <option value="Oui">Oui</option>
+              <option value="Non">Non</option>
+            </select>
+          </Field>
 
-          {/* Soin Pastoral*/}
-          <div className="flex flex-col">
-            <label className="font-medium">Soin_Pastoral</label>
-            <textarea
-              name="Soin_Pastoral"
-              value={formData.Soin_Pastoral}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
-          </div>
-            
-          {/* Prière du salut */}
-          <div className="flex flex-col">
-            <label className="font-medium">Prière du salut</label>
+          <Field label="Prière du salut">
             <select
-              className="input"
               name="priere_salut"
               value={formData.priere_salut}
-              required
               onChange={(e) => {
                 const value = e.target.value;
-                setFormData({
-                  ...formData,
-                  priere_salut: value,
-                  type_conversion: value === "Oui" ? formData.type_conversion : "",
-                });
+                setFormData({ ...formData, priere_salut: value, type_conversion: value === "Oui" ? formData.type_conversion : "" });
               }}
+              className="inp"
             >
               <option value="">-- Prière du salut ? --</option>
               <option value="Oui">Oui</option>
               <option value="Non">Non</option>
             </select>
-
-            {/* Type de conversion */}
             {formData.priere_salut === "Oui" && (
-              <select
-                className="input mt-2"
-                name="type_conversion"
-                value={formData.type_conversion}
-                onChange={handleChange}
-                required
-              >
+              <select name="type_conversion" value={formData.type_conversion} onChange={handleChange} className="inp mt-2">
                 <option value="">Type</option>
                 <option value="Nouveau converti">Nouveau converti</option>
                 <option value="Réconciliation">Réconciliation</option>
               </select>
             )}
-          </div>          
+          </Field>
 
-          {/* Besoins */}
-          <div className="flex flex-col">
-            <label className="font-medium">Difficultés / Besoins</label>
-            {besoinsOptions.map(b => (
-              <label key={b} className="flex items-center gap-2">
-                <input type="checkbox" value={b} checked={formData.besoin.includes(b)} onChange={handleBesoinChange} className="accent-[#25297e]" />
-                {b}
-              </label>
-            ))}
-            <label className="flex items-center gap-2">
-              <input type="checkbox" value="Autre" checked={showAutre} onChange={handleBesoinChange} className="accent-[#25297e]" />
-              Autre
-            </label>
-            {showAutre && (
-              <input name="autreBesoin" value={formData.autreBesoin} onChange={handleChange} className="input mt-2" placeholder="Précisez" />
-            )}
-          </div>
-             
-          {/* Comment est-il venu ? */}
-          <div className="flex flex-col">
-            <label className="font-medium">Comment est-il venu ?</label>
-            <select name="venu" value={formData.venu} onChange={handleChange} className="input">
+          <Field label="Formation">
+            <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="inp" rows={2} />
+          </Field>          
+
+          {/* État du contact */}
+          <Field label="État du contact">
+            <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="inp">
+              <option value="">-- Sélectionner --</option>
+              <option value="nouveau">Nouveau</option>
+              <option value="existant">Existant</option>
+              <option value="inactif">Inactif</option>
+            </select>
+          </Field>
+
+          <Field label="Comment est-il venu ?">
+            <select name="venu" value={formData.venu} onChange={handleChange} className="inp">
               <option value="">-- Sélectionner --</option>
               <option value="invité">Invité</option>
               <option value="réseaux">Réseaux</option>
               <option value="evangélisation">Évangélisation</option>
               <option value="autre">Autre</option>
             </select>
-          </div>
+          </Field>
 
-          {/* Informations supplémentaires */}
-          <div className="flex flex-col">
-            <label className="font-medium">Informations supplémentaires</label>
-            <textarea
-              name="infos_supplementaires"
-              value={formData.infos_supplementaires}
-              onChange={handleChange}
-              className="input"
-              rows={2}
-            />
-          </div>
+          <Field label="Informations supplémentaires">
+            <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} className="inp" rows={2} />
+          </Field>
 
-          {/* Statut à l'arrivée */}
-          <div className="flex flex-col">
-            <label className="font-medium">Statut à l'arrivée</label>
-            <select
-              name="statut_initial"
-              value={formData.statut_initial}
-              onChange={handleChange}
-              className="input"
-            >
+          <Field label="Statut à l'arrivée">
+            <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="inp">
               <option value="">-- Sélectionner --</option>
               <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
               <option value="a déjà son église">A déjà son église</option>
               <option value="visiteur">Visiteur</option>
             </select>
-          </div>                         
+          </Field>
+
         </div>
 
-        {/* Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all"
           >
             Annuler
           </button>
@@ -427,48 +411,60 @@ if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
             type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
+            style={{ background: loading ? "#a0a0c0" : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}
           >
-            {loading ? "Enregistrement..." : "Sauvegarder"}
+            {loading ? "Enregistrement..." : "💾 Sauvegarder"}
           </button>
         </div>
 
-        {/* Message succès ou erreur sous les boutons */}
         {message && (
-          <p className="text-[#25297e] font-semibold text-center mt-3">
+          <p className="text-center text-sm font-semibold px-6 pb-4" style={{ color: message.includes("❌") ? "#dc2626" : "#2E3192" }}>
             {message}
           </p>
         )}
 
-        {/* Styles */}
         <style jsx>{`
-          label {
-            font-weight: 600; /* semi-bold */
-            color: white;
-          }
-
-          .input {
+          .inp {
             width: 100%;
-            border: 1px solid #a0c4ff;
-            border-radius: 14px;
-            padding: 12px;
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-weight: 400;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            color: #1e293b;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
           }
-
-          select.input {
-            font-weight: 400;
-            color: white;
+          .inp:focus {
+            border-color: #2E3192;
+            background: #fff;
           }
-
-          select.input option {
+          select.inp option {
             background: white;
-            color: black;
-            font-weight: 400;
+            color: #1e293b;
           }
         `}</style>
       </div>
+    </div>
+  );
+}
+
+// ---- Helper sub-components ----
+function SectionTitle({ children }) {
+  return (
+    <div className="flex items-center gap-2 pt-2">
+      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#2E3192" }}>{children}</span>
+      <div className="flex-1 h-px" style={{ background: "#e2e8f0" }} />
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#64748b" }}>{label}</label>
+      {children}
     </div>
   );
 }

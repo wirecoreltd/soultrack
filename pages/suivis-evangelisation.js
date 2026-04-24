@@ -32,7 +32,7 @@ function SuivisEvangelisationContent() {
   const [phoneMenuId, setPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
 
-  // ✅ Map : suivi_evangelise_id → [{id, prenom, nom}]
+  // 🔥 Map : suivi_evangelise_id → [{id, prenom, nom}]
   const [assignmentsMap, setAssignmentsMap] = useState({});
 
   /* ================= INIT ================= */
@@ -106,16 +106,15 @@ function SuivisEvangelisationContent() {
   };
 
   /* ================= ASSIGNMENTS MAP ================= */
-  // ✅ Charge tous les suivi_assignments liés aux suivis évangélisés
-  //    et construit une map : suivi_evangelise_id → [{id, prenom, nom}]
-  const fetchAssignmentsForSuivis = async (suivisIds, profilesData) => {
+  // 🔥 Lit depuis suivi_assignments_evangelises (table dédiée)
+  const fetchAssignmentsForSuivis = async (suivisIds) => {
     if (!suivisIds || suivisIds.length === 0) {
       setAssignmentsMap({});
       return;
     }
 
     const { data: assignments, error } = await supabase
-      .from("suivi_assignments")
+      .from("suivi_assignments_evangelises")   // 🔥 table dédiée
       .select("suivi_evangelise_id, conseiller_id")
       .in("suivi_evangelise_id", suivisIds)
       .eq("statut", "actif");
@@ -126,7 +125,7 @@ function SuivisEvangelisationContent() {
       return;
     }
 
-    // Récupérer les profils des conseillers présents dans les assignments
+    // Récupérer les profils des conseillers
     const conseillerIds = [...new Set((assignments || []).map(a => a.conseiller_id).filter(Boolean))];
 
     let profileMap = {};
@@ -138,7 +137,7 @@ function SuivisEvangelisationContent() {
       (profiles || []).forEach(p => { profileMap[p.id] = p; });
     }
 
-    // Construire la map suivi_evangelise_id → [conseillers]
+    // Construire la map suivi_evangelise_id → [{id, prenom, nom}]
     const map = {};
     (assignments || []).forEach(row => {
       const profile = profileMap[row.conseiller_id];
@@ -174,13 +173,12 @@ function SuivisEvangelisationContent() {
 
       // 🔹 Filtrage par rôle
       if (userData.role === "Conseiller") {
-        // ✅ Pour un conseiller : on filtre via suivi_assignments
+        // 🔥 Pour un conseiller : filtrer via suivi_assignments_evangelises
         const { data: myAssignments } = await supabase
-          .from("suivi_assignments")
+          .from("suivi_assignments_evangelises")  // 🔥 table dédiée
           .select("suivi_evangelise_id")
           .eq("conseiller_id", userData.id)
-          .eq("statut", "actif")
-          .not("suivi_evangelise_id", "is", null);
+          .eq("statut", "actif");
 
         const myIds = (myAssignments || []).map(a => a.suivi_evangelise_id);
         filtered = filtered.filter(m => myIds.includes(m.id));
@@ -236,7 +234,6 @@ function SuivisEvangelisationContent() {
     if (assigned && assigned.length > 0) {
       return assigned.map(c => `${c.prenom} ${c.nom}`).join(", ");
     }
-    // Fallback : si pas dans assignments, on cherche dans conseillers via conseiller_id direct
     return "—";
   };
 
@@ -251,7 +248,7 @@ function SuivisEvangelisationContent() {
   const handleStatusChange = (id, value) =>
     setStatusChanges((p) => ({ ...p, [id]: value }));
 
-  /* ================= UPSERT MEMBRE ================= */
+  /* ================= UPSERT MEMBRE + mise à jour suivi_assignments_evangelises ================= */
   const upsertMembre = async (suivi) => {
     try {
       const payload = {
@@ -277,17 +274,23 @@ function SuivisEvangelisationContent() {
 
       const { data, error } = await supabase
         .from("membres_complets")
-        .upsert(payload, { onConflict: "suivi_int_id" });
+        .upsert(payload, { onConflict: "suivi_int_id" })
+        .select("id")
+        .single();
 
       if (error) {
         console.error("Erreur insertion membre :", error);
         alert("Erreur insertion membre : " + error.message);
-      } else {
-        console.log("Membre intégré avec succès :", data);
+        return null;
       }
+
+      console.log("Membre intégré avec succès :", data);
+      return data?.id || null;
+
     } catch (err) {
       console.error("Erreur upsert membre :", err.message);
       alert("Erreur upsert membre : " + err.message);
+      return null;
     }
   };
 
@@ -313,11 +316,34 @@ function SuivisEvangelisationContent() {
       if (error) throw error;
 
       if (newStatus === "Intégré") {
-        await upsertMembre({
+        // 🔥 1. Créer le membre dans membres_complets
+        const membreId = await upsertMembre({
           ...m,
           status_suivis_evangelises: newStatus,
           commentaire_evangelises: newComment,
         });
+
+        // 🔥 2. Si on a le membre_id, on pourrait mettre à jour suivi_assignments si besoin
+        // (la table suivi_assignments_evangelises n'a pas de membre_id, c'est la table suivi_assignments qui en a)
+        // Donc on crée une entrée dans suivi_assignments pour le membre intégré
+        if (membreId) {
+          const assigned = assignmentsMap[id];
+          if (assigned && assigned.length > 0) {
+            const rows = assigned.map((c, index) => ({
+              membre_id: membreId,
+              conseiller_id: c.id,
+              role: index === 0 ? "principal" : "assistant",
+              statut: "actif",
+            }));
+            const { error: assignError } = await supabase
+              .from("suivi_assignments")
+              .insert(rows);
+            if (assignError) {
+              console.error("Erreur création suivi_assignments pour membre intégré:", assignError);
+            }
+          }
+        }
+
         setAllSuivis((prev) => prev.filter((s) => s.id !== id));
         return;
       }
@@ -442,7 +468,7 @@ function SuivisEvangelisationContent() {
                 {/* Cellule, Conseiller(s), Ville */}
                 <div className="flex flex-col items-center space-y-1 mb-1">
                   <p className="text-sm text-black">🏠 Cellule : {cellule?.cellule_full || "—"}</p>
-                  {/* ✅ Conseillers depuis suivi_assignments */}
+                  {/* 🔥 Conseillers depuis suivi_assignments_evangelises */}
                   <p className="text-sm text-black">
                     👤 Conseiller(s) : {getConseillersForSuivi(m.id)}
                   </p>
@@ -518,7 +544,7 @@ function SuivisEvangelisationContent() {
                     <p>❓ Difficultés / Besoins : {formatBesoin(m.besoin)}</p>
                     <p>📝 Infos : {m.infos_supplementaires || ""}</p>
 
-                    {/* ✅ Détail des conseillers assignés */}
+                    {/* 🔥 Détail des conseillers assignés depuis suivi_assignments_evangelises */}
                     <div>
                       <span className="font-semibold">👤 Conseiller(s) assigné(s) : </span>
                       {assignmentsMap[m.id] && assignmentsMap[m.id].length > 0 ? (

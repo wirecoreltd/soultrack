@@ -7,9 +7,9 @@ export default function EditEvangeliseSuiviPopup({
   member,
   cellules = [],
   conseillers = [],
-  onClose,          // ferme uniquement Edit
-  closeDetails,     // ferme Details si présent
-  onUpdateMember,   // met à jour le parent
+  onClose,
+  closeDetails,
+  onUpdateMember,
 }) {
   const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
   const initialBesoin =
@@ -104,127 +104,147 @@ export default function EditEvangeliseSuiviPopup({
         .single();
 
       if (error) {
-        alert("❌ Une erreur est survenue : " + error.message);
+        setMessage("❌ Une erreur est survenue : " + error.message);
       } else {
         if (onUpdateMember) onUpdateMember(data);
         setMessage("✅ Changement enregistré !");
         setTimeout(() => {
           setMessage("");
-          onClose(); // ferme Edit
-          if (closeDetails) closeDetails(); // ferme Details si présent
+          onClose();
+          if (closeDetails) closeDetails();
         }, 1200);
       }
     } catch (err) {
-      alert("❌ Une erreur est survenue : " + err.message);
+      setMessage("❌ Une erreur est survenue : " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      style={{ background: "rgba(30,35,90,0.35)", backdropFilter: "blur(6px)" }}
+    >
       <div
-        className="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl overflow-y-auto max-h-[90vh]"
-        style={{ background: "linear-gradient(180deg, rgba(46,49,146,0.16), rgba(46,49,146,0.40))" }}
+        className="relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
+        style={{ background: "#ffffff", border: "1px solid #e2e8f0" }}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-red-600 font-bold text-xl"
+        {/* Header */}
+        <div
+          className="px-6 pt-6 pb-4"
+          style={{ background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}
         >
-          ✕
-        </button>
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-white font-bold text-sm transition-all"
+            style={{ background: "rgba(255,255,255,0.2)" }}
+          >
+            ✕
+          </button>
+          <h2 className="text-xl font-bold text-white pr-10">
+            ✏️ {member.prenom} {member.nom}
+          </h2>
+          <p className="text-blue-100 text-sm mt-1 opacity-80">Modifier le suivi évangélisé</p>
+        </div>
 
-        <h2 className="text-2xl font-bold text-center mb-6 text-white">
-          Modifier {member.prenom} {member.nom}
-        </h2>
+        {/* Body */}
+        <div
+          className="overflow-y-auto px-6 py-5 flex flex-col gap-5"
+          style={{ maxHeight: "68vh" }}
+        >
+          {/* Section: Identité */}
+          <SectionTitle>👤 Identité</SectionTitle>
 
-        <div className="flex flex-col gap-4 text-white">
-          {["prenom", "nom", "ville", "telephone"].map((f) => (
-            <div key={f} className="flex flex-col">
-              <label className="font-semibold capitalize">{f}</label>
-              <input name={f} value={formData[f]} onChange={handleChange} className="input" />
-            </div>
+          <Field label="Civilité">
+            <select name="sexe" value={formData.sexe} onChange={handleChange} className="inp">
+              <option value="">-- Civilité --</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
+            </select>
+          </Field>
+
+          {[
+            { name: "prenom", label: "Prénom" },
+            { name: "nom", label: "Nom" },
+            { name: "ville", label: "Ville" },
+          ].map(({ name, label }) => (
+            <Field key={name} label={label}>
+              <input name={name} value={formData[name]} onChange={handleChange} className="inp" />
+            </Field>
           ))}
 
-          {/* WhatsApp */}
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="is_whatsapp"
-              checked={formData.is_whatsapp}
-              onChange={handleChange}
-              className="accent-[#25297e]"
-            />
-            WhatsApp
-          </label>
+          <Field label="Téléphone">
+            <input name="telephone" value={formData.telephone} onChange={handleChange} className="inp" />
+            <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
+              <input
+                type="checkbox"
+                name="is_whatsapp"
+                checked={formData.is_whatsapp}
+                onChange={handleChange}
+                className="accent-[#2E3192]"
+              />
+              Numéro WhatsApp
+            </label>
+          </Field>
 
-          {/* Sexe */}
-          <select
-            className="input select-black"
-            name="sexe"
-            value={formData.sexe || ""}
-            onChange={handleChange}
-          >
-            <option value="">Sexe</option>
-            <option value="Homme">Homme</option>
-            <option value="Femme">Femme</option>
-          </select>
+          {/* Section: Vie spirituelle */}
+          <SectionTitle>🕊 Vie spirituelle</SectionTitle>
 
-          {/* Prière du salut */}
-          <select
-            className="input"
-            value={formData.priere_salut ? "Oui" : "Non"}
-            onChange={(e) => {
-              const value = e.target.value;
-              setFormData({
-                ...formData,
-                priere_salut: value === "Oui",
-                type_conversion: value === "Oui" ? formData.type_conversion : "",
-              });
-            }}
-          >
-            <option value="">-- Prière du salut ? --</option>
-            <option value="Oui">Oui</option>
-            <option value="Non">Non</option>
-          </select>
-
-          {/* Type de conversion */}
-          {formData.priere_salut && (
+          <Field label="Prière du salut">
             <select
-              className="input"
-              value={formData.type_conversion || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, type_conversion: e.target.value })
-              }
+              className="inp"
+              value={formData.priere_salut ? "Oui" : "Non"}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData((prev) => ({
+                  ...prev,
+                  priere_salut: value === "Oui",
+                  type_conversion: value === "Oui" ? prev.type_conversion : "",
+                }));
+              }}
             >
-              <option value="">Type</option>
-              <option value="Nouveau converti">Nouveau converti</option>
-              <option value="Réconciliation">Réconciliation</option>
+              <option value="">-- Prière du salut ? --</option>
+              <option value="Oui">Oui</option>
+              <option value="Non">Non</option>
             </select>
-          )}
+            {formData.priere_salut && (
+              <select
+                name="type_conversion"
+                value={formData.type_conversion}
+                onChange={handleChange}
+                className="inp mt-2"
+              >
+                <option value="">Type de conversion</option>
+                <option value="Nouveau converti">Nouveau converti</option>
+                <option value="Réconciliation">Réconciliation</option>
+              </select>
+            )}
+          </Field>
 
-          {/* Besoins */}
-          <div className="flex flex-col">
-            <label className="font-semibold">Besoins</label>
+          {/* Section: Besoins */}
+          <SectionTitle>🙏 Besoins</SectionTitle>
+
+          <div className="flex flex-col gap-2">
             {besoinsOptions.map((item) => (
-              <label key={item} className="flex items-center gap-2">
+              <label key={item} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                 <input
                   type="checkbox"
                   value={item}
                   checked={formData.besoin.includes(item)}
                   onChange={handleBesoinChange}
-                  className="accent-[#25297e]"
+                  className="accent-[#2E3192]"
                 />
                 {item}
               </label>
             ))}
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
               <input
                 type="checkbox"
                 value="Autre"
                 checked={showAutre}
                 onChange={handleBesoinChange}
-                className="accent-[#25297e]"
+                className="accent-[#2E3192]"
               />
               Autre
             </label>
@@ -234,72 +254,119 @@ export default function EditEvangeliseSuiviPopup({
                 name="autreBesoin"
                 value={formData.autreBesoin}
                 onChange={handleChange}
-                className="input mt-2"
-                placeholder="Précisez"
+                placeholder="Précisez..."
+                className="inp mt-1"
               />
             )}
           </div>
 
-          {/* Infos supplémentaires */}
-          <label className="font-semibold">Infos supplémentaires</label>
-          <textarea
-            name="infos_supplementaires"
-            value={formData.infos_supplementaires}
-            onChange={handleChange}
-            className="input"
-            rows={3}
-          />
+          {/* Section: Suivi */}
+          <SectionTitle>📝 Suivi</SectionTitle>
 
-          {/* Commentaire */}
-          <label className="font-semibold">Commentaire</label>
-          <textarea
-            name="commentaire_evangelises"
-            value={formData.commentaire_evangelises}
-            onChange={handleChange}
-            className="input"
-            rows={2}
-          />
+          <Field label="Informations supplémentaires">
+            <textarea
+              name="infos_supplementaires"
+              value={formData.infos_supplementaires}
+              onChange={handleChange}
+              className="inp"
+              rows={2}
+            />
+          </Field>
+
+          <Field label="Commentaire">
+            <textarea
+              name="commentaire_evangelises"
+              value={formData.commentaire_evangelises}
+              onChange={handleChange}
+              className="inp"
+              rows={2}
+            />
+          </Field>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row gap-3">
           <button
-            onClick={onClose} // Annuler
-            className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md"
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all"
           >
             Annuler
           </button>
           <button
-            onClick={handleSubmit} // Sauvegarder et éventuellement fermer Details
+            type="button"
+            onClick={handleSubmit}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 disabled:opacity-60 text-white font-bold py-3 rounded-2xl shadow-md"
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
+            style={{
+              background: loading
+                ? "#a0a0c0"
+                : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
+            }}
           >
-            {loading ? "Enregistrement..." : "Sauvegarder"}
+            {loading ? "Enregistrement..." : "💾 Sauvegarder"}
           </button>
         </div>
 
         {message && (
-          <p className="text-[#25297e] font-semibold text-center mt-3">{message}</p>
+          <p
+            className="text-center text-sm font-semibold px-6 pb-4"
+            style={{ color: message.includes("❌") ? "#dc2626" : "#2E3192" }}
+          >
+            {message}
+          </p>
         )}
 
         <style jsx>{`
-          label {
-            font-weight: 600;
-            color: white;
-          }
-          .input {
+          .inp {
             width: 100%;
-            border: 1px solid #a0c4ff;
-            border-radius: 14px;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-weight: 400;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            color: #1e293b;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
           }
-          .select-black option {
-            color: black;
+          .inp:focus {
+            border-color: #2E3192;
+            background: #fff;
+          }
+          select.inp option {
+            background: white;
+            color: #1e293b;
           }
         `}</style>
       </div>
+    </div>
+  );
+}
+
+function SectionTitle({ children }) {
+  return (
+    <div className="flex items-center gap-2 pt-2">
+      <span
+        className="text-xs font-bold uppercase tracking-widest"
+        style={{ color: "#2E3192" }}
+      >
+        {children}
+      </span>
+      <div className="flex-1 h-px" style={{ background: "#e2e8f0" }} />
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label
+        className="text-xs font-semibold uppercase tracking-wide"
+        style={{ color: "#64748b" }}
+      >
+        {label}
+      </label>
+      {children}
     </div>
   );
 }

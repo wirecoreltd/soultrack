@@ -30,7 +30,7 @@ function getRoles(profile) {
 
 export default function ListMembers() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableCellule"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableIntegration"]}>
       <ListMembersContent />
     </ProtectedRoute>
   );
@@ -199,9 +199,11 @@ function ListMembersContent() {
           .map(a => a.membre_id);
         setConseillerMembreIds(ids);
       } else {
+        // Admin / ResponsableCellule / autres : pas de restriction par assignments
         setConseillerMembreIds(null);
       }
     }
+    // ✅ Toujours marquer comme chargé, quel que soit le rôle
     assignmentsLoadedRef.current = true;
   }, []); // ✅ pas de dépendance sur userProfile (on utilise la ref)
 
@@ -244,14 +246,17 @@ function ListMembersContent() {
 
   // -------------------- Fetch membres --------------------
   useEffect(() => {
-    // ✅ On attend que le profil soit prêt ET que les assignments soient chargés
     if (!userProfile) return;
-    if (!assignmentsLoadedRef.current) return;
 
-    // Pour un conseiller sans URL param, on doit avoir conseillerMembreIds résolu (non null)
     const rolesArray = getRoles(userProfile);
     const isConseiller = rolesArray.includes("Conseiller");
-    if (!conseillerIdFromUrl && isConseiller && conseillerMembreIds === null) return;
+
+    if (isConseiller) {
+      // ✅ Le conseiller attend que ses membre_ids soient chargés depuis suivi_assignments
+      if (!assignmentsLoadedRef.current) return;
+      if (!conseillerIdFromUrl && conseillerMembreIds === null) return;
+    }
+    // ✅ Admin / ResponsableCellule : on n'attend pas les assignments, on fetch directement
 
     let isMounted = true; // ✅ Guard contre les résultats de requêtes obsolètes
 

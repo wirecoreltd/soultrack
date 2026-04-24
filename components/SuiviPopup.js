@@ -266,7 +266,7 @@ export default function SuiviPopup({ member, onClose, user }) {
     };
 
     if (editingSuivi) {
-      // ─── MODE ÉDITION : UPDATE ───
+      // ─── MODE ÉDITION : UPDATE Supabase ───
       const { error: updateError } = await supabase
         .from("suivis")
         .update(payload)
@@ -279,22 +279,19 @@ export default function SuiviPopup({ member, onClose, user }) {
         return;
       }
 
-      // 🔥 Re-fetch uniquement la ligne modifiée avec la jointure profiles
-      const { data: updatedRow } = await supabase
-        .from("suivis")
-        .select("*, profiles:created_by(prenom, nom)")
-        .eq("id", editingSuivi.id)
-        .single();
+      // 🔥 Mise à jour LOCALE directe dans le state
+      // On reconstruit l'objet complet sans re-fetch pour éviter les problèmes de cache
+      const updatedSuivi = {
+        ...editingSuivi,           // garde id, membre_id, created_by, profiles (jointure déjà là)
+        ...payload,                // écrase avec les nouvelles valeurs
+      };
 
-      // 🔥 Remplacer directement dans le state local → mise à jour instantanée
-      if (updatedRow) {
-        setSuivis((prev) =>
-          prev.map((s) => (s.id === editingSuivi.id ? updatedRow : s))
-        );
-      }
+      setSuivis((prev) =>
+        prev.map((s) => (s.id === editingSuivi.id ? updatedSuivi : s))
+      );
 
     } else {
-      // ─── MODE CRÉATION : INSERT ───
+      // ─── MODE CRÉATION : INSERT puis re-fetch ───
       const { error: insertError } = await supabase.from("suivis").insert({
         ...payload,
         membre_id: member.id,
@@ -308,7 +305,7 @@ export default function SuiviPopup({ member, onClose, user }) {
         return;
       }
 
-      // Re-fetch complet pour avoir la nouvelle ligne avec profiles
+      // Re-fetch complet pour avoir la nouvelle ligne avec son id et profiles
       await fetchSuivis();
     }
 

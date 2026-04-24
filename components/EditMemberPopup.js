@@ -337,18 +337,18 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
 
               {selectedConseillers.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {selectedConseillers.map(id => {
-                    const c = (conseillers || []).find(x => x.id === id);
-                    return (
-                      <div key={id} className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white" style={{ background: "#2E3192" }}>
-                        {c?.prenom} {c?.nom}
-                        <button
-                          onClick={() => setSelectedConseillers(prev => prev.filter(x => x !== id))}
-                          className="ml-1 opacity-70 hover:opacity-100"
-                        >✕</button>
-                      </div>
-                    );
-                  })}
+                  {selectedConseillers.map((c, index) => (
+                    <div key={c.id} className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white" style={{ background: index === 0 ? "#2E3192" : "#6b7280" }}>
+                      <span>{c.prenom} {c.nom}</span>
+                      {index === 0 && selectedConseillers.length > 1 && (
+                        <span className="text-xs opacity-60 ml-1">(principal)</span>
+                      )}
+                      <button
+                        onClick={() => setSelectedConseillers(prev => prev.filter(x => x.id !== c.id))}
+                        className="ml-1 opacity-70 hover:opacity-100"
+                      >✕</button>
+                    </div>
+                  ))}
                 </div>
               )}
             </>

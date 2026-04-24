@@ -407,13 +407,13 @@ const formatDate = (dateStr) => {
 
           <input
             type="date"
-            value={formatDateForInput(formData.ma_date)}
-            onChange={(e) =>
-              setFormData(prev => ({
-                ...prev,
-                ma_date: e.target.value
-              }))
-            }
+            value={formatDateForInput(form.date_action)}
+              onChange={(e) =>
+                setForm(prev => ({
+                  ...prev,
+                  date_action: e.target.value
+                }))
+              }
           />
 
           <select

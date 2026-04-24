@@ -78,17 +78,24 @@ const isPrivileged = (currentUserRoles || [])
   const modalRef = useRef(null);
 
   useEffect(() => {
-    const fetchAssignments = async () => {
-      const { data, error } = await supabase
-        .from("suivi_assignments")
-        .select("conseiller_id")
-        .eq("membre_id", member.id);
-      if (!error && data) {
-        setSelectedConseillers(data.map(d => d.conseiller_id));
-      }
-    };
-    fetchAssignments();
-  }, [member.id]);
+  const fetchAssignments = async () => {
+    const { data, error } = await supabase
+      .from("suivi_assignments")
+      .select("conseiller_id")
+      .eq("membre_id", member.id);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    if (data) {
+      setSelectedConseillers(data.map(d => d.conseiller_id));
+    }
+  };
+
+  fetchAssignments();
+}, [member.id]);
 
   // Click outside handler
   useEffect(() => {
@@ -332,17 +339,28 @@ const isPrivileged = (currentUserRoles || [])
               {selectedConseillers.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {selectedConseillers.map(id => {
-                    const c = (conseillers || []).find(x => x.id === id);
-                    return (
-                      <div key={id} className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white" style={{ background: "#2E3192" }}>
-                        {c?.prenom} {c?.nom}
-                        <button
-                          onClick={() => setSelectedConseillers(prev => prev.filter(x => x !== id))}
-                          className="ml-1 opacity-70 hover:opacity-100"
-                        >✕</button>
-                      </div>
-                    );
-                  })}
+  const c = getConseiller(id);
+
+  if (!c) return null; // 🔥 évite crash
+
+  return (
+    <div
+      key={id}
+      className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white"
+      style={{ background: "#2E3192" }}
+    >
+      {c.prenom} {c.nom}
+      <button
+        onClick={() =>
+          setSelectedConseillers(prev => prev.filter(x => x !== id))
+        }
+        className="ml-1 opacity-70 hover:opacity-100"
+      >
+        ✕
+      </button>
+    </div>
+  );
+})}
                 </div>
               )}
             </>

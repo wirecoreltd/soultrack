@@ -142,20 +142,37 @@ function ListMembersContent() {
     return ministereList.join(", ");
   };
 
-  // ─── fetchAssignments en useCallback pour être accessible partout ───
+  // ─── fetchAssignments en useCallback ───
   const fetchAssignments = useCallback(async () => {
-    const { data, error } = await supabase
+    // Étape 1 : récupérer tous les assignments
+    const { data: assignments, error } = await supabase
       .from("suivi_assignments")
-      .select("membre_id, conseiller_id, profiles:conseiller_id(id, prenom, nom)")
-      .eq("statut", "actif");
+      .select("membre_id, conseiller_id, role");
 
     if (error) { console.error("fetchAssignments error:", error); return; }
+    if (!assignments || assignments.length === 0) { setAssignmentsMap({}); return; }
+
+    // Étape 2 : récupérer les profils conseillers concernés
+    const conseillerIds = [...new Set(assignments.map(a => a.conseiller_id))];
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom")
+      .in("id", conseillerIds);
+
+    if (profilesError) { console.error("fetchAssignments profiles error:", profilesError); return; }
+
+    // Étape 3 : construire la map memberId → [{id, prenom, nom}]
+    const profileMap = {};
+    (profiles || []).forEach(p => { profileMap[p.id] = p; });
 
     const map = {};
-    (data || []).forEach((row) => {
-      if (!row.profiles) return;
+    assignments.forEach((row) => {
+      const profile = profileMap[row.conseiller_id];
+      if (!profile) return;
       if (!map[row.membre_id]) map[row.membre_id] = [];
-      map[row.membre_id].push(row.profiles);
+      if (!map[row.membre_id].some(c => c.id === profile.id)) {
+        map[row.membre_id].push(profile);
+      }
     });
     setAssignmentsMap(map);
   }, []);

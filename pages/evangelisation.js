@@ -481,25 +481,32 @@ function EvangelisationContent() {
                 </button>
 
                 {detailsOpen[member.id] && (
-                  <div className="text-sm mt-2 space-y-1">
+                  <div className="text-black text-sm mt-3 w-full space-y-4">
+                  <div>
                   <p>📣 Type d'Evangélisation : {member.type_evangelisation || ""}</p>
+                  </div>
                   <hr />
                   
+                  <div>
                   <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
                   <p>🎗️ Civilité : {member.sexe || "—"}</p>
                   <p>⏳ Tranche d'age : {member.age || "—"}</p>
                   <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>    
-                  <hr className="my-2" />
-                  
+                  </div>
+                  <hr />
+
+                  <div>
                   <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
                   <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
                   <p>☀️ Type de conversion : {member.type_conversion || "—"}</p>
+                  </div>
                   <hr />
-                  
+
+                  <div>
                   <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
                   <p>❓ Difficultés / Besoins : {formatBesoin(member.besoin)}</p>
                   <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
-
+                  </div>
                     <div className="mt-3 bg-gray-50 rounded-xl shadow-md p-4">
                       <div className="flex flex-col gap-2">
                         <button

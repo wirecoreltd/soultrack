@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import supabase from "../../lib/supabaseClient";
-import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
+import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 
 export default function AdminDashboardPage() {
@@ -15,53 +15,45 @@ export default function AdminDashboardPage() {
 }
 
 function AdminDashboard() {
-  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [totalEglises, setTotalEglises] = useState(0);
+  const [stats, setStats] = useState([]);
+  const [totalBranches, setTotalBranches] = useState(0);
   const [totalMembres, setTotalMembres] = useState(0);
 
-  // 🔥 FETCH DATA
   const fetchData = async () => {
     setLoading(true);
 
-    try {
-      // 1. récupérer églises
-      const { data: eglises, error: errEglises } = await supabase
-        .from("eglises")
-        .select("id, nom");
+    const { data, error } = await supabase
+      .from("membres_complets")
+      .select("branche_id");
 
-      if (errEglises) throw errEglises;
-
-      // 2. récupérer membres
-      const { data: membres, error: errMembres } = await supabase
-        .from("membres_complets")
-        .select("id, eglise_id");
-
-      if (errMembres) throw errMembres;
-
-      // 3. calcul des membres par église
-      const counts = {};
-
-      membres.forEach((m) => {
-        if (!counts[m.eglise_id]) {
-          counts[m.eglise_id] = 0;
-        }
-        counts[m.eglise_id]++;
-      });
-
-      const result = eglises.map((e) => ({
-        ...e,
-        total_membres: counts[e.id] || 0,
-      }));
-
-      setData(result);
-      setTotalEglises(eglises.length);
-      setTotalMembres(membres.length);
-    } catch (error) {
-      console.error("Erreur chargement dashboard:", error);
-      setData([]);
+    if (error) {
+      console.error(error);
+      setLoading(false);
+      return;
     }
+
+    // 🔥 GROUP BY BRANCHE
+    const map = {};
+
+    data.forEach((m) => {
+      if (!m.branche_id) return;
+
+      if (!map[m.branche_id]) {
+        map[m.branche_id] = {
+          branche_id: m.branche_id,
+          count: 0,
+        };
+      }
+
+      map[m.branche_id].count += 1;
+    });
+
+    const result = Object.values(map);
+
+    setStats(result);
+    setTotalBranches(result.length);
+    setTotalMembres(data.length);
 
     setLoading(false);
   };
@@ -70,91 +62,80 @@ function AdminDashboard() {
     fetchData();
   }, []);
 
-  // 🔍 FILTER
-  const filtered = data.filter((e) =>
-    e.nom?.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-4 sm:p-6"
-      style={{ background: "#333699" }}
-    >
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-[#333699]">
+
       <HeaderPages />
 
       {/* TITRE */}
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold mt-4 mb-6 text-white">
-          Dashboard des <span className="text-emerald-300">Églises</span>
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-bold text-white mt-4">
+          📊 Dashboard Réseau d'Églises
         </h1>
 
-        <p className="italic text-base text-white/90 max-w-2xl">
-          Visualisez le nombre d’églises et de membres par église.
+        <p className="text-white/80 mt-2">
+          Vue par branche (ex: Impact Centre Chrétien - Cité Royale)
         </p>
       </div>
 
-      {/* STATS */}
-      <div className="flex gap-4 mb-6 flex-wrap justify-center">
-        <div className="bg-white rounded-xl px-6 py-4 shadow text-center">
-          <p className="text-sm text-gray-500">Églises</p>
-          <p className="text-xl font-bold">{totalEglises}</p>
+      {/* STATS GLOBAL */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 w-full max-w-4xl">
+
+        <div className="bg-white rounded-xl p-6 text-center shadow">
+          <h2 className="text-3xl font-bold text-[#333699]">
+            {totalBranches}
+          </h2>
+          <p className="text-gray-600">Branches</p>
         </div>
 
-        <div className="bg-white rounded-xl px-6 py-4 shadow text-center">
-          <p className="text-sm text-gray-500">Membres</p>
-          <p className="text-xl font-bold">{totalMembres}</p>
+        <div className="bg-white rounded-xl p-6 text-center shadow">
+          <h2 className="text-3xl font-bold text-[#333699]">
+            {totalMembres}
+          </h2>
+          <p className="text-gray-600">Membres totaux</p>
         </div>
+
       </div>
 
-      {/* SEARCH */}
-      <div className="w-full max-w-4xl flex justify-center mb-6">
-        <input
-          type="text"
-          placeholder="Recherche église..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:w-2/3 px-3 py-2 rounded-md border text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
-        />
-      </div>
+      {/* LISTE BRANCHES */}
+      <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 
-      {/* LIST */}
-      <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
         {loading ? (
-          <p className="text-white col-span-full">Chargement...</p>
-        ) : filtered.length === 0 ? (
-          <p className="text-white col-span-full">Aucune église trouvée.</p>
+          <p className="text-white col-span-full text-center">
+            Chargement...
+          </p>
+        ) : stats.length === 0 ? (
+          <p className="text-white col-span-full text-center">
+            Aucune donnée disponible
+          </p>
         ) : (
-          filtered.map((e) => (
+          stats.map((b) => (
             <div
-              key={e.id}
-              className="bg-white rounded-2xl shadow-lg w-full max-w-sm overflow-hidden transition hover:shadow-2xl"
+              key={b.branche_id}
+              className="bg-white rounded-xl shadow p-5 text-center hover:shadow-xl transition"
             >
-              {/* BAR */}
-              <div className="w-full h-[6px] bg-blue-500 rounded-t-2xl" />
+              <h3 className="font-bold text-lg text-[#333699] mb-2">
+                🏢 Branche
+              </h3>
 
-              <div className="p-4 flex flex-col items-center">
-                {/* NOM */}
-                <h2 className="font-bold text-black text-lg text-center mb-2">
-                  ⛪ {e.nom}
-                </h2>
+              <p className="text-gray-700 text-xs mb-3 break-all">
+                ID: {b.branche_id}
+              </p>
 
-                {/* MEMBRES */}
-                <p className="text-gray-700 text-sm mb-4">
-                  👥 {e.total_membres} membres
-                </p>
-
-                {/* BOUTON */}
-                <button className="px-3 py-2 bg-[#333699] text-white rounded-md text-sm hover:bg-blue-800 w-full">
-                  Voir détails
-                </button>
+              <div className="text-2xl font-bold text-emerald-600">
+                {b.count}
               </div>
+
+              <p className="text-gray-500 text-sm">
+                membres
+              </p>
             </div>
           ))
         )}
+
       </div>
 
       <Footer />
     </div>
   );
 }
-

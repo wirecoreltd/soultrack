@@ -77,6 +77,9 @@ function ListMembersContent() {
   // Map memberId → [{id, prenom, nom}]
   const [assignmentsMap, setAssignmentsMap] = useState({});
 
+  // IDs des membres attribués au conseiller connecté (depuis suivi_assignments)
+  const [conseillerMembreIds, setConseillerMembreIds] = useState(null);
+
   const roles = getRoles(userProfile);
   const isAdmin = roles.includes("Administrateur");
   const isIntegration = roles.includes("ResponsableIntegration");
@@ -142,39 +145,33 @@ function ListMembersContent() {
     return ministereList.join(", ");
   };
 
-  // ─── fetchAssignments en useCallback ───
-  const fetchAssignments = useCallback(async () => {
-    // Étape 1 : tous les assignments sans aucun filtre
+  // ─── fetchAssignments : construit la map ET les IDs du conseiller connecté ───
+  const fetchAssignments = useCallback(async (currentUserProfile) => {
     const { data: assignments, error } = await supabase
       .from("suivi_assignments")
       .select("membre_id, conseiller_id, role");
 
-    console.log("[fetchAssignments] assignments:", assignments, "error:", error);
-
     if (error) { console.error("fetchAssignments error:", error); return; }
     if (!assignments || assignments.length === 0) {
-      console.warn("[fetchAssignments] Aucun assignment trouvé");
       setAssignmentsMap({});
+      setConseillerMembreIds([]);
       return;
     }
 
-    // Étape 2 : profils des conseillers
+    // Profils des conseillers pour la map d'affichage
     const conseillerIds = [...new Set(assignments.map(a => a.conseiller_id).filter(Boolean))];
-    console.log("[fetchAssignments] conseillerIds:", conseillerIds);
 
     const { data: profilesData, error: profilesError } = await supabase
       .from("profiles")
       .select("id, prenom, nom")
       .in("id", conseillerIds);
 
-    console.log("[fetchAssignments] profiles:", profilesData, "error:", profilesError);
-
     if (profilesError) { console.error("fetchAssignments profiles error:", profilesError); return; }
 
-    // Étape 3 : construire la map memberId → [{id, prenom, nom}]
     const profileMap = {};
     (profilesData || []).forEach(p => { profileMap[p.id] = p; });
 
+    // Map memberId → [{id, prenom, nom}] pour l'affichage
     const map = {};
     assignments.forEach((row) => {
       const profile = profileMap[row.conseiller_id];
@@ -184,10 +181,23 @@ function ListMembersContent() {
         map[row.membre_id].push(profile);
       }
     });
-
-    console.log("[fetchAssignments] map final:", map);
     setAssignmentsMap(map);
-  }, []);
+
+    // Si l'utilisateur est Conseiller, extraire ses membre_ids depuis suivi_assignments
+    const profile = currentUserProfile || userProfile;
+    if (profile) {
+      const rolesArray = getRoles(profile);
+      if (rolesArray.includes("Conseiller")) {
+        const ids = assignments
+          .filter(a => a.conseiller_id === profile.id)
+          .map(a => a.membre_id);
+        setConseillerMembreIds(ids);
+      } else {
+        // Pas conseiller : pas de restriction via assignments
+        setConseillerMembreIds(null);
+      }
+    }
+  }, [userProfile]);
 
   // -------------------- Scroll to top --------------------
   useEffect(() => {
@@ -239,12 +249,26 @@ function ListMembersContent() {
           .eq("branche_id", userProfile.branche_id);
 
         if (conseillerIdFromUrl) {
+          // Filtre URL explicite : on garde l'ancien comportement par conseiller_id colonne
           query = query.eq("conseiller_id", conseillerIdFromUrl);
         } else {
           const rolesArray = getRoles(userProfile);
-          if (rolesArray.includes("Conseiller") || rolesArray.includes("ResponsableIntegration")) {
-            query = query.eq("conseiller_id", userProfile.id);
+
+          // ✅ Conseiller : filtre via suivi_assignments (conseillerMembreIds)
+          if (rolesArray.includes("Conseiller")) {
+            // On attend que conseillerMembreIds soit chargé
+            if (conseillerMembreIds === null) {
+              // Pas encore chargé, on attend le prochain render
+              return;
+            }
+            if (conseillerMembreIds.length === 0) {
+              setAllMembers([]);
+              setLoading(false);
+              return;
+            }
+            query = query.in("id", conseillerMembreIds);
           }
+
           if (rolesArray.includes("ResponsableCellule")) {
             const { data: cellulesData } = await supabase.from("cellules").select("id").eq("responsable_id", userProfile.id);
             const celluleIds = cellulesData?.map((c) => c.id) || [];
@@ -264,7 +288,7 @@ function ListMembersContent() {
     };
 
     fetchMembers();
-  }, [userProfile, scopedQuery, setAllMembers, conseillerIdFromUrl]);
+  }, [userProfile, scopedQuery, setAllMembers, conseillerIdFromUrl, conseillerMembreIds]);
 
   // -------------------- Session --------------------
   useEffect(() => {
@@ -309,8 +333,9 @@ function ListMembersContent() {
         .order("prenom");
       if (conseillersData) setConseillers(conseillersData);
 
-      // Charger les assignments au démarrage
-      await fetchAssignments();
+      // ✅ On passe le profil directement pour que fetchAssignments
+      //    calcule conseillerMembreIds sans attendre le state userProfile
+      await fetchAssignments(profile);
     };
 
     fetchData();
@@ -341,9 +366,9 @@ function ListMembersContent() {
     channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, fetchScopedMembers);
     channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, fetchScopedMembers);
 
-    // Reload assignments en realtime
+    // ✅ Reload assignments + conseillerMembreIds en realtime
     channel.on("postgres_changes", { event: "*", schema: "public", table: "suivi_assignments" }, () => {
-      fetchAssignments();
+      fetchAssignments(userProfile);
     });
 
     try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
@@ -357,7 +382,7 @@ function ListMembersContent() {
         }
       } catch (e) {}
     };
-  }, [scopedQuery, setAllMembers, fetchAssignments]);
+  }, [scopedQuery, setAllMembers, fetchAssignments, userProfile]);
 
   // -------------------- Filtrage --------------------
   const { filteredMembers, filteredNouveaux, filteredAnciens, filteredInactifs } = useMemo(() => {
@@ -505,7 +530,6 @@ function ListMembersContent() {
                 ? cellules.find((c) => String(c.id) === String(m.cellule_id))?.cellule_full || "—"
                 : "—"}
             </p>
-            {/* Conseillers depuis assignmentsMap — mis à jour après chaque sauvegarde */}
             <p>👤 Conseiller(s) : {getConseillersForMember(m.id)}</p>
           </div>
 
@@ -807,7 +831,7 @@ function ListMembersContent() {
         </>
       )}
 
-      {/* EditMemberPopup — onUpdateMember recharge les assignments immédiatement */}
+      {/* EditMemberPopup */}
       <EditMemberPopup
         member={editMember}
         cellules={cellules}
@@ -816,10 +840,9 @@ function ListMembersContent() {
         onClose={() => setEditMember(null)}
         onUpdateMember={async (updatedMember) => {
           await logStats(editMember, updatedMember, userProfile);
-          // Mettre à jour le membre dans la liste
           setAllMembers((prev) => prev.map((m) => (m.id === updatedMember.id ? updatedMember : m)));
-          // ✅ Recharger les assignments → les conseillers s'affichent immédiatement
-          await fetchAssignments();
+          // ✅ Recharge assignments + conseillerMembreIds immédiatement
+          await fetchAssignments(userProfile);
           setEditMember(null);
           showToast("✅ Contact mis à jour !");
         }}

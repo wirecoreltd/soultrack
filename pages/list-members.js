@@ -144,26 +144,36 @@ function ListMembersContent() {
 
   // ─── fetchAssignments en useCallback ───
   const fetchAssignments = useCallback(async () => {
-    // Étape 1 : récupérer tous les assignments
+    // Étape 1 : tous les assignments sans aucun filtre
     const { data: assignments, error } = await supabase
       .from("suivi_assignments")
       .select("membre_id, conseiller_id, role");
 
-    if (error) { console.error("fetchAssignments error:", error); return; }
-    if (!assignments || assignments.length === 0) { setAssignmentsMap({}); return; }
+    console.log("[fetchAssignments] assignments:", assignments, "error:", error);
 
-    // Étape 2 : récupérer les profils conseillers concernés
-    const conseillerIds = [...new Set(assignments.map(a => a.conseiller_id))];
-    const { data: profiles, error: profilesError } = await supabase
+    if (error) { console.error("fetchAssignments error:", error); return; }
+    if (!assignments || assignments.length === 0) {
+      console.warn("[fetchAssignments] Aucun assignment trouvé");
+      setAssignmentsMap({});
+      return;
+    }
+
+    // Étape 2 : profils des conseillers
+    const conseillerIds = [...new Set(assignments.map(a => a.conseiller_id).filter(Boolean))];
+    console.log("[fetchAssignments] conseillerIds:", conseillerIds);
+
+    const { data: profilesData, error: profilesError } = await supabase
       .from("profiles")
       .select("id, prenom, nom")
       .in("id", conseillerIds);
+
+    console.log("[fetchAssignments] profiles:", profilesData, "error:", profilesError);
 
     if (profilesError) { console.error("fetchAssignments profiles error:", profilesError); return; }
 
     // Étape 3 : construire la map memberId → [{id, prenom, nom}]
     const profileMap = {};
-    (profiles || []).forEach(p => { profileMap[p.id] = p; });
+    (profilesData || []).forEach(p => { profileMap[p.id] = p; });
 
     const map = {};
     assignments.forEach((row) => {
@@ -174,6 +184,8 @@ function ListMembersContent() {
         map[row.membre_id].push(profile);
       }
     });
+
+    console.log("[fetchAssignments] map final:", map);
     setAssignmentsMap(map);
   }, []);
 

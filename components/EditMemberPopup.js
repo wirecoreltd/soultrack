@@ -3,11 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 
+// Pass `currentUserRoles` (array) as a prop from the parent
 export default function EditMemberPopup({ member, cellules, conseillers, onClose, onUpdateMember, currentUserRoles }) {
   if (!member) return null;
 
-  const ADMIN_ROLES = new Set(["Administrateur", "ResponsableIntegration"]);
-  const isPrivileged = (currentUserRoles || []).some(role => ADMIN_ROLES.has(role));
+
+  const isPrivileged = (currentUserRoles || []).some(r => ["Administrateur", "ResponsableIntegration"].includes(r));
 
   const [autreMinistere, setAutreMinistere] = useState("");
   const [search, setSearch] = useState("");
@@ -65,34 +66,37 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-
-  // 🔥 Stocke des objets {id, prenom, nom} au lieu de simples IDs
   const [selectedConseillers, setSelectedConseillers] = useState([]);
 
+  // Ref for click-outside detection
   const modalRef = useRef(null);
 
-  // 🔥 Fetch assignments avec jointure profiles pour avoir prenom/nom
   useEffect(() => {
     const fetchAssignments = async () => {
       const { data, error } = await supabase
         .from("suivi_assignments")
-        .select("conseiller_id, profiles:conseiller_id(id, prenom, nom)")
-        .eq("membre_id", member.id);
+        .select("conseiller_id, role, profiles:conseiller_id(id, prenom, nom)")
+        .eq("membre_id", member.id)
+        .eq("statut", "actif")
+        .order("created_at", { ascending: true });
 
-      if (error) {
-        console.error("fetchAssignments error:", error);
-        return;
-      }
+      if (error) { console.error("fetchAssignments error:", error); return; }
 
       if (data) {
-        const objects = data.map(d => d.profiles).filter(Boolean);
+        // Trier: principal en premier
+        const sorted = [...data].sort((a, b) => {
+          if (a.role === "principal") return -1;
+          if (b.role === "principal") return 1;
+          return 0;
+        });
+        const objects = sorted.map(d => d.profiles).filter(Boolean);
         setSelectedConseillers(objects);
       }
     };
-
     fetchAssignments();
   }, [member.id]);
 
+  // Click outside handler
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -107,6 +111,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
     `${c.prenom} ${c.nom}`.toLowerCase().includes(search.toLowerCase())
   );
 
+  // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox") {
@@ -137,6 +142,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
     }));
   };
 
+  // -------------------- SUBMIT --------------------
   const handleSubmit = async () => {
     setMessage("");
     if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
@@ -205,19 +211,14 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
       if (error) throw error;
 
       if (isPrivileged) {
-        // Supprimer anciens assignments
         await supabase.from("suivi_assignments").delete().eq("membre_id", member.id);
-
-        // Insérer avec les IDs des objets sélectionnés
-        const rows = selectedConseillers.map((c, index) => ({
+        const rows = selectedConseillers.map((id, index) => ({
           membre_id: member.id,
-          conseiller_id: c.id,
+          conseiller_id: id,
           role: index === 0 ? "principal" : "assistant",
           statut: "actif"
         }));
-        if (rows.length > 0) {
-          await supabase.from("suivi_assignments").insert(rows);
-        }
+        if (rows.length > 0) await supabase.from("suivi_assignments").insert(rows);
       }
 
       const { data: updatedMember, error: selectError } = await supabase
@@ -234,6 +235,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
     }
   };
 
+  // -------------------- UI --------------------
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: "rgba(30,35,90,0.35)", backdropFilter: "blur(6px)" }}>
       <div
@@ -259,6 +261,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
         {/* Body */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
 
+          {/* Section: Identité */}
           <SectionTitle>👤 Identité</SectionTitle>
 
           <Field label="Civilité">
@@ -290,6 +293,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
             </select>
           </Field>
 
+          {/* Section: Suivi — restricted fields */}
           <SectionTitle>📌 Suivi par</SectionTitle>
 
           {isPrivileged ? (
@@ -312,52 +316,39 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
                   className="inp mb-2"
                 />
                 <div className="max-h-36 overflow-y-auto rounded-xl border border-gray-200 divide-y divide-gray-100">
-                  {filteredConseillers.map(c => {
-                    const alreadySelected = selectedConseillers.some(s => s.id === c.id);
-                    return (
-                      <div
-                        key={c.id}
-                        onClick={() => {
-                          if (!alreadySelected) {
-                            // 🔥 Ajouter l'objet complet {id, prenom, nom}
-                            setSelectedConseillers(prev => [...prev, { id: c.id, prenom: c.prenom, nom: c.nom }]);
-                          }
-                        }}
-                        className={`px-3 py-2 text-sm transition-colors ${
-                          alreadySelected
-                            ? "bg-gray-50 text-gray-400 cursor-not-allowed"
-                            : "cursor-pointer hover:bg-blue-50 text-gray-700"
-                        }`}
-                      >
-                        {c.prenom} {c.nom} {alreadySelected ? "✓" : ""}
-                      </div>
-                    );
-                  })}
+                  {filteredConseillers.map(c => (
+                    <div
+                      key={c.id}
+                      onClick={() => {
+                        if (!selectedConseillers.includes(c.id)) {
+                          setSelectedConseillers(prev => [...prev, c.id]);
+                        }
+                      }}
+                      className="cursor-pointer px-3 py-2 text-sm hover:bg-blue-50 text-gray-700 transition-colors"
+                    >
+                      {c.prenom} {c.nom}
+                    </div>
+                  ))}
                   {filteredConseillers.length === 0 && (
                     <p className="text-xs text-gray-400 px-3 py-2">Aucun résultat</p>
                   )}
                 </div>
               </Field>
 
-              {/* 🔥 Affichage des conseillers sélectionnés avec leurs noms */}
               {selectedConseillers.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {selectedConseillers.map((c, index) => (
-                    <div
-                      key={c.id}
-                      className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white"
-                      style={{ background: index === 0 ? "#2E3192" : "#6b7280" }}
-                    >
-                      <span>{c.prenom} {c.nom}</span>
-                      {index === 0 && <span className="text-xs opacity-70 ml-1">(principal)</span>}
-                      <button
-                        onClick={() => setSelectedConseillers(prev => prev.filter(x => x.id !== c.id))}
-                        className="ml-1 opacity-70 hover:opacity-100"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
+                  {selectedConseillers.map(id => {
+                    const c = (conseillers || []).find(x => x.id === id);
+                    return (
+                      <div key={id} className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white" style={{ background: "#2E3192" }}>
+                        {c?.prenom} {c?.nom}
+                        <button
+                          onClick={() => setSelectedConseillers(prev => prev.filter(x => x !== id))}
+                          className="ml-1 opacity-70 hover:opacity-100"
+                        >✕</button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </>
@@ -367,6 +358,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
             </p>
           )}
 
+          {/* Section: Suivi */}
           <SectionTitle>💝 Suivi</SectionTitle>
 
           <Field label="Suivi statut">
@@ -386,6 +378,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
             <textarea name="Commentaire_Suivi_Evangelisation" value={formData.Commentaire_Suivi_Evangelisation} onChange={handleChange} className="inp" rows={2} />
           </Field>
 
+          {/* Section: Vie spirituelle */}
           <SectionTitle>🕊 Vie spirituelle</SectionTitle>
 
           <Field label="Baptême d'eau">
@@ -455,6 +448,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
             <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="inp" rows={2} />
           </Field>
 
+          {/* Serviteur — restricted */}
           {isPrivileged && (
             <>
               <div className="flex items-center gap-3 py-2">
@@ -510,6 +504,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
             </>
           )}
 
+          {/* État du contact */}
           <Field label="État du contact">
             <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="inp">
               <option value="">-- Sélectionner --</option>
@@ -596,6 +591,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
   );
 }
 
+// ---- Helper sub-components ----
 function SectionTitle({ children }) {
   return (
     <div className="flex items-center gap-2 pt-2">

@@ -332,8 +332,10 @@ export default function SuiviPopup({ member, onClose, user }) {
     });
   };
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return "";
+  const formatDateForInput = (date) => {
+  if (!date) return "";
+  return date.split("T")[0];
+};
     try {
       const d = new Date(dateStr);
       const day = d.getDate().toString().padStart(2, "0");

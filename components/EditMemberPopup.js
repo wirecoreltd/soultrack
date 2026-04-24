@@ -236,6 +236,9 @@ const isPrivileged = (currentUserRoles || [])
     }
   };
 
+  const getConseiller = (id) => {
+  return (conseillers || []).find(c => c.id === id);
+};
   // -------------------- UI --------------------
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: "rgba(30,35,90,0.35)", backdropFilter: "blur(6px)" }}>

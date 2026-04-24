@@ -34,7 +34,6 @@ function EvangelisationContent() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [contactsToSendNow, setContactsToSendNow] = useState([]);
 
-  // 🔹 Popup doublon
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
   const [doublonsDetected, setDoublonsDetected] = useState([]);
   const [pendingContacts, setPendingContacts] = useState([]);
@@ -183,31 +182,28 @@ function EvangelisationContent() {
     }
   };
 
-  /* ================= ÉCRITURE DANS SUIVI_ASSIGNMENTS ================= */
-  // ✅ Après insertion dans suivis_des_evangelises, on écrit dans suivi_assignments
-  //    avec suivi_evangelise_id = id de la ligne suivis_des_evangelises
-  //    et membre_id = null (pas encore dans membres_complets)
+  /* ================= ÉCRITURE DANS suivi_assignments_evangelises ================= */
+  // 🔥 On utilise la table dédiée suivi_assignments_evangelises
   const writeAssignments = async (insertedSuivis) => {
     if (!insertedSuivis || insertedSuivis.length === 0) return;
 
-    // On n'écrit dans suivi_assignments que si la cible est un conseiller
+    // On n'écrit que si la cible est un conseiller
     if (selectedTargetType !== "conseiller") return;
 
     const assignmentRows = insertedSuivis.map((suivi) => ({
-      membre_id: null,                        // pas encore dans membres_complets
-      suivi_evangelise_id: suivi.id,          // ✅ lien vers suivis_des_evangelises
-      conseiller_id: selectedTarget,          // C1234
+      suivi_evangelise_id: suivi.id,   // ✅ FK vers suivis_des_evangelises
+      conseiller_id: selectedTarget,   // UUID du conseiller sélectionné
       role: "principal",
       statut: "actif",
       assigned_by: profile?.id || null,
     }));
 
     const { error } = await supabase
-      .from("suivi_assignments")
+      .from("suivi_assignments_evangelises")  // 🔥 table dédiée
       .insert(assignmentRows);
 
     if (error) {
-      console.error("Erreur écriture suivi_assignments :", error);
+      console.error("Erreur écriture suivi_assignments_evangelises :", error);
     }
   };
 
@@ -273,7 +269,7 @@ function EvangelisationContent() {
 
       if (insertError) throw insertError;
 
-      // ✅ Écriture dans suivi_assignments avec les IDs retournés
+      // ✅ Écriture dans suivi_assignments_evangelises avec les IDs retournés
       await writeAssignments(insertedSuivis);
 
       // 🔹 Mettre à jour le statut des contacts envoyés
@@ -519,14 +515,14 @@ function EvangelisationContent() {
                   </div>
                 </li>
               ))}
+              {doublonsDetected.length === 0 && (
+                <div className="mt-4">
+                  <button onClick={() => setShowDoublonPopup(false)} className="bg-blue-500 text-white px-4 py-2 rounded font-semibold">
+                    Fermer
+                  </button>
+                </div>
+              )}
             </ul>
-            {doublonsDetected.length === 0 && (
-              <div className="mt-4">
-                <button onClick={() => setShowDoublonPopup(false)} className="bg-blue-500 text-white px-4 py-2 rounded font-semibold">
-                  Fermer
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -553,7 +549,7 @@ function EvangelisationContent() {
                 Annuler
               </button>
               <button
-                onClick={() => { sendToWhatsapp(); setShowWhatsappPopup(false); setPhoneNumber(""); }}
+                onClick={() => { sendToWhatsapp(contactsToSendNow); setShowWhatsappPopup(false); setPhoneNumber(""); }}
                 className="flex-1 py-3 bg-green-500 text-white rounded-2xl font-semibold"
               >
                 Envoyer

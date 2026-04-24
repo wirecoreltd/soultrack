@@ -11,7 +11,9 @@ export default function EditEvangeliseSuiviPopup({
   closeDetails,
   onUpdateMember,
 }) {
-  const besoinsOptions = ["Finances", "Santé", "Travail", "Les Enfants", "La Famille"];
+  const besoinsOptions = ["Finances","Santé","Travail / Études","Famille / Enfants","Miracle", "Délivrance",
+    "Relations / Conflits","Addictions / Dépendances","Guidance spirituelle",
+    "Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"];
   const initialBesoin =
     typeof member.besoin === "string" ? JSON.parse(member.besoin || "[]") : member.besoin || [];
 
@@ -225,7 +227,7 @@ export default function EditEvangeliseSuiviPopup({
           {/* Section: Besoins */}
           <SectionTitle>🙏 Besoins</SectionTitle>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap gap-2 mb-2">
             {besoinsOptions.map((item) => (
               <label key={item} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                 <input

@@ -1,4 +1,3 @@
-```javascript
 "use client";
 
 import { useEffect, useState } from "react";
@@ -158,4 +157,4 @@ function AdminDashboard() {
     </div>
   );
 }
-```
+

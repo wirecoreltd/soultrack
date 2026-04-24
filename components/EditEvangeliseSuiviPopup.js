@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function EditEvangeliseSuiviPopup({
@@ -10,10 +10,18 @@ export default function EditEvangeliseSuiviPopup({
   onClose,
   closeDetails,
   onUpdateMember,
+  currentUserRoles,
 }) {
-  const besoinsOptions = ["Finances","Santé","Travail / Études","Famille / Enfants","Miracle", "Délivrance",
-    "Relations / Conflits","Addictions / Dépendances","Guidance spirituelle",
-    "Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"];
+  const isPrivileged = (currentUserRoles || []).some((r) =>
+    ["Administrateur", "ResponsableEvangelisation", "Superadmin"].includes(r)
+  );
+
+  const besoinsOptions = [
+    "Finances", "Santé", "Travail / Études", "Famille / Enfants", "Miracle", "Délivrance",
+    "Relations / Conflits", "Addictions / Dépendances", "Guidance spirituelle",
+    "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
+  ];
+
   const initialBesoin =
     typeof member.besoin === "string" ? JSON.parse(member.besoin || "[]") : member.besoin || [];
 
@@ -40,6 +48,37 @@ export default function EditEvangeliseSuiviPopup({
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Conseillers assignment
+  const [selectedConseillers, setSelectedConseillers] = useState([]);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    if (!isPrivileged) return;
+    const fetchAssignments = async () => {
+      const { data, error } = await supabase
+        .from("suivi_assignments_evangelises")
+        .select("conseiller_id, role, profiles:conseiller_id(id, prenom, nom)")
+        .eq("suivi_evangelise_id", member.id)
+        .eq("statut", "actif")
+        .order("created_at", { ascending: true });
+
+      if (error) { console.error("fetchAssignments error:", error); return; }
+      if (data) {
+        const sorted = [...data].sort((a, b) => {
+          if (a.role === "principal") return -1;
+          if (b.role === "principal") return 1;
+          return 0;
+        });
+        setSelectedConseillers(sorted.map((d) => d.profiles).filter(Boolean));
+      }
+    };
+    fetchAssignments();
+  }, [member.id]);
+
+  const filteredConseillers = (conseillers || []).filter((c) =>
+    `${c.prenom} ${c.nom}`.toLowerCase().includes(search.toLowerCase())
+  );
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
@@ -107,15 +146,34 @@ export default function EditEvangeliseSuiviPopup({
 
       if (error) {
         setMessage("❌ Une erreur est survenue : " + error.message);
-      } else {
-        if (onUpdateMember) onUpdateMember(data);
-        setMessage("✅ Changement enregistré !");
-        setTimeout(() => {
-          setMessage("");
-          onClose();
-          if (closeDetails) closeDetails();
-        }, 1200);
+        return;
       }
+
+      // Sauvegarder les assignments conseillers
+      if (isPrivileged) {
+        await supabase
+          .from("suivi_assignments_evangelises")
+          .delete()
+          .eq("suivi_evangelise_id", member.id);
+
+        const rows = selectedConseillers.map((c, index) => ({
+          suivi_evangelise_id: member.id,
+          conseiller_id: c.id,
+          role: index === 0 ? "principal" : "assistant",
+          statut: "actif",
+        }));
+        if (rows.length > 0) {
+          await supabase.from("suivi_assignments_evangelises").insert(rows);
+        }
+      }
+
+      if (onUpdateMember) onUpdateMember(data);
+      setMessage("✅ Changement enregistré !");
+      setTimeout(() => {
+        setMessage("");
+        onClose();
+        if (closeDetails) closeDetails();
+      }, 1200);
     } catch (err) {
       setMessage("❌ Une erreur est survenue : " + err.message);
     } finally {
@@ -151,10 +209,8 @@ export default function EditEvangeliseSuiviPopup({
         </div>
 
         {/* Body */}
-        <div
-          className="overflow-y-auto px-6 py-5 flex flex-col gap-5"
-          style={{ maxHeight: "68vh" }}
-        >
+        <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
+
           {/* Section: Identité */}
           <SectionTitle>👤 Identité</SectionTitle>
 
@@ -189,6 +245,82 @@ export default function EditEvangeliseSuiviPopup({
               Numéro WhatsApp
             </label>
           </Field>
+
+          {/* Section: Ajouter conseiller */}
+          <SectionTitle>👤 Ajouter conseiller</SectionTitle>
+
+          {isPrivileged ? (
+            <>
+              <input
+                type="text"
+                placeholder="Rechercher un conseiller..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="inp"
+              />
+              <div
+                className="rounded-xl overflow-hidden divide-y divide-gray-100"
+                style={{ border: "1px solid #e2e8f0", maxHeight: "9rem", overflowY: "auto" }}
+              >
+                {filteredConseillers.map((c) => {
+                  const alreadySelected = selectedConseillers.some((s) => s.id === c.id);
+                  return (
+                    <div
+                      key={c.id}
+                      onClick={() => {
+                        if (!alreadySelected) {
+                          setSelectedConseillers((prev) => [
+                            ...prev,
+                            { id: c.id, prenom: c.prenom, nom: c.nom },
+                          ]);
+                        }
+                      }}
+                      className={
+                        "px-3 py-2 text-sm transition-colors " +
+                        (alreadySelected
+                          ? "bg-gray-50 text-gray-300 cursor-not-allowed"
+                          : "cursor-pointer hover:bg-blue-50 text-gray-700")
+                      }
+                    >
+                      {c.prenom} {c.nom} {alreadySelected ? "✓" : ""}
+                    </div>
+                  );
+                })}
+                {filteredConseillers.length === 0 && (
+                  <p className="text-xs text-gray-400 px-3 py-2">Aucun résultat</p>
+                )}
+              </div>
+
+              {selectedConseillers.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedConseillers.map((c, index) => (
+                    <div
+                      key={c.id}
+                      className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white"
+                      style={{ background: index === 0 ? "#2E3192" : "#6b7280" }}
+                    >
+                      <span>{c.prenom} {c.nom}</span>
+                      {index === 0 && selectedConseillers.length > 1 && (
+                        <span className="text-xs opacity-60 ml-1">(principal)</span>
+                      )}
+                      <button
+                        onClick={() =>
+                          setSelectedConseillers((prev) => prev.filter((x) => x.id !== c.id))
+                        }
+                        className="ml-1 opacity-70 hover:opacity-100"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-gray-400 italic rounded-xl px-4 py-3" style={{ background: "#f8fafc" }}>
+              🔒 Les conseillers sont gérés par un administrateur.
+            </p>
+          )}
 
           {/* Section: Vie spirituelle */}
           <SectionTitle>🕊 Vie spirituelle</SectionTitle>
@@ -348,10 +480,7 @@ export default function EditEvangeliseSuiviPopup({
 function SectionTitle({ children }) {
   return (
     <div className="flex items-center gap-2 pt-2">
-      <span
-        className="text-xs font-bold uppercase tracking-widest"
-        style={{ color: "#2E3192" }}
-      >
+      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#2E3192" }}>
         {children}
       </span>
       <div className="flex-1 h-px" style={{ background: "#e2e8f0" }} />
@@ -362,10 +491,7 @@ function SectionTitle({ children }) {
 function Field({ label, children }) {
   return (
     <div className="flex flex-col gap-1">
-      <label
-        className="text-xs font-semibold uppercase tracking-wide"
-        style={{ color: "#64748b" }}
-      >
+      <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#64748b" }}>
         {label}
       </label>
       {children}

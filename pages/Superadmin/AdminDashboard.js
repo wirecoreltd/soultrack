@@ -1,3 +1,4 @@
+```javascript
 "use client";
 
 import { useEffect, useState } from "react";
@@ -25,34 +26,43 @@ function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
 
-    // 1. récupérer églises
-    const { data: eglises } = await supabase
-      .from("eglises")
-      .select("id, nom");
+    try {
+      // 1. récupérer églises
+      const { data: eglises, error: errEglises } = await supabase
+        .from("eglises")
+        .select("id, nom");
 
-    // 2. récupérer membres
-    const { data: membres } = await supabase
-      .from("membres_complets")
-      .select("id, eglise_id");
+      if (errEglises) throw errEglises;
 
-    // 3. calcul
-    const counts = {};
+      // 2. récupérer membres
+      const { data: membres, error: errMembres } = await supabase
+        .from("membres_complets")
+        .select("id, eglise_id");
 
-    membres.forEach((m) => {
-      if (!counts[m.eglise_id]) {
-        counts[m.eglise_id] = 0;
-      }
-      counts[m.eglise_id]++;
-    });
+      if (errMembres) throw errMembres;
 
-    const result = eglises.map((e) => ({
-      ...e,
-      total_membres: counts[e.id] || 0,
-    }));
+      // 3. calcul des membres par église
+      const counts = {};
 
-    setData(result);
-    setTotalEglises(eglises.length);
-    setTotalMembres(membres.length);
+      membres.forEach((m) => {
+        if (!counts[m.eglise_id]) {
+          counts[m.eglise_id] = 0;
+        }
+        counts[m.eglise_id]++;
+      });
+
+      const result = eglises.map((e) => ({
+        ...e,
+        total_membres: counts[e.id] || 0,
+      }));
+
+      setData(result);
+      setTotalEglises(eglises.length);
+      setTotalMembres(membres.length);
+    } catch (error) {
+      console.error("Erreur chargement dashboard:", error);
+      setData([]);
+    }
 
     setLoading(false);
   };
@@ -110,7 +120,6 @@ function AdminDashboard() {
 
       {/* LIST */}
       <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
-
         {loading ? (
           <p className="text-white col-span-full">Chargement...</p>
         ) : filtered.length === 0 ? (
@@ -121,12 +130,11 @@ function AdminDashboard() {
               key={e.id}
               className="bg-white rounded-2xl shadow-lg w-full max-w-sm overflow-hidden transition hover:shadow-2xl"
             >
-              {/* TOP BAR */}
+              {/* BAR */}
               <div className="w-full h-[6px] bg-blue-500 rounded-t-2xl" />
 
               <div className="p-4 flex flex-col items-center">
-
-                {/* NOM EGLISE */}
+                {/* NOM */}
                 <h2 className="font-bold text-black text-lg text-center mb-2">
                   ⛪ {e.nom}
                 </h2>
@@ -136,13 +144,10 @@ function AdminDashboard() {
                   👥 {e.total_membres} membres
                 </p>
 
-                {/* ACTION */}
-                <button
-                  className="px-3 py-2 bg-[#333699] text-white rounded-md text-sm hover:bg-blue-800 w-full"
-                >
+                {/* BOUTON */}
+                <button className="px-3 py-2 bg-[#333699] text-white rounded-md text-sm hover:bg-blue-800 w-full">
                   Voir détails
                 </button>
-
               </div>
             </div>
           ))

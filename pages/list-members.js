@@ -237,17 +237,76 @@ function ListMembersContent() {
   };
 
   // -------------------- Fetch membres --------------------
-  useEffect(() => {
-  if (!userProfile) return;
+ useEffect(() => {
+  const fetchMembers = async () => {
+    if (!userProfile) return;
 
-  // 🔥 empêche le rendu trop tôt pour conseiller
-  if (!conseillerIdFromUrl) {
-    const rolesArray = getRoles(userProfile);
+    // 🔥 Empêche le flicker (ton problème de "double fiche")
+    if (!conseillerIdFromUrl) {
+      const rolesArray = getRoles(userProfile);
 
-    if (rolesArray.includes("Conseiller") && conseillerMembreIds === null) {
-      return; // ⛔ attend que les assignments soient prêts
+      if (rolesArray.includes("Conseiller") && conseillerMembreIds === null) {
+        return;
+      }
     }
-  }
+
+    try {
+      setLoading(true);
+      setAllMembers([]);
+
+      let query = supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("eglise_id", userProfile.eglise_id)
+        .eq("branche_id", userProfile.branche_id);
+
+      if (conseillerIdFromUrl) {
+        const { data: assignments, error } = await supabase
+          .from("suivi_assignments")
+          .select("membre_id")
+          .eq("conseiller_id", conseillerIdFromUrl);
+
+        if (error) {
+          console.error(error);
+          setAllMembers([]);
+          setLoading(false);
+          return;
+        }
+
+        const ids = assignments.map((a) => a.membre_id);
+
+        if (ids.length === 0) {
+          setAllMembers([]);
+          setLoading(false);
+          return;
+        }
+
+        query = query.in("id", ids);
+      } else {
+        const rolesArray = getRoles(userProfile);
+
+        if (rolesArray.includes("Conseiller")) {
+          if (!conseillerMembreIds || conseillerMembreIds.length === 0) {
+            setAllMembers([]);
+            setLoading(false);
+            return;
+          }
+
+          query = query.in("id", conseillerMembreIds);
+        }
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setAllMembers(data || []);
+    } catch (err) {
+      console.error("Erreur fetchMembers:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   fetchMembers();
 }, [userProfile, conseillerMembreIds, conseillerIdFromUrl]);

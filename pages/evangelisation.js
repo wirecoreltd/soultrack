@@ -32,11 +32,19 @@ function EvangelisationContent() {
   const phoneMenuRef = useRef(null);
   const [showWhatsappPopup, setShowWhatsappPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
+
+  // 🔥 On garde une ref stable des contacts à envoyer
+  // pour ne pas perdre la valeur entre les setState et le callback du popup
+  const contactsToSendRef = useRef([]);
   const [contactsToSendNow, setContactsToSendNow] = useState([]);
 
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
   const [doublonsDetected, setDoublonsDetected] = useState([]);
   const [pendingContacts, setPendingContacts] = useState([]);
+
+  // 🔥 On garde aussi le type/target au moment de l'envoi dans des refs
+  const selectedTargetTypeRef = useRef("");
+  const selectedTargetRef = useRef("");
 
   const [view, setView] = useState(() => {
     if (typeof window !== "undefined") {
@@ -164,12 +172,17 @@ function EvangelisationContent() {
   const checkDoublons = async () => {
     if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
 
+    // 🔥 Sauvegarder dans les refs AVANT d'ouvrir le popup
+    selectedTargetTypeRef.current = selectedTargetType;
+    selectedTargetRef.current = selectedTarget;
+    contactsToSendRef.current = selectedContacts;
+
     const { data: existingSuivis } = await supabase
       .from("suivis_des_evangelises")
       .select("telephone");
 
     const detected = selectedContacts.filter((c) =>
-      existingSuivis.some((s) => s.telephone === c.telephone)
+      (existingSuivis || []).some((s) => s.telephone === c.telephone)
     );
 
     if (detected.length > 0) {
@@ -177,65 +190,87 @@ function EvangelisationContent() {
       setPendingContacts(selectedContacts);
       setShowDoublonPopup(true);
     } else {
+      // 🔥 Mettre à jour le state ET la ref
       setContactsToSendNow(selectedContacts);
+      contactsToSendRef.current = selectedContacts;
       setShowWhatsappPopup(true);
     }
   };
 
   /* ================= ÉCRITURE DANS suivi_assignments_evangelises ================= */
-  // 🔥 On utilise la table dédiée suivi_assignments_evangelises
-  const writeAssignments = async (insertedSuivis) => {
-    if (!insertedSuivis || insertedSuivis.length === 0) return;
+  const writeAssignments = async (insertedSuivis, targetType, targetId) => {
+    console.log("writeAssignments appelé:", { insertedSuivis, targetType, targetId });
+
+    if (!insertedSuivis || insertedSuivis.length === 0) {
+      console.warn("writeAssignments: pas de suivis insérés");
+      return;
+    }
 
     // On n'écrit que si la cible est un conseiller
-    if (selectedTargetType !== "conseiller") return;
+    if (targetType !== "conseiller") {
+      console.log("writeAssignments: cible n'est pas un conseiller, skip");
+      return;
+    }
+
+    if (!targetId) {
+      console.warn("writeAssignments: pas de targetId");
+      return;
+    }
 
     const assignmentRows = insertedSuivis.map((suivi) => ({
-      suivi_evangelise_id: suivi.id,   // ✅ FK vers suivis_des_evangelises
-      conseiller_id: selectedTarget,   // UUID du conseiller sélectionné
+      suivi_evangelise_id: suivi.id,
+      conseiller_id: targetId,
       role: "principal",
       statut: "actif",
       assigned_by: profile?.id || null,
     }));
 
-    const { error } = await supabase
-      .from("suivi_assignments_evangelises")  // 🔥 table dédiée
-      .insert(assignmentRows);
+    console.log("Insertion suivi_assignments_evangelises:", assignmentRows);
+
+    const { data, error } = await supabase
+      .from("suivi_assignments_evangelises")
+      .insert(assignmentRows)
+      .select();
 
     if (error) {
       console.error("Erreur écriture suivi_assignments_evangelises :", error);
+    } else {
+      console.log("✅ suivi_assignments_evangelises insérés:", data);
     }
   };
 
   /* ================= SEND MESSAGE ================= */
-  const sendToWhatsapp = async (contactsToSend = contactsToSendNow) => {
+  // 🔥 Prend explicitement les contacts, le type et la cible en paramètres
+  // pour ne jamais dépendre du state qui peut être périmé
+  const sendToWhatsapp = async (contactsToSend, targetType, targetId) => {
     setShowDoublonPopup(false);
-    setPendingContacts([]);
+    setShowWhatsappPopup(false);
     setLoadingSend(true);
 
+    console.log("sendToWhatsapp:", { contactsToSend, targetType, targetId });
+
     try {
-      if (!selectedTargetType || !selectedTarget) {
+      if (!targetType || !targetId) {
         alert("⚠️ Veuillez sélectionner un conseiller ou une cellule cible");
         setLoadingSend(false);
         return;
       }
 
+      if (!contactsToSend || contactsToSend.length === 0) {
+        alert("⚠️ Aucun contact sélectionné");
+        setLoadingSend(false);
+        return;
+      }
+
       const cible =
-        selectedTargetType === "cellule"
-          ? cellules.find((c) => c.id === selectedTarget)
-          : conseillers.find((c) => c.id === selectedTarget);
+        targetType === "cellule"
+          ? cellules.find((c) => c.id === targetId)
+          : conseillers.find((c) => c.id === targetId);
 
       if (!cible || !cible.telephone) {
         alert("⚠️ Numéro du conseiller ou responsable de cellule manquant");
         setLoadingSend(false);
         return;
-      }
-
-      let targetPhone = "";
-      if (contactsToSend.length === 1) {
-        targetPhone = contactsToSend[0].telephone?.replace(/\D/g, "") || "";
-      } else {
-        targetPhone = cible.telephone?.replace(/\D/g, "") || "";
       }
 
       // 🔹 Préparer les inserts pour suivis_des_evangelises
@@ -252,8 +287,8 @@ function EvangelisationContent() {
         priere_salut: m.priere_salut,
         status_suivis_evangelises: "Envoyé",
         evangelise_id: m.id,
-        conseiller_id: selectedTargetType === "conseiller" ? selectedTarget : null,
-        cellule_id: selectedTargetType === "cellule" ? selectedTarget : null,
+        conseiller_id: targetType === "conseiller" ? targetId : null,
+        cellule_id: targetType === "cellule" ? targetId : null,
         date_evangelise: m.date_evangelise,
         date_suivi: new Date().toISOString(),
         eglise_id: profile?.eglise_id || null,
@@ -261,16 +296,24 @@ function EvangelisationContent() {
         type_evangelisation: m.type_evangelisation,
       }));
 
-      // ✅ Insert dans suivis_des_evangelises avec retour des lignes créées
+      console.log("Insert suivis_des_evangelises:", inserts);
+
+      // ✅ Insert avec .select() pour récupérer les IDs générés
       const { data: insertedSuivis, error: insertError } = await supabase
         .from("suivis_des_evangelises")
         .insert(inserts)
         .select("id, conseiller_id");
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Erreur insert suivis_des_evangelises:", insertError);
+        throw insertError;
+      }
 
-      // ✅ Écriture dans suivi_assignments_evangelises avec les IDs retournés
-      await writeAssignments(insertedSuivis);
+      console.log("✅ suivis_des_evangelises insérés:", insertedSuivis);
+
+      // ✅ Écriture dans suivi_assignments_evangelises
+      // On passe targetType et targetId directement pour éviter tout problème de closure
+      await writeAssignments(insertedSuivis, targetType, targetId);
 
       // 🔹 Mettre à jour le statut des contacts envoyés
       const ids = contactsToSend.map((c) => c.id);
@@ -284,7 +327,7 @@ function EvangelisationContent() {
       setCheckedContacts({});
 
       // 🔹 Construire le message WhatsApp
-      let message = `👋 Bonjour ${selectedTargetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
+      let message = `👋 Bonjour ${targetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
       message += contactsToSend.length > 1
         ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l'évangélisation.\n\n"
         : "Nous te confions avec joie la personne suivante rencontrée lors de l'évangélisation.\n\n";
@@ -313,16 +356,21 @@ function EvangelisationContent() {
 
       message += "Merci pour ton engagement ✨";
 
-      const whatsappLink = phoneNumber
-        ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
+      const targetPhone = phoneNumber
+        ? phoneNumber.replace(/\D/g, "")
+        : cible.telephone?.replace(/\D/g, "") || "";
+
+      const whatsappLink = targetPhone
+        ? `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(message)}`
         : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 
       window.open(whatsappLink, "_blank");
+      setPhoneNumber("");
 
       alert("✅ Contacts envoyés et enregistrés");
     } catch (err) {
       console.error("Erreur envoi WhatsApp :", err);
-      alert("❌ Erreur lors de l'envoi");
+      alert("❌ Erreur lors de l'envoi : " + err.message);
     } finally {
       setLoadingSend(false);
     }
@@ -498,9 +546,14 @@ function EvangelisationContent() {
                   <div className="flex gap-2 mt-2 sm:mt-0">
                     <button
                       onClick={() => {
-                        setContactsToSendNow([d]);
-                        setShowWhatsappPopup(true);
+                        // 🔥 Passer directement les valeurs depuis les refs
+                        sendToWhatsapp(
+                          [d],
+                          selectedTargetTypeRef.current,
+                          selectedTargetRef.current
+                        );
                         setDoublonsDetected((prev) => prev.filter((c) => c.id !== d.id));
+                        setShowDoublonPopup(false);
                       }}
                       className="bg-green-500 text-white px-3 py-1 rounded font-semibold"
                     >
@@ -527,6 +580,7 @@ function EvangelisationContent() {
         </div>
       )}
 
+      {/* 🔹 Popup WhatsApp */}
       {showWhatsappPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
@@ -549,7 +603,14 @@ function EvangelisationContent() {
                 Annuler
               </button>
               <button
-                onClick={() => { sendToWhatsapp(contactsToSendNow); setShowWhatsappPopup(false); setPhoneNumber(""); }}
+                onClick={() => {
+                  // 🔥 Passer explicitement les valeurs depuis les refs
+                  sendToWhatsapp(
+                    contactsToSendRef.current,
+                    selectedTargetTypeRef.current,
+                    selectedTargetRef.current
+                  );
+                }}
                 className="flex-1 py-3 bg-green-500 text-white rounded-2xl font-semibold"
               >
                 Envoyer

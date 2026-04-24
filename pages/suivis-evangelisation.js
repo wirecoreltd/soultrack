@@ -578,17 +578,20 @@ function SuivisEvangelisationContent() {
 
       {/* ── EditEvangeliseSuiviPopup ── */}
       {editingContact && (
-        <EditEvangeliseSuiviPopup
-          member={editingContact}
-          onClose={() => setEditingContact(null)}
-          closeDetails={() => {}}
-          onUpdateMember={(updates) => {
-            updateSuiviLocal(editingContact.id, updates);
-            setEditingContact(null);
-            fetchSuivis(user, cellules);
-          }}
-        />
-      )}
+      <EditEvangeliseSuiviPopup
+        member={editingContact}
+        conseillers={conseillers}
+        cellules={cellules}
+        currentUserRoles={user?.role ? [user.role] : []}
+        onClose={() => setEditingContact(null)}
+        closeDetails={() => {}}
+        onUpdateMember={(updates) => {
+          updateSuiviLocal(editingContact.id, updates);
+          setEditingContact(null);
+          fetchSuivis(user, cellules);
+        }}
+      />
+    )}
 
       {/* 🔥 SuiviEvanPopup — passe m directement, SuiviEvanPopup utilise evangelise_id comme clé */}
       {suiviEvanMember && (

@@ -482,14 +482,20 @@ function EvangelisationContent() {
 
                 {detailsOpen[member.id] && (
                   <div className="text-sm mt-2 space-y-1">
-                    <p>📣 Type d'Evangélisation : {member.type_evangelisation || ""}</p>
-                    <p>🎗️ Civilité : {member.sexe || "—"}</p>
-                    <p>⏳ Tranche d'age : {member.age || "—"}</p>
-                    <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
-                    <p>☀️ Type de conversion : {member.type_conversion || "—"}</p>
-                    <p>❓ Difficultés / Besoins : {formatBesoin(member.besoin)}</p>
-                    <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
+                  <p>📣 Type d'Evangélisation : {member.type_evangelisation || ""}</p>
+                  <hr />
+                  <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
+                  <p>🎗️ Civilité : {member.sexe || "—"}</p>
+                  <p>⏳ Tranche d'age : {member.age || "—"}</p>
+                  <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>    
+                  <hr />
+                  <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
+                  <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
+                  <p>☀️ Type de conversion : {member.type_conversion || "—"}</p>
+                  <hr />
+                  <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
+                  <p>❓ Difficultés / Besoins : {formatBesoin(member.besoin)}</p>
+                  <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
 
                     <div className="mt-3 bg-gray-50 rounded-xl shadow-md p-4">
                       <div className="flex flex-col gap-2">

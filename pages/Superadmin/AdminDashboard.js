@@ -36,8 +36,8 @@ function AdminDashboard() {
 
     // 🔥 2. récupérer branches
     const { data: branches, error: err2 } = await supabase
-      .from("branches")
-      .select("id, nom, pays");
+  .from("branches")
+  .select("id, nom, pays");
 
     if (err2) {
       console.error(err2);

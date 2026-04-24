@@ -554,10 +554,9 @@ function SuivisEvangelisationContent() {
                         {/* 🔥 Bouton Suivi évangélisation — au-dessus */}
                         <button
                           onClick={() => setSuiviEvanMember(m)}
-                          className="w-full py-2 rounded-lg font-semibold text-white shadow-sm hover:shadow-md transition-all"
-                          style={{ background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}
-                        >
-                          🌍 Suivi évangélisation
+                          className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
+                  >
+                    💡 Ajouter / Voir suivis
                         </button>
 
                         {/* Bouton Modifier — en dessous */}

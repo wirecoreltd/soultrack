@@ -169,7 +169,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
         if (formData.star) {
           await supabase.from("stats_ministere_besoin").upsert({
             membre_id: member.id,
-            branche_id: formData.cellule_id || null,
+            branche_id: member.branche_id || null,  // ← branche_id du membre, pas cellule_id
             sexe: formData.sexe,
             type: "ministere",
           });
@@ -212,9 +212,10 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
 
       if (isPrivileged) {
         await supabase.from("suivi_assignments").delete().eq("membre_id", member.id);
-        const rows = selectedConseillers.map((id, index) => ({
+        // selectedConseillers est un tableau d objets {id, prenom, nom}
+        const rows = selectedConseillers.map((c, index) => ({
           membre_id: member.id,
-          conseiller_id: id,
+          conseiller_id: c.id,   // ← c.id et non c entier
           role: index === 0 ? "principal" : "assistant",
           statut: "actif"
         }));

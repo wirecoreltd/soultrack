@@ -237,14 +237,12 @@ function ListMembersContent() {
   };
 
   // -------------------- Fetch membres --------------------
- useEffect(() => {
+useEffect(() => {
   const fetchMembers = async () => {
     if (!userProfile) return;
 
-    // 🔥 Empêche le flicker (ton problème de "double fiche")
     if (!conseillerIdFromUrl) {
       const rolesArray = getRoles(userProfile);
-
       if (rolesArray.includes("Conseiller") && conseillerMembreIds === null) {
         return;
       }
@@ -252,7 +250,6 @@ function ListMembersContent() {
 
     try {
       setLoading(true);
-      setAllMembers([]);
 
       let query = supabase
         .from("membres_complets")
@@ -266,18 +263,12 @@ function ListMembersContent() {
           .select("membre_id")
           .eq("conseiller_id", conseillerIdFromUrl);
 
-        if (error) {
-          console.error(error);
-          setAllMembers([]);
-          setLoading(false);
-          return;
-        }
+        if (error) throw error;
 
-        const ids = assignments.map((a) => a.membre_id);
+        const ids = assignments?.map((a) => a.membre_id) || [];
 
         if (ids.length === 0) {
           setAllMembers([]);
-          setLoading(false);
           return;
         }
 
@@ -288,15 +279,32 @@ function ListMembersContent() {
         if (rolesArray.includes("Conseiller")) {
           if (!conseillerMembreIds || conseillerMembreIds.length === 0) {
             setAllMembers([]);
-            setLoading(false);
             return;
           }
 
           query = query.in("id", conseillerMembreIds);
         }
+
+        if (rolesArray.includes("ResponsableCellule")) {
+          const { data: cellulesData } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", userProfile.id);
+
+          const celluleIds = cellulesData?.map((c) => c.id) || [];
+
+          if (celluleIds.length === 0) {
+            setAllMembers([]);
+            return;
+          }
+
+          query = query.in("cellule_id", celluleIds);
+        }
       }
 
-      const { data, error } = await query.order("created_at", { ascending: false });
+      const { data, error } = await query.order("created_at", {
+        ascending: false,
+      });
 
       if (error) throw error;
 
@@ -309,84 +317,7 @@ function ListMembersContent() {
   };
 
   fetchMembers();
-}, [userProfile, conseillerMembreIds, conseillerIdFromUrl]);
-
-    const fetchMembers = async () => {
-      try {
-        
-        setLoading(true);          // ✅ IMPORTANT
-        setAllMembers([]);
-        
-        let query = supabase
-          .from("membres_complets")
-          .select("*")
-          .eq("eglise_id", userProfile.eglise_id)
-          .eq("branche_id", userProfile.branche_id);
-
-                if (conseillerIdFromUrl) {
-          // 🔎 Aller chercher les membres assignés via suivi_assignments
-          const { data: assignments, error: assignError } = await supabase
-            .from("suivi_assignments")
-            .select("membre_id")
-            .eq("conseiller_id", conseillerIdFromUrl);
-        
-          if (assignError) {
-            console.error(assignError);
-            setAllMembers([]);
-            setLoading(false);
-            return;
-          }
-        
-          const membreIds = assignments.map((a) => a.membre_id);
-        
-          // 🚫 Aucun membre assigné
-          if (membreIds.length === 0) {
-            setAllMembers([]);
-            setLoading(false);
-            return;
-          }
-        
-          // ✅ Filtrer les membres avec les IDs
-          query = query.in("id", membreIds);
-        } 
-        else {
-          const rolesArray = getRoles(userProfile);
-
-          // ✅ Conseiller : filtre via suivi_assignments (conseillerMembreIds)
-          if (rolesArray.includes("Conseiller")) {
-            // On attend que conseillerMembreIds soit chargé
-            if (conseillerMembreIds === null) {
-              // Pas encore chargé, on attend le prochain render
-              return;
-            }
-            if (conseillerMembreIds.length === 0) {
-              setAllMembers([]);
-              setLoading(false);
-              return;
-            }
-            query = query.in("id", conseillerMembreIds);
-          }
-
-          if (rolesArray.includes("ResponsableCellule")) {
-            const { data: cellulesData } = await supabase.from("cellules").select("id").eq("responsable_id", userProfile.id);
-            const celluleIds = cellulesData?.map((c) => c.id) || [];
-            if (celluleIds.length > 0) query = query.in("cellule_id", celluleIds);
-            else { setAllMembers([]); setLoading(false); return; }
-          }
-        }
-
-        const { data, error } = await query.order("created_at", { ascending: false });
-        if (error) throw error;
-        setAllMembers(data || []);
-        setLoading(false);
-      } catch (err) {
-        console.error("Erreur fetchMembers:", err);
-        setLoading(false);
-      }
-    };
-
-    fetchMembers();
-  }, [userProfile, scopedQuery, setAllMembers, conseillerIdFromUrl, conseillerMembreIds]);
+}, [userProfile, conseillerIdFromUrl, conseillerMembreIds]);
 
   // -------------------- Session --------------------
   useEffect(() => {

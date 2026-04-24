@@ -116,7 +116,7 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
 
   const fetchSuivis = async () => {
     const { data } = await supabase
-      .from("suivis_des_evangelises")
+      .from("suivis_evangelises")
       .select("*, profiles:created_by(prenom, nom)")
       .eq("evangelise_id", member.id)
       .order("date_action", { ascending: false });
@@ -250,7 +250,7 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
 
     if (editingSuivi) {
       const { error } = await supabase
-        .from("suivis_des_evangelises")
+        .from("suivis_evangelises")
         .update(payload)
         .eq("id", editingSuivi.id);
 
@@ -264,7 +264,7 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
         prev.map((s) => (s.id === editingSuivi.id ? { ...editingSuivi, ...payload } : s))
       );
     } else {
-      const { error } = await supabase.from("suivis_des_evangelises").insert({
+      const { error } = await supabase.from("suivis_evangelises").insert({
         ...payload,
         evangelise_id: member.id,
         created_by: currentUserId,

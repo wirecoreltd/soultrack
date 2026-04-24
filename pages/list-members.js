@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import React from "react";
 import supabase from "../lib/supabaseClient";
 import BoutonEnvoyer from "../components/BoutonEnvoyer";
 import LogoutLink from "../components/LogoutLink";
@@ -21,11 +22,7 @@ function getRoles(profile) {
   if (!profile) return [];
   if (Array.isArray(profile.roles)) return profile.roles;
   if (typeof profile.roles === "string") {
-    return profile.roles
-      .replace("{", "")
-      .replace("}", "")
-      .split(",")
-      .map((r) => r.trim());
+    return profile.roles.replace("{", "").replace("}", "").split(",").map((r) => r.trim());
   }
   if (profile.role) return [profile.role];
   return [];
@@ -77,7 +74,7 @@ function ListMembersContent() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
 
-  // 🔥 Map memberId → [{id, prenom, nom}] des conseillers assignés
+  // Map memberId → [{id, prenom, nom}]
   const [assignmentsMap, setAssignmentsMap] = useState({});
 
   const roles = getRoles(userProfile);
@@ -87,9 +84,7 @@ function ListMembersContent() {
   const canEditSensitiveFields = isAdmin || isIntegration;
 
   const [view, setView] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("members_view") || "card";
-    }
+    if (typeof window !== "undefined") return localStorage.getItem("members_view") || "card";
     return "card";
   });
 
@@ -102,63 +97,26 @@ function ListMembersContent() {
   };
 
   const handleUpdateMember = (updatedMember) => {
-    setAllMembers((prev) =>
-      prev.map((mem) => (mem.id === updatedMember.id ? updatedMember : mem))
-    );
+    setAllMembers((prev) => prev.map((mem) => (mem.id === updatedMember.id ? updatedMember : mem)));
   };
 
-  const statutSuiviLabels = {
-    1: "En Attente",
-    2: "En Suivis",
-    3: "Intégré",
-    4: "Refus",
-  };
+  const statutSuiviLabels = { 1: "En Attente", 2: "En Suivis", 3: "Intégré", 4: "Refus" };
 
   const logStats = async (member, updatedMember, userProfile) => {
     if (!userProfile) return;
     const logs = [];
     if (updatedMember.Ministere) {
-      const ministeres =
-        typeof updatedMember.Ministere === "string"
-          ? JSON.parse(updatedMember.Ministere)
-          : updatedMember.Ministere;
-      ministeres.forEach((m) => {
-        logs.push({
-          membre_id: member.id,
-          eglise_id: userProfile.eglise_id,
-          branche_id: userProfile.branche_id,
-          type: "ministere",
-          valeur: m,
-        });
-      });
+      const ministeres = typeof updatedMember.Ministere === "string" ? JSON.parse(updatedMember.Ministere) : updatedMember.Ministere;
+      ministeres.forEach((m) => logs.push({ membre_id: member.id, eglise_id: userProfile.eglise_id, branche_id: userProfile.branche_id, type: "ministere", valeur: m }));
     }
     if (updatedMember.besoin) {
-      const besoins =
-        typeof updatedMember.besoin === "string"
-          ? JSON.parse(updatedMember.besoin)
-          : updatedMember.besoin;
-      besoins.forEach((b) => {
-        logs.push({
-          membre_id: member.id,
-          eglise_id: userProfile.eglise_id,
-          branche_id: userProfile.branche_id,
-          type: "besoin",
-          valeur: b,
-        });
-      });
+      const besoins = typeof updatedMember.besoin === "string" ? JSON.parse(updatedMember.besoin) : updatedMember.besoin;
+      besoins.forEach((b) => logs.push({ membre_id: member.id, eglise_id: userProfile.eglise_id, branche_id: userProfile.branche_id, type: "besoin", valeur: b }));
     }
     if (updatedMember.star === true && updatedMember.etat_contact === "existant") {
-      logs.push({
-        membre_id: member.id,
-        eglise_id: userProfile.eglise_id,
-        branche_id: userProfile.branche_id,
-        type: "serviteur",
-        valeur: "true",
-      });
+      logs.push({ membre_id: member.id, eglise_id: userProfile.eglise_id, branche_id: userProfile.branche_id, type: "serviteur", valeur: "true" });
     }
-    if (logs.length > 0) {
-      await supabase.from("stats_ministere_besoin").insert(logs);
-    }
+    if (logs.length > 0) await supabase.from("stats_ministere_besoin").insert(logs);
   };
 
   const formatDateFr = (dateString) => {
@@ -184,6 +142,24 @@ function ListMembersContent() {
     return ministereList.join(", ");
   };
 
+  // ─── fetchAssignments en useCallback pour être accessible partout ───
+  const fetchAssignments = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("suivi_assignments")
+      .select("membre_id, conseiller_id, profiles:conseiller_id(id, prenom, nom)")
+      .eq("statut", "actif");
+
+    if (error) { console.error("fetchAssignments error:", error); return; }
+
+    const map = {};
+    (data || []).forEach((row) => {
+      if (!row.profiles) return;
+      if (!map[row.membre_id]) map[row.membre_id] = [];
+      map[row.membre_id].push(row.profiles);
+    });
+    setAssignmentsMap(map);
+  }, []);
+
   // -------------------- Scroll to top --------------------
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 300);
@@ -195,18 +171,13 @@ function ListMembersContent() {
 
   // -------------------- Supprimer --------------------
   const handleSupprimerMembre = async (id) => {
-    const { error } = await supabase
-      .from("membres_complets")
-      .update({ etat_contact: "supprime" })
-      .eq("id", id);
+    const { error } = await supabase.from("membres_complets").update({ etat_contact: "supprime" }).eq("id", id);
     if (error) { console.error("Erreur suppression :", error); return; }
     setAllMembers((prev) => prev.map((m) => (m.id === id ? { ...m, etat_contact: "supprime" } : m)));
     showToast("❌ Contact supprimé");
   };
 
-  const handleCommentChange = (id, value) => {
-    setCommentChanges((prev) => ({ ...prev, [id]: value }));
-  };
+  const handleCommentChange = (id, value) => setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
   const updateSuivi = async (id) => {
     setUpdating((prev) => ({ ...prev, [id]: true }));
@@ -224,26 +195,6 @@ function ListMembersContent() {
   const handleAfterSend = (memberId, type, cible) => {
     showToast("✅ Contact envoyé !");
     setAllMembers((prev) => prev.map((m) => m.id === memberId ? { ...m, suivi_envoye: true } : m));
-  };
-
-  // 🔥 Charger les suivi_assignments pour tous les membres de l'église
-  const fetchAssignments = async (profile) => {
-    if (!profile) return;
-    const { data, error } = await supabase
-      .from("suivi_assignments")
-      .select("membre_id, conseiller_id, profiles:conseiller_id(id, prenom, nom)")
-      .eq("statut", "actif");
-
-    if (error) { console.error("fetchAssignments error:", error); return; }
-
-    // Construire la map memberId → [{id, prenom, nom}]
-    const map = {};
-    (data || []).forEach((row) => {
-      if (!row.profiles) return;
-      if (!map[row.membre_id]) map[row.membre_id] = [];
-      map[row.membre_id].push(row.profiles);
-    });
-    setAssignmentsMap(map);
   };
 
   // -------------------- Fetch membres --------------------
@@ -266,10 +217,7 @@ function ListMembersContent() {
             query = query.eq("conseiller_id", userProfile.id);
           }
           if (rolesArray.includes("ResponsableCellule")) {
-            const { data: cellulesData } = await supabase
-              .from("cellules")
-              .select("id")
-              .eq("responsable_id", userProfile.id);
+            const { data: cellulesData } = await supabase.from("cellules").select("id").eq("responsable_id", userProfile.id);
             const celluleIds = cellulesData?.map((c) => c.id) || [];
             if (celluleIds.length > 0) query = query.in("cellule_id", celluleIds);
             else { setAllMembers([]); setLoading(false); return; }
@@ -332,12 +280,12 @@ function ListMembersContent() {
         .order("prenom");
       if (conseillersData) setConseillers(conseillersData);
 
-      // 🔥 Charger les assignments après avoir le profil
-      await fetchAssignments(profile);
+      // Charger les assignments au démarrage
+      await fetchAssignments();
     };
 
     fetchData();
-  }, []);
+  }, [fetchAssignments]);
 
   // -------------------- Realtime --------------------
   useEffect(() => {
@@ -364,9 +312,9 @@ function ListMembersContent() {
     channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, fetchScopedMembers);
     channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, fetchScopedMembers);
 
-    // 🔥 Reload assignments en realtime aussi
+    // Reload assignments en realtime
     channel.on("postgres_changes", { event: "*", schema: "public", table: "suivi_assignments" }, () => {
-      fetchAssignments(userProfile);
+      fetchAssignments();
     });
 
     try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
@@ -380,7 +328,7 @@ function ListMembersContent() {
         }
       } catch (e) {}
     };
-  }, [scopedQuery, setAllMembers, userProfile]);
+  }, [scopedQuery, setAllMembers, fetchAssignments]);
 
   // -------------------- Filtrage --------------------
   const { filteredMembers, filteredNouveaux, filteredAnciens, filteredInactifs } = useMemo(() => {
@@ -430,9 +378,7 @@ function ListMembersContent() {
   };
 
   const today = new Date();
-  const dateDuJour = today.toLocaleDateString("fr-FR", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric",
-  });
+  const dateDuJour = today.toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -444,7 +390,7 @@ function ListMembersContent() {
 
   useEffect(() => { localStorage.setItem("members_view", view); }, [view]);
 
-  // 🔥 Nouvelle fonction : affiche les conseillers depuis assignmentsMap
+  // Affiche les conseillers depuis assignmentsMap
   const getConseillersForMember = (memberId) => {
     const assigned = assignmentsMap[memberId];
     if (assigned && assigned.length > 0) {
@@ -530,7 +476,7 @@ function ListMembersContent() {
                 ? cellules.find((c) => String(c.id) === String(m.cellule_id))?.cellule_full || "—"
                 : "—"}
             </p>
-            {/* 🔥 Affichage conseillers depuis assignmentsMap */}
+            {/* Conseillers depuis assignmentsMap — mis à jour après chaque sauvegarde */}
             <p>👤 Conseiller(s) : {getConseillersForMember(m.id)}</p>
           </div>
 
@@ -559,10 +505,8 @@ function ListMembersContent() {
                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
               >
                 <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-                {selectedTargetType[m.id] === "cellule" &&
-                  cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)}
-                {selectedTargetType[m.id] === "conseiller" &&
-                  conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)}
+                {selectedTargetType[m.id] === "cellule" && cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)}
+                {selectedTargetType[m.id] === "conseiller" && conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)}
               </select>
             )}
 
@@ -652,7 +596,7 @@ function ListMembersContent() {
                 <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
                 <p>📝 Commentaire : {m.commentaire_suivis || "—"}</p>
                 <p>📑 Évangélisation : {m.Commentaire_Suivi_Evangelisation || "—"}</p>
-                {/* 🔥 Affichage détaillé des conseillers dans les détails */}
+                {/* Conseillers détaillés avec rôle principal */}
                 <div className="mt-1">
                   <span className="font-semibold">👤 Conseiller(s) : </span>
                   {(assignmentsMap[m.id] && assignmentsMap[m.id].length > 0) ? (
@@ -673,9 +617,7 @@ function ListMembersContent() {
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
                 <p>💧 Baptême d'eau : {m.bapteme_eau || "—"}</p>
-                {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
-                  <p className="ml-4">💦 Veut se faire baptiser</p>
-                )}
+                {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && <p className="ml-4">💦 Veut se faire baptiser</p>}
                 <p>🔥 Baptême de feu : {m.bapteme_esprit || "—"}</p>
                 <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
                 <p>✨ Conversion : {m.type_conversion || "—"}</p>
@@ -784,11 +726,7 @@ function ListMembersContent() {
       </div>
 
       <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="px-3 py-1 rounded-md border text-black text-sm"
-        >
+        <select value={filter} onChange={(e) => setFilter(e.target.value)} className="px-3 py-1 rounded-md border text-black text-sm">
           <option value="">-- Tous les états de contact --</option>
           <option value="nouveau">Nouveau</option>
           <option value="existant">Existant</option>
@@ -831,9 +769,7 @@ function ListMembersContent() {
 
           {filteredInactifs.length > 0 && (
             <>
-              <h2 className="w-full max-w-6xl text-gray-400 font-bold mb-2 text-lg">
-                Contacts inactifs
-              </h2>
+              <h2 className="w-full max-w-6xl text-gray-400 font-bold mb-2 text-lg">Contacts inactifs</h2>
               <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                 {filteredInactifs.map((m) => renderMemberCard(m))}
               </div>
@@ -842,6 +778,7 @@ function ListMembersContent() {
         </>
       )}
 
+      {/* EditMemberPopup — onUpdateMember recharge les assignments immédiatement */}
       <EditMemberPopup
         member={editMember}
         cellules={cellules}
@@ -850,9 +787,10 @@ function ListMembersContent() {
         onClose={() => setEditMember(null)}
         onUpdateMember={async (updatedMember) => {
           await logStats(editMember, updatedMember, userProfile);
+          // Mettre à jour le membre dans la liste
           setAllMembers((prev) => prev.map((m) => (m.id === updatedMember.id ? updatedMember : m)));
-          // 🔥 Recharger les assignments après modification
-          await fetchAssignments(userProfile);
+          // ✅ Recharger les assignments → les conseillers s'affichent immédiatement
+          await fetchAssignments();
           setEditMember(null);
           showToast("✅ Contact mis à jour !");
         }}

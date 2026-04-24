@@ -533,16 +533,34 @@ function SuivisEvangelisationContent() {
               {/* Détails */}
               <div className={`transition-all duration-500 overflow-hidden ${ouvert ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
                 {ouvert && (
-                  <div className="rounded-xl p-3 text-sm space-y-2">
-                    <p>📅 {m.sexe === "Femme" ? "Évangélisée" : "Évangélisé"} le : {formatDateFr(m.date_evangelise)}</p>
-                    <p>📣 Type d'Evangélisation : {m.type_evangelisation || ""}</p>
-                    <p>🎗️ Civilité : {m.sexe || ""}</p>
+                  <div className="text-black text-sm mt-3 w-full space-y-4">
+                  <div>
+                  <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
+                  <p>🎗️ Civilité : {m.sexe || ""}</p>
                     <p>⏳ Tranche d'age : {m.age || ""}</p>
                     <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                    <p>🙏 Prière salut : {m.priere_salut ? "Oui" : "Non"}</p>
+                  </div>
+                  <hr />
+
+                   <div>
+                  <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
+                  <p>🙏 Prière salut : {m.priere_salut ? "Oui" : "Non"}</p>
                     <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
+                  </div>
+                  <hr />
+
+                   <div>
+                <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>                  
+                    <p>📅 {m.sexe === "Femme" ? "Évangélisée" : "Évangélisé"} le : {formatDateFr(m.date_evangelise)}</p>
+                    <p>📣 Type d'Evangélisation : {m.type_evangelisation || ""}</p>
+                   </div>
+              <hr />
+                    
+                    <div>
+                <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
                     <p>❓ Difficultés / Besoins : {formatBesoin(m.besoin)}</p>
                     <p>📝 Infos : {m.infos_supplementaires || ""}</p>
+                  </div>
 
                     {/* 🔥 Détail des conseillers assignés depuis suivi_assignments_evangelises */}
                     <div>

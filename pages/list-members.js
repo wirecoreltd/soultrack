@@ -238,10 +238,26 @@ function ListMembersContent() {
 
   // -------------------- Fetch membres --------------------
   useEffect(() => {
-    if (!scopedQuery || !userProfile) return;
+  if (!userProfile) return;
+
+  // 🔥 empêche le rendu trop tôt pour conseiller
+  if (!conseillerIdFromUrl) {
+    const rolesArray = getRoles(userProfile);
+
+    if (rolesArray.includes("Conseiller") && conseillerMembreIds === null) {
+      return; // ⛔ attend que les assignments soient prêts
+    }
+  }
+
+  fetchMembers();
+}, [userProfile, conseillerMembreIds, conseillerIdFromUrl]);
 
     const fetchMembers = async () => {
       try {
+        
+        setLoading(true);          // ✅ IMPORTANT
+        setAllMembers([]);
+        
         let query = supabase
           .from("membres_complets")
           .select("*")
@@ -820,39 +836,49 @@ function ListMembersContent() {
       </div>
 
       {view === "card" && (
-        <>
-          {filteredNouveaux.length > 0 && (
-            <>
-              <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg text-sm">
-                💖 Bien aimé venu le {dateDuJour}
-              </h2>
-              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-                {filteredNouveaux.map((m) => renderMemberCard({ ...m, isNouveau: true }))}
-              </div>
-            </>
-          )}
+  <>
+    {loading ? (
+      <p className="text-white text-center w-full">Chargement...</p>
+    ) : (
+      <>
+        {filteredNouveaux.length > 0 && (
+          <>
+            <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg text-sm">
+              💖 Bien aimé venu le {dateDuJour}
+            </h2>
+            <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+              {filteredNouveaux.map((m) =>
+                renderMemberCard({ ...m, isNouveau: true })
+              )}
+            </div>
+          </>
+        )}
 
-          {filteredAnciens.length > 0 && (
-            <>
-              <h2 className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-blue-500 to-gray-300 bg-clip-text text-transparent">
-                Membres existants
-              </h2>
-              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-                {filteredAnciens.map((m) => renderMemberCard(m))}
-              </div>
-            </>
-          )}
+        {filteredAnciens.length > 0 && (
+          <>
+            <h2 className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-blue-500 to-gray-300 bg-clip-text text-transparent">
+              Membres existants
+            </h2>
+            <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+              {filteredAnciens.map((m) => renderMemberCard(m))}
+            </div>
+          </>
+        )}
 
-          {filteredInactifs.length > 0 && (
-            <>
-              <h2 className="w-full max-w-6xl text-gray-400 font-bold mb-2 text-lg">Contacts inactifs</h2>
-              <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                {filteredInactifs.map((m) => renderMemberCard(m))}
-              </div>
-            </>
-          )}
-        </>
-      )}
+        {filteredInactifs.length > 0 && (
+          <>
+            <h2 className="w-full max-w-6xl text-gray-400 font-bold mb-2 text-lg">
+              Contacts inactifs
+            </h2>
+            <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+              {filteredInactifs.map((m) => renderMemberCard(m))}
+            </div>
+          </>
+        )}
+      </>
+    )}
+  </>
+)}
 
       {/* EditMemberPopup */}
       <EditMemberPopup

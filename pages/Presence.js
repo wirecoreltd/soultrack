@@ -19,16 +19,14 @@ function Presence() {
   const [presentList, setPresentList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [view, setView] = useState("absents");
+  const [view, setView] = useState("absents"); // ✅ FIX 3: toggle entre "absents" et "presents"
 
-  // 📅 DATE SÉLECTIONNÉE
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
 
   const today = selectedDate;
 
-  // 🔥 FETCH ABSENTS
   const fetchMembers = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -63,7 +61,6 @@ function Presence() {
     }
   };
 
-  // 🔥 FETCH PRÉSENTS
   const fetchPresentMembers = async () => {
     try {
       const { data } = await supabase
@@ -88,7 +85,6 @@ function Presence() {
     setLoading(false);
   };
 
-  // 🔄 LOAD INITIAL + REALTIME
   useEffect(() => {
     fetchAll();
 
@@ -109,24 +105,35 @@ function Presence() {
     return () => supabase.removeChannel(channel);
   }, [selectedDate]);
 
-  // ✅ MARQUER PRÉSENT
-  const markPresent = async (memberId) => {
+  // ✅ FIX 1 & 2 : markPresent met à jour members ET presentList immédiatement
+  const markPresent = async (membre) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
       await supabase.from("presences").insert({
-        membre_id: memberId,
+        membre_id: membre.id,
         date: today,
         checked_by: user.id,
       });
 
-      setMembers(prev => prev.filter(m => m.id !== memberId));
+      // Retirer de la liste absents
+      setMembers(prev => prev.filter(m => m.id !== membre.id));
+
+      // Ajouter à la liste présents → compteur augmente ✅ FIX 2
+      setPresentList(prev => [
+        ...prev,
+        {
+          membre_id: membre.id,
+          checked_by: user.id,
+          membres_complets: { prenom: membre.prenom, nom: membre.nom },
+        },
+      ]);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // ❌ REMETTRE ABSENT
+  // ✅ FIX 4 : markAbsent retire de presentList et remet dans members
   const markAbsent = async (memberId) => {
     try {
       await supabase
@@ -134,12 +141,30 @@ function Presence() {
         .delete()
         .eq("membre_id", memberId)
         .eq("date", today);
+
+      // Trouver le membre dans presentList
+      const found = presentList.find(p => p.membre_id === memberId);
+
+      // Retirer de présents
+      setPresentList(prev => prev.filter(p => p.membre_id !== memberId));
+
+      // Remettre dans absents
+      if (found?.membres_complets) {
+        setMembers(prev => [
+          ...prev,
+          {
+            id: memberId,
+            prenom: found.membres_complets.prenom,
+            nom: found.membres_complets.nom,
+            telephone: "",
+          },
+        ]);
+      }
     } catch (err) {
       console.error(err);
     }
   };
 
-  // 🔍 FILTERS
   const filteredAbsents = members.filter(
     (m) =>
       m.prenom.toLowerCase().includes(search.toLowerCase()) ||
@@ -157,13 +182,11 @@ function Presence() {
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
 
-      {/* HEADER */}
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold mt-4 text-white">
           Présences du <span className="text-emerald-300">jour</span>
         </h1>
 
-        {/* 📅 DATE PICKER */}
         <div className="flex justify-center mt-4">
           <input
             type="date"
@@ -172,27 +195,34 @@ function Presence() {
             className="px-3 py-2 rounded-md text-black"
           />
         </div>
-       
-        {/* COMPTEURS */}
+
+        {/* ✅ FIX 2 : compteur présents mis à jour en temps réel */}
         <div className="flex gap-4 justify-center mt-3 text-sm">
           <span className="text-green-300">✔ Présents : {presentList.length}</span>
           <span className="text-white">⚪ Restants : {members.length}</span>
         </div>
       </div>
 
-      {/* SWITCH */}
-      <div className="flex gap-3 mb-6">        
+      {/* ✅ FIX 3 : Toggle entre Absents et Présents */}
+      <div className="flex gap-3 mb-6">
+        <button
+          onClick={() => setView("absents")}
+          className={`px-4 py-2 rounded ${
+            view === "absents" ? "bg-white text-[#333699] font-bold" : "bg-white/20 text-white"
+          }`}
+        >
+          ⚪ Absents ({members.length})
+        </button>
         <button
           onClick={() => setView("presents")}
           className={`px-4 py-2 rounded ${
-            view === "presents" ? "bg-green-400 text-black" : "bg-white/20 text-white"
+            view === "presents" ? "bg-green-400 text-black font-bold" : "bg-white/20 text-white"
           }`}
         >
-          Lister comme Présents ✔
+          ✔ Présents ({presentList.length})
         </button>
       </div>
 
-      {/* SEARCH */}
       <div className="w-full max-w-4xl flex justify-center mb-6">
         <input
           type="text"
@@ -203,7 +233,6 @@ function Presence() {
         />
       </div>
 
-      {/* LIST */}
       <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-4">
         {loading ? (
           <p className="text-white text-center col-span-full">Chargement...</p>
@@ -214,14 +243,15 @@ function Presence() {
             filteredAbsents.map((m) => (
               <div
                 key={m.id}
-                onClick={() => markPresent(m.id)}
+                onClick={() => markPresent(m)} // ✅ FIX 1 : passe l'objet complet
                 className="bg-white rounded-xl shadow p-4 cursor-pointer hover:bg-green-100 transition"
               >
                 <h2 className="font-bold text-black text-lg">
-                  {m.prenom} {m.nom}                </h2>              
-
+                  {m.prenom} {m.nom}
+                </h2>
+                {/* ✅ FIX 1 : texte mis à jour après clic (disparaît car carte retirée) */}
                 <div className="mt-2 text-green-600 font-semibold text-sm">
-                  ➕ Cliquer pour marquer présent
+                  ➕ Marquer comme présent
                 </div>
               </div>
             ))
@@ -238,12 +268,12 @@ function Presence() {
                 <h2 className="font-bold text-black text-lg">
                   ✔ {p.membres_complets?.prenom} {p.membres_complets?.nom}
                 </h2>
-
+                {/* ✅ FIX 4 : bouton absent remet le contact dans la liste principale */}
                 <button
                   onClick={() => markAbsent(p.membre_id)}
                   className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
                 >
-                  Remettre absent
+                  − Marquer absent
                 </button>
               </div>
             ))

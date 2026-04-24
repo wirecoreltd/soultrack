@@ -316,19 +316,23 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
                   className="inp mb-2"
                 />
                 <div className="max-h-36 overflow-y-auto rounded-xl border border-gray-200 divide-y divide-gray-100">
-                  {filteredConseillers.map(c => (
-                    <div
-                      key={c.id}
-                      onClick={() => {
-                        if (!selectedConseillers.includes(c.id)) {
-                          setSelectedConseillers(prev => [...prev, c.id]);
-                        }
-                      }}
-                      className="cursor-pointer px-3 py-2 text-sm hover:bg-blue-50 text-gray-700 transition-colors"
-                    >
-                      {c.prenom} {c.nom}
-                    </div>
-                  ))}
+                  {filteredConseillers.map(c => {
+                    const alreadySelected = selectedConseillers.some(s => s.id === c.id);
+                    return (
+                      <div
+                        key={c.id}
+                        onClick={() => {
+                          if (!alreadySelected) {
+                            // Ajouter l objet complet {id, prenom, nom}
+                            setSelectedConseillers(prev => [...prev, { id: c.id, prenom: c.prenom, nom: c.nom }]);
+                          }
+                        }}
+                        className={"px-3 py-2 text-sm transition-colors " + (alreadySelected ? "bg-gray-50 text-gray-300 cursor-not-allowed" : "cursor-pointer hover:bg-blue-50 text-gray-700")}
+                      >
+                        {c.prenom} {c.nom} {alreadySelected ? "✓" : ""}
+                      </div>
+                    );
+                  })}
                   {filteredConseillers.length === 0 && (
                     <p className="text-xs text-gray-400 px-3 py-2">Aucun résultat</p>
                   )}

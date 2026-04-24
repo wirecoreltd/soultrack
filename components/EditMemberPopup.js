@@ -3,18 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 
-// Pass `currentUserRoles` (array) as a prop from the parent
 export default function EditMemberPopup({ member, cellules, conseillers, onClose, onUpdateMember, currentUserRoles }) {
   if (!member) return null;
 
-
-  const ADMIN_ROLES = new Set([
-  "Administrateur",
-  "ResponsableIntegration"
-]);
-
-const isPrivileged = (currentUserRoles || [])
-  .some(role => ADMIN_ROLES.has(role));
+  const ADMIN_ROLES = new Set(["Administrateur", "ResponsableIntegration"]);
+  const isPrivileged = (currentUserRoles || []).some(role => ADMIN_ROLES.has(role));
 
   const [autreMinistere, setAutreMinistere] = useState("");
   const [search, setSearch] = useState("");
@@ -72,32 +65,37 @@ const isPrivileged = (currentUserRoles || [])
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  // 🔥 On stocke des objets {id, prenom, nom} au lieu de simples IDs
   const [selectedConseillers, setSelectedConseillers] = useState([]);
 
-  // Ref for click-outside detection
   const modalRef = useRef(null);
 
+  // 🔥 FIX : fetch les assignments avec jointure profiles pour avoir prenom/nom
   useEffect(() => {
-  const fetchAssignments = async () => {
-    const { data, error } = await supabase
-      .from("suivi_assignments")
-      .select("conseiller_id")
-      .eq("membre_id", member.id);
+    const fetchAssignments = async () => {
+      const { data, error } = await supabase
+        .from("suivi_assignments")
+        .select("conseiller_id, profiles:conseiller_id(id, prenom, nom)")
+        .eq("membre_id", member.id);
 
-    if (error) {
-      console.error(error);
-      return;
-    }
+      if (error) {
+        console.error("fetchAssignments error:", error);
+        return;
+      }
 
-    if (data) {
-      setSelectedConseillers(data.map(d => d.conseiller_id));
-    }
-  };
+      if (data) {
+        // Construire des objets complets {id, prenom, nom}
+        const objects = data
+          .map(d => d.profiles)
+          .filter(Boolean);
+        setSelectedConseillers(objects);
+      }
+    };
 
-  fetchAssignments();
-}, [member.id]);
+    fetchAssignments();
+  }, [member.id]);
 
-  // Click outside handler
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -112,7 +110,6 @@ const isPrivileged = (currentUserRoles || [])
     `${c.prenom} ${c.nom}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox") {
@@ -143,7 +140,6 @@ const isPrivileged = (currentUserRoles || [])
     }));
   };
 
-  // -------------------- SUBMIT --------------------
   const handleSubmit = async () => {
     setMessage("");
     if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
@@ -212,14 +208,19 @@ const isPrivileged = (currentUserRoles || [])
       if (error) throw error;
 
       if (isPrivileged) {
+        // 🔥 Supprimer anciens assignments
         await supabase.from("suivi_assignments").delete().eq("membre_id", member.id);
-        const rows = selectedConseillers.map((id, index) => ({
+
+        // 🔥 Insérer avec les IDs des objets sélectionnés
+        const rows = selectedConseillers.map((c, index) => ({
           membre_id: member.id,
-          conseiller_id: id,
+          conseiller_id: c.id,
           role: index === 0 ? "principal" : "assistant",
           statut: "actif"
         }));
-        if (rows.length > 0) await supabase.from("suivi_assignments").insert(rows);
+        if (rows.length > 0) {
+          await supabase.from("suivi_assignments").insert(rows);
+        }
       }
 
       const { data: updatedMember, error: selectError } = await supabase
@@ -236,10 +237,6 @@ const isPrivileged = (currentUserRoles || [])
     }
   };
 
-  const getConseiller = (id) => {
-  return (conseillers || []).find(c => c.id === id);
-};
-  // -------------------- UI --------------------
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: "rgba(30,35,90,0.35)", backdropFilter: "blur(6px)" }}>
       <div
@@ -265,7 +262,6 @@ const isPrivileged = (currentUserRoles || [])
         {/* Body */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
 
-          {/* Section: Identité */}
           <SectionTitle>👤 Identité</SectionTitle>
 
           <Field label="Civilité">
@@ -297,7 +293,6 @@ const isPrivileged = (currentUserRoles || [])
             </select>
           </Field>
 
-          {/* Section: Suivi — restricted fields */}
           <SectionTitle>📌 Suivi par</SectionTitle>
 
           {isPrivileged ? (
@@ -320,50 +315,53 @@ const isPrivileged = (currentUserRoles || [])
                   className="inp mb-2"
                 />
                 <div className="max-h-36 overflow-y-auto rounded-xl border border-gray-200 divide-y divide-gray-100">
-                  {filteredConseillers.map(c => (
-                    <div
-                      key={c.id}
-                      onClick={() => {
-                        if (!selectedConseillers.includes(c.id)) {
-                          setSelectedConseillers(prev => [...prev, c.id]);
-                        }
-                      }}
-                      className="cursor-pointer px-3 py-2 text-sm hover:bg-blue-50 text-gray-700 transition-colors"
-                    >
-                      {c.prenom} {c.nom}
-                    </div>
-                  ))}
+                  {filteredConseillers.map(c => {
+                    // 🔥 Griser les conseillers déjà sélectionnés
+                    const alreadySelected = selectedConseillers.some(s => s.id === c.id);
+                    return (
+                      <div
+                        key={c.id}
+                        onClick={() => {
+                          if (!alreadySelected) {
+                            // 🔥 Ajouter l'objet complet {id, prenom, nom}
+                            setSelectedConseillers(prev => [...prev, { id: c.id, prenom: c.prenom, nom: c.nom }]);
+                          }
+                        }}
+                        className={`px-3 py-2 text-sm transition-colors ${
+                          alreadySelected
+                            ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+                            : "cursor-pointer hover:bg-blue-50 text-gray-700"
+                        }`}
+                      >
+                        {c.prenom} {c.nom} {alreadySelected ? "✓" : ""}
+                      </div>
+                    );
+                  })}
                   {filteredConseillers.length === 0 && (
                     <p className="text-xs text-gray-400 px-3 py-2">Aucun résultat</p>
                   )}
                 </div>
               </Field>
 
+              {/* 🔥 Affichage des conseillers sélectionnés avec leurs noms */}
               {selectedConseillers.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {selectedConseillers.map(id => {
-  const c = getConseiller(id);
-
-  if (!c) return null; // 🔥 évite crash
-
-  return (
-    <div
-      key={id}
-      className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white"
-      style={{ background: "#2E3192" }}
-    >
-      {c.prenom} {c.nom}
-      <button
-        onClick={() =>
-          setSelectedConseillers(prev => prev.filter(x => x !== id))
-        }
-        className="ml-1 opacity-70 hover:opacity-100"
-      >
-        ✕
-      </button>
-    </div>
-  );
-})}
+                  {selectedConseillers.map((c, index) => (
+                    <div
+                      key={c.id}
+                      className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white"
+                      style={{ background: index === 0 ? "#2E3192" : "#6b7280" }}
+                    >
+                      <span>{c.prenom} {c.nom}</span>
+                      {index === 0 && <span className="text-xs opacity-70 ml-1">(principal)</span>}
+                      <button
+                        onClick={() => setSelectedConseillers(prev => prev.filter(x => x.id !== c.id))}
+                        className="ml-1 opacity-70 hover:opacity-100"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </>
@@ -373,7 +371,6 @@ const isPrivileged = (currentUserRoles || [])
             </p>
           )}
 
-          {/* Section: Suivi */}
           <SectionTitle>💝 Suivi</SectionTitle>
 
           <Field label="Suivi statut">
@@ -393,7 +390,6 @@ const isPrivileged = (currentUserRoles || [])
             <textarea name="Commentaire_Suivi_Evangelisation" value={formData.Commentaire_Suivi_Evangelisation} onChange={handleChange} className="inp" rows={2} />
           </Field>
 
-          {/* Section: Vie spirituelle */}
           <SectionTitle>🕊 Vie spirituelle</SectionTitle>
 
           <Field label="Baptême d'eau">
@@ -463,7 +459,6 @@ const isPrivileged = (currentUserRoles || [])
             <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="inp" rows={2} />
           </Field>
 
-          {/* Serviteur — restricted */}
           {isPrivileged && (
             <>
               <div className="flex items-center gap-3 py-2">
@@ -519,7 +514,6 @@ const isPrivileged = (currentUserRoles || [])
             </>
           )}
 
-          {/* État du contact */}
           <Field label="État du contact">
             <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="inp">
               <option value="">-- Sélectionner --</option>
@@ -606,7 +600,6 @@ const isPrivileged = (currentUserRoles || [])
   );
 }
 
-// ---- Helper sub-components ----
 function SectionTitle({ children }) {
   return (
     <div className="flex items-center gap-2 pt-2">

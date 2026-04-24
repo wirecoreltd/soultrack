@@ -361,17 +361,7 @@ export default function EditMemberSuivisPopup({ member, cellules, conseillers, o
 
           <Field label="Formation">
             <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="inp" rows={2} />
-          </Field>          
-
-          {/* État du contact */}
-          <Field label="État du contact">
-            <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="inp">
-              <option value="">-- Sélectionner --</option>
-              <option value="nouveau">Nouveau</option>
-              <option value="existant">Existant</option>
-              <option value="inactif">Inactif</option>
-            </select>
-          </Field>
+          </Field>                 
 
           <Field label="Comment est-il venu ?">
             <select name="venu" value={formData.venu} onChange={handleChange} className="inp">

@@ -197,59 +197,32 @@ function Presence() {
     return () => supabase.removeChannel(channel);
   }, [selectedDate]);
 
-  // ✅ MARQUER PRÉSENT
   const markPresent = async (membre) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("presences").insert({
+      membre_id: membre.id,
+      date: today,
+      checked_by: user.id,
+    });
+    await fetchAll(); // fallback si realtime tarde
+  } catch (err) {
+    console.error(err);
+  }
+};
 
-      await supabase.from("presences").insert({
-        membre_id: membre.id,
-        date: today,
-        checked_by: user.id,
-      });
-
-      setMembers(prev => prev.filter(m => m.id !== membre.id));
-      setPresentList(prev => [
-        ...prev,
-        {
-          membre_id: membre.id,
-          checked_by: user.id,
-          membres_complets: { prenom: membre.prenom, nom: membre.nom },
-        },
-      ]);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // ❌ MARQUER ABSENT
-  const markAbsent = async (memberId) => {
-    try {
-      await supabase
-        .from("presences")
-        .delete()
-        .eq("membre_id", memberId)
-        .eq("date", today);
-
-      const found = presentList.find(p => p.membre_id === memberId);
-
-      setPresentList(prev => prev.filter(p => p.membre_id !== memberId));
-
-      if (found?.membres_complets) {
-        setMembers(prev => [
-          ...prev,
-          {
-            id: memberId,
-            prenom: found.membres_complets.prenom,
-            nom: found.membres_complets.nom,
-            telephone: "",
-          },
-        ]);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+const markAbsent = async (memberId) => {
+  try {
+    await supabase
+      .from("presences")
+      .delete()
+      .eq("membre_id", memberId)
+      .eq("date", today);
+    await fetchAll(); // fallback si realtime tarde
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const filteredAbsents = members.filter(
     (m) =>

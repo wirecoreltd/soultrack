@@ -248,10 +248,33 @@ function ListMembersContent() {
           .eq("eglise_id", userProfile.eglise_id)
           .eq("branche_id", userProfile.branche_id);
 
-        if (conseillerIdFromUrl) {
-          // Filtre URL explicite : on garde l'ancien comportement par conseiller_id colonne
-          query = query.eq("conseiller_id", conseillerIdFromUrl);
-        } else {
+                if (conseillerIdFromUrl) {
+          // 🔎 Aller chercher les membres assignés via suivi_assignments
+          const { data: assignments, error: assignError } = await supabase
+            .from("suivi_assignments")
+            .select("membre_id")
+            .eq("conseiller_id", conseillerIdFromUrl);
+        
+          if (assignError) {
+            console.error(assignError);
+            setAllMembers([]);
+            setLoading(false);
+            return;
+          }
+        
+          const membreIds = assignments.map((a) => a.membre_id);
+        
+          // 🚫 Aucun membre assigné
+          if (membreIds.length === 0) {
+            setAllMembers([]);
+            setLoading(false);
+            return;
+          }
+        
+          // ✅ Filtrer les membres avec les IDs
+          query = query.in("id", membreIds);
+        } 
+        else {
           const rolesArray = getRoles(userProfile);
 
           // ✅ Conseiller : filtre via suivi_assignments (conseillerMembreIds)

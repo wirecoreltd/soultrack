@@ -28,7 +28,7 @@ function Presence() {
 
   const today = selectedDate;
 
-  // 🔥 FETCH MEMBRES SELON LE RÔLE
+  // 🔥 FETCH MEMBRES SELON LE RÔLE (liste unifiée)
   const fetchMembers = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -49,53 +49,56 @@ function Presence() {
 
       const presentIds = presencesToday?.map(p => p.membre_id) || [];
 
-      let memberIds = null; // null = pas de filtre par ID (admin)
+      let allMemberIds = null; // null = admin (pas de filtre)
 
-      // 👤 CAS CONSEILLER : via suivi_assignments
-      if (profile.roles?.includes("Conseiller") && !profile.roles?.includes("Administrateur")) {
-        const { data: assignments } = await supabase
-          .from("suivi_assignments")
-          .select("membre_id")
-          .eq("conseiller_id", user.id)
-          .eq("statut", "actif");
+      if (!profile.roles?.includes("Administrateur")) {
+        let ids = new Set();
 
-        memberIds = assignments?.map(a => a.membre_id) || [];
-      }
+        // 👤 Membres via suivi_assignments (Conseiller)
+        if (profile.roles?.includes("Conseiller")) {
+          const { data: assignments } = await supabase
+            .from("suivi_assignments")
+            .select("membre_id")
+            .eq("conseiller_id", user.id)
+            .eq("statut", "actif");
 
-      // 🏠 CAS RESPONSABLE CELLULE : via cellules.responsable_id
-      if (profile.roles?.includes("ResponsableCellule") && !profile.roles?.includes("Administrateur")) {
-        const { data: cellule } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", user.id)
-          .single();
-
-        if (cellule) {
-          const { data: cellulesMembers } = await supabase
-            .from("membres_complets")
-            .select("id")
-            .eq("cellule_id", cellule.id);
-
-          memberIds = cellulesMembers?.map(m => m.id) || [];
-        } else {
-          memberIds = [];
+          assignments?.forEach(a => ids.add(a.membre_id));
         }
+
+        // 🏠 Membres via cellule (ResponsableCellule)
+        if (profile.roles?.includes("ResponsableCellule")) {
+          const { data: cellule } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", user.id)
+            .single();
+
+          if (cellule) {
+            const { data: cellulesMembers } = await supabase
+              .from("membres_complets")
+              .select("id")
+              .eq("cellule_id", cellule.id);
+
+            cellulesMembers?.forEach(m => ids.add(m.id));
+          }
+        }
+
+        allMemberIds = [...ids];
       }
 
-      // 🔍 CONSTRUIRE LA REQUÊTE
+      // 🔍 REQUÊTE
       let query = supabase
         .from("membres_complets")
         .select("id, prenom, nom, telephone")
         .eq("eglise_id", profile.eglise_id)
         .eq("branche_id", profile.branche_id);
 
-      // Filtre par IDs si pas admin
-      if (memberIds !== null) {
-        if (memberIds.length === 0) {
+      if (allMemberIds !== null) {
+        if (allMemberIds.length === 0) {
           setMembers([]);
           return;
         }
-        query = query.in("id", memberIds);
+        query = query.in("id", allMemberIds);
       }
 
       // Exclure les présents
@@ -110,7 +113,7 @@ function Presence() {
     }
   };
 
-  // 🔥 FETCH PRÉSENTS
+  // 🔥 FETCH PRÉSENTS (même périmètre que fetchMembers)
   const fetchPresentMembers = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -126,42 +129,43 @@ function Presence() {
         .select(`
           membre_id,
           checked_by,
-          membres_complets (prenom, nom, cellule_id, conseiller_id)
+          membres_complets (prenom, nom)
         `)
         .eq("date", today);
 
       let filtered = allPresences || [];
 
-      // Filtrer les présents selon le rôle
-      if (profile.roles?.includes("Conseiller") && !profile.roles?.includes("Administrateur")) {
-        const { data: assignments } = await supabase
-          .from("suivi_assignments")
-          .select("membre_id")
-          .eq("conseiller_id", user.id)
-          .eq("statut", "actif");
+      if (!profile.roles?.includes("Administrateur")) {
+        let ids = new Set();
 
-        const myIds = assignments?.map(a => a.membre_id) || [];
-        filtered = filtered.filter(p => myIds.includes(p.membre_id));
-      }
+        if (profile.roles?.includes("Conseiller")) {
+          const { data: assignments } = await supabase
+            .from("suivi_assignments")
+            .select("membre_id")
+            .eq("conseiller_id", user.id)
+            .eq("statut", "actif");
 
-      if (profile.roles?.includes("ResponsableCellule") && !profile.roles?.includes("Administrateur")) {
-        const { data: cellule } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", user.id)
-          .single();
-
-        if (cellule) {
-          const { data: cellulesMembers } = await supabase
-            .from("membres_complets")
-            .select("id")
-            .eq("cellule_id", cellule.id);
-
-          const myIds = cellulesMembers?.map(m => m.id) || [];
-          filtered = filtered.filter(p => myIds.includes(p.membre_id));
-        } else {
-          filtered = [];
+          assignments?.forEach(a => ids.add(a.membre_id));
         }
+
+        if (profile.roles?.includes("ResponsableCellule")) {
+          const { data: cellule } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", user.id)
+            .single();
+
+          if (cellule) {
+            const { data: cellulesMembers } = await supabase
+              .from("membres_complets")
+              .select("id")
+              .eq("cellule_id", cellule.id);
+
+            cellulesMembers?.forEach(m => ids.add(m.id));
+          }
+        }
+
+        filtered = filtered.filter(p => ids.has(p.membre_id));
       }
 
       setPresentList(filtered);
@@ -177,6 +181,7 @@ function Presence() {
     setLoading(false);
   };
 
+  // 🔄 LOAD INITIAL + REALTIME
   useEffect(() => {
     fetchAll();
 
@@ -197,33 +202,40 @@ function Presence() {
     return () => supabase.removeChannel(channel);
   }, [selectedDate]);
 
+  // ✅ MARQUER PRÉSENT — source de vérité = DB, realtime + fetchAll sync tout
   const markPresent = async (membre) => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from("presences").insert({
-      membre_id: membre.id,
-      date: today,
-      checked_by: user.id,
-    });
-    await fetchAll(); // fallback si realtime tarde
-  } catch (err) {
-    console.error(err);
-  }
-};
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
 
-const markAbsent = async (memberId) => {
-  try {
-    await supabase
-      .from("presences")
-      .delete()
-      .eq("membre_id", memberId)
-      .eq("date", today);
-    await fetchAll(); // fallback si realtime tarde
-  } catch (err) {
-    console.error(err);
-  }
-};
+      await supabase.from("presences").insert({
+        membre_id: membre.id,
+        date: today,
+        checked_by: user.id,
+      });
 
+      // fetchAll resync toutes les listes (église + cellule + conseiller)
+      await fetchAll();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // ❌ MARQUER ABSENT — idem, fetchAll resync tout
+  const markAbsent = async (memberId) => {
+    try {
+      await supabase
+        .from("presences")
+        .delete()
+        .eq("membre_id", memberId)
+        .eq("date", today);
+
+      await fetchAll();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // 🔍 FILTRES
   const filteredAbsents = members.filter(
     (m) =>
       m.prenom?.toLowerCase().includes(search.toLowerCase()) ||

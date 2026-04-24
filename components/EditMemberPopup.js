@@ -66,12 +66,12 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // 🔥 On stocke des objets {id, prenom, nom} au lieu de simples IDs
+  // 🔥 Stocke des objets {id, prenom, nom} au lieu de simples IDs
   const [selectedConseillers, setSelectedConseillers] = useState([]);
 
   const modalRef = useRef(null);
 
-  // 🔥 FIX : fetch les assignments avec jointure profiles pour avoir prenom/nom
+  // 🔥 Fetch assignments avec jointure profiles pour avoir prenom/nom
   useEffect(() => {
     const fetchAssignments = async () => {
       const { data, error } = await supabase
@@ -85,10 +85,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
       }
 
       if (data) {
-        // Construire des objets complets {id, prenom, nom}
-        const objects = data
-          .map(d => d.profiles)
-          .filter(Boolean);
+        const objects = data.map(d => d.profiles).filter(Boolean);
         setSelectedConseillers(objects);
       }
     };
@@ -208,10 +205,10 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
       if (error) throw error;
 
       if (isPrivileged) {
-        // 🔥 Supprimer anciens assignments
+        // Supprimer anciens assignments
         await supabase.from("suivi_assignments").delete().eq("membre_id", member.id);
 
-        // 🔥 Insérer avec les IDs des objets sélectionnés
+        // Insérer avec les IDs des objets sélectionnés
         const rows = selectedConseillers.map((c, index) => ({
           membre_id: member.id,
           conseiller_id: c.id,
@@ -316,7 +313,6 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
                 />
                 <div className="max-h-36 overflow-y-auto rounded-xl border border-gray-200 divide-y divide-gray-100">
                   {filteredConseillers.map(c => {
-                    // 🔥 Griser les conseillers déjà sélectionnés
                     const alreadySelected = selectedConseillers.some(s => s.id === c.id);
                     return (
                       <div

@@ -560,23 +560,7 @@ function SuivisEvangelisationContent() {
                 <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
                     <p>❓ Difficultés / Besoins : {formatBesoin(m.besoin)}</p>
                     <p>📝 Infos : {m.infos_supplementaires || ""}</p>
-                  </div>
-
-                    {/* 🔥 Détail des conseillers assignés depuis suivi_assignments_evangelises */}
-                    <div>
-                      <span className="font-semibold">👤 Conseiller(s) assigné(s) : </span>
-                      {assignmentsMap[m.id] && assignmentsMap[m.id].length > 0 ? (
-                        <span>
-                          {assignmentsMap[m.id].map((c, i) => (
-                            <span key={c.id}>
-                              {c.prenom} {c.nom}
-                              {i === 0 && assignmentsMap[m.id].length > 1 ? " (principal)" : ""}
-                              {i < assignmentsMap[m.id].length - 1 ? ", " : ""}
-                            </span>
-                          ))}
-                        </span>
-                      ) : "—"}
-                    </div>
+                  </div>                    
 
                     {!showRefus && (
                       <div className="mt-4">

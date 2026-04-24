@@ -332,22 +332,28 @@ export default function SuiviPopup({ member, onClose, user }) {
     });
   };
 
-  const formatDateForInput = (date) => {
+  // ✅ Pour input date
+const formatDateForInput = (date) => {
   if (!date) return "";
   return date.split("T")[0];
 };
-    try {
-      const d = new Date(dateStr);
-      const day = d.getDate().toString().padStart(2, "0");
-      const months = [
-        "Janv", "Févr", "Mars", "Avr", "Mai", "Juin",
-        "Juil", "Août", "Sept", "Oct", "Nov", "Déc",
-      ];
-      return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
-    } catch {
-      return dateStr;
-    }
-  };
+
+// ✅ Pour affichage joli
+const formatDate = (dateStr) => {
+  if (!dateStr) return "";
+
+  try {
+    const d = new Date(dateStr);
+    const day = d.getDate().toString().padStart(2, "0");
+    const months = [
+      "Janv", "Févr", "Mars", "Avr", "Mai", "Juin",
+      "Juil", "Août", "Sept", "Oct", "Nov", "Déc",
+    ];
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  } catch {
+    return dateStr;
+  }
+};
 
   const parseHistoriqueBesoin = (besoinJson) => {
     if (!besoinJson) return [];

@@ -8,7 +8,7 @@ import Footer from "../components/Footer";
 
 export default function PresencePage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "Conseiller"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "Conseiller", "ResponsableCellule"]}>
       <Presence />
     </ProtectedRoute>
   );
@@ -19,7 +19,8 @@ function Presence() {
   const [presentList, setPresentList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [view, setView] = useState("absents"); // ✅ FIX 3: toggle entre "absents" et "presents"
+  const [view, setView] = useState("absents");
+  const [userRole, setUserRole] = useState(null);
 
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -27,16 +28,20 @@ function Presence() {
 
   const today = selectedDate;
 
+  // 🔥 FETCH MEMBRES SELON LE RÔLE
   const fetchMembers = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("eglise_id, branche_id, role, roles")
         .eq("id", user.id)
         .single();
 
+      setUserRole(profile.role);
+
+      // IDs déjà présents aujourd'hui
       const { data: presencesToday } = await supabase
         .from("presences")
         .select("membre_id")
@@ -44,12 +49,56 @@ function Presence() {
 
       const presentIds = presencesToday?.map(p => p.membre_id) || [];
 
+      let memberIds = null; // null = pas de filtre par ID (admin)
+
+      // 👤 CAS CONSEILLER : via suivi_assignments
+      if (profile.roles?.includes("Conseiller") && !profile.roles?.includes("Administrateur")) {
+        const { data: assignments } = await supabase
+          .from("suivi_assignments")
+          .select("membre_id")
+          .eq("conseiller_id", user.id)
+          .eq("statut", "actif");
+
+        memberIds = assignments?.map(a => a.membre_id) || [];
+      }
+
+      // 🏠 CAS RESPONSABLE CELLULE : via cellules.responsable_id
+      if (profile.roles?.includes("ResponsableCellule") && !profile.roles?.includes("Administrateur")) {
+        const { data: cellule } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", user.id)
+          .single();
+
+        if (cellule) {
+          const { data: cellulesMembers } = await supabase
+            .from("membres_complets")
+            .select("id")
+            .eq("cellule_id", cellule.id);
+
+          memberIds = cellulesMembers?.map(m => m.id) || [];
+        } else {
+          memberIds = [];
+        }
+      }
+
+      // 🔍 CONSTRUIRE LA REQUÊTE
       let query = supabase
         .from("membres_complets")
         .select("id, prenom, nom, telephone")
         .eq("eglise_id", profile.eglise_id)
         .eq("branche_id", profile.branche_id);
 
+      // Filtre par IDs si pas admin
+      if (memberIds !== null) {
+        if (memberIds.length === 0) {
+          setMembers([]);
+          return;
+        }
+        query = query.in("id", memberIds);
+      }
+
+      // Exclure les présents
       if (presentIds.length > 0) {
         query = query.not("id", "in", `(${presentIds.join(",")})`);
       }
@@ -61,18 +110,61 @@ function Presence() {
     }
   };
 
+  // 🔥 FETCH PRÉSENTS
   const fetchPresentMembers = async () => {
     try {
-      const { data } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, roles, eglise_id, branche_id")
+        .eq("id", user.id)
+        .single();
+
+      const { data: allPresences } = await supabase
         .from("presences")
         .select(`
           membre_id,
           checked_by,
-          membres_complets (prenom, nom)
+          membres_complets (prenom, nom, cellule_id, conseiller_id)
         `)
         .eq("date", today);
 
-      setPresentList(data || []);
+      let filtered = allPresences || [];
+
+      // Filtrer les présents selon le rôle
+      if (profile.roles?.includes("Conseiller") && !profile.roles?.includes("Administrateur")) {
+        const { data: assignments } = await supabase
+          .from("suivi_assignments")
+          .select("membre_id")
+          .eq("conseiller_id", user.id)
+          .eq("statut", "actif");
+
+        const myIds = assignments?.map(a => a.membre_id) || [];
+        filtered = filtered.filter(p => myIds.includes(p.membre_id));
+      }
+
+      if (profile.roles?.includes("ResponsableCellule") && !profile.roles?.includes("Administrateur")) {
+        const { data: cellule } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", user.id)
+          .single();
+
+        if (cellule) {
+          const { data: cellulesMembers } = await supabase
+            .from("membres_complets")
+            .select("id")
+            .eq("cellule_id", cellule.id);
+
+          const myIds = cellulesMembers?.map(m => m.id) || [];
+          filtered = filtered.filter(p => myIds.includes(p.membre_id));
+        } else {
+          filtered = [];
+        }
+      }
+
+      setPresentList(filtered);
     } catch (err) {
       console.error(err);
     }
@@ -105,7 +197,7 @@ function Presence() {
     return () => supabase.removeChannel(channel);
   }, [selectedDate]);
 
-  // ✅ FIX 1 & 2 : markPresent met à jour members ET presentList immédiatement
+  // ✅ MARQUER PRÉSENT
   const markPresent = async (membre) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -116,10 +208,7 @@ function Presence() {
         checked_by: user.id,
       });
 
-      // Retirer de la liste absents
       setMembers(prev => prev.filter(m => m.id !== membre.id));
-
-      // Ajouter à la liste présents → compteur augmente ✅ FIX 2
       setPresentList(prev => [
         ...prev,
         {
@@ -133,7 +222,7 @@ function Presence() {
     }
   };
 
-  // ✅ FIX 4 : markAbsent retire de presentList et remet dans members
+  // ❌ MARQUER ABSENT
   const markAbsent = async (memberId) => {
     try {
       await supabase
@@ -142,13 +231,10 @@ function Presence() {
         .eq("membre_id", memberId)
         .eq("date", today);
 
-      // Trouver le membre dans presentList
       const found = presentList.find(p => p.membre_id === memberId);
 
-      // Retirer de présents
       setPresentList(prev => prev.filter(p => p.membre_id !== memberId));
 
-      // Remettre dans absents
       if (found?.membres_complets) {
         setMembers(prev => [
           ...prev,
@@ -167,16 +253,23 @@ function Presence() {
 
   const filteredAbsents = members.filter(
     (m) =>
-      m.prenom.toLowerCase().includes(search.toLowerCase()) ||
-      m.nom.toLowerCase().includes(search.toLowerCase()) ||
+      m.prenom?.toLowerCase().includes(search.toLowerCase()) ||
+      m.nom?.toLowerCase().includes(search.toLowerCase()) ||
       (m.telephone || "").includes(search)
   );
 
   const filteredPresents = presentList.filter(
     (p) =>
-      p.membres_complets?.prenom.toLowerCase().includes(search.toLowerCase()) ||
-      p.membres_complets?.nom.toLowerCase().includes(search.toLowerCase())
+      p.membres_complets?.prenom?.toLowerCase().includes(search.toLowerCase()) ||
+      p.membres_complets?.nom?.toLowerCase().includes(search.toLowerCase())
   );
+
+  // 🏷️ LABEL selon le rôle
+  const getRoleLabel = () => {
+    if (userRole === "Conseiller") return "👤 Vos membres suivis";
+    if (userRole === "ResponsableCellule") return "🏠 Membres de votre cellule";
+    return "🏢 Tous les membres de la branche";
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
@@ -187,6 +280,12 @@ function Presence() {
           Présences du <span className="text-emerald-300">jour</span>
         </h1>
 
+        {/* 🏷️ LABEL RÔLE */}
+        {userRole && (
+          <p className="text-white/70 text-sm mt-1">{getRoleLabel()}</p>
+        )}
+
+        {/* 📅 DATE PICKER */}
         <div className="flex justify-center mt-4">
           <input
             type="date"
@@ -196,14 +295,14 @@ function Presence() {
           />
         </div>
 
-        {/* ✅ FIX 2 : compteur présents mis à jour en temps réel */}
+        {/* COMPTEURS */}
         <div className="flex gap-4 justify-center mt-3 text-sm">
           <span className="text-green-300">✔ Présents : {presentList.length}</span>
           <span className="text-white">⚪ Restants : {members.length}</span>
         </div>
       </div>
 
-      {/* ✅ FIX 3 : Toggle entre Absents et Présents */}
+      {/* TOGGLE */}
       <div className="flex gap-3 mb-6">
         <button
           onClick={() => setView("absents")}
@@ -223,6 +322,7 @@ function Presence() {
         </button>
       </div>
 
+      {/* SEARCH */}
       <div className="w-full max-w-4xl flex justify-center mb-6">
         <input
           type="text"
@@ -233,6 +333,7 @@ function Presence() {
         />
       </div>
 
+      {/* LIST */}
       <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-4">
         {loading ? (
           <p className="text-white text-center col-span-full">Chargement...</p>
@@ -243,13 +344,12 @@ function Presence() {
             filteredAbsents.map((m) => (
               <div
                 key={m.id}
-                onClick={() => markPresent(m)} // ✅ FIX 1 : passe l'objet complet
+                onClick={() => markPresent(m)}
                 className="bg-white rounded-xl shadow p-4 cursor-pointer hover:bg-green-100 transition"
               >
                 <h2 className="font-bold text-black text-lg">
                   {m.prenom} {m.nom}
                 </h2>
-                {/* ✅ FIX 1 : texte mis à jour après clic (disparaît car carte retirée) */}
                 <div className="mt-2 text-green-600 font-semibold text-sm">
                   ➕ Marquer comme présent
                 </div>
@@ -268,7 +368,6 @@ function Presence() {
                 <h2 className="font-bold text-black text-lg">
                   ✔ {p.membres_complets?.prenom} {p.membres_complets?.nom}
                 </h2>
-                {/* ✅ FIX 4 : bouton absent remet le contact dans la liste principale */}
                 <button
                   onClick={() => markAbsent(p.membre_id)}
                   className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"

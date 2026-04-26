@@ -14,26 +14,56 @@ export default function PresencePage() {
   );
 }
 
+// 🕐 TYPES DE TEMPS DISPONIBLES
+const TYPES_TEMPS = [
+  { value: "Culte Dominical", label: "⛪ Culte Dominical" },
+  { value: "Culte Semaine", label: "📅 Culte Semaine" },
+  { value: "Cellule", label: "🏠 Réunion de Cellule" },
+  { value: "Jeunesse", label: "🔥 Réunion Jeunesse" },
+  { value: "Prière", label: "🙏 Réunion de Prière" },
+  { value: "Évangélisation", label: "📢 Sortie Évangélisation" },
+  { value: "Spécial", label: "⭐ Temps Spécial" },
+];
+
 function Presence() {
+  // --- ÉTAT SESSION ATTENDANCE ---
+  const [sessionReady, setSessionReady] = useState(false); // false = écran de config
+  const [attendanceId, setAttendanceId] = useState(null);
+  const [typeTemps, setTypeTemps] = useState("");
+  const [tempsNom, setTempsNom] = useState("");
+  const [compteurs, setCompteurs] = useState({
+    hommes: 0,
+    femmes: 0,
+    jeunes: 0,
+    enfants: 0,
+    evangelises: 0,
+    nouveauxVenus: 0,
+    nouveauxConvertis: 0,
+    connectes: 0,
+  });
+  const [savingAttendance, setSavingAttendance] = useState(false);
+  const [attendanceSaved, setAttendanceSaved] = useState(false);
+
+  // --- ÉTAT PRÉSENCE ---
   const [members, setMembers] = useState([]);
   const [presentList, setPresentList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [view, setView] = useState("absents");
   const [userRole, setUserRole] = useState(null);
-  const profileRef = useRef(null); // cache du profil
-  const myIdsRef = useRef(null);   // cache des IDs du périmètre
 
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
 
-  // 🔥 INIT PROFIL + IDs DU PÉRIMÈTRE (une seule fois)
+  const profileRef = useRef(null);
+  const myIdsRef = useRef(null);
+
+  // 🔥 INIT PROFIL
   const initProfile = useCallback(async () => {
     if (profileRef.current && myIdsRef.current !== undefined) return;
 
     const { data: { user } } = await supabase.auth.getUser();
-
     const { data: profile } = await supabase
       .from("profiles")
       .select("eglise_id, branche_id, role, roles")
@@ -43,7 +73,6 @@ function Presence() {
     profileRef.current = { ...profile, uid: user.id };
     setUserRole(profile.role);
 
-    // Admin = null (pas de filtre)
     if (profile.roles?.includes("Administrateur") || profile.roles?.includes("ResponsableIntegration")) {
       myIdsRef.current = null;
       return;
@@ -51,12 +80,10 @@ function Presence() {
 
     let ids = new Set();
 
-    // Lancer les deux requêtes en parallèle
     const [assignmentsResult, celluleResult] = await Promise.all([
       profile.roles?.includes("Conseiller")
         ? supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", user.id).eq("statut", "actif")
         : Promise.resolve({ data: [] }),
-
       profile.roles?.includes("ResponsableCellule")
         ? supabase.from("cellules").select("id").eq("responsable_id", user.id).single()
         : Promise.resolve({ data: null }),
@@ -75,7 +102,7 @@ function Presence() {
     myIdsRef.current = [...ids];
   }, []);
 
-  // 🔥 FETCH TOUT EN PARALLÈLE
+  // 🔥 FETCH MEMBRES + PRÉSENCES
   const fetchAll = useCallback(async (date) => {
     try {
       await initProfile();
@@ -83,20 +110,17 @@ function Presence() {
       const myIds = myIdsRef.current;
       const today = date || selectedDate;
 
-      // Lancer présences + membres en parallèle
       const [presencesResult, membresResult] = await Promise.all([
         supabase
           .from("presences")
           .select("membre_id, checked_by, membres_complets(prenom, nom)")
           .eq("date", today),
-
         (() => {
           let q = supabase
             .from("membres_complets")
             .select("id, prenom, nom, telephone")
             .eq("eglise_id", profile.eglise_id)
             .eq("branche_id", profile.branche_id);
-
           if (myIds !== null) {
             if (myIds.length === 0) return Promise.resolve({ data: [] });
             q = q.in("id", myIds);
@@ -107,20 +131,14 @@ function Presence() {
 
       const allPresences = presencesResult.data || [];
       const allMembers = membresResult.data || [];
-
-      // IDs présents aujourd'hui (tous, pas filtrés)
       const presentIds = new Set(allPresences.map(p => p.membre_id));
 
-      // Absents = membres du périmètre PAS dans présences
-      const absents = allMembers.filter(m => !presentIds.has(m.id));
-
-      // Présents = présences filtrées par périmètre
-      const presents = myIds !== null
-        ? allPresences.filter(p => myIds.includes(p.membre_id))
-        : allPresences;
-
-      setMembers(absents);
-      setPresentList(presents);
+      setMembers(allMembers.filter(m => !presentIds.has(m.id)));
+      setPresentList(
+        myIds !== null
+          ? allPresences.filter(p => myIds.includes(p.membre_id))
+          : allPresences
+      );
     } catch (err) {
       console.error(err);
     }
@@ -132,15 +150,61 @@ function Presence() {
 
     const channel = supabase
       .channel("presence-live")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "presences" },
-        () => fetchAll(selectedDate)
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "presences" }, () => fetchAll(selectedDate))
       .subscribe();
 
     return () => supabase.removeChannel(channel);
   }, [selectedDate]);
+
+  // ✅ DÉMARRER SESSION — crée l'entrée attendance
+  const demarrerSession = async () => {
+    if (!typeTemps) return;
+    setSavingAttendance(true);
+    try {
+      const profile = profileRef.current;
+
+      const { data, error } = await supabase
+        .from("attendance")
+        .insert({
+          date: selectedDate,
+          typeTemps: typeTemps,
+          temps_nom: tempsNom || typeTemps,
+          branche_id: profile.branche_id,
+          eglise_id: profile.eglise_id,
+          ...compteurs,
+        })
+        .select("id")
+        .single();
+
+      if (error) throw error;
+
+      setAttendanceId(data.id);
+      setSessionReady(true);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la création de la session");
+    } finally {
+      setSavingAttendance(false);
+    }
+  };
+
+  // 💾 SAUVEGARDER COMPTEURS (mise à jour)
+  const sauvegarderCompteurs = async () => {
+    if (!attendanceId) return;
+    setSavingAttendance(true);
+    try {
+      await supabase
+        .from("attendance")
+        .update({ ...compteurs })
+        .eq("id", attendanceId);
+      setAttendanceSaved(true);
+      setTimeout(() => setAttendanceSaved(false), 2000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSavingAttendance(false);
+    }
+  };
 
   // ✅ MARQUER PRÉSENT
   const markPresent = async (membre) => {
@@ -160,9 +224,7 @@ function Presence() {
   // ❌ MARQUER ABSENT
   const markAbsent = async (memberId) => {
     try {
-      await supabase
-        .from("presences")
-        .delete()
+      await supabase.from("presences").delete()
         .eq("membre_id", memberId)
         .eq("date", selectedDate);
       await fetchAll(selectedDate);
@@ -171,17 +233,22 @@ function Presence() {
     }
   };
 
-  const filteredAbsents = members.filter(
-    (m) =>
-      m.prenom?.toLowerCase().includes(search.toLowerCase()) ||
-      m.nom?.toLowerCase().includes(search.toLowerCase()) ||
-      (m.telephone || "").includes(search)
+  const updateCompteur = (key, delta) => {
+    setCompteurs(prev => ({
+      ...prev,
+      [key]: Math.max(0, (prev[key] || 0) + delta),
+    }));
+  };
+
+  const filteredAbsents = members.filter(m =>
+    m.prenom?.toLowerCase().includes(search.toLowerCase()) ||
+    m.nom?.toLowerCase().includes(search.toLowerCase()) ||
+    (m.telephone || "").includes(search)
   );
 
-  const filteredPresents = presentList.filter(
-    (p) =>
-      p.membres_complets?.prenom?.toLowerCase().includes(search.toLowerCase()) ||
-      p.membres_complets?.nom?.toLowerCase().includes(search.toLowerCase())
+  const filteredPresents = presentList.filter(p =>
+    p.membres_complets?.prenom?.toLowerCase().includes(search.toLowerCase()) ||
+    p.membres_complets?.nom?.toLowerCase().includes(search.toLowerCase())
   );
 
   const getRoleLabel = () => {
@@ -190,25 +257,151 @@ function Presence() {
     return "🏢 Tous les membres de la branche";
   };
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 📋 ÉCRAN DE CONFIGURATION DE SESSION
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (!sessionReady) {
+    return (
+      <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+        <HeaderPages />
+
+        <div className="w-full max-w-lg mt-6">
+          <h1 className="text-2xl font-bold text-white text-center mb-2">
+            📋 Nouvelle Session de Présence
+          </h1>
+          <p className="text-white/70 text-center text-sm mb-8">
+            Configurez la session avant de commencer
+          </p>
+
+          <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-5">
+
+            {/* DATE */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">📅 Date</label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
+              />
+            </div>
+
+            {/* TYPE DE TEMPS */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">⛪ Type de temps *</label>
+              <div className="grid grid-cols-2 gap-2">
+                {TYPES_TEMPS.map(t => (
+                  <button
+                    key={t.value}
+                    onClick={() => setTypeTemps(t.value)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${
+                      typeTemps === t.value
+                        ? "border-[#333699] bg-[#333699] text-white"
+                        : "border-gray-200 bg-gray-50 text-gray-700 hover:border-[#333699]"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* NOM PERSONNALISÉ */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                ✏️ Nom du temps <span className="font-normal text-gray-400">(optionnel)</span>
+              </label>
+              <input
+                type="text"
+                placeholder={typeTemps || "Ex: Culte de Pâques"}
+                value={tempsNom}
+                onChange={(e) => setTempsNom(e.target.value)}
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
+              />
+            </div>
+
+            {/* COMPTEURS INITIAUX */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                🔢 Compteurs manuels
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { key: "hommes", label: "👨 Hommes" },
+                  { key: "femmes", label: "👩 Femmes" },
+                  { key: "jeunes", label: "🧑 Jeunes" },
+                  { key: "enfants", label: "👶 Enfants" },
+                  { key: "evangelises", label: "📢 Évangélisés" },
+                  { key: "nouveauxVenus", label: "🆕 Nouveaux venus" },
+                  { key: "nouveauxConvertis", label: "✝️ Nouveaux convertis" },
+                  { key: "connectes", label: "📱 Connectés" },
+                ].map(({ key, label }) => (
+                  <div key={key} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                    <span className="text-xs text-gray-600 font-medium">{label}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => updateCompteur(key, -1)}
+                        className="w-7 h-7 rounded-full bg-gray-200 hover:bg-red-200 text-gray-700 font-bold text-sm flex items-center justify-center"
+                      >−</button>
+                      <span className="w-6 text-center font-bold text-gray-800 text-sm">
+                        {compteurs[key]}
+                      </span>
+                      <button
+                        onClick={() => updateCompteur(key, 1)}
+                        className="w-7 h-7 rounded-full bg-gray-200 hover:bg-green-200 text-gray-700 font-bold text-sm flex items-center justify-center"
+                      >+</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* BOUTON DÉMARRER */}
+            <button
+              onClick={demarrerSession}
+              disabled={!typeTemps || savingAttendance}
+              className={`w-full py-3 rounded-xl font-bold text-white text-lg transition ${
+                typeTemps
+                  ? "bg-[#333699] hover:bg-[#2a2d80]"
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
+            >
+              {savingAttendance ? "Démarrage..." : "▶ Démarrer la prise de présence"}
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ✅ ÉCRAN PRINCIPAL DE PRÉSENCE
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
 
-      <div className="text-center mb-6">
+      <div className="text-center mb-4">
         <h1 className="text-2xl font-bold mt-4 text-white">
           Présences du <span className="text-emerald-300">jour</span>
         </h1>
+        {/* BADGE TYPE TEMPS */}
+        <span className="inline-block mt-2 px-3 py-1 bg-white/20 text-white rounded-full text-sm font-medium">
+          {TYPES_TEMPS.find(t => t.value === typeTemps)?.label || typeTemps}
+          {tempsNom && tempsNom !== typeTemps && ` — ${tempsNom}`}
+        </span>
 
         {userRole && (
           <p className="text-white/70 text-sm mt-1">{getRoleLabel()}</p>
         )}
 
-        <div className="flex justify-center mt-4">
+        <div className="flex justify-center mt-3">
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-2 rounded-md text-black"
+            className="px-3 py-2 rounded-md text-black text-sm"
           />
         </div>
 
@@ -218,6 +411,50 @@ function Presence() {
         </div>
       </div>
 
+      {/* COMPTEURS RAPIDES (modifiables pendant la session) */}
+      <div className="w-full max-w-4xl bg-white/10 rounded-xl p-4 mb-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-white font-semibold text-sm">🔢 Compteurs manuels</h3>
+          <button
+            onClick={sauvegarderCompteurs}
+            disabled={savingAttendance}
+            className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs rounded-lg font-semibold"
+          >
+            {attendanceSaved ? "✔ Sauvegardé !" : savingAttendance ? "..." : "💾 Sauvegarder"}
+          </button>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {[
+            { key: "hommes", label: "👨 Hommes" },
+            { key: "femmes", label: "👩 Femmes" },
+            { key: "jeunes", label: "🧑 Jeunes" },
+            { key: "enfants", label: "👶 Enfants" },
+            { key: "evangelises", label: "📢 Évangélisés" },
+            { key: "nouveauxVenus", label: "🆕 Nouveaux" },
+            { key: "nouveauxConvertis", label: "✝️ Convertis" },
+            { key: "connectes", label: "📱 Connectés" },
+          ].map(({ key, label }) => (
+            <div key={key} className="flex items-center justify-between bg-white/10 rounded-lg px-2 py-2">
+              <span className="text-xs text-white/80">{label}</span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => updateCompteur(key, -1)}
+                  className="w-6 h-6 rounded-full bg-white/20 hover:bg-red-400 text-white font-bold text-xs flex items-center justify-center"
+                >−</button>
+                <span className="w-5 text-center font-bold text-white text-sm">
+                  {compteurs[key]}
+                </span>
+                <button
+                  onClick={() => updateCompteur(key, 1)}
+                  className="w-6 h-6 rounded-full bg-white/20 hover:bg-green-400 text-white font-bold text-xs flex items-center justify-center"
+                >+</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* TOGGLE */}
       <div className="flex gap-3 mb-6">
         <button
           onClick={() => setView("absents")}
@@ -237,6 +474,7 @@ function Presence() {
         </button>
       </div>
 
+      {/* SEARCH */}
       <div className="w-full max-w-4xl flex justify-center mb-6">
         <input
           type="text"
@@ -247,6 +485,7 @@ function Presence() {
         />
       </div>
 
+      {/* LIST */}
       <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-4">
         {loading ? (
           <p className="text-white text-center col-span-full">Chargement...</p>
@@ -260,12 +499,8 @@ function Presence() {
                 onClick={() => markPresent(m)}
                 className="bg-white rounded-xl shadow p-4 cursor-pointer hover:bg-green-100 transition"
               >
-                <h2 className="font-bold text-black text-lg">
-                  {m.prenom} {m.nom}
-                </h2>
-                <div className="mt-2 text-green-600 font-semibold text-sm">
-                  ➕ Marquer comme présent
-                </div>
+                <h2 className="font-bold text-black text-lg">{m.prenom} {m.nom}</h2>
+                <div className="mt-2 text-green-600 font-semibold text-sm">➕ Marquer comme présent</div>
               </div>
             ))
           )
@@ -274,10 +509,7 @@ function Presence() {
             <p className="text-white text-center col-span-full">Aucune présence</p>
           ) : (
             filteredPresents.map((p) => (
-              <div
-                key={p.membre_id}
-                className="bg-white rounded-xl shadow p-4"
-              >
+              <div key={p.membre_id} className="bg-white rounded-xl shadow p-4">
                 <h2 className="font-bold text-black text-lg">
                   ✔ {p.membres_complets?.prenom} {p.membres_complets?.nom}
                 </h2>
@@ -292,6 +524,20 @@ function Presence() {
           )
         )}
       </div>
+
+      {/* BOUTON NOUVELLE SESSION */}
+      <button
+        onClick={() => {
+          setSessionReady(false);
+          setAttendanceId(null);
+          setTypeTemps("");
+          setTempsNom("");
+          setCompteurs({ hommes: 0, femmes: 0, jeunes: 0, enfants: 0, evangelises: 0, nouveauxVenus: 0, nouveauxConvertis: 0, connectes: 0 });
+        }}
+        className="mt-8 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm"
+      >
+        ↩ Nouvelle session
+      </button>
 
       <Footer />
     </div>

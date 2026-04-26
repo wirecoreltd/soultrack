@@ -248,39 +248,34 @@ function Presence() {
   }, []);
 
   // ─── CHARGER TYPES DE TEMPS ───────────────────────────────────
-  const loadTempsOptions = useCallback(async () => {
-    await initProfile();
-    const profile = profileRef.current;
+const loadTempsOptions = useCallback(async () => {
+  await initProfile();
+  const profile = profileRef.current;
 
-    const { data, error } = await supabase
-      .from("attendance")
-      .select("typeTemps")
-      .eq("eglise_id", profile.eglise_id)
-      .eq("branche_id", profile.branche_id)
-      .not("typeTemps", "is", null);
+  const { data, error } = await supabase
+    .from("attendance")
+    .select("typeTemps, nouveauTemps, temps_nom")
+    .eq("eglise_id", profile.eglise_id)
+    .eq("branche_id", profile.branche_id);
 
-    if (error) { console.error(error); return; }
+  if (error) { console.error(error); return; }
 
-    const unique = [
-      ...new Set(
-        (data || [])
-          .map(t => t.typeTemps?.trim())
-          .filter(t => t && t !== "")
-      )
-    ];
+  const tous = new Set();
 
-    // Culte Dominical toujours en premier
-    const hasCulteDominical = unique.includes("Culte Dominical");
-    const sorted = hasCulteDominical
-      ? ["Culte Dominical", ...unique.filter(t => t !== "Culte Dominical")]
-      : ["Culte Dominical", ...unique];
+  (data || []).forEach(row => {
+    // Priorité : temps_nom > typeTemps > nouveauTemps
+    const val = row.temps_nom?.trim() || row.typeTemps?.trim() || row.nouveauTemps?.trim();
+    if (val && val !== "") tous.add(val);
+  });
 
-    setTempsOptions(sorted);
-  }, [initProfile]);
+  // Culte Dominical toujours en premier
+  const liste = [...tous].filter(t => t !== "Culte Dominical");
+  const sorted = tous.has("Culte Dominical")
+    ? ["Culte Dominical", ...liste]
+    : ["Culte Dominical", ...liste];
 
-  useEffect(() => {
-    loadTempsOptions();
-  }, [loadTempsOptions]);
+  setTempsOptions(sorted);
+}, [initProfile]);
 
   // ─── FETCH MEMBRES + PRÉSENCES ────────────────────────────────
   const fetchAll = useCallback(async (date) => {

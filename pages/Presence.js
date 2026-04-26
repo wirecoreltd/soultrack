@@ -52,11 +52,7 @@ function FormulaireSession({
 
       {/* TYPE DE TEMPS */}
       <div>
-  <label className="block text-sm font-semibold text-gray-700 mb-1">⛪ Type de temps *</label>
-  {/* ✅ MESSAGE ICI */}
-  <p className="text-xs text-gray-400 mb-2">
-    Le type sélectionné sera visible dans le rapport <span className="font-medium text-[#333699]">Présences & Statistiques</span>.
-  </p>
+  <label className="block text-sm font-semibold text-gray-700 mb-1">Selectionner un Type de Temps</label> 
   <div className="grid grid-cols-2 gap-2">
           {tempsOptions.map(t => (
             <button
@@ -86,8 +82,8 @@ function FormulaireSession({
         </div>
       </div>
 
-      {/* NOUVEAU TYPE */}
-      {typeTemps === "AUTRE" && (
+     {/* NOUVEAU TYPE */}
+{typeTemps === "AUTRE" && (
   <div className="flex flex-col gap-3">
     <div>
       <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -104,6 +100,7 @@ function FormulaireSession({
       />
       <p className="text-xs text-gray-400 mt-1">{nouveauTemps.length}/30 caractères</p>
     </div>
+
     <label className="flex items-center gap-2 text-sm text-amber-600 cursor-pointer select-none">
       <input
         type="checkbox"
@@ -113,7 +110,7 @@ function FormulaireSession({
       Enregistrer ce type pour une prochaine fois
     </label>
 
-    {/* ✅ MESSAGE uniquement quand cochée */}
+    {/* MESSAGE uniquement quand checkbox cochée ET nom rempli */}
     {enregistrerTemps && nouveauTemps.trim() && (
       <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
         <span className="text-blue-400 mt-0.5">ℹ️</span>

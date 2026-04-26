@@ -1,54 +1,73 @@
 import { createClient } from "@supabase/supabase-js";
 import { v2 as cloudinary } from "cloudinary";
 
-// 🔐 Supabase admin
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// 🔐 Cloudinary config
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Méthode non autorisée" });
-  }
-
+export async function POST(req) {
   try {
     const formData = await req.formData();
 
-const nomEglise = formData.get("nomEglise");
-const nomBranche = formData.get("nomBranche");
-const denomination = formData.get("denomination");
-const ville = formData.get("ville");
-const localisation = formData.get("localisation");
+    // ======================
+    // 1. Extract fields
+    // ======================
+    const nomEglise = formData.get("nomEglise");
+    const nomBranche = formData.get("nomBranche");
+    const denomination = formData.get("denomination");
+    const ville = formData.get("ville");
+    const localisation = formData.get("localisation");
 
-const adminPrenom = formData.get("adminPrenom");
-const adminNom = formData.get("adminNom");
-const adminEmail = formData.get("adminEmail");
-const adminPassword = formData.get("adminPassword");
+    const adminPrenom = formData.get("adminPrenom");
+    const adminNom = formData.get("adminNom");
+    const adminEmail = formData.get("adminEmail");
+    const adminPassword = formData.get("adminPassword");
 
-    // =========================
-    // 1️⃣ Upload logo (si présent)
-    // =========================
-    let logoUrl = null;
+    const logoFile = formData.get("logo");
 
-    if (req.body.logo) {
-      const upload = await cloudinary.uploader.upload(req.body.logo, {
-        folder: "soultrack/logos",
-      });
-
-      logoUrl = upload.secure_url;
+    // ======================
+    // 2. Validation minimale
+    // ======================
+    if (!nomEglise || !adminEmail || !adminPassword) {
+      return Response.json(
+        { error: "Champs obligatoires manquants" },
+        { status: 400 }
+      );
     }
 
-    // =========================
-    // 2️⃣ Vérifier email
-    // =========================
+    // ======================
+    // 3. Upload logo (Cloudinary)
+    // ======================
+    let logoUrl = null;
+
+    if (logoFile && logoFile.size > 0) {
+      const buffer = Buffer.from(await logoFile.arrayBuffer());
+
+      const uploadResult = await new Promise((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(
+            { folder: "soultrack/logos" },
+            (err, result) => {
+              if (err) reject(err);
+              else resolve(result);
+            }
+          )
+          .end(buffer);
+      });
+
+      logoUrl = uploadResult.secure_url;
+    }
+
+    // ======================
+    // 4. Check email exist
+    // ======================
     const { data: existing } = await supabaseAdmin
       .from("profiles")
       .select("id")
@@ -56,13 +75,16 @@ const adminPassword = formData.get("adminPassword");
       .maybeSingle();
 
     if (existing) {
-      return res.status(400).json({ error: "Email déjà utilisé" });
+      return Response.json(
+        { error: "Email déjà utilisé" },
+        { status: 400 }
+      );
     }
 
-    // =========================
-    // 3️⃣ Créer église
-    // =========================
-    const { data: egliseData, error: egliseError } = await supabaseAdmin
+    // ======================
+    // 5. Create church
+    // ======================
+    const { data: eglise, error: egliseError } = await supabaseAdmin
       .from("eglises")
       .insert([
         {
@@ -77,36 +99,32 @@ const adminPassword = formData.get("adminPassword");
       .single();
 
     if (egliseError) {
-      return res.status(400).json({ error: egliseError.message });
+      return Response.json({ error: egliseError.message }, { status: 400 });
     }
 
-    const egliseId = egliseData.id;
-
-    // =========================
-    // 4️⃣ Créer branche
-    // =========================
-    const { data: brancheData, error: brancheError } = await supabaseAdmin
+    // ======================
+    // 6. Create branch
+    // ======================
+    const { data: branche, error: brancheError } = await supabaseAdmin
       .from("branches")
       .insert([
         {
           nom: nomBranche,
           localisation,
-          eglise_id: egliseId,
+          eglise_id: eglise.id,
         },
       ])
       .select()
       .single();
 
     if (brancheError) {
-      return res.status(400).json({ error: brancheError.message });
+      return Response.json({ error: brancheError.message }, { status: 400 });
     }
 
-    const brancheId = brancheData.id;
-
-    // =========================
-    // 5️⃣ Créer user auth
-    // =========================
-    const { data: authData, error: authError } =
+    // ======================
+    // 7. Create auth user
+    // ======================
+    const { data: auth, error: authError } =
       await supabaseAdmin.auth.admin.createUser({
         email: adminEmail,
         password: adminPassword,
@@ -114,47 +132,47 @@ const adminPassword = formData.get("adminPassword");
       });
 
     if (authError) {
-      return res.status(400).json({ error: authError.message });
+      return Response.json({ error: authError.message }, { status: 400 });
     }
 
-    const adminUserId = authData.user.id;
-
-    // =========================
-    // 6️⃣ Créer profile admin
-    // =========================
-    const { data: profileData, error: profileError } = await supabaseAdmin
+    // ======================
+    // 8. Create profile
+    // ======================
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .insert([
         {
-          id: adminUserId,
+          id: auth.user.id,
           prenom: adminPrenom,
           nom: adminNom,
           email: adminEmail,
           role: "Administrateur",
           roles: ["Administrateur"],
-          eglise_id: egliseId,
-          branche_id: brancheId,
+          eglise_id: eglise.id,
+          branche_id: branche.id,
         },
       ])
       .select()
       .single();
 
     if (profileError) {
-      return res.status(400).json({ error: profileError.message });
+      return Response.json({ error: profileError.message }, { status: 400 });
     }
 
-    // =========================
-    // ✅ SUCCESS
-    // =========================
-    return res.status(200).json({
+    // ======================
+    // SUCCESS
+    // ======================
+    return Response.json({
       message: "Église créée avec succès",
-      eglise: egliseData,
-      branche: brancheData,
-      admin: profileData,
+      eglise,
+      branche,
+      profile,
     });
 
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: err.message });
+    return Response.json(
+      { error: err.message },
+      { status: 500 }
+    );
   }
 }

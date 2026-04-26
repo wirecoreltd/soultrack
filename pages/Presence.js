@@ -52,8 +52,12 @@ function FormulaireSession({
 
       {/* TYPE DE TEMPS */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">⛪ Type de temps *</label>
-        <div className="grid grid-cols-2 gap-2">
+  <label className="block text-sm font-semibold text-gray-700 mb-1">⛪ Type de temps *</label>
+  {/* ✅ MESSAGE ICI */}
+  <p className="text-xs text-gray-400 mb-2">
+    Le type sélectionné sera visible dans le rapport <span className="font-medium text-[#333699]">Présences & Statistiques</span>.
+  </p>
+  <div className="grid grid-cols-2 gap-2">
           {tempsOptions.map(t => (
             <button
               key={t}
@@ -130,25 +134,7 @@ function FormulaireSession({
             ))}
           </select>
         </div>
-      )}
-
-      {/* INDICATION */}
-      {typeFinalLabel && (
-        <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-          <span className="text-blue-400 mt-0.5">ℹ️</span>
-          <p className="text-xs text-blue-600 leading-relaxed">
-            Ce temps{" "}
-            <span className="font-semibold">"{typeFinalLabel}"</span>{" "}
-            apparaîtra automatiquement dans le rapport{" "}
-            <span className="font-semibold">Présences & Statistiques</span>.
-            {isCulte && !numeroCulte && (
-              <span className="text-amber-600 block mt-1">
-                ⚠️ Pensez à sélectionner un numéro de culte.
-              </span>
-            )}
-          </p>
-        </div>
-      )}
+      )}      
 
       {/* BOUTON */}
       <button
@@ -248,34 +234,39 @@ function Presence() {
   }, []);
 
   // ─── CHARGER TYPES DE TEMPS ───────────────────────────────────
-const loadTempsOptions = useCallback(async () => {
-  await initProfile();
-  const profile = profileRef.current;
+  const loadTempsOptions = useCallback(async () => {
+    await initProfile();
+    const profile = profileRef.current;
 
-  const { data, error } = await supabase
-    .from("attendance")
-    .select("typeTemps, nouveauTemps, temps_nom")
-    .eq("eglise_id", profile.eglise_id)
-    .eq("branche_id", profile.branche_id);
+    const { data, error } = await supabase
+      .from("attendance")
+      .select("typeTemps")
+      .eq("eglise_id", profile.eglise_id)
+      .eq("branche_id", profile.branche_id)
+      .not("typeTemps", "is", null);
 
-  if (error) { console.error(error); return; }
+    if (error) { console.error(error); return; }
 
-  const tous = new Set();
+    const unique = [
+      ...new Set(
+        (data || [])
+          .map(t => t.typeTemps?.trim())
+          .filter(t => t && t !== "")
+      )
+    ];
 
-  (data || []).forEach(row => {
-    // Priorité : temps_nom > typeTemps > nouveauTemps
-    const val = row.temps_nom?.trim() || row.typeTemps?.trim() || row.nouveauTemps?.trim();
-    if (val && val !== "") tous.add(val);
-  });
+    // Culte Dominical toujours en premier
+    const hasCulteDominical = unique.includes("Culte Dominical");
+    const sorted = hasCulteDominical
+      ? ["Culte Dominical", ...unique.filter(t => t !== "Culte Dominical")]
+      : ["Culte Dominical", ...unique];
 
-  // Culte Dominical toujours en premier
-  const liste = [...tous].filter(t => t !== "Culte Dominical");
-  const sorted = tous.has("Culte Dominical")
-    ? ["Culte Dominical", ...liste]
-    : ["Culte Dominical", ...liste];
+    setTempsOptions(sorted);
+  }, [initProfile]);
 
-  setTempsOptions(sorted);
-}, [initProfile]);
+  useEffect(() => {
+    loadTempsOptions();
+  }, [loadTempsOptions]);
 
   // ─── FETCH MEMBRES + PRÉSENCES ────────────────────────────────
   const fetchAll = useCallback(async (date) => {

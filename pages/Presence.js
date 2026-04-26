@@ -14,13 +14,143 @@ export default function PresencePage() {
   );
 }
 
+// ─── FORMULAIRE SESSION (hors du composant Presence) ──────────
+function FormulaireSession({
+  isEdit,
+  selectedDate, setSelectedDate,
+  typeTemps, setTypeTemps,
+  nouveauTemps, setNouveauTemps,
+  enregistrerTemps, setEnregistrerTemps,
+  numeroCulte, setNumeroCulte,
+  tempsOptions,
+  savingSession,
+  onSubmit,
+  onCancel,
+}) {
+  const typeFinalLabel = typeTemps === "AUTRE" ? nouveauTemps : typeTemps;
+  const isCulte = typeTemps === "Culte Dominical" || typeFinalLabel === "Culte Dominical";
+  const isDisabled = savingSession || !typeTemps || (typeTemps === "AUTRE" && !nouveauTemps.trim());
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-5">
+
+      {/* DATE */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1">📅 Date</label>
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
+        />
+      </div>
+
+      {/* TYPE DE TEMPS */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">⛪ Type de temps *</label>
+        <div className="grid grid-cols-2 gap-2">
+          {tempsOptions.map(t => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => { setTypeTemps(t); setNouveauTemps(""); }}
+              className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${
+                typeTemps === t
+                  ? "border-[#333699] bg-[#333699] text-white"
+                  : "border-gray-200 bg-gray-50 text-gray-700 hover:border-[#333699]"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setTypeTemps("AUTRE")}
+            className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${
+              typeTemps === "AUTRE"
+                ? "border-[#333699] bg-[#333699] text-white"
+                : "border-dashed border-gray-300 bg-white text-gray-500 hover:border-[#333699]"
+            }`}
+          >
+            ➕ Nouveau type...
+          </button>
+        </div>
+      </div>
+
+      {/* NOUVEAU TYPE */}
+      {typeTemps === "AUTRE" && (
+        <div className="flex flex-col gap-3">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">✏️ Nom du nouveau type</label>
+            <input
+              type="text"
+              placeholder="Ex: Tour de Prière, Camp..."
+              value={nouveauTemps}
+              onChange={(e) => setNouveauTemps(e.target.value.slice(0, 30))}
+              maxLength={30}
+              autoFocus
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm text-amber-600 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={enregistrerTemps}
+              onChange={e => setEnregistrerTemps(e.target.checked)}
+            />
+            Enregistrer ce type pour une prochaine fois
+          </label>
+        </div>
+      )}
+
+      {/* NUMÉRO CULTE */}
+      {isCulte && (
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">🔢 Numéro de culte</label>
+          <select
+            value={numeroCulte}
+            onChange={e => setNumeroCulte(e.target.value)}
+            className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
+          >
+            <option value="">--- Sélectionner ---</option>
+            {[1, 2, 3, 4, 5].map(n => (
+              <option key={n} value={n}>{n}{n === 1 ? "er" : "ème"} Culte</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* BOUTON */}
+      <button
+        type="button"
+        onClick={onSubmit}
+        disabled={isDisabled}
+        className={`w-full py-3 rounded-xl font-bold text-white text-base transition ${
+          isDisabled ? "bg-gray-300 cursor-not-allowed" : "bg-[#333699] hover:bg-[#2a2d80]"
+        }`}
+      >
+        {savingSession ? "..." : isEdit ? "💾 Enregistrer les modifications" : "▶ Démarrer la prise de présence"}
+      </button>
+
+      {isEdit && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-full py-2 rounded-xl font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 text-sm"
+        >
+          Annuler
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── COMPOSANT PRINCIPAL ───────────────────────────────────────
 function Presence() {
-  // --- SESSION ---
   const [sessionReady, setSessionReady] = useState(false);
   const [attendanceId, setAttendanceId] = useState(null);
   const [editingSession, setEditingSession] = useState(false);
 
-  // --- CONFIG SESSION ---
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [typeTemps, setTypeTemps] = useState("");
   const [nouveauTemps, setNouveauTemps] = useState("");
@@ -29,7 +159,6 @@ function Presence() {
   const [tempsOptions, setTempsOptions] = useState([]);
   const [savingSession, setSavingSession] = useState(false);
 
-  // --- PRÉSENCE ---
   const [members, setMembers] = useState([]);
   const [presentList, setPresentList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -40,7 +169,7 @@ function Presence() {
   const profileRef = useRef(null);
   const myIdsRef = useRef(null);
 
-  // ─── INIT PROFIL ───────────────────────────────────────────
+  // ─── INIT PROFIL ─────────────────────────────────────────────
   const initProfile = useCallback(async () => {
     if (profileRef.current) return;
 
@@ -54,7 +183,10 @@ function Presence() {
     profileRef.current = { ...profile, uid: user.id };
     setUserRole(profile.role);
 
-    if (profile.roles?.includes("Administrateur") || profile.roles?.includes("ResponsableIntegration")) {
+    if (
+      profile.roles?.includes("Administrateur") ||
+      profile.roles?.includes("ResponsableIntegration")
+    ) {
       myIdsRef.current = null;
       return;
     }
@@ -78,33 +210,42 @@ function Presence() {
     myIdsRef.current = [...ids];
   }, []);
 
-  // ─── CHARGER TYPES DE TEMPS ────────────────────────────────
+  // ─── CHARGER TYPES DE TEMPS depuis attendance ─────────────────
   const loadTempsOptions = useCallback(async () => {
     await initProfile();
     const profile = profileRef.current;
-    const { data } = await supabase
+
+    const { data, error } = await supabase
       .from("attendance")
       .select("typeTemps")
       .eq("eglise_id", profile.eglise_id)
       .eq("branche_id", profile.branche_id)
       .not("typeTemps", "is", null);
 
+    if (error) { console.error(error); return; }
+
     const unique = [
-      "Culte Dominical",
       ...new Set(
         (data || [])
           .map(t => t.typeTemps?.trim())
-          .filter(t => t && t !== "" && t !== "Culte Dominical")
+          .filter(t => t && t !== "")
       )
     ];
-    setTempsOptions(unique);
+
+    // Mettre "Culte Dominical" en premier s'il existe, sinon l'ajouter
+    const hasCulteDominical = unique.includes("Culte Dominical");
+    const sorted = hasCulteDominical
+      ? ["Culte Dominical", ...unique.filter(t => t !== "Culte Dominical")]
+      : ["Culte Dominical", ...unique];
+
+    setTempsOptions(sorted);
   }, [initProfile]);
 
   useEffect(() => {
     loadTempsOptions();
   }, [loadTempsOptions]);
 
-  // ─── FETCH MEMBRES + PRÉSENCES ─────────────────────────────
+  // ─── FETCH MEMBRES + PRÉSENCES ────────────────────────────────
   const fetchAll = useCallback(async (date) => {
     try {
       await initProfile();
@@ -159,7 +300,7 @@ function Presence() {
     return () => supabase.removeChannel(channel);
   }, [selectedDate, sessionReady]);
 
-  // ─── DÉMARRER SESSION ──────────────────────────────────────
+  // ─── DÉMARRER SESSION ─────────────────────────────────────────
   const demarrerSession = async () => {
     const typeFinal = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
     if (!typeFinal) return alert("Veuillez choisir un type de temps.");
@@ -169,7 +310,7 @@ function Presence() {
     try {
       const profile = profileRef.current;
 
-      // Enregistrer le type pour plus tard si demandé
+      // Enregistrer le nouveau type dans la liste locale si demandé
       if (typeTemps === "AUTRE" && enregistrerTemps && !tempsOptions.includes(typeFinal)) {
         setTempsOptions(prev => [...prev, typeFinal]);
       }
@@ -180,7 +321,9 @@ function Presence() {
         temps_nom: typeFinal,
         branche_id: profile.branche_id,
         eglise_id: profile.eglise_id,
-        ...(typeFinal === "Culte Dominical" && numeroCulte ? { numero_culte: Number(numeroCulte) } : {}),
+        ...(typeFinal === "Culte Dominical" && numeroCulte
+          ? { numero_culte: Number(numeroCulte) }
+          : {}),
       };
 
       const { data, error } = await supabase
@@ -202,7 +345,7 @@ function Presence() {
     }
   };
 
-  // ─── MODIFIER LA SESSION ───────────────────────────────────
+  // ─── MODIFIER SESSION ─────────────────────────────────────────
   const modifierSession = async () => {
     const typeFinal = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
     if (!typeFinal || !attendanceId) return;
@@ -213,7 +356,9 @@ function Presence() {
         date: selectedDate,
         typeTemps: typeFinal,
         temps_nom: typeFinal,
-        ...(typeFinal === "Culte Dominical" && numeroCulte ? { numero_culte: Number(numeroCulte) } : { numero_culte: null }),
+        ...(typeFinal === "Culte Dominical" && numeroCulte
+          ? { numero_culte: Number(numeroCulte) }
+          : { numero_culte: null }),
       };
 
       const { error } = await supabase
@@ -222,7 +367,6 @@ function Presence() {
         .eq("id", attendanceId);
 
       if (error) throw error;
-
       setEditingSession(false);
     } catch (err) {
       console.error(err);
@@ -232,7 +376,7 @@ function Presence() {
     }
   };
 
-  // ─── MARQUER PRÉSENT / ABSENT ──────────────────────────────
+  // ─── MARQUER PRÉSENT / ABSENT ─────────────────────────────────
   const markPresent = async (membre) => {
     try {
       const { uid } = profileRef.current;
@@ -240,6 +384,7 @@ function Presence() {
         membre_id: membre.id,
         date: selectedDate,
         checked_by: uid,
+        attendance_id: attendanceId,
       });
       await fetchAll(selectedDate);
     } catch (err) {
@@ -258,7 +403,7 @@ function Presence() {
     }
   };
 
-  // ─── FILTRES ───────────────────────────────────────────────
+  // ─── FILTRES ──────────────────────────────────────────────────
   const filteredAbsents = members.filter(m =>
     m.prenom?.toLowerCase().includes(search.toLowerCase()) ||
     m.nom?.toLowerCase().includes(search.toLowerCase()) ||
@@ -278,127 +423,7 @@ function Presence() {
 
   const typeFinalLabel = typeTemps === "AUTRE" ? nouveauTemps : typeTemps;
 
-  // ─── FORMULAIRE CONFIG (réutilisé pour création + édition) ─
-  const FormulaireSession = ({ isEdit = false }) => (
-    <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-5">
-
-      {/* DATE */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">📅 Date</label>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
-        />
-      </div>
-
-      {/* TYPE DE TEMPS */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">⛪ Type de temps *</label>
-        <div className="grid grid-cols-2 gap-2">
-          {tempsOptions.map(t => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTypeTemps(t)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${
-                typeTemps === t
-                  ? "border-[#333699] bg-[#333699] text-white"
-                  : "border-gray-200 bg-gray-50 text-gray-700 hover:border-[#333699]"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setTypeTemps("AUTRE")}
-            className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${
-              typeTemps === "AUTRE"
-                ? "border-[#333699] bg-[#333699] text-white"
-                : "border-dashed border-gray-300 bg-white text-gray-500 hover:border-[#333699]"
-            }`}
-          >
-            ➕ Nouveau type...
-          </button>
-        </div>
-      </div>
-
-      {/* NOUVEAU TYPE */}
-      {typeTemps === "AUTRE" && (
-        <div className="flex flex-col gap-2">
-          <label className="block text-sm font-semibold text-gray-700">✏️ Nom du nouveau type</label>
-          <input
-            type="text"
-            placeholder="Ex: Tour de Prière, Camp..."
-            value={nouveauTemps}
-            onChange={(e) => setNouveauTemps(e.target.value.slice(0, 30))}
-            maxLength={30}
-            className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
-          />
-          <label className="flex items-center gap-2 text-sm text-amber-600 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={enregistrerTemps}
-              onChange={e => setEnregistrerTemps(e.target.checked)}
-            />
-            Enregistrer ce type pour une prochaine fois
-          </label>
-        </div>
-      )}
-
-      {/* NUMÉRO CULTE */}
-      {(typeTemps === "Culte Dominical" || typeFinalLabel === "Culte Dominical") && (
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">🔢 Numéro de culte</label>
-          <select
-            value={numeroCulte}
-            onChange={e => setNumeroCulte(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
-          >
-            <option value="">--- Sélectionner ---</option>
-            {[1, 2, 3, 4, 5].map(n => (
-              <option key={n} value={n}>{n}{n === 1 ? "er" : "ème"} Culte</option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* BOUTON */}
-      <button
-        type="button"
-        onClick={isEdit ? modifierSession : demarrerSession}
-        disabled={savingSession || !typeTemps || (typeTemps === "AUTRE" && !nouveauTemps.trim())}
-        className={`w-full py-3 rounded-xl font-bold text-white text-base transition ${
-          !typeTemps || (typeTemps === "AUTRE" && !nouveauTemps.trim())
-            ? "bg-gray-300 cursor-not-allowed"
-            : "bg-[#333699] hover:bg-[#2a2d80]"
-        }`}
-      >
-        {savingSession
-          ? "..."
-          : isEdit
-            ? "💾 Enregistrer les modifications"
-            : "▶ Démarrer la prise de présence"
-        }
-      </button>
-
-      {isEdit && (
-        <button
-          type="button"
-          onClick={() => setEditingSession(false)}
-          className="w-full py-2 rounded-xl font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 text-sm"
-        >
-          Annuler
-        </button>
-      )}
-    </div>
-  );
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // 📋 ÉCRAN CONFIG INITIAL
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ━━━ ÉCRAN CONFIG ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   if (!sessionReady) {
     return (
       <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
@@ -406,16 +431,25 @@ function Presence() {
         <div className="w-full max-w-lg mt-6">
           <h1 className="text-2xl font-bold text-white text-center mb-2">📋 Nouvelle Session</h1>
           <p className="text-white/70 text-center text-sm mb-6">Configurez la session avant de commencer</p>
-          <FormulaireSession isEdit={false} />
+          <FormulaireSession
+            isEdit={false}
+            selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+            typeTemps={typeTemps} setTypeTemps={setTypeTemps}
+            nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
+            enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
+            numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
+            tempsOptions={tempsOptions}
+            savingSession={savingSession}
+            onSubmit={demarrerSession}
+            onCancel={null}
+          />
         </div>
         <Footer />
       </div>
     );
   }
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // ✅ ÉCRAN PRÉSENCE
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ━━━ ÉCRAN PRÉSENCE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
@@ -425,27 +459,29 @@ function Presence() {
           Présences du <span className="text-emerald-300">jour</span>
         </h1>
 
-        {/* RÉSUMÉ SESSION — cliquable pour modifier */}
+        {/* RÉSUMÉ SESSION cliquable */}
         <div
           className="inline-flex flex-col items-center mt-3 px-4 py-2 bg-white/10 rounded-xl cursor-pointer hover:bg-white/20 transition group"
-          onClick={() => setEditingSession(true)}
+          onClick={() => setEditingSession(v => !v)}
         >
           <div className="flex items-center gap-2">
             <span className="text-white font-semibold text-sm">
               {typeFinalLabel}
-              {numeroCulte ? ` — ${numeroCulte}${Number(numeroCulte) === 1 ? "er" : "ème"} culte` : ""}
+              {numeroCulte
+                ? ` — ${numeroCulte}${Number(numeroCulte) === 1 ? "er" : "ème"} culte`
+                : ""}
             </span>
             <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>
           </div>
           <span className="text-white/60 text-xs mt-0.5">
-            📅 {new Date(selectedDate + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+            📅 {new Date(selectedDate + "T00:00:00").toLocaleDateString("fr-FR", {
+              day: "2-digit", month: "long", year: "numeric"
+            })}
           </span>
           <span className="text-white/40 text-xs mt-0.5">Cliquer pour modifier</span>
         </div>
 
-        {userRole && (
-          <p className="text-white/70 text-sm mt-2">{getRoleLabel()}</p>
-        )}
+        {userRole && <p className="text-white/70 text-sm mt-2">{getRoleLabel()}</p>}
 
         <div className="flex gap-4 justify-center mt-3 text-sm">
           <span className="text-green-300">✔ Présents : {presentList.length}</span>
@@ -453,15 +489,26 @@ function Presence() {
         </div>
       </div>
 
-      {/* PANNEAU MODIFICATION SESSION (inline) */}
+      {/* MODIFICATION SESSION INLINE */}
       {editingSession && (
         <div className="w-full max-w-lg mb-6">
           <h2 className="text-white font-semibold text-center mb-3">✏️ Modifier la session</h2>
-          <FormulaireSession isEdit={true} />
+          <FormulaireSession
+            isEdit={true}
+            selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+            typeTemps={typeTemps} setTypeTemps={setTypeTemps}
+            nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
+            enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
+            numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
+            tempsOptions={tempsOptions}
+            savingSession={savingSession}
+            onSubmit={modifierSession}
+            onCancel={() => setEditingSession(false)}
+          />
         </div>
       )}
 
-      {/* TOGGLE */}
+      {/* LISTE */}
       {!editingSession && (
         <>
           <div className="flex gap-3 mb-6">
@@ -528,7 +575,6 @@ function Presence() {
             )}
           </div>
 
-          {/* NOUVELLE SESSION */}
           <button
             onClick={() => {
               setSessionReady(false);

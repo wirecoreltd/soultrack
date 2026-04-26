@@ -14,7 +14,7 @@ export default function PresencePage() {
   );
 }
 
-// ─── FORMULAIRE SESSION (hors du composant Presence) ──────────
+// ─── FORMULAIRE SESSION ────────────────────────────────────────
 function FormulaireSession({
   isEdit,
   selectedDate, setSelectedDate,
@@ -27,9 +27,14 @@ function FormulaireSession({
   onSubmit,
   onCancel,
 }) {
-  const typeFinalLabel = typeTemps === "AUTRE" ? nouveauTemps : typeTemps;
-  const isCulte = typeTemps === "Culte Dominical" || typeFinalLabel === "Culte Dominical";
-  const isDisabled = savingSession || !typeTemps || (typeTemps === "AUTRE" && !nouveauTemps.trim());
+  const typeFinalLabel = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
+
+  // Culte si le type contient "culte" (insensible à la casse)
+  const isCulte = typeFinalLabel?.toLowerCase().includes("culte");
+
+  const isDisabled = savingSession
+    || !typeTemps
+    || (typeTemps === "AUTRE" && !nouveauTemps.trim());
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-5">
@@ -53,7 +58,7 @@ function FormulaireSession({
             <button
               key={t}
               type="button"
-              onClick={() => { setTypeTemps(t); setNouveauTemps(""); }}
+              onClick={() => { setTypeTemps(t); setNouveauTemps(""); setNumeroCulte(""); }}
               className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${
                 typeTemps === t
                   ? "border-[#333699] bg-[#333699] text-white"
@@ -65,7 +70,7 @@ function FormulaireSession({
           ))}
           <button
             type="button"
-            onClick={() => setTypeTemps("AUTRE")}
+            onClick={() => { setTypeTemps("AUTRE"); setNumeroCulte(""); }}
             className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${
               typeTemps === "AUTRE"
                 ? "border-[#333699] bg-[#333699] text-white"
@@ -81,7 +86,9 @@ function FormulaireSession({
       {typeTemps === "AUTRE" && (
         <div className="flex flex-col gap-3">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">✏️ Nom du nouveau type</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              ✏️ Nom du nouveau type
+            </label>
             <input
               type="text"
               placeholder="Ex: Tour de Prière, Camp..."
@@ -91,8 +98,9 @@ function FormulaireSession({
               autoFocus
               className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
             />
+            <p className="text-xs text-gray-400 mt-1">{nouveauTemps.length}/30 caractères</p>
           </div>
-          <label className="flex items-center gap-2 text-sm text-amber-600 cursor-pointer">
+          <label className="flex items-center gap-2 text-sm text-amber-600 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={enregistrerTemps}
@@ -103,20 +111,42 @@ function FormulaireSession({
         </div>
       )}
 
-      {/* NUMÉRO CULTE */}
+      {/* NUMÉRO CULTE — visible si le type contient "culte" */}
       {isCulte && (
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">🔢 Numéro de culte</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            🔢 Numéro de culte
+          </label>
           <select
             value={numeroCulte}
             onChange={e => setNumeroCulte(e.target.value)}
             className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
           >
             <option value="">--- Sélectionner ---</option>
-            {[1, 2, 3, 4, 5].map(n => (
-              <option key={n} value={n}>{n}{n === 1 ? "er" : "ème"} Culte</option>
+            {[1, 2, 3, 4, 5, 6, 7].map(n => (
+              <option key={n} value={n}>
+                {n}{n === 1 ? "er" : "ème"} Culte
+              </option>
             ))}
           </select>
+        </div>
+      )}
+
+      {/* INDICATION */}
+      {typeFinalLabel && (
+        <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+          <span className="text-blue-400 mt-0.5">ℹ️</span>
+          <p className="text-xs text-blue-600 leading-relaxed">
+            Ce temps{" "}
+            <span className="font-semibold">"{typeFinalLabel}"</span>{" "}
+            apparaîtra automatiquement dans le rapport{" "}
+            <span className="font-semibold">Présences & Statistiques</span>.
+            {isCulte && !numeroCulte && (
+              <span className="text-amber-600 block mt-1">
+                ⚠️ Pensez à sélectionner un numéro de culte.
+              </span>
+            )}
+          </p>
         </div>
       )}
 
@@ -126,10 +156,17 @@ function FormulaireSession({
         onClick={onSubmit}
         disabled={isDisabled}
         className={`w-full py-3 rounded-xl font-bold text-white text-base transition ${
-          isDisabled ? "bg-gray-300 cursor-not-allowed" : "bg-[#333699] hover:bg-[#2a2d80]"
+          isDisabled
+            ? "bg-gray-300 cursor-not-allowed"
+            : "bg-[#333699] hover:bg-[#2a2d80]"
         }`}
       >
-        {savingSession ? "..." : isEdit ? "💾 Enregistrer les modifications" : "▶ Démarrer la prise de présence"}
+        {savingSession
+          ? "..."
+          : isEdit
+            ? "💾 Enregistrer les modifications"
+            : "▶ Démarrer la prise de présence"
+        }
       </button>
 
       {isEdit && (
@@ -169,7 +206,7 @@ function Presence() {
   const profileRef = useRef(null);
   const myIdsRef = useRef(null);
 
-  // ─── INIT PROFIL ─────────────────────────────────────────────
+  // ─── INIT PROFIL ──────────────────────────────────────────────
   const initProfile = useCallback(async () => {
     if (profileRef.current) return;
 
@@ -210,7 +247,7 @@ function Presence() {
     myIdsRef.current = [...ids];
   }, []);
 
-  // ─── CHARGER TYPES DE TEMPS depuis attendance ─────────────────
+  // ─── CHARGER TYPES DE TEMPS ───────────────────────────────────
   const loadTempsOptions = useCallback(async () => {
     await initProfile();
     const profile = profileRef.current;
@@ -232,7 +269,7 @@ function Presence() {
       )
     ];
 
-    // Mettre "Culte Dominical" en premier s'il existe, sinon l'ajouter
+    // Culte Dominical toujours en premier
     const hasCulteDominical = unique.includes("Culte Dominical");
     const sorted = hasCulteDominical
       ? ["Culte Dominical", ...unique.filter(t => t !== "Culte Dominical")]
@@ -310,10 +347,11 @@ function Presence() {
     try {
       const profile = profileRef.current;
 
-      // Enregistrer le nouveau type dans la liste locale si demandé
       if (typeTemps === "AUTRE" && enregistrerTemps && !tempsOptions.includes(typeFinal)) {
         setTempsOptions(prev => [...prev, typeFinal]);
       }
+
+      const isCulte = typeFinal.toLowerCase().includes("culte");
 
       const payload = {
         date: selectedDate,
@@ -321,9 +359,7 @@ function Presence() {
         temps_nom: typeFinal,
         branche_id: profile.branche_id,
         eglise_id: profile.eglise_id,
-        ...(typeFinal === "Culte Dominical" && numeroCulte
-          ? { numero_culte: Number(numeroCulte) }
-          : {}),
+        ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : {}),
       };
 
       const { data, error } = await supabase
@@ -352,11 +388,13 @@ function Presence() {
 
     setSavingSession(true);
     try {
+      const isCulte = typeFinal.toLowerCase().includes("culte");
+
       const payload = {
         date: selectedDate,
         typeTemps: typeFinal,
         temps_nom: typeFinal,
-        ...(typeFinal === "Culte Dominical" && numeroCulte
+        ...(isCulte && numeroCulte
           ? { numero_culte: Number(numeroCulte) }
           : { numero_culte: null }),
       };
@@ -376,7 +414,7 @@ function Presence() {
     }
   };
 
-  // ─── MARQUER PRÉSENT / ABSENT ─────────────────────────────────
+  // ─── PRÉSENCE ─────────────────────────────────────────────────
   const markPresent = async (membre) => {
     try {
       const { uid } = profileRef.current;
@@ -430,7 +468,9 @@ function Presence() {
         <HeaderPages />
         <div className="w-full max-w-lg mt-6">
           <h1 className="text-2xl font-bold text-white text-center mb-2">📋 Nouvelle Session</h1>
-          <p className="text-white/70 text-center text-sm mb-6">Configurez la session avant de commencer</p>
+          <p className="text-white/70 text-center text-sm mb-6">
+            Configurez la session avant de commencer
+          </p>
           <FormulaireSession
             isEdit={false}
             selectedDate={selectedDate} setSelectedDate={setSelectedDate}
@@ -514,13 +554,17 @@ function Presence() {
           <div className="flex gap-3 mb-6">
             <button
               onClick={() => setView("absents")}
-              className={`px-4 py-2 rounded ${view === "absents" ? "bg-white text-[#333699] font-bold" : "bg-white/20 text-white"}`}
+              className={`px-4 py-2 rounded ${
+                view === "absents" ? "bg-white text-[#333699] font-bold" : "bg-white/20 text-white"
+              }`}
             >
               ⚪ Absents ({members.length})
             </button>
             <button
               onClick={() => setView("presents")}
-              className={`px-4 py-2 rounded ${view === "presents" ? "bg-green-400 text-black font-bold" : "bg-white/20 text-white"}`}
+              className={`px-4 py-2 rounded ${
+                view === "presents" ? "bg-green-400 text-black font-bold" : "bg-white/20 text-white"
+              }`}
             >
               ✔ Présents ({presentList.length})
             </button>
@@ -550,7 +594,9 @@ function Presence() {
                     className="bg-white rounded-xl shadow p-4 cursor-pointer hover:bg-green-100 transition"
                   >
                     <h2 className="font-bold text-black text-lg">{m.prenom} {m.nom}</h2>
-                    <div className="mt-2 text-green-600 font-semibold text-sm">➕ Marquer comme présent</div>
+                    <div className="mt-2 text-green-600 font-semibold text-sm">
+                      ➕ Marquer comme présent
+                    </div>
                   </div>
                 ))
               )

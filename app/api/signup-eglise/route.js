@@ -1,31 +1,34 @@
 import { v2 as cloudinary } from "cloudinary";
+import { createClient } from "@supabase/supabase-js";
 
-// 🔐 Configuration Cloudinary
+// 🔐 Cloudinary config
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// 🔐 Supabase config
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 export async function POST(req) {
   try {
     const formData = await req.formData();
 
-    // 📦 Récupérer le fichier logo
     const file = formData.get("logo");
-
     let logoUrl = null;
 
-    // 🖼️ Upload vers Cloudinary si fichier présent
+    // 🖼️ Upload image
     if (file && file.size > 0) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
       const uploadResult = await new Promise((resolve, reject) => {
         cloudinary.uploader.upload_stream(
-          {
-            folder: "soultrack/logos", // dossier dans Cloudinary
-          },
+          { folder: "soultrack/logos" },
           (error, result) => {
             if (error) reject(error);
             else resolve(result);
@@ -36,26 +39,24 @@ export async function POST(req) {
       logoUrl = uploadResult.secure_url;
     }
 
-    // 🧾 Récupérer les champs du formulaire
-    const data = {
-      denomination: formData.get("denomination"),
-      nomEglise: formData.get("nomEglise"),
-      nomBranche: formData.get("nomBranche"),
-      ville: formData.get("ville"),
-      localisation: formData.get("localisation"),
-      adminPrenom: formData.get("adminPrenom"),
-      adminNom: formData.get("adminNom"),
-      adminEmail: formData.get("adminEmail"),
-      adminPassword: formData.get("adminPassword"),
-      logoUrl,
-    };
+    // 🧾 INSERT EN BASE DE DONNÉES
+    const { data, error } = await supabase
+      .from("eglises")
+      .insert({
+        nom: formData.get("nomEglise"),          // ✅ FIX IMPORTANT
+        denomination: formData.get("denomination"),
+        ville: formData.get("ville"),
+        pays: formData.get("localisation"),
+        branche: formData.get("nomBranche"),
+        logo_url: logoUrl,
+      })
+      .select()
+      .single();
 
-    // 🧪 Debug (à voir dans terminal serveur)
-    console.log("📦 Données reçues :", data);
-
-    // 🗄️ 👉 Ici tu ajouteras ta base de données plus tard
-    // Exemple :
-    // await db.eglise.create({ data });
+    if (error) {
+      console.error(error);
+      return Response.json({ success: false, error: error.message }, { status: 400 });
+    }
 
     return Response.json({
       success: true,
@@ -64,13 +65,10 @@ export async function POST(req) {
     });
 
   } catch (error) {
-    console.error("❌ Erreur API :", error);
+    console.error("❌ API error:", error);
 
     return Response.json(
-      {
-        success: false,
-        error: error.message,
-      },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

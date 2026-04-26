@@ -77,9 +77,12 @@ export default function SignupEglise() {
       if (logoFile) body.append("logo", logoFile);
 
       const res = await fetch("/api/signup-eglise", {
-        method: "POST",
-        body,
-      });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify(data)
+});
       const data = await res.json().catch(() => null);
       if (res.ok) {
         setMessage("✅ Église et admin créés avec succès !");

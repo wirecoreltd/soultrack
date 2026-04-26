@@ -20,17 +20,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    const {
-      nomEglise,
-      nomBranche,
-      denomination,
-      ville,
-      localisation,
-      adminPrenom,
-      adminNom,
-      adminEmail,
-      adminPassword,
-    } = req.body;
+    const formData = await req.formData();
+
+const nomEglise = formData.get("nomEglise");
+const nomBranche = formData.get("nomBranche");
+const denomination = formData.get("denomination");
+const ville = formData.get("ville");
+const localisation = formData.get("localisation");
+
+const adminPrenom = formData.get("adminPrenom");
+const adminNom = formData.get("adminNom");
+const adminEmail = formData.get("adminEmail");
+const adminPassword = formData.get("adminPassword");
 
     // =========================
     // 1️⃣ Upload logo (si présent)

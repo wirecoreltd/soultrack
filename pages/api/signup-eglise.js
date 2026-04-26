@@ -1,69 +1,126 @@
 import { createClient } from "@supabase/supabase-js";
+import { v2 as cloudinary } from "cloudinary";
 
-// ⚠️ À utiliser uniquement côté serveur
+// 🔐 Supabase admin
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,       // URL Supabase
-  process.env.SUPABASE_SERVICE_ROLE_KEY       // Clé SERVICE_ROLE (privée)
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
+
+// 🔐 Cloudinary config
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
-  const {
-    nomEglise,
-    nomBranche,
-    localisation,
-    adminPrenom,
-    adminNom,
-    adminEmail,
-    adminPassword,
-  } = req.body;
-
   try {
-    // 1️⃣ Vérifier si l'email existe déjà
-    const { data: existing, error: existingError } = await supabaseAdmin
+    const {
+      nomEglise,
+      nomBranche,
+      denomination,
+      ville,
+      localisation,
+      adminPrenom,
+      adminNom,
+      adminEmail,
+      adminPassword,
+    } = req.body;
+
+    // =========================
+    // 1️⃣ Upload logo (si présent)
+    // =========================
+    let logoUrl = null;
+
+    if (req.body.logo) {
+      const upload = await cloudinary.uploader.upload(req.body.logo, {
+        folder: "soultrack/logos",
+      });
+
+      logoUrl = upload.secure_url;
+    }
+
+    // =========================
+    // 2️⃣ Vérifier email
+    // =========================
+    const { data: existing } = await supabaseAdmin
       .from("profiles")
       .select("id")
       .eq("email", adminEmail)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       return res.status(400).json({ error: "Email déjà utilisé" });
     }
 
-    // 2️⃣ Créer l'église
+    // =========================
+    // 3️⃣ Créer église
+    // =========================
     const { data: egliseData, error: egliseError } = await supabaseAdmin
       .from("eglises")
-      .insert([{ nom: nomEglise }])
+      .insert([
+        {
+          nom: nomEglise,
+          denomination,
+          ville,
+          pays: localisation,
+          logo_url: logoUrl,
+        },
+      ])
       .select()
       .single();
 
-    if (egliseError) return res.status(400).json({ error: egliseError.message });
+    if (egliseError) {
+      return res.status(400).json({ error: egliseError.message });
+    }
+
     const egliseId = egliseData.id;
 
-    // 3️⃣ Créer la branche
+    // =========================
+    // 4️⃣ Créer branche
+    // =========================
     const { data: brancheData, error: brancheError } = await supabaseAdmin
       .from("branches")
-      .insert([{ nom: nomBranche, localisation, eglise_id: egliseId }])
+      .insert([
+        {
+          nom: nomBranche,
+          localisation,
+          eglise_id: egliseId,
+        },
+      ])
       .select()
       .single();
 
-    if (brancheError) return res.status(400).json({ error: brancheError.message });
+    if (brancheError) {
+      return res.status(400).json({ error: brancheError.message });
+    }
+
     const brancheId = brancheData.id;
 
-    // 4️⃣ Créer l’utilisateur admin dans Supabase Auth
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: adminEmail,
-      password: adminPassword,
-      email_confirm: true,
-    });
+    // =========================
+    // 5️⃣ Créer user auth
+    // =========================
+    const { data: authData, error: authError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email: adminEmail,
+        password: adminPassword,
+        email_confirm: true,
+      });
 
-    if (authError) return res.status(400).json({ error: authError.message });
+    if (authError) {
+      return res.status(400).json({ error: authError.message });
+    }
+
     const adminUserId = authData.user.id;
 
-    // 5️⃣ Créer le profil admin dans profiles
+    // =========================
+    // 6️⃣ Créer profile admin
+    // =========================
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from("profiles")
       .insert([
@@ -76,17 +133,20 @@ export default async function handler(req, res) {
           roles: ["Administrateur"],
           eglise_id: egliseId,
           branche_id: brancheId,
-          must_change_password: false,
         },
       ])
       .select()
       .single();
 
-    if (profileError) return res.status(400).json({ error: profileError.message });
+    if (profileError) {
+      return res.status(400).json({ error: profileError.message });
+    }
 
-    // ✅ Tout a été créé
+    // =========================
+    // ✅ SUCCESS
+    // =========================
     return res.status(200).json({
-      message: "Église, branche et admin créés avec succès !",
+      message: "Église créée avec succès",
       eglise: egliseData,
       branche: brancheData,
       admin: profileData,

@@ -88,32 +88,43 @@ function FormulaireSession({
 
       {/* NOUVEAU TYPE */}
       {typeTemps === "AUTRE" && (
-        <div className="flex flex-col gap-3">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              ✏️ Nom du nouveau type
-            </label>
-            <input
-              type="text"
-              placeholder="Ex: Tour de Prière, Camp..."
-              value={nouveauTemps}
-              onChange={(e) => setNouveauTemps(e.target.value.slice(0, 30))}
-              maxLength={30}
-              autoFocus
-              className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
-            />
-            <p className="text-xs text-gray-400 mt-1">{nouveauTemps.length}/30 caractères</p>
-          </div>
-          <label className="flex items-center gap-2 text-sm text-amber-600 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={enregistrerTemps}
-              onChange={e => setEnregistrerTemps(e.target.checked)}
-            />
-            Enregistrer ce type pour une prochaine fois
-          </label>
-        </div>
-      )}
+  <div className="flex flex-col gap-3">
+    <div>
+      <label className="block text-sm font-semibold text-gray-700 mb-1">
+        ✏️ Nom du nouveau type
+      </label>
+      <input
+        type="text"
+        placeholder="Ex: Tour de Prière, Camp..."
+        value={nouveauTemps}
+        onChange={(e) => setNouveauTemps(e.target.value.slice(0, 30))}
+        maxLength={30}
+        autoFocus
+        className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
+      />
+      <p className="text-xs text-gray-400 mt-1">{nouveauTemps.length}/30 caractères</p>
+    </div>
+    <label className="flex items-center gap-2 text-sm text-amber-600 cursor-pointer select-none">
+      <input
+        type="checkbox"
+        checked={enregistrerTemps}
+        onChange={e => setEnregistrerTemps(e.target.checked)}
+      />
+      Enregistrer ce type pour une prochaine fois
+    </label>
+
+    {/* ✅ MESSAGE uniquement quand cochée */}
+    {enregistrerTemps && nouveauTemps.trim() && (
+      <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+        <span className="text-blue-400 mt-0.5">ℹ️</span>
+        <p className="text-xs text-blue-600 leading-relaxed">
+          <span className="font-semibold">"{nouveauTemps.trim()}"</span> sera enregistré et apparaîtra dans la liste des types de temps du rapport{" "}
+          <span className="font-semibold">Présences & Statistiques</span>.
+        </p>
+      </div>
+    )}
+  </div>
+)}
 
       {/* NUMÉRO CULTE — visible si le type contient "culte" */}
       {isCulte && (

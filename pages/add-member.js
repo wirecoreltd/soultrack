@@ -18,7 +18,7 @@ export default function AddMember() {
     age: "",
     statut: "",
     venu: "",
-    date_venu: new Date().toISOString().slice(0, 10), // Ajout de la date de venue par défaut
+    date_venu: new Date().toISOString().slice(0, 10),
     besoin: [],
     besoinLibre: "",
     is_whatsapp: false,
@@ -26,7 +26,7 @@ export default function AddMember() {
     priere_salut: "",
     type_conversion: "",
     eglise_id: "",
-    branche_id: "",
+    // ✅ branche_id supprimé du state
   });
 
   const [noPhone, setNoPhone] = useState(false);
@@ -36,19 +36,24 @@ export default function AddMember() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const besoinsOptions = [
-    "Finances","Santé","Travail / Études","Famille / Enfants","Miracle", "Délivrance",
-    "Relations / Conflits","Addictions / Dépendances","Guidance spirituelle",
-    "Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"
+    "Finances", "Santé", "Travail / Études", "Famille / Enfants", "Miracle", "Délivrance",
+    "Relations / Conflits", "Addictions / Dépendances", "Guidance spirituelle",
+    "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
   ];
 
+  // ─── Cas 1 : utilisateur connecté → récupérer eglise_id ───
   useEffect(() => {
+    // Si un token est présent, c'est le cas 2 (lien externe) qui prend le dessus
+    if (token) return;
+
     const fetchUserEglise = async () => {
       const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) return;
+      if (!session?.session?.user) { setLoading(false); return; }
 
+      // ✅ On ne sélectionne plus branche_id
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("eglise_id")
         .eq("id", session.session.user.id)
         .single();
 
@@ -56,15 +61,16 @@ export default function AddMember() {
         setFormData(prev => ({
           ...prev,
           eglise_id: profile.eglise_id,
-          branche_id: profile.branche_id,
+          // ✅ branche_id supprimé
         }));
       }
       setLoading(false);
     };
 
     fetchUserEglise();
-  }, []);
+  }, [token]);
 
+  // ─── Cas 2 : lien externe avec token ───
   useEffect(() => {
     if (!token) return;
 
@@ -73,7 +79,7 @@ export default function AddMember() {
 
       const { data, error } = await supabase
         .from("access_tokens")
-        .select("church_id, branch_id")
+        .select("church_id")          // ✅ branch_id supprimé
         .eq("token", token)
         .gte("expires_at", new Date().toISOString())
         .single();
@@ -84,7 +90,7 @@ export default function AddMember() {
         setFormData(prev => ({
           ...prev,
           eglise_id: data.church_id,
-          branche_id: data.branch_id
+          // ✅ branche_id supprimé
         }));
       }
 
@@ -110,68 +116,7 @@ export default function AddMember() {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      if (!noPhone && !formData.telephone) throw new Error("Le téléphone est requis ou cochez 'Pas de téléphone'");
-
-      const finalBesoin = showBesoinLibre && formData.besoinLibre
-        ? [...formData.besoin.filter(b => b !== "Autre"), formData.besoinLibre]
-        : formData.besoin;
-
-      const dataToSend = {
-        ...formData,
-        date_venu: formData.date_venu, // Envoi de date_venu
-        besoin: finalBesoin,
-        etat_contact: "nouveau",
-      };
-
-      delete dataToSend.besoinLibre;
-
-      if (!noPhone) {
-        const { data: existing } = await supabase
-          .from("membres_complets")
-          .select("id")
-          .eq("telephone", formData.telephone)
-          .single();
-
-        if (existing) throw new Error("Ce numéro de téléphone existe déjà.");
-      }
-
-      const { error } = await supabase.from("membres_complets").insert([dataToSend]);
-      if (error) throw error;
-
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-
-      setFormData(prev => ({
-        ...prev,
-        sexe: "",
-        nom: "",
-        prenom: "",
-        telephone: "",
-        ville: "",
-        age: "",
-        statut: "",
-        venu: "",
-        date_venu: new Date().toISOString().slice(0, 10),
-        besoin: [],
-        besoinLibre: "",
-        is_whatsapp: false,
-        infos_supplementaires: "",
-        priere_salut: "",
-        type_conversion: "",
-      }));
-      setNoPhone(false);
-      setShowBesoinLibre(false);
-
-    } catch (err) {
-      setErrorMsg(err.message || "Erreur lors de l'ajout du membre.");
-    }
-  };
-
-  const handleCancel = () => {
+  const resetForm = () => {
     setFormData(prev => ({
       ...prev,
       sexe: "",
@@ -195,12 +140,56 @@ export default function AddMember() {
     setErrorMsg("");
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMsg("");
+
+    try {
+      if (!noPhone && !formData.telephone) {
+        throw new Error("Le téléphone est requis ou cochez 'Pas de téléphone'");
+      }
+
+      const finalBesoin = showBesoinLibre && formData.besoinLibre
+        ? [...formData.besoin.filter(b => b !== "Autre"), formData.besoinLibre]
+        : formData.besoin;
+
+      // ✅ On ne transmet plus branche_id dans dataToSend
+      const { besoinLibre, ...rest } = formData;
+      const dataToSend = {
+        ...rest,
+        besoin: finalBesoin,
+        etat_contact: "nouveau",
+      };
+
+      if (!noPhone) {
+        const { data: existing } = await supabase
+          .from("membres_complets")
+          .select("id")
+          .eq("telephone", formData.telephone)
+          .maybeSingle();
+
+        if (existing) throw new Error("Ce numéro de téléphone existe déjà.");
+      }
+
+      const { error } = await supabase.from("membres_complets").insert([dataToSend]);
+      if (error) throw error;
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+      resetForm();
+
+    } catch (err) {
+      setErrorMsg(err.message || "Erreur lors de l'ajout du membre.");
+    }
+  };
+
   if (loading) return <p className="text-center mt-10">Vérification du lien...</p>;
-  if (errorMsg) return <p className="text-center mt-10 text-red-600">{errorMsg}</p>;
+  if (errorMsg && !formData.eglise_id) return <p className="text-center mt-10 text-red-600">{errorMsg}</p>;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-4 sm:p-6">
       <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-3xl shadow-lg relative">
+
         <button
           onClick={() => window.close()}
           className="absolute top-3 right-3 sm:top-4 sm:right-4 text-black font-bold hover:text-gray-800 transition-colors text-xl"
@@ -213,85 +202,141 @@ export default function AddMember() {
           <Image src="/logo.png" alt="SoulTrack Logo" width={70} height={70} />
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">Ajouter un nouveau membre</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">
+          Ajouter un nouveau membre
+        </h1>
         <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">
           « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
+
           {/* Date de venue */}
           <label className="text-sm sm:text-base font-semibold">Date de venue</label>
           <input
             type="date"
             value={formData.date_venu}
-            onChange={e => setFormData({...formData, date_venu: e.target.value})}
+            onChange={e => setFormData({ ...formData, date_venu: e.target.value })}
             className="input"
             required
-          />  
-          <label className="text-sm sm:text-base font-semibold">Prénom</label>
-          <input type="text" value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} className="input" required />
-          <label className="text-sm sm:text-base font-semibold">Nom</label>
-          <input type="text" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} className="input" required />          
+          />
 
-          <div className="mb-4">
+          {/* Prénom / Nom */}
+          <label className="text-sm sm:text-base font-semibold">Prénom</label>
+          <input
+            type="text"
+            value={formData.prenom}
+            onChange={e => setFormData({ ...formData, prenom: e.target.value })}
+            className="input"
+            required
+          />
+
+          <label className="text-sm sm:text-base font-semibold">Nom</label>
+          <input
+            type="text"
+            value={formData.nom}
+            onChange={e => setFormData({ ...formData, nom: e.target.value })}
+            className="input"
+            required
+          />
+
+          {/* Téléphone */}
+          <div className="mb-2">
             <label className="block font-medium mb-1">Téléphone</label>
             <input
               type="tel"
               value={noPhone ? "Pas de téléphone" : formData.telephone}
-              onChange={e => setFormData({...formData, telephone: e.target.value})}
+              onChange={e => setFormData({ ...formData, telephone: e.target.value })}
               disabled={noPhone}
               required={!noPhone}
               className="w-full border rounded-lg px-3 py-2"
               placeholder="Ex: 5 1234 5678"
             />
-            <label className="flex items-center mt-2 space-x-2">
-              <input type="checkbox" checked={noPhone} onChange={(e) => {
-                setNoPhone(e.target.checked);
-                if (e.target.checked) setFormData(prev => ({ ...prev, telephone: "Pas de téléphone" }));
-                else setFormData(prev => ({ ...prev, telephone: "" }));
-              }}/>
+            <label className="flex items-center mt-2 space-x-2 text-sm">
+              <input
+                type="checkbox"
+                checked={noPhone}
+                onChange={(e) => {
+                  setNoPhone(e.target.checked);
+                  setFormData(prev => ({
+                    ...prev,
+                    telephone: e.target.checked ? "Pas de téléphone" : "",
+                  }));
+                }}
+              />
               <span>La personne n'a pas de téléphone</span>
             </label>
           </div>
 
+          {/* WhatsApp */}
           <label className="flex items-center gap-2 text-sm sm:text-base">
-            <input type="checkbox" checked={formData.is_whatsapp} onChange={e => setFormData({...formData, is_whatsapp: e.target.checked})} />
+            <input
+              type="checkbox"
+              checked={formData.is_whatsapp}
+              onChange={e => setFormData({ ...formData, is_whatsapp: e.target.checked })}
+            />
             Numéro WhatsApp
           </label>
 
+          {/* Ville */}
           <label className="text-sm sm:text-base font-semibold">Ville</label>
-          <input type="text" value={formData.ville} onChange={e => setFormData({...formData, ville: e.target.value})} className="input" />
+          <input
+            type="text"
+            value={formData.ville}
+            onChange={e => setFormData({ ...formData, ville: e.target.value })}
+            className="input"
+          />
 
+          {/* Civilité */}
           <label className="text-sm sm:text-base font-semibold">Civilité</label>
-          <select value={formData.sexe} onChange={e => setFormData({...formData, sexe: e.target.value})} className="input" required>
+          <select
+            value={formData.sexe}
+            onChange={e => setFormData({ ...formData, sexe: e.target.value })}
+            className="input"
+            required
+          >
             <option value="">-- Choisir --</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
           </select>
 
+          {/* Âge */}
           <label className="text-sm sm:text-base font-semibold">Âge</label>
-          <select value={formData.age} onChange={e => setFormData({...formData, age: e.target.value})} className="input" required>
+          <select
+            value={formData.age}
+            onChange={e => setFormData({ ...formData, age: e.target.value })}
+            className="input"
+            required
+          >
             <option value="">-- Choisir --</option>
-            <option value="12-17 ans">12-17 ans</option>
-            <option value="18-25 ans">18-25 ans</option>
-            <option value="26-30 ans">26-30 ans</option>
-            <option value="31-40 ans">31-40 ans</option>
-            <option value="41-55 ans">41-55 ans</option>
-            <option value="56-69 ans">56-69 ans</option>
-            <option value="70 ans et plus">70 ans et plus</option>
+            {["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"].map(v => (
+              <option key={v} value={v}>{v}</option>
+            ))}
           </select>
 
+          {/* Statut */}
           <label className="text-sm sm:text-base font-semibold">Statut</label>
-          <select value={formData.statut} onChange={e => setFormData({...formData, statut: e.target.value})} className="input" required>
+          <select
+            value={formData.statut}
+            onChange={e => setFormData({ ...formData, statut: e.target.value })}
+            className="input"
+            required
+          >
             <option value="">-- Choisir --</option>
-            <option value="veut rejoindre l'église">Veut rejoindre l'élise</option>
+            <option value="veut rejoindre l'église">Veut rejoindre l'église</option>
             <option value="a déjà son église">A déjà son église</option>
             <option value="nouveau">Nouveau</option>
             <option value="visiteur">Visiteur</option>
           </select>
 
+          {/* Comment venu */}
           <label className="text-sm sm:text-base font-semibold">Comment est-il venu ?</label>
-          <select value={formData.venu} onChange={e => setFormData({...formData, venu: e.target.value})} className="input" required>
+          <select
+            value={formData.venu}
+            onChange={e => setFormData({ ...formData, venu: e.target.value })}
+            className="input"
+            required
+          >
             <option value="">-- Choisir --</option>
             <option value="invité">Invité</option>
             <option value="réseaux">Réseaux</option>
@@ -299,9 +344,18 @@ export default function AddMember() {
             <option value="autre">Autre</option>
           </select>
 
+          {/* Prière du salut */}
           <label className="text-sm sm:text-base font-semibold">Prière du salut</label>
-          <select className="input" value={formData.priere_salut} required
-            onChange={e => setFormData({...formData, priere_salut: e.target.value, type_conversion: e.target.value === "Oui" ? formData.type_conversion : ""})}>
+          <select
+            className="input"
+            value={formData.priere_salut}
+            required
+            onChange={e => setFormData({
+              ...formData,
+              priere_salut: e.target.value,
+              type_conversion: e.target.value === "Oui" ? formData.type_conversion : "",
+            })}
+          >
             <option value="">-- Choisir --</option>
             <option value="Oui">Oui</option>
             <option value="Non">Non</option>
@@ -310,7 +364,12 @@ export default function AddMember() {
           {formData.priere_salut === "Oui" && (
             <>
               <label className="text-sm sm:text-base font-semibold">Type de conversion</label>
-              <select className="input" value={formData.type_conversion} onChange={e => setFormData({...formData, type_conversion: e.target.value})} required>
+              <select
+                className="input"
+                value={formData.type_conversion}
+                onChange={e => setFormData({ ...formData, type_conversion: e.target.value })}
+                required
+              >
                 <option value="">-- Choisir --</option>
                 <option value="Nouveau converti">Nouveau converti</option>
                 <option value="Réconciliation">Réconciliation</option>
@@ -318,38 +377,79 @@ export default function AddMember() {
             </>
           )}
 
+          {/* Besoins */}
           <label className="text-sm sm:text-base font-bold mb-1">Difficultés / Besoins</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {besoinsOptions.map(item => (
               <label key={item} className="flex items-center gap-1 text-sm">
-                <input type="checkbox" value={item} checked={formData.besoin.includes(item)} onChange={handleBesoinChange} className="w-4 h-4 sm:w-5 sm:h-5" />
+                <input
+                  type="checkbox"
+                  value={item}
+                  checked={formData.besoin.includes(item)}
+                  onChange={handleBesoinChange}
+                  className="w-4 h-4 sm:w-5 sm:h-5"
+                />
                 {item}
               </label>
             ))}
             <label className="flex items-center gap-1 text-sm">
-              <input type="checkbox" value="Autre" checked={showBesoinLibre} onChange={handleBesoinChange} className="w-4 h-4 sm:w-5 sm:h-5" />
+              <input
+                type="checkbox"
+                value="Autre"
+                checked={showBesoinLibre}
+                onChange={handleBesoinChange}
+                className="w-4 h-4 sm:w-5 sm:h-5"
+              />
               Autre
             </label>
           </div>
 
           {showBesoinLibre && (
-            <input type="text" placeholder="Précisez..." value={formData.besoinLibre} onChange={e => setFormData({...formData, besoinLibre: e.target.value})} className="input mb-2" />
+            <input
+              type="text"
+              placeholder="Précisez..."
+              value={formData.besoinLibre}
+              onChange={e => setFormData({ ...formData, besoinLibre: e.target.value })}
+              className="input mb-2"
+            />
           )}
 
+          {/* Infos supplémentaires */}
           <label className="text-sm sm:text-base font-semibold">Informations supplémentaires</label>
-          <textarea placeholder="..." rows={2} value={formData.infos_supplementaires} onChange={e => setFormData({...formData, infos_supplementaires: e.target.value})} className="input" />
+          <textarea
+            placeholder="..."
+            rows={2}
+            value={formData.infos_supplementaires}
+            onChange={e => setFormData({ ...formData, infos_supplementaires: e.target.value })}
+            className="input"
+          />
+
+          {errorMsg && (
+            <p className="text-red-600 text-sm font-semibold text-center">{errorMsg}</p>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
-            <button type="button" onClick={handleCancel} className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
+            <button
+              type="button"
+              onClick={resetForm}
+              className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
               Annuler
             </button>
-            <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
               Ajouter
             </button>
           </div>
         </form>
 
-        {success && <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">✅ Membre ajouté avec succès !</p>}
+        {success && (
+          <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
+            ✅ Membre ajouté avec succès !
+          </p>
+        )}
 
         <style jsx>{`
           .input {

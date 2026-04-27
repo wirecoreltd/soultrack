@@ -93,7 +93,7 @@ function MembresCelluleContent() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("id, role, eglise_id, branche_id")
+      .select("id, role, eglise_id")
       .eq("id", user.id)
       .single();
 
@@ -102,8 +102,7 @@ function MembresCelluleContent() {
     let query = supabase
       .from("cellules")
       .select("*")
-      .eq("eglise_id", profile.eglise_id)
-      .eq("branche_id", profile.branche_id)
+      .eq("eglise_id", profile.eglise_id)     
       .order("cellule_full");
 
     // ✅ Si ResponsableCellule, filtrer uniquement ses cellules
@@ -130,7 +129,7 @@ function MembresCelluleContent() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, role, eglise_id, branche_id")
+        .select("id, role, eglise_id")
         .eq("id", user.id)
         .single();
 

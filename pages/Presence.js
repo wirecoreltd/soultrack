@@ -52,9 +52,10 @@ function FormulaireSession({
 
       {/* TYPE DE TEMPS */}
       <div>
-  <label className="block text-sm font-semibold text-gray-700 mb-1">Selectionner un Type de Temps</label> 
-  <div className="grid grid-cols-2 gap-2">
-          {tempsOptions.map(t => (
+        <label className="block text-sm font-semibold text-gray-700 mb-1">Selectionner un Type de Temps</label>
+        <div className="grid grid-cols-2 gap-2">
+          {/* CHANGEMENT 1 : "Culte Dominical" retiré — on affiche uniquement les options sans lui */}
+          {tempsOptions.filter(t => t !== "Culte Dominical").map(t => (
             <button
               key={t}
               type="button"
@@ -82,46 +83,45 @@ function FormulaireSession({
         </div>
       </div>
 
-     {/* NOUVEAU TYPE */}
-{typeTemps === "AUTRE" && (
-  <div className="flex flex-col gap-3">
-    <div>
-      <label className="block text-sm font-semibold text-gray-700 mb-1">
-        ✏️ Nom du nouveau type
-      </label>
-      <input
-        type="text"
-        placeholder="Ex: Tour de Prière, Camp..."
-        value={nouveauTemps}
-        onChange={(e) => setNouveauTemps(e.target.value.slice(0, 30))}
-        maxLength={30}
-        autoFocus
-        className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
-      />
-      <p className="text-xs text-gray-400 mt-1">{nouveauTemps.length}/30 caractères</p>
-    </div>
+      {/* NOUVEAU TYPE */}
+      {typeTemps === "AUTRE" && (
+        <div className="flex flex-col gap-3">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              ✏️ Nom du nouveau type
+            </label>
+            <input
+              type="text"
+              placeholder="Ex: Tour de Prière, Camp..."
+              value={nouveauTemps}
+              onChange={(e) => setNouveauTemps(e.target.value.slice(0, 30))}
+              maxLength={30}
+              autoFocus
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
+            />
+            <p className="text-xs text-gray-400 mt-1">{nouveauTemps.length}/30 caractères</p>
+          </div>
 
-    <label className="flex items-center gap-2 text-sm text-amber-600 cursor-pointer select-none">
-      <input
-        type="checkbox"
-        checked={enregistrerTemps}
-        onChange={e => setEnregistrerTemps(e.target.checked)}
-      />
-      Enregistrer ce type pour une prochaine fois
-    </label>
+          <label className="flex items-center gap-2 text-sm text-amber-600 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={enregistrerTemps}
+              onChange={e => setEnregistrerTemps(e.target.checked)}
+            />
+            Enregistrer ce type pour une prochaine fois
+          </label>
 
-    {/* MESSAGE uniquement quand checkbox cochée ET nom rempli */}
-    {enregistrerTemps && nouveauTemps.trim() && (
-      <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-        <span className="text-blue-400 mt-0.5">ℹ️</span>
-        <p className="text-xs text-blue-600 leading-relaxed">
-          <span className="font-semibold">"{nouveauTemps.trim()}"</span> sera enregistré et apparaîtra dans la liste des types de temps du rapport{" "}
-          <span className="font-semibold">Présences & Statistiques</span>.
-        </p>
-      </div>
-    )}
-  </div>
-)}
+          {enregistrerTemps && nouveauTemps.trim() && (
+            <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+              <span className="text-blue-400 mt-0.5">ℹ️</span>
+              <p className="text-xs text-blue-600 leading-relaxed">
+                <span className="font-semibold">"{nouveauTemps.trim()}"</span> sera enregistré et apparaîtra dans la liste des types de temps du rapport{" "}
+                <span className="font-semibold">Présences & Statistiques</span>.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* NUMÉRO CULTE — visible si le type contient "culte" */}
       {isCulte && (
@@ -142,7 +142,7 @@ function FormulaireSession({
             ))}
           </select>
         </div>
-      )}      
+      )}
 
       {/* BOUTON */}
       <button
@@ -249,7 +249,7 @@ function Presence() {
     const { data, error } = await supabase
       .from("attendance")
       .select("typeTemps")
-      .eq("eglise_id", profile.eglise_id)      
+      .eq("eglise_id", profile.eglise_id)
       .not("typeTemps", "is", null);
 
     if (error) { console.error(error); return; }
@@ -258,15 +258,13 @@ function Presence() {
       ...new Set(
         (data || [])
           .map(t => t.typeTemps?.trim())
-          .filter(t => t && t !== "")
+          // CHANGEMENT 1 : exclure "Culte Dominical" de la liste
+          .filter(t => t && t !== "" && t !== "Culte Dominical")
       )
     ];
 
-    // Culte Dominical toujours en premier
-    const hasCulteDominical = unique.includes("Culte Dominical");
-    const sorted = hasCulteDominical
-      ? ["Culte Dominical", ...unique.filter(t => t !== "Culte Dominical")]
-      : ["Culte Dominical", ...unique];
+    // CHANGEMENT 2 : tri alphabétique (Culte Dominical supprimé, plus de cas spécial)
+    const sorted = [...unique].sort((a, b) => a.localeCompare(b, "fr"));
 
     setTempsOptions(sorted);
   }, [initProfile]);
@@ -292,8 +290,7 @@ function Presence() {
           let q = supabase
             .from("membres_complets")
             .select("id, prenom, nom, telephone")
-            .eq("eglise_id", profile.eglise_id)
-            ;
+            .eq("eglise_id", profile.eglise_id);
           if (myIds !== null) {
             if (myIds.length === 0) return Promise.resolve({ data: [] });
             q = q.in("id", myIds);
@@ -306,12 +303,27 @@ function Presence() {
       const allMembers = membresResult.data || [];
       const presentIds = new Set(allPresences.map(p => p.membre_id));
 
-      setMembers(allMembers.filter(m => !presentIds.has(m.id)));
-      setPresentList(
+      // CHANGEMENT 2 : tri alphabétique par nom puis prénom
+      const absents = allMembers
+        .filter(m => !presentIds.has(m.id))
+        .sort((a, b) => {
+          const nomCmp = (a.nom || "").localeCompare(b.nom || "", "fr");
+          return nomCmp !== 0 ? nomCmp : (a.prenom || "").localeCompare(b.prenom || "", "fr");
+        });
+
+      const presents = (
         myIds !== null
           ? allPresences.filter(p => myIds.includes(p.membre_id))
           : allPresences
-      );
+      ).sort((a, b) => {
+        const nomA = a.membres_complets?.nom || "";
+        const nomB = b.membres_complets?.nom || "";
+        const nomCmp = nomA.localeCompare(nomB, "fr");
+        return nomCmp !== 0 ? nomCmp : (a.membres_complets?.prenom || "").localeCompare(b.membres_complets?.prenom || "", "fr");
+      });
+
+      setMembers(absents);
+      setPresentList(presents);
     } catch (err) {
       console.error(err);
     }
@@ -341,7 +353,7 @@ function Presence() {
       const profile = profileRef.current;
 
       if (typeTemps === "AUTRE" && enregistrerTemps && !tempsOptions.includes(typeFinal)) {
-        setTempsOptions(prev => [...prev, typeFinal]);
+        setTempsOptions(prev => [...prev, typeFinal].sort((a, b) => a.localeCompare(b, "fr")));
       }
 
       const isCulte = typeFinal.toLowerCase().includes("culte");
@@ -349,7 +361,7 @@ function Presence() {
       const payload = {
         date: selectedDate,
         typeTemps: typeFinal,
-        temps_nom: typeFinal,        
+        temps_nom: typeFinal,
         eglise_id: profile.eglise_id,
         ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : {}),
       };
@@ -543,7 +555,7 @@ function Presence() {
       {/* LISTE */}
       {!editingSession && (
         <>
-          <div className="flex gap-3 mb-6">
+          <div className="flex gap-3 mb-4">
             <button
               onClick={() => setView("absents")}
               className={`px-4 py-2 rounded ${
@@ -562,6 +574,13 @@ function Presence() {
             </button>
           </div>
 
+          {/* CHANGEMENT 4 : petite note au-dessus de la barre de recherche */}
+          {view === "absents" && (
+            <p className="text-white/60 text-xs mb-2 italic">
+              💡 Cliquer sur un nom pour marquer comme présent
+            </p>
+          )}
+
           <div className="w-full max-w-4xl flex justify-center mb-6">
             <input
               type="text"
@@ -572,23 +591,23 @@ function Presence() {
             />
           </div>
 
-          <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-2">
             {loading ? (
               <p className="text-white text-center col-span-full">Chargement...</p>
             ) : view === "absents" ? (
               filteredAbsents.length === 0 ? (
                 <p className="text-white text-center col-span-full">✅ Tout le monde est présent</p>
               ) : (
+                // CHANGEMENT 3 : carte compacte avec checkbox visuelle, sans le texte "Marquer comme présent"
                 filteredAbsents.map(m => (
                   <div
                     key={m.id}
                     onClick={() => markPresent(m)}
-                    className="bg-white rounded-xl shadow p-4 cursor-pointer hover:bg-green-100 transition"
+                    className="bg-white rounded-xl shadow px-4 py-3 cursor-pointer hover:bg-green-50 transition flex items-center gap-3"
                   >
-                    <h2 className="font-bold text-black text-lg">{m.prenom} {m.nom}</h2>
-                    <div className="mt-2 text-green-600 font-semibold text-sm">
-                      ➕ Marquer comme présent
-                    </div>
+                    {/* Checkbox visuelle non cochée */}
+                    <span className="w-5 h-5 flex-shrink-0 rounded border-2 border-gray-300 inline-block" />
+                    <span className="font-semibold text-black text-base">{m.nom} {m.prenom}</span>
                   </div>
                 ))
               )
@@ -597,15 +616,17 @@ function Presence() {
                 <p className="text-white text-center col-span-full">Aucune présence</p>
               ) : (
                 filteredPresents.map(p => (
-                  <div key={p.membre_id} className="bg-white rounded-xl shadow p-4">
-                    <h2 className="font-bold text-black text-lg">
-                      ✔ {p.membres_complets?.prenom} {p.membres_complets?.nom}
-                    </h2>
+                  <div key={p.membre_id} className="bg-white rounded-xl shadow px-4 py-3 flex items-center gap-3">
+                    {/* Checkbox visuelle cochée */}
+                    <span className="w-5 h-5 flex-shrink-0 rounded border-2 border-green-500 bg-green-500 inline-flex items-center justify-center text-white text-xs font-bold">✓</span>
+                    <span className="font-semibold text-black text-base flex-1">
+                      {p.membres_complets?.nom} {p.membres_complets?.prenom}
+                    </span>
                     <button
                       onClick={() => markAbsent(p.membre_id)}
-                      className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                      className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs flex-shrink-0"
                     >
-                      − Marquer absent
+                      − Absent
                     </button>
                   </div>
                 ))

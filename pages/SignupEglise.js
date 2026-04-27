@@ -135,7 +135,7 @@ export default function SignupEglise() {
             value={formData.nomEglise}
             onChange={handleChange}
             className="input"
-            required
+            
           />
           <input
             name="branche"
@@ -150,6 +150,7 @@ export default function SignupEglise() {
             value={formData.ville}
             onChange={handleChange}
             className="input"
+              required
           />
           <input
             name="localisation"

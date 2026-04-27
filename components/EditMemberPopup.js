@@ -168,10 +168,13 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
       if (isPrivileged) {
         if (formData.star) {
           await supabase.from("stats_ministere_besoin").upsert({
-            membre_id: member.id,
-            sexe: formData.sexe,
-            type: "ministere",
-          });
+  membre_id: member.id,
+  sexe: formData.sexe,
+  type: "ministere",
+  valeur: finalMinistere.join(","),
+  eglise_id: member.eglise_id,        // ✅ disponible via props
+  date_action: new Date().toISOString().split("T")[0],
+});
         } else {
           await supabase.from("stats_ministere_besoin").delete()
             .eq("membre_id", member.id).eq("type", "ministere");

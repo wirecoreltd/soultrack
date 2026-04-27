@@ -28,7 +28,7 @@ function ImportPageContent() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("eglise_id")
         .eq("id", authUser.id)
         .single();
 
@@ -41,8 +41,7 @@ function ImportPageContent() {
         .single();
 
       setUser({
-        eglise_id: profile.eglise_id,
-        branche_id: profile.branche_id,
+        eglise_id: profile.eglise_id,        
         cellule_id: cellule?.id || null,
       });
 

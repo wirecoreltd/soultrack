@@ -30,12 +30,10 @@ function CreateConseiller() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-
   // ➤ Récupérer l'utilisateur connecté et ses membres disponibles
   useEffect(() => {
     async function fetchUserAndMembers() {
       try {
-        // 🔹 Session utilisateur
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) return console.error("Erreur session :", sessionError);
         if (!session?.user) return setMessage("❌ Vous devez être connecté");
@@ -44,18 +42,17 @@ function CreateConseiller() {
         // 🔹 Profil du responsable
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, eglise_id, branche_id")
+          .select("id, eglise_id") // ✅ branche_id retiré
           .eq("id", session.user.id)
           .single();
         if (profileError) return console.error("Erreur profil :", profileError);
 
-        // 🔹 Membres star de la même église/branche
+        // 🔹 Membres star de la même église
         const { data: membersData, error: membersError } = await supabase
           .from("membres_complets")
           .select("id, prenom, nom, telephone")
           .eq("star", true)
-          .eq("eglise_id", profileData.eglise_id)
-          .eq("branche_id", profileData.branche_id);
+          .eq("eglise_id", profileData.eglise_id); // ✅ .eq("branche_id", ...) retiré
         if (membersError) return console.error("Erreur membres :", membersError);
 
         // 🔹 Conseillers existants
@@ -135,18 +132,18 @@ function CreateConseiller() {
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
         <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700 hover:text-gray-900">← Retour</button>
-        <div className="flex justify-center mb-6"><Image src="/logo.png" alt="Logo" width={80} height={80} /></div>        
+        <div className="flex justify-center mb-6"><Image src="/logo.png" alt="Logo" width={80} height={80} /></div>
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">Créer un <span className="text-[#333699]">Conseiller</span></h1>
 
-          <div className="max-w-3xl w-full mb-6 text-center">
-            <p className="italic text-base text-black/90">
-              <span className="text-[#FFB07C] font-semibold">Transformez </span>
-              un serviteur disponible en <span className="text-[#FFB07C] font-semibold">Conseiller </span> 
-              au sein de votre équipe. Remplissez ses <span className="text-[#FFB07C] font-semibold">informations</span>, 
-              assignez-lui un rôle et un mot de passe <span className="text-[#FFB07C] font-semibold">sécurisé</span>. Chaque création est guidée pour que le Conseiller 
-              commence <span className="text-[#FFB07C] font-semibold">son rôle en toute sérénité</span>.
-            </p>
-          </div>    
+        <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-black/90">
+            <span className="text-[#FFB07C] font-semibold">Transformez </span>
+            un serviteur disponible en <span className="text-[#FFB07C] font-semibold">Conseiller </span>
+            au sein de votre équipe. Remplissez ses <span className="text-[#FFB07C] font-semibold">informations</span>,
+            assignez-lui un rôle et un mot de passe <span className="text-[#FFB07C] font-semibold">sécurisé</span>. Chaque création est guidée pour que le Conseiller
+            commence <span className="text-[#FFB07C] font-semibold">son rôle en toute sérénité</span>.
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
           <select value={selectedMemberId} onChange={(e) => setSelectedMemberId(e.target.value)} className="input" required>
@@ -178,7 +175,7 @@ function CreateConseiller() {
           .input { width:100%; border:1px solid #ccc; border-radius:12px; padding:12px; color:black; }
         `}</style>
       </div>
-          <Footer />
+      <Footer />
     </div>
   );
 }

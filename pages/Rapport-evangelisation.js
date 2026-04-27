@@ -14,8 +14,7 @@ export default function RapportEvangelisation() {
   const [loading, setLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedRapport, setSelectedRapport] = useState(null);
-  const [egliseId, setEgliseId] = useState(null);
-  const [brancheId, setBrancheId] = useState(null);
+  const [egliseId, setEgliseId] = useState(null);  
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [message, setMessage] = useState("");
@@ -63,7 +62,7 @@ const [integrationPercent, setIntegrationPercent] = useState(0);
 
       // ---------------- FETCH RAPPORTS ----------------
       const fetchRapports = async () => {
-        if (!egliseId || !brancheId) return;
+        if (!egliseId) return;
         setLoading(true);
         setShowTable(false);
       

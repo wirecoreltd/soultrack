@@ -18,7 +18,7 @@ function Attendance() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showTable, setShowTable] = useState(false);
-  const [superviseur, setSuperviseur] = useState({ eglise_id: null, branche_id: null });
+  const [superviseur, setSuperviseur] = useState({ eglise_id: null });
   const [tempsOptions, setTempsOptions] = useState(["Cellule"]);
   const formRef = useRef(null);
   const selectRef = useRef(null);
@@ -53,11 +53,11 @@ function Attendance() {
       if (!user) return;
       const { data, error } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("eglise_id")
         .eq("id", user.id)
         .single();
       if (error) console.error(error);
-      else setSuperviseur({ eglise_id: data.eglise_id, branche_id: data.branche_id });
+      else setSuperviseur({ eglise_id: data.eglise_id });
     };
     loadSuperviseur();
   }, []);
@@ -120,8 +120,7 @@ const calculateTypeTotals = (rows) => {
     const { data, error } = await supabase
       .from("attendance_cellule")
       .select("typeTemps")
-      .eq("eglise_id", superviseur.eglise_id)
-      .eq("branche_id", superviseur.branche_id)
+      .eq("eglise_id", superviseur.eglise_id)      
       .not("typeTemps", "is", null);
 
     if (error) console.error(error);
@@ -160,7 +159,7 @@ const calculateTypeTotals = (rows) => {
           .update({ typeTemps: nouveauNom })
           .eq("typeTemps", ancienNom)
           .eq("eglise_id", superviseur.eglise_id)
-          .eq("branche_id", superviseur.branche_id);
+          ;
         if (error) throw error;
         fetchRapports(); // recharge les rapports pour voir le nouveau nom
       } catch (err) {
@@ -182,7 +181,7 @@ const calculateTypeTotals = (rows) => {
           .update({ typeTemps: null })
           .eq("typeTemps", nomTemps)
           .eq("eglise_id", superviseur.eglise_id)
-          .eq("branche_id", superviseur.branche_id);
+          ;
         if (error) throw error;
         fetchRapports(); // recharge la table
       } catch (err) {
@@ -208,7 +207,7 @@ const calculateTypeTotals = (rows) => {
   setMessage("⏳ Enregistrement en cours...");
 
   // 1️⃣ Vérifier que superviseur est chargé
-  if (!superviseur.eglise_id || !superviseur.branche_id) {
+  if (!superviseur.eglise_id) {
     setMessage("❌ Les informations de l’église ne sont pas encore chargées.");
     return;
   }
@@ -228,8 +227,7 @@ const calculateTypeTotals = (rows) => {
     try {
       const { error } = await supabase.from("attendance_cellule").insert([{
         typeTemps: typeTempsFinal,
-        eglise_id: superviseur.eglise_id,
-        branche_id: superviseur.branche_id
+        eglise_id: superviseur.eglise_id        
       }]);
       if (error) throw error;
     } catch (err) {
@@ -243,8 +241,7 @@ const calculateTypeTotals = (rows) => {
   const rapportAvecEglise = {
     ...formData,
     typeTemps: typeTempsFinal,
-    eglise_id: superviseur.eglise_id,
-    branche_id: superviseur.branche_id,
+    eglise_id: superviseur.eglise_id,    
     hommes: Number(formData.hommes) || 0,
     femmes: Number(formData.femmes) || 0,
     jeunes: Number(formData.jeunes) || 0,
@@ -319,7 +316,7 @@ const calculateTypeTotals = (rows) => {
     setLoading(true);
     let query = supabase.from("attendance_cellule").select("*")
       .eq("eglise_id", superviseur.eglise_id)
-      .eq("branche_id", superviseur.branche_id);
+      ;
     if (dateDebut) query = query.gte("date", dateDebut);
     if (dateFin) query = query.lte("date", dateFin);
     query = query.order("date", { ascending: true }).order("numero_culte", { ascending: true });

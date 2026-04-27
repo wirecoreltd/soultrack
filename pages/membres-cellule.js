@@ -134,11 +134,12 @@ function MembresCelluleContent() {
         .single();
 
       let query = supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("statut_suivis", 3)
-        .not("cellule_id", "is", null)
-        .order("created_at", { ascending: false });
+      .from("membres_complets")
+      .select("*")
+      .eq("statut_suivis", 3)
+      .eq("eglise_id", profile.eglise_id)
+      .not("cellule_id", "is", null)
+      .order("created_at", { ascending: false });
 
       if (celluleId) {
         query = query.eq("cellule_id", celluleId);

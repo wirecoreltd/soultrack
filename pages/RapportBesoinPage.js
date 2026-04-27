@@ -38,7 +38,6 @@ function RapportBesoin() {
         .eq("id", session.session.user.id)
         .single();
 
-      // Total membres de l'église (inchangé)
       const { data: membres, error: errorMembres } = await supabase
         .from("membres_complets")
         .select("id, etat_contact, sexe")
@@ -53,16 +52,12 @@ function RapportBesoin() {
 
       const membreIds = membres.map((m) => m.id);
 
-      // Sexe par membre_id pour la répartition H/F
       const sexeMap = {};
       membres.forEach((m) => {
         sexeMap[m.id] =
-          m.sexe?.toLowerCase() === "homme"
-            ? "hommes"
-            : "femmes";
+          m.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";
       });
 
-      // Suivis de l'église filtrés par date
       let query = supabase
         .from("suivis")
         .select("membre_id, besoin, date_action")
@@ -90,14 +85,17 @@ function RapportBesoin() {
 
         items.forEach((item) => {
           const label = typeof item === "string" ? item.trim() : item.label;
+          const statut = typeof item === "string" ? null : item.statut;
           if (!label) return;
 
           if (!count[label]) {
-            count[label] = { total: 0, hommes: 0, femmes: 0 };
+            count[label] = { total: 0, hommes: 0, femmes: 0, enSuivi: 0, resolu: 0 };
           }
           count[label].total++;
           if (sexe === "hommes") count[label].hommes++;
           else count[label].femmes++;
+          if (statut === "Résolu") count[label].resolu++;
+          else count[label].enSuivi++;
         });
       });
 
@@ -196,18 +194,25 @@ function RapportBesoin() {
       {/* DESKTOP */}
       <div className="hidden md:flex w-full overflow-x-auto mt-4 justify-center">
         <div className="w-max">
+          {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-white/20 bg-white/5 rounded-t-lg whitespace-nowrap">
             <div className="w-[220px]">Catégorie</div>
-            <div className="w-[100px] text-center">Hommes</div>
-            <div className="w-[100px] text-center">Femmes</div>
-            <div className="w-[100px] text-center text-orange-400 font-semibold">Total</div>
-            <div className="w-[160px] text-center">% Membres</div>
+            <div className="w-[90px] text-center">Hommes</div>
+            <div className="w-[90px] text-center">Femmes</div>
+            <div className="w-[90px] text-center text-orange-400">Total</div>
+            <div className="w-[110px] text-center text-yellow-300">En suivi</div>
+            <div className="w-[100px] text-center text-green-400">Résolu</div>
+            <div className="w-[110px] text-center">% Résolu</div>
+            <div className="w-[120px] text-center">% Membres</div>
           </div>
 
+          {/* LIGNES */}
           {labels.map((b, i) => {
             const data = values[i];
-            const percent =
+            const percentMembres =
               totalMembres > 0 ? ((data.total / totalMembres) * 100).toFixed(1) : 0;
+            const percentResolu =
+              data.total > 0 ? ((data.resolu / data.total) * 100).toFixed(1) : 0;
 
             return (
               <div
@@ -218,10 +223,13 @@ function RapportBesoin() {
                 className={`flex items-center mt-2 px-4 py-3 rounded-md bg-white/20 hover:bg-white/30 transition cursor-pointer border-l-4 ${getBesoinColor(b)}`}
               >
                 <div className="w-[220px] text-white font-medium">{b}</div>
-                <div className="w-[100px] text-center text-white">{data.hommes}</div>
-                <div className="w-[100px] text-center text-white">{data.femmes}</div>
-                <div className="w-[100px] text-center text-orange-400 font-semibold">{data.total}</div>
-                <div className="w-[160px] text-center text-white font-semibold">{percent} %</div>
+                <div className="w-[90px] text-center text-white">{data.hommes}</div>
+                <div className="w-[90px] text-center text-white">{data.femmes}</div>
+                <div className="w-[90px] text-center text-orange-400 font-semibold">{data.total}</div>
+                <div className="w-[110px] text-center text-yellow-300 font-semibold">{data.enSuivi}</div>
+                <div className="w-[100px] text-center text-green-400 font-semibold">{data.resolu}</div>
+                <div className="w-[110px] text-center text-white font-semibold">{percentResolu} %</div>
+                <div className="w-[120px] text-center text-white font-semibold">{percentMembres} %</div>
               </div>
             );
           })}
@@ -232,8 +240,10 @@ function RapportBesoin() {
       <div className="md:hidden w-full mt-6 space-y-2">
         {labels.map((b, i) => {
           const data = values[i];
-          const percent =
+          const percentMembres =
             totalMembres > 0 ? ((data.total / totalMembres) * 100).toFixed(1) : 0;
+          const percentResolu =
+            data.total > 0 ? ((data.resolu / data.total) * 100).toFixed(1) : 0;
 
           return (
             <div
@@ -247,14 +257,15 @@ function RapportBesoin() {
             >
               <div className="flex justify-between items-center">
                 <div className="font-semibold text-white">{b}</div>
-                <div className="flex gap-3 text-sm text-orange-400 font-semibold whitespace-nowrap">
-                  <span>H: {data.hommes}</span>
-                  <span>F: {data.femmes}</span>
-                  <span>Total: {data.total}</span>
+                <div className="flex gap-2 text-sm font-semibold whitespace-nowrap">
+                  <span className="text-orange-400">T:{data.total}</span>
+                  <span className="text-yellow-300">S:{data.enSuivi}</span>
+                  <span className="text-green-400">R:{data.resolu}</span>
                 </div>
               </div>
-              <div className="mt-1 text-right text-sm text-amber-300">
-                {percent} % du total membres
+              <div className="flex justify-between mt-1 text-sm">
+                <span className="text-white/70">H:{data.hommes} F:{data.femmes}</span>
+                <span className="text-amber-300">{percentResolu}% résolu · {percentMembres}% membres</span>
               </div>
             </div>
           );

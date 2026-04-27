@@ -139,7 +139,7 @@ export default function SignupEglise() {
           />
           <input
             name="branche"
-            placeholder="Branche (ex: Ouest...)"
+            placeholder="Branche (ex: Paris Ouest...)"
             value={formData.branche}
             onChange={handleChange}
             className="input"

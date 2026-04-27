@@ -29,6 +29,7 @@ export default function AjouterMembreCellule() {
     sexe: "",
     telephone: "",
     ville: "",
+    age: "",
     venu: "",
     priere_salut: "",
     type_conversion: "",
@@ -151,6 +152,7 @@ useEffect(() => {
           besoin: formData.besoin.join(", "),
           autrebesoin: formData.autreBesoin || null,
           sexe: formData.sexe || null,
+          age: "",
           date_venu: formData.date_venu || null,
           bapteme_eau: false,
           bapteme_esprit: false,
@@ -177,6 +179,7 @@ useEffect(() => {
         nom: "",
         prenom: "",
         sexe: "",
+        age: "",
         telephone: "",
         ville: "",
         venu: "",
@@ -201,6 +204,7 @@ useEffect(() => {
       sexe: "",
       telephone: "",
       ville: "",
+      age: "",
       venu: "",
       priere_salut: "",
       type_conversion: "",
@@ -279,6 +283,20 @@ useEffect(() => {
             <option value="">-- Civilité --</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
+          </select>
+
+          {/* Âge */}
+          <label className="text-sm sm:text-base font-semibold">Âge</label>
+          <select
+            value={formData.age}
+            onChange={e => setFormData({ ...formData, age: e.target.value })}
+            className="input"
+            required
+          >
+            <option value="">-- Choisir --</option>
+            {["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"].map(v => (
+              <option key={v} value={v}>{v}</option>
+            ))}
           </select>
 
           <input name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" />

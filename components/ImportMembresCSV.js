@@ -153,8 +153,7 @@ export default function ImportMembresCSV({ user }) {
               star: normalized.serviteur === "Oui",
               infos_supplementaires: normalized.infos_supplementaires || null,
               cellule_id: user.cellule_id,
-              eglise_id: user.eglise_id,
-              branche_id: user.branche_id,
+              eglise_id: user.eglise_id,              
               statut_suivis: "3",
               etat_contact: "existant",
             });

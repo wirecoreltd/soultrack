@@ -18,8 +18,7 @@ function RapportMinistere() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [rapports, setRapports] = useState([]);
-  const [egliseId, setEgliseId] = useState(null);
-  const [brancheId, setBrancheId] = useState(null);
+  const [egliseId, setEgliseId] = useState(null);  
   const [loading, setLoading] = useState(false);
   const [totalServiteurs, setTotalServiteurs] = useState(0);
   const [totalMembres, setTotalMembres] = useState(0);
@@ -33,13 +32,12 @@ function RapportMinistere() {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("eglise_id")
         .eq("id", user.id)
         .single();
 
       if (!error && profile) {
-        setEgliseId(profile.eglise_id);
-        setBrancheId(profile.branche_id);
+        setEgliseId(profile.eglise_id);       
       }
     };
     fetchUser();
@@ -52,8 +50,8 @@ function RapportMinistere() {
     setTotalMembres(0);
     setMessage("⏳ Chargement...");
 
-    if (!egliseId || !brancheId) {
-      setMessage("❌ ID de l'église ou branche manquant");
+    if (!egliseId) {
+      setMessage("❌ ID de l'église");
       setLoading(false);
       return;
     }
@@ -63,7 +61,7 @@ function RapportMinistere() {
         .from("membres_complets")
         .select("id, etat_contact")
         .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+        ;
 
       if (membresError) throw membresError;
 
@@ -75,8 +73,7 @@ function RapportMinistere() {
       let queryStats = supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, type, date_action")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId)
+        .eq("eglise_id", egliseId)        
         .eq("type", "ministere");
 
       if (dateDebut) queryStats = queryStats.gte("date_action", dateDebut);
@@ -202,9 +199,9 @@ const getMinistereColor = (ministere) => {
 
   <button
     onClick={fetchRapport}
-    disabled={!egliseId || !brancheId || loading}
+    disabled={!egliseId || loading}
     className={`w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition ${
-      !egliseId || !brancheId || loading
+      !egliseId || loading
         ? "opacity-50 cursor-not-allowed"
         : ""
     }`}
@@ -270,7 +267,7 @@ const getMinistereColor = (ministere) => {
         </div>
       </div>
 
-      {(!egliseId || !brancheId) && (
+      {(!egliseId ) && (
         <p className="text-white text-center mt-2">
           ⏳ Chargement des informations utilisateur...
         </p>

@@ -8,10 +8,12 @@ export default function HeaderPages() {
   const router = useRouter();
 
   const [prenom, setPrenom] = useState("Utilisateur");
-  const [eglise, setEglise] = useState("Église Principale");
-  const [branche, setBranche] = useState("Maurice");
+  const [eglise, setEglise] = useState("");
+  const [branche, setBranche] = useState("");
+  const [denomination, setDenomination] = useState("");
+  const [ville, setVille] = useState("");
   const [superviseur, setSuperviseur] = useState("");
-  const [logoUrl, setLogoUrl] = useState(null); // 🔹 AJOUT
+  const [logoUrl, setLogoUrl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [invitationPending, setInvitationPending] = useState(false);
@@ -36,12 +38,14 @@ export default function HeaderPages() {
         if (profile?.eglise_id) {
           const { data: egliseData } = await supabase
             .from("eglises")
-            .select("nom, logo_url") // 🔹 AJOUT logo_url
+            .select("nom, logo_url, denomination, ville")
             .eq("id", profile.eglise_id)
             .single();
           if (egliseData) {
-            setEglise(egliseData.nom);
-            if (egliseData.logo_url) setLogoUrl(egliseData.logo_url); // 🔹 AJOUT
+            setEglise(egliseData.nom || "");
+            setLogoUrl(egliseData.logo_url || null);
+            setDenomination(egliseData.denomination || "");
+            setVille(egliseData.ville || "");
           }
         }
 
@@ -53,7 +57,7 @@ export default function HeaderPages() {
             .single();
 
           if (brancheData) {
-            setBranche(brancheData.nom);
+            setBranche(brancheData.nom || "");
             if (brancheData.superviseur_nom) setSuperviseur(brancheData.superviseur_nom);
           }
 
@@ -136,7 +140,6 @@ export default function HeaderPages() {
         )}
       </div>
 
-      {/* 🔹 LOGOS CÔTE À CÔTE */}
       <div className="flex flex-col items-center mb-4">
         <div className="flex items-center justify-center gap-4">
           <img
@@ -153,8 +156,17 @@ export default function HeaderPages() {
             />
           )}
         </div>
+
+        {/* Ligne 1 : Dénomination - Nom église */}
         <p className="text-white font-semibold text-lg mt-2">
-          {eglise} <span className="text-amber-300">- {branche}</span>
+          {denomination && <span className="text-amber-300">{denomination} - </span>}
+          {eglise}
+        </p>
+
+        {/* Ligne 2 : Branche - Ville */}
+        <p className="text-gray-300 text-sm">
+          {branche}
+          {ville && <span className="text-amber-300"> - {ville}</span>}
         </p>
       </div>
     </div>

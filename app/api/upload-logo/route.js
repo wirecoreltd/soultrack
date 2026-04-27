@@ -8,6 +8,12 @@ cloudinary.config({
 
 export async function POST(req) {
   try {
+    console.log("Config Cloudinary:", {
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET ? "présent" : "MANQUANT",
+    });
+
     const formData = await req.formData();
     const file = formData.get("file");
 
@@ -22,14 +28,25 @@ export async function POST(req) {
       cloudinary.uploader.upload_stream(
         { folder: "soultrack/logos" },
         (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
+          if (error) {
+            // 🔍 Renvoie TOUT l'objet erreur Cloudinary
+            console.error("Cloudinary error complet:", JSON.stringify(error));
+            reject(error);
+          } else {
+            resolve(result);
+          }
         }
       ).end(buffer);
     });
 
     return Response.json({ url: result.secure_url });
+
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    console.error("Erreur complète:", JSON.stringify(err));
+    return Response.json({ 
+      error: err.message,
+      http_code: err.http_code,
+      details: JSON.stringify(err)
+    }, { status: 500 });
   }
 }

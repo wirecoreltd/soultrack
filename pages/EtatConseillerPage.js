@@ -30,6 +30,8 @@ function EtatConseiller() {
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
   const [filterConseiller, setFilterConseiller] = useState("");
+  const [filterEglise, setFilterEglise] = useState("");         // ✅ AJOUT
+  const [eglises, setEglises] = useState([]);                   // ✅ AJOUT
   const [loading, setLoading] = useState(false);
   const [showTable, setShowTable] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState({});
@@ -51,6 +53,7 @@ function EtatConseiller() {
   useEffect(() => {
     fetchUserProfile();
     fetchConseillers();
+    fetchEglises();   // ✅ AJOUT
   }, []);
 
   const fetchUserProfile = async () => {
@@ -68,19 +71,27 @@ function EtatConseiller() {
     setUserProfile(data);
   };
 
+  // ================= FETCH EGLISES ================= // ✅ AJOUT
+  const fetchEglises = async () => {
+    const { data, error } = await supabase
+      .from("eglises")
+      .select("id, nom")
+      .order("nom", { ascending: true });
+    if (!error) setEglises(data || []);
+  };
+
   // ================= FETCH CONSEILLERS =================
   const fetchConseillers = async () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .or("roles.cs.{Conseiller},roles.cs.{ResponsableIntegration}"); 
+        .or("roles.cs.{Conseiller},roles.cs.{ResponsableIntegration}");
 
       if (error) {
         console.error("Erreur fetch conseillers:", error);
         return;
       }
-
       setConseillers(data || []);
     } catch (err) {
       console.error("Erreur fetch conseillers:", err);
@@ -98,26 +109,34 @@ function EtatConseiller() {
         .select("*")
         .order("date_depart", { ascending: false });
 
-      if (!userProfile.roles?.includes("Administrateur")) {
+      const isAdmin = userProfile.roles?.includes("Administrateur");
+
+      if (!isAdmin) {
+        // Conseiller/ResponsableIntegration : filtré par leur propre id ET leur eglise_id
         query = query.eq("conseiller_id", userProfile.id);
+        if (userProfile.eglise_id) {
+          query = query.eq("eglise_id", userProfile.eglise_id);  // ✅ auto
+        }
+      } else {
+        // Admin : filtre par eglise_id choisi dans le select
+        if (filterEglise) {
+          query = query.eq("eglise_id", filterEglise);            // ✅ choix admin
+        }
       }
 
       const { data, error } = await query;
       if (error) throw error;
 
-      // Filtre par date
       let filteredByDate = data;
       if (filterDebut) filteredByDate = filteredByDate.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
       if (filterFin) filteredByDate = filteredByDate.filter(r => new Date(r.date_depart) <= new Date(filterFin));
 
       setReports(filteredByDate);
 
-      // Conseillers disponibles pour la plage sélectionnée
       const conseillersDisponibles = Array.from(
         new Set(filteredByDate.map(r => r.conseiller).filter(Boolean))
       );
       setAvailableConseillers(conseillersDisponibles);
-
       setFilterConseiller("");
       setShowTable(true);
     } catch (err) {
@@ -162,7 +181,7 @@ function EtatConseiller() {
     });
     return map;
   };
-  
+
   const toggleMonth = (monthKey) => setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
 
   const handleUpdateMember = (updated) => {
@@ -170,47 +189,42 @@ function EtatConseiller() {
   };
 
   const handleDetailsClick = async (row) => {
-  try {
-    if (!row || !row.personne_id) {
-      alert("Donnée invalide");
-      return;
-    }
-
-    // 🔥 UTILISER source au lieu de type_evangelisation
-    if (row.source === "evangelisation") {
-      const { data, error } = await supabase
-        .from("suivis_des_evangelises")
-        .select("*")
-        .eq("evangelise_id", row.personne_id)
-        .maybeSingle();      
-
-      if (error) throw error;
-      
-      console.log("ROW CLICKED:", row);
-      
-      setSelectedEvangelise({ ...row, ...data });
-
-    } else if (row.source === "integration") {
-      const { data, error } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("id", row.personne_id)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!data) {
-        alert("Membre introuvable");
+    try {
+      if (!row || !row.personne_id) {
+        alert("Donnée invalide");
         return;
       }
 
-      setSelectedMember(data);
-    }
+      if (row.source === "evangelisation") {
+        const { data, error } = await supabase
+          .from("suivis_des_evangelises")
+          .select("*")
+          .eq("evangelise_id", row.personne_id)
+          .maybeSingle();
 
-  } catch (err) {
-    console.error("Erreur details:", err);
-    alert("Erreur lors de l'ouverture");
-  }
-};
+        if (error) throw error;
+        setSelectedEvangelise({ ...row, ...data });
+
+      } else if (row.source === "integration") {
+        const { data, error } = await supabase
+          .from("membres_complets")
+          .select("*")
+          .eq("id", row.personne_id)
+          .maybeSingle();
+
+        if (error) throw error;
+        if (!data) {
+          alert("Membre introuvable");
+          return;
+        }
+        setSelectedMember(data);
+      }
+
+    } catch (err) {
+      console.error("Erreur details:", err);
+      alert("Erreur lors de l'ouverture");
+    }
+  };
 
   const displayedReports = filterConseiller
     ? reports.filter(r => r.conseiller === filterConseiller)
@@ -223,7 +237,7 @@ function EtatConseiller() {
 
     setKpis({
       totalEvangelises: displayedReports.filter(r =>
-        ["individuel","sortie de groupe","campagne d’evangelisation","evangelisation de rue","evangelisation maison","evangelisation stade","evangelisation"]
+        ["individuel","sortie de groupe","campagne d'evangelisation","evangelisation de rue","evangelisation maison","evangelisation stade","evangelisation"]
           .some(t => normalize(r.type_evangelisation).includes(normalize(t)))
       ).length,
       totalVenus: displayedReports.filter(r => normalize(r.type_evangelisation).includes("integration")).length,
@@ -251,318 +265,323 @@ function EtatConseiller() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
-L'Évolution des Âmes par <span className="text-emerald-300">Conseiller</span></h1>
-    <div className="max-w-3xl w-full mb-6 text-center">
-          <p className="italic text-base text-white/90">   
-          <span className="text-blue-300 font-semibold">Suivez l’évolution</span> des personnes accompagnées par les conseillers.
-          Visualisez les étapes, <span className="text-blue-300 font-semibold">analysez les parcours et mesurez les progrès 
-          dans le temps</span>, pour mieux comprendre, ajuster et faire <span className="text-blue-300 font-semibold">progresser 
+        L'Évolution des Âmes par <span className="text-emerald-300">Conseiller</span>
+      </h1>
+      <div className="max-w-3xl w-full mb-6 text-center">
+        <p className="italic text-base text-white/90">
+          <span className="text-blue-300 font-semibold">Suivez l'évolution</span> des personnes accompagnées par les conseillers.
+          Visualisez les étapes, <span className="text-blue-300 font-semibold">analysez les parcours et mesurez les progrès
+          dans le temps</span>, pour mieux comprendre, ajuster et faire <span className="text-blue-300 font-semibold">progresser
             chaque accompagnement</span>.
-          </p>
+        </p>
+      </div>
+
+      {/* FILTRES */}
+      <div className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white">
+        <p className="text-base text-red-400 font-semibold text-center mb-4">
+          Choisissez les paramètres pour générer le rapport
+        </p>
+
+        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
+
+          {/* ✅ SELECT ÉGLISE — Admin uniquement, AVANT le bouton Générer */}
+          {userProfile?.roles?.includes("Administrateur") && (
+            <div className="flex flex-col w-full md:w-auto">
+              <label className="text-base text-center mb-1">Église</label>
+              <select
+                value={filterEglise}
+                onChange={(e) => setFilterEglise(e.target.value)}
+                className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white text-center"
+              >
+                <option value="" className="text-black">Toutes les églises</option>
+                {eglises.map((eg) => (
+                  <option key={eg.id} value={eg.id} className="text-black">
+                    {eg.nom}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Date début */}
+          <div className="flex flex-col w-full md:w-auto">
+            <label className="text-base text-center mb-1">Date début</label>
+            <input
+              type="date"
+              value={filterDebut}
+              onChange={(e) => setFilterDebut(e.target.value)}
+              className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+            />
+          </div>
+
+          {/* Date fin */}
+          <div className="flex flex-col w-full md:w-auto">
+            <label className="text-base text-center mb-1">Date fin</label>
+            <input
+              type="date"
+              value={filterFin}
+              onChange={(e) => setFilterFin(e.target.value)}
+              className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+            />
+          </div>
+
+          {/* Bouton Générer */}
+          <div className="flex flex-col w-full md:w-auto">
+            <label className="text-base text-center mb-1 opacity-0">btn</label>
+            <button
+              onClick={fetchReports}
+              className="w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
+            >
+              Générer
+            </button>
+          </div>
+
+          {/* SELECT CONSEILLER — après génération */}
+          {showTable && (
+            <div className="flex flex-col w-full md:w-auto">
+              <label className="text-base text-center mb-1">Conseiller</label>
+              <select
+                value={filterConseiller}
+                onChange={(e) => setFilterConseiller(e.target.value)}
+                className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white text-center"
+              >
+                <option value="" className="text-black">Tous les conseillers</option>
+                {availableConseillers.map((c, i) => (
+                  <option key={i} value={c} className="text-black">{c}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
         </div>
-
-      {/* FILTRES + GENERER + SELECT CONSEILLER */}
-<div className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white">
-
-  {/* TEXTE AU-DESSUS */}
-  <p className="text-base text-red-400 font-semibold text-center mb-4">
-    Choisissez les paramètres pour générer le rapport
-  </p>
-
-  {/* CONTAINER */}
-  <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
-
-    {/* Date début */}
-    <div className="flex flex-col w-full md:w-auto">
-      <label className="text-base text-center mb-1">Date début</label>
-      <input 
-        type="date" 
-        value={filterDebut} 
-        onChange={(e) => setFilterDebut(e.target.value)} 
-        className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-      />
-    </div>
-
-    {/* Date fin */}
-    <div className="flex flex-col w-full md:w-auto">
-      <label className="text-base text-center mb-1">Date fin</label>
-      <input 
-        type="date" 
-        value={filterFin} 
-        onChange={(e) => setFilterFin(e.target.value)} 
-        className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-      />
-    </div>  
-
-    {/* Bouton */}
-    <div className="flex flex-col w-full md:w-auto">
-      <label className="text-base text-center mb-1 opacity-0">btn</label>
-      <button 
-        onClick={fetchReports} 
-        className="w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
-      >
-        Générer
-      </button>
-    </div>
-
-    {/* SELECT CONSEILLER (après génération) */}
-    {showTable && (
-      <div className="flex flex-col w-full md:w-auto">
-        <label className="text-base text-center mb-1">Conseiller</label>
-        <select
-          value={filterConseiller}
-          onChange={(e) => setFilterConseiller(e.target.value)}
-          className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white text-center"
-        >
-          <option value="" className="text-black">Tous les conseillers</option>
-          {availableConseillers.map((c, i) => (
-            <option key={i} value={c} className="text-black">
-              {c}
-            </option>
-          ))}
-        </select>
       </div>
-    )}
 
-  </div>
-</div>
-
-{/* KPI (après génération) */}
-{showTable && (
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
-    {/* Chaque KPI */}
-    <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
-      <div className="text-sm">Total Évangélisés</div>
-    </div>
-    <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalVenus}</div>
-      <div className="text-sm">Total Venus Église</div>
-    </div>
-    <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
-      <div className="text-sm">Intégrés</div>
-      <div className="text-sm">
-        {kpis.totalEvangelises > 0
-          ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
-          : 0}%
-      </div>
-    </div>
-    <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
-      <div className="text-sm">Baptêmes</div>
-      <div className="text-sm">
-        {kpis.totalEvangelises + kpis.totalVenus > 0
-          ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
-          : 0}%
-      </div>
-    </div>
-    <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
-      <div className="text-sm">Ministère</div>
-    </div>
-    <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalRefus}</div>
-      <div className="text-sm">Refus</div>
-    </div>
-    <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalEncours}</div>
-      <div className="text-sm">En cours</div>
-    </div>
-    <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
-      <div className="text-2xl font-bold">{kpis.totalAttente}</div>
-      <div className="text-sm">En attente</div>
-    </div>
-  </div>
-)}
-
+      {/* KPI */}
+      {showTable && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 w-full max-w-6xl">
+          <div className="p-4 rounded-2xl bg-blue-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalEvangelises}</div>
+            <div className="text-sm">Total Évangélisés</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-purple-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalVenus}</div>
+            <div className="text-sm">Total Venus Église</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-green-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalIntegration}</div>
+            <div className="text-sm">Intégrés</div>
+            <div className="text-sm">
+              {kpis.totalEvangelises > 0
+                ? Math.round((kpis.totalIntegration / kpis.totalEvangelises) * 100)
+                : 0}%
+            </div>
+          </div>
+          <div className="p-4 rounded-2xl bg-indigo-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalBapteme}</div>
+            <div className="text-sm">Baptêmes</div>
+            <div className="text-sm">
+              {kpis.totalEvangelises + kpis.totalVenus > 0
+                ? Math.round((kpis.totalBapteme / (kpis.totalEvangelises + kpis.totalVenus)) * 100)
+                : 0}%
+            </div>
+          </div>
+          <div className="p-4 rounded-2xl bg-pink-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalMinistere}</div>
+            <div className="text-sm">Ministère</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-red-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalRefus}</div>
+            <div className="text-sm">Refus</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-yellow-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalEncours}</div>
+            <div className="text-sm">En cours</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-gray-500 text-white text-center">
+            <div className="text-2xl font-bold">{kpis.totalAttente}</div>
+            <div className="text-sm">En attente</div>
+          </div>
+        </div>
+      )}
 
       {/* TABLEAU */}
-        {showTable && (
-          <div className="w-full flex justify-center mt-6 mb-6">
-            <div className="w-full max-w-7xl">
-        
-              {/* DESKTOP */}
-              <div className="hidden md:block w-full overflow-x-auto">
-                <div className="w-max mx-auto space-y-2 bg-white/5 p-2 rounded-xl">
-        
-                  {/* HEADER */}
-                  <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-                    <div className="min-w-[150px] ml-6">Date Depart</div>
-                    <div className="min-w-[200px] text-center ml-2">Nom Complet</div>
-                    <div className="min-w-[200px] text-center">Type</div>
-                    <div className="min-w-[200px] text-center">Statut</div>
-                    <div className="min-w-[150px] text-center">Assigné le</div>
-                    <div className="min-w-[150px] text-center">Date évolution</div>
-                    <div className="min-w-[150px] text-center">Date Baptême</div>
-                    <div className="min-w-[150px] text-center">Début Ministère</div>
-                    <div className="min-w-[220px] text-center">Conseiller</div>            
-                    <div className="min-w-[200px] text-center">Action</div>
-                  </div>
-        
-                  {/* MONTHS */}
-                  {groupedReports.map(([monthKey, rows]) => {
-                    const [year, monthIndex] = monthKey.split("-").map(Number);
-                    const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-                    const isExpanded = expandedMonths[monthKey] || false;
-        
-                    return (
-                      <div key={monthKey} className="w-full">
-        
-                        {/* LIGNE MOIS */}
-                        <div
-                          className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer"
-                          onClick={() => toggleMonth(monthKey)}
-                        >
-                          <div className="text-white font-semibold">
-                            {isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})
-                          </div>
+      {showTable && (
+        <div className="w-full flex justify-center mt-6 mb-6">
+          <div className="w-full max-w-7xl">
+
+            {/* DESKTOP */}
+            <div className="hidden md:block w-full overflow-x-auto">
+              <div className="w-max mx-auto space-y-2 bg-white/5 p-2 rounded-xl">
+
+                {/* HEADER */}
+                <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
+                  <div className="min-w-[150px] ml-6">Date Depart</div>
+                  <div className="min-w-[200px] text-center ml-2">Nom Complet</div>
+                  <div className="min-w-[200px] text-center">Type</div>
+                  <div className="min-w-[200px] text-center">Statut</div>
+                  <div className="min-w-[150px] text-center">Assigné le</div>
+                  <div className="min-w-[150px] text-center">Date évolution</div>
+                  <div className="min-w-[150px] text-center">Date Baptême</div>
+                  <div className="min-w-[150px] text-center">Début Ministère</div>
+                  <div className="min-w-[220px] text-center">Conseiller</div>
+                  <div className="min-w-[200px] text-center">Action</div>
+                </div>
+
+                {/* MONTHS */}
+                {groupedReports.map(([monthKey, rows]) => {
+                  const [year, monthIndex] = monthKey.split("-").map(Number);
+                  const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+                  const isExpanded = expandedMonths[monthKey] || false;
+
+                  return (
+                    <div key={monthKey} className="w-full">
+                      <div
+                        className="flex items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer"
+                        onClick={() => toggleMonth(monthKey)}
+                      >
+                        <div className="text-white font-semibold">
+                          {isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})
                         </div>
-        
-                        {/* CONTENU */}
-                        {isExpanded && (
-                          <div className="ml-6 mt-2 space-y-2">
-                            {rows.map((r, i) => {
-        
-                              const statutNormalise = getStatutNormalise(r.statut);
-        
-                              let borderColor = "";
-                              let textColor = "";
-        
-                              switch (statutNormalise) {
-                                case "intégré":
-                                case "integre":
-                                  borderColor = "border-green-500";
-                                  textColor = "text-green-400";
-                                  break;
-                                case "en attente":
-                                  borderColor = "border-gray-500";
-                                  textColor = "text-gray-400";
-                                  break;
-                                case "refus":
-                                  borderColor = "border-red-500";
-                                  textColor = "text-red-400";
-                                  break;
-                                case "en cours":
-                                case "en suivis":
-                                  borderColor = "border-orange-500";
-                                  textColor = "text-orange-400";
-                                  break;
-                                default:
-                                  borderColor = "border-white/30";
-                                  textColor = "text-white";
-                              }
-        
-                              return (
-                                <div
-                                  key={i}
-                                  className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
-                                >
-                                  <div className="min-w-[150px] text-white">{formatDateFR(r.date_depart)}</div>
-                                  <div className="min-w-[200px] text-center text-white">{r.nom_complet}</div>
-                                  <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
-                                  <div className={`min-w-[200px] text-center font-semibold ${textColor}`}>
-                                    {formatStatut(r.statut)}
-                                  </div>
-                                  <div className="min-w-[150px] text-center text-white">{formatDateFR(r.envoyer_au_suivi_le)}</div>
-                                  <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
-                                  <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
-                                  <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>                          
-                                  <div className="min-w-[200px] text-center text-white">{r.conseiller}</div>
-                                  <div className="min-w-[100px] text-center">
-                                    <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)}>Détails</button>
-                                  </div>        
+                      </div>
+
+                      {isExpanded && (
+                        <div className="ml-6 mt-2 space-y-2">
+                          {rows.map((r, i) => {
+                            const statutNormalise = getStatutNormalise(r.statut);
+                            let borderColor = "";
+                            let textColor = "";
+
+                            switch (statutNormalise) {
+                              case "intégré":
+                              case "integre":
+                                borderColor = "border-green-500";
+                                textColor = "text-green-400";
+                                break;
+                              case "en attente":
+                                borderColor = "border-gray-500";
+                                textColor = "text-gray-400";
+                                break;
+                              case "refus":
+                                borderColor = "border-red-500";
+                                textColor = "text-red-400";
+                                break;
+                              case "en cours":
+                              case "en suivis":
+                                borderColor = "border-orange-500";
+                                textColor = "text-orange-400";
+                                break;
+                              default:
+                                borderColor = "border-white/30";
+                                textColor = "text-white";
+                            }
+
+                            return (
+                              <div
+                                key={i}
+                                className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColor}`}
+                              >
+                                <div className="min-w-[150px] text-white">{formatDateFR(r.date_depart)}</div>
+                                <div className="min-w-[200px] text-center text-white">{r.nom_complet}</div>
+                                <div className="min-w-[200px] text-center text-white">{r.type_evangelisation}</div>
+                                <div className={`min-w-[200px] text-center font-semibold ${textColor}`}>
+                                  {formatStatut(r.statut)}
                                 </div>
-                              );
-                            })}
-                          </div>
-                        )}
+                                <div className="min-w-[150px] text-center text-white">{formatDateFR(r.envoyer_au_suivi_le)}</div>
+                                <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_integration)}</div>
+                                <div className="min-w-[150px] text-center text-white">{formatDateFR(r.date_baptise)}</div>
+                                <div className="min-w-[150px] text-center text-white">{formatDateFR(r.debut_ministere)}</div>
+                                <div className="min-w-[200px] text-center text-white">{r.conseiller}</div>
+                                <div className="min-w-[100px] text-center">
+                                  <button className="text-orange-500 underline text-sm" onClick={() => handleDetailsClick(r)}>Détails</button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* MOBILE */}
+      <div className="md:hidden space-y-4 w-full">
+        {groupedReports.map(([monthKey, rows]) => {
+          const [year, monthIndex] = monthKey.split("-").map(Number);
+          const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
+          const isExpanded = expandedMonths[monthKey] || false;
+
+          return (
+            <div key={monthKey} className="space-y-2 w-full">
+              <div
+                className="flex items-center justify-between px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer w-full"
+                onClick={() => toggleMonth(monthKey)}
+              >
+                <span className="text-white font-semibold">{isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})</span>
+              </div>
+
+              {isExpanded && (
+                <div className="mt-2 space-y-2 w-full">
+                  {rows.map((r, i) => {
+                    const statutNormalise = getStatutNormalise(r.statut);
+                    let borderColor = "";
+                    let textColor = "";
+
+                    switch (statutNormalise) {
+                      case "intégré":
+                      case "integre":
+                        borderColor = "border-green-500";
+                        textColor = "text-green-400";
+                        break;
+                      case "en attente":
+                        borderColor = "border-gray-500";
+                        textColor = "text-gray-400";
+                        break;
+                      case "refus":
+                        borderColor = "border-red-500";
+                        textColor = "text-red-400";
+                        break;
+                      case "en cours":
+                      case "en suivis":
+                        borderColor = "border-orange-500";
+                        textColor = "text-orange-400";
+                        break;
+                      default:
+                        borderColor = "border-white/30";
+                        textColor = "text-white";
+                    }
+
+                    return (
+                      <div
+                        key={i}
+                        className={`bg-white/10 rounded-xl p-4 text-white space-y-1 border-l-4 ${borderColor}`}
+                      >
+                        <p><strong>Date:</strong> {formatDateFR(r.date_depart)}</p>
+                        <p><strong>Nom:</strong> {r.nom_complet}</p>
+                        <p><strong>Type:</strong> {r.type_evangelisation}</p>
+                        <p className={`font-semibold ${textColor}`}><strong>Statut:</strong> {formatStatut(r.statut)}</p>
+                        <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.envoyer_au_suivi_le)}</p>
+                        <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
+                        <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
+                        <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>
+                        <p><strong>Conseiller:</strong> {r.conseiller}</p>
                       </div>
                     );
                   })}
-        
                 </div>
-              </div>
-        
+              )}
             </div>
-          </div>
-        )}
-        
-        {/* MOBILE */}
-<div className="md:hidden space-y-4 w-full">
-  {groupedReports.map(([monthKey, rows]) => {
-    const [year, monthIndex] = monthKey.split("-").map(Number);
-    const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-    const isExpanded = expandedMonths[monthKey] || false;
-
-    return (
-      <div key={monthKey} className="space-y-2 w-full">
-        {/* Ligne mois collapsable */}
-        <div
-          className="flex items-center justify-between px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-amber-300 cursor-pointer w-full"
-          onClick={() => toggleMonth(monthKey)}
-        >
-          <span className="text-white font-semibold">{isExpanded ? "➖" : "➕"} {monthLabel} ({rows.length})</span>
-        </div>
-
-        {/* Contenu du mois */}
-        {isExpanded && (
-          <div className="mt-2 space-y-2 w-full">
-            {rows.map((r, i) => {
-              const statutNormalise = getStatutNormalise(r.statut);
-
-              let borderColor = "";
-              let textColor = "";
-
-              switch (statutNormalise) {
-                case "intégré":
-                case "integre":
-                  borderColor = "border-green-500";
-                  textColor = "text-green-400";
-                  break;
-                case "en attente":
-                  borderColor = "border-gray-500";
-                  textColor = "text-gray-400";
-                  break;
-                case "refus":
-                  borderColor = "border-red-500";
-                  textColor = "text-red-400";
-                  break;
-                case "en cours":
-                case "en suivis":
-                  borderColor = "border-orange-500";
-                  textColor = "text-orange-400";
-                  break;
-                default:
-                  borderColor = "border-white/30";
-                  textColor = "text-white";
-              }
-
-              return (
-                <div
-                  key={i}
-                  className={`bg-white/10 rounded-xl p-4 text-white space-y-1 border-l-4 ${borderColor}`}
-                >
-                  <p><strong>Date:</strong> {formatDateFR(r.date_depart)}</p>
-                  <p><strong>Nom:</strong> {r.nom_complet}</p>
-                  <p><strong>Type:</strong> {r.type_evangelisation}</p>
-                  <p className={`font-semibold ${textColor}`}><strong>Statut:</strong> {formatStatut(r.statut)}</p>
-                  <p><strong>Envoyé au suivi:</strong> {formatDateFR(r.envoyer_au_suivi_le)}</p>
-                  <p><strong>Date Intégration:</strong> {formatDateFR(r.date_integration)}</p>
-                  <p><strong>Baptême:</strong> {formatDateFR(r.date_baptise)}</p>
-                  <p><strong>Début Ministère:</strong> {formatDateFR(r.debut_ministere)}</p>            
-                  <p><strong>Conseiller:</strong> {r.conseiller}</p>                        
-                </div>
-              );
-            })}
-          </div>
-        )}
+          );
+        })}
       </div>
-    );
-  })}
-</div>
-        
-          {/* POPUPS */}
+
+      {/* POPUPS */}
       {selectedEvangelise && (
         <DetailsEtatConseillerPopup
           member={selectedEvangelise}
@@ -574,14 +593,14 @@ L'Évolution des Âmes par <span className="text-emerald-300">Conseiller</span><
           }}
         />
       )}
-      
+
       {selectedMember && (
         <DetailsEtatConsEvangePopup
           member={selectedMember}
           onClose={() => setSelectedMember(null)}
-          onEdit={(member) => setEditMember(member)} // ouvre popup édition
+          onEdit={(member) => setEditMember(member)}
         />
-      )}           
+      )}
 
       <Footer />
     </div>

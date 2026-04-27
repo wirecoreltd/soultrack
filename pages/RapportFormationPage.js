@@ -42,7 +42,7 @@ function RapportFormation() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("eglise_id)
+        .select("eglise_id")
         .eq("id", session.session.user.id)
         .single();
 

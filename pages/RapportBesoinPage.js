@@ -34,15 +34,14 @@ function RapportBesoin() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("eglise_id")
         .eq("id", session.session.user.id)
         .single();
 
       const { data: membres, error: errorMembres } = await supabase
         .from("membres_complets")
         .select("id, etat_contact, sexe, created_at, besoin")
-        .eq("eglise_id", profile.eglise_id)
-        .eq("branche_id", profile.branche_id)
+        .eq("eglise_id", profile.eglise_id)       
         .gte("created_at", dateDebut || "1900-01-01")
         .lte("created_at", dateFin || "2999-12-31");
 

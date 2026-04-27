@@ -207,7 +207,7 @@ function Presence() {
     const { data: { user } } = await supabase.auth.getUser();
     const { data: profile } = await supabase
       .from("profiles")
-      .select("eglise_id, branche_id, role, roles")
+      .select("eglise_id, role, roles")
       .eq("id", user.id)
       .single();
 
@@ -249,8 +249,7 @@ function Presence() {
     const { data, error } = await supabase
       .from("attendance")
       .select("typeTemps")
-      .eq("eglise_id", profile.eglise_id)
-      .eq("branche_id", profile.branche_id)
+      .eq("eglise_id", profile.eglise_id)      
       .not("typeTemps", "is", null);
 
     if (error) { console.error(error); return; }
@@ -294,7 +293,7 @@ function Presence() {
             .from("membres_complets")
             .select("id, prenom, nom, telephone")
             .eq("eglise_id", profile.eglise_id)
-            .eq("branche_id", profile.branche_id);
+            ;
           if (myIds !== null) {
             if (myIds.length === 0) return Promise.resolve({ data: [] });
             q = q.in("id", myIds);
@@ -350,8 +349,7 @@ function Presence() {
       const payload = {
         date: selectedDate,
         typeTemps: typeFinal,
-        temps_nom: typeFinal,
-        branche_id: profile.branche_id,
+        temps_nom: typeFinal,        
         eglise_id: profile.eglise_id,
         ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : {}),
       };

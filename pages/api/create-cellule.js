@@ -18,17 +18,9 @@ export default async function handler(req, res) {
       responsable_nom,
       telephone,
       eglise_id,
-      branche_id,
     } = req.body;
 
-    if (
-      !nom ||
-      !zone ||
-      !responsable_id ||
-      !responsable_nom ||
-      !eglise_id ||
-      !branche_id
-    ) {
+    if (!nom || !zone || !responsable_id || !responsable_nom || !eglise_id) {
       return res.status(400).json({ error: "Missing fields" });
     }
 
@@ -39,7 +31,6 @@ export default async function handler(req, res) {
       responsable_id,
       telephone,
       eglise_id,
-      branche_id,
       created_at: new Date(),
     });
 

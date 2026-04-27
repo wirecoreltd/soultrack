@@ -106,12 +106,7 @@ function EtatConseiller() {
   try {
     const isAdmin = userProfile.roles?.includes("Administrateur");
 
-    // Admin : priorité au filtre manuel, sinon prend son église
-    const egliseId = isAdmin
-      ? (filterEglise || userProfile.eglise_id)
-      : userProfile.eglise_id;
-
-    if (!egliseId) {
+    if (!userProfile.eglise_id) {
       alert("Aucune église rattachée à votre compte");
       return;
     }
@@ -119,7 +114,7 @@ function EtatConseiller() {
     let query = supabase
       .from("vue_flow_conseillers")
       .select("*")
-      .eq("eglise_id", egliseId)
+      .eq("eglise_id", userProfile.eglise_id)  // ✅ toujours auto
       .order("date_depart", { ascending: false });
 
     if (!isAdmin) {
@@ -284,26 +279,7 @@ function EtatConseiller() {
           Choisissez les paramètres pour générer le rapport
         </p>
 
-        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
-
-          {/* ✅ SELECT ÉGLISE — Admin uniquement, AVANT le bouton Générer */}
-          {userProfile?.roles?.includes("Administrateur") && (
-            <div className="flex flex-col w-full md:w-auto">
-              <label className="text-base text-center mb-1">Église</label>
-              <select
-                value={filterEglise}
-                onChange={(e) => setFilterEglise(e.target.value)}
-                className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white text-center"
-              >
-                <option value="" className="text-black">Toutes les églises</option>
-                {eglises.map((eg) => (
-                  <option key={eg.id} value={eg.id} className="text-black">
-                    {eg.nom}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">         
 
           {/* Date début */}
           <div className="flex flex-col w-full md:w-auto">

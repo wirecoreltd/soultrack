@@ -38,12 +38,11 @@ function RapportBesoin() {
         .eq("id", session.session.user.id)
         .single();
 
+      // Total membres de l'église (inchangé)
       const { data: membres, error: errorMembres } = await supabase
         .from("membres_complets")
-        .select("id, etat_contact, sexe, created_at, besoin")
-        .eq("eglise_id", profile.eglise_id)       
-        .gte("created_at", dateDebut || "1900-01-01")
-        .lte("created_at", dateFin || "2999-12-31");
+        .select("id, etat_contact, sexe")
+        .eq("eglise_id", profile.eglise_id);
 
       if (errorMembres) throw errorMembres;
 
@@ -52,36 +51,53 @@ function RapportBesoin() {
       ).length;
       setTotalMembres(totalMembresLocal);
 
-      const count = {};
+      const membreIds = membres.map((m) => m.id);
 
-      (membres || []).forEach((m) => {
-        if (!m.besoin) return;
-
-        const sexe =
+      // Sexe par membre_id pour la répartition H/F
+      const sexeMap = {};
+      membres.forEach((m) => {
+        sexeMap[m.id] =
           m.sexe?.toLowerCase() === "homme"
             ? "hommes"
-            : m.sexe?.toLowerCase() === "femme"
-            ? "femmes"
             : "femmes";
+      });
 
-        let besoinsArray = [];
+      // Suivis de l'église filtrés par date
+      let query = supabase
+        .from("suivis")
+        .select("membre_id, besoin, date_action")
+        .in("membre_id", membreIds);
+
+      if (dateDebut) query = query.gte("date_action", dateDebut);
+      if (dateFin) query = query.lte("date_action", dateFin);
+
+      const { data: suivis, error: errorSuivis } = await query;
+      if (errorSuivis) throw errorSuivis;
+
+      const count = {};
+
+      (suivis || []).forEach((s) => {
+        if (!s.besoin) return;
+
+        const sexe = sexeMap[s.membre_id] || "femmes";
+
+        let items = [];
         try {
-          besoinsArray = Array.isArray(m.besoin) ? m.besoin : JSON.parse(m.besoin);
+          items = Array.isArray(s.besoin) ? s.besoin : JSON.parse(s.besoin);
         } catch {
-          besoinsArray = m.besoin.split(",");
+          return;
         }
 
-        besoinsArray.forEach((b) => {
-          const clean = b.trim();
-          if (!clean) return;
+        items.forEach((item) => {
+          const label = typeof item === "string" ? item.trim() : item.label;
+          if (!label) return;
 
-          if (!count[clean]) {
-            count[clean] = { total: 0, hommes: 0, femmes: 0 };
+          if (!count[label]) {
+            count[label] = { total: 0, hommes: 0, femmes: 0 };
           }
-
-          count[clean].total++;
-          if (sexe === "hommes") count[clean].hommes++;
-          else count[clean].femmes++;
+          count[label].total++;
+          if (sexe === "hommes") count[label].hommes++;
+          else count[label].femmes++;
         });
       });
 
@@ -94,8 +110,8 @@ function RapportBesoin() {
   };
 
   const besoinColors = {
-    "Finances": "border-green-400",
-    "Santé": "border-red-400",
+    Finances: "border-green-400",
+    Santé: "border-red-400",
     "Travail / Études": "border-blue-400",
     "Famille / Enfants": "border-pink-400",
     "Relations / Conflits": "border-orange-400",
@@ -104,10 +120,10 @@ function RapportBesoin() {
     "Logement / Sécurité": "border-yellow-400",
     "Communauté / Isolement": "border-cyan-400",
     "Dépression / Santé mentale": "border-rose-500",
-    "Autres": "border-gray-400",
+    Autres: "border-gray-400",
   };
 
-  const getBesoinColor = (besoin) => besoinColors[besoin] || besoinColors["Autres"];
+  const getBesoinColor = (b) => besoinColors[b] || besoinColors["Autres"];
 
   const labels = Object.keys(besoinsCount);
   const values = Object.values(besoinsCount);
@@ -116,7 +132,7 @@ function RapportBesoin() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
         Rapport <span className="text-emerald-300">Difficultés / Besoins</span>
       </h1>
 
@@ -138,7 +154,6 @@ function RapportBesoin() {
         <p className="text-base text-red-400 font-semibold text-center mb-4">
           Choisissez les paramètres pour générer le rapport
         </p>
-
         <div className="flex flex-col w-full">
           <label className="text-center text-base mb-1">Date de Début</label>
           <input
@@ -148,7 +163,6 @@ function RapportBesoin() {
             className="w-full border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
           />
         </div>
-
         <div className="flex flex-col w-full mt-2">
           <label className="text-center text-base mb-1">Date de Fin</label>
           <input
@@ -158,12 +172,11 @@ function RapportBesoin() {
             className="w-full border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
           />
         </div>
-
-        <div className="flex flex-col w-full md:w-auto">
+        <div className="flex flex-col w-full mt-3">
           <label className="text-base text-center mb-1 opacity-0">btn</label>
           <button
             onClick={fetchRapport}
-            className="w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
+            className="w-full h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
           >
             Générer
           </button>
@@ -183,7 +196,6 @@ function RapportBesoin() {
       {/* DESKTOP */}
       <div className="hidden md:flex w-full overflow-x-auto mt-4 justify-center">
         <div className="w-max">
-          {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-white/20 bg-white/5 rounded-t-lg whitespace-nowrap">
             <div className="w-[220px]">Catégorie</div>
             <div className="w-[100px] text-center">Hommes</div>
@@ -192,7 +204,6 @@ function RapportBesoin() {
             <div className="w-[160px] text-center">% Membres</div>
           </div>
 
-          {/* LIGNES */}
           {labels.map((b, i) => {
             const data = values[i];
             const percent =
@@ -204,7 +215,7 @@ function RapportBesoin() {
                 onClick={() =>
                   router.push(`/list-members?besoin=${encodeURIComponent(b)}`)
                 }
-                className={`flex items-center mt-2 px-4 py-3 rounded-md bg-white/20 hover:bg-white/20 transition cursor-pointer border-l-4 ${getBesoinColor(b)}`}
+                className={`flex items-center mt-2 px-4 py-3 rounded-md bg-white/20 hover:bg-white/30 transition cursor-pointer border-l-4 ${getBesoinColor(b)}`}
               >
                 <div className="w-[220px] text-white font-medium">{b}</div>
                 <div className="w-[100px] text-center text-white">{data.hommes}</div>

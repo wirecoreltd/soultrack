@@ -30,22 +30,20 @@ function ListConseillers() {
 
       const { data: currentUserProfile } = await supabase
         .from("profiles")
-        .select("id, prenom, nom, email, telephone, role, eglise_id, branche_id")
+        .select("id, prenom, nom, email, telephone, role, eglise_id") // ✅ branche_id retiré
         .eq("id", user.id)
         .single();
 
       if (!currentUserProfile) throw new Error("Profil introuvable");
 
       const eglise_id = String(currentUserProfile.eglise_id);
-      const branche_id = String(currentUserProfile.branche_id);
 
-      // 1️⃣ Fetch les conseillers de l'église/branche
+      // 1️⃣ Fetch les conseillers de l'église
       const { data: profiles, error: errConseillers } = await supabase
         .from("profiles")
         .select("id, prenom, nom, email, telephone, roles, responsable_id")
         .contains("roles", ["Conseiller"])
-        .eq("eglise_id", eglise_id)
-        .eq("branche_id", branche_id);
+        .eq("eglise_id", eglise_id); // ✅ .eq("branche_id", ...) retiré
 
       if (errConseillers) throw errConseillers;
       if (!profiles || profiles.length === 0) {
@@ -158,7 +156,7 @@ function ListConseillers() {
         {loading ? (
           <p className="text-center text-white col-span-full">Chargement...</p>
         ) : filteredConseillers.length === 0 ? (
-          <p className="text-center text-white col-span-full">Aucun conseiller trouvé pour votre église et votre branche.</p>
+          <p className="text-center text-white col-span-full">Aucun conseiller trouvé pour votre église.</p>
         ) : (
           filteredConseillers.map((c) => (
             <div key={c.id} className="bg-white rounded-2xl shadow-lg w-full max-w-sm overflow-hidden transition hover:shadow-2xl">

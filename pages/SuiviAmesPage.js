@@ -307,7 +307,7 @@ function SuiviAmesPage() {
         </div>
       </div>
 
-      {loading && <p className="text-white mt-4">Chargement...</p>}
+      {loading && <p className="text-white mt-4"></p>}
       <Footer />
     </div>
   );

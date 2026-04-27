@@ -460,7 +460,7 @@ function Presence() {
   const getRoleLabel = () => {
     if (userRole === "Conseiller") return "👤 Vos membres suivis";
     if (userRole === "ResponsableCellule") return "🏠 Membres de votre cellule";
-    return "🏢 Tous les membres de la branche";
+    return "🏢 Tous les membres de l'église";
   };
 
   const typeFinalLabel = typeTemps === "AUTRE" ? nouveauTemps : typeTemps;
@@ -576,7 +576,7 @@ function Presence() {
 
           {/* CHANGEMENT 4 : petite note au-dessus de la barre de recherche */}
           {view === "absents" && (
-            <p className="text-white/60 text-xs mb-2 italic">
+            <p className="text-amber-300 text-sm mb-2 italic">
               💡 Cliquer sur un nom pour marquer comme présent
             </p>
           )}

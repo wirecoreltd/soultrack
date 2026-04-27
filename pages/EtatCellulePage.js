@@ -92,11 +92,14 @@ const fetchReports = async () => {
   setShowTable(false);
 
   try {
+    // ✅ filtre par eglise_id du user connecté
     let query = supabase
       .from("vue_flow_personnes")
       .select("*")
+      .eq("eglise_id", userProfile.eglise_id)
       .order("date_depart", { ascending: false });
 
+    // Les non-admins voient uniquement leur responsable
     if (!userProfile.roles?.includes("Administrateur")) {
       query = query.ilike("responsable", `%${userProfile.prenom}%`);
     }
@@ -109,14 +112,13 @@ const fetchReports = async () => {
     if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
     if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
 
-    // Mettre à jour la liste des cellules disponibles selon la plage
     const cellulesDisponibles = Array.from(new Set(filtered.map(r => r.cellule_full))).sort();
     setCellules(cellulesDisponibles.map(c => ({ id: c, cellule_full: c })));
 
     setAllReports(filtered);
-    setReports(filtered); // Initialement toutes les cellules
+    setReports(filtered);
     updateKpis(filtered);
-    setFilterCellule(""); // Reset filtre cellule
+    setFilterCellule("");
     setShowTable(true);
   } catch (err) {
     console.error("Erreur fetch:", err);

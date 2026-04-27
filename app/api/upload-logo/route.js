@@ -1,18 +1,14 @@
-import { v2 as cloudinary } from "cloudinary";
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import crypto from "crypto";
 
 export async function POST(req) {
   try {
-    console.log("Config Cloudinary:", {
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET ? "présent" : "MANQUANT",
-    });
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      return Response.json({ error: "Variables Cloudinary manquantes" }, { status: 500 });
+    }
 
     const formData = await req.formData();
     const file = formData.get("file");
@@ -21,32 +17,42 @@ export async function POST(req) {
       return Response.json({ error: "Aucun fichier reçu" }, { status: 400 });
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    // Signature
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = "soultrack/logos";
+    const toSign = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
+    const signature = crypto.createHash("sha1").update(toSign).digest("hex");
 
-    const result = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        { folder: "soultrack/logos" },
-        (error, result) => {
-          if (error) {
-            // 🔍 Renvoie TOUT l'objet erreur Cloudinary
-            console.error("Cloudinary error complet:", JSON.stringify(error));
-            reject(error);
-          } else {
-            resolve(result);
-          }
-        }
-      ).end(buffer);
-    });
+    // FormData pour Cloudinary
+    const arrayBuffer = await file.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: file.type });
+
+    const uploadForm = new FormData();
+    uploadForm.append("file", blob, file.name);
+    uploadForm.append("api_key", apiKey);
+    uploadForm.append("timestamp", timestamp.toString());
+    uploadForm.append("signature", signature);
+    uploadForm.append("folder", folder);
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      { method: "POST", body: uploadForm }
+    );
+
+    const result = await response.json();
+    console.log("Réponse Cloudinary complète:", JSON.stringify(result));
+
+    if (!response.ok) {
+      return Response.json({ 
+        error: result.error?.message || "Erreur Cloudinary", 
+        details: result 
+      }, { status: 500 });
+    }
 
     return Response.json({ url: result.secure_url });
 
   } catch (err) {
-    console.error("Erreur complète:", JSON.stringify(err));
-    return Response.json({ 
-      error: err.message,
-      http_code: err.http_code,
-      details: JSON.stringify(err)
-    }, { status: 500 });
+    console.error("Erreur:", err.message);
+    return Response.json({ error: err.message }, { status: 500 });
   }
 }

@@ -33,54 +33,8 @@ function EditEgliseContent() {
   const [logoUrl, setLogoUrl] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
-  const [logoError, setLogoError] = useState("");
 
-  // =========================
-  // 🔹 Resize automatique
-  // =========================
-  const resizeImage = (file) => {
-    return new Promise((resolve) => {
-      const img = new window.Image();
-      const url = URL.createObjectURL(file);
-
-      img.onload = () => {
-        const maxWidth = 250;
-        const maxHeight = 200;
-
-        let { width, height } = img;
-
-        const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
-        width = width * ratio;
-        height = height * ratio;
-
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob(
-          (blob) => {
-            const resizedFile = new File([blob], file.name, {
-              type: "image/webp",
-            });
-            resolve(resizedFile);
-          },
-          "image/webp",
-          0.85 // compression
-        );
-
-        URL.revokeObjectURL(url);
-      };
-
-      img.src = url;
-    });
-  };
-
-  // =========================
-  // 🔹 Load data
-  // =========================
+  // Chargement des données actuelles
   useEffect(() => {
     const fetchEglise = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -123,37 +77,39 @@ function EditEgliseContent() {
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  // =========================
-  // 🔹 Upload logo (avec resize)
-  // =========================
-  const handleLogoChange = async (e) => {
+  const handleLogoChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    setLogoError("");
-
     const allowedTypes = ["image/png", "image/svg+xml", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      setLogoError("❌ Format invalide. PNG, SVG ou WEBP uniquement.");
+      setMessage("❌ Format invalide. Utilisez PNG, SVG ou WEBP uniquement.");
+      e.target.value = "";
       return;
     }
 
     const maxSize = 500 * 1024;
     if (file.size > maxSize) {
-      setLogoError("❌ Image trop lourde. Maximum 500 Ko.");
+      setMessage("❌ Image trop lourde. Maximum 500 Ko.");
+      e.target.value = "";
       return;
     }
 
-    // 🔥 resize auto
-    const resizedFile = await resizeImage(file);
-
-    setLogoFile(resizedFile);
-    setLogoPreview(URL.createObjectURL(resizedFile));
+    const img = new window.Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      if (img.width !== img.height) {
+        setMessage("❌ Le logo doit être carré (ex: 200x200, 512x512).");
+        e.target.value = "";
+        URL.revokeObjectURL(img.src);
+        return;
+      }
+      setLogoFile(file);
+      setLogoPreview(img.src);
+      setMessage("");
+    };
   };
 
-  // =========================
-  // 🔹 Submit
-  // =========================
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!egliseId) return;
@@ -168,16 +124,12 @@ function EditEgliseContent() {
         setMessage("⏳ Upload du logo...");
         const fd = new FormData();
         fd.append("file", logoFile);
-
         const uploadRes = await fetch("/api/upload-logo", {
           method: "POST",
           body: fd,
         });
-
         const uploadData = await uploadRes.json();
-        if (!uploadRes.ok)
-          throw new Error(uploadData.error || "Erreur upload logo");
-
+        if (!uploadRes.ok) throw new Error(uploadData.error || "Erreur upload logo");
         newLogoUrl = uploadData.url;
       }
 
@@ -199,12 +151,14 @@ function EditEgliseContent() {
       setLogoFile(null);
       setLogoPreview(newLogoUrl);
       setMessage("✅ Informations mises à jour avec succès !");
+      // ✅ PAS de setTimeout ni de reload ici
+
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {
       setSaving(false);
     }
-  };
+  }; 
 
   if (loading)
     return <p className="text-center mt-10 text-white">Chargement...</p>;
@@ -218,15 +172,25 @@ function EditEgliseContent() {
         <span className="text-emerald-300">Église</span>
       </h1>
 
+      <div className="max-w-3xl w-full mb-6 text-center mx-auto">
+        <p className="italic text-base text-white/90">
+          Mettez à jour les informations de votre église.{" "}
+          <span className="text-blue-300 font-semibold">
+            Ces données apparaissent sur l'ensemble de l'application
+          </span>{" "}
+          et sont visibles par tous les membres.
+        </p>
+      </div>
+
       <div className="max-w-lg mx-auto bg-white/10 rounded-2xl p-6 flex flex-col gap-4">
 
-        {/* LOGO */}
+        {/* Logo actuel */}
         <div className="flex flex-col items-center gap-3">
           {logoPreview ? (
             <img
               src={logoPreview}
               alt="Logo église"
-              className="max-h-[200px] max-w-[250px] object-contain"
+              className="w-24 h-24 object-contain"
             />
           ) : (
             <div className="w-24 h-24 rounded-xl bg-white/20 flex items-center justify-center text-white/50 text-sm">
@@ -236,8 +200,8 @@ function EditEgliseContent() {
 
           <label className="cursor-pointer border border-dashed border-white/40 rounded-xl px-4 py-3 flex flex-col items-center gap-1 hover:bg-white/10 transition w-full">
             <span className="text-2xl">🖼️</span>
-            <span className="text-sm text-white/70 text-center">
-              PNG, SVG ou WEBP · Max 500 Ko · Max 250×200 px
+            <span className="text-sm text-white/70">
+              Changer le logo — PNG, SVG ou WEBP · Carré · Max 500 Ko
             </span>
             <input
               type="file"
@@ -247,45 +211,109 @@ function EditEgliseContent() {
             />
           </label>
 
-          {logoError && (
-            <p className="text-red-400 text-xs text-center">
-              {logoError}
-            </p>
+          {logoFile && (
+            <button
+              type="button"
+              onClick={() => {
+                setLogoFile(null);
+                setLogoPreview(logoUrl);
+                setMessage("");
+              }}
+              className="text-xs text-red-300 hover:text-red-500 underline"
+            >
+              Annuler le changement de logo
+            </button>
           )}
         </div>
 
+        <hr className="border-white/20" />
+
+        {/* Formulaire */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input name="denomination" value={formData.denomination} onChange={handleChange} className="input" />
-          <input name="nom" value={formData.nom} onChange={handleChange} className="input" />
-          <input name="branche" value={formData.branche} onChange={handleChange} className="input" />
-          <input name="ville" value={formData.ville} onChange={handleChange} className="input" />
-          <input name="pays" value={formData.pays} onChange={handleChange} className="input" />
+          <div className="flex flex-col gap-1">
+            <label className="text-white/70 text-sm">Dénomination</label>
+            <input
+              name="denomination"
+              value={formData.denomination}
+              onChange={handleChange}
+              className="input"
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-white/70 text-sm">Nom de l'église</label>
+            <input
+              name="nom"
+              value={formData.nom}
+              onChange={handleChange}
+              className="input"              
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-white/70 text-sm">Nom de la branche</label>
+            <input
+              name="branche"
+              value={formData.branche}
+              onChange={handleChange}
+              className="input"
+              />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-white/70 text-sm">Ville</label>
+            <input
+              name="ville"
+              value={formData.ville}
+              onChange={handleChange}
+              className="input"
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-white/70 text-sm">Pays</label>
+            <input
+              name="pays"
+              value={formData.pays}
+              onChange={handleChange}
+              className="input"
+              required
+            />
+          </div>
 
           {message && (
-            <p className="text-center text-sm text-white">{message}</p>
+            <p className={`text-center text-sm ${message.startsWith("✅") ? "text-emerald-300" : "text-red-400"}`}>
+              {message}
+            </p>
           )}
 
           <button
             type="submit"
             disabled={saving}
-            className="bg-gradient-to-r from-emerald-400 to-blue-400 text-white py-3 rounded-2xl"
+            className="bg-gradient-to-r from-emerald-400 to-blue-400 hover:from-emerald-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition"
           >
             {saving ? "Sauvegarde..." : "💾 Sauvegarder"}
           </button>
         </form>
       </div>
 
-      <Footer />
-
       <style jsx>{`
         .input {
           width: 100%;
+          border: 1px solid rgba(255,255,255,0.2);
           border-radius: 12px;
           padding: 12px;
           background: rgba(255,255,255,0.1);
           color: white;
         }
+        .input::placeholder {
+          color: rgba(255,255,255,0.4);
+        }
       `}</style>
+
+      <Footer />
     </div>
   );
 }

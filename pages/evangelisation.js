@@ -291,8 +291,7 @@ function EvangelisationContent() {
         cellule_id: targetType === "cellule" ? targetId : null,
         date_evangelise: m.date_evangelise,
         date_suivi: new Date().toISOString(),
-        eglise_id: profile?.eglise_id || null,
-        branche_id: profile?.branche_id || null,
+        eglise_id: profile?.eglise_id || null,        
         type_evangelisation: m.type_evangelisation,
       }));
 

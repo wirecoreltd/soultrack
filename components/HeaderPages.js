@@ -203,7 +203,7 @@ export default function HeaderPages() {
 
         {/* Ligne 3 : Pays avec drapeau */}
           {pays && (
-            <p className="text-gray-300 text-sm flex items-center gap-1">
+            <p className="text-gray-300 mt-2 text-sm flex items-center gap-1">
               <img
                 src={`https://flagcdn.com/w20/${getIsoCode(pays)}.png`}
                 srcSet={`https://flagcdn.com/w40/${getIsoCode(pays)}.png 2x`}
@@ -212,7 +212,7 @@ export default function HeaderPages() {
                 alt={pays}
                 style={{ borderRadius: "2px", display: "inline-block" }}
               />
-              <span className="text-amber-300">{pays}</span>
+              <span className="text-white">{pays}</span>
             </p>
           )}
       </div>

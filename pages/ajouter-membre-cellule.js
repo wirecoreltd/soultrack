@@ -153,7 +153,7 @@ useEffect(() => {
           besoin: formData.besoin.join(", "),
           autrebesoin: formData.autreBesoin || null,
           sexe: formData.sexe || null,
-          age: "",
+          age: formData.age || null,
           date_venu: formData.date_venu || null,
           bapteme_eau: false,
           bapteme_esprit: false,
@@ -286,15 +286,14 @@ useEffect(() => {
             <option value="Femme">Femme</option>
           </select>
 
-          {/* Âge */}
-          <label className="text-sm sm:text-base font-semibold">Âge</label>
+          {/* Âge */}         
           <select
             value={formData.age}
             onChange={e => setFormData({ ...formData, age: e.target.value })}
             className="input"
             required
           >
-            <option value="">-- Choisir --</option>
+            <option value="">-- Tranche d'âge --</option>
             {["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"].map(v => (
               <option key={v} value={v}>{v}</option>
             ))}

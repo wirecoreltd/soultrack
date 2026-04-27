@@ -191,14 +191,17 @@ export default function HeaderPages() {
 
         {/* Ligne 1 : Dénomination - Nom église */}
         <p className="text-white font-semibold text-lg mt-2">
-          {denomination && <span className="text-amber-300">{denomination} - </span>}
-          {eglise}
-        </p>
+          {denomination && ( <span className="text-amber-300"> {denomination} {eglise && " - "}
+          </span>
+        )}
+        {eglise}
+                </p>
 
         {/* Ligne 2 : Branche - Ville */}
         <p className="text-gray-300 text-sm">
           {branche}
-          {ville && <span className="text-amber-300"> - {ville}</span>}
+            {branche && ville && <span className="text-amber-300"> - </span>}
+            {ville}
         </p>
 
         {/* Ligne 3 : Pays avec drapeau */}

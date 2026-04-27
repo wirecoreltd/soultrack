@@ -52,7 +52,6 @@ const DetailsPopup = React.memo(function DetailsPopup({
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
-  // Affiche les conseillers depuis assignmentsMap (même logique que ListMembers)
   const getConseillersForMember = (memberId) => {
     const assigned = assignmentsMap?.[memberId];
     if (assigned && assigned.length > 0) {
@@ -173,7 +172,6 @@ function SuivisMembresContent() {
   const phoneMenuRef = useRef(null);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
 
-  // ─── assignmentsMap : même logique que ListMembers ───
   const [assignmentsMap, setAssignmentsMap] = useState({});
 
   const [view, setView] = useState(() => {
@@ -198,7 +196,7 @@ function SuivisMembresContent() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ─── fetchAssignments : copie exacte de ListMembers ───
+  // ─── fetchAssignments ───
   const fetchAssignments = useCallback(async () => {
     const { data: assignments, error } = await supabase
       .from("suivi_assignments")
@@ -235,7 +233,6 @@ function SuivisMembresContent() {
     setAssignmentsMap(map);
   }, []);
 
-  // Helper : affiche les conseillers depuis assignmentsMap
   const getConseillersForMember = (memberId) => {
     const assigned = assignmentsMap[memberId];
     if (assigned && assigned.length > 0) {
@@ -244,7 +241,7 @@ function SuivisMembresContent() {
     return "—";
   };
 
-  // ─── Realtime : écoute suivi_assignments ───
+  // ─── Realtime ───
   useEffect(() => {
     const channel = supabase
       .channel("realtime:suivi_assignments_suivis")
@@ -265,7 +262,7 @@ function SuivisMembresContent() {
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, prenom, nom, role, roles, eglise_id, branche_id")
+          .select("id, prenom, nom, role, roles, eglise_id") // ✅ branche_id retiré
           .eq("id", user.id)
           .single();
         if (profileError || !profileData) throw profileError;
@@ -276,23 +273,20 @@ function SuivisMembresContent() {
         const { data: cellulesData } = await supabase
           .from("cellules")
           .select("id, cellule_full, responsable_id")
-          .eq("eglise_id", profileData.eglise_id)
-          .eq("branche_id", profileData.branche_id);
+          .eq("eglise_id", profileData.eglise_id); // ✅ .eq("branche_id", ...) retiré
         setCellules(cellulesData || []);
 
         const { data: conseillersData } = await supabase
           .from("profiles")
           .select("id, prenom, nom")
           .eq("role", "Conseiller")
-          .eq("eglise_id", profileData.eglise_id)
-          .eq("branche_id", profileData.branche_id);
+          .eq("eglise_id", profileData.eglise_id); // ✅ .eq("branche_id", ...) retiré
         setConseillers(conseillersData || []);
 
         let query = supabase
           .from("membres_complets")
           .select("*")
-          .eq("eglise_id", profileData.eglise_id)
-          .eq("branche_id", profileData.branche_id)
+          .eq("eglise_id", profileData.eglise_id) // ✅ .eq("branche_id", ...) retiré
           .order("created_at", { ascending: false });
 
         if (profileData.role === "Conseiller") {
@@ -309,7 +303,6 @@ function SuivisMembresContent() {
         setAllMembers(data || []);
         if (!data || data.length === 0) setMessage("Aucun membre à afficher.");
 
-        // Charger les assignments au démarrage
         await fetchAssignments();
 
       } catch (err) {
@@ -478,12 +471,10 @@ function SuivisMembresContent() {
                   </div>
                 )}
 
-                {/* Cellule */}
                 <p className="text-sm text-black-700 mb-1">
                   🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}
                 </p>
 
-                {/* ✅ Conseillers depuis assignmentsMap (aligné sur ListMembers) */}
                 <p className="text-sm text-black-700 mb-1">
                   👤 Conseiller(s) : {getConseillersForMember(m.id)}
                 </p>
@@ -539,7 +530,6 @@ function SuivisMembresContent() {
                 </button>
               </div>
 
-              {/* Détails — DetailsPopup est stable (défini hors du parent) */}
               <div className={`transition-all duration-500 overflow-hidden ${detailsOpen === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
                 {detailsOpen === m.id && (
                   <div className="pt-2">
@@ -570,7 +560,6 @@ function SuivisMembresContent() {
           onClose={() => setEditMember(null)}
           onUpdateMember={async (updatedMember) => {
             updateMember(updatedMember.id, updatedMember);
-            // ✅ Recharger les assignments après modification
             await fetchAssignments();
             setEditMember(null);
           }}

@@ -19,6 +19,7 @@ function CreateInternalUserContent() {
   const [members, setMembers] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const [duplicatePhone, setDuplicatePhone] = useState(null);
+  const [duplicateEmail, setDuplicateEmail] = useState(null);
 
   const [formData, setFormData] = useState({
     prenom: "",

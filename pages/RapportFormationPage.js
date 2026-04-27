@@ -21,8 +21,7 @@ function RapportFormation() {
     nom_formation: "",
     hommes: 0,
     femmes: 0,
-    eglise_id: null,
-    branche_id: null,
+    eglise_id: null,    
   });
 
   const [filterDebut, setFilterDebut] = useState("");
@@ -43,15 +42,14 @@ function RapportFormation() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("eglise_id)
         .eq("id", session.session.user.id)
         .single();
 
       if (profile) {
         setFormData((prev) => ({
           ...prev,
-          eglise_id: profile.eglise_id,
-          branche_id: profile.branche_id,
+          eglise_id: profile.eglise_id,          
         }));
       }
     };
@@ -64,8 +62,7 @@ function RapportFormation() {
     let query = supabase
       .from("formations")
       .select("*")
-      .eq("eglise_id", formData.eglise_id)
-      .eq("branche_id", formData.branche_id)
+      .eq("eglise_id", formData.eglise_id)      
       .order("date_debut", { ascending: false });
 
     if (filterDebut) query = query.gte("date_debut", filterDebut);

@@ -149,7 +149,7 @@ export default function HeaderPages() {
             <img
               src={logoUrl}
               alt="Logo Église"
-              className="w-20 h-20 object-contain rounded-full border-2 border-amber-300"
+              className="w-20 h-20 object-contain"
             />
           )}
         </div>

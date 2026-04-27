@@ -18,7 +18,7 @@ function RapportMinistere() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [rapports, setRapports] = useState([]);
-  const [egliseId, setEgliseId] = useState(null);  
+  const [egliseId, setEgliseId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [totalServiteurs, setTotalServiteurs] = useState(0);
   const [totalMembres, setTotalMembres] = useState(0);
@@ -37,7 +37,7 @@ function RapportMinistere() {
         .single();
 
       if (!error && profile) {
-        setEgliseId(profile.eglise_id);       
+        setEgliseId(profile.eglise_id);
       }
     };
     fetchUser();
@@ -51,7 +51,7 @@ function RapportMinistere() {
     setMessage("⏳ Chargement...");
 
     if (!egliseId) {
-      setMessage("❌ ID de l'église");
+      setMessage("❌ ID de l'église introuvable");
       setLoading(false);
       return;
     }
@@ -60,8 +60,7 @@ function RapportMinistere() {
       const { data: membresData, error: membresError } = await supabase
         .from("membres_complets")
         .select("id, etat_contact")
-        .eq("eglise_id", egliseId)
-        ;
+        .eq("eglise_id", egliseId);
 
       if (membresError) throw membresError;
 
@@ -73,7 +72,7 @@ function RapportMinistere() {
       let queryStats = supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, type, date_action")
-        .eq("eglise_id", egliseId)        
+        .eq("eglise_id", egliseId)
         .eq("type", "ministere");
 
       if (dateDebut) queryStats = queryStats.gte("date_action", dateDebut);
@@ -82,18 +81,21 @@ function RapportMinistere() {
       const { data: statsData, error: statsError } = await queryStats;
       if (statsError) throw statsError;
 
+      // ✅ Dédoublonnage : 1 serviteur compte 1 seule fois par ministère
       const serviteursSet = new Set();
+      const seen = new Set(); // clé unique membre_id + ministère
       const counts = {};
 
       statsData.forEach((s) => {
-        if (!s.membre_id) return;
+        if (!s.membre_id || !s.valeur) return;
         serviteursSet.add(s.membre_id);
-        if (!s.valeur) return;
 
         s.valeur.split(",").forEach((ministere) => {
           const m = ministere.trim();
-          if (!counts[m]) counts[m] = 0;
-          counts[m]++;
+          const key = `${s.membre_id}__${m}`;
+          if (seen.has(key)) return; // déjà compté pour ce membre → on ignore
+          seen.add(key);
+          counts[m] = (counts[m] || 0) + 1;
         });
       });
 
@@ -116,28 +118,28 @@ function RapportMinistere() {
   };
 
   const ministereColors = {
-  "Intercession": "border-purple-400",
-  "Louange": "border-pink-400",
-  "Administration": "border-blue-400",
-  "Technique": "border-cyan-400",
-  "Communication": "border-indigo-400",
-  "Les Enfants": "border-yellow-400",
-  "Les ados": "border-orange-400",
-  "Les jeunes": "border-red-400",
-  "Finance": "border-green-400",
-  "Nettoyage": "border-gray-400",
-  "Conseiller": "border-emerald-400",
-  "Compassion": "border-rose-400",
-  "Visite": "border-amber-400",
-  "Berger": "border-lime-400",
-  "Modération": "border-sky-400",
-  "Autres": "border-white"
-};
+    Intercession: "border-purple-400",
+    Louange: "border-pink-400",
+    Administration: "border-blue-400",
+    Technique: "border-cyan-400",
+    Communication: "border-indigo-400",
+    "Les Enfants": "border-yellow-400",
+    "Les ados": "border-orange-400",
+    "Les jeunes": "border-red-400",
+    Finance: "border-green-400",
+    Nettoyage: "border-gray-400",
+    Conseiller: "border-emerald-400",
+    Compassion: "border-rose-400",
+    Visite: "border-amber-400",
+    Berger: "border-lime-400",
+    Modération: "border-sky-400",
+    Autres: "border-white",
+  };
 
-const getMinistereColor = (ministere) => {
-  return ministereColors[ministere] || ministereColors["Autres"];
-};
-  
+  const getMinistereColor = (ministere) => {
+    return ministereColors[ministere] || ministereColors["Autres"];
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-[#333699]">
       <HeaderPages />
@@ -150,7 +152,7 @@ const getMinistereColor = (ministere) => {
       {/* 🔥 DESCRIPTION */}
       <div className="max-w-3xl w-full mb-6 text-center">
         <p className="italic text-base text-white/90">
-          Suivez en un coup d’œil le nombre{" "}
+          Suivez en un coup d'œil le nombre{" "}
           <span className="text-blue-300 font-semibold">
             total de serviteurs
           </span>
@@ -160,13 +162,13 @@ const getMinistereColor = (ministere) => {
           </span>{" "}
           et le{" "}
           <span className="text-blue-300 font-semibold">
-            niveau d’engagement global dans l’église
+            niveau d'engagement global dans l'église
           </span>
           . Analysez le poids de chaque ministère et le{" "}
           <span className="text-blue-300 font-semibold">
             pourcentage de serviteurs
           </span>{" "}
-          par rapport à l’ensemble des membres pour mieux orienter vos décisions
+          par rapport à l'ensemble des membres pour mieux orienter vos décisions
           et renforcer la{" "}
           <span className="text-blue-300 font-semibold">
             dynamique du service
@@ -182,34 +184,31 @@ const getMinistereColor = (ministere) => {
         </p>
 
         <div className="flex flex-col md:flex-row items-stretch md:items-end gap-3 md:gap-4 w-full">
+          <input
+            type="date"
+            value={dateDebut}
+            onChange={(e) => setDateDebut(e.target.value)}
+            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto h-10"
+          />
 
-  <input
-    type="date"
-    value={dateDebut}
-    onChange={(e) => setDateDebut(e.target.value)}
-    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto h-10"
-  />
+          <input
+            type="date"
+            value={dateFin}
+            onChange={(e) => setDateFin(e.target.value)}
+            className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto h-10"
+          />
 
-  <input
-    type="date"
-    value={dateFin}
-    onChange={(e) => setDateFin(e.target.value)}
-    className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white w-full sm:w-auto h-10"
-  />
-
-  <button
-    onClick={fetchRapport}
-    disabled={!egliseId || loading}
-    className={`w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition ${
-      !egliseId || loading
-        ? "opacity-50 cursor-not-allowed"
-        : ""
-    }`}
-  >
-    Générer
-  </button>
-</div>
-        </div>     
+          <button
+            onClick={fetchRapport}
+            disabled={!egliseId || loading}
+            className={`w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition ${
+              !egliseId || loading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            Générer
+          </button>
+        </div>
+      </div>
 
       {/* 🔹 RÉSUMÉ */}
       <div className="flex flex-wrap gap-4 mt-6 justify-center w-full max-w-xl">
@@ -246,9 +245,7 @@ const getMinistereColor = (ministere) => {
           </div>
 
           {loading && (
-            <div className="text-white text-center py-4">
-              Chargement...
-            </div>
+            <div className="text-white text-center py-4">Chargement...</div>
           )}
 
           {rapports.map((r, index) => (
@@ -256,9 +253,7 @@ const getMinistereColor = (ministere) => {
               key={index}
               className={`grid grid-cols-[2fr_1fr] items-center px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${getMinistereColor(r.ministere)} mt-2`}
             >
-              <div className="text-white font-semibold">
-                {r.ministere}
-              </div>
+              <div className="text-white font-semibold">{r.ministere}</div>
               <div className="text-center text-orange-400 font-bold">
                 {r.total}
               </div>
@@ -267,7 +262,7 @@ const getMinistereColor = (ministere) => {
         </div>
       </div>
 
-      {(!egliseId ) && (
+      {!egliseId && (
         <p className="text-white text-center mt-2">
           ⏳ Chargement des informations utilisateur...
         </p>

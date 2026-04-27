@@ -50,13 +50,12 @@ const [integrationPercent, setIntegrationPercent] = useState(0);
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("eglise_id")
         .eq("id", user.id)
         .single();
 
       if (profile) {
-        setEgliseId(profile.eglise_id);
-        setBrancheId(profile.branche_id);
+        setEgliseId(profile.eglise_id);        
       }
     };
     fetchProfile();
@@ -73,8 +72,7 @@ const [integrationPercent, setIntegrationPercent] = useState(0);
           let { data: evangelisesData } = await supabase
             .from("evangelises")
             .select("*")
-            .eq("eglise_id", egliseId)
-            .eq("branche_id", brancheId)
+            .eq("eglise_id", egliseId)            
             .neq("status_suivi", "supprime");
       
           setAllEvangelises(evangelisesData || []);
@@ -114,8 +112,7 @@ const [integrationPercent, setIntegrationPercent] = useState(0);
           let query = supabase
             .from("rapport_evangelisation")
             .select("*")
-            .eq("eglise_id", egliseId)
-            .eq("branche_id", brancheId)
+            .eq("eglise_id", egliseId)            
             .in("evangelise_member_id", filtered.map(e => e.id))
             .order("date_evangelise", { ascending: true });
       
@@ -131,7 +128,7 @@ const [integrationPercent, setIntegrationPercent] = useState(0);
             .from("suivis_des_evangelises")
             .select("*")
             .eq("eglise_id", egliseId)
-            .eq("branche_id", brancheId);
+            ;
       
           const filteredSuivisFinal = (suivisData || []).filter((s) => {
             const suiviDate = s.date_suivi ? new Date(s.date_suivi) : null;

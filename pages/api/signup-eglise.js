@@ -33,12 +33,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Email déjà utilisé" });
     }
 
-    // 2️⃣ Créer l'église
-    const { data: egliseData, error: egliseError } = await supabaseAdmin
-      .from("eglises")
-      .insert([{ nom: nomEglise }])
-      .select()
-      .single();
+    // Dans /api/signup-eglise/route.js
+const { nomEglise, nomBranche, denomination, ville, localisation, logoUrl, adminPrenom, adminNom, adminEmail, adminPassword } = await req.json();
+
+// Lors de l'insert dans eglises :
+const { data: eglise, error: egliseError } = await supabase
+  .from("eglises")
+  .insert([{
+    nom: nomEglise,
+    branche: nomBranche,
+    denomination,
+    ville,
+    pays: localisation,
+    logo_url: logoUrl ?? null,   // ← ajoute ça
+  }])
+  .select()
+  .single();
 
     if (egliseError) return res.status(400).json({ error: egliseError.message });
     const egliseId = egliseData.id;

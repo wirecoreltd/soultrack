@@ -18,8 +18,7 @@ function CreateCelluleContent() {
   });
 
   const [responsables, setResponsables] = useState([]);
-  const [egliseId, setEgliseId] = useState(null);
-  const [brancheId, setBrancheId] = useState(null);
+  const [egliseId, setEgliseId] = useState(null);  
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -37,14 +36,13 @@ function CreateCelluleContent() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("eglise_id")
         .eq("id", user.id)
         .single();
 
       if (!profile) return;
 
-      setEgliseId(profile.eglise_id);
-      setBrancheId(profile.branche_id);
+      setEgliseId(profile.eglise_id);     
     };
 
     initContext();
@@ -54,21 +52,20 @@ function CreateCelluleContent() {
      RESPONSABLES (FILTRÉS)
   ========================= */
   useEffect(() => {
-    if (!egliseId || !brancheId) return;
+    if (!egliseId) return;
 
     const fetchResponsables = async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("id, prenom, nom, telephone")
         .eq("role", "ResponsableCellule")
-        .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+        .eq("eglise_id", egliseId);        
 
       if (!error) setResponsables(data || []);
     };
 
     fetchResponsables();
-  }, [egliseId, brancheId]);
+  }, [egliseId]);
 
   /* =========================
      HANDLERS
@@ -91,7 +88,7 @@ function CreateCelluleContent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!egliseId || !brancheId) {
+    if (!egliseId) {
       setMessage("❌ Contexte église/branche introuvable");
       return;
     }
@@ -105,8 +102,7 @@ function CreateCelluleContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          eglise_id: egliseId,
-          branche_id: brancheId,
+          eglise_id: egliseId,         
         }),
       });
 

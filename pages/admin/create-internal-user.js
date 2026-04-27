@@ -55,35 +55,36 @@ function CreateInternalUserContent() {
   ];
 
   const allRoles = [
-    { key: "Administrateur", label: "Administrateur" },
-    { key: "ResponsableIntegration", label: "Responsable Integration" },
-    { key: "ResponsableCellule", label: "Responsable Cellule" },
-    { key: "ResponsableEvangelisation", label: "Responsable Evangelisation" },
-    { key: "SuperviseurCellule", label: "Superviseur Cellule" },
-    { key: "Conseiller", label: "Conseiller" },
+    { key: "Administrateur",           label: "Administrateur" },
+    { key: "ResponsableIntegration",   label: "Responsable Integration" },
+    { key: "ResponsableCellule",       label: "Responsable Cellule" },
+    { key: "ResponsableEvangelisation",label: "Responsable Evangelisation" },
+    { key: "SuperviseurCellule",       label: "Superviseur Cellule" },
+    { key: "Conseiller",               label: "Conseiller" },
   ];
 
-  // ➤ Récupérer les membres existants
+  // ─── Récupérer les membres existants (sans branche_id) ───
   useEffect(() => {
     const fetchMembers = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return;
 
+        // ✅ On ne sélectionne plus branche_id
         const { data: profile } = await supabase
           .from("profiles")
-          .select("eglise_id, branche_id")
+          .select("eglise_id")
           .eq("id", session.user.id)
           .single();
 
         if (!profile) return;
 
+        // ✅ Filtre uniquement par eglise_id (plus de branche_id)
         const { data: membersData } = await supabase
           .from("membres_complets")
           .select("id, prenom, nom, telephone, etat_contact")
           .eq("star", true)
           .eq("eglise_id", profile.eglise_id)
-          .eq("branche_id", profile.branche_id)
           .in("etat_contact", ["existant"]);
 
         setMembers(membersData || []);
@@ -95,7 +96,7 @@ function CreateInternalUserContent() {
     fetchMembers();
   }, []);
 
-  // ➤ Pré-remplissage infos et calcul des rôles à cacher
+  // ─── Pré-remplissage infos + calcul des rôles à cacher ───
   useEffect(() => {
     if (!selectedMemberId || selectedMemberId === "add-serviteur") {
       setFormData(prev => ({
@@ -158,154 +159,138 @@ function CreateInternalUserContent() {
         : [...prev.ministere, ministere];
       return { ...prev, ministere: list };
     });
-  }; 
+  };
 
-  // ➤ Soumission du formulaire
+  // ─── Soumission ───
   const handleSubmit = async (e, forceCreate = false) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (formData.password !== formData.confirmPassword) {
-    setMessage("❌ Les mots de passe ne correspondent pas.");
-    return;
-  }
-
-  if (!formData.roles || formData.roles.length === 0) {
-    setMessage("❌ Sélectionnez au moins un rôle !");
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      setMessage("❌ Session expirée");
-      setLoading(false);
+    if (formData.password !== formData.confirmPassword) {
+      setMessage("❌ Les mots de passe ne correspondent pas.");
       return;
     }
 
-    // ✅ 1. VERIFICATION TELEPHONE
-       const { data: existingMembers } = await supabase
-  .from("membres_complets")
-  .select("prenom, nom, telephone, etat_contact")
-  .eq("telephone", formData.telephone)
-  .in("etat_contact", ["existant", "nouveau"]);
-
-    if (existingMembers && existingMembers.length > 0 && !forceCreate) {
-      const existing = existingMembers[0];
-
-      setDuplicatePhone(existing);
-      setMessage(
-        `⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}`
-      );
-
-      setLoading(false);
-      return; // 🚨 BLOQUE ICI (IMPORTANT)
-    }
-
-    // ✅ 2. CREATION UTILISATEUR
-    const res = await fetch("/api/create-user", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({
-        ...formData,
-        member_id: selectedMemberId,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      setMessage(`❌ ${data?.error}`);
-      setLoading(false);
+    if (!formData.roles || formData.roles.length === 0) {
+      setMessage("❌ Sélectionnez au moins un rôle !");
       return;
     }
 
-    // ✅ SUCCESS
-    setMessage("✅ Utilisateur créé !");
-    setDuplicatePhone(null);
+    setLoading(true);
 
-    setFormData({
-      prenom: "",
-      nom: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      telephone: "",
-      roles: [],
-      cellule_nom: "",
-      cellule_zone: "",
-      ministere: [],
-    });
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setMessage("❌ Session expirée");
+        setLoading(false);
+        return;
+      }
 
-  } catch (err) {
-    setMessage("❌ " + err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      // 1️⃣ Vérification téléphone
+      const { data: existingMembers } = await supabase
+        .from("membres_complets")
+        .select("prenom, nom, telephone, etat_contact")
+        .eq("telephone", formData.telephone)
+        .in("etat_contact", ["existant", "nouveau"]);
+
+      if (existingMembers && existingMembers.length > 0 && !forceCreate) {
+        const existing = existingMembers[0];
+        setDuplicatePhone(existing);
+        setMessage(`⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}`);
+        setLoading(false);
+        return;
+      }
+
+      // 2️⃣ Création utilisateur via API
+      // ✅ member_id passé, mais plus de branche_id côté client
+      // L'API create-user se charge de récupérer eglise_id depuis le token
+      const res = await fetch("/api/create-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          ...formData,
+          member_id: selectedMemberId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(`❌ ${data?.error}`);
+        setLoading(false);
+        return;
+      }
+
+      setMessage("✅ Utilisateur créé !");
+      setDuplicatePhone(null);
+
+      setFormData({
+        prenom: "",
+        nom: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        telephone: "",
+        roles: [],
+        cellule_nom: "",
+        cellule_zone: "",
+        ministere: [],
+      });
+      setSelectedMemberId("");
+
+    } catch (err) {
+      setMessage("❌ " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCancel = () => router.push("/admin/list-users");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
+
         <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700 hover:text-gray-900">
           ← Retour
         </button>
 
-        <div className="flex justify-center mb-6 cursor-pointer" 
-          onClick={() => router.push("/index")}>
-          <Image  src="/logo.png"  alt="Logo SoulTrack"  width={80}  height={80} />
+        <div
+          className="flex justify-center mb-6 cursor-pointer"
+          onClick={() => router.push("/index")}
+        >
+          <Image src="/logo.png" alt="Logo SoulTrack" width={80} height={80} />
         </div>
-            
+
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">
-  Créer un <br />
-  <span className="text-[#333699]">Utilisateur</span>
-</h1>
+          Créer un <br />
+          <span className="text-[#333699]">Utilisateur</span>
+        </h1>
 
-<div className="max-w-3xl w-full mb-6 text-center space-y-3">
-  <p className="italic text-base text-black/90">
-    Créez un utilisateur en sélectionnant un membre existant ou en ajoutant un nouveau serviteur.
-    Chaque utilisateur doit se voir attribuer au moins un{" "}
-    <span className="text-[#FFB07C] font-semibold">rôle</span>.  
-    Selon le rôle choisi, il aura accès à son{" "}
-    <span className="text-[#FFB07C] font-semibold">hub dédié</span> :
-  </p>
+        <div className="max-w-3xl w-full mb-6 text-center space-y-3">
+          <p className="italic text-base text-black/90">
+            Créez un utilisateur en sélectionnant un membre existant ou en ajoutant un nouveau serviteur.
+            Chaque utilisateur doit se voir attribuer au moins un{" "}
+            <span className="text-[#FFB07C] font-semibold">rôle</span>.
+            Selon le rôle choisi, il aura accès à son{" "}
+            <span className="text-[#FFB07C] font-semibold">hub dédié</span> :
+          </p>
 
-  <div className="italic text-sm text-black/90 space-y-1">
-    <p>
-      • Administrateur –{" "}
-      <span className="text-[#FFB07C] font-semibold">gestion complète du système</span> (Hub Admin)
-    </p>
-    <p>
-      • Responsable Intégration –{" "}
-      <span className="text-[#FFB07C] font-semibold">gestion des membres</span> (Hub Membres)
-    </p>
-    <p>
-      • Responsable Évangélisation –{" "}
-      <span className="text-[#FFB07C] font-semibold">suivi de l’évangélisation</span> (Hub Évangélisation)
-    </p>
-    <p>
-      • Responsable Cellule –{" "}
-      <span className="text-[#FFB07C] font-semibold">gestion des cellules</span> (Hub Cellule)
-    </p>
-    <p>
-      • Conseiller –{" "}
-      <span className="text-[#FFB07C] font-semibold">accompagnement des membres</span> (Hub Conseiller)
-    </p>
-    <p>
-      • Superviseur Cellule –{" "}
-      <span className="text-[#FFB07C] font-semibold">supervision et création de responsables</span> (Hub Cellule)
-    </p>
-  </div>
-</div>
-        
+          <div className="italic text-sm text-black/90 space-y-1">
+            <p>• Administrateur – <span className="text-[#FFB07C] font-semibold">gestion complète du système</span> (Hub Admin)</p>
+            <p>• Responsable Intégration – <span className="text-[#FFB07C] font-semibold">gestion des membres</span> (Hub Membres)</p>
+            <p>• Responsable Évangélisation – <span className="text-[#FFB07C] font-semibold">suivi de l'évangélisation</span> (Hub Évangélisation)</p>
+            <p>• Responsable Cellule – <span className="text-[#FFB07C] font-semibold">gestion des cellules</span> (Hub Cellule)</p>
+            <p>• Conseiller – <span className="text-[#FFB07C] font-semibold">accompagnement des membres</span> (Hub Conseiller)</p>
+            <p>• Superviseur Cellule – <span className="text-[#FFB07C] font-semibold">supervision et création de responsables</span> (Hub Cellule)</p>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+          {/* Sélection membre */}
           <select
             value={selectedMemberId}
             onChange={e => setSelectedMemberId(e.target.value)}
@@ -347,6 +332,7 @@ function CreateInternalUserContent() {
           <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
           <input name="confirmPassword" placeholder="Confirmer mot de passe" type="password" value={formData.confirmPassword} onChange={handleChange} className="input" required />
 
+          {/* Rôles */}
           <div className="flex flex-col gap-2">
             <label className="font-semibold">Rôles :</label>
             {allRoles.map(role =>
@@ -363,6 +349,7 @@ function CreateInternalUserContent() {
             )}
           </div>
 
+          {/* Cellule si ResponsableCellule */}
           {formData.roles.includes("ResponsableCellule") && (
             <div className="flex flex-col gap-2">
               <input name="cellule_nom" placeholder="Nom cellule" value={formData.cellule_nom} onChange={handleChange} className="input" />
@@ -371,69 +358,64 @@ function CreateInternalUserContent() {
           )}
 
           <div className="flex gap-4 mt-4">
-  <button
-    type="button"
-    onClick={handleCancel}
-    disabled={!!duplicatePhone}
-    className={`flex-1 py-3 rounded-xl text-white ${
-      duplicatePhone
-        ? "bg-gray-300 cursor-not-allowed"
-        : "bg-gray-400 hover:bg-gray-500"
-    }`}
-  >
-    Annuler
-  </button>
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={!!duplicatePhone}
+              className={`flex-1 py-3 rounded-xl text-white ${duplicatePhone ? "bg-gray-300 cursor-not-allowed" : "bg-gray-400 hover:bg-gray-500"}`}
+            >
+              Annuler
+            </button>
 
-  <button
-    type="submit"
-    disabled={loading || !!duplicatePhone}
-    className={`flex-1 py-3 rounded-xl text-white ${
-      duplicatePhone
-        ? "bg-gray-300 cursor-not-allowed"
-        : "bg-blue-500 hover:bg-blue-600"
-    }`}
-  >
-    {loading ? "Création..." : "Créer"}
-  </button>
-</div>
+            <button
+              type="submit"
+              disabled={loading || !!duplicatePhone}
+              className={`flex-1 py-3 rounded-xl text-white ${duplicatePhone ? "bg-gray-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
+            >
+              {loading ? "Création..." : "Créer"}
+            </button>
+          </div>
         </form>
-          {duplicatePhone && (
-  <div className="mt-4 p-4 border border-yellow-500 bg-yellow-100 rounded-lg text-center">
-    <p>
-      ⚠️ Le numéro {formData.telephone} existe déjà pour {duplicatePhone.prenom} {duplicatePhone.nom}.
-    </p>
 
-    <div className="flex justify-center gap-4 mt-2">
-      <button
-        type="button"
-        onClick={() => setDuplicatePhone(null)}
-        className="bg-gray-500 text-white py-2 px-4 rounded"
-      >
-        Annuler
-      </button>
+        {/* Bandeau doublon téléphone */}
+        {duplicatePhone && (
+          <div className="mt-4 p-4 border border-yellow-500 bg-yellow-100 rounded-lg text-center">
+            <p>
+              ⚠️ Le numéro {formData.telephone} existe déjà pour {duplicatePhone.prenom} {duplicatePhone.nom}.
+            </p>
+            <div className="flex justify-center gap-4 mt-2">
+              <button
+                type="button"
+                onClick={() => setDuplicatePhone(null)}
+                className="bg-gray-500 text-white py-2 px-4 rounded"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e, true)}
+                className="bg-green-500 text-white py-2 px-4 rounded"
+              >
+                Continuer quand même
+              </button>
+            </div>
+          </div>
+        )}
 
-      <button
-        type="button"
-        onClick={(e) => handleSubmit(e, true)}
-        className="bg-green-500 text-white py-2 px-4 rounded"
-      >
-        Continuer quand même
-      </button>
-    </div>
-  </div>
-)}
-
-{message && !duplicatePhone && (
-  <p className={`mt-4 text-center font-semibold ${
-    message.startsWith("❌") ? "text-red-600" : "text-green-600"
-  }`}>
-    {message}
-  </p>
-)}           
-              
+        {message && !duplicatePhone && (
+          <p className={`mt-4 text-center font-semibold ${message.startsWith("❌") ? "text-red-600" : "text-green-600"}`}>
+            {message}
+          </p>
+        )}
 
         <style jsx>{`
-          .input { width: 100%; border: 1px solid #ccc; border-radius: 12px; padding: 12px; }
+          .input {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 12px;
+            color: black;
+          }
         `}</style>
       </div>
     </div>

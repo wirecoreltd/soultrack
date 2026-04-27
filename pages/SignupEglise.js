@@ -213,11 +213,11 @@ export default function SignupEglise() {
           {/* ── Logo ── */}
           <div className="flex flex-col gap-2">
             <label className="text-sm text-gray-600 font-medium">
-              Logo de l'église (optionnel) — PNG, SVG ou WEBP · Carré · Max 500 Ko
+              Logo de l'église (optionnel) — PNG, SVG ou WEBP · Carré (ex: 200×200) · Max 500 Ko
             </label>
             <label className="cursor-pointer border border-dashed border-gray-400 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-gray-50 transition">
               {logoPreview ? (
-                <img src={logoPreview} alt="Aperçu logo" className="w-20 h-20 object-contain rounded-lg" />
+                <img src={logoPreview} alt="Aperçu logo" className="max-h-[200px] max-w-[250px] object-contain rounded-lg"/>
               ) : (
                 <>
                   <span className="text-3xl">🖼️</span>

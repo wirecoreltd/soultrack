@@ -106,25 +106,24 @@ function EtatConseiller() {
   try {
     const isAdmin = userProfile.roles?.includes("Administrateur");
 
-    // Bloquer si admin sans église sélectionnée
-    if (isAdmin && !filterEglise) {
-      alert("Veuillez sélectionner une église");
+    // Admin : priorité au filtre manuel, sinon prend son église
+    const egliseId = isAdmin
+      ? (filterEglise || userProfile.eglise_id)
+      : userProfile.eglise_id;
+
+    if (!egliseId) {
+      alert("Aucune église rattachée à votre compte");
       return;
     }
 
     let query = supabase
       .from("vue_flow_conseillers")
       .select("*")
+      .eq("eglise_id", egliseId)
       .order("date_depart", { ascending: false });
 
-    if (isAdmin) {
-      // Admin : filtre strict par église choisie
-      query = query.eq("eglise_id", filterEglise);
-    } else {
-      // Conseiller : filtre par son église ET son id
-      query = query
-        .eq("eglise_id", userProfile.eglise_id)
-        .eq("conseiller_id", userProfile.id);
+    if (!isAdmin) {
+      query = query.eq("conseiller_id", userProfile.id);
     }
 
     const { data, error } = await query;

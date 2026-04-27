@@ -23,8 +23,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     besoin: [],
     infos_supplementaires: "",
     is_whatsapp: false,
-    eglise_id: null,
-    branche_id: null,
+    eglise_id: null, // ✅ branche_id: null retiré
     type_evangelisation: "",
     date_evangelise: new Date().toISOString().split("T")[0],
   });
@@ -41,9 +40,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     "Communauté / Isolement","Dépression / Santé mentale"
   ];
 
-
-
-  // Récupérer eglise_id et branche_id
+  // Récupérer eglise_id
   useEffect(() => {
     const fetchUserEglise = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -51,29 +48,28 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("eglise_id") // ✅ branche_id retiré
         .eq("id", session.session.user.id)
         .single();
 
       if (!error && profile) {
         setFormData(prev => ({
           ...prev,
-          eglise_id: profile.eglise_id,
-          branche_id: profile.branche_id
+          eglise_id: profile.eglise_id, // ✅ branche_id retiré
         }));
       }
     };
     fetchUserEglise();
   }, []);
 
-  //===================
   const successRef = useRef(null);
-  
-      useEffect(() => {
-      if (success && successRef.current) {
-        successRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-    }, [success]);
+
+  useEffect(() => {
+    if (success && successRef.current) {
+      successRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [success]);
+
   // Vérification du token si présent
   useEffect(() => {
     if (!token) return;
@@ -113,8 +109,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
       besoin: [],
       infos_supplementaires: "",
       is_whatsapp: false,
-      eglise_id: prev.eglise_id,
-      branche_id: prev.branche_id,
+      eglise_id: prev.eglise_id, // ✅ branche_id retiré du reset
       type_evangelisation: "",
       date_evangelise: new Date().toISOString().split("T")[0],
     }));
@@ -125,8 +120,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.eglise_id || !formData.branche_id) {
-      alert("Votre compte n'est pas rattaché à une église ou branche.");
+    if (!formData.eglise_id) { // ✅ !formData.branche_id retiré de la validation
+      alert("Votre compte n'est pas rattaché à une église.");
       return;
     }
 
@@ -146,9 +141,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
       besoin: finalBesoins,
       infos_supplementaires: formData.infos_supplementaires || null,
       is_whatsapp: formData.is_whatsapp,
-      eglise_id: formData.eglise_id,
-      branche_id: formData.branche_id,
-      type_evangelisation: formData.type_evangelisation,      
+      eglise_id: formData.eglise_id, // ✅ branche_id retiré de finalData
+      type_evangelisation: formData.type_evangelisation,
       date_evangelise: formData.date_evangelise,
     };
 
@@ -169,8 +163,6 @@ export default function AddEvangelise({ onNewEvangelise }) {
       }
 
       console.log("Nouvel évangélisé ajouté :", data);
-
-      // ✅ Trigger Supabase gère automatiquement rapport_evangelisation
 
       setSuccess(true);
       resetForm();
@@ -202,15 +194,15 @@ export default function AddEvangelise({ onNewEvangelise }) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 justify-center">
 
           {/* Date Evangelisation */}
-           <div className="flex justify-center w-full">
-              <input
-                type="date"
-                className="input w-auto text-center"
-                value={formData.date_evangelise}
-                onChange={e => setFormData({ ...formData, date_evangelise: e.target.value })}
-              />
-            </div>
-  
+          <div className="flex justify-center w-full">
+            <input
+              type="date"
+              className="input w-auto text-center"
+              value={formData.date_evangelise}
+              onChange={e => setFormData({ ...formData, date_evangelise: e.target.value })}
+            />
+          </div>
+
           {/* Type Evangelisation */}
           <select
             className="input text-center"
@@ -221,7 +213,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
             <option value="">Type d'Evangélisation</option>
             <option value="Individuel">Individuel</option>
             <option value="Sortie de groupe">Sortie de groupe</option>
-            <option value="Campagne d’évangélisation">Campagne d’évangélisation</option>
+            <option value="Campagne d'évangélisation">Campagne d'évangélisation</option>
             <option value="Évangélisation de rue">Évangélisation de rue</option>
             <option value="Évangélisation maison">Évangélisation maison</option>
             <option value="Évangélisation stade">Évangélisation stade</option>
@@ -307,7 +299,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
           </div>
         </form>
 
-        {success && (<p ref={successRef} className="text-green-600 font-semibold text-center mt-3" > ✅ Personne évangélisée ajoutée avec succès ! </p>)}
+        {success && (<p ref={successRef} className="text-green-600 font-semibold text-center mt-3">✅ Personne évangélisée ajoutée avec succès !</p>)}
 
         <style jsx>{`.input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ccc; }`}</style>
       </div>

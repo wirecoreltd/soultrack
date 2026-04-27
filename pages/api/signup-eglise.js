@@ -1,5 +1,4 @@
 // pages/api/signup-eglise.js
-
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseAdmin = createClient(
@@ -14,7 +13,6 @@ export default async function handler(req, res) {
 
   const {
     nomEglise,
-    nomBranche,
     denomination,
     ville,
     localisation,
@@ -31,18 +29,17 @@ export default async function handler(req, res) {
       .from("profiles")
       .select("id")
       .eq("email", adminEmail)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       return res.status(400).json({ error: "Email déjà utilisé" });
     }
 
-    // 2️⃣ Créer l'église
+    // 2️⃣ Créer l'église (sans branche)
     const { data: egliseData, error: egliseError } = await supabaseAdmin
       .from("eglises")
       .insert([{
         nom: nomEglise,
-        branche: nomBranche,
         denomination,
         ville,
         pays: localisation,
@@ -55,18 +52,7 @@ export default async function handler(req, res) {
 
     const egliseId = egliseData.id;
 
-    // 3️⃣ Créer la branche
-    const { data: brancheData, error: brancheError } = await supabaseAdmin
-      .from("branches")
-      .insert([{ nom: nomBranche, localisation, eglise_id: egliseId }])
-      .select()
-      .single();
-
-    if (brancheError) return res.status(400).json({ error: brancheError.message });
-
-    const brancheId = brancheData.id;
-
-    // 4️⃣ Créer l'utilisateur admin dans Supabase Auth
+    // 3️⃣ Créer l'utilisateur admin dans Supabase Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: adminEmail,
       password: adminPassword,
@@ -77,7 +63,7 @@ export default async function handler(req, res) {
 
     const adminUserId = authData.user.id;
 
-    // 5️⃣ Créer le profil admin
+    // 4️⃣ Créer le profil admin (sans branche_id)
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from("profiles")
       .insert([{
@@ -88,7 +74,6 @@ export default async function handler(req, res) {
         role: "Administrateur",
         roles: ["Administrateur"],
         eglise_id: egliseId,
-        branche_id: brancheId,
         must_change_password: false,
       }])
       .select()
@@ -97,9 +82,8 @@ export default async function handler(req, res) {
     if (profileError) return res.status(400).json({ error: profileError.message });
 
     return res.status(200).json({
-      message: "Église, branche et admin créés avec succès !",
+      message: "Église et admin créés avec succès !",
       eglise: egliseData,
-      branche: brancheData,
       admin: profileData,
     });
 

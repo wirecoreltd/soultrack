@@ -56,22 +56,21 @@ function CreateInternalUserContent() {
   ];
 
   const allRoles = [
-    { key: "Administrateur",           label: "Administrateur" },
-    { key: "ResponsableIntegration",   label: "Responsable Integration" },
-    { key: "ResponsableCellule",       label: "Responsable Cellule" },
-    { key: "ResponsableEvangelisation",label: "Responsable Evangelisation" },
-    { key: "SuperviseurCellule",       label: "Superviseur Cellule" },
-    { key: "Conseiller",               label: "Conseiller" },
+    { key: "Administrateur",            label: "Administrateur" },
+    { key: "ResponsableIntegration",    label: "Responsable Integration" },
+    { key: "ResponsableCellule",        label: "Responsable Cellule" },
+    { key: "ResponsableEvangelisation", label: "Responsable Evangelisation" },
+    { key: "SuperviseurCellule",        label: "Superviseur Cellule" },
+    { key: "Conseiller",                label: "Conseiller" },
   ];
 
-  // ─── Récupérer les membres existants (sans branche_id) ───
+  // ─── Récupérer les membres existants ───
   useEffect(() => {
     const fetchMembers = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return;
 
-        // ✅ On ne sélectionne plus branche_id
         const { data: profile } = await supabase
           .from("profiles")
           .select("eglise_id")
@@ -80,7 +79,6 @@ function CreateInternalUserContent() {
 
         if (!profile) return;
 
-        // ✅ Filtre uniquement par eglise_id (plus de branche_id)
         const { data: membersData } = await supabase
           .from("membres_complets")
           .select("id, prenom, nom, telephone, etat_contact")
@@ -142,24 +140,6 @@ function CreateInternalUserContent() {
     }
   }, [selectedMemberId, members]);
 
-  // 2️⃣ Vérification email
-
-      const { data: existingUsers } = await supabase
-        .from("profiles")
-        .select("id, email, prenom, nom")
-        .eq("email", formData.email);
-
-      if (existingUsers && existingUsers.length > 0 && !forceCreate) {
-        const existing = existingUsers[0];
-        setDuplicateEmail(existing);
-        setMessage(`⚠️ L'email ${formData.email} est déjà utilisé par ${existing.prenom} ${existing.nom}`);
-        setLoading(false);
-        return;
-      }
-
-      // 3️⃣ Création utilisateur via API  ← (was "2️⃣" before)
-      const res = await fetch("/api/create-user", {
-
   const handleChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleRoleChange = role => {
@@ -219,9 +199,21 @@ function CreateInternalUserContent() {
         return;
       }
 
-      // 2️⃣ Création utilisateur via API
-      // ✅ member_id passé, mais plus de branche_id côté client
-      // L'API create-user se charge de récupérer eglise_id depuis le token
+      // 2️⃣ Vérification email
+      const { data: existingUsers } = await supabase
+        .from("profiles")
+        .select("id, email, prenom, nom")
+        .eq("email", formData.email);
+
+      if (existingUsers && existingUsers.length > 0 && !forceCreate) {
+        const existing = existingUsers[0];
+        setDuplicateEmail(existing);
+        setMessage(`⚠️ L'email ${formData.email} est déjà utilisé par ${existing.prenom} ${existing.nom}`);
+        setLoading(false);
+        return;
+      }
+
+      // 3️⃣ Création utilisateur via API
       const res = await fetch("/api/create-user", {
         method: "POST",
         headers: {
@@ -244,6 +236,7 @@ function CreateInternalUserContent() {
 
       setMessage("✅ Utilisateur créé !");
       setDuplicatePhone(null);
+      setDuplicateEmail(null);
 
       setFormData({
         prenom: "",
@@ -300,7 +293,7 @@ function CreateInternalUserContent() {
           <div className="italic text-sm text-black/90 space-y-1">
             <p>• Administrateur – <span className="text-[#FFB07C] font-semibold">gestion complète du système</span> (Hub Admin)</p>
             <p>• Responsable Intégration – <span className="text-[#FFB07C] font-semibold">gestion des membres</span> (Hub Membres)</p>
-            <p>• Responsable Évangélisation – <span className="text-[#FFB07C] font-semibold">suivi de l'évangélisation</span> (Hub Évangélisation)</p>
+            <p>• Responsable Évangélisation – <span className="text-[#FFB07C] font-semibold">suivi de l&apos;évangélisation</span> (Hub Évangélisation)</p>
             <p>• Responsable Cellule – <span className="text-[#FFB07C] font-semibold">gestion des cellules</span> (Hub Cellule)</p>
             <p>• Conseiller – <span className="text-[#FFB07C] font-semibold">accompagnement des membres</span> (Hub Conseiller)</p>
             <p>• Superviseur Cellule – <span className="text-[#FFB07C] font-semibold">supervision et création de responsables</span> (Hub Cellule)</p>
@@ -389,7 +382,7 @@ function CreateInternalUserContent() {
             <button
               type="submit"
               disabled={loading || !!duplicatePhone || !!duplicateEmail}
-              className={`flex-1 py-3 rounded-xl text-white ${duplicatePhone ? "bg-gray-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
+              className={`flex-1 py-3 rounded-xl text-white ${duplicatePhone || duplicateEmail ? "bg-gray-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
             >
               {loading ? "Création..." : "Créer"}
             </button>
@@ -420,24 +413,26 @@ function CreateInternalUserContent() {
             </div>
           </div>
         )}
-{duplicateEmail && (
-  <div className="mt-4 p-4 border border-red-500 bg-red-100 rounded-lg text-center">
-    <p>
-      ❌ L'email {formData.email} est déjà utilisé par {duplicateEmail.prenom} {duplicateEmail.nom}.
-    </p>
-    <div className="flex justify-center gap-4 mt-2">
-      <button
-        type="button"
-        onClick={() => setDuplicateEmail(null)}
-        className="bg-gray-500 text-white py-2 px-4 rounded"
-      >
-        Modifier
-      </button>
-    </div>
-  </div>
-)}
 
-        {message && !duplicatePhone && (
+        {/* Bandeau doublon email */}
+        {duplicateEmail && (
+          <div className="mt-4 p-4 border border-red-500 bg-red-100 rounded-lg text-center">
+            <p>
+              ❌ L&apos;email {formData.email} est déjà utilisé par {duplicateEmail.prenom} {duplicateEmail.nom}.
+            </p>
+            <div className="flex justify-center gap-4 mt-2">
+              <button
+                type="button"
+                onClick={() => setDuplicateEmail(null)}
+                className="bg-gray-500 text-white py-2 px-4 rounded"
+              >
+                Modifier
+              </button>
+            </div>
+          </div>
+        )}
+
+        {message && !duplicatePhone && !duplicateEmail && (
           <p className={`mt-4 text-center font-semibold ${message.startsWith("❌") ? "text-red-600" : "text-green-600"}`}>
             {message}
           </p>

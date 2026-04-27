@@ -18,7 +18,8 @@ export default function HeaderPages() {
   const [userRole, setUserRole] = useState(null);
   const [invitationPending, setInvitationPending] = useState(false);
   const [pendingToken, setPendingToken] = useState(null);
-
+  const [pays, setPays] = useState("");
+  
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -38,7 +39,7 @@ export default function HeaderPages() {
         if (profile?.eglise_id) {
           const { data: egliseData } = await supabase
             .from("eglises")
-            .select("nom, logo_url, denomination, ville")
+            .select("nom, logo_url, denomination, ville, pays") // ← ajoute pays
             .eq("id", profile.eglise_id)
             .single();
           if (egliseData) {
@@ -46,8 +47,8 @@ export default function HeaderPages() {
             setLogoUrl(egliseData.logo_url || null);
             setDenomination(egliseData.denomination || "");
             setVille(egliseData.ville || "");
+            setPays(egliseData.pays || ""); // ← ajoute ça
           }
-        }
 
         if (profile?.branche_id) {
           const { data: brancheData } = await supabase

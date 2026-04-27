@@ -20,8 +20,7 @@ function RapportBaptemes() {
     hommes:0,
     femmes:0,
     baptise_par:"",
-    eglise_id:null,
-    branche_id:null
+    eglise_id:null    
   });
   const [filterDebut,setFilterDebut]=useState("");
   const [filterFin,setFilterFin]=useState("");
@@ -42,24 +41,23 @@ function RapportBaptemes() {
       if(!session?.session?.user) return;
       const {data:profile}=await supabase
         .from("profiles")
-        .select("eglise_id,branche_id")
+        .select("eglise_id")
         .eq("id",session.session.user.id)
         .single();
       if(profile){
-        setFormData(prev=>({...prev,eglise_id:profile.eglise_id,branche_id:profile.branche_id}));
-        fetchCandidats(profile.eglise_id,profile.branche_id);
+        setFormData(prev=>({...prev,eglise_id:profile.eglise_id}));
+        fetchCandidats(profile.eglise_id);
       }
     };
     fetchUser();
   },[]);
 
   /* CANDIDATS */
-  const fetchCandidats=async(eglise_id,branche_id)=>{
+  const fetchCandidats=async(eglise_id)=>{
     const {data}=await supabase
       .from("membres_complets")
       .select("id,prenom,nom,sexe,evangelise_member_id")
-      .eq("eglise_id",eglise_id)
-      .eq("branche_id",branche_id)
+      .eq("eglise_id",eglise_id)      
       .eq("veut_se_faire_baptiser","Oui")
       .eq("bapteme_eau","Non");
     setCandidats(data || []);
@@ -96,8 +94,7 @@ function RapportBaptemes() {
     let query=supabase
       .from("baptemes")
       .select("*")
-      .eq("eglise_id",formData.eglise_id)
-      .eq("branche_id",formData.branche_id)
+      .eq("eglise_id",formData.eglise_id)      
       .order("date",{ascending:false});
     if(filterDebut) query=query.gte("date",filterDebut);
     if(filterFin) query=query.lte("date",filterFin);
@@ -154,7 +151,7 @@ function RapportBaptemes() {
     }
     setSelectedCandidats([]);
     setFormData(prev=>({...prev,date:"",hommes:0,femmes:0,baptise_par:""}));
-    fetchCandidats(formData.eglise_id,formData.branche_id);
+    fetchCandidats(formData.eglise_id);
     fetchRapports();
     setRapportSuccess(true);
     setTimeout(() => setRapportSuccess(false), 3000);

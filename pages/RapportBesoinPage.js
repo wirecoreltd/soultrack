@@ -45,6 +45,10 @@ function RapportBesoin() {
 
       if (errorMembres) throw errorMembres;
 
+      // 🔍 DEBUG — retire ce log une fois le problème résolu
+      console.log("Valeurs sexe uniques:", [...new Set(membres.map((m) => m.sexe))]);
+      console.log("Membres sample:", membres.slice(0, 5));
+
       const totalMembresLocal = membres.filter((m) =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
       ).length;
@@ -58,6 +62,9 @@ function RapportBesoin() {
           m.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";
       });
 
+      // 🔍 DEBUG — retire ce log une fois le problème résolu
+      console.log("SexeMap sample:", Object.entries(sexeMap).slice(0, 5));
+
       let query = supabase
         .from("suivis")
         .select("membre_id, besoin, date_action")
@@ -68,6 +75,12 @@ function RapportBesoin() {
 
       const { data: suivis, error: errorSuivis } = await query;
       if (errorSuivis) throw errorSuivis;
+
+      // 🔍 DEBUG — retire ce log une fois le problème résolu
+      console.log("Suivis sample:", suivis?.slice(0, 3));
+      suivis?.slice(0, 5).forEach((s) => {
+        console.log("membre_id:", s.membre_id, "→ sexe dans map:", sexeMap[s.membre_id]);
+      });
 
       const count = {};
 
@@ -194,7 +207,6 @@ function RapportBesoin() {
       {/* DESKTOP */}
       <div className="hidden md:flex w-full overflow-x-auto mt-4 justify-center">
         <div className="w-max">
-          {/* HEADER */}
           <div className="flex text-sm font-semibold uppercase text-white px-3 py-2 border-b border-white/20 bg-white/5 rounded-t-lg whitespace-nowrap">
             <div className="w-[220px]">Catégorie</div>
             <div className="w-[90px] text-center">Hommes</div>
@@ -206,7 +218,6 @@ function RapportBesoin() {
             <div className="w-[120px] text-center">% Membres</div>
           </div>
 
-          {/* LIGNES */}
           {labels.map((b, i) => {
             const data = values[i];
             const percentMembres =

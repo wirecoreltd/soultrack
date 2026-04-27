@@ -8,7 +8,6 @@ export default function SignupEglise() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     nomEglise: "",
-    nomBranche: "",
     denomination: "",
     ville: "",
     localisation: "",
@@ -27,39 +26,36 @@ export default function SignupEglise() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleLogoChange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    const file = e.target.files[0];
+    if (!file) return;
 
-  // Vérification format
-  const allowedTypes = ["image/png", "image/svg+xml", "image/webp"];
-  if (!allowedTypes.includes(file.type)) {
-    alert("❌ Format invalide. Utilisez PNG, SVG ou WEBP uniquement.");
-    e.target.value = "";
-    return;
-  }
-
-  // Vérification taille (max 500 Ko)
-  const maxSize = 500 * 1024;
-  if (file.size > maxSize) {
-    alert("❌ Image trop lourde. Maximum 500 Ko.");
-    e.target.value = "";
-    return;
-  }
-
-  // Vérification dimensions
-  const img = new window.Image();
-  img.src = URL.createObjectURL(file);
-  img.onload = () => {
-    if (img.width !== img.height) {
-      alert("❌ Le logo doit être carré (ex: 200x200, 512x512).");
+    const allowedTypes = ["image/png", "image/svg+xml", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("❌ Format invalide. Utilisez PNG, SVG ou WEBP uniquement.");
       e.target.value = "";
-      URL.revokeObjectURL(img.src);
       return;
     }
-    setLogoFile(file);
-    setLogoPreview(img.src);
+
+    const maxSize = 500 * 1024;
+    if (file.size > maxSize) {
+      alert("❌ Image trop lourde. Maximum 500 Ko.");
+      e.target.value = "";
+      return;
+    }
+
+    const img = new window.Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      if (img.width !== img.height) {
+        alert("❌ Le logo doit être carré (ex: 200x200, 512x512).");
+        e.target.value = "";
+        URL.revokeObjectURL(img.src);
+        return;
+      }
+      setLogoFile(file);
+      setLogoPreview(img.src);
+    };
   };
-};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,7 +69,6 @@ export default function SignupEglise() {
     setMessage("⏳ Création en cours...");
 
     try {
-      // 1. Upload du logo si présent
       let logoUrl = null;
       if (logoFile) {
         setMessage("⏳ Upload du logo...");
@@ -88,7 +83,6 @@ export default function SignupEglise() {
         logoUrl = uploadData.url;
       }
 
-      // 2. Création église + admin
       setMessage("⏳ Création du compte...");
       const res = await fetch("/api/signup-eglise", {
         method: "POST",
@@ -123,23 +117,27 @@ export default function SignupEglise() {
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
+
+          {/* Infos église */}
           <input name="denomination" placeholder="Dénomination" value={formData.denomination} onChange={handleChange} className="input" required />
           <input name="nomEglise" placeholder="Nom de l'église" value={formData.nomEglise} onChange={handleChange} className="input" required />
-          <input name="nomBranche" placeholder="Nom de la Branche" value={formData.nomBranche} onChange={handleChange} className="input" required />
           <input name="ville" placeholder="Ville" value={formData.ville} onChange={handleChange} className="input" />
           <input name="localisation" placeholder="Pays" value={formData.localisation} onChange={handleChange} className="input" required />
 
           <hr className="my-2 border-gray-300" />
 
+          {/* Infos admin */}
           <input name="adminPrenom" placeholder="Prénom de l'Admin" value={formData.adminPrenom} onChange={handleChange} className="input" required />
           <input name="adminNom" placeholder="Nom de l'Admin" value={formData.adminNom} onChange={handleChange} className="input" required />
           <input type="email" name="adminEmail" placeholder="Email de l'Admin" value={formData.adminEmail} onChange={handleChange} className="input" required />
           <input type="password" name="adminPassword" placeholder="Mot de passe" value={formData.adminPassword} onChange={handleChange} className="input" required />
           <input type="password" name="adminConfirmPassword" placeholder="Confirmer le mot de passe" value={formData.adminConfirmPassword} onChange={handleChange} className="input" required />
 
-          {/* Logo upload */}
+          {/* Logo */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm text-gray-600 font-medium">Logo de l'église (optionnel) — PNG, SVG ou WEBP · Carré · Max 500 Ko</label>
+            <label className="text-sm text-gray-600 font-medium">
+              Logo (optionnel) — PNG, SVG ou WEBP · max 500 Ko
+            </label>
             <label className="cursor-pointer border border-dashed border-gray-400 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-gray-50 transition">
               {logoPreview ? (
                 <img src={logoPreview} alt="Aperçu logo" className="w-20 h-20 object-contain rounded-lg" />
@@ -149,7 +147,7 @@ export default function SignupEglise() {
                   <span className="text-sm text-gray-500">Cliquez pour choisir une image</span>
                 </>
               )}
-              <input type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
+              <input type="file" accept="image/png,image/svg+xml,image/webp" onChange={handleLogoChange} className="hidden" />
             </label>
             {logoPreview && (
               <button

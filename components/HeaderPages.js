@@ -11,10 +11,11 @@ export default function HeaderPages() {
   const [eglise, setEglise] = useState("Église Principale");
   const [branche, setBranche] = useState("Maurice");
   const [superviseur, setSuperviseur] = useState("");
+  const [logoUrl, setLogoUrl] = useState(null); // 🔹 AJOUT
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [invitationPending, setInvitationPending] = useState(false);
-  const [pendingToken, setPendingToken] = useState(null); // 🔹 token pour redirection
+  const [pendingToken, setPendingToken] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -35,10 +36,13 @@ export default function HeaderPages() {
         if (profile?.eglise_id) {
           const { data: egliseData } = await supabase
             .from("eglises")
-            .select("nom")
+            .select("nom, logo_url") // 🔹 AJOUT logo_url
             .eq("id", profile.eglise_id)
             .single();
-          if (egliseData) setEglise(egliseData.nom);
+          if (egliseData) {
+            setEglise(egliseData.nom);
+            if (egliseData.logo_url) setLogoUrl(egliseData.logo_url); // 🔹 AJOUT
+          }
         }
 
         if (profile?.branche_id) {
@@ -63,7 +67,7 @@ export default function HeaderPages() {
 
             if (invites && invites.length > 0) {
               setInvitationPending(true);
-              setPendingToken(invites[0].invitation_token); // 🔹 token de l’invitation
+              setPendingToken(invites[0].invitation_token);
             }
           }
         }
@@ -103,11 +107,10 @@ export default function HeaderPages() {
           {userRole === "Administrateur" && invitationPending && (
             <button
               onClick={handleClickInvitation}
-              className="relative text-amber-300 text-lg hover:text-gray-200 transition relative mr-2"
+              className="relative text-amber-300 text-lg hover:text-gray-200 transition mr-2"
               title="Invitation en attente"
             >
               🔔
-              {/* 🔹 Petit point rouge sur la cloche */}
               <span className="absolute top-0 right-0 transform translate-x-1/17 -translate-y-1/10 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
           )}
@@ -133,13 +136,23 @@ export default function HeaderPages() {
         )}
       </div>
 
+      {/* 🔹 LOGOS CÔTE À CÔTE */}
       <div className="flex flex-col items-center mb-4">
-        <img
-          src="/logo.png"
-          alt="Logo SoulTrack"
-          className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
-          onClick={() => router.push("/index")}
-        />
+        <div className="flex items-center justify-center gap-4">
+          <img
+            src="/logo.png"
+            alt="Logo SoulTrack"
+            className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
+            onClick={() => router.push("/index")}
+          />
+          {logoUrl && (
+            <img
+              src={logoUrl}
+              alt="Logo Église"
+              className="w-20 h-20 object-contain rounded-full border-2 border-amber-300"
+            />
+          )}
+        </div>
         <p className="text-white font-semibold text-lg mt-2">
           {eglise} <span className="text-amber-300">- {branche}</span>
         </p>

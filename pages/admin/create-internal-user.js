@@ -141,6 +141,20 @@ function CreateInternalUserContent() {
     }
   }, [selectedMemberId, members]);
 
+  // 2️⃣ Vérification email
+const { data: existingUsers } = await supabase
+  .from("profiles")
+  .select("id, email, prenom, nom")
+  .eq("email", formData.email);
+
+if (existingUsers && existingUsers.length > 0 && !forceCreate) {
+  const existing = existingUsers[0];
+  setDuplicateEmail(existing);
+  setMessage(`⚠️ L'email ${formData.email} est déjà utilisé par ${existing.prenom} ${existing.nom}`);
+  setLoading(false);
+  return;
+}
+
   const handleChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleRoleChange = role => {
@@ -369,7 +383,7 @@ function CreateInternalUserContent() {
 
             <button
               type="submit"
-              disabled={loading || !!duplicatePhone}
+              disabled={loading || !!duplicatePhone || !!duplicateEmail}
               className={`flex-1 py-3 rounded-xl text-white ${duplicatePhone ? "bg-gray-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
             >
               {loading ? "Création..." : "Créer"}
@@ -401,6 +415,22 @@ function CreateInternalUserContent() {
             </div>
           </div>
         )}
+{duplicateEmail && (
+  <div className="mt-4 p-4 border border-red-500 bg-red-100 rounded-lg text-center">
+    <p>
+      ❌ L'email {formData.email} est déjà utilisé par {duplicateEmail.prenom} {duplicateEmail.nom}.
+    </p>
+    <div className="flex justify-center gap-4 mt-2">
+      <button
+        type="button"
+        onClick={() => setDuplicateEmail(null)}
+        className="bg-gray-500 text-white py-2 px-4 rounded"
+      >
+        Modifier
+      </button>
+    </div>
+  </div>
+)}
 
         {message && !duplicatePhone && (
           <p className={`mt-4 text-center font-semibold ${message.startsWith("❌") ? "text-red-600" : "text-green-600"}`}>

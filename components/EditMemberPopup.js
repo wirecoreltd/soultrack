@@ -169,7 +169,6 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
         if (formData.star) {
           await supabase.from("stats_ministere_besoin").upsert({
             membre_id: member.id,
-            branche_id: member.branche_id || null,  // ← branche_id du membre, pas cellule_id
             sexe: formData.sexe,
             type: "ministere",
           });

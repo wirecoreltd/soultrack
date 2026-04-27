@@ -17,8 +17,7 @@ function SuiviAmesPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState({});
-  const [egliseId, setEgliseId] = useState(null);
-  const [brancheId, setBrancheId] = useState(null);
+  const [egliseId, setEgliseId] = useState(null);  
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("ALL");  
   const searchParams = useSearchParams(); 
@@ -38,13 +37,13 @@ function SuiviAmesPage() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("eglise_id")
         .eq("id", user.id)
         .single();
 
       if (profile) {
         setEgliseId(profile.eglise_id);
-        setBrancheId(profile.branche_id);
+        
       }
     };
     fetchProfile();
@@ -52,7 +51,7 @@ function SuiviAmesPage() {
 
   // ================= DATA =================
   useEffect(() => {
-    if (!egliseId || !brancheId) return;
+    if (!egliseId) return;
 
     const fetchData = async () => {
       setLoading(true);
@@ -61,19 +60,19 @@ function SuiviAmesPage() {
         .from("evangelises")
         .select("*")
         .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+        ;
 
       const { data: suivis } = await supabase
         .from("suivis_des_evangelises")
         .select("*")
         .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+        ;
 
       const { data: membres } = await supabase
         .from("membres_complets")
         .select("*")
         .eq("eglise_id", egliseId)
-        .eq("branche_id", brancheId);
+        ;
 
       const { data: profiles } = await supabase
         .from("profiles")
@@ -190,7 +189,7 @@ function SuiviAmesPage() {
     };
 
     fetchData();
-  }, [egliseId, brancheId, idsQuery, dateDebutQuery, dateFinQuery]);
+  }, [egliseId, idsQuery, dateDebutQuery, dateFinQuery]);
 
   const filteredData = useMemo(() => {
     let d = [...data];

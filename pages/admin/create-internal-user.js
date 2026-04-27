@@ -24,6 +24,7 @@ function CreateInternalUserContent() {
   const [formData, setFormData] = useState({
     prenom: "",
     nom: "",
+    sexe: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -102,6 +103,7 @@ function CreateInternalUserContent() {
         ...prev,
         prenom: "",
         nom: "",
+        sexe: "",
         telephone: "",
         roles: [],
         ministere: [],
@@ -116,6 +118,7 @@ function CreateInternalUserContent() {
         ...prev,
         prenom: member.prenom,
         nom: member.nom,
+        sexe: member.sexe,        
         telephone: member.telephone,
         roles: [],
       }));
@@ -187,7 +190,7 @@ function CreateInternalUserContent() {
       // 1️⃣ Vérification téléphone
       const { data: existingMembers } = await supabase
         .from("membres_complets")
-        .select("prenom, nom, telephone, etat_contact")
+        .select("prenom, nom, sexe, telephone, etat_contact")
         .eq("telephone", formData.telephone)
         .in("etat_contact", ["existant", "nouveau"]);
 
@@ -241,6 +244,7 @@ function CreateInternalUserContent() {
       setFormData({
         prenom: "",
         nom: "",
+        sexe: "",
         email: "",
         password: "",
         confirmPassword: "",
@@ -318,6 +322,7 @@ function CreateInternalUserContent() {
 
           {(selectedMemberId === "add-serviteur" || selectedMemberId) && (
             <>
+              <input name="sexe" placeholder="Civilité" value={formData.sexe} onChange={handleChange} className="input" />
               <input name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" />
               <input name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" />
               <input name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" />

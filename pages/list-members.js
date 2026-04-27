@@ -74,18 +74,11 @@ function ListMembersContent() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
 
-  // Map memberId → [{id, prenom, nom}]
   const [assignmentsMap, setAssignmentsMap] = useState({});
-
-  // IDs des membres attribués au conseiller connecté (depuis suivi_assignments)
-  // null = pas encore chargé, [] = chargé mais vide, [...] = chargé avec données
   const [conseillerMembreIds, setConseillerMembreIds] = useState(null);
 
-  // ✅ Ref pour éviter que le Realtime re-fetch avant que userProfile soit prêt
   const userProfileRef = useRef(null);
-  // ✅ Flag pour indiquer que les assignments ont été chargés au moins une fois
   const assignmentsLoadedRef = useRef(false);
-  // ✅ Compteur pour forcer un re-fetch contrôlé depuis le Realtime
   const [fetchTrigger, setFetchTrigger] = useState(0);
 
   const roles = getRoles(userProfile);
@@ -118,14 +111,29 @@ function ListMembersContent() {
     const logs = [];
     if (updatedMember.Ministere) {
       const ministeres = typeof updatedMember.Ministere === "string" ? JSON.parse(updatedMember.Ministere) : updatedMember.Ministere;
-      ministeres.forEach((m) => logs.push({ membre_id: member.id, eglise_id: userProfile.eglise_id, branche_id: userProfile.branche_id, type: "ministere", valeur: m }));
+      ministeres.forEach((m) => logs.push({
+        membre_id: member.id,
+        eglise_id: userProfile.eglise_id, // ✅ branche_id retiré
+        type: "ministere",
+        valeur: m,
+      }));
     }
     if (updatedMember.besoin) {
       const besoins = typeof updatedMember.besoin === "string" ? JSON.parse(updatedMember.besoin) : updatedMember.besoin;
-      besoins.forEach((b) => logs.push({ membre_id: member.id, eglise_id: userProfile.eglise_id, branche_id: userProfile.branche_id, type: "besoin", valeur: b }));
+      besoins.forEach((b) => logs.push({
+        membre_id: member.id,
+        eglise_id: userProfile.eglise_id, // ✅ branche_id retiré
+        type: "besoin",
+        valeur: b,
+      }));
     }
     if (updatedMember.star === true && updatedMember.etat_contact === "existant") {
-      logs.push({ membre_id: member.id, eglise_id: userProfile.eglise_id, branche_id: userProfile.branche_id, type: "serviteur", valeur: "true" });
+      logs.push({
+        membre_id: member.id,
+        eglise_id: userProfile.eglise_id, // ✅ branche_id retiré
+        type: "serviteur",
+        valeur: "true",
+      });
     }
     if (logs.length > 0) await supabase.from("stats_ministere_besoin").insert(logs);
   };
@@ -199,13 +207,11 @@ function ListMembersContent() {
           .map(a => a.membre_id);
         setConseillerMembreIds(ids);
       } else {
-        // Admin / ResponsableCellule / autres : pas de restriction par assignments
         setConseillerMembreIds(null);
       }
     }
-    // ✅ Toujours marquer comme chargé, quel que soit le rôle
     assignmentsLoadedRef.current = true;
-  }, []); // ✅ pas de dépendance sur userProfile (on utilise la ref)
+  }, []);
 
   // -------------------- Scroll to top --------------------
   useEffect(() => {
@@ -252,13 +258,11 @@ function ListMembersContent() {
     const isConseiller = rolesArray.includes("Conseiller");
 
     if (isConseiller) {
-      // ✅ Le conseiller attend que ses membre_ids soient chargés depuis suivi_assignments
       if (!assignmentsLoadedRef.current) return;
       if (!conseillerIdFromUrl && conseillerMembreIds === null) return;
     }
-    // ✅ Admin / ResponsableCellule : on n'attend pas les assignments, on fetch directement
 
-    let isMounted = true; // ✅ Guard contre les résultats de requêtes obsolètes
+    let isMounted = true;
 
     const fetchMembers = async () => {
       try {
@@ -267,8 +271,7 @@ function ListMembersContent() {
         let query = supabase
           .from("membres_complets")
           .select("*")
-          .eq("eglise_id", userProfile.eglise_id)
-          .eq("branche_id", userProfile.branche_id);
+          .eq("eglise_id", userProfile.eglise_id); // ✅ .eq("branche_id", ...) retiré
 
         if (conseillerIdFromUrl) {
           const { data: assignments, error } = await supabase
@@ -325,7 +328,6 @@ function ListMembersContent() {
 
         if (error) throw error;
 
-        // ✅ Ne mettre à jour le state que si le composant est toujours monté
         if (isMounted) {
           setAllMembers(data || []);
         }
@@ -339,7 +341,7 @@ function ListMembersContent() {
     fetchMembers();
 
     return () => {
-      isMounted = false; // ✅ Annule toute mise à jour state si l'effet se re-déclenche
+      isMounted = false;
     };
   }, [userProfile, conseillerIdFromUrl, conseillerMembreIds, fetchTrigger]);
 
@@ -362,20 +364,18 @@ function ListMembersContent() {
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, eglise_id, branche_id, roles, role")
+        .select("id, eglise_id, roles, role") // ✅ branche_id retiré
         .eq("id", user.id)
         .single();
       if (profileError || !profile) return;
 
-      // ✅ Stocker dans la ref EN PREMIER pour que fetchAssignments y ait accès
       userProfileRef.current = profile;
       setUserProfile(profile);
 
       const { data: cellulesData } = await supabase
         .from("cellules")
         .select("id, cellule_full")
-        .eq("eglise_id", profile.eglise_id)
-        .eq("branche_id", profile.branche_id)
+        .eq("eglise_id", profile.eglise_id) // ✅ .eq("branche_id", ...) retiré
         .order("cellule_full");
       if (cellulesData) setCellules(cellulesData);
 
@@ -383,12 +383,10 @@ function ListMembersContent() {
         .from("profiles")
         .select("id, prenom, nom, telephone")
         .contains("roles", ["Conseiller"])
-        .eq("eglise_id", profile.eglise_id)
-        .eq("branche_id", profile.branche_id)
+        .eq("eglise_id", profile.eglise_id) // ✅ .eq("branche_id", ...) retiré
         .order("prenom");
       if (conseillersData) setConseillers(conseillersData);
 
-      // ✅ Passer le profil directement pour éviter de dépendre du state
       await fetchAssignments(profile);
     };
 
@@ -404,8 +402,6 @@ function ListMembersContent() {
 
     const channel = supabase.channel("realtime:membres_complets");
 
-    // ✅ Le Realtime déclenche un re-fetch contrôlé via fetchTrigger
-    //    plutôt que d'appeler directement setAllMembers (qui causait le double affichage)
     const handleMembresChange = () => {
       setFetchTrigger(t => t + 1);
     };
@@ -430,7 +426,7 @@ function ListMembersContent() {
         }
       } catch (e) {}
     };
-  }, [fetchAssignments]); // ✅ Ne dépend plus de scopedQuery ni de userProfile (ref utilisée)
+  }, [fetchAssignments]);
 
   // -------------------- Filtrage --------------------
   const { filteredMembers, filteredNouveaux, filteredAnciens, filteredInactifs } = useMemo(() => {

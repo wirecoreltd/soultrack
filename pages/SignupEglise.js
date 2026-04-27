@@ -27,11 +27,39 @@ export default function SignupEglise() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleLogoChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // Vérification format
+  const allowedTypes = ["image/png", "image/svg+xml", "image/webp"];
+  if (!allowedTypes.includes(file.type)) {
+    alert("❌ Format invalide. Utilisez PNG, SVG ou WEBP uniquement.");
+    e.target.value = "";
+    return;
+  }
+
+  // Vérification taille (max 500 Ko)
+  const maxSize = 500 * 1024;
+  if (file.size > maxSize) {
+    alert("❌ Image trop lourde. Maximum 500 Ko.");
+    e.target.value = "";
+    return;
+  }
+
+  // Vérification dimensions
+  const img = new window.Image();
+  img.src = URL.createObjectURL(file);
+  img.onload = () => {
+    if (img.width !== img.height) {
+      alert("❌ Le logo doit être carré (ex: 200x200, 512x512).");
+      e.target.value = "";
+      URL.revokeObjectURL(img.src);
+      return;
+    }
     setLogoFile(file);
-    setLogoPreview(URL.createObjectURL(file));
+    setLogoPreview(img.src);
   };
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -111,7 +139,7 @@ export default function SignupEglise() {
 
           {/* Logo upload */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm text-gray-600 font-medium">Logo de l'église (optionnel)</label>
+            <label className="text-sm text-gray-600 font-medium">Logo de l'église (optionnel) — PNG, SVG ou WEBP · Carré · Max 500 Ko</label>
             <label className="cursor-pointer border border-dashed border-gray-400 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-gray-50 transition">
               {logoPreview ? (
                 <img src={logoPreview} alt="Aperçu logo" className="w-20 h-20 object-contain rounded-lg" />

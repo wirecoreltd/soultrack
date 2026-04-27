@@ -30,13 +30,7 @@ const translations = {
         range: "0 – 50 membres",
         price: "Gratuit",
         accent: "rgba(29,158,117,0.45)",
-        features: [
-          "Ajouter et gérer les membres",
-          "Ajouter des personnes évangélisées",
-          "Liste des évangélisés",
-          "Rapports présence et Statistiques",
-          "Jusqu'à 3 utilisateurs en plus de l'admin",
-        ],
+        
       },
       {
         name: "Croissance",
@@ -44,11 +38,7 @@ const translations = {
         range: "51 – 150 membres",
         price: "$39/mois",
         accent: "rgba(55,138,221,0.5)",
-        features: [
-          "✔ Tout dans Départ",
-          "📊 Rapports",
-          "🧭 Conseillers",
-        ],
+        
       },
       {
         name: "Vision",
@@ -56,11 +46,7 @@ const translations = {
         range: "151 – 500 membres",
         price: "$79/mois",
         accent: "rgba(251,191,36,0.4)",
-        features: [
-          "✔ Tout dans Croissance",
-          "📈 Statistiques avancées",
-          "⚙️ Organisation complète",
-        ],
+        
       },
       {
         name: "Expansion",
@@ -68,11 +54,7 @@ const translations = {
         range: "501 - 1500 membres",
         price: "$149/mois",
         accent: "rgba(212,83,126,0.4)",
-        features: [
-          "⚙ Plan personnalisé",
-          "🤝 Support dédié",
-          "🏢 Multi-branches",
-        ],
+        
       },
       {
         name: "Réseaux",
@@ -80,11 +62,7 @@ const translations = {
         range: "501 - 1500 membres",
         price: "sur mesure",
         accent: "rgba(212,83,126,0.4)",
-        features: [
-          "⚙ Plan personnalisé",
-          "🤝 Support dédié",
-          "🏢 Multi-branches",
-        ],
+        
       },
     ],
   },
@@ -110,13 +88,7 @@ const translations = {
         range: "0 – 50 members",
         price: "Free",
         accent: "rgba(29,158,117,0.45)",
-        features: [
-          "Add and manage members",
-          "Add evangelised contacts",
-          "Evangelised list",
-          "Attendance reports & statistics",
-          "Up to 3 users in addition to the admin",
-        ],
+       
       },
       {
         name: "Growth",
@@ -124,11 +96,7 @@ const translations = {
         range: "51 – 300 members",
         price: "$29/month",
         accent: "rgba(55,138,221,0.5)",
-        features: [
-          "✔ Everything in Starter",
-          "📊 Reports",
-          "🧭 Counselors",
-        ],
+       
       },
       {
         name: "Vision",
@@ -136,11 +104,7 @@ const translations = {
         range: "301 – 1000 members",
         price: "$59/month",
         accent: "rgba(251,191,36,0.4)",
-        features: [
-          "✔ Everything in Growth",
-          "📈 Advanced statistics",
-          "⚙️ Full organisation",
-        ],
+        
       },
       {
         name: "Expansion",
@@ -148,11 +112,7 @@ const translations = {
         range: "1000+ members",
         price: "Custom",
         accent: "rgba(212,83,126,0.4)",
-        features: [
-          "⚙ Personalised plan",
-          "🤝 Dedicated support",
-          "🏢 Multi-branch",
-        ],
+        
       },
     ],
   },

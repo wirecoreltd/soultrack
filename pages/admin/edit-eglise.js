@@ -136,28 +136,31 @@ function EditEgliseContent() {
 
       // Mise à jour de l'église
       const { error } = await supabase
-        .from("eglises")
-        .update({
-          denomination: formData.denomination,
-          nom: formData.nom,
-          branche: formData.branche,
-          ville: formData.ville,
-          pays: formData.pays,
-          logo_url: newLogoUrl,
-        })
-        .eq("id", egliseId);
+  .from("eglises")
+  .update({
+    denomination: formData.denomination,
+    nom: formData.nom,
+    branche: formData.branche,
+    ville: formData.ville,
+    pays: formData.pays,
+    logo_url: newLogoUrl,
+  })
+  .eq("id", egliseId);
 
-      if (error) throw new Error(error.message);
+if (error) throw new Error(error.message);
 
-      setLogoUrl(newLogoUrl);
-      setLogoFile(null);
-      setMessage("✅ Informations mises à jour avec succès !");
-    } catch (err) {
-      setMessage("❌ " + err.message);
-    } finally {
-      setSaving(false);
-    }
+setLogoUrl(newLogoUrl);
+setLogoFile(null);
+setMessage("✅ Informations mises à jour avec succès !");
+setTimeout(() => router.reload(), 1500); // ✅ dans le try, après le message
+
+} catch (err) {
+  setMessage("❌ " + err.message);
+} finally {
+  setSaving(false);
+}
   };
+  setTimeout(() => router.reload(), 1000);
 
   if (loading)
     return <p className="text-center mt-10 text-white">Chargement...</p>;
@@ -166,7 +169,7 @@ function EditEgliseContent() {
     <div className="min-h-screen p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-2 text-center text-white">
+      <h1 className="text-2xl font-bold mt-8 mb-2 text-center text-white">
         Modifier les informations de l'
         <span className="text-emerald-300">Église</span>
       </h1>

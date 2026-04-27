@@ -93,10 +93,10 @@ function SuivisEvangelisationContent() {
     const u = userData || user;
     if (!u) return [];
     const { data, error } = await supabase
-      .from("cellules")
-      .select("id, cellule_full, responsable_id")
-      .eq("eglise_id", u.eglise_id)
-      .eq("branche_id", u.branche_id);
+  .from("cellules")
+  .select("id, cellule_full, responsable_id")
+  .eq("eglise_id", u.eglise_id);
+    
     if (error) {
       console.error("Erreur fetchCellules :", error);
       setCellules([]);
@@ -154,12 +154,11 @@ function SuivisEvangelisationContent() {
     try {
       if (!userData) return;
 
-      const { data, error } = await supabase
-        .from("suivis_des_evangelises")
-        .select("*")
-        .eq("eglise_id", userData.eglise_id)
-        .eq("branche_id", userData.branche_id)
-        .order("id", { ascending: false });
+     const { data, error } = await supabase
+  .from("suivis_des_evangelises")
+  .select("*")
+  .eq("eglise_id", userData.eglise_id)
+  .order("id", { ascending: false });
 
       if (error) {
         console.error("Erreur fetchSuivis:", error);
@@ -247,8 +246,7 @@ function SuivisEvangelisationContent() {
     try {
       const payload = {
         suivi_int_id: suivi.id,
-        eglise_id: user.eglise_id,
-        branche_id: user.branche_id,
+        eglise_id: user.eglise_id,        
         nom: suivi.nom || "",
         prenom: suivi.prenom || "",
         telephone: suivi.telephone || "",

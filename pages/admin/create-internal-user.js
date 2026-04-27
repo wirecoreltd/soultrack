@@ -143,18 +143,22 @@ function CreateInternalUserContent() {
   }, [selectedMemberId, members]);
 
   // 2️⃣ Vérification email
-const { data: existingUsers } = await supabase
-  .from("profiles")
-  .select("id, email, prenom, nom")
-  .eq("email", formData.email);
 
-if (existingUsers && existingUsers.length > 0 && !forceCreate) {
-  const existing = existingUsers[0];
-  setDuplicateEmail(existing);
-  setMessage(`⚠️ L'email ${formData.email} est déjà utilisé par ${existing.prenom} ${existing.nom}`);
-  setLoading(false);
-  return;
-}
+      const { data: existingUsers } = await supabase
+        .from("profiles")
+        .select("id, email, prenom, nom")
+        .eq("email", formData.email);
+
+      if (existingUsers && existingUsers.length > 0 && !forceCreate) {
+        const existing = existingUsers[0];
+        setDuplicateEmail(existing);
+        setMessage(`⚠️ L'email ${formData.email} est déjà utilisé par ${existing.prenom} ${existing.nom}`);
+        setLoading(false);
+        return;
+      }
+
+      // 3️⃣ Création utilisateur via API  ← (was "2️⃣" before)
+      const res = await fetch("/api/create-user", {
 
   const handleChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 

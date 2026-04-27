@@ -5,35 +5,35 @@ import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 
 function getFlagEmoji(countryName) {
-  const isoMap = {
-    "Afghanistan": "AF", "Afrique du Sud": "ZA", "Albanie": "AL", "Algérie": "DZ",
-    "Allemagne": "DE", "Angola": "AO", "Arabie Saoudite": "SA", "Argentine": "AR",
-    "Australie": "AU", "Autriche": "AT", "Belgique": "BE", "Bénin": "BJ",
-    "Birmanie": "MM", "Bolivie": "BO", "Brésil": "BR", "Burkina Faso": "BF",
-    "Burundi": "BI", "Cameroun": "CM", "Canada": "CA", "Chili": "CL",
-    "Chine": "CN", "Colombie": "CO", "Congo": "CG", "Corée du Sud": "KR",
-    "Côte d'Ivoire": "CI", "Cuba": "CU", "Danemark": "DK", "Egypte": "EG",
-    "Espagne": "ES", "États-Unis": "US", "USA": "US", "Ethiopie": "ET",
-    "Finlande": "FI", "France": "FR", "Gabon": "GA", "Ghana": "GH",
-    "Grèce": "GR", "Guinée": "GN", "Haïti": "HT", "Hongrie": "HU",
-    "Inde": "IN", "Indonésie": "ID", "Iran": "IR", "Irlande": "IE",
-    "Israël": "IL", "Italie": "IT", "Jamaïque": "JM", "Japon": "JP",
-    "Kenya": "KE", "Liban": "LB", "Luxembourg": "LU", "Madagascar": "MG",
-    "Mali": "ML", "Maroc": "MA", "Maurice": "MU", "Mauritanie": "MR",
-    "Mexique": "MX", "Mozambique": "MZ", "Namibie": "NA", "Niger": "NE",
-    "Nigeria": "NG", "Norvège": "NO", "Nouvelle-Zélande": "NZ", "Ouganda": "UG",
-    "Pakistan": "PK", "Pays-Bas": "NL", "Pérou": "PE", "Philippines": "PH",
-    "Pologne": "PL", "Portugal": "PT", "RDC": "CD",
-    "République Démocratique du Congo": "CD", "République Dominicaine": "DO",
-    "Roumanie": "RO", "Royaume-Uni": "GB", "Rwanda": "RW", "Sénégal": "SN",
-    "Sierra Leone": "SL", "Singapour": "SG", "Somalie": "SO", "Soudan": "SD",
-    "Suède": "SE", "Suisse": "CH", "Tanzanie": "TZ", "Tchad": "TD",
-    "Togo": "TG", "Tunisie": "TN", "Turquie": "TR", "Ukraine": "UA",
-    "Uruguay": "UY", "Venezuela": "VE", "Vietnam": "VN", "Zimbabwe": "ZW",
+  const flagMap = {
+    "Afghanistan": "🇦🇫", "Afrique du Sud": "🇿🇦", "Albanie": "🇦🇱", "Algérie": "🇩🇿",
+    "Allemagne": "🇩🇪", "Angola": "🇦🇴", "Arabie Saoudite": "🇸🇦", "Argentine": "🇦🇷",
+    "Australie": "🇦🇺", "Autriche": "🇦🇹", "Belgique": "🇧🇪", "Bénin": "🇧🇯",
+    "Birmanie": "🇲🇲", "Bolivie": "🇧🇴", "Brésil": "🇧🇷", "Burkina Faso": "🇧🇫",
+    "Burundi": "🇧🇮", "Cameroun": "🇨🇲", "Canada": "🇨🇦", "Chili": "🇨🇱",
+    "Chine": "🇨🇳", "Colombie": "🇨🇴", "Congo": "🇨🇬", "Corée du Sud": "🇰🇷",
+    "Côte d'Ivoire": "🇨🇮", "Cuba": "🇨🇺", "Danemark": "🇩🇰", "Egypte": "🇪🇬",
+    "Espagne": "🇪🇸", "États-Unis": "🇺🇸", "USA": "🇺🇸", "Ethiopie": "🇪🇹",
+    "Finlande": "🇫🇮", "France": "🇫🇷", "Gabon": "🇬🇦", "Ghana": "🇬🇭",
+    "Grèce": "🇬🇷", "Guinée": "🇬🇳", "Haïti": "🇭🇹", "Hongrie": "🇭🇺",
+    "Inde": "🇮🇳", "Indonésie": "🇮🇩", "Iran": "🇮🇷", "Irlande": "🇮🇪",
+    "Israël": "🇮🇱", "Italie": "🇮🇹", "Jamaïque": "🇯🇲", "Japon": "🇯🇵",
+    "Kenya": "🇰🇪", "Liban": "🇱🇧", "Luxembourg": "🇱🇺", "Madagascar": "🇲🇬",
+    "Mali": "🇲🇱", "Maroc": "🇲🇦", "Maurice": "🇲🇺", "Mauritanie": "🇲🇷",
+    "Mexique": "🇲🇽", "Mozambique": "🇲🇿", "Namibie": "🇳🇦", "Niger": "🇳🇪",
+    "Nigeria": "🇳🇬", "Norvège": "🇳🇴", "Nouvelle-Zélande": "🇳🇿", "Ouganda": "🇺🇬",
+    "Pakistan": "🇵🇰", "Pays-Bas": "🇳🇱", "Pérou": "🇵🇪", "Philippines": "🇵🇭",
+    "Pologne": "🇵🇱", "Portugal": "🇵🇹", "RDC": "🇨🇩",
+    "République Démocratique du Congo": "🇨🇩", "République Dominicaine": "🇩🇴",
+    "Roumanie": "🇷🇴", "Royaume-Uni": "🇬🇧", "Rwanda": "🇷🇼", "Sénégal": "🇸🇳",
+    "Sierra Leone": "🇸🇱", "Singapour": "🇸🇬", "Somalie": "🇸🇴", "Soudan": "🇸🇩",
+    "Suède": "🇸🇪", "Suisse": "🇨🇭", "Tanzanie": "🇹🇿", "Tchad": "🇹🇩",
+    "Togo": "🇹🇬", "Tunisie": "🇹🇳", "Turquie": "🇹🇷", "Ukraine": "🇺🇦",
+    "Uruguay": "🇺🇾", "Venezuela": "🇻🇪", "Vietnam": "🇻🇳", "Zimbabwe": "🇿🇼",
   };
 
-  const code = isoMap[countryName];
-  if (!code) return "🌍";
+  return flagMap[countryName] || "🌍";
+}
 
   return code
     .toUpperCase()

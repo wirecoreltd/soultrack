@@ -9,24 +9,23 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [token, setToken] = useState("");
   const [churchName, setChurchName] = useState("");
-  const [branchName, setBranchName] = useState("");
+  // ✅ branchName supprimé — plus de branche
 
-  // 🔹 Récupère automatiquement l'utilisateur connecté
   const fetchUserAndToken = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Récupère profil
+      // ✅ On ne récupère plus branche_id
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("eglise_id")
         .eq("id", user.id)
         .single();
 
       if (profileError || !profile) return;
 
-      // Récupère nom de l'église
+      // Nom de l'église
       const { data: churchData } = await supabase
         .from("eglises")
         .select("nom")
@@ -34,34 +33,27 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
         .single();
       if (churchData) setChurchName(churchData.nom);
 
-      // Récupère nom de la branche
-      const { data: branchData } = await supabase
-        .from("branches")
-        .select("nom")
-        .eq("id", profile.branche_id)
-        .single();
-      if (branchData) setBranchName(branchData.nom);
+      // ✅ Supprimé : fetch de la branche
 
-      // Vérifie si un token valide existe déjà
+      // Vérifier si un token valide existe déjà pour cette église
       const now = new Date().toISOString();
-      let query = supabase
+      const { data: existingToken, error: tokenError } = await supabase
         .from("access_tokens")
         .select("*")
         .eq("access_type", type)
-        .gte("expires_at", now)
         .eq("church_id", profile.eglise_id)
-        .eq("branch_id", profile.branche_id)
+        // ✅ .eq("branch_id", ...) supprimé
+        .gte("expires_at", now)
         .order("expires_at", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle(); // ✅ maybeSingle au lieu de single pour éviter une erreur si aucun résultat
 
-      const { data, error } = await query;
-      if (data && !error) {
-        setToken(data.token);
+      if (existingToken && !tokenError) {
+        setToken(existingToken.token);
         return;
       }
 
-      // Sinon créer un nouveau token
+      // Créer un nouveau token
       const newToken = uuidv4();
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -72,7 +64,7 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
           access_type: type,
           expires_at: expiresAt,
           church_id: profile.eglise_id,
-          branch_id: profile.branche_id,
+          // ✅ branch_id supprimé
         }]);
 
       if (!insertError) setToken(newToken);
@@ -95,10 +87,12 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
 
   const handleSend = () => {
     const link = getLink();
+
+    // ✅ Message sans "Branche"
     const message =
       type === "ajouter_membre"
-        ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre.\n\nÉglise : ${churchName}\nBranche : ${branchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
-        : `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nÉglise : ${churchName}\nBranche : ${branchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`;
+        ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
+        : `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`;
 
     const whatsappLink = phoneNumber
       ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
@@ -137,10 +131,7 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
 
             <div className="flex gap-3">
               <button
-                onClick={() => {
-                  setShowPopup(false);
-                  setPhoneNumber("");
-                }}
+                onClick={() => { setShowPopup(false); setPhoneNumber(""); }}
                 className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 rounded-2xl font-semibold"
               >
                 Annuler

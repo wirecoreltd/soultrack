@@ -247,8 +247,7 @@ function EditEgliseContent() {
               name="nom"
               value={formData.nom}
               onChange={handleChange}
-              className="input"
-              required
+              className="input"              
             />
           </div>
 
@@ -259,8 +258,7 @@ function EditEgliseContent() {
               value={formData.branche}
               onChange={handleChange}
               className="input"
-              required
-            />
+              />
           </div>
 
           <div className="flex flex-col gap-1">
@@ -270,6 +268,7 @@ function EditEgliseContent() {
               value={formData.ville}
               onChange={handleChange}
               className="input"
+              required
             />
           </div>
 

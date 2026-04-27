@@ -31,15 +31,7 @@ function getFlagEmoji(countryName) {
     "Togo": "🇹🇬", "Tunisie": "🇹🇳", "Turquie": "🇹🇷", "Ukraine": "🇺🇦",
     "Uruguay": "🇺🇾", "Venezuela": "🇻🇪", "Vietnam": "🇻🇳", "Zimbabwe": "🇿🇼",
   };
-
   return flagMap[countryName] || "🌍";
-}
-
-  return code
-    .toUpperCase()
-    .split("")
-    .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
-    .join("");
 }
 
 export default function HeaderPages() {
@@ -203,7 +195,7 @@ export default function HeaderPages() {
           {eglise}
         </p>
 
-        {/* Ligne 2 : Branche */}
+        {/* Ligne 2 : Branche - Ville */}
         <p className="text-gray-300 text-sm">
           {branche}
           {ville && <span className="text-amber-300"> - {ville}</span>}
@@ -211,8 +203,8 @@ export default function HeaderPages() {
 
         {/* Ligne 3 : Pays avec drapeau */}
         {pays && (
-          <p className="text-gray-300 text-sm mt-2">
-            {getFlagEmoji(pays)} <span className="text-white">{pays}</span>
+          <p className="text-gray-300 text-sm">
+            {getFlagEmoji(pays)} <span className="text-amber-300">{pays}</span>
           </p>
         )}
       </div>

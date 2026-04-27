@@ -4,34 +4,34 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 
-function getFlagEmoji(countryName) {
-  const flagMap = {
-    "Afghanistan": "🇦🇫", "Afrique du Sud": "🇿🇦", "Albanie": "🇦🇱", "Algérie": "🇩🇿",
-    "Allemagne": "🇩🇪", "Angola": "🇦🇴", "Arabie Saoudite": "🇸🇦", "Argentine": "🇦🇷",
-    "Australie": "🇦🇺", "Autriche": "🇦🇹", "Belgique": "🇧🇪", "Bénin": "🇧🇯",
-    "Birmanie": "🇲🇲", "Bolivie": "🇧🇴", "Brésil": "🇧🇷", "Burkina Faso": "🇧🇫",
-    "Burundi": "🇧🇮", "Cameroun": "🇨🇲", "Canada": "🇨🇦", "Chili": "🇨🇱",
-    "Chine": "🇨🇳", "Colombie": "🇨🇴", "Congo": "🇨🇬", "Corée du Sud": "🇰🇷",
-    "Côte d'Ivoire": "🇨🇮", "Cuba": "🇨🇺", "Danemark": "🇩🇰", "Egypte": "🇪🇬",
-    "Espagne": "🇪🇸", "États-Unis": "🇺🇸", "USA": "🇺🇸", "Ethiopie": "🇪🇹",
-    "Finlande": "🇫🇮", "France": "🇫🇷", "Gabon": "🇬🇦", "Ghana": "🇬🇭",
-    "Grèce": "🇬🇷", "Guinée": "🇬🇳", "Haïti": "🇭🇹", "Hongrie": "🇭🇺",
-    "Inde": "🇮🇳", "Indonésie": "🇮🇩", "Iran": "🇮🇷", "Irlande": "🇮🇪",
-    "Israël": "🇮🇱", "Italie": "🇮🇹", "Jamaïque": "🇯🇲", "Japon": "🇯🇵",
-    "Kenya": "🇰🇪", "Liban": "🇱🇧", "Luxembourg": "🇱🇺", "Madagascar": "🇲🇬",
-    "Mali": "🇲🇱", "Maroc": "🇲🇦", "Maurice": "🇲🇺", "Mauritanie": "🇲🇷",
-    "Mexique": "🇲🇽", "Mozambique": "🇲🇿", "Namibie": "🇳🇦", "Niger": "🇳🇪",
-    "Nigeria": "🇳🇬", "Norvège": "🇳🇴", "Nouvelle-Zélande": "🇳🇿", "Ouganda": "🇺🇬",
-    "Pakistan": "🇵🇰", "Pays-Bas": "🇳🇱", "Pérou": "🇵🇪", "Philippines": "🇵🇭",
-    "Pologne": "🇵🇱", "Portugal": "🇵🇹", "RDC": "🇨🇩",
-    "République Démocratique du Congo": "🇨🇩", "République Dominicaine": "🇩🇴",
-    "Roumanie": "🇷🇴", "Royaume-Uni": "🇬🇧", "Rwanda": "🇷🇼", "Sénégal": "🇸🇳",
-    "Sierra Leone": "🇸🇱", "Singapour": "🇸🇬", "Somalie": "🇸🇴", "Soudan": "🇸🇩",
-    "Suède": "🇸🇪", "Suisse": "🇨🇭", "Tanzanie": "🇹🇿", "Tchad": "🇹🇩",
-    "Togo": "🇹🇬", "Tunisie": "🇹🇳", "Turquie": "🇹🇷", "Ukraine": "🇺🇦",
-    "Uruguay": "🇺🇾", "Venezuela": "🇻🇪", "Vietnam": "🇻🇳", "Zimbabwe": "🇿🇼",
+function getIsoCode(countryName) {
+  const isoMap = {
+    "Afghanistan": "af", "Afrique du Sud": "za", "Albanie": "al", "Algérie": "dz",
+    "Allemagne": "de", "Angola": "ao", "Arabie Saoudite": "sa", "Argentine": "ar",
+    "Australie": "au", "Autriche": "at", "Belgique": "be", "Bénin": "bj",
+    "Birmanie": "mm", "Bolivie": "bo", "Brésil": "br", "Burkina Faso": "bf",
+    "Burundi": "bi", "Cameroun": "cm", "Canada": "ca", "Chili": "cl",
+    "Chine": "cn", "Colombie": "co", "Congo": "cg", "Corée du Sud": "kr",
+    "Côte d'Ivoire": "ci", "Cuba": "cu", "Danemark": "dk", "Egypte": "eg",
+    "Espagne": "es", "États-Unis": "us", "USA": "us", "Ethiopie": "et",
+    "Finlande": "fi", "France": "fr", "Gabon": "ga", "Ghana": "gh",
+    "Grèce": "gr", "Guinée": "gn", "Haïti": "ht", "Hongrie": "hu",
+    "Inde": "in", "Indonésie": "id", "Iran": "ir", "Irlande": "ie",
+    "Israël": "il", "Italie": "it", "Jamaïque": "jm", "Japon": "jp",
+    "Kenya": "ke", "Liban": "lb", "Luxembourg": "lu", "Madagascar": "mg",
+    "Mali": "ml", "Maroc": "ma", "Maurice": "mu", "Mauritanie": "mr",
+    "Mexique": "mx", "Mozambique": "mz", "Namibie": "na", "Niger": "ne",
+    "Nigeria": "ng", "Norvège": "no", "Nouvelle-Zélande": "nz", "Ouganda": "ug",
+    "Pakistan": "pk", "Pays-Bas": "nl", "Pérou": "pe", "Philippines": "ph",
+    "Pologne": "pl", "Portugal": "pt", "RDC": "cd",
+    "République Démocratique du Congo": "cd", "République Dominicaine": "do",
+    "Roumanie": "ro", "Royaume-Uni": "gb", "Rwanda": "rw", "Sénégal": "sn",
+    "Sierra Leone": "sl", "Singapour": "sg", "Somalie": "so", "Soudan": "sd",
+    "Suède": "se", "Suisse": "ch", "Tanzanie": "tz", "Tchad": "td",
+    "Togo": "tg", "Tunisie": "tn", "Turquie": "tr", "Ukraine": "ua",
+    "Uruguay": "uy", "Venezuela": "ve", "Vietnam": "vn", "Zimbabwe": "zw",
   };
-  return flagMap[countryName] || "🌍";
+  return isoMap[countryName] || "un"; // "un" = drapeau ONU par défaut
 }
 
 export default function HeaderPages() {
@@ -202,11 +202,19 @@ export default function HeaderPages() {
         </p>
 
         {/* Ligne 3 : Pays avec drapeau */}
-        {pays && (
-          <p className="text-gray-300 text-sm">
-            {getFlagEmoji(pays)} <span className="text-amber-300">{pays}</span>
-          </p>
-        )}
+          {pays && (
+            <p className="text-gray-300 text-sm flex items-center gap-1">
+              <img
+                src={`https://flagcdn.com/w20/${getIsoCode(pays)}.png`}
+                srcSet={`https://flagcdn.com/w40/${getIsoCode(pays)}.png 2x`}
+                width="20"
+                height="14"
+                alt={pays}
+                style={{ borderRadius: "2px", display: "inline-block" }}
+              />
+              <span className="text-amber-300">{pays}</span>
+            </p>
+          )}
       </div>
     </div>
   );

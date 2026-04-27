@@ -58,14 +58,13 @@ useEffect(() => {
 
     const { data: profile, error } = await supabase
       .from("profiles")
-      .select("eglise_id, branche_id")
+      .select("eglise_id")
       .eq("id", user.id)
       .single();
 
     if (!error && profile) {
       setUserScope({
-        eglise_id: profile.eglise_id,
-        branche_id: profile.branche_id,
+        eglise_id: profile.eglise_id,        
       });
     }
   };
@@ -76,7 +75,7 @@ useEffect(() => {
 
   // ================== FETCH CELLULES ==================
   useEffect(() => {
-  if (!userScope.eglise_id || !userScope.branche_id) return;
+  if (!userScope.eglise_id) return;
 
   const fetchCellules = async () => {
     const userId = localStorage.getItem("userId");
@@ -86,7 +85,7 @@ useEffect(() => {
       .select("id, ville, cellule")
       .eq("responsable_id", userId)
       .eq("eglise_id", userScope.eglise_id)
-      .eq("branche_id", userScope.branche_id);
+      ;
 
     if (error || !data || data.length === 0) {
       alert("⚠️ Aucune cellule trouvée pour votre église / branche.");
@@ -144,8 +143,7 @@ useEffect(() => {
           ville: formData.ville,
           venu: formData.venu,
           cellule_id: formData.cellule_id,
-          eglise_id: userScope.eglise_id,
-          branche_id: userScope.branche_id,
+          eglise_id: userScope.eglise_id,         
           statut_suivis: 3, // Intégrer
           etat_contact: "existant", 
           is_whatsapp: formData.is_whatsapp,

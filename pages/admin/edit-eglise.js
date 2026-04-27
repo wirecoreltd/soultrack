@@ -120,7 +120,6 @@ function EditEgliseContent() {
     try {
       let newLogoUrl = logoUrl;
 
-      // Upload nouveau logo si changé
       if (logoFile) {
         setMessage("⏳ Upload du logo...");
         const fd = new FormData();
@@ -134,33 +133,32 @@ function EditEgliseContent() {
         newLogoUrl = uploadData.url;
       }
 
-      // Mise à jour de l'église
       const { error } = await supabase
-  .from("eglises")
-  .update({
-    denomination: formData.denomination,
-    nom: formData.nom,
-    branche: formData.branche,
-    ville: formData.ville,
-    pays: formData.pays,
-    logo_url: newLogoUrl,
-  })
-  .eq("id", egliseId);
+        .from("eglises")
+        .update({
+          denomination: formData.denomination,
+          nom: formData.nom,
+          branche: formData.branche,
+          ville: formData.ville,
+          pays: formData.pays,
+          logo_url: newLogoUrl,
+        })
+        .eq("id", egliseId);
 
-if (error) throw new Error(error.message);
+      if (error) throw new Error(error.message);
 
-setLogoUrl(newLogoUrl);
-setLogoFile(null);
-setLogoPreview(newLogoUrl);
-setMessage("✅ Informations mises à jour avec succès !");
+      setLogoUrl(newLogoUrl);
+      setLogoFile(null);
+      setLogoPreview(newLogoUrl);
+      setMessage("✅ Informations mises à jour avec succès !");
+      // ✅ PAS de setTimeout ni de reload ici
 
-} catch (err) {
-  setMessage("❌ " + err.message);
-} finally {
-  setSaving(false);
-}
-  };
-  setTimeout(() => router.reload(), 1000);
+    } catch (err) {
+      setMessage("❌ " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  }; 
 
   if (loading)
     return <p className="text-center mt-10 text-white">Chargement...</p>;

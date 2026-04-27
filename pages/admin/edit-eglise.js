@@ -151,8 +151,8 @@ if (error) throw new Error(error.message);
 
 setLogoUrl(newLogoUrl);
 setLogoFile(null);
+setLogoPreview(newLogoUrl);
 setMessage("✅ Informations mises à jour avec succès !");
-setTimeout(() => router.reload(), 1500); // ✅ dans le try, après le message
 
 } catch (err) {
   setMessage("❌ " + err.message);

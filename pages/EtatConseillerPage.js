@@ -100,51 +100,54 @@ function EtatConseiller() {
 
   // ================= FETCH REPORTS =================
   const fetchReports = async () => {
-    if (!userProfile) return;
-    setShowTable(false);
+  if (!userProfile) return;
+  setShowTable(false);
 
-    try {
-      let query = supabase
-        .from("vue_flow_conseillers")
-        .select("*")
-        .order("date_depart", { ascending: false });
+  try {
+    const isAdmin = userProfile.roles?.includes("Administrateur");
 
-      const isAdmin = userProfile.roles?.includes("Administrateur");
-
-      if (!isAdmin) {
-        // Conseiller/ResponsableIntegration : filtré par leur propre id ET leur eglise_id
-        query = query.eq("conseiller_id", userProfile.id);
-        if (userProfile.eglise_id) {
-          query = query.eq("eglise_id", userProfile.eglise_id);  // ✅ auto
-        }
-      } else {
-        // Admin : filtre par eglise_id choisi dans le select
-        if (filterEglise) {
-          query = query.eq("eglise_id", filterEglise);            // ✅ choix admin
-        }
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      let filteredByDate = data;
-      if (filterDebut) filteredByDate = filteredByDate.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
-      if (filterFin) filteredByDate = filteredByDate.filter(r => new Date(r.date_depart) <= new Date(filterFin));
-
-      setReports(filteredByDate);
-
-      const conseillersDisponibles = Array.from(
-        new Set(filteredByDate.map(r => r.conseiller).filter(Boolean))
-      );
-      setAvailableConseillers(conseillersDisponibles);
-      setFilterConseiller("");
-      setShowTable(true);
-    } catch (err) {
-      console.error("Erreur fetch:", err);
-      setReports([]);
-      setShowTable(false);
+    // Bloquer si admin sans église sélectionnée
+    if (isAdmin && !filterEglise) {
+      alert("Veuillez sélectionner une église");
+      return;
     }
-  };
+
+    let query = supabase
+      .from("vue_flow_conseillers")
+      .select("*")
+      .order("date_depart", { ascending: false });
+
+    if (isAdmin) {
+      // Admin : filtre strict par église choisie
+      query = query.eq("eglise_id", filterEglise);
+    } else {
+      // Conseiller : filtre par son église ET son id
+      query = query
+        .eq("eglise_id", userProfile.eglise_id)
+        .eq("conseiller_id", userProfile.id);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    let filteredByDate = data;
+    if (filterDebut) filteredByDate = filteredByDate.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
+    if (filterFin) filteredByDate = filteredByDate.filter(r => new Date(r.date_depart) <= new Date(filterFin));
+
+    setReports(filteredByDate);
+
+    const conseillersDisponibles = Array.from(
+      new Set(filteredByDate.map(r => r.conseiller).filter(Boolean))
+    );
+    setAvailableConseillers(conseillersDisponibles);
+    setFilterConseiller("");
+    setShowTable(true);
+  } catch (err) {
+    console.error("Erreur fetch:", err);
+    setReports([]);
+    setShowTable(false);
+  }
+};
 
   // ================= UTILITIES =================
   const getMonthNameFR = (monthIndex) => [

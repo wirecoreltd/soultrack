@@ -4,6 +4,44 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 
+function getFlagEmoji(countryName) {
+  const isoMap = {
+    "Afghanistan": "AF", "Afrique du Sud": "ZA", "Albanie": "AL", "Algérie": "DZ",
+    "Allemagne": "DE", "Angola": "AO", "Arabie Saoudite": "SA", "Argentine": "AR",
+    "Australie": "AU", "Autriche": "AT", "Belgique": "BE", "Bénin": "BJ",
+    "Birmanie": "MM", "Bolivie": "BO", "Brésil": "BR", "Burkina Faso": "BF",
+    "Burundi": "BI", "Cameroun": "CM", "Canada": "CA", "Chili": "CL",
+    "Chine": "CN", "Colombie": "CO", "Congo": "CG", "Corée du Sud": "KR",
+    "Côte d'Ivoire": "CI", "Cuba": "CU", "Danemark": "DK", "Egypte": "EG",
+    "Espagne": "ES", "États-Unis": "US", "USA": "US", "Ethiopie": "ET",
+    "Finlande": "FI", "France": "FR", "Gabon": "GA", "Ghana": "GH",
+    "Grèce": "GR", "Guinée": "GN", "Haïti": "HT", "Hongrie": "HU",
+    "Inde": "IN", "Indonésie": "ID", "Iran": "IR", "Irlande": "IE",
+    "Israël": "IL", "Italie": "IT", "Jamaïque": "JM", "Japon": "JP",
+    "Kenya": "KE", "Liban": "LB", "Luxembourg": "LU", "Madagascar": "MG",
+    "Mali": "ML", "Maroc": "MA", "Maurice": "MU", "Mauritanie": "MR",
+    "Mexique": "MX", "Mozambique": "MZ", "Namibie": "NA", "Niger": "NE",
+    "Nigeria": "NG", "Norvège": "NO", "Nouvelle-Zélande": "NZ", "Ouganda": "UG",
+    "Pakistan": "PK", "Pays-Bas": "NL", "Pérou": "PE", "Philippines": "PH",
+    "Pologne": "PL", "Portugal": "PT", "RDC": "CD",
+    "République Démocratique du Congo": "CD", "République Dominicaine": "DO",
+    "Roumanie": "RO", "Royaume-Uni": "GB", "Rwanda": "RW", "Sénégal": "SN",
+    "Sierra Leone": "SL", "Singapour": "SG", "Somalie": "SO", "Soudan": "SD",
+    "Suède": "SE", "Suisse": "CH", "Tanzanie": "TZ", "Tchad": "TD",
+    "Togo": "TG", "Tunisie": "TN", "Turquie": "TR", "Ukraine": "UA",
+    "Uruguay": "UY", "Venezuela": "VE", "Vietnam": "VN", "Zimbabwe": "ZW",
+  };
+
+  const code = isoMap[countryName];
+  if (!code) return "🌍";
+
+  return code
+    .toUpperCase()
+    .split("")
+    .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
+    .join("");
+}
+
 export default function HeaderPages() {
   const router = useRouter();
 
@@ -12,14 +50,14 @@ export default function HeaderPages() {
   const [branche, setBranche] = useState("");
   const [denomination, setDenomination] = useState("");
   const [ville, setVille] = useState("");
+  const [pays, setPays] = useState("");
   const [superviseur, setSuperviseur] = useState("");
   const [logoUrl, setLogoUrl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [invitationPending, setInvitationPending] = useState(false);
   const [pendingToken, setPendingToken] = useState(null);
-  const [pays, setPays] = useState("");
-  
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -39,7 +77,7 @@ export default function HeaderPages() {
         if (profile?.eglise_id) {
           const { data: egliseData } = await supabase
             .from("eglises")
-            .select("nom, logo_url, denomination, ville, pays") // ← ajoute pays
+            .select("nom, logo_url, denomination, ville, pays")
             .eq("id", profile.eglise_id)
             .single();
           if (egliseData) {
@@ -47,8 +85,9 @@ export default function HeaderPages() {
             setLogoUrl(egliseData.logo_url || null);
             setDenomination(egliseData.denomination || "");
             setVille(egliseData.ville || "");
-            setPays(egliseData.pays || ""); // ← ajoute ça
+            setPays(egliseData.pays || "");
           }
+        }
 
         if (profile?.branche_id) {
           const { data: brancheData } = await supabase
@@ -86,46 +125,6 @@ export default function HeaderPages() {
 
     fetchProfile();
   }, []);
-
-  function getFlagEmoji(countryName) {
-  // Correspondance nom → code ISO 2 lettres
-  const isoMap = {
-    "Afghanistan": "AF", "Afrique du Sud": "ZA", "Albanie": "AL", "Algérie": "DZ",
-    "Allemagne": "DE", "Angola": "AO", "Arabie Saoudite": "SA", "Argentine": "AR",
-    "Australie": "AU", "Autriche": "AT", "Belgique": "BE", "Bénin": "BJ",
-    "Birmanie": "MM", "Bolivie": "BO", "Brésil": "BR", "Burkina Faso": "BF",
-    "Burundi": "BI", "Cameroun": "CM", "Canada": "CA", "Chili": "CL",
-    "Chine": "CN", "Colombie": "CO", "Congo": "CG", "Corée du Sud": "KR",
-    "Côte d'Ivoire": "CI", "Cuba": "CU", "Danemark": "DK", "Egypte": "EG",
-    "Espagne": "ES", "États-Unis": "US", "USA": "US", "Ethiopie": "ET",
-    "Finlande": "FI", "France": "FR", "Gabon": "GA", "Ghana": "GH",
-    "Grèce": "GR", "Guinée": "GN", "Haïti": "HT", "Hongrie": "HU",
-    "Inde": "IN", "Indonésie": "ID", "Iran": "IR", "Irlande": "IE",
-    "Israël": "IL", "Italie": "IT", "Jamaïque": "JM", "Japon": "JP",
-    "Kenya": "KE", "Liban": "LB", "Luxembourg": "LU", "Madagascar": "MG",
-    "Mali": "ML", "Maroc": "MA", "Maurice": "MU", "Mauritanie": "MR",
-    "Mexique": "MX", "Mozambique": "MZ", "Namibie": "NA", "Niger": "NE",
-    "Nigeria": "NG", "Norvège": "NO", "Nouvelle-Zélande": "NZ", "Ouganda": "UG",
-    "Pakistan": "PK", "Pays-Bas": "NL", "Pérou": "PE", "Philippines": "PH",
-    "Pologne": "PL", "Portugal": "PT", "RDC": "CD",
-    "République Démocratique du Congo": "CD", "République Dominicaine": "DO",
-    "Roumanie": "RO", "Royaume-Uni": "GB", "Rwanda": "RW", "Sénégal": "SN",
-    "Sierra Leone": "SL", "Singapour": "SG", "Somalie": "SO", "Soudan": "SD",
-    "Suède": "SE", "Suisse": "CH", "Tanzanie": "TZ", "Tchad": "TD",
-    "Togo": "TG", "Tunisie": "TN", "Turquie": "TR", "Ukraine": "UA",
-    "Uruguay": "UY", "Venezuela": "VE", "Vietnam": "VN", "Zimbabwe": "ZW",
-  };
-
-  const code = isoMap[countryName];
-  if (!code) return "🌍"; // drapeau générique si pays non trouvé
-
-  // Convertit le code ISO en emoji drapeau (magic Unicode ✨)
-  return code
-    .toUpperCase()
-    .split("")
-    .map((char) => String.fromCodePoint(127397 + char.charCodeAt(0)))
-    .join("");
-}
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -204,17 +203,18 @@ export default function HeaderPages() {
           {eglise}
         </p>
 
-        {/* Ligne 2 : Branche - Ville */}
+        {/* Ligne 2 : Branche */}
         <p className="text-gray-300 text-sm">
           {branche}
           {ville && <span className="text-amber-300"> - {ville}</span>}
         </p>
-          {/* Ligne 3 : Pays avec drapeau */}
-{pays && (
-  <p className="text-gray-300 text-sm">
-    {getFlagEmoji(pays)} <span className="text-amber-300">{pays}</span>
-  </p>
-)}  
+
+        {/* Ligne 3 : Pays avec drapeau */}
+        {pays && (
+          <p className="text-gray-300 text-sm">
+            {getFlagEmoji(pays)} <span className="text-amber-300">{pays}</span>
+          </p>
+        )}
       </div>
     </div>
   );

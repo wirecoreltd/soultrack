@@ -60,30 +60,15 @@ function UserRow({ u, setSelectedUser, setDeleteUser }) {
         <div className="flex-[2] text-white font-semibold">
           {u.prenom} {u.nom}
         </div>
-
         <div className="flex-[2] text-white">{u.email}</div>
-
         <div className="flex-[2] text-white">{u.telephone || "-"}</div>
-
         <div className="flex-[2] text-white">{rolesDisplay}</div>
-
         <div className="flex-[2] text-amber-300 text-sm">
           {formatDate(u.created_at)}
         </div>
-
         <div className="flex-[1] flex justify-center gap-2">
-          <button
-            onClick={() => setSelectedUser(u)}
-            className="text-blue-400 hover:text-blue-600"
-          >
-            ✏️
-          </button>
-          <button
-            onClick={() => setDeleteUser(u)}
-            className="text-red-400 hover:text-red-600"
-          >
-            🗑️
-          </button>
+          <button onClick={() => setSelectedUser(u)} className="text-blue-400 hover:text-blue-600">✏️</button>
+          <button onClick={() => setDeleteUser(u)} className="text-red-400 hover:text-red-600">🗑️</button>
         </div>
       </div>
 
@@ -92,52 +77,25 @@ function UserRow({ u, setSelectedUser, setDeleteUser }) {
         className="sm:hidden flex flex-col p-4 rounded-xl bg-white/10 border-l-4 gap-2"
         style={{ borderLeftColor: borderColor }}
       >
-        {/* Date à droite */}
-        <div className="text-right text-amber-300 text-xs">Créer le : 
-          {formatDate(u.created_at)}
+        <div className="text-right text-amber-300 text-xs">
+          Créer le : {formatDate(u.created_at)}
         </div>
-
-        {/* Infos */}
         <div className="text-center space-y-1.5">
-           {/* Nom */}
-           <div className="text-white font-semibold">
-             {u.prenom} {u.nom}
-           </div>
-         
-           {/* Téléphone */}
-           <div className="text-white flex justify-center items-center gap-1">
-             <span>📞</span>
-             <span>{u.telephone || "-"}</span>
-           </div>
-         
-           {/* Email */}
-           <div className="text-white flex justify-center items-center gap-1 break-all">
-             <span>📧</span>
-             <span>{u.email}</span>
-           </div>
-         
-           {/* Rôle */}
-           <div className="flex justify-center items-center gap-1 text-orange-400 font-semibold mt-1">
-             <span>🎖️</span>
-             <span>{rolesDisplay}</span>
-           </div>
-         </div>
-
-        {/* Actions centrées */}
-         <div className="mt-2 flex justify-center gap-3 pt-2">
-           <button
-             onClick={() => setSelectedUser(u)}
-             className="text-blue-400 text-sm leading-none"
-           >
-             ✏️
-           </button>
-           <button
-             onClick={() => setDeleteUser(u)}
-             className="text-red-400 text-base leading-none"
-           >
-             🗑️
-           </button>
-         </div>
+          <div className="text-white font-semibold">{u.prenom} {u.nom}</div>
+          <div className="text-white flex justify-center items-center gap-1">
+            <span>📞</span><span>{u.telephone || "-"}</span>
+          </div>
+          <div className="text-white flex justify-center items-center gap-1 break-all">
+            <span>📧</span><span>{u.email}</span>
+          </div>
+          <div className="flex justify-center items-center gap-1 text-orange-400 font-semibold mt-1">
+            <span>🎖️</span><span>{rolesDisplay}</span>
+          </div>
+        </div>
+        <div className="mt-2 flex justify-center gap-3 pt-2">
+          <button onClick={() => setSelectedUser(u)} className="text-blue-400 text-sm leading-none">✏️</button>
+          <button onClick={() => setDeleteUser(u)} className="text-red-400 text-base leading-none">🗑️</button>
+        </div>
       </div>
     </>
   );
@@ -164,46 +122,44 @@ function ListUsersContent() {
   const [deleteUser, setDeleteUser] = useState(null);
   const [search, setSearch] = useState("");
 
-  const [userScope, setUserScope] = useState({
-    eglise_id: null,
-    branche_id: null,
-  });
+  // ✅ Plus de branche_id dans le scope
+  const [egliseId, setEgliseId] = useState(null);
 
+  // ─── Récupérer eglise_id de l'admin connecté ───
   useEffect(() => {
     const fetchUserScope = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData?.session?.user;
       if (!user) return;
 
+      // ✅ On ne sélectionne plus branche_id
       const { data: profile } = await supabase
         .from("profiles")
-        .select("eglise_id, branche_id")
+        .select("eglise_id")
         .eq("id", user.id)
         .single();
 
-      if (profile) {
-        setUserScope({
-          eglise_id: profile.eglise_id,
-          branche_id: profile.branche_id,
-        });
+      if (profile?.eglise_id) {
+        setEgliseId(profile.eglise_id);
       }
     };
     fetchUserScope();
   }, []);
 
+  // ─── Charger les utilisateurs dès qu'on a eglise_id ───
   useEffect(() => {
-    if (!userScope.eglise_id || !userScope.branche_id) return;
+    if (!egliseId) return;
     fetchUsers();
-  }, [userScope]);
+  }, [egliseId]);
 
   const fetchUsers = async () => {
     setLoading(true);
 
+    // ✅ Filtre uniquement par eglise_id (plus de branche_id)
     const { data } = await supabase
       .from("profiles")
       .select("id, prenom, nom, email, telephone, roles, created_at")
-      .eq("eglise_id", userScope.eglise_id)
-      .eq("branche_id", userScope.branche_id)
+      .eq("eglise_id", egliseId)
       .order("created_at", { ascending: true });
 
     setUsers(data || []);
@@ -212,15 +168,12 @@ function ListUsersContent() {
       new Set((data || []).flatMap((u) => u.roles || []))
     );
     setRoles(allRoles);
-
     setLoading(false);
   };
 
   const handleDelete = async () => {
     if (!deleteUser?.id) return;
-
     await supabase.from("profiles").delete().eq("id", deleteUser.id);
-
     setUsers(users.filter((u) => u.id !== deleteUser.id));
     setDeleteUser(null);
   };
@@ -235,8 +188,8 @@ function ListUsersContent() {
     .filter((u) => (role ? u.roles?.includes(role) : true))
     .filter(
       (u) =>
-        u.prenom.toLowerCase().includes(search.toLowerCase()) ||
-        u.nom.toLowerCase().includes(search.toLowerCase())
+        u.prenom?.toLowerCase().includes(search.toLowerCase()) ||
+        u.nom?.toLowerCase().includes(search.toLowerCase())
     );
 
   if (loading)
@@ -246,16 +199,20 @@ function ListUsersContent() {
     <div className="min-h-screen p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Gestion des <span className="text-emerald-300">utilisateurs</span></h1>
-     
-          <div className="max-w-3xl w-full mb-6 text-center mx-auto">
-          <p className="italic text-base text-white/90">
-           Visualiser, filtrer et gérer tous les utilisateurs de votre église. Chaque  <span className="text-blue-300 font-semibold">rôle a une responsabilité spécifique</span>, et 
-           chaque utilisateur contribue à la croissance et au soutien des membres. Utilisez cette interface  <span className="text-blue-300 font-semibold">pour accompagner, 
-            encadrer et développer une communauté solide et fraternelle</span>.
-  
-         </p>
-        </div>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+        Gestion des <span className="text-emerald-300">utilisateurs</span>
+      </h1>
+
+      <div className="max-w-3xl w-full mb-6 text-center mx-auto">
+        <p className="italic text-base text-white/90">
+          Visualiser, filtrer et gérer tous les utilisateurs de votre église. Chaque{" "}
+          <span className="text-blue-300 font-semibold">rôle a une responsabilité spécifique</span>, et
+          chaque utilisateur contribue à la croissance et au soutien des membres. Utilisez cette interface{" "}
+          <span className="text-blue-300 font-semibold">
+            pour accompagner, encadrer et développer une communauté solide et fraternelle
+          </span>.
+        </p>
+      </div>
 
       <div className="max-w-6xl w-full mx-auto mb-6 flex flex-col gap-3">
         <input
@@ -277,10 +234,7 @@ function ListUsersContent() {
               <option key={r}>{r}</option>
             ))}
           </select>
-
-          <span className="text-white text-sm">
-            Total : {filteredUsers.length}
-          </span>
+          <span className="text-white text-sm">Total : {filteredUsers.length}</span>
         </div>
 
         <div className="flex justify-end">
@@ -293,7 +247,7 @@ function ListUsersContent() {
         </div>
       </div>
 
-      {/* TABLE HEADER */}
+      {/* En-tête tableau desktop */}
       <div className="max-w-6xl mx-auto space-y-2">
         <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
           <div className="flex-[2] ml-2">Nom</div>
@@ -314,7 +268,7 @@ function ListUsersContent() {
         ))}
       </div>
 
-      {/* Modals */}
+      {/* Modal édition */}
       {selectedUser && (
         <EditUserModal
           user={selectedUser}
@@ -323,19 +277,24 @@ function ListUsersContent() {
         />
       )}
 
+      {/* Modal suppression */}
       {deleteUser && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50">
-          <div className="bg-white p-6 rounded-xl text-center">
-            <p>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white p-6 rounded-xl text-center shadow-lg">
+            <p className="mb-2 font-semibold text-gray-800">
               Supprimer {deleteUser.prenom} {deleteUser.nom} ?
             </p>
-            <div className="flex gap-3 justify-center mt-4">
-              <button onClick={() => setDeleteUser(null)}>
+            <p className="text-sm text-gray-500 mb-4">Cette action est irréversible.</p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => setDeleteUser(null)}
+                className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300"
+              >
                 Annuler
               </button>
               <button
                 onClick={handleDelete}
-                className="text-red-500"
+                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
               >
                 Supprimer
               </button>

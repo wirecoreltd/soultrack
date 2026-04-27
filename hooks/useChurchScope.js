@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 
@@ -23,7 +22,7 @@ export default function useChurchScope() {
         // 👤 Profil
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, role, eglise_id, branche_id")
+          .select("id, role, eglise_id") // ✅ branche_id retiré
           .eq("id", session.user.id)
           .single();
 
@@ -31,8 +30,8 @@ export default function useChurchScope() {
           throw new Error("Profil introuvable");
         }
 
-        if (!profileData.eglise_id || !profileData.branche_id) {
-          throw new Error("Profil sans église ou branche");
+        if (!profileData.eglise_id) {
+          throw new Error("Profil sans église"); // ✅ validation branche_id supprimée
         }
 
         setProfile(profileData);
@@ -51,16 +50,13 @@ export default function useChurchScope() {
    * 🎯 scopedQuery
    * Applique AUTOMATIQUEMENT :
    * - eglise_id
-   * - branche_id
    */
   const scopedQuery = (table) => {
     if (!profile) return null;
-
     return supabase
       .from(table)
       .select("*")
-      .eq("eglise_id", profile.eglise_id)
-      .eq("branche_id", profile.branche_id)
+      .eq("eglise_id", profile.eglise_id) // ✅ .eq("branche_id", ...) supprimé
       .not("eglise_id", "is", null);
   };
 

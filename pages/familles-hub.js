@@ -7,7 +7,6 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import SendLinkPopup from "../components/SendLinkPopup";
 import LogoutLink from "../components/LogoutLink";
-import AccessGuard from "../components/AccessGuard";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
@@ -211,7 +210,6 @@ useEffect(() => {
         </div>
                   
         <Footer />
-      </div>
-    </AccessGuard>
+      </div>  
   );
 }

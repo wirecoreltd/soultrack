@@ -12,11 +12,10 @@ const roleCards = {
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#F97316" },
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#10B981" },
     { path: "/conseiller-hub", label: "Conseiller", emoji: "🤝", color: "#0EA5E9" },
-    { path: "/rapport-hub", label: "Rapport", emoji: "📈", color: "#FBBF24" },
-    { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" }, 
     { path: "/familles-hub", label: "Familles", emoji: "👑", color: "#F59E0B" },
-    { path: "/Presence", label: "Presence", emoji: "✍🏻", color: "#0EA5E9" }, 
-    
+    { path: "/rapport-hub", label: "Rapport", emoji: "📈", color: "#FBBF24" },
+    { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" },     
+    { path: "/Presence", label: "Presence", emoji: "✍🏻", color: "#0EA5E9" },     
       ],
   
    Superadmin: [
@@ -24,10 +23,10 @@ const roleCards = {
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#F97316" },
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#10B981" },
     { path: "/conseiller-hub", label: "Conseiller", emoji: "🤝", color: "#0EA5E9" },
-    { path: "/rapport-hub", label: "Rapport", emoji: "📈", color: "#FBBF24" },
-    { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" },
     { path: "/familles-hub", label: "Familles", emoji: "👑", color: "#F59E0B" }, 
-     { path: "/Presence", label: "Presence", emoji: "⚙️", color: "#0EA5E9" },
+    { path: "/rapport-hub", label: "Rapport", emoji: "📈", color: "#FBBF24" },
+    { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" },    
+     { path: "/Presence", label: "Presence", emoji: "✍🏻", color: "#0EA5E9" },
     { path: "/Superadmin/Superadmin-hub", label: "Admin SoulTrack", emoji: "🔐", color: "#000000" },
   ],
   
@@ -35,7 +34,8 @@ const roleCards = {
     ResponsableEvangelisation: [{ path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" },],
     ResponsableCellule: [{ path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, ],
     SuperviseurCellule: [{ path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, ],
-    Conseiller: [{ path: "/conseiller-hub", label: "Conseiller Hub", emoji: "🤝", color: "#F59E0B" }, ],    
+    Conseiller: [{ path: "/conseiller-hub", label: "Conseiller Hub", emoji: "🤝", color: "#F59E0B" }, ],  
+    ResponsableFamilles: [{ path: "/familles-hub", label: "Familles", emoji: "👑", color: "#F59E0B" }, ],
     Membre: [],
   };
 

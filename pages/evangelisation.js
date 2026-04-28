@@ -191,9 +191,17 @@ function EvangelisationContent() {
       setShowDoublonPopup(true);
     } else {
       // 🔥 Mettre à jour le state ET la ref
-      setContactsToSendNow(selectedContacts);
-      contactsToSendRef.current = selectedContacts;
-      setShowWhatsappPopup(true);
+      // APRÈS
+setContactsToSendNow(selectedContacts);
+contactsToSendRef.current = selectedContacts;
+
+// Pré-remplir le numéro de la cible si disponible
+const cible = selectedTargetType === "cellule"
+  ? cellules.find((c) => c.id === selectedTarget)
+  : conseillers.find((c) => c.id === selectedTarget);
+if (cible?.telephone) setPhoneNumber(cible.telephone);
+
+setShowWhatsappPopup(true);
     }
   };
 
@@ -619,20 +627,23 @@ const whatsappLink = targetPhone
                 className="flex-1 py-3 bg-gray-300 rounded-2xl font-semibold"
               >
                 Annuler
-              </button>
-              <button
-                onClick={() => {
-                  // 🔥 Passer explicitement les valeurs depuis les refs
-                  sendToWhatsapp(
-                    contactsToSendRef.current,
-                    selectedTargetTypeRef.current,
-                    selectedTargetRef.current
-                  );
-                }}
-                className="flex-1 py-3 bg-green-500 text-white rounded-2xl font-semibold"
-              >
-                Envoyer
-              </button>
+              </button>              
+                <button
+                  onClick={() => {
+                    if (!phoneNumber || phoneNumber.replace(/\D/g, "").length < 8) {
+                      alert("⚠️ Veuillez saisir un numéro WhatsApp valide");
+                      return;
+                    }
+                    sendToWhatsapp(
+                      contactsToSendRef.current,
+                      selectedTargetTypeRef.current,
+                      selectedTargetRef.current
+                    );
+                  }}
+                  className="flex-1 py-3 bg-green-500 text-white rounded-2xl font-semibold"
+                >
+                  Envoyer
+                </button>
             </div>
           </div>
         </div>

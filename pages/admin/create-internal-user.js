@@ -60,6 +60,7 @@ function CreateInternalUserContent() {
     { key: "Administrateur",            label: "Administrateur" },
     { key: "ResponsableIntegration",    label: "Responsable Integration" },
     { key: "ResponsableCellule",        label: "Responsable Cellule" },
+    { key: "ResponsableFamilles",       label: "Responsable Familles" },
     { key: "ResponsableEvangelisation", label: "Responsable Evangelisation" },
     { key: "SuperviseurCellule",        label: "Superviseur Cellule" },
     { key: "Conseiller",                label: "Conseiller" },
@@ -299,6 +300,7 @@ function CreateInternalUserContent() {
             <p>• Responsable Intégration – <span className="text-[#FFB07C] font-semibold">gestion des membres</span> (Hub Membres)</p>
             <p>• Responsable Évangélisation – <span className="text-[#FFB07C] font-semibold">suivi de l&apos;évangélisation</span> (Hub Évangélisation)</p>
             <p>• Responsable Cellule – <span className="text-[#FFB07C] font-semibold">gestion des cellules</span> (Hub Cellule)</p>
+            <p>• Responsable Familles – <span className="text-[#FFB07C] font-semibold">gestion des familles</span> (Familles Cellule)</p>
             <p>• Conseiller – <span className="text-[#FFB07C] font-semibold">accompagnement des membres</span> (Hub Conseiller)</p>
             <p>• Superviseur Cellule – <span className="text-[#FFB07C] font-semibold">supervision et création de responsables</span> (Hub Cellule)</p>
           </div>

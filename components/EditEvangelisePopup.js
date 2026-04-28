@@ -260,45 +260,7 @@ export default function EditEvangelisePopup({
               </select>
             )}
           </Field>
-
-          {/* Section: Besoins */}
-          <SectionTitle>🙏 Besoins</SectionTitle>
-
-          <div className="flex flex-col gap-2">
-            {besoinsOptions.map((item) => (
-              <label key={item} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  value={item}
-                  checked={formData.besoin.includes(item)}
-                  onChange={handleBesoinChange}
-                  className="accent-[#2E3192]"
-                />
-                {item}
-              </label>
-            ))}
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-              <input
-                type="checkbox"
-                value="Autre"
-                checked={showAutre}
-                onChange={handleBesoinChange}
-                className="accent-[#2E3192]"
-              />
-              Autre
-            </label>
-            {showAutre && (
-              <input
-                type="text"
-                name="autreBesoin"
-                value={formData.autreBesoin}
-                onChange={handleChange}
-                placeholder="Précisez..."
-                className="inp mt-1"
-              />
-            )}
-          </div>
-
+          
           {/* Section: Infos */}
           <SectionTitle>📝 Informations</SectionTitle>
 

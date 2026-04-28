@@ -26,25 +26,6 @@ function CellulesHubContent() {
   const router = useRouter();
   const [prenom, setPrenom] = useState("cher membre");
 
-  const [role, setRole] = useState(null);
-
-useEffect(() => {
-  const fetchRole = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    setRole(data?.role);
-  };
-
-  fetchRole();
-}, []);
-  
   useEffect(() => {
     const fetchPrenom = async () => {
       try {
@@ -173,26 +154,33 @@ useEffect(() => {
             </div>
           </Link>
 
-         {role !== "ResponsableCellule" && (
-            <Link
-              href="/admin/create-cellule"
-              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
-              style={{ borderTopColor: "#F97316" }}
-            >
-              <div className="text-4xl mb-1">🛠️</div>
-              <div className="text-lg font-bold text-gray-800 text-center">
-                Créer une Cellule
-              </div>
-            </Link>
-          )}
-        </div>     
+          <Link
+            href="/admin/create-cellule"
+            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+            style={{ borderTopColor: "#F97316" }}
+          >
+            <div className="text-4xl mb-1">🛠️</div>
+            <div className="text-lg font-bold text-gray-800 text-center">
+              Créer une Cellule
+            </div>
+          </Link>
+        </div>   
 
-            {/* ✅ Bouton Envoyer formulaire Cellule */}
-        <div className="w-full max-w-md mb-6">
+             {/* ✅ Bouton Envoyer formulaire Cellule – Nouveau membre */}
+        <div className="w-full max-w-md mb-3">
           <SendLinkPopup
             label="Envoyer formulaire Cellule – Nouveau membre"
             type="ajouter_membre_cellule"
             buttonColor="from-[#f7971e] to-[#ffd200]"
+          />
+        </div>
+
+        {/* ✅ Bouton Envoyer formulaire Cellule – Évangélisation */}
+        <div className="w-full max-w-md mb-6">
+          <SendLinkPopup
+            label="Envoyer formulaire Cellule – Évangélisation"
+            type="ajouter_evangelise_cellule"
+            buttonColor="from-[#11998e] to-[#38ef7d]"
           />
         </div>
                   

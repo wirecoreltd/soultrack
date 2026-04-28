@@ -8,9 +8,9 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
 
 /* =========================
-   Ligne Cellule (RESPONSIVE)
+   Ligne Famille (RESPONSIVE)
 ========================= */
-function CelluleRow({ c, router }) {
+function FamilleRow({ c, router }) {
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const phoneMenuRef = useRef(null);
 
@@ -35,7 +35,7 @@ function CelluleRow({ c, router }) {
       >
         <div className="flex-[2] text-white text-sm">{c.ville}</div>
         <div className="flex-[2] text-white font-semibold text-sm">
-          {c.cellule_full}
+          {c.famille_full}
         </div>
         <div className="flex-[2] text-white text-sm">{c.responsable}</div>
 
@@ -68,7 +68,7 @@ function CelluleRow({ c, router }) {
         <div className="flex-[1] flex justify-center">
           <span
             className="text-orange-400 underline cursor-pointer text-sm"
-            onClick={() => router.push(`/membres-cellule?celluleId=${c.id}`)}
+            onClick={() => router.push(`/membres-famille?familleId=${c.id}`)}
           >
             Détails
           </span>
@@ -82,7 +82,7 @@ function CelluleRow({ c, router }) {
       >
         {/* Nom */}
         <div className="text-white font-semibold text-lg">
-          {c.cellule_full}
+          {c.famille_full}
         </div>
 
         {/* Ville */}
@@ -130,7 +130,7 @@ function CelluleRow({ c, router }) {
           </div>
 
           <button
-            onClick={() => router.push(`/admin/cellules/${c.id}/membres`)}
+            onClick={() => router.push(`/admin/familles/${c.id}/membres`)}
             className="text-orange-400 underline text-sm"
           >
             Voir détails →
@@ -144,29 +144,29 @@ function CelluleRow({ c, router }) {
 /* =========================
    Page principale
 ========================= */
-export default function ListCellules() {
+export default function ListFamilles() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
-      <ListCellulesContent />
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFamilles"]}>
+      <ListFamillesContent />
     </ProtectedRoute>
   );
 }
 
-function ListCellulesContent() {
+function ListfamillesContent() {
   const router = useRouter();
-  const [cellules, setCellules] = useState([]);
+  const [familles, setfamilles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
-  const [selectedCellule, setSelectedCellule] = useState(null);
+  const [selectedFamille, setSelectedFamille] = useState(null);
 
   const [search, setSearch] = useState("");
-  const [filterCellule, setFilterCellule] = useState("");
+  const [filterFamille, setFilterFamille] = useState("");
 
   useEffect(() => {
-    fetchCellules();
+    fetchFamilles();
   }, []);
 
-  const fetchCellules = async () => {
+  const fetchFamilles = async () => {
     setLoading(true);
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -183,12 +183,12 @@ function ListCellulesContent() {
     setUserRole(profile.role);
 
     let query = supabase
-        .from("cellules")
+        .from("familles")
         .select("*")
         .eq("eglise_id", profile.eglise_id)
-        .order("cellule_full");
+        .order("famille_full");
 
-    if (profile.role === "ResponsableCellule") {
+    if (profile.role === "ResponsableFamilles") {
       query = query.eq("responsable_id", profile.id);
     }
 
@@ -199,20 +199,20 @@ function ListCellulesContent() {
         const { count } = await supabase
           .from("membres_complets")
           .select("id", { count: "exact", head: true })
-          .eq("cellule_id", c.id)
+          .eq("famille_id", c.id)
           .eq("statut_suivis", 3);
 
         return { ...c, membre_count: count || 0 };
       })
     );
 
-    setCellules(withCount);
+    setFamilles(withCount);
     setLoading(false);
   };
 
-  const cellulesFiltrees = cellules.filter((c) => {
-    const matchSearch = c.cellule_full?.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filterCellule ? c.cellule_full === filterCellule : true;
+  const famillessFiltrees = familles.filter((c) => {
+    const matchSearch = c.famille_full?.toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filterFamille ? c.famille_full === filterFamille : true;
     return matchSearch && matchFilter;
   });
 
@@ -224,11 +224,11 @@ function ListCellulesContent() {
     <div className="min-h-screen p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Liste des <span className="text-emerald-300">Cellules</span></h1>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Liste des <span className="text-emerald-300">Familles</span></h1>
       
     <div className="max-w-3xl w-full mb-6 text-center mx-auto">
           <p className="italic text-base text-white/90">
-     <span className="text-blue-300 font-semibold">Gérez et consultez facilement vos cellules</span>.
+     <span className="text-blue-300 font-semibold">Gérez et consultez facilement vos familles</span>.
                Recherchez par nom, filtrez rapidement, visualisez les responsables et le nombre de membres, 
                et accédez aux<span className="text-blue-300 font-semibold"> détails pour un suivi précis</span>.
      </p>
@@ -248,30 +248,30 @@ function ListCellulesContent() {
       {/* Filtre */}
       <div className="max-w-6xl mx-auto mb-4 flex justify-center gap-4">
         <select
-          value={filterCellule}
-          onChange={(e) => setFilterCellule(e.target.value)}
+          value={filterFamille}
+          onChange={(e) => setFilterFamille(e.target.value)}
           className="px-3 py-2 rounded-md text-black"
         >
           <option value="">Toutes</option>
-          {cellules.map((c) => (
-            <option key={c.id} value={c.cellule_full}>
-              {c.cellule_full}
+          {familles.map((c) => (
+            <option key={c.id} value={c.famille_full}>
+              {c.famille_full}
             </option>
           ))}
         </select>
 
         <span className="text-white font-semibold">
-          Total : {cellulesFiltrees.length}
+          Total : {famillesFiltrees.length}
         </span>
       </div>
 
       {/* Bouton */}
       <div className="max-w-6xl mx-auto flex justify-end mb-3">
         <button
-          onClick={() => router.push("/admin/create-cellule")}
+          onClick={() => router.push("/admin/create-famille")}
           className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
         >
-          ➕ Ajouter une Cellule
+          ➕ Ajouter une Famille
         </button>
       </div>
 
@@ -281,18 +281,18 @@ function ListCellulesContent() {
         {/* Header Desktop */}
         <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
           <div className="flex-[2]">Ville</div>
-          <div className="flex-[2]">Cellule</div>
+          <div className="flex-[2]">Famille</div>
           <div className="flex-[2]">Responsable</div>
           <div className="flex-[2] text-center">Téléphone</div>
           <div className="flex-[1] text-center">Count</div>
           <div className="flex-[1] text-center">Action</div>
         </div>
 
-        {cellulesFiltrees.length === 0 ? (
-          <p className="text-white text-center mt-6">Aucune cellule</p>
+        {famillesFiltrees.length === 0 ? (
+          <p className="text-white text-center mt-6">Aucune famille</p>
         ) : (
-          cellulesFiltrees.map((c) => (
-            <CelluleRow key={c.id} c={c} router={router} />
+          famillesFiltrees.map((c) => (
+            <FamilleRow key={c.id} c={c} router={router} />
           ))
         )}
       </div>

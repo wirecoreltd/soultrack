@@ -4,8 +4,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import supabase from "../lib/supabaseClient";
-import Image from "next/image";
 import { useMembers } from "../context/MembersContext";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Footer from "../components/Footer";
@@ -18,10 +18,16 @@ export default function AjouterMembreCellule() {
   );
 }
 
-  function AjouterMembreCelluleContent() {
+function AjouterMembreCelluleContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setAllMembers } = useMembers();
-    
+
+  // ✅ Lire eglise_id et cellule_id depuis l'URL si présents
+  const urlEgliseId = searchParams.get("eglise_id");
+  const urlCelluleId = searchParams.get("cellule_id");
+  const isFromLink = !!urlEgliseId && !!urlCelluleId;
+
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [cellules, setCellules] = useState([]);
   const [formData, setFormData] = useState({
@@ -36,78 +42,76 @@ export default function AjouterMembreCellule() {
     type_conversion: "",
     besoin: [],
     autreBesoin: "",
-    cellule_id: "", // ✅ TOUJOURS vide par défaut
+    cellule_id: urlCelluleId || "",
     infos_supplementaires: "",
     date_venu: new Date().toISOString().slice(0, 10),
     is_whatsapp: false,
   });
 
-    const besoinsOptions = ["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
-  "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"];
+  const besoinsOptions = [
+    "Finances", "Santé", "Travail / Études", "Famille / Enfants",
+    "Relations / Conflits", "Addictions / Dépendances", "Guidance spirituelle",
+    "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale"
+  ];
 
   const [success, setSuccess] = useState(false);
 
-    const [userScope, setUserScope] = useState({
-  eglise_id: null,
-  branche_id: null,
-});
+  const [userScope, setUserScope] = useState({
+    eglise_id: urlEgliseId || null,
+  });
 
-useEffect(() => {
-  const fetchUserScope = async () => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData?.session?.user;
-    if (!user) return;
-
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select("eglise_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!error && profile) {
-      setUserScope({
-        eglise_id: profile.eglise_id,        
-      });
-    }
-  };
-
-  fetchUserScope();
-}, []);
-
-
-  // ================== FETCH CELLULES ==================
   useEffect(() => {
-  if (!userScope.eglise_id) return;
+    // Si les params sont dans l'URL, pas besoin de fetch le profil
+    if (isFromLink) return;
 
-  const fetchCellules = async () => {
-    const userId = localStorage.getItem("userId");
+    const fetchUserScope = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) return;
 
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("id, ville, cellule")
-      .eq("responsable_id", userId)
-      .eq("eglise_id", userScope.eglise_id)
-      ;
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("eglise_id")
+        .eq("id", user.id)
+        .single();
 
-    if (error || !data || data.length === 0) {
-      alert("⚠️ Aucune cellule trouvée pour votre église / branche.");
-      return;
-    }
+      if (!error && profile) {
+        setUserScope({ eglise_id: profile.eglise_id });
+      }
+    };
 
-    setCellules(data);
+    fetchUserScope();
+  }, [isFromLink]);
 
-    if (data.length === 1) {
-      setFormData((prev) => ({
-        ...prev,
-        cellule_id: data[0].id,
-      }));
-    }
-  };
+  // ================== FETCH CELLULES (seulement si pas de cellule_id dans l'URL) ==================
+  useEffect(() => {
+    if (!userScope.eglise_id) return;
+    if (isFromLink) return; // ✅ Pas besoin de fetcher les cellules si déjà dans l'URL
 
-  fetchCellules();
-}, [userScope]);
+    const fetchCellules = async () => {
+      const userId = localStorage.getItem("userId");
 
-    
+      const { data, error } = await supabase
+        .from("cellules")
+        .select("id, ville, cellule")
+        .eq("responsable_id", userId)
+        .eq("eglise_id", userScope.eglise_id);
+
+      if (error || !data || data.length === 0) {
+        alert("⚠️ Aucune cellule trouvée pour votre église.");
+        return;
+      }
+
+      setCellules(data);
+
+      if (data.length === 1) {
+        setFormData((prev) => ({ ...prev, cellule_id: data[0].id }));
+      }
+    };
+
+    fetchCellules();
+  }, [userScope, isFromLink]);
+
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
     if (value === "Autre") {
@@ -122,9 +126,6 @@ useEffect(() => {
     });
   };
 
-
-
-  // ================== HANDLERS ==================
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -133,34 +134,33 @@ useEffect(() => {
     });
   };
 
-  // ================== SUBMIT ==================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       const newMemberData = {
-          nom: formData.nom,
-          prenom: formData.prenom,
-          telephone: formData.telephone,
-          ville: formData.ville,
-          venu: formData.venu,
-          cellule_id: formData.cellule_id,
-          eglise_id: userScope.eglise_id,         
-          statut_suivis: 3, // Intégrer
-          etat_contact: "existant", 
-          is_whatsapp: formData.is_whatsapp,
-          infos_supplementaires: formData.infos_supplementaires,
-          besoin: formData.besoin.join(", "),
-          autrebesoin: formData.autreBesoin || null,
-          sexe: formData.sexe || null,
-          age: formData.age || null,
-          date_venu: formData.date_venu || null,
-          bapteme_eau: false,
-          bapteme_esprit: false,
-          statut_initial: formData.statut_initial || null,
-          priere_salut: formData.priere_salut || null,
-          type_conversion: formData.type_conversion || null,
-        };
+        nom: formData.nom,
+        prenom: formData.prenom,
+        telephone: formData.telephone,
+        ville: formData.ville,
+        venu: formData.venu,
+        cellule_id: formData.cellule_id,
+        eglise_id: userScope.eglise_id,
+        statut_suivis: 3,
+        etat_contact: "existant",
+        is_whatsapp: formData.is_whatsapp,
+        infos_supplementaires: formData.infos_supplementaires,
+        besoin: formData.besoin.join(", "),
+        autrebesoin: formData.autreBesoin || null,
+        sexe: formData.sexe || null,
+        age: formData.age || null,
+        date_venu: formData.date_venu || null,
+        bapteme_eau: false,
+        bapteme_esprit: false,
+        statut_initial: formData.statut_initial || null,
+        priere_salut: formData.priere_salut || null,
+        type_conversion: formData.type_conversion || null,
+      };
 
       const { data: newMember, error } = await supabase
         .from("membres_complets")
@@ -171,11 +171,9 @@ useEffect(() => {
       if (error) throw error;
 
       setAllMembers((prev) => [...prev, newMember]);
-
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 
-      // ✅ RESET PROPRE
       setFormData({
         nom: "",
         prenom: "",
@@ -186,15 +184,16 @@ useEffect(() => {
         venu: "",
         priere_salut: "",
         type_conversion: "",
-        date_venu: "",
+        date_venu: new Date().toISOString().slice(0, 10),
         besoin: [],
         autreBesoin: "",
-        cellule_id: cellules.length === 1 ? cellules[0].id : "",
+        // ✅ Conserver cellule_id si venu depuis un lien
+        cellule_id: urlCelluleId || (cellules.length === 1 ? cellules[0].id : ""),
         infos_supplementaires: "",
         is_whatsapp: false,
       });
     } catch (err) {
-      alert("❌ Impossible d’ajouter le membre : " + err.message);
+      alert("❌ Impossible d'ajouter le membre : " + err.message);
     }
   };
 
@@ -209,16 +208,15 @@ useEffect(() => {
       venu: "",
       priere_salut: "",
       type_conversion: "",
-      date_venu: "",
+      date_venu: new Date().toISOString().slice(0, 10),
       besoin: [],
       autreBesoin: "",
-      cellule_id: cellules.length === 1 ? cellules[0].id : "",
+      cellule_id: urlCelluleId || (cellules.length === 1 ? cellules[0].id : ""),
       infos_supplementaires: "",
       is_whatsapp: false,
     });
   };
 
-  // ================== RENDER ==================
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg relative">
@@ -232,27 +230,31 @@ useEffect(() => {
 
         <div className="flex justify-center mb-6">
           <img
-          src="/logo.png"
-          alt="Logo SoulTrack"
-          className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
-          onClick={() => router.push("/index")}
-        />
+            src="/logo.png"
+            alt="Logo SoulTrack"
+            className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
+            onClick={() => router.push("/index")}
+          />
         </div>
 
-         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">Ajouter un membre<br />à ma <span className="text-[#333699]">Cellule</span></h1>
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">
+          Ajouter un membre<br />à ma <span className="text-[#333699]">Cellule</span>
+        </h1>
 
-          <div className="max-w-3xl w-full mb-6 text-center">
-            <p className="italic text-base text-black/90">
-              <span className="text-[#FFB07C] font-semibold">Ajoutez</span> facilement un membre à  <span className="text-[#FFB07C] font-semibold">votre cellule</span>. Renseignez ses informations, ses 
-             <span className="text-[#FFB07C] font-semibold">besoins et son parcours spirituel</span>, puis associez-le à une cellule 
-              pour assurer  <span className="text-[#FFB07C] font-semibold">un suivi structuré et personnalisé</span>.            
-             </p>
-          </div>    
+        <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-black/90">
+            <span className="text-[#FFB07C] font-semibold">Ajoutez</span> facilement un membre à{" "}
+            <span className="text-[#FFB07C] font-semibold">votre cellule</span>. Renseignez ses informations, ses 
+            <span className="text-[#FFB07C] font-semibold"> besoins et son parcours spirituel</span>, puis associez-le à une cellule 
+            pour assurer{" "}
+            <span className="text-[#FFB07C] font-semibold">un suivi structuré et personnalisé</span>.            
+          </p>
+        </div>    
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
-          {/* ✅ MENU DÉROULANT : PAR DÉFAUT "-- Choisir une cellule --" */}
-          {cellules.length > 1 && (
+          {/* ✅ Sélecteur cellule : caché si cellule_id dans l'URL */}
+          {!isFromLink && cellules.length > 1 && (
             <select
               name="cellule_id"
               value={formData.cellule_id}
@@ -268,25 +270,25 @@ useEffect(() => {
               ))}
             </select>
           )}
-          {/* Date de venue */}                  
-                  <input
-                    type="date"
-                    value={formData.date_venu}
-                    onChange={e => setFormData({...formData, date_venu: e.target.value})}
-                    className="input"
-                    required
-                />  
+
+          {/* Date de venue */}
+          <input
+            type="date"
+            value={formData.date_venu}
+            onChange={e => setFormData({ ...formData, date_venu: e.target.value })}
+            className="input"
+            required
+          />
 
           <input name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" required />
           <input name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" required />
 
-          <select className="input" value={formData.sexe} onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}required>
+          <select className="input" value={formData.sexe} onChange={(e) => setFormData({ ...formData, sexe: e.target.value })} required>
             <option value="">-- Civilité --</option>
             <option value="Homme">Homme</option>
             <option value="Femme">Femme</option>
           </select>
 
-          {/* Âge */}         
           <select
             value={formData.age}
             onChange={e => setFormData({ ...formData, age: e.target.value })}
@@ -294,19 +296,20 @@ useEffect(() => {
             required
           >
             <option value="">-- Tranche d'âge --</option>
-            {["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"].map(v => (
+            {["12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans", "41-55 ans", "56-69 ans", "70 ans et plus"].map(v => (
               <option key={v} value={v}>{v}</option>
             ))}
           </select>
 
           <input name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" />
-          <label className="flex items-center gap-2"><input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} />
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} />
             WhatsApp
           </label>
 
           <input name="ville" placeholder="Ville" value={formData.ville} onChange={handleChange} className="input" />
-          {/* Comment est-il venu */}
-          <select name="venu" value={formData.venu} onChange={handleChange}className="input">
+
+          <select name="venu" value={formData.venu} onChange={handleChange} className="input">
             <option value="">-- Comment est-il venu ? --</option>
             <option value="invité">Invité</option>
             <option value="réseaux">Réseaux</option>
@@ -314,7 +317,6 @@ useEffect(() => {
             <option value="autre">Autre</option>
           </select>
         
-          {/* Prière du salut */}
           <select
             className="input"
             value={formData.priere_salut || ""}
@@ -333,14 +335,11 @@ useEffect(() => {
             <option value="Non">Non</option>
           </select>
         
-          {/* Type de conversion */}
           {formData.priere_salut === "Oui" && (
             <select
               className="input"
               value={formData.type_conversion || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, type_conversion: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })}
               required
             >
               <option value="">Type</option>
@@ -349,44 +348,42 @@ useEffect(() => {
             </select>
           )}
         
-            {/* Besoins */}
-            <label className="text-sm sm:text-base font-bold mb-1">Difficultés / Besoins</label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {besoinsOptions.map((item) => (
-                <label key={item} className="flex items-center gap-1 text-sm">
-                  <input
-                    type="checkbox"
-                    value={item}
-                    checked={formData.besoin.includes(item)}
-                    onChange={handleBesoinChange}
-                    className="w-4 h-4 sm:w-5 sm:h-5"
-                  />
-                  {item}
-                </label>
-              ))}
-              <label className="flex items-center gap-1 text-sm">
+          <label className="text-sm sm:text-base font-bold mb-1">Difficultés / Besoins</label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {besoinsOptions.map((item) => (
+              <label key={item} className="flex items-center gap-1 text-sm">
                 <input
                   type="checkbox"
-                  value="Autre"
-                  checked={showBesoinLibre}
+                  value={item}
+                  checked={formData.besoin.includes(item)}
                   onChange={handleBesoinChange}
                   className="w-4 h-4 sm:w-5 sm:h-5"
                 />
-                Autre
+                {item}
               </label>
-            </div>
-            
-            {showBesoinLibre && (
+            ))}
+            <label className="flex items-center gap-1 text-sm">
               <input
-                type="text"
-                placeholder="Précisez..."
-                value={formData.besoinLibre}
-                onChange={(e) =>
-                  setFormData({ ...formData, besoinLibre: e.target.value })
-                }
-                className="input mb-2"
+                type="checkbox"
+                value="Autre"
+                checked={showBesoinLibre}
+                onChange={handleBesoinChange}
+                className="w-4 h-4 sm:w-5 sm:h-5"
               />
-            )}
+              Autre
+            </label>
+          </div>
+          
+          {showBesoinLibre && (
+            <input
+              type="text"
+              placeholder="Précisez..."
+              value={formData.besoinLibre}
+              onChange={(e) => setFormData({ ...formData, besoinLibre: e.target.value })}
+              className="input mb-2"
+            />
+          )}
+
           <textarea
             name="infos_supplementaires"
             placeholder="Informations supplémentaires..."

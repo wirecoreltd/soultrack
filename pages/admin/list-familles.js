@@ -80,17 +80,14 @@ function FamilleRow({ c, router }) {
         className="sm:hidden bg-white/10 backdrop-blur-md rounded-xl p-4 border-l-4 mb-2 relative overflow-visible"
         style={{ borderLeftColor: "#F59E0B" }}
       >
-        {/* Nom */}
         <div className="text-white font-semibold text-lg">
           {c.famille_full}
         </div>
 
-        {/* Ville */}
         <div className="text-white text-sm mb-2 mt-3">
           📍 Ville : <span className="font-semibold">{c.ville}</span>
         </div>
 
-        {/* Responsable */}
         <div className="text-white text-sm mb-2">
           👤 Responsable :{" "}
           <span className="text-amber-300 font-semibold">
@@ -98,7 +95,6 @@ function FamilleRow({ c, router }) {
           </span>
         </div>
 
-        {/* Téléphone */}
         <div className="relative mb-2">
           <span
             className="text-sm cursor-pointer"
@@ -123,7 +119,6 @@ function FamilleRow({ c, router }) {
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex justify-between items-center mt-3">
           <div className="text-white text-sm">
             👥 {c.membre_count} membre{c.membre_count > 1 ? "s" : ""}
@@ -146,18 +141,17 @@ function FamilleRow({ c, router }) {
 ========================= */
 export default function ListFamilles() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFamilles"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFamille", "SuperviseurFamille"]}>
       <ListFamillesContent />
     </ProtectedRoute>
   );
 }
 
-function ListfamillesContent() {
+function ListFamillesContent() {
   const router = useRouter();
-  const [familles, setfamilles] = useState([]);
+  const [familles, setFamilles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
-  const [selectedFamille, setSelectedFamille] = useState(null);
 
   const [search, setSearch] = useState("");
   const [filterFamille, setFilterFamille] = useState("");
@@ -183,19 +177,19 @@ function ListfamillesContent() {
     setUserRole(profile.role);
 
     let query = supabase
-        .from("familles")
-        .select("*")
-        .eq("eglise_id", profile.eglise_id)
-        .order("famille_full");
+      .from("familles")
+      .select("*")
+      .eq("eglise_id", profile.eglise_id)
+      .order("famille_full");
 
-    if (profile.role === "ResponsableFamilles") {
+    if (profile.role === "ResponsableFamille") {
       query = query.eq("responsable_id", profile.id);
     }
 
-    const { data: cellsData } = await query;
+    const { data: familiesData } = await query;
 
     const withCount = await Promise.all(
-      (cellsData || []).map(async (c) => {
+      (familiesData || []).map(async (c) => {
         const { count } = await supabase
           .from("membres_complets")
           .select("id", { count: "exact", head: true })
@@ -210,7 +204,7 @@ function ListfamillesContent() {
     setLoading(false);
   };
 
-  const famillessFiltrees = familles.filter((c) => {
+  const famillesFiltrees = familles.filter((c) => {
     const matchSearch = c.famille_full?.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filterFamille ? c.famille_full === filterFamille : true;
     return matchSearch && matchFilter;
@@ -224,15 +218,15 @@ function ListfamillesContent() {
     <div className="min-h-screen p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Liste des <span className="text-emerald-300">Familles</span></h1>
-      
-    <div className="max-w-3xl w-full mb-6 text-center mx-auto">
-          <p className="italic text-base text-white/90">
-     <span className="text-blue-300 font-semibold">Gérez et consultez facilement vos familles</span>.
-               Recherchez par nom, filtrez rapidement, visualisez les responsables et le nombre de membres, 
-               et accédez aux<span className="text-blue-300 font-semibold"> détails pour un suivi précis</span>.
-     </p>
-        </div>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-white text-center">
+        Liste des <span className="text-emerald-300">Familles</span>
+      </h1>
+
+      <div className="max-w-3xl w-full mb-6 text-center mx-auto">
+        <p className="italic text-base text-white/90">
+          Gestion des familles de l’église, suivi des membres et responsables.
+        </p>
+      </div>
 
       {/* Recherche */}
       <div className="flex justify-center mb-4">
@@ -277,17 +271,6 @@ function ListfamillesContent() {
 
       {/* Tableau */}
       <div className="max-w-6xl mx-auto space-y-2">
-
-        {/* Header Desktop */}
-        <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
-          <div className="flex-[2]">Ville</div>
-          <div className="flex-[2]">Famille</div>
-          <div className="flex-[2]">Responsable</div>
-          <div className="flex-[2] text-center">Téléphone</div>
-          <div className="flex-[1] text-center">Count</div>
-          <div className="flex-[1] text-center">Action</div>
-        </div>
-
         {famillesFiltrees.length === 0 ? (
           <p className="text-white text-center mt-6">Aucune famille</p>
         ) : (

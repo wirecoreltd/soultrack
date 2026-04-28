@@ -190,22 +190,23 @@ function EvangelisationContent() {
       setDoublonsDetected(detected);
       setPendingContacts(selectedContacts);
       setShowDoublonPopup(true);
-    } else {
-      // 🔥 Mettre à jour le state ET la ref
-      // APRÈS
-setContactsToSendNow(selectedContacts);
-contactsToSendRef.current = selectedContacts;
+    // APRÈS
+} else {
+  setContactsToSendNow(selectedContacts);
+  contactsToSendRef.current = selectedContacts;
 
-// Pré-remplir le numéro de la cible si disponible
-const cibleName = selectedTargetType === "cellule"
-  ? cible?.responsable || cible?.cellule_full || ""
-  : cible ? `${cible.prenom} ${cible.nom}` : "";
+  const cible = selectedTargetType === "cellule"
+    ? cellules.find((c) => c.id === selectedTarget)
+    : conseillers.find((c) => c.id === selectedTarget);
 
-setPhoneNumber(cible?.telephone || "");
-setTargetName(cibleName);
-setShowWhatsappPopup(true);
-    }
-  };
+  const cibleName = selectedTargetType === "cellule"
+    ? cible?.responsable || cible?.cellule_full || ""
+    : cible ? `${cible.prenom} ${cible.nom}` : "";
+
+  setPhoneNumber(cible?.telephone || "");
+  setTargetName(cibleName);
+  setShowWhatsappPopup(true);
+}
 
   /* ================= ÉCRITURE DANS suivi_assignments_evangelises ================= */
   const writeAssignments = async (insertedSuivis, targetType, targetId) => {
@@ -365,12 +366,7 @@ setShowWhatsappPopup(true);
 
       message += "Merci pour ton engagement ✨";
 
-      const rawPhone = phoneNumber
-  ? phoneNumber.replace(/\D/g, "")
-  : cible.telephone?.replace(/\D/g, "") || "";
-
-// Un numéro valide doit avoir au moins 8 chiffres
-// APRÈS — si phoneNumber est vide on n'utilise pas le numéro de la table
+      // APRÈS — garder uniquement ceci
 const rawPhone = phoneNumber ? phoneNumber.replace(/\D/g, "") : "";
 const targetPhone = rawPhone.length >= 8 ? rawPhone : "";
 

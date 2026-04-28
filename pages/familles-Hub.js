@@ -14,15 +14,15 @@ import HeaderPages from "../components/HeaderPages";
 import ProtectedRoute from "../components/ProtectedRoute"; 
 import Footer from "../components/Footer";
 
-export default function FamillesHub() {
+export default function famillesHub() {
   return (
     <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFamilles", "Superadmin"]}>
-      <FamillesHubContent />
+      <famillesHubContent />
     </ProtectedRoute>
   );
 }
 
-function FamillesHubContent() {
+function famillesHubContent() {
   const router = useRouter();
   const [prenom, setPrenom] = useState("cher membre");
 

@@ -10,6 +10,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
   const [egliseId, setEgliseId] = useState(null);
   const [cellules, setCellules] = useState([]);
   const [selectedCelluleId, setSelectedCelluleId] = useState(celluleId || "");
+  const [selectedCelluleName, setSelectedCelluleName] = useState("");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -48,7 +49,20 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
             setCellules(cellulesData);
             if (cellulesData.length === 1) {
               setSelectedCelluleId(cellulesData[0].id);
+              setSelectedCelluleName(`${cellulesData[0].ville} - ${cellulesData[0].cellule}`);
             }
+          }
+        }
+
+        // Si celluleId est passé en prop, récupérer son nom
+        if (celluleId) {
+          const { data: celluleData } = await supabase
+            .from("cellules")
+            .select("ville, cellule")
+            .eq("id", celluleId)
+            .single();
+          if (celluleData) {
+            setSelectedCelluleName(`${celluleData.ville} - ${celluleData.cellule}`);
           }
         }
       } catch (err) {
@@ -61,13 +75,14 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
 
   const getLink = () => {
     const base = window.location.origin;
+    // ✅ Toujours résoudre cid depuis celluleId (prop) ou selectedCelluleId (select)
+    const cid = celluleId || selectedCelluleId;
 
     if (type === "ajouter_membre") {
       return `${base}/add-member?eglise_id=${egliseId}`;
     }
 
     if (type === "ajouter_membre_cellule") {
-      const cid = celluleId || selectedCelluleId;
       return `${base}/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}`;
     }
 
@@ -76,7 +91,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     }
 
     if (type === "ajouter_evangelise_cellule") {
-      const cid = celluleId || selectedCelluleId;
+      // ✅ CORRIGÉ : cellule_id est maintenant bien inclus dans l'URL
       return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}`;
     }
 
@@ -92,11 +107,15 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
 
     const link = getLink();
 
+    // Nom de la cellule à afficher dans le message
+    const celluleName = selectedCelluleName || "";
+
+    // ✅ Nouveau format de message
     const message =
-      type === "ajouter_membre_cellule"
-        ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la cellule.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
-        : type === "ajouter_evangelise_cellule"
-        ? `Bonjour 👋\n\nVoici le lien pour enregistrer une personne évangélisée dans la cellule.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
+      type === "ajouter_evangelise_cellule"
+        ? `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nCellule : ${celluleName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
+        : type === "ajouter_membre_cellule"
+        ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la cellule.\n\nCellule : ${celluleName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
         : type === "ajouter_membre"
         ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
         : `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`;
@@ -132,7 +151,11 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
             {(type === "ajouter_membre_cellule" || type === "ajouter_evangelise_cellule") && !celluleId && cellules.length > 1 && (
               <select
                 value={selectedCelluleId}
-                onChange={(e) => setSelectedCelluleId(e.target.value)}
+                onChange={(e) => {
+                  setSelectedCelluleId(e.target.value);
+                  const found = cellules.find(c => c.id === e.target.value);
+                  setSelectedCelluleName(found ? `${found.ville} - ${found.cellule}` : "");
+                }}
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-orange-400"
                 required
               >

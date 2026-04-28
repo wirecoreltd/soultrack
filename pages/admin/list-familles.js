@@ -35,8 +35,8 @@ function FamilleRow({ c, router }) {
       >
         <div className="flex-[2] text-white text-sm">{c.ville}</div>
         <div className="flex-[2] text-white font-semibold text-sm">
-          {c.famille_full}
-        </div>
+           {c.ville} - {c.famille}
+         </div>
         <div className="flex-[2] text-white text-sm">{c.responsable}</div>
 
         {/* Téléphone */}
@@ -205,10 +205,13 @@ function ListFamillesContent() {
   };
 
   const famillesFiltrees = familles.filter((c) => {
-    const matchSearch = c.famille_full?.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filterFamille ? c.famille_full === filterFamille : true;
-    return matchSearch && matchFilter;
-  });
+  const full = `${c.ville} - ${c.famille}`.toLowerCase();
+
+  const matchSearch = full.includes(search.toLowerCase());
+  const matchFilter = filterFamille ? full === filterFamille : true;
+
+  return matchSearch && matchFilter;
+});
 
   if (loading) {
     return <p className="text-center mt-10 text-white">Chargement...</p>;
@@ -246,11 +249,9 @@ function ListFamillesContent() {
           onChange={(e) => setFilterFamille(e.target.value)}
           className="px-3 py-2 rounded-md text-black"
         >
-          <option value="">Toutes</option>
-          {familles.map((c) => (
-            <option key={c.id} value={c.famille_full}>
-              {c.famille_full}
-            </option>
+          <option key={c.id} value={`${c.ville} - ${c.famille}`}>
+  {c.ville} - {c.famille}
+</option>
           ))}
         </select>
 

@@ -57,7 +57,7 @@ function CreateFamilleContent() {
       const { data, error } = await supabase
         .from("profiles")
         .select("id, prenom, nom, telephone")
-        .eq("role", "ResponsableFamille")
+        .eq("role", "ResponsableFamilles")
         .eq("eglise_id", egliseId);
 
       if (!error) setResponsables(data || []);

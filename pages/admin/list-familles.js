@@ -81,7 +81,7 @@ function FamilleRow({ c, router }) {
         style={{ borderLeftColor: "#F59E0B" }}
       >
         <div className="text-white font-semibold text-lg">
-          {c.famille_full}
+          {c.ville} - {c.famille}
         </div>
 
         <div className="text-white text-sm mb-2 mt-3">
@@ -244,16 +244,22 @@ function ListFamillesContent() {
 
       {/* Filtre */}
       <div className="max-w-6xl mx-auto mb-4 flex justify-center gap-4">
-        <select
-          value={filterFamille}
-          onChange={(e) => setFilterFamille(e.target.value)}
-          className="px-3 py-2 rounded-md text-black"
-        >
-          <option key={c.id} value={`${c.ville} - ${c.famille}`}>
-  {c.ville} - {c.famille}
-</option>
-         // ))}
-        </select>
+       <select
+  value={filterFamille}
+  onChange={(e) => setFilterFamille(e.target.value)}
+  className="px-3 py-2 rounded-md text-black"
+>
+  <option value="">Toutes</option>
+
+  {familles.map((c) => {
+    const full = `${c.ville} - ${c.famille}`;
+    return (
+      <option key={c.id} value={full}>
+        {full}
+      </option>
+    );
+  })}
+</select>
 
         <span className="text-white font-semibold">
           Total : {famillesFiltrees.length}

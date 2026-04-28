@@ -68,16 +68,7 @@ function CellulesHubContent() {
               afin que chacun puisse <span className="text-blue-300 font-semibold">s'épanouir pleinement dans la foi</span>.
             </p>
           </div>
-        </div>
-
-        {/* ✅ Bouton Envoyer formulaire Cellule */}
-        <div className="w-full max-w-md mb-6">
-          <SendLinkPopup
-            label="📨 Envoyer formulaire Cellule – Nouveau membre"
-            type="ajouter_membre_cellule"
-            buttonColor="from-[#f7971e] to-[#ffd200]"
-          />
-        </div>
+        </div>       
 
         {/* Liste des Cellules */}
         <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6 flex-wrap">
@@ -174,6 +165,15 @@ function CellulesHubContent() {
             </div>
           </Link>
         </div>     
+
+            {/* ✅ Bouton Envoyer formulaire Cellule */}
+        <div className="w-full max-w-md mb-6">
+          <SendLinkPopup
+            label="📨 Envoyer formulaire Cellule – Nouveau membre"
+            type="ajouter_membre_cellule"
+            buttonColor="from-[#f7971e] to-[#ffd200]"
+          />
+        </div>
                   
         <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-white/90">

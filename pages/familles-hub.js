@@ -76,11 +76,11 @@ useEffect(() => {
 
         {/* 🔹 Titre + texte motivant */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Espace Cellule</h1>
+          <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Espace Familles</h1>
         
           <div className="max-w-3xl w-full mb-6 text-center">
             <p className="italic text-base text-white/90">
-              Chaque cellule est un <span className="text-blue-300 font-semibold">espace</span> où les âmes grandissent, sont <span className="text-blue-300 font-semibold">accompagnées et encouragées dans leur cheminement</span>. 
+              Chaque Famille est un <span className="text-blue-300 font-semibold">espace</span> où les âmes grandissent, sont <span className="text-blue-300 font-semibold">accompagnées et encouragées dans leur cheminement</span>. 
               Ensemble, unissons nos forces, construisons et faisons fructifier chaque vie, 
               afin que chacun puisse <span className="text-blue-300 font-semibold">s'épanouir pleinement dans la foi</span>.
             </p>

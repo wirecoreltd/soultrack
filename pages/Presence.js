@@ -290,7 +290,7 @@ function Presence() {
           let q = supabase
             .from("membres_complets")
             .select("id, prenom, nom, telephone")
-            .eq("eglise_id", profile.eglise_id);
+            .eq("eglise_id", profile.eglise_id)
             .in("etat_contact", ["existant", "nouveau"]);
           
           if (myIds !== null) {

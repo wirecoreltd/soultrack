@@ -12,17 +12,18 @@ const roleCards = {
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#F97316" },
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#10B981" },
     { path: "/conseiller-hub", label: "Conseiller", emoji: "🤝", color: "#0EA5E9" },
+    { path: "/Familles", label: "Familles", emoji: "👑", color: "#710ee9" }, 
     { path: "/rapport-hub", label: "Rapport", emoji: "📈", color: "#FBBF24" },
     { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" },  
-    { path: "/Presence", label: "Presence", emoji: "✍🏻", color: "#0EA5E9" }, 
-    
-      ],
+    { path: "/Presence", label: "Presence", emoji: "✍🏻", color: "#0EA5E9" },    
+    ],
   
    Superadmin: [
     { path: "/membres-hub", label: "Gestion des membres", emoji: "🧭", color: "#0E7490" },
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#F97316" },
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#10B981" },
     { path: "/conseiller-hub", label: "Conseiller", emoji: "🤝", color: "#0EA5E9" },
+    { path: "/Familles", label: "Familles", emoji: "👑", color: "#710ee9" }, 
     { path: "/rapport-hub", label: "Rapport", emoji: "📈", color: "#FBBF24" },
     { path: "/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" },
      { path: "/Presence", label: "Presence", emoji: "⚙️", color: "#0EA5E9" },
@@ -33,6 +34,7 @@ const roleCards = {
     ResponsableEvangelisation: [{ path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" },],
     ResponsableCellule: [{ path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, ],
     SuperviseurCellule: [{ path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, ],
+    ResponsableFamilles: [{ path: "/Familles-hub", label: "Familles", emoji: "👑", color: "#710ee9" }, ],
     Conseiller: [{ path: "/conseiller-hub", label: "Conseiller Hub", emoji: "🤝", color: "#F59E0B" }, ],    
     Membre: [],
   };

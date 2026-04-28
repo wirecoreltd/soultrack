@@ -11,6 +11,7 @@ export default function SuiviPopup({ member, onClose, user }) {
   const [editingSuivi, setEditingSuivi] = useState(null);
 
   const formTopRef = useRef(null);
+  const modalRef = useRef(null);
 
   const parseBesoinsList = (val) => {
     if (!val) return [];
@@ -57,6 +58,17 @@ export default function SuiviPopup({ member, onClose, user }) {
     "Communauté / Isolement",
     "Dépression / Santé mentale",
   ];
+
+  // Click outside handler
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (modalRef.current && !modalRef.current.contains(e.target)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
 
   useEffect(() => {
     const resolveUser = async () => {
@@ -138,7 +150,6 @@ export default function SuiviPopup({ member, onClose, user }) {
 
   const handleEditSuivi = (s) => {
     const besoinsArr = parseHistoriqueBesoin(s.besoin);
-
     const besoinChecked = [];
     const besoinStatuts = {};
     const resolved = [];
@@ -266,7 +277,6 @@ export default function SuiviPopup({ member, onClose, user }) {
     };
 
     if (editingSuivi) {
-      // ─── MODE ÉDITION : UPDATE Supabase ───
       const { error: updateError } = await supabase
         .from("suivis")
         .update(payload)
@@ -279,19 +289,15 @@ export default function SuiviPopup({ member, onClose, user }) {
         return;
       }
 
-      // 🔥 Mise à jour LOCALE directe dans le state
-      // On reconstruit l'objet complet sans re-fetch pour éviter les problèmes de cache
       const updatedSuivi = {
-        ...editingSuivi,           // garde id, membre_id, created_by, profiles (jointure déjà là)
-        ...payload,                // écrase avec les nouvelles valeurs
+        ...editingSuivi,
+        ...payload,
       };
 
       setSuivis((prev) =>
         prev.map((s) => (s.id === editingSuivi.id ? updatedSuivi : s))
       );
-
     } else {
-      // ─── MODE CRÉATION : INSERT puis re-fetch ───
       const { error: insertError } = await supabase.from("suivis").insert({
         ...payload,
         membre_id: member.id,
@@ -305,11 +311,9 @@ export default function SuiviPopup({ member, onClose, user }) {
         return;
       }
 
-      // Re-fetch complet pour avoir la nouvelle ligne avec son id et profiles
       await fetchSuivis();
     }
 
-    // Mettre à jour membres_complets.besoin
     await supabase
       .from("membres_complets")
       .update({ besoin: JSON.stringify(newMemberBesoins) })
@@ -332,27 +336,22 @@ export default function SuiviPopup({ member, onClose, user }) {
     });
   };
 
-  // ✅ Pour input date
-const formatDateForInput = (date) => {
-  if (!date) return "";
-  return date.split("T")[0];
-};
+  const formatDateForInput = (date) => {
+    if (!date) return "";
+    return date.split("T")[0];
+  };
 
-// ✅ Pour affichage joli
-const formatDate = (dateStr) => {
-  if (!dateStr) return "";
-  try {
-    const d = new Date(dateStr);
-    const day = d.getDate().toString().padStart(2, "0");
-    const months = [
-      "Janv", "Févr", "Mars", "Avr", "Mai", "Juin",
-      "Juil", "Août", "Sept", "Oct", "Nov", "Déc",
-    ];
-    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
-  } catch {
-    return dateStr;
-  }
-};
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    try {
+      const d = new Date(dateStr);
+      const day = d.getDate().toString().padStart(2, "0");
+      const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
+      return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    } catch {
+      return dateStr;
+    }
+  };
 
   const parseHistoriqueBesoin = (besoinJson) => {
     if (!besoinJson) return [];
@@ -375,61 +374,82 @@ const formatDate = (dateStr) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white w-full max-w-2xl p-5 rounded-xl max-h-[85vh] overflow-y-auto">
-
-        {/* HEADER */}
-        <div ref={formTopRef} className="flex justify-between items-center mb-4">
-          <h2 className="font-bold text-lg">
-            💡 Suivi — {member.prenom} {member.nom}
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      style={{ background: "rgba(30,35,90,0.35)", backdropFilter: "blur(6px)" }}
+    >
+      <div
+        ref={modalRef}
+        className="relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
+        style={{ background: "#ffffff", border: "1px solid #e2e8f0" }}
+      >
+        {/* ── HEADER ── */}
+        <div
+          ref={formTopRef}
+          className="px-6 pt-6 pb-4 relative"
+          style={{ background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}
+        >
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-white font-bold text-sm transition-all"
+            style={{ background: "rgba(255,255,255,0.2)" }}
+          >
+            ✕
+          </button>
+          <h2 className="text-xl font-bold text-white pr-10">
+            💡 {member.prenom} {member.nom}
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-black text-xl">✕</button>
+          <p className="text-blue-100 text-sm mt-1 opacity-80">Suivi pastoral</p>
         </div>
 
-        {/* Bandeau mode édition */}
-        {editingSuivi && (
-          <div className="mb-3 flex items-center justify-between bg-orange-50 border border-orange-300 rounded-lg px-3 py-2">
-            <p className="text-orange-700 text-sm font-semibold">
-              ✏️ Modification du suivi du {formatDate(editingSuivi.date_action)}
-            </p>
-            <button
-              onClick={handleCancelEdit}
-              className="text-xs text-gray-500 underline hover:text-gray-700"
+        {/* ── BODY ── */}
+        <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
+
+          {/* Bandeau mode édition */}
+          {editingSuivi && (
+            <div className="flex items-center justify-between bg-orange-50 border border-orange-300 rounded-xl px-4 py-2">
+              <p className="text-orange-700 text-sm font-semibold">
+                ✏️ Modification du suivi du {formatDate(editingSuivi.date_action)}
+              </p>
+              <button
+                onClick={handleCancelEdit}
+                className="text-xs text-gray-500 underline hover:text-gray-700"
+              >
+                Annuler
+              </button>
+            </div>
+          )}
+
+          {/* ── SECTION FORMULAIRE ── */}
+          <SectionTitle>📋 {editingSuivi ? "Modifier le suivi" : "Nouveau suivi"}</SectionTitle>
+
+          {/* Date */}
+          <Field label="Date">
+            <input
+              type="date"
+              value={formatDateForInput(form.date_action)}
+              onChange={(e) => setForm((prev) => ({ ...prev, date_action: e.target.value }))}
+              className="inp"
+            />
+          </Field>
+
+          {/* Type */}
+          <Field label="Type d'action">
+            <select
+              value={form.type}
+              onChange={(e) => setForm({ ...form, type: e.target.value })}
+              className="inp"
             >
-              Annuler
-            </button>
-          </div>
-        )}
+              <option value="">-- Sélectionner --</option>
+              <option value="Appel">Appel</option>
+              <option value="Visite">Visite</option>
+              <option value="Entretien">Entretien</option>
+            </select>
+          </Field>
 
-        {/* FORM */}
-        <div className="space-y-3 border-b pb-4">
-
-        <input
-          type="date"
-          value={formatDateForInput(form.date_action)}
-          onChange={(e) =>
-            setForm(prev => ({
-              ...prev,
-              date_action: e.target.value
-            }))
-          }
-        />
-
-          <select
-            value={form.type}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-            className="border p-2 w-full rounded"
-          >
-            <option value="">Type d'action</option>
-            <option value="Appel">Appel</option>
-            <option value="Visite">Visite</option>
-            <option value="Entretien">Entretien</option>
-          </select>
-
-          {/* BESOINS */}
-          <div>
-            <p className="font-semibold mb-2">Besoins</p>
-            <div className="space-y-2">
+          {/* Besoins */}
+          <Field label="Besoins">
+            <div className="space-y-2 mt-1">
               {besoinsOptions.map((b) => {
                 const isChecked = form.besoin.includes(b);
                 const isResolved = resolvedBesoins.includes(b);
@@ -439,7 +459,6 @@ const formatDate = (dateStr) => {
                 let showTick = false;
                 if (isResolved) {
                   boxStyle = "bg-green-500 border-green-500";
-                  showTick = false;
                 } else if (isChecked) {
                   boxStyle = "bg-orange-400 border-orange-400";
                   showTick = true;
@@ -460,7 +479,7 @@ const formatDate = (dateStr) => {
                           </svg>
                         )}
                       </div>
-                      <span className={isResolved ? "line-through text-gray-400" : ""}>
+                      <span className={isResolved ? "line-through text-gray-400" : "text-gray-700"}>
                         {b}
                       </span>
                     </label>
@@ -488,44 +507,28 @@ const formatDate = (dateStr) => {
                 );
               })}
             </div>
-          </div>
+          </Field>
 
-          <textarea
-            placeholder="Commentaire..."
-            value={form.commentaire}
-            onChange={(e) => setForm({ ...form, commentaire: e.target.value })}
-            className="border p-2 w-full rounded"
-            rows={3}
-          />
+          {/* Commentaire */}
+          <Field label="Commentaire">
+            <textarea
+              placeholder="Commentaire..."
+              value={form.commentaire}
+              onChange={(e) => setForm({ ...form, commentaire: e.target.value })}
+              className="inp"
+              rows={3}
+            />
+          </Field>
 
           {currentUserName && (
-            <p className="text-center text-sm text-gray-400">
-              👤 {currentUserName}
-            </p>
+            <p className="text-center text-sm text-gray-400">👤 {currentUserName}</p>
           )}
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className={`px-4 py-2 rounded w-full text-white font-semibold ${
-              editingSuivi
-                ? "bg-orange-500 hover:bg-orange-600"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {loading
-              ? editingSuivi ? "Mise à jour..." : "Ajout..."
-              : editingSuivi ? "💾 Enregistrer les modifications" : "Ajouter suivi"
-            }
-          </button>
-        </div>
-
-        {/* HISTORIQUE */}
-        <div className="mt-4">
-          <h3 className="font-bold mb-2">📅 Historique</h3>
+          {/* ── SECTION HISTORIQUE ── */}
+          <SectionTitle>📅 Historique</SectionTitle>
 
           {suivis.length === 0 && (
-            <p className="text-sm text-gray-500">Aucun suivi pour le moment</p>
+            <p className="text-sm text-gray-400 italic">Aucun suivi pour le moment</p>
           )}
 
           {suivis.map((s) => {
@@ -535,21 +538,22 @@ const formatDate = (dateStr) => {
             return (
               <div
                 key={s.id}
-                className={`border-b py-3 text-sm space-y-1 rounded-lg px-2 transition-colors ${
-                  isBeingEdited ? "bg-orange-50 border border-orange-300" : ""
+                className={`rounded-xl px-4 py-3 text-sm space-y-1 border transition-colors ${
+                  isBeingEdited
+                    ? "bg-orange-50 border-orange-300"
+                    : "bg-gray-50 border-gray-200"
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <p className="font-semibold">
+                  <p className="font-semibold text-gray-800">
                     📅 {formatDate(s.date_action)} — {s.action_type}
                   </p>
-
                   <button
                     onClick={() => handleEditSuivi(s)}
-                    className={`text-xs px-2 py-1 rounded font-semibold border transition-colors ${
+                    className={`text-xs px-2 py-1 rounded-lg font-semibold border transition-colors ${
                       isBeingEdited
                         ? "bg-orange-100 border-orange-400 text-orange-700"
-                        : "bg-gray-100 border-gray-300 text-gray-600 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600"
+                        : "bg-white border-gray-300 text-gray-600 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600"
                     }`}
                   >
                     {isBeingEdited ? "✏️ En cours..." : "✏️ Modifier"}
@@ -558,14 +562,12 @@ const formatDate = (dateStr) => {
 
                 {besoinsArr.length > 0 && (
                   <div className="mt-1">
-                    <p className="text-gray-500 text-xs mb-0.5">Besoin :</p>
+                    <p className="text-gray-400 text-xs mb-0.5">Besoin :</p>
                     <div className="space-y-0.5">
                       {besoinsArr.map((item, i) => (
                         <p key={i} className="text-gray-700">
                           {item.label} —{" "}
-                          <span className={statutColor(item.statut)}>
-                            {item.statut}
-                          </span>
+                          <span className={statutColor(item.statut)}>{item.statut}</span>
                         </p>
                       ))}
                     </div>
@@ -584,7 +586,85 @@ const formatDate = (dateStr) => {
           })}
         </div>
 
+        {/* ── FOOTER ── */}
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all"
+          >
+            Fermer
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
+            style={{
+              background: loading
+                ? "#a0a0c0"
+                : editingSuivi
+                ? "linear-gradient(135deg, #f97316 0%, #ea580c 100%)"
+                : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
+            }}
+          >
+            {loading
+              ? editingSuivi ? "Mise à jour..." : "Ajout..."
+              : editingSuivi ? "💾 Enregistrer les modifications" : "Ajouter suivi"}
+          </button>
+        </div>
+
+        <style jsx>{`
+          .inp {
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            color: #1e293b;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+          }
+          .inp:focus {
+            border-color: #2E3192;
+            background: #fff;
+          }
+          select.inp option {
+            background: white;
+            color: #1e293b;
+          }
+        `}</style>
       </div>
+    </div>
+  );
+}
+
+// ── Helper sub-components ──
+function SectionTitle({ children }) {
+  return (
+    <div className="flex items-center gap-2 pt-2">
+      <span
+        className="text-xs font-bold uppercase tracking-widest"
+        style={{ color: "#2E3192" }}
+      >
+        {children}
+      </span>
+      <div className="flex-1 h-px" style={{ background: "#e2e8f0" }} />
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label
+        className="text-xs font-semibold uppercase tracking-wide"
+        style={{ color: "#64748b" }}
+      >
+        {label}
+      </label>
+      {children}
     </div>
   );
 }

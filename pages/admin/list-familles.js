@@ -163,36 +163,32 @@ function ListFamillesContent() {
   const fetchFamilles = async () => {
     setLoading(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    console.log("USER:", user, userError);
     if (!user) return;
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("id, role, eglise_id")
       .eq("id", user.id)
       .single();
 
+    console.log("PROFILE:", profile, profileError);
     if (!profile) return;
 
     setUserRole(profile.role);
 
-    let query = supabase
+    const { data: familiesData, error: familiesError } = await supabase
       .from("familles")
       .select("*")
       .eq("eglise_id", profile.eglise_id)
       .order("famille_full");
 
-    if (profile.role === "ResponsableFamille") {
-      query = query.eq("responsable_id", profile.id);
-    }
+    console.log("FAMILIES:", familiesData, familiesError);
 
-    const { data: familiesData } = await query;
+    const withCount = (familiesData || []).map((c) => ({ ...c, membre_count: 0 }));
 
-    const withCount = await Promise.all(
-  (familiesData || []).map(async (c) => {
-    return { ...c, membre_count: 0 };
-  })
-);
+    console.log("WITH COUNT:", withCount);
 
     setFamilles(withCount);
     setLoading(false);

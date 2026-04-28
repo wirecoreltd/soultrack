@@ -328,7 +328,7 @@ function EvangelisationContent() {
       setCheckedContacts({});
 
       // 🔹 Construire le message WhatsApp
-      let message = `👋 Bonjour ${targetType === "cellule" ? cible.cellule_full : cible.prenom},\n\n`;
+      let message = `👋 Bonjour ${targetType === "cellule" ? (cible.responsable || cible.cellule_full) : cible.prenom},\n\n`;
       message +=
         contactsToSend.length > 1
           ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l'évangélisation.\n\n"

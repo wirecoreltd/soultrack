@@ -7,6 +7,7 @@ import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
+import SuiviPopup from "../components/SuiviPopup";
 
 export default function MembresCellule() {
   return (

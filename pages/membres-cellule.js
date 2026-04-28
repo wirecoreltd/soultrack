@@ -6,7 +6,7 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
-import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
+import EditMemberSuivisPopup from "../components/EditMemberSuivisPopup";
 import SuiviPopup from "../components/SuiviPopup";
 
 export default function MembresCellule() {
@@ -419,7 +419,7 @@ function MembresCelluleContent() {
       )}
 
       {editMember && (
-        <EditMemberCellulePopup
+        <EditMemberSuivisPopup
           member={editMember}
           onClose={() => setEditMember(null)}
           onUpdateMember={(updated) => {

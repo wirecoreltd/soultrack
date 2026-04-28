@@ -164,8 +164,7 @@ function ListFamillesContent() {
     setLoading(true);
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    console.log("USER:", user, userError);
-    if (!user) return;
+        if (!user) return;
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
@@ -173,8 +172,7 @@ function ListFamillesContent() {
       .eq("id", user.id)
       .single();
 
-    console.log("PROFILE:", profile, profileError);
-    if (!profile) return;
+       if (!profile) return;
 
     setUserRole(profile.role);
 
@@ -183,12 +181,8 @@ function ListFamillesContent() {
       .select("*")
       .eq("eglise_id", profile.eglise_id)
       .order("famille_full");
-
-    console.log("FAMILIES:", familiesData, familiesError);
-
-    const withCount = (familiesData || []).map((c) => ({ ...c, membre_count: 0 }));
-
-    console.log("WITH COUNT:", withCount);
+    
+    const withCount = (familiesData || []).map((c) => ({ ...c, membre_count: 0 }));    
 
     setFamilles(withCount);
     setLoading(false);

@@ -100,7 +100,7 @@ function MembresHubContent() {
       {/* Bouton popup pour envoyer le lien */}
       <div className="w-full max-w-md mb-10">
         <SendLinkPopup
-          label="Envoyer l'appli – Nouveau membre"
+          label="Envoyer formulaire Église – Nouveau membre"
           type="ajouter_membre"
           buttonColor="from-[#09203F] to-[#537895]"
           userId={userId} // 🔹 passer le userId

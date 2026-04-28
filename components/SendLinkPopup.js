@@ -2,95 +2,95 @@
 
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
-import { v4 as uuidv4 } from "uuid";
 
-export default function SendLinkPopup({ label, type, buttonColor }) {
+export default function SendLinkPopup({ label, type, buttonColor, celluleId = null }) {
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [token, setToken] = useState("");
   const [churchName, setChurchName] = useState("");
-  // ✅ branchName supprimé — plus de branche
-
-  const fetchUserAndToken = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // ✅ On ne récupère plus branche_id
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("eglise_id")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError || !profile) return;
-
-      // Nom de l'église
-      const { data: churchData } = await supabase
-        .from("eglises")
-        .select("nom")
-        .eq("id", profile.eglise_id)
-        .single();
-      if (churchData) setChurchName(churchData.nom);
-
-      // ✅ Supprimé : fetch de la branche
-
-      // Vérifier si un token valide existe déjà pour cette église
-      const now = new Date().toISOString();
-      const { data: existingToken, error: tokenError } = await supabase
-        .from("access_tokens")
-        .select("*")
-        .eq("access_type", type)
-        .eq("church_id", profile.eglise_id)
-        // ✅ .eq("branch_id", ...) supprimé
-        .gte("expires_at", now)
-        .order("expires_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(); // ✅ maybeSingle au lieu de single pour éviter une erreur si aucun résultat
-
-      if (existingToken && !tokenError) {
-        setToken(existingToken.token);
-        return;
-      }
-
-      // Créer un nouveau token
-      const newToken = uuidv4();
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-      const { error: insertError } = await supabase
-        .from("access_tokens")
-        .insert([{
-          token: newToken,
-          access_type: type,
-          expires_at: expiresAt,
-          church_id: profile.eglise_id,
-          // ✅ branch_id supprimé
-        }]);
-
-      if (!insertError) setToken(newToken);
-
-    } catch (err) {
-      console.error("Erreur token :", err.message);
-    }
-  };
+  const [egliseId, setEgliseId] = useState(null);
+  const [cellules, setCellules] = useState([]);
+  const [selectedCelluleId, setSelectedCelluleId] = useState(celluleId || "");
 
   useEffect(() => {
-    fetchUserAndToken();
-  }, [type]);
+    const fetchUserData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("eglise_id")
+          .eq("id", user.id)
+          .single();
+
+        if (profileError || !profile) return;
+
+        setEgliseId(profile.eglise_id);
+
+        // Nom de l'église
+        const { data: churchData } = await supabase
+          .from("eglises")
+          .select("nom")
+          .eq("id", profile.eglise_id)
+          .single();
+        if (churchData) setChurchName(churchData.nom);
+
+        // Si type cellule et pas de celluleId passé en prop → récupérer les cellules du responsable
+        if (type === "ajouter_membre_cellule" && !celluleId) {
+          const userId = user.id;
+          const { data: cellulesData } = await supabase
+            .from("cellules")
+            .select("id, ville, cellule")
+            .eq("responsable_id", userId)
+            .eq("eglise_id", profile.eglise_id);
+
+          if (cellulesData && cellulesData.length > 0) {
+            setCellules(cellulesData);
+            if (cellulesData.length === 1) {
+              setSelectedCelluleId(cellulesData[0].id);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Erreur fetchUserData :", err.message);
+      }
+    };
+
+    fetchUserData();
+  }, [type, celluleId]);
 
   const getLink = () => {
-    if (!token) return window.location.origin;
-    if (type === "ajouter_membre") return `${window.location.origin}/add-member?token=${token}`;
-    if (type === "ajouter_evangelise") return `${window.location.origin}/add-evangelise?token=${token}`;
-    return window.location.origin;
+    const base = window.location.origin;
+
+    if (type === "ajouter_membre") {
+      return `${base}/add-member?eglise_id=${egliseId}`;
+    }
+
+    if (type === "ajouter_membre_cellule") {
+      const cid = celluleId || selectedCelluleId;
+      return `${base}/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}`;
+    }
+
+    if (type === "ajouter_evangelise") {
+      return `${base}/add-evangelise?eglise_id=${egliseId}`;
+    }
+
+    return base;
   };
 
   const handleSend = () => {
+    // Vérifier qu'une cellule est sélectionnée si nécessaire
+    if (type === "ajouter_membre_cellule" && !celluleId && !selectedCelluleId) {
+      alert("Veuillez sélectionner une cellule.");
+      return;
+    }
+
     const link = getLink();
 
-    // ✅ Message sans "Branche"
     const message =
-      type === "ajouter_membre"
+      type === "ajouter_membre_cellule"
+        ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la cellule.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
+        : type === "ajouter_membre"
         ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
         : `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`;
 
@@ -121,12 +121,29 @@ export default function SendLinkPopup({ label, type, buttonColor }) {
               ou saisissez un numéro manuellement.
             </p>
 
+            {/* Sélecteur de cellule si plusieurs cellules et pas de celluleId fixe */}
+            {type === "ajouter_membre_cellule" && !celluleId && cellules.length > 1 && (
+              <select
+                value={selectedCelluleId}
+                onChange={(e) => setSelectedCelluleId(e.target.value)}
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                required
+              >
+                <option value="">-- Choisir une cellule --</option>
+                {cellules.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.ville} - {c.cellule}
+                  </option>
+                ))}
+              </select>
+            )}
+
             <input
               type="text"
               placeholder="Numéro (ex: +2305xxxxxxx)"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
 
             <div className="flex gap-3">

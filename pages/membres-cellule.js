@@ -32,6 +32,7 @@ function MembresCelluleContent() {
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
   const [showBesoinLibre, setshowBesoinLibre] = useState(false);
+  const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
 
   const memberIdStr =
     typeof memberId === "string"
@@ -348,27 +349,68 @@ function MembresCelluleContent() {
                     </button>
 
                     {isOpen && (
-                      <div className="text-black text-sm mt-2 w-full space-y-1">
-                        <p className="font-semibold text-center" style={{ color: "#2E3192" }}>
-                          💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}
-                        </p>
-                        <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
+                      <div className="text-black text-sm space-y-2 w-full">
+
+                      <div>
+                        <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
                         <p>🎗️ Civilité : {m.sexe || ""}</p>
                         <p>⏳ Tranche d'age : {m.age || ""}</p>
                         <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                        <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>
+                         </div>
+                      <hr />
+
+                       <div>
+                          <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
+                          <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
+                          <p>💡 Statut Suivi : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""} </p>
+                         </div>
+                        <hr />
+
+                        <div>
+                          <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>                       
+                          <p>💧 Baptême d’Eau : {m.bapteme_eau || "—"}</p>
                         {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
                           <p className="ml-6">💦 Veut se faire baptiser</p>
                         )}
                         <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
-                        <p>✒️ Formation : {m.Formation || ""}</p>
-                        <p>❤️‍🩹 Soin Pastoral : {m.Soin_Pastoral || ""}</p>
-                        <p>❓ Difficultés / Besoins : {besoins}</p>  
+                        <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
+                        <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>  
+                        <p>✒️ Formation : {m.Formation || ""}</p>                       
                         <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
-                        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                        <p>🧩 Comment est-il venu : {m.venu || ""}</p>                    
-                        <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
+                          </div>
+                        <hr />
 
+                        <div>
+                          <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>
+                          <p>🧩 Comment est-il venu : {m.venu || ""}</p>
+                          <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? "—"}</p>                          
+                          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>                                        
+                          <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
+                          </div>
+                         <hr />
+
+                        <div>
+                         <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>                          
+                         <p>❓ Difficultés / Besoins : {besoins}</p>  
+
+                          <div className="flex justify-center">
+                            <button
+                              onClick={() => setOpenSuiviMemberId(m.id)}
+                              className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
+                            >
+                              💡 Ajouter / Voir suivis
+                            </button>
+                          </div>
+                  
+                          {openSuiviMemberId === m.id && (
+                            <SuiviPopup
+                              member={m}
+                              onClose={() => setOpenSuiviMemberId(null)}
+                              user={user}
+                            />
+                          )}
+                        </div>  
+                      <div className="mt-4 rounded-xl w-full shadow-md p-4 bg-white">
                         <button
                           onClick={() => setEditMember(m)}
                           className="text-blue-600 text-sm mt-2 block mx-auto underline"
@@ -376,16 +418,32 @@ function MembresCelluleContent() {
                           ✏️ Modifier le contact
                         </button>
                       </div>
+                     </div>      
                     )}
                   </div>
                 );
               })}
-
             </div>
           </div>
         </>
       )}
-
+<div className={`transition-all duration-500 overflow-hidden ${detailsOpen === m.id ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
+                {detailsOpen === m.id && (
+                  <div className="pt-2">
+                    <DetailsPopup
+                      m={m}
+                      user={userProfile}
+                      showRefus={showRefus}
+                      openSuiviMemberId={openSuiviMemberId}
+                      setOpenSuiviMemberId={setOpenSuiviMemberId}
+                      setEditMember={setEditMember}
+                      cellules={cellules}
+                      conseillers={conseillers}
+                      assignmentsMap={assignmentsMap}
+                    />
+                  </div>
+                )}
+              </div>
         {editMember && (
   <EditMemberCellulePopup
     member={editMember}

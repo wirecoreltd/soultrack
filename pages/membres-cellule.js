@@ -108,7 +108,7 @@ function MembresCelluleContent() {
         .order("cellule_full");
 
       // ✅ ResponsableCellule : seulement ses propres cellules
-      if (profile.role === "ResponsableCellule") {
+      if (profile.roles?.includes("ResponsableCellule") && !profile.roles?.includes("Administrateur")){
         query = query.eq("responsable_id", profile.id);
       }
 

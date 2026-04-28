@@ -267,8 +267,8 @@ function EvangelisationContent() {
           ? cellules.find((c) => c.id === targetId)
           : conseillers.find((c) => c.id === targetId);
 
-      if (!cible || !cible.telephone) {
-        alert("⚠️ Numéro du conseiller ou responsable de cellule manquant");
+      if (!cible) {
+        alert("⚠️ Conseiller ou cellule introuvable");
         setLoadingSend(false);
         return;
       }
@@ -355,13 +355,16 @@ function EvangelisationContent() {
 
       message += "Merci pour ton engagement ✨";
 
-      const targetPhone = phoneNumber
-        ? phoneNumber.replace(/\D/g, "")
-        : cible.telephone?.replace(/\D/g, "") || "";
+      const rawPhone = phoneNumber
+  ? phoneNumber.replace(/\D/g, "")
+  : cible.telephone?.replace(/\D/g, "") || "";
 
-      const whatsappLink = targetPhone
-        ? `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(message)}`
-        : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+// Un numéro valide doit avoir au moins 8 chiffres
+const targetPhone = rawPhone.length >= 8 ? rawPhone : "";
+
+const whatsappLink = targetPhone
+  ? `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(message)}`
+  : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 
       window.open(whatsappLink, "_blank");
       setPhoneNumber("");

@@ -171,15 +171,15 @@ useEffect(() => {
             </div>
           </Link>
 
-            {role !== "ResponsableCellule" && (
+            {role !== "ResponsableFamilles" && (
               <Link
-                href="/admin/create-cellule"
+                href="/admin/create-famille"
                 className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
                 style={{ borderTopColor: "#F97316" }}
               >
                 <div className="text-4xl mb-1">🛠️</div>
                 <div className="text-lg font-bold text-gray-800 text-center">
-                  Créer une Cellule
+                  Créer une Famille
                 </div>
               </Link>
             )}          

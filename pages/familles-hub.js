@@ -44,8 +44,7 @@ function FamillesHubContent() {
     fetchPrenom();
   }, []);
 
-  return (
-    <AccessGuard allowedRoles={["Administrateur", "Superadmin", "ResponsableFamilles"]}>
+  return (    
       <div
         className="min-h-screen flex flex-col items-center p-6"
         style={{ background: "linear-gradient(135deg, #1E3A8A 0%, #FDE68A 100%)" }}

@@ -169,7 +169,7 @@ function CellulesHubContent() {
             {/* ✅ Bouton Envoyer formulaire Cellule */}
         <div className="w-full max-w-md mb-6">
           <SendLinkPopup
-            label="📨 Envoyer formulaire Cellule – Nouveau membre"
+            label="Envoyer formulaire Cellule – Nouveau membre"
             type="ajouter_membre_cellule"
             buttonColor="from-[#f7971e] to-[#ffd200]"
           />

@@ -189,16 +189,10 @@ function ListFamillesContent() {
     const { data: familiesData } = await query;
 
     const withCount = await Promise.all(
-      (familiesData || []).map(async (c) => {
-        const { count } = await supabase
-          .from("membres_complets")
-          .select("id", { count: "exact", head: true })
-          .eq("famille_id", c.id)
-          .eq("statut_suivis", 3);
-
-        return { ...c, membre_count: count || 0 };
-      })
-    );
+  (familiesData || []).map(async (c) => {
+    return { ...c, membre_count: 0 };
+  })
+);
 
     setFamilles(withCount);
     setLoading(false);

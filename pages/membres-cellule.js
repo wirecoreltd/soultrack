@@ -107,6 +107,7 @@ function MembresCelluleContent() {
         .eq("eglise_id", profile.eglise_id)
         .order("cellule_full");
 
+      // ✅ ResponsableCellule : seulement ses propres cellules
       if (profile.role === "ResponsableCellule") {
         query = query.eq("responsable_id", profile.id);
       }
@@ -134,6 +135,8 @@ function MembresCelluleContent() {
           .eq("id", user.id)
           .single();
 
+        if (!profile) return;
+
         let query = supabase
           .from("membres_complets")
           .select("*")
@@ -142,26 +145,42 @@ function MembresCelluleContent() {
           .not("cellule_id", "is", null)
           .order("created_at", { ascending: false });
 
-        if (celluleId) {
-          query = query.eq("cellule_id", celluleId);
-        }
-
         if (profile.role === "ResponsableCellule") {
+          // ✅ Récupérer les cellules du responsable EN PREMIER
           const { data: mesCellules } = await supabase
             .from("cellules")
             .select("id")
-            .eq("responsable_id", profile.id);
+            .eq("responsable_id", profile.id)
+            .eq("eglise_id", profile.eglise_id);
 
-          const ids = (mesCellules || []).map((c) => c.id);
+          const mesCelluleIds = (mesCellules || []).map((c) => c.id);
 
-          if (ids.length === 0) {
+          if (mesCelluleIds.length === 0) {
             setMembres([]);
             setMessage("Aucun membre trouvé");
             setLoading(false);
             return;
           }
 
-          query = query.in("cellule_id", ids);
+          // ✅ Si celluleId dans l'URL, vérifier qu'il appartient bien au responsable
+          if (celluleId) {
+            if (mesCelluleIds.includes(celluleId)) {
+              // celluleId autorisé → filtrer uniquement sur cette cellule
+              query = query.eq("cellule_id", celluleId);
+            } else {
+              // celluleId non autorisé → on ignore et on affiche toutes ses cellules
+              query = query.in("cellule_id", mesCelluleIds);
+            }
+          } else {
+            // Pas de celluleId dans l'URL → toutes ses cellules
+            query = query.in("cellule_id", mesCelluleIds);
+          }
+
+        } else {
+          // Administrateur / Superviseur : celluleId dans l'URL appliqué normalement
+          if (celluleId) {
+            query = query.eq("cellule_id", celluleId);
+          }
         }
 
         const { data, error } = await query;
@@ -287,16 +306,10 @@ function MembresCelluleContent() {
 
                           {openPhoneId === m.id && (
                             <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56">
-                              <a
-                                href={`tel:${m.telephone}`}
-                                className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                              >
+                              <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">
                                 📞 Appeler
                               </a>
-                              <a
-                                href={`sms:${m.telephone}`}
-                                className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                              >
+                              <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">
                                 ✉️ SMS
                               </a>
                               <a
@@ -328,9 +341,7 @@ function MembresCelluleContent() {
                     <p className="text-center text-sm mt-1">👤 {cellule?.responsable || "—"}</p>
 
                     <button
-                      onClick={() =>
-                        setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))
-                      }
+                      onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
                       className="text-orange-500 underline mt-2 block mx-auto text-sm"
                     >
                       {isOpen ? "Fermer détails" : "Détails"}

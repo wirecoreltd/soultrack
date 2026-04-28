@@ -291,6 +291,8 @@ function Presence() {
             .from("membres_complets")
             .select("id, prenom, nom, telephone")
             .eq("eglise_id", profile.eglise_id);
+            .in("etat_contact", ["existant", "nouveau"]);
+          
           if (myIds !== null) {
             if (myIds.length === 0) return Promise.resolve({ data: [] });
             q = q.in("id", myIds);

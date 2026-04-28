@@ -32,6 +32,7 @@ function EvangelisationContent() {
   const phoneMenuRef = useRef(null);
   const [showWhatsappPopup, setShowWhatsappPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [targetName, setTargetName] = useState("");
 
   // 🔥 On garde une ref stable des contacts à envoyer
   // pour ne pas perdre la valeur entre les setState et le callback du popup
@@ -196,11 +197,12 @@ setContactsToSendNow(selectedContacts);
 contactsToSendRef.current = selectedContacts;
 
 // Pré-remplir le numéro de la cible si disponible
-const cible = selectedTargetType === "cellule"
-  ? cellules.find((c) => c.id === selectedTarget)
-  : conseillers.find((c) => c.id === selectedTarget);
-if (cible?.telephone) setPhoneNumber(cible.telephone);
+const cibleName = selectedTargetType === "cellule"
+  ? cible?.responsable || cible?.cellule_full || ""
+  : cible ? `${cible.prenom} ${cible.nom}` : "";
 
+setPhoneNumber(cible?.telephone || "");
+setTargetName(cibleName);
 setShowWhatsappPopup(true);
     }
   };
@@ -368,6 +370,8 @@ setShowWhatsappPopup(true);
   : cible.telephone?.replace(/\D/g, "") || "";
 
 // Un numéro valide doit avoir au moins 8 chiffres
+// APRÈS — si phoneNumber est vide on n'utilise pas le numéro de la table
+const rawPhone = phoneNumber ? phoneNumber.replace(/\D/g, "") : "";
 const targetPhone = rawPhone.length >= 8 ? rawPhone : "";
 
 const whatsappLink = targetPhone
@@ -608,46 +612,61 @@ const whatsappLink = targetPhone
 
       {/* 🔹 Popup WhatsApp */}
       {showWhatsappPopup && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
-            <h2 className="text-xl font-bold mb-3">Envoyer l'évangélisation</h2>
-            <p className="text-gray-700 mb-4">
-              Cliquez sur <b>Envoyer</b> si le contact figure déjà dans WhatsApp, ou saisissez un numéro manuellement.
-            </p>
-            <input
-              type="text"
-              placeholder="Numéro (ex: +2305xxxxxxx)"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4"
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setShowWhatsappPopup(false); setPhoneNumber(""); }}
-                className="flex-1 py-3 bg-gray-300 rounded-2xl font-semibold"
-              >
-                Annuler
-              </button>              
-                <button
-                  onClick={() => {
-                    if (!phoneNumber || phoneNumber.replace(/\D/g, "").length < 8) {
-                      alert("⚠️ Veuillez saisir un numéro WhatsApp valide");
-                      return;
-                    }
-                    sendToWhatsapp(
-                      contactsToSendRef.current,
-                      selectedTargetTypeRef.current,
-                      selectedTargetRef.current
-                    );
-                  }}
-                  className="flex-1 py-3 bg-green-500 text-white rounded-2xl font-semibold"
-                >
-                  Envoyer
-                </button>
-            </div>
-          </div>
-        </div>
-      )}
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
+      <h2 className="text-xl font-bold mb-3">Envoyer l'évangélisation</h2>
+      <p className="text-gray-700 mb-4">
+        Vérifiez les informations du responsable avant d'envoyer.
+        Si le numéro est effacé, WhatsApp s'ouvrira sur vos contacts.
+      </p>
+
+      {/* Champ Nom */}
+      <label className="text-sm font-semibold text-gray-600 mb-1 block">👤 Nom du responsable</label>
+      <input
+        type="text"
+        placeholder="Nom du responsable"
+        value={targetName}
+        onChange={(e) => setTargetName(e.target.value)}
+        className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-3"
+      />
+
+      {/* Champ Téléphone */}
+      <label className="text-sm font-semibold text-gray-600 mb-1 block">📞 Numéro WhatsApp</label>
+      <input
+        type="text"
+        placeholder="Numéro (ex: +2305xxxxxxx) — laisser vide pour choisir dans vos contacts"
+        value={phoneNumber}
+        onChange={(e) => setPhoneNumber(e.target.value)}
+        className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4"
+      />
+
+      <div className="flex gap-3">
+        <button
+          onClick={() => {
+            setShowWhatsappPopup(false);
+            setPhoneNumber("");
+            setTargetName("");
+          }}
+          className="flex-1 py-3 bg-gray-300 rounded-2xl font-semibold"
+        >
+          Annuler
+        </button>
+        <button
+          onClick={() => {
+            sendToWhatsapp(
+              contactsToSendRef.current,
+              selectedTargetTypeRef.current,
+              selectedTargetRef.current
+            );
+          }}
+          className="flex-1 py-3 bg-green-500 text-white rounded-2xl font-semibold"
+        >
+          Envoyer
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       <Footer />
     </div>

@@ -36,7 +36,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
         if (churchData) setChurchName(churchData.nom);
 
         // Si type cellule et pas de celluleId passé en prop → récupérer les cellules du responsable
-        if (type === "ajouter_membre_cellule" && !celluleId) {
+        if ((type === "ajouter_membre_cellule" || type === "ajouter_evangelise_cellule") && !celluleId) {
           const userId = user.id;
           const { data: cellulesData } = await supabase
             .from("cellules")
@@ -75,12 +75,17 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
       return `${base}/add-evangelise?eglise_id=${egliseId}`;
     }
 
+    if (type === "ajouter_evangelise_cellule") {
+      const cid = celluleId || selectedCelluleId;
+      return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}`;
+    }
+
     return base;
   };
 
   const handleSend = () => {
     // Vérifier qu'une cellule est sélectionnée si nécessaire
-    if (type === "ajouter_membre_cellule" && !celluleId && !selectedCelluleId) {
+    if ((type === "ajouter_membre_cellule" || type === "ajouter_evangelise_cellule") && !celluleId && !selectedCelluleId) {
       alert("Veuillez sélectionner une cellule.");
       return;
     }
@@ -90,6 +95,8 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     const message =
       type === "ajouter_membre_cellule"
         ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la cellule.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
+        : type === "ajouter_evangelise_cellule"
+        ? `Bonjour 👋\n\nVoici le lien pour enregistrer une personne évangélisée dans la cellule.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
         : type === "ajouter_membre"
         ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
         : `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`;
@@ -122,7 +129,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
             </p>
 
             {/* Sélecteur de cellule si plusieurs cellules et pas de celluleId fixe */}
-            {type === "ajouter_membre_cellule" && !celluleId && cellules.length > 1 && (
+            {(type === "ajouter_membre_cellule" || type === "ajouter_evangelise_cellule") && !celluleId && cellules.length > 1 && (
               <select
                 value={selectedCelluleId}
                 onChange={(e) => setSelectedCelluleId(e.target.value)}

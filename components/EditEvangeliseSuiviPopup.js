@@ -6,6 +6,7 @@ import supabase from "../lib/supabaseClient";
 export default function EditEvangeliseSuiviPopup({
   member,
   cellules = [],
+  familles = [],
   conseillers = [],
   onClose,
   closeDetails,
@@ -39,6 +40,7 @@ export default function EditEvangeliseSuiviPopup({
     commentaire_evangelises: member.commentaire_evangelises || "",
     status_suivis_evangelises: member.status_suivis_evangelises || "Envoyé",
     cellule_id: member.cellule_id || null,
+    famille_id: member.famille_id || null,
     conseiller_id: member.conseiller_id || null,
     responsable_cellule: member.responsable_cellule || null,
     evangelise_id: member.evangelise_id || null,
@@ -132,6 +134,7 @@ export default function EditEvangeliseSuiviPopup({
         commentaire_evangelises: formData.commentaire_evangelises || null,
         status_suivis_evangelises: formData.status_suivis_evangelises || "Envoyé",
         cellule_id: formData.cellule_id || null,
+        famille_id: formData.famille_id || null,
         conseiller_id: formData.conseiller_id || null,
         responsable_cellule: formData.responsable_cellule || null,
         evangelise_id: formData.evangelise_id || null,

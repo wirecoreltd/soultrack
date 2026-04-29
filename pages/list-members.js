@@ -53,7 +53,7 @@ function ListMembersContent() {
   const [userRole, setUserRole] = useState(null);
   const besoinFromUrl = searchParams.get("besoin");
   const dateDebut = searchParams.get("dateDebut");
-  const dateFin = searchParams.get("dateFin");/
+  const dateFin = searchParams.get("dateFin");
   const [familles, setFamilles] = useState([]);
 
   const [commentChanges, setCommentChanges] = useState({});

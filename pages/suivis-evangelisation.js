@@ -53,16 +53,16 @@ function SuivisEvangelisationContent() {
   }, []);
 
   useEffect(() => {
-    if (user) fetchSuivis(user, cellules);
+    if (user) fetchSuivis(user, cellules, familles));
   }, [showRefus]);
 
-  const init = async () => {
+ const init = async () => {
   const userData = await fetchUser();
   await fetchConseillers();
   const cellulesData = await fetchCellules(userData);
-  await fetchFamilles(userData);
+  const famillesData = await fetchFamilles(userData);
   if (userData) {
-    await fetchSuivis(userData, cellulesData);
+    await fetchSuivis(userData, cellulesData, famillesData);
   }
   setLoading(false);
 };
@@ -164,7 +164,7 @@ function SuivisEvangelisationContent() {
   };
 
   /* ================= SUIVIS ================= */
-  const fetchSuivis = async (userData, cellulesData) => {
+  const fetchSuivis = async (userData, cellulesData, famillesData) => {
     try {
       if (!userData) return;
 
@@ -199,11 +199,11 @@ function SuivisEvangelisationContent() {
           .map((c) => c.id);
         filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
       } else if (userData.role === "ResponsableFamilles") {
-        const mesFamillesIds = (familles || [])
-          .filter((f) => f.responsable_id === userData.id)
-          .map((f) => f.id);
-        filtered = filtered.filter((m) => mesFamillesIds.includes(m.famille_id));
-      }
+  const mesFamillesIds = (famillesData || familles || [])
+    .filter((f) => f.responsable_id === userData.id)
+    .map((f) => f.id);
+  filtered = filtered.filter((m) => mesFamillesIds.includes(m.famille_id));
+}
 
       setAllSuivis(filtered);
 

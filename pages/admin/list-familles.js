@@ -141,7 +141,7 @@ function FamilleRow({ c, router }) {
 ========================= */
 export default function ListFamilles() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFamille", "SuperviseurFamille"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "Superadmin", "ResponsableFamilles"]}>
       <ListFamillesContent />
     </ProtectedRoute>
   );

@@ -5,10 +5,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import supabase from "../lib/supabaseClient";
-import { useMembers } from "../context/MembersContext";
-import ProtectedRoute from "../components/ProtectedRoute";
-import Footer from "../components/Footer";
+import supabase from "../../lib/supabaseClient";
+import { useMembers } from "../../context/MembersContext";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import Footer from "../../components/Footer";
 
 export default function AjouterMembreCellule() {
   return (

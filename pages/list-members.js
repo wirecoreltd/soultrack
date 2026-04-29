@@ -399,6 +399,15 @@ console.log("erreur:", famillesError);
         .eq("eglise_id", profile.eglise_id) // ✅ .eq("branche_id", ...) retiré
         .order("prenom");
       if (conseillersData) setConseillers(conseillersData);
+      
+      const { data: famillesData } = await supabase
+      .from("familles")
+      .select("id, ville, famille_full")
+      .eq("eglise_id", profile.eglise_id)
+      .order("famille_full");
+    if (famillesData) setFamilles(famillesData);
+
+await fetchAssignments(profile);
 
       await fetchAssignments(profile);
     };

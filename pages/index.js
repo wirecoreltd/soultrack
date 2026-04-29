@@ -8,7 +8,7 @@ import Footer from "../components/Footer";
 
 const roleCards = {
   Administrateur: [
-    { path: "/membres-hub", label: "Gestion des membres", emoji: "🧭", color: "#0E7490" },
+    { path: "membres/membres-hub", label: "Gestion des membres", emoji: "🧭", color: "#0E7490" },
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#F97316" },
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#10B981" },
     { path: "/conseiller-hub", label: "Conseiller", emoji: "🤝", color: "#0EA5E9" },
@@ -19,7 +19,7 @@ const roleCards = {
       ],
   
    Superadmin: [
-    { path: "/membres-hub", label: "Gestion des membres", emoji: "🧭", color: "#0E7490" },
+    { path: "membres/membres-hub", label: "Gestion des membres", emoji: "🧭", color: "#0E7490" },
     { path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#F97316" },
     { path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#10B981" },
     { path: "/conseiller-hub", label: "Conseiller", emoji: "🤝", color: "#0EA5E9" },
@@ -30,7 +30,7 @@ const roleCards = {
     { path: "/Superadmin/Superadmin-hub", label: "Admin SoulTrack", emoji: "🔐", color: "#000000" },
   ],
   
-    ResponsableIntegration: [{ path: "/membres-hub", label: "Gestion des membres", emoji: "🧭", color: "#0284C7" },],
+    ResponsableIntegration: [{ path: "membres/membres-hub", label: "Gestion des membres", emoji: "🧭", color: "#0284C7" },],
     ResponsableEvangelisation: [{ path: "/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" },],
     ResponsableCellule: [{ path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, ],
     SuperviseurCellule: [{ path: "/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, ],

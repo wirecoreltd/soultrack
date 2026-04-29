@@ -4,14 +4,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/router";
-import SendLinkPopup from "../components/SendLinkPopup";
-import LogoutLink from "../components/LogoutLink";
+import { useRouter } from "next/navigation";
+import SendLinkPopup from "../../components/SendLinkPopup";
+import LogoutLink from "../../components/LogoutLink";
 import { useEffect, useState } from "react";
-import supabase from "../lib/supabaseClient";
-import HeaderPages from "../components/HeaderPages";
-import ProtectedRoute from "../components/ProtectedRoute"; 
-import Footer from "../components/Footer";
+import supabase from "../../lib/supabaseClient";
+import HeaderPages from "../../components/HeaderPages";
+import ProtectedRoute from "../../components/ProtectedRoute"; 
+import Footer from "../../components/Footer";
 
 export default function FamillesHub() {
   return (
@@ -101,7 +101,7 @@ useEffect(() => {
           </Link>
         
           <Link
-            href="/ajouter-membre-famille"
+            href="/famille/ajouter-membre-famille"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
           >
             <div className="text-5xl mb-2">➕</div>
@@ -111,7 +111,7 @@ useEffect(() => {
           </Link>
         
           <Link
-            href="/membres-famille"
+            href="/famille/membres-famille"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
           >
             <div className="text-5xl mb-2">👥</div>
@@ -121,7 +121,7 @@ useEffect(() => {
           </Link>
         
           <Link
-            href="/suivis-evangelisation"
+            href="/evangelisation/suivis-evangelisation"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-orange-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
           >
             <div className="text-5xl mb-2">💗</div>
@@ -131,7 +131,7 @@ useEffect(() => {
           </Link>
         
           <Link
-            href="/suivis-membres"
+            href="/membres/suivis-membres"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
           >
             <div className="text-5xl mb-2">💌</div>
@@ -141,7 +141,7 @@ useEffect(() => {
           </Link>   
 
           <Link
-            href="/attendance_famille"
+            href="/famille/attendance_famille"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
           >
             <div className="text-5xl mb-2">👨‍👩‍👦‍👦</div>
@@ -151,7 +151,7 @@ useEffect(() => {
           </Link> 
               
           <Link
-            href="/EtatCellulePage"
+            href="/famille/EtatCellulePage"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
           >
             <div className="text-5xl mb-2">🌱</div>

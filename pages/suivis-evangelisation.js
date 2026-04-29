@@ -33,6 +33,7 @@ function SuivisEvangelisationContent() {
   const [user, setUser] = useState(null);
   const [phoneMenuId, setPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
+  const [familles, setFamilles] = useState([]);
 
   const [assignmentsMap, setAssignmentsMap] = useState({});
 
@@ -56,15 +57,16 @@ function SuivisEvangelisationContent() {
   }, [showRefus]);
 
   const init = async () => {
-    const userData = await fetchUser();
-    await fetchConseillers();
-    const cellulesData = await fetchCellules(userData);
-    if (userData) {
-      await fetchSuivis(userData, cellulesData);
-    }
-    setLoading(false);
-  };
-
+  const userData = await fetchUser();
+  await fetchConseillers();
+  const cellulesData = await fetchCellules(userData);
+  await fetchFamilles(userData);
+  if (userData) {
+    await fetchSuivis(userData, cellulesData);
+  }
+  setLoading(false);
+};
+  
   /* ================= USER ================= */
   const fetchUser = async () => {
     const { data: session } = await supabase.auth.getSession();
@@ -106,6 +108,18 @@ function SuivisEvangelisationContent() {
     return data || [];
   };
 
+   /* ================= FAMILLES ================= */
+  const fetchFamilles = async (userData) => {
+  const u = userData || user;
+  if (!u) return [];
+  const { data, error } = await supabase
+    .from("familles")
+    .select("id, famille_full, responsable_id")
+    .eq("eglise_id", u.eglise_id);
+  if (error) { console.error("Erreur fetchFamilles :", error); setFamilles([]); return []; }
+  setFamilles(data || []);
+  return data || [];
+};
   /* ================= ASSIGNMENTS MAP ================= */
   const fetchAssignmentsForSuivis = async (suivisIds) => {
     if (!suivisIds || suivisIds.length === 0) {
@@ -174,6 +188,7 @@ function SuivisEvangelisationContent() {
           .select("suivi_evangelise_id")
           .eq("conseiller_id", userData.id)
           .eq("statut", "actif");
+        
 
         const myIds = (myAssignments || []).map(a => a.suivi_evangelise_id);
         filtered = filtered.filter(m => myIds.includes(m.id));
@@ -183,6 +198,13 @@ function SuivisEvangelisationContent() {
           .map((c) => c.id);
         filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
       }
+
+      } else if (userData.role === "ResponsableFamilles") {
+  const mesFamillesIds = (familles || [])
+    .filter((f) => f.responsable_id === userData.id)
+    .map((f) => f.id);
+  filtered = filtered.filter((m) => mesFamillesIds.includes(m.famille_id));
+}
 
       setAllSuivis(filtered);
 
@@ -454,6 +476,10 @@ function SuivisEvangelisationContent() {
                 {/* Cellule, Conseiller(s), Ville */}
                 <div className="flex flex-col items-center space-y-1 mb-1">
                   <p className="text-sm text-black">🏠 Cellule : {cellule?.cellule_full || "—"}</p>
+                  {(() => {
+                      const famille = familles.find((f) => f.id === m.famille_id);
+                      return <p className="text-sm text-black">👨‍👩‍👦 Famille : {famille?.famille_full || "—"}</p>;
+                    })()}
                   <p className="text-sm text-black">
                     👤 Conseiller(s) : {getConseillersForSuivi(m.id)}
                   </p>

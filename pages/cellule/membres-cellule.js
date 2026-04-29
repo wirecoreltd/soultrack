@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/router";
-import supabase from "../lib/supabaseClient";
-import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
-import ProtectedRoute from "../components/ProtectedRoute";
-import EditMemberSuivisPopup from "../components/EditMemberSuivisPopup";
-import SuiviPopup from "../components/SuiviPopup";
+import supabase from "../../lib/supabaseClient";
+import HeaderPages from "../../components/HeaderPages";
+import Footer from "../../components/Footer";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import EditMemberSuivisPopup from "../../components/EditMemberSuivisPopup";
+import SuiviPopup from "../../components/SuiviPopup";
 
 export default function MembresCellule() {
   return (

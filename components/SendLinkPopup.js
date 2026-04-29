@@ -8,12 +8,11 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
   const [phoneNumber, setPhoneNumber] = useState("");
   const [churchName, setChurchName] = useState("");
   const [egliseId, setEgliseId] = useState(null);
-  const [cellules, setCellules] = useState([]);
-  const [selectedCelluleId, setSelectedCelluleId] = useState(celluleId || "");
-  const [selectedCelluleName, setSelectedCelluleName] = useState("");
 
-  const isFamilleType = type === "ajouter_membre_famille" || type === "ajouter_evangelise_famille";
-  const isCelluleType = type === "ajouter_membre_cellule" || type === "ajouter_evangelise_cellule";
+  // ✅ States génériques pour cellule ET famille
+  const [groupes, setGroupes] = useState([]);
+  const [selectedGroupeId, setSelectedGroupeId] = useState(celluleId || "");
+  const [selectedGroupeName, setSelectedGroupeName] = useState("");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -39,62 +38,48 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
           .single();
         if (churchData) setChurchName(churchData.nom);
 
-        // Cellules du responsable
-        if (isCelluleType && !celluleId) {
-          const { data: cellulesData } = await supabase
-            .from("cellules")
-            .select("id, ville, cellule")
-            .eq("responsable_id", user.id)
+        const isCellule = type.includes("cellule");
+        const isFamille = type.includes("famille");
+
+        // ✅ Fetch cellules OU familles selon le type, seulement si pas de celluleId fixe
+        if ((isCellule || isFamille) && !celluleId) {
+          const userId = user.id;
+          const table = isFamille ? "familles" : "cellules";
+          const nameField = isFamille ? "famille" : "cellule";
+
+          const { data: groupesData } = await supabase
+            .from(table)
+            .select(`id, ville, ${nameField}`)
+            .eq("responsable_id", userId)
             .eq("eglise_id", profile.eglise_id);
 
-          if (cellulesData && cellulesData.length > 0) {
-            setCellules(cellulesData);
-            if (cellulesData.length === 1) {
-              setSelectedCelluleId(cellulesData[0].id);
-              setSelectedCelluleName(`${cellulesData[0].ville} - ${cellulesData[0].cellule}`);
+          if (groupesData && groupesData.length > 0) {
+            const mapped = groupesData.map((d) => ({
+              id: d.id,
+              label: `${d.ville} - ${d[nameField]}`,
+            }));
+            setGroupes(mapped);
+            if (groupesData.length === 1) {
+              setSelectedGroupeId(groupesData[0].id);
+              setSelectedGroupeName(`${groupesData[0].ville} - ${groupesData[0][nameField]}`);
             }
           }
         }
 
-        // Familles du responsable
-        if (isFamilleType && !celluleId) {
-          const { data: famillesData } = await supabase
-            .from("familles")
-            .select("id, famille_full")
-            .eq("responsable_id", user.id)
-            .eq("eglise_id", profile.eglise_id);
+        // ✅ Si celluleId est passé en prop, récupérer son nom depuis la bonne table
+        if (celluleId) {
+          const isFamille = type.includes("famille");
+          const table = isFamille ? "familles" : "cellules";
+          const nameField = isFamille ? "famille" : "cellule";
 
-          if (famillesData && famillesData.length > 0) {
-            // Normalise au même format que cellules pour réutiliser le même state
-            setCellules(famillesData.map(f => ({ id: f.id, ville: f.famille_full, cellule: "" })));
-            if (famillesData.length === 1) {
-              setSelectedCelluleId(famillesData[0].id);
-              setSelectedCelluleName(famillesData[0].famille_full);
-            }
-          }
-        }
-
-        // Si celluleId passé en prop → récupérer le nom (cellule)
-        if (celluleId && isCelluleType) {
-          const { data: celluleData } = await supabase
-            .from("cellules")
-            .select("ville, cellule")
+          const { data: groupeData } = await supabase
+            .from(table)
+            .select(`ville, ${nameField}`)
             .eq("id", celluleId)
             .single();
-          if (celluleData) {
-            setSelectedCelluleName(`${celluleData.ville} - ${celluleData.cellule}`);
-          }
-        }
 
-        // Si celluleId passé en prop → récupérer le nom (famille)
-        if (celluleId && isFamilleType) {
-          const { data: familleData } = await supabase
-            .from("familles")
-            .select("famille_full")
-            .eq("id", celluleId)
-            .single();
-          if (familleData) {
-            setSelectedCelluleName(familleData.famille_full);
+          if (groupeData) {
+            setSelectedGroupeName(`${groupeData.ville} - ${groupeData[nameField]}`);
           }
         }
       } catch (err) {
@@ -107,7 +92,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
 
   const getLink = () => {
     const base = window.location.origin;
-    const cid = celluleId || selectedCelluleId;
+    const cid = celluleId || selectedGroupeId;
 
     if (type === "ajouter_membre") {
       return `${base}/add-member?eglise_id=${egliseId}`;
@@ -115,6 +100,10 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
 
     if (type === "ajouter_membre_cellule") {
       return `${base}/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}`;
+    }
+
+    if (type === "ajouter_membre_famille") {
+      return `${base}/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}`;
     }
 
     if (type === "ajouter_evangelise") {
@@ -125,10 +114,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
       return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}`;
     }
 
-    if (type === "ajouter_membre_famille") {
-      return `${base}/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}`;
-    }
-
     if (type === "ajouter_evangelise_famille") {
       return `${base}/add-evangelise?eglise_id=${egliseId}&famille_id=${cid}`;
     }
@@ -137,24 +122,32 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
   };
 
   const handleSend = () => {
-    if ((isCelluleType || isFamilleType) && !celluleId && !selectedCelluleId) {
-      alert(isFamilleType ? "Veuillez sélectionner une famille." : "Veuillez sélectionner une cellule.");
+    // ✅ Vérifier qu'un groupe est sélectionné si nécessaire
+    const needsGroupe =
+      type === "ajouter_membre_cellule" ||
+      type === "ajouter_evangelise_cellule" ||
+      type === "ajouter_membre_famille" ||
+      type === "ajouter_evangelise_famille";
+
+    if (needsGroupe && !celluleId && !selectedGroupeId) {
+      const label = type.includes("famille") ? "une famille" : "une cellule";
+      alert(`Veuillez sélectionner ${label}.`);
       return;
     }
 
     const link = getLink();
-    const celluleName = selectedCelluleName || "";
+    const groupeName = selectedGroupeName || "";
 
     const message =
       type === "ajouter_evangelise_cellule"
-        ? `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nCellule : ${celluleName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
-      : type === "ajouter_membre_cellule"
-        ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la cellule.\n\nCellule : ${celluleName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
-      : type === "ajouter_membre_famille"
-        ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la famille.\n\nFamille : ${celluleName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
-      : type === "ajouter_evangelise_famille"
-        ? `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nFamille : ${celluleName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
-      : type === "ajouter_membre"
+        ? `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nCellule : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
+        : type === "ajouter_membre_cellule"
+        ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la cellule.\n\nCellule : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
+        : type === "ajouter_evangelise_famille"
+        ? `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nFamille : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
+        : type === "ajouter_membre_famille"
+        ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la famille.\n\nFamille : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
+        : type === "ajouter_membre"
         ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
         : `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`;
 
@@ -166,6 +159,17 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     setShowPopup(false);
     setPhoneNumber("");
   };
+
+  // ✅ Afficher le select si plusieurs groupes ET pas de celluleId fixe
+  const needsGroupe =
+    type === "ajouter_membre_cellule" ||
+    type === "ajouter_evangelise_cellule" ||
+    type === "ajouter_membre_famille" ||
+    type === "ajouter_evangelise_famille";
+
+  const selectLabel = type.includes("famille")
+    ? "-- Choisir une famille --"
+    : "-- Choisir une cellule --";
 
   return (
     <>
@@ -185,24 +189,22 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
               ou saisissez un numéro manuellement.
             </p>
 
-            {/* Select cellule ou famille si plusieurs disponibles */}
-            {(isCelluleType || isFamilleType) && !celluleId && cellules.length > 1 && (
+            {/* ✅ Sélecteur générique cellule / famille */}
+            {needsGroupe && !celluleId && groupes.length > 1 && (
               <select
-                value={selectedCelluleId}
+                value={selectedGroupeId}
                 onChange={(e) => {
-                  setSelectedCelluleId(e.target.value);
-                  const found = cellules.find(c => c.id === e.target.value);
-                  if (found) {
-                    setSelectedCelluleName(found.cellule ? `${found.ville} - ${found.cellule}` : found.ville);
-                  }
+                  setSelectedGroupeId(e.target.value);
+                  const found = groupes.find((g) => g.id === e.target.value);
+                  setSelectedGroupeName(found?.label || "");
                 }}
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-orange-400"
                 required
               >
-                <option value="">-- Choisir {isFamilleType ? "une famille" : "une cellule"} --</option>
-                {cellules.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.cellule ? `${c.ville} - ${c.cellule}` : c.ville}
+                <option value="">{selectLabel}</option>
+                {groupes.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.label}
                   </option>
                 ))}
               </select>

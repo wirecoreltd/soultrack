@@ -146,7 +146,7 @@ const DetailsPopup = React.memo(function DetailsPopup({
 
 export default function SuivisMembres() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableCellule", "ResponsableFamille", "ResponsableIntegration"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableCellule", "ResponsableFamilles", "ResponsableIntegration"]}>
       <SuivisMembresContent />
     </ProtectedRoute>
   );

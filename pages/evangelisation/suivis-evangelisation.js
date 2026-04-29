@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import supabase from "../lib/supabaseClient";
+import supabase from "../../lib/supabaseClient";
 import Image from "next/image";
-import LogoutLink from "../components/LogoutLink";
-import EditEvangeliseSuiviPopup from "../components/EditEvangeliseSuiviPopup";
-import SuiviEvanPopup from "../components/SuiviEvanPopup";
-import HeaderPages from "../components/HeaderPages";
-import ProtectedRoute from "../components/ProtectedRoute";
-import Footer from "../components/Footer";
+import LogoutLink from "../../components/LogoutLink";
+import EditEvangeliseSuiviPopup from "../../components/EditEvangeliseSuiviPopup";
+import SuiviEvanPopup from "../../components/SuiviEvanPopup";
+import HeaderPages from "../../components/HeaderPages";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import Footer from "../../components/Footer";
 
 export default function SuivisEvangelisation() {
   return (

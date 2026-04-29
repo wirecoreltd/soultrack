@@ -89,28 +89,30 @@ function AjouterMembreFamilleContent() {
     if (isFromLink) return; // ✅ Pas besoin de fetcher les Familles si déjà dans l'URL
 
     const fetchFamilles = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-const userId = sessionData?.session?.user?.id;
-      console.log("userId local:", localStorage.getItem("userId"));
-console.log("userId session:", userId);
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData?.session?.user?.id; // ✅ use session, not localStorage
 
-      const { data, error } = await supabase
-        .from("familles")
-        .select("id, ville, Famille")
-        .eq("responsable_id", userId)
-        .eq("eglise_id", userScope.eglise_id);
+  if (!userId) {
+    alert("⚠️ Utilisateur non connecté.");
+    return;
+  }
 
-      if (error || !data || data.length === 0) {
-        alert("⚠️ Aucune Famille trouvée pour votre église.");
-        return;
-      }
+  const { data, error } = await supabase
+    .from("familles")
+    .select("id, ville, famille")
+    .eq("responsable_id", userId)
+    .eq("eglise_id", userScope.eglise_id);
 
-      setFamilles(data);
+  if (error || !data || data.length === 0) {
+    alert("⚠️ Aucune Famille trouvée pour votre église.");
+    return;
+  }
 
-      if (data.length === 1) {
-        setFormData((prev) => ({ ...prev, Famille_id: data[0].id }));
-      }
-    };
+  setFamilles(data);
+  if (data.length === 1) {
+    setFormData((prev) => ({ ...prev, famille_id: data[0].id }));
+  }
+};
 
     fetchFamilles();
   }, [userScope, isFromLink]);

@@ -246,8 +246,16 @@ function ListMembersContent() {
     }
   };
 
-  const handleAfterSend = (memberId, type, cible) => {
+  const handleAfterSend = async (memberId, type, cible) => {
   showToast("✅ Contact envoyé !");
+  
+  // ← mettre à jour dans Supabase
+  await supabase
+    .from("membres_complets")
+    .update({ etat_contact: "existant" })
+    .eq("id", memberId);
+
+  // ← mettre à jour localement sans refresh
   setAllMembers((prev) => prev.map((m) => 
     m.id === memberId 
       ? { ...m, suivi_envoye: true, etat_contact: "existant" }

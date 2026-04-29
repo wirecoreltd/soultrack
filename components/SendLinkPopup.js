@@ -12,6 +12,9 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
   const [selectedCelluleId, setSelectedCelluleId] = useState(celluleId || "");
   const [selectedCelluleName, setSelectedCelluleName] = useState("");
 
+  const isFamilleType = type === "ajouter_membre_famille" || type === "ajouter_evangelise_famille";
+  const isCelluleType = type === "ajouter_membre_cellule" || type === "ajouter_evangelise_cellule";
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -36,13 +39,12 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
           .single();
         if (churchData) setChurchName(churchData.nom);
 
-        // Si type cellule et pas de celluleId passé en prop → récupérer les cellules du responsable
-        if ((type === "ajouter_membre_cellule" || type === "ajouter_evangelise_cellule") && !celluleId) {
-          const userId = user.id;
+        // Cellules du responsable
+        if (isCelluleType && !celluleId) {
           const { data: cellulesData } = await supabase
             .from("cellules")
             .select("id, ville, cellule")
-            .eq("responsable_id", userId)
+            .eq("responsable_id", user.id)
             .eq("eglise_id", profile.eglise_id);
 
           if (cellulesData && cellulesData.length > 0) {
@@ -54,8 +56,26 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
           }
         }
 
-        // Si celluleId est passé en prop, récupérer son nom
-        if (celluleId) {
+        // Familles du responsable
+        if (isFamilleType && !celluleId) {
+          const { data: famillesData } = await supabase
+            .from("familles")
+            .select("id, famille_full")
+            .eq("responsable_id", user.id)
+            .eq("eglise_id", profile.eglise_id);
+
+          if (famillesData && famillesData.length > 0) {
+            // Normalise au même format que cellules pour réutiliser le même state
+            setCellules(famillesData.map(f => ({ id: f.id, ville: f.famille_full, cellule: "" })));
+            if (famillesData.length === 1) {
+              setSelectedCelluleId(famillesData[0].id);
+              setSelectedCelluleName(famillesData[0].famille_full);
+            }
+          }
+        }
+
+        // Si celluleId passé en prop → récupérer le nom (cellule)
+        if (celluleId && isCelluleType) {
           const { data: celluleData } = await supabase
             .from("cellules")
             .select("ville, cellule")
@@ -63,6 +83,18 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
             .single();
           if (celluleData) {
             setSelectedCelluleName(`${celluleData.ville} - ${celluleData.cellule}`);
+          }
+        }
+
+        // Si celluleId passé en prop → récupérer le nom (famille)
+        if (celluleId && isFamilleType) {
+          const { data: familleData } = await supabase
+            .from("familles")
+            .select("famille_full")
+            .eq("id", celluleId)
+            .single();
+          if (familleData) {
+            setSelectedCelluleName(familleData.famille_full);
           }
         }
       } catch (err) {
@@ -75,7 +107,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
 
   const getLink = () => {
     const base = window.location.origin;
-    // ✅ Toujours résoudre cid depuis celluleId (prop) ou selectedCelluleId (select)
     const cid = celluleId || selectedCelluleId;
 
     if (type === "ajouter_membre") {
@@ -91,32 +122,39 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     }
 
     if (type === "ajouter_evangelise_cellule") {
-      // ✅ CORRIGÉ : cellule_id est maintenant bien inclus dans l'URL
       return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}`;
+    }
+
+    if (type === "ajouter_membre_famille") {
+      return `${base}/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}`;
+    }
+
+    if (type === "ajouter_evangelise_famille") {
+      return `${base}/add-evangelise?eglise_id=${egliseId}&famille_id=${cid}`;
     }
 
     return base;
   };
 
   const handleSend = () => {
-    // Vérifier qu'une cellule est sélectionnée si nécessaire
-    if ((type === "ajouter_membre_cellule" || type === "ajouter_evangelise_cellule") && !celluleId && !selectedCelluleId) {
-      alert("Veuillez sélectionner une cellule.");
+    if ((isCelluleType || isFamilleType) && !celluleId && !selectedCelluleId) {
+      alert(isFamilleType ? "Veuillez sélectionner une famille." : "Veuillez sélectionner une cellule.");
       return;
     }
 
     const link = getLink();
-
-    // Nom de la cellule à afficher dans le message
     const celluleName = selectedCelluleName || "";
 
-    // ✅ Nouveau format de message
     const message =
       type === "ajouter_evangelise_cellule"
         ? `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nCellule : ${celluleName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
-        : type === "ajouter_membre_cellule"
+      : type === "ajouter_membre_cellule"
         ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la cellule.\n\nCellule : ${celluleName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
-        : type === "ajouter_membre"
+      : type === "ajouter_membre_famille"
+        ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la famille.\n\nFamille : ${celluleName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
+      : type === "ajouter_evangelise_famille"
+        ? `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nFamille : ${celluleName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
+      : type === "ajouter_membre"
         ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
         : `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`;
 
@@ -147,22 +185,24 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
               ou saisissez un numéro manuellement.
             </p>
 
-            {/* Sélecteur de cellule si plusieurs cellules et pas de celluleId fixe */}
-            {(type === "ajouter_membre_cellule" || type === "ajouter_evangelise_cellule") && !celluleId && cellules.length > 1 && (
+            {/* Select cellule ou famille si plusieurs disponibles */}
+            {(isCelluleType || isFamilleType) && !celluleId && cellules.length > 1 && (
               <select
                 value={selectedCelluleId}
                 onChange={(e) => {
                   setSelectedCelluleId(e.target.value);
                   const found = cellules.find(c => c.id === e.target.value);
-                  setSelectedCelluleName(found ? `${found.ville} - ${found.cellule}` : "");
+                  if (found) {
+                    setSelectedCelluleName(found.cellule ? `${found.ville} - ${found.cellule}` : found.ville);
+                  }
                 }}
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-orange-400"
                 required
               >
-                <option value="">-- Choisir une cellule --</option>
+                <option value="">-- Choisir {isFamilleType ? "une famille" : "une cellule"} --</option>
                 {cellules.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.ville} - {c.cellule}
+                    {c.cellule ? `${c.ville} - ${c.cellule}` : c.ville}
                   </option>
                 ))}
               </select>

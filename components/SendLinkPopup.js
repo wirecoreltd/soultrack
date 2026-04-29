@@ -13,7 +13,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
   const [selectedGroupeId, setSelectedGroupeId] = useState(celluleId || "");
   const [selectedGroupeName, setSelectedGroupeName] = useState("");
 
-  // ✅ Déclaré UNE SEULE FOIS au niveau du composant, pas dans le useEffect
   const isFamille = type.includes("famille");
   const isCellule = type.includes("cellule");
   const table = isFamille ? "familles" : "cellules";
@@ -43,17 +42,13 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
           .single();
         if (churchData) setChurchName(churchData.nom);
 
-        // ✅ Fetch familles OU cellules selon `table` calculé en dehors
+        // Fetch familles OU cellules
         if ((isCellule || isFamille) && !celluleId) {
-          const { data: groupesData, error: groupesError } = await supabase
+          const { data: groupesData } = await supabase
             .from(table)
             .select(`id, ville, ${nameField}`)
             .eq("responsable_id", user.id)
             .eq("eglise_id", profile.eglise_id);
-
-          console.log("table:", table, "| nameField:", nameField);
-          console.log("groupesData:", groupesData);
-          console.log("groupesError:", groupesError);
 
           if (groupesData && groupesData.length > 0) {
             const mapped = groupesData.map((d) => ({
@@ -61,6 +56,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
               label: `${d.ville} - ${d[nameField]}`,
             }));
             setGroupes(mapped);
+            // ✅ Auto-sélection si une seule famille/cellule
             if (groupesData.length === 1) {
               setSelectedGroupeId(groupesData[0].id);
               setSelectedGroupeName(`${groupesData[0].ville} - ${groupesData[0][nameField]}`);
@@ -68,7 +64,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
           }
         }
 
-        // ✅ Si celluleId passé en prop, récupérer son nom depuis la bonne table
+        // Si celluleId passé en prop, récupérer son nom
         if (celluleId) {
           const { data: groupeData } = await supabase
             .from(table)
@@ -90,7 +86,8 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
 
   const getLink = () => {
     const base = window.location.origin;
-    const cid = celluleId || selectedGroupeId;
+    // ✅ Même fallback que handleSend pour éviter un lien vide
+    const cid = celluleId || selectedGroupeId || (groupes.length === 1 ? groupes[0].id : "");
 
     if (type === "ajouter_membre") {
       return `${base}/add-member?eglise_id=${egliseId}`;
@@ -116,7 +113,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
 
   const handleSend = () => {
     const needsGroupe = isCellule || isFamille;
-    // ✅ Fallback sur groupes[0].id si une seule famille/cellule (auto-sélectionnée)
     const effectiveGroupeId = celluleId || selectedGroupeId || (groupes.length === 1 ? groupes[0].id : "");
 
     if (needsGroupe && !effectiveGroupeId) {
@@ -170,7 +166,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
               ou saisissez un numéro manuellement.
             </p>
 
-            {/* ✅ Select générique cellule / famille — affiché seulement si plusieurs groupes */}
+            {/* Select famille/cellule — affiché seulement si plusieurs groupes */}
             {needsGroupe && !celluleId && groupes.length > 1 && (
               <select
                 value={selectedGroupeId}

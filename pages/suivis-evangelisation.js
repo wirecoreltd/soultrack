@@ -192,19 +192,18 @@ function SuivisEvangelisationContent() {
 
         const myIds = (myAssignments || []).map(a => a.suivi_evangelise_id);
         filtered = filtered.filter(m => myIds.includes(m.id));
+      
       } else if (userData.role === "ResponsableCellule") {
         const mesCellulesIds = (cellulesData || [])
           .filter((c) => c.responsable_id === userData.id)
           .map((c) => c.id);
         filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
-      }
-
       } else if (userData.role === "ResponsableFamilles") {
-  const mesFamillesIds = (familles || [])
-    .filter((f) => f.responsable_id === userData.id)
-    .map((f) => f.id);
-  filtered = filtered.filter((m) => mesFamillesIds.includes(m.famille_id));
-}
+        const mesFamillesIds = (familles || [])
+          .filter((f) => f.responsable_id === userData.id)
+          .map((f) => f.id);
+        filtered = filtered.filter((m) => mesFamillesIds.includes(m.famille_id));
+      }
 
       setAllSuivis(filtered);
 

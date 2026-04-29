@@ -49,7 +49,7 @@ function ConseillerHubContent() {
         </div>
 
       {/* 🔹 Cartes principales */}
-      <div className="w-full max-w-5xl flex flex-col sm:flex-row justify-between gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-5xl mb-6">
         <Link
           href="/membres/list-members"
           className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"

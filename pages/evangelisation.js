@@ -661,8 +661,7 @@ function EvangelisationContent() {
       {/* 🔹 Popup WhatsApp */}
       {showWhatsappPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
-            <h2 className="text-xl font-bold mb-3">Envoyer l'évangélisation</h2>
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">            
             <p className="text-gray-700 mb-4">
               Vérifiez les informations du responsable avant d'envoyer. Si le numéro est effacé,
               WhatsApp s'ouvrira sur vos contacts.
@@ -686,7 +685,7 @@ function EvangelisationContent() {
             </label>
             <input
               type="text"
-              placeholder="Numéro (ex: +2305xxxxxxx) — laisser vide pour choisir dans vos contacts"
+              placeholder="+3363xxx... — laisser vide pour choisir dans vos contacts"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4"

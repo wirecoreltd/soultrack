@@ -8,7 +8,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function AttendancePage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "Superadmin", "ResponsableCellule"]}>
       <Attendance />
     </ProtectedRoute>
   );

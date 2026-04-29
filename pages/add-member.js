@@ -9,6 +9,9 @@ export default function AddMember() {
   const router = useRouter();
   const { token } = router.query;
 
+  // ✅ Lire famille_id depuis l'URL
+  const urlFamilleId = router.query.famille_id || null;
+
   const [formData, setFormData] = useState({
     sexe: "",
     nom: "",
@@ -26,7 +29,7 @@ export default function AddMember() {
     priere_salut: "",
     type_conversion: "",
     eglise_id: "",
-    // ✅ branche_id supprimé du state
+    famille_id: urlFamilleId || null, // ✅ famille_id dans le state
   });
 
   const [noPhone, setNoPhone] = useState(false);
@@ -43,14 +46,12 @@ export default function AddMember() {
 
   // ─── Cas 1 : utilisateur connecté → récupérer eglise_id ───
   useEffect(() => {
-    // Si un token est présent, c'est le cas 2 (lien externe) qui prend le dessus
     if (token) return;
 
     const fetchUserEglise = async () => {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user) { setLoading(false); return; }
 
-      // ✅ On ne sélectionne plus branche_id
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("eglise_id")
@@ -61,7 +62,6 @@ export default function AddMember() {
         setFormData(prev => ({
           ...prev,
           eglise_id: profile.eglise_id,
-          // ✅ branche_id supprimé
         }));
       }
       setLoading(false);
@@ -79,7 +79,7 @@ export default function AddMember() {
 
       const { data, error } = await supabase
         .from("access_tokens")
-        .select("church_id")          // ✅ branch_id supprimé
+        .select("church_id")
         .eq("token", token)
         .gte("expires_at", new Date().toISOString())
         .single();
@@ -90,7 +90,6 @@ export default function AddMember() {
         setFormData(prev => ({
           ...prev,
           eglise_id: data.church_id,
-          // ✅ branche_id supprimé
         }));
       }
 
@@ -99,6 +98,13 @@ export default function AddMember() {
 
     verifyToken();
   }, [token]);
+
+  // ✅ Mettre à jour famille_id si l'URL change après le premier rendu
+  useEffect(() => {
+    if (urlFamilleId) {
+      setFormData(prev => ({ ...prev, famille_id: urlFamilleId }));
+    }
+  }, [urlFamilleId]);
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
@@ -134,6 +140,7 @@ export default function AddMember() {
       infos_supplementaires: "",
       priere_salut: "",
       type_conversion: "",
+      // ✅ eglise_id et famille_id conservés
     }));
     setNoPhone(false);
     setShowBesoinLibre(false);
@@ -153,12 +160,13 @@ export default function AddMember() {
         ? [...formData.besoin.filter(b => b !== "Autre"), formData.besoinLibre]
         : formData.besoin;
 
-      // ✅ On ne transmet plus branche_id dans dataToSend
+      // ✅ famille_id inclus dans dataToSend
       const { besoinLibre, ...rest } = formData;
       const dataToSend = {
         ...rest,
         besoin: finalBesoin,
         etat_contact: "nouveau",
+        famille_id: formData.famille_id || null,
       };
 
       if (!noPhone) {

@@ -12,7 +12,7 @@ const roleCards = {
     { path: "/evangelisation/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#F97316" },
     { path: "/cellule/cellules-hub", label: "Cellule", emoji: "🏠", color: "#10B981" },
     { path: "/conseiller/conseiller-hub", label: "Conseiller", emoji: "🤝", color: "#0EA5E9" },
-    { path: "/familles-hub", label: "Familles", emoji: "👑", color: "#F59E0B" },
+    { path: "/famille/familles-hub", label: "Familles", emoji: "👑", color: "#F59E0B" },
     { path: "/rapport-hub", label: "Rapport", emoji: "📈", color: "#FBBF24" },
     { path: "/admin/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" },     
     { path: "/Presence", label: "Presence", emoji: "✍🏻", color: "#0EA5E9" },     
@@ -23,7 +23,7 @@ const roleCards = {
     { path: "/evangelisation/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#F97316" },
     { path: "/cellule/cellules-hub", label: "Cellule", emoji: "🏠", color: "#10B981" },
     { path: "/conseiller/conseiller-hub", label: "Conseiller", emoji: "🤝", color: "#0EA5E9" },
-    { path: "/familles-hub", label: "Familles", emoji: "👑", color: "#F59E0B" }, 
+    { path: "/famille/familles-hub", label: "Familles", emoji: "👑", color: "#F59E0B" }, 
     { path: "/rapport-hub", label: "Rapport", emoji: "📈", color: "#FBBF24" },
     { path: "admin/administrateur", label: "Admin", emoji: "⚙️", color: "#0EA5E9" },    
      { path: "/Presence", label: "Presence", emoji: "✍🏻", color: "#0EA5E9" },
@@ -35,7 +35,7 @@ const roleCards = {
     ResponsableCellule: [{ path: "/cellule/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, ],
     SuperviseurCellule: [{ path: "/cellule/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" }, ],
     Conseiller: [{ path: "/conseiller/conseiller-hub", label: "Conseiller Hub", emoji: "🤝", color: "#F59E0B" }, ],  
-    ResponsableFamilles: [{ path: "/familles-hub", label: "Familles", emoji: "👑", color: "#F59E0B" }, ],
+    ResponsableFamilles: [{ path: "/famille/familles-hub", label: "Familles", emoji: "👑", color: "#F59E0B" }, ],
     Membre: [],
   };
 

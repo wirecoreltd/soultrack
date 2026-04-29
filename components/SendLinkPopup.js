@@ -53,6 +53,12 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
             .eq("responsable_id", userId)
             .eq("eglise_id", profile.eglise_id);
 
+          console.log("table:", table);
+console.log("userId:", userId);
+console.log("eglise_id:", profile.eglise_id);
+console.log("groupesData:", groupesData);
+console.log("groupesError:", groupesError);
+
           if (groupesData && groupesData.length > 0) {
             const mapped = groupesData.map((d) => ({
               id: d.id,

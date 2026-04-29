@@ -324,10 +324,10 @@ function CreateInternalUserContent() {
 
           {(selectedMemberId === "add-serviteur" || selectedMemberId) && (
             <>
-              <input name="sexe" placeholder="Civilité" value={formData.sexe} onChange={handleChange} className="input" />
-              <input name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" />
-              <input name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" />
-              <input name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" />
+              <input name="sexe" placeholder="Civilité" value={formData.sexe} onChange={handleChange} className="input" required />
+              <input name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" required />
+              <input name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" required />
+              <input name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" required />
             </>
           )}
 

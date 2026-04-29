@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import supabase from "../lib/supabaseClient";
+import supabase from "../../lib/supabaseClient";
 import Image from "next/image";
-import ProtectedRoute from "../components/ProtectedRoute";
-import Footer from "../components/Footer";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import Footer from "../../components/Footer";
 
 export default function CreateConseillerPage() {
   return (

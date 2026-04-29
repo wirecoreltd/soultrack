@@ -247,9 +247,13 @@ function ListMembersContent() {
   };
 
   const handleAfterSend = (memberId, type, cible) => {
-    showToast("✅ Contact envoyé !");
-    setAllMembers((prev) => prev.map((m) => m.id === memberId ? { ...m, suivi_envoye: true } : m));
-  };
+  showToast("✅ Contact envoyé !");
+  setAllMembers((prev) => prev.map((m) => 
+    m.id === memberId 
+      ? { ...m, suivi_envoye: true, etat_contact: "existant" }
+      : m
+  ));
+};
 
   // -------------------- Fetch membres --------------------
   useEffect(() => {
@@ -316,10 +320,6 @@ function ListMembersContent() {
               .select("id, ville, famille_full")
               .eq("eglise_id", profile.eglise_id)
               .order("famille_full");
-
-            console.log("eglise_id du profil:", profile.eglise_id);
-console.log("familles trouvées:", famillesData);
-console.log("erreur:", famillesError);
             
             if (famillesData) setFamilles(famillesData);
 
@@ -554,30 +554,6 @@ await fetchAssignments(profile);
               <span className="text-yellow-400">⭐</span>
             )}
           </h2>
-
-<button
-  onClick={async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    console.log("USER:", user);
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, eglise_id")
-      .eq("id", user.id)
-      .single();
-    console.log("PROFILE:", profile);
-
-    const { data: fam, error } = await supabase
-      .from("familles")
-      .select("*")
-      .eq("eglise_id", profile.eglise_id);
-    console.log("FAMILLES:", fam);
-    console.log("ERROR:", error);
-  }}
-  className="text-white bg-red-500 px-3 py-1 rounded text-sm"
->
-  DEBUG FAMILLES
-</button>
 
           {/* Téléphone */}
           <div className="relative text-center mt-2 phone-menu-container">

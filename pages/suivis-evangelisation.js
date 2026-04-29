@@ -53,7 +53,7 @@ function SuivisEvangelisationContent() {
   }, []);
 
   useEffect(() => {
-    if (user) fetchSuivis(user, cellules, familles));
+    if (user) fetchSuivis(user, cellules, familles);
   }, [showRefus]);
 
  const init = async () => {

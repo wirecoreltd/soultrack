@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import supabase from "../lib/supabaseClient"; // default export
-import EditEvanRapportLine from "../components/EditEvanRapportLine";
-import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
+import supabase from "../../lib/supabaseClient"; // default export
+import EditEvanRapportLine from "../../components/EditEvanRapportLine";
+import HeaderPages from "../../components/HeaderPages";
+import Footer from "../../components/Footer";
 import { useRouter } from "next/navigation";
 
 export default function RapportEvangelisation() {

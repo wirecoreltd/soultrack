@@ -12,7 +12,7 @@ import Footer from "../components/Footer";
 
 export default function AjouterMembreFamille() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFamille"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFamilles"]}>
       <AjouterMembreFamilleContent />
     </ProtectedRoute>
   );

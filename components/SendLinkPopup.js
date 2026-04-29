@@ -9,10 +9,15 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
   const [churchName, setChurchName] = useState("");
   const [egliseId, setEgliseId] = useState(null);
 
-  // ✅ States génériques pour cellule ET famille
   const [groupes, setGroupes] = useState([]);
   const [selectedGroupeId, setSelectedGroupeId] = useState(celluleId || "");
   const [selectedGroupeName, setSelectedGroupeName] = useState("");
+
+  // ✅ Déclaré UNE SEULE FOIS au niveau du composant, pas dans le useEffect
+  const isFamille = type.includes("famille");
+  const isCellule = type.includes("cellule");
+  const table = isFamille ? "familles" : "cellules";
+  const nameField = isFamille ? "famille" : "cellule";
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -38,26 +43,17 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
           .single();
         if (churchData) setChurchName(churchData.nom);
 
-        const isCellule = type.includes("cellule");
-        const isFamille = type.includes("famille");
-
-        // ✅ Fetch cellules OU familles selon le type, seulement si pas de celluleId fixe
+        // ✅ Fetch familles OU cellules selon `table` calculé en dehors
         if ((isCellule || isFamille) && !celluleId) {
-          const userId = user.id;
-          const table = isFamille ? "familles" : "cellules";
-          const nameField = isFamille ? "famille" : "cellule";
-
-          const { data: groupesData } = await supabase
+          const { data: groupesData, error: groupesError } = await supabase
             .from(table)
             .select(`id, ville, ${nameField}`)
-            .eq("responsable_id", userId)
+            .eq("responsable_id", user.id)
             .eq("eglise_id", profile.eglise_id);
 
-          console.log("table:", table);
-console.log("userId:", userId);
-console.log("eglise_id:", profile.eglise_id);
-console.log("groupesData:", groupesData);
-console.log("groupesError:", groupesError);
+          console.log("table:", table, "| nameField:", nameField);
+          console.log("groupesData:", groupesData);
+          console.log("groupesError:", groupesError);
 
           if (groupesData && groupesData.length > 0) {
             const mapped = groupesData.map((d) => ({
@@ -72,12 +68,8 @@ console.log("groupesError:", groupesError);
           }
         }
 
-        // ✅ Si celluleId est passé en prop, récupérer son nom depuis la bonne table
+        // ✅ Si celluleId passé en prop, récupérer son nom depuis la bonne table
         if (celluleId) {
-          const isFamille = type.includes("famille");
-          const table = isFamille ? "familles" : "cellules";
-          const nameField = isFamille ? "famille" : "cellule";
-
           const { data: groupeData } = await supabase
             .from(table)
             .select(`ville, ${nameField}`)
@@ -103,23 +95,18 @@ console.log("groupesError:", groupesError);
     if (type === "ajouter_membre") {
       return `${base}/add-member?eglise_id=${egliseId}`;
     }
-
     if (type === "ajouter_membre_cellule") {
       return `${base}/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}`;
     }
-
     if (type === "ajouter_membre_famille") {
       return `${base}/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}`;
     }
-
     if (type === "ajouter_evangelise") {
       return `${base}/add-evangelise?eglise_id=${egliseId}`;
     }
-
     if (type === "ajouter_evangelise_cellule") {
       return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}`;
     }
-
     if (type === "ajouter_evangelise_famille") {
       return `${base}/add-evangelise?eglise_id=${egliseId}&famille_id=${cid}`;
     }
@@ -128,21 +115,17 @@ console.log("groupesError:", groupesError);
   };
 
   const handleSend = () => {
-    // ✅ Vérifier qu'un groupe est sélectionné si nécessaire
-    const needsGroupe =
-      type === "ajouter_membre_cellule" ||
-      type === "ajouter_evangelise_cellule" ||
-      type === "ajouter_membre_famille" ||
-      type === "ajouter_evangelise_famille";
+    const needsGroupe = isCellule || isFamille;
+    // ✅ Fallback sur groupes[0].id si une seule famille/cellule (auto-sélectionnée)
+    const effectiveGroupeId = celluleId || selectedGroupeId || (groupes.length === 1 ? groupes[0].id : "");
 
-    if (needsGroupe && !celluleId && !selectedGroupeId) {
-      const label = type.includes("famille") ? "une famille" : "une cellule";
-      alert(`Veuillez sélectionner ${label}.`);
+    if (needsGroupe && !effectiveGroupeId) {
+      alert(`Veuillez sélectionner ${isFamille ? "une famille" : "une cellule"}.`);
       return;
     }
 
     const link = getLink();
-    const groupeName = selectedGroupeName || "";
+    const groupeName = selectedGroupeName || groupes[0]?.label || "";
 
     const message =
       type === "ajouter_evangelise_cellule"
@@ -166,16 +149,8 @@ console.log("groupesError:", groupesError);
     setPhoneNumber("");
   };
 
-  // ✅ Afficher le select si plusieurs groupes ET pas de celluleId fixe
-  const needsGroupe =
-    type === "ajouter_membre_cellule" ||
-    type === "ajouter_evangelise_cellule" ||
-    type === "ajouter_membre_famille" ||
-    type === "ajouter_evangelise_famille";
-
-  const selectLabel = type.includes("famille")
-    ? "-- Choisir une famille --"
-    : "-- Choisir une cellule --";
+  const needsGroupe = isCellule || isFamille;
+  const selectLabel = isFamille ? "-- Choisir une famille --" : "-- Choisir une cellule --";
 
   return (
     <>
@@ -195,7 +170,7 @@ console.log("groupesError:", groupesError);
               ou saisissez un numéro manuellement.
             </p>
 
-            {/* ✅ Sélecteur générique cellule / famille */}
+            {/* ✅ Select générique cellule / famille — affiché seulement si plusieurs groupes */}
             {needsGroupe && !celluleId && groupes.length > 1 && (
               <select
                 value={selectedGroupeId}

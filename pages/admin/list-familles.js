@@ -176,16 +176,23 @@ function ListFamillesContent() {
 
     setUserRole(profile.role);
 
-    const { data: familiesData, error: familiesError } = await supabase
-      .from("familles")
-      .select("*")
-      .eq("eglise_id", profile.eglise_id)
-      .order("famille_full");
-    
-    const withCount = (familiesData || []).map((c) => ({ ...c, membre_count: 0 }));    
+    // ✅ APRÈS
+const { data: familiesData, error: familiesError } = await supabase
+  .from("familles")
+  .select("*")
+  .eq("eglise_id", profile.eglise_id)
+  .order("famille_full");
 
-    setFamilles(withCount);
-    setLoading(false);
+let filtered = familiesData || [];
+
+if (profile.role === "ResponsableFamilles") {
+  filtered = filtered.filter((f) => f.responsable_id === profile.id);
+}
+
+const withCount = filtered.map((c) => ({ ...c, membre_count: 0 }));
+
+setFamilles(withCount);
+setLoading(false);
   };
 
   const famillesFiltrees = familles.filter((c) => {

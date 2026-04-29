@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 import React from "react";
-import supabase from "../lib/supabaseClient";
+import supabase from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import HeaderPages from "../components/HeaderPages";
-import ProtectedRoute from "../components/ProtectedRoute";
-import Footer from "../components/Footer";
+import HeaderPages from "../../components/HeaderPages";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import Footer from "../../components/Footer";
 
 export default function ListConseillersPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "Superadmin", "ResponsableIntegration"]}>
       <ListConseillers />
     </ProtectedRoute>
   );

@@ -257,24 +257,26 @@ function ListMembersContent() {
 
   // ✅ handleAfterSend : met à jour Supabase + local, bloque le realtime pendant l'opération
   const handleAfterSend = async (memberId, type, cible) => {
-    localUpdateInProgressRef.current = true;
+  localUpdateInProgressRef.current = true;
 
-    await supabase
-      .from("membres_complets")
-      .update({ etat_contact: "existant" })
-      .eq("id", memberId);
+  const updateData = { etat_contact: "existant" };
+  if (type === "famille" && cible?.id) updateData.famille_id = cible.id;
+  if (type === "cellule" && cible?.id) updateData.cellule_id = cible.id;
 
-    setAllMembers((prev) => prev.map((m) =>
-      m.id === memberId
-        ? { ...m, suivi_envoye: true, etat_contact: "existant" }
-        : m
-    ));
+  await supabase
+    .from("membres_complets")
+    .update(updateData)
+    .eq("id", memberId);
 
-    showToast("✅ Contact envoyé !");
+  setAllMembers((prev) => prev.map((m) =>
+    m.id === memberId
+      ? { ...m, suivi_envoye: true, etat_contact: "existant", ...updateData }
+      : m
+  ));
 
-    // Relâcher le verrou après 2s (largement après que le realtime arrive)
-    setTimeout(() => { localUpdateInProgressRef.current = false; }, 2000);
-  };
+  showToast("✅ Contact envoyé !");
+  setTimeout(() => { localUpdateInProgressRef.current = false; }, 2000);
+};
 
   // -------------------- Fetch membres --------------------
   useEffect(() => {

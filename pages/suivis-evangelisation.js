@@ -12,7 +12,7 @@ import Footer from "../components/Footer";
 
 export default function SuivisEvangelisation() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEvangelisation", "ResponsableCellule", "Conseiller"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEvangelisation", "ResponsableCellule", "ResponsableFamilles", "Conseiller"]}>
       <SuivisEvangelisationContent />
     </ProtectedRoute>
   );

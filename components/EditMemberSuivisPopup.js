@@ -4,9 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 
 // Pass `currentUserRoles` (array) as a prop from the parent
-export default function EditMemberSuivisPopup({ member, cellules, conseillers, onClose, onUpdateMember, currentUserRoles }) {
+export default function EditMemberSuivisPopup({ member, cellules, familles, conseillers, onClose, onUpdateMember, currentUserRoles }) {
   if (!member) return null;
-
 
   const isPrivileged = (currentUserRoles || []).some(r => ["Administrateur", "ResponsableIntegration"].includes(r));
 
@@ -40,6 +39,7 @@ export default function EditMemberSuivisPopup({ member, cellules, conseillers, o
     priere_salut: member?.priere_salut || "",
     type_conversion: member?.type_conversion || "",
     cellule_id: member?.cellule_id ?? "",
+    famille_id: member?.famille_id ?? "",      // ✅ famille_id
     conseillers_ids: member?.conseillers_ids || [],
     besoin: initialBesoin,
     autreBesoin: "",
@@ -169,7 +169,7 @@ export default function EditMemberSuivisPopup({ member, cellules, conseillers, o
         if (formData.star) {
           await supabase.from("stats_ministere_besoin").upsert({
             membre_id: member.id,
-            branche_id: member.branche_id || null,  // ← branche_id du membre, pas cellule_id
+            branche_id: member.branche_id || null,
             sexe: formData.sexe,
             type: "ministere",
           });
@@ -192,7 +192,10 @@ export default function EditMemberSuivisPopup({ member, cellules, conseillers, o
         bapteme_esprit: formData.bapteme_esprit,
         priere_salut: formData.priere_salut || null,
         type_conversion: formData.type_conversion || null,
+        // ✅ cellule_id : géré par isPrivileged comme avant
         cellule_id: isPrivileged ? (formData.cellule_id || null) : (member.cellule_id || null),
+        // ✅ famille_id : même logique que cellule_id
+        famille_id: isPrivileged ? (formData.famille_id || null) : (member.famille_id || null),
         besoin: JSON.stringify(finalBesoin),
         venu: formData.venu || null,
         infos_supplementaires: formData.infos_supplementaires || null,
@@ -212,10 +215,9 @@ export default function EditMemberSuivisPopup({ member, cellules, conseillers, o
 
       if (isPrivileged) {
         await supabase.from("suivi_assignments").delete().eq("membre_id", member.id);
-        // selectedConseillers est un tableau d objets {id, prenom, nom}
         const rows = selectedConseillers.map((c, index) => ({
           membre_id: member.id,
-          conseiller_id: c.id,   // ← c.id et non c entier
+          conseiller_id: c.id,
           role: index === 0 ? "principal" : "assistant",
           statut: "actif"
         }));
@@ -293,6 +295,32 @@ export default function EditMemberSuivisPopup({ member, cellules, conseillers, o
               ))}
             </select>
           </Field>
+
+          {/* ✅ Section: Affectation — Cellule + Famille (isPrivileged uniquement) */}
+          {isPrivileged && (
+            <>
+              <SectionTitle>🏠 Affectation</SectionTitle>
+
+              <Field label="Cellule">
+                <select name="cellule_id" value={formData.cellule_id} onChange={handleChange} className="inp">
+                  <option value="">-- Sélectionner une cellule --</option>
+                  {(cellules || []).map(c => (
+                    <option key={c.id} value={c.id}>{c.cellule_full}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Famille">
+                <select name="famille_id" value={formData.famille_id} onChange={handleChange} className="inp">
+                  <option value="">-- Sélectionner une famille --</option>
+                  {(familles || []).map(f => (
+                    <option key={f.id} value={f.id}>{f.famille_full}</option>
+                  ))}
+                </select>
+              </Field>
+            </>
+          )}
+
           {/* Section: Vie spirituelle */}
           <SectionTitle>🕊 Vie spirituelle</SectionTitle>
 
@@ -361,7 +389,7 @@ export default function EditMemberSuivisPopup({ member, cellules, conseillers, o
 
           <Field label="Formation">
             <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="inp" rows={2} />
-          </Field>                 
+          </Field>
 
           <Field label="Comment est-il venu ?">
             <select name="venu" value={formData.venu} onChange={handleChange} className="inp">

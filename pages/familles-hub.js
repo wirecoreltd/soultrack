@@ -189,7 +189,7 @@ useEffect(() => {
         <div className="w-full max-w-md mb-3">
           <SendLinkPopup
             label="Envoyer formulaire Famille – Nouveau membre"
-            type="ajouter_membre_famille"
+            type="add-member"
             buttonColor="from-[#f7971e] to-[#ffd200]"
           />
         </div>
@@ -198,7 +198,7 @@ useEffect(() => {
         <div className="w-full max-w-md mb-6">
           <SendLinkPopup
             label="Envoyer formulaire Famille – Évangélisation"
-            type="ajouter_evangelise_famille"
+            type="add-evangelise"
             buttonColor="from-[#11998e] to-[#38ef7d]"
           />
         </div>

@@ -316,6 +316,11 @@ function ListMembersContent() {
               .select("id, ville, famille_full")
               .eq("eglise_id", profile.eglise_id)
               .order("famille_full");
+
+            console.log("eglise_id du profil:", profile.eglise_id);
+console.log("familles trouvées:", famillesData);
+console.log("erreur:", famillesError);
+            
             if (famillesData) setFamilles(famillesData);
 
             const celluleIds = cellulesData?.map((c) => c.id) || [];

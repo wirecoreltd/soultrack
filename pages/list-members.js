@@ -546,6 +546,30 @@ console.log("erreur:", famillesError);
             )}
           </h2>
 
+<button
+  onClick={async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log("USER:", user);
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, eglise_id")
+      .eq("id", user.id)
+      .single();
+    console.log("PROFILE:", profile);
+
+    const { data: fam, error } = await supabase
+      .from("familles")
+      .select("*")
+      .eq("eglise_id", profile.eglise_id);
+    console.log("FAMILLES:", fam);
+    console.log("ERROR:", error);
+  }}
+  className="text-white bg-red-500 px-3 py-1 rounded text-sm"
+>
+  DEBUG FAMILLES
+</button>
+
           {/* Téléphone */}
           <div className="relative text-center mt-2 phone-menu-container">
             {m.telephone ? (

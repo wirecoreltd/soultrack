@@ -99,7 +99,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
       return `${base}/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}`;
     }
     if (type === "ajouter_membre_famille") {
-      return `${base}/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}`;
+      return `${base}/famille/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}`;
     }
     if (type === "ajouter_evangelise") {
       return `${base}/add-evangelise?eglise_id=${egliseId}`;

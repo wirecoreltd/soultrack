@@ -6,6 +6,7 @@ import supabase from "../lib/supabaseClient";
 export default function EditEvangelisePopup({
   member,
   cellules = [],
+  familles = [],   // ✅ accepté comme prop (cohérence avec Evangelisation.js)
   conseillers = [],
   onClose,
   onUpdateMember,
@@ -159,12 +160,7 @@ export default function EditEvangelisePopup({
           <SectionTitle>👤 Identité</SectionTitle>
 
           <Field label="Civilité">
-            <select
-              name="sexe"
-              value={formData.sexe}
-              onChange={handleChange}
-              className="inp"
-            >
+            <select name="sexe" value={formData.sexe} onChange={handleChange} className="inp">
               <option value="">-- Civilité --</option>
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
@@ -210,12 +206,7 @@ export default function EditEvangelisePopup({
           <SectionTitle>🌍 Évangélisation</SectionTitle>
 
           <Field label="Type d'évangélisation">
-            <select
-              name="type_evangelisation"
-              value={formData.type_evangelisation}
-              onChange={handleChange}
-              className="inp"
-            >
+            <select name="type_evangelisation" value={formData.type_evangelisation} onChange={handleChange} className="inp">
               <option value="">-- Type d'évangélisation --</option>
               <option value="Individuel">Individuel</option>
               <option value="Sortie de groupe">Sortie de groupe</option>
@@ -248,19 +239,14 @@ export default function EditEvangelisePopup({
               <option value="Non">Non</option>
             </select>
             {formData.priere_salut && (
-              <select
-                name="type_conversion"
-                value={formData.type_conversion}
-                onChange={handleChange}
-                className="inp mt-2"
-              >
+              <select name="type_conversion" value={formData.type_conversion} onChange={handleChange} className="inp mt-2">
                 <option value="">Type de conversion</option>
                 <option value="Nouveau converti">Nouveau converti</option>
                 <option value="Réconciliation">Réconciliation</option>
               </select>
             )}
           </Field>
-          
+
           {/* Section: Infos */}
           <SectionTitle>📝 Informations</SectionTitle>
 
@@ -289,11 +275,7 @@ export default function EditEvangelisePopup({
             onClick={handleSubmit}
             disabled={loading}
             className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
-            style={{
-              background: loading
-                ? "#a0a0c0"
-                : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
-            }}
+            style={{ background: loading ? "#a0a0c0" : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}
           >
             {loading ? "Enregistrement..." : "💾 Sauvegarder"}
           </button>
@@ -337,12 +319,7 @@ export default function EditEvangelisePopup({
 function SectionTitle({ children }) {
   return (
     <div className="flex items-center gap-2 pt-2">
-      <span
-        className="text-xs font-bold uppercase tracking-widest"
-        style={{ color: "#2E3192" }}
-      >
-        {children}
-      </span>
+      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#2E3192" }}>{children}</span>
       <div className="flex-1 h-px" style={{ background: "#e2e8f0" }} />
     </div>
   );
@@ -351,12 +328,7 @@ function SectionTitle({ children }) {
 function Field({ label, children }) {
   return (
     <div className="flex flex-col gap-1">
-      <label
-        className="text-xs font-semibold uppercase tracking-wide"
-        style={{ color: "#64748b" }}
-      >
-        {label}
-      </label>
+      <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#64748b" }}>{label}</label>
       {children}
     </div>
   );

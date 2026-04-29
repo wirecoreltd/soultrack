@@ -308,6 +308,12 @@ function SuivisMembresContent() {
           else query = query.eq("id", -1);
         }
 
+        } else if (profileData.role === "ResponsableFamille") {
+          const familleIds = famillesData?.filter(f => f.responsable_id === profileData.id).map(f => f.id) || [];
+          if (familleIds.length > 0) query = query.in("famille_id", familleIds);
+          else query = query.eq("id", -1);
+        }
+
         const { data, error } = await query;
         if (error) throw error;
 

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import supabase from "../lib/supabaseClient";
-import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
-import ProtectedRoute from "../components/ProtectedRoute";
+import supabase from "../../lib/supabaseClient";
+import HeaderPages from "../../components/HeaderPages";
+import Footer from "../../components/Footer";
+import ProtectedRoute from "../../components/ProtectedRoute";
 
 export default function AttendancePage() {
   return (

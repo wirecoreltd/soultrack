@@ -161,7 +161,7 @@ useEffect(() => {
           </Link>   
 
           <Link
-            href="/admin/import"
+            href="/admin/import-famille"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
             style={{ borderTopColor: "#F97316" }}
           >

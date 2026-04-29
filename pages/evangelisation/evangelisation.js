@@ -5,7 +5,7 @@ import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import EditEvangelisePopup from "../../components/EditEvangelisePopup";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import useChurchScope from ".../../../hooks/useChurchScope";
+import useChurchScope from ".../../hooks/useChurchScope";
 import Footer from "../../components/Footer";
 
 export default function Evangelisation() {

@@ -34,7 +34,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
 
         setEgliseId(profile.eglise_id);
 
-        // Nom de l'église
         const { data: churchData } = await supabase
           .from("eglises")
           .select("nom")
@@ -42,7 +41,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
           .single();
         if (churchData) setChurchName(churchData.nom);
 
-        // Fetch familles OU cellules
         if ((isCellule || isFamille) && !celluleId) {
           const { data: groupesData } = await supabase
             .from(table)
@@ -56,7 +54,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
               label: `${d.ville} - ${d[nameField]}`,
             }));
             setGroupes(mapped);
-            // ✅ Auto-sélection si une seule famille/cellule
             if (groupesData.length === 1) {
               setSelectedGroupeId(groupesData[0].id);
               setSelectedGroupeName(`${groupesData[0].ville} - ${groupesData[0][nameField]}`);
@@ -64,7 +61,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
           }
         }
 
-        // Si celluleId passé en prop, récupérer son nom
         if (celluleId) {
           const { data: groupeData } = await supabase
             .from(table)
@@ -84,10 +80,9 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     fetchUserData();
   }, [type, celluleId]);
 
-  const getLink = () => {
+  // ✅ cid passé en paramètre — ne dépend plus du state React
+  const getLink = (cid) => {
     const base = window.location.origin;
-    // ✅ Même fallback que handleSend pour éviter un lien vide
-    const cid = celluleId || selectedGroupeId || (groupes.length === 1 ? groupes[0].id : "");
 
     if (type === "ajouter_membre") {
       return `${base}/add-member?eglise_id=${egliseId}`;
@@ -113,14 +108,16 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
 
   const handleSend = () => {
     const needsGroupe = isCellule || isFamille;
-    const effectiveGroupeId = celluleId || selectedGroupeId || (groupes.length === 1 ? groupes[0].id : "");
 
-    if (needsGroupe && !effectiveGroupeId) {
+    // ✅ cid calculé une seule fois ici et passé directement à getLink
+    const cid = celluleId || selectedGroupeId || (groupes.length === 1 ? groupes[0].id : "");
+
+    if (needsGroupe && !cid) {
       alert(`Veuillez sélectionner ${isFamille ? "une famille" : "une cellule"}.`);
       return;
     }
 
-    const link = getLink();
+    const link = getLink(cid);
     const groupeName = selectedGroupeName || groupes[0]?.label || "";
 
     const message =
@@ -166,7 +163,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
               ou saisissez un numéro manuellement.
             </p>
 
-            {/* Select famille/cellule — affiché seulement si plusieurs groupes */}
             {needsGroupe && !celluleId && groupes.length > 1 && (
               <select
                 value={selectedGroupeId}

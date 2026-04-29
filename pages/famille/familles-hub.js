@@ -189,7 +189,7 @@ useEffect(() => {
         <div className="w-full max-w-md mb-3">
           <SendLinkPopup
             label="Envoyer formulaire Famille – Nouveau membre"
-            type="add-member"
+            type="ajouter-membre-famille"
             buttonColor="from-[#f7971e] to-[#ffd200]"
           />
         </div>

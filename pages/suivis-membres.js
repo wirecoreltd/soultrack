@@ -25,6 +25,7 @@ const DetailsPopup = React.memo(function DetailsPopup({
   setOpenSuiviMemberId,
   setEditMember,
   cellules,
+  familles,
   conseillers,
   assignmentsMap,
 }) {
@@ -167,6 +168,7 @@ function SuivisMembresContent() {
   const [showRefus, setShowRefus] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(null);
   const [cellules, setCellules] = useState([]);
+  const [familles, setFamilles] = useState([]); // ✅ familles state
   const [conseillers, setConseillers] = useState([]);
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
@@ -262,7 +264,7 @@ function SuivisMembresContent() {
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, prenom, nom, role, roles, eglise_id") // ✅ branche_id retiré
+          .select("id, prenom, nom, role, roles, eglise_id")
           .eq("id", user.id)
           .single();
         if (profileError || !profileData) throw profileError;
@@ -270,23 +272,32 @@ function SuivisMembresContent() {
         setPrenom(profileData.prenom || "cher membre");
         setUserProfile(profileData);
 
+        // ─── Fetch cellules ───
         const { data: cellulesData } = await supabase
           .from("cellules")
           .select("id, cellule_full, responsable_id")
-          .eq("eglise_id", profileData.eglise_id); // ✅ .eq("branche_id", ...) retiré
+          .eq("eglise_id", profileData.eglise_id);
         setCellules(cellulesData || []);
 
+        // ─── Fetch familles ✅ ───
+        const { data: famillesData } = await supabase
+          .from("familles")
+          .select("id, famille_full, responsable_id")
+          .eq("eglise_id", profileData.eglise_id);
+        setFamilles(famillesData || []);
+
+        // ─── Fetch conseillers ───
         const { data: conseillersData } = await supabase
           .from("profiles")
           .select("id, prenom, nom")
           .eq("role", "Conseiller")
-          .eq("eglise_id", profileData.eglise_id); // ✅ .eq("branche_id", ...) retiré
+          .eq("eglise_id", profileData.eglise_id);
         setConseillers(conseillersData || []);
 
         let query = supabase
           .from("membres_complets")
           .select("*")
-          .eq("eglise_id", profileData.eglise_id) // ✅ .eq("branche_id", ...) retiré
+          .eq("eglise_id", profileData.eglise_id)
           .order("created_at", { ascending: false });
 
         if (profileData.role === "Conseiller") {
@@ -475,6 +486,11 @@ function SuivisMembresContent() {
                   🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}
                 </p>
 
+                {/* ✅ Famille affichée comme Cellule */}
+                <p className="text-sm text-black-700 mb-1">
+                  👨‍👩‍👦 Famille : {m.famille_id ? (familles.find(f => f.id === m.famille_id)?.famille_full || "—") : "—"}
+                </p>
+
                 <p className="text-sm text-black-700 mb-1">
                   👤 Conseiller(s) : {getConseillersForMember(m.id)}
                 </p>
@@ -541,6 +557,7 @@ function SuivisMembresContent() {
                       setOpenSuiviMemberId={setOpenSuiviMemberId}
                       setEditMember={setEditMember}
                       cellules={cellules}
+                      familles={familles}
                       conseillers={conseillers}
                       assignmentsMap={assignmentsMap}
                     />
@@ -556,6 +573,7 @@ function SuivisMembresContent() {
         <EditMemberSuivisPopup
           member={editMember}
           cellules={cellules}
+          familles={familles}
           conseillers={conseillers}
           onClose={() => setEditMember(null)}
           onUpdateMember={async (updatedMember) => {

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 
 // Pass `currentUserRoles` (array) as a prop from the parent
-export default function EditMemberPopup({ member, cellules, conseillers, onClose, onUpdateMember, currentUserRoles }) {
+export default function EditMemberPopup({ member, cellules, conseillers, familles, onClose, onUpdateMember, currentUserRoles }) {
   if (!member) return null;
 
 
@@ -313,7 +313,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
               </Field>
 
                     <Field label="Familles">
-                <select name="famille_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="inp">
+                <select name="famille_id" value={formData.famille_id ?? ""} onChange={handleChange} className="inp">
                   <option value="">-- Famille --</option>
                   {(familles || []).map(c => (
                     <option key={c.id} value={c.id}>{c.famille_full}</option>

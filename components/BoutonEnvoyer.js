@@ -279,34 +279,34 @@ export default function BoutonEnvoyer({
       {/* ================= POPUP WHATSAPP ================= */}
       {showWhatsappPopup && (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-      <p className="text-gray-500 text-sm mb-4">
+    <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl"> 
+      <p className="text-gray-700 mb-4">
         Vérifiez les informations du responsable avant d'envoyer. 
         Si le numéro est effacé, WhatsApp s'ouvrira sur vos contacts.
       </p>
 
       <div className="flex flex-col gap-3 mb-4">
         <div>
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label className="text-sm font-semibold text-gray-600 mb-1 block">
             👤 Nom du responsable
           </label>
           <input
             type="text"
             value={responsableNom}
             onChange={(e) => setResponsableNom(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2 mt-1 text-sm"
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-3"
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          <label className="text-sm font-semibold text-gray-600 mb-1 block">
             📞 Numéro WhatsApp
           </label>
           <input
             type="text"
             value={manualPhone}
             onChange={(e) => setManualPhone(e.target.value)}
-            placeholder="Numéro WhatsApp"
-            className="w-full border rounded-lg px-3 py-2 mt-1 text-sm"
+            placeholder="+3363xxx... — laisser vide pour choisir dans vos contacts"
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4"
           />
         </div>
       </div>

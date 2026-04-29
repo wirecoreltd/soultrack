@@ -188,8 +188,8 @@ useEffect(() => {
              {/* ✅ Bouton Envoyer formulaire Cellule – Nouveau membre */}
         <div className="w-full max-w-md mb-3">
           <SendLinkPopup
-            label="Envoyer formulaire Cellule – Nouveau membre"
-            type="ajouter_membre_cellule"
+            label="Envoyer formulaire Famille – Nouveau membre"
+            type="ajouter_membre_famille"
             buttonColor="from-[#f7971e] to-[#ffd200]"
           />
         </div>
@@ -197,8 +197,8 @@ useEffect(() => {
         {/* ✅ Bouton Envoyer formulaire Cellule – Évangélisation */}
         <div className="w-full max-w-md mb-6">
           <SendLinkPopup
-            label="Envoyer formulaire Cellule – Évangélisation"
-            type="ajouter_evangelise_cellule"
+            label="Envoyer formulaire Famille – Évangélisation"
+            type="ajouter_evangelise_famille"
             buttonColor="from-[#11998e] to-[#38ef7d]"
           />
         </div>

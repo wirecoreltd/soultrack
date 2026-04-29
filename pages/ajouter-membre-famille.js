@@ -89,7 +89,10 @@ function AjouterMembreFamilleContent() {
     if (isFromLink) return; // ✅ Pas besoin de fetcher les Familles si déjà dans l'URL
 
     const fetchFamilles = async () => {
-      const userId = localStorage.getItem("userId");
+      const { data: sessionData } = await supabase.auth.getSession();
+const userId = sessionData?.session?.user?.id;
+      console.log("userId local:", localStorage.getItem("userId"));
+console.log("userId session:", userId);
 
       const { data, error } = await supabase
         .from("familles")

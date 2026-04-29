@@ -2,21 +2,21 @@
 
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import React from "react";
-import supabase from "../lib/supabaseClient";
-import BoutonEnvoyer from "../components/BoutonEnvoyer";
-import LogoutLink from "../components/LogoutLink";
-import DetailsMemberPopup from "../components/DetailsMemberPopup";
-import EditMemberPopup from "../components/EditMemberPopup";
+import supabase from "../../lib/supabaseClient";
+import BoutonEnvoyer from "../../components/BoutonEnvoyer";
+import LogoutLink from "../../components/LogoutLink";
+import DetailsMemberPopup from "../../components/DetailsMemberPopup";
+import EditMemberPopup from "../../components/EditMemberPopup";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useSearchParams } from "next/navigation";
-import { useMembers } from "../context/MembersContext";
-import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
+import { useMembers } from "../../context/MembersContext";
+import HeaderPages from "../../components/HeaderPages";
+import Footer from "../../components/Footer";
 import { useRouter } from "next/navigation";
-import ProtectedRoute from "../components/ProtectedRoute";
-import useChurchScope from "../hooks/useChurchScope";
-import SuiviPopup from "../components/SuiviPopup";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import useChurchScope from "../../hooks/useChurchScope";
+import SuiviPopup from "../../components/SuiviPopup";
 
 function getRoles(profile) {
   if (!profile) return [];

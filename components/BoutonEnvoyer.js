@@ -17,6 +17,7 @@ export default function BoutonEnvoyer({
   const [showWhatsappPopup, setShowWhatsappPopup] = useState(false);
   const [manualPhone, setManualPhone] = useState("");
   const [messageToSend, setMessageToSend] = useState("");
+  const [responsableNom, setResponsableNom] = useState("");
 
   // =========================
   // 🔹 Vérification doublon
@@ -120,6 +121,7 @@ export default function BoutonEnvoyer({
     message += `Merci beaucoup pour ton engagement et le temps que tu vas lui consacrer ❤️\n`;
     message += `Que ton accompagnement soit une vraie bénédiction.`;
 
+    setResponsableNom(responsablePrenom);
     return { message, responsableTelephone };
   };
 
@@ -276,30 +278,50 @@ export default function BoutonEnvoyer({
 
       {/* ================= POPUP WHATSAPP ================= */}
       {showWhatsappPopup && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <p className="text-gray-700 mb-4">
-              Cliquez sur <b>Envoyer</b> si le contact figure déjà dans WhatsApp,
-              ou saisissez un numéro manuellement.
-            </p>
-            <input
-              type="text"
-              value={manualPhone}
-              onChange={(e) => setManualPhone(e.target.value)}
-              placeholder="Numéro WhatsApp"
-              className="w-full border p-2 rounded mb-4"
-            />
-            <div className="flex gap-2">
-              <button onClick={sendToWhatsapp} className="flex-1 bg-green-500 text-white py-2 rounded">
-                Envoyer
-              </button>
-              <button onClick={() => setShowWhatsappPopup(false)} className="flex-1 bg-gray-300 py-2 rounded">
-                Annuler
-              </button>
-            </div>
-          </div>
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+      <p className="text-gray-500 text-sm mb-4">
+        Vérifiez les informations du responsable avant d'envoyer. 
+        Si le numéro est effacé, WhatsApp s'ouvrira sur vos contacts.
+      </p>
+
+      <div className="flex flex-col gap-3 mb-4">
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            👤 Nom du responsable
+          </label>
+          <input
+            type="text"
+            value={responsableNom}
+            onChange={(e) => setResponsableNom(e.target.value)}
+            className="w-full border rounded-lg px-3 py-2 mt-1 text-sm"
+          />
         </div>
-      )}
+        <div>
+          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            📞 Numéro WhatsApp
+          </label>
+          <input
+            type="text"
+            value={manualPhone}
+            onChange={(e) => setManualPhone(e.target.value)}
+            placeholder="Numéro WhatsApp"
+            className="w-full border rounded-lg px-3 py-2 mt-1 text-sm"
+          />
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button onClick={sendToWhatsapp} className="flex-1 bg-green-500 text-white py-2 rounded-lg font-semibold">
+          Envoyer
+        </button>
+        <button onClick={() => setShowWhatsappPopup(false)} className="flex-1 bg-gray-200 py-2 rounded-lg">
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </>
   );
 }

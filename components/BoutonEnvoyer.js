@@ -62,40 +62,63 @@ export default function BoutonEnvoyer({
       responsableTelephone = cible.telephone;
     }
 
+    // ✅ Famille : on récupère le responsable de la famille
+    if (type === "famille") {
+      const { data: famille } = await supabase
+        .from("familles")
+        .select("id, responsable_id, famille_full, telephone_responsable")
+        .eq("id", cible.id)
+        .single();
+
+      if (famille?.responsable_id) {
+        const { data: resp } = await supabase
+          .from("profiles")
+          .select("prenom, telephone")
+          .eq("id", famille.responsable_id)
+          .single();
+        responsablePrenom = resp?.prenom || "Responsable";
+        responsableTelephone = resp?.telephone || famille.telephone_responsable || "";
+      } else {
+        responsablePrenom = "Responsable";
+        responsableTelephone = famille?.telephone_responsable || "";
+      }
+      cible.famille_full = famille?.famille_full || cible.famille_full;
+    }
+
     if (type === "numero") {
       responsablePrenom = "Responsable";
       responsableTelephone = cible;
     }
 
     let message = `👋 Bonjour ${responsablePrenom} !\n\n`;
-message += `J’espère que tu vas bien 😊\n\n`;
-message += `Je te partage les informations d’un nouveau membre que tu vas pouvoir accompagner :\n\n`;
+    message += `J'espère que tu vas bien 😊\n\n`;
+    message += `Je te partage les informations d'un nouveau membre que tu vas pouvoir accompagner :\n\n`;
 
-message += `👤 Nom : ${membre.prenom} ${membre.nom}\n`;
-message += `🎗️ Sexe : ${membre.sexe || "—"}\n`;
-message += `⏳ Âge : ${membre.age || "—"}\n`;
-message += `📱 Téléphone : ${membre.telephone || "—"}\n`;
-message += `💬 WhatsApp : ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
-message += `🏙️ Ville : ${membre.ville || "—"}\n\n`;
+    message += `👤 Nom : ${membre.prenom} ${membre.nom}\n`;
+    message += `🎗️ Sexe : ${membre.sexe || "—"}\n`;
+    message += `⏳ Âge : ${membre.age || "—"}\n`;
+    message += `📱 Téléphone : ${membre.telephone || "—"}\n`;
+    message += `💬 WhatsApp : ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
+    message += `🏙️ Ville : ${membre.ville || "—"}\n\n`;
 
-message += `✨ Raison de sa venue : ${membre.statut_initial || "—"}\n`;
-message += `🙏 Prière du salut : ${membre.priere_salut || "—"}\n`;
+    message += `✨ Raison de sa venue : ${membre.statut_initial || "—"}\n`;
+    message += `🙏 Prière du salut : ${membre.priere_salut || "—"}\n`;
 
-message += `❓ Besoins : ${
-  membre.besoin
-    ? (() => {
-        try {
-          const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
-          return Array.isArray(besoins) ? besoins.join(", ") : besoins;
-        } catch { return membre.besoin; }
-      })()
-    : "—"
-}\n`;
+    message += `❓ Besoins : ${
+      membre.besoin
+        ? (() => {
+            try {
+              const besoins = typeof membre.besoin === "string" ? JSON.parse(membre.besoin) : membre.besoin;
+              return Array.isArray(besoins) ? besoins.join(", ") : besoins;
+            } catch { return membre.besoin; }
+          })()
+        : "—"
+    }\n`;
 
-message += `📝 Infos supplémentaires : ${membre.infos_supplementaires || "—"}\n\n`;
+    message += `📝 Infos supplémentaires : ${membre.infos_supplementaires || "—"}\n\n`;
 
-message += `Merci beaucoup pour ton engagement et le temps que tu vas lui consacrer ❤️\n`;
-message += `Que ton accompagnement soit une vraie bénédiction.`;
+    message += `Merci beaucoup pour ton engagement et le temps que tu vas lui consacrer ❤️\n`;
+    message += `Que ton accompagnement soit une vraie bénédiction.`;
 
     return { message, responsableTelephone };
   };
@@ -138,15 +161,20 @@ message += `Que ton accompagnement soit une vraie bénédiction.`;
       ? `https://wa.me/${phone}?text=${encodeURIComponent(messageToSend)}`
       : `https://wa.me/?text=${encodeURIComponent(messageToSend)}`;
 
+    // ✅ Fermer les popups AVANT de faire quoi que ce soit
+    setShowWhatsappPopup(false);
+    setShowDoublonPopup(false);
+    setDoublonDetected(false);
+
     window.open(whatsappLink, "_blank");
 
     try {
       const now = new Date().toISOString();
 
-      // 1️⃣ Mise à jour membres_complets — sans conseiller_id
+      // 1️⃣ Mise à jour membres_complets
       const updatePayload = {
         statut: "actif",
-        statut_suivis: 1, // envoye = En Attente
+        statut_suivis: 1,
         etat_contact: "existant",
         date_envoi_suivi: now,
       };
@@ -159,11 +187,20 @@ message += `Que ton accompagnement soit une vraie bénédiction.`;
       }
 
       if (type === "conseiller") {
-        // Ne plus écrire dans conseiller_id de membres_complets
-        // On écrit dans suivi_assignments à la place (étape 2)
         updatePayload.suivi_responsable = `${cible.prenom} ${cible.nom}`;
         updatePayload.suivi_responsable_id = cible.id;
       }
+
+      // ✅ Famille : écrire famille_id dans membres_complets
+      if (type === "famille") {
+        updatePayload.famille_id = cible.id;
+        updatePayload.suivi_responsable = null;
+        updatePayload.suivi_responsable_id = null;
+      }
+
+      // ✅ Appeler onEnvoyer AVANT le update Supabase pour que le verrou
+      // dans list-members soit posé avant que le realtime arrive
+      if (onEnvoyer) onEnvoyer(membre.id);
 
       const { data, error } = await supabase
         .from("membres_complets")
@@ -176,14 +213,12 @@ message += `Que ton accompagnement soit une vraie bénédiction.`;
 
       // 2️⃣ Si type conseiller → écrire dans suivi_assignments
       if (type === "conseiller" && cible?.id) {
-        // Supprimer l'ancien assignment pour ce conseiller s'il existe déjà
         await supabase
           .from("suivi_assignments")
           .delete()
           .eq("membre_id", membre.id)
           .eq("conseiller_id", cible.id);
 
-        // Vérifier s'il a déjà des assignments pour savoir si principal ou assistant
         const { data: existing } = await supabase
           .from("suivi_assignments")
           .select("id")
@@ -199,15 +234,10 @@ message += `Que ton accompagnement soit une vraie bénédiction.`;
         });
       }
 
-      if (onEnvoyer) onEnvoyer(data);
       if (showToast) showToast(`✅ ${membre.prenom} ${membre.nom} envoyé`);
 
     } catch (err) {
       console.error(err);
-    } finally {
-      setShowWhatsappPopup(false);
-      setShowDoublonPopup(false);
-      setDoublonDetected(false);
     }
   };
 

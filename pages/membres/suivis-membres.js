@@ -2,16 +2,16 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import React from "react";
-import supabase from "../lib/supabaseClient";
-import LogoutLink from "../components/LogoutLink";
-import EditMemberSuivisPopup from "../components/EditMemberSuivisPopup";
-import { useMembers } from "../context/MembersContext";
+import supabase from "../../lib/supabaseClient";
+import LogoutLink from "../../components/LogoutLink";
+import EditMemberSuivisPopup from "../../components/EditMemberSuivisPopup";
+import { useMembers } from "../../context/MembersContext";
 import { useRouter } from "next/navigation";
-import HeaderPages from "../components/HeaderPages";
-import ProtectedRoute from "../components/ProtectedRoute";
-import useChurchScope from "../hooks/useChurchScope";
-import Footer from "../components/Footer";
-import SuiviPopup from "../components/SuiviPopup";
+import HeaderPages from "../../components/HeaderPages";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import useChurchScope from "../../hooks/useChurchScope";
+import Footer from "../../components/Footer";
+import SuiviPopup from "../../components/SuiviPopup";
 
 // ─────────────────────────────────────────────────────────────
 // DetailsPopup extrait HORS du composant parent pour éviter

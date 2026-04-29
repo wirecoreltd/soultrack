@@ -4,10 +4,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import SendLinkPopup from "../../components/SendLinkPopup";
 import LogoutLink from "../../components/LogoutLink";
-import AccessGuard from "../../components/AccessGuard";
 import { useEffect, useState } from "react";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
@@ -68,8 +67,7 @@ useEffect(() => {
   fetchRole();
 }, []);
 
-  return (
-    <AccessGuard allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
+  return (    
       <div
         className="min-h-screen flex flex-col items-center p-6"
         style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
@@ -212,7 +210,6 @@ useEffect(() => {
         </div>
                   
         <Footer />
-      </div>
-    </AccessGuard>
+      </div>  
   );
 }

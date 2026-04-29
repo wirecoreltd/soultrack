@@ -20,6 +20,7 @@ function EvangelisationContent() {
   const { profile, loading: loadingProfile, error: profileError, scopedQuery } = useChurchScope();
   const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
+  const [familles, setFamilles] = useState([]); // ✅ familles state
   const [conseillers, setConseillers] = useState([]);
   const [selectedTargetType, setSelectedTargetType] = useState("");
   const [selectedTarget, setSelectedTarget] = useState("");
@@ -70,6 +71,7 @@ function EvangelisationContent() {
     if (!profile) return;
     fetchContacts();
     fetchCellules();
+    fetchFamilles(); // ✅
     fetchConseillers();
   }, [profile]);
 
@@ -99,6 +101,20 @@ function EvangelisationContent() {
     } catch (err) {
       console.error("Erreur fetchCellules:", err.message);
       setCellules([]);
+    }
+  };
+
+  // ✅ Fetch familles — même logique que cellules
+  const fetchFamilles = async () => {
+    try {
+      const query = scopedQuery("familles");
+      if (!query) return;
+      const { data, error } = await query.select("id, famille_full, responsable, telephone, ville");
+      if (error) throw error;
+      setFamilles(data || []);
+    } catch (err) {
+      console.error("Erreur fetchFamilles:", err.message);
+      setFamilles([]);
     }
   };
 
@@ -147,6 +163,20 @@ function EvangelisationContent() {
     return "#888";
   };
 
+  // ✅ Helper : résoudre le nom/téléphone de la cible selon le type
+  const resolveCible = (targetType, targetId) => {
+    if (targetType === "cellule") return cellules.find((c) => c.id === targetId);
+    if (targetType === "famille") return familles.find((f) => f.id === targetId);
+    if (targetType === "conseiller") return conseillers.find((c) => c.id === targetId);
+    return null;
+  };
+
+  const getCibleName = (targetType, cible) => {
+    if (!cible) return "";
+    if (targetType === "conseiller") return `${cible.prenom} ${cible.nom}`;
+    return cible.responsable || cible.cellule_full || cible.famille_full || "";
+  };
+
   /* ================= SUPPRESSION ================= */
   const handleSupprimerMembre = async (id) => {
     try {
@@ -190,15 +220,8 @@ function EvangelisationContent() {
       setContactsToSendNow(selectedContacts);
       contactsToSendRef.current = selectedContacts;
 
-      const cible =
-        selectedTargetType === "cellule"
-          ? cellules.find((c) => c.id === selectedTarget)
-          : conseillers.find((c) => c.id === selectedTarget);
-
-      const cibleName =
-        selectedTargetType === "cellule"
-          ? cible?.responsable || cible?.cellule_full || ""
-          : cible ? `${cible.prenom} ${cible.nom}` : "";
+      const cible = resolveCible(selectedTargetType, selectedTarget);
+      const cibleName = getCibleName(selectedTargetType, cible);
 
       setPhoneNumber(cible?.telephone || "");
       setTargetName(cibleName);
@@ -208,22 +231,9 @@ function EvangelisationContent() {
 
   /* ================= ÉCRITURE DANS suivi_assignments_evangelises ================= */
   const writeAssignments = async (insertedSuivis, targetType, targetId) => {
-    console.log("writeAssignments appelé:", { insertedSuivis, targetType, targetId });
-
-    if (!insertedSuivis || insertedSuivis.length === 0) {
-      console.warn("writeAssignments: pas de suivis insérés");
-      return;
-    }
-
-    if (targetType !== "conseiller") {
-      console.log("writeAssignments: cible n'est pas un conseiller, skip");
-      return;
-    }
-
-    if (!targetId) {
-      console.warn("writeAssignments: pas de targetId");
-      return;
-    }
+    if (!insertedSuivis || insertedSuivis.length === 0) return;
+    if (targetType !== "conseiller") return;
+    if (!targetId) return;
 
     const assignmentRows = insertedSuivis.map((suivi) => ({
       suivi_evangelise_id: suivi.id,
@@ -233,18 +243,12 @@ function EvangelisationContent() {
       assigned_by: profile?.id || null,
     }));
 
-    console.log("Insertion suivi_assignments_evangelises:", assignmentRows);
-
     const { data, error } = await supabase
       .from("suivi_assignments_evangelises")
       .insert(assignmentRows)
       .select();
 
-    if (error) {
-      console.error("Erreur écriture suivi_assignments_evangelises :", error);
-    } else {
-      console.log("✅ suivi_assignments_evangelises insérés:", data);
-    }
+    if (error) console.error("Erreur écriture suivi_assignments_evangelises :", error);
   };
 
   /* ================= SEND MESSAGE ================= */
@@ -253,11 +257,9 @@ function EvangelisationContent() {
     setShowWhatsappPopup(false);
     setLoadingSend(true);
 
-    console.log("sendToWhatsapp:", { contactsToSend, targetType, targetId });
-
     try {
       if (!targetType || !targetId) {
-        alert("⚠️ Veuillez sélectionner un conseiller ou une cellule cible");
+        alert("⚠️ Veuillez sélectionner une cible");
         setLoadingSend(false);
         return;
       }
@@ -268,13 +270,10 @@ function EvangelisationContent() {
         return;
       }
 
-      const cible =
-        targetType === "cellule"
-          ? cellules.find((c) => c.id === targetId)
-          : conseillers.find((c) => c.id === targetId);
+      const cible = resolveCible(targetType, targetId);
 
       if (!cible) {
-        alert("⚠️ Conseiller ou cellule introuvable");
+        alert("⚠️ Cible introuvable");
         setLoadingSend(false);
         return;
       }
@@ -295,25 +294,19 @@ function EvangelisationContent() {
         evangelise_id: m.id,
         conseiller_id: targetType === "conseiller" ? targetId : null,
         cellule_id: targetType === "cellule" ? targetId : null,
+        famille_id: targetType === "famille" ? targetId : null, // ✅
         date_evangelise: m.date_evangelise,
         date_suivi: new Date().toISOString(),
         eglise_id: profile?.eglise_id || null,
         type_evangelisation: m.type_evangelisation,
       }));
 
-      console.log("Insert suivis_des_evangelises:", inserts);
-
       const { data: insertedSuivis, error: insertError } = await supabase
         .from("suivis_des_evangelises")
         .insert(inserts)
         .select("id, conseiller_id");
 
-      if (insertError) {
-        console.error("Erreur insert suivis_des_evangelises:", insertError);
-        throw insertError;
-      }
-
-      console.log("✅ suivis_des_evangelises insérés:", insertedSuivis);
+      if (insertError) throw insertError;
 
       await writeAssignments(insertedSuivis, targetType, targetId);
 
@@ -328,7 +321,8 @@ function EvangelisationContent() {
       setCheckedContacts({});
 
       // 🔹 Construire le message WhatsApp
-      let message = `👋 Bonjour ${targetType === "cellule" ? (cible.responsable || cible.cellule_full) : cible.prenom},\n\n`;
+      const cibleName = getCibleName(targetType, cible);
+      let message = `👋 Bonjour ${cibleName},\n\n`;
       message +=
         contactsToSend.length > 1
           ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l'évangélisation.\n\n"
@@ -336,9 +330,7 @@ function EvangelisationContent() {
 
       contactsToSend.forEach((m, i) => {
         message += "────────────────────\n";
-        if (contactsToSend.length > 1) {
-          message += `👥 Personne ${i + 1}\n`;
-        }
+        if (contactsToSend.length > 1) message += `👥 Personne ${i + 1}\n`;
         message += `📣 Type d'Evangélisation : ${m.type_evangelisation || "—"}
 📅 Date évangélisé : ${formatDateFr(m.date_evangelise)}  
 🎗️ Civilité : ${m.sexe || "—"}  
@@ -357,10 +349,8 @@ function EvangelisationContent() {
 
       message += "Merci pour ton engagement ✨";
 
-      // Si phoneNumber est vide → ouvrir les contacts WhatsApp sans numéro
       const rawPhone = phoneNumber ? phoneNumber.replace(/\D/g, "") : "";
       const targetPhone = rawPhone.length >= 8 ? rawPhone : "";
-
       const whatsappLink = targetPhone
         ? `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(message)}`
         : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
@@ -410,6 +400,7 @@ function EvangelisationContent() {
         >
           <option value="">-- Envoyer à --</option>
           <option value="cellule">Une Cellule</option>
+          <option value="famille">Une Famille</option> {/* ✅ */}
           <option value="conseiller">Un Conseiller</option>
         </select>
 
@@ -420,13 +411,20 @@ function EvangelisationContent() {
             className="w-full border rounded px-3 py-2 mb-3 text-center"
           >
             <option value="">-- Choisir --</option>
-            {(selectedTargetType === "cellule" ? cellules : conseillers).map((c) => (
+            {/* ✅ Liste selon le type sélectionné */}
+            {selectedTargetType === "cellule" && cellules.map((c) => (
               <option key={c.id} value={c.id}>
-                {selectedTargetType === "cellule"
-                  ? c.ville
-                    ? `${c.cellule_full} - ${c.ville}`
-                    : c.cellule_full
-                  : `${c.prenom} ${c.nom}`}
+                {c.ville ? `${c.cellule_full} - ${c.ville}` : c.cellule_full}
+              </option>
+            ))}
+            {selectedTargetType === "famille" && familles.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.ville ? `${f.famille_full} - ${f.ville}` : f.famille_full}
+              </option>
+            ))}
+            {selectedTargetType === "conseiller" && conseillers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.prenom} {c.nom}
               </option>
             ))}
           </select>
@@ -468,42 +466,10 @@ function EvangelisationContent() {
                     className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <a
-                      href={member.telephone ? `tel:${member.telephone}` : "#"}
-                      className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                    >
-                      📞 Appeler
-                    </a>
-                    <a
-                      href={member.telephone ? `sms:${member.telephone}` : "#"}
-                      className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                    >
-                      ✉️ SMS
-                    </a>
-                    <a
-                      href={
-                        member.telephone
-                          ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call`
-                          : "#"
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                    >
-                      📱 Appel WhatsApp
-                    </a>
-                    <a
-                      href={
-                        member.telephone
-                          ? `https://wa.me/${member.telephone.replace(/\D/g, "")}`
-                          : "#"
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                    >
-                      💬 Message WhatsApp
-                    </a>
+                    <a href={member.telephone ? `tel:${member.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
+                    <a href={member.telephone ? `sms:${member.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
+                    <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
+                    <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
                   </div>
                 )}
                 <p className="text-center mt-3 text-sm">🏙️ Ville : {member.ville || "—"}</p>
@@ -519,9 +485,7 @@ function EvangelisationContent() {
                   Evangélisé le {formatDateFr(member.date_evangelise)}
                 </p>
                 <button
-                  onClick={() =>
-                    setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))
-                  }
+                  onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}
                   className="text-orange-500 underline text-sm block mx-auto mt-2"
                 >
                   {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
@@ -554,21 +518,14 @@ function EvangelisationContent() {
                     <div className="mt-3 bg-gray-50 rounded-xl shadow-md p-4">
                       <div className="flex flex-col gap-2">
                         <button
-                          onClick={() => {
-                            setEditMember(member);
-                            setPopupMember(null);
-                          }}
+                          onClick={() => { setEditMember(member); setPopupMember(null); }}
                           className="w-full py-2 rounded-lg text-orange-500"
                         >
                           ✏️ Modifier le contact
                         </button>
                         <button
                           onClick={() => {
-                            if (
-                              window.confirm(
-                                "⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?"
-                              )
-                            ) {
+                            if (window.confirm("⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?")) {
                               handleSupprimerMembre(member.id);
                             }
                           }}
@@ -591,12 +548,11 @@ function EvangelisationContent() {
         <EditEvangelisePopup
           member={editMember}
           cellules={cellules}
+          familles={familles} // ✅
           conseillers={conseillers}
           onClose={() => setEditMember(null)}
           onUpdateMember={(updatedMember) => {
-            setContacts((prev) =>
-              prev.map((c) => (c.id === updatedMember.id ? updatedMember : c))
-            );
+            setContacts((prev) => prev.map((c) => (c.id === updatedMember.id ? updatedMember : c)));
             setEditMember(null);
           }}
         />
@@ -610,21 +566,12 @@ function EvangelisationContent() {
             <p className="text-sm">Ces contacts sont déjà enregistrés dans les suivis.</p>
             <ul className="text-left list-disc list-inside max-h-60 overflow-y-auto space-y-2">
               {doublonsDetected.map((d) => (
-                <li
-                  key={d.id}
-                  className="flex flex-col sm:flex-row justify-between items-center gap-2 bg-gray-100 p-2 rounded"
-                >
-                  <span>
-                    {d.prenom} {d.nom} - {d.telephone}
-                  </span>
+                <li key={d.id} className="flex flex-col sm:flex-row justify-between items-center gap-2 bg-gray-100 p-2 rounded">
+                  <span>{d.prenom} {d.nom} - {d.telephone}</span>
                   <div className="flex gap-2 mt-2 sm:mt-0">
                     <button
                       onClick={() => {
-                        sendToWhatsapp(
-                          [d],
-                          selectedTargetTypeRef.current,
-                          selectedTargetRef.current
-                        );
+                        sendToWhatsapp([d], selectedTargetTypeRef.current, selectedTargetRef.current);
                         setDoublonsDetected((prev) => prev.filter((c) => c.id !== d.id));
                         setShowDoublonPopup(false);
                       }}
@@ -633,9 +580,7 @@ function EvangelisationContent() {
                       Envoyer
                     </button>
                     <button
-                      onClick={() =>
-                        setDoublonsDetected((prev) => prev.filter((c) => c.id !== d.id))
-                      }
+                      onClick={() => setDoublonsDetected((prev) => prev.filter((c) => c.id !== d.id))}
                       className="bg-gray-300 px-3 py-1 rounded font-semibold"
                     >
                       Annuler
@@ -645,10 +590,7 @@ function EvangelisationContent() {
               ))}
               {doublonsDetected.length === 0 && (
                 <div className="mt-4">
-                  <button
-                    onClick={() => setShowDoublonPopup(false)}
-                    className="bg-blue-500 text-white px-4 py-2 rounded font-semibold"
-                  >
+                  <button onClick={() => setShowDoublonPopup(false)} className="bg-blue-500 text-white px-4 py-2 rounded font-semibold">
                     Fermer
                   </button>
                 </div>
@@ -661,16 +603,12 @@ function EvangelisationContent() {
       {/* 🔹 Popup WhatsApp */}
       {showWhatsappPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">            
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
             <p className="text-gray-700 mb-4">
               Vérifiez les informations du responsable avant d'envoyer. Si le numéro est effacé,
               WhatsApp s'ouvrira sur vos contacts.
             </p>
-
-            {/* Champ Nom */}
-            <label className="text-sm font-semibold text-gray-600 mb-1 block">
-              👤 Nom du responsable
-            </label>
+            <label className="text-sm font-semibold text-gray-600 mb-1 block">👤 Nom du responsable</label>
             <input
               type="text"
               placeholder="Nom du responsable"
@@ -678,11 +616,7 @@ function EvangelisationContent() {
               onChange={(e) => setTargetName(e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-3"
             />
-
-            {/* Champ Téléphone */}
-            <label className="text-sm font-semibold text-gray-600 mb-1 block">
-              📞 Numéro WhatsApp
-            </label>
+            <label className="text-sm font-semibold text-gray-600 mb-1 block">📞 Numéro WhatsApp</label>
             <input
               type="text"
               placeholder="+3363xxx... — laisser vide pour choisir dans vos contacts"
@@ -690,26 +624,15 @@ function EvangelisationContent() {
               onChange={(e) => setPhoneNumber(e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4"
             />
-
             <div className="flex gap-3">
               <button
-                onClick={() => {
-                  setShowWhatsappPopup(false);
-                  setPhoneNumber("");
-                  setTargetName("");
-                }}
+                onClick={() => { setShowWhatsappPopup(false); setPhoneNumber(""); setTargetName(""); }}
                 className="flex-1 py-3 bg-gray-300 rounded-2xl font-semibold"
               >
                 Annuler
               </button>
               <button
-                onClick={() => {
-                  sendToWhatsapp(
-                    contactsToSendRef.current,
-                    selectedTargetTypeRef.current,
-                    selectedTargetRef.current
-                  );
-                }}
+                onClick={() => sendToWhatsapp(contactsToSendRef.current, selectedTargetTypeRef.current, selectedTargetRef.current)}
                 className="flex-1 py-3 bg-green-500 text-white rounded-2xl font-semibold"
               >
                 Envoyer

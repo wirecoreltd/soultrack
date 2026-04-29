@@ -8,10 +8,11 @@ import supabase from "../lib/supabaseClient";
 export default function AddEvangelise({ onNewEvangelise }) {
   const router = useRouter();
 
-  // ✅ Lire eglise_id et cellule_id depuis l'URL (plus de token)
+  // ✅ Lire eglise_id, cellule_id et famille_id depuis l'URL
   const urlEgliseId = router.query.eglise_id || null;
   const urlCelluleId = router.query.cellule_id || null;
-  const isFromCelluleLink = !!urlEgliseId && !!urlCelluleId;
+  const urlFamilleId = router.query.famille_id || null;
+  const isFromLink = !!urlEgliseId && (!!urlCelluleId || !!urlFamilleId);
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -45,7 +46,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
   // ✅ Si pas de params URL → récupérer eglise_id depuis le profil connecté
   useEffect(() => {
-    if (isFromCelluleLink) return;
+    if (isFromLink) return;
 
     const fetchUserEglise = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -62,7 +63,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
       }
     };
     fetchUserEglise();
-  }, [isFromCelluleLink]);
+  }, [isFromLink]);
 
   const successRef = useRef(null);
   useEffect(() => {
@@ -112,7 +113,9 @@ export default function AddEvangelise({ onNewEvangelise }) {
     if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
 
     // ✅ status_suivi selon le contexte
-    const statusSuivi = isFromCelluleLink ? "evangelisation_cellule" : "Non envoyé";
+    let statusSuivi = "Non envoyé";
+    if (urlCelluleId) statusSuivi = "evangelisation_cellule";
+    else if (urlFamilleId) statusSuivi = "evangelisation_famille";
 
     const finalData = {
       nom: formData.nom.trim(),
@@ -145,8 +148,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
       if (error) throw error;
 
-      // ✅ 2. Si venu depuis un lien cellule → insérer automatiquement dans suivis_des_evangelises
-      if (isFromCelluleLink && urlCelluleId) {
+      // ✅ 2. Si venu depuis un lien cellule → insérer dans suivis_des_evangelises avec cellule_id
+      if (urlCelluleId) {
         const suiviData = {
           prenom: evangelise.prenom,
           nom: evangelise.nom,
@@ -162,6 +165,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
           status_suivis_evangelises: "Envoyé",
           evangelise_id: evangelise.id,
           cellule_id: urlCelluleId,
+          famille_id: null,
           conseiller_id: null,
           date_evangelise: evangelise.date_evangelise,
           date_suivi: new Date().toISOString(),
@@ -174,7 +178,41 @@ export default function AddEvangelise({ onNewEvangelise }) {
           .insert([suiviData]);
 
         if (suiviError) {
-          console.error("Erreur insertion suivis_des_evangelises :", suiviError);
+          console.error("Erreur insertion suivis_des_evangelises (cellule) :", suiviError);
+        }
+      }
+
+      // ✅ 3. Si venu depuis un lien famille → insérer dans suivis_des_evangelises avec famille_id
+      if (urlFamilleId) {
+        const suiviData = {
+          prenom: evangelise.prenom,
+          nom: evangelise.nom,
+          telephone: evangelise.telephone,
+          is_whatsapp: evangelise.is_whatsapp,
+          ville: evangelise.ville,
+          besoin: evangelise.besoin,
+          infos_supplementaires: evangelise.infos_supplementaires,
+          sexe: evangelise.sexe,
+          age: evangelise.age,
+          type_conversion: evangelise.type_conversion,
+          priere_salut: evangelise.priere_salut,
+          status_suivis_evangelises: "Envoyé",
+          evangelise_id: evangelise.id,
+          cellule_id: null,
+          famille_id: urlFamilleId,
+          conseiller_id: null,
+          date_evangelise: evangelise.date_evangelise,
+          date_suivi: new Date().toISOString(),
+          eglise_id: evangelise.eglise_id,
+          type_evangelisation: evangelise.type_evangelisation,
+        };
+
+        const { error: suiviError } = await supabase
+          .from("suivis_des_evangelises")
+          .insert([suiviData]);
+
+        if (suiviError) {
+          console.error("Erreur insertion suivis_des_evangelises (famille) :", suiviError);
         }
       }
 

@@ -40,6 +40,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
     priere_salut: member?.priere_salut || "",
     type_conversion: member?.type_conversion || "",
     cellule_id: member?.cellule_id ?? "",
+    famille_id: member?.famille_id ?? "",
     conseillers_ids: member?.conseillers_ids || [],
     besoin: initialBesoin,
     autreBesoin: "",
@@ -195,6 +196,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
         priere_salut: formData.priere_salut || null,
         type_conversion: formData.type_conversion || null,
         cellule_id: isPrivileged ? (formData.cellule_id || null) : (member.cellule_id || null),
+        famille_id: isPrivileged ? (formData.famille_id || null) : (member.famille_id || null),
         besoin: JSON.stringify(finalBesoin),
         venu: formData.venu || null,
         infos_supplementaires: formData.infos_supplementaires || null,
@@ -309,6 +311,16 @@ export default function EditMemberPopup({ member, cellules, conseillers, onClose
                   ))}
                 </select>
               </Field>
+
+                    <Field label="Familles">
+                <select name="famille_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="inp">
+                  <option value="">-- Famille --</option>
+                  {(familles || []).map(c => (
+                    <option key={c.id} value={c.id}>{c.famille_full}</option>
+                  ))}
+                </select>
+              </Field>
+
 
               <Field label="Ajouter conseiller">
                 <input

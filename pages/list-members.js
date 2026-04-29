@@ -53,7 +53,8 @@ function ListMembersContent() {
   const [userRole, setUserRole] = useState(null);
   const besoinFromUrl = searchParams.get("besoin");
   const dateDebut = searchParams.get("dateDebut");
-  const dateFin = searchParams.get("dateFin");
+  const dateFin = searchParams.get("dateFin");/
+  const [familles, setFamilles] = useState([]);
 
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
@@ -309,6 +310,13 @@ function ListMembersContent() {
               .from("cellules")
               .select("id")
               .eq("responsable_id", userProfile.id);
+
+            const { data: famillesData } = await supabase
+              .from("familles")
+              .select("id, ville, famille_full")
+              .eq("eglise_id", profile.eglise_id)
+              .order("famille_full");
+            if (famillesData) setFamilles(famillesData);
 
             const celluleIds = cellulesData?.map((c) => c.id) || [];
 
@@ -573,6 +581,12 @@ function ListMembersContent() {
                 ? cellules.find((c) => String(c.id) === String(m.cellule_id))?.cellule_full || "—"
                 : "—"}
             </p>
+              <p>
+                👨‍👩‍👦 Famille :{" "}
+                {m.famille_id
+                  ? familles.find((f) => String(f.id) === String(m.famille_id))?.famille_full || "—"
+                  : "—"}
+              </p>
             <p>👤 Conseiller(s) : {getConseillersForMember(m.id)}</p>
           </div>
 
@@ -591,10 +605,12 @@ function ListMembersContent() {
               <option value="">-- Choisir une option --</option>
               <option value="cellule">Une Cellule</option>
               <option value="conseiller">Un Conseiller</option>
+              <option value="famille">Une Famille</option>   
               <option value="numero">Saisir un numéro</option>
             </select>
 
-            {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller") && (
+            {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller" ||
+            selectedTargetType[m.id] === "famille") && (
               <select
                 value={selectedTargets[m.id] || ""}
                 onChange={(e) => setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))}
@@ -603,6 +619,7 @@ function ListMembersContent() {
                 <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
                 {selectedTargetType[m.id] === "cellule" && cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)}
                 {selectedTargetType[m.id] === "conseiller" && conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)}
+                {selectedTargetType[m.id] === "famille" && familles.map((f) => <option key={f.id} value={f.id}>{f.famille_full || "—"}</option>)}  
               </select>
             )}
 
@@ -626,6 +643,8 @@ function ListMembersContent() {
                       ? cellules.find((c) => c.id === selectedTargets[m.id])
                       : selectedTargetType[m.id] === "conseiller"
                       ? conseillers.find((c) => c.id === selectedTargets[m.id])
+                      : selectedTargetType[m.id] === "famille"
+                      ? familles.find((f) => f.id === selectedTargets[m.id])
                       : selectedTargets[m.id]
                   }
                   onEnvoyer={(id) =>
@@ -636,6 +655,8 @@ function ListMembersContent() {
                         ? cellules.find((c) => c.id === selectedTargets[m.id])
                         : selectedTargetType[m.id] === "conseiller"
                         ? conseillers.find((c) => c.id === selectedTargets[m.id])
+                        : selectedTargetType[m.id] === "famille"
+                        ? familles.find((f) => f.id === selectedTargets[m.id]) 
                         : selectedTargets[m.id]
                     )
                   }
@@ -885,6 +906,7 @@ function ListMembersContent() {
       <EditMemberPopup
         member={editMember}
         cellules={cellules}
+        familles={familles} 
         conseillers={conseillers}
         currentUserRoles={getRoles(userProfile)}
         onClose={() => setEditMember(null)}

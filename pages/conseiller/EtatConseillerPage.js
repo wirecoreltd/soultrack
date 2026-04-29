@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import supabase from "../lib/supabaseClient";
-import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
-import ProtectedRoute from "../components/ProtectedRoute";
-import DetailsEtatConsEvangePopup from "../components/DetailsEtatConsEvangePopup";
-import EditMemberCellulePopup from "../components/EditMemberCellulePopup";
-import DetailsEtatConseillerPopup from "../components/DetailsEtatConseillerPopup";
+import supabase from "../../lib/supabaseClient";
+import HeaderPages from "../../components/HeaderPages";
+import Footer from "../../components/Footer";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import DetailsEtatConsEvangePopup from "../../components/DetailsEtatConsEvangePopup";
+import EditMemberCellulePopup from "../../components/EditMemberCellulePopup";
+import DetailsEtatConseillerPopup from "../../components/DetailsEtatConseillerPopup";
 
 export default function EtatConseillerPage() {
   return (

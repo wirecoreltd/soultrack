@@ -184,16 +184,7 @@ useEffect(() => {
                 </div>
               </Link>
             )}          
-        </div>   
-
-             {/* ✅ Bouton Envoyer formulaire Cellule – Nouveau membre */}
-        <div className="w-full max-w-md mb-3">
-          <SendLinkPopup
-            label="Envoyer formulaire Famille – Nouveau membre"
-            type="ajouter-membre-famille"
-            buttonColor="from-[#f7971e] to-[#ffd200]"
-          />
-        </div>
+        </div>               
 
         {/* ✅ Bouton Envoyer formulaire Cellule – Évangélisation */}
         <div className="w-full max-w-md mb-3">

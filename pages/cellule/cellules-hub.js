@@ -1,4 +1,4 @@
-/* ✅ pages/cellules-hub.js */
+
 
 "use client";
 

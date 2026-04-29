@@ -41,6 +41,7 @@ function ListMembersContent() {
   const [search, setSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [cellules, setCellules] = useState([]);
+  const [familles, setFamilles] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [popupMember, setPopupMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
@@ -54,7 +55,6 @@ function ListMembersContent() {
   const besoinFromUrl = searchParams.get("besoin");
   const dateDebut = searchParams.get("dateDebut");
   const dateFin = searchParams.get("dateFin");
-  const [familles, setFamilles] = useState([]);
 
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
@@ -81,6 +81,9 @@ function ListMembersContent() {
   const userProfileRef = useRef(null);
   const assignmentsLoadedRef = useRef(false);
   const [fetchTrigger, setFetchTrigger] = useState(0);
+
+  // ✅ Ref pour bloquer le realtime pendant nos propres mises à jour
+  const localUpdateInProgressRef = useRef(false);
 
   const roles = getRoles(userProfile);
   const isAdmin = roles.includes("Administrateur");
@@ -114,7 +117,7 @@ function ListMembersContent() {
       const ministeres = typeof updatedMember.Ministere === "string" ? JSON.parse(updatedMember.Ministere) : updatedMember.Ministere;
       ministeres.forEach((m) => logs.push({
         membre_id: member.id,
-        eglise_id: userProfile.eglise_id, // ✅ branche_id retiré
+        eglise_id: userProfile.eglise_id,
         type: "ministere",
         valeur: m,
       }));
@@ -123,7 +126,7 @@ function ListMembersContent() {
       const besoins = typeof updatedMember.besoin === "string" ? JSON.parse(updatedMember.besoin) : updatedMember.besoin;
       besoins.forEach((b) => logs.push({
         membre_id: member.id,
-        eglise_id: userProfile.eglise_id, // ✅ branche_id retiré
+        eglise_id: userProfile.eglise_id,
         type: "besoin",
         valeur: b,
       }));
@@ -131,7 +134,7 @@ function ListMembersContent() {
     if (updatedMember.star === true && updatedMember.etat_contact === "existant") {
       logs.push({
         membre_id: member.id,
-        eglise_id: userProfile.eglise_id, // ✅ branche_id retiré
+        eglise_id: userProfile.eglise_id,
         type: "serviteur",
         valeur: "true",
       });
@@ -225,10 +228,16 @@ function ListMembersContent() {
 
   // -------------------- Supprimer --------------------
   const handleSupprimerMembre = async (id) => {
+    localUpdateInProgressRef.current = true;
     const { error } = await supabase.from("membres_complets").update({ etat_contact: "supprime" }).eq("id", id);
-    if (error) { console.error("Erreur suppression :", error); return; }
+    if (error) {
+      console.error("Erreur suppression :", error);
+      localUpdateInProgressRef.current = false;
+      return;
+    }
     setAllMembers((prev) => prev.map((m) => (m.id === id ? { ...m, etat_contact: "supprime" } : m)));
     showToast("❌ Contact supprimé");
+    setTimeout(() => { localUpdateInProgressRef.current = false; }, 2000);
   };
 
   const handleCommentChange = (id, value) => setCommentChanges((prev) => ({ ...prev, [id]: value }));
@@ -246,22 +255,26 @@ function ListMembersContent() {
     }
   };
 
+  // ✅ handleAfterSend : met à jour Supabase + local, bloque le realtime pendant l'opération
   const handleAfterSend = async (memberId, type, cible) => {
-  showToast("✅ Contact envoyé !");
-  
-  // ← mettre à jour dans Supabase
-  await supabase
-    .from("membres_complets")
-    .update({ etat_contact: "existant" })
-    .eq("id", memberId);
+    localUpdateInProgressRef.current = true;
 
-  // ← mettre à jour localement sans refresh
-  setAllMembers((prev) => prev.map((m) => 
-    m.id === memberId 
-      ? { ...m, suivi_envoye: true, etat_contact: "existant" }
-      : m
-  ));
-};
+    await supabase
+      .from("membres_complets")
+      .update({ etat_contact: "existant" })
+      .eq("id", memberId);
+
+    setAllMembers((prev) => prev.map((m) =>
+      m.id === memberId
+        ? { ...m, suivi_envoye: true, etat_contact: "existant" }
+        : m
+    ));
+
+    showToast("✅ Contact envoyé !");
+
+    // Relâcher le verrou après 2s (largement après que le realtime arrive)
+    setTimeout(() => { localUpdateInProgressRef.current = false; }, 2000);
+  };
 
   // -------------------- Fetch membres --------------------
   useEffect(() => {
@@ -284,7 +297,7 @@ function ListMembersContent() {
         let query = supabase
           .from("membres_complets")
           .select("*")
-          .eq("eglise_id", userProfile.eglise_id); // ✅ .eq("branche_id", ...) retiré
+          .eq("eglise_id", userProfile.eglise_id);
 
         if (conseillerIdFromUrl) {
           const { data: assignments, error } = await supabase
@@ -322,14 +335,6 @@ function ListMembersContent() {
               .from("cellules")
               .select("id")
               .eq("responsable_id", userProfile.id);
-
-            const { data: famillesData } = await supabase
-              .from("familles")
-              .select("id, ville, famille_full")
-              .eq("eglise_id", profile.eglise_id)
-              .order("famille_full");
-            
-            if (famillesData) setFamilles(famillesData);
 
             const celluleIds = cellulesData?.map((c) => c.id) || [];
 
@@ -377,7 +382,7 @@ function ListMembersContent() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // -------------------- Fetch cellules, conseillers, profile --------------------
+  // -------------------- Fetch cellules, familles, conseillers, profile --------------------
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -385,7 +390,7 @@ function ListMembersContent() {
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("id, eglise_id, roles, role") // ✅ branche_id retiré
+        .select("id, eglise_id, roles, role")
         .eq("id", user.id)
         .single();
       if (profileError || !profile) return;
@@ -396,26 +401,24 @@ function ListMembersContent() {
       const { data: cellulesData } = await supabase
         .from("cellules")
         .select("id, cellule_full")
-        .eq("eglise_id", profile.eglise_id) // ✅ .eq("branche_id", ...) retiré
+        .eq("eglise_id", profile.eglise_id)
         .order("cellule_full");
       if (cellulesData) setCellules(cellulesData);
+
+      const { data: famillesData } = await supabase
+        .from("familles")
+        .select("id, ville, famille_full")
+        .eq("eglise_id", profile.eglise_id)
+        .order("famille_full");
+      if (famillesData) setFamilles(famillesData);
 
       const { data: conseillersData } = await supabase
         .from("profiles")
         .select("id, prenom, nom, telephone")
         .contains("roles", ["Conseiller"])
-        .eq("eglise_id", profile.eglise_id) // ✅ .eq("branche_id", ...) retiré
+        .eq("eglise_id", profile.eglise_id)
         .order("prenom");
       if (conseillersData) setConseillers(conseillersData);
-      
-      const { data: famillesData } = await supabase
-      .from("familles")
-      .select("id, ville, famille_full")
-      .eq("eglise_id", profile.eglise_id)
-      .order("famille_full");
-    if (famillesData) setFamilles(famillesData);
-
-await fetchAssignments(profile);
 
       await fetchAssignments(profile);
     };
@@ -432,7 +435,9 @@ await fetchAssignments(profile);
 
     const channel = supabase.channel("realtime:membres_complets");
 
+    // ✅ On ignore le trigger realtime si une mise à jour locale est en cours
     const handleMembresChange = () => {
+      if (localUpdateInProgressRef.current) return;
       setFetchTrigger(t => t + 1);
     };
 
@@ -603,12 +608,12 @@ await fetchAssignments(profile);
                 ? cellules.find((c) => String(c.id) === String(m.cellule_id))?.cellule_full || "—"
                 : "—"}
             </p>
-              <p>
-                👨‍👩‍👦 Famille :{" "}
-                {m.famille_id
-                  ? familles.find((f) => String(f.id) === String(m.famille_id))?.famille_full || "—"
-                  : "—"}
-              </p>
+            <p>
+              👨‍👩‍👦 Famille :{" "}
+              {m.famille_id
+                ? familles.find((f) => String(f.id) === String(m.famille_id))?.famille_full || "—"
+                : "—"}
+            </p>
             <p>👤 Conseiller(s) : {getConseillersForMember(m.id)}</p>
           </div>
 
@@ -627,21 +632,28 @@ await fetchAssignments(profile);
               <option value="">-- Choisir une option --</option>
               <option value="cellule">Une Cellule</option>
               <option value="conseiller">Un Conseiller</option>
-              <option value="famille">Une Famille</option>   
+              <option value="famille">Une Famille</option>
               <option value="numero">Saisir un numéro</option>
             </select>
 
-            {(selectedTargetType[m.id] === "cellule" || selectedTargetType[m.id] === "conseiller" ||
-            selectedTargetType[m.id] === "famille") && (
+            {(selectedTargetType[m.id] === "cellule" ||
+              selectedTargetType[m.id] === "conseiller" ||
+              selectedTargetType[m.id] === "famille") && (
               <select
                 value={selectedTargets[m.id] || ""}
                 onChange={(e) => setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))}
                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
               >
                 <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-                {selectedTargetType[m.id] === "cellule" && cellules.map((c) => <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>)}
-                {selectedTargetType[m.id] === "conseiller" && conseillers.map((c) => <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>)}
-                {selectedTargetType[m.id] === "famille" && familles.map((f) => <option key={f.id} value={f.id}>{f.famille_full || "—"}</option>)}  
+                {selectedTargetType[m.id] === "cellule" && cellules.map((c) => (
+                  <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>
+                ))}
+                {selectedTargetType[m.id] === "conseiller" && conseillers.map((c) => (
+                  <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>
+                ))}
+                {selectedTargetType[m.id] === "famille" && familles.map((f) => (
+                  <option key={f.id} value={f.id}>{f.famille_full || "—"}</option>
+                ))}
               </select>
             )}
 
@@ -678,7 +690,7 @@ await fetchAssignments(profile);
                         : selectedTargetType[m.id] === "conseiller"
                         ? conseillers.find((c) => c.id === selectedTargets[m.id])
                         : selectedTargetType[m.id] === "famille"
-                        ? familles.find((f) => f.id === selectedTargets[m.id]) 
+                        ? familles.find((f) => f.id === selectedTargets[m.id])
                         : selectedTargets[m.id]
                     )
                   }
@@ -695,12 +707,16 @@ await fetchAssignments(profile);
               <button
                 onClick={() => {
                   if (window.confirm("⚠️ Confirmation\n\nCe contact n'a plus besoin d'être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?")) {
+                    localUpdateInProgressRef.current = true;
                     supabase.from("membres_complets").update({ etat_contact: "existant" }).eq("id", m.id)
                       .then(({ error }) => {
-                        if (error) { showToast("❌ Erreur lors du déplacement"); }
-                        else {
+                        if (error) {
+                          showToast("❌ Erreur lors du déplacement");
+                          localUpdateInProgressRef.current = false;
+                        } else {
                           setAllMembers((prev) => prev.map((mem) => mem.id === m.id ? { ...mem, etat_contact: "existant" } : mem));
                           showToast("✅ Contact déplacé dans membres existants");
+                          setTimeout(() => { localUpdateInProgressRef.current = false; }, 2000);
                         }
                       });
                   }
@@ -928,7 +944,7 @@ await fetchAssignments(profile);
       <EditMemberPopup
         member={editMember}
         cellules={cellules}
-        familles={familles} 
+        familles={familles}
         conseillers={conseillers}
         currentUserRoles={getRoles(userProfile)}
         onClose={() => setEditMember(null)}

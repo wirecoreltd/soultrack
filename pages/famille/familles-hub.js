@@ -12,6 +12,7 @@ import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute"; 
 import Footer from "../../components/Footer";
+import SendLinkFamillePopup from "../../components/SendLinkFamillePopup";
 
 export default function FamillesHub() {
   return (
@@ -195,19 +196,21 @@ useEffect(() => {
         </div>
 
         {/* ✅ Bouton Envoyer formulaire Cellule – Évangélisation */}
-        <div className="w-full max-w-md mb-6">
-          <SendLinkPopup
-            label="Envoyer formulaire Famille – Évangélisation"
-            type="add-evangelise"
-            buttonColor="from-[#11998e] to-[#38ef7d]"
-          />
-        </div>
-                  
-        <div className="max-w-3xl w-full mb-6 text-center">
-          <p className="italic text-base text-white/90">
-            La famille est le plus grand trésor. Prenez soin les uns des autres avec amour et patience. 
-          </p>
-        </div>
+        <div className="w-full max-w-md mb-3">
+  <SendLinkFamillePopup
+    label="Envoyer formulaire Famille – Nouveau membre"
+    type="ajouter_membre_famille"
+    buttonColor="from-[#f7971e] to-[#ffd200]"
+  />
+</div>
+
+<div className="w-full max-w-md mb-6">
+  <SendLinkFamillePopup
+    label="Envoyer formulaire Famille – Évangélisation"
+    type="ajouter_evangelise_famille"
+    buttonColor="from-[#11998e] to-[#38ef7d]"
+  />
+</div>
                   
         <Footer />
       </div>  

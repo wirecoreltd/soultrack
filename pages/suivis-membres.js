@@ -146,7 +146,7 @@ const DetailsPopup = React.memo(function DetailsPopup({
 
 export default function SuivisMembres() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableCellule", "ResponsableFamilles", "ResponsableIntegration"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableCellule", "ResponsableFamille", "ResponsableIntegration"]}>
       <SuivisMembresContent />
     </ProtectedRoute>
   );
@@ -306,9 +306,8 @@ function SuivisMembresContent() {
           const celluleIds = cellulesData?.filter(c => c.responsable_id === profileData.id).map(c => c.id) || [];
           if (celluleIds.length > 0) query = query.in("cellule_id", celluleIds);
           else query = query.eq("id", -1);
-        }
-
         } else if (profileData.role === "ResponsableFamille") {
+          // ✅ Même logique que ResponsableCellule, mais sur famille_id
           const familleIds = famillesData?.filter(f => f.responsable_id === profileData.id).map(f => f.id) || [];
           if (familleIds.length > 0) query = query.in("famille_id", familleIds);
           else query = query.eq("id", -1);

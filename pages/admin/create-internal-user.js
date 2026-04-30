@@ -59,11 +59,11 @@ function CreateInternalUserContent() {
   const allRoles = [
     { key: "Administrateur",            label: "Administrateur" },
     { key: "ResponsableIntegration",    label: "Responsable Integration" },
-    { key: "ResponsableCellule",        label: "Responsable Cellule" },
-    { key: "ResponsableFamilles",       label: "Responsable Familles" },
-    { key: "ResponsableEvangelisation", label: "Responsable Evangelisation" },
     { key: "SuperviseurCellule",        label: "Superviseur Cellule" },
+    { key: "ResponsableCellule",        label: "Responsable Cellule" },
+    { key: "ResponsableEvangelisation", label: "Responsable Evangelisation" },
     { key: "SuperviseurFamilles",       label: "Superviseur Familles" },
+    { key: "ResponsableFamilles",       label: "Responsable Familles" },         
     { key: "Conseiller",                label: "Conseiller" },
   ];
 

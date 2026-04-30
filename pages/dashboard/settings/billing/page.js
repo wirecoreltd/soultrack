@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import supabase from "../../../../lib/supabaseClient";
+import HeaderPages from "../../../../components/HeaderPages";
+import ProtectedRoute from "../../../../components/ProtectedRoute";
+import Footer from "../../../../components/Footer";
 
 const PLANS = [
   { id: "free",       nom: "Départ",     prix: "Gratuit",    limite: 50,   emoji: "🌱" },
@@ -17,7 +15,7 @@ const PLANS = [
   { id: "enterprise", nom: "Réseaux",    prix: "Sur mesure", limite: null, emoji: "🔗" },
 ];
 
-export default function BillingPage() {
+function BillingContent() {
   const router = useRouter();
 
   const [subscription, setSubscription] = useState(null);
@@ -85,152 +83,112 @@ export default function BillingPage() {
     setUpgrading(false);
   }
 
-  if (loading) return (
-    <div style={{ color: "#fff", padding: "40px", textAlign: "center" }}>
-      Chargement...
-    </div>
-  );
+  if (loading) {
+    return <p className="text-center mt-10 text-white">Chargement...</p>;
+  }
 
   const planActuel = PLANS.find(p => p.id === subscription?.plan_id);
   const limiteActuelle = planActuel?.limite;
 
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto", padding: "40px 24px", color: "#fff" }}>
+    <div className="min-h-screen p-6 bg-[#333699]">
+      <HeaderPages />
 
-      <h1 style={{ fontSize: "24px", fontWeight: 700, marginBottom: "8px" }}>
-        Abonnement
+      <h1 className="text-2xl font-bold mt-4 mb-2 text-white text-center">
+        Abonnement <span className="text-emerald-300">SoulTrack</span>
       </h1>
-      <p style={{ color: "rgba(255,255,255,0.5)", marginBottom: "40px", fontSize: "14px" }}>
-        Gérez votre plan SoulTrack
-      </p>
 
-      {/* Plan actuel */}
-      <div style={{
-        background: "rgba(255,255,255,0.07)",
-        border: "0.5px solid rgba(255,255,255,0.15)",
-        borderRadius: "16px",
-        padding: "24px",
-        marginBottom: "32px",
-      }}>
-        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "8px" }}>
-          PLAN ACTUEL
+      <div className="max-w-3xl w-full mb-6 text-center mx-auto">
+        <p className="italic text-base text-white/90">
+          <span className="text-blue-300 font-semibold">Gérez votre plan</span> et suivez
+          l'utilisation de votre église. Passez à un plan supérieur pour{" "}
+          <span className="text-blue-300 font-semibold">accueillir plus de membres</span>.
         </p>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-          <div>
-            <span style={{ fontSize: "20px", fontWeight: 700 }}>
-              {planActuel?.emoji} {planActuel?.nom}
-            </span>
-            <span style={{
-              marginLeft: "12px",
-              background: "rgba(251,191,36,0.15)",
-              color: "#fbbf24",
-              padding: "3px 10px",
-              borderRadius: "20px",
-              fontSize: "13px",
-              fontWeight: 600,
-            }}>
-              {planActuel?.prix}
-            </span>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>
-              Membres utilisés
-            </p>
-            <p style={{ fontSize: "18px", fontWeight: 700 }}>
-              {nombreMembres}
-              <span style={{ color: "rgba(255,255,255,0.4)", fontWeight: 400 }}>
-                {" "}/ {limiteActuelle ?? "∞"}
-              </span>
-            </p>
-            {/* Barre de progression */}
-            {limiteActuelle && (
-              <div style={{
-                width: "160px", height: "6px",
-                background: "rgba(255,255,255,0.1)",
-                borderRadius: "4px", marginTop: "6px",
-              }}>
-                <div style={{
-                  width: `${Math.min(100, (nombreMembres / limiteActuelle) * 100)}%`,
-                  height: "100%",
-                  background: nombreMembres / limiteActuelle > 0.9 ? "#ef4444" : "#fbbf24",
-                  borderRadius: "4px",
-                  transition: "width 0.3s",
-                }} />
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
-      {/* Message feedback */}
-      {message && (
-        <div style={{
-          background: message.type === "error" ? "rgba(239,68,68,0.15)" : "rgba(34,197,94,0.15)",
-          border: `0.5px solid ${message.type === "error" ? "rgba(239,68,68,0.4)" : "rgba(34,197,94,0.4)"}`,
-          borderRadius: "10px",
-          padding: "12px 16px",
-          marginBottom: "24px",
-          fontSize: "14px",
-          color: message.type === "error" ? "#fca5a5" : "#86efac",
-        }}>
-          {message.text}
+      <div className="max-w-3xl mx-auto space-y-4">
+
+        {/* Plan actuel */}
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-5 border-l-4 border-amber-400">
+          <p className="text-xs text-white/50 uppercase mb-3 font-semibold tracking-wider">
+            Plan actuel
+          </p>
+          <div className="flex justify-between items-center flex-wrap gap-4">
+            <div>
+              <span className="text-white text-xl font-bold">
+                {planActuel?.emoji} {planActuel?.nom}
+              </span>
+              <span className="ml-3 bg-amber-400/20 text-amber-300 px-3 py-1 rounded-full text-sm font-semibold">
+                {planActuel?.prix}
+              </span>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-white/60">Membres utilisés</p>
+              <p className="text-2xl font-bold text-white">
+                {nombreMembres}
+                <span className="text-white/40 text-base font-normal">
+                  {" "}/ {limiteActuelle ?? "∞"}
+                </span>
+              </p>
+              {limiteActuelle && (
+                <div className="w-40 h-1.5 bg-white/10 rounded-full mt-2">
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{
+                      width: `${Math.min(100, (nombreMembres / limiteActuelle) * 100)}%`,
+                      background: nombreMembres / limiteActuelle > 0.9 ? "#ef4444" : "#fbbf24",
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* Changer de plan */}
-      <h2 style={{ fontSize: "16px", fontWeight: 600, marginBottom: "16px", color: "rgba(255,255,255,0.7)" }}>
-        Changer de plan
-      </h2>
+        {/* Message feedback */}
+        {message && (
+          <div className={`rounded-xl px-4 py-3 text-sm font-medium border ${
+            message.type === "error"
+              ? "bg-red-500/15 border-red-500/40 text-red-300"
+              : "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
+          }`}>
+            {message.text}
+          </div>
+        )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {/* Header desktop */}
+        <div className="hidden sm:flex text-sm font-semibold text-white border-b border-white/20 pb-2 px-2">
+          <div className="flex-[2]">Plan</div>
+          <div className="flex-[2]">Limite</div>
+          <div className="flex-[1] text-center">Prix</div>
+          <div className="flex-[1] text-center">Action</div>
+        </div>
+
+        {/* Liste des plans */}
         {PLANS.map((plan) => {
           const estActuel = plan.id === subscription?.plan_id;
           return (
-            <div key={plan.id} style={{
-              background: estActuel ? "rgba(251,191,36,0.08)" : "rgba(255,255,255,0.05)",
-              border: estActuel ? "0.5px solid rgba(251,191,36,0.4)" : "0.5px solid rgba(255,255,255,0.1)",
-              borderRadius: "12px",
-              padding: "16px 20px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: "12px",
-              flexWrap: "wrap",
-            }}>
-              <div>
-                <span style={{ fontWeight: 600 }}>{plan.emoji} {plan.nom}</span>
-                <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "13px", marginLeft: "10px" }}>
-                  {plan.limite ? `jusqu'à ${plan.limite} membres` : "Illimité"}
-                </span>
+            <div
+              key={plan.id}
+              className="sm:hidden bg-white/10 backdrop-blur-md rounded-xl p-4 border-l-4 mb-2"
+              style={{ borderLeftColor: estActuel ? "#fbbf24" : "rgba(255,255,255,0.2)" }}
+            >
+              {/* Mobile card */}
+              <div className="text-white font-semibold text-lg">{plan.emoji} {plan.nom}</div>
+              <div className="text-white/70 text-sm mt-1">
+                👥 {plan.limite ? `Jusqu'à ${plan.limite} membres` : "Illimité"}
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <span style={{ color: "#fbbf24", fontWeight: 700 }}>{plan.prix}</span>
+              <div className="flex justify-between items-center mt-3">
+                <span className="text-amber-300 font-bold">{plan.prix}</span>
                 {estActuel ? (
-                  <span style={{
-                    background: "rgba(251,191,36,0.2)",
-                    color: "#fbbf24",
-                    padding: "5px 14px",
-                    borderRadius: "8px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}>
+                  <span className="bg-amber-400/20 text-amber-300 px-3 py-1 rounded-full text-sm font-semibold">
                     Actuel
                   </span>
                 ) : (
                   <button
                     onClick={() => changerPlan(plan.id)}
                     disabled={upgrading}
-                    style={{
-                      background: "#fff",
-                      color: "#333699",
-                      border: "none",
-                      padding: "6px 16px",
-                      borderRadius: "8px",
-                      fontWeight: 600,
-                      fontSize: "13px",
-                      cursor: upgrading ? "not-allowed" : "pointer",
-                      opacity: upgrading ? 0.6 : 1,
-                    }}
+                    className="bg-white text-[#333699] font-semibold px-4 py-1.5 rounded-lg text-sm shadow disabled:opacity-50"
                   >
                     {upgrading ? "..." : "Choisir"}
                   </button>
@@ -239,15 +197,63 @@ export default function BillingPage() {
             </div>
           );
         })}
+
+        {/* Desktop rows */}
+        {PLANS.map((plan) => {
+          const estActuel = plan.id === subscription?.plan_id;
+          return (
+            <div
+              key={`desk-${plan.id}`}
+              className={`hidden sm:flex flex-row items-center px-4 py-3 rounded-lg gap-2 border-l-4 ${
+                estActuel ? "bg-amber-400/10 border-amber-400" : "bg-white/10 border-white/20"
+              }`}
+            >
+              <div className="flex-[2] text-white font-semibold text-sm">
+                {plan.emoji} {plan.nom}
+              </div>
+              <div className="flex-[2] text-white/70 text-sm">
+                {plan.limite ? `Jusqu'à ${plan.limite} membres` : "Illimité"}
+              </div>
+              <div className="flex-[1] text-center text-amber-300 font-bold text-sm">
+                {plan.prix}
+              </div>
+              <div className="flex-[1] flex justify-center">
+                {estActuel ? (
+                  <span className="bg-amber-400/20 text-amber-300 px-3 py-1 rounded-full text-sm font-semibold">
+                    Actuel
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => changerPlan(plan.id)}
+                    disabled={upgrading}
+                    className="bg-white text-[#333699] font-semibold px-4 py-1.5 rounded-lg text-sm shadow disabled:opacity-50"
+                  >
+                    {upgrading ? "..." : "Choisir"}
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Renouvellement */}
+        {subscription?.current_period_end && (
+          <p className="text-center text-sm text-white/35 mt-4">
+            Prochain renouvellement :{" "}
+            {new Date(subscription.current_period_end).toLocaleDateString("fr-FR")}
+          </p>
+        )}
       </div>
 
-      {/* Renouvellement */}
-      {subscription?.current_period_end && (
-        <p style={{ marginTop: "28px", fontSize: "13px", color: "rgba(255,255,255,0.35)", textAlign: "center" }}>
-          Prochain renouvellement :{" "}
-          {new Date(subscription.current_period_end).toLocaleDateString("fr-FR")}
-        </p>
-      )}
+      <Footer />
     </div>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur"]}>
+      <BillingContent />
+    </ProtectedRoute>
   );
 }

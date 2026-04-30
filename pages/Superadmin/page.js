@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import Footer from "/../../components/Footer";
+import Footer from "../../components/Footer";
 
 const PLANS = [
   { id: "free",       nom: "Départ",     prix: "Gratuit",    limite: 50,   emoji: "🌱" },

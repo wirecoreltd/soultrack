@@ -24,12 +24,12 @@ const translations = {
     btnStart: "Commencer →",
     footer: "Tous droits réservés.",
     plans: [
-      { name: "Départ",     emoji: "🌱", range: "0 – 50 membres",       price: "Gratuit",    accent: "rgba(29,158,117,0.45)" },
-      { name: "Croissance", emoji: "📈", range: "51 – 200 membres",      price: "$19/mois",   accent: "rgba(55,138,221,0.5)"  },
-      { name: "Vision",     emoji: "🔥", range: "201 – 500 membres",     price: "$39/mois",   accent: "rgba(251,191,36,0.4)"  },
-      { name: "Expansion",  emoji: "🌍", range: "501 – 1500 membres",    price: "$79/mois",   accent: "rgba(212,83,126,0.4)"  },
-      { name: "Réseaux",    emoji: "🔗", range: "1500+ • Multi-églises", price: "Sur mesure", accent: "rgba(139,92,246,0.45)" },
-    ],
+    { id: "free",       name: "Départ",     emoji: "🌱", range: "0 – 50 membres",       price: "Gratuit",    accent: "rgba(29,158,117,0.45)" },
+    { id: "starter",    name: "Croissance", emoji: "📈", range: "51 – 200 membres",      price: "$19/mois",   accent: "rgba(55,138,221,0.5)"  },
+    { id: "vision",     name: "Vision",     emoji: "🔥", range: "201 – 500 membres",     price: "$39/mois",   accent: "rgba(251,191,36,0.4)"  },
+    { id: "expansion",  name: "Expansion",  emoji: "🌍", range: "501 – 1500 membres",    price: "$79/mois",   accent: "rgba(212,83,126,0.4)"  },
+    { id: "enterprise", name: "Réseaux",    emoji: "🔗", range: "1500+ • Multi-églises", price: "Sur mesure", accent: "rgba(139,92,246,0.45)" },
+  ],
   },
   en: {
     login: "Log in",
@@ -47,12 +47,12 @@ const translations = {
     btnStart: "Get started →",
     footer: "All rights reserved.",
     plans: [
-      { name: "Starter",   emoji: "🌱", range: "0 – 50 members",      price: "Free",   accent: "rgba(29,158,117,0.45)" },
-      { name: "Growth",    emoji: "📈", range: "51 – 200 members",     price: "$19/mo", accent: "rgba(55,138,221,0.5)"  },
-      { name: "Vision",    emoji: "🔥", range: "201 – 500 members",    price: "$39/mo", accent: "rgba(251,191,36,0.4)"  },
-      { name: "Expansion", emoji: "🌍", range: "501 – 1500 members",   price: "$79/mo", accent: "rgba(212,83,126,0.4)"  },
-      { name: "Networks",  emoji: "🔗", range: "1500+ • Multi-church", price: "Custom", accent: "rgba(139,92,246,0.45)" },
-    ],
+    { id: "free",       name: "Starter",   emoji: "🌱", range: "0 – 50 members",      price: "Free",   accent: "rgba(29,158,117,0.45)" },
+    { id: "starter",    name: "Growth",    emoji: "📈", range: "51 – 200 members",     price: "$19/mo", accent: "rgba(55,138,221,0.5)"  },
+    { id: "vision",     name: "Vision",    emoji: "🔥", range: "201 – 500 members",    price: "$39/mo", accent: "rgba(251,191,36,0.4)"  },
+    { id: "expansion",  name: "Expansion", emoji: "🌍", range: "501 – 1500 members",   price: "$79/mo", accent: "rgba(212,83,126,0.4)"  },
+    { id: "enterprise", name: "Networks",  emoji: "🔗", range: "1500+ • Multi-church", price: "Custom", accent: "rgba(139,92,246,0.45)" },
+  ],
   },
 };
 

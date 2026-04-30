@@ -69,7 +69,7 @@ function CelluleRow({ c, router }) {
         <div className="flex-[1] flex justify-center">
           <span
             className="text-orange-400 underline cursor-pointer text-sm"
-            onClick={() => router.push(`${window.location.origin}/cellule/membres-cellule?celluleId=${c.id}`)               
+            onClick={() => router.push(`${window.location.origin}/cellule/membres-cellule?celluleId=${c.id}`)}           
           >
             Détails
           </span>
@@ -131,7 +131,7 @@ function CelluleRow({ c, router }) {
           </div>
 
           <button
-            onClick={() => router.push(`${window.location.origin}/cellule/membres-cellule?celluleId=${c.id}`)
+            onClick={() => router.push(`${window.location.origin}/cellule/membres-cellule?celluleId=${c.id}`)}
             className="text-orange-400 underline text-sm"
           >
             Voir détails →

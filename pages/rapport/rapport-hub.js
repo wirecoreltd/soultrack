@@ -3,8 +3,8 @@
 "use client";
 
 import Link from "next/link";
-import HeaderPages from "../components/HeaderPages";
-import ProtectedRoute from "../components/ProtectedRoute";
+import HeaderPages from "../../components/HeaderPages";
+import ProtectedRoute from "../../components/ProtectedRoute";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
@@ -44,7 +44,7 @@ function RapportHubContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           <Link
-            href="/attendance"
+            href="/rapport/attendance"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
             border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
@@ -53,7 +53,7 @@ function RapportHubContent() {
           </Link>
 
           <Link
-            href="/Rapport-evangelisation"
+            href="/rapport/Rapport-evangelisation"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
             border-t-4 border-[#38BDF8] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
@@ -62,7 +62,7 @@ function RapportHubContent() {
           </Link>
 
           <Link
-            href="/RapportBaptemePage"
+            href="/rapport/RapportBaptemePage"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
             border-t-4 border-[#10B981] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
@@ -71,7 +71,7 @@ function RapportHubContent() {
           </Link>
 
           <Link
-            href="/RapportFormationPage"
+            href="/rapport/RapportFormationPage"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
             border-t-4 border-[#FBBF24] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
@@ -80,7 +80,7 @@ function RapportHubContent() {
           </Link>
 
           <Link
-            href="/RapportMinisterePage"
+            href="/rapport/RapportMinisterePage"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
             border-t-4 border-[#3B82F6] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
@@ -89,7 +89,7 @@ function RapportHubContent() {
           </Link>
 
           <Link
-            href="/RapportBesoinPage"
+            href="/rapport/RapportBesoinPage"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
             border-t-4 border-[#F472B6] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
@@ -98,7 +98,7 @@ function RapportHubContent() {
           </Link>
 
           <Link
-            href="/EtatConseillerPage"
+            href="/rapport/EtatConseillerPage"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
             border-t-4 border-[#22D3EE] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
@@ -107,7 +107,7 @@ function RapportHubContent() {
           </Link>
 
           <Link
-            href="/EtatCellulePage"
+            href="/rapport/EtatCellulePage"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
             border-t-4 border-[#A78BFA] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >
@@ -116,7 +116,7 @@ function RapportHubContent() {
           </Link>
 
           <Link
-            href="/StatGlobalPage"
+            href="/rapport/StatGlobalPage"
             className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center 
             border-t-4 border-[#84CC16] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
           >

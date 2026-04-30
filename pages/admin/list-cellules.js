@@ -131,7 +131,7 @@ function CelluleRow({ c, router }) {
           </div>
 
           <button
-            onClick={() => router.push(`/admin/cellules/${c.id}/membres`)}
+            onClick={() => router.push(`/cellule/membres-cellule?celluleId=${c.id}`)}
             className="text-orange-400 underline text-sm"
           >
             Voir détails →

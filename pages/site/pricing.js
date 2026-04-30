@@ -97,52 +97,23 @@ export default function PricingPage() {
         pointerEvents: "none", zIndex: 0,
       }} />
 
-      {/* ───── HEADER ───── */}
-      <header
-        style={{
-          background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
-          borderBottom: scrolled
-            ? "0.5px solid rgba(255,255,255,0.15)"
-            : "0.5px solid transparent",
-          position: "sticky",
-          top: 0,
-          zIndex: 100,
-          backdropFilter: scrolled ? "blur(16px)" : "none",
-          transition: "background 0.3s, border-color 0.3s",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1100px",
-            margin: "0 auto",
-            padding: "22px 24px",
-            height: "88px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+      {/* ───── HEADER (aligné sur about.tsx) ───── */}
+      <header style={{
+        background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
+        borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent",
+        position: "sticky", top: 0, zIndex: 100,
+        backdropFilter: scrolled ? "blur(16px)" : "none",
+        transition: "background 0.3s, border-color 0.3s",
+      }}>
+        <div style={{
+          maxWidth: "1100px", margin: "0 auto", padding: "22px 24px",
+          height: "88px", display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+
           {/* LOGO */}
-          <div
-            onClick={() => router.push("/site/HomePage")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              cursor: "pointer",
-              zIndex: 1,
-              flexShrink: 0,
-            }}
-          >
+          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>
             <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
-            <span
-              style={{
-                color: "#fff",
-                fontSize: "22px",
-                fontWeight: 500,
-                fontFamily: "'Great Vibes', cursive",
-              }}
-            >
+            <span style={{ color: "#fff", fontSize: "22px", fontWeight: 500, fontFamily: "'Great Vibes', cursive" }}>
               SoulTrack
             </span>
           </div>
@@ -150,55 +121,20 @@ export default function PricingPage() {
           {/* NAV desktop */}
           <nav style={{ display: "flex", alignItems: "center", gap: "32px", zIndex: 1 }}>
             {t.nav.map((item) => (
-              <span
-                key={item.path}
-                onClick={() => router.push(item.path)}
-                style={{
-                  color: pathname === item.path ? "#fbbf24" : "#fff",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "color 0.2s",
-                }}
-                className="nav-hide"
-              >
+              <span key={item.path} onClick={() => router.push(item.path)}
+                style={{ color: pathname === item.path ? "#fbbf24" : "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", transition: "color 0.2s" }}
+                className="nav-hide">
                 {item.label}
               </span>
             ))}
           </nav>
 
           {/* BOUTONS desktop */}
-          <div
-            style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }}
-            className="nav-hide"
-          >
-            <button
-              onClick={() => router.push("/login")}
-              style={{
-                background: "transparent",
-                color: "#fbbf24",
-                border: "0.5px solid rgba(255,255,255,0.35)",
-                padding: "7px 18px",
-                borderRadius: "8px",
-                fontSize: "14px",
-                cursor: "pointer",
-              }}
-            >
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
+            <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fbbf24", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
               {t.login}
             </button>
-            <button
-              onClick={() => router.push("/SignupEglise")}
-              style={{
-                background: "#fff",
-                color: "#333699",
-                border: "none",
-                padding: "7px 18px",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
+            <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
               {t.signup}
             </button>
           </div>
@@ -214,75 +150,32 @@ export default function PricingPage() {
           </div>
 
           {/* HAMBURGER */}
-          <button
-            onClick={() => setOpenMenu(!openMenu)}
-            className="nav-show"
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              display: "none",
-              flexDirection: "column",
-              gap: "5px",
-              padding: "4px",
-              zIndex: 1,
-            }}
-          >
+          <button onClick={() => setOpenMenu(!openMenu)} className="nav-show"
+            style={{ background: "none", border: "none", cursor: "pointer", display: "none", flexDirection: "column", gap: "5px", padding: "4px", zIndex: 1 }}>
             {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                style={{
-                  display: "block",
-                  width: "22px",
-                  height: "1.5px",
-                  background: "rgba(255,255,255,0.85)",
-                  borderRadius: "2px",
-                  transition: "transform 0.2s, opacity 0.2s",
-                  transform: openMenu
-                    ? i === 0
-                      ? "rotate(45deg) translate(5px, 5px)"
-                      : i === 2
-                      ? "rotate(-45deg) translate(5px, -5px)"
-                      : "scaleX(0)"
-                    : "none",
-                  opacity: openMenu && i === 1 ? 0 : 1,
-                }}
-              />
+              <span key={i} style={{
+                display: "block", width: "22px", height: "1.5px",
+                background: "rgba(255,255,255,0.85)", borderRadius: "2px",
+                transition: "transform 0.2s, opacity 0.2s",
+                transform: openMenu
+                  ? i === 0 ? "rotate(45deg) translate(5px, 5px)"
+                  : i === 2 ? "rotate(-45deg) translate(5px, -5px)"
+                  : "scaleX(0)" : "none",
+                opacity: openMenu && i === 1 ? 0 : 1,
+              }} />
             ))}
           </button>
         </div>
 
         {/* MENU MOBILE */}
         {openMenu && (
-          <div
-            style={{
-              background: "#333699",
-              borderTop: "0.5px solid rgba(255,255,255,0.15)",
-              padding: "20px 24px 28px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "20px",
-            }}
-          >
+          <div style={{ background: "#333699", borderTop: "0.5px solid rgba(255,255,255,0.15)", padding: "20px 24px 28px", display: "flex", flexDirection: "column", gap: "20px" }}>
             {t.nav.map((item) => (
-              <span
-                key={item.path}
-                onClick={() => {
-                  router.push(item.path);
-                  setOpenMenu(false);
-                }}
-                style={{
-                  color: pathname === item.path ? "#fbbf24" : "#fff",
-                  fontSize: "15px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
+              <span key={item.path} onClick={() => { router.push(item.path); setOpenMenu(false); }}
+                style={{ color: pathname === item.path ? "#fbbf24" : "#fff", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>
                 {item.label}
               </span>
             ))}
-
-            {/* Switcher langue mobile */}
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
               <button onClick={() => setLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
                 <img src="https://flagcdn.com/w20/fr.png" srcSet="https://flagcdn.com/w40/fr.png 2x" width="20" height="14" alt="Français" style={{ display: "block", borderRadius: "2px" }} />
@@ -291,36 +184,11 @@ export default function PricingPage() {
                 <img src="https://flagcdn.com/w20/gb.png" srcSet="https://flagcdn.com/w40/gb.png 2x" width="20" height="14" alt="English" style={{ display: "block", borderRadius: "2px" }} />
               </button>
             </div>
-
-            {/* Boutons mobile */}
             <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
-              <button
-                onClick={() => router.push("/login")}
-                style={{
-                  background: "transparent",
-                  color: "#fff",
-                  border: "0.5px solid rgba(255,255,255,0.35)",
-                  padding: "11px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                }}
-              >
+              <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fff", border: "0.5px solid rgba(255,255,255,0.35)", padding: "11px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
                 {t.login}
               </button>
-              <button
-                onClick={() => router.push("/SignupEglise")}
-                style={{
-                  background: "#fff",
-                  color: "#333699",
-                  border: "none",
-                  padding: "11px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
+              <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "11px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
                 {t.signup}
               </button>
             </div>
@@ -360,7 +228,7 @@ export default function PricingPage() {
               background: "rgba(255,255,255,0.08)",
               border: "0.5px solid rgba(255,255,255,0.12)",
               borderRadius: "20px",
-              padding: "28px 24px",
+              padding: "32px 24px 28px",   /* ↑ padding top augmenté */
               position: "relative",
               backdropFilter: "blur(8px)",
               display: "flex",
@@ -377,13 +245,31 @@ export default function PricingPage() {
                 pointerEvents: "none",
               }} />
 
-              <h3 style={{ color: "#FFFFFF", fontSize: "18px", marginBottom: "4px", alignSelf: "flex-start", textAlign: "left" }}>
+              {/* Nom du plan */}
+              <h3 style={{
+                color: "#FFFFFF", fontSize: "18px",
+                marginBottom: "8px",          /* ↑ était 4px */
+                alignSelf: "flex-start", textAlign: "left",
+              }}>
                 {plan.emoji} {plan.name}
               </h3>
-              <p style={{ color: "#FFFFFF", fontSize: "13px", marginBottom: "14px", opacity: 0.85, alignSelf: "flex-start", textAlign: "left" }}>
+
+              {/* Plage de membres */}
+              <p style={{
+                color: "#FFFFFF", fontSize: "13px",
+                marginBottom: "20px",         /* ↑ était 14px */
+                opacity: 0.85,
+                alignSelf: "flex-start", textAlign: "left",
+              }}>
                 {plan.range}
               </p>
-              <div style={{ color: "#fbbf24", fontWeight: 600, fontSize: "22px", marginBottom: "20px", textAlign: "center", width: "100%" }}>
+
+              {/* Prix */}
+              <div style={{
+                color: "#fbbf24", fontWeight: 600, fontSize: "22px",
+                marginBottom: "28px",         /* ↑ était 20px */
+                textAlign: "center", width: "100%",
+              }}>
                 {plan.price}
               </div>
 
@@ -407,13 +293,9 @@ export default function PricingPage() {
       </footer>
 
       <style>{`
-        html, body {
-          width: 100%;
-          overflow-x: hidden;
-        }
+        html, body { width: 100%; overflow-x: hidden; }
         * { box-sizing: border-box; }
         img { max-width: 100%; height: auto; }
-
         @media (max-width: 768px) {
           .nav-hide { display: none !important; }
           .nav-show { display: flex !important; }

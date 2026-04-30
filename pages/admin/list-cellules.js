@@ -267,14 +267,16 @@ function ListCellulesContent() {
       </div>
 
       {/* Bouton */}
-      <div className="max-w-6xl mx-auto flex justify-end mb-3">
-        <button
-          onClick={() => router.push("/admin/create-cellule")}
-          className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-        >
-          ➕ Ajouter une Cellule
-        </button>
-      </div>
+      {userRole === "SuperviseurCellule" && (
+  <div className="max-w-6xl mx-auto flex justify-end mb-3">
+    <button
+      onClick={() => router.push("/admin/create-cellule")}
+      className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+    >
+      ➕ Ajouter une Cellule
+    </button>
+  </div>
+)}
 
       {/* Tableau */}
       <div className="max-w-6xl mx-auto space-y-2">

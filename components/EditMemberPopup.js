@@ -239,7 +239,9 @@ export default function EditMemberPopup({ member, cellules, conseillers, famille
       setLoading(false);
     }
   };
-
+console.log("familles reçues dans popup:", familles);
+console.log("isPrivileged:", isPrivileged);
+console.log("currentUserRoles:", currentUserRoles);
   // -------------------- UI --------------------
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: "rgba(30,35,90,0.35)", backdropFilter: "blur(6px)" }}>

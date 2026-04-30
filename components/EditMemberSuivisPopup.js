@@ -295,32 +295,7 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
               ))}
             </select>
           </Field>
-
-          {/* ✅ Section: Affectation — Cellule + Famille (isPrivileged uniquement) */}
-          {isPrivileged && (
-            <>
-              <SectionTitle>🏠 Affectation</SectionTitle>
-
-              <Field label="Cellule">
-                <select name="cellule_id" value={formData.cellule_id} onChange={handleChange} className="inp">
-                  <option value="">-- Sélectionner une cellule --</option>
-                  {(cellules || []).map(c => (
-                    <option key={c.id} value={c.id}>{c.cellule_full}</option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field label="Famille">
-                <select name="famille_id" value={formData.famille_id} onChange={handleChange} className="inp">
-                  <option value="">-- Sélectionner une famille --</option>
-                  {(familles || []).map(f => (
-                    <option key={f.id} value={f.id}>{f.famille_full}</option>
-                  ))}
-                </select>
-              </Field>
-            </>
-          )}
-
+         
           {/* Section: Vie spirituelle */}
           <SectionTitle>🕊 Vie spirituelle</SectionTitle>
 

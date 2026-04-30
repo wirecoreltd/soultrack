@@ -17,19 +17,19 @@ export default function StatGlobalPageWrapper() {
 function StatGlobalPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [branchesTree, setBranchesTree] = useState([]);
+  const [eglisesTree, setEglisesTree] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [superviseurFilter, setSuperviseurFilter] = useState("");
-  const [allBranches, setAllBranches] = useState([]);
+  const [parentFilter, setParentFilter] = useState("");
+  const [allEglises, setAllEglises] = useState([]);
   const [rootId, setRootId] = useState(null);
-  const [expandedBranches, setExpandedBranches] = useState([]);
-  const [ministereMap, setMinistereMap] = useState({});  
+  const [expandedEglises, setExpandedEglises] = useState([]);
+  const [ministereMap, setMinistereMap] = useState({});
 
-  const toggleExpand = (branchId) => {
-    setExpandedBranches((prev) =>
-      prev.includes(branchId)
-        ? prev.filter((id) => id !== branchId)
-        : [...prev, branchId]
+  const toggleExpand = (egliseId) => {
+    setExpandedEglises((prev) =>
+      prev.includes(egliseId)
+        ? prev.filter((id) => id !== egliseId)
+        : [...prev, egliseId]
     );
   };
 
@@ -39,30 +39,32 @@ function StatGlobalPage() {
       const { data: { user } } = await supabase.auth.getUser();
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("branche_id")
+        .select("eglise_id")
         .eq("id", user.id)
         .single();
 
-      const rootIdValue = profileData.branche_id;
+      const rootIdValue = profileData.eglise_id;
       setRootId(rootIdValue);
 
-      const { data: filteredBranchesData } = await supabase.rpc("get_descendant_branches", { root_id: rootIdValue });
+      // Fetch all descendant eglises using the RPC (rename your function accordingly,
+      // or keep the same name if it already works on eglises)
+      const { data: filteredEglisesData } = await supabase.rpc("get_descendant_eglises", { root_id: rootIdValue });
 
-      if (!filteredBranchesData?.length) {
-        setBranchesTree([]);
-        setAllBranches([]);
+      if (!filteredEglisesData?.length) {
+        setEglisesTree([]);
+        setAllEglises([]);
         setMinistereMap({});
         setLoading(false);
         return;
       }
 
-      const branchIds = filteredBranchesData.map((b) => b.id);
+      const egliseIds = filteredEglisesData.map((e) => e.id);
 
       // ================= MINISTÈRE =================
       let ministereQuery = supabase
         .from("membres_complets")
-        .select("id, branche_id")
-        .in("branche_id", branchIds)
+        .select("id, eglise_id")
+        .in("eglise_id", egliseIds)
         .eq("star", true);
 
       if (dateDebut) ministereQuery = ministereQuery.gte("created_at", dateDebut);
@@ -71,13 +73,13 @@ function StatGlobalPage() {
       const { data: ministereData } = await ministereQuery;
 
       const minMap = {};
-      branchIds.forEach((id) => { minMap[id] = []; });
-      ministereData?.forEach((m) => { minMap[m.branche_id].push(m.id); });
+      egliseIds.forEach((id) => { minMap[id] = []; });
+      ministereData?.forEach((m) => { minMap[m.eglise_id].push(m.id); });
       setMinistereMap(minMap);
 
       // ================= STATS MAP =================
       const statsMap = {};
-      branchIds.forEach((id) => {
+      egliseIds.forEach((id) => {
         statsMap[id] = {
           culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0 },
           formation: { hommes: 0, femmes: 0 },
@@ -88,8 +90,8 @@ function StatGlobalPage() {
         };
       });
 
-      const tableFetch = async (table, branchField, dateField) => {
-        let query = supabase.from(table).select("*").in(branchField, branchIds);
+      const tableFetch = async (table, dateField) => {
+        let query = supabase.from(table).select("*").in("eglise_id", egliseIds);
         if (dateDebut) query = query.gte(dateField, dateDebut);
         if (dateFin) query = query.lte(dateField, dateFin);
         const { data } = await query;
@@ -97,16 +99,16 @@ function StatGlobalPage() {
       };
 
       const [attendanceData, formationData, baptemeData, evangeData, cellulesData] = await Promise.all([
-        tableFetch("attendance_stats", "branche_id", "mois"),
-        tableFetch("formations", "branche_id", "date_debut"),
-        tableFetch("baptemes", "branche_id", "date"),
-        tableFetch("rapport_evangelisation", "branche_id", "date"),
-        tableFetch("cellules", "branche_id", "created_at"),
+        tableFetch("attendance_stats", "mois"),
+        tableFetch("formations", "date_debut"),
+        tableFetch("baptemes", "date"),
+        tableFetch("rapport_evangelisation", "date"),
+        tableFetch("cellules", "created_at"),
       ]);
 
       // ================= CULTE =================
       attendanceData.forEach((s) => {
-        const a = statsMap[s.branche_id]?.culte;
+        const a = statsMap[s.eglise_id]?.culte;
         if (!a) return;
         a.hommes += Number(s.hommes) || 0;
         a.femmes += Number(s.femmes) || 0;
@@ -120,7 +122,7 @@ function StatGlobalPage() {
 
       // ================= FORMATION =================
       formationData.forEach((f) => {
-        const form = statsMap[f.branche_id]?.formation;
+        const form = statsMap[f.eglise_id]?.formation;
         if (!form) return;
         form.hommes += Number(f.hommes) || 0;
         form.femmes += Number(f.femmes) || 0;
@@ -128,7 +130,7 @@ function StatGlobalPage() {
 
       // ================= BAPTÊME =================
       baptemeData.forEach((b) => {
-        const bap = statsMap[b.branche_id]?.bapteme;
+        const bap = statsMap[b.eglise_id]?.bapteme;
         if (!bap) return;
         bap.hommes += Number(b.hommes) || 0;
         bap.femmes += Number(b.femmes) || 0;
@@ -136,7 +138,7 @@ function StatGlobalPage() {
 
       // ================= ÉVANGÉLISATION =================
       evangeData.forEach((e) => {
-        const ev = statsMap[e.branche_id]?.evangelisation;
+        const ev = statsMap[e.eglise_id]?.evangelisation;
         if (!ev) return;
         ev.hommes += Number(e.hommes) || 0;
         ev.femmes += Number(e.femmes) || 0;
@@ -144,41 +146,36 @@ function StatGlobalPage() {
         ev.nouveau_converti += Number(e.nouveau_converti) || 0;
         ev.reconciliation += Number(e.reconciliation) || 0;
         ev.moissonneurs += Number(e.moissonneurs) || 0;
-      });      
+      });
 
-     // ================= SERVITEURS =================
-const { data: serviteurData } = await supabase
-  .from("stats_ministere_besoin")
-  .select("membre_id, branche_id, sexe, type")
-  .in("branche_id", branchIds);
+      // ================= SERVITEURS =================
+      const { data: serviteurData } = await supabase
+        .from("stats_ministere_besoin")
+        .select("membre_id, eglise_id, sexe, type")
+        .in("eglise_id", egliseIds);
 
-const unique = new Map();
+      const unique = new Map();
 
-serviteurData?.forEach((row) => {
-  if (row.type !== "ministere") return;
+      serviteurData?.forEach((row) => {
+        if (row.type !== "ministere") return;
+        const key = `${row.eglise_id}_${row.membre_id}`;
+        if (!unique.has(key)) {
+          unique.set(key, row);
+        }
+      });
 
-  const key = `${row.branche_id}_${row.membre_id}`;
-
-  if (!unique.has(key)) {
-    unique.set(key, row);
-  }
-});
-
-unique.forEach((row) => {
-  if (!row.sexe) return;
-
-  const serv = statsMap[row.branche_id]?.serviteurs;
-  if (!serv) return;
-
-  const sexe = row.sexe.trim().toLowerCase();
-
-  if (sexe === "homme") serv.hommes += 1;
-  else if (sexe === "femme") serv.femmes += 1;
-});
+      unique.forEach((row) => {
+        if (!row.sexe) return;
+        const serv = statsMap[row.eglise_id]?.serviteurs;
+        if (!serv) return;
+        const sexe = row.sexe.trim().toLowerCase();
+        if (sexe === "homme") serv.hommes += 1;
+        else if (sexe === "femme") serv.femmes += 1;
+      });
 
       // ================= CELLULES =================
       cellulesData.forEach((c) => {
-        const id = c.branche_id || c.eglise_id;
+        const id = c.eglise_id;
         if (id && statsMap[id]) {
           statsMap[id].cellules.total++;
         } else {
@@ -188,33 +185,33 @@ unique.forEach((row) => {
 
       // ================= ARBRE =================
       const map = {};
-      filteredBranchesData.forEach((b) => {
-        map[b.id] = { ...b, stats: statsMap[b.id], enfants: [] };
+      filteredEglisesData.forEach((e) => {
+        map[e.id] = { ...e, stats: statsMap[e.id], enfants: [] };
       });
       const tree = [];
-      Object.values(map).forEach((b) => {
-        if (b.superviseur_id && map[b.superviseur_id]) map[b.superviseur_id].enfants.push(b);
-        else tree.push(b);
+      Object.values(map).forEach((e) => {
+        if (e.parent_eglise_id && map[e.parent_eglise_id]) map[e.parent_eglise_id].enfants.push(e);
+        else tree.push(e);
       });
 
-      setBranchesTree(tree);
-      setAllBranches(Object.values(map));
+      setEglisesTree(tree);
+      setAllEglises(Object.values(map));
     } catch (err) {
       console.error("Erreur fetch stats:", err);
-      setBranchesTree([]);
-      setAllBranches([]);
+      setEglisesTree([]);
+      setAllEglises([]);
       setMinistereMap({});
     }
     setLoading(false);
   };
 
-  // ================= RENDER BRANCH (DESKTOP) =================
-  const renderBranch = (branch, level = 0) => {
-    const isExpanded = expandedBranches.includes(branch.id);
+  // ================= RENDER EGLISE (DESKTOP) =================
+  const renderEglise = (eglise, level = 0) => {
+    const isExpanded = expandedEglises.includes(eglise.id);
 
     const totalStats =
-      branch.enfants.length > 0 && !isExpanded
-        ? branch.enfants.reduce(
+      eglise.enfants.length > 0 && !isExpanded
+        ? eglise.enfants.reduce(
             (acc, child) => {
               acc.culte.hommes += child.stats.culte.hommes;
               acc.culte.femmes += child.stats.culte.femmes;
@@ -239,34 +236,34 @@ unique.forEach((row) => {
               return acc;
             },
             {
-              culte: { ...branch.stats.culte },
-              formation: { ...branch.stats.formation },
-              bapteme: { ...branch.stats.bapteme },
-              evangelisation: { ...branch.stats.evangelisation },
-              serviteurs: { ...branch.stats.serviteurs },
-              cellules: { ...branch.stats.cellules },
+              culte: { ...eglise.stats.culte },
+              formation: { ...eglise.stats.formation },
+              bapteme: { ...eglise.stats.bapteme },
+              evangelisation: { ...eglise.stats.evangelisation },
+              serviteurs: { ...eglise.stats.serviteurs },
+              cellules: { ...eglise.stats.cellules },
             }
           )
-        : branch.stats;
+        : eglise.stats;
 
     return (
-      <div key={branch.id} className="mt-8">
+      <div key={eglise.id} className="mt-8">
         <div className="flex items-center mb-3">
-          {level >= 1 && branch.enfants.length > 0 && (
-            <button onClick={() => toggleExpand(branch.id)} className="mr-2 text-xl">
+          {level >= 1 && eglise.enfants.length > 0 && (
+            <button onClick={() => toggleExpand(eglise.id)} className="mr-2 text-xl">
               {isExpanded ? "➖" : "➕"}
             </button>
           )}
           <div className="flex items-center gap-2">
-            <span className={`text-xl font-semibold ${branch.enfants.length > 0 ? "text-amber-300" : "text-white"}`}>
-              {branch.nom}
+            <span className={`text-xl font-semibold ${eglise.enfants.length > 0 ? "text-amber-300" : "text-white"}`}>
+              {eglise.nom}
             </span>
-            {branch.enfants.length > 0 && (
+            {eglise.enfants.length > 0 && (
               <span className="text-sm text-white">
-                (Supervision de {branch.enfants.length} église{branch.enfants.length > 1 ? "s" : ""})
+                (Supervision de {eglise.enfants.length} église{eglise.enfants.length > 1 ? "s" : ""})
               </span>
             )}
-            {branch.enfants.length > 0 && !isExpanded && (
+            {eglise.enfants.length > 0 && !isExpanded && (
               <span className="text-sm text-amber-300">• Total général</span>
             )}
           </div>
@@ -281,13 +278,13 @@ unique.forEach((row) => {
               <div className="min-w-[120px] text-center">Hommes</div>
               <div className="min-w-[120px] text-center">Femmes</div>
               <div className="min-w-[120px] text-center">Jeunes</div>
-              <div className="min-w-[120px] text-center text orange-400">Total</div>
+              <div className="min-w-[120px] text-center text-orange-400">Total</div>
               <div className="min-w-[120px] text-center">Enfants</div>
               <div className="min-w-[140px] text-center">Connectés</div>
               <div className="min-w-[150px] text-center">Nouveaux Venus</div>
               <div className="min-w-[180px] text-center">Nouveau Converti</div>
               <div className="min-w-[160px] text-center">Moissonneurs</div>
-            <div className="min-w-[120px] text-center text orange-400">Total Global</div>
+              <div className="min-w-[120px] text-center text-orange-400">Total Global</div>
             </div>
 
             {/* CULTE */}
@@ -303,8 +300,9 @@ unique.forEach((row) => {
               <div className="min-w-[150px] text-center font-semibold">{totalStats.culte.nouveaux_venus}</div>
               <div className="min-w-[180px] text-center font-semibold">{totalStats.culte.nouveau_converti}</div>
               <div className="min-w-[160px] text-center font-semibold">{totalStats.culte.moissonneurs}</div>
-              <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.culte.hommes + totalStats.culte.femmes + 
-              totalStats.culte.jeunes + totalStats.culte.enfants + totalStats.culte.connectes }</div>
+              <div className="min-w-[120px] text-center font-semibold text-orange-400">
+                {totalStats.culte.hommes + totalStats.culte.femmes + totalStats.culte.jeunes + totalStats.culte.enfants + totalStats.culte.connectes}
+              </div>
             </div>
 
             {/* FORMATION */}
@@ -314,7 +312,7 @@ unique.forEach((row) => {
               <div className="min-w-[120px] text-center font-semibold">{totalStats.formation.hommes}</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.formation.femmes}</div>
               <div className="min-w-[120px] text-center"></div>
-               <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.formation.hommes + totalStats.formation.femmes}</div>
+              <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.formation.hommes + totalStats.formation.femmes}</div>
             </div>
 
             {/* BAPTÊME */}
@@ -324,7 +322,7 @@ unique.forEach((row) => {
               <div className="min-w-[120px] text-center font-semibold">{totalStats.bapteme.hommes}</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.bapteme.femmes}</div>
               <div className="min-w-[120px] text-center"></div>
-              <div className="min-w-[120px] text-center semibold text-orange-400">{totalStats.bapteme.hommes + totalStats.bapteme.femmes} </div>
+              <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.bapteme.hommes + totalStats.bapteme.femmes}</div>
             </div>
 
             {/* ÉVANGÉLISATION */}
@@ -348,8 +346,7 @@ unique.forEach((row) => {
               <div className="min-w-[100px] text-center">-</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.serviteurs.hommes}</div>
               <div className="min-w-[120px] text-center font-semibold">{totalStats.serviteurs.femmes}</div>
-              <div className="min-w-[120x] text-center"></div>
-              <div className="min-w-[120x] text-center"></div>
+              <div className="min-w-[120px] text-center"></div>
               <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.serviteurs.hommes + totalStats.serviteurs.femmes}</div>
             </div>
 
@@ -360,30 +357,30 @@ unique.forEach((row) => {
               <div className="min-w-[120px] text-center"></div>
               <div className="min-w-[120px] text-center"></div>
               <div className="min-w-[120px] text-center"></div>
-              <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.cellules.total}</div>              
+              <div className="min-w-[120px] text-center font-semibold text-orange-400">{totalStats.cellules.total}</div>
             </div>
           </div>
         </div>
 
         {/* RENDER CHILDREN */}
-        {branch.enfants.map((child) =>
-          level === 0 || isExpanded ? renderBranch(child, level + 1) : null
+        {eglise.enfants.map((child) =>
+          level === 0 || isExpanded ? renderEglise(child, level + 1) : null
         )}
       </div>
     );
   };
 
-  // ================= RENDER BRANCH (MOBILE) =================
-  const renderBranchMobile = (branch, level = 0) => {
-    const isExpanded = expandedBranches.includes(branch.id);
-    const stats = branch.stats;
+  // ================= RENDER EGLISE (MOBILE) =================
+  const renderEgliseMobile = (eglise, level = 0) => {
+    const isExpanded = expandedEglises.includes(eglise.id);
+    const stats = eglise.stats;
 
     return (
-      <div className="mt-3" key={branch.id}>
+      <div className="mt-3" key={eglise.id}>
 
         {/* CARD HEADER */}
         <div
-          onClick={() => toggleExpand(branch.id)}
+          onClick={() => toggleExpand(eglise.id)}
           className="bg-white/10 border-l-4 border-amber-400 rounded-xl p-3 flex justify-between items-center cursor-pointer"
           style={{ marginLeft: level * 10 }}
         >
@@ -392,9 +389,9 @@ unique.forEach((row) => {
               {isExpanded ? "➖" : "➕"}
             </span>
             <div>
-              <p className="font-semibold text-white">{branch.nom}</p>
+              <p className="font-semibold text-white">{eglise.nom}</p>
               <p className="text-xs text-white/70">
-                {branch.enfants.length} église(s)
+                {eglise.enfants.length} église(s)
               </p>
             </div>
           </div>
@@ -501,27 +498,28 @@ unique.forEach((row) => {
 
         {/* CHILDREN */}
         {isExpanded &&
-          branch.enfants.map((child) => renderBranchMobile(child, level + 1))}
+          eglise.enfants.map((child) => renderEgliseMobile(child, level + 1))}
       </div>
     );
   };
 
-  const superviseurOptions = allBranches.filter((b) => b.superviseur_id === rootId);
+  // Direct children of root eglise (for the supervisor filter dropdown)
+  const parentOptions = allEglises.filter((e) => e.parent_eglise_id === rootId);
 
-  const filteredBranches = (() => {
-    if (!superviseurFilter) return branchesTree;
+  const filteredEglises = (() => {
+    if (!parentFilter) return eglisesTree;
 
-    const findBranchInTree = (tree) => {
-      for (let branch of tree) {
-        if (branch.id === superviseurFilter) return branch;
-        const found = findBranchInTree(branch.enfants || []);
+    const findEgliseInTree = (tree) => {
+      for (let eglise of tree) {
+        if (eglise.id === parentFilter) return eglise;
+        const found = findEgliseInTree(eglise.enfants || []);
         if (found) return found;
       }
       return null;
     };
 
-    const foundBranch = findBranchInTree(branchesTree);
-    return foundBranch ? [foundBranch] : [];
+    const foundEglise = findEgliseInTree(eglisesTree);
+    return foundEglise ? [foundEglise] : [];
   })();
 
   return (
@@ -544,64 +542,62 @@ unique.forEach((row) => {
         </p>
       </div>
 
-             {/* FILTRE DATE */}
+      {/* FILTRE DATE */}
       <div className="flex justify-center mb-8">
         <div className="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl flex flex-col gap-6 w-fit shadow-lg">
           <p className="text-base text-red-400 font-semibold text-center mb-4">
             Choisissez les paramètres pour générer le rapport
           </p>
 
-           
           <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
-            {/* DATE DEBUT */}           
-    <div className="flex flex-col w-full md:w-auto">
-      <label className="text-base text-center mb-1">Date de début</label>
-      <input
-        type="date"
-        value={dateDebut}
-        onChange={e => setDateDebut(e.target.value)}
-        className="w-full h-10 bg-white/10 border border-white/30 rounded-lg px-3 text-white"
-      />
-    </div>
+            {/* DATE DEBUT */}
+            <div className="flex flex-col w-full md:w-auto">
+              <label className="text-base text-center mb-1">Date de début</label>
+              <input
+                type="date"
+                value={dateDebut}
+                onChange={e => setDateDebut(e.target.value)}
+                className="w-full h-10 bg-white/10 border border-white/30 rounded-lg px-3 text-white"
+              />
+            </div>
 
-    {/* DATE FIN */}
-    <div className="flex flex-col w-full md:w-auto">
-      <label className="text-base text-center mb-1">Date de fin</label>
-      <input
-        type="date"
-        value={dateFin}
-        onChange={e => setDateFin(e.target.value)}
-        className="w-full h-10 bg-white/10 border border-white/30 rounded-lg px-3 text-white"
-      />
-    </div>
+            {/* DATE FIN */}
+            <div className="flex flex-col w-full md:w-auto">
+              <label className="text-base text-center mb-1">Date de fin</label>
+              <input
+                type="date"
+                value={dateFin}
+                onChange={e => setDateFin(e.target.value)}
+                className="w-full h-10 bg-white/10 border border-white/30 rounded-lg px-3 text-white"
+              />
+            </div>
 
-    {/* BOUTON */}
-    <div className="flex flex-col w-full md:w-auto">
-      <label className="text-base text-center mb-1 opacity-0">btn</label>
-      <button
-        onClick={fetchStats}
+            {/* BOUTON */}
+            <div className="flex flex-col w-full md:w-auto">
+              <label className="text-base text-center mb-1 opacity-0">btn</label>
+              <button
+                onClick={fetchStats}
                 className="w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
-      >
-        {loading ? "Générer..." : "Générer le rapport"}
-      </button>
-    </div>
+              >
+                {loading ? "Générer..." : "Générer le rapport"}
+              </button>
+            </div>
 
-            {/* SELECT SUPERVISEUR */}
-            {superviseurOptions.length > 0 && (
+            {/* SELECT PARENT EGLISE */}
+            {parentOptions.length > 0 && (
               <div className="flex flex-col w-full md:w-auto">
-                <label className="text-sm text-center mb-1">Superviseur</label>
+                <label className="text-sm text-center mb-1">Église parente</label>
                 <select
-                  value={superviseurFilter}
-                  onChange={(e) => setSuperviseurFilter(e.target.value)}
-                   className="w-full h-10 bg-white/10 border border-white/30 rounded-lg px-3 text-white text-center"
-        >
-                 <option value="">Tous</option>
-{superviseurOptions.map((s) => (
-  <option key={s.id} value={s.id} className="text-black">
-    {s.nom}
-  </option>
-))}
-                 
+                  value={parentFilter}
+                  onChange={(e) => setParentFilter(e.target.value)}
+                  className="w-full h-10 bg-white/10 border border-white/30 rounded-lg px-3 text-white text-center"
+                >
+                  <option value="">Toutes</option>
+                  {parentOptions.map((e) => (
+                    <option key={e.id} value={e.id} className="text-black">
+                      {e.nom}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
@@ -611,12 +607,12 @@ unique.forEach((row) => {
 
       {/* DESKTOP */}
       <div className="hidden md:block">
-        {filteredBranches.map((branch) => renderBranch(branch))}
+        {filteredEglises.map((eglise) => renderEglise(eglise))}
       </div>
 
       {/* MOBILE */}
       <div className="md:hidden space-y-3">
-        {filteredBranches.map((branch) => renderBranchMobile(branch))}
+        {filteredEglises.map((eglise) => renderEgliseMobile(eglise))}
       </div>
 
       <Footer />

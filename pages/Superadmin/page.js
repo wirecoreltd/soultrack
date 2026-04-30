@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
-import ProtectedRoute from "../../../components/ProtectedRoute";
+import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "/../../components/Footer";
 
 const PLANS = [
@@ -252,7 +252,7 @@ function BillingContent() {
 
 export default function BillingPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur"]}>
+    <ProtectedRoute allowedRoles={["Superadmin"]}>
       <BillingContent />
     </ProtectedRoute>
   );

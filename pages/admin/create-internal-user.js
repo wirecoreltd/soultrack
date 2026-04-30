@@ -63,6 +63,7 @@ function CreateInternalUserContent() {
     { key: "ResponsableFamilles",       label: "Responsable Familles" },
     { key: "ResponsableEvangelisation", label: "Responsable Evangelisation" },
     { key: "SuperviseurCellule",        label: "Superviseur Cellule" },
+    { key: "SuperviseurFamilles",       label: "Superviseur Familles" },
     { key: "Conseiller",                label: "Conseiller" },
   ];
 

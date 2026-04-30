@@ -1,20 +1,23 @@
-// app/dashboard/settings/billing/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
 const PLANS = [
-  { id: "free",       nom: "Départ",     prix: "Gratuit", limite: 50,   emoji: "🌱" },
-  { id: "starter",    nom: "Croissance", prix: "$19/mois", limite: 200,  emoji: "📈" },
-  { id: "vision",     nom: "Vision",     prix: "$39/mois", limite: 500,  emoji: "🔥" },
-  { id: "expansion",  nom: "Expansion",  prix: "$79/mois", limite: 1500, emoji: "🌍" },
+  { id: "free",       nom: "Départ",     prix: "Gratuit",    limite: 50,   emoji: "🌱" },
+  { id: "starter",    nom: "Croissance", prix: "$19/mois",   limite: 200,  emoji: "📈" },
+  { id: "vision",     nom: "Vision",     prix: "$39/mois",   limite: 500,  emoji: "🔥" },
+  { id: "expansion",  nom: "Expansion",  prix: "$79/mois",   limite: 1500, emoji: "🌍" },
   { id: "enterprise", nom: "Réseaux",    prix: "Sur mesure", limite: null, emoji: "🔗" },
 ];
 
 export default function BillingPage() {
-  const supabase = createClientComponentClient();
   const router = useRouter();
 
   const [subscription, setSubscription] = useState(null);
@@ -29,12 +32,9 @@ export default function BillingPage() {
   }, []);
 
   async function loadData() {
-    // Récupérer l'utilisateur connecté
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return router.push("/login");
 
-    // Récupérer l'église liée à cet utilisateur
-    // (adapte selon ta logique : profile, eglise_users, etc.)
     const { data: profile } = await supabase
       .from("profiles")
       .select("eglise_id")
@@ -44,7 +44,6 @@ export default function BillingPage() {
     if (!profile?.eglise_id) return;
     setEgliseId(profile.eglise_id);
 
-    // Abonnement actuel
     const { data: sub } = await supabase
       .from("subscriptions")
       .select("*, plans(*)")
@@ -53,7 +52,6 @@ export default function BillingPage() {
 
     setSubscription(sub);
 
-    // Nombre de membres actifs
     const { count } = await supabase
       .from("membres_complets")
       .select("*", { count: "exact", head: true })

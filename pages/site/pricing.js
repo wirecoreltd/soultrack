@@ -3,6 +3,10 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 
+import { Great_Vibes } from "next/font/google";
+const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
+
+// ─── DICTIONNAIRE ────────────────────────────────────────────────────────────
 const translations = {
   fr: {
     login: "Connexion",
@@ -94,24 +98,51 @@ export default function PricingPage() {
       }} />
 
       {/* ───── HEADER ───── */}
-      <header style={{
-        background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
-        borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent",
-        position: "sticky", top: 0, zIndex: 100,
-        backdropFilter: scrolled ? "blur(16px)" : "none",
-        transition: "background 0.3s, border-color 0.3s",
-      }}>
-        <div style={{
-          maxWidth: "1100px", margin: "0 auto", padding: "22px 24px",
-          height: "88px", display: "flex", alignItems: "center", justifyContent: "space-between",
-        }}>
+      <header
+        style={{
+          background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
+          borderBottom: scrolled
+            ? "0.5px solid rgba(255,255,255,0.15)"
+            : "0.5px solid transparent",
+          position: "sticky",
+          top: 0,
+          zIndex: 100,
+          backdropFilter: scrolled ? "blur(16px)" : "none",
+          transition: "background 0.3s, border-color 0.3s",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "1100px",
+            margin: "0 auto",
+            padding: "22px 24px",
+            height: "88px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           {/* LOGO */}
-          <div onClick={() => router.push("/site/HomePage")} style={{
-            display: "flex", alignItems: "center", gap: "6px",
-            cursor: "pointer", zIndex: 1, flexShrink: 0,
-          }}>
+          <div
+            onClick={() => router.push("/site/HomePage")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              cursor: "pointer",
+              zIndex: 1,
+              flexShrink: 0,
+            }}
+          >
             <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
-            <span style={{ color: "#fff", fontSize: "22px", fontWeight: 500, fontFamily: "'Great Vibes', cursive" }}>
+            <span
+              style={{
+                color: "#fff",
+                fontSize: "22px",
+                fontWeight: 500,
+                fontFamily: "'Great Vibes', cursive",
+              }}
+            >
               SoulTrack
             </span>
           </div>
@@ -119,30 +150,55 @@ export default function PricingPage() {
           {/* NAV desktop */}
           <nav style={{ display: "flex", alignItems: "center", gap: "32px", zIndex: 1 }}>
             {t.nav.map((item) => (
-              <span key={item.path} onClick={() => router.push(item.path)}
+              <span
+                key={item.path}
+                onClick={() => router.push(item.path)}
                 style={{
                   color: pathname === item.path ? "#fbbf24" : "#fff",
-                  fontSize: "14px", fontWeight: 600, cursor: "pointer", transition: "color 0.2s",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "color 0.2s",
                 }}
-                className="nav-hide">
+                className="nav-hide"
+              >
                 {item.label}
               </span>
             ))}
           </nav>
 
           {/* BOUTONS desktop */}
-          <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
-            <button onClick={() => router.push("/login")} style={{
-              background: "transparent", color: "#fbbf24",
-              border: "0.5px solid rgba(255,255,255,0.35)",
-              padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer",
-            }}>
+          <div
+            style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }}
+            className="nav-hide"
+          >
+            <button
+              onClick={() => router.push("/login")}
+              style={{
+                background: "transparent",
+                color: "#fbbf24",
+                border: "0.5px solid rgba(255,255,255,0.35)",
+                padding: "7px 18px",
+                borderRadius: "8px",
+                fontSize: "14px",
+                cursor: "pointer",
+              }}
+            >
               {t.login}
             </button>
-            <button onClick={() => router.push("/SignupEglise")} style={{
-              background: "#fff", color: "#333699", border: "none",
-              padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer",
-            }}>
+            <button
+              onClick={() => router.push("/SignupEglise")}
+              style={{
+                background: "#fff",
+                color: "#333699",
+                border: "none",
+                padding: "7px 18px",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
               {t.signup}
             </button>
           </div>
@@ -158,34 +214,70 @@ export default function PricingPage() {
           </div>
 
           {/* HAMBURGER */}
-          <button onClick={() => setOpenMenu(!openMenu)} className="nav-show" style={{
-            background: "none", border: "none", cursor: "pointer",
-            display: "none", flexDirection: "column", gap: "5px", padding: "4px", zIndex: 1,
-          }}>
+          <button
+            onClick={() => setOpenMenu(!openMenu)}
+            className="nav-show"
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              display: "none",
+              flexDirection: "column",
+              gap: "5px",
+              padding: "4px",
+              zIndex: 1,
+            }}
+          >
             {[0, 1, 2].map((i) => (
-              <span key={i} style={{
-                display: "block", width: "22px", height: "1.5px",
-                background: "rgba(255,255,255,0.85)", borderRadius: "2px",
-                transition: "transform 0.2s, opacity 0.2s",
-                transform: openMenu
-                  ? i === 0 ? "rotate(45deg) translate(5px, 5px)"
-                  : i === 2 ? "rotate(-45deg) translate(5px, -5px)" : "scaleX(0)"
-                  : "none",
-                opacity: openMenu && i === 1 ? 0 : 1,
-              }} />
+              <span
+                key={i}
+                style={{
+                  display: "block",
+                  width: "22px",
+                  height: "1.5px",
+                  background: "rgba(255,255,255,0.85)",
+                  borderRadius: "2px",
+                  transition: "transform 0.2s, opacity 0.2s",
+                  transform: openMenu
+                    ? i === 0
+                      ? "rotate(45deg) translate(5px, 5px)"
+                      : i === 2
+                      ? "rotate(-45deg) translate(5px, -5px)"
+                      : "scaleX(0)"
+                    : "none",
+                  opacity: openMenu && i === 1 ? 0 : 1,
+                }}
+              />
             ))}
           </button>
         </div>
 
         {/* MENU MOBILE */}
         {openMenu && (
-          <div style={{
-            background: "#333699", borderTop: "0.5px solid rgba(255,255,255,0.15)",
-            padding: "20px 24px 28px", display: "flex", flexDirection: "column", gap: "20px",
-          }}>
+          <div
+            style={{
+              background: "#333699",
+              borderTop: "0.5px solid rgba(255,255,255,0.15)",
+              padding: "20px 24px 28px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "20px",
+            }}
+          >
             {t.nav.map((item) => (
-              <span key={item.path} onClick={() => { router.push(item.path); setOpenMenu(false); }}
-                style={{ color: pathname === item.path ? "#fbbf24" : "#fff", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>
+              <span
+                key={item.path}
+                onClick={() => {
+                  router.push(item.path);
+                  setOpenMenu(false);
+                }}
+                style={{
+                  color: pathname === item.path ? "#fbbf24" : "#fff",
+                  fontSize: "15px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
                 {item.label}
               </span>
             ))}
@@ -202,17 +294,33 @@ export default function PricingPage() {
 
             {/* Boutons mobile */}
             <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
-              <button onClick={() => router.push("/login")} style={{
-                background: "transparent", color: "#fff",
-                border: "0.5px solid rgba(255,255,255,0.35)",
-                padding: "11px", borderRadius: "8px", fontSize: "14px", cursor: "pointer",
-              }}>
+              <button
+                onClick={() => router.push("/login")}
+                style={{
+                  background: "transparent",
+                  color: "#fff",
+                  border: "0.5px solid rgba(255,255,255,0.35)",
+                  padding: "11px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                }}
+              >
                 {t.login}
               </button>
-              <button onClick={() => router.push("/SignupEglise")} style={{
-                background: "#fff", color: "#333699", border: "none",
-                padding: "11px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer",
-              }}>
+              <button
+                onClick={() => router.push("/SignupEglise")}
+                style={{
+                  background: "#fff",
+                  color: "#333699",
+                  border: "none",
+                  padding: "11px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
                 {t.signup}
               </button>
             </div>
@@ -222,8 +330,12 @@ export default function PricingPage() {
 
       {/* ───── HERO ───── */}
       <section style={{
-        textAlign: "center", padding: "60px max(16px, 4vw) 40px",
-        width: "100%", boxSizing: "border-box", position: "relative", zIndex: 1,
+        textAlign: "center",
+        padding: "60px max(16px, 4vw) 40px",
+        width: "100%",
+        boxSizing: "border-box",
+        position: "relative",
+        zIndex: 1,
       }}>
         <h1 style={{ color: "#fff", fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 500, marginBottom: "10px" }}>
           {t.heroTitle} <span style={{ color: "#fbbf24" }}>{t.heroHighlight}</span>
@@ -236,19 +348,25 @@ export default function PricingPage() {
       {/* ───── PLANS ───── */}
       <section style={{ padding: "40px 24px 100px", position: "relative", zIndex: 1 }}>
         <div style={{
-          maxWidth: "1100px", margin: "0 auto",
+          maxWidth: "1100px",
+          margin: "0 auto",
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))",
-          gap: "20px", width: "100%",
+          width: "100%",
+          gap: "20px",
         }}>
           {t.plans.map((plan, i) => (
             <div key={i} style={{
               background: "rgba(255,255,255,0.08)",
               border: "0.5px solid rgba(255,255,255,0.12)",
-              borderRadius: "20px", padding: "36px 24px 28px",
-              position: "relative", backdropFilter: "blur(8px)",
-              display: "flex", flexDirection: "column",
-              alignItems: "center", textAlign: "center",
+              borderRadius: "20px",
+              padding: "28px 24px",
+              position: "relative",
+              backdropFilter: "blur(8px)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
               overflow: "hidden",
             }}>
               {/* GLOW accent */}
@@ -259,21 +377,19 @@ export default function PricingPage() {
                 pointerEvents: "none",
               }} />
 
-              <div style={{ fontSize: "36px", marginBottom: "12px" }}>{plan.emoji}</div>
-              <h3 style={{ color: "#fff", fontSize: "20px", fontWeight: 600, marginBottom: "8px" }}>
-                {plan.name}
+              <h3 style={{ color: "#FFFFFF", fontSize: "18px", marginBottom: "4px", alignSelf: "flex-start", textAlign: "left" }}>
+                {plan.emoji} {plan.name}
               </h3>
-              <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "13px", marginBottom: "20px" }}>
+              <p style={{ color: "#FFFFFF", fontSize: "13px", marginBottom: "14px", opacity: 0.85, alignSelf: "flex-start", textAlign: "left" }}>
                 {plan.range}
               </p>
-              <div style={{ color: "#fbbf24", fontWeight: 700, fontSize: "26px", marginBottom: "28px" }}>
+              <div style={{ color: "#fbbf24", fontWeight: 600, fontSize: "22px", marginBottom: "20px", textAlign: "center", width: "100%" }}>
                 {plan.price}
               </div>
 
               <button onClick={() => router.push("/SignupEglise")} style={{
                 background: "#fff", color: "#333699", border: "none",
-                padding: "10px 24px", borderRadius: "10px",
-                fontWeight: 600, fontSize: "14px", cursor: "pointer",
+                padding: "10px 20px", borderRadius: "10px", fontWeight: 600, cursor: "pointer",
                 marginTop: "auto",
               }}>
                 {t.btnStart}
@@ -291,9 +407,13 @@ export default function PricingPage() {
       </footer>
 
       <style>{`
-        html, body { width: 100%; overflow-x: hidden; }
+        html, body {
+          width: 100%;
+          overflow-x: hidden;
+        }
         * { box-sizing: border-box; }
         img { max-width: 100%; height: auto; }
+
         @media (max-width: 768px) {
           .nav-hide { display: none !important; }
           .nav-show { display: flex !important; }

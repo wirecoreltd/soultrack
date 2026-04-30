@@ -3,10 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 
-// Pass `currentUserRoles` (array) as a prop from the parent
-export default function EditMemberPopup({ member, cellules, conseillers, familles, onClose, onUpdateMember, currentUserRoles }) {
+export default function EditMemberPopup({ member, cellules, familles, conseillers, onClose, onUpdateMember, currentUserRoles }) {
   if (!member) return null;
-
 
   const isPrivileged = (currentUserRoles || []).some(r => ["Administrateur", "ResponsableIntegration"].includes(r));
 
@@ -69,7 +67,6 @@ export default function EditMemberPopup({ member, cellules, conseillers, famille
   const [message, setMessage] = useState("");
   const [selectedConseillers, setSelectedConseillers] = useState([]);
 
-  // Ref for click-outside detection
   const modalRef = useRef(null);
 
   useEffect(() => {
@@ -84,7 +81,6 @@ export default function EditMemberPopup({ member, cellules, conseillers, famille
       if (error) { console.error("fetchAssignments error:", error); return; }
 
       if (data) {
-        // Trier: principal en premier
         const sorted = [...data].sort((a, b) => {
           if (a.role === "principal") return -1;
           if (b.role === "principal") return 1;
@@ -97,7 +93,6 @@ export default function EditMemberPopup({ member, cellules, conseillers, famille
     fetchAssignments();
   }, [member.id]);
 
-  // Click outside handler
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -112,7 +107,6 @@ export default function EditMemberPopup({ member, cellules, conseillers, famille
     `${c.prenom} ${c.nom}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  // -------------------- HANDLERS --------------------
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox") {
@@ -143,7 +137,6 @@ export default function EditMemberPopup({ member, cellules, conseillers, famille
     }));
   };
 
-  // -------------------- SUBMIT --------------------
   const handleSubmit = async () => {
     setMessage("");
     if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
@@ -169,13 +162,13 @@ export default function EditMemberPopup({ member, cellules, conseillers, famille
       if (isPrivileged) {
         if (formData.star) {
           await supabase.from("stats_ministere_besoin").upsert({
-  membre_id: member.id,
-  sexe: formData.sexe,
-  type: "ministere",
-  valeur: finalMinistere.join(","),
-  eglise_id: member.eglise_id,        // ✅ disponible via props
-  date_action: new Date().toISOString().split("T")[0],
-});
+            membre_id: member.id,
+            sexe: formData.sexe,
+            type: "ministere",
+            valeur: finalMinistere.join(","),
+            eglise_id: member.eglise_id,
+            date_action: new Date().toISOString().split("T")[0],
+          });
         } else {
           await supabase.from("stats_ministere_besoin").delete()
             .eq("membre_id", member.id).eq("type", "ministere");
@@ -216,10 +209,9 @@ export default function EditMemberPopup({ member, cellules, conseillers, famille
 
       if (isPrivileged) {
         await supabase.from("suivi_assignments").delete().eq("membre_id", member.id);
-        // selectedConseillers est un tableau d objets {id, prenom, nom}
         const rows = selectedConseillers.map((c, index) => ({
           membre_id: member.id,
-          conseiller_id: c.id,   // ← c.id et non c entier
+          conseiller_id: c.id,
           role: index === 0 ? "principal" : "assistant",
           statut: "actif"
         }));
@@ -239,10 +231,7 @@ export default function EditMemberPopup({ member, cellules, conseillers, famille
       setLoading(false);
     }
   };
-console.log("familles reçues dans popup:", familles);
-console.log("isPrivileged:", isPrivileged);
-console.log("currentUserRoles:", currentUserRoles);
-  // -------------------- UI --------------------
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: "rgba(30,35,90,0.35)", backdropFilter: "blur(6px)" }}>
       <div
@@ -268,7 +257,6 @@ console.log("currentUserRoles:", currentUserRoles);
         {/* Body */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
 
-          {/* Section: Identité */}
           <SectionTitle>👤 Identité</SectionTitle>
 
           <Field label="Civilité">
@@ -300,7 +288,6 @@ console.log("currentUserRoles:", currentUserRoles);
             </select>
           </Field>
 
-          {/* Section: Suivi — restricted fields */}
           <SectionTitle>📌 Suivi par</SectionTitle>
 
           {isPrivileged ? (
@@ -314,15 +301,15 @@ console.log("currentUserRoles:", currentUserRoles);
                 </select>
               </Field>
 
-                    <Field label="Familles">
+              {/* ✅ Famille — value corrigée sur famille_id */}
+              <Field label="Famille">
                 <select name="famille_id" value={formData.famille_id ?? ""} onChange={handleChange} className="inp">
                   <option value="">-- Famille --</option>
-                  {(familles || []).map(c => (
-                    <option key={c.id} value={c.id}>{c.famille_full}</option>
+                  {(familles || []).map(f => (
+                    <option key={f.id} value={f.id}>{f.famille_full}</option>
                   ))}
                 </select>
               </Field>
-
 
               <Field label="Ajouter conseiller">
                 <input
@@ -340,7 +327,6 @@ console.log("currentUserRoles:", currentUserRoles);
                         key={c.id}
                         onClick={() => {
                           if (!alreadySelected) {
-                            // Ajouter l objet complet {id, prenom, nom}
                             setSelectedConseillers(prev => [...prev, { id: c.id, prenom: c.prenom, nom: c.nom }]);
                           }
                         }}
@@ -375,11 +361,10 @@ console.log("currentUserRoles:", currentUserRoles);
             </>
           ) : (
             <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
-              🔒 La cellule et les conseillers sont gérés par un administrateur.
+              🔒 La cellule, la famille et les conseillers sont gérés par un administrateur.
             </p>
           )}
 
-          {/* Section: Suivi */}
           <SectionTitle>💝 Suivi</SectionTitle>
 
           <Field label="Suivi statut">
@@ -399,7 +384,6 @@ console.log("currentUserRoles:", currentUserRoles);
             <textarea name="Commentaire_Suivi_Evangelisation" value={formData.Commentaire_Suivi_Evangelisation} onChange={handleChange} className="inp" rows={2} />
           </Field>
 
-          {/* Section: Vie spirituelle */}
           <SectionTitle>🕊 Vie spirituelle</SectionTitle>
 
           <Field label="Baptême d'eau">
@@ -469,7 +453,6 @@ console.log("currentUserRoles:", currentUserRoles);
             <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="inp" rows={2} />
           </Field>
 
-          {/* Serviteur — restricted */}
           {isPrivileged && (
             <>
               <div className="flex items-center gap-3 py-2">
@@ -525,7 +508,6 @@ console.log("currentUserRoles:", currentUserRoles);
             </>
           )}
 
-          {/* État du contact */}
           <Field label="État du contact">
             <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="inp">
               <option value="">-- Sélectionner --</option>
@@ -612,7 +594,6 @@ console.log("currentUserRoles:", currentUserRoles);
   );
 }
 
-// ---- Helper sub-components ----
 function SectionTitle({ children }) {
   return (
     <div className="flex items-center gap-2 pt-2">

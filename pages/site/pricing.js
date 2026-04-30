@@ -362,20 +362,19 @@ gap: "10px",
                 {t.login}
               </button>
               <button
-                onClick={() => router.push("/SignupEglise")}
-                style={{
-                  background: "#fff",
-                  color: "#333699",
-                  border: "none",
-                  padding: "11px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                {t.signup}
-              </button>
+  onClick={() => router.push(
+    plan.id === "enterprise"
+      ? "/site/contact"
+      : `/SignupEglise?plan=${plan.id}`
+  )}
+  style={{
+    background: "#fff", color: "#333699", border: "none",
+    padding: "10px 20px", borderRadius: "10px",
+    fontWeight: 600, cursor: "pointer", marginTop: "auto",
+  }}
+>
+  {t.btnStart}
+</button>
             </div>
           </div>
         )}

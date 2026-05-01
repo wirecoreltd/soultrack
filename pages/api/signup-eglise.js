@@ -1,6 +1,5 @@
 // pages/api/signup-eglise.js
 import { createClient } from "@supabase/supabase-js";
-import { addMonths } from "date-fns";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -37,6 +36,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Email déjà utilisé" });
     }
 
+    const addMonths = (date, n) => {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + n);
+  return d;
+};
+
+    
     // 2️⃣ Créer l'église (sans branche)
     const { data: egliseData, error: egliseError } = await supabaseAdmin
       .from("eglises")
@@ -90,11 +96,10 @@ const { error: subError } = await supabaseAdmin
   .insert([{
     eglise_id: egliseId,
     plan_id: planId,
-    status: "active",
-    started_at: new Date().toISOString(),
-    expires_at: planId === "free" ? null : addMonths(new Date(), 1).toISOString(),
+    statut: "active",
+    current_period_start: new Date().toISOString(),
     current_period_end: planId === "free"
-      ? addMonths(new Date(), 100).toISOString()  // far future for free plan
+      ? addMonths(new Date(), 100).toISOString()
       : addMonths(new Date(), 1).toISOString(),
   }]);
 

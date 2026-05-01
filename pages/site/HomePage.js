@@ -424,7 +424,7 @@ gap: "10px",
               {t.login}
             </button>
             <button
-              onClick={() => router.push("/SignupEglise")}
+              onClick={() => router.push("/site/pricing")}
               style={{
                 background: "#fff",
                 color: "#333699",

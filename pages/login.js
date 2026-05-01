@@ -120,7 +120,7 @@ export default function LoginPage() {
         </button>
 
         <button
-          onClick={() => router.push("/SignupEglise")}
+          onClick={() => router.push("/site/pricing")}
           className="mt-4 text-orange-400 underline hover:text-orange-400"
         >
           Création de compte

@@ -211,7 +211,7 @@ export default function PricingPage() {
               {t.login}
             </button>
             <button
-              onClick={() => router.push("/SignupEglise")}
+              onClick={() => router.push("/site/pricing")}
               style={{
                 background: "#fff",
                 color: "#333699",
@@ -325,7 +325,7 @@ export default function PricingPage() {
                 {t.login}
               </button>
               <button
-                onClick={() => router.push("/SignupEglise")}
+                onClick={() => router.push("/site/pricing")}
                 style={{
                   background: "#fff", color: "#333699", border: "none",
                   padding: "11px", borderRadius: "8px",

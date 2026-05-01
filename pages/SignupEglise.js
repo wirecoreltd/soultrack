@@ -1,11 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";  // ← ajoute useEffect
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function SignupEglise() {
   const router = useRouter();
+  const [planId, setPlanId] = useState("free");  // ← nouveau
+
+  // ← nouveau : lire le plan depuis l'URL, sinon rediriger vers pricing
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get("plan");
+    if (!plan) {
+      router.push("/pricing");  // adapte le chemin de ta page pricing
+    } else {
+      setPlanId(plan);
+    }
+  }, []);
+
+  const PLANS_LABELS = {
+    free: "🌱 Départ — Gratuit",
+    starter: "📈 Croissance — $19/mois",
+    vision: "🔥 Vision — $39/mois",
+    expansion: "🌍 Expansion — $79/mois",
+    enterprise: "🔗 Réseaux — Sur mesure",
+  };
+
+  // ... tout ton state existant reste pareil ...
   const [formData, setFormData] = useState({
     nomEglise: "",
     denomination: "",
@@ -26,37 +48,7 @@ export default function SignupEglise() {
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleLogoChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const allowedTypes = ["image/png", "image/svg+xml", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
-      alert("❌ Format invalide. Utilisez PNG, SVG ou WEBP uniquement.");
-      e.target.value = "";
-      return;
-    }
-
-    const maxSize = 500 * 1024;
-    if (file.size > maxSize) {
-      alert("❌ Image trop lourde. Maximum 500 Ko.");
-      e.target.value = "";
-      return;
-    }
-
-    const img = new window.Image();
-    img.src = URL.createObjectURL(file);
-    img.onload = () => {
-      if (img.width !== img.height) {
-        alert("❌ Le logo doit être carré (ex: 200x200, 512x512).");
-        e.target.value = "";
-        URL.revokeObjectURL(img.src);
-        return;
-      }
-      setLogoFile(file);
-      setLogoPreview(img.src);
-    };
-  };
+  // ... handleLogoChange reste pareil ...
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -88,8 +80,7 @@ export default function SignupEglise() {
       const res = await fetch("/api/signup-eglise", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // ✅ nomBranche supprimé
-        body: JSON.stringify({ ...formData, logoUrl }),
+        body: JSON.stringify({ ...formData, logoUrl, planId }),  // ← ajoute planId
       });
 
       const data = await res.json().catch(() => null);
@@ -109,7 +100,7 @@ export default function SignupEglise() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
-      <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
+      <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center"> 
         <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Image src="/logo.png" alt="Logo SoulTrack" width={48} height={48} />
           SoulTrack
@@ -117,6 +108,18 @@ export default function SignupEglise() {
         <p className="text-center text-gray-700 mb-6">
           Créez votre Église et l'administrateur principal pour commencer.
         </p>
+
+    <div className="w-full bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 text-center">
+          <p className="text-xs text-gray-500 mb-1">Plan sélectionné</p>
+          <p className="font-bold text-blue-700">{PLANS_LABELS[planId]}</p>
+          <button
+            type="button"
+            onClick={() => router.push("/pricing")}
+            className="text-xs text-blue-400 underline mt-1"
+          >
+            Changer de plan
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
 

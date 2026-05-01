@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { addMonths } from "date-fns/addMonths";
 
 export default function SignupEglise() {
   const router = useRouter();
@@ -26,6 +25,13 @@ export default function SignupEglise() {
     expansion: "🌍 Expansion — $79/mois",
     enterprise: "🔗 Réseaux — Sur mesure",
   };
+
+  // Remove the date-fns import entirely, then use this helper:
+const addMonths = (date, n) => {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + n);
+  return d;
+};
 
   const [formData, setFormData] = useState({
     nomEglise: "",

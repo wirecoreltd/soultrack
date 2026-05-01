@@ -94,7 +94,7 @@ const translations = {
   },
   en: {
     login: "Log in",
-    : "Create my church",
+    signup: "Create my church",
     nav: [
       { label: "Home", path: "/site/HomePage" },
       { label: "How it works", path: "/site/Fonctionnement" },

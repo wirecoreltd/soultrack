@@ -58,10 +58,10 @@ function BillingContent() {
     setMessage(null);
 
     const { data: sub } = await supabase
-      .from("subscriptions")
-      .select("*, plans(*)")
-      .eq("eglise_id", egliseId)
-      .single();
+  .from("subscriptions")
+  .select("*, plans(*)")
+  .eq("eglise_id", egliseId)
+  .maybeSingle(); 
 
     setSubscription(sub);
 

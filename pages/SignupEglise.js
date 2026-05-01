@@ -1,19 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";  // ← ajoute useEffect
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function SignupEglise() {
   const router = useRouter();
-  const [planId, setPlanId] = useState("free");  // ← nouveau
+  const [planId, setPlanId] = useState("free");
 
-  // ← nouveau : lire le plan depuis l'URL, sinon rediriger vers pricing
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const plan = params.get("plan");
     if (!plan) {
-      router.push("/pricing");  // adapte le chemin de ta page pricing
+      router.push("/pricing");
     } else {
       setPlanId(plan);
     }
@@ -27,7 +26,6 @@ export default function SignupEglise() {
     enterprise: "🔗 Réseaux — Sur mesure",
   };
 
-  // ... tout ton state existant reste pareil ...
   const [formData, setFormData] = useState({
     nomEglise: "",
     denomination: "",
@@ -48,7 +46,21 @@ export default function SignupEglise() {
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  // ... handleLogoChange reste pareil ...
+  const handleLogoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Vérification taille max 500 Ko
+    if (file.size > 500 * 1024) {
+      setMessage("❌ Le logo dépasse 500 Ko. Veuillez choisir une image plus petite.");
+      return;
+    }
+
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setLogoPreview(reader.result);
+    reader.readAsDataURL(file);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,7 +92,7 @@ export default function SignupEglise() {
       const res = await fetch("/api/signup-eglise", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, logoUrl, planId }),  // ← ajoute planId
+        body: JSON.stringify({ ...formData, logoUrl, planId }),
       });
 
       const data = await res.json().catch(() => null);
@@ -100,7 +112,7 @@ export default function SignupEglise() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
-      <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center"> 
+      <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
         <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Image src="/logo.png" alt="Logo SoulTrack" width={48} height={48} />
           SoulTrack
@@ -109,7 +121,7 @@ export default function SignupEglise() {
           Créez votre Église et l'administrateur principal pour commencer.
         </p>
 
-    <div className="w-full bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 text-center">
+        <div className="w-full bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 text-center">
           <p className="text-xs text-gray-500 mb-1">Plan sélectionné</p>
           <p className="font-bold text-blue-700">{PLANS_LABELS[planId]}</p>
           <button
@@ -126,7 +138,7 @@ export default function SignupEglise() {
           {/* ── Infos église ── */}
           <input
             name="denomination"
-            placeholder="Dénomination (ex: Egélise de Christ)"
+            placeholder="Dénomination (ex: Église de Christ)"
             value={formData.denomination}
             onChange={handleChange}
             className="input"
@@ -138,7 +150,6 @@ export default function SignupEglise() {
             value={formData.nomEglise}
             onChange={handleChange}
             className="input"
-            
           />
           <input
             name="branche"
@@ -146,14 +157,14 @@ export default function SignupEglise() {
             value={formData.branche}
             onChange={handleChange}
             className="input"
-          />              
+          />
           <input
             name="ville"
             placeholder="Ville (ex: Paris...)"
             value={formData.ville}
             onChange={handleChange}
             className="input"
-              required
+            required
           />
           <input
             name="localisation"
@@ -220,7 +231,11 @@ export default function SignupEglise() {
             </label>
             <label className="cursor-pointer border border-dashed border-gray-400 rounded-xl p-4 flex flex-col items-center gap-2 hover:bg-gray-50 transition">
               {logoPreview ? (
-                <img src={logoPreview} alt="Aperçu logo" className="max-h-[200px] max-w-[250px] object-contain rounded-lg"/>
+                <img
+                  src={logoPreview}
+                  alt="Aperçu logo"
+                  className="max-h-[200px] max-w-[250px] object-contain rounded-lg"
+                />
               ) : (
                 <>
                   <span className="text-3xl">🖼️</span>
@@ -246,7 +261,15 @@ export default function SignupEglise() {
           </div>
 
           {message && (
-            <p className={`text-center text-sm font-medium ${message.startsWith("✅") ? "text-green-600" : message.startsWith("⏳") ? "text-blue-500" : "text-red-500"}`}>
+            <p
+              className={`text-center text-sm font-medium ${
+                message.startsWith("✅")
+                  ? "text-green-600"
+                  : message.startsWith("⏳")
+                  ? "text-blue-500"
+                  : "text-red-500"
+              }`}
+            >
               {message}
             </p>
           )}

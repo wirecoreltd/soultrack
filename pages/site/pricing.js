@@ -80,6 +80,14 @@ export default function PricingPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  function handleChoosePlan(planId) {
+    if (planId === "enterprise") {
+      router.push("/site/contact");
+    } else {
+      router.push(`/SignupEglise?plan=${planId}`);
+    }
+  }
+  
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
 
@@ -457,12 +465,16 @@ gap: "10px",
                 {plan.price}
               </div>
 
-              <button onClick={() => router.push("/SignupEglise")} style={{
-                background: "#fff", color: "#333699", border: "none",
-                padding: "10px 20px", borderRadius: "10px", fontWeight: 600, cursor: "pointer",
-                marginTop: "auto",
-              }}>
-                {t.btnStart}
+              <button
+                onClick={() => handleChoosePlan(plan.id)}
+                style={{
+                  background: "#fff", color: "#333699", border: "none",
+                  padding: "10px 20px", borderRadius: "10px",
+                  fontWeight: 600, cursor: "pointer", marginTop: "auto",
+                  width: "100%",
+                }}
+              >
+                {plan.id === "enterprise" ? t.btnContact : t.btnStart}
               </button>
             </div>
           ))}

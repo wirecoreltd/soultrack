@@ -231,7 +231,7 @@ export default function AboutPage() {
             <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fbbf24", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
               {t.login}
             </button>
-            <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={() => router.push("/site/pricing")} style={{ background: "#fff", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
               {t.signup}
             </button>
           </div>
@@ -285,7 +285,7 @@ export default function AboutPage() {
               <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fff", border: "0.5px solid rgba(255,255,255,0.35)", padding: "11px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
                 {t.login}
               </button>
-              <button onClick={() => router.push("/SignupEglise")} style={{ background: "#fff", color: "#333699", border: "none", padding: "11px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
+              <button onClick={() => router.push("/site/pricing")} style={{ background: "#fff", color: "#333699", border: "none", padding: "11px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
                 {t.signup}
               </button>
             </div>
@@ -439,7 +439,7 @@ export default function AboutPage() {
             <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "15px", lineHeight: 1.8, maxWidth: "420px", margin: "0 auto 28px" }}>
               {t.ctaText}
             </p>
-            <button onClick={() => router.push("/SignupEglise")} style={{
+            <button onClick={() => router.push("/site/pricing")} style={{
               background: "#fff", color: "#333699", border: "none",
               padding: "14px 36px", borderRadius: "10px", fontSize: "15px",
               fontWeight: 700, cursor: "pointer", transition: "opacity 0.2s",

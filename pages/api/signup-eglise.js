@@ -22,6 +22,7 @@ export default async function handler(req, res) {
     adminNom,
     adminEmail,
     adminPassword,
+    planId = "free",
   } = req.body;
 
   try {
@@ -63,8 +64,6 @@ export default async function handler(req, res) {
     if (authError) return res.status(400).json({ error: authError.message });
 
     const adminUserId = authData.user.id;
-    
-    const { ..., planId = "free" } = req.body;
 
     // 4️⃣ Créer le profil admin (sans branche_id)
     const { data: profileData, error: profileError } = await supabaseAdmin
@@ -84,17 +83,18 @@ export default async function handler(req, res) {
 
     if (profileError) return res.status(400).json({ error: profileError.message });
 
+    // 5️⃣ Créer la souscription
     const { error: subError } = await supabaseAdmin
-  .from("subscriptions")
-  .insert([{
-    eglise_id: egliseId,
-    plan_id: planId,
-    status: "active",
-    started_at: new Date().toISOString(),
-    expires_at: planId === "free" ? null : addMonths(new Date(), 1).toISOString(),
-  }]);
+      .from("subscriptions")
+      .insert([{
+        eglise_id: egliseId,
+        plan_id: planId,
+        status: "active",
+        started_at: new Date().toISOString(),
+        expires_at: planId === "free" ? null : addMonths(new Date(), 1).toISOString(),
+      }]);
 
-if (subError) return res.status(400).json({ error: subError.message });
+    if (subError) return res.status(400).json({ error: subError.message });
 
     return res.status(200).json({
       message: "Église et admin créés avec succès !",

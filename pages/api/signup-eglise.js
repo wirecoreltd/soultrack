@@ -84,15 +84,19 @@ export default async function handler(req, res) {
     if (profileError) return res.status(400).json({ error: profileError.message });
 
     // 5️⃣ Créer la souscription
-    const { error: subError } = await supabaseAdmin
-      .from("subscriptions")
-      .insert([{
-        eglise_id: egliseId,
-        plan_id: planId,
-        status: "active",
-        started_at: new Date().toISOString(),
-        expires_at: planId === "free" ? null : addMonths(new Date(), 1).toISOString(),
-      }]);
+   // Replace the subscription insert with this:
+const { error: subError } = await supabaseAdmin
+  .from("subscriptions")
+  .insert([{
+    eglise_id: egliseId,
+    plan_id: planId,
+    status: "active",
+    started_at: new Date().toISOString(),
+    expires_at: planId === "free" ? null : addMonths(new Date(), 1).toISOString(),
+    current_period_end: planId === "free"
+      ? addMonths(new Date(), 100).toISOString()  // far future for free plan
+      : addMonths(new Date(), 1).toISOString(),
+  }]);
 
     if (subError) return res.status(400).json({ error: subError.message });
 

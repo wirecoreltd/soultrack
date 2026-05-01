@@ -1,6 +1,5 @@
 // pages/api/billing/upgrade.js
 import { createClient } from "@supabase/supabase-js";
-import { addMonths } from "date-fns";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -12,30 +11,51 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
-  const { userId, newPlan } = req.body;
+  const { eglise_id, new_plan_id } = req.body;
+
+  // Log pour débugger
+  console.log("upgrade called with:", { eglise_id, new_plan_id });
+
+  if (!eglise_id || !new_plan_id) {
+    return res.status(400).json({ error: "eglise_id et new_plan_id sont requis" });
+  }
 
   try {
-    const now = new Date();
-    const expiresAt = addMonths(now, 1);
-
-    const { data, error } = await supabaseAdmin
+    // Vérifier si un abonnement existe déjà
+    const { data: existing } = await supabaseAdmin
       .from("subscriptions")
-      .update({
-        plan: newPlan,
-        status: "active",
-        started_at: now.toISOString(),
-        expires_at: expiresAt.toISOString(),
-      })
-      .eq("user_id", userId)
-      .select()
-      .single();
+      .select("id")
+      .eq("eglise_id", eglise_id)
+      .maybeSingle();
 
-    if (error) return res.status(400).json({ error: error.message });
+    let data, error;
 
-    return res.status(200).json({ message: "Abonnement mis à jour avec succès", subscription: data });
+    if (existing) {
+      // Mettre à jour l'abonnement existant
+      ({ data, error } = await supabaseAdmin
+        .from("subscriptions")
+        .update({ plan_id: new_plan_id, status: "active" })
+        .eq("eglise_id", eglise_id)
+        .select()
+        .single());
+    } else {
+      // Créer un nouvel abonnement si inexistant
+      ({ data, error } = await supabaseAdmin
+        .from("subscriptions")
+        .insert([{ eglise_id, plan_id: new_plan_id, status: "active" }])
+        .select()
+        .single());
+    }
+
+    if (error) {
+      console.error("Supabase error:", error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.status(200).json({ message: "Plan mis à jour", subscription: data });
 
   } catch (err) {
-    console.error(err);
+    console.error("Server error:", err);
     return res.status(500).json({ error: err.message });
   }
 }

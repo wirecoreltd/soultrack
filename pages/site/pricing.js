@@ -20,16 +20,18 @@ const translations = {
     ],
     heroTitle: "Une structure adaptée à votre",
     heroHighlight: "croissance",
+    heroSub: "Choisissez votre plan et on commence.",
     heroPara: "Chaque étape du ministère nécessite un niveau de structure différent. SoulTrack évolue avec votre église.",
     btnStart: "Commencer →",
+    btnContact: "Nous contacter →",
     footer: "Tous droits réservés.",
     plans: [
-    { id: "free",       name: "Départ",     emoji: "🌱", range: "0 – 50 membres",       price: "Gratuit",    accent: "rgba(29,158,117,0.45)" },
-    { id: "starter",    name: "Croissance", emoji: "📈", range: "51 – 200 membres",      price: "$19/mois",   accent: "rgba(55,138,221,0.5)"  },
-    { id: "vision",     name: "Vision",     emoji: "🔥", range: "201 – 500 membres",     price: "$39/mois",   accent: "rgba(251,191,36,0.4)"  },
-    { id: "expansion",  name: "Expansion",  emoji: "🌍", range: "501 – 1500 membres",    price: "$79/mois",   accent: "rgba(212,83,126,0.4)"  },
-    { id: "enterprise", name: "Réseaux",    emoji: "🔗", range: "1500+ • Multi-églises", price: "Sur mesure", accent: "rgba(139,92,246,0.45)" },
-  ],
+      { id: "free",       name: "Départ",     emoji: "🌱", range: "0 – 50 membres",       price: "Gratuit",    accent: "rgba(29,158,117,0.45)" },
+      { id: "starter",    name: "Croissance", emoji: "📈", range: "51 – 200 membres",      price: "$19/mois",   accent: "rgba(55,138,221,0.5)"  },
+      { id: "vision",     name: "Vision",     emoji: "🔥", range: "201 – 500 membres",     price: "$39/mois",   accent: "rgba(251,191,36,0.4)"  },
+      { id: "expansion",  name: "Expansion",  emoji: "🌍", range: "501 – 1500 membres",    price: "$79/mois",   accent: "rgba(212,83,126,0.4)"  },
+      { id: "enterprise", name: "Réseaux",    emoji: "🔗", range: "1500+ • Multi-églises", price: "Sur mesure", accent: "rgba(139,92,246,0.45)" },
+    ],
   },
   en: {
     login: "Log in",
@@ -43,27 +45,20 @@ const translations = {
     ],
     heroTitle: "A structure adapted to your",
     heroHighlight: "growth",
+    heroSub: "Choose your plan and let's get started.",
     heroPara: "Every stage of ministry requires a different level of structure. SoulTrack grows with your church.",
     btnStart: "Get started →",
+    btnContact: "Contact us →",
     footer: "All rights reserved.",
     plans: [
-    { id: "free",       name: "Starter",   emoji: "🌱", range: "0 – 50 members",      price: "Free",   accent: "rgba(29,158,117,0.45)" },
-    { id: "starter",    name: "Growth",    emoji: "📈", range: "51 – 200 members",     price: "$19/mo", accent: "rgba(55,138,221,0.5)"  },
-    { id: "vision",     name: "Vision",    emoji: "🔥", range: "201 – 500 members",    price: "$39/mo", accent: "rgba(251,191,36,0.4)"  },
-    { id: "expansion",  name: "Expansion", emoji: "🌍", range: "501 – 1500 members",   price: "$79/mo", accent: "rgba(212,83,126,0.4)"  },
-    { id: "enterprise", name: "Networks",  emoji: "🔗", range: "1500+ • Multi-church", price: "Custom", accent: "rgba(139,92,246,0.45)" },
-  ],
+      { id: "free",       name: "Starter",   emoji: "🌱", range: "0 – 50 members",      price: "Free",   accent: "rgba(29,158,117,0.45)" },
+      { id: "starter",    name: "Growth",    emoji: "📈", range: "51 – 200 members",     price: "$19/mo", accent: "rgba(55,138,221,0.5)"  },
+      { id: "vision",     name: "Vision",    emoji: "🔥", range: "201 – 500 members",    price: "$39/mo", accent: "rgba(251,191,36,0.4)"  },
+      { id: "expansion",  name: "Expansion", emoji: "🌍", range: "501 – 1500 members",   price: "$79/mo", accent: "rgba(212,83,126,0.4)"  },
+      { id: "enterprise", name: "Networks",  emoji: "🔗", range: "1500+ • Multi-church", price: "Custom", accent: "rgba(139,92,246,0.45)" },
+    ],
   },
 };
-
-const langBtnStyle = (active) => ({
-  background: "none",
-  border: "none",
-  cursor: "pointer",
-  padding: 0,
-  opacity: active ? 1 : 0.45,
-  transition: "opacity 0.2s",
-});
 
 export default function PricingPage() {
   const router = useRouter();
@@ -87,7 +82,7 @@ export default function PricingPage() {
       router.push(`/SignupEglise?plan=${planId}`);
     }
   }
-  
+
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
 
@@ -105,7 +100,7 @@ export default function PricingPage() {
         pointerEvents: "none", zIndex: 0,
       }} />
 
-       {/* ───── HEADER ───── */}
+      {/* ───── HEADER ───── */}
       <header
         style={{
           background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
@@ -129,7 +124,7 @@ export default function PricingPage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-gap: "10px",
+            gap: "10px",
             boxSizing: "border-box",
           }}
         >
@@ -233,25 +228,19 @@ gap: "10px",
           </div>
 
           {/* Switcher langue desktop */}
-          <div style={{ display: "flex", gap: "8px", alignItems: "center", marginLeft: "8px"}}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", marginLeft: "8px" }}>
             <button
               onClick={() => setLang("fr")}
               title="Français"
               style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-                opacity: lang === "fr" ? 1 : 0.45,
-                transition: "opacity 0.2s",
+                background: "none", border: "none", cursor: "pointer", padding: 0,
+                opacity: lang === "fr" ? 1 : 0.45, transition: "opacity 0.2s",
               }}
             >
               <img
                 src="https://flagcdn.com/w40/fr.png"
                 srcSet="https://flagcdn.com/w80/fr.png 2x"
-                width="32"
-                height="22"
-                alt="Français"
+                width="32" height="22" alt="Français"
                 style={{ display: "block", borderRadius: "3px" }}
               />
             </button>
@@ -259,20 +248,14 @@ gap: "10px",
               onClick={() => setLang("en")}
               title="English"
               style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-                opacity: lang === "en" ? 1 : 0.45,
-                transition: "opacity 0.2s",
+                background: "none", border: "none", cursor: "pointer", padding: 0,
+                opacity: lang === "en" ? 1 : 0.45, transition: "opacity 0.2s",
               }}
             >
               <img
                 src="https://flagcdn.com/w40/gb.png"
                 srcSet="https://flagcdn.com/w80/gb.png 2x"
-                width="32"
-                height="22"
-                alt="English"
+                width="32" height="22" alt="English"
                 style={{ display: "block", borderRadius: "3px" }}
               />
             </button>
@@ -283,32 +266,22 @@ gap: "10px",
             onClick={() => setOpenMenu(!openMenu)}
             className="nav-show"
             style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              display: "none",
-              flexDirection: "column",
-              gap: "5px",
-              padding: "4px",
-              zIndex: 1,
+              background: "none", border: "none", cursor: "pointer",
+              display: "none", flexDirection: "column", gap: "5px",
+              padding: "4px", zIndex: 1,
             }}
           >
             {[0, 1, 2].map((i) => (
               <span
                 key={i}
                 style={{
-                  display: "block",
-                  width: "22px",
-                  height: "1.5px",
-                  background: "rgba(255,255,255,0.85)",
-                  borderRadius: "2px",
+                  display: "block", width: "22px", height: "1.5px",
+                  background: "rgba(255,255,255,0.85)", borderRadius: "2px",
                   transition: "transform 0.2s, opacity 0.2s",
                   transform: openMenu
-                    ? i === 0
-                      ? "rotate(45deg) translate(5px, 5px)"
-                      : i === 2
-                      ? "rotate(-45deg) translate(5px, -5px)"
-                      : "scaleX(0)"
+                    ? i === 0 ? "rotate(45deg) translate(5px, 5px)"
+                    : i === 2 ? "rotate(-45deg) translate(5px, -5px)"
+                    : "scaleX(0)"
                     : "none",
                   opacity: openMenu && i === 1 ? 0 : 1,
                 }}
@@ -324,65 +297,43 @@ gap: "10px",
               background: "#333699",
               borderTop: "0.5px solid rgba(255,255,255,0.15)",
               padding: "20px 24px 28px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "20px",
+              display: "flex", flexDirection: "column", gap: "20px",
             }}
           >
             {t.nav.map((item) => (
               <span
                 key={item.path}
-                onClick={() => {
-                  router.push(item.path);
-                  setOpenMenu(false);
-                }}
+                onClick={() => { router.push(item.path); setOpenMenu(false); }}
                 style={{
                   color: pathname === item.path ? "#fbbf24" : "#fff",
-                  fontSize: "15px",
-                  fontWeight: 600,
-                  cursor: "pointer",
+                  fontSize: "15px", fontWeight: 600, cursor: "pointer",
                 }}
               >
                 {item.label}
               </span>
-            ))}      
-           
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-                marginTop: "4px",
-              }}
-            >
+            ))}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
               <button
                 onClick={() => router.push("/login")}
                 style={{
-                  background: "transparent",
-                  color: "#fff",
+                  background: "transparent", color: "#fff",
                   border: "0.5px solid rgba(255,255,255,0.35)",
-                  padding: "11px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  cursor: "pointer",
+                  padding: "11px", borderRadius: "8px",
+                  fontSize: "14px", cursor: "pointer",
                 }}
               >
                 {t.login}
               </button>
               <button
-  onClick={() => router.push(
-    plan.id === "enterprise"
-      ? "/site/contact"
-      : `/SignupEglise?plan=${plan.id}`
-  )}
-  style={{
-    background: "#fff", color: "#333699", border: "none",
-    padding: "10px 20px", borderRadius: "10px",
-    fontWeight: 600, cursor: "pointer", marginTop: "auto",
-  }}
->
-  {t.btnStart}
-</button>
+                onClick={() => router.push("/SignupEglise")}
+                style={{
+                  background: "#fff", color: "#333699", border: "none",
+                  padding: "11px", borderRadius: "8px",
+                  fontSize: "14px", fontWeight: 600, cursor: "pointer",
+                }}
+              >
+                {t.signup}
+              </button>
             </div>
           </div>
         )}
@@ -400,6 +351,16 @@ gap: "10px",
         <h1 style={{ color: "#fff", fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 500, marginBottom: "10px" }}>
           {t.heroTitle} <span style={{ color: "#fbbf24" }}>{t.heroHighlight}</span>
         </h1>
+        {/* ── NOUVELLE LIGNE ── */}
+        <p style={{
+          color: "#fff",
+          fontSize: "clamp(1rem, 2.5vw, 1.25rem)",
+          fontWeight: 600,
+          marginBottom: "12px",
+          letterSpacing: "0.01em",
+        }}>
+          {t.heroSub}
+        </p>
         <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: "500px", margin: "0 auto", lineHeight: 1.7 }}>
           {t.heroPara}
         </p>
@@ -420,7 +381,7 @@ gap: "10px",
               background: "rgba(255,255,255,0.08)",
               border: "0.5px solid rgba(255,255,255,0.12)",
               borderRadius: "20px",
-              padding: "32px 24px 28px",   /* ↑ padding top augmenté */
+              padding: "32px 24px 28px",
               position: "relative",
               backdropFilter: "blur(8px)",
               display: "flex",
@@ -440,7 +401,7 @@ gap: "10px",
               {/* Nom du plan */}
               <h3 style={{
                 color: "#FFFFFF", fontSize: "18px",
-                marginBottom: "8px",          /* ↑ était 4px */
+                marginBottom: "8px",
                 alignSelf: "flex-start", textAlign: "left",
               }}>
                 {plan.emoji} {plan.name}
@@ -449,7 +410,7 @@ gap: "10px",
               {/* Plage de membres */}
               <p style={{
                 color: "#FFFFFF", fontSize: "13px",
-                marginBottom: "20px",         /* ↑ était 14px */
+                marginBottom: "20px",
                 opacity: 0.85,
                 alignSelf: "flex-start", textAlign: "left",
               }}>
@@ -459,18 +420,24 @@ gap: "10px",
               {/* Prix */}
               <div style={{
                 color: "#fbbf24", fontWeight: 600, fontSize: "22px",
-                marginBottom: "28px",         /* ↑ était 20px */
+                marginBottom: "28px",
                 textAlign: "center", width: "100%",
               }}>
                 {plan.price}
               </div>
 
+              {/* ── BOUTON corrigé : même style pour tous les plans ── */}
               <button
                 onClick={() => handleChoosePlan(plan.id)}
                 style={{
-                  background: "#fff", color: "#333699", border: "none",
-                  padding: "10px 20px", borderRadius: "10px",
-                  fontWeight: 600, cursor: "pointer", marginTop: "auto",
+                  background: "#fff",
+                  color: "#333699",
+                  border: "none",
+                  padding: "10px 20px",
+                  borderRadius: "10px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  marginTop: "auto",
                   width: "100%",
                 }}
               >

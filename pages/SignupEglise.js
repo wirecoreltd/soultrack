@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { addMonths } from "date-fns/addMonths";
 
 export default function SignupEglise() {
   const router = useRouter();

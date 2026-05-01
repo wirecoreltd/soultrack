@@ -59,7 +59,7 @@ function BillingContent() {
 
     const { data: sub } = await supabase
   .from("subscriptions")
-  .select("*, plans(*)")
+  .select("*")
   .eq("eglise_id", egliseId)
   .maybeSingle(); 
 

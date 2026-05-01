@@ -33,18 +33,35 @@ export default async function handler(req, res) {
     if (existing) {
       // Mettre à jour l'abonnement existant
       ({ data, error } = await supabaseAdmin
-        .from("subscriptions")
-        .update({ plan_id: new_plan_id, status: "active" })
-        .eq("eglise_id", eglise_id)
-        .select()
-        .single());
+  .from("subscriptions")
+  .update({
+    plan_id: new_plan_id,
+    statut: "active",           // ← statut, pas status
+    current_period_start: new Date().toISOString(),
+    current_period_end: new_plan_id === "free"
+      ? new Date(new Date().setFullYear(new Date().getFullYear() + 10)).toISOString()
+      : new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
+    updated_at: new Date().toISOString(),
+  })
+  .eq("eglise_id", eglise_id)
+  .select()
+  .single());
+      
     } else {
       // Créer un nouvel abonnement si inexistant
-      ({ data, error } = await supabaseAdmin
-        .from("subscriptions")
-        .insert([{ eglise_id, plan_id: new_plan_id, status: "active" }])
-        .select()
-        .single());
+     ({ data, error } = await supabaseAdmin
+  .from("subscriptions")
+  .insert([{
+    eglise_id,
+    plan_id: new_plan_id,
+    statut: "active",           // ← statut, pas status
+    current_period_start: new Date().toISOString(),
+    current_period_end: new_plan_id === "free"
+      ? new Date(new Date().setFullYear(new Date().getFullYear() + 10)).toISOString()
+      : new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
+  }])
+  .select()
+  .single());
     }
 
     if (error) {

@@ -94,7 +94,7 @@ const translations = {
   },
   en: {
     login: "Log in",
-    signup: "Create my church",
+    : "Create my church",
     nav: [
       { label: "Home", path: "/site/HomePage" },
       { label: "How it works", path: "/site/Fonctionnement" },
@@ -335,7 +335,7 @@ export default function Fonctionnement() {
               {t.login}
             </button>
             <button
-              onClick={() => router.push("/SignupEglise")}
+              onClick={() => router.push("/site/pricing")}
               style={{
                 background: "#fff",
                 color: "#333699",
@@ -463,7 +463,7 @@ export default function Fonctionnement() {
                 {t.login}
               </button>
               <button
-                onClick={() => router.push("/SignupEglise")}
+                onClick={() => router.push("/site/pricing")}
                 style={{
                   background: "#fff",
                   color: "#333699",

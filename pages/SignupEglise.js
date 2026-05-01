@@ -26,13 +26,6 @@ export default function SignupEglise() {
     enterprise: "🔗 Réseaux — Sur mesure",
   };
 
-  // Remove the date-fns import entirely, then use this helper:
-const addMonths = (date, n) => {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + n);
-  return d;
-};
-
   const [formData, setFormData] = useState({
     nomEglise: "",
     denomination: "",

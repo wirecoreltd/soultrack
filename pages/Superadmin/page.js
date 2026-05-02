@@ -369,7 +369,8 @@ function BillingContent() {
       <Footer />
 
       <style>{`
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { margin: 0; padding: 0; background: #333699; }
         .desk-only { display: grid !important; }
         .mob-only  { display: none  !important; }
         @media (max-width: 768px) {

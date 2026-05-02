@@ -15,13 +15,6 @@ const PLANS = [
   { id: "enterprise", nom: "Réseaux",    prix: "Sur mesure", limite: null, emoji: "🔗", color: "rgba(139,92,246,0.9)"  },
 ];
 
-// Couleur barre selon remplissage
-function barColor(pct) {
-  if (pct >= 90) return "#ef4444";   // rouge  — proche limite
-  if (pct >= 60) return "#f97316";   // orange — 2/3
-  return "#fbbf24";                  // jaune  — 1/3
-}
-
 function BillingContent() {
   const router = useRouter();
 

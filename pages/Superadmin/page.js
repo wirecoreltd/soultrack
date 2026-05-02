@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
@@ -8,273 +8,449 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
 
 const PLANS = [
-  { id: "free",       nom: "Départ",     prix: "Gratuit",    limite: 50,   emoji: "🌱" },
-  { id: "starter",    nom: "Croissance", prix: "$19/mois",   limite: 200,  emoji: "📈" },
-  { id: "vision",     nom: "Vision",     prix: "$39/mois",   limite: 500,  emoji: "🔥" },
-  { id: "expansion",  nom: "Expansion",  prix: "$79/mois",   limite: 1500, emoji: "🌍" },
-  { id: "enterprise", nom: "Réseaux",    prix: "Sur mesure", limite: null, emoji: "🔗" },
+  { id: "free",       nom: "Départ",     prix: "Gratuit",    limite: 50,   emoji: "🌱", color: "rgba(29,158,117,0.7)"  },
+  { id: "starter",    nom: "Croissance", prix: "$19/mois",   limite: 200,  emoji: "📈", color: "rgba(55,138,221,0.7)"  },
+  { id: "vision",     nom: "Vision",     prix: "$39/mois",   limite: 500,  emoji: "🔥", color: "rgba(251,191,36,0.8)"  },
+  { id: "expansion",  nom: "Expansion",  prix: "$79/mois",   limite: 1500, emoji: "🌍", color: "rgba(212,83,126,0.8)"  },
+  { id: "enterprise", nom: "Réseaux",    prix: "Sur mesure", limite: null, emoji: "🔗", color: "rgba(139,92,246,0.8)"  },
 ];
 
 function BillingContent() {
   const router = useRouter();
 
-  const [eglises, setEglises] = useState([]);
-  const [selectedEglise, setSelectedEglise] = useState(null);
-  const [subscription, setSubscription] = useState(null);
-  const [nombreMembres, setNombreMembres] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [rows, setRows]           = useState([]);   // { eglise, subscription, membres }
+  const [loading, setLoading]     = useState(true);
+  const [filterText, setFilterText] = useState("");
+  const [filterPlan, setFilterPlan] = useState("all");
+
+  // ── modal changement de plan ──
+  const [modal, setModal]         = useState(null);  // { egliseId, planActuelId }
   const [upgrading, setUpgrading] = useState(false);
-  const [message, setMessage] = useState(null);
+  const [message, setMessage]     = useState(null);
 
-  useEffect(() => {
-    loadEglises();
-  }, []);
+  useEffect(() => { loadAll(); }, []);
 
-  useEffect(() => {
-    if (selectedEglise) loadEgliseData(selectedEglise);
-  }, [selectedEglise]);
+  async function loadAll() {
+    setLoading(true);
 
-  async function loadEglises() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return router.push("/login");
 
-    const { data, error } = await supabase
+    // 1. Toutes les églises
+    const { data: eglises, error } = await supabase
       .from("eglises")
-      .select("id, nom")
+      .select("id, nom, denomination, branche, ville, pays")
       .order("nom");
 
-    if (error || !data?.length) {
-      setLoading(false);
-      return;
-    }
+    if (error || !eglises?.length) { setLoading(false); return; }
 
-    setEglises(data);
-    setSelectedEglise(data[0].id); // sélectionne la première par défaut
-    setLoading(false);
-  }
+    // 2. Tous les abonnements
+    const { data: subs } = await supabase
+      .from("subscriptions")
+      .select("eglise_id, plan_id, current_period_end");
 
-  async function loadEgliseData(egliseId) {
-    setLoading(true);
-    setMessage(null);
-
-    const { data: sub } = await supabase
-  .from("subscriptions")
-  .select("*")
-  .eq("eglise_id", egliseId)
-  .maybeSingle(); 
-
-    setSubscription(sub);
-
-    const { count } = await supabase
+    // 3. Nombre de membres par église
+    const { data: membresRaw } = await supabase
       .from("membres_complets")
-      .select("*", { count: "exact", head: true })
-      .eq("eglise_id", egliseId)
+      .select("eglise_id")
       .is("raison_supprime", null);
 
-    setNombreMembres(count || 0);
+    const membresCount = {};
+    (membresRaw || []).forEach(m => {
+      membresCount[m.eglise_id] = (membresCount[m.eglise_id] || 0) + 1;
+    });
+
+    const subMap = {};
+    (subs || []).forEach(s => { subMap[s.eglise_id] = s; });
+
+    const combined = eglises.map(e => ({
+      eglise: e,
+      subscription: subMap[e.id] || null,
+      membres: membresCount[e.id] || 0,
+    }));
+
+    setRows(combined);
     setLoading(false);
   }
 
+  // ── filtres ──
+  const filtered = useMemo(() => {
+    return rows.filter(r => {
+      const e = r.eglise;
+      const label = [e.denomination, e.nom, e.branche, e.ville, e.pays]
+        .filter(Boolean).join(" ").toLowerCase();
+      const matchText = filterText.trim() === "" || label.includes(filterText.toLowerCase());
+      const matchPlan = filterPlan === "all" || (r.subscription?.plan_id ?? "free") === filterPlan;
+      return matchText && matchPlan;
+    });
+  }, [rows, filterText, filterPlan]);
+
+  // ── changer plan ──
   async function changerPlan(newPlanId) {
-    if (newPlanId === subscription?.plan_id) return;
+    if (!modal || newPlanId === modal.planActuelId) return;
     setUpgrading(true);
     setMessage(null);
 
     const res = await fetch("/api/billing/upgrade", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ eglise_id: selectedEglise, new_plan_id: newPlanId }),
+      body: JSON.stringify({ eglise_id: modal.egliseId, new_plan_id: newPlanId }),
     });
 
     const data = await res.json();
-
     if (!res.ok) {
       setMessage({ type: "error", text: data.message || "Erreur lors du changement de plan." });
     } else {
-      setMessage({ type: "success", text: "Plan mis à jour avec succès !" });
-      loadEgliseData(selectedEglise);
+      setMessage({ type: "success", text: "Plan mis à jour !" });
+      setModal(null);
+      loadAll();
     }
-
     setUpgrading(false);
   }
 
-  const planActuel = PLANS.find(p => p.id === subscription?.plan_id);
-  const limiteActuelle = planActuel?.limite;
-
   return (
-    <div className="min-h-screen p-6 bg-[#333699]">
+    <div style={{ background: "#333699", minHeight: "100vh", position: "relative" }}>
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-2 text-white text-center">
-        Abonnements <span className="text-emerald-300">SoulTrack</span>
-      </h1>
-
-      <div className="max-w-3xl w-full mb-6 text-center mx-auto">
-        <p className="italic text-base text-white/90">
-          <span className="text-blue-300 font-semibold">Gérez les plans</span> de toutes les églises
-          enregistrées sur la plateforme.
+      {/* ── TITRE ── */}
+      <div style={{ textAlign: "center", padding: "28px 24px 0" }}>
+        <h1 style={{ color: "#fff", fontSize: "clamp(1.4rem,3vw,2rem)", fontWeight: 700, margin: 0 }}>
+          Abonnements <span style={{ color: "#6ee7b7" }}>SoulTrack</span>
+        </h1>
+        <p style={{ color: "rgba(255,255,255,0.6)", marginTop: "8px", fontSize: "14px" }}>
+          Gérez les plans de toutes les églises enregistrées sur la plateforme.
         </p>
       </div>
 
-      <div className="max-w-3xl mx-auto space-y-4">
+      {/* ── FILTRES ── */}
+      <div style={{
+        maxWidth: "1200px", margin: "24px auto 0", padding: "0 20px",
+        display: "flex", flexWrap: "wrap", gap: "12px",
+      }}>
+        {/* Filtre texte combiné */}
+        <div style={{ flex: "1 1 300px", position: "relative" }}>
+          <span style={{
+            position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)",
+            fontSize: "16px", pointerEvents: "none",
+          }}>🔍</span>
+          <input
+            type="text"
+            placeholder="Dénomination · Nom · Branche · Ville · Pays…"
+            value={filterText}
+            onChange={e => setFilterText(e.target.value)}
+            style={{
+              width: "100%", padding: "10px 14px 10px 38px",
+              borderRadius: "10px", border: "0.5px solid rgba(255,255,255,0.2)",
+              background: "rgba(255,255,255,0.1)", color: "#fff",
+              fontSize: "14px", outline: "none", boxSizing: "border-box",
+            }}
+          />
+        </div>
 
-        {/* Sélecteur d'église */}
-        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border-l-4 border-blue-400">
-          <p className="text-xs text-white/50 uppercase mb-2 font-semibold tracking-wider">
-            Sélectionner une église
-          </p>
+        {/* Filtre plan */}
+        <div style={{ flex: "0 1 200px" }}>
           <select
-            value={selectedEglise || ""}
-            onChange={(e) => setSelectedEglise(e.target.value)}
-            className="w-full px-3 py-2 rounded-md text-black font-medium"
+            value={filterPlan}
+            onChange={e => setFilterPlan(e.target.value)}
+            style={{
+              width: "100%", padding: "10px 14px",
+              borderRadius: "10px", border: "0.5px solid rgba(255,255,255,0.2)",
+              background: "rgba(255,255,255,0.1)", color: "#fff",
+              fontSize: "14px", outline: "none", cursor: "pointer",
+            }}
           >
-            {eglises.map((e) => (
-              <option key={e.id} value={e.id}>{e.nom}</option>
+            <option value="all" style={{ color: "#000" }}>Tous les plans</option>
+            {PLANS.map(p => (
+              <option key={p.id} value={p.id} style={{ color: "#000" }}>
+                {p.emoji} {p.nom}
+              </option>
             ))}
           </select>
         </div>
 
+        {/* Compteur résultats */}
+        <div style={{
+          flex: "0 0 auto", display: "flex", alignItems: "center",
+          color: "rgba(255,255,255,0.5)", fontSize: "13px",
+        }}>
+          {filtered.length} église{filtered.length !== 1 ? "s" : ""}
+        </div>
+      </div>
+
+      {/* ── TABLEAU ── */}
+      <div style={{ maxWidth: "1200px", margin: "20px auto 60px", padding: "0 20px" }}>
         {loading ? (
-          <p className="text-center text-white mt-6">Chargement...</p>
+          <p style={{ color: "#fff", textAlign: "center", marginTop: "60px" }}>Chargement…</p>
+        ) : filtered.length === 0 ? (
+          <p style={{ color: "rgba(255,255,255,0.5)", textAlign: "center", marginTop: "60px" }}>
+            Aucune église trouvée.
+          </p>
         ) : (
           <>
-            {/* Plan actuel */}
-            <div className="bg-white/10 backdrop-blur-md rounded-xl p-5 border-l-4 border-amber-400">
-              <p className="text-xs text-white/50 uppercase mb-3 font-semibold tracking-wider">
-                Plan actuel
-              </p>
-              <div className="flex justify-between items-center flex-wrap gap-4">
-                <div>
-                  <span className="text-white text-xl font-bold">
-                    {planActuel ? `${planActuel.emoji} ${planActuel.nom}` : "Aucun plan"}
-                  </span>
-                  {planActuel && (
-                    <span className="ml-3 bg-amber-400/20 text-amber-300 px-3 py-1 rounded-full text-sm font-semibold">
-                      {planActuel.prix}
-                    </span>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-white/60">Membres actifs</p>
-                  <p className="text-2xl font-bold text-white">
-                    {nombreMembres}
-                    <span className="text-white/40 text-base font-normal">
-                      {" "}/ {limiteActuelle ?? "∞"}
-                    </span>
-                  </p>
-                  {limiteActuelle && (
-                    <div className="w-40 h-1.5 bg-white/10 rounded-full mt-2">
-                      <div
-                        className="h-full rounded-full transition-all duration-300"
-                        style={{
-                          width: `${Math.min(100, (nombreMembres / limiteActuelle) * 100)}%`,
-                          background: nombreMembres / limiteActuelle > 0.9 ? "#ef4444" : "#fbbf24",
-                        }}
-                      />
+            {/* ── Desktop table ── */}
+            <div style={{ overflowX: "auto" }} className="desk-only">
+              <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 8px" }}>
+                <thead>
+                  <tr>
+                    {["Dénomination", "Nom de l'église", "Branche", "Ville", "Pays", "Plan", "Membres"].map(h => (
+                      <th key={h} style={{
+                        color: "rgba(255,255,255,0.45)", fontSize: "11px", fontWeight: 700,
+                        textTransform: "uppercase", letterSpacing: "0.08em",
+                        padding: "0 14px 10px", textAlign: "left",
+                      }}>
+                        {h}
+                      </th>
+                    ))}
+                    <th style={{ width: "80px" }} />
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(({ eglise, subscription, membres }) => {
+                    const planId = subscription?.plan_id ?? "free";
+                    const plan = PLANS.find(p => p.id === planId) || PLANS[0];
+                    const pct = plan.limite ? Math.min(100, (membres / plan.limite) * 100) : 0;
+                    const overload = plan.limite && membres > plan.limite;
+
+                    return (
+                      <tr
+                        key={eglise.id}
+                        style={{ background: "rgba(255,255,255,0.07)", borderRadius: "12px" }}
+                      >
+                        <Cell>{eglise.denomination || "—"}</Cell>
+                        <Cell bold>{eglise.nom}</Cell>
+                        <Cell>{eglise.branche || "—"}</Cell>
+                        <Cell>{eglise.ville || "—"}</Cell>
+                        <Cell>{eglise.pays || "—"}</Cell>
+
+                        {/* Plan badge */}
+                        <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                          <span style={{
+                            background: plan.color,
+                            color: "#fff", fontSize: "12px", fontWeight: 700,
+                            padding: "3px 10px", borderRadius: "20px",
+                          }}>
+                            {plan.emoji} {plan.nom}
+                          </span>
+                        </td>
+
+                        {/* Membres + barre */}
+                        <td style={{ padding: "12px 14px", minWidth: "130px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span style={{
+                              color: overload ? "#f87171" : "#fff",
+                              fontWeight: 600, fontSize: "14px",
+                            }}>
+                              {membres}
+                              <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 400, fontSize: "12px" }}>
+                                {" "}/ {plan.limite ?? "∞"}
+                              </span>
+                            </span>
+                          </div>
+                          {plan.limite && (
+                            <div style={{ marginTop: "5px", width: "100px", height: "4px", background: "rgba(255,255,255,0.12)", borderRadius: "4px" }}>
+                              <div style={{
+                                width: `${pct}%`, height: "100%", borderRadius: "4px",
+                                background: pct > 90 ? "#ef4444" : "#fbbf24",
+                                transition: "width 0.4s",
+                              }} />
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Bouton changer plan */}
+                        <td style={{ padding: "12px 14px" }}>
+                          <button
+                            onClick={() => { setMessage(null); setModal({ egliseId: eglise.id, planActuelId: planId, nomEglise: eglise.nom }); }}
+                            style={{
+                              background: "rgba(255,255,255,0.12)", color: "#fff",
+                              border: "0.5px solid rgba(255,255,255,0.25)",
+                              padding: "6px 14px", borderRadius: "8px",
+                              fontSize: "12px", fontWeight: 600, cursor: "pointer",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            Changer
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── Mobile cards ── */}
+            <div className="mob-only" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {filtered.map(({ eglise, subscription, membres }) => {
+                const planId = subscription?.plan_id ?? "free";
+                const plan = PLANS.find(p => p.id === planId) || PLANS[0];
+                const pct = plan.limite ? Math.min(100, (membres / plan.limite) * 100) : 0;
+                const label = [eglise.denomination, eglise.branche, eglise.ville, eglise.pays]
+                  .filter(Boolean).join(" · ");
+
+                return (
+                  <div key={eglise.id} style={{
+                    background: "rgba(255,255,255,0.08)", borderRadius: "16px",
+                    padding: "16px", borderLeft: `4px solid ${plan.color}`,
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px", flexWrap: "wrap" }}>
+                      <div>
+                        <p style={{ color: "#fff", fontWeight: 700, fontSize: "15px", margin: 0 }}>{eglise.nom}</p>
+                        <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", margin: "4px 0 0" }}>{label || "—"}</p>
+                      </div>
+                      <span style={{
+                        background: plan.color, color: "#fff",
+                        fontSize: "11px", fontWeight: 700,
+                        padding: "3px 10px", borderRadius: "20px", whiteSpace: "nowrap",
+                      }}>
+                        {plan.emoji} {plan.nom}
+                      </span>
                     </div>
-                  )}
-                </div>
-              </div>
-            </div>
 
-            {/* Message feedback */}
-            {message && (
-              <div className={`rounded-xl px-4 py-3 text-sm font-medium border ${
-                message.type === "error"
-                  ? "bg-red-500/15 border-red-500/40 text-red-300"
-                  : "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
-              }`}>
-                {message.text}
-              </div>
-            )}
-
-            {/* Header desktop */}
-            <div className="hidden sm:flex text-sm font-semibold text-white border-b border-white/20 pb-2 px-2">
-              <div className="flex-[2]">Plan</div>
-              <div className="flex-[2]">Limite</div>
-              <div className="flex-[1] text-center">Prix</div>
-              <div className="flex-[1] text-center">Action</div>
-            </div>
-
-            {/* Mobile cards */}
-            {PLANS.map((plan) => {
-              const estActuel = plan.id === subscription?.plan_id;
-              return (
-                <div
-                  key={plan.id}
-                  className="sm:hidden bg-white/10 backdrop-blur-md rounded-xl p-4 border-l-4 mb-2"
-                  style={{ borderLeftColor: estActuel ? "#fbbf24" : "rgba(255,255,255,0.2)" }}
-                >
-                  <div className="text-white font-semibold text-lg">{plan.emoji} {plan.nom}</div>
-                  <div className="text-white/70 text-sm mt-1">
-                    👥 {plan.limite ? `Jusqu'à ${plan.limite} membres` : "Illimité"}
-                  </div>
-                  <div className="flex justify-between items-center mt-3">
-                    <span className="text-amber-300 font-bold">{plan.prix}</span>
-                    {estActuel ? (
-                      <span className="bg-amber-400/20 text-amber-300 px-3 py-1 rounded-full text-sm font-semibold">
-                        Actuel
-                      </span>
-                    ) : (
+                    <div style={{ marginTop: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <span style={{ color: "#fff", fontWeight: 600, fontSize: "14px" }}>
+                          {membres}
+                          <span style={{ color: "rgba(255,255,255,0.4)", fontWeight: 400, fontSize: "12px" }}> / {plan.limite ?? "∞"}</span>
+                        </span>
+                        {plan.limite && (
+                          <div style={{ marginTop: "5px", width: "100px", height: "4px", background: "rgba(255,255,255,0.12)", borderRadius: "4px" }}>
+                            <div style={{ width: `${pct}%`, height: "100%", borderRadius: "4px", background: pct > 90 ? "#ef4444" : "#fbbf24" }} />
+                          </div>
+                        )}
+                      </div>
                       <button
-                        onClick={() => changerPlan(plan.id)}
-                        disabled={upgrading}
-                        className="bg-white text-[#333699] font-semibold px-4 py-1.5 rounded-lg text-sm shadow disabled:opacity-50"
+                        onClick={() => { setMessage(null); setModal({ egliseId: eglise.id, planActuelId: planId, nomEglise: eglise.nom }); }}
+                        style={{
+                          background: "rgba(255,255,255,0.12)", color: "#fff",
+                          border: "0.5px solid rgba(255,255,255,0.25)",
+                          padding: "7px 16px", borderRadius: "8px",
+                          fontSize: "13px", fontWeight: 600, cursor: "pointer",
+                        }}
                       >
-                        {upgrading ? "..." : "Choisir"}
+                        Changer
                       </button>
-                    )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-
-            {/* Desktop rows */}
-            {PLANS.map((plan) => {
-              const estActuel = plan.id === subscription?.plan_id;
-              return (
-                <div
-                  key={`desk-${plan.id}`}
-                  className={`hidden sm:flex flex-row items-center px-4 py-3 rounded-lg gap-2 border-l-4 ${
-                    estActuel ? "bg-amber-400/10 border-amber-400" : "bg-white/10 border-white/20"
-                  }`}
-                >
-                  <div className="flex-[2] text-white font-semibold text-sm">{plan.emoji} {plan.nom}</div>
-                  <div className="flex-[2] text-white/70 text-sm">
-                    {plan.limite ? `Jusqu'à ${plan.limite} membres` : "Illimité"}
-                  </div>
-                  <div className="flex-[1] text-center text-amber-300 font-bold text-sm">{plan.prix}</div>
-                  <div className="flex-[1] flex justify-center">
-                    {estActuel ? (
-                      <span className="bg-amber-400/20 text-amber-300 px-3 py-1 rounded-full text-sm font-semibold">
-                        Actuel
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => changerPlan(plan.id)}
-                        disabled={upgrading}
-                        className="bg-white text-[#333699] font-semibold px-4 py-1.5 rounded-lg text-sm shadow disabled:opacity-50"
-                      >
-                        {upgrading ? "..." : "Choisir"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-
-            {subscription?.current_period_end && (
-              <p className="text-center text-sm text-white/35 mt-4">
-                Prochain renouvellement :{" "}
-                {new Date(subscription.current_period_end).toLocaleDateString("fr-FR")}
-              </p>
-            )}
+                );
+              })}
+            </div>
           </>
         )}
       </div>
 
+      {/* ── MODAL changement de plan ── */}
+      {modal && (
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setModal(null); }}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 200, padding: "20px",
+          }}
+        >
+          <div style={{
+            background: "#1e2070", borderRadius: "20px",
+            padding: "28px 24px", width: "100%", maxWidth: "460px",
+            border: "0.5px solid rgba(255,255,255,0.15)",
+          }}>
+            <h2 style={{ color: "#fff", fontSize: "17px", fontWeight: 700, margin: "0 0 4px" }}>
+              Changer le plan
+            </h2>
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", margin: "0 0 20px" }}>
+              {modal.nomEglise}
+            </p>
+
+            {message && (
+              <div style={{
+                marginBottom: "16px", padding: "10px 14px", borderRadius: "10px",
+                background: message.type === "error" ? "rgba(239,68,68,0.15)" : "rgba(110,231,183,0.15)",
+                color: message.type === "error" ? "#f87171" : "#6ee7b7",
+                fontSize: "13px", fontWeight: 600,
+                border: `0.5px solid ${message.type === "error" ? "rgba(239,68,68,0.3)" : "rgba(110,231,183,0.3)"}`,
+              }}>
+                {message.text}
+              </div>
+            )}
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {PLANS.map(plan => {
+                const estActuel = plan.id === modal.planActuelId;
+                return (
+                  <button
+                    key={plan.id}
+                    onClick={() => changerPlan(plan.id)}
+                    disabled={upgrading || estActuel}
+                    style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      padding: "12px 16px", borderRadius: "12px", cursor: estActuel ? "default" : "pointer",
+                      border: estActuel ? "1.5px solid #fbbf24" : "0.5px solid rgba(255,255,255,0.15)",
+                      background: estActuel ? "rgba(251,191,36,0.1)" : "rgba(255,255,255,0.07)",
+                      transition: "background 0.2s",
+                      opacity: upgrading && !estActuel ? 0.5 : 1,
+                    }}
+                    onMouseEnter={e => { if (!estActuel) e.currentTarget.style.background = "rgba(255,255,255,0.13)"; }}
+                    onMouseLeave={e => { if (!estActuel) e.currentTarget.style.background = "rgba(255,255,255,0.07)"; }}
+                  >
+                    <span style={{ color: "#fff", fontWeight: 600, fontSize: "14px" }}>
+                      {plan.emoji} {plan.nom}
+                      {estActuel && <span style={{ color: "#fbbf24", fontSize: "11px", marginLeft: "8px" }}>• Actuel</span>}
+                    </span>
+                    <span style={{ color: "#fbbf24", fontWeight: 700, fontSize: "14px" }}>{plan.prix}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setModal(null)}
+              style={{
+                marginTop: "20px", width: "100%", padding: "10px",
+                borderRadius: "10px", border: "0.5px solid rgba(255,255,255,0.15)",
+                background: "transparent", color: "rgba(255,255,255,0.5)",
+                fontSize: "14px", cursor: "pointer",
+              }}
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
       <Footer />
+
+      <style>{`
+        * { box-sizing: border-box; }
+        .desk-only { display: block; }
+        .mob-only  { display: none;  }
+        @media (max-width: 768px) {
+          .desk-only { display: none !important; }
+          .mob-only  { display: flex !important;  }
+        }
+        input::placeholder { color: rgba(255,255,255,0.35); }
+        select option { background: #1e2070; }
+        tbody tr td:first-child { border-radius: 12px 0 0 12px; }
+        tbody tr td:last-child  { border-radius: 0 12px 12px 0; }
+      `}</style>
     </div>
+  );
+}
+
+// Cellule de tableau réutilisable
+function Cell({ children, bold }) {
+  return (
+    <td style={{
+      padding: "13px 14px",
+      color: bold ? "#fff" : "rgba(255,255,255,0.75)",
+      fontWeight: bold ? 600 : 400,
+      fontSize: "13px",
+      whiteSpace: "nowrap",
+      maxWidth: "180px",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+    }}>
+      {children}
+    </td>
   );
 }
 

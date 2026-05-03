@@ -6,6 +6,12 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+const addOneMonth = () => {
+  const d = new Date();
+  d.setMonth(d.getMonth() + 1);
+  return d.toISOString();
+};
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Méthode non autorisée" });
@@ -36,14 +42,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Email déjà utilisé" });
     }
 
-    const addMonths = (date, n) => {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + n);
-  return d;
-};
-
-    
-    // 2️⃣ Créer l'église (sans branche)
+    // 2️⃣ Créer l'église
     const { data: egliseData, error: egliseError } = await supabaseAdmin
       .from("eglises")
       .insert([{
@@ -71,7 +70,7 @@ export default async function handler(req, res) {
 
     const adminUserId = authData.user.id;
 
-    // 4️⃣ Créer le profil admin (sans branche_id)
+    // 4️⃣ Créer le profil admin
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from("profiles")
       .insert([{
@@ -89,19 +88,16 @@ export default async function handler(req, res) {
 
     if (profileError) return res.status(400).json({ error: profileError.message });
 
-    // 5️⃣ Créer la souscription
-   // Replace the subscription insert with this:
-const { error: subError } = await supabaseAdmin
-  .from("subscriptions")
-  .insert([{
-    eglise_id: egliseId,
-    plan_id: planId,
-    statut: "active",
-    current_period_start: new Date().toISOString(),
-    current_period_end: planId === "free"
-      ? addMonths(new Date(), 100).toISOString()
-      : addMonths(new Date(), 1).toISOString(),
-  }]);
+    // 5️⃣ Créer la souscription — 1 mois pour tous les plans
+    const { error: subError } = await supabaseAdmin
+      .from("subscriptions")
+      .insert([{
+        eglise_id: egliseId,
+        plan_id: planId,
+        statut: "active",
+        current_period_start: new Date().toISOString(),
+        current_period_end: addOneMonth(),
+      }]);
 
     if (subError) return res.status(400).json({ error: subError.message });
 

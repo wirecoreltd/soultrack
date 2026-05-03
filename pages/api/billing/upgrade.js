@@ -6,14 +6,18 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+const addOneMonth = () => {
+  const d = new Date();
+  d.setMonth(d.getMonth() + 1);
+  return d.toISOString();
+};
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Méthode non autorisée" });
   }
 
   const { eglise_id, new_plan_id } = req.body;
-
-  // Log pour débugger
   console.log("upgrade called with:", { eglise_id, new_plan_id });
 
   if (!eglise_id || !new_plan_id) {
@@ -21,7 +25,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Vérifier si un abonnement existe déjà
     const { data: existing } = await supabaseAdmin
       .from("subscriptions")
       .select("id")
@@ -31,37 +34,30 @@ export default async function handler(req, res) {
     let data, error;
 
     if (existing) {
-      // Mettre à jour l'abonnement existant
       ({ data, error } = await supabaseAdmin
-  .from("subscriptions")
-  .update({
-    plan_id: new_plan_id,
-    statut: "active",           // ← statut, pas status
-    current_period_start: new Date().toISOString(),
-    current_period_end: new_plan_id === "free"
-      ? new Date(new Date().setFullYear(new Date().getFullYear() + 10)).toISOString()
-      : new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
-    updated_at: new Date().toISOString(),
-  })
-  .eq("eglise_id", eglise_id)
-  .select()
-  .single());
-      
+        .from("subscriptions")
+        .update({
+          plan_id: new_plan_id,
+          statut: "active",
+          current_period_start: new Date().toISOString(),
+          current_period_end: addOneMonth(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("eglise_id", eglise_id)
+        .select()
+        .single());
     } else {
-      // Créer un nouvel abonnement si inexistant
-     ({ data, error } = await supabaseAdmin
-  .from("subscriptions")
-  .insert([{
-    eglise_id,
-    plan_id: new_plan_id,
-    statut: "active",           // ← statut, pas status
-    current_period_start: new Date().toISOString(),
-    current_period_end: new_plan_id === "free"
-      ? new Date(new Date().setFullYear(new Date().getFullYear() + 10)).toISOString()
-      : new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
-  }])
-  .select()
-  .single());
+      ({ data, error } = await supabaseAdmin
+        .from("subscriptions")
+        .insert([{
+          eglise_id,
+          plan_id: new_plan_id,
+          statut: "active",
+          current_period_start: new Date().toISOString(),
+          current_period_end: addOneMonth(),
+        }])
+        .select()
+        .single());
     }
 
     if (error) {
@@ -70,7 +66,6 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json({ message: "Plan mis à jour", subscription: data });
-
   } catch (err) {
     console.error("Server error:", err);
     return res.status(500).json({ error: err.message });

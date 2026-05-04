@@ -898,17 +898,18 @@ function ListMembersContent() {
   {canAddMember && (
     <>
       <button
-        onClick={() => router.push("/admin/import")}
-        className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-      >
-        📥 Importer une liste
-      </button>
-      <button
         onClick={() => router.push("/AddContact")}
         className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
       >
         ➕ Ajouter un membre
       </button>
+          
+      <button
+        onClick={() => router.push("/admin/import")}
+        className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+      >
+        📥 Importer une liste
+      </button>      
     </>
   )}
 </div>

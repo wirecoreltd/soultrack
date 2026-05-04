@@ -10,7 +10,7 @@ import ImportMembresCelluleCSV from "../../components/ImportMembresCelluleCSV";
 
 export default function ImportPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "ResponsableCellule"]}>
       <ImportPageContent />
     </ProtectedRoute>
   );
@@ -28,20 +28,26 @@ function ImportPageContent() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("eglise_id")
+        .select("eglise_id, role")
         .eq("id", authUser.id)
         .single();
 
       if (!profile) { setLoading(false); return; }
 
-      const { data: cellules } = await supabase
-        .from("cellules")
-        .select("id")
-        .eq("responsable_id", authUser.id);
+      let cellule_id = null;
+
+      if (profile.role === "ResponsableCellule") {
+        const { data: cellules } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", authUser.id);
+        cellule_id = cellules?.[0]?.id || null;
+      }
 
       setUser({
         eglise_id: profile.eglise_id,
-        cellule_id: cellules?.[0]?.id || null,
+        role: profile.role,
+        cellule_id,
       });
 
       setLoading(false);
@@ -86,17 +92,20 @@ function ImportPageContent() {
 
       <div className="flex justify-end max-w-6xl mx-auto mb-4">
         <button
-          onClick={() => router.push("/membres-cellule")}
+          onClick={() => router.back()}
           className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
         >
-          Retour aux membres
+          ← Retour
         </button>
       </div>
 
       <div className="flex justify-center">
         <div className="w-full max-w-3xl">
-          <ImportMembresCSV user={user} />
-          <ImportMembresCelluleCSV user={user} />  
+          {user.role === "ResponsableCellule" ? (
+            <ImportMembresCelluleCSV user={user} />
+          ) : (
+            <ImportMembresCSV user={user} />
+          )}
         </div>
       </div>
 

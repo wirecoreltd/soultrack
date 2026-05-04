@@ -898,7 +898,7 @@ function ListMembersContent() {
   {canAddMember && (
     <>
       <button
-        onClick={() => setShowImport(!showImport)}
+        onClick={() => onClick={() => router.push("/admin/import")}
         className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-white/10"
       >
         📥 Importer CSV
@@ -912,12 +912,6 @@ function ListMembersContent() {
     </>
   )}
 </div>
-{showImport && userProfile && (
-  <div className="w-full max-w-3xl mx-auto mt-4">
-    <ImportMembresCSV user={userProfile} />
-  </div>
-)}
-
       {view === "card" && (
         <>
           {loading ? (

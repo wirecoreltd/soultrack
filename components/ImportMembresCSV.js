@@ -4,7 +4,7 @@ import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Papa from "papaparse";
 
-export default function ImportMembresCSV({ user }) {
+export default function ImportMembresCSV({ user, withCellule = false }) {
   const [data, setData] = useState([]);
   const [errors, setErrors] = useState([]);
   const [duplicates, setDuplicates] = useState([]);
@@ -15,7 +15,7 @@ export default function ImportMembresCSV({ user }) {
   const [success, setSuccess] = useState(false);
   const [importCount, setImportCount] = useState(0);
 
-  const requiredFields = ["nom", "prenom", "sexe", "age", "date_venu"];
+  const requiredFields = ["nom", "prenom", "sexe", "age", "date_venu", "serviteur"];
 
   const capitalize = (str) =>
     str ? str.trim().replace(/\b\w/g, (c) => c.toUpperCase()) : "";
@@ -43,25 +43,25 @@ export default function ImportMembresCSV({ user }) {
 
   const handleDownloadTemplate = () => {
     const headers = [
-      "nom *", "prenom *", "civilite *", "age *", "date_venu *",
+      "nom *", "prenom *", "sexe *", "age *", "date_venu *", "serviteur *",
       "telephone", "ville",
       "bapteme_eau", "bapteme_esprit",
-      "serviteur",
       "infos_supplementaires",
     ];
     const example = [
-      "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15",
-      "59700000", "Curepipe", "Oui", "Non", "Oui",
+      "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15", "Oui",
+      "59700000", "Curepipe",
+      "Oui", "Non",
       "Info supplementaire ici",
     ];
     const notes = [
       "IMPORTANT: Effacez toutes les lignes commencant par # avant d'importer le fichier.",
       "Les colonnes avec * sont obligatoires.",
-      "civilite: Homme | Femme",
+      "sexe: Homme | Femme",
       "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
       "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
-      "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
       "serviteur: Oui | Non",
+      "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
     ];
     const csvContent = [
       headers.join(","),
@@ -104,9 +104,7 @@ export default function ImportMembresCSV({ user }) {
           const normalized = {};
           Object.keys(row).forEach((key) => {
             const cleanKey = key.replace(" *", "").trim();
-            const value = row[key]?.toString().trim();
-            if (cleanKey === "civilite") normalized["sexe"] = value;
-            else normalized[cleanKey] = value;
+            normalized[cleanKey] = row[key]?.toString().trim();
           });
 
           let rowErrors = [];
@@ -117,7 +115,7 @@ export default function ImportMembresCSV({ user }) {
           });
 
           if (normalized.sexe && !["Homme", "Femme"].includes(normalized.sexe))
-            rowErrors.push(`Ligne ${index + 1}: civilite invalide (Homme ou Femme)`);
+            rowErrors.push(`Ligne ${index + 1}: sexe invalide (Homme ou Femme)`);
 
           const validAges = [
             "12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans",
@@ -130,31 +128,34 @@ export default function ImportMembresCSV({ user }) {
           if (normalized.date_venu && !dateVenu)
             rowErrors.push(`Ligne ${index + 1}: date_venu invalide`);
 
+          if (normalized.serviteur && !["Oui", "Non"].includes(normalized.serviteur))
+            rowErrors.push(`Ligne ${index + 1}: serviteur invalide (Oui ou Non)`);
+
           if (normalized.bapteme_eau && !["Oui", "Non"].includes(normalized.bapteme_eau))
             rowErrors.push(`Ligne ${index + 1}: bapteme_eau invalide (Oui ou Non)`);
 
           if (normalized.bapteme_esprit && !["Oui", "Non"].includes(normalized.bapteme_esprit))
             rowErrors.push(`Ligne ${index + 1}: bapteme_esprit invalide (Oui ou Non)`);
 
-          if (normalized.serviteur && !["Oui", "Non"].includes(normalized.serviteur))
-            rowErrors.push(`Ligne ${index + 1}: serviteur invalide (Oui ou Non)`);
-
           if (rowErrors.length === 0) {
             validData.push({
+              // Obligatoires
               nom: capitalize(normalized.nom),
               prenom: capitalize(normalized.prenom),
               sexe: normalized.sexe,
               age: normalized.age,
               date_venu: dateVenu,
-              telephone: cleanPhone(normalized.telephone),
-              ville: capitalize(normalized.ville),
+              star: normalized.serviteur === "Oui",
+              // Optionnels
+              telephone: cleanPhone(normalized.telephone) || null,
+              ville: capitalize(normalized.ville) || null,
               bapteme_eau: normalized.bapteme_eau || null,
               bapteme_esprit: normalized.bapteme_esprit || null,
-              star: normalized.serviteur === "Oui",
               infos_supplementaires: normalized.infos_supplementaires || null,
-              cellule_id: user.cellule_id,
-              eglise_id: user.eglise_id,              
-              statut_suivis: "3",
+              // Automatiques
+              eglise_id: user.eglise_id,
+              ...(withCellule && user.cellule_id ? { cellule_id: user.cellule_id } : {}),
+              statut_suivis: 3,
               etat_contact: "existant",
             });
           } else {
@@ -178,7 +179,7 @@ export default function ImportMembresCSV({ user }) {
           const { data: existing } = await supabase
             .from("membres_complets")
             .select("id, nom, prenom, telephone")
-            .eq("cellule_id", user.cellule_id)
+            .eq("eglise_id", user.eglise_id)
             .in("telephone", phones);
 
           (existing || []).forEach((e) => {
@@ -196,7 +197,6 @@ export default function ImportMembresCSV({ user }) {
             finalData.push(row);
             return;
           }
-
           const match = existingByPhone[row.telephone];
           if (match) {
             dupList.push({
@@ -222,7 +222,6 @@ export default function ImportMembresCSV({ user }) {
   const handleImport = async () => {
     setLoading(true);
 
-    // Nouvelles lignes → insert
     if (data.length > 0) {
       const { error } = await supabase.from("membres_complets").insert(data);
       if (error) {
@@ -232,7 +231,6 @@ export default function ImportMembresCSV({ user }) {
       }
     }
 
-    // Doublons coches "Ajouter" → insert
     const dupsToInsert = duplicates.filter((d) => depsToAdd[d.telephone]);
     if (dupsToInsert.length > 0) {
       const { error } = await supabase
@@ -245,7 +243,6 @@ export default function ImportMembresCSV({ user }) {
       }
     }
 
-    // Doublons coches "Mettre a jour" → update
     const dupsToUpdate = duplicates.filter((d) => depsToUpdate[d.telephone]);
     for (const dup of dupsToUpdate) {
       const { existingId, rowData } = dup;
@@ -257,11 +254,11 @@ export default function ImportMembresCSV({ user }) {
           sexe: rowData.sexe,
           age: rowData.age,
           date_venu: rowData.date_venu,
+          star: rowData.star,
           telephone: rowData.telephone,
           ville: rowData.ville,
           bapteme_eau: rowData.bapteme_eau,
           bapteme_esprit: rowData.bapteme_esprit,
-          star: rowData.star,
           infos_supplementaires: rowData.infos_supplementaires,
         })
         .eq("id", existingId);
@@ -290,6 +287,13 @@ export default function ImportMembresCSV({ user }) {
 
   return (
     <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 space-y-5">
+
+      {/* Avertissement si withCellule mais pas de cellule_id */}
+      {withCellule && !user.cellule_id && (
+        <div className="bg-orange-500/20 border border-orange-400/40 rounded-xl p-4 text-orange-200 text-sm">
+          ⚠️ Aucune cellule associée à votre compte. Les membres importés ne seront pas rattachés à une cellule.
+        </div>
+      )}
 
       {/* Template */}
       <div className="bg-white/10 border border-blue-300/40 rounded-xl p-4">
@@ -353,9 +357,7 @@ export default function ImportMembresCSV({ user }) {
             <p key={i} className="text-sm">{err}</p>
           ))}
           {errors.length > 10 && (
-            <p className="text-sm mt-1 italic">
-              ...et {errors.length - 10} autres erreurs
-            </p>
+            <p className="text-sm mt-1 italic">...et {errors.length - 10} autres erreurs</p>
           )}
         </div>
       )}
@@ -371,10 +373,7 @@ export default function ImportMembresCSV({ user }) {
           </p>
 
           {duplicates.map((d, i) => (
-            <div
-              key={i}
-              className="bg-white/5 border border-white/10 rounded-lg p-3 space-y-2"
-            >
+            <div key={i} className="bg-white/5 border border-white/10 rounded-lg p-3 space-y-2">
               <div>
                 <p className="text-white font-semibold text-sm">
                   {d.csv}
@@ -387,8 +386,6 @@ export default function ImportMembresCSV({ user }) {
               </div>
 
               <div className="flex gap-3 flex-wrap">
-
-                {/* Mettre a jour */}
                 <label className={`flex items-center gap-2 cursor-pointer text-sm px-3 py-1.5 rounded-lg border transition ${
                   depsToUpdate[d.telephone]
                     ? "bg-blue-400/20 border-blue-300/50 text-blue-200"
@@ -398,20 +395,15 @@ export default function ImportMembresCSV({ user }) {
                     type="checkbox"
                     checked={!!depsToUpdate[d.telephone]}
                     onChange={(e) => {
-                      setDepsToUpdate((prev) => ({
-                        ...prev,
-                        [d.telephone]: e.target.checked,
-                      }));
-                      if (e.target.checked) {
+                      setDepsToUpdate((prev) => ({ ...prev, [d.telephone]: e.target.checked }));
+                      if (e.target.checked)
                         setDepsToAdd((prev) => ({ ...prev, [d.telephone]: false }));
-                      }
                     }}
                     className="accent-blue-400 w-4 h-4"
                   />
                   Mettre a jour
                 </label>
 
-                {/* Ajouter quand meme */}
                 <label className={`flex items-center gap-2 cursor-pointer text-sm px-3 py-1.5 rounded-lg border transition ${
                   depsToAdd[d.telephone]
                     ? "bg-emerald-400/20 border-emerald-300/50 text-emerald-200"
@@ -421,35 +413,25 @@ export default function ImportMembresCSV({ user }) {
                     type="checkbox"
                     checked={!!depsToAdd[d.telephone]}
                     onChange={(e) => {
-                      setDepsToAdd((prev) => ({
-                        ...prev,
-                        [d.telephone]: e.target.checked,
-                      }));
-                      if (e.target.checked) {
+                      setDepsToAdd((prev) => ({ ...prev, [d.telephone]: e.target.checked }));
+                      if (e.target.checked)
                         setDepsToUpdate((prev) => ({ ...prev, [d.telephone]: false }));
-                      }
                     }}
                     className="accent-emerald-400 w-4 h-4"
                   />
                   Ajouter quand meme
                 </label>
-
               </div>
 
               {depsToUpdate[d.telephone] && (
-                <p className="text-blue-300 text-xs">
-                  Les donnees existantes seront ecrasees par celles du CSV.
-                </p>
+                <p className="text-blue-300 text-xs">Les donnees existantes seront ecrasees par celles du CSV.</p>
               )}
               {depsToAdd[d.telephone] && (
-                <p className="text-emerald-300 text-xs">
-                  Une nouvelle entree sera creee meme si le numero existe deja.
-                </p>
+                <p className="text-emerald-300 text-xs">Une nouvelle entree sera creee meme si le numero existe deja.</p>
               )}
             </div>
           ))}
 
-          {/* Boutons globaux */}
           <div className="flex gap-4 pt-1 flex-wrap">
             <button
               onClick={() => {
@@ -461,9 +443,7 @@ export default function ImportMembresCSV({ user }) {
               }}
               className="text-xs text-blue-300 underline"
             >
-              {duplicates.every((d) => depsToUpdate[d.telephone])
-                ? "Tout decocher (MAJ)"
-                : "Tout mettre a jour"}
+              {duplicates.every((d) => depsToUpdate[d.telephone]) ? "Tout decocher (MAJ)" : "Tout mettre a jour"}
             </button>
 
             <button
@@ -476,34 +456,30 @@ export default function ImportMembresCSV({ user }) {
               }}
               className="text-xs text-emerald-300 underline"
             >
-              {duplicates.every((d) => depsToAdd[d.telephone])
-                ? "Tout decocher (Ajout)"
-                : "Tout ajouter quand meme"}
+              {duplicates.every((d) => depsToAdd[d.telephone]) ? "Tout decocher (Ajout)" : "Tout ajouter quand meme"}
             </button>
           </div>
         </div>
       )}
 
-      {/* Apercu lignes valides */}
+      {/* Apercu */}
       {data.length > 0 && (
         <div className="bg-white/10 border border-white/20 rounded-xl p-4">
-          <p className="font-semibold text-emerald-300 mb-2">
-            Apercu des lignes a importer
-          </p>
+          <p className="font-semibold text-emerald-300 mb-2">Apercu des lignes a importer</p>
+          {withCellule && user.cellule_id && (
+            <p className="text-xs text-blue-300 mb-2">
+              📌 Ces membres seront rattachés à la cellule sélectionnée
+            </p>
+          )}
           <div className="max-h-40 overflow-auto space-y-1">
             {data.slice(0, 5).map((row, i) => (
-              <div
-                key={i}
-                className="text-white/80 text-sm bg-white/5 rounded px-3 py-1"
-              >
-                {row.prenom} {row.nom} — {row.age} — {row.date_venu}
-                {row.star ? " ★" : ""}
+              <div key={i} className="text-white/80 text-sm bg-white/5 rounded px-3 py-1">
+                {row.prenom} {row.nom} — {row.sexe} — {row.age} — {row.date_venu}
+                {row.star ? " ⭐" : ""}
               </div>
             ))}
             {data.length > 5 && (
-              <p className="text-white/40 italic text-sm">
-                ...et {data.length - 5} autres
-              </p>
+              <p className="text-white/40 italic text-sm">...et {data.length - 5} autres</p>
             )}
           </div>
         </div>
@@ -515,9 +491,7 @@ export default function ImportMembresCSV({ user }) {
         disabled={totalToImport === 0 || loading}
         className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white font-bold py-3 rounded-xl shadow transition"
       >
-        {loading
-          ? "Import en cours..."
-          : `Importer ${totalToImport > 0 ? totalToImport + " membre(s)" : ""}`}
+        {loading ? "Import en cours..." : `Importer ${totalToImport > 0 ? totalToImport + " membre(s)" : ""}`}
       </button>
 
       {/* Succes */}

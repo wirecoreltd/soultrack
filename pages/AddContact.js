@@ -7,7 +7,7 @@ import { checkLimiteAtteinte } from "../lib/checkLimite";
 
 export default function AddContact() {
   const router = useRouter();
-
+  const [errorMsg, setErrorMsg] = useState("");
   const [etatContact, setEtatContact] = useState("nouveau");
   const [formData, setFormData] = useState({
     prenom: "",

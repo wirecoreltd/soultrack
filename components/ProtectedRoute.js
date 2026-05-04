@@ -1,10 +1,10 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "./HeaderPages";
 import Footer from "./Footer";
+import { NotificationProvider } from "./NotificationContext";
 
 export default function ProtectedRoute({ allowedRoles = [], children }) {
   const router = useRouter();
@@ -50,18 +50,20 @@ export default function ProtectedRoute({ allowedRoles = [], children }) {
     return (
       <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
         <HeaderPages />
-
-        <div className="flex-1 flex flex-col justify-center items-center text-center p-6">         
+        <div className="flex-1 flex flex-col justify-center items-center text-center p-6">
           <h3 className="text-3xl font-bold text-red-600 mb-4">🚫 Accès refusé</h3>
           <p className="text-xl text-white max-w-md">
-            Vous n’avez pas les permissions nécessaires pour accéder à cette page.
+            Vous n'avez pas les permissions nécessaires pour accéder à cette page.
           </p>
         </div>
-
         <Footer />
       </div>
     );
   }
 
-  return <>{children}</>;
+  return (
+    <NotificationProvider>
+      {children}
+    </NotificationProvider>
+  );
 }

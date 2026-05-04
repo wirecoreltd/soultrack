@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
+import { useNotifications } from "./NotificationContext";
 
 function getIsoCode(countryName) {
   const isoMap = {
@@ -14,7 +15,7 @@ function getIsoCode(countryName) {
     "Chine": "cn", "Colombie": "co", "Congo": "cg", "Corée du Sud": "kr",
     "Côte d'Ivoire": "ci", "Cuba": "cu", "Danemark": "dk", "Egypte": "eg",
     "Espagne": "es", "États-Unis": "us", "USA": "us", "Ethiopie": "et",
-    "Finlande": "fi", "France": "fr", "Gabon": "ga", "Ghana": "gh","Martinique": "mq",
+    "Finlande": "fi", "France": "fr", "Gabon": "ga", "Ghana": "gh", "Martinique": "mq",
     "Rodrigues": "mu", "Grèce": "gr", "Guinée": "gn", "Haïti": "ht", "Hongrie": "hu",
     "Inde": "in", "Indonésie": "id", "Iran": "ir", "Irlande": "ie",
     "Israël": "il", "Italie": "it", "Jamaïque": "jm", "Japon": "jp",
@@ -31,11 +32,13 @@ function getIsoCode(countryName) {
     "Togo": "tg", "Tunisie": "tn", "Turquie": "tr", "Ukraine": "ua",
     "Uruguay": "uy", "Venezuela": "ve", "Vietnam": "vn", "Zimbabwe": "zw",
   };
-  return isoMap[countryName] || "un"; // "un" = drapeau ONU par défaut
+  return isoMap[countryName] || "un";
 }
 
 export default function HeaderPages() {
   const router = useRouter();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const [prenom, setPrenom] = useState("Utilisateur");
   const [eglise, setEglise] = useState("");
@@ -107,7 +110,6 @@ export default function HeaderPages() {
             }
           }
         }
-
       } catch (err) {
         console.error("Erreur récupération profil :", err);
       } finally {
@@ -129,6 +131,22 @@ export default function HeaderPages() {
     }
   };
 
+  // Fermer le dropdown si on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".notif-dropdown-container")) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  };
+
   return (
     <div className="w-full max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-1">
@@ -139,17 +157,75 @@ export default function HeaderPages() {
           ← Retour
         </button>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
+
+          {/* Cloche invitation */}
           {userRole === "Administrateur" && invitationPending && (
             <button
               onClick={handleClickInvitation}
-              className="relative text-amber-300 text-lg hover:text-gray-200 transition mr-2"
+              className="relative text-amber-300 text-lg hover:text-gray-200 transition"
               title="Invitation en attente"
             >
               🔔
-              <span className="absolute top-0 right-0 transform translate-x-1/17 -translate-y-1/10 w-2 h-2 bg-red-500 rounded-full"></span>
+              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
           )}
+
+          {/* Cloche notifications */}
+          <div className="relative notif-dropdown-container">
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="relative text-amber-300 text-lg hover:text-gray-200 transition"
+              title="Notifications"
+            >
+              🔔
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {showDropdown && (
+              <div className="absolute right-0 top-8 w-72 bg-white rounded-xl shadow-xl border z-50">
+                <div className="flex justify-between items-center px-3 py-2 border-b">
+                  <span className="font-semibold text-sm text-gray-700">Notifications</span>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllAsRead}
+                      className="text-xs text-blue-500 hover:underline"
+                    >
+                      Tout marquer lu
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-6">
+                      Aucune notification
+                    </p>
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        onClick={() => {
+                          markAsRead(n.id);
+                          if (n.lien) router.push(n.lien);
+                          setShowDropdown(false);
+                        }}
+                        className="px-3 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-0"
+                      >
+                        <p className="text-sm font-semibold text-gray-800">{n.titre}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{n.message}</p>
+                        <p className="text-[10px] text-gray-400 mt-1">{formatDate(n.created_at)}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           <button
             onClick={handleLogout}
@@ -189,35 +265,34 @@ export default function HeaderPages() {
           )}
         </div>
 
-        {/* Ligne 1 : Dénomination - Nom église */}
         <p className="text-white font-semibold text-lg mt-2">
-          {denomination && ( <span className="text-amber-300"> {denomination} {eglise && " - "}
-          </span>
-        )}
-        {eglise}
-                </p>
-
-        {/* Ligne 2 : Branche - Ville */}
-        <p className="text-gray-300 text-sm">
-          {branche}
-            {branche && ville && <span className="text-amber-300"> - </span>}
-            {ville}
+          {denomination && (
+            <span className="text-amber-300">
+              {denomination}{eglise && " - "}
+            </span>
+          )}
+          {eglise}
         </p>
 
-        {/* Ligne 3 : Pays avec drapeau */}
-          {pays && (
-            <p className="text-gray-300 mt-2 text-sm flex items-center gap-1">
-              <img
-                src={`https://flagcdn.com/w20/${getIsoCode(pays)}.png`}
-                srcSet={`https://flagcdn.com/w40/${getIsoCode(pays)}.png 2x`}
-                width="20"
-                height="14"
-                alt={pays}
-                style={{ borderRadius: "2px", display: "inline-block" }}
-              />
-              <span className="text-white">{pays}</span>
-            </p>
-          )}
+        <p className="text-gray-300 text-sm">
+          {branche}
+          {branche && ville && <span className="text-amber-300"> - </span>}
+          {ville}
+        </p>
+
+        {pays && (
+          <p className="text-gray-300 mt-2 text-sm flex items-center gap-1">
+            <img
+              src={`https://flagcdn.com/w20/${getIsoCode(pays)}.png`}
+              srcSet={`https://flagcdn.com/w40/${getIsoCode(pays)}.png 2x`}
+              width="20"
+              height="14"
+              alt={pays}
+              style={{ borderRadius: "2px", display: "inline-block" }}
+            />
+            <span className="text-white">{pays}</span>
+          </p>
+        )}
       </div>
     </div>
   );

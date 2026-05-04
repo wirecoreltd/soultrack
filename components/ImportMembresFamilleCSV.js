@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import supabase from "../../lib/supabaseClient";
+import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 import ImportMembresCSV from "../components/ImportMembresCSV";
-import ImportMembresCelluleCSV from ".../components/ImportMembresCelluleCSV";
+import ImportMembresCelluleCSV from "../components/ImportMembresCelluleCSV";
 import ImportMembresFamilleCSV from "../components/ImportMembresFamilleCSV";
 
 export default function ImportPage() {

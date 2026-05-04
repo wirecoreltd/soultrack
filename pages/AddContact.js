@@ -88,12 +88,17 @@ export default function AddContact() {
 
     delete dataToSend.besoinLibre;
 
-     const { atteinte, count, limite } = await checkLimiteAtteinte(eglise_id);
+     if (!formData.eglise_id) {
+  alert("Erreur : église non chargée.");
+  return;
+}
 
-    if (atteinte) {
-      setErrorMsg(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
-      return;
-    }
+const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
+
+if (atteinte) {
+  setErrorMsg(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+  return;
+}
 
     try {
       const { error } = await supabase.from("membres_complets").insert([dataToSend]);

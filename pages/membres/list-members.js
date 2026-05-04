@@ -74,8 +74,7 @@ function ListMembersContent() {
   const router = useRouter();
   const [userProfile, setUserProfile] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
-  const { unreadCount, notifications } = useNotifications();
+  const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);  
 
   const [assignmentsMap, setAssignmentsMap] = useState({});
   const [conseillerMembreIds, setConseillerMembreIds] = useState(null);

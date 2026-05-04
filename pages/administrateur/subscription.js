@@ -59,7 +59,7 @@ function SubscriptionContent() {
       .from("membres_complets")
       .select("*", { count: "exact", head: true })
       .eq("eglise_id", profile.eglise_id)
-      .or("raison_supprime.is.null,raison_supprime.eq.");
+      .neq("etat_contact", "supprime");
 
     setNombreMembres(count || 0);
     setLoading(false);

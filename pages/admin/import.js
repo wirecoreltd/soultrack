@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient";
@@ -34,30 +33,18 @@ function ImportPageContent() {
 
       if (!profile) { setLoading(false); return; }
 
-     const fetchUser = async () => {
-  const { data: { user: authUser } } = await supabase.auth.getUser();
-  if (!authUser) { setLoading(false); return; }
+      const { data: cellules } = await supabase
+        .from("cellules")
+        .select("id")
+        .eq("responsable_id", authUser.id);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("eglise_id")
-    .eq("id", authUser.id)
-    .single();
+      setUser({
+        eglise_id: profile.eglise_id,
+        cellule_id: cellules?.[0]?.id || null,
+      });
 
-  if (!profile) { setLoading(false); return; }
-
-  const { data: cellules } = await supabase
-    .from("cellules")
-    .select("id")
-    .eq("responsable_id", authUser.id); // ✅ corrigé
-
-  setUser({
-    eglise_id: profile.eglise_id,
-    cellule_id: cellules?.[0]?.id || null,
-  });
-
-  setLoading(false);
-};
+      setLoading(false);
+    };
 
     fetchUser();
   }, []);
@@ -82,13 +69,11 @@ function ImportPageContent() {
     <div className="min-h-screen p-6" style={{ backgroundColor: "#333699" }}>
       <HeaderPages />
 
-      {/* Titre */}
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
         <span className="text-white">Importer des </span>
         <span className="text-emerald-300">membres</span>
       </h1>
 
-      {/* Sous-titre */}
       <div className="max-w-3xl w-full mb-6 text-center mx-auto">
         <p className="italic text-base text-white/90">
           Importez facilement vos membres via un fichier CSV.{" "}
@@ -98,7 +83,6 @@ function ImportPageContent() {
         </p>
       </div>
 
-      {/* Bouton retour */}
       <div className="flex justify-end max-w-6xl mx-auto mb-4">
         <button
           onClick={() => router.push("/membres-cellule")}
@@ -108,7 +92,6 @@ function ImportPageContent() {
         </button>
       </div>
 
-      {/* Contenu principal */}
       <div className="flex justify-center">
         <div className="w-full max-w-3xl">
           <ImportMembresCSV user={user} />

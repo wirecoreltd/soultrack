@@ -18,7 +18,7 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import useChurchScope from "../../hooks/useChurchScope";
 import SuiviPopup from "../../components/SuiviPopup";
 import ImportMembresCSV from "../../components/ImportMembresCSV";
-import { useNotifications } from "../../components/NotificationsContext"; /
+import { useNotifications } from "../../components/NotificationsContext";
 
 function getRoles(profile) {
   if (!profile) return [];

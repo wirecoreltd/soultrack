@@ -11,7 +11,7 @@ import ImportMembresFamilleCSV from "../../components/ImportMembresFamilleCSV";
 
 export default function ImportPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "ResponsableCellule", "ResponsableFamille"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "ResponsableCellule", "ResponsableFamilles"]}>
       <ImportPageContent />
     </ProtectedRoute>
   );

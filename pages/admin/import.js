@@ -7,10 +7,11 @@ import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import ImportMembresCSV from "../../components/ImportMembresCSV";
 import ImportMembresCelluleCSV from "../../components/ImportMembresCelluleCSV";
+import ImportMembresFamilleCSV from "../../components/ImportMembresFamilleCSV";
 
 export default function ImportPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "ResponsableCellule"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "ResponsableCellule", "ResponsableFamille"]}>
       <ImportPageContent />
     </ProtectedRoute>
   );
@@ -35,6 +36,7 @@ function ImportPageContent() {
       if (!profile) { setLoading(false); return; }
 
       let cellule_id = null;
+      let famille_id = null;
 
       if (profile.role === "ResponsableCellule") {
         const { data: cellules } = await supabase
@@ -44,10 +46,19 @@ function ImportPageContent() {
         cellule_id = cellules?.[0]?.id || null;
       }
 
+      if (profile.role === "ResponsableFamille") {
+        const { data: familles } = await supabase
+          .from("familles")
+          .select("id")
+          .eq("responsable_id", authUser.id);
+        famille_id = familles?.[0]?.id || null;
+      }
+
       setUser({
         eglise_id: profile.eglise_id,
         role: profile.role,
         cellule_id,
+        famille_id,
       });
 
       setLoading(false);
@@ -71,6 +82,17 @@ function ImportPageContent() {
       </div>
     );
   }
+
+  const renderImport = () => {
+    switch (user.role) {
+      case "ResponsableCellule":
+        return <ImportMembresCelluleCSV user={user} />;
+      case "ResponsableFamille":
+        return <ImportMembresFamilleCSV user={user} />;
+      default:
+        return <ImportMembresCSV user={user} />;
+    }
+  };
 
   return (
     <div className="min-h-screen p-6" style={{ backgroundColor: "#333699" }}>
@@ -101,11 +123,7 @@ function ImportPageContent() {
 
       <div className="flex justify-center">
         <div className="w-full max-w-3xl">
-          {user.role === "ResponsableCellule" ? (
-            <ImportMembresCelluleCSV user={user} />
-          ) : (
-            <ImportMembresCSV user={user} />
-          )}
+          {renderImport()}
         </div>
       </div>
 

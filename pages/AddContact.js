@@ -86,19 +86,15 @@ export default function AddContact() {
       eglise_id: formData.eglise_id, // ✅ branche_id retiré
     };
 
-    delete dataToSend.besoinLibre;
-
-     if (!formData.eglise_id) {
-  alert("Erreur : église non chargée.");
-  return;
-}
-
-const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
-
-if (atteinte) {
-  setErrorMsg(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
-  return;
-}
+    delete dataToSend.besoinLibre;    
+    
+      //block limite//
+      const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
+      
+      if (atteinte) {
+        setErrorMsg(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+        return;
+      }
 
     try {
       const { error } = await supabase.from("membres_complets").insert([dataToSend]);

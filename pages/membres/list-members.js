@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import useChurchScope from "../../hooks/useChurchScope";
 import SuiviPopup from "../../components/SuiviPopup";
+import ImportMembresCSV from "../../components/ImportMembresCSV";
 
 function getRoles(profile) {
   if (!profile) return [];
@@ -216,6 +217,8 @@ function ListMembersContent() {
     }
     assignmentsLoadedRef.current = true;
   }, []);
+
+  const [showImport, setShowImport] = useState(false);
 
   // -------------------- Scroll to top --------------------
   useEffect(() => {
@@ -891,13 +894,24 @@ function ListMembersContent() {
         <span className="text-white text-sm ml-2">{filteredMembers.length} membres</span>
       </div>
 
-      <div className="w-full flex justify-end">
-        {canAddMember && (
-          <button onClick={() => router.push("/AddContact")} className="text-white font-semibold px-4 py-2 rounded shadow text-sm">
-            ➕ Ajouter un membre
-          </button>
-        )}
-      </div>
+      <div className="w-full flex justify-end gap-2">
+  {canAddMember && (
+    <>
+      <button
+        onClick={() => setShowImport(!showImport)}
+        className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-white/10"
+      >
+        📥 Importer CSV
+      </button>
+      <button
+        onClick={() => router.push("/AddContact")}
+        className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+      >
+        ➕ Ajouter un membre
+      </button>
+    </>
+  )}
+</div>
 
       {view === "card" && (
         <>

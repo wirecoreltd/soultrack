@@ -86,7 +86,7 @@ export default function Administrateur() {
 
           {/* 🔹 Carte : Liste des utilisateurs */}
           <Link
-            href="/admin/list-users"
+            href="/administrateur/list-users"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
             style={{ borderTopColor: "#0E7490" }}
           >
@@ -98,7 +98,7 @@ export default function Administrateur() {
 
           {/* 🔹 Carte : Relier une Église */}
           <Link
-            href="/admin/link-eglise"
+            href="/administrateur/link-eglise"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
             style={{ borderTopColor: "#8B5CF6" }}
           >
@@ -110,7 +110,7 @@ export default function Administrateur() {
           
           {/* 🔹 Carte : Créer un Utilisateur */}
           <Link
-            href="/admin/create-internal-user"
+            href="/administrateur/create-internal-user"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
             style={{ borderTopColor: "#0EA5E9" }}
           >
@@ -121,7 +121,7 @@ export default function Administrateur() {
           </Link>
 
           <Link
-            href="/admin/subscription"
+            href="/administrateur/subscription"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
             style={{ borderTopColor: "#F97316" }}
           >
@@ -133,7 +133,7 @@ export default function Administrateur() {
 
             {/* 🔹 Carte : Modifier église */}
           <Link
-            href="/admin/edit-eglise"
+            href="/administrateur/edit-eglise"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
             style={{ borderTopColor: "#F97316" }}
           >

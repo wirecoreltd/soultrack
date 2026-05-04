@@ -34,18 +34,30 @@ function ImportPageContent() {
 
       if (!profile) { setLoading(false); return; }
 
-     const { data: cellules } = await supabase
-        .from("cellules")
-        .select("id")
-        .eq("responsable_id", userId);
-      
-      setUser({
-        eglise_id: profile.eglise_id,
-        cellule_id: cellules?.[0]?.id || null, // première cellule
-      });
+     const fetchUser = async () => {
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+  if (!authUser) { setLoading(false); return; }
 
-      setLoading(false);
-    };
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("eglise_id")
+    .eq("id", authUser.id)
+    .single();
+
+  if (!profile) { setLoading(false); return; }
+
+  const { data: cellules } = await supabase
+    .from("cellules")
+    .select("id")
+    .eq("responsable_id", authUser.id); // ✅ corrigé
+
+  setUser({
+    eglise_id: profile.eglise_id,
+    cellule_id: cellules?.[0]?.id || null,
+  });
+
+  setLoading(false);
+};
 
     fetchUser();
   }, []);

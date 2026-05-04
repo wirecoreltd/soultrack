@@ -6,6 +6,7 @@ import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import ImportMembresCSV from "../../components/ImportMembresCSV";
+import ImportMembresCelluleCSV from "../../components/ImportMembresCelluleCSV";
 
 export default function ImportPage() {
   return (
@@ -95,6 +96,7 @@ function ImportPageContent() {
       <div className="flex justify-center">
         <div className="w-full max-w-3xl">
           <ImportMembresCSV user={user} />
+          <ImportMembresCelluleCSV user={user} />  
         </div>
       </div>
 

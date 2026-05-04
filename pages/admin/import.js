@@ -46,7 +46,7 @@ function ImportPageContent() {
         cellule_id = cellules?.[0]?.id || null;
       }
 
-      if (profile.role === "ResponsableFamille") {
+      if (profile.role === "ResponsableFamilles") { // ✅ avec S
         const { data: familles } = await supabase
           .from("familles")
           .select("id")
@@ -87,11 +87,44 @@ function ImportPageContent() {
     switch (user.role) {
       case "ResponsableCellule":
         return <ImportMembresCelluleCSV user={user} />;
-      case "ResponsableFamille":
+      case "ResponsableFamilles": // ✅ avec S
         return <ImportMembresFamilleCSV user={user} />;
       default:
         return <ImportMembresCSV user={user} />;
     }
+  };
+
+  const getSubtitle = () => {
+    if (user.role === "ResponsableCellule") {
+      return (
+        <p className="italic text-base text-white/90">
+          Importez facilement les membres de votre{" "}
+          <span className="text-blue-300 font-semibold">cellule</span> via un fichier CSV.{" "}
+          <span className="text-blue-300 font-semibold">Telechargez le template</span>,
+          remplissez-le et importez-le en quelques clics pour un{" "}
+          <span className="text-blue-300 font-semibold">ajout rapide et fiable</span>.
+        </p>
+      );
+    }
+    if (user.role === "ResponsableFamilles") {
+      return (
+        <p className="italic text-base text-white/90">
+          Importez facilement les membres de votre{" "}
+          <span className="text-blue-300 font-semibold">famille</span> via un fichier CSV.{" "}
+          <span className="text-blue-300 font-semibold">Telechargez le template</span>,
+          remplissez-le et importez-le en quelques clics pour un{" "}
+          <span className="text-blue-300 font-semibold">ajout rapide et fiable</span>.
+        </p>
+      );
+    }
+    return (
+      <p className="italic text-base text-white/90">
+        Importez facilement vos membres via un fichier CSV.{" "}
+        <span className="text-blue-300 font-semibold">Telechargez le template</span>,
+        remplissez-le et importez-le en quelques clics pour un{" "}
+        <span className="text-blue-300 font-semibold">ajout rapide et fiable</span>.
+      </p>
+    );
   };
 
   return (
@@ -104,12 +137,7 @@ function ImportPageContent() {
       </h1>
 
       <div className="max-w-3xl w-full mb-6 text-center mx-auto">
-        <p className="italic text-base text-white/90">
-          Importez facilement vos membres via un fichier CSV.{" "}
-          <span className="text-blue-300 font-semibold">Telechargez le template</span>,
-          remplissez-le et importez-le en quelques clics pour un{" "}
-          <span className="text-blue-300 font-semibold">ajout rapide et fiable</span>.
-        </p>
+        {getSubtitle()}
       </div>
 
       <div className="flex justify-end max-w-6xl mx-auto mb-4">

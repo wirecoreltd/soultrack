@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
-import Footer from ".../components/Footer";
+import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 import ImportMembresCSV from "../components/ImportMembresCSV";
 import ImportMembresCelluleCSV from ".../components/ImportMembresCelluleCSV";

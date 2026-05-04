@@ -34,6 +34,7 @@ function MembresFamilleContent() {
   const phoneMenuRef = useRef(null);
   const [showBesoinLibre, setshowBesoinLibre] = useState(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
+  const [userRole, setUserRole] = useState(null);
 
   const memberIdStr =
     typeof memberId === "string"
@@ -98,6 +99,11 @@ function MembresFamilleContent() {
         .select("id, role, eglise_id")
         .eq("id", user.id)
         .single();
+      
+      if (!profile) return;
+      
+      // ✅ IMPORTANT
+      setUserRole(profile.role);
 
       if (!profile) return;
 
@@ -255,6 +261,7 @@ function MembresFamilleContent() {
       {!loading && !message && (
         <>
           {/* BOUTONS */}
+         {userRole === "ResponsableFamilles" && (
           <div className="flex justify-end mt-4 mb-4 gap-2">
             <button
               onClick={() => router.push("/ajouter-membre-famille")}
@@ -262,6 +269,7 @@ function MembresFamilleContent() {
             >
               ➕ Ajouter un membre
             </button>
+        
             <button
               onClick={() => router.push("/admin/import")}
               className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
@@ -269,6 +277,7 @@ function MembresFamilleContent() {
               📥 Importer une Liste
             </button>
           </div>
+        )}
 
           <div className="flex justify-center">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">

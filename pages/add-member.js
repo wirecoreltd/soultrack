@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
+import { checkLimiteAtteinte } from "../lib/checkLimite";
 
 export default function AddMember() {
   const router = useRouter();
@@ -159,6 +160,12 @@ export default function AddMember() {
       const finalBesoin = showBesoinLibre && formData.besoinLibre
         ? [...formData.besoin.filter(b => b !== "Autre"), formData.besoinLibre]
         : formData.besoin;
+
+      const { atteinte, count, limite } = await checkLimiteAtteinte(eglise_id);
+if (atteinte) {
+  setErrorMsg(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+  // ou alert() pour les fichiers qui utilisent alert
+  return;
 
       // ✅ famille_id inclus dans dataToSend
       const { besoinLibre, ...rest } = formData;

@@ -2,7 +2,12 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
 
-const NotificationContext = createContext({});
+const NotificationContext = createContext({
+  notifications: [],
+  unreadCount: 0,
+  markAsRead: async () => {},
+  markAllAsRead: async () => {},
+});
 
 export function NotificationProvider({ children }) {
   const [notifications, setNotifications] = useState([]);

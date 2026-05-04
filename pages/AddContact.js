@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
+import { checkLimiteAtteinte } from "../lib/checkLimite";
 
 export default function AddContact() {
   const router = useRouter();
@@ -86,6 +87,13 @@ export default function AddContact() {
     };
 
     delete dataToSend.besoinLibre;
+
+     const { atteinte, count, limite } = await checkLimiteAtteinte(eglise_id);
+
+    if (atteinte) {
+      setErrorMsg(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+      return;
+    }
 
     try {
       const { error } = await supabase.from("membres_complets").insert([dataToSend]);

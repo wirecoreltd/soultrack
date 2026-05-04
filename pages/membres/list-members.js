@@ -898,10 +898,10 @@ function ListMembersContent() {
   {canAddMember && (
     <>
       <button
-        onClick={() => onClick={() => router.push("/admin/import")}
-        className="text-white font-semibold px-4 py-2 rounded shadow text-sm bg-white/10"
+        onClick={() => router.push("/admin/import")}
+        className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
       >
-        📥 Importer CSV
+        📥 Importer une liste
       </button>
       <button
         onClick={() => router.push("/AddContact")}

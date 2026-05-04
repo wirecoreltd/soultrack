@@ -130,7 +130,7 @@ export default function HeaderPages() {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto mt-4">
+    <div className="w-full max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-1">
         <button
           onClick={() => router.back()}

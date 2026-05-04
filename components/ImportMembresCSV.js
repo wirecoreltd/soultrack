@@ -4,7 +4,7 @@ import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import Papa from "papaparse";
 
-export default function ImportMembresCSV({ user, withCellule = false }) {
+export default function ImportMembresCSV({ user }) {
   const [data, setData] = useState([]);
   const [errors, setErrors] = useState([]);
   const [duplicates, setDuplicates] = useState([]);
@@ -154,7 +154,6 @@ export default function ImportMembresCSV({ user, withCellule = false }) {
               infos_supplementaires: normalized.infos_supplementaires || null,
               // Automatiques
               eglise_id: user.eglise_id,
-              ...(withCellule && user.cellule_id ? { cellule_id: user.cellule_id } : {}),
               statut_suivis: 3,
               etat_contact: "existant",
             });
@@ -287,13 +286,6 @@ export default function ImportMembresCSV({ user, withCellule = false }) {
 
   return (
     <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 space-y-5">
-
-      {/* Avertissement si withCellule mais pas de cellule_id */}
-      {withCellule && !user.cellule_id && (
-        <div className="bg-orange-500/20 border border-orange-400/40 rounded-xl p-4 text-orange-200 text-sm">
-          ⚠️ Aucune cellule associée à votre compte. Les membres importés ne seront pas rattachés à une cellule.
-        </div>
-      )}
 
       {/* Template */}
       <div className="bg-white/10 border border-blue-300/40 rounded-xl p-4">
@@ -466,11 +458,6 @@ export default function ImportMembresCSV({ user, withCellule = false }) {
       {data.length > 0 && (
         <div className="bg-white/10 border border-white/20 rounded-xl p-4">
           <p className="font-semibold text-emerald-300 mb-2">Apercu des lignes a importer</p>
-          {withCellule && user.cellule_id && (
-            <p className="text-xs text-blue-300 mb-2">
-              📌 Ces membres seront rattachés à la cellule sélectionnée
-            </p>
-          )}
           <div className="max-h-40 overflow-auto space-y-1">
             {data.slice(0, 5).map((row, i) => (
               <div key={i} className="text-white/80 text-sm bg-white/5 rounded px-3 py-1">

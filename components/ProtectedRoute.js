@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "./HeaderPages";
 import Footer from "./Footer";
-import { NotificationProvider } from "./NotificationContext";
+import { useNotifications } from "../../context/NotificationContext";
 
 export default function ProtectedRoute({ allowedRoles = [], children }) {
   const router = useRouter();

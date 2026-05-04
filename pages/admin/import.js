@@ -34,15 +34,14 @@ function ImportPageContent() {
 
       if (!profile) { setLoading(false); return; }
 
-      const { data: cellule } = await supabase
+     const { data: cellules } = await supabase
         .from("cellules")
         .select("id")
-        .eq("responsable_id", authUser.id)
-        .single();
-
+        .eq("responsable_id", userId);
+      
       setUser({
-        eglise_id: profile.eglise_id,        
-        cellule_id: cellule?.id || null,
+        eglise_id: profile.eglise_id,
+        cellule_id: cellules?.[0]?.id || null, // première cellule
       });
 
       setLoading(false);

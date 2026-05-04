@@ -20,7 +20,6 @@ export default function MembresCellule() {
 function MembresCelluleContent() {
   const router = useRouter();
   const { memberId, celluleId } = router.query;
-
   const [membres, setMembres] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [filterCellule, setFilterCellule] = useState("");
@@ -34,6 +33,7 @@ function MembresCelluleContent() {
   const phoneMenuRef = useRef(null);
   const [showBesoinLibre, setshowBesoinLibre] = useState(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
+  const [userRole, setUserRole] = useState(null);
 
   const memberIdStr =
     typeof memberId === "string"
@@ -89,35 +89,37 @@ function MembresCelluleContent() {
 
   // ------------------- FETCH USER + CELLULES -------------------
   useEffect(() => {
-    const fetchCellules = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  const fetchCellules = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, role, eglise_id")
-        .eq("id", user.id)
-        .single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, role, eglise_id")
+      .eq("id", user.id)
+      .single();
 
-      if (!profile) return;
+    if (!profile) return;
 
-      let query = supabase
-        .from("cellules")
-        .select("*")
-        .eq("eglise_id", profile.eglise_id)
-        .order("cellule_full");
+    // ✅ stocker le rôle
+    setUserRole(profile.role);
 
-      // ✅ ResponsableCellule : seulement ses propres cellules
-      if (profile.roles?.includes("ResponsableCellule") && !profile.roles?.includes("Administrateur")){
-        query = query.eq("responsable_id", profile.id);
-      }
+    let query = supabase
+      .from("cellules")
+      .select("*")
+      .eq("eglise_id", profile.eglise_id)
+      .order("cellule_full");
 
-      const { data } = await query;
-      setCellules(data || []);
-    };
+    if (profile.role === "ResponsableCellule") {
+      query = query.eq("responsable_id", profile.id);
+    }
 
-    fetchCellules();
-  }, []);
+    const { data } = await query;
+    setCellules(data || []);
+  };
+
+  fetchCellules();
+}, []);
 
   // ------------------- FETCH MEMBRES -------------------
   useEffect(() => {
@@ -255,20 +257,23 @@ function MembresCelluleContent() {
       {!loading && !message && (
         <>
           {/* BOUTONS */}
-          <div className="flex justify-end mt-4 mb-4 gap-2">
-            <button
-              onClick={() => router.push("/ajouter-membre-cellule")}
-              className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-            >
-              ➕ Ajouter un membre
-            </button>
-            <button
-              onClick={() => router.push("/admin/import")}
-              className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-            >
-              📥 Importer une Liste
-            </button>
-          </div>
+          {userRole === "ResponsableCellule" && (
+  <div className="flex justify-end mt-4 mb-4 gap-2">
+    <button
+      onClick={() => router.push("/ajouter-membre-cellule")}
+      className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+    >
+      ➕ Ajouter un membre
+    </button>
+
+    <button
+      onClick={() => router.push("/admin/import")}
+      className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+    >
+      📥 Importer une Liste
+    </button>
+  </div>
+)}
 
           <div className="flex justify-center">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">

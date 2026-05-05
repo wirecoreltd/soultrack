@@ -76,6 +76,8 @@ export default function AddContact() {
   e.preventDefault();
   setErrorMsg("");
 
+    console.log("eglise_id au submit:", formData.eglise_id); 
+    
   // Vérifier que eglise_id est bien chargé
   if (!formData.eglise_id) {
     setErrorMsg("❌ Erreur : église non identifiée.");
@@ -403,6 +405,11 @@ export default function AddContact() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
+                
+              {errorMsg && (
+                  <p className="text-red-600 text-sm font-semibold text-center">{errorMsg}</p>
+                )}    
+                  
             <button type="button" onClick={handleCancel} className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               Annuler
             </button>

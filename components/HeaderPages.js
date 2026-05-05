@@ -223,8 +223,21 @@ export default function HeaderPages() {
           {branche && ville && <span className="text-amber-300"> - </span>}
           {ville}
         </p>
-      </div>
 
+          {pays && (
+          <p className="text-gray-300 mt-2 text-sm flex items-center gap-1">
+            <img
+              src={`https://flagcdn.com/w20/${getIsoCode(pays)}.png`}
+              srcSet={`https://flagcdn.com/w40/${getIsoCode(pays)}.png 2x`}
+              width="20"
+              height="14"
+              alt={pays}
+              style={{ borderRadius: "2px", display: "inline-block" }}
+            />
+            <span className="text-white">{pays}</span>
+          </p>
+        )}
+      </div>
     </div>
   );
 }

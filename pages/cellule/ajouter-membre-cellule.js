@@ -56,6 +56,8 @@ function AjouterMembreCelluleContent() {
 
   const [success, setSuccess] = useState(false);
 
+  const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
+
   const [userScope, setUserScope] = useState({
     eglise_id: urlEgliseId || null,
   });
@@ -161,6 +163,12 @@ function AjouterMembreCelluleContent() {
         priere_salut: formData.priere_salut || null,
         type_conversion: formData.type_conversion || null,
       };
+
+      const { atteinte, count, limite } = await checkLimiteAtteinte(userScope.eglise_id);
+        if (atteinte) {
+          alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+          return;
+        }
 
       const { data: newMember, error } = await supabase
         .from("membres_complets")

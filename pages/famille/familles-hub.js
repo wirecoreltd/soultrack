@@ -52,8 +52,6 @@ const [loadingRole, setLoadingRole] = useState(true);
     fetchPrenom();
   }, []);
 
-  const [role, setRole] = useState(null);
-
 useEffect(() => {
   const fetchRole = async () => {
     const { data: { user } } = await supabase.auth.getUser();

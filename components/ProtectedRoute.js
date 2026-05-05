@@ -1,10 +1,9 @@
-"use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import supabase from "../lib/supabaseClient";
-import HeaderPages from "./HeaderPages";
-import Footer from "./Footer";
-import NotificationBell from "./NotificationBell";
+  "use client";
+  import { useEffect, useState } from "react";
+  import { useRouter } from "next/navigation";
+  import supabase from "../lib/supabaseClient";
+  import HeaderPages from "./HeaderPages";
+  import Footer from "./Footer";  
 
 export default function ProtectedRoute({ allowedRoles = [], children }) {
   const router = useRouter();
@@ -62,8 +61,6 @@ export default function ProtectedRoute({ allowedRoles = [], children }) {
   }
 
   return (
-    <NotificationProvider>
-      {children}
-    </NotificationProvider>
+    <>{children}</>
   );
 }

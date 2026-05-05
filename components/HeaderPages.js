@@ -202,7 +202,7 @@ export default function HeaderPages() {
           </div>
 
           {/* Connecté */}
-          <p className="text-white text-sm">
+          <p className="text-white text-sm mt-1">
             Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
           </p>
         </div>

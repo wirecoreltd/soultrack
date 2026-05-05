@@ -9,6 +9,7 @@ import supabase from "../../lib/supabaseClient";
 import { useMembers } from "../../context/MembersContext";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
+import { checkLimiteAtteinte } from "../../lib/checkLimite";
 
 export default function AjouterMembreCellule() {
   return (

@@ -78,13 +78,15 @@ export default function NotificationBell({ egliseId }) {
     if (!egliseId) return;
 
     const loadAll = async () => {
-      const updates = {};
-      for (const type of NOTIFICATION_TYPES) {
-        const { data } = await type.fetchQuery(egliseId);
-        updates[type.key] = (data || []).map(type.formatItem);
-      }
-      setNotifsByType(updates);
-    };
+  console.log("🔔 egliseId reçu:", egliseId); // ← ajoute ça
+  const updates = {};
+  for (const type of NOTIFICATION_TYPES) {
+    const { data, error } = await type.fetchQuery(egliseId);
+    console.log("🔔 data fetched:", data, "error:", error); // ← et ça
+    updates[type.key] = (data || []).map(type.formatItem);
+  }
+  setNotifsByType(updates);
+};
 
     loadAll();
   }, [egliseId]);
@@ -106,6 +108,7 @@ export default function NotificationBell({ egliseId }) {
           "postgres_changes",
           { event: "INSERT", schema: "public", table: type.table },
           (payload) => {
+            console.log("🔔 Realtime INSERT reçu:", payload.new); 
             const row = payload.new;
             if (!type.filter(row, egliseId)) return;
             const item = type.formatItem(row);

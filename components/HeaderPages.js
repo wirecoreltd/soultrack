@@ -159,6 +159,7 @@ export default function HeaderPages() {
             </button>
         
             {/* Logo SoulTrack centré sous Retour */}
+            <div className="mt-2">
             <img
               src="/logo.png"
               alt="Logo SoulTrack"
@@ -166,6 +167,7 @@ export default function HeaderPages() {
               onClick={() => router.push("/index")}
             />
           </div>
+        </div>
 
         <div className="flex items-center space-x-3">
 
@@ -260,11 +262,13 @@ export default function HeaderPages() {
 
       <div className="flex flex-col items-center mb-4">
         {logoUrl && (
+          <div className="mt-2">
           <img
             src={logoUrl}
             alt="Logo Église"
-            className="w-14 h-14 object-contain mb-2"
+            className="w-12 h-12 object-contain mb-2"
           />
+        </div>
         )}
 
         <p className="text-white font-semibold text-lg mt-2">

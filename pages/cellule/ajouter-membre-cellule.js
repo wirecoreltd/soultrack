@@ -54,9 +54,7 @@ function AjouterMembreCelluleContent() {
     "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale"
   ];
 
-  const [success, setSuccess] = useState(false);
-
-  const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
+  const [success, setSuccess] = useState(false);  
 
   const [userScope, setUserScope] = useState({
     eglise_id: urlEgliseId || null,
@@ -164,7 +162,7 @@ function AjouterMembreCelluleContent() {
         type_conversion: formData.type_conversion || null,
       };
 
-      const { atteinte, count, limite } = await checkLimiteAtteinte(userScope.eglise_id);
+      const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
         if (atteinte) {
           alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
           return;

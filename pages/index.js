@@ -6,6 +6,14 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 
+// ─── Carte notifications commune à tous les rôles ─────────────────────────
+const NOTIF_CARD = {
+  path: "/notifications",
+  label: "Notifications",
+  emoji: "🔔",
+  color: "#ef4444",
+};
+
 const roleCards = {
   Administrateur: [
     { path: "/membres/membres-hub", label: "Gestion des membres", emoji: "🧭", color: "#0E7490" },
@@ -61,7 +69,6 @@ export default function IndexPage() {
   useEffect(() => {
     const init = async () => {
       try {
-        // 1️⃣ Session Supabase
         const { data } = await supabase.auth.getSession();
 
         if (!data?.session) {
@@ -69,9 +76,7 @@ export default function IndexPage() {
           return;
         }
 
-        // 2️⃣ Roles localStorage (fallback sécurisé)
         const storedRoles = localStorage.getItem("userRole");
-
         if (storedRoles) {
           try {
             const parsed = JSON.parse(storedRoles);
@@ -96,15 +101,14 @@ export default function IndexPage() {
 
   if (loading || !ready) return null;
 
-  // 3️⃣ Construction des cards
+  // ─── Construction des cards ───────────────────────────────────────────────
   let cardsToShow = [];
 
   if (roles.includes("Superadmin")) {
-    cardsToShow = roleCards.Superadmin;
+    cardsToShow = [...roleCards.Superadmin];
   } else {
     roles.forEach((role) => {
       const key = role.trim();
-
       if (roleCards[key]) {
         roleCards[key].forEach((card) => {
           if (!cardsToShow.find((c) => c.path === card.path)) {
@@ -113,6 +117,12 @@ export default function IndexPage() {
         });
       }
     });
+  }
+
+  // ✅ Ajouter la carte Notifications pour tous les rôles (sauf Membre seul)
+  const isMemberOnly = roles.length === 1 && roles[0] === "Membre";
+  if (!isMemberOnly) {
+    cardsToShow.push(NOTIF_CARD);
   }
 
   const handleRedirect = (path) => {
@@ -130,11 +140,10 @@ export default function IndexPage() {
         <h1 className="text-2xl font-bold mt-4 mb-6 text-white">
           Tableau de bord
         </h1>
-
         <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-white/90">
             <span className="text-blue-300 font-semibold">Bienvenue dans votre espace</span>.
-            Accédez aux différents hubs selon votre rôle pour servir et organiser l’église.
+            Accédez aux différents hubs selon votre rôle pour servir et organiser l'église.
           </p>
         </div>
       </div>
@@ -148,9 +157,7 @@ export default function IndexPage() {
             style={{ borderTopColor: card.color }}
           >
             <div className="text-4xl mb-1">{card.emoji}</div>
-            <div className="text-lg font-bold text-gray-800">
-              {card.label}
-            </div>
+            <div className="text-lg font-bold text-gray-800">{card.label}</div>
           </div>
         ))}
       </div>

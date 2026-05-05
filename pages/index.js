@@ -45,7 +45,7 @@ const roleCards = {
     { path: "/evangelisation/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" },
   ],
   ResponsableCellule: [
-    { path: "/cellule/cellule-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
+    { path: "/cellule/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
   ],
   SuperviseurCellule: [
     { path: "/cellule/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },

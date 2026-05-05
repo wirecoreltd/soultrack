@@ -260,7 +260,7 @@ function MembresCelluleContent() {
           {userRole === "ResponsableCellule" && (
   <div className="flex justify-end mt-4 mb-4 gap-2">
     <button
-      onClick={() => router.push("/ajouter-membre-cellule")}
+      onClick={() => router.push("/cellule/ajouter-membre-cellule")}
       className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
     >
       ➕ Ajouter un membre

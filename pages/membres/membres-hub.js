@@ -57,7 +57,7 @@ function MembresHubContent() {
       <HeaderPages />
 
       <div className="text-center mb-6">
-         <h1 className="text-2xl font-bold mt-3 mb-6 text-blue-300 text-center text-white">Espace Membres</h1>
+         <h1 className="text-2xl font-bold mt-2 mb-6 text-blue-300 text-center text-white">Espace Membres</h1>
       
         <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-white/90">

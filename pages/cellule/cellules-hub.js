@@ -2,21 +2,22 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import SendLinkPopup from "../../components/SendLinkPopup";
 import { useEffect, useState } from "react";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
 
-export default function ConseillerHub() {
+export default function CellulesHub() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableIntegration"]}>
-      <ConseillerHubContent />
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
+      <CellulesHubContent />
     </ProtectedRoute>
   );
 }
 
-function ConseillerHubContent() {
+function CellulesHubContent() {
   const [role, setRole] = useState(null);
   const [loadingRole, setLoadingRole] = useState(true);
 
@@ -37,130 +38,97 @@ function ConseillerHubContent() {
 
   if (loadingRole) return null;
 
-  const isConseiller = role === "Conseiller";
-  const isAdmin = role === "Administrateur" || role === "ResponsableIntegration";
+  const isAdmin = role === "Administrateur" || role === "SuperviseurCellule" || role === "SuperAdmin";
+  const isResponsableCellule = role === "ResponsableCellule";
 
-  // ─── Conseiller : seulement 2 cartes ─────────────────────────────────────
-  if (isConseiller) {
-    return (
-      <div
-        className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
-        style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
-      >
-        <HeaderPages />
-
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold mt-4 mb-6 text-white">Espace Conseiller</h1>
-          <div className="max-w-3xl w-full mb-6 text-center">
-            <p className="italic text-base text-white/90">
-              Chaque <span className="text-blue-300 font-semibold">conseiller</span> est un soutien
-              attentif et un{" "}
-              <span className="text-blue-300 font-semibold">bâtisseur de vies</span> pour les âmes
-              qui grandissent.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6 flex-wrap">
-          {/* Conseiller Hub */}
-          <Link
-            href="/membres/list-members"
-            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#F59E0B] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
-          >
-            <div className="text-5xl mb-2">🤝</div>
-            <div className="text-lg font-bold text-gray-800 text-center">Conseiller Hub</div>
-          </Link>
-
-          {/* Notifications */}
-          <Link
-            href="/notifications"
-            className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
-            style={{ borderTopColor: "#ef4444" }}
-          >
-            <div className="text-5xl mb-2">🔔</div>
-            <div className="text-lg font-bold text-gray-800 text-center">Notifications</div>
-          </Link>
-        </div>
-
-        <div className="max-w-3xl w-full mb-6 text-center">
-          <p className="italic text-base text-white/90">
-            Chaque vie que nous touchons est précieuse. Accompagnons chacun avec soin pour grandir.
-          </p>
-        </div>
-
-        <Footer />
-      </div>
-    );
-  }
-
-  // ─── Administrateur / ResponsableIntegration : toutes les cartes ─────────
   return (
     <div
-      className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
+      className="min-h-screen flex flex-col items-center p-6"
       style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       <HeaderPages />
 
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold mt-4 mb-6 text-white">Espace Conseiller</h1>
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-white">Espace Cellule</h1>
         <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-white/90">
-            Chaque <span className="text-blue-300 font-semibold">conseiller</span> est un soutien
-            attentif et un{" "}
-            <span className="text-blue-300 font-semibold">bâtisseur de vies</span> pour les âmes
-            qui grandissent.{" "}
-            <span className="text-blue-300 font-semibold">Ensemble</span>, nous construisons,
-            accompagnons et faisons fructifier chaque{" "}
-            <span className="text-blue-300 font-semibold">vie</span> avec patience, écoute et foi.
+            Chaque cellule est un{" "}
+            <span className="text-blue-300 font-semibold">espace</span> où les âmes grandissent,
+            sont{" "}
+            <span className="text-blue-300 font-semibold">
+              accompagnées et encouragées dans leur cheminement
+            </span>. Ensemble, unissons nos forces, construisons et faisons fructifier chaque vie,
+            afin que chacun puisse{" "}
+            <span className="text-blue-300 font-semibold">s'épanouir pleinement dans la foi</span>.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-5xl mb-6">
-        <Link
-          href="/membres/list-members"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-4xl mb-2">👥</div>
-          <div className="text-lg font-bold text-gray-800 text-center">Gérer les membres</div>
+      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6 flex-wrap">
+
+        {/* ✅ Visible pour tous les rôles */}
+        <Link href="/cellule/list-cellules" className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer">
+          <div className="text-5xl mb-2">🏠</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Liste des Cellules</div>
         </Link>
 
-        <Link
-          href="/membres/suivis-membres"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#38BDF8] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-4xl mb-2">💌</div>
-          <div className="text-lg font-bold text-gray-800 text-center">Suivis des membres</div>
+        <Link href="/cellule/ajouter-membre-cellule" className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer">
+          <div className="text-5xl mb-2">➕</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Ajouter un membre à la Cellule</div>
         </Link>
 
-        <Link
-          href="/evangelisation/suivis-evangelisation"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#10B981] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-4xl mb-2">💗</div>
+        <Link href="/cellule/membres-cellule" className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer">
+          <div className="text-5xl mb-2">👥</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Membres de la Cellule</div>
+        </Link>
+
+        <Link href="/evangelisation/suivis-evangelisation" className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-orange-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer">
+          <div className="text-5xl mb-2">💗</div>
           <div className="text-lg font-bold text-gray-800 text-center">Suivis des évangélisés</div>
         </Link>
 
-        <Link
-          href="/conseiller/EtatConseillerPage"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-4xl mb-2">🌱</div>
-          <div className="text-lg font-bold text-gray-800 text-center">L'évolution des Âmes</div>
+        <Link href="/membres/suivis-membres" className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer">
+          <div className="text-5xl mb-2">💌</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Suivis des membres</div>
         </Link>
 
-        <Link
-          href="/Presence"
-          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
-        >
-          <div className="text-4xl mb-2">✍🏻</div>
-          <div className="text-lg font-bold text-gray-800 text-center">Présence</div>
+        <Link href="/cellule/attendance_cellule" className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer">
+          <div className="text-5xl mb-2">👨‍👩‍👦‍👦</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Présences & statistiques</div>
         </Link>
+
+        <Link href="/cellule/EtatCellulePage" className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer">
+          <div className="text-5xl mb-2">🌱</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Etat Cellule</div>
+        </Link>
+
+        {/* ✅ Seulement Admin et SuperviseurCellule */}
+        {isAdmin && (
+          <>
+            <Link href="/admin/import" className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer" style={{ borderTopColor: "#F97316" }}>
+              <div className="text-4xl mb-1">📤</div>
+              <div className="text-lg font-bold text-gray-800 text-center">Import Une liste des membres</div>
+            </Link>
+
+            <Link href="/admin/create-cellule" className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer" style={{ borderTopColor: "#F97316" }}>
+              <div className="text-4xl mb-1">🛠️</div>
+              <div className="text-lg font-bold text-gray-800 text-center">Créer une Cellule</div>
+            </Link>
+          </>
+        )}
+      </div>
+
+      {/* ✅ Boutons formulaires pour tous */}
+      <div className="w-full max-w-md mb-3">
+        <SendLinkPopup label="Envoyer formulaire Cellule – Nouveau membre" type="ajouter_membre_cellule" buttonColor="from-[#f7971e] to-[#ffd200]" />
+      </div>
+      <div className="w-full max-w-md mb-6">
+        <SendLinkPopup label="Envoyer formulaire Cellule – Évangélisation" type="ajouter_evangelise_cellule" buttonColor="from-[#11998e] to-[#38ef7d]" />
       </div>
 
       <div className="max-w-3xl w-full mb-6 text-center">
         <p className="italic text-base text-white/90">
-          Chaque vie que nous touchons est précieuse. Accompagnons chacun avec soin pour grandir.
+          La famille est le plus grand trésor. Prenez soin les uns des autres avec amour et patience.
         </p>
       </div>
 

@@ -9,6 +9,7 @@ import supabase from "../../lib/supabaseClient";
 import { useMembers } from "../../context/MembersContext";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
+import { checkLimiteAtteinte } from "../../lib/checkLimite";
 
 export default function AjouterMembreFamille() {
   return (
@@ -141,6 +142,19 @@ function AjouterMembreFamilleContent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+     if (!userScope.eglise_id) {
+    alert("❌ Église non identifiée.");
+    return;
+      }
+    
+      try {
+        // 1. Vérifier la limite
+        const { atteinte, count, limite } = await checkLimiteAtteinte(userScope.eglise_id);
+        if (atteinte) {
+          alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+          return;
+        }
 
     try {
       const newMemberData = {

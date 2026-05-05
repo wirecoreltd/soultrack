@@ -137,6 +137,19 @@ function AjouterMembreCelluleContent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+  if (!userScope.eglise_id) {
+    alert("❌ Église non identifiée.");
+    return;
+  }
+
+  try {
+    // ✅ Vérifier la limite
+    const { atteinte, count, limite } = await checkLimiteAtteinte(userScope.eglise_id);
+    if (atteinte) {
+      alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+      return;
+    }
 
     try {
       const newMemberData = {
@@ -161,13 +174,7 @@ function AjouterMembreCelluleContent() {
         statut_initial: formData.statut_initial || null,
         priere_salut: formData.priere_salut || null,
         type_conversion: formData.type_conversion || null,
-      };
-
-      const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
-        if (atteinte) {
-          alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
-          return;
-        }
+      };     
 
       const { data: newMember, error } = await supabase
         .from("membres_complets")

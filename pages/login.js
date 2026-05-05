@@ -60,6 +60,10 @@ export default function LoginPage() {
         router.replace("/evangelisation/evangelisation-hub");
       } else if (roles.includes("Conseiller")) {
         router.replace("/conseiller/conseiller-hub");
+         } else if (roles.includes("ResponsableFamilles")) {
+        router.replace("/famille/familles-hub");
+        } else if (roles.includes("ResponsableIntegration")) {
+        router.replace("/membres/membres-hub");
       } else {
         router.replace("/"); // fallback
       }

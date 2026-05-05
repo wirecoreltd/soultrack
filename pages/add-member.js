@@ -149,54 +149,59 @@ export default function AddMember() {
   };
 
      const handleSubmit = async (e) => {
-      e.preventDefault();
-      setErrorMsg("");
-    
-      try {
-        if (!noPhone && !formData.telephone) {
-          throw new Error("Le téléphone est requis ou cochez 'Pas de téléphone'");
-        }
-    
-        const finalBesoin = showBesoinLibre && formData.besoinLibre
-          ? [...formData.besoin.filter(b => b !== "Autre"), formData.besoinLibre]
-          : formData.besoin;
-    
-       const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
-    
-        if (atteinte) {
-          setErrorMsg(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
-          return;
-        } // ✅ ICI la correction
-    
-        const { besoinLibre, ...rest } = formData;
-        const dataToSend = {
-          ...rest,
-          besoin: finalBesoin,
-          etat_contact: "nouveau",
-          famille_id: formData.famille_id || null,
-        };
-    
-        if (!noPhone) {
-          const { data: existing } = await supabase
-            .from("membres_complets")
-            .select("id")
-            .eq("telephone", formData.telephone)
-            .maybeSingle();
-    
-          if (existing) throw new Error("Ce numéro de téléphone existe déjà.");
-        }
-    
-        const { error } = await supabase.from("membres_complets").insert([dataToSend]);
-        if (error) throw error;
-    
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
-        resetForm();
-    
-      } catch (err) {
-        setErrorMsg(err.message || "Erreur lors de l'ajout du membre.");
-      }
+  e.preventDefault();
+  setErrorMsg("");
+
+  try {
+    if (!noPhone && !formData.telephone) {
+      throw new Error("Le téléphone est requis ou cochez 'Pas de téléphone'");
+    }
+
+    // ✅ Vérifier que eglise_id est bien chargé
+    if (!formData.eglise_id) {
+      throw new Error("Église non identifiée. Veuillez réessayer.");
+    }
+
+    const finalBesoin = showBesoinLibre && formData.besoinLibre
+      ? [...formData.besoin.filter(b => b !== "Autre"), formData.besoinLibre]
+      : formData.besoin;
+
+    // ✅ Vérifier la limite
+    const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
+    if (atteinte) {
+      setErrorMsg(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+      return;
+    }
+
+    const { besoinLibre, ...rest } = formData;
+    const dataToSend = {
+      ...rest,
+      besoin: finalBesoin,
+      etat_contact: "nouveau",
+      famille_id: formData.famille_id || null,
     };
+
+    if (!noPhone) {
+      const { data: existing } = await supabase
+        .from("membres_complets")
+        .select("id")
+        .eq("telephone", formData.telephone)
+        .maybeSingle();
+
+      if (existing) throw new Error("Ce numéro de téléphone existe déjà.");
+    }
+
+    const { error } = await supabase.from("membres_complets").insert([dataToSend]);
+    if (error) throw error;
+
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 3000);
+    resetForm();
+
+  } catch (err) {
+    setErrorMsg(err.message || "Erreur lors de l'ajout du membre.");
+  }
+};
 
   if (loading) return <p className="text-center mt-10">Vérification du lien...</p>;
   if (errorMsg && !formData.eglise_id) return <p className="text-center mt-10 text-red-600">{errorMsg}</p>;

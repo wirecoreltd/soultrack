@@ -41,6 +41,7 @@ function EvangelisationHubContent() {
     </Link>
   );
 
+ if (isResponsableEvangelisation) {
   return (
   <div
     className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
@@ -92,7 +93,7 @@ function EvangelisationHubContent() {
             Rapport Evangélisation
           </div>
         </Link>
-            
+            {NOTIF_CARD}
       </div>
 
       {/* 🔹 Bouton popup ajouté sous les cartes */}

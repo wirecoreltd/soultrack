@@ -73,7 +73,7 @@ function ConseillerHubContent() {
 
           {/* Notifications */}
           <Link
-            href="/notifications"
+            href="/admin/notifications"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
             style={{ borderTopColor: "#ef4444" }}
           >

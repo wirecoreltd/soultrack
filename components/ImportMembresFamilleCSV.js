@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
+import { checkLimiteAtteinte } from "../lib/checkLimite";
 import Papa from "papaparse";
 
 export default function ImportMembresFamilleCSV({ user }) {
@@ -219,6 +220,20 @@ export default function ImportMembresFamilleCSV({ user }) {
 
   const handleImport = async () => {
     setLoading(true);
+
+    const { atteinte, count, limite } = await checkLimiteAtteinte(user.eglise_id);
+      if (atteinte) {
+        alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+        setLoading(false);
+        return;
+      }
+    
+      // ✅ Vérifier si l'import dépasserait la limite
+      if (limite !== null && count + totalToImport > limite) {
+        alert(`❌ Cet import dépasserait la limite : vous avez ${count}/${limite} membres et voulez en importer ${totalToImport}.`);
+        setLoading(false);
+        return;
+      }
 
     if (data.length > 0) {
       const { error } = await supabase.from("membres_complets").insert(data);

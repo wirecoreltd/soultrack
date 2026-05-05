@@ -141,81 +141,81 @@ function AjouterMembreFamilleContent() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-     if (!userScope.eglise_id) {
+  if (!userScope.eglise_id) {
     alert("❌ Église non identifiée.");
     return;
-      }
-    
-      try {
-        // 1. Vérifier la limite
-        const { atteinte, count, limite } = await checkLimiteAtteinte(userScope.eglise_id);
-        if (atteinte) {
-          alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
-          return;
-        }
+  }
 
-    try {
-      const newMemberData = {
-        nom: formData.nom,
-        prenom: formData.prenom,
-        telephone: formData.telephone,
-        ville: formData.ville,
-        venu: formData.venu,
-        famille_id: formData.famille_id,
-        eglise_id: userScope.eglise_id,
-        statut_suivis: 3,
-        etat_contact: "existant",
-        is_whatsapp: formData.is_whatsapp,
-        infos_supplementaires: formData.infos_supplementaires,
-        besoin: formData.besoin.join(", "),
-        autrebesoin: formData.autreBesoin || null,
-        sexe: formData.sexe || null,
-        age: formData.age || null,
-        date_venu: formData.date_venu || null,
-        bapteme_eau: false,
-        bapteme_esprit: false,
-        statut_initial: formData.statut_initial || null,
-        priere_salut: formData.priere_salut || null,
-        type_conversion: formData.type_conversion || null,
-      };
-
-      const { data: newMember, error } = await supabase
-        .from("membres_complets")
-        .insert([newMemberData])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setAllMembers((prev) => [...prev, newMember]);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-
-      setFormData({
-        nom: "",
-        prenom: "",
-        sexe: "",
-        age: "",
-        telephone: "",
-        ville: "",
-        venu: "",
-        priere_salut: "",
-        type_conversion: "",
-        date_venu: new Date().toISOString().slice(0, 10),
-        besoin: [],
-        autreBesoin: "",
-        // ✅ Conserver Famille_id si venu depuis un lien
-        famille_id: urlFamilleId || (Familles.length === 1 ? Familles[0].id : ""),
-        infos_supplementaires: "",
-        is_whatsapp: false,
-      });
-    } catch (err) {
-      alert("❌ Impossible d'ajouter le membre : " + err.message);
+  try {
+    // 1. Vérifier la limite
+    const { atteinte, count, limite } = await checkLimiteAtteinte(userScope.eglise_id);
+    if (atteinte) {
+      alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+      return;
     }
-  };
 
+    // 2. Création membre
+    const newMemberData = {
+      nom: formData.nom,
+      prenom: formData.prenom,
+      telephone: formData.telephone,
+      ville: formData.ville,
+      venu: formData.venu,
+      famille_id: formData.famille_id,
+      eglise_id: userScope.eglise_id,
+      statut_suivis: 3,
+      etat_contact: "existant",
+      is_whatsapp: formData.is_whatsapp,
+      infos_supplementaires: formData.infos_supplementaires,
+      besoin: formData.besoin.join(", "),
+      autrebesoin: formData.autreBesoin || null,
+      sexe: formData.sexe || null,
+      age: formData.age || null,
+      date_venu: formData.date_venu || null,
+      bapteme_eau: false,
+      bapteme_esprit: false,
+      statut_initial: formData.statut_initial || null,
+      priere_salut: formData.priere_salut || null,
+      type_conversion: formData.type_conversion || null,
+    };
+
+    const { data: newMember, error } = await supabase
+      .from("membres_complets")
+      .insert([newMemberData])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    setAllMembers((prev) => [...prev, newMember]);
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 3000);
+
+    setFormData({
+      nom: "",
+      prenom: "",
+      sexe: "",
+      age: "",
+      telephone: "",
+      ville: "",
+      venu: "",
+      priere_salut: "",
+      type_conversion: "",
+      date_venu: new Date().toISOString().slice(0, 10),
+      besoin: [],
+      autreBesoin: "",
+      famille_id: urlFamilleId || (Familles.length === 1 ? Familles[0].id : ""),
+      infos_supplementaires: "",
+      is_whatsapp: false,
+    });
+
+  } catch (err) {
+    alert("❌ Impossible d'ajouter le membre : " + err.message);
+  }
+};
+  
   const handleCancel = () => {
     setFormData({
       nom: "",

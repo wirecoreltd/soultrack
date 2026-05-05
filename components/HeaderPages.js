@@ -74,6 +74,8 @@ export default function HeaderPages() {
         if (profile?.eglise_id) {
           setEgliseId(profile.eglise_id);
 
+          console.log("✅ HeaderPages egliseId:", profile.eglise_id); 
+
           const { data: egliseData } = await supabase
             .from("eglises")
             .select("nom, logo_url, denomination, ville, pays")

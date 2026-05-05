@@ -149,13 +149,23 @@ export default function HeaderPages() {
 
   return (
     <div className="w-full max-w-5xl mx-auto">
-      <div className="flex justify-between items-center mb-1">
-        <button
-          onClick={() => router.back()}
-          className="text-amber-300 hover:text-gray-200 transition"
-        >
-          ← Retour
-        </button>
+      <div className="flex justify-between items-start mb-1">
+        <div className="flex flex-col items-start">
+          <button
+            onClick={() => router.back()}
+            className="text-amber-300 hover:text-gray-200 transition"
+          >
+            ← Retour
+          </button>
+      
+          {/* Logo SoulTrack déplacé ici */}
+          <img
+            src="/logo.png"
+            alt="Logo SoulTrack"
+            className="w-10 h-auto mt-1 cursor-pointer hover:opacity-80 transition"
+            onClick={() => router.push("/index")}
+          />
+        </div>
 
         <div className="flex items-center space-x-3">
 
@@ -249,21 +259,13 @@ export default function HeaderPages() {
       </div>
 
       <div className="flex flex-col items-center mb-4">
-        <div className="flex items-center justify-center gap-4">
+        {logoUrl && (
           <img
-            src="/logo.png"
-            alt="Logo SoulTrack"
-            className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
-            onClick={() => router.push("/index")}
+            src={logoUrl}
+            alt="Logo Église"
+            className="w-16 h-16 object-contain mb-2"
           />
-          {logoUrl && (
-            <img
-              src={logoUrl}
-              alt="Logo Église"
-              className="w-20 h-20 object-contain"
-            />
-          )}
-        </div>
+        )}
 
         <p className="text-white font-semibold text-lg mt-2">
           {denomination && (

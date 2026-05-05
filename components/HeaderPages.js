@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
-import { useNotifications } from "./NotificationContext";
+import NotificationBell from "./NotificationBell";
 
 function getIsoCode(countryName) {
   const isoMap = {
@@ -37,8 +37,6 @@ function getIsoCode(countryName) {
 
 export default function HeaderPages() {
   const router = useRouter();
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
-  const [showDropdown, setShowDropdown] = useState(false);
 
   const [prenom, setPrenom] = useState("Utilisateur");
   const [eglise, setEglise] = useState("");
@@ -52,6 +50,9 @@ export default function HeaderPages() {
   const [userRole, setUserRole] = useState(null);
   const [invitationPending, setInvitationPending] = useState(false);
   const [pendingToken, setPendingToken] = useState(null);
+
+  // Pour passer l'eglise_id à NotificationBell
+  const [egliseId, setEgliseId] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -71,6 +72,8 @@ export default function HeaderPages() {
         setUserRole(profile?.role || null);
 
         if (profile?.eglise_id) {
+          setEgliseId(profile.eglise_id);
+
           const { data: egliseData } = await supabase
             .from("eglises")
             .select("nom, logo_url, denomination, ville, pays")
@@ -133,33 +136,13 @@ export default function HeaderPages() {
     }
   };
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(".notif-dropdown-container")) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const formatDate = (dateStr) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   return (
     <div className="w-full max-w-5xl mx-auto">
 
-      {/* HEADER RIGHT ALIGNED */}
+      {/* HEADER */}
       <div className="flex justify-between items-start mb-1">
 
-        {/* LEFT */}
+        {/* LEFT — Retour + Logo */}
         <div className="flex flex-col items-center">
           <button
             onClick={() => router.back()}
@@ -178,21 +161,29 @@ export default function HeaderPages() {
           </div>
         </div>
 
-        {/* RIGHT */}
+        {/* RIGHT — Cloche + Déconnexion + Nom */}
         <div className="flex flex-col items-end text-right text-sm leading-tight">
 
-          {/* 🔔 + Déconnexion */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+
+            {/* 🔔 Invitation admin (gardée telle quelle) */}
             {userRole === "Administrateur" && invitationPending && (
               <button
                 onClick={handleClickInvitation}
                 className="relative text-amber-300 text-lg hover:text-gray-200 transition"
+                title="Invitation en attente"
               >
-                🔔
-                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                📩
+                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
               </button>
             )}
 
+            {/* 🔔 NotificationBell centralisée */}
+            {egliseId && (
+              <NotificationBell egliseId={egliseId} />
+            )}
+
+            {/* Déconnexion */}
             <button
               onClick={handleLogout}
               className="text-amber-300 text-sm hover:text-gray-200 transition whitespace-nowrap"
@@ -201,14 +192,14 @@ export default function HeaderPages() {
             </button>
           </div>
 
-          {/* Connecté */}
+          {/* Nom connecté */}
           <p className="text-white text-sm mt-1">
             Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
           </p>
         </div>
       </div>
 
-      {/* RESTE INCHANGÉ */}
+      {/* Infos église */}
       <div className="flex flex-col items-center mb-4">
         {logoUrl && (
           <div className="mt-2">

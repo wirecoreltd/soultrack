@@ -30,6 +30,17 @@ function EvangelisationHubContent() {
     setUserName(prenom);
   }, []);
 
+    const NOTIF_CARD = (
+    <Link
+      href="/admin/notifications"
+      className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+      style={{ borderTopColor: "#ef4444" }}
+    >
+      <div className="text-5xl mb-2">🔔</div>
+      <div className="text-lg font-bold text-gray-800 text-center">Notifications</div>
+    </Link>
+  );
+
   return (
   <div
     className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"

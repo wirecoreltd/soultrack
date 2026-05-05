@@ -135,81 +135,75 @@ function AjouterMembreCelluleContent() {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+
   if (!userScope.eglise_id) {
     alert("❌ Église non identifiée.");
     return;
   }
 
   try {
-    // ✅ Vérifier la limite
+    // 1. Vérifier la limite
     const { atteinte, count, limite } = await checkLimiteAtteinte(userScope.eglise_id);
     if (atteinte) {
       alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
       return;
     }
 
-    try {
-      const newMemberData = {
-        nom: formData.nom,
-        prenom: formData.prenom,
-        telephone: formData.telephone,
-        ville: formData.ville,
-        venu: formData.venu,
-        cellule_id: formData.cellule_id,
-        eglise_id: userScope.eglise_id,
-        statut_suivis: 3,
-        etat_contact: "existant",
-        is_whatsapp: formData.is_whatsapp,
-        infos_supplementaires: formData.infos_supplementaires,
-        besoin: formData.besoin.join(", "),
-        autrebesoin: formData.autreBesoin || null,
-        sexe: formData.sexe || null,
-        age: formData.age || null,
-        date_venu: formData.date_venu || null,
-        bapteme_eau: false,
-        bapteme_esprit: false,
-        statut_initial: formData.statut_initial || null,
-        priere_salut: formData.priere_salut || null,
-        type_conversion: formData.type_conversion || null,
-      };     
+    // 2. Préparer les données
+    const newMemberData = {
+      nom: formData.nom,
+      prenom: formData.prenom,
+      telephone: formData.telephone,
+      ville: formData.ville,
+      venu: formData.venu,
+      cellule_id: formData.cellule_id,
+      eglise_id: userScope.eglise_id,
+      statut_suivis: 3,
+      etat_contact: "existant",
+      is_whatsapp: formData.is_whatsapp,
+      infos_supplementaires: formData.infos_supplementaires,
+      besoin: formData.besoin.join(", "),
+      autrebesoin: formData.autreBesoin || null,
+      sexe: formData.sexe || null,
+      age: formData.age || null,
+      date_venu: formData.date_venu || null,
+      bapteme_eau: false,
+      bapteme_esprit: false,
+      statut_initial: formData.statut_initial || null,
+      priere_salut: formData.priere_salut || null,
+      type_conversion: formData.type_conversion || null,
+    };
 
-      const { data: newMember, error } = await supabase
-        .from("membres_complets")
-        .insert([newMemberData])
-        .select()
-        .single();
+    // 3. Insérer
+    const { data: newMember, error } = await supabase
+      .from("membres_complets")
+      .insert([newMemberData])
+      .select()
+      .single();
 
-      if (error) throw error;
+    if (error) throw error;
 
-      setAllMembers((prev) => [...prev, newMember]);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+    setAllMembers((prev) => [...prev, newMember]);
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 3000);
 
-      setFormData({
-        nom: "",
-        prenom: "",
-        sexe: "",
-        age: "",
-        telephone: "",
-        ville: "",
-        venu: "",
-        priere_salut: "",
-        type_conversion: "",
-        date_venu: new Date().toISOString().slice(0, 10),
-        besoin: [],
-        autreBesoin: "",
-        // ✅ Conserver cellule_id si venu depuis un lien
-        cellule_id: urlCelluleId || (cellules.length === 1 ? cellules[0].id : ""),
-        infos_supplementaires: "",
-        is_whatsapp: false,
-      });
-    } catch (err) {
-      alert("❌ Impossible d'ajouter le membre : " + err.message);
-    }
-  };
+    setFormData({
+      nom: "", prenom: "", sexe: "", age: "",
+      telephone: "", ville: "", venu: "",
+      priere_salut: "", type_conversion: "",
+      date_venu: new Date().toISOString().slice(0, 10),
+      besoin: [], autreBesoin: "",
+      cellule_id: urlCelluleId || (cellules.length === 1 ? cellules[0].id : ""),
+      infos_supplementaires: "",
+      is_whatsapp: false,
+    });
+
+  } catch (err) {
+    alert("❌ Impossible d'ajouter le membre : " + err.message);
+  }
+};
 
   const handleCancel = () => {
     setFormData({

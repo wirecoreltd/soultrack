@@ -14,6 +14,9 @@ const NOTIF_CARD = {
   color: "#ef4444",
 };
 
+// ─── Rôles dont le hub contient déjà la carte Notifications ───────────────
+const ROLES_WITH_NOTIF_IN_HUB = ["ResponsableFamilles", "ResponsableCellule", "Conseiller", "SuperviseurCellule"];
+
 const roleCards = {
   Administrateur: [
     { path: "/membres/membres-hub", label: "Gestion des membres", emoji: "🧭", color: "#0E7490" },
@@ -45,11 +48,11 @@ const roleCards = {
     { path: "/evangelisation/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" },
   ],
   ResponsableCellule: [
-  { path: "/cellule/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
-],
+    { path: "/cellule/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
+  ],
   SuperviseurCellule: [
-  { path: "/cellule/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
-],
+    { path: "/cellule/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
+  ],
   Conseiller: [
     { path: "/conseiller/conseiller-hub", label: "Conseiller Hub", emoji: "🤝", color: "#F59E0B" },
   ],
@@ -119,9 +122,12 @@ export default function IndexPage() {
     });
   }
 
-  // ✅ Ajouter la carte Notifications pour tous les rôles (sauf Membre seul)
+  // ✅ Ajouter Notifications seulement si le hub du rôle ne la contient pas déjà
   const isMemberOnly = roles.length === 1 && roles[0] === "Membre";
-  if (!isMemberOnly) {
+  const notifAlreadyInHub =
+    roles.length === 1 && ROLES_WITH_NOTIF_IN_HUB.includes(roles[0]);
+
+  if (!isMemberOnly && !notifAlreadyInHub) {
     cardsToShow.push(NOTIF_CARD);
   }
 

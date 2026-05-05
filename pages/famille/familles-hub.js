@@ -26,6 +26,9 @@ function FamillesHubContent() {
   const router = useRouter();
   const [prenom, setPrenom] = useState("cher membre");
 
+  const [role, setRole] = useState(null);
+const [loadingRole, setLoadingRole] = useState(true);
+
   useEffect(() => {
     const fetchPrenom = async () => {
       try {
@@ -63,6 +66,7 @@ useEffect(() => {
       .single();
 
     setRole(data?.role);
+     setLoadingRole(false);
   };
 
   fetchRole();
@@ -174,7 +178,7 @@ useEffect(() => {
             </div>
           </Link>
 
-            {role !== "ResponsableFamilles" && (
+            {!loadingRole && ( role === "Administrateur" || role === "SuperviseurCellule" || role === "SuperAdmin") && (
               <Link
                 href="/admin/create-famille"
                 className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"

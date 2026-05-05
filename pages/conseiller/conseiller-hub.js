@@ -64,7 +64,7 @@ function ConseillerHubContent() {
         <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6 flex-wrap">
           {/* Conseiller Hub */}
           <Link
-            href="/membres/list-members"
+            href="/conseiller/conseiller-hub"
             className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#F59E0B] p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
           >
             <div className="text-5xl mb-2">🤝</div>

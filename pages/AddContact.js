@@ -73,8 +73,24 @@ export default function AddContact() {
   const handleCancel = () => router.back();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  setErrorMsg("");
 
+  // Vérifier que eglise_id est bien chargé
+  if (!formData.eglise_id) {
+    setErrorMsg("❌ Erreur : église non identifiée.");
+    return;
+  }
+
+  try {
+    // 1. Vérifier la limite AVANT tout
+    const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
+    if (atteinte) {
+      setErrorMsg(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+      return;
+    }
+
+    // 2. Préparer les données
     const finalBesoin = showBesoinLibre && formData.besoinLibre
       ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
       : formData.besoin;
@@ -83,50 +99,31 @@ export default function AddContact() {
       ...formData,
       etat_contact: etatContact,
       besoin: finalBesoin,
-      eglise_id: formData.eglise_id, // ✅ branche_id retiré
     };
+    delete dataToSend.besoinLibre;
 
-    delete dataToSend.besoinLibre;    
-    
-      //block limite//
-      const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
-      
-      if (atteinte) {
-        setErrorMsg(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
-        return;
-      }
+    // 3. Insérer
+    const { error } = await supabase.from("membres_complets").insert([dataToSend]);
+    if (error) throw error;
 
-    try {
-      const { error } = await supabase.from("membres_complets").insert([dataToSend]);
-      if (error) throw error;
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 3000);
 
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+    setFormData({
+      prenom: "", nom: "", telephone: "", is_whatsapp: false,
+      ville: "", sexe: "", age: "", statut: "",
+      date_venu: new Date().toISOString().slice(0, 10),
+      venu: "", priere_salut: "", type_conversion: "",
+      besoin: [], besoinLibre: "", infos_supplementaires: "",
+      eglise_id: formData.eglise_id,
+    });
+    setShowBesoinLibre(false);
 
-      setFormData({
-        prenom: "",
-        nom: "",
-        telephone: "",
-        is_whatsapp: false,
-        ville: "",
-        sexe: "",
-        age: "",
-        statut: "",
-        date_venu: new Date().toISOString().slice(0, 10),
-        venu: "",
-        priere_salut: "",
-        type_conversion: "",
-        besoin: [],
-        besoinLibre: "",
-        infos_supplementaires: "",
-        eglise_id: formData.eglise_id, // ✅ branche_id retiré du reset
-      });
-      setShowBesoinLibre(false);
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
+  } catch (err) {
+    setErrorMsg("❌ " + err.message);
+  }
+};
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-4 sm:p-6">
       <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-3xl shadow-lg relative">

@@ -161,7 +161,7 @@ export default function AddMember() {
           ? [...formData.besoin.filter(b => b !== "Autre"), formData.besoinLibre]
           : formData.besoin;
     
-        const { atteinte, count, limite } = await checkLimiteAtteinte(eglise_id);
+       const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
     
         if (atteinte) {
           setErrorMsg(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);

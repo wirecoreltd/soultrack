@@ -9,6 +9,7 @@ import SuiviEvanPopup from "../../components/SuiviEvanPopup";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
+import { checkLimiteAtteinte } from "../../lib/checkLimite";
 
 export default function SuivisEvangelisation() {
   return (
@@ -327,7 +328,15 @@ function SuivisEvangelisationContent() {
       if (error) throw error;
 
       if (newStatus === "Intégré") {
-        const membreId = await upsertMembre({
+  // ✅ Vérifier la limite avant d'intégrer
+  const { atteinte, count, limite } = await checkLimiteAtteinte(user.eglise_id);
+  if (atteinte) {
+    alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan pour intégrer ce contact.`);
+    setUpdating((p) => ({ ...p, [id]: false }));
+    return;
+  }
+
+  const membreId = await upsertMembre({
           ...m,
           status_suivis_evangelises: newStatus,
           commentaire_evangelises: newComment,

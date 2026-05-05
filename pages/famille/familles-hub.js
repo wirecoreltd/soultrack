@@ -105,7 +105,7 @@ useEffect(() => {
         
           {!loadingRole && role === "ResponsableFamilles" && (
             <Link
-              href="/cellule/ajouter-membre-cellule"
+              href="/famille/ajouter-membre-famille"
               className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
             >
               <div className="text-5xl mb-2">➕</div>

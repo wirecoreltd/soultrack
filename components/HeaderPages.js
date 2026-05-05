@@ -150,22 +150,22 @@ export default function HeaderPages() {
   return (
     <div className="w-full max-w-5xl mx-auto">
       <div className="flex justify-between items-start mb-1">
-        <div className="flex flex-col items-start">
-          <button
-            onClick={() => router.back()}
-            className="text-amber-300 hover:text-gray-200 transition"
-          >
-            ← Retour
-          </button>
-      
-          {/* Logo SoulTrack déplacé ici */}
-          <img
-            src="/logo.png"
-            alt="Logo SoulTrack"
-            className="w-10 h-auto mt-1 cursor-pointer hover:opacity-80 transition"
-            onClick={() => router.push("/index")}
-          />
-        </div>
+          <div className="flex flex-col items-center">
+            <button
+              onClick={() => router.back()}
+              className="text-amber-300 hover:text-gray-200 transition"
+            >
+              ← Retour
+            </button>
+        
+            {/* Logo SoulTrack centré sous Retour */}
+            <img
+              src="/logo.png"
+              alt="Logo SoulTrack"
+              className="w-10 h-auto mt-1 cursor-pointer hover:opacity-80 transition"
+              onClick={() => router.push("/index")}
+            />
+          </div>
 
         <div className="flex items-center space-x-3">
 
@@ -263,7 +263,7 @@ export default function HeaderPages() {
           <img
             src={logoUrl}
             alt="Logo Église"
-            className="w-16 h-16 object-contain mb-2"
+            className="w-14 h-14 object-contain mb-2"
           />
         )}
 

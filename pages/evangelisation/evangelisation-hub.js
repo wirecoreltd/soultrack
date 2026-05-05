@@ -30,6 +30,13 @@ function EvangelisationHubContent() {
     setUserName(prenom);
   }, []);
 
+  const role = localStorage.getItem("role");
+  const isResponsableEvangelisation = role === "ResponsableEvangelisation";
+
+  if (!isResponsableEvangelisation) {
+    return null;
+  }
+
     const NOTIF_CARD = (
     <Link
       href="/admin/notifications"

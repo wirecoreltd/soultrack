@@ -8,7 +8,7 @@ import Footer from "../components/Footer";
 
 // ─── Carte notifications commune à tous les rôles ─────────────────────────
 const NOTIF_CARD = {
-  path: "/notifications",
+  path: "/admin/notifications",
   label: "Notifications",
   emoji: "🔔",
   color: "#ef4444",
@@ -45,8 +45,8 @@ const roleCards = {
     { path: "/evangelisation/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" },
   ],
   ResponsableCellule: [
-    { path: "/cellule/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
-  ],
+  { path: "/cellule/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
+],
   SuperviseurCellule: [
     { path: "/cellule/cellules-hub", label: "Cellule", emoji: "🏠", color: "#06B6D4" },
   ],

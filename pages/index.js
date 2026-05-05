@@ -143,7 +143,7 @@ export default function IndexPage() {
       <HeaderPages />
 
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold mt-4 mb-6 text-white">
+        <h1 className="text-2xl font-bold mt-2 mb-6 text-white">
           Tableau de bord
         </h1>
         <div className="max-w-3xl w-full mb-6 text-center">

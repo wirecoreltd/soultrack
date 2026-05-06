@@ -24,7 +24,11 @@ function getRoles(profile) {
   if (!profile) return [];
   if (Array.isArray(profile.roles)) return profile.roles;
   if (typeof profile.roles === "string") {
-    return profile.roles.replace("{", "").replace("}", "").split(",").map((r) => r.trim());
+    return profile.roles
+      .replace("{", "")
+      .replace("}", "")
+      .split(",")
+      .map((r) => r.trim());
   }
   if (profile.role) return [profile.role];
   return [];
@@ -32,7 +36,14 @@ function getRoles(profile) {
 
 export default function ListMembers() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller","ResponsableIntegration", "ResponsableCellule"]}>
+    <ProtectedRoute
+      allowedRoles={[
+        "Administrateur",
+        "Conseiller",
+        "ResponsableIntegration",
+        "ResponsableCellule",
+      ]}
+    >
       <ListMembersContent />
     </ProtectedRoute>
   );
@@ -53,7 +64,7 @@ function ListMembersContent() {
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
   const toBoolean = (val) => val === true || val === "true";
-  const [userRole, setUserRole] = useState(null);
+  const [userRole, setUserRole] = useState(null); // ✅ sera assigné dans fetchData
   const besoinFromUrl = searchParams.get("besoin");
   const dateDebut = searchParams.get("dateDebut");
   const dateFin = searchParams.get("dateFin");
@@ -75,7 +86,7 @@ function ListMembersContent() {
   const router = useRouter();
   const [userProfile, setUserProfile] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);  
+  const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
 
   const [assignmentsMap, setAssignmentsMap] = useState({});
   const [conseillerMembreIds, setConseillerMembreIds] = useState(null);
@@ -87,8 +98,12 @@ function ListMembersContent() {
   // ✅ Ref pour bloquer le realtime pendant nos propres mises à jour
   const localUpdateInProgressRef = useRef(false);
 
-  // ✅ FEATURES
+  // ─────────────────────────────────────────────
+  // ✅ FEATURES — source unique via useFeature
+  // ─────────────────────────────────────────────
   const famillesActive = useFeature("familles");
+  const cellulesActive = useFeature("cellules");     // ✅ AJOUTÉ
+  const conseillerActive = useFeature("conseiller"); // ✅ AJOUTÉ
 
   const roles = getRoles(userProfile);
   const isAdmin = roles.includes("Administrateur");
@@ -97,7 +112,8 @@ function ListMembersContent() {
   const canEditSensitiveFields = isAdmin || isIntegration;
 
   const [view, setView] = useState(() => {
-    if (typeof window !== "undefined") return localStorage.getItem("members_view") || "card";
+    if (typeof window !== "undefined")
+      return localStorage.getItem("members_view") || "card";
     return "card";
   });
 
@@ -110,33 +126,53 @@ function ListMembersContent() {
   };
 
   const handleUpdateMember = (updatedMember) => {
-    setAllMembers((prev) => prev.map((mem) => (mem.id === updatedMember.id ? updatedMember : mem)));
+    setAllMembers((prev) =>
+      prev.map((mem) => (mem.id === updatedMember.id ? updatedMember : mem))
+    );
   };
 
-  const statutSuiviLabels = { 1: "En Attente", 2: "En Suivis", 3: "Intégré", 4: "Refus" };
+  const statutSuiviLabels = {
+    1: "En Attente",
+    2: "En Suivis",
+    3: "Intégré",
+    4: "Refus",
+  };
 
   const logStats = async (member, updatedMember, userProfile) => {
     if (!userProfile) return;
     const logs = [];
     if (updatedMember.Ministere) {
-      const ministeres = typeof updatedMember.Ministere === "string" ? JSON.parse(updatedMember.Ministere) : updatedMember.Ministere;
-      ministeres.forEach((m) => logs.push({
-        membre_id: member.id,
-        eglise_id: userProfile.eglise_id,
-        type: "ministere",
-        valeur: m,
-      }));
+      const ministeres =
+        typeof updatedMember.Ministere === "string"
+          ? JSON.parse(updatedMember.Ministere)
+          : updatedMember.Ministere;
+      ministeres.forEach((m) =>
+        logs.push({
+          membre_id: member.id,
+          eglise_id: userProfile.eglise_id,
+          type: "ministere",
+          valeur: m,
+        })
+      );
     }
     if (updatedMember.besoin) {
-      const besoins = typeof updatedMember.besoin === "string" ? JSON.parse(updatedMember.besoin) : updatedMember.besoin;
-      besoins.forEach((b) => logs.push({
-        membre_id: member.id,
-        eglise_id: userProfile.eglise_id,
-        type: "besoin",
-        valeur: b,
-      }));
+      const besoins =
+        typeof updatedMember.besoin === "string"
+          ? JSON.parse(updatedMember.besoin)
+          : updatedMember.besoin;
+      besoins.forEach((b) =>
+        logs.push({
+          membre_id: member.id,
+          eglise_id: userProfile.eglise_id,
+          type: "besoin",
+          valeur: b,
+        })
+      );
     }
-    if (updatedMember.star === true && updatedMember.etat_contact === "existant") {
+    if (
+      updatedMember.star === true &&
+      updatedMember.etat_contact === "existant"
+    ) {
       logs.push({
         membre_id: member.id,
         eglise_id: userProfile.eglise_id,
@@ -144,14 +180,18 @@ function ListMembersContent() {
         valeur: "true",
       });
     }
-    if (logs.length > 0) await supabase.from("stats_ministere_besoin").insert(logs);
+    if (logs.length > 0)
+      await supabase.from("stats_ministere_besoin").insert(logs);
   };
 
   const formatDateFr = (dateString) => {
     if (!dateString) return "—";
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
-    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
+    const months = [
+      "Janv","Févr","Mars","Avr","Mai","Juin",
+      "Juil","Août","Sept","Oct","Nov","Déc",
+    ];
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
@@ -159,11 +199,17 @@ function ListMembersContent() {
     let ministereList = [];
     if (ministereJson) {
       try {
-        const parsed = typeof ministereJson === "string" ? JSON.parse(ministereJson) : ministereJson;
+        const parsed =
+          typeof ministereJson === "string"
+            ? JSON.parse(ministereJson)
+            : ministereJson;
         ministereList = Array.isArray(parsed) ? parsed : [parsed];
-        ministereList = ministereList.filter((m) => m.toLowerCase() !== "autre");
+        ministereList = ministereList.filter(
+          (m) => m.toLowerCase() !== "autre"
+        );
       } catch {
-        if (ministereJson.toLowerCase() !== "autre") ministereList = [ministereJson];
+        if (ministereJson.toLowerCase() !== "autre")
+          ministereList = [ministereJson];
       }
     }
     if (autreMinistere?.trim()) ministereList.push(autreMinistere.trim());
@@ -176,7 +222,10 @@ function ListMembersContent() {
       .from("suivi_assignments")
       .select("membre_id, conseiller_id, role");
 
-    if (error) { console.error("fetchAssignments error:", error); return; }
+    if (error) {
+      console.error("fetchAssignments error:", error);
+      return;
+    }
     if (!assignments || assignments.length === 0) {
       setAssignmentsMap({});
       setConseillerMembreIds([]);
@@ -184,24 +233,31 @@ function ListMembersContent() {
       return;
     }
 
-    const conseillerIds = [...new Set(assignments.map(a => a.conseiller_id).filter(Boolean))];
+    const conseillerIds = [
+      ...new Set(assignments.map((a) => a.conseiller_id).filter(Boolean)),
+    ];
 
     const { data: profilesData, error: profilesError } = await supabase
       .from("profiles")
       .select("id, prenom, nom")
       .in("id", conseillerIds);
 
-    if (profilesError) { console.error("fetchAssignments profiles error:", profilesError); return; }
+    if (profilesError) {
+      console.error("fetchAssignments profiles error:", profilesError);
+      return;
+    }
 
     const profileMap = {};
-    (profilesData || []).forEach(p => { profileMap[p.id] = p; });
+    (profilesData || []).forEach((p) => {
+      profileMap[p.id] = p;
+    });
 
     const map = {};
     assignments.forEach((row) => {
       const profile = profileMap[row.conseiller_id];
       if (!profile) return;
       if (!map[row.membre_id]) map[row.membre_id] = [];
-      if (!map[row.membre_id].some(c => c.id === profile.id)) {
+      if (!map[row.membre_id].some((c) => c.id === profile.id)) {
         map[row.membre_id].push(profile);
       }
     });
@@ -212,8 +268,8 @@ function ListMembersContent() {
       const rolesArray = getRoles(profile);
       if (rolesArray.includes("Conseiller")) {
         const ids = assignments
-          .filter(a => a.conseiller_id === profile.id)
-          .map(a => a.membre_id);
+          .filter((a) => a.conseiller_id === profile.id)
+          .map((a) => a.membre_id);
         setConseillerMembreIds(ids);
       } else {
         setConseillerMembreIds(null);
@@ -236,18 +292,28 @@ function ListMembersContent() {
   // -------------------- Supprimer --------------------
   const handleSupprimerMembre = async (id) => {
     localUpdateInProgressRef.current = true;
-    const { error } = await supabase.from("membres_complets").update({ etat_contact: "supprime" }).eq("id", id);
+    const { error } = await supabase
+      .from("membres_complets")
+      .update({ etat_contact: "supprime" })
+      .eq("id", id);
     if (error) {
       console.error("Erreur suppression :", error);
       localUpdateInProgressRef.current = false;
       return;
     }
-    setAllMembers((prev) => prev.map((m) => (m.id === id ? { ...m, etat_contact: "supprime" } : m)));
+    setAllMembers((prev) =>
+      prev.map((m) =>
+        m.id === id ? { ...m, etat_contact: "supprime" } : m
+      )
+    );
     showToast("❌ Contact supprimé");
-    setTimeout(() => { localUpdateInProgressRef.current = false; }, 2000);
+    setTimeout(() => {
+      localUpdateInProgressRef.current = false;
+    }, 2000);
   };
 
-  const handleCommentChange = (id, value) => setCommentChanges((prev) => ({ ...prev, [id]: value }));
+  const handleCommentChange = (id, value) =>
+    setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
   const updateSuivi = async (id) => {
     setUpdating((prev) => ({ ...prev, [id]: true }));
@@ -274,14 +340,18 @@ function ListMembersContent() {
       .update(updateData)
       .eq("id", memberId);
 
-    setAllMembers((prev) => prev.map((m) =>
-      m.id === memberId
-        ? { ...m, suivi_envoye: true, etat_contact: "existant", ...updateData }
-        : m
-    ));
+    setAllMembers((prev) =>
+      prev.map((m) =>
+        m.id === memberId
+          ? { ...m, suivi_envoye: true, etat_contact: "existant", ...updateData }
+          : m
+      )
+    );
 
     showToast("✅ Contact envoyé !");
-    setTimeout(() => { localUpdateInProgressRef.current = false; }, 2000);
+    setTimeout(() => {
+      localUpdateInProgressRef.current = false;
+    }, 2000);
   };
 
   // -------------------- Fetch membres --------------------
@@ -358,7 +428,9 @@ function ListMembersContent() {
           }
         }
 
-        const { data, error } = await query.order("created_at", { ascending: false });
+        const { data, error } = await query.order("created_at", {
+          ascending: false,
+        });
 
         if (error) throw error;
 
@@ -382,18 +454,24 @@ function ListMembersContent() {
   // -------------------- Session --------------------
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setSession(session);
     };
     getSession();
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => setSession(session)
+    );
     return () => listener.subscription.unsubscribe();
   }, []);
 
   // -------------------- Fetch cellules, familles, conseillers, profile --------------------
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: profile, error: profileError } = await supabase
@@ -406,12 +484,23 @@ function ListMembersContent() {
       userProfileRef.current = profile;
       setUserProfile(profile);
 
-      const { data: cellulesData } = await supabase
-        .from("cellules")
-        .select("id, cellule_full")
-        .eq("eglise_id", profile.eglise_id)
-        .order("cellule_full");
-      if (cellulesData) setCellules(cellulesData);
+      // ✅ Assigner userRole correctement
+      const rolesArray = getRoles(profile);
+      if (rolesArray.includes("Conseiller")) {
+        setUserRole("Conseiller");
+      } else {
+        setUserRole(rolesArray[0] || null);
+      }
+
+      // ✅ Charger cellules seulement si feature active
+      if (cellulesActive) {
+        const { data: cellulesData } = await supabase
+          .from("cellules")
+          .select("id, cellule_full")
+          .eq("eglise_id", profile.eglise_id)
+          .order("cellule_full");
+        if (cellulesData) setCellules(cellulesData);
+      }
 
       // ✅ Charger familles seulement si feature active
       if (famillesActive) {
@@ -423,24 +512,29 @@ function ListMembersContent() {
         if (famillesData) setFamilles(famillesData);
       }
 
-      const { data: conseillersData } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, telephone")
-        .contains("roles", ["Conseiller"])
-        .eq("eglise_id", profile.eglise_id)
-        .order("prenom");
-      if (conseillersData) setConseillers(conseillersData);
+      // ✅ Charger conseillers seulement si feature active
+      if (conseillerActive) {
+        const { data: conseillersData } = await supabase
+          .from("profiles")
+          .select("id, prenom, nom, telephone")
+          .contains("roles", ["Conseiller"])
+          .eq("eglise_id", profile.eglise_id)
+          .order("prenom");
+        if (conseillersData) setConseillers(conseillersData);
+      }
 
       await fetchAssignments(profile);
     };
 
     fetchData();
-  }, [fetchAssignments, famillesActive]);
+  }, [fetchAssignments, famillesActive, cellulesActive, conseillerActive]);
 
   // -------------------- Realtime --------------------
   useEffect(() => {
     if (realtimeChannelRef.current) {
-      try { realtimeChannelRef.current.unsubscribe(); } catch (e) {}
+      try {
+        realtimeChannelRef.current.unsubscribe();
+      } catch (e) {}
       realtimeChannelRef.current = null;
     }
 
@@ -448,19 +542,39 @@ function ListMembersContent() {
 
     const handleMembresChange = () => {
       if (localUpdateInProgressRef.current) return;
-      setFetchTrigger(t => t + 1);
+      setFetchTrigger((t) => t + 1);
     };
 
     const handleAssignmentsChange = () => {
       fetchAssignments(userProfileRef.current);
     };
 
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "membres_complets" }, handleMembresChange);
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "cellules" }, handleMembresChange);
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, handleMembresChange);
-    channel.on("postgres_changes", { event: "*", schema: "public", table: "suivi_assignments" }, handleAssignmentsChange);
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "membres_complets" },
+      handleMembresChange
+    );
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "cellules" },
+      handleMembresChange
+    );
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "profiles" },
+      handleMembresChange
+    );
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "suivi_assignments" },
+      handleAssignmentsChange
+    );
 
-    try { channel.subscribe(); } catch (err) { console.warn("Erreur subscription realtime:", err); }
+    try {
+      channel.subscribe();
+    } catch (err) {
+      console.warn("Erreur subscription realtime:", err);
+    }
     realtimeChannelRef.current = channel;
 
     return () => {
@@ -474,36 +588,55 @@ function ListMembersContent() {
   }, [fetchAssignments]);
 
   // -------------------- Filtrage --------------------
-  const { filteredMembers, filteredNouveaux, filteredAnciens, filteredInactifs } = useMemo(() => {
-    const actifs = members.filter((m) => m.etat_contact !== "supprime");
+  const { filteredMembers, filteredNouveaux, filteredAnciens, filteredInactifs } =
+    useMemo(() => {
+      const actifs = members.filter((m) => m.etat_contact !== "supprime");
 
-    const besoinFiltered = besoinFromUrl
-      ? actifs.filter((m) => {
-          if (!m.besoin) return false;
-          let besoinsArray = [];
-          try { besoinsArray = Array.isArray(m.besoin) ? m.besoin : JSON.parse(m.besoin); }
-          catch { besoinsArray = m.besoin.split(","); }
-          return besoinsArray.map((b) => b.trim()).includes(besoinFromUrl);
-        })
-      : actifs;
+      const besoinFiltered = besoinFromUrl
+        ? actifs.filter((m) => {
+            if (!m.besoin) return false;
+            let besoinsArray = [];
+            try {
+              besoinsArray = Array.isArray(m.besoin)
+                ? m.besoin
+                : JSON.parse(m.besoin);
+            } catch {
+              besoinsArray = m.besoin.split(",");
+            }
+            return besoinsArray
+              .map((b) => b.trim())
+              .includes(besoinFromUrl);
+          })
+        : actifs;
 
-    const searchFiltered = filter
-      ? besoinFiltered.filter((m) => m.etat_contact?.trim().toLowerCase() === filter)
-      : besoinFiltered;
+      const searchFiltered = filter
+        ? besoinFiltered.filter(
+            (m) => m.etat_contact?.trim().toLowerCase() === filter
+          )
+        : besoinFiltered;
 
-    const searchAndNameFiltered = searchFiltered.filter((m) =>
-      `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
-    );
+      const searchAndNameFiltered = searchFiltered.filter((m) =>
+        `${m.prenom || ""} ${m.nom || ""}`
+          .toLowerCase()
+          .includes(search.toLowerCase())
+      );
 
-    return {
-      filteredMembers: searchAndNameFiltered,
-      filteredNouveaux: searchAndNameFiltered.filter((m) => m.etat_contact?.trim().toLowerCase() === "nouveau"),
-      filteredAnciens: searchAndNameFiltered.filter((m) => ["existant", "ancien"].includes(m.etat_contact?.trim().toLowerCase())),
-      filteredInactifs: searchAndNameFiltered.filter((m) => m.etat_contact?.trim().toLowerCase() === "inactif"),
-    };
-  }, [members, filter, search, besoinFromUrl]);
+      return {
+        filteredMembers: searchAndNameFiltered,
+        filteredNouveaux: searchAndNameFiltered.filter(
+          (m) => m.etat_contact?.trim().toLowerCase() === "nouveau"
+        ),
+        filteredAnciens: searchAndNameFiltered.filter((m) =>
+          ["existant", "ancien"].includes(m.etat_contact?.trim().toLowerCase())
+        ),
+        filteredInactifs: searchAndNameFiltered.filter(
+          (m) => m.etat_contact?.trim().toLowerCase() === "inactif"
+        ),
+      };
+    }, [members, filter, search, besoinFromUrl]);
 
-  const toggleDetails = (id) => setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleDetails = (id) =>
+    setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const getBorderColor = (member) => {
     const etat = (member?.etat_contact || "").toLowerCase().trim();
@@ -516,12 +649,20 @@ function ListMembersContent() {
   };
 
   const formatDate = (dateStr) => {
-    try { return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr }); }
-    catch { return ""; }
+    try {
+      return format(new Date(dateStr), "EEEE d MMMM yyyy", { locale: fr });
+    } catch {
+      return "";
+    }
   };
 
   const today = new Date();
-  const dateDuJour = today.toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const dateDuJour = today.toLocaleDateString("fr-FR", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -531,7 +672,9 @@ function ListMembersContent() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => { localStorage.setItem("members_view", view); }, [view]);
+  useEffect(() => {
+    localStorage.setItem("members_view", view);
+  }, [view]);
 
   const getConseillersForMember = (memberId) => {
     const assigned = assignmentsMap[memberId];
@@ -552,7 +695,9 @@ function ListMembersContent() {
           try {
             const arr = JSON.parse(m.besoin);
             return Array.isArray(arr) ? arr.join(", ") : m.besoin;
-          } catch { return m.besoin; }
+          } catch {
+            return m.besoin;
+          }
         })();
 
     return (
@@ -572,10 +717,13 @@ function ListMembersContent() {
 
         <div className="flex flex-col items-center mt-8">
           <h2 className="text-base font-bold text-center flex items-center justify-center gap-1">
-            <span>{m.prenom} {m.nom}</span>
-            {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
-              <span className="text-yellow-400">⭐</span>
-            )}
+            <span>
+              {m.prenom} {m.nom}
+            </span>
+            {m.star === true &&
+              m.etat_contact?.trim().toLowerCase() === "existant" && (
+                <span className="text-yellow-400">⭐</span>
+              )}
           </h2>
 
           {/* Téléphone */}
@@ -593,10 +741,34 @@ function ListMembersContent() {
                 </p>
                 {openPhoneId === m.id && (
                   <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56">
-                    <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
-                    <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
-                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
-                    <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
+                    <a
+                      href={`tel:${m.telephone}`}
+                      className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                    >
+                      📞 Appeler
+                    </a>
+                    <a
+                      href={`sms:${m.telephone}`}
+                      className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                    >
+                      ✉️ SMS
+                    </a>
+                    <a
+                      href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                    >
+                      📱 Appel WhatsApp
+                    </a>
+                    <a
+                      href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                    >
+                      💬 Message WhatsApp
+                    </a>
                   </div>
                 )}
               </>
@@ -608,31 +780,50 @@ function ListMembersContent() {
           {/* Infos principales */}
           <div className="w-full mt-2 text-sm text-black space-y-1">
             <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
-            <p className="text-center">🕊 Etat Contact : {m.etat_contact || "—"}</p>
-            <div className="w-full flex justify-end mt-3">
-              <p className="text-[11px] text-gray-400">Créé le {formatDateFr(m.created_at)}</p>
-            </div>
-            <p>
-              🏠 Cellule :{" "}
-              {m.cellule_id
-                ? cellules.find((c) => String(c.id) === String(m.cellule_id))?.cellule_full || "—"
-                : "—"}
+            <p className="text-center">
+              🕊 Etat Contact : {m.etat_contact || "—"}
             </p>
+            <div className="w-full flex justify-end mt-3">
+              <p className="text-[11px] text-gray-400">
+                Créé le {formatDateFr(m.created_at)}
+              </p>
+            </div>
+
+            {/* ✅ Cellule cachée si feature désactivée */}
+            {cellulesActive && (
+              <p>
+                🏠 Cellule :{" "}
+                {m.cellule_id
+                  ? cellules.find(
+                      (c) => String(c.id) === String(m.cellule_id)
+                    )?.cellule_full || "—"
+                  : "—"}
+              </p>
+            )}
+
             {/* ✅ Famille cachée si feature désactivée */}
             {famillesActive && (
               <p>
                 👨‍👩‍👦 Famille :{" "}
                 {m.famille_id
-                  ? familles.find((f) => String(f.id) === String(m.famille_id))?.famille_full || "—"
+                  ? familles.find(
+                      (f) => String(f.id) === String(m.famille_id)
+                    )?.famille_full || "—"
                   : "—"}
               </p>
             )}
-            <p>👤 Conseiller(s) : {getConseillersForMember(m.id)}</p>
+
+            {/* ✅ Conseiller caché si feature désactivée */}
+            {conseillerActive && (
+              <p>👤 Conseiller(s) : {getConseillersForMember(m.id)}</p>
+            )}
           </div>
 
           {/* Envoyer en suivi */}
           <div className="mt-2 w-full">
-            <label className="font-semibold text-sm">Envoyer ce contact en suivi :</label>
+            <label className="font-semibold text-sm">
+              Envoyer ce contact en suivi :
+            </label>
             <select
               value={selectedTargetType[m.id] || ""}
               onChange={(e) => {
@@ -643,31 +834,59 @@ function ListMembersContent() {
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Choisir une option --</option>
-              <option value="cellule">Une Cellule</option>
-              <option value="conseiller">Un Conseiller</option>
-              {/* ✅ Option famille cachée si feature désactivée */}
-              {famillesActive && <option value="famille">Une Famille</option>}
+              {/* ✅ Options conditionnées aux features */}
+              {cellulesActive && (
+                <option value="cellule">Une Cellule</option>
+              )}
+              {conseillerActive && (
+                <option value="conseiller">Un Conseiller</option>
+              )}
+              {famillesActive && (
+                <option value="famille">Une Famille</option>
+              )}
               <option value="numero">Saisir un numéro</option>
             </select>
 
-            {(selectedTargetType[m.id] === "cellule" ||
-              selectedTargetType[m.id] === "conseiller" ||
-              (famillesActive && selectedTargetType[m.id] === "famille")) && (
+            {/* ✅ Select secondaire conditionné aux features */}
+            {(
+              (cellulesActive && selectedTargetType[m.id] === "cellule") ||
+              (conseillerActive && selectedTargetType[m.id] === "conseiller") ||
+              (famillesActive && selectedTargetType[m.id] === "famille")
+            ) && (
               <select
                 value={selectedTargets[m.id] || ""}
-                onChange={(e) => setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                onChange={(e) =>
+                  setSelectedTargets((prev) => ({
+                    ...prev,
+                    [m.id]: e.target.value,
+                  }))
+                }
                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
               >
-                <option value="">-- Choisir {selectedTargetType[m.id]} --</option>
-                {selectedTargetType[m.id] === "cellule" && cellules.map((c) => (
-                  <option key={c.id} value={c.id}>{c.cellule_full || "—"}</option>
-                ))}
-                {selectedTargetType[m.id] === "conseiller" && conseillers.map((c) => (
-                  <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>
-                ))}
-                {famillesActive && selectedTargetType[m.id] === "famille" && familles.map((f) => (
-                  <option key={f.id} value={f.id}>{f.famille_full || "—"}</option>
-                ))}
+                <option value="">
+                  -- Choisir {selectedTargetType[m.id]} --
+                </option>
+                {cellulesActive &&
+                  selectedTargetType[m.id] === "cellule" &&
+                  cellules.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.cellule_full || "—"}
+                    </option>
+                  ))}
+                {conseillerActive &&
+                  selectedTargetType[m.id] === "conseiller" &&
+                  conseillers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.prenom || "—"} {c.nom || ""}
+                    </option>
+                  ))}
+                {famillesActive &&
+                  selectedTargetType[m.id] === "famille" &&
+                  familles.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.famille_full || "—"}
+                    </option>
+                  ))}
               </select>
             )}
 
@@ -676,7 +895,12 @@ function ListMembersContent() {
                 type="tel"
                 placeholder="Saisir un numéro"
                 value={selectedTargets[m.id] || ""}
-                onChange={(e) => setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                onChange={(e) =>
+                  setSelectedTargets((prev) => ({
+                    ...prev,
+                    [m.id]: e.target.value,
+                  }))
+                }
                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
               />
             )}
@@ -702,7 +926,9 @@ function ListMembersContent() {
                       selectedTargetType[m.id] === "cellule"
                         ? cellules.find((c) => c.id === selectedTargets[m.id])
                         : selectedTargetType[m.id] === "conseiller"
-                        ? conseillers.find((c) => c.id === selectedTargets[m.id])
+                        ? conseillers.find(
+                            (c) => c.id === selectedTargets[m.id]
+                          )
                         : selectedTargetType[m.id] === "famille"
                         ? familles.find((f) => f.id === selectedTargets[m.id])
                         : selectedTargets[m.id]
@@ -720,17 +946,34 @@ function ListMembersContent() {
             <div className="w-full flex justify-end mt-4">
               <button
                 onClick={() => {
-                  if (window.confirm("⚠️ Confirmation\n\nCe contact n'a plus besoin d'être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?")) {
+                  if (
+                    window.confirm(
+                      "⚠️ Confirmation\n\nCe contact n'a plus besoin d'être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?"
+                    )
+                  ) {
                     localUpdateInProgressRef.current = true;
-                    supabase.from("membres_complets").update({ etat_contact: "existant" }).eq("id", m.id)
+                    supabase
+                      .from("membres_complets")
+                      .update({ etat_contact: "existant" })
+                      .eq("id", m.id)
                       .then(({ error }) => {
                         if (error) {
                           showToast("❌ Erreur lors du déplacement");
                           localUpdateInProgressRef.current = false;
                         } else {
-                          setAllMembers((prev) => prev.map((mem) => mem.id === m.id ? { ...mem, etat_contact: "existant" } : mem));
-                          showToast("✅ Contact déplacé dans membres existants");
-                          setTimeout(() => { localUpdateInProgressRef.current = false; }, 2000);
+                          setAllMembers((prev) =>
+                            prev.map((mem) =>
+                              mem.id === m.id
+                                ? { ...mem, etat_contact: "existant" }
+                                : mem
+                            )
+                          );
+                          showToast(
+                            "✅ Contact déplacé dans membres existants"
+                          );
+                          setTimeout(() => {
+                            localUpdateInProgressRef.current = false;
+                          }, 2000);
                         }
                       });
                   }
@@ -743,14 +986,16 @@ function ListMembersContent() {
           )}
 
           {/* Bouton Détails */}
-          <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-3">
+          <button
+            onClick={() => toggleDetails(m.id)}
+            className="text-orange-500 underline text-sm mt-3"
+          >
             {isOpen ? "Fermer détails" : "Détails"}
           </button>
 
           {/* Détails */}
           {isOpen && (
             <div className="text-black text-sm mt-3 w-full space-y-4">
-
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
                 <p>🎗️ Civilité : {m.sexe || "—"}</p>
@@ -761,36 +1006,60 @@ function ListMembersContent() {
 
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
-                <p className="font-semibold text-[#2E3192]">💡 Statut : {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || "—"}</p>
+                <p className="font-semibold text-[#2E3192]">
+                  💡 Statut :{" "}
+                  {statutSuiviLabels[m.statut_suivis] ||
+                    m.suivi_statut ||
+                    "—"}
+                </p>
                 <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
                 <p>📝 Commentaire : {m.commentaire_suivis || "—"}</p>
-                <p>📑 Évangélisation : {m.Commentaire_Suivi_Evangelisation || "—"}</p>
-                <div className="mt-1">
-                  <span className="font-semibold">👤 Conseiller(s) : </span>
-                  {(assignmentsMap[m.id] && assignmentsMap[m.id].length > 0) ? (
-                    <span>
-                      {assignmentsMap[m.id].map((c, i) => (
-                        <span key={c.id}>
-                          {c.prenom} {c.nom}
-                          {i === 0 && assignmentsMap[m.id].length > 1 ? " (principal)" : ""}
-                          {i < assignmentsMap[m.id].length - 1 ? ", " : ""}
-                        </span>
-                      ))}
-                    </span>
-                  ) : "—"}
-                </div>
+                <p>
+                  📑 Évangélisation :{" "}
+                  {m.Commentaire_Suivi_Evangelisation || "—"}
+                </p>
+
+                {/* ✅ Conseiller dans Détails — caché si feature désactivée */}
+                {conseillerActive && (
+                  <div className="mt-1">
+                    <span className="font-semibold">👤 Conseiller(s) : </span>
+                    {assignmentsMap[m.id]?.length > 0 ? (
+                      <span>
+                        {assignmentsMap[m.id].map((c, i) => (
+                          <span key={c.id}>
+                            {c.prenom} {c.nom}
+                            {i === 0 && assignmentsMap[m.id].length > 1
+                              ? " (principal)"
+                              : ""}
+                            {i < assignmentsMap[m.id].length - 1 ? ", " : ""}
+                          </span>
+                        ))}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </div>
+                )}
               </div>
               <hr />
 
               <div>
-                <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
+                <p className="font-bold text-[#2E3192] mb-1">
+                  🕊 Vie spirituelle
+                </p>
                 <p>💧 Baptême d'eau : {m.bapteme_eau || "—"}</p>
-                {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && <p className="ml-4">💦 Veut se faire baptiser</p>}
+                {m.bapteme_eau === "Non" &&
+                  m.veut_se_faire_baptiser === "Oui" && (
+                    <p className="ml-4">💦 Veut se faire baptiser</p>
+                  )}
                 <p>🔥 Baptême de feu : {m.bapteme_esprit || "—"}</p>
                 <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
                 <p>✨ Conversion : {m.type_conversion || "—"}</p>
                 <p>✒️ Formation : {m.Formation || "—"}</p>
-                <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}</p>
+                <p>
+                  💢 Ministère :{" "}
+                  {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}
+                </p>
               </div>
               <hr />
 
@@ -803,7 +1072,9 @@ function ListMembersContent() {
               <hr />
 
               <div>
-                <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
+                <p className="font-bold text-[#2E3192] mb-1">
+                  ❤️‍🩹 Soin pastoral
+                </p>
                 <p>❓ Besoins : {besoins}</p>
                 <div className="flex justify-center">
                   <button
@@ -824,32 +1095,56 @@ function ListMembersContent() {
 
               <div className="flex flex-col items-center">
                 <div className="flex flex-col items-center w-full p-4 bg-white rounded-lg shadow-md space-y-2">
-                  <button onClick={() => setEditMember(m)} className="w-full text-orange-500 text-sm py-2 rounded-md">
+                  <button
+                    onClick={() => setEditMember(m)}
+                    className="w-full text-orange-500 text-sm py-2 rounded-md"
+                  >
                     ✏️ Modifier le contact
                   </button>
 
-                  {userRole === "Conseiller" && m.integration_fini !== "fini" && (
-                    <button
-                      onClick={async () => {
-                        if (!window.confirm("⚠️ Confirmation\n\nCe contact ne sera plus attribué à vous.\nVoulez-vous continuer ?")) return;
-                        try {
-                          const { error } = await supabase.from("membres_complets").update({ integration_fini: "fini", conseiller_id: null }).eq("id", m.id);
-                          if (error) throw error;
-                          setAllMembers((prev) => prev.filter((mem) => mem.id !== m.id));
-                          showToast("✅ Intégration terminée. Contact détaché.");
-                        } catch (err) {
-                          showToast("❌ Erreur lors de l'opération");
-                        }
-                      }}
-                      className="ml-auto bg-white text-blue-600 w-full py-2 rounded-md font-semibold shadow-sm"
-                    >
-                      ✅ Intégration terminée
-                    </button>
-                  )}
+                  {/* ✅ userRole maintenant correctement assigné */}
+                  {userRole === "Conseiller" &&
+                    m.integration_fini !== "fini" && (
+                      <button
+                        onClick={async () => {
+                          if (
+                            !window.confirm(
+                              "⚠️ Confirmation\n\nCe contact ne sera plus attribué à vous.\nVoulez-vous continuer ?"
+                            )
+                          )
+                            return;
+                          try {
+                            const { error } = await supabase
+                              .from("membres_complets")
+                              .update({
+                                integration_fini: "fini",
+                                conseiller_id: null,
+                              })
+                              .eq("id", m.id);
+                            if (error) throw error;
+                            setAllMembers((prev) =>
+                              prev.filter((mem) => mem.id !== m.id)
+                            );
+                            showToast(
+                              "✅ Intégration terminée. Contact détaché."
+                            );
+                          } catch (err) {
+                            showToast("❌ Erreur lors de l'opération");
+                          }
+                        }}
+                        className="ml-auto bg-white text-blue-600 w-full py-2 rounded-md font-semibold shadow-sm"
+                      >
+                        ✅ Intégration terminée
+                      </button>
+                    )}
 
                   <button
                     onClick={() => {
-                      if (window.confirm("⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?\n\nCette action supprimera également TOUT l'historique du contact.\nCette action est irréversible.")) {
+                      if (
+                        window.confirm(
+                          "⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?\n\nCette action supprimera également TOUT l'historique du contact.\nCette action est irréversible."
+                        )
+                      ) {
                         handleSupprimerMembre(m.id);
                       }
                     }}
@@ -868,7 +1163,10 @@ function ListMembersContent() {
 
   // -------------------- Rendu --------------------
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+    <div
+      className="min-h-screen flex flex-col items-center p-4 sm:p-6"
+      style={{ background: "#333699" }}
+    >
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
         Liste des <span className="text-emerald-300">Membres</span>
@@ -876,10 +1174,25 @@ function ListMembersContent() {
 
       <div className="max-w-3xl w-full mb-6 text-center">
         <p className="italic text-base text-white/90">
-          <span className="text-blue-300 font-semibold">Visualisez et gérez</span> tous les membres,{" "}
-          <span className="text-blue-300 font-semibold"> nouveaux contacts</span> et{" "}
-          <span className="text-blue-300 font-semibold"> membres existants</span>. Vous pouvez filtrer par état, consulter les détails,{" "}
-          <span className="text-blue-300 font-semibold"> envoyer des suivis</span> et mettre à jour les informations en toute sécurité selon votre rôle.
+          <span className="text-blue-300 font-semibold">
+            Visualisez et gérez
+          </span>{" "}
+          tous les membres,{" "}
+          <span className="text-blue-300 font-semibold">
+            {" "}
+            nouveaux contacts
+          </span>{" "}
+          et{" "}
+          <span className="text-blue-300 font-semibold">
+            {" "}
+            membres existants
+          </span>
+          . Vous pouvez filtrer par état, consulter les détails,{" "}
+          <span className="text-blue-300 font-semibold">
+            {" "}
+            envoyer des suivis
+          </span>{" "}
+          et mettre à jour les informations en toute sécurité selon votre rôle.
         </p>
       </div>
 
@@ -894,13 +1207,19 @@ function ListMembersContent() {
       </div>
 
       <div className="w-full max-w-6xl flex justify-center items-center mb-4 gap-2 flex-wrap">
-        <select value={filter} onChange={(e) => setFilter(e.target.value)} className="px-3 py-1 rounded-md border text-black text-sm">
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="px-3 py-1 rounded-md border text-black text-sm"
+        >
           <option value="">-- Tous les états de contact --</option>
           <option value="nouveau">Nouveau</option>
           <option value="existant">Existant</option>
           <option value="inactif">Inactif</option>
         </select>
-        <span className="text-white text-sm ml-2">{filteredMembers.length} membres</span>
+        <span className="text-white text-sm ml-2">
+          {filteredMembers.length} membres
+        </span>
       </div>
 
       <div className="w-full flex justify-end gap-2">
@@ -934,7 +1253,9 @@ function ListMembersContent() {
                     💖 Bien aimé venu le {dateDuJour}
                   </h2>
                   <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
-                    {filteredNouveaux.map((m) => renderMemberCard({ ...m, isNouveau: true }))}
+                    {filteredNouveaux.map((m) =>
+                      renderMemberCard({ ...m, isNouveau: true })
+                    )}
                   </div>
                 </>
               )}
@@ -967,14 +1288,18 @@ function ListMembersContent() {
 
       <EditMemberPopup
         member={editMember}
-        cellules={cellules}
-        familles={famillesActive ? familles : []}
-        conseillers={conseillers}
+        cellules={cellulesActive ? cellules : []}       // ✅
+        familles={famillesActive ? familles : []}       // ✅
+        conseillers={conseillerActive ? conseillers : []} // ✅
         currentUserRoles={getRoles(userProfile)}
         onClose={() => setEditMember(null)}
         onUpdateMember={async (updatedMember) => {
           await logStats(editMember, updatedMember, userProfile);
-          setAllMembers((prev) => prev.map((m) => (m.id === updatedMember.id ? updatedMember : m)));
+          setAllMembers((prev) =>
+            prev.map((m) =>
+              m.id === updatedMember.id ? updatedMember : m
+            )
+          );
           await fetchAssignments(userProfile);
           setEditMember(null);
           showToast("✅ Contact mis à jour !");

@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import supabase from "../../lib/supabaseClient";
-import ProtectedRoute from "../../components/ProtectedRoute";
-import HeaderPages from "../../components/HeaderPages";
-import Footer from "../../components/Footer";
+import supabase from "../../../lib/supabaseClient";
+import ProtectedRoute from "../../../components/ProtectedRoute";
+import HeaderPages from "../../../components/HeaderPages";
+import Footer from "../../../components/Footer";
+
+import {
+  buildFeaturesState,
+} from "../../../lib/features";
 
 export default function FeaturesPage() {
   return (
@@ -14,19 +18,6 @@ export default function FeaturesPage() {
   );
 }
 
-// ─────────────────────────────────────────────
-// DEFAULT BUSINESS LOGIC (SOURCE OF TRUTH)
-// ─────────────────────────────────────────────
-const DEFAULT_FEATURES = {
-  membres: true,
-  evangelisation: true,
-  cellules: true,
-  conseiller: true,
-  rapport: true,
-  presence: true,
-  familles: false,
-};
-
 const ALL_FEATURES = [
   { key: "membres", label: "Membres", emoji: "🧭" },
   { key: "evangelisation", label: "Évangélisation", emoji: "✝️" },
@@ -35,6 +26,8 @@ const ALL_FEATURES = [
   { key: "familles", label: "Familles", emoji: "👑" },
   { key: "rapport", label: "Rapport", emoji: "📊" },
   { key: "presence", label: "Présence", emoji: "✍🏻" },
+  { key: "administrateur", label: "Admin", emoji: "🛠️" },
+  { key: "notifications", label: "Notifications", emoji: "🔔" },
 ];
 
 function Features() {
@@ -61,7 +54,7 @@ function Features() {
   }, []);
 
   // ─────────────────────────────────────────────
-  // LOAD FEATURES (FIX FINAL ROBUSTE)
+  // LOAD FEATURES (PROPRE + SAFE)
   // ─────────────────────────────────────────────
   const fetchFeatures = async (egliseId) => {
     setLoading(true);
@@ -77,21 +70,23 @@ function Features() {
       return;
     }
 
-    // ✔ STEP 1 : base DEFAULT (source métier)
-    const map = { ...DEFAULT_FEATURES };
+    // ✔ MERGE PROPRE (DEFAULT + DB OVERRIDE)
+    const state = buildFeaturesState(data);
 
-    // ✔ STEP 2 : override DB (IMPORTANT FIX ACTIVE === TRUE)
-    data?.forEach((f) => {
-      map[f.feature] = f.active === true;
-    });
+    setFeatures(state);
 
-    setFeatures(map);
-
-    // compteur actifs
-    const count = Object.values(map).filter(Boolean).length;
+    const count = Object.values(state).filter(Boolean).length;
     setActiveCount(count);
 
     setLoading(false);
+  };
+
+  // ─────────────────────────────────────────────
+  // SELECT EGLISE
+  // ─────────────────────────────────────────────
+  const handleSelect = (eg) => {
+    setSelected(eg);
+    fetchFeatures(eg.id);
   };
 
   // ─────────────────────────────────────────────
@@ -108,7 +103,6 @@ function Features() {
     };
 
     setFeatures(updated);
-
     setActiveCount(Object.values(updated).filter(Boolean).length);
 
     const { error } = await supabase
@@ -124,7 +118,6 @@ function Features() {
 
     if (error) {
       console.error(error);
-      setFeatures(features); // rollback
     }
   };
 
@@ -139,7 +132,7 @@ function Features() {
           🔧 Modules Églises
         </h1>
         <p className="text-white/80 mt-2">
-          Activation des fonctionnalités par église
+          Gestion des features par église
         </p>
       </div>
 
@@ -149,8 +142,7 @@ function Features() {
           className="w-full p-3 rounded-xl"
           onChange={(e) => {
             const eg = eglises.find((x) => x.id === e.target.value);
-            setSelected(eg);
-            fetchFeatures(eg.id);
+            if (eg) handleSelect(eg);
           }}
         >
           <option>-- Sélectionner une église --</option>
@@ -164,20 +156,20 @@ function Features() {
 
       {/* STATS */}
       {selected && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 w-full max-w-3xl">
+        <div className="grid grid-cols-2 gap-4 mb-8 w-full max-w-3xl">
 
           <div className="bg-white rounded-xl p-6 text-center shadow">
             <h2 className="text-3xl font-bold text-[#333699]">
               {activeCount}
             </h2>
-            <p className="text-gray-600">Modules actifs</p>
+            <p className="text-gray-600">Actifs</p>
           </div>
 
           <div className="bg-white rounded-xl p-6 text-center shadow">
             <h2 className="text-3xl font-bold text-[#333699]">
               {ALL_FEATURES.length}
             </h2>
-            <p className="text-gray-600">Total modules</p>
+            <p className="text-gray-600">Total</p>
           </div>
 
         </div>
@@ -193,14 +185,14 @@ function Features() {
             </p>
           ) : (
             ALL_FEATURES.map((f) => {
-              const active = features[f.key] === true; // 🔥 FIX IMPORTANT
+              const active = features[f.key] === true;
 
               return (
                 <div
                   key={f.key}
                   onClick={() => toggle(f.key)}
-                  className={`bg-white rounded-xl shadow p-5 text-center cursor-pointer hover:shadow-xl transition ${
-                    active ? "border-2 border-green-500" : ""
+                  className={`bg-white rounded-xl shadow p-5 text-center cursor-pointer transition ${
+                    active ? "border-2 border-green-500" : "opacity-70"
                   }`}
                 >
                   <div className="text-3xl mb-2">{f.emoji}</div>
@@ -210,7 +202,7 @@ function Features() {
                   </h3>
 
                   <div
-                    className={`mt-3 text-sm font-bold ${
+                    className={`mt-2 font-bold text-sm ${
                       active ? "text-green-600" : "text-gray-400"
                     }`}
                   >

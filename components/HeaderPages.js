@@ -40,7 +40,6 @@ export default function HeaderPages() {
 
   const [prenom, setPrenom] = useState("Utilisateur");
   const [eglise, setEglise] = useState("");
-  const [branche, setBranche] = useState("");
   const [denomination, setDenomination] = useState("");
   const [ville, setVille] = useState("");
   const [pays, setPays] = useState("");
@@ -55,6 +54,51 @@ export default function HeaderPages() {
   const [egliseId, setEgliseId] = useState(null);
   const [userId, setUserId] = useState(null); // ✅ AJOUT
 
+        const storedRoles = localStorage.getItem("userRole");
+          if (storedRoles) {
+            try {
+              const parsed = JSON.parse(storedRoles);
+              setRoles(Array.isArray(parsed) ? parsed : [parsed]);
+            } catch {
+              setRoles([storedRoles]);
+            }
+          }
+
+          const handleLogoClick = () => {
+          if (!roles || roles.length === 0) {
+            router.push("/index");
+            return;
+          }        
+          // 🔥 Plusieurs rôles → dashboard
+          if (roles.length > 1) {
+            router.push("/index");
+            return;
+          }
+        
+          // 🔥 Un seul rôle → redirection directe
+          const role = roles[0];
+        
+          if (role === "ResponsableCellule" || role === "SuperviseurCellule") {
+            router.push("/cellule/cellules-hub");
+        
+          } else if (role === "ResponsableFamilles") {
+            router.push("/famille/familles-hub");
+        
+          } else if (role === "Conseiller") {
+            router.push("/conseiller/conseiller-hub");
+        
+          } else if (role === "ResponsableEvangelisation") {
+            router.push("/evangelisation/evangelisation-hub");
+        
+          } else if (role === "ResponsableIntegration") {
+            router.push("/membres/membres-hub");
+        
+          } else {
+            router.push("/index");
+          }
+        };
+        
+          
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -65,7 +109,7 @@ export default function HeaderPages() {
 
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("prenom, eglise_id, branche_id, role")
+          .select("prenom, eglise_id, roles")
           .eq("id", user.id)
           .single();
 
@@ -93,33 +137,7 @@ export default function HeaderPages() {
             setPays(egliseData.pays || "");
           }
         }
-
-        if (profile?.branche_id) {
-          const { data: brancheData } = await supabase
-            .from("branches")
-            .select("nom, superviseur_nom")
-            .eq("id", profile.branche_id)
-            .single();
-
-          if (brancheData) {
-            setBranche(brancheData.nom || "");
-            if (brancheData.superviseur_nom) setSuperviseur(brancheData.superviseur_nom);
-          }
-
-          if (profile.role === "Administrateur") {
-            const { data: invites } = await supabase
-              .from("eglise_supervisions")
-              .select("invitation_token")
-              .eq("supervisee_branche_id", profile.branche_id)
-              .eq("statut", "pending")
-              .limit(1);
-
-            if (invites && invites.length > 0) {
-              setInvitationPending(true);
-              setPendingToken(invites[0].invitation_token);
-            }
-          }
-        }
+        
       } catch (err) {
         console.error("Erreur récupération profil :", err);
       } finally {
@@ -161,7 +179,7 @@ export default function HeaderPages() {
               src="/logo.png"
               alt="Logo SoulTrack"
               className="w-10 h-auto cursor-pointer hover:opacity-80 transition"
-              onClick={() => router.push("/index")}
+              const [roles, setRoles] = useState([]);
             />
           </div>
         </div>
@@ -225,9 +243,7 @@ export default function HeaderPages() {
           {eglise}
         </p>
 
-        <p className="text-amber-300 mt-2 text-sm">
-          {branche}
-          {branche && ville && <span className="text-amber-300"> - </span>}
+        <p className="text-amber-300 mt-2 text-sm">          
           {ville}
         </p>
 

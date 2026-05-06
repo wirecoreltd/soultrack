@@ -6,9 +6,8 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 
-import {
-  buildFeaturesState,
-} from "../../lib/features";
+// ✅ SOURCE UNIQUE — import depuis lib/features
+import { buildFeaturesState } from "../../lib/features";
 
 export default function FeaturesPage() {
   return (
@@ -33,7 +32,6 @@ const ALL_FEATURES = [
 function Features() {
   const [eglises, setEglises] = useState([]);
   const [selected, setSelected] = useState(null);
-
   const [features, setFeatures] = useState({});
   const [loading, setLoading] = useState(false);
   const [activeCount, setActiveCount] = useState(0);
@@ -46,15 +44,13 @@ function Features() {
       const { data } = await supabase
         .from("eglises")
         .select("id, nom, ville");
-
       setEglises(data || []);
     };
-
     fetchEglises();
   }, []);
 
   // ─────────────────────────────────────────────
-  // LOAD FEATURES (PROPRE + SAFE)
+  // LOAD FEATURES
   // ─────────────────────────────────────────────
   const fetchFeatures = async (egliseId) => {
     setLoading(true);
@@ -70,9 +66,8 @@ function Features() {
       return;
     }
 
-    // ✔ MERGE PROPRE (DEFAULT + DB OVERRIDE)
+    // ✅ MERGE PROPRE (DEFAULT + DB OVERRIDE) via lib/features
     const state = buildFeaturesState(data);
-
     setFeatures(state);
 
     const count = Object.values(state).filter(Boolean).length;
@@ -96,11 +91,7 @@ function Features() {
     if (!selected) return;
 
     const newValue = !features[key];
-
-    const updated = {
-      ...features,
-      [key]: newValue,
-    };
+    const updated = { ...features, [key]: newValue };
 
     setFeatures(updated);
     setActiveCount(Object.values(updated).filter(Boolean).length);
@@ -123,7 +114,6 @@ function Features() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-[#333699]">
-
       <HeaderPages />
 
       {/* HEADER */}
@@ -131,9 +121,7 @@ function Features() {
         <h1 className="text-2xl font-bold text-white mt-4">
           🔧 Modules Églises
         </h1>
-        <p className="text-white/80 mt-2">
-          Gestion des features par église
-        </p>
+        <p className="text-white/80 mt-2">Gestion des features par église</p>
       </div>
 
       {/* SELECT */}
@@ -157,28 +145,22 @@ function Features() {
       {/* STATS */}
       {selected && (
         <div className="grid grid-cols-2 gap-4 mb-8 w-full max-w-3xl">
-
           <div className="bg-white rounded-xl p-6 text-center shadow">
-            <h2 className="text-3xl font-bold text-[#333699]">
-              {activeCount}
-            </h2>
+            <h2 className="text-3xl font-bold text-[#333699]">{activeCount}</h2>
             <p className="text-gray-600">Actifs</p>
           </div>
-
           <div className="bg-white rounded-xl p-6 text-center shadow">
             <h2 className="text-3xl font-bold text-[#333699]">
               {ALL_FEATURES.length}
             </h2>
             <p className="text-gray-600">Total</p>
           </div>
-
         </div>
       )}
 
       {/* GRID */}
       {selected && (
         <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-
           {loading ? (
             <p className="text-white col-span-full text-center">
               Chargement...
@@ -186,7 +168,6 @@ function Features() {
           ) : (
             ALL_FEATURES.map((f) => {
               const active = features[f.key] === true;
-
               return (
                 <div
                   key={f.key}
@@ -196,11 +177,7 @@ function Features() {
                   }`}
                 >
                   <div className="text-3xl mb-2">{f.emoji}</div>
-
-                  <h3 className="font-bold text-[#333699]">
-                    {f.label}
-                  </h3>
-
+                  <h3 className="font-bold text-[#333699]">{f.label}</h3>
                   <div
                     className={`mt-2 font-bold text-sm ${
                       active ? "text-green-600" : "text-gray-400"
@@ -212,7 +189,6 @@ function Features() {
               );
             })
           )}
-
         </div>
       )}
 

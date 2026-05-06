@@ -12,19 +12,17 @@ const ROLES_RESPONSABLE_CELLULE  = ["ResponsableCellule"];
 const ROLES_NEW_IN_CELLULE       = ["Administrateur", "SuperviseurCellule"];
 
 export default function NotificationBell({ egliseId, userRole, userId }) {
-  const [countMembres,      setCountMembres]      = useState(0);
-  const [countEvangelises,  setCountEvangelises]  = useState(0);
-  const [countCellule,      setCountCellule]      = useState(0);
-  const [countNewInCellule, setCountNewInCellule] = useState(0);
-  const [countAssignes,     setCountAssignes]     = useState(0);
-  const [isNew,             setIsNew]             = useState(false);
+  const [countMembres,       setCountMembres]       = useState(0);
+  const [countEvangelises,   setCountEvangelises]   = useState(0);
+  const [countCellule,       setCountCellule]       = useState(0);
+  const [countNewInCellule,  setCountNewInCellule]  = useState(0);
+  const [countAssignes,      setCountAssignes]      = useState(0);
+  const [countAssignesEvang, setCountAssignesEvang] = useState(0); // ✅ NOUVEAU
+  const [isNew,              setIsNew]              = useState(false);
 
-  // IDs des cellules/familles dont cet utilisateur est responsable (pour les notifs assignées)
   const [mesCelluleIds, setMesCelluleIds] = useState([]);
   const [mesFamilleIds, setMesFamilleIds] = useState([]);
-
-  // IDs pour les notifications "nouveaux membres" (superviseur/responsable)
-  const [celluleIds, setCelluleIds] = useState([]);
+  const [celluleIds,    setCelluleIds]    = useState([]);
 
   const router     = useRouter();
   const channelRef = useRef(null);
@@ -37,11 +35,12 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
 
   // ─── Total badge ──────────────────────────────────────────────────────────
   const totalCount =
-      (canSeeMembres                          ? countMembres      : 0)
-    + (canSeeEvangelises                      ? countEvangelises  : 0)
-    + (canSeeSuperviseur || canSeeResponsable ? countCellule      : 0)
-    + (canSeeNewInCellule                     ? countNewInCellule : 0)
-    + countAssignes; // visible par tous les rôles
+      (canSeeMembres                          ? countMembres         : 0)
+    + (canSeeEvangelises                      ? countEvangelises     : 0)
+    + (canSeeSuperviseur || canSeeResponsable ? countCellule         : 0)
+    + (canSeeNewInCellule                     ? countNewInCellule    : 0)
+    + countAssignes
+    + countAssignesEvang; // ✅ NOUVEAU
 
   // ─── Chargement initial ───────────────────────────────────────────────────
   useEffect(() => {
@@ -49,7 +48,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
 
     const fetchCounts = async () => {
 
-      // ── 1. Nouveaux membres (Admin + ResponsableIntegration) ──
+      // ── 1. Nouveaux membres ──
       if (canSeeMembres) {
         const { count } = await supabase
           .from("membres_complets")
@@ -69,7 +68,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         setCountEvangelises(count || 0);
       }
 
-      // ── 3. SuperviseurCellule → ses cellules supervisées ──
+      // ── 3. SuperviseurCellule ──
       if (canSeeSuperviseur) {
         const { data: cellules } = await supabase
           .from("cellules")
@@ -87,7 +86,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         }
       }
 
-      // ── 4. ResponsableCellule → ses cellules ──
+      // ── 4. ResponsableCellule ──
       if (canSeeResponsable) {
         const { data: cellules } = await supabase
           .from("cellules")
@@ -105,7 +104,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         }
       }
 
-      // ── 5. is_new_in_cellule (Admin + SuperviseurCellule) ──
+      // ── 5. is_new_in_cellule ──
       if (canSeeNewInCellule) {
         const { count } = await supabase
           .from("membres_complets")
@@ -115,12 +114,10 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         setCountNewInCellule(count || 0);
       }
 
-      // ── 6. ✅ Membres assignés à CE responsable (notification_responsable = true) ──
-      // 3 requêtes séparées selon le type d'assignation
-
+      // ── 6. Membres assignés (membres_complets) ──
       let totalAssignes = 0;
 
-      // 6a. Conseiller → suivi_responsable_id = userId
+      // 6a. Conseiller
       const { count: countConseiller } = await supabase
         .from("membres_complets")
         .select("id", { count: "exact", head: true })
@@ -128,7 +125,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         .eq("notification_responsable", true);
       totalAssignes += countConseiller || 0;
 
-      // 6b. ResponsableCellule → cellule_id dans ses cellules
+      // 6b. ResponsableCellule
       const { data: cellulesDuResponsable } = await supabase
         .from("cellules")
         .select("id")
@@ -145,7 +142,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         totalAssignes += countCelluleAssign || 0;
       }
 
-      // 6c. ResponsableFamilles → famille_id dans ses familles
+      // 6c. ResponsableFamilles
       const { data: famillesDuResponsable } = await supabase
         .from("familles")
         .select("id")
@@ -163,6 +160,40 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
       }
 
       setCountAssignes(totalAssignes);
+
+      // ── 7. ✅ Évangélisés assignés (suivis_des_evangelises) ──
+      // idsCellules et idsFamilles sont déjà définis au-dessus
+      let totalAssignesEvang = 0;
+
+      // 7a. Conseiller
+      const { count: countECons } = await supabase
+        .from("suivis_des_evangelises")
+        .select("id", { count: "exact", head: true })
+        .eq("conseiller_id", userId)
+        .eq("notification_responsable", true);
+      totalAssignesEvang += countECons || 0;
+
+      // 7b. ResponsableCellule
+      if (idsCellules.length > 0) {
+        const { count: countECell } = await supabase
+          .from("suivis_des_evangelises")
+          .select("id", { count: "exact", head: true })
+          .in("cellule_id", idsCellules)
+          .eq("notification_responsable", true);
+        totalAssignesEvang += countECell || 0;
+      }
+
+      // 7c. ResponsableFamilles
+      if (idsFamilles.length > 0) {
+        const { count: countEFam } = await supabase
+          .from("suivis_des_evangelises")
+          .select("id", { count: "exact", head: true })
+          .in("famille_id", idsFamilles)
+          .eq("notification_responsable", true);
+        totalAssignesEvang += countEFam || 0;
+      }
+
+      setCountAssignesEvang(totalAssignesEvang);
     };
 
     fetchCounts();
@@ -196,7 +227,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         });
     }
 
-    // ── Évangélisés ──
+    // ── Évangélisés non envoyés ──
     if (canSeeEvangelises) {
       channel
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "evangelises" }, (payload) => {
@@ -214,7 +245,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         });
     }
 
-    // ── SuperviseurCellule + ResponsableCellule → nouveaux dans leurs cellules ──
+    // ── SuperviseurCellule + ResponsableCellule ──
     if ((canSeeSuperviseur || canSeeResponsable) && celluleIds.length > 0) {
       channel
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "membres_complets" }, (payload) => {
@@ -250,7 +281,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         });
     }
 
-    // ── ✅ Membres assignés — écoute les 3 cas : conseiller / cellule / famille ──
+    // ── Membres assignés (membres_complets) ──
     channel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "membres_complets" }, (payload) => {
       const row = payload.new;
       const old = payload.old;
@@ -262,16 +293,37 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
 
       if (!estPourMoi) return;
 
-      // Notif activée → incrémenter
       if (row.notification_responsable === true && old.notification_responsable !== true) {
         setCountAssignes((prev) => prev + 1);
         setIsNew(true);
         setTimeout(() => setIsNew(false), 2000);
       }
 
-      // Notif marquée lue → décrémenter
       if (row.notification_responsable === false && old.notification_responsable === true) {
         setCountAssignes((prev) => Math.max(0, prev - 1));
+      }
+    });
+
+    // ── ✅ Évangélisés assignés (suivis_des_evangelises) ──
+    channel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "suivis_des_evangelises" }, (payload) => {
+      const row = payload.new;
+      const old = payload.old;
+
+      const estPourMoi =
+        row.conseiller_id === userId ||
+        (mesCelluleIds.length > 0 && mesCelluleIds.includes(row.cellule_id)) ||
+        (mesFamilleIds.length > 0 && mesFamilleIds.includes(row.famille_id));
+
+      if (!estPourMoi) return;
+
+      if (row.notification_responsable === true && old.notification_responsable !== true) {
+        setCountAssignesEvang((prev) => prev + 1);
+        setIsNew(true);
+        setTimeout(() => setIsNew(false), 2000);
+      }
+
+      if (row.notification_responsable === false && old.notification_responsable === true) {
+        setCountAssignesEvang((prev) => Math.max(0, prev - 1));
       }
     });
 

@@ -3,104 +3,126 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 
-// ─── Rôles qui voient la notification "nouveau membre" ───────────────────────
-const ROLES_NOUVEAUX_MEMBRES = ["Administrateur", "ResponsableIntegration"];
+// ─── Rôles par type de notification ──────────────────────────────────────────
+const ROLES_NOUVEAUX_MEMBRES    = ["Administrateur", "ResponsableIntegration"];
+const ROLES_NOUVEAUX_EVANGELISES = ["Administrateur", "ResponsableEvangelisation"];
 
 export default function NotificationBell({ egliseId, userRole }) {
-  const [count, setCount] = useState(0);
-  const [isNew, setIsNew] = useState(false);
-  const router = useRouter();
+  const [countMembres, setCountMembres]       = useState(0);
+  const [countEvangelises, setCountEvangelises] = useState(0);
+  const [isNew, setIsNew]                     = useState(false);
+  const router     = useRouter();
   const channelRef = useRef(null);
 
-  // ─── Vérifie si le rôle a accès à cette notification ────────────────────
-  const canSeeNouveauxMembres = ROLES_NOUVEAUX_MEMBRES.includes(userRole);
+  const canSeeMembres     = ROLES_NOUVEAUX_MEMBRES.includes(userRole);
+  const canSeeEvangelises = ROLES_NOUVEAUX_EVANGELISES.includes(userRole);
+
+  // ─── Total affiché sur le badge ───────────────────────────────────────────
+  const totalCount = (canSeeMembres ? countMembres : 0)
+                   + (canSeeEvangelises ? countEvangelises : 0);
 
   // ─── Chargement initial ───────────────────────────────────────────────────
   useEffect(() => {
-    if (!egliseId || !canSeeNouveauxMembres) return;
+    if (!egliseId) return;
 
-    const fetchCount = async () => {
-      const { count: total } = await supabase
-        .from("membres_complets")
-        .select("id", { count: "exact", head: true })
-        .eq("eglise_id", egliseId)
-        .eq("etat_contact", "nouveau");
-      setCount(total || 0);
+    const fetchCounts = async () => {
+      // Nouveaux membres
+      if (canSeeMembres) {
+        const { count: total } = await supabase
+          .from("membres_complets")
+          .select("id", { count: "exact", head: true })
+          .eq("eglise_id", egliseId)
+          .eq("etat_contact", "nouveau");
+        setCountMembres(total || 0);
+      }
+
+      // Évangélisés non envoyés
+      if (canSeeEvangelises) {
+        const { count: total } = await supabase
+          .from("evangelises")
+          .select("id", { count: "exact", head: true })
+          .eq("eglise_id", egliseId)
+          .eq("status_suivi", "Non envoyé");
+        setCountEvangelises(total || 0);
+      }
     };
 
-    fetchCount();
-  }, [egliseId, canSeeNouveauxMembres]);
+    fetchCounts();
+  }, [egliseId, canSeeMembres, canSeeEvangelises]);
 
   // ─── Realtime ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!egliseId || !canSeeNouveauxMembres) return;
+    if (!egliseId) return;
 
     if (channelRef.current) {
       try { supabase.removeChannel(channelRef.current); } catch (_) {}
     }
 
-    const channel = supabase
-      .channel(`notif-bell-${egliseId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "membres_complets" },
-        (payload) => {
-          const row = payload.new;
-          if (row.eglise_id === egliseId && row.etat_contact === "nouveau") {
-            setCount((prev) => prev + 1);
-            setIsNew(true);
-            setTimeout(() => setIsNew(false), 2000);
-          }
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "membres_complets" },
-        (payload) => {
-          const row = payload.new;
-          if (row.eglise_id === egliseId && row.etat_contact !== "nouveau") {
-            setCount((prev) => Math.max(0, prev - 1));
-          }
-        }
-      )
-      .subscribe();
+    const channel = supabase.channel(`notif-bell-${egliseId}`);
 
+    // ── Membres ──
+    if (canSeeMembres) {
+      channel
+        .on("postgres_changes",
+          { event: "INSERT", schema: "public", table: "membres_complets" },
+          (payload) => {
+            const row = payload.new;
+            if (row.eglise_id === egliseId && row.etat_contact === "nouveau") {
+              setCountMembres((prev) => prev + 1);
+              setIsNew(true);
+              setTimeout(() => setIsNew(false), 2000);
+            }
+          }
+        )
+        .on("postgres_changes",
+          { event: "UPDATE", schema: "public", table: "membres_complets" },
+          (payload) => {
+            const row = payload.new;
+            if (row.eglise_id === egliseId && row.etat_contact !== "nouveau") {
+              setCountMembres((prev) => Math.max(0, prev - 1));
+            }
+          }
+        );
+    }
+
+    // ── Évangélisés ──
+    if (canSeeEvangelises) {
+      channel
+        .on("postgres_changes",
+          { event: "INSERT", schema: "public", table: "evangelises" },
+          (payload) => {
+            const row = payload.new;
+            if (row.eglise_id === egliseId && row.status_suivi === "Non envoyé") {
+              setCountEvangelises((prev) => prev + 1);
+              setIsNew(true);
+              setTimeout(() => setIsNew(false), 2000);
+            }
+          }
+        )
+        .on("postgres_changes",
+          { event: "UPDATE", schema: "public", table: "evangelises" },
+          (payload) => {
+            const row = payload.new;
+            if (row.eglise_id === egliseId && row.status_suivi !== "Non envoyé") {
+              setCountEvangelises((prev) => Math.max(0, prev - 1));
+            }
+          }
+        );
+    }
+
+    channel.subscribe();
     channelRef.current = channel;
 
     return () => {
       try { supabase.removeChannel(channel); } catch (_) {}
     };
-  }, [egliseId, canSeeNouveauxMembres]);
+  }, [egliseId, canSeeMembres, canSeeEvangelises]);
 
-  // ─── Si le rôle n'a pas accès → cloche sans badge, pas de compteur ───────
-  if (!canSeeNouveauxMembres) {
-    return (
-      <button
-        onClick={() => router.push("/admin/notifications")}
-        title="Voir les notifications"
-        style={{
-          position: "relative",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          fontSize: "1.1rem",
-          lineHeight: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "2px",
-        }}
-      >
-        🔔
-      </button>
-    );
-  }
-
-  // ─── Rôles autorisés → cloche avec badge ─────────────────────────────────
+  // ─── Rendu ────────────────────────────────────────────────────────────────
   return (
     <>
       <button
-        onClick={() => router.push("/admin/notifications)}
+        onClick={() => router.push("/admin/notifications")}
         title="Voir les notifications"
         style={{
           position: "relative",
@@ -117,7 +139,7 @@ export default function NotificationBell({ egliseId, userRole }) {
         }}
       >
         🔔
-        {count > 0 && (
+        {totalCount > 0 && (
           <span
             style={{
               position: "absolute",
@@ -138,7 +160,7 @@ export default function NotificationBell({ egliseId, userRole }) {
               lineHeight: 1,
             }}
           >
-            {count > 99 ? "99+" : count}
+            {totalCount > 99 ? "99+" : totalCount}
           </span>
         )}
       </button>

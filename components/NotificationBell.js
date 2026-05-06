@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
@@ -8,14 +9,25 @@ const ROLES_NOUVEAUX_MEMBRES     = ["Administrateur", "ResponsableIntegration"];
 const ROLES_NOUVEAUX_EVANGELISES = ["Administrateur", "ResponsableEvangelisation"];
 const ROLES_SUPERVISEUR_CELLULE  = ["SuperviseurCellule"];
 const ROLES_RESPONSABLE_CELLULE  = ["ResponsableCellule"];
-// Rôles qui voient les nouveaux ajouts via ajouter-membre-cellule
 const ROLES_NEW_IN_CELLULE       = ["Administrateur", "SuperviseurCellule"];
+
+// ─── Rôles qui peuvent recevoir des membres assignés ─────────────────────────
+const ROLES_ASSIGNES = [
+  "ResponsableCellule",
+  "ResponsableFamilles",
+  "Conseiller",
+  "Administrateur",
+  "SuperviseurCellule",
+  "ResponsableIntegration",
+  "ResponsableEvangelisation",
+];
 
 export default function NotificationBell({ egliseId, userRole, userId }) {
   const [countMembres,       setCountMembres]       = useState(0);
   const [countEvangelises,   setCountEvangelises]   = useState(0);
   const [countCellule,       setCountCellule]       = useState(0);
-  const [countNewInCellule,  setCountNewInCellule]  = useState(0); // ✅ AJOUT
+  const [countNewInCellule,  setCountNewInCellule]  = useState(0);
+  const [countAssignes,      setCountAssignes]      = useState(0); // ✅ NOUVEAU
   const [isNew,              setIsNew]              = useState(false);
   const [celluleIds,         setCelluleIds]         = useState([]);
   const router     = useRouter();
@@ -25,13 +37,15 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
   const canSeeEvangelises  = ROLES_NOUVEAUX_EVANGELISES.includes(userRole);
   const canSeeSuperviseur  = ROLES_SUPERVISEUR_CELLULE.includes(userRole);
   const canSeeResponsable  = ROLES_RESPONSABLE_CELLULE.includes(userRole);
-  const canSeeNewInCellule = ROLES_NEW_IN_CELLULE.includes(userRole); // ✅ AJOUT
+  const canSeeNewInCellule = ROLES_NEW_IN_CELLULE.includes(userRole);
+  const canSeeAssignes     = ROLES_ASSIGNES.includes(userRole); // ✅ NOUVEAU
 
   // ─── Total badge ──────────────────────────────────────────────────────────
   const totalCount = (canSeeMembres                          ? countMembres      : 0)
                    + (canSeeEvangelises                      ? countEvangelises  : 0)
                    + (canSeeSuperviseur || canSeeResponsable ? countCellule      : 0)
-                   + (canSeeNewInCellule                     ? countNewInCellule : 0); // ✅ AJOUT
+                   + (canSeeNewInCellule                     ? countNewInCellule : 0)
+                   + (canSeeAssignes                         ? countAssignes     : 0); // ✅ NOUVEAU
 
   // ─── Chargement initial ───────────────────────────────────────────────────
   useEffect(() => {
@@ -99,7 +113,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         }
       }
 
-      // ✅ AJOUT — Administrateur + SuperviseurCellule → membres ajoutés via cellule (is_new_in_cellule)
+      // ── Administrateur + SuperviseurCellule → membres ajoutés via cellule ──
       if (canSeeNewInCellule) {
         const { count: total } = await supabase
           .from("membres_complets")
@@ -108,10 +122,20 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
           .eq("is_new_in_cellule", "true");
         setCountNewInCellule(total || 0);
       }
+
+      // ✅ NOUVEAU — Membres assignés à CE responsable avec notification_responsable = true
+      if (canSeeAssignes) {
+        const { count: total } = await supabase
+          .from("membres_complets")
+          .select("id", { count: "exact", head: true })
+          .eq("suivi_responsable_id", userId)
+          .eq("notification_responsable", true);
+        setCountAssignes(total || 0);
+      }
     };
 
     fetchCounts();
-  }, [egliseId, userId, canSeeMembres, canSeeEvangelises, canSeeSuperviseur, canSeeResponsable, canSeeNewInCellule]);
+  }, [egliseId, userId, canSeeMembres, canSeeEvangelises, canSeeSuperviseur, canSeeResponsable, canSeeNewInCellule, canSeeAssignes]);
 
   // ─── Realtime ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -198,7 +222,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         );
     }
 
-    // ✅ AJOUT — Administrateur + SuperviseurCellule → is_new_in_cellule realtime
+    // ── Administrateur + SuperviseurCellule → is_new_in_cellule realtime ──
     if (canSeeNewInCellule) {
       channel
         .on("postgres_changes",
@@ -223,13 +247,45 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         );
     }
 
+    // ✅ NOUVEAU — Realtime membres assignés à ce responsable
+    if (canSeeAssignes) {
+      channel
+        .on("postgres_changes",
+          { event: "UPDATE", schema: "public", table: "membres_complets" },
+          (payload) => {
+            const row = payload.new;
+            const old = payload.old;
+
+            // Un membre vient d'être assigné à CE responsable avec notif active
+            if (
+              row.suivi_responsable_id === userId &&
+              row.notification_responsable === true &&
+              old.notification_responsable !== true
+            ) {
+              setCountAssignes((prev) => prev + 1);
+              setIsNew(true);
+              setTimeout(() => setIsNew(false), 2000);
+            }
+
+            // La notif a été marquée comme lue
+            if (
+              row.suivi_responsable_id === userId &&
+              row.notification_responsable === false &&
+              old.notification_responsable === true
+            ) {
+              setCountAssignes((prev) => Math.max(0, prev - 1));
+            }
+          }
+        );
+    }
+
     channel.subscribe();
     channelRef.current = channel;
 
     return () => {
       try { supabase.removeChannel(channel); } catch (_) {}
     };
-  }, [egliseId, userId, celluleIds, canSeeMembres, canSeeEvangelises, canSeeSuperviseur, canSeeResponsable, canSeeNewInCellule]);
+  }, [egliseId, userId, celluleIds, canSeeMembres, canSeeEvangelises, canSeeSuperviseur, canSeeResponsable, canSeeNewInCellule, canSeeAssignes]);
 
   // ─── Rendu ────────────────────────────────────────────────────────────────
   return (

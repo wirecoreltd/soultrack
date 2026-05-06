@@ -3,10 +3,25 @@
 import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 
-export default function EditMemberPopup({ member, cellules, familles, conseillers, onClose, onUpdateMember, currentUserRoles }) {
-  if (!member) return null;
+export default function EditMemberPopup({
+  member,
+  cellules,
+  familles,
+  conseillers,
+  onClose,
+  onUpdateMember,
+  currentUserRoles,
+}) {
+  // ✅ Calculé avant le early return pour respecter l'ordre des hooks
+  const isPrivileged = (currentUserRoles || []).some((r) =>
+    ["Administrateur", "ResponsableIntegration"].includes(r)
+  );
 
-  const isPrivileged = (currentUserRoles || []).some(r => ["Administrateur", "ResponsableIntegration"].includes(r));
+  // ✅ Ces booléens pilotent l'affichage des sections — basés sur les tableaux reçus du parent
+  // Le parent envoie déjà [] si la feature est désactivée
+  const showCellules = Array.isArray(cellules) && cellules.length > 0;
+  const showFamilles = Array.isArray(familles) && familles.length > 0;
+  const showConseillers = Array.isArray(conseillers) && conseillers.length > 0;
 
   const [autreMinistere, setAutreMinistere] = useState("");
   const [search, setSearch] = useState("");
@@ -52,14 +67,15 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
     Soin_Pastoral: member?.Soin_Pastoral || "",
     Ministere: parseBesoin(member?.Ministere),
     veut_se_faire_baptiser: member?.veut_se_faire_baptiser || "",
-    Commentaire_Suivi_Evangelisation: member?.Commentaire_Suivi_Evangelisation || "",
+    Commentaire_Suivi_Evangelisation:
+      member?.Commentaire_Suivi_Evangelisation || "",
   });
 
   const ministereOptions = [
-    "Intercession", "Louange", "Administration", "Technique",
-    "Communication", "Les Enfants", "Les ados", "Les jeunes",
-    "Finance", "Nettoyage", "Conseiller", "Compassion",
-    "Visite", "Berger", "Modération",
+    "Intercession","Louange","Administration","Technique",
+    "Communication","Les Enfants","Les ados","Les jeunes",
+    "Finance","Nettoyage","Conseiller","Compassion",
+    "Visite","Berger","Modération",
   ];
 
   const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
@@ -69,16 +85,24 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
 
   const modalRef = useRef(null);
 
+  // ✅ Early return APRÈS tous les hooks
+  if (!member) return null;
+
   useEffect(() => {
     const fetchAssignments = async () => {
       const { data, error } = await supabase
         .from("suivi_assignments")
-        .select("conseiller_id, role, profiles:conseiller_id(id, prenom, nom)")
+        .select(
+          "conseiller_id, role, profiles:conseiller_id(id, prenom, nom)"
+        )
         .eq("membre_id", member.id)
         .eq("statut", "actif")
         .order("created_at", { ascending: true });
 
-      if (error) { console.error("fetchAssignments error:", error); return; }
+      if (error) {
+        console.error("fetchAssignments error:", error);
+        return;
+      }
 
       if (data) {
         const sorted = [...data].sort((a, b) => {
@@ -86,7 +110,7 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
           if (b.role === "principal") return 1;
           return 0;
         });
-        const objects = sorted.map(d => d.profiles).filter(Boolean);
+        const objects = sorted.map((d) => d.profiles).filter(Boolean);
         setSelectedConseillers(objects);
       }
     };
@@ -103,20 +127,20 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
-  const filteredConseillers = (conseillers || []).filter(c =>
+  const filteredConseillers = (conseillers || []).filter((c) =>
     `${c.prenom} ${c.nom}`.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox") {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [name]: checked,
         ...(name === "star" && !checked ? { Ministere: [] } : {}),
       }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -124,38 +148,44 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
     const { value, checked } = e.target;
     if (value === "Autre") {
       setShowAutre(checked);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        besoin: checked ? [...prev.besoin, "Autre"] : prev.besoin.filter(b => b !== "Autre"),
-        autreBesoin: ""
+        besoin: checked
+          ? [...prev.besoin, "Autre"]
+          : prev.besoin.filter((b) => b !== "Autre"),
+        autreBesoin: "",
       }));
       return;
     }
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      besoin: checked ? [...prev.besoin, value] : prev.besoin.filter(b => b !== value)
+      besoin: checked
+        ? [...prev.besoin, value]
+        : prev.besoin.filter((b) => b !== value),
     }));
   };
 
   const handleSubmit = async () => {
     setMessage("");
-    if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
-    if (!formData.nom.trim()) return setMessage("❌ Le nom est obligatoire.");
+    if (!formData.prenom.trim())
+      return setMessage("❌ Le prénom est obligatoire.");
+    if (!formData.nom.trim())
+      return setMessage("❌ Le nom est obligatoire.");
 
     setLoading(true);
 
     try {
       let finalBesoin = [...formData.besoin];
       if (showAutre && formData.autreBesoin.trim()) {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
+        finalBesoin = finalBesoin.filter((b) => b !== "Autre");
         finalBesoin.push(formData.autreBesoin.trim());
       } else {
-        finalBesoin = finalBesoin.filter(b => b !== "Autre");
+        finalBesoin = finalBesoin.filter((b) => b !== "Autre");
       }
 
       let finalMinistere = [...formData.Ministere];
       if (finalMinistere.includes("Autre") && autreMinistere?.trim()) {
-        finalMinistere = finalMinistere.filter(m => m !== "Autre");
+        finalMinistere = finalMinistere.filter((m) => m !== "Autre");
         finalMinistere.push(autreMinistere.trim());
       }
 
@@ -170,8 +200,11 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
             date_action: new Date().toISOString().split("T")[0],
           });
         } else {
-          await supabase.from("stats_ministere_besoin").delete()
-            .eq("membre_id", member.id).eq("type", "ministere");
+          await supabase
+            .from("stats_ministere_besoin")
+            .delete()
+            .eq("membre_id", member.id)
+            .eq("type", "ministere");
         }
       }
 
@@ -188,8 +221,18 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
         bapteme_esprit: formData.bapteme_esprit,
         priere_salut: formData.priere_salut || null,
         type_conversion: formData.type_conversion || null,
-        cellule_id: isPrivileged ? (formData.cellule_id || null) : (member.cellule_id || null),
-        famille_id: isPrivileged ? (formData.famille_id || null) : (member.famille_id || null),
+        // ✅ cellule_id préservé si feature désactivée (showCellules)
+        cellule_id: isPrivileged
+          ? showCellules
+            ? formData.cellule_id || null
+            : member.cellule_id || null
+          : member.cellule_id || null,
+        // ✅ famille_id préservé si feature désactivée (showFamilles)
+        famille_id: isPrivileged
+          ? showFamilles
+            ? formData.famille_id || null
+            : member.famille_id || null
+          : member.famille_id || null,
         besoin: JSON.stringify(finalBesoin),
         venu: formData.venu || null,
         infos_supplementaires: formData.infos_supplementaires || null,
@@ -200,26 +243,41 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
         Formation: formData.Formation || null,
         Soin_Pastoral: formData.Soin_Pastoral || null,
         veut_se_faire_baptiser: formData.veut_se_faire_baptiser || null,
-        Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
-        Ministere: (isPrivileged && formData.star) ? JSON.stringify(finalMinistere) : member.Ministere,
+        Commentaire_Suivi_Evangelisation:
+          formData.Commentaire_Suivi_Evangelisation || null,
+        Ministere:
+          isPrivileged && formData.star
+            ? JSON.stringify(finalMinistere)
+            : member.Ministere,
       };
 
-      const { error } = await supabase.from("membres_complets").update(payload).eq("id", member.id);
+      const { error } = await supabase
+        .from("membres_complets")
+        .update(payload)
+        .eq("id", member.id);
       if (error) throw error;
 
-      if (isPrivileged) {
-        await supabase.from("suivi_assignments").delete().eq("membre_id", member.id);
+      // ✅ Conseillers préservés si feature désactivée
+      if (isPrivileged && showConseillers) {
+        await supabase
+          .from("suivi_assignments")
+          .delete()
+          .eq("membre_id", member.id);
         const rows = selectedConseillers.map((c, index) => ({
           membre_id: member.id,
           conseiller_id: c.id,
           role: index === 0 ? "principal" : "assistant",
-          statut: "actif"
+          statut: "actif",
         }));
-        if (rows.length > 0) await supabase.from("suivi_assignments").insert(rows);
+        if (rows.length > 0)
+          await supabase.from("suivi_assignments").insert(rows);
       }
 
       const { data: updatedMember, error: selectError } = await supabase
-        .from("membres_complets").select("*").eq("id", member.id).single();
+        .from("membres_complets")
+        .select("*")
+        .eq("id", member.id)
+        .single();
       if (selectError) throw selectError;
 
       onUpdateMember(updatedMember);
@@ -233,14 +291,25 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: "rgba(30,35,90,0.35)", backdropFilter: "blur(6px)" }}>
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      style={{
+        background: "rgba(30,35,90,0.35)",
+        backdropFilter: "blur(6px)",
+      }}
+    >
       <div
         ref={modalRef}
         className="relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
         style={{ background: "#ffffff", border: "1px solid #e2e8f0" }}
       >
         {/* Header */}
-        <div className="px-6 pt-6 pb-4" style={{ background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}>
+        <div
+          className="px-6 pt-6 pb-4"
+          style={{
+            background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
+          }}
+        >
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-white font-bold text-sm transition-all"
@@ -251,16 +320,25 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
           <h2 className="text-xl font-bold text-white pr-10">
             ✏️ {member.prenom} {member.nom}
           </h2>
-          <p className="text-blue-100 text-sm mt-1 opacity-80">Modifier le profil</p>
+          <p className="text-blue-100 text-sm mt-1 opacity-80">
+            Modifier le profil
+          </p>
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
-
+        <div
+          className="overflow-y-auto px-6 py-5 flex flex-col gap-5"
+          style={{ maxHeight: "68vh" }}
+        >
           <SectionTitle>👤 Identité</SectionTitle>
 
           <Field label="Civilité">
-            <select name="sexe" value={formData.sexe} onChange={handleChange} className="inp">
+            <select
+              name="sexe"
+              value={formData.sexe}
+              onChange={handleChange}
+              className="inp"
+            >
               <option value="">-- Civilité --</option>
               <option value="Homme">Homme</option>
               <option value="Femme">Femme</option>
@@ -269,10 +347,21 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
 
           {["prenom", "nom", "telephone", "ville"].map((f) => (
             <Field key={f} label={f.charAt(0).toUpperCase() + f.slice(1)}>
-              <input name={f} value={formData[f]} onChange={handleChange} className="inp" />
+              <input
+                name={f}
+                value={formData[f]}
+                onChange={handleChange}
+                className="inp"
+              />
               {f === "telephone" && (
                 <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
-                  <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} className="accent-[#2E3192]" />
+                  <input
+                    type="checkbox"
+                    name="is_whatsapp"
+                    checked={formData.is_whatsapp}
+                    onChange={handleChange}
+                    className="accent-[#2E3192]"
+                  />
                   Numéro WhatsApp
                 </label>
               )}
@@ -280,95 +369,178 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
           ))}
 
           <Field label="Âge">
-            <select name="age" value={formData.age} onChange={handleChange} className="inp">
+            <select
+              name="age"
+              value={formData.age}
+              onChange={handleChange}
+              className="inp"
+            >
               <option value="">-- Choisir --</option>
-              {["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"].map(v => (
-                <option key={v} value={v}>{v}</option>
+              {[
+                "12-17 ans","18-25 ans","26-30 ans","31-40 ans",
+                "41-55 ans","56-69 ans","70 ans et plus",
+              ].map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
               ))}
             </select>
           </Field>
 
-          <SectionTitle>📌 Suivi par</SectionTitle>
+          {/* ✅ Section "Suivi par" — affichée seulement si au moins une feature active */}
+          {isPrivileged && (showCellules || showFamilles || showConseillers) && (
+            <SectionTitle>📌 Suivi par</SectionTitle>
+          )}
 
           {isPrivileged ? (
             <>
-              <Field label="Cellule">
-                <select name="cellule_id" value={formData.cellule_id ?? ""} onChange={handleChange} className="inp">
-                  <option value="">-- Cellule --</option>
-                  {(cellules || []).map(c => (
-                    <option key={c.id} value={c.id}>{c.cellule_full}</option>
-                  ))}
-                </select>
-              </Field>
+              {/* ✅ Cellule — masquée si feature désactivée */}
+              {showCellules && (
+                <Field label="Cellule">
+                  <select
+                    name="cellule_id"
+                    value={formData.cellule_id ?? ""}
+                    onChange={handleChange}
+                    className="inp"
+                  >
+                    <option value="">-- Cellule --</option>
+                    {cellules.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.cellule_full}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              )}
 
-              {/* ✅ Famille — value corrigée sur famille_id */}
-              <Field label="Famille">
-                <select name="famille_id" value={formData.famille_id ?? ""} onChange={handleChange} className="inp">
-                  <option value="">-- Famille --</option>
-                  {(familles || []).map(f => (
-                    <option key={f.id} value={f.id}>{f.famille_full}</option>
-                  ))}
-                </select>
-              </Field>
+              {/* ✅ Famille — masquée si feature désactivée */}
+              {showFamilles && (
+                <Field label="Famille">
+                  <select
+                    name="famille_id"
+                    value={formData.famille_id ?? ""}
+                    onChange={handleChange}
+                    className="inp"
+                  >
+                    <option value="">-- Famille --</option>
+                    {familles.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.famille_full}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              )}
 
-              <Field label="Ajouter conseiller">
-                <input
-                  type="text"
-                  placeholder="Rechercher un conseiller..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="inp mb-2"
-                />
-                <div className="max-h-36 overflow-y-auto rounded-xl border border-gray-200 divide-y divide-gray-100">
-                  {filteredConseillers.map(c => {
-                    const alreadySelected = selectedConseillers.some(s => s.id === c.id);
-                    return (
-                      <div
-                        key={c.id}
-                        onClick={() => {
-                          if (!alreadySelected) {
-                            setSelectedConseillers(prev => [...prev, { id: c.id, prenom: c.prenom, nom: c.nom }]);
-                          }
-                        }}
-                        className={"px-3 py-2 text-sm transition-colors " + (alreadySelected ? "bg-gray-50 text-gray-300 cursor-not-allowed" : "cursor-pointer hover:bg-blue-50 text-gray-700")}
-                      >
-                        {c.prenom} {c.nom} {alreadySelected ? "✓" : ""}
-                      </div>
-                    );
-                  })}
-                  {filteredConseillers.length === 0 && (
-                    <p className="text-xs text-gray-400 px-3 py-2">Aucun résultat</p>
-                  )}
-                </div>
-              </Field>
-
-              {selectedConseillers.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {selectedConseillers.map((c, index) => (
-                    <div key={c.id} className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white" style={{ background: index === 0 ? "#2E3192" : "#6b7280" }}>
-                      <span>{c.prenom} {c.nom}</span>
-                      {index === 0 && selectedConseillers.length > 1 && (
-                        <span className="text-xs opacity-60 ml-1">(principal)</span>
+              {/* ✅ Conseillers — masqués si feature désactivée */}
+              {showConseillers && (
+                <>
+                  <Field label="Ajouter conseiller">
+                    <input
+                      type="text"
+                      placeholder="Rechercher un conseiller..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="inp mb-2"
+                    />
+                    <div className="max-h-36 overflow-y-auto rounded-xl border border-gray-200 divide-y divide-gray-100">
+                      {filteredConseillers.map((c) => {
+                        const alreadySelected = selectedConseillers.some(
+                          (s) => s.id === c.id
+                        );
+                        return (
+                          <div
+                            key={c.id}
+                            onClick={() => {
+                              if (!alreadySelected) {
+                                setSelectedConseillers((prev) => [
+                                  ...prev,
+                                  { id: c.id, prenom: c.prenom, nom: c.nom },
+                                ]);
+                              }
+                            }}
+                            className={
+                              "px-3 py-2 text-sm transition-colors " +
+                              (alreadySelected
+                                ? "bg-gray-50 text-gray-300 cursor-not-allowed"
+                                : "cursor-pointer hover:bg-blue-50 text-gray-700")
+                            }
+                          >
+                            {c.prenom} {c.nom} {alreadySelected ? "✓" : ""}
+                          </div>
+                        );
+                      })}
+                      {filteredConseillers.length === 0 && (
+                        <p className="text-xs text-gray-400 px-3 py-2">
+                          Aucun résultat
+                        </p>
                       )}
-                      <button
-                        onClick={() => setSelectedConseillers(prev => prev.filter(x => x.id !== c.id))}
-                        className="ml-1 opacity-70 hover:opacity-100"
-                      >✕</button>
                     </div>
-                  ))}
-                </div>
+                  </Field>
+
+                  {selectedConseillers.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedConseillers.map((c, index) => (
+                        <div
+                          key={c.id}
+                          className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white"
+                          style={{
+                            background: index === 0 ? "#2E3192" : "#6b7280",
+                          }}
+                        >
+                          <span>
+                            {c.prenom} {c.nom}
+                          </span>
+                          {index === 0 && selectedConseillers.length > 1 && (
+                            <span className="text-xs opacity-60 ml-1">
+                              (principal)
+                            </span>
+                          )}
+                          <button
+                            onClick={() =>
+                              setSelectedConseillers((prev) =>
+                                prev.filter((x) => x.id !== c.id)
+                              )
+                            }
+                            className="ml-1 opacity-70 hover:opacity-100"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* ✅ Message si toutes les features sont désactivées */}
+              {!showCellules && !showFamilles && !showConseillers && (
+                <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
+                  🔒 La cellule, la famille et les conseillers sont gérés par un
+                  administrateur.
+                </p>
               )}
             </>
           ) : (
             <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
-              🔒 La cellule, la famille et les conseillers sont gérés par un administrateur.
+              🔒 La cellule, la famille et les conseillers sont gérés par un
+              administrateur.
             </p>
           )}
 
           <SectionTitle>💝 Suivi</SectionTitle>
 
           <Field label="Suivi statut">
-            <select value={formData.suivi_statut ?? ""} onChange={(e) => setFormData(prev => ({ ...prev, suivi_statut: e.target.value }))} className="inp">
+            <select
+              value={formData.suivi_statut ?? ""}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  suivi_statut: e.target.value,
+                }))
+              }
+              className="inp"
+            >
               <option value="">-- Sélectionner un statut --</option>
               <option value="En Attente">En Attente</option>
               <option value="Intégrer">Intégrer</option>
@@ -377,11 +549,23 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
           </Field>
 
           <Field label="Commentaire suivis">
-            <textarea name="commentaire_suivis" value={formData.commentaire_suivis} onChange={handleChange} className="inp" rows={2} />
+            <textarea
+              name="commentaire_suivis"
+              value={formData.commentaire_suivis}
+              onChange={handleChange}
+              className="inp"
+              rows={2}
+            />
           </Field>
 
           <Field label="Commentaire suivis Évangélisation">
-            <textarea name="Commentaire_Suivi_Evangelisation" value={formData.Commentaire_Suivi_Evangelisation} onChange={handleChange} className="inp" rows={2} />
+            <textarea
+              name="Commentaire_Suivi_Evangelisation"
+              value={formData.Commentaire_Suivi_Evangelisation}
+              onChange={handleChange}
+              className="inp"
+              rows={2}
+            />
           </Field>
 
           <SectionTitle>🕊 Vie spirituelle</SectionTitle>
@@ -392,10 +576,11 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
               value={formData.bapteme_eau ?? ""}
               onChange={(e) => {
                 const value = e.target.value;
-                setFormData(prev => ({
+                setFormData((prev) => ({
                   ...prev,
                   bapteme_eau: value,
-                  veut_se_faire_baptiser: value === "Oui" ? "Non" : prev.veut_se_faire_baptiser
+                  veut_se_faire_baptiser:
+                    value === "Oui" ? "Non" : prev.veut_se_faire_baptiser,
                 }));
               }}
               className="inp"
@@ -411,7 +596,12 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
               <input
                 type="checkbox"
                 checked={formData.veut_se_faire_baptiser === "Oui"}
-                onChange={(e) => setFormData(prev => ({ ...prev, veut_se_faire_baptiser: e.target.checked ? "Oui" : "Non" }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    veut_se_faire_baptiser: e.target.checked ? "Oui" : "Non",
+                  }))
+                }
                 className="accent-[#2E3192]"
               />
               💦 Veut se faire baptiser
@@ -419,7 +609,12 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
           )}
 
           <Field label="Baptême de feu">
-            <select name="bapteme_esprit" value={formData.bapteme_esprit ?? ""} onChange={handleChange} className="inp">
+            <select
+              name="bapteme_esprit"
+              value={formData.bapteme_esprit ?? ""}
+              onChange={handleChange}
+              className="inp"
+            >
               <option value="">-- Sélectionner --</option>
               <option value="Oui">Oui</option>
               <option value="Non">Non</option>
@@ -432,7 +627,12 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
               value={formData.priere_salut}
               onChange={(e) => {
                 const value = e.target.value;
-                setFormData({ ...formData, priere_salut: value, type_conversion: value === "Oui" ? formData.type_conversion : "" });
+                setFormData({
+                  ...formData,
+                  priere_salut: value,
+                  type_conversion:
+                    value === "Oui" ? formData.type_conversion : "",
+                });
               }}
               className="inp"
             >
@@ -441,7 +641,12 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
               <option value="Non">Non</option>
             </select>
             {formData.priere_salut === "Oui" && (
-              <select name="type_conversion" value={formData.type_conversion} onChange={handleChange} className="inp mt-2">
+              <select
+                name="type_conversion"
+                value={formData.type_conversion}
+                onChange={handleChange}
+                className="inp mt-2"
+              >
                 <option value="">Type</option>
                 <option value="Nouveau converti">Nouveau converti</option>
                 <option value="Réconciliation">Réconciliation</option>
@@ -450,14 +655,26 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
           </Field>
 
           <Field label="Formation">
-            <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="inp" rows={2} />
+            <textarea
+              name="Formation"
+              value={formData.Formation}
+              onChange={handleChange}
+              className="inp"
+              rows={2}
+            />
           </Field>
 
           {isPrivileged && (
             <>
               <div className="flex items-center gap-3 py-2">
                 <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
-                  <input type="checkbox" name="star" checked={formData.star} onChange={handleChange} className="accent-[#2E3192] w-4 h-4" />
+                  <input
+                    type="checkbox"
+                    name="star"
+                    checked={formData.star}
+                    onChange={handleChange}
+                    className="accent-[#2E3192] w-4 h-4"
+                  />
                   ⭐ Définir en tant que serviteur
                 </label>
               </div>
@@ -466,16 +683,21 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
                 <Field label="Ministère">
                   <div className="grid grid-cols-2 gap-1 mt-1">
                     {ministereOptions.map((m) => (
-                      <label key={m} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1">
+                      <label
+                        key={m}
+                        className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1"
+                      >
                         <input
                           type="checkbox"
                           value={m}
                           checked={formData.Ministere.includes(m)}
                           onChange={(e) => {
                             const { value, checked } = e.target;
-                            setFormData(prev => ({
+                            setFormData((prev) => ({
                               ...prev,
-                              Ministere: checked ? [...prev.Ministere, value] : prev.Ministere.filter(v => v !== value),
+                              Ministere: checked
+                                ? [...prev.Ministere, value]
+                                : prev.Ministere.filter((v) => v !== value),
                             }));
                           }}
                           className="accent-[#2E3192]"
@@ -489,9 +711,11 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
                         checked={formData.Ministere.includes("Autre")}
                         onChange={(e) => {
                           const checked = e.target.checked;
-                          setFormData(prev => ({
+                          setFormData((prev) => ({
                             ...prev,
-                            Ministere: checked ? [...prev.Ministere, "Autre"] : prev.Ministere.filter(v => v !== "Autre"),
+                            Ministere: checked
+                              ? [...prev.Ministere, "Autre"]
+                              : prev.Ministere.filter((v) => v !== "Autre"),
                           }));
                           if (!checked) setAutreMinistere("");
                         }}
@@ -501,7 +725,13 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
                     </label>
                   </div>
                   {formData.Ministere.includes("Autre") && (
-                    <input type="text" className="inp mt-2" placeholder="Précisez le ministère" value={autreMinistere} onChange={(e) => setAutreMinistere(e.target.value)} />
+                    <input
+                      type="text"
+                      className="inp mt-2"
+                      placeholder="Précisez le ministère"
+                      value={autreMinistere}
+                      onChange={(e) => setAutreMinistere(e.target.value)}
+                    />
                   )}
                 </Field>
               )}
@@ -509,7 +739,12 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
           )}
 
           <Field label="État du contact">
-            <select name="etat_contact" value={formData.etat_contact} onChange={handleChange} className="inp">
+            <select
+              name="etat_contact"
+              value={formData.etat_contact}
+              onChange={handleChange}
+              className="inp"
+            >
               <option value="">-- Sélectionner --</option>
               <option value="nouveau">Nouveau</option>
               <option value="existant">Existant</option>
@@ -518,7 +753,12 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
           </Field>
 
           <Field label="Comment est-il venu ?">
-            <select name="venu" value={formData.venu} onChange={handleChange} className="inp">
+            <select
+              name="venu"
+              value={formData.venu}
+              onChange={handleChange}
+              className="inp"
+            >
               <option value="">-- Sélectionner --</option>
               <option value="invité">Invité</option>
               <option value="réseaux">Réseaux</option>
@@ -528,18 +768,28 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
           </Field>
 
           <Field label="Informations supplémentaires">
-            <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} className="inp" rows={2} />
+            <textarea
+              name="infos_supplementaires"
+              value={formData.infos_supplementaires}
+              onChange={handleChange}
+              className="inp"
+              rows={2}
+            />
           </Field>
 
           <Field label="Statut à l'arrivée">
-            <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="inp">
+            <select
+              name="statut_initial"
+              value={formData.statut_initial}
+              onChange={handleChange}
+              className="inp"
+            >
               <option value="">-- Sélectionner --</option>
               <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
               <option value="a déjà son église">A déjà son église</option>
               <option value="visiteur">Visiteur</option>
             </select>
           </Field>
-
         </div>
 
         {/* Footer */}
@@ -556,14 +806,21 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
             onClick={handleSubmit}
             disabled={loading}
             className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
-            style={{ background: loading ? "#a0a0c0" : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}
+            style={{
+              background: loading
+                ? "#a0a0c0"
+                : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
+            }}
           >
             {loading ? "Enregistrement..." : "💾 Sauvegarder"}
           </button>
         </div>
 
         {message && (
-          <p className="text-center text-sm font-semibold px-6 pb-4" style={{ color: message.includes("❌") ? "#dc2626" : "#2E3192" }}>
+          <p
+            className="text-center text-sm font-semibold px-6 pb-4"
+            style={{ color: message.includes("❌") ? "#dc2626" : "#2E3192" }}
+          >
             {message}
           </p>
         )}
@@ -597,7 +854,12 @@ export default function EditMemberPopup({ member, cellules, familles, conseiller
 function SectionTitle({ children }) {
   return (
     <div className="flex items-center gap-2 pt-2">
-      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#2E3192" }}>{children}</span>
+      <span
+        className="text-xs font-bold uppercase tracking-widest"
+        style={{ color: "#2E3192" }}
+      >
+        {children}
+      </span>
       <div className="flex-1 h-px" style={{ background: "#e2e8f0" }} />
     </div>
   );
@@ -606,7 +868,12 @@ function SectionTitle({ children }) {
 function Field({ label, children }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#64748b" }}>{label}</label>
+      <label
+        className="text-xs font-semibold uppercase tracking-wide"
+        style={{ color: "#64748b" }}
+      >
+        {label}
+      </label>
       {children}
     </div>
   );

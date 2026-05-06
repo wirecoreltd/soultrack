@@ -27,22 +27,24 @@ function formatDateFr(dateStr) {
   });
 }
 
-function getBorderColor(etat) {
-  switch ((etat || "").toLowerCase()) {
-    case "nouveau":  return "#fb923c";
-    case "existant": return "#4ade80";
-    case "inactif":  return "#9ca3af";
-    default:         return "#9ca3af";
+function getBorderColor(type) {
+  switch (type) {
+    case "nouveau":       return "#fb923c";
+    case "existant":      return "#4ade80";
+    case "evangelise":    return "#a78bfa";
+    case "new_in_cellule": return "#38bdf8";
+    default:              return "#9ca3af";
   }
 }
 
-function EtatBadge({ etat }) {
-  const colors = {
-    nouveau:  { bg: "#fff7ed", text: "#ea580c", dot: "#fb923c" },
-    existant: { bg: "#f0fdf4", text: "#16a34a", dot: "#4ade80" },
-    inactif:  { bg: "#f9fafb", text: "#6b7280", dot: "#9ca3af" },
+function TypeBadge({ type }) {
+  const config = {
+    nouveau:        { bg: "#fff7ed", text: "#ea580c", dot: "#fb923c",  label: "Nouveau membre" },
+    existant:       { bg: "#f0fdf4", text: "#16a34a", dot: "#4ade80",  label: "Existant" },
+    evangelise:     { bg: "#f5f3ff", text: "#7c3aed", dot: "#a78bfa",  label: "Évangélisé" },
+    new_in_cellule: { bg: "#f0f9ff", text: "#0369a1", dot: "#38bdf8",  label: "Ajouté en cellule/famille" },
   };
-  const c = colors[(etat || "").toLowerCase()] || colors.inactif;
+  const c = config[type] || config.existant;
   return (
     <span style={{
       background: c.bg, color: c.text,
@@ -51,7 +53,7 @@ function EtatBadge({ etat }) {
       display: "inline-flex", alignItems: "center", gap: "5px",
     }}>
       <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: c.dot, display: "inline-block" }} />
-      {etat || "—"}
+      {c.label}
     </span>
   );
 }
@@ -67,12 +69,12 @@ export default function NotificationsPage() {
 function NotificationsContent() {
   const router = useRouter();
   const [userProfile, setUserProfile] = useState(null);
-  const [membres, setMembres] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const channelRef = useRef(null);
 
-  // ─── Charger profil + membres selon rôle ─────────────────────────────────
+  // ─── Charger profil + notifications selon rôle ───────────────────────────
   useEffect(() => {
     const init = async () => {
       setLoading(true);
@@ -87,60 +89,123 @@ function NotificationsContent() {
 
       if (!profile) return;
       setUserProfile(profile);
-
-      await fetchMembres(profile);
+      await fetchNotifications(profile);
       setLoading(false);
     };
 
     init();
   }, []);
 
-  const fetchMembres = async (profile) => {
+  const fetchNotifications = async (profile) => {
     if (!profile) return;
     const roles = getRoles(profile);
-    const isAdmin = roles.includes("Administrateur") || roles.includes("ResponsableIntegration");
-    const isConseiller = roles.includes("Conseiller");
-    const isResponsableCellule = roles.includes("ResponsableCellule");
+    const isAdmin               = roles.includes("Administrateur");
+    const isResponsableInteg    = roles.includes("ResponsableIntegration");
+    const isResponsableEvang    = roles.includes("ResponsableEvangelisation");
+    const isSuperviseurCellule  = roles.includes("SuperviseurCellule");
+    const isResponsableCellule  = roles.includes("ResponsableCellule");
+    const isConseiller          = roles.includes("Conseiller");
 
-    let query = supabase
-      .from("membres_complets")
-      .select("id, prenom, nom, telephone, ville, etat_contact, created_at, cellule_id, eglise_id")
-      .eq("eglise_id", profile.eglise_id)
-      .eq("etat_contact", "nouveau")
-      .order("created_at", { ascending: false });
+    let allNotifs = [];
 
-    // Conseiller → seulement ses membres assignés
-    if (isConseiller && !isAdmin) {
-      const { data: assignments } = await supabase
-        .from("suivi_assignments")
-        .select("membre_id")
-        .eq("conseiller_id", profile.id);
+    // ── 1. Nouveaux membres (etat_contact = "nouveau") ──
+    // Administrateur, ResponsableIntegration, Conseiller, ResponsableCellule
+    if (isAdmin || isResponsableInteg || isConseiller || isResponsableCellule) {
+      let query = supabase
+        .from("membres_complets")
+        .select("id, prenom, nom, ville, etat_contact, created_at, cellule_id, eglise_id")
+        .eq("eglise_id", profile.eglise_id)
+        .eq("etat_contact", "nouveau")
+        .order("created_at", { ascending: false });
 
-      const ids = (assignments || []).map((a) => a.membre_id);
-      if (ids.length === 0) {
-        setMembres([]);
-        return;
+      // Conseiller → seulement ses membres assignés
+      if (isConseiller && !isAdmin && !isResponsableInteg) {
+        const { data: assignments } = await supabase
+          .from("suivi_assignments")
+          .select("membre_id")
+          .eq("conseiller_id", profile.id);
+        const ids = (assignments || []).map((a) => a.membre_id);
+        if (ids.length === 0) {
+          query = null;
+        } else {
+          query = query.in("id", ids);
+        }
       }
-      query = query.in("id", ids);
+
+      // ResponsableCellule → membres de ses cellules uniquement
+      if (isResponsableCellule && !isAdmin && !isResponsableInteg && !isConseiller) {
+        const { data: cellules } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", profile.id);
+        const celluleIds = (cellules || []).map((c) => c.id);
+        if (celluleIds.length === 0) {
+          query = null;
+        } else {
+          query = query.in("cellule_id", celluleIds);
+        }
+      }
+
+      if (query) {
+        const { data } = await query;
+        const mapped = (data || []).map((m) => ({
+          ...m,
+          _type: "nouveau",
+          _date: m.created_at,
+        }));
+        allNotifs = [...allNotifs, ...mapped];
+      }
     }
 
-    // ResponsableCellule → membres de ses cellules
-    if (isResponsableCellule && !isAdmin && !isConseiller) {
-      const { data: cellules } = await supabase
-        .from("cellules")
-        .select("id")
-        .eq("responsable_id", profile.id);
+    // ── 2. Évangélisés non envoyés (status_suivi = "Non envoyé") ──
+    // Administrateur, ResponsableEvangelisation
+    if (isAdmin || isResponsableEvang) {
+      const { data } = await supabase
+        .from("evangelises")
+        .select("id, prenom, nom, created_at, eglise_id")
+        .eq("eglise_id", profile.eglise_id)
+        .eq("status_suivi", "Non envoyé")
+        .order("created_at", { ascending: false });
 
-      const celluleIds = (cellules || []).map((c) => c.id);
-      if (celluleIds.length === 0) {
-        setMembres([]);
-        return;
-      }
-      query = query.in("cellule_id", celluleIds);
+      const mapped = (data || []).map((e) => ({
+        ...e,
+        _type: "evangelise",
+        _date: e.created_at,
+      }));
+      allNotifs = [...allNotifs, ...mapped];
     }
 
-    const { data } = await query;
-    setMembres(data || []);
+    // ── 3. Membres ajoutés via cellule/famille (is_new_in_cellule = "true") ──
+    // Administrateur, SuperviseurCellule
+    if (isAdmin || isSuperviseurCellule) {
+      const { data } = await supabase
+        .from("membres_complets")
+        .select("id, prenom, nom, ville, etat_contact, created_at, cellule_id, eglise_id, is_new_in_cellule")
+        .eq("eglise_id", profile.eglise_id)
+        .eq("is_new_in_cellule", "true")
+        .order("created_at", { ascending: false });
+
+      const mapped = (data || []).map((m) => ({
+        ...m,
+        _type: "new_in_cellule",
+        _date: m.created_at,
+      }));
+      allNotifs = [...allNotifs, ...mapped];
+    }
+
+    // ── Trier par date décroissante ──
+    allNotifs.sort((a, b) => new Date(b._date) - new Date(a._date));
+
+    // ── Dédoublonner par id + type ──
+    const seen = new Set();
+    const deduped = allNotifs.filter((n) => {
+      const key = `${n._type}-${n.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    setNotifications(deduped);
   };
 
   // ─── Realtime ─────────────────────────────────────────────────────────────
@@ -151,59 +216,93 @@ function NotificationsContent() {
       try { supabase.removeChannel(channelRef.current); } catch (_) {}
     }
 
-    const channel = supabase
-      .channel(`notifications-page-${userProfile.eglise_id}`)
-      .on(
-        "postgres_changes",
+    const roles = getRoles(userProfile);
+    const isAdmin              = roles.includes("Administrateur");
+    const isResponsableEvang   = roles.includes("ResponsableEvangelisation");
+    const isSuperviseurCellule = roles.includes("SuperviseurCellule");
+
+    const channel = supabase.channel(`notifications-page-${userProfile.eglise_id}`);
+
+    // Nouveaux membres
+    channel
+      .on("postgres_changes",
         { event: "INSERT", schema: "public", table: "membres_complets" },
         (payload) => {
           const row = payload.new;
-          if (row.eglise_id === userProfile.eglise_id && row.etat_contact === "nouveau") {
-            setMembres((prev) => [row, ...prev]);
+          if (row.eglise_id !== userProfile.eglise_id) return;
+
+          if (row.etat_contact === "nouveau") {
+            setNotifications((prev) => [{ ...row, _type: "nouveau", _date: row.created_at }, ...prev]);
+          }
+          if ((isAdmin || isSuperviseurCellule) && row.is_new_in_cellule === "true") {
+            setNotifications((prev) => [{ ...row, _type: "new_in_cellule", _date: row.created_at }, ...prev]);
           }
         }
       )
-      .on(
-        "postgres_changes",
+      .on("postgres_changes",
         { event: "UPDATE", schema: "public", table: "membres_complets" },
         (payload) => {
           const row = payload.new;
           if (row.etat_contact !== "nouveau") {
-            setMembres((prev) => prev.filter((m) => m.id !== row.id));
+            setNotifications((prev) => prev.filter((n) => !(n._type === "nouveau" && n.id === row.id)));
+          }
+          if (row.is_new_in_cellule !== "true") {
+            setNotifications((prev) => prev.filter((n) => !(n._type === "new_in_cellule" && n.id === row.id)));
           }
         }
-      )
-      .subscribe();
+      );
 
+    // Évangélisés
+    if (isAdmin || isResponsableEvang) {
+      channel
+        .on("postgres_changes",
+          { event: "INSERT", schema: "public", table: "evangelises" },
+          (payload) => {
+            const row = payload.new;
+            if (row.eglise_id === userProfile.eglise_id && row.status_suivi === "Non envoyé") {
+              setNotifications((prev) => [{ ...row, _type: "evangelise", _date: row.created_at }, ...prev]);
+            }
+          }
+        )
+        .on("postgres_changes",
+          { event: "UPDATE", schema: "public", table: "evangelises" },
+          (payload) => {
+            const row = payload.new;
+            if (row.status_suivi !== "Non envoyé") {
+              setNotifications((prev) => prev.filter((n) => !(n._type === "evangelise" && n.id === row.id)));
+            }
+          }
+        );
+    }
+
+    channel.subscribe();
     channelRef.current = channel;
+
     return () => {
       try { supabase.removeChannel(channel); } catch (_) {}
     };
   }, [userProfile]);
 
   // ─── Recherche ────────────────────────────────────────────────────────────
-  const filtered = membres.filter((m) =>
-    `${m.prenom || ""} ${m.nom || ""} ${m.ville || ""}`.toLowerCase().includes(search.toLowerCase())
+  const filtered = notifications.filter((n) =>
+    `${n.prenom || ""} ${n.nom || ""} ${n.ville || ""}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  const roles = getRoles(userProfile);
-  const isAdmin = roles.includes("Administrateur") || roles.includes("ResponsableIntegration");
-  const isConseiller = roles.includes("Conseiller");
-  const isResponsableCellule = roles.includes("ResponsableCellule");
-
-  const roleLabel = isAdmin
-    ? "Tous les nouveaux membres"
-    : isConseiller
-    ? "Vos membres assignés (nouveaux)"
-    : isResponsableCellule
-    ? "Nouveaux membres de vos cellules"
-    : "Notifications";
+  // ─── Navigation au clic ───────────────────────────────────────────────────
+  const handleClick = (n) => {
+    if (n._type === "evangelise") {
+      router.push(`/evangelisation/suivis-evangelisation`);
+    } else {
+      router.push(`/ListMembers?search=${encodeURIComponent(`${n.prenom} ${n.nom}`)}`);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4" style={{ background: "#333699" }}>
       <HeaderPages />
 
       <div className="w-full max-w-3xl mt-4 mb-6">
+
         {/* Titre */}
         <div className="flex items-center justify-between mb-1">
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -218,12 +317,12 @@ function NotificationsContent() {
           </span>
         </div>
 
-        <p className="text-white/60 text-sm mb-4">{roleLabel}</p>
+        <p className="text-white/60 text-sm mb-4">Toutes vos notifications</p>
 
         {/* Recherche */}
         <input
           type="text"
-          placeholder="🔍 Rechercher un membre..."
+          placeholder="🔍 Rechercher..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full px-4 py-2 rounded-lg border-0 text-black text-sm mb-4"
@@ -240,14 +339,14 @@ function NotificationsContent() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {filtered.map((m) => (
+            {filtered.map((n, i) => (
               <div
-                key={m.id}
-                onClick={() => router.push(`/ListMembers?search=${encodeURIComponent(`${m.prenom} ${m.nom}`)}`)}
+                key={`${n._type}-${n.id}-${i}`}
+                onClick={() => handleClick(n)}
                 style={{
                   background: "#fff",
                   borderRadius: "12px",
-                  borderLeft: `4px solid ${getBorderColor(m.etat_contact)}`,
+                  borderLeft: `4px solid ${getBorderColor(n._type)}`,
                   padding: "12px 16px",
                   display: "flex",
                   alignItems: "center",
@@ -268,27 +367,28 @@ function NotificationsContent() {
                 {/* Avatar */}
                 <div style={{
                   width: "42px", height: "42px", borderRadius: "50%",
-                  background: "#fff7ed", display: "flex", alignItems: "center",
+                  background: n._type === "evangelise" ? "#f5f3ff" : "#fff7ed",
+                  display: "flex", alignItems: "center",
                   justifyContent: "center", fontSize: "20px", flexShrink: 0,
                 }}>
-                  👤
+                  {n._type === "evangelise" ? "💗" : "👤"}
                 </div>
 
                 {/* Infos */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                     <p style={{ fontWeight: "700", fontSize: "14px", color: "#111827", margin: 0 }}>
-                      {m.prenom} {m.nom}
+                      {n.prenom} {n.nom}
                     </p>
-                    <EtatBadge etat={m.etat_contact} />
+                    <TypeBadge type={n._type} />
                   </div>
-                  {m.ville && (
+                  {n.ville && (
                     <p style={{ fontSize: "12px", color: "#6b7280", margin: "2px 0 0" }}>
-                      🏙️ {m.ville}
+                      🏙️ {n.ville}
                     </p>
                   )}
-                  <p style={{ fontSize: "11px", color: "#d1d5db", margin: "2px 0 0" }}>
-                    📅 {formatDateFr(m.created_at)}
+                  <p style={{ fontSize: "11px", color: "#9ca3af", margin: "2px 0 0" }}>
+                    📅 {formatDateFr(n._date)}
                   </p>
                 </div>
 

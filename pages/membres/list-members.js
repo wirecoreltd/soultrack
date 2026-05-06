@@ -18,7 +18,7 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import useChurchScope from "../../hooks/useChurchScope";
 import SuiviPopup from "../../components/SuiviPopup";
 import ImportMembresCSV from "../../components/ImportMembresCSV";
-import { useFeature } from "../../context/FeaturesContext"; // ✅ NOUVEAU
+import { useFeature } from "../../components/FeaturesContext"; // ✅ NOUVEAU
 
 function getRoles(profile) {
   if (!profile) return [];

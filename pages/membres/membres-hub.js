@@ -95,6 +95,16 @@ function MembresHubContent() {
           <div className="text-4xl mb-2">🗒️</div>
           <div className="text-lg font-bold text-gray-800 text-center">Présences & Rapports</div>
         </Link>
+        
+        <Link
+          href="/admin/notifications"
+          className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#FBBF24] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32"
+        >
+          <div className="text-4xl mb-2">🔔</div>
+          <div className="text-lg font-bold text-gray-800 text-center">
+            Notifications
+          </div>
+        </Link>
       </div>
 
       {/* Bouton popup pour envoyer le lien */}

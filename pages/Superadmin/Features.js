@@ -42,21 +42,23 @@ function Features() {
 
   // ─── load features ───
   const fetchFeatures = async (egliseId) => {
-    setLoading(true);
+  const { data } = await supabase
+    .from("eglise_features")
+    .select("feature, active")
+    .eq("eglise_id", egliseId);
 
-    const { data } = await supabase
-      .from("eglise_features")
-      .select("feature, active")
-      .eq("eglise_id", egliseId);
+  const map = {};
 
-    const map = {};
-    data?.forEach((f) => (map[f.feature] = f.active));
+  ALL_FEATURES.forEach((f) => {
+    map[f.key] = false; // default OFF
+  });
 
-    ALL_FEATURES.forEach((f) => {
-      if (map[f.key] === undefined) map[f.key] = false;
-    });
+  data.forEach((f) => {
+    map[f.feature] = f.active;
+  });
 
-    setFeatures(map);
+  setFeatures({ ...map }); // important clone
+};
 
     const count = Object.values(map).filter(Boolean).length;
     setActiveCount(count);

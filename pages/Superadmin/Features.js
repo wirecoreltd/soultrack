@@ -120,6 +120,10 @@ function Features() {
     }
   };
 
+  console.log("SELECTED EGLISE:", selected);
+console.log("DB DATA:", data);
+console.log("FINAL MAP:", map);
+
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-[#333699]">
 

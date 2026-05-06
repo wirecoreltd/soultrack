@@ -15,23 +15,19 @@ function CreateCelluleContent() {
     responsable_id: "",
     responsable_nom: "",
     telephone: "",
+    superviseur_id: "",
   });
 
   const [responsables, setResponsables] = useState([]);
-  const [egliseId, setEgliseId] = useState(null);  
+  const [superviseurs, setSuperviseurs] = useState([]);
+  const [egliseId, setEgliseId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  /* =========================
-     CONTEXTE UTILISATEUR
-     (eglise_id / branche_id)
-  ========================= */
+  // ─── Contexte utilisateur ─────────────────────────────────────────────────
   useEffect(() => {
     const initContext = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: profile } = await supabase
@@ -41,42 +37,46 @@ function CreateCelluleContent() {
         .single();
 
       if (!profile) return;
-
-      setEgliseId(profile.eglise_id);     
+      setEgliseId(profile.eglise_id);
     };
 
     initContext();
   }, []);
 
-  /* =========================
-     RESPONSABLES (FILTRÉS)
-  ========================= */
+  // ─── Responsables + Superviseurs ──────────────────────────────────────────
   useEffect(() => {
     if (!egliseId) return;
 
-    const fetchResponsables = async () => {
-      const { data, error } = await supabase
+    const fetchProfiles = async () => {
+      // Responsables de cellule
+      const { data: resp } = await supabase
         .from("profiles")
         .select("id, prenom, nom, telephone")
         .eq("role", "ResponsableCellule")
-        .eq("eglise_id", egliseId);        
+        .eq("eglise_id", egliseId);
 
-      if (!error) setResponsables(data || []);
+      setResponsables(resp || []);
+
+      // Superviseurs de cellule
+      const { data: sup } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .eq("role", "SuperviseurCellule")
+        .eq("eglise_id", egliseId);
+
+      setSuperviseurs(sup || []);
     };
 
-    fetchResponsables();
+    fetchProfiles();
   }, [egliseId]);
 
-  /* =========================
-     HANDLERS
-  ========================= */
+  // ─── Handlers ─────────────────────────────────────────────────────────────
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleResponsableChange = (e) => {
     const selected = responsables.find((r) => r.id === e.target.value);
-
     setFormData({
       ...formData,
       responsable_id: e.target.value,
@@ -89,7 +89,7 @@ function CreateCelluleContent() {
     e.preventDefault();
 
     if (!egliseId) {
-      setMessage("❌ Contexte église/branche introuvable");
+      setMessage("❌ Contexte église introuvable");
       return;
     }
 
@@ -102,7 +102,7 @@ function CreateCelluleContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          eglise_id: egliseId,         
+          eglise_id: egliseId,
         }),
       });
 
@@ -118,6 +118,7 @@ function CreateCelluleContent() {
           responsable_id: "",
           responsable_nom: "",
           telephone: "",
+          superviseur_id: "",
         });
       }
     } catch (err) {
@@ -127,21 +128,12 @@ function CreateCelluleContent() {
     }
   };
 
-  const handleCancel = () => {
-    router.back();
-  };
-
-  /* =========================
-     UI
-  ========================= */
+  // ─── UI ───────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-lg relative">
 
-        <button
-          onClick={() => router.back()}
-          className="absolute top-4 left-4 text-gray-700"
-        >
+        <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700">
           ← Retour
         </button>
 
@@ -149,14 +141,18 @@ function CreateCelluleContent() {
           <Image src="/logo.png" alt="SoulTrack" width={80} height={80} />
         </div>
 
-        <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black"> Créer une <br />à ma <span className="text-[#333699]">Cellule</span></h1>
-         <div className="max-w-3xl w-full mb-6 text-center">
-            <p className="italic text-base text-black/90">
-              Chaque cellule doit être créée avec un responsable pour guider et soutenir le groupe        
-             </p>
-          </div>    
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">
+          Créer une <span className="text-[#333699]">Cellule</span>
+        </h1>
+
+        <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-black/90">
+            Chaque cellule doit être créée avec un responsable et un superviseur pour guider et soutenir le groupe.
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+
           <input
             name="nom"
             placeholder="Nom de la cellule"
@@ -175,6 +171,7 @@ function CreateCelluleContent() {
             required
           />
 
+          {/* Responsable */}
           <select
             value={formData.responsable_id}
             onChange={handleResponsableChange}
@@ -189,23 +186,38 @@ function CreateCelluleContent() {
             ))}
           </select>
 
+          {/* Téléphone auto-rempli */}
           {formData.responsable_id && (
             <input
               value={formData.telephone}
               readOnly
+              placeholder="Téléphone du responsable"
               className="w-full rounded-xl border p-3 bg-gray-100 text-black"
             />
           )}
 
+          {/* ✅ Superviseur */}
+          <select
+            value={formData.superviseur_id}
+            onChange={(e) => setFormData({ ...formData, superviseur_id: e.target.value })}
+            className="w-full rounded-xl border p-3 text-black"
+          >
+            <option value="">-- Sélectionnez un superviseur (optionnel) --</option>
+            {superviseurs.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.prenom} {s.nom}
+              </option>
+            ))}
+          </select>
+
           <div className="flex gap-4">
             <button
               type="button"
-              onClick={handleCancel}
+              onClick={() => router.back()}
               className="flex-1 bg-gray-400 text-white py-2 rounded-2xl"
             >
               Annuler
             </button>
-
             <button
               type="submit"
               disabled={loading}
@@ -214,21 +226,18 @@ function CreateCelluleContent() {
               {loading ? "Création..." : "Créer"}
             </button>
           </div>
-        </form> 
+        </form>
 
-        {message && (
-          <p className="mt-4 text-center text-sm">{message}</p>
-        )}
+        {message && <p className="mt-4 text-center text-sm">{message}</p>}
       </div>
     </div>
   );
 }
- export default function CreateCellulePage() {
+
+export default function CreateCellulePage() {
   return (
-    <div>
-    <ProtectedRoute allowedRoles={["Administrateur","SuperviseurCellule"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "SuperviseurCellule"]}>
       <CreateCelluleContent />
-    </ProtectedRoute>   
-    </div>
+    </ProtectedRoute>
   );
 }

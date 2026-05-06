@@ -39,6 +39,7 @@ function CelluleRow({ c, router }) {
           {c.cellule_full}
         </div>
         <div className="flex-[2] text-white text-sm">{c.responsable}</div>
+        <div className="flex-[2] text-white text-sm">{c.superviseur || "—"}</div>
 
         {/* Téléphone */}
         <div className="flex-[2] flex justify-center relative text-sm">
@@ -286,6 +287,7 @@ function ListCellulesContent() {
           <div className="flex-[2]">Ville</div>
           <div className="flex-[2]">Cellule</div>
           <div className="flex-[2]">Responsable</div>
+          <div className="flex-[2]">Superviseur</div>
           <div className="flex-[2] text-center">Téléphone</div>
           <div className="flex-[1] text-center">Count</div>
           <div className="flex-[1] text-center">Action</div>

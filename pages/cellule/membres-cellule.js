@@ -147,33 +147,21 @@ function MembresCelluleContent() {
         if (!profile) return;
 
         let query = supabase
-  .from("membres_complets")
-  .select("*")
-  .eq("statut_suivis", 3)
-  .eq("eglise_id", profile.eglise_id)
-  .not("cellule_id", "is", null)
-  .order("created_at", { ascending: false });
+          .from("membres_complets")
+          .select("*")
+          .eq("statut_suivis", 3)
+          .eq("eglise_id", profile.eglise_id)
+          .not("cellule_id", "is", null)
+          .order("created_at", { ascending: false });
 
-          let mesCelluleIds = [];
-          
-          // ---------------- ADMIN ----------------
-         if (profile.role === "Administrateur") {
-
-            // ❌ retire toute restriction pour test
-            let baseQuery = supabase
-              .from("membres_complets")
-              .select("*")
-              .eq("statut_suivis", 3)
-              .not("cellule_id", "is", null)
-              .order("created_at", { ascending: false });
+         let mesCelluleIds = [];
+          if (profile.role === "Administrateur") {
+            query = query.eq("eglise_id", profile.eglise_id);
           
             if (celluleId) {
-              baseQuery = baseQuery.eq("cellule_id", celluleId);
+              query = query.eq("cellule_id", celluleId);
             }
           
-            query = baseQuery;
-          }
-          // ---------------- RESPONSABLE ----------------
           } else if (profile.role === "ResponsableCellule") {
           
             const { data: mesCellules } = await supabase
@@ -195,7 +183,6 @@ function MembresCelluleContent() {
               ? query.eq("cellule_id", celluleId)
               : query.in("cellule_id", mesCelluleIds);
           
-          // ---------------- SUPERVISEUR ----------------
           } else if (profile.role === "SuperviseurCellule") {
           
             const { data: mesCellules } = await supabase
@@ -217,14 +204,12 @@ function MembresCelluleContent() {
               ? query.eq("cellule_id", celluleId)
               : query.in("cellule_id", mesCelluleIds);
           
-          // ---------------- AUTRE ----------------
           } else {
             setMembres([]);
             setMessage("Accès non autorisé");
             setLoading(false);
             return;
           }
-
       
 
           // ✅ Si celluleId dans l'URL, vérifier qu'il appartient bien au responsable

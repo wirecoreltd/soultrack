@@ -52,21 +52,36 @@ export default function LoginPage() {
       localStorage.setItem("userId", user.id);
 
       // 4️⃣ Redirection automatique selon rôle
-      if (roles.includes("ResponsableCellule") || roles.includes("SuperviseurCellule")) {
-        router.replace("/cellule/cellules-hub");
-      } else if (roles.includes("Administrateur")) {
-        router.replace("/index"); // modifier si tu as une autre page admin
-      } else if (roles.includes("ResponsableEvangelisation")) {
-        router.replace("/evangelisation/evangelisation-hub");
-      } else if (roles.includes("Conseiller")) {
-        router.replace("/conseiller/conseiller-hub");
-         } else if (roles.includes("ResponsableFamilles")) {
-        router.replace("/famille/familles-hub");
-        } else if (roles.includes("ResponsableIntegration")) {
-        router.replace("/membres/membres-hub");
-      } else {
-        router.replace("/"); // fallback
-      }
+     // 4️⃣ Redirection intelligente selon nombre de rôles
+
+// 🔥 Si plusieurs rôles → dashboard
+if (roles.length > 1) {
+  router.replace("/index");
+  return;
+}
+
+// 🔥 Si un seul rôle → redirection vers son hub
+if (roles.includes("ResponsableCellule") || roles.includes("SuperviseurCellule")) {
+  router.replace("/cellule/cellules-hub");
+
+} else if (roles.includes("ResponsableFamilles")) {
+  router.replace("/famille/familles-hub");
+
+} else if (roles.includes("Conseiller")) {
+  router.replace("/conseiller/conseiller-hub");
+
+} else if (roles.includes("ResponsableEvangelisation")) {
+  router.replace("/evangelisation/evangelisation-hub");
+
+} else if (roles.includes("ResponsableIntegration")) {
+  router.replace("/membres/membres-hub");
+
+} else if (roles.includes("Administrateur")) {
+  router.replace("/index");
+
+} else {
+  router.replace("/index"); // fallback propre
+}
 
     } catch (err) {
       console.error(err);

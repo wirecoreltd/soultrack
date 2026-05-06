@@ -24,7 +24,6 @@ function AjouterMembreFamilleContent() {
   const searchParams = useSearchParams();
   const { setAllMembers } = useMembers();
 
-  // ✅ Lire eglise_id et Famille_id depuis l'URL si présents
   const urlEgliseId = searchParams.get("eglise_id");
   const urlFamilleId = searchParams.get("famille_id");
   const isFromLink = !!urlEgliseId && !!urlFamilleId;
@@ -62,7 +61,6 @@ function AjouterMembreFamilleContent() {
   });
 
   useEffect(() => {
-    // Si les params sont dans l'URL, pas besoin de fetch le profil
     if (isFromLink) return;
 
     const fetchUserScope = async () => {
@@ -84,36 +82,35 @@ function AjouterMembreFamilleContent() {
     fetchUserScope();
   }, [isFromLink]);
 
-  // ================== FETCH FamilleS (seulement si pas de Famille_id dans l'URL) ==================
   useEffect(() => {
     if (!userScope.eglise_id) return;
-    if (isFromLink) return; // ✅ Pas besoin de fetcher les Familles si déjà dans l'URL
+    if (isFromLink) return;
 
     const fetchFamilles = async () => {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const userId = sessionData?.session?.user?.id; // ✅ use session, not localStorage
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
 
-  if (!userId) {
-    alert("⚠️ Utilisateur non connecté.");
-    return;
-  }
+      if (!userId) {
+        alert("⚠️ Utilisateur non connecté.");
+        return;
+      }
 
-  const { data, error } = await supabase
-    .from("familles")
-    .select("id, ville, famille")
-    .eq("responsable_id", userId)
-    .eq("eglise_id", userScope.eglise_id);
+      const { data, error } = await supabase
+        .from("familles")
+        .select("id, ville, famille")
+        .eq("responsable_id", userId)
+        .eq("eglise_id", userScope.eglise_id);
 
-  if (error || !data || data.length === 0) {
-    alert("⚠️ Aucune Famille trouvée pour votre église.");
-    return;
-  }
+      if (error || !data || data.length === 0) {
+        alert("⚠️ Aucune Famille trouvée pour votre église.");
+        return;
+      }
 
-  setFamilles(data);
-  if (data.length === 1) {
-    setFormData((prev) => ({ ...prev, famille_id: data[0].id }));
-  }
-};
+      setFamilles(data);
+      if (data.length === 1) {
+        setFormData((prev) => ({ ...prev, famille_id: data[0].id }));
+      }
+    };
 
     fetchFamilles();
   }, [userScope, isFromLink]);
@@ -141,81 +138,80 @@ function AjouterMembreFamilleContent() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!userScope.eglise_id) {
-    alert("❌ Église non identifiée.");
-    return;
-  }
-
-  try {
-    // 1. Vérifier la limite
-    const { atteinte, count, limite } = await checkLimiteAtteinte(userScope.eglise_id);
-    if (atteinte) {
-      alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+    if (!userScope.eglise_id) {
+      alert("❌ Église non identifiée.");
       return;
     }
 
-    // 2. Création membre
-    const newMemberData = {
-      nom: formData.nom,
-      prenom: formData.prenom,
-      telephone: formData.telephone,
-      ville: formData.ville,
-      venu: formData.venu,
-      famille_id: formData.famille_id,
-      eglise_id: userScope.eglise_id,
-      statut_suivis: 3,
-      etat_contact: "existant",
-      is_whatsapp: formData.is_whatsapp,
-      infos_supplementaires: formData.infos_supplementaires,
-      besoin: formData.besoin.join(", "),
-      autrebesoin: formData.autreBesoin || null,
-      sexe: formData.sexe || null,
-      age: formData.age || null,
-      date_venu: formData.date_venu || null,
-      bapteme_eau: false,
-      bapteme_esprit: false,
-      statut_initial: formData.statut_initial || null,
-      priere_salut: formData.priere_salut || null,
-      type_conversion: formData.type_conversion || null,
-    };
+    try {
+      const { atteinte, count, limite } = await checkLimiteAtteinte(userScope.eglise_id);
+      if (atteinte) {
+        alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+        return;
+      }
 
-    const { data: newMember, error } = await supabase
-      .from("membres_complets")
-      .insert([newMemberData])
-      .select()
-      .single();
+      const newMemberData = {
+        nom: formData.nom,
+        prenom: formData.prenom,
+        telephone: formData.telephone,
+        ville: formData.ville,
+        venu: formData.venu,
+        famille_id: formData.famille_id,
+        eglise_id: userScope.eglise_id,
+        statut_suivis: 3,
+        etat_contact: "existant",
+        is_new_in_cellule: "true", // ✅ AJOUT : déclenche les notifications Admin + SuperviseurCellule
+        is_whatsapp: formData.is_whatsapp,
+        infos_supplementaires: formData.infos_supplementaires,
+        besoin: formData.besoin.join(", "),
+        autrebesoin: formData.autreBesoin || null,
+        sexe: formData.sexe || null,
+        age: formData.age || null,
+        date_venu: formData.date_venu || null,
+        bapteme_eau: false,
+        bapteme_esprit: false,
+        statut_initial: formData.statut_initial || null,
+        priere_salut: formData.priere_salut || null,
+        type_conversion: formData.type_conversion || null,
+      };
 
-    if (error) throw error;
+      const { data: newMember, error } = await supabase
+        .from("membres_complets")
+        .insert([newMemberData])
+        .select()
+        .single();
 
-    setAllMembers((prev) => [...prev, newMember]);
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
+      if (error) throw error;
 
-    setFormData({
-      nom: "",
-      prenom: "",
-      sexe: "",
-      age: "",
-      telephone: "",
-      ville: "",
-      venu: "",
-      priere_salut: "",
-      type_conversion: "",
-      date_venu: new Date().toISOString().slice(0, 10),
-      besoin: [],
-      autreBesoin: "",
-      famille_id: urlFamilleId || (Familles.length === 1 ? Familles[0].id : ""),
-      infos_supplementaires: "",
-      is_whatsapp: false,
-    });
+      setAllMembers((prev) => [...prev, newMember]);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
 
-  } catch (err) {
-    alert("❌ Impossible d'ajouter le membre : " + err.message);
-  }
-};
-  
+      setFormData({
+        nom: "",
+        prenom: "",
+        sexe: "",
+        age: "",
+        telephone: "",
+        ville: "",
+        venu: "",
+        priere_salut: "",
+        type_conversion: "",
+        date_venu: new Date().toISOString().slice(0, 10),
+        besoin: [],
+        autreBesoin: "",
+        famille_id: urlFamilleId || (Familles.length === 1 ? Familles[0].id : ""),
+        infos_supplementaires: "",
+        is_whatsapp: false,
+      });
+
+    } catch (err) {
+      alert("❌ Impossible d'ajouter le membre : " + err.message);
+    }
+  };
+
   const handleCancel = () => {
     setFormData({
       nom: "",
@@ -263,16 +259,15 @@ function AjouterMembreFamilleContent() {
         <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-black/90">
             <span className="text-[#FFB07C] font-semibold">Ajoutez</span> facilement un membre à{" "}
-            <span className="text-[#FFB07C] font-semibold">votre Famille</span>. Renseignez ses informations, ses 
-            <span className="text-[#FFB07C] font-semibold"> besoins et son parcours spirituel</span>, puis associez-le à une Famille 
+            <span className="text-[#FFB07C] font-semibold">votre Famille</span>. Renseignez ses informations, ses
+            <span className="text-[#FFB07C] font-semibold"> besoins et son parcours spirituel</span>, puis associez-le à une Famille
             pour assurer{" "}
-            <span className="text-[#FFB07C] font-semibold">un suivi structuré et personnalisé</span>.            
+            <span className="text-[#FFB07C] font-semibold">un suivi structuré et personnalisé</span>.
           </p>
-        </div>    
+        </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
-          {/* ✅ Sélecteur Famille : caché si Famille_id dans l'URL */}
           {!isFromLink && Familles.length > 1 && (
             <select
               name="famille_id"
@@ -290,7 +285,6 @@ function AjouterMembreFamilleContent() {
             </select>
           )}
 
-          {/* Date de venue */}
           <input
             type="date"
             value={formData.date_venu}
@@ -335,7 +329,7 @@ function AjouterMembreFamilleContent() {
             <option value="evangélisation">Evangélisation</option>
             <option value="autre">Autre</option>
           </select>
-        
+
           <select
             className="input"
             value={formData.priere_salut || ""}
@@ -353,7 +347,7 @@ function AjouterMembreFamilleContent() {
             <option value="Oui">Oui</option>
             <option value="Non">Non</option>
           </select>
-        
+
           {formData.priere_salut === "Oui" && (
             <select
               className="input"
@@ -366,7 +360,7 @@ function AjouterMembreFamilleContent() {
               <option value="Réconciliation">Réconciliation</option>
             </select>
           )}
-        
+
           <label className="text-sm sm:text-base font-bold mb-1">Difficultés / Besoins</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {besoinsOptions.map((item) => (
@@ -392,7 +386,7 @@ function AjouterMembreFamilleContent() {
               Autre
             </label>
           </div>
-          
+
           {showBesoinLibre && (
             <input
               type="text"
@@ -435,7 +429,7 @@ function AjouterMembreFamilleContent() {
             padding: 12px;
           }
         `}</style>
-      </div>           
+      </div>
     </div>
   );
 }

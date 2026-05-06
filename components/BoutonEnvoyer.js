@@ -63,7 +63,6 @@ export default function BoutonEnvoyer({
       responsableTelephone = cible.telephone;
     }
 
-    // ✅ Famille : on récupère le responsable de la famille
     if (type === "famille") {
       const { data: famille } = await supabase
         .from("familles")
@@ -163,7 +162,6 @@ export default function BoutonEnvoyer({
       ? `https://wa.me/${phone}?text=${encodeURIComponent(messageToSend)}`
       : `https://wa.me/?text=${encodeURIComponent(messageToSend)}`;
 
-    // ✅ Fermer les popups AVANT de faire quoi que ce soit
     setShowWhatsappPopup(false);
     setShowDoublonPopup(false);
     setDoublonDetected(false);
@@ -173,12 +171,12 @@ export default function BoutonEnvoyer({
     try {
       const now = new Date().toISOString();
 
-      // 1️⃣ Mise à jour membres_complets
       const updatePayload = {
         statut: "actif",
         statut_suivis: 1,
         etat_contact: "existant",
         date_envoi_suivi: now,
+        notification_responsable: true, // ✅ NOUVEAU — déclenche la notif pour le responsable
       };
 
       if (type === "cellule") {
@@ -193,15 +191,12 @@ export default function BoutonEnvoyer({
         updatePayload.suivi_responsable_id = cible.id;
       }
 
-      // ✅ Famille : écrire famille_id dans membres_complets
       if (type === "famille") {
         updatePayload.famille_id = cible.id;
         updatePayload.suivi_responsable = null;
         updatePayload.suivi_responsable_id = null;
       }
 
-      // ✅ Appeler onEnvoyer AVANT le update Supabase pour que le verrou
-      // dans list-members soit posé avant que le realtime arrive
       if (onEnvoyer) onEnvoyer(membre.id);
 
       const { data, error } = await supabase
@@ -213,7 +208,7 @@ export default function BoutonEnvoyer({
 
       if (error) { console.error(error); alert("❌ Erreur mise à jour membre"); return; }
 
-      // 2️⃣ Si type conseiller → écrire dans suivi_assignments
+      // Si type conseiller → écrire dans suivi_assignments
       if (type === "conseiller" && cible?.id) {
         await supabase
           .from("suivi_assignments")
@@ -278,50 +273,50 @@ export default function BoutonEnvoyer({
 
       {/* ================= POPUP WHATSAPP ================= */}
       {showWhatsappPopup && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl"> 
-      <p className="text-gray-700 mb-4">
-        Vérifiez les informations du responsable avant d'envoyer. 
-        Si le numéro est effacé, WhatsApp s'ouvrira sur vos contacts.
-      </p>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
+            <p className="text-gray-700 mb-4">
+              Vérifiez les informations du responsable avant d'envoyer.
+              Si le numéro est effacé, WhatsApp s'ouvrira sur vos contacts.
+            </p>
 
-      <div className="flex flex-col gap-3 mb-4">
-        <div>
-          <label className="text-sm font-semibold text-gray-600 mb-1 block">
-            👤 Nom du responsable
-          </label>
-          <input
-            type="text"
-            value={responsableNom}
-            onChange={(e) => setResponsableNom(e.target.value)}
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-3"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-semibold text-gray-600 mb-1 block">
-            📞 Numéro WhatsApp
-          </label>
-          <input
-            type="text"
-            value={manualPhone}
-            onChange={(e) => setManualPhone(e.target.value)}
-            placeholder="+3363xxx... — laisser vide pour choisir dans vos contacts"
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4"
-          />
-        </div>
-      </div>
+            <div className="flex flex-col gap-3 mb-4">
+              <div>
+                <label className="text-sm font-semibold text-gray-600 mb-1 block">
+                  👤 Nom du responsable
+                </label>
+                <input
+                  type="text"
+                  value={responsableNom}
+                  onChange={(e) => setResponsableNom(e.target.value)}
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-3"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-600 mb-1 block">
+                  📞 Numéro WhatsApp
+                </label>
+                <input
+                  type="text"
+                  value={manualPhone}
+                  onChange={(e) => setManualPhone(e.target.value)}
+                  placeholder="+3363xxx... — laisser vide pour choisir dans vos contacts"
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4"
+                />
+              </div>
+            </div>
 
-      <div className="flex gap-2">
-        <button onClick={sendToWhatsapp} className="flex-1 bg-green-500 text-white py-2 rounded-lg font-semibold">
-          Envoyer
-        </button>
-        <button onClick={() => setShowWhatsappPopup(false)} className="flex-1 bg-gray-200 py-2 rounded-lg">
-          Annuler
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+            <div className="flex gap-2">
+              <button onClick={sendToWhatsapp} className="flex-1 bg-green-500 text-white py-2 rounded-lg font-semibold">
+                Envoyer
+              </button>
+              <button onClick={() => setShowWhatsappPopup(false)} className="flex-1 bg-gray-200 py-2 rounded-lg">
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

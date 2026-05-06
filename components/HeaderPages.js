@@ -182,7 +182,9 @@ export default function HeaderPages() {
 
             {/* 🔔 NotificationBell centralisée */}
             {egliseId && (
-              <NotificationBell egliseId={egliseId} />
+              <NotificationBell egliseId={egliseId} 
+              onClick={() => router.push("/admin/notifications")}
+              />
             )}
 
             {/* Déconnexion */}
@@ -211,21 +213,21 @@ export default function HeaderPages() {
 
         <p className="text-white font-semibold text-lg mt-2">
           {denomination && (
-            <span className="text-amber-300">
+            <span className="text-white">
               {denomination}{eglise && " - "}
             </span>
           )}
           {eglise}
         </p>
 
-        <p className="text-gray-300 text-sm">
+        <p className="text-amber-300 text-sm">
           {branche}
           {branche && ville && <span className="text-amber-300"> - </span>}
           {ville}
         </p>
 
           {pays && (
-          <p className="text-gray-300 mt-2 text-sm flex items-center gap-1">
+          <p className="text-white mt-1 text-sm flex items-center gap-1">
             <img
               src={`https://flagcdn.com/w20/${getIsoCode(pays)}.png`}
               srcSet={`https://flagcdn.com/w40/${getIsoCode(pays)}.png 2x`}

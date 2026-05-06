@@ -51,14 +51,17 @@ export default function HeaderPages() {
   const [invitationPending, setInvitationPending] = useState(false);
   const [pendingToken, setPendingToken] = useState(null);
 
-  // Pour passer l'eglise_id à NotificationBell
+  // Pour passer l'eglise_id et userId à NotificationBell
   const [egliseId, setEgliseId] = useState(null);
+  const [userId, setUserId] = useState(null); // ✅ AJOUT
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) return;
+
+        setUserId(user.id); // ✅ AJOUT
 
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
@@ -74,7 +77,7 @@ export default function HeaderPages() {
         if (profile?.eglise_id) {
           setEgliseId(profile.eglise_id);
 
-          console.log("✅ HeaderPages egliseId:", profile.eglise_id); 
+          console.log("✅ HeaderPages egliseId:", profile.eglise_id);
 
           const { data: egliseData } = await supabase
             .from("eglises")
@@ -168,7 +171,7 @@ export default function HeaderPages() {
 
           <div className="flex items-center gap-3">
 
-            {/* 🔔 Invitation admin (gardée telle quelle) */}
+            {/* 📩 Invitation admin */}
             {userRole === "Administrateur" && invitationPending && (
               <button
                 onClick={handleClickInvitation}
@@ -180,10 +183,12 @@ export default function HeaderPages() {
               </button>
             )}
 
-            {/* 🔔 NotificationBell centralisée */}
-            {egliseId && (
-              <NotificationBell egliseId={egliseId} userRole={userRole} 
-              onClick={() => router.push("/admin/notifications")}
+            {/* 🔔 NotificationBell — egliseId + userRole + userId ✅ */}
+            {egliseId && userId && (
+              <NotificationBell
+                egliseId={egliseId}
+                userRole={userRole}
+                userId={userId}
               />
             )}
 
@@ -226,7 +231,7 @@ export default function HeaderPages() {
           {ville}
         </p>
 
-          {pays && (
+        {pays && (
           <p className="text-white mt-2 text-sm flex items-center gap-1">
             <img
               src={`https://flagcdn.com/w20/${getIsoCode(pays)}.png`}

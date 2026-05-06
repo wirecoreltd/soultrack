@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
+import { FEATURE_ROUTES, buildFeaturesState, canAccessFeature } from "../lib/features";
 
 // ─── Carte notifications commune à tous les rôles ─────────────────────────
 const NOTIF_CARD = {
@@ -66,6 +67,7 @@ export default function IndexPage() {
   const router = useRouter();
 
   const [roles, setRoles] = useState([]);
+  const [features, setFeatures] = useState(null); // ← NOUVEAU
   const [loading, setLoading] = useState(true);
   const [ready, setReady] = useState(false);
 
@@ -79,16 +81,35 @@ export default function IndexPage() {
           return;
         }
 
+        // ─── Rôles ───────────────────────────────────────────────────────
         const storedRoles = localStorage.getItem("userRole");
+        let parsedRoles = [];
         if (storedRoles) {
           try {
             const parsed = JSON.parse(storedRoles);
-            setRoles(Array.isArray(parsed) ? parsed : [parsed]);
+            parsedRoles = Array.isArray(parsed) ? parsed : [parsed];
           } catch {
-            setRoles([storedRoles]);
+            parsedRoles = [storedRoles];
           }
-        } else {
-          setRoles([]);
+        }
+        setRoles(parsedRoles);
+
+        // ─── Features (uniquement pour Administrateur) ────────────────────
+        if (parsedRoles.includes("Administrateur") && !parsedRoles.includes("Superadmin")) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("eglise_id")
+            .eq("id", data.session.user.id)
+            .single();
+
+          if (profile?.eglise_id) {
+            const { data: dbFeatures } = await supabase
+              .from("eglise_features")
+              .select("feature, active")
+              .eq("eglise_id", profile.eglise_id);
+
+            setFeatures(buildFeaturesState(dbFeatures || []));
+          }
         }
 
         setReady(true);
@@ -108,7 +129,19 @@ export default function IndexPage() {
   let cardsToShow = [];
 
   if (roles.includes("Superadmin")) {
+    // Superadmin voit tout, pas de filtre features
     cardsToShow = [...roleCards.Superadmin];
+
+  } else if (roles.includes("Administrateur")) {
+    // ✅ Administrateur filtré par les features de son église
+    cardsToShow = roleCards.Administrateur.filter((card) => {
+      const featureKey = Object.keys(FEATURE_ROUTES).find(
+        (k) => FEATURE_ROUTES[k] === card.path
+      );
+      if (!featureKey) return true; // pas de feature associée = toujours visible
+      return canAccessFeature(features, featureKey);
+    });
+
   } else {
     roles.forEach((role) => {
       const key = role.trim();
@@ -122,7 +155,7 @@ export default function IndexPage() {
     });
   }
 
-  // ✅ Ajouter Notifications seulement si le hub du rôle ne la contient pas déjà
+  // ─── Notifications ────────────────────────────────────────────────────────
   const isMemberOnly = roles.length === 1 && roles[0] === "Membre";
   const notifAlreadyInHub =
     roles.length === 1 && ROLES_WITH_NOTIF_IN_HUB.includes(roles[0]);

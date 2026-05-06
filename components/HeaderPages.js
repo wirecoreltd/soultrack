@@ -182,7 +182,7 @@ export default function HeaderPages() {
 
             {/* 🔔 NotificationBell centralisée */}
             {egliseId && (
-              <NotificationBell egliseId={egliseId} 
+              <NotificationBell egliseId={egliseId} userRole={userRole} 
               onClick={() => router.push("/admin/notifications")}
               />
             )}

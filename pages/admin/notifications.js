@@ -447,7 +447,7 @@ function NotificationsContent() {
         .eq("id", n.id);
 
       setNotifications((prev) => prev.filter((notif) => !(notif._type === "membre_assigne" && notif.id === n.id)));
-      router.push(`/ListMembers?search=${encodeURIComponent(`${n.prenom} ${n.nom}`)}`);
+      router.push(`/cellule/membres-cellule?search=${encodeURIComponent(`${n.prenom} ${n.nom}`)}`);
       return;
     }
 

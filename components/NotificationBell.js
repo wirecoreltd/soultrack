@@ -3,15 +3,21 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 
-export default function NotificationBell({ egliseId }) {
+// ─── Rôles qui voient la notification "nouveau membre" ───────────────────────
+const ROLES_NOUVEAUX_MEMBRES = ["Administrateur", "ResponsableIntegration"];
+
+export default function NotificationBell({ egliseId, userRole }) {
   const [count, setCount] = useState(0);
   const [isNew, setIsNew] = useState(false);
   const router = useRouter();
   const channelRef = useRef(null);
 
+  // ─── Vérifie si le rôle a accès à cette notification ────────────────────
+  const canSeeNouveauxMembres = ROLES_NOUVEAUX_MEMBRES.includes(userRole);
+
   // ─── Chargement initial ───────────────────────────────────────────────────
   useEffect(() => {
-    if (!egliseId) return;
+    if (!egliseId || !canSeeNouveauxMembres) return;
 
     const fetchCount = async () => {
       const { count: total } = await supabase
@@ -23,11 +29,11 @@ export default function NotificationBell({ egliseId }) {
     };
 
     fetchCount();
-  }, [egliseId]);
+  }, [egliseId, canSeeNouveauxMembres]);
 
   // ─── Realtime ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!egliseId) return;
+    if (!egliseId || !canSeeNouveauxMembres) return;
 
     if (channelRef.current) {
       try { supabase.removeChannel(channelRef.current); } catch (_) {}
@@ -64,8 +70,33 @@ export default function NotificationBell({ egliseId }) {
     return () => {
       try { supabase.removeChannel(channel); } catch (_) {}
     };
-  }, [egliseId]);
+  }, [egliseId, canSeeNouveauxMembres]);
 
+  // ─── Si le rôle n'a pas accès → cloche sans badge, pas de compteur ───────
+  if (!canSeeNouveauxMembres) {
+    return (
+      <button
+        onClick={() => router.push("/notifications")}
+        title="Voir les notifications"
+        style={{
+          position: "relative",
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          fontSize: "1.1rem",
+          lineHeight: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "2px",
+        }}
+      >
+        🔔
+      </button>
+    );
+  }
+
+  // ─── Rôles autorisés → cloche avec badge ─────────────────────────────────
   return (
     <>
       <button

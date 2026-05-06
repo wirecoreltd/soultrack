@@ -43,69 +43,40 @@ export default function HeaderPages() {
   const [denomination, setDenomination] = useState("");
   const [ville, setVille] = useState("");
   const [pays, setPays] = useState("");
-  const [superviseur, setSuperviseur] = useState("");
   const [logoUrl, setLogoUrl] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState(null);
+
+  const [roles, setRoles] = useState([]); // ✅ roles tableau
+  const [userRole, setUserRole] = useState([]); // ✅ utilisé pour UI
+
   const [invitationPending, setInvitationPending] = useState(false);
   const [pendingToken, setPendingToken] = useState(null);
 
-  // Pour passer l'eglise_id et userId à NotificationBell
   const [egliseId, setEgliseId] = useState(null);
-  const [userId, setUserId] = useState(null); // ✅ AJOUT
+  const [userId, setUserId] = useState(null);
 
-        const storedRoles = localStorage.getItem("userRole");
-          if (storedRoles) {
-            try {
-              const parsed = JSON.parse(storedRoles);
-              setRoles(Array.isArray(parsed) ? parsed : [parsed]);
-            } catch {
-              setRoles([storedRoles]);
-            }
-          }
+  // 🔁 Récupérer rôles depuis localStorage
+  useEffect(() => {
+    const storedRoles = localStorage.getItem("userRole");
 
-          const handleLogoClick = () => {
-          if (!roles || roles.length === 0) {
-            router.push("/index");
-            return;
-          }        
-          // 🔥 Plusieurs rôles → dashboard
-          if (roles.length > 1) {
-            router.push("/index");
-            return;
-          }
-        
-          // 🔥 Un seul rôle → redirection directe
-          const role = roles[0];
-        
-          if (role === "ResponsableCellule" || role === "SuperviseurCellule") {
-            router.push("/cellule/cellules-hub");
-        
-          } else if (role === "ResponsableFamilles") {
-            router.push("/famille/familles-hub");
-        
-          } else if (role === "Conseiller") {
-            router.push("/conseiller/conseiller-hub");
-        
-          } else if (role === "ResponsableEvangelisation") {
-            router.push("/evangelisation/evangelisation-hub");
-        
-          } else if (role === "ResponsableIntegration") {
-            router.push("/membres/membres-hub");
-        
-          } else {
-            router.push("/index");
-          }
-        };
-        
-          
+    if (storedRoles) {
+      try {
+        const parsed = JSON.parse(storedRoles);
+        setRoles(Array.isArray(parsed) ? parsed : [parsed]);
+      } catch {
+        setRoles([storedRoles]);
+      }
+    }
+  }, []);
+
+  // 🔁 Fetch profil
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) return;
 
-        setUserId(user.id); // ✅ AJOUT
+        setUserId(user.id);
 
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
@@ -116,12 +87,10 @@ export default function HeaderPages() {
         if (profileError) throw profileError;
 
         setPrenom(profile?.prenom || "Utilisateur");
-        setUserRole(profile?.role || null);
+        setUserRole(profile?.roles || []);
 
         if (profile?.eglise_id) {
           setEgliseId(profile.eglise_id);
-
-          console.log("✅ HeaderPages egliseId:", profile.eglise_id);
 
           const { data: egliseData } = await supabase
             .from("eglises")
@@ -137,7 +106,7 @@ export default function HeaderPages() {
             setPays(egliseData.pays || "");
           }
         }
-        
+
       } catch (err) {
         console.error("Erreur récupération profil :", err);
       } finally {
@@ -147,6 +116,35 @@ export default function HeaderPages() {
 
     fetchProfile();
   }, []);
+
+  // 🔁 Navigation intelligente via logo
+  const handleLogoClick = () => {
+    if (!roles || roles.length === 0) {
+      router.push("/index");
+      return;
+    }
+
+    if (roles.length > 1) {
+      router.push("/index");
+      return;
+    }
+
+    const role = roles[0];
+
+    if (role === "ResponsableCellule" || role === "SuperviseurCellule") {
+      router.push("/cellule/cellules-hub");
+    } else if (role === "ResponsableFamilles") {
+      router.push("/famille/familles-hub");
+    } else if (role === "Conseiller") {
+      router.push("/conseiller/conseiller-hub");
+    } else if (role === "ResponsableEvangelisation") {
+      router.push("/evangelisation/evangelisation-hub");
+    } else if (role === "ResponsableIntegration") {
+      router.push("/membres/membres-hub");
+    } else {
+      router.push("/index");
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -165,7 +163,7 @@ export default function HeaderPages() {
       {/* HEADER */}
       <div className="flex justify-between items-start mb-1">
 
-        {/* LEFT — Retour + Logo */}
+        {/* LEFT */}
         <div className="flex flex-col items-center">
           <button
             onClick={() => router.back()}
@@ -179,29 +177,28 @@ export default function HeaderPages() {
               src="/logo.png"
               alt="Logo SoulTrack"
               className="w-10 h-auto cursor-pointer hover:opacity-80 transition"
-              const [roles, setRoles] = useState([]);
+              onClick={handleLogoClick}
             />
           </div>
         </div>
 
-        {/* RIGHT — Cloche + Déconnexion + Nom */}
+        {/* RIGHT */}
         <div className="flex flex-col items-end text-right text-sm leading-tight">
 
           <div className="flex items-center gap-3">
 
-            {/* 📩 Invitation admin */}
-            {userRole === "Administrateur" && invitationPending && (
+            {/* Invitation */}
+            {userRole?.includes("Administrateur") && invitationPending && (
               <button
                 onClick={handleClickInvitation}
                 className="relative text-amber-300 text-lg hover:text-gray-200 transition"
-                title="Invitation en attente"
               >
                 📩
                 <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
               </button>
             )}
 
-            {/* 🔔 NotificationBell — egliseId + userRole + userId ✅ */}
+            {/* Notifications */}
             {egliseId && userId && (
               <NotificationBell
                 egliseId={egliseId}
@@ -210,54 +207,42 @@ export default function HeaderPages() {
               />
             )}
 
-            {/* Déconnexion */}
+            {/* Logout */}
             <button
               onClick={handleLogout}
-              className="text-amber-300 text-sm hover:text-gray-200 transition whitespace-nowrap"
+              className="text-amber-300 text-sm hover:text-gray-200 transition"
             >
               Déconnexion
             </button>
           </div>
 
-          {/* Nom connecté */}
           <p className="text-white text-sm mt-1">
             Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
           </p>
         </div>
       </div>
 
-      {/* Infos église */}
+      {/* INFOS EGLISE */}
       <div className="flex flex-col items-center mb-4">
         {logoUrl && (
-          <div className="mt-2">
-            <img src={logoUrl} alt="Logo Église" className="w-12 h-12 object-contain mb-2" />
-          </div>
+          <img src={logoUrl} className="w-12 h-12 object-contain mb-2" />
         )}
 
         <p className="text-white font-semibold text-lg mt-2">
-          {denomination && (
-            <span className="text-white">
-              {denomination}{eglise && " - "}
-            </span>
-          )}
-          {eglise}
+          {denomination && `${denomination} - `}{eglise}
         </p>
 
-        <p className="text-amber-300 mt-2 text-sm">          
-          {ville}
-        </p>
+        <p className="text-amber-300 mt-2 text-sm">{ville}</p>
 
         {pays && (
           <p className="text-white mt-2 text-sm flex items-center gap-1">
             <img
               src={`https://flagcdn.com/w20/${getIsoCode(pays)}.png`}
-              srcSet={`https://flagcdn.com/w40/${getIsoCode(pays)}.png 2x`}
               width="20"
               height="14"
               alt={pays}
-              style={{ borderRadius: "2px", display: "inline-block" }}
             />
-            <span className="text-white">{pays}</span>
+            {pays}
           </p>
         )}
       </div>

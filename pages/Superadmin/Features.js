@@ -14,6 +14,9 @@ export default function FeaturesPage() {
   );
 }
 
+// ─────────────────────────────────────────────
+// FEATURES LIST
+// ─────────────────────────────────────────────
 const ALL_FEATURES = [
   { key: "membres", label: "Membres", emoji: "🧭" },
   { key: "evangelisation", label: "Évangélisation", emoji: "✝️" },
@@ -25,92 +28,110 @@ const ALL_FEATURES = [
 ];
 
 function Features() {
-  const [loading, setLoading] = useState(true);
   const [eglises, setEglises] = useState([]);
   const [selected, setSelected] = useState(null);
+
   const [features, setFeatures] = useState({});
+  const [loading, setLoading] = useState(false);
   const [activeCount, setActiveCount] = useState(0);
 
-  // ─── load eglises ───
-  const fetchEglises = async () => {
-    const { data } = await supabase
-      .from("eglises")
-      .select("id, nom, ville");
+  // ─────────────────────────────────────────────
+  // LOAD EGLISES
+  // ─────────────────────────────────────────────
+  useEffect(() => {
+    const fetchEglises = async () => {
+      const { data } = await supabase
+        .from("eglises")
+        .select("id, nom, ville");
 
-    setEglises(data || []);
-  };
+      setEglises(data || []);
+    };
 
-  // ─── load features ───
+    fetchEglises();
+  }, []);
+
+  // ─────────────────────────────────────────────
+  // LOAD FEATURES (IMPORTANT FIX ICI)
+  // ─────────────────────────────────────────────
   const fetchFeatures = async (egliseId) => {
-  const { data } = await supabase
-    .from("eglise_features")
-    .select("feature, active")
-    .eq("eglise_id", egliseId);
+    setLoading(true);
 
-  const map = {};
+    const { data, error } = await supabase
+      .from("eglise_features")
+      .select("feature, active")
+      .eq("eglise_id", egliseId);
 
-  ALL_FEATURES.forEach((f) => {
-    map[f.key] = false; // default OFF
-  });
+    if (error) {
+      console.error(error);
+      setLoading(false);
+      return;
+    }
 
-  data.forEach((f) => {
-    map[f.feature] = f.active;
-  });
+    // ✔ STEP 1 : reset TOTAL depuis ALL_FEATURES
+    const map = Object.fromEntries(
+      ALL_FEATURES.map((f) => [f.key, false])
+    );
 
-  setFeatures({ ...map }); // important clone
-};
+    // ✔ STEP 2 : overwrite avec DB
+    data?.forEach((f) => {
+      map[f.feature] = f.active;
+    });
 
+    setFeatures(map);
+
+    // ✔ compteur actifs
     const count = Object.values(map).filter(Boolean).length;
     setActiveCount(count);
 
     setLoading(false);
   };
 
-  // ─── toggle feature ───
+  // ─────────────────────────────────────────────
+  // TOGGLE FEATURE
+  // ─────────────────────────────────────────────
   const toggle = async (key) => {
     if (!selected) return;
 
     const newValue = !features[key];
 
-    setFeatures((prev) => ({
-      ...prev,
-      [key]: newValue,
-    }));
+    // UI optimiste
+    const updated = { ...features, [key]: newValue };
+    setFeatures(updated);
 
-    const updated = {
-      eglise_id: selected.id,
-      feature: key,
-      active: newValue,
-    };
+    setActiveCount(Object.values(updated).filter(Boolean).length);
 
-    await supabase
+    // DB update
+    const { error } = await supabase
       .from("eglise_features")
-      .upsert(updated, { onConflict: "eglise_id,feature" });
+      .upsert(
+        {
+          eglise_id: selected.id,
+          feature: key,
+          active: newValue,
+        },
+        { onConflict: "eglise_id,feature" }
+      );
 
-    const count = Object.values({
-      ...features,
-      [key]: newValue,
-    }).filter(Boolean).length;
+    if (error) {
+      console.error(error);
 
-    setActiveCount(count);
+      // rollback
+      setFeatures(features);
+    }
   };
-
-  useEffect(() => {
-    fetchEglises();
-  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-[#333699]">
 
       <HeaderPages />
 
-      {/* TITLE */}
+      {/* HEADER */}
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold text-white mt-4">
           🔧 Modules Églises
         </h1>
         <p className="text-white/80 mt-2">
-          Gestion des fonctionnalités par église
+          Activation des fonctionnalités par église
         </p>
       </div>
 
@@ -154,7 +175,7 @@ function Features() {
         </div>
       )}
 
-      {/* GRID FEATURES */}
+      {/* GRID */}
       {selected && (
         <div className="w-full max-w-5xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 

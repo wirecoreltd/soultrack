@@ -21,6 +21,8 @@ function CreateCelluleContent() {
   const [responsables, setResponsables] = useState([]);
   const [superviseurs, setSuperviseurs] = useState([]);
   const [egliseId, setEgliseId] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -32,12 +34,19 @@ function CreateCelluleContent() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("eglise_id")
+        .select("eglise_id, role")
         .eq("id", user.id)
         .single();
 
       if (!profile) return;
       setEgliseId(profile.eglise_id);
+      setUserRole(profile.role);
+      setUserId(user.id);
+
+      // ✅ Si SuperviseurCellule → on met son id automatiquement
+      if (profile.role === "SuperviseurCellule") {
+        setFormData((prev) => ({ ...prev, superviseur_id: user.id }));
+      }
     };
 
     initContext();
@@ -196,19 +205,21 @@ function CreateCelluleContent() {
             />
           )}
 
-          {/* ✅ Superviseur */}
-          <select
-            value={formData.superviseur_id}
-            onChange={(e) => setFormData({ ...formData, superviseur_id: e.target.value })}
-            className="w-full rounded-xl border p-3 text-black"
-          >
-            <option value="">-- Sélectionnez un superviseur (optionnel) --</option>
-            {superviseurs.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.prenom} {s.nom}
-              </option>
-            ))}
-          </select>
+          {/* ✅ Superviseur — visible seulement pour l'Administrateur */}
+          {userRole === "Administrateur" && (
+            <select
+              value={formData.superviseur_id}
+              onChange={(e) => setFormData({ ...formData, superviseur_id: e.target.value })}
+              className="w-full rounded-xl border p-3 text-black"
+            >
+              <option value="">-- Sélectionnez un superviseur (optionnel) --</option>
+              {superviseurs.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.prenom} {s.nom}
+                </option>
+              ))}
+            </select>
+          )}
 
           <div className="flex gap-4">
             <button

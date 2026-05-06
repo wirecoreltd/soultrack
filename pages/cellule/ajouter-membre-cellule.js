@@ -13,7 +13,7 @@ import { checkLimiteAtteinte } from "../../lib/checkLimite";
 
 export default function AjouterMembreCellule() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule"]}>
+    <ProtectedRoute allowedRoles={["Superadmin", "ResponsableCellule"]}>
       <AjouterMembreCelluleContent />
     </ProtectedRoute>
   );

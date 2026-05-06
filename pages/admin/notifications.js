@@ -191,18 +191,55 @@ function NotificationsContent() {
       allNotifs = [...allNotifs, ...mapped];
     }
 
-    // ── 4. ✅ NOUVEAU — Membres assignés à CE responsable (notification_responsable = true) ──
-    // Visible par : ResponsableCellule, ResponsableFamilles, Conseiller
-    // (et Admin pour tout voir)
+    // ── 4. ✅ Membres assignés à CE responsable (notification_responsable = true) ──
+    // 3 cas : via suivi_responsable_id (conseiller), cellule_id, famille_id
     {
-      const { data } = await supabase
+      let assignesNotifs = [];
+
+      // 4a. Conseiller → suivi_responsable_id = profile.id
+      const { data: parConseiller } = await supabase
         .from("membres_complets")
-        .select("id, prenom, nom, ville, created_at, date_envoi_suivi, eglise_id, suivi_responsable, suivi_cellule_nom, famille_id")
+        .select("id, prenom, nom, ville, created_at, date_envoi_suivi, eglise_id, suivi_cellule_nom, famille_id, cellule_id")
         .eq("suivi_responsable_id", profile.id)
         .eq("notification_responsable", true)
         .order("date_envoi_suivi", { ascending: false });
+      assignesNotifs = [...assignesNotifs, ...(parConseiller || [])];
 
-      const mapped = (data || []).map((m) => ({
+      // 4b. ResponsableCellule → cellule_id dans ses cellules
+      const { data: cellulesDuResp } = await supabase
+        .from("cellules")
+        .select("id")
+        .eq("responsable_id", profile.id);
+      const idsCellules = (cellulesDuResp || []).map((c) => c.id);
+
+      if (idsCellules.length > 0) {
+        const { data: parCellule } = await supabase
+          .from("membres_complets")
+          .select("id, prenom, nom, ville, created_at, date_envoi_suivi, eglise_id, suivi_cellule_nom, famille_id, cellule_id")
+          .in("cellule_id", idsCellules)
+          .eq("notification_responsable", true)
+          .order("date_envoi_suivi", { ascending: false });
+        assignesNotifs = [...assignesNotifs, ...(parCellule || [])];
+      }
+
+      // 4c. ResponsableFamilles → famille_id dans ses familles
+      const { data: famillesDuResp } = await supabase
+        .from("familles")
+        .select("id")
+        .eq("responsable_id", profile.id);
+      const idsFamilles = (famillesDuResp || []).map((f) => f.id);
+
+      if (idsFamilles.length > 0) {
+        const { data: parFamille } = await supabase
+          .from("membres_complets")
+          .select("id, prenom, nom, ville, created_at, date_envoi_suivi, eglise_id, suivi_cellule_nom, famille_id, cellule_id")
+          .in("famille_id", idsFamilles)
+          .eq("notification_responsable", true)
+          .order("date_envoi_suivi", { ascending: false });
+        assignesNotifs = [...assignesNotifs, ...(parFamille || [])];
+      }
+
+      const mapped = assignesNotifs.map((m) => ({
         ...m,
         _type: "membre_assigne",
         _date: m.date_envoi_suivi || m.created_at,

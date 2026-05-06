@@ -18,6 +18,7 @@ export default async function handler(req, res) {
       responsable_nom,
       telephone,
       eglise_id,
+      superviseur_id, // ✅ nouveau champ
     } = req.body;
 
     if (!nom || !zone || !responsable_id || !responsable_nom || !eglise_id) {
@@ -31,6 +32,7 @@ export default async function handler(req, res) {
       responsable_id,
       telephone,
       eglise_id,
+      superviseur_id: superviseur_id || null, // ✅ sauvegardé en base
       created_at: new Date(),
     });
 
@@ -40,6 +42,7 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json({ success: true });
+
   } catch (err) {
     console.error("Server error:", err);
     return res.status(500).json({ error: "Server error" });

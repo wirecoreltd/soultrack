@@ -4,29 +4,37 @@ import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 
 // ─── Rôles par type de notification ──────────────────────────────────────────
-const ROLES_NOUVEAUX_MEMBRES    = ["Administrateur", "ResponsableIntegration"];
+const ROLES_NOUVEAUX_MEMBRES     = ["Administrateur", "ResponsableIntegration"];
 const ROLES_NOUVEAUX_EVANGELISES = ["Administrateur", "ResponsableEvangelisation"];
+const ROLES_SUPERVISEUR_CELLULE  = ["SuperviseurCellule"];
+const ROLES_RESPONSABLE_CELLULE  = ["ResponsableCellule"];
 
-export default function NotificationBell({ egliseId, userRole }) {
-  const [countMembres, setCountMembres]       = useState(0);
+export default function NotificationBell({ egliseId, userRole, userId }) {
+  const [countMembres,     setCountMembres]     = useState(0);
   const [countEvangelises, setCountEvangelises] = useState(0);
-  const [isNew, setIsNew]                     = useState(false);
+  const [countCellule,     setCountCellule]     = useState(0);
+  const [isNew,            setIsNew]            = useState(false);
+  const [celluleIds,       setCelluleIds]       = useState([]);
   const router     = useRouter();
   const channelRef = useRef(null);
 
   const canSeeMembres     = ROLES_NOUVEAUX_MEMBRES.includes(userRole);
   const canSeeEvangelises = ROLES_NOUVEAUX_EVANGELISES.includes(userRole);
+  const canSeeSuperviseur = ROLES_SUPERVISEUR_CELLULE.includes(userRole);
+  const canSeeResponsable = ROLES_RESPONSABLE_CELLULE.includes(userRole);
 
-  // ─── Total affiché sur le badge ───────────────────────────────────────────
-  const totalCount = (canSeeMembres ? countMembres : 0)
-                   + (canSeeEvangelises ? countEvangelises : 0);
+  // ─── Total badge ──────────────────────────────────────────────────────────
+  const totalCount = (canSeeMembres                          ? countMembres     : 0)
+                   + (canSeeEvangelises                      ? countEvangelises : 0)
+                   + (canSeeSuperviseur || canSeeResponsable ? countCellule     : 0);
 
   // ─── Chargement initial ───────────────────────────────────────────────────
   useEffect(() => {
-    if (!egliseId) return;
+    if (!egliseId || !userId) return;
 
     const fetchCounts = async () => {
-      // Nouveaux membres
+
+      // ── Administrateur + ResponsableIntegration → nouveaux membres ──
       if (canSeeMembres) {
         const { count: total } = await supabase
           .from("membres_complets")
@@ -36,7 +44,7 @@ export default function NotificationBell({ egliseId, userRole }) {
         setCountMembres(total || 0);
       }
 
-      // Évangélisés non envoyés
+      // ── Administrateur + ResponsableEvangelisation → évangélisés non envoyés ──
       if (canSeeEvangelises) {
         const { count: total } = await supabase
           .from("evangelises")
@@ -45,22 +53,62 @@ export default function NotificationBell({ egliseId, userRole }) {
           .eq("status_suivi", "Non envoyé");
         setCountEvangelises(total || 0);
       }
+
+      // ── SuperviseurCellule → cellules où superviseur_id = userId ──
+      if (canSeeSuperviseur) {
+        const { data: cellules } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("superviseur_id", userId);
+
+        const ids = (cellules || []).map((c) => c.id);
+        setCelluleIds(ids);
+
+        if (ids.length > 0) {
+          const { count: total } = await supabase
+            .from("membres_complets")
+            .select("id", { count: "exact", head: true })
+            .in("cellule_id", ids)
+            .eq("etat_contact", "nouveau");
+          setCountCellule(total || 0);
+        }
+      }
+
+      // ── ResponsableCellule → cellules où responsable_id = userId ──
+      if (canSeeResponsable) {
+        const { data: cellules } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", userId);
+
+        const ids = (cellules || []).map((c) => c.id);
+        setCelluleIds(ids);
+
+        if (ids.length > 0) {
+          const { count: total } = await supabase
+            .from("membres_complets")
+            .select("id", { count: "exact", head: true })
+            .in("cellule_id", ids)
+            .eq("etat_contact", "nouveau");
+          setCountCellule(total || 0);
+        }
+      }
     };
 
     fetchCounts();
-  }, [egliseId, canSeeMembres, canSeeEvangelises]);
+  }, [egliseId, userId, canSeeMembres, canSeeEvangelises, canSeeSuperviseur, canSeeResponsable]);
 
   // ─── Realtime ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!egliseId) return;
+    if (!egliseId || !userId) return;
 
     if (channelRef.current) {
       try { supabase.removeChannel(channelRef.current); } catch (_) {}
     }
 
-    const channel = supabase.channel(`notif-bell-${egliseId}`);
+    const channel = supabase.channel(`notif-bell-${egliseId}-${userId}`);
 
-    // ── Membres ──
+    // ── Membres (Administrateur + ResponsableIntegration) ──
     if (canSeeMembres) {
       channel
         .on("postgres_changes",
@@ -85,7 +133,7 @@ export default function NotificationBell({ egliseId, userRole }) {
         );
     }
 
-    // ── Évangélisés ──
+    // ── Évangélisés (Administrateur + ResponsableEvangelisation) ──
     if (canSeeEvangelises) {
       channel
         .on("postgres_changes",
@@ -110,13 +158,38 @@ export default function NotificationBell({ egliseId, userRole }) {
         );
     }
 
+    // ── SuperviseurCellule + ResponsableCellule → leurs cellules ──
+    if ((canSeeSuperviseur || canSeeResponsable) && celluleIds.length > 0) {
+      channel
+        .on("postgres_changes",
+          { event: "INSERT", schema: "public", table: "membres_complets" },
+          (payload) => {
+            const row = payload.new;
+            if (celluleIds.includes(row.cellule_id) && row.etat_contact === "nouveau") {
+              setCountCellule((prev) => prev + 1);
+              setIsNew(true);
+              setTimeout(() => setIsNew(false), 2000);
+            }
+          }
+        )
+        .on("postgres_changes",
+          { event: "UPDATE", schema: "public", table: "membres_complets" },
+          (payload) => {
+            const row = payload.new;
+            if (celluleIds.includes(row.cellule_id) && row.etat_contact !== "nouveau") {
+              setCountCellule((prev) => Math.max(0, prev - 1));
+            }
+          }
+        );
+    }
+
     channel.subscribe();
     channelRef.current = channel;
 
     return () => {
       try { supabase.removeChannel(channel); } catch (_) {}
     };
-  }, [egliseId, canSeeMembres, canSeeEvangelises]);
+  }, [egliseId, userId, celluleIds, canSeeMembres, canSeeEvangelises, canSeeSuperviseur, canSeeResponsable]);
 
   // ─── Rendu ────────────────────────────────────────────────────────────────
   return (
@@ -140,26 +213,18 @@ export default function NotificationBell({ egliseId, userRole }) {
       >
         🔔
         {totalCount > 0 && (
-          <span
-            style={{
-              position: "absolute",
-              top: "-5px",
-              right: "-6px",
-              background: "#ef4444",
-              color: "#fff",
-              fontSize: "9px",
-              fontWeight: "800",
-              borderRadius: "9999px",
-              minWidth: "16px",
-              height: "16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "0 3px",
-              boxShadow: "0 0 0 2px #333699",
-              lineHeight: 1,
-            }}
-          >
+          <span style={{
+            position: "absolute",
+            top: "-5px", right: "-6px",
+            background: "#ef4444", color: "#fff",
+            fontSize: "9px", fontWeight: "800",
+            borderRadius: "9999px",
+            minWidth: "16px", height: "16px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "0 3px",
+            boxShadow: "0 0 0 2px #333699",
+            lineHeight: 1,
+          }}>
             {totalCount > 99 ? "99+" : totalCount}
           </span>
         )}

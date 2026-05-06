@@ -39,7 +39,7 @@ function CelluleRow({ c, router }) {
           {c.cellule_full}
         </div>
         <div className="flex-[2] text-white text-sm">{c.responsable}</div>
-        <div className="flex-[2] text-white text-sm">{c.superviseur || "—"}</div>
+        <div className="flex-[2] text-white text-sm">{c.superviseur ? `${c.superviseur.nom} ${c.superviseur.prenom}` : "—"}</div>
 
         {/* Téléphone */}
         <div className="flex-[2] flex justify-center relative text-sm">
@@ -186,7 +186,7 @@ function ListCellulesContent() {
 
     let query = supabase
         .from("cellules")
-        .select("*")
+        .select(`*,superviseur:superviseur_id ( nom, prenom )`)
         .eq("eglise_id", profile.eglise_id)
         .order("cellule_full");
 

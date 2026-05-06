@@ -129,118 +129,123 @@ function MembresCelluleContent() {
 }, []);
 
   // ------------------- FETCH MEMBRES -------------------
-  useEffect(() => {
-    if (memberIdStr) return;
+useEffect(() => {
+  if (memberIdStr) return;
 
-    const fetchAllMembers = async () => {
-      setLoading(true);
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+  const fetchAllMembers = async () => {
+    setLoading(true);
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id, roles, eglise_id")
-          .eq("id", user.id)
-          .single();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-        if (!profile) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, role, eglise_id")
+        .eq("id", user.id)
+        .single();
 
-        let query = supabase
-          .from("membres_complets")
-          .select("*")
-          .eq("statut_suivis", 3)
-          .eq("eglise_id", profile.eglise_id)
-          .not("cellule_id", "is", null)
-          .order("created_at", { ascending: false });
+      if (!profile) return;
 
-         let mesCelluleIds = [];
-          if (profile.role === "Administrateur") {
-            query = query.eq("eglise_id", profile.eglise_id);
-          
-            if (celluleId) {
-              query = query.eq("cellule_id", celluleId);
-            }
-          
-          } else if (profile.role === "ResponsableCellule") {
-          
-            const { data: mesCellules } = await supabase
-              .from("cellules")
-              .select("id")
-              .eq("responsable_id", profile.id)
-              .eq("eglise_id", profile.eglise_id);
-          
-            mesCelluleIds = (mesCellules || []).map(c => c.id);
-          
-            if (!mesCelluleIds.length) {
-              setMembres([]);
-              setMessage("Aucun membre trouvé");
-              setLoading(false);
-              return;
-            }
-          
-            query = celluleId && mesCelluleIds.includes(celluleId)
-              ? query.eq("cellule_id", celluleId)
-              : query.in("cellule_id", mesCelluleIds);
-          
-          } else if (profile.role === "SuperviseurCellule") {
-          
-            const { data: mesCellules } = await supabase
-              .from("cellules")
-              .select("id")
-              .eq("superviseur_id", profile.id)
-              .eq("eglise_id", profile.eglise_id);
-          
-            mesCelluleIds = (mesCellules || []).map(c => c.id);
-          
-            if (!mesCelluleIds.length) {
-              setMembres([]);
-              setMessage("Aucun membre trouvé");
-              setLoading(false);
-              return;
-            }
-          
-            query = celluleId && mesCelluleIds.includes(celluleId)
-              ? query.eq("cellule_id", celluleId)
-              : query.in("cellule_id", mesCelluleIds);
-          
-          } else {
-            setMembres([]);
-            setMessage("Accès non autorisé");
-            setLoading(false);
-            return;
-          }
-      
+      let query = supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("statut_suivis", 3)
+        .eq("eglise_id", profile.eglise_id)
+        .not("cellule_id", "is", null)
+        .order("created_at", { ascending: false });
 
-          // ✅ Si celluleId dans l'URL, vérifier qu'il appartient bien au responsable
-          if (celluleId) {
-            if (mesCelluleIds.includes(celluleId)) {
-              // celluleId autorisé → filtrer uniquement sur cette cellule
-              query = query.eq("cellule_id", celluleId);
-            } else {
-              // celluleId non autorisé → on ignore et on affiche toutes ses cellules
-              query = query.in("cellule_id", mesCelluleIds);
-            }
-          } else {
-            // Pas de celluleId dans l'URL → toutes ses cellules
-            query = query.in("cellule_id", mesCelluleIds);
-          }        
+      let mesCelluleIds = [];
 
-        const { data, error } = await query;
-        if (error) throw error;
+      // ---------------- ADMIN ----------------
+      if (profile.role === "Administrateur") {
 
-        setMembres(data || []);
-        if (!data || data.length === 0) setMessage("Aucun membre trouvé");
-      } catch (err) {
-        console.error(err);
-        setMessage("Erreur de chargement");
-      } finally {
-        setLoading(false);
+        if (celluleId) {
+          query = query.eq("cellule_id", celluleId);
+        }
+
       }
-    };
 
-    fetchAllMembers();
-  }, [memberIdStr, celluleId]);
+      // ---------------- RESPONSABLE ----------------
+      else if (profile.role === "ResponsableCellule") {
+
+        const { data: mesCellules } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", profile.id)
+          .eq("eglise_id", profile.eglise_id);
+
+        mesCelluleIds = (mesCellules || []).map(c => c.id);
+
+        if (!mesCelluleIds.length) {
+          setMembres([]);
+          setMessage("Aucun membre trouvé");
+          setLoading(false);
+          return;
+        }
+
+        // sécurité de base
+        query = query.in("cellule_id", mesCelluleIds);
+
+        // filtre optionnel sécurisé
+        if (celluleId && mesCelluleIds.includes(celluleId)) {
+          query = query.eq("cellule_id", celluleId);
+        }
+      }
+
+      // ---------------- SUPERVISEUR ----------------
+      else if (profile.role === "SuperviseurCellule") {
+
+        const { data: mesCellules } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("superviseur_id", profile.id)
+          .eq("eglise_id", profile.eglise_id);
+
+        mesCelluleIds = (mesCellules || []).map(c => c.id);
+
+        if (!mesCelluleIds.length) {
+          setMembres([]);
+          setMessage("Aucun membre trouvé");
+          setLoading(false);
+          return;
+        }
+
+        // sécurité de base
+        query = query.in("cellule_id", mesCelluleIds);
+
+        // filtre optionnel sécurisé
+        if (celluleId && mesCelluleIds.includes(celluleId)) {
+          query = query.eq("cellule_id", celluleId);
+        }
+      }
+
+      // ---------------- AUTRE ROLE ----------------
+      else {
+        setMembres([]);
+        setMessage("Accès non autorisé");
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      setMembres(data || []);
+      if (!data || data.length === 0) {
+        setMessage("Aucun membre trouvé");
+      }
+
+    } catch (err) {
+      console.error(err);
+      setMessage("Erreur de chargement");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchAllMembers();
+}, [memberIdStr, celluleId]);
 
   // ------------------- CLICK OUTSIDE -------------------
   const handleClickOutside = useCallback((e) => {

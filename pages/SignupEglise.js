@@ -8,15 +8,16 @@ export default function SignupEglise() {
   const router = useRouter();
   const [planId, setPlanId] = useState("free");
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const plan = params.get("plan");
-    if (!plan) {
-      router.push("/site/pricing");
-    } else {
-      setPlanId(plan);
-    }
-  }, []);
+ useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const plan = params.get("plan");
+
+  if (plan) {
+    setPlanId(plan);
+  } else {
+    setPlanId("free"); // 👈 plan par défaut
+  }
+}, []);
 
   const PLANS_LABELS = {
     free: "🌱 Départ — Gratuit",
@@ -123,10 +124,20 @@ export default function SignupEglise() {
 
         <div className="w-full bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 text-center">
           <p className="text-xs text-gray-500 mb-1">Plan sélectionné</p>
-          <p className="font-bold text-blue-700">{PLANS_LABELS[planId]}</p>
+          <select
+  value={planId}
+  onChange={(e) => setPlanId(e.target.value)}
+  className="w-full mt-2 border border-blue-200 rounded-lg p-2 text-center font-semibold text-blue-700 bg-white"
+>
+  {Object.entries(PLANS_LABELS).map(([key, label]) => (
+    <option key={key} value={key}>
+      {label}
+    </option>
+  ))}
+</select>
           <button
             type="button"
-            onClick={() => router.push("site/pricing")}
+            onClick={() => router.push("/site/pricing")}
             className="text-xs text-blue-400 underline mt-1"
           >
             Changer de plan

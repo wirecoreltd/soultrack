@@ -299,6 +299,7 @@ function EvangelisationContent() {
         date_suivi: new Date().toISOString(),
         eglise_id: profile?.eglise_id || null,
         type_evangelisation: m.type_evangelisation,
+        notification_responsable: true,
       }));
 
       const { data: insertedSuivis, error: insertError } = await supabase

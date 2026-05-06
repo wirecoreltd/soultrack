@@ -226,14 +226,7 @@ function MembresCelluleContent() {
           } else {
             // Pas de celluleId dans l'URL → toutes ses cellules
             query = query.in("cellule_id", mesCelluleIds);
-          }
-
-        } else {
-          // Administrateur / Superviseur : celluleId dans l'URL appliqué normalement
-          if (celluleId) {
-            query = query.eq("cellule_id", celluleId);
-          }
-        }
+          }        
 
         const { data, error } = await query;
         if (error) throw error;

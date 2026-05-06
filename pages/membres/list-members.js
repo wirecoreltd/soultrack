@@ -31,7 +31,7 @@ function getRoles(profile) {
 
 export default function ListMembers() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableCellule"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller","ResponsableIntegration", "ResponsableCellule"]}>
       <ListMembersContent />
     </ProtectedRoute>
   );

@@ -192,15 +192,23 @@ function ListCellulesContent() {
 
     setUserRole(profile.role);
 
-    let query = supabase
-        .from("cellules")
-        .select(`*,superviseur:superviseur_id ( nom, prenom )`)
-        .eq("eglise_id", profile.eglise_id)
-        .order("cellule_full");
+   let query = supabase
+  .from("cellules")
+  .select(`*, superviseur:superviseur_id ( nom, prenom )`)
+  .eq("eglise_id", profile.eglise_id)
+  .order("cellule_full");
 
-    if (profile.role === "ResponsableCellule") {
-      query = query.eq("responsable_id", profile.id);
-    }
+// 🔐 FILTRAGE STRICT
+if (profile.role === "ResponsableCellule") {
+  query = query.eq("responsable_id", profile.id);
+
+} else if (profile.role === "SuperviseurCellule") {
+  query = query.eq("superviseur_id", profile.id);
+
+} else if (profile.role !== "Administrateur") {
+  // 🚨 BLOQUE TOUT si rôle inattendu
+  query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+}
 
     const { data: cellsData } = await query;
 

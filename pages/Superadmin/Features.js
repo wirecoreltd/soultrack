@@ -15,8 +15,18 @@ export default function FeaturesPage() {
 }
 
 // ─────────────────────────────────────────────
-// FEATURES LIST
+// DEFAULT BUSINESS LOGIC
 // ─────────────────────────────────────────────
+const DEFAULT_FEATURES = {
+  membres: true,
+  evangelisation: true,
+  cellules: true,
+  conseiller: true,
+  rapport: true,
+  presence: true,
+  familles: false,
+};
+
 const ALL_FEATURES = [
   { key: "membres", label: "Membres", emoji: "🧭" },
   { key: "evangelisation", label: "Évangélisation", emoji: "✝️" },
@@ -51,7 +61,7 @@ function Features() {
   }, []);
 
   // ─────────────────────────────────────────────
-  // LOAD FEATURES (IMPORTANT FIX ICI)
+  // LOAD FEATURES (FIX FINAL)
   // ─────────────────────────────────────────────
   const fetchFeatures = async (egliseId) => {
     setLoading(true);
@@ -67,19 +77,16 @@ function Features() {
       return;
     }
 
-    // ✔ STEP 1 : reset TOTAL depuis ALL_FEATURES
-    const map = Object.fromEntries(
-      ALL_FEATURES.map((f) => [f.key, false])
-    );
+    // ✔ STEP 1 : base métier (IMPORTANT)
+    const map = { ...DEFAULT_FEATURES };
 
-    // ✔ STEP 2 : overwrite avec DB
+    // ✔ STEP 2 : override DB
     data?.forEach((f) => {
-      map[f.feature] = f.active;
+      map[f.feature] = f.active === true;
     });
 
     setFeatures(map);
 
-    // ✔ compteur actifs
     const count = Object.values(map).filter(Boolean).length;
     setActiveCount(count);
 
@@ -94,13 +101,15 @@ function Features() {
 
     const newValue = !features[key];
 
-    // UI optimiste
-    const updated = { ...features, [key]: newValue };
+    const updated = {
+      ...features,
+      [key]: newValue,
+    };
+
     setFeatures(updated);
 
     setActiveCount(Object.values(updated).filter(Boolean).length);
 
-    // DB update
     const { error } = await supabase
       .from("eglise_features")
       .upsert(
@@ -114,15 +123,9 @@ function Features() {
 
     if (error) {
       console.error(error);
-
-      // rollback
-      setFeatures(features);
+      setFeatures(features); // rollback
     }
   };
-
-  console.log("SELECTED EGLISE:", selected);
-console.log("DB DATA:", data);
-console.log("FINAL MAP:", map);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 bg-[#333699]">
@@ -135,7 +138,7 @@ console.log("FINAL MAP:", map);
           🔧 Modules Églises
         </h1>
         <p className="text-white/80 mt-2">
-          Activation des fonctionnalités par église
+          Gestion des fonctionnalités par église
         </p>
       </div>
 

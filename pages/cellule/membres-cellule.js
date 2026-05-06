@@ -157,11 +157,9 @@ function MembresCelluleContent() {
         if (profile.role === "Administrateur") {
 
   // ✅ Admin voit tout
-  if (celluleId) {
-    query = query.eq("cellule_id", celluleId);
-  }
+let mesCelluleIds = []; // ✅ TOUJOURS accessible
 
-} else if (profile.role === "ResponsableCellule") {
+if (profile.role === "ResponsableCellule") {
 
   const { data: mesCellules } = await supabase
     .from("cellules")
@@ -169,7 +167,7 @@ function MembresCelluleContent() {
     .eq("responsable_id", profile.id)
     .eq("eglise_id", profile.eglise_id);
 
-  const mesCelluleIds = (mesCellules || []).map(c => c.id);
+  mesCelluleIds = (mesCellules || []).map(c => c.id);
 
   if (mesCelluleIds.length === 0) {
     setMembres([]);
@@ -192,7 +190,7 @@ function MembresCelluleContent() {
     .eq("superviseur_id", profile.id)
     .eq("eglise_id", profile.eglise_id);
 
-  const mesCelluleIds = (mesCellules || []).map(c => c.id);
+  mesCelluleIds = (mesCellules || []).map(c => c.id);
 
   if (mesCelluleIds.length === 0) {
     setMembres([]);
@@ -207,8 +205,14 @@ function MembresCelluleContent() {
     query = query.in("cellule_id", mesCelluleIds);
   }
 
+} else if (profile.role === "Administrateur") {
+
+  if (celluleId) {
+    query = query.eq("cellule_id", celluleId);
+  }
+
 } else {
-  // 🔒 aucun autre rôle ne voit rien
+
   setMembres([]);
   setMessage("Accès non autorisé");
   setLoading(false);

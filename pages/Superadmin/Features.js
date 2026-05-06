@@ -15,7 +15,7 @@ export default function FeaturesPage() {
 }
 
 // ─────────────────────────────────────────────
-// DEFAULT BUSINESS LOGIC
+// DEFAULT BUSINESS LOGIC (SOURCE OF TRUTH)
 // ─────────────────────────────────────────────
 const DEFAULT_FEATURES = {
   membres: true,
@@ -61,7 +61,7 @@ function Features() {
   }, []);
 
   // ─────────────────────────────────────────────
-  // LOAD FEATURES (FIX FINAL)
+  // LOAD FEATURES (FIX FINAL ROBUSTE)
   // ─────────────────────────────────────────────
   const fetchFeatures = async (egliseId) => {
     setLoading(true);
@@ -77,16 +77,17 @@ function Features() {
       return;
     }
 
-    // ✔ STEP 1 : base métier (IMPORTANT)
+    // ✔ STEP 1 : base DEFAULT (source métier)
     const map = { ...DEFAULT_FEATURES };
 
-    // ✔ STEP 2 : override DB
+    // ✔ STEP 2 : override DB (IMPORTANT FIX ACTIVE === TRUE)
     data?.forEach((f) => {
       map[f.feature] = f.active === true;
     });
 
     setFeatures(map);
 
+    // compteur actifs
     const count = Object.values(map).filter(Boolean).length;
     setActiveCount(count);
 
@@ -138,7 +139,7 @@ function Features() {
           🔧 Modules Églises
         </h1>
         <p className="text-white/80 mt-2">
-          Gestion des fonctionnalités par église
+          Activation des fonctionnalités par église
         </p>
       </div>
 
@@ -192,7 +193,7 @@ function Features() {
             </p>
           ) : (
             ALL_FEATURES.map((f) => {
-              const active = features[f.key];
+              const active = features[f.key] === true; // 🔥 FIX IMPORTANT
 
               return (
                 <div

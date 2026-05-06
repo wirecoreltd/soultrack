@@ -126,85 +126,125 @@ function MembresFamilleContent() {
   }, []);
 
   // ------------------- FETCH MEMBRES -------------------
-  useEffect(() => {
-    if (memberIdStr) return;
+  // ------------------- FETCH MEMBRES -------------------
+useEffect(() => {
+  if (memberIdStr) return;
 
-    const fetchAllMembers = async () => {
-      setLoading(true);
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+  const fetchAllMembers = async () => {
+    setLoading(true);
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id, role, eglise_id")
-          .eq("id", user.id)
-          .single();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-        if (!profile) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, role, eglise_id")
+        .eq("id", user.id)
+        .single();
 
-        let query = supabase
-          .from("membres_complets")
-          .select("*")
-          .eq("statut_suivis", 3)
-          .eq("eglise_id", profile.eglise_id)
-          .not("famille_id", "is", null)
-          .order("created_at", { ascending: false });
+      if (!profile) return;
 
-        if (profile.role === "ResponsableFamilles") {
-          // ✅ Récupérer les Familles du responsable EN PREMIER
-          const { data: mesFamilles } = await supabase
-            .from("familles")
-            .select("id")
-            .eq("responsable_id", profile.id)
-            .eq("eglise_id", profile.eglise_id);
+      let query = supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("statut_suivis", 3)
+        .eq("eglise_id", profile.eglise_id)
+        .not("famille_id", "is", null)
+        .order("created_at", { ascending: false });
 
-          const mesFamilleIds = (mesFamilles || []).map((c) => c.id);
+      let mesFamilleIds = [];
 
-          if (mesFamilleIds.length === 0) {
-            setMembres([]);
-            setMessage("Aucun membre trouvé");
-            setLoading(false);
-            return;
-          }
+      // ---------------- ADMIN ----------------
+      if (profile.role === "Administrateur") {
 
-          // ✅ Si FamilleId dans l'URL, vérifier qu'il appartient bien au responsable
-          if (familleId) {
-            if (mesFamilleIds.includes(familleId)) {
-              // FamilleId autorisé → filtrer uniquement sur cetteFamille
-              query = query.eq("famille_id", familleId);
-            } else {
-              // FamilleId non autorisé → on ignore et on affiche toutes ses cellules
-              query = query.in("famille_id", mesFamilleeIds);
-            }
-          } else {
-            // Pas de FamilleId dans l'URL → toutes ses Familles
-            query = query.in("famille_id", mesFamilleIds);
-          }
-
-        } else {
-          // Administrateur / Superviseur : FamilleId dans l'URL appliqué normalement
-          if (familleId) {
-            query = query.eq("famille_id", familleId);
-          }
+        if (familleId) {
+          query = query.eq("famille_id", familleId);
         }
 
-        const { data, error } = await query;
-        if (error) throw error;
-
-        setMembres(data || []);
-        if (!data || data.length === 0) setMessage("Aucun membre trouvé");
-      } catch (err) {
-        console.error(err);
-        setMessage("Erreur de chargement");
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchAllMembers();
-  }, [memberIdStr, familleId]);
+      // ---------------- RESPONSABLE FAMILLES ----------------
+      else if (profile.role === "ResponsableFamilles") {
 
+        const { data: mesFamilles } = await supabase
+          .from("familles")
+          .select("id")
+          .eq("responsable_id", profile.id)
+          .eq("eglise_id", profile.eglise_id);
+
+        mesFamilleIds = (mesFamilles || []).map(f => f.id);
+
+        if (!mesFamilleIds.length) {
+          setMembres([]);
+          setMessage("Aucun membre trouvé");
+          setLoading(false);
+          return;
+        }
+
+        // sécurité de base
+        query = query.in("famille_id", mesFamilleIds);
+
+        // filtre optionnel sécurisé
+        if (familleId && mesFamilleIds.includes(familleId)) {
+          query = query.eq("famille_id", familleId);
+        }
+      }
+
+      // ---------------- SUPERVISEUR FAMILLES ----------------
+      else if (profile.role === "SuperviseurFamilles") {
+
+        const { data: mesFamilles } = await supabase
+          .from("familles")
+          .select("id")
+          .eq("superviseur_id", profile.id)
+          .eq("eglise_id", profile.eglise_id);
+
+        mesFamilleIds = (mesFamilles || []).map(f => f.id);
+
+        if (!mesFamilleIds.length) {
+          setMembres([]);
+          setMessage("Aucun membre trouvé");
+          setLoading(false);
+          return;
+        }
+
+        // sécurité de base
+        query = query.in("famille_id", mesFamilleIds);
+
+        // filtre optionnel sécurisé
+        if (familleId && mesFamilleIds.includes(familleId)) {
+          query = query.eq("famille_id", familleId);
+        }
+      }
+
+      // ---------------- AUTRES ROLES ----------------
+      else {
+        setMembres([]);
+        setMessage("Accès non autorisé");
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      setMembres(data || []);
+
+      if (!data || data.length === 0) {
+        setMessage("Aucun membre trouvé");
+      }
+
+    } catch (err) {
+      console.error(err);
+      setMessage("Erreur de chargement");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchAllMembers();
+}, [memberIdStr, familleId]);
   // ------------------- CLICK OUTSIDE -------------------
   const handleClickOutside = useCallback((e) => {
     if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {

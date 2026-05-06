@@ -58,7 +58,7 @@ function EtatBadge({ etat }) {
 
 export default function NotificationsPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableFamilles", "ResponsableCellule", "ResponsableIntegration", "ResponsableEvangelisation"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "Conseiller", "ResponsableFamilles", "ResponsableCellule", "SuperviseurCellule", "ResponsableIntegration", "ResponsableEvangelisation"]}>
       <NotificationsContent />
     </ProtectedRoute>
   );

@@ -157,12 +157,22 @@ function MembresCelluleContent() {
           let mesCelluleIds = [];
           
           // ---------------- ADMIN ----------------
-          if (profile.role === "Administrateur") {
+         if (profile.role === "Administrateur") {
+
+            // ❌ retire toute restriction pour test
+            let baseQuery = supabase
+              .from("membres_complets")
+              .select("*")
+              .eq("statut_suivis", 3)
+              .not("cellule_id", "is", null)
+              .order("created_at", { ascending: false });
           
             if (celluleId) {
-              query = query.eq("cellule_id", celluleId);
+              baseQuery = baseQuery.eq("cellule_id", celluleId);
             }
           
+            query = baseQuery;
+          }
           // ---------------- RESPONSABLE ----------------
           } else if (profile.role === "ResponsableCellule") {
           

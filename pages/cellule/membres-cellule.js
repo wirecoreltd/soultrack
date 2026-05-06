@@ -111,8 +111,15 @@ function MembresCelluleContent() {
       .order("cellule_full");
 
     if (profile.role === "ResponsableCellule") {
-      query = query.eq("responsable_id", profile.id);
-    }
+  query = query.eq("responsable_id", profile.id);
+
+} else if (profile.role === "SuperviseurCellule") {
+  query = query.eq("superviseur_id", profile.id);
+
+} else if (profile.role !== "Administrateur") {
+  // 🚨 bloque tout
+  query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+}
 
     const { data } = await query;
     setCellules(data || []);
@@ -148,21 +155,64 @@ function MembresCelluleContent() {
           .order("created_at", { ascending: false });
 
         if (profile.role === "ResponsableCellule") {
-          // ✅ Récupérer les cellules du responsable EN PREMIER
-          const { data: mesCellules } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", profile.id)
-            .eq("eglise_id", profile.eglise_id);
 
-          const mesCelluleIds = (mesCellules || []).map((c) => c.id);
-
-          if (mesCelluleIds.length === 0) {
-            setMembres([]);
-            setMessage("Aucun membre trouvé");
-            setLoading(false);
-            return;
-          }
+        const { data: mesCellules } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", profile.id)
+          .eq("eglise_id", profile.eglise_id);
+      
+        const mesCelluleIds = (mesCellules || []).map(c => c.id);
+      
+        if (mesCelluleIds.length === 0) {
+          setMembres([]);
+          setMessage("Aucun membre trouvé");
+          setLoading(false);
+          return;
+        }
+      
+        if (celluleId && mesCelluleIds.includes(celluleId)) {
+          query = query.eq("cellule_id", celluleId);
+        } else {
+          query = query.in("cellule_id", mesCelluleIds);
+        }
+      
+      } else if (profile.role === "SuperviseurCellule") {
+      
+        const { data: mesCellules } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("superviseur_id", profile.id)
+          .eq("eglise_id", profile.eglise_id);
+      
+        const mesCelluleIds = (mesCellules || []).map(c => c.id);
+      
+        if (mesCelluleIds.length === 0) {
+          setMembres([]);
+          setMessage("Aucun membre trouvé");
+          setLoading(false);
+          return;
+        }
+      
+        if (celluleId && mesCelluleIds.includes(celluleId)) {
+          query = query.eq("cellule_id", celluleId);
+        } else {
+          query = query.in("cellule_id", mesCelluleIds);
+        }
+      
+      } else if (profile.role === "Administrateur") {
+      
+        if (celluleId) {
+          query = query.eq("cellule_id", celluleId);
+        }
+      
+      } else {
+        // 🚨 BLOQUE TOUT
+        setMembres([]);
+        setMessage("Accès non autorisé");
+        setLoading(false);
+        return;
+      }
 
           // ✅ Si celluleId dans l'URL, vérifier qu'il appartient bien au responsable
           if (celluleId) {

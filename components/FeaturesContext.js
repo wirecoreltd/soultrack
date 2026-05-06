@@ -2,7 +2,13 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";
-import { buildFeaturesState, canAccessFeature } from "../lib/features";
+
+// ✅ SOURCE UNIQUE — tout vient de lib/features
+import {
+  buildFeaturesState,
+  canAccessFeature,
+  DEFAULT_FEATURES,
+} from "../lib/features";
 
 const FeaturesContext = createContext(null);
 
@@ -13,21 +19,34 @@ export function FeaturesProvider({ children }) {
   useEffect(() => {
     const load = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          setLoadingFeatures(false); // ✅ ne pas rester bloqué
+          return;
+        }
 
         const { data: profile } = await supabase
           .from("profiles")
           .select("eglise_id, roles, role")
-          .eq("id", user.id)
+          .eq("id", user.id) // ✅ fix bug markdown
           .single();
 
-        if (!profile?.eglise_id) return;
+        if (!profile?.eglise_id) {
+          setLoadingFeatures(false); // ✅ ne pas rester bloqué
+          return;
+        }
 
-        // Superadmin voit tout → pas de filtre
-        const roles = Array.isArray(profile.roles) ? profile.roles : [profile.role];
+        // ✅ Superadmin voit tout
+        const roles = Array.isArray(profile.roles)
+          ? profile.roles
+          : [profile.role];
+
         if (roles.includes("Superadmin")) {
           setFeatures(null); // null = tout visible
+          setLoadingFeatures(false); // ✅ FIX — était oublié avant
           return;
         }
 
@@ -54,14 +73,14 @@ export function FeaturesProvider({ children }) {
   );
 }
 
-// ─── Hook ────────────────────────────────────────────────────────────────────
+// ─── Hook global ─────────────────────────────────────────────────────────────
 export function useFeatures() {
   const ctx = useContext(FeaturesContext);
   if (!ctx) throw new Error("useFeatures must be used inside FeaturesProvider");
   return ctx;
 }
 
-// ─── Helper direct ────────────────────────────────────────────────────────────
+// ─── Hook par clé ─────────────────────────────────────────────────────────────
 export function useFeature(key) {
   const { features } = useFeatures();
   if (features === null) return true; // Superadmin → tout actif

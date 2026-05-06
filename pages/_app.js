@@ -1,6 +1,6 @@
 import "../styles/globals.css";
 import { MembersProvider } from "../context/MembersContext";
-import { FeaturesProvider } from "../context/FeaturesContext";
+import { FeaturesProvider } from "../components/FeaturesContext";
 
 function MyApp({ Component, pageProps }) {
   return (

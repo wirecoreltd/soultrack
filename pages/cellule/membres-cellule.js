@@ -140,7 +140,7 @@ function MembresCelluleContent() {
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("id, role, eglise_id")
+          .select("id, roles, eglise_id")
           .eq("id", user.id)
           .single();
 

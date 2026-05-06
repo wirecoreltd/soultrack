@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import supabase from "../../../lib/supabaseClient";
-import ProtectedRoute from "../../../components/ProtectedRoute";
-import HeaderPages from "../../../components/HeaderPages";
-import Footer from "../../../components/Footer";
+import supabase from "../../lib/supabaseClient";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import HeaderPages from "../../components/HeaderPages";
+import Footer from "../../components/Footer";
 
 import {
   buildFeaturesState,
-} from "../../../lib/features";
+} from "../../lib/features";
 
 export default function FeaturesPage() {
   return (

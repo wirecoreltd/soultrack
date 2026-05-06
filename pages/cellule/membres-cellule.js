@@ -147,19 +147,23 @@ function MembresCelluleContent() {
         if (!profile) return;
 
         let query = supabase
-          .from("membres_complets")
-          .select("*")
-          .eq("statut_suivis", 3)
-          .eq("eglise_id", profile.eglise_id)
-          .not("cellule_id", "is", null)
-          .order("created_at", { ascending: false });
+  .from("membres_complets")
+  .select("*")
+  .eq("statut_suivis", 3)
+  .eq("eglise_id", profile.eglise_id)
+  .not("cellule_id", "is", null)
+  .order("created_at", { ascending: false });
 
-        if (profile.role === "Administrateur") {
+let mesCelluleIds = []; // toujours déclaré au bon scope
 
-  // ✅ Admin voit tout
-let mesCelluleIds = []; // ✅ TOUJOURS accessible
+// ---------------- ADMIN ----------------
+if (profile.role === "Administrateur") {
+  if (celluleId) {
+    query = query.eq("cellule_id", celluleId);
+  }
 
-if (profile.role === "ResponsableCellule") {
+// ---------------- RESPONSABLE ----------------
+} else if (profile.role === "ResponsableCellule") {
 
   const { data: mesCellules } = await supabase
     .from("cellules")
@@ -182,6 +186,7 @@ if (profile.role === "ResponsableCellule") {
     query = query.in("cellule_id", mesCelluleIds);
   }
 
+// ---------------- SUPERVISEUR ----------------
 } else if (profile.role === "SuperviseurCellule") {
 
   const { data: mesCellules } = await supabase
@@ -198,6 +203,20 @@ if (profile.role === "ResponsableCellule") {
     setLoading(false);
     return;
   }
+
+  if (celluleId && mesCelluleIds.includes(celluleId)) {
+    query = query.eq("cellule_id", celluleId);
+  } else {
+    query = query.in("cellule_id", mesCelluleIds);
+  }
+
+// ---------------- AUTRE ----------------
+} else {
+  setMembres([]);
+  setMessage("Accès non autorisé");
+  setLoading(false);
+  return;
+}
 
   if (celluleId && mesCelluleIds.includes(celluleId)) {
     query = query.eq("cellule_id", celluleId);

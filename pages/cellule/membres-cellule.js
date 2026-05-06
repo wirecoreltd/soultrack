@@ -154,65 +154,68 @@ function MembresCelluleContent() {
           .not("cellule_id", "is", null)
           .order("created_at", { ascending: false });
 
-        if (profile.role === "ResponsableCellule") {
+        if (profile.role === "Administrateur") {
 
-        const { data: mesCellules } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", profile.id)
-          .eq("eglise_id", profile.eglise_id);
+  // ✅ Admin voit tout
+  if (celluleId) {
+    query = query.eq("cellule_id", celluleId);
+  }
+
+} else if (profile.role === "ResponsableCellule") {
+
+  const { data: mesCellules } = await supabase
+    .from("cellules")
+    .select("id")
+    .eq("responsable_id", profile.id)
+    .eq("eglise_id", profile.eglise_id);
+
+  const mesCelluleIds = (mesCellules || []).map(c => c.id);
+
+  if (mesCelluleIds.length === 0) {
+    setMembres([]);
+    setMessage("Aucun membre trouvé");
+    setLoading(false);
+    return;
+  }
+
+  if (celluleId && mesCelluleIds.includes(celluleId)) {
+    query = query.eq("cellule_id", celluleId);
+  } else {
+    query = query.in("cellule_id", mesCelluleIds);
+  }
+
+} else if (profile.role === "SuperviseurCellule") {
+
+  const { data: mesCellules } = await supabase
+    .from("cellules")
+    .select("id")
+    .eq("superviseur_id", profile.id)
+    .eq("eglise_id", profile.eglise_id);
+
+  const mesCelluleIds = (mesCellules || []).map(c => c.id);
+
+  if (mesCelluleIds.length === 0) {
+    setMembres([]);
+    setMessage("Aucun membre trouvé");
+    setLoading(false);
+    return;
+  }
+
+  if (celluleId && mesCelluleIds.includes(celluleId)) {
+    query = query.eq("cellule_id", celluleId);
+  } else {
+    query = query.in("cellule_id", mesCelluleIds);
+  }
+
+} else {
+  // 🔒 aucun autre rôle ne voit rien
+  setMembres([]);
+  setMessage("Accès non autorisé");
+  setLoading(false);
+  return;
+}
+
       
-        const mesCelluleIds = (mesCellules || []).map(c => c.id);
-      
-        if (mesCelluleIds.length === 0) {
-          setMembres([]);
-          setMessage("Aucun membre trouvé");
-          setLoading(false);
-          return;
-        }
-      
-        if (celluleId && mesCelluleIds.includes(celluleId)) {
-          query = query.eq("cellule_id", celluleId);
-        } else {
-          query = query.in("cellule_id", mesCelluleIds);
-        }
-      
-      } else if (profile.role === "SuperviseurCellule") {
-      
-        const { data: mesCellules } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("superviseur_id", profile.id)
-          .eq("eglise_id", profile.eglise_id);
-      
-        const mesCelluleIds = (mesCellules || []).map(c => c.id);
-      
-        if (mesCelluleIds.length === 0) {
-          setMembres([]);
-          setMessage("Aucun membre trouvé");
-          setLoading(false);
-          return;
-        }
-      
-        if (celluleId && mesCelluleIds.includes(celluleId)) {
-          query = query.eq("cellule_id", celluleId);
-        } else {
-          query = query.in("cellule_id", mesCelluleIds);
-        }
-      
-      } else if (profile.role === "Administrateur") {
-      
-        if (celluleId) {
-          query = query.eq("cellule_id", celluleId);
-        }
-      
-      } else {
-        // 🚨 BLOQUE TOUT
-        setMembres([]);
-        setMessage("Accès non autorisé");
-        setLoading(false);
-        return;
-      }
 
           // ✅ Si celluleId dans l'URL, vérifier qu'il appartient bien au responsable
           if (celluleId) {

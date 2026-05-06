@@ -76,7 +76,7 @@ export default function NotificationBell({ egliseId, userRole }) {
   if (!canSeeNouveauxMembres) {
     return (
       <button
-        onClick={() => router.push("/notifications")}
+        onClick={() => router.push("/admin/notifications")}
         title="Voir les notifications"
         style={{
           position: "relative",

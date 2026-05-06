@@ -154,89 +154,66 @@ function MembresCelluleContent() {
   .not("cellule_id", "is", null)
   .order("created_at", { ascending: false });
 
-let mesCelluleIds = []; // toujours déclaré au bon scope
-
-// ---------------- ADMIN ----------------
-if (profile.role === "Administrateur") {
-  if (celluleId) {
-    query = query.eq("cellule_id", celluleId);
-  }
-
-// ---------------- RESPONSABLE ----------------
-} else if (profile.role === "ResponsableCellule") {
-
-  const { data: mesCellules } = await supabase
-    .from("cellules")
-    .select("id")
-    .eq("responsable_id", profile.id)
-    .eq("eglise_id", profile.eglise_id);
-
-  mesCelluleIds = (mesCellules || []).map(c => c.id);
-
-  if (mesCelluleIds.length === 0) {
-    setMembres([]);
-    setMessage("Aucun membre trouvé");
-    setLoading(false);
-    return;
-  }
-
-  if (celluleId && mesCelluleIds.includes(celluleId)) {
-    query = query.eq("cellule_id", celluleId);
-  } else {
-    query = query.in("cellule_id", mesCelluleIds);
-  }
-
-// ---------------- SUPERVISEUR ----------------
-} else if (profile.role === "SuperviseurCellule") {
-
-  const { data: mesCellules } = await supabase
-    .from("cellules")
-    .select("id")
-    .eq("superviseur_id", profile.id)
-    .eq("eglise_id", profile.eglise_id);
-
-  mesCelluleIds = (mesCellules || []).map(c => c.id);
-
-  if (mesCelluleIds.length === 0) {
-    setMembres([]);
-    setMessage("Aucun membre trouvé");
-    setLoading(false);
-    return;
-  }
-
-  if (celluleId && mesCelluleIds.includes(celluleId)) {
-    query = query.eq("cellule_id", celluleId);
-  } else {
-    query = query.in("cellule_id", mesCelluleIds);
-  }
-
-// ---------------- AUTRE ----------------
-} else {
-  setMembres([]);
-  setMessage("Accès non autorisé");
-  setLoading(false);
-  return;
-}
-
-  if (celluleId && mesCelluleIds.includes(celluleId)) {
-    query = query.eq("cellule_id", celluleId);
-  } else {
-    query = query.in("cellule_id", mesCelluleIds);
-  }
-
-} else if (profile.role === "Administrateur") {
-
-  if (celluleId) {
-    query = query.eq("cellule_id", celluleId);
-  }
-
-} else {
-
-  setMembres([]);
-  setMessage("Accès non autorisé");
-  setLoading(false);
-  return;
-}
+          let mesCelluleIds = [];
+          
+          // ---------------- ADMIN ----------------
+          if (profile.role === "Administrateur") {
+          
+            if (celluleId) {
+              query = query.eq("cellule_id", celluleId);
+            }
+          
+          // ---------------- RESPONSABLE ----------------
+          } else if (profile.role === "ResponsableCellule") {
+          
+            const { data: mesCellules } = await supabase
+              .from("cellules")
+              .select("id")
+              .eq("responsable_id", profile.id)
+              .eq("eglise_id", profile.eglise_id);
+          
+            mesCelluleIds = (mesCellules || []).map(c => c.id);
+          
+            if (!mesCelluleIds.length) {
+              setMembres([]);
+              setMessage("Aucun membre trouvé");
+              setLoading(false);
+              return;
+            }
+          
+            query = celluleId && mesCelluleIds.includes(celluleId)
+              ? query.eq("cellule_id", celluleId)
+              : query.in("cellule_id", mesCelluleIds);
+          
+          // ---------------- SUPERVISEUR ----------------
+          } else if (profile.role === "SuperviseurCellule") {
+          
+            const { data: mesCellules } = await supabase
+              .from("cellules")
+              .select("id")
+              .eq("superviseur_id", profile.id)
+              .eq("eglise_id", profile.eglise_id);
+          
+            mesCelluleIds = (mesCellules || []).map(c => c.id);
+          
+            if (!mesCelluleIds.length) {
+              setMembres([]);
+              setMessage("Aucun membre trouvé");
+              setLoading(false);
+              return;
+            }
+          
+            query = celluleId && mesCelluleIds.includes(celluleId)
+              ? query.eq("cellule_id", celluleId)
+              : query.in("cellule_id", mesCelluleIds);
+          
+          // ---------------- AUTRE ----------------
+          } else {
+            setMembres([]);
+            setMessage("Accès non autorisé");
+            setLoading(false);
+            return;
+          }
 
       
 

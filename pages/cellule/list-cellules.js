@@ -39,7 +39,7 @@ function CelluleRow({ c, router }) {
           {c.cellule_full}
         </div>
         <div className="flex-[2] text-white text-sm">{c.responsable}</div>
-        <div className="flex-[2] text-white text-sm">{c.superviseur ? `${c.superviseur.nom} ${c.superviseur.prenom}` : "—"}</div>
+        <div className="flex-[2] text-white text-sm">{c.superviseur ? `${c.superviseur.prenom} ${c.superviseur.nom}` : "—"}</div>
 
         {/* Téléphone */}
         <div className="flex-[2] flex justify-center relative text-sm">
@@ -97,6 +97,14 @@ function CelluleRow({ c, router }) {
           👤 Responsable :{" "}
           <span className="text-amber-300 font-semibold">
             {c.responsable || "—"}
+          </span>
+        </div>
+
+         {/* Superviseur */}
+        <div className="text-white text-sm mb-2">
+          ⚜️ Superviseur :{" "}
+          <span className="text-amber-300 font-semibold">
+            {c.superviseur ? `${c.superviseur.prenom} ${c.superviseur.nom}` : "—"}
           </span>
         </div>
 

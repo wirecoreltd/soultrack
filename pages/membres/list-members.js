@@ -18,6 +18,7 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import useChurchScope from "../../hooks/useChurchScope";
 import SuiviPopup from "../../components/SuiviPopup";
 import ImportMembresCSV from "../../components/ImportMembresCSV";
+import { useFeature } from "../../context/FeaturesContext"; // ✅ NOUVEAU
 
 function getRoles(profile) {
   if (!profile) return [];
@@ -85,6 +86,9 @@ function ListMembersContent() {
 
   // ✅ Ref pour bloquer le realtime pendant nos propres mises à jour
   const localUpdateInProgressRef = useRef(false);
+
+  // ✅ FEATURES
+  const famillesActive = useFeature("familles");
 
   const roles = getRoles(userProfile);
   const isAdmin = roles.includes("Administrateur");
@@ -258,28 +262,27 @@ function ListMembersContent() {
     }
   };
 
-  // ✅ handleAfterSend : met à jour Supabase + local, bloque le realtime pendant l'opération
   const handleAfterSend = async (memberId, type, cible) => {
-  localUpdateInProgressRef.current = true;
+    localUpdateInProgressRef.current = true;
 
-  const updateData = { etat_contact: "existant" };
-  if (type === "famille" && cible?.id) updateData.famille_id = cible.id;
-  if (type === "cellule" && cible?.id) updateData.cellule_id = cible.id;
+    const updateData = { etat_contact: "existant" };
+    if (type === "famille" && cible?.id) updateData.famille_id = cible.id;
+    if (type === "cellule" && cible?.id) updateData.cellule_id = cible.id;
 
-  await supabase
-    .from("membres_complets")
-    .update(updateData)
-    .eq("id", memberId);
+    await supabase
+      .from("membres_complets")
+      .update(updateData)
+      .eq("id", memberId);
 
-  setAllMembers((prev) => prev.map((m) =>
-    m.id === memberId
-      ? { ...m, suivi_envoye: true, etat_contact: "existant", ...updateData }
-      : m
-  ));
+    setAllMembers((prev) => prev.map((m) =>
+      m.id === memberId
+        ? { ...m, suivi_envoye: true, etat_contact: "existant", ...updateData }
+        : m
+    ));
 
-  showToast("✅ Contact envoyé !");
-  setTimeout(() => { localUpdateInProgressRef.current = false; }, 2000);
-};
+    showToast("✅ Contact envoyé !");
+    setTimeout(() => { localUpdateInProgressRef.current = false; }, 2000);
+  };
 
   // -------------------- Fetch membres --------------------
   useEffect(() => {
@@ -410,12 +413,15 @@ function ListMembersContent() {
         .order("cellule_full");
       if (cellulesData) setCellules(cellulesData);
 
-      const { data: famillesData } = await supabase
-        .from("familles")
-        .select("id, ville, famille_full")
-        .eq("eglise_id", profile.eglise_id)
-        .order("famille_full");
-      if (famillesData) setFamilles(famillesData);
+      // ✅ Charger familles seulement si feature active
+      if (famillesActive) {
+        const { data: famillesData } = await supabase
+          .from("familles")
+          .select("id, ville, famille_full")
+          .eq("eglise_id", profile.eglise_id)
+          .order("famille_full");
+        if (famillesData) setFamilles(famillesData);
+      }
 
       const { data: conseillersData } = await supabase
         .from("profiles")
@@ -429,7 +435,7 @@ function ListMembersContent() {
     };
 
     fetchData();
-  }, [fetchAssignments]);
+  }, [fetchAssignments, famillesActive]);
 
   // -------------------- Realtime --------------------
   useEffect(() => {
@@ -440,7 +446,6 @@ function ListMembersContent() {
 
     const channel = supabase.channel("realtime:membres_complets");
 
-    // ✅ On ignore le trigger realtime si une mise à jour locale est en cours
     const handleMembresChange = () => {
       if (localUpdateInProgressRef.current) return;
       setFetchTrigger(t => t + 1);
@@ -613,12 +618,15 @@ function ListMembersContent() {
                 ? cellules.find((c) => String(c.id) === String(m.cellule_id))?.cellule_full || "—"
                 : "—"}
             </p>
-            <p>
-              👨‍👩‍👦 Famille :{" "}
-              {m.famille_id
-                ? familles.find((f) => String(f.id) === String(m.famille_id))?.famille_full || "—"
-                : "—"}
-            </p>
+            {/* ✅ Famille cachée si feature désactivée */}
+            {famillesActive && (
+              <p>
+                👨‍👩‍👦 Famille :{" "}
+                {m.famille_id
+                  ? familles.find((f) => String(f.id) === String(m.famille_id))?.famille_full || "—"
+                  : "—"}
+              </p>
+            )}
             <p>👤 Conseiller(s) : {getConseillersForMember(m.id)}</p>
           </div>
 
@@ -637,13 +645,14 @@ function ListMembersContent() {
               <option value="">-- Choisir une option --</option>
               <option value="cellule">Une Cellule</option>
               <option value="conseiller">Un Conseiller</option>
-              <option value="famille">Une Famille</option>
+              {/* ✅ Option famille cachée si feature désactivée */}
+              {famillesActive && <option value="famille">Une Famille</option>}
               <option value="numero">Saisir un numéro</option>
             </select>
 
             {(selectedTargetType[m.id] === "cellule" ||
               selectedTargetType[m.id] === "conseiller" ||
-              selectedTargetType[m.id] === "famille") && (
+              (famillesActive && selectedTargetType[m.id] === "famille")) && (
               <select
                 value={selectedTargets[m.id] || ""}
                 onChange={(e) => setSelectedTargets((prev) => ({ ...prev, [m.id]: e.target.value }))}
@@ -656,7 +665,7 @@ function ListMembersContent() {
                 {selectedTargetType[m.id] === "conseiller" && conseillers.map((c) => (
                   <option key={c.id} value={c.id}>{c.prenom || "—"} {c.nom || ""}</option>
                 ))}
-                {selectedTargetType[m.id] === "famille" && familles.map((f) => (
+                {famillesActive && selectedTargetType[m.id] === "famille" && familles.map((f) => (
                   <option key={f.id} value={f.id}>{f.famille_full || "—"}</option>
                 ))}
               </select>
@@ -895,24 +904,24 @@ function ListMembersContent() {
       </div>
 
       <div className="w-full flex justify-end gap-2">
-  {canAddMember && (
-    <>
-      <button
-        onClick={() => router.push("/AddContact")}
-        className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-      >
-        ➕ Ajouter un membre
-      </button>
-          
-      <button
-        onClick={() => router.push("/admin/import")}
-        className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-      >
-        📥 Importer une liste
-      </button>      
-    </>
-  )}
-</div>
+        {canAddMember && (
+          <>
+            <button
+              onClick={() => router.push("/AddContact")}
+              className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+            >
+              ➕ Ajouter un membre
+            </button>
+            <button
+              onClick={() => router.push("/admin/import")}
+              className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+            >
+              📥 Importer une liste
+            </button>
+          </>
+        )}
+      </div>
+
       {view === "card" && (
         <>
           {loading ? (
@@ -956,11 +965,10 @@ function ListMembersContent() {
         </>
       )}
 
-      {/* EditMemberPopup */}
       <EditMemberPopup
         member={editMember}
         cellules={cellules}
-        familles={familles}
+        familles={famillesActive ? familles : []}
         conseillers={conseillers}
         currentUserRoles={getRoles(userProfile)}
         onClose={() => setEditMember(null)}

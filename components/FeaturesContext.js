@@ -1,8 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import supabase from "../../lib/supabaseClient";
-import { buildFeaturesState, canAccessFeature } from "../../lib/features";
+import supabase from "../lib/supabaseClient";
+import { buildFeaturesState, canAccessFeature } from "../lib/features";
 
 const FeaturesContext = createContext(null);
 

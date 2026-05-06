@@ -220,14 +220,14 @@ export default function HeaderPages() {
           {eglise}
         </p>
 
-        <p className="text-amber-300 text-sm">
+        <p className="text-amber-300 mt-2 text-sm">
           {branche}
           {branche && ville && <span className="text-amber-300"> - </span>}
           {ville}
         </p>
 
           {pays && (
-          <p className="text-white mt-1 text-sm flex items-center gap-1">
+          <p className="text-white mt-2 text-sm flex items-center gap-1">
             <img
               src={`https://flagcdn.com/w20/${getIsoCode(pays)}.png`}
               srcSet={`https://flagcdn.com/w40/${getIsoCode(pays)}.png 2x`}

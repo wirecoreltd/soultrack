@@ -13,7 +13,7 @@ import { checkLimiteAtteinte } from "../../lib/checkLimite";
 
 export default function AjouterMembreFamille() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFamilles"]}>
+    <ProtectedRoute allowedRoles={["ResponsableFamilles"]}>
       <AjouterMembreFamilleContent />
     </ProtectedRoute>
   );

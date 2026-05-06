@@ -12,7 +12,7 @@ export default function SignupEglise() {
     const params = new URLSearchParams(window.location.search);
     const plan = params.get("plan");
     if (!plan) {
-      router.push("/pricing");
+      router.push("/site/pricing");
     } else {
       setPlanId(plan);
     }
@@ -126,7 +126,7 @@ export default function SignupEglise() {
           <p className="font-bold text-blue-700">{PLANS_LABELS[planId]}</p>
           <button
             type="button"
-            onClick={() => router.push("/pricing")}
+            onClick={() => router.push("site/pricing")}
             className="text-xs text-blue-400 underline mt-1"
           >
             Changer de plan

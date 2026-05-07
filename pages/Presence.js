@@ -608,7 +608,7 @@ function Presence() {
           groupesResult.push({
             id: `f-${f.id}`,
             label: f.famille_full || `${f.ville} - ${f.famille}`,
-            icon: "👨‍👩‍👦", color: "purple", membres: fm,
+            icon: "👑", color: "purple", membres: fm,
           });
         }
       });

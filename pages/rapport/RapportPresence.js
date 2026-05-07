@@ -18,7 +18,7 @@ import {
   Legend,
   Filler,
 } from "chart.js";
-import { Line, Doughnut, Bar } from "react-chartjs-2";
+import { Line, Doughnut } from "react-chartjs-2";
 
 ChartJS.register(
   CategoryScale,
@@ -42,7 +42,7 @@ export default function RapportPresencePage() {
         "SuperviseurCellule",
         "SuperviseurFamille",
         "ResponsableCellule",
-        "ResponsableFamille",
+        "ResponsableFamilles",
       ]}
     >
       <RapportPresence />
@@ -63,6 +63,17 @@ const AGE_TRANCHES = [
   "Non renseigné",
 ];
 
+// Mapping des tranches membres_complets → AGE_TRANCHES normalisés
+const normalizeAge = (age) => {
+  if (!age) return "Non renseigné";
+  const map = {
+    "12-17 ans": "13-17 ans",
+    "41-55 ans": "41-50 ans",
+    "56-69 ans": "Plus de 60 ans",
+  };
+  return map[age] || (AGE_TRANCHES.includes(age) ? age : "Non renseigné");
+};
+
 const fmt = (d) =>
   `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
 
@@ -73,12 +84,30 @@ const fmtMois = (d) => {
 
 const weekKey = (d) => {
   const tmp = new Date(d);
-  tmp.setHours(0,0,0,0);
-  tmp.setDate(tmp.getDate() - tmp.getDay() + 1); // lundi
-  return tmp.toISOString().slice(0,10);
+  tmp.setHours(0, 0, 0, 0);
+  tmp.setDate(tmp.getDate() - tmp.getDay() + 1);
+  return tmp.toISOString().slice(0, 10);
 };
 
-const monthKey = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+const monthKey = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+
+// Icônes SVG inline
+const IconFamille = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+
+const IconCellule = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    <polyline points="9 22 9 12 15 12 15 22"/>
+  </svg>
+);
 
 // ───────────────────────────────────────────────────────────────────────────
 function RapportPresence() {
@@ -93,6 +122,10 @@ function RapportPresence() {
   const [familles, setFamilles] = useState([]);
   const [cellules, setCellules] = useState([]);
 
+  // Familles/cellules attachées au user (pour restriction)
+  const [myFamilleIds, setMyFamilleIds] = useState([]);
+  const [myCelluleIds, setMyCelluleIds] = useState([]);
+
   const [brancheId, setBrancheId] = useState("");
   const [familleId, setFamilleId] = useState("");
   const [celluleId, setCelluleId] = useState("");
@@ -101,16 +134,20 @@ function RapportPresence() {
   const [tblFamilleId, setTblFamilleId] = useState("");
   const [tblCelluleId, setTblCelluleId] = useState("");
 
+  // filtre répartition
+  const [repartFamilleId, setRepartFamilleId] = useState("");
+  const [repartCelluleId, setRepartCelluleId] = useState("");
+
   const [attendances, setAttendances] = useState([]);
-  const [presences, setPresences]     = useState([]); // pour tranches d'âge
+  const [presences, setPresences] = useState([]);
+  const [membres, setMembres] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [activeTab, setActiveTab] = useState("evolution");
 
-  // drill-down évolution : "mois" | "semaine" | "jour"
-  const [evGranularity, setEvGranularity] = useState("auto"); // auto | mois | semaine | jour
-  const [drillMois, setDrillMois]   = useState(null); // "2026-04" cliqué
-  const [drillSemaine, setDrillSemaine] = useState(null); // "2026-04-07" (lundi)
+  const [evGranularity, setEvGranularity] = useState("auto");
+  const [drillMois, setDrillMois] = useState(null);
+  const [drillSemaine, setDrillSemaine] = useState(null);
 
   // ── init ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -128,39 +165,113 @@ function RapportPresence() {
       setUserRole(profile?.role);
       if (!profile?.eglise_id) return;
 
-      const { data: br } = await supabase.from("branches").select("id, nom").eq("eglise_id", profile.eglise_id).order("nom");
+      const { data: br } = await supabase
+        .from("branches")
+        .select("id, nom")
+        .eq("eglise_id", profile.eglise_id)
+        .order("nom");
       setBranches(br || []);
 
-      const { data: fa } = await supabase.from("familles").select("id, nom, branche_id").eq("eglise_id", profile.eglise_id).order("nom");
+      const { data: fa } = await supabase
+        .from("familles")
+        .select("id, nom, branche_id, responsable_id")
+        .eq("eglise_id", profile.eglise_id)
+        .order("nom");
       setFamilles(fa || []);
 
-      const { data: ce } = await supabase.from("cellules").select("id, nom, famille_id, branche_id").eq("eglise_id", profile.eglise_id).order("nom");
+      const { data: ce } = await supabase
+        .from("cellules")
+        .select("id, nom, famille_id, branche_id, responsable_id, superviseur_id")
+        .eq("eglise_id", profile.eglise_id)
+        .order("nom");
       setCellules(ce || []);
+
+      // Calcul des familles/cellules attachées à l'utilisateur
+      const role = profile?.role;
+      const uid = profile?.id;
+
+      if (role === "ResponsableFamilles") {
+        const myFam = (fa || []).filter((f) => f.responsable_id === uid).map((f) => f.id);
+        setMyFamilleIds(myFam);
+        // Les cellules de ces familles
+        const myCel = (ce || []).filter((c) => myFam.includes(c.famille_id)).map((c) => c.id);
+        setMyCelluleIds(myCel);
+      } else if (role === "ResponsableCellule") {
+        const myCel = (ce || []).filter((c) => c.responsable_id === uid).map((c) => c.id);
+        setMyCelluleIds(myCel);
+        setMyFamilleIds([]);
+      } else if (role === "SuperviseurCellule" || role === "SuperviseurFamille") {
+        const myCel = (ce || []).filter((c) => c.superviseur_id === uid).map((c) => c.id);
+        setMyCelluleIds(myCel);
+        const myFam = (fa || []).filter((f) => f.superviseur_id === uid).map((f) => f.id);
+        setMyFamilleIds(myFam);
+      }
+
+      // Charger membres
+      const { data: mb } = await supabase
+        .from("membres_complets")
+        .select("id, age, sexe, cellule_id, famille_id, eglise_id")
+        .eq("eglise_id", profile.eglise_id);
+      setMembres(mb || []);
     };
     init();
   }, []);
 
-  const famillesFiltrees = brancheId ? familles.filter((f) => f.branche_id === brancheId) : familles;
-  const cellulesFiltrees = familleId
-    ? cellules.filter((c) => c.famille_id === familleId)
-    : brancheId
-    ? cellules.filter((c) => c.branche_id === brancheId)
-    : cellules;
+  // ── familles/cellules visibles selon rôle ────────────────────────────────
+  const famillesVisibles = useMemo(() => {
+    if (!userRole) return familles;
+    if (["Administrateur", "ResponsableSuivi", "SuperviseurCellule", "SuperviseurFamille"].includes(userRole))
+      return familles;
+    if (userRole === "ResponsableFamilles")
+      return familles.filter((f) => myFamilleIds.includes(f.id));
+    if (userRole === "ResponsableCellule")
+      return familles; // voit les familles pour info mais filtré par cellule
+    return familles;
+  }, [familles, userRole, myFamilleIds]);
 
-  // cellules filtrées pour le tableau détaillé
+  const cellulesVisibles = useMemo(() => {
+    if (!userRole) return cellules;
+    if (["Administrateur", "ResponsableSuivi", "SuperviseurCellule", "SuperviseurFamille"].includes(userRole))
+      return cellules;
+    if (userRole === "ResponsableFamilles")
+      return cellules.filter((c) => myCelluleIds.includes(c.id));
+    if (userRole === "ResponsableCellule")
+      return cellules.filter((c) => myCelluleIds.includes(c.id));
+    return cellules;
+  }, [cellules, userRole, myCelluleIds]);
+
+  const famillesFiltrees = brancheId
+    ? famillesVisibles.filter((f) => f.branche_id === brancheId)
+    : famillesVisibles;
+
+  const cellulesFiltrees = familleId
+    ? cellulesVisibles.filter((c) => c.famille_id === familleId)
+    : brancheId
+    ? cellulesVisibles.filter((c) => c.branche_id === brancheId)
+    : cellulesVisibles;
+
   const tblCellulesFiltrees = tblFamilleId
-    ? cellules.filter((c) => c.famille_id === tblFamilleId)
-    : cellules;
+    ? cellulesVisibles.filter((c) => c.famille_id === tblFamilleId)
+    : cellulesVisibles;
+
+  const repartCellulesFiltrees = repartFamilleId
+    ? cellulesVisibles.filter((c) => c.famille_id === repartFamilleId)
+    : cellulesVisibles;
 
   const getVuesAccessibles = () => {
     if (!userRole) return [];
-    if (userRole === "Administrateur") return ["eglise","branche","famille","cellule"];
-    if (["SuperviseurCellule","SuperviseurFamille"].includes(userRole)) return ["branche","famille","cellule"];
-    if (["ResponsableCellule","ResponsableFamille"].includes(userRole)) return ["famille","cellule"];
+    if (userRole === "Administrateur") return ["eglise", "branche", "famille", "cellule"];
+    if (["SuperviseurCellule", "SuperviseurFamille"].includes(userRole)) return ["branche", "famille", "cellule"];
+    if (["ResponsableCellule", "ResponsableFamilles"].includes(userRole)) return ["famille", "cellule"];
     return ["eglise"];
   };
 
-  const vueLabels = { eglise:"Église globale", branche:"Par branche", famille:"Par famille", cellule:"Par cellule" };
+  const vueLabels = {
+    eglise: "Église globale",
+    branche: "Par branche",
+    famille: "Par famille",
+    cellule: "Par cellule",
+  };
 
   // ── fetch ────────────────────────────────────────────────────────────────
   const fetchRapport = async () => {
@@ -170,25 +281,38 @@ function RapportPresence() {
     setPresences([]);
     setDrillMois(null);
     setDrillSemaine(null);
+    setRepartFamilleId("");
+    setRepartCelluleId("");
 
     try {
-      // --- attendance ---
-      let q = supabase.from("attendance").select("*").order("date", { ascending: true });
+      let q = supabase
+        .from("attendance")
+        .select("*")
+        .order("date", { ascending: true });
+
       if (userProfile?.eglise_id) q = q.eq("eglise_id", userProfile.eglise_id);
-      if (["SuperviseurCellule","SuperviseurFamille"].includes(userRole) && userProfile?.branche_id)
-        q = q.eq("branche_id", userProfile.branche_id);
-      if (["ResponsableCellule","ResponsableFamille"].includes(userRole) && userProfile?.id)
-        q = q.eq("superviseur_id", userProfile.id);
+
+      // Restriction rôle sur attendance (par superviseur_id ou branche_id)
+      if (userRole === "ResponsableFamilles" && myFamilleIds.length > 0) {
+        // On filtre via les cellules attachées — l'attendance n'a pas famille_id
+        // On laisse passer tout puis on filtre via membres
+      }
+      if (userRole === "ResponsableCellule" && myCelluleIds.length > 0) {
+        // même approche
+      }
+
+      // Filtres sélectionnés par l'utilisateur
       if (celluleId) q = q.eq("cellule_id", celluleId);
       else if (familleId) q = q.eq("famille_id", familleId);
       else if (brancheId) q = q.eq("branche_id", brancheId);
+
       if (dateDebut) q = q.gte("date", dateDebut);
-      if (dateFin)   q = q.lte("date", dateFin);
+      if (dateFin) q = q.lte("date", dateFin);
 
       const { data, error } = await q;
       if (error) throw error;
 
-      // regroup par date + numero_culte (pour évolution)
+      // Regrouper par date + numero_culte
       const grouped = {};
       (data || []).forEach((a) => {
         const key = `${a.date}_${a.numero_culte || ""}`;
@@ -200,16 +324,21 @@ function RapportPresence() {
       });
       setAttendances(Object.values(grouped));
 
-      // --- presences (pour tranches d'âge) ---
-      let pq = supabase
-        .from("presences")
-        .select("id, membre_id, date, attendance_id")
-        .order("date", { ascending: true });
-      if (dateDebut) pq = pq.gte("date", dateDebut);
-      if (dateFin)   pq = pq.lte("date", dateFin);
-
-      const { data: pdata } = await pq;
-      setPresences(pdata || []);
+      // Presences pour tranches d'âge
+      const attendanceIds = (data || []).map((a) => a.id);
+      if (attendanceIds.length > 0) {
+        let pq = supabase
+          .from("presences")
+          .select("id, membre_id, date, attendance_id")
+          .in("attendance_id", attendanceIds)
+          .order("date", { ascending: true });
+        if (dateDebut) pq = pq.gte("date", dateDebut);
+        if (dateFin) pq = pq.lte("date", dateFin);
+        const { data: pdata } = await pq;
+        setPresences(pdata || []);
+      } else {
+        setPresences([]);
+      }
 
       setMessage("");
     } catch (err) {
@@ -220,12 +349,50 @@ function RapportPresence() {
     }
   };
 
-  // ── métriques globales ───────────────────────────────────────────────────
+  // ── métriques filtrées par repartition filter ────────────────────────────
+  const membresFiltrés = useMemo(() => {
+    let src = membres;
+
+    // Restriction rôle
+    if (userRole === "ResponsableCellule" && myCelluleIds.length > 0)
+      src = src.filter((m) => myCelluleIds.includes(m.cellule_id));
+    else if (userRole === "ResponsableFamilles" && myFamilleIds.length > 0)
+      src = src.filter((m) => myFamilleIds.includes(m.famille_id) || myCelluleIds.includes(m.cellule_id));
+
+    // Filtre répartition
+    if (repartCelluleId) src = src.filter((m) => m.cellule_id === repartCelluleId);
+    else if (repartFamilleId) src = src.filter((m) => m.famille_id === repartFamilleId);
+
+    return src;
+  }, [membres, userRole, myCelluleIds, myFamilleIds, repartFamilleId, repartCelluleId]);
+
+  // IDs des membres présents (filtré par presences liées aux attendances)
+  const presentMemberIds = useMemo(
+    () => new Set(presences.map((p) => p.membre_id)),
+    [presences]
+  );
+
+  const membresPresents = useMemo(
+    () => membresFiltrés.filter((m) => presentMemberIds.has(m.id)),
+    [membresFiltrés, presentMemberIds]
+  );
+
+  // Métriques globales (basées sur attendances, pas sur le filtre répartition)
   const totalH = attendances.reduce((s, a) => s + (a.hommes || 0), 0);
   const totalF = attendances.reduce((s, a) => s + (a.femmes || 0), 0);
   const totalPresences = totalH + totalF;
 
-  // ── évolution — logique granularité ──────────────────────────────────────
+  // Métriques répartition (basées sur membresPresents filtrés)
+  const repartH = membresPresents.filter((m) => m.sexe === "Homme").length;
+  const repartF = membresPresents.filter((m) => m.sexe === "Femme").length;
+  const repartTotal = membresPresents.length;
+
+  // Utiliser les totaux attendance si pas de données presences individuelles
+  const displayH = repartTotal > 0 ? repartH : totalH;
+  const displayF = repartTotal > 0 ? repartF : totalF;
+  const hasIndividualData = repartTotal > 0;
+
+  // ── évolution ────────────────────────────────────────────────────────────
   const rangeDays = useMemo(() => {
     if (!dateDebut || !dateFin) return 0;
     return (new Date(dateFin) - new Date(dateDebut)) / 86400000;
@@ -233,52 +400,50 @@ function RapportPresence() {
 
   const effectiveGranularity = useMemo(() => {
     if (drillSemaine) return "jour";
-    if (drillMois)    return "semaine";
+    if (drillMois) return "semaine";
     if (evGranularity !== "auto") return evGranularity;
     return rangeDays > 31 ? "mois" : "jour";
   }, [evGranularity, rangeDays, drillMois, drillSemaine]);
 
-  // données filtrées pour drill
   const attendancesDrill = useMemo(() => {
     let src = attendances;
     if (drillSemaine) {
       const lundi = new Date(drillSemaine);
-      const dimanche = new Date(lundi); dimanche.setDate(dimanche.getDate() + 6);
-      src = src.filter(a => {
+      const dimanche = new Date(lundi);
+      dimanche.setDate(dimanche.getDate() + 6);
+      src = src.filter((a) => {
         const d = new Date(a.date);
         return d >= lundi && d <= dimanche;
       });
     } else if (drillMois) {
-      src = src.filter(a => a.date.startsWith(drillMois));
+      src = src.filter((a) => a.date.startsWith(drillMois));
     }
     return src;
   }, [attendances, drillMois, drillSemaine]);
 
-  // agréger selon granularité
   const evGrouped = useMemo(() => {
     const map = {};
-    attendancesDrill.forEach(a => {
+    attendancesDrill.forEach((a) => {
       const d = new Date(a.date);
       let key;
-      if (effectiveGranularity === "mois")    key = monthKey(d);
+      if (effectiveGranularity === "mois") key = monthKey(d);
       else if (effectiveGranularity === "semaine") key = weekKey(d);
       else key = a.date;
 
       if (!map[key]) map[key] = { key, hommes: 0, femmes: 0 };
-      map[key].hommes += (a.hommes || 0);
-      map[key].femmes += (a.femmes || 0);
+      map[key].hommes += a.hommes || 0;
+      map[key].femmes += a.femmes || 0;
     });
-    return Object.values(map).sort((a,b) => a.key.localeCompare(b.key));
+    return Object.values(map).sort((a, b) => a.key.localeCompare(b.key));
   }, [attendancesDrill, effectiveGranularity]);
 
-  const evLabels = evGrouped.map(g => {
+  const evLabels = evGrouped.map((g) => {
     if (effectiveGranularity === "mois") {
-      const [y,m] = g.key.split("-");
-      return fmtMois(new Date(+y, +m-1, 1));
+      const [y, m] = g.key.split("-");
+      return fmtMois(new Date(+y, +m - 1, 1));
     }
     if (effectiveGranularity === "semaine") {
-      const d = new Date(g.key);
-      return `Sem. ${fmt(d)}`;
+      return `Sem. ${fmt(new Date(g.key))}`;
     }
     return fmt(new Date(g.key));
   });
@@ -298,55 +463,116 @@ function RapportPresence() {
   const lineData = {
     labels: evLabels,
     datasets: [
-      { label:"Hommes", data: evGrouped.map(g=>g.hommes), borderColor:"#3b82f6", backgroundColor:"rgba(59,130,246,0.12)", tension:0.4, pointRadius:4, borderWidth:2, fill:true },
-      { label:"Femmes", data: evGrouped.map(g=>g.femmes), borderColor:"#ec4899", backgroundColor:"rgba(236,72,153,0.12)", tension:0.4, pointRadius:4, borderWidth:2, fill:true },
+      {
+        label: "Hommes",
+        data: evGrouped.map((g) => g.hommes),
+        borderColor: "#3b82f6",
+        backgroundColor: "rgba(59,130,246,0.12)",
+        tension: 0.4,
+        pointRadius: 4,
+        borderWidth: 2,
+        fill: true,
+      },
+      {
+        label: "Femmes",
+        data: evGrouped.map((g) => g.femmes),
+        borderColor: "#ec4899",
+        backgroundColor: "rgba(236,72,153,0.12)",
+        tension: 0.4,
+        pointRadius: 4,
+        borderWidth: 2,
+        fill: true,
+      },
     ],
   };
 
   const lineOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    onClick: (_,elements) => handleEvBarClick(elements),
-    plugins: { legend:{ display:false }, tooltip:{ callbacks:{ footer: effectiveGranularity !== "jour" ? ()=>"Cliquez pour zoomer" : undefined }}},
+    onClick: (_, elements) => handleEvBarClick(elements),
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          footer: effectiveGranularity !== "jour" ? () => "Cliquez pour zoomer" : undefined,
+        },
+      },
+    },
     scales: {
-      y: { beginAtZero:false, ticks:{ color:"#fff", font:{size:11} }, grid:{ color:"rgba(255,255,255,0.08)" }},
-      x: { ticks:{ color:"#fff", font:{size:11}, maxRotation:45, autoSkip:true, maxTicksLimit:14 }, grid:{ display:false }},
+      y: {
+        beginAtZero: false,
+        ticks: { color: "#fff", font: { size: 11 } },
+        grid: { color: "rgba(255,255,255,0.08)" },
+      },
+      x: {
+        ticks: { color: "#fff", font: { size: 11 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 14 },
+        grid: { display: false },
+      },
     },
   };
 
-  // ── répartition civilité ─────────────────────────────────────────────────
+  // ── Pie chart civilité ───────────────────────────────────────────────────
   const civiliteData = {
-    labels: ["Hommes","Femmes"],
-    datasets: [{ data:[totalH,totalF], backgroundColor:["#3b82f6","#ec4899"], borderWidth:0 }],
+    labels: ["Hommes", "Femmes"],
+    datasets: [
+      {
+        data: [displayH, displayF],
+        backgroundColor: ["#3b82f6", "#ec4899"],
+        borderWidth: 0,
+        hoverOffset: 6,
+      },
+    ],
   };
+
+  // ── Pie chart tranches d'âge ─────────────────────────────────────────────
+  const tranchesData = useMemo(() => {
+    const counts = {};
+    AGE_TRANCHES.forEach((t) => { counts[t] = 0; });
+
+    membresPresents.forEach((m) => {
+      const bucket = normalizeAge(m.age);
+      counts[bucket]++;
+    });
+
+    return AGE_TRANCHES.map((t) => ({ tranche: t, count: counts[t] })).filter(
+      (t) => t.count > 0
+    );
+  }, [membresPresents]);
+
+  const tranchesPieData = {
+    labels: tranchesData.map((t) => t.tranche),
+    datasets: [
+      {
+        data: tranchesData.map((t) => t.count),
+        backgroundColor: [
+          "#6366f1","#3b82f6","#06b6d4","#10b981",
+          "#f59e0b","#ef4444","#ec4899","#8b5cf6","#64748b",
+        ],
+        borderWidth: 0,
+        hoverOffset: 6,
+      },
+    ],
+  };
+
   const doughnutOptions = {
-    responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{ position:"bottom", labels:{ color:"#fff", font:{size:11}, boxWidth:10, padding:10 }}},
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom",
+        labels: { color: "#fff", font: { size: 10 }, boxWidth: 10, padding: 8 },
+      },
+    },
   };
 
   // ── tableau détaillé ─────────────────────────────────────────────────────
-  // on re-group attendance brut (pas encore regroupé) par date+culte+famille+cellule
-  // puis on filtre par tblFamilleId / tblCelluleId
-  const rawAttendanceForTable = useMemo(() => {
-    // attendances déjà regroupés par date+culte au niveau global
-    // Pour le tableau on veut filtrer par famille/cellule du tableau
-    // On re-group après filtre
-    return attendances; // attendances is already grouped globally — refine below
-  }, [attendances]);
-
-  // NOTE: `attendances` state already has famille_id / cellule_id from the first row of each group.
-  // For per-famille/cellule filtering we need the raw data — stored separately.
-  // We'll do a second pass from the raw grouped data filtered:
   const tableRows = useMemo(() => {
-    // filter by tblFamilleId / tblCelluleId
-    // attendances already grouped globally; re-filter by fields on records
     let src = attendances;
-    if (tblCelluleId) src = src.filter(a => a.cellule_id === tblCelluleId);
-    else if (tblFamilleId) src = src.filter(a => a.famille_id === tblFamilleId);
+    if (tblCelluleId) src = src.filter((a) => a.cellule_id === tblCelluleId);
+    else if (tblFamilleId) src = src.filter((a) => a.famille_id === tblFamilleId);
 
-    // re-group by date + numero_culte after filter
     const grouped = {};
-    src.forEach(a => {
+    src.forEach((a) => {
       const key = `${a.date}_${a.numero_culte || ""}`;
       if (!grouped[key]) grouped[key] = { ...a };
       else {
@@ -355,96 +581,54 @@ function RapportPresence() {
       }
     });
 
-    const sorted = Object.values(grouped).sort((a,b) => a.date.localeCompare(b.date));
+    const sorted = Object.values(grouped).sort((a, b) => a.date.localeCompare(b.date));
     return sorted.map((a, i) => {
-      const total = (a.hommes||0) + (a.femmes||0);
-      const prev = i > 0 ? sorted[i-1] : null;
-      const prevTotal = prev ? (prev.hommes||0)+(prev.femmes||0) : null;
-      const pct = prevTotal && prevTotal > 0 ? (((total-prevTotal)/prevTotal)*100).toFixed(1) : null;
+      const total = (a.hommes || 0) + (a.femmes || 0);
+      const prev = i > 0 ? sorted[i - 1] : null;
+      const prevTotal = prev ? (prev.hommes || 0) + (prev.femmes || 0) : null;
+      const pct =
+        prevTotal && prevTotal > 0
+          ? (((total - prevTotal) / prevTotal) * 100).toFixed(1)
+          : null;
       return { ...a, total, pct };
     });
   }, [attendances, tblFamilleId, tblCelluleId]);
 
-  // ── tranches d'âge ───────────────────────────────────────────────────────
-  const [membres, setMembres] = useState([]);
-  useEffect(() => {
-    if (!userProfile?.eglise_id) return;
-    supabase
-      .from("membres_complets")
-      .select("id, age, sexe")
-      .eq("eglise_id", userProfile.eglise_id)
-      .then(({ data }) => setMembres(data || []));
-  }, [userProfile]);
-
-  const tranchesData = useMemo(() => {
-    // membre IDs présents dans les presences filtrées
-    const presentIds = new Set(presences.map(p => p.membre_id));
-    const membresPresents = membres.filter(m => presentIds.has(m.id));
-
-    const counts = {};
-    AGE_TRANCHES.forEach(t => { counts[t] = { total: 0, hommes: 0, femmes: 0 }; });
-
-    membresPresents.forEach(m => {
-      const t = m.age || "Non renseigné";
-      const bucket = AGE_TRANCHES.includes(t) ? t : "Non renseigné";
-      counts[bucket].total++;
-      if (m.sexe === "Homme") counts[bucket].hommes++;
-      else if (m.sexe === "Femme") counts[bucket].femmes++;
-    });
-
-    return AGE_TRANCHES.map(t => ({ tranche: t, ...counts[t] }));
-  }, [presences, membres]);
-
-  const tranchesBarData = {
-    labels: tranchesData.map(t => t.tranche),
-    datasets: [
-      { label:"Hommes", data: tranchesData.map(t=>t.hommes), backgroundColor:"#3b82f6" },
-      { label:"Femmes", data: tranchesData.map(t=>t.femmes), backgroundColor:"#ec4899" },
-    ],
-  };
-
-  const barOptions = {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend:{ labels:{ color:"#fff", font:{size:11} }}},
-    scales: {
-      y: { beginAtZero:true, ticks:{ color:"#fff" }, grid:{ color:"rgba(255,255,255,0.08)" }},
-      x: { ticks:{ color:"#fff", font:{size:10}, maxRotation:30 }, grid:{ display:false }},
-    },
-  };
-
-  const vuesAccessibles = getVuesAccessibles();
-
   // ── granularity buttons ──────────────────────────────────────────────────
   const granularityBtns = () => {
     const back = drillSemaine
-      ? () => { setDrillSemaine(null); }
+      ? () => setDrillSemaine(null)
       : drillMois
-      ? () => { setDrillMois(null); }
+      ? () => setDrillMois(null)
       : null;
 
     return (
       <div className="flex items-center gap-2 flex-wrap mb-3">
         {back && (
-          <button onClick={back} className="px-3 py-1 rounded-full text-xs border border-white/30 text-white/70 hover:border-white flex items-center gap-1">
+          <button
+            onClick={back}
+            className="px-3 py-1 rounded-full text-xs border border-white/30 text-white/70 hover:border-white flex items-center gap-1"
+          >
             ← Retour
           </button>
         )}
-        {!drillMois && !drillSemaine && (["mois","semaine","jour"]).map(g => (
-          <button
-            key={g}
-            onClick={() => setEvGranularity(g)}
-            className={`px-3 py-1 rounded-full text-xs border transition ${
-              (evGranularity === "auto" ? effectiveGranularity : evGranularity) === g
-                ? "bg-emerald-400 text-white border-emerald-400"
-                : "border-white/30 text-white/70 hover:border-white"
-            }`}
-          >
-            {g.charAt(0).toUpperCase()+g.slice(1)}
-          </button>
-        ))}
+        {!drillMois && !drillSemaine &&
+          ["mois", "semaine", "jour"].map((g) => (
+            <button
+              key={g}
+              onClick={() => setEvGranularity(g)}
+              className={`px-3 py-1 rounded-full text-xs border transition ${
+                (evGranularity === "auto" ? effectiveGranularity : evGranularity) === g
+                  ? "bg-emerald-400 text-white border-emerald-400"
+                  : "border-white/30 text-white/70 hover:border-white"
+              }`}
+            >
+              {g.charAt(0).toUpperCase() + g.slice(1)}
+            </button>
+          ))}
         {drillMois && !drillSemaine && (
           <span className="text-white/60 text-xs">
-            {fmtMois(new Date(drillMois+"-01"))} — cliquez une semaine pour zoomer
+            {fmtMois(new Date(drillMois + "-01"))} — cliquez une semaine pour zoomer
           </span>
         )}
         {drillSemaine && (
@@ -455,6 +639,58 @@ function RapportPresence() {
       </div>
     );
   };
+
+  const vuesAccessibles = getVuesAccessibles();
+
+  // ── Filtre répartition ───────────────────────────────────────────────────
+  const FilterRepartition = () => (
+    <div className="flex flex-wrap gap-3 mb-4 items-end">
+      {/* Famille */}
+      <div className="flex flex-col">
+        <label className="text-xs text-white/60 mb-1 flex items-center gap-1">
+          <span className="text-emerald-300"><IconFamille /></span>
+          Famille
+        </label>
+        <select
+          value={repartFamilleId}
+          onChange={(e) => { setRepartFamilleId(e.target.value); setRepartCelluleId(""); }}
+          className="border border-white/20 rounded-lg px-3 py-1.5 bg-white/10 text-white text-sm min-w-[160px]"
+        >
+          <option value="">Toutes les familles</option>
+          {famillesVisibles.map((f) => (
+            <option key={f.id} value={f.id}>{f.nom || f.famille_full || f.id}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Cellule */}
+      <div className="flex flex-col">
+        <label className="text-xs text-white/60 mb-1 flex items-center gap-1">
+          <span className="text-amber-300"><IconCellule /></span>
+          Cellule
+        </label>
+        <select
+          value={repartCelluleId}
+          onChange={(e) => setRepartCelluleId(e.target.value)}
+          className="border border-white/20 rounded-lg px-3 py-1.5 bg-white/10 text-white text-sm min-w-[160px]"
+        >
+          <option value="">Toutes les cellules</option>
+          {repartCellulesFiltrees.map((c) => (
+            <option key={c.id} value={c.id}>{c.nom || c.cellule_full || c.id}</option>
+          ))}
+        </select>
+      </div>
+
+      {(repartFamilleId || repartCelluleId) && (
+        <button
+          onClick={() => { setRepartFamilleId(""); setRepartCelluleId(""); }}
+          className="text-xs text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 self-end"
+        >
+          Réinitialiser
+        </button>
+      )}
+    </div>
+  );
 
   // ───────────────────────────────────────────────────────────────────────
   return (
@@ -482,7 +718,9 @@ function RapportPresence() {
                 key={v}
                 onClick={() => { setVue(v); setBrancheId(""); setFamilleId(""); setCelluleId(""); }}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium border transition ${
-                  vue === v ? "bg-emerald-400 text-white border-emerald-400" : "border-white/30 text-white/70 hover:border-white"
+                  vue === v
+                    ? "bg-emerald-400 text-white border-emerald-400"
+                    : "border-white/30 text-white/70 hover:border-white"
                 }`}
               >
                 {vueLabels[v]}
@@ -492,53 +730,81 @@ function RapportPresence() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {["branche","famille","cellule"].includes(vue) && (
+          {["branche", "famille", "cellule"].includes(vue) && (
             <div className="flex flex-col">
               <label className="text-sm text-center mb-1">Branche</label>
-              <select value={brancheId} onChange={(e) => { setBrancheId(e.target.value); setFamilleId(""); setCelluleId(""); }}
-                className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white">
+              <select
+                value={brancheId}
+                onChange={(e) => { setBrancheId(e.target.value); setFamilleId(""); setCelluleId(""); }}
+                className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+              >
                 <option value="">Toutes les branches</option>
                 {branches.map((b) => <option key={b.id} value={b.id}>{b.nom}</option>)}
               </select>
             </div>
           )}
 
-          {["famille","cellule"].includes(vue) && (
+          {["famille", "cellule"].includes(vue) && (
             <div className="flex flex-col">
-              <label className="text-sm text-center mb-1">Famille</label>
-              <select value={familleId} onChange={(e) => { setFamilleId(e.target.value); setCelluleId(""); }}
-                className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white">
+              <label className="text-sm text-center mb-1 flex items-center justify-center gap-1">
+                <IconFamille /> Famille
+              </label>
+              <select
+                value={familleId}
+                onChange={(e) => { setFamilleId(e.target.value); setCelluleId(""); }}
+                className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+              >
                 <option value="">Toutes les familles</option>
-                {famillesFiltrees.map((f) => <option key={f.id} value={f.id}>{f.nom}</option>)}
+                {famillesFiltrees.map((f) => (
+                  <option key={f.id} value={f.id}>{f.nom || f.famille_full}</option>
+                ))}
               </select>
             </div>
           )}
 
           {vue === "cellule" && (
             <div className="flex flex-col">
-              <label className="text-sm text-center mb-1">Cellule</label>
-              <select value={celluleId} onChange={(e) => setCelluleId(e.target.value)}
-                className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white">
+              <label className="text-sm text-center mb-1 flex items-center justify-center gap-1">
+                <IconCellule /> Cellule
+              </label>
+              <select
+                value={celluleId}
+                onChange={(e) => setCelluleId(e.target.value)}
+                className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+              >
                 <option value="">Toutes les cellules</option>
-                {cellulesFiltrees.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
+                {cellulesFiltrees.map((c) => (
+                  <option key={c.id} value={c.id}>{c.nom || c.cellule_full}</option>
+                ))}
               </select>
             </div>
           )}
 
           <div className="flex flex-col">
             <label className="text-sm text-center mb-1">Date de Début</label>
-            <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)}
-              className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
+            <input
+              type="date"
+              value={dateDebut}
+              onChange={(e) => setDateDebut(e.target.value)}
+              className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+            />
           </div>
           <div className="flex flex-col">
             <label className="text-sm text-center mb-1">Date de Fin</label>
-            <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)}
-              className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white" />
+            <input
+              type="date"
+              value={dateFin}
+              onChange={(e) => setDateFin(e.target.value)}
+              className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
+            />
           </div>
         </div>
 
-        <button onClick={fetchRapport} disabled={loading}
-          className="w-full mt-4 h-10 bg-amber-300 text-white font-semibold rounded-lg hover:bg-amber-400 transition disabled:opacity-60">
+        <button
+          onClick={fetchRapport}
+          disabled={loading}
+          className="w-full mt-4 h-10 bg-amber-300 text-white font-semibold rounded-lg hover:bg-amber-400 transition disabled:opacity-60"
+        >
           {loading ? "⏳ Chargement..." : "Générer"}
         </button>
       </div>
@@ -551,9 +817,9 @@ function RapportPresence() {
           {/* MÉTRIQUES */}
           <div className="grid grid-cols-3 gap-3 mb-6">
             {[
-              { label:"Total présences", value: totalPresences.toLocaleString("fr-FR"), color:"text-white" },
-              { label:"Hommes",          value: totalH,  color:"text-blue-300" },
-              { label:"Femmes",          value: totalF,  color:"text-pink-300" },
+              { label: "Total présences", value: totalPresences.toLocaleString("fr-FR"), color: "text-white" },
+              { label: "Hommes", value: totalH, color: "text-blue-300" },
+              { label: "Femmes", value: totalF, color: "text-pink-300" },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-white/10 border border-white/20 rounded-xl p-3 text-center text-white">
                 <p className="text-xs text-white/60 mb-1">{label}</p>
@@ -565,15 +831,19 @@ function RapportPresence() {
           {/* ONGLETS */}
           <div className="flex gap-2 mb-4 flex-wrap">
             {[
-              { key:"evolution",  label:"Évolution" },
-              { key:"repartition",label:"Répartition" },
-              { key:"tableau",    label:"Tableau détaillé" },
-              { key:"tranches",   label:"Tranches d'âge" },
+              { key: "evolution", label: "Évolution" },
+              { key: "repartition", label: "Répartition" },
+              { key: "tableau", label: "Tableau détaillé" },
             ].map(({ key, label }) => (
-              <button key={key} onClick={() => setActiveTab(key)}
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium border transition ${
-                  activeTab === key ? "bg-white text-[#333699] border-white" : "border-white/30 text-white/70 hover:border-white"
-                }`}>
+                  activeTab === key
+                    ? "bg-white text-[#333699] border-white"
+                    : "border-white/30 text-white/70 hover:border-white"
+                }`}
+              >
                 {label}
               </button>
             ))}
@@ -583,63 +853,163 @@ function RapportPresence() {
           {activeTab === "evolution" && (
             <div className="bg-white/10 border border-white/20 rounded-xl p-4">
               <p className="text-white font-semibold mb-2">Évolution des présences</p>
-
               {granularityBtns()}
-
               <div className="flex flex-wrap gap-3 mb-3 text-xs text-white/70">
-                {[["Hommes","#3b82f6"],["Femmes","#ec4899"]].map(([l,c]) => (
+                {[["Hommes", "#3b82f6"], ["Femmes", "#ec4899"]].map(([l, c]) => (
                   <span key={l} className="flex items-center gap-1">
-                    <span style={{ background:c }} className="w-3 h-3 rounded-sm inline-block"></span>{l}
+                    <span style={{ background: c }} className="w-3 h-3 rounded-sm inline-block"></span>
+                    {l}
                   </span>
                 ))}
                 {effectiveGranularity !== "jour" && (
                   <span className="text-white/40 ml-auto">💡 Cliquez sur un point pour zoomer</span>
                 )}
               </div>
-
               <div style={{ height: 280 }}>
                 <Line data={lineData} options={lineOptions} />
               </div>
             </div>
           )}
 
-          {/* ── TAB RÉPARTITION ── */}
+          {/* ── TAB RÉPARTITION (civilité + tranches d'âge fusionnées) ── */}
           {activeTab === "repartition" && (
-            <div className="flex justify-center">
-              <div className="bg-white/10 border border-white/20 rounded-xl p-4 w-full max-w-sm">
-                <p className="text-white font-semibold mb-3">Par civilité</p>
-                <div style={{ height: 200 }}>
-                  <Doughnut data={civiliteData} options={doughnutOptions} />
+            <div className="bg-white/10 border border-white/20 rounded-xl p-4">
+              <p className="text-white font-semibold mb-4">Répartition des présences</p>
+
+              {/* Filtre famille / cellule */}
+              <FilterRepartition />
+
+              {/* Compteurs filtrés */}
+              <div className="grid grid-cols-3 gap-3 mb-5">
+                {[
+                  { label: "Total", value: hasIndividualData ? repartTotal : totalPresences, color: "text-white" },
+                  { label: "Hommes", value: displayH, color: "text-blue-300" },
+                  { label: "Femmes", value: displayF, color: "text-pink-300" },
+                ].map(({ label, value, color }) => (
+                  <div key={label} className="bg-white/10 border border-white/10 rounded-xl p-3 text-center">
+                    <p className="text-xs text-white/50 mb-1">{label}</p>
+                    <p className={`text-lg font-bold ${color}`}>{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {!hasIndividualData && (repartFamilleId || repartCelluleId) && (
+                <p className="text-white/40 text-xs text-center mb-3">
+                  ℹ️ Données individuelles non disponibles pour ce filtre — affichage des totaux globaux
+                </p>
+              )}
+
+              {/* Deux pie charts côte à côte */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Civilité */}
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                  <p className="text-white/70 text-sm font-medium mb-3 text-center">Par civilité</p>
+                  <div style={{ height: 200 }}>
+                    <Doughnut data={civiliteData} options={doughnutOptions} />
+                  </div>
+                  <div className="flex justify-center gap-4 mt-3 text-xs">
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-blue-400 inline-block"></span>
+                      <span className="text-blue-300 font-semibold">{displayH}</span>
+                      <span className="text-white/50">H</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-pink-400 inline-block"></span>
+                      <span className="text-pink-300 font-semibold">{displayF}</span>
+                      <span className="text-white/50">F</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Tranches d'âge */}
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                  <p className="text-white/70 text-sm font-medium mb-3 text-center">Par tranche d'âge</p>
+                  {tranchesData.length === 0 ? (
+                    <div className="flex items-center justify-center h-[200px]">
+                      <p className="text-white/30 text-xs text-center">
+                        Aucune donnée de présences<br/>individuelles disponible
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ height: 200 }}>
+                        <Doughnut data={tranchesPieData} options={doughnutOptions} />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
+
+              {/* Tableau récap tranches */}
+              {tranchesData.length > 0 && (
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full text-sm text-white text-left">
+                    <thead>
+                      <tr className="text-xs uppercase text-white/40 border-b border-white/10">
+                        <th className="py-2 pr-4">Tranche d'âge</th>
+                        <th className="py-2 pr-4 text-orange-400">Nb</th>
+                        <th className="py-2 text-white/40">%</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tranchesData.map((t) => {
+                        const totalGlobal = tranchesData.reduce((s, x) => s + x.count, 0);
+                        return (
+                          <tr key={t.tranche} className="border-t border-white/10 hover:bg-white/5">
+                            <td className="py-1.5 pr-4 text-white/80">{t.tranche}</td>
+                            <td className="py-1.5 pr-4 text-orange-400 font-semibold">{t.count}</td>
+                            <td className="py-1.5 text-white/40 text-xs">
+                              {totalGlobal > 0 ? ((t.count / totalGlobal) * 100).toFixed(1) : 0}%
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
           {/* ── TAB TABLEAU DÉTAILLÉ ── */}
           {activeTab === "tableau" && (
             <div>
-              {/* Filtres tableau */}
               <div className="flex flex-wrap gap-3 mb-3 items-end">
                 <div className="flex flex-col">
-                  <label className="text-xs text-white/60 mb-1">Filtrer par famille</label>
-                  <select value={tblFamilleId}
+                  <label className="text-xs text-white/60 mb-1 flex items-center gap-1">
+                    <IconFamille /> Filtrer par famille
+                  </label>
+                  <select
+                    value={tblFamilleId}
                     onChange={(e) => { setTblFamilleId(e.target.value); setTblCelluleId(""); }}
-                    className="border border-gray-400 rounded-lg px-3 py-1.5 bg-white/10 text-white text-sm">
+                    className="border border-gray-400 rounded-lg px-3 py-1.5 bg-white/10 text-white text-sm"
+                  >
                     <option value="">Toutes les familles</option>
-                    {familles.map(f => <option key={f.id} value={f.id}>{f.nom}</option>)}
+                    {famillesVisibles.map((f) => (
+                      <option key={f.id} value={f.id}>{f.nom || f.famille_full}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex flex-col">
-                  <label className="text-xs text-white/60 mb-1">Filtrer par cellule</label>
-                  <select value={tblCelluleId} onChange={(e) => setTblCelluleId(e.target.value)}
-                    className="border border-gray-400 rounded-lg px-3 py-1.5 bg-white/10 text-white text-sm">
+                  <label className="text-xs text-white/60 mb-1 flex items-center gap-1">
+                    <IconCellule /> Filtrer par cellule
+                  </label>
+                  <select
+                    value={tblCelluleId}
+                    onChange={(e) => setTblCelluleId(e.target.value)}
+                    className="border border-gray-400 rounded-lg px-3 py-1.5 bg-white/10 text-white text-sm"
+                  >
                     <option value="">Toutes les cellules</option>
-                    {tblCellulesFiltrees.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
+                    {tblCellulesFiltrees.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nom || c.cellule_full}</option>
+                    ))}
                   </select>
                 </div>
                 {(tblFamilleId || tblCelluleId) && (
-                  <button onClick={() => { setTblFamilleId(""); setTblCelluleId(""); }}
-                    className="text-xs text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5">
+                  <button
+                    onClick={() => { setTblFamilleId(""); setTblCelluleId(""); }}
+                    className="text-xs text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5"
+                  >
                     Réinitialiser
                   </button>
                 )}
@@ -659,84 +1029,44 @@ function RapportPresence() {
                   </thead>
                   <tbody>
                     {tableRows.length === 0 ? (
-                      <tr><td colSpan={6} className="px-3 py-6 text-center text-white/40">Aucune donnée pour ce filtre</td></tr>
-                    ) : tableRows.map((a) => {
-                      const pctNum = parseFloat(a.pct);
-                      const pctColor = pctNum > 0 ? "#4ade80" : pctNum < 0 ? "#f87171" : "rgba(255,255,255,0.4)";
-                      return (
-                        <tr key={`${a.date}_${a.numero_culte}`} className="border-t border-white/10 hover:bg-white/5">
-                          <td className="px-3 py-2">{new Date(a.date).toLocaleDateString("fr-FR")}</td>
-                          <td className="px-3 py-2">{a.numero_culte || ""}</td>
-                          <td className="px-3 py-2 text-blue-300">{a.hommes || ""}</td>
-                          <td className="px-3 py-2 text-pink-300">{a.femmes || ""}</td>
-                          <td className="px-3 py-2 text-orange-400 font-semibold">{a.total || ""}</td>
-                          <td className="px-3 py-2">
-                            {a.pct !== null ? (
-                              <span style={{ color: pctColor, fontWeight: 500 }}>
-                                {pctNum > 0 ? "+" : ""}{a.pct}%
-                              </span>
-                            ) : ""}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                      <tr>
+                        <td colSpan={6} className="px-3 py-6 text-center text-white/40">
+                          Aucune donnée pour ce filtre
+                        </td>
+                      </tr>
+                    ) : (
+                      tableRows.map((a) => {
+                        const pctNum = parseFloat(a.pct);
+                        const pctColor =
+                          pctNum > 0 ? "#4ade80" : pctNum < 0 ? "#f87171" : "rgba(255,255,255,0.4)";
+                        return (
+                          <tr
+                            key={`${a.date}_${a.numero_culte}`}
+                            className="border-t border-white/10 hover:bg-white/5"
+                          >
+                            <td className="px-3 py-2">
+                              {new Date(a.date).toLocaleDateString("fr-FR")}
+                            </td>
+                            <td className="px-3 py-2">{a.numero_culte || ""}</td>
+                            <td className="px-3 py-2 text-blue-300">{a.hommes || ""}</td>
+                            <td className="px-3 py-2 text-pink-300">{a.femmes || ""}</td>
+                            <td className="px-3 py-2 text-orange-400 font-semibold">{a.total || ""}</td>
+                            <td className="px-3 py-2">
+                              {a.pct !== null ? (
+                                <span style={{ color: pctColor, fontWeight: 500 }}>
+                                  {pctNum > 0 ? "+" : ""}{a.pct}%
+                                </span>
+                              ) : ""}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
-
-          {/* ── TAB TRANCHES D'ÂGE ── */}
-          {activeTab === "tranches" && (
-            <div className="bg-white/10 border border-white/20 rounded-xl p-4">
-              <p className="text-white font-semibold mb-4">Répartition par tranche d'âge</p>
-
-              {presences.length === 0 ? (
-                <p className="text-white/50 text-sm text-center py-8">
-                  Aucune donnée de présences individuelles disponible pour cette période.<br/>
-                  <span className="text-xs">(La table presences doit être alimentée)</span>
-                </p>
-              ) : (
-                <>
-                  <div style={{ height: 260 }}>
-                    <Bar data={tranchesBarData} options={barOptions} />
-                  </div>
-
-                  {/* tableau récapitulatif tranches */}
-                  <div className="mt-4 overflow-x-auto">
-                    <table className="w-full text-sm text-white text-left">
-                      <thead>
-                        <tr className="text-xs uppercase text-white/50 border-b border-white/10">
-                          <th className="py-2 pr-4">Tranche</th>
-                          <th className="py-2 pr-4 text-blue-300">H</th>
-                          <th className="py-2 pr-4 text-pink-300">F</th>
-                          <th className="py-2 text-orange-400">Total</th>
-                          <th className="py-2 text-white/40">%</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {tranchesData.filter(t => t.total > 0).map(t => {
-                          const totalGlobal = tranchesData.reduce((s,x)=>s+x.total,0);
-                          return (
-                            <tr key={t.tranche} className="border-t border-white/10 hover:bg-white/5">
-                              <td className="py-1.5 pr-4">{t.tranche}</td>
-                              <td className="py-1.5 pr-4 text-blue-300">{t.hommes}</td>
-                              <td className="py-1.5 pr-4 text-pink-300">{t.femmes}</td>
-                              <td className="py-1.5 text-orange-400 font-semibold">{t.total}</td>
-                              <td className="py-1.5 text-white/50 text-xs">
-                                {totalGlobal > 0 ? ((t.total/totalGlobal)*100).toFixed(1) : 0}%
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
         </div>
       )}
 

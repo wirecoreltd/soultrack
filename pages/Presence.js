@@ -947,7 +947,7 @@ function Presence() {
             }}
             className="mt-8 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm"
           >
-            ↩ Nouvelle session
+            ↩ Nouvelle sessionsssssssssss
           </button>
         </>
       )}

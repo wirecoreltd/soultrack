@@ -7,6 +7,7 @@ import EditEvangelisePopup from "../../components/EditEvangelisePopup";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import useChurchScope from "../../hooks/useChurchScope";
 import Footer from "../../components/Footer";
+import { useFeature } from "../../components/FeaturesContext";
 
 export default function Evangelisation() {
   return (
@@ -18,9 +19,17 @@ export default function Evangelisation() {
 
 function EvangelisationContent() {
   const { profile, loading: loadingProfile, error: profileError, scopedQuery } = useChurchScope();
+
+  // ─────────────────────────────────────────────
+  // ✅ FEATURES
+  // ─────────────────────────────────────────────
+  const famillesActive = useFeature("familles");
+  const conseillerActive = useFeature("conseiller");
+  const cellulesActive = useFeature("cellules");
+
   const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
-  const [familles, setFamilles] = useState([]); // ✅ familles state
+  const [familles, setFamilles] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [selectedTargetType, setSelectedTargetType] = useState("");
   const [selectedTarget, setSelectedTarget] = useState("");
@@ -69,11 +78,15 @@ function EvangelisationContent() {
 
   useEffect(() => {
     if (!profile) return;
+
     fetchContacts();
-    fetchCellules();
-    fetchFamilles(); // ✅
-    fetchConseillers();
-  }, [profile]);
+
+    // ✅ Chargement conditionné par feature
+    if (cellulesActive) fetchCellules();
+    if (famillesActive) fetchFamilles();
+    if (conseillerActive) fetchConseillers();
+
+  }, [profile, cellulesActive, famillesActive, conseillerActive]);
 
   const fetchContacts = async () => {
     try {
@@ -104,7 +117,6 @@ function EvangelisationContent() {
     }
   };
 
-  // ✅ Fetch familles — même logique que cellules
   const fetchFamilles = async () => {
     try {
       const query = scopedQuery("familles");
@@ -153,7 +165,7 @@ function EvangelisationContent() {
     if (!dateString) return "—";
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
-    const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
@@ -163,7 +175,6 @@ function EvangelisationContent() {
     return "#888";
   };
 
-  // ✅ Helper : résoudre le nom/téléphone de la cible selon le type
   const resolveCible = (targetType, targetId) => {
     if (targetType === "cellule") return cellules.find((c) => c.id === targetId);
     if (targetType === "famille") return familles.find((f) => f.id === targetId);
@@ -229,7 +240,7 @@ function EvangelisationContent() {
     }
   };
 
-  /* ================= ÉCRITURE DANS suivi_assignments_evangelises ================= */
+  /* ================= ÉCRITURE suivi_assignments_evangelises ================= */
   const writeAssignments = async (insertedSuivis, targetType, targetId) => {
     if (!insertedSuivis || insertedSuivis.length === 0) return;
     if (targetType !== "conseiller") return;
@@ -243,7 +254,7 @@ function EvangelisationContent() {
       assigned_by: profile?.id || null,
     }));
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("suivi_assignments_evangelises")
       .insert(assignmentRows)
       .select();
@@ -263,7 +274,6 @@ function EvangelisationContent() {
         setLoadingSend(false);
         return;
       }
-
       if (!contactsToSend || contactsToSend.length === 0) {
         alert("⚠️ Aucun contact sélectionné");
         setLoadingSend(false);
@@ -271,14 +281,12 @@ function EvangelisationContent() {
       }
 
       const cible = resolveCible(targetType, targetId);
-
       if (!cible) {
         alert("⚠️ Cible introuvable");
         setLoadingSend(false);
         return;
       }
 
-      // 🔹 Préparer les inserts pour suivis_des_evangelises
       const inserts = contactsToSend.map((m) => ({
         prenom: m.prenom,
         nom: m.nom,
@@ -294,7 +302,7 @@ function EvangelisationContent() {
         evangelise_id: m.id,
         conseiller_id: targetType === "conseiller" ? targetId : null,
         cellule_id: targetType === "cellule" ? targetId : null,
-        famille_id: targetType === "famille" ? targetId : null, // ✅
+        famille_id: targetType === "famille" ? targetId : null,
         date_evangelise: m.date_evangelise,
         date_suivi: new Date().toISOString(),
         eglise_id: profile?.eglise_id || null,
@@ -321,7 +329,6 @@ function EvangelisationContent() {
       setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
       setCheckedContacts({});
 
-      // 🔹 Construire le message WhatsApp
       const cibleName = getCibleName(targetType, cible);
       let message = `👋 Bonjour ${cibleName},\n\n`;
       message +=
@@ -389,7 +396,7 @@ function EvangelisationContent() {
         </p>
       </div>
 
-      {/* Sélection cible */}
+      {/* ✅ Sélection cible — options conditionnées par feature */}
       <div className="w-full max-w-md mb-6">
         <select
           value={selectedTargetType}
@@ -400,9 +407,9 @@ function EvangelisationContent() {
           className="w-full border rounded px-3 py-2 mb-3 text-center"
         >
           <option value="">-- Envoyer à --</option>
-          <option value="cellule">Une Cellule</option>
-          <option value="famille">Une Famille</option> {/* ✅ */}
-          <option value="conseiller">Un Conseiller</option>
+          {cellulesActive && <option value="cellule">Une Cellule</option>}
+          {famillesActive && <option value="famille">Une Famille</option>}
+          {conseillerActive && <option value="conseiller">Un Conseiller</option>}
         </select>
 
         {selectedTargetType && (
@@ -412,18 +419,17 @@ function EvangelisationContent() {
             className="w-full border rounded px-3 py-2 mb-3 text-center"
           >
             <option value="">-- Choisir --</option>
-            {/* ✅ Liste selon le type sélectionné */}
-            {selectedTargetType === "cellule" && cellules.map((c) => (
+            {cellulesActive && selectedTargetType === "cellule" && cellules.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.ville ? `${c.cellule_full} - ${c.ville}` : c.cellule_full}
               </option>
             ))}
-            {selectedTargetType === "famille" && familles.map((f) => (
+            {famillesActive && selectedTargetType === "famille" && familles.map((f) => (
               <option key={f.id} value={f.id}>
                 {f.ville ? `${f.famille_full} - ${f.ville}` : f.famille_full}
               </option>
             ))}
-            {selectedTargetType === "conseiller" && conseillers.map((c) => (
+            {conseillerActive && selectedTargetType === "conseiller" && conseillers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.prenom} {c.nom}
               </option>
@@ -544,13 +550,13 @@ function EvangelisationContent() {
         )}
       </div>
 
-      {/* POPUP EDIT */}
+      {/* ✅ POPUP EDIT — props filtrées par feature */}
       {editMember && (
         <EditEvangelisePopup
           member={editMember}
-          cellules={cellules}
-          familles={familles} // ✅
-          conseillers={conseillers}
+          cellules={cellulesActive ? cellules : []}
+          familles={famillesActive ? familles : []}
+          conseillers={conseillerActive ? conseillers : []}
           onClose={() => setEditMember(null)}
           onUpdateMember={(updatedMember) => {
             setContacts((prev) => prev.map((c) => (c.id === updatedMember.id ? updatedMember : c)));

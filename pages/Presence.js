@@ -229,8 +229,6 @@ function FormulaireSession({
 }
 
 // ─── TOGGLE VISIBILITÉ ─────────────────────────────────────────
-// FIX 1 : le thumb ne déborde plus du conteneur
-// Calcul : left 3px + translate 22px + width 18px + 3px right gap = 46px ≤ 48px (w-12)
 function ToggleVisibilite({ visible, onToggle, saving }) {
   return (
     <div className={`w-full max-w-lg mx-auto mb-4 rounded-xl px-4 py-3 flex items-center justify-between gap-3 border-2 transition ${
@@ -253,7 +251,6 @@ function ToggleVisibilite({ visible, onToggle, saving }) {
           visible ? "bg-emerald-500" : "bg-gray-400"
         } ${saving ? "opacity-50" : ""}`}
       >
-        {/* FIX : top/left fixes + translate calibré pour rester dans le bouton */}
         <span
           className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] bg-white rounded-full shadow transition-transform ${
             visible ? "translate-x-[22px]" : "translate-x-0"
@@ -489,9 +486,31 @@ function Presence() {
     profileRef.current.liste_presence_visible = newVal;
     setListeVisible(newVal);
     setSavingVisible(false);
-    // FIX bug 2 : on appelle fetchAll directement sans dépendre de etape (closure stale)
-    // fetchAll relit toujours depuis Supabase donc reflète immédiatement le nouvel état
     await fetchAll(selectedDate);
+  };
+
+  // ─── MISE À JOUR COMPTEURS ATTENDANCE ────────────────────────
+  const updateAttendanceCounters = async (currentAttendanceId, date) => {
+    if (!currentAttendanceId) return;
+
+    const { data: presences } = await supabase
+      .from("presences")
+      .select("membres_complets(civilite)")
+      .eq("date", date)
+      .eq("attendance_id", currentAttendanceId);
+
+    const counts = { hommes: 0, femmes: 0 };
+
+    (presences || []).forEach(p => {
+      const civilite = p.membres_complets?.civilite?.trim();
+      if (civilite === "Homme") counts.hommes++;
+      else if (civilite === "Femme") counts.femmes++;
+    });
+
+    await supabase
+      .from("attendance")
+      .update(counts)
+      .eq("id", currentAttendanceId);
   };
 
   // ─── FETCH MEMBRES + PRÉSENCES ────────────────────────────────
@@ -505,7 +524,7 @@ function Presence() {
 
       const { data: presencesData } = await supabase
         .from("presences")
-        .select("membre_id, checked_by, membres_complets(prenom, nom)")
+        .select("membre_id, checked_by, membres_complets(prenom, nom, civilite)")
         .eq("date", d);
 
       const allPresences = presencesData || [];
@@ -515,7 +534,7 @@ function Presence() {
         if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); return; }
         const { data: membresData } = await supabase
           .from("membres_complets")
-          .select("id, prenom, nom, telephone")
+          .select("id, prenom, nom, telephone, civilite")
           .eq("eglise_id", profile.eglise_id)
           .in("etat_contact", ["existant", "nouveau"])
           .in("id", myIds);
@@ -533,7 +552,7 @@ function Presence() {
       // ── VUE ADMIN/RI ──────────────────────────────────────────
       const { data: tousMembres } = await supabase
         .from("membres_complets")
-        .select("id, prenom, nom, telephone, cellule_id, famille_id")
+        .select("id, prenom, nom, telephone, civilite, cellule_id, famille_id")
         .eq("eglise_id", profile.eglise_id)
         .in("etat_contact", ["existant", "nouveau"]);
 
@@ -558,10 +577,8 @@ function Presence() {
         .select("membre_id, conseiller_id, profiles(prenom, nom)")
         .eq("statut", "actif");
 
-      // IDs des responsables ayant activé leur liste
       const visiblesIds = new Set((responsablesVisibles || []).map(r => r.id));
 
-      // Map conseiller_id → { ids[], profile }
       const assignmentsByConseiller = {};
       (assignmentsData || []).forEach(a => {
         if (!assignmentsByConseiller[a.conseiller_id]) assignmentsByConseiller[a.conseiller_id] = { ids: [], profile: a.profiles };
@@ -569,10 +586,6 @@ function Presence() {
       });
 
       const membresDansConseiller = new Set(Object.values(assignmentsByConseiller).flatMap(v => v.ids));
-
-      // ── Approche additive : on construit les groupes visibles un par un.
-      // Un membre n'apparaît QUE si son groupe a activé la visibilité.
-      // Les membres sans groupe ni conseiller visible sont dans "Sans rattachement".
 
       const groupesResult = [];
       const membresCouvertsParGroupe = new Set();
@@ -614,7 +627,6 @@ function Presence() {
       });
 
       // ── Conseillers dont la liste est visible
-      // On n'affiche que les membres pas déjà couverts par une cellule/famille visible
       Object.entries(assignmentsByConseiller).forEach(([consId, { ids, profile: consProfile }]) => {
         if (!visiblesIds.has(consId)) return;
         const cm = ids
@@ -633,7 +645,7 @@ function Presence() {
         }
       });
 
-      // ── Sans rattachement : pas de cellule, pas de famille, pas de conseiller
+      // ── Sans rattachement
       const sansCellule = membres
         .filter(m => !m.cellule_id && !m.famille_id && !membresDansConseiller.has(m.id))
         .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
@@ -641,7 +653,6 @@ function Presence() {
         groupesResult.unshift({ id: "sans", label: "Sans rattachement", icon: "👤", color: "gray", membres: sansCellule });
       }
 
-      // Membres visibles pour le compteur absents/présents
       const membresVisiblesIds = new Set([
         ...membresCouvertsParGroupe,
         ...sansCellule.map(m => m.id),
@@ -688,6 +699,8 @@ function Presence() {
         typeTemps: typeFinal,
         temps_nom: typeFinal,
         eglise_id: profile.eglise_id,
+        hommes: 0,
+        femmes: 0,
         ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : {}),
       };
 
@@ -736,14 +749,23 @@ function Presence() {
   const markPresent = async (membre) => {
     try {
       const { uid } = profileRef.current;
-      await supabase.from("presences").insert({ membre_id: membre.id, date: selectedDate, checked_by: uid, attendance_id: attendanceId });
+      await supabase.from("presences").insert({
+        membre_id: membre.id,
+        date: selectedDate,
+        checked_by: uid,
+        attendance_id: attendanceId,
+      });
+      await updateAttendanceCounters(attendanceId, selectedDate);
       await fetchAll(selectedDate);
     } catch (err) { console.error(err); }
   };
 
   const markAbsent = async (memberId) => {
     try {
-      await supabase.from("presences").delete().eq("membre_id", memberId).eq("date", selectedDate);
+      await supabase.from("presences").delete()
+        .eq("membre_id", memberId)
+        .eq("date", selectedDate);
+      await updateAttendanceCounters(attendanceId, selectedDate);
       await fetchAll(selectedDate);
     } catch (err) { console.error(err); }
   };

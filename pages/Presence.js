@@ -26,7 +26,9 @@ function formatSessionLabel(s) {
 }
 
 // ─── ÉCRAN CHOIX SESSION ───────────────────────────────────────
-function ChoixSession({ sessions, onJoin, onNew, loadingCheck }) {
+function ChoixSession({ sessions, sessionsAnciennes, onJoin, onNew, loadingCheck }) {
+  const [showAnciennes, setShowAnciennes] = useState(false);
+
   if (loadingCheck) {
     return (
       <div className="w-full max-w-lg mt-6 flex flex-col items-center gap-4">
@@ -34,6 +36,13 @@ function ChoixSession({ sessions, onJoin, onNew, loadingCheck }) {
       </div>
     );
   }
+
+  // Grouper les anciennes sessions par date
+  const anciennesParDate = sessionsAnciennes.reduce((acc, s) => {
+    if (!acc[s.date]) acc[s.date] = [];
+    acc[s.date].push(s);
+    return acc;
+  }, {});
 
   return (
     <div className="w-full max-w-lg mt-6 flex flex-col gap-4">
@@ -77,6 +86,54 @@ function ChoixSession({ sessions, onJoin, onNew, loadingCheck }) {
           >
             ➕ Créer une session
           </button>
+        </div>
+      )}
+
+      {/* ── ANCIENNES SESSIONS (7 derniers jours) ── */}
+      {sessionsAnciennes.length > 0 && (
+        <div className="bg-white/10 rounded-2xl overflow-hidden">
+          <button
+            onClick={() => setShowAnciennes(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/10 transition"
+          >
+            <span className="text-white font-semibold text-sm flex items-center gap-2">
+              🕐 Anciennes sessions
+              <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">
+                {sessionsAnciennes.length}
+              </span>
+            </span>
+            <span className="text-white/60 text-xs">{showAnciennes ? "▲ Masquer" : "▼ Afficher"}</span>
+          </button>
+
+          {showAnciennes && (
+            <div className="flex flex-col gap-3 px-4 pb-4">
+              {Object.entries(anciennesParDate).map(([date, sessionsDuJour]) => (
+                <div key={date}>
+                  <p className="text-white/50 text-xs font-semibold mb-2 uppercase tracking-wide">
+                    📅 {new Date(date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long" })}
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {sessionsDuJour.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => onJoin(s)}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition group border border-white/10"
+                      >
+                        <span className="text-left text-sm">
+                          {s.typeTemps}
+                          {s.numero_culte ? ` — ${s.numero_culte}${s.numero_culte === 1 ? "er" : "ème"} culte` : ""}
+                          {s.heure ? ` · ${s.heure}` : ""}
+                        </span>
+                        <span className="text-xs bg-white/20 text-white/80 group-hover:bg-white/30 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
+                          Modifier →
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -347,6 +404,7 @@ function Presence() {
   // ── Étapes : "check" → "choix" → "form" → "ready"
   const [etape, setEtape] = useState("check");
   const [sessionsAujourdhui, setSessionsAujourdhui] = useState([]);
+  const [sessionsAnciennes, setSessionsAnciennes] = useState([]);
 
   const [attendanceId, setAttendanceId] = useState(null);
   const [editingSession, setEditingSession] = useState(false);
@@ -450,6 +508,7 @@ function Presence() {
     await initProfile();
     const profile = profileRef.current;
 
+    // Sessions d'aujourd'hui
     const { data } = await supabase
       .from("attendance")
       .select("id, typeTemps, date, heure, numero_culte")
@@ -457,7 +516,22 @@ function Presence() {
       .eq("date", today())
       .order("created_at", { ascending: false });
 
+    // Sessions des 7 derniers jours (hors aujourd'hui)
+    const il7joursDate = new Date();
+    il7joursDate.setDate(il7joursDate.getDate() - 7);
+    const il7jours = il7joursDate.toISOString().split("T")[0];
+
+    const { data: anciennes } = await supabase
+      .from("attendance")
+      .select("id, typeTemps, date, heure, numero_culte")
+      .eq("eglise_id", profile.eglise_id)
+      .lt("date", today())
+      .gte("date", il7jours)
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false });
+
     setSessionsAujourdhui(data || []);
+    setSessionsAnciennes(anciennes || []);
     setEtape((data || []).length > 0 ? "choix" : "form");
   }, [initProfile]);
 
@@ -803,6 +877,7 @@ function Presence() {
         </p>
         <ChoixSession
           sessions={sessionsAujourdhui}
+          sessionsAnciennes={sessionsAnciennes}
           onJoin={rejoindreSession}
           onNew={() => setEtape("form")}
           loadingCheck={false}

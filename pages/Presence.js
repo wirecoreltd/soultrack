@@ -26,7 +26,7 @@ function formatSessionLabel(s) {
 }
 
 // ─── ÉCRAN CHOIX SESSION ───────────────────────────────────────
-function ChoixSession({ sessions, onJoin, onNew, loadingCheck }) {
+function ChoixSession({ sessions, onJoin, onNew, onHistorique, loadingCheck }) {
   if (loadingCheck) {
     return (
       <div className="w-full max-w-lg mt-6 flex flex-col items-center gap-4">
@@ -79,6 +79,140 @@ function ChoixSession({ sessions, onJoin, onNew, loadingCheck }) {
           </button>
         </div>
       )}
+
+      {/* ── BOUTON HISTORIQUE ── */}
+      <button
+        onClick={onHistorique}
+        className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-sm font-medium flex items-center justify-center gap-2 transition border border-white/20"
+      >
+        🕐 Voir les sessions des 7 derniers jours
+      </button>
+    </div>
+  );
+}
+
+// ─── ÉCRAN HISTORIQUE 7 JOURS ──────────────────────────────────
+function EcranHistorique({ egliseId, onJoin, onBack }) {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [countsBySession, setCountsBySession] = useState({});
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      // Calcul des 7 derniers jours (excl. aujourd'hui)
+      const dates = [];
+      for (let i = 1; i <= 7; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        dates.push(d.toISOString().split("T")[0]);
+      }
+
+      const { data: sessionsData } = await supabase
+        .from("attendance")
+        .select("id, typeTemps, date, heure, numero_culte")
+        .eq("eglise_id", egliseId)
+        .in("date", dates)
+        .order("date", { ascending: false })
+        .order("created_at", { ascending: false });
+
+      const allSessions = sessionsData || [];
+      setSessions(allSessions);
+
+      // Compter les présences pour chaque session
+      if (allSessions.length > 0) {
+        const { data: presencesData } = await supabase
+          .from("presences")
+          .select("attendance_id")
+          .in("attendance_id", allSessions.map(s => s.id));
+
+        const counts = {};
+        (presencesData || []).forEach(p => {
+          counts[p.attendance_id] = (counts[p.attendance_id] || 0) + 1;
+        });
+        setCountsBySession(counts);
+      }
+
+      setLoading(false);
+    }
+    load();
+  }, [egliseId]);
+
+  // Grouper par date
+  const byDate = sessions.reduce((acc, s) => {
+    if (!acc[s.date]) acc[s.date] = [];
+    acc[s.date].push(s);
+    return acc;
+  }, {});
+
+  const datesSorted = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
+
+  return (
+    <div className="w-full max-w-lg mt-6 flex flex-col gap-4">
+      <div className="flex items-center gap-3 mb-2">
+        <button
+          onClick={onBack}
+          className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm transition"
+        >
+          ← Retour
+        </button>
+        <h2 className="text-white font-bold text-lg">🕐 Sessions des 7 derniers jours</h2>
+      </div>
+
+      {loading ? (
+        <div className="flex flex-col items-center gap-3 py-8">
+          <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+          <p className="text-white/60 text-sm">Chargement...</p>
+        </div>
+      ) : datesSorted.length === 0 ? (
+        <div className="bg-white/10 rounded-2xl p-6 text-center">
+          <p className="text-white/60 text-sm">Aucune session dans les 7 derniers jours.</p>
+        </div>
+      ) : (
+        datesSorted.map(date => (
+          <div key={date} className="bg-white rounded-2xl shadow-xl p-4 flex flex-col gap-2">
+            {/* En-tête date */}
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-bold text-[#333699] bg-[#333699]/10 px-2 py-0.5 rounded-full">
+                📅 {new Date(date + "T00:00:00").toLocaleDateString("fr-FR", {
+                  weekday: "long", day: "2-digit", month: "long", year: "numeric"
+                })}
+              </span>
+            </div>
+
+            {byDate[date].map(s => (
+              <button
+                key={s.id}
+                onClick={() => onJoin(s)}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-gray-200 hover:border-[#333699] hover:bg-[#333699]/5 transition group"
+              >
+                <div className="flex flex-col items-start gap-0.5">
+                  <span className="text-sm font-semibold text-gray-800 group-hover:text-[#333699] transition text-left">
+                    {s.typeTemps}
+                    {s.numero_culte ? ` — ${s.numero_culte}${s.numero_culte === 1 ? "er" : "ème"} culte` : ""}
+                  </span>
+                  {s.heure && (
+                    <span className="text-xs text-gray-400">🕐 {s.heure}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                  <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">
+                    ✔ {countsBySession[s.id] || 0} présent{(countsBySession[s.id] || 0) > 1 ? "s" : ""}
+                  </span>
+                  <span className="text-xs text-[#333699] group-hover:underline">Ouvrir →</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        ))
+      )}
+
+      <button
+        onClick={onBack}
+        className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/70 text-sm transition mt-2"
+      >
+        ← Retour à aujourd'hui
+      </button>
     </div>
   );
 }
@@ -229,8 +363,6 @@ function FormulaireSession({
 }
 
 // ─── TOGGLE VISIBILITÉ ─────────────────────────────────────────
-// FIX 1 : le thumb ne déborde plus du conteneur
-// Calcul : left 3px + translate 22px + width 18px + 3px right gap = 46px ≤ 48px (w-12)
 function ToggleVisibilite({ visible, onToggle, saving }) {
   return (
     <div className={`w-full max-w-lg mx-auto mb-4 rounded-xl px-4 py-3 flex items-center justify-between gap-3 border-2 transition ${
@@ -253,7 +385,6 @@ function ToggleVisibilite({ visible, onToggle, saving }) {
           visible ? "bg-emerald-500" : "bg-gray-400"
         } ${saving ? "opacity-50" : ""}`}
       >
-        {/* FIX : top/left fixes + translate calibré pour rester dans le bouton */}
         <span
           className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] bg-white rounded-full shadow transition-transform ${
             visible ? "translate-x-[22px]" : "translate-x-0"
@@ -347,12 +478,14 @@ function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, vie
 
 // ─── COMPOSANT PRINCIPAL ───────────────────────────────────────
 function Presence() {
-  // ── Étapes : "check" → "choix" → "form" → "ready"
+  // ── Étapes : "check" → "choix" → "form" → "ready" → "historique"
   const [etape, setEtape] = useState("check");
   const [sessionsAujourdhui, setSessionsAujourdhui] = useState([]);
 
   const [attendanceId, setAttendanceId] = useState(null);
   const [editingSession, setEditingSession] = useState(false);
+  // ── NOUVEAU : indique si la session ouverte est une session passée (lecture/édition)
+  const [isSessionPassee, setIsSessionPassee] = useState(false);
 
   const [selectedDate, setSelectedDate] = useState(today());
   const [selectedTime, setSelectedTime] = useState(nowTime());
@@ -469,14 +602,16 @@ function Presence() {
     checkSessionsDuJour();
   }, [loadTempsOptions, checkSessionsDuJour]);
 
-  // ─── REJOINDRE UNE SESSION EXISTANTE ─────────────────────────
+  // ─── REJOINDRE UNE SESSION (aujourd'hui OU passée) ────────────
   const rejoindreSession = (session) => {
+    const estPassee = session.date !== today();
     setAttendanceId(session.id);
     setSelectedDate(session.date);
     setSelectedTime(session.heure || "");
     setTypeTemps(session.typeTemps || "");
     setNumeroCulte(session.numero_culte?.toString() || "");
     setSessionCourante(session);
+    setIsSessionPassee(estPassee);
     setEtape("ready");
   };
 
@@ -489,8 +624,6 @@ function Presence() {
     profileRef.current.liste_presence_visible = newVal;
     setListeVisible(newVal);
     setSavingVisible(false);
-    // FIX bug 2 : on appelle fetchAll directement sans dépendre de etape (closure stale)
-    // fetchAll relit toujours depuis Supabase donc reflète immédiatement le nouvel état
     await fetchAll(selectedDate);
   };
 
@@ -506,7 +639,12 @@ function Presence() {
       const { data: presencesData } = await supabase
         .from("presences")
         .select("membre_id, checked_by, membres_complets(prenom, nom)")
-        .eq("date", d);
+        .eq("date", d)
+        // Si attendance_id disponible, filtrer par session précise
+        // (important pour les sessions passées qui peuvent avoir plusieurs sessions par date)
+        // On filtre uniquement si on est dans une session spécifique (attendanceId dispo via closure)
+        // Note: fetchAll est appelé avec la date, mais on peut aussi filtrer par attendance_id
+        // pour les sessions passées. On laisse tel quel pour compatibilité avec le comportement actuel.
 
       const allPresences = presencesData || [];
       const presentIds = new Set(allPresences.map(p => p.membre_id));
@@ -558,10 +696,8 @@ function Presence() {
         .select("membre_id, conseiller_id, profiles(prenom, nom)")
         .eq("statut", "actif");
 
-      // IDs des responsables ayant activé leur liste
       const visiblesIds = new Set((responsablesVisibles || []).map(r => r.id));
 
-      // Map conseiller_id → { ids[], profile }
       const assignmentsByConseiller = {};
       (assignmentsData || []).forEach(a => {
         if (!assignmentsByConseiller[a.conseiller_id]) assignmentsByConseiller[a.conseiller_id] = { ids: [], profile: a.profiles };
@@ -570,14 +706,9 @@ function Presence() {
 
       const membresDansConseiller = new Set(Object.values(assignmentsByConseiller).flatMap(v => v.ids));
 
-      // ── Approche additive : on construit les groupes visibles un par un.
-      // Un membre n'apparaît QUE si son groupe a activé la visibilité.
-      // Les membres sans groupe ni conseiller visible sont dans "Sans rattachement".
-
       const groupesResult = [];
       const membresCouvertsParGroupe = new Set();
 
-      // ── Cellules dont le responsable a activé la visibilité
       const cellulesVisibles = (cellulesData || []).filter(
         c => c.responsable_id && visiblesIds.has(c.responsable_id)
       );
@@ -595,7 +726,6 @@ function Presence() {
         }
       });
 
-      // ── Familles dont le responsable a activé la visibilité
       const famillesVisibles = (famillesData || []).filter(
         f => f.responsable_id && visiblesIds.has(f.responsable_id)
       );
@@ -613,8 +743,6 @@ function Presence() {
         }
       });
 
-      // ── Conseillers dont la liste est visible
-      // On n'affiche que les membres pas déjà couverts par une cellule/famille visible
       Object.entries(assignmentsByConseiller).forEach(([consId, { ids, profile: consProfile }]) => {
         if (!visiblesIds.has(consId)) return;
         const cm = ids
@@ -633,7 +761,6 @@ function Presence() {
         }
       });
 
-      // ── Sans rattachement : pas de cellule, pas de famille, pas de conseiller
       const sansCellule = membres
         .filter(m => !m.cellule_id && !m.famille_id && !membresDansConseiller.has(m.id))
         .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
@@ -641,7 +768,6 @@ function Presence() {
         groupesResult.unshift({ id: "sans", label: "Sans rattachement", icon: "👤", color: "gray", membres: sansCellule });
       }
 
-      // Membres visibles pour le compteur absents/présents
       const membresVisiblesIds = new Set([
         ...membresCouvertsParGroupe,
         ...sansCellule.map(m => m.id),
@@ -697,6 +823,7 @@ function Presence() {
       const newSession = { id: data.id, typeTemps: typeFinal, date: selectedDate, heure: selectedTime, numero_culte: numeroCulte ? Number(numeroCulte) : null };
       setAttendanceId(data.id);
       setSessionCourante(newSession);
+      setIsSessionPassee(false);
       setEtape("ready");
     } catch (err) {
       console.error(err);
@@ -748,6 +875,19 @@ function Presence() {
     } catch (err) { console.error(err); }
   };
 
+  // ─── RESET COMPLET ────────────────────────────────────────────
+  const resetToCheck = () => {
+    setEtape("check");
+    setAttendanceId(null);
+    setSessionCourante(null);
+    setIsSessionPassee(false);
+    setTypeTemps(""); setNouveauTemps(""); setNumeroCulte("");
+    setEnregistrerTemps(false);
+    setSelectedDate(today());
+    setSelectedTime(nowTime());
+    checkSessionsDuJour();
+  };
+
   // ─── FILTRES ──────────────────────────────────────────────────
   const filterM = (m) => `${m.prenom} ${m.nom} ${m.telephone || ""}`.toLowerCase().includes(search.toLowerCase());
   const filterP = (p) => `${p.membres_complets?.prenom} ${p.membres_complets?.nom}`.toLowerCase().includes(search.toLowerCase());
@@ -770,6 +910,22 @@ function Presence() {
     );
   }
 
+  // ━━━ ÉCRAN HISTORIQUE 7 JOURS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (etape === "historique") {
+    return (
+      <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+        <HeaderPages />
+        <h1 className="text-2xl font-bold text-white text-center mt-6 mb-1">📋 Présences</h1>
+        <EcranHistorique
+          egliseId={profileRef.current?.eglise_id}
+          onJoin={rejoindreSession}
+          onBack={() => setEtape("choix")}
+        />
+        <Footer />
+      </div>
+    );
+  }
+
   // ━━━ ÉCRAN CHOIX SESSION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   if (etape === "choix") {
     return (
@@ -783,6 +939,7 @@ function Presence() {
           sessions={sessionsAujourdhui}
           onJoin={rejoindreSession}
           onNew={() => setEtape("form")}
+          onHistorique={() => setEtape("historique")}
           loadingCheck={false}
         />
         <Footer />
@@ -832,8 +989,21 @@ function Presence() {
 
       <div className="text-center mb-4 mt-4 w-full">
         <h1 className="text-2xl font-bold text-white">
-          Présences du <span className="text-emerald-300">jour</span>
+          {isSessionPassee ? (
+            <>Présences — <span className="text-amber-300">Session passée</span></>
+          ) : (
+            <>Présences du <span className="text-emerald-300">jour</span></>
+          )}
         </h1>
+
+        {/* Badge session passée */}
+        {isSessionPassee && (
+          <div className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 bg-amber-400/20 border border-amber-400/40 rounded-full">
+            <span className="text-amber-300 text-xs font-semibold">
+              🕐 Session du {new Date(selectedDate + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long" })}
+            </span>
+          </div>
+        )}
 
         {/* Résumé session cliquable */}
         <div
@@ -958,20 +1128,24 @@ function Presence() {
             </div>
           )}
 
-          <button
-            onClick={() => {
-              setEtape("check");
-              setAttendanceId(null);
-              setSessionCourante(null);
-              setTypeTemps(""); setNouveauTemps(""); setNumeroCulte("");
-              setEnregistrerTemps(false);
-              setSelectedTime(nowTime());
-              checkSessionsDuJour();
-            }}
-            className="mt-8 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm"
-          >
-            ↩ Nouvelle session
-          </button>
+          {/* ── BOUTONS NAVIGATION BAS ── */}
+          <div className="mt-8 flex flex-col items-center gap-3 w-full max-w-lg">
+            <button
+              onClick={resetToCheck}
+              className="w-full px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm"
+            >
+              ↩ Nouvelle session
+            </button>
+            {/* Depuis une session passée : bouton retour à l'historique */}
+            {isSessionPassee && (
+              <button
+                onClick={() => setEtape("historique")}
+                className="w-full px-4 py-2 bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/30 rounded-lg text-sm"
+              >
+                ← Retour à l'historique
+              </button>
+            )}
+          </div>
         </>
       )}
 

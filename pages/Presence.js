@@ -26,9 +26,7 @@ function formatSessionLabel(s) {
 }
 
 // ─── ÉCRAN CHOIX SESSION ───────────────────────────────────────
-function ChoixSession({ sessions, sessionsAnciennes, onJoin, onNew, loadingCheck }) {
-  const [showAnciennes, setShowAnciennes] = useState(false);
-
+function ChoixSession({ sessions, onJoin, onNew, loadingCheck }) {
   if (loadingCheck) {
     return (
       <div className="w-full max-w-lg mt-6 flex flex-col items-center gap-4">
@@ -36,13 +34,6 @@ function ChoixSession({ sessions, sessionsAnciennes, onJoin, onNew, loadingCheck
       </div>
     );
   }
-
-  // Grouper les anciennes sessions par date
-  const anciennesParDate = sessionsAnciennes.reduce((acc, s) => {
-    if (!acc[s.date]) acc[s.date] = [];
-    acc[s.date].push(s);
-    return acc;
-  }, {});
 
   return (
     <div className="w-full max-w-lg mt-6 flex flex-col gap-4">
@@ -86,54 +77,6 @@ function ChoixSession({ sessions, sessionsAnciennes, onJoin, onNew, loadingCheck
           >
             ➕ Créer une session
           </button>
-        </div>
-      )}
-
-      {/* ── ANCIENNES SESSIONS (7 derniers jours) ── */}
-      {sessionsAnciennes.length > 0 && (
-        <div className="bg-white/10 rounded-2xl overflow-hidden">
-          <button
-            onClick={() => setShowAnciennes(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/10 transition"
-          >
-            <span className="text-white font-semibold text-sm flex items-center gap-2">
-              🕐 Anciennes sessions
-              <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">
-                {sessionsAnciennes.length}
-              </span>
-            </span>
-            <span className="text-white/60 text-xs">{showAnciennes ? "▲ Masquer" : "▼ Afficher"}</span>
-          </button>
-
-          {showAnciennes && (
-            <div className="flex flex-col gap-3 px-4 pb-4">
-              {Object.entries(anciennesParDate).map(([date, sessionsDuJour]) => (
-                <div key={date}>
-                  <p className="text-white/50 text-xs font-semibold mb-2 uppercase tracking-wide">
-                    📅 {new Date(date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long" })}
-                  </p>
-                  <div className="flex flex-col gap-2">
-                    {sessionsDuJour.map(s => (
-                      <button
-                        key={s.id}
-                        onClick={() => onJoin(s)}
-                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition group border border-white/10"
-                      >
-                        <span className="text-left text-sm">
-                          {s.typeTemps}
-                          {s.numero_culte ? ` — ${s.numero_culte}${s.numero_culte === 1 ? "er" : "ème"} culte` : ""}
-                          {s.heure ? ` · ${s.heure}` : ""}
-                        </span>
-                        <span className="text-xs bg-white/20 text-white/80 group-hover:bg-white/30 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
-                          Modifier →
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </div>
@@ -308,11 +251,9 @@ function ToggleVisibilite({ visible, onToggle, saving }) {
           visible ? "bg-emerald-500" : "bg-gray-400"
         } ${saving ? "opacity-50" : ""}`}
       >
-        <span
-          className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] bg-white rounded-full shadow transition-transform ${
-            visible ? "translate-x-[22px]" : "translate-x-0"
-          }`}
-        />
+        <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+          visible ? "translate-x-6" : "translate-x-0.5"
+        }`} />
       </button>
     </div>
   );
@@ -404,13 +345,12 @@ function Presence() {
   // ── Étapes : "check" → "choix" → "form" → "ready"
   const [etape, setEtape] = useState("check");
   const [sessionsAujourdhui, setSessionsAujourdhui] = useState([]);
-  const [sessionsAnciennes, setSessionsAnciennes] = useState([]);
 
   const [attendanceId, setAttendanceId] = useState(null);
   const [editingSession, setEditingSession] = useState(false);
 
   const [selectedDate, setSelectedDate] = useState(today());
-  const [selectedTime, setSelectedTime] = useState(nowTime());
+  const [selectedTime, setSelectedTime] = useState(nowTime()); // ✅ heure auto
   const [typeTemps, setTypeTemps] = useState("");
   const [nouveauTemps, setNouveauTemps] = useState("");
   const [enregistrerTemps, setEnregistrerTemps] = useState(false);
@@ -428,6 +368,7 @@ function Presence() {
   const [listeVisible, setListeVisible] = useState(false);
   const [savingVisible, setSavingVisible] = useState(false);
 
+  // Session affichée dans le header (après avoir rejoint ou créé)
   const [sessionCourante, setSessionCourante] = useState(null);
 
   const profileRef = useRef(null);
@@ -468,12 +409,18 @@ function Presence() {
         : Promise.resolve({ data: [] }),
     ]);
 
+    console.log("[initProfile] uid:", user.id);
+    console.log("[initProfile] cellules:", cellulesResult.data);
+    console.log("[initProfile] familles:", famillesResult.data);
+    console.log("[initProfile] assignments:", assignmentsResult.data);
+
     assignmentsResult.data?.forEach(a => ids.add(a.membre_id));
 
     if (cellulesResult.data?.length > 0) {
       const celluleIds = cellulesResult.data.map(c => c.id);
       const { data: cm } = await supabase
         .from("membres_complets").select("id").in("cellule_id", celluleIds);
+      console.log("[initProfile] membres cellule:", cm);
       cm?.forEach(m => ids.add(m.id));
     }
 
@@ -508,7 +455,6 @@ function Presence() {
     await initProfile();
     const profile = profileRef.current;
 
-    // Sessions d'aujourd'hui
     const { data } = await supabase
       .from("attendance")
       .select("id, typeTemps, date, heure, numero_culte")
@@ -516,22 +462,8 @@ function Presence() {
       .eq("date", today())
       .order("created_at", { ascending: false });
 
-    // Sessions des 7 derniers jours (hors aujourd'hui)
-    const il7joursDate = new Date();
-    il7joursDate.setDate(il7joursDate.getDate() - 7);
-    const il7jours = il7joursDate.toISOString().split("T")[0];
-
-    const { data: anciennes } = await supabase
-      .from("attendance")
-      .select("id, typeTemps, date, heure, numero_culte")
-      .eq("eglise_id", profile.eglise_id)
-      .lt("date", today())
-      .gte("date", il7jours)
-      .order("date", { ascending: false })
-      .order("created_at", { ascending: false });
-
     setSessionsAujourdhui(data || []);
-    setSessionsAnciennes(anciennes || []);
+    // S'il y a des sessions → écran de choix, sinon → formulaire direct
     setEtape((data || []).length > 0 ? "choix" : "form");
   }, [initProfile]);
 
@@ -560,31 +492,7 @@ function Presence() {
     profileRef.current.liste_presence_visible = newVal;
     setListeVisible(newVal);
     setSavingVisible(false);
-    await fetchAll(selectedDate);
-  };
-
-  // ─── MISE À JOUR COMPTEURS ATTENDANCE ────────────────────────
-  const updateAttendanceCounters = async (currentAttendanceId, date) => {
-    if (!currentAttendanceId) return;
-
-    const { data: presences } = await supabase
-      .from("presences")
-      .select("membres_complets(sexe)")
-      .eq("date", date)
-      .eq("attendance_id", currentAttendanceId);
-
-    const counts = { hommes: 0, femmes: 0 };
-
-    (presences || []).forEach(p => {
-      const sexe = p.membres_complets?.sexe?.trim();
-      if (sexe === "Homme") counts.hommes++;
-      else if (sexe === "Femme") counts.femmes++;
-    });
-
-    await supabase
-      .from("attendance")
-      .update(counts)
-      .eq("id", currentAttendanceId);
+    if (etape === "ready") fetchAll(selectedDate);
   };
 
   // ─── FETCH MEMBRES + PRÉSENCES ────────────────────────────────
@@ -608,7 +516,7 @@ function Presence() {
         if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); return; }
         const { data: membresData } = await supabase
           .from("membres_complets")
-          .select("id, prenom, nom, telephone, sexe")
+          .select("id, prenom, nom, telephone")
           .eq("eglise_id", profile.eglise_id)
           .in("etat_contact", ["existant", "nouveau"])
           .in("id", myIds);
@@ -626,7 +534,7 @@ function Presence() {
       // ── VUE ADMIN/RI ──────────────────────────────────────────
       const { data: tousMembres } = await supabase
         .from("membres_complets")
-        .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
+        .select("id, prenom, nom, telephone, cellule_id, famille_id")
         .eq("eglise_id", profile.eglise_id)
         .in("etat_contact", ["existant", "nouveau"]);
 
@@ -643,7 +551,7 @@ function Presence() {
         .eq("eglise_id", profile.eglise_id);
 
       const { data: famillesData } = await supabase
-        .from("familles").select("id, famille_full, famille, ville, responsable_id")
+        .from("familles").select("id, nom, responsable_id")
         .eq("eglise_id", profile.eglise_id);
 
       const { data: assignmentsData } = await supabase
@@ -661,80 +569,55 @@ function Presence() {
 
       const membresDansConseiller = new Set(Object.values(assignmentsByConseiller).flatMap(v => v.ids));
 
+      const cellulesNonVisibles = (cellulesData || []).filter(c => c.responsable_id && !visiblesIds.has(c.responsable_id));
+      const famillesNonVisibles = (famillesData || []).filter(f => f.responsable_id && !visiblesIds.has(f.responsable_id));
+      const cellulesVisibles = (cellulesData || []).filter(c => visiblesIds.has(c.responsable_id));
+      const famillesVisibles = (famillesData || []).filter(f => visiblesIds.has(f.responsable_id));
+
+      const membresMasques = new Set();
+      cellulesNonVisibles.forEach(c => {
+        membres.filter(m => m.cellule_id === c.id && !membresDansConseiller.has(m.id)).forEach(m => membresMasques.add(m.id));
+      });
+      famillesNonVisibles.forEach(f => {
+        membres.filter(m => m.famille_id === f.id && !membresDansConseiller.has(m.id)).forEach(m => membresMasques.add(m.id));
+      });
+
       const groupesResult = [];
-      const membresCouvertsParGroupe = new Set();
 
-      // ── Cellules dont le responsable a activé la visibilité
-      const cellulesVisibles = (cellulesData || []).filter(
-        c => c.responsable_id && visiblesIds.has(c.responsable_id)
-      );
-      cellulesVisibles.forEach(c => {
-        const cm = membres
-          .filter(m => m.cellule_id === c.id)
-          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-        cm.forEach(m => membresCouvertsParGroupe.add(m.id));
-        if (cm.length > 0) {
-          groupesResult.push({
-            id: `c-${c.id}`,
-            label: c.cellule_full || `${c.ville} - ${c.cellule}`,
-            icon: "🏠", color: "green", membres: cm,
-          });
-        }
-      });
-
-      // ── Familles dont le responsable a activé la visibilité
-      const famillesVisibles = (famillesData || []).filter(
-        f => f.responsable_id && visiblesIds.has(f.responsable_id)
-      );
-      famillesVisibles.forEach(f => {
-        const fm = membres
-          .filter(m => m.famille_id === f.id)
-          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-        fm.forEach(m => membresCouvertsParGroupe.add(m.id));
-        if (fm.length > 0) {
-          groupesResult.push({
-            id: `f-${f.id}`,
-            label: f.famille_full || `${f.ville} - ${f.famille}`,
-            icon: "👑", color: "purple", membres: fm,
-          });
-        }
-      });
-
-      // ── Conseillers dont la liste est visible
-      Object.entries(assignmentsByConseiller).forEach(([consId, { ids, profile: consProfile }]) => {
-        if (!visiblesIds.has(consId)) return;
-        const cm = ids
-          .map(id => membres.find(m => m.id === id))
-          .filter(Boolean)
-          .filter(m => !membresCouvertsParGroupe.has(m.id))
-          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-        cm.forEach(m => membresCouvertsParGroupe.add(m.id));
-        if (cm.length > 0) {
-          const consNom = consProfile ? `${consProfile.prenom} ${consProfile.nom}` : "Conseiller";
-          groupesResult.push({
-            id: `cons-${consId}`,
-            label: `Suivi par ${consNom}`,
-            icon: "🫂", color: "amber", membres: cm,
-          });
-        }
-      });
-
-      // ── Sans rattachement
+      // Sans rattachement
       const sansCellule = membres
         .filter(m => !m.cellule_id && !m.famille_id && !membresDansConseiller.has(m.id))
         .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
       if (sansCellule.length > 0) {
-        groupesResult.unshift({ id: "sans", label: "Sans rattachement", icon: "👤", color: "gray", membres: sansCellule });
+        groupesResult.push({ id: "sans", label: "Sans rattachement", icon: "👤", color: "gray", membres: sansCellule });
       }
 
-      const membresVisiblesIds = new Set([
-        ...membresCouvertsParGroupe,
-        ...sansCellule.map(m => m.id),
-      ]);
+      // Cellules visibles
+      cellulesVisibles.forEach(c => {
+        const cm = membres.filter(m => m.cellule_id === c.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        if (cm.length > 0) groupesResult.push({ id: `c-${c.id}`, label: c.cellule_full || `${c.ville} - ${c.cellule}`, icon: "🏠", color: "green", membres: cm });
+      });
+
+      // Familles visibles
+      famillesVisibles.forEach(f => {
+        const fm = membres.filter(m => m.famille_id === f.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.nom, icon: "👨‍👩‍👦", color: "purple", membres: fm });
+      });
+
+      // Conseillers (toujours visibles)
+      Object.entries(assignmentsByConseiller).forEach(([consId, { ids, profile: consProfile }]) => {
+        const cm = ids.map(id => membres.find(m => m.id === id)).filter(Boolean)
+          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        if (cm.length > 0) {
+          const consNom = consProfile ? `${consProfile.prenom} ${consProfile.nom}` : "Conseiller";
+          groupesResult.push({ id: `cons-${consId}`, label: `Suivi par ${consNom}`, icon: "🫂", color: "amber", membres: cm });
+        }
+      });
 
       setGroupes(groupesResult);
       setPresentList(allPresences);
-      setAllMembers(membres.filter(m => membresVisiblesIds.has(m.id) && !presentIds.has(m.id)));
+      const visibleMembres = membres.filter(m => !membresMasques.has(m.id));
+      setAllMembers(visibleMembres.filter(m => !presentIds.has(m.id)));
 
     } catch (err) { console.error(err); }
   }, [selectedDate, initProfile]);
@@ -769,12 +652,10 @@ function Presence() {
       const isCulte = typeFinal.toLowerCase().includes("culte");
       const payload = {
         date: selectedDate,
-        heure: selectedTime,
+        heure: selectedTime,        // ✅ heure enregistrée
         typeTemps: typeFinal,
         temps_nom: typeFinal,
         eglise_id: profile.eglise_id,
-        hommes: 0,
-        femmes: 0,
         ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : {}),
       };
 
@@ -823,23 +704,14 @@ function Presence() {
   const markPresent = async (membre) => {
     try {
       const { uid } = profileRef.current;
-      await supabase.from("presences").insert({
-        membre_id: membre.id,
-        date: selectedDate,
-        checked_by: uid,
-        attendance_id: attendanceId,
-      });
-      await updateAttendanceCounters(attendanceId, selectedDate);
+      await supabase.from("presences").insert({ membre_id: membre.id, date: selectedDate, checked_by: uid, attendance_id: attendanceId });
       await fetchAll(selectedDate);
     } catch (err) { console.error(err); }
   };
 
   const markAbsent = async (memberId) => {
     try {
-      await supabase.from("presences").delete()
-        .eq("membre_id", memberId)
-        .eq("date", selectedDate);
-      await updateAttendanceCounters(attendanceId, selectedDate);
+      await supabase.from("presences").delete().eq("membre_id", memberId).eq("date", selectedDate);
       await fetchAll(selectedDate);
     } catch (err) { console.error(err); }
   };
@@ -877,7 +749,6 @@ function Presence() {
         </p>
         <ChoixSession
           sessions={sessionsAujourdhui}
-          sessionsAnciennes={sessionsAnciennes}
           onJoin={rejoindreSession}
           onNew={() => setEtape("form")}
           loadingCheck={false}

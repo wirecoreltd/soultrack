@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
-import ProtectedRoute from "../components/ProtectedRoute";
+import ProtectedRoute from "../../components/ProtectedRoute";
 import { CiviliteDonut, TranchesDonut } from "../../components/DonutCharts";
 import {
   Chart as ChartJS,

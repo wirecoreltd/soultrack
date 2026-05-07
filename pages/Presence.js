@@ -773,7 +773,7 @@ function Presence() {
       <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
         <HeaderPages />
         <div className="w-full max-w-lg mt-6">
-          <h1 className="text-2xl font-bold text-white text-center mb-1">📋 Nouvelle Session</h1>
+          <h1 className="text-2xl font-bold text-white text-center mb-1">📋 Nouvelle Session 989898</h1>
           <p className="text-white/70 text-center text-sm mb-4">Configurez la session avant de commencer</p>
           {sessionsAujourdhui.length > 0 && (
             <button

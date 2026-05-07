@@ -187,7 +187,7 @@ function FormulaireSession({
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">Sélectionner un Type de Temps</label>
         <div className="grid grid-cols-2 gap-2">
-          {tempsOptions.filter(t => t !== "Culte Dominical").map(t => (
+          {tempsOptions.map(t => (
             <button
               key={t}
               type="button"
@@ -498,11 +498,11 @@ function Presence() {
       .not("typeTemps", "is", null);
 
     const unique = [
-  "Culte Dominical",
+  "Culte",
   ...new Set(
     (data || [])
       .map(t => t.typeTemps?.trim())
-      .filter(t => t && t !== "" && t !== "Culte Dominical")
+      .filter(t => t && t !== "" && t !== "Culte")
   )
 ];
 

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import supabase from "../lib/supabaseClient";
 import { useFeature } from "../components/FeaturesContext";
 
 export default function EditUserModal({ user, onClose, onUpdated }) {
-  // ✅ Règle absolue React — tous les hooks AVANT tout return conditionnel
+  // ✅ Tous les hooks en premier — avant tout return conditionnel
   const cellulesActive = useFeature("cellules");
+  const conseillerActive = useFeature("conseiller");
+  const famillesActive = useFeature("familles");
 
   const [form, setForm] = useState({
     prenom: "",
@@ -21,14 +23,22 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   const [cellules, setCellules] = useState([]);
   const [selectedCelluleIds, setSelectedCelluleIds] = useState([]);
 
-  const allRoles = [
-    { value: "Administrateur", label: "Administrateur" },
-    { value: "ResponsableIntegration", label: "Responsable Intégration" },
-    { value: "ResponsableCellule", label: "Responsable Cellule" },
+  // ✅ allRoles conditionné par features — seuls les rôles actifs sont proposés
+  const allRoles = useMemo(() => [
+    { value: "Administrateur",            label: "Administrateur" },
+    { value: "ResponsableIntegration",    label: "Responsable Intégration" },
+    ...(cellulesActive ? [
+      { value: "ResponsableCellule",      label: "Responsable Cellule" },
+      { value: "SuperviseurCellule",      label: "Superviseur Cellule" },
+    ] : []),
     { value: "ResponsableEvangelisation", label: "Responsable Évangélisation" },
-    { value: "SuperviseurCellule", label: "Superviseur Cellule" },
-    { value: "Conseiller", label: "Conseiller" },
-  ];
+    ...(conseillerActive ? [
+      { value: "Conseiller",              label: "Conseiller" },
+    ] : []),
+    ...(famillesActive ? [
+      { value: "ResponsableFamilles",     label: "Responsable Familles" },
+    ] : []),
+  ], [cellulesActive, conseillerActive, famillesActive]);
 
   useEffect(() => {
     if (!user) return;
@@ -44,7 +54,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   // ✅ Chargement Supabase conditionné par la feature cellules
   useEffect(() => {
     if (!user?.eglise_id) return;
-    if (!cellulesActive) return; // ← ne pas fetcher si désactivé
+    if (!cellulesActive) return;
 
     const fetchCellules = async () => {
       const { data } = await supabase
@@ -55,7 +65,6 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
 
       setCellules(data || []);
 
-      // Pré-sélectionner les cellules déjà assignées à cet utilisateur
       const dejassignees = (data || [])
         .filter((c) => c.responsable_id === user.id)
         .map((c) => c.id);
@@ -94,7 +103,6 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     if (!user?.id) return;
     setSaving(true);
 
-    // ✅ Mise à jour du profil
     const { data, error } = await supabase
       .from("profiles")
       .update({
@@ -114,16 +122,11 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
       return;
     }
 
-    // ✅ Gestion des cellules — seulement si la feature est active
+    // ✅ Gestion cellules — seulement si la feature est active
     if (cellulesActive) {
       if (form.roles.includes("ResponsableCellule")) {
-        // 1. Retirer ce responsable des cellules qu'il n'a plus
         const cellulesARetirer = cellules
-          .filter(
-            (c) =>
-              c.responsable_id === user.id &&
-              !selectedCelluleIds.includes(c.id)
-          )
+          .filter((c) => c.responsable_id === user.id && !selectedCelluleIds.includes(c.id))
           .map((c) => c.id);
 
         if (cellulesARetirer.length > 0) {
@@ -133,7 +136,6 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             .in("id", cellulesARetirer);
         }
 
-        // 2. Assigner ce responsable aux cellules sélectionnées
         if (selectedCelluleIds.length > 0) {
           await supabase
             .from("cellules")
@@ -144,7 +146,6 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             .in("id", selectedCelluleIds);
         }
       } else {
-        // Si le rôle ResponsableCellule est retiré → désassigner toutes ses cellules
         await supabase
           .from("cellules")
           .update({ responsable_id: null })
@@ -165,10 +166,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     }, 700);
   };
 
-  // ✅ Déduire depuis les données reçues (pas useFeature dans les conditions d'affichage)
-  const showCellules =
-    cellulesActive &&
-    form.roles.includes("ResponsableCellule");
+  const showCellules = cellulesActive && form.roles.includes("ResponsableCellule");
 
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 p-4">
@@ -181,40 +179,12 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
         </div>
 
         <div className="flex flex-col gap-4">
-          <input
-            type="text"
-            name="prenom"
-            value={form.prenom}
-            onChange={handleChange}
-            placeholder="Prénom"
-            className="input"
-          />
-          <input
-            type="text"
-            name="nom"
-            value={form.nom}
-            onChange={handleChange}
-            placeholder="Nom"
-            className="input"
-          />
-          <input
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            placeholder="Email"
-            className="input"
-          />
-          <input
-            type="text"
-            name="telephone"
-            value={form.telephone}
-            onChange={handleChange}
-            placeholder="Téléphone"
-            className="input"
-          />
+          <input type="text" name="prenom" value={form.prenom} onChange={handleChange} placeholder="Prénom" className="input" />
+          <input type="text" name="nom" value={form.nom} onChange={handleChange} placeholder="Nom" className="input" />
+          <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" className="input" />
+          <input type="text" name="telephone" value={form.telephone} onChange={handleChange} placeholder="Téléphone" className="input" />
 
-          {/* Rôles */}
+          {/* ✅ Rôles — uniquement ceux dont la feature est active */}
           <div className="flex flex-col gap-2">
             <label className="font-semibold">Rôles :</label>
             {allRoles.map((r) => (
@@ -229,22 +199,17 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             ))}
           </div>
 
-          {/* ✅ Sélecteur de cellules — visible seulement si feature active ET rôle coché */}
+          {/* ✅ Sélecteur cellules — visible seulement si feature active ET rôle coché */}
           {showCellules && (
             <div className="flex flex-col gap-2 mt-2 p-4 bg-green-50 rounded-2xl border border-green-200">
               <label className="font-semibold text-green-800">
                 🏠 Cellules assignées :
               </label>
               {cellules.length === 0 ? (
-                <p className="text-sm text-gray-500">
-                  Aucune cellule trouvée pour cette église.
-                </p>
+                <p className="text-sm text-gray-500">Aucune cellule trouvée pour cette église.</p>
               ) : (
                 cellules.map((c) => (
-                  <label
-                    key={c.id}
-                    className="inline-flex items-center gap-2 text-sm"
-                  >
+                  <label key={c.id} className="inline-flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
                       checked={selectedCelluleIds.includes(c.id)}
@@ -253,9 +218,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
                     />
                     <span>{c.cellule_full || `${c.ville} - ${c.cellule}`}</span>
                     {c.responsable_id && c.responsable_id !== user.id && (
-                      <span className="text-xs text-orange-500">
-                        (déjà assignée)
-                      </span>
+                      <span className="text-xs text-orange-500">(déjà assignée)</span>
                     )}
                   </label>
                 ))
@@ -264,17 +227,10 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
           )}
 
           <div className="flex gap-4 mt-4">
-            <button
-              onClick={onClose}
-              className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition"
-            >
+            <button onClick={onClose} className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition">
               Annuler
             </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition"
-            >
+            <button onClick={handleSave} disabled={saving} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition">
               {saving ? "Enregistrement..." : "Enregistrer"}
             </button>
           </div>
@@ -292,7 +248,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             border: 1px solid #ccc;
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
           }
         `}</style>
       </div>

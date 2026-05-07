@@ -162,7 +162,7 @@ function CellulesHubContent() {
       {/* Formulaires visibles uniquement ResponsableCellule */}
       {isResponsableCellule && (
         <>
-          <div className="w-full max-w-md mt-3 mb-3">
+          <div className="w-full max-w-md mt-5 mb-3">
             <SendLinkPopup
               label="Envoyer formulaire Cellule – Nouveau membre"
               type="ajouter_membre_cellule"

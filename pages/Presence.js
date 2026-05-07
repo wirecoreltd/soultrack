@@ -187,7 +187,7 @@ function FormulaireSession({
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">Sélectionner un Type de Temps</label>
         <div className="grid grid-cols-2 gap-2">
-          {tempsOptions.map(t => (
+          {tempsOptions.filter(t => t !== "Culte Dominical").map(t => (
             <button
               key={t}
               type="button"
@@ -497,16 +497,10 @@ function Presence() {
       .eq("eglise_id", profile.eglise_id)
       .not("typeTemps", "is", null);
 
-    const unique = [
-  "Culte",
-  ...new Set(
-    (data || [])
-      .map(t => t.typeTemps?.trim())
-      .filter(t => t && t !== "" && t !== "Culte")
-  )
-];
-
-setTempsOptions(unique.sort((a, b) => a.localeCompare(b, "fr")));
+    const unique = [...new Set(
+      (data || []).map(t => t.typeTemps?.trim()).filter(t => t && t !== "" && t !== "Culte Dominical")
+    )];
+    setTempsOptions([...unique].sort((a, b) => a.localeCompare(b, "fr")));
   }, [initProfile]);
 
   // ─── VÉRIFIER SESSIONS DU JOUR ────────────────────────────────

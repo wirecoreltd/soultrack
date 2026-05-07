@@ -497,10 +497,16 @@ function Presence() {
       .eq("eglise_id", profile.eglise_id)
       .not("typeTemps", "is", null);
 
-    const unique = [...new Set(
-      (data || []).map(t => t.typeTemps?.trim()).filter(t => t && t !== "" && t !== "Culte Dominical")
-    )];
-    setTempsOptions([...unique].sort((a, b) => a.localeCompare(b, "fr")));
+    const unique = [
+  "Culte Dominical",
+  ...new Set(
+    (data || [])
+      .map(t => t.typeTemps?.trim())
+      .filter(t => t && t !== "" && t !== "Culte Dominical")
+  )
+];
+
+setTempsOptions(unique.sort((a, b) => a.localeCompare(b, "fr")));
   }, [initProfile]);
 
   // ─── VÉRIFIER SESSIONS DU JOUR ────────────────────────────────

@@ -14,10 +14,80 @@ export default function PresencePage() {
   );
 }
 
+// ─── HELPERS ──────────────────────────────────────────────────
+const today = () => new Date().toISOString().split("T")[0];
+const nowTime = () => new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
+function formatSessionLabel(s) {
+  const d = new Date(s.date + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long" });
+  const culte = s.numero_culte ? ` — ${s.numero_culte}${s.numero_culte === 1 ? "er" : "ème"} culte` : "";
+  const heure = s.heure ? ` · ${s.heure}` : "";
+  return `${s.typeTemps}${culte} · ${d}${heure}`;
+}
+
+// ─── ÉCRAN CHOIX SESSION ───────────────────────────────────────
+function ChoixSession({ sessions, onJoin, onNew, loadingCheck }) {
+  if (loadingCheck) {
+    return (
+      <div className="w-full max-w-lg mt-6 flex flex-col items-center gap-4">
+        <p className="text-white/70 text-sm animate-pulse">Recherche de sessions en cours...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-lg mt-6 flex flex-col gap-4">
+      {sessions.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-3">
+          <h2 className="text-base font-bold text-gray-800 mb-1">
+            📋 Sessions du jour
+          </h2>
+          <p className="text-sm text-gray-500 mb-2">
+            Ces sessions ont déjà été créées. Cliquez pour rejoindre.
+          </p>
+          {sessions.map(s => (
+            <button
+              key={s.id}
+              onClick={() => onJoin(s)}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-[#333699] hover:bg-[#333699] hover:text-white text-[#333699] font-semibold transition group"
+            >
+              <span className="text-left text-sm">{formatSessionLabel(s)}</span>
+              <span className="text-xs bg-emerald-100 text-emerald-700 group-hover:bg-white/20 group-hover:text-white px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
+                Rejoindre →
+              </span>
+            </button>
+          ))}
+          <div className="border-t border-gray-100 pt-3 mt-1">
+            <button
+              onClick={onNew}
+              className="w-full py-2 rounded-xl border border-dashed border-gray-300 text-gray-500 text-sm hover:border-[#333699] hover:text-[#333699] transition"
+            >
+              ➕ Créer une nouvelle session
+            </button>
+          </div>
+        </div>
+      )}
+
+      {sessions.length === 0 && (
+        <div className="bg-white/10 rounded-2xl p-5 text-center">
+          <p className="text-white/70 text-sm mb-3">Aucune session aujourd'hui.</p>
+          <button
+            onClick={onNew}
+            className="px-6 py-3 bg-white text-[#333699] font-bold rounded-xl hover:bg-white/90 transition"
+          >
+            ➕ Créer une session
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── FORMULAIRE SESSION ────────────────────────────────────────
 function FormulaireSession({
   isEdit,
   selectedDate, setSelectedDate,
+  selectedTime, setSelectedTime,
   typeTemps, setTypeTemps,
   nouveauTemps, setNouveauTemps,
   enregistrerTemps, setEnregistrerTemps,
@@ -33,16 +103,30 @@ function FormulaireSession({
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-5">
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">📅 Date</label>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
-        />
+
+      {/* DATE + HEURE */}
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">📅 Date</label>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">🕐 Heure</label>
+          <input
+            type="time"
+            value={selectedTime}
+            onChange={(e) => setSelectedTime(e.target.value)}
+            className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
+          />
+        </div>
       </div>
 
+      {/* TYPE DE TEMPS */}
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">Sélectionner un Type de Temps</label>
         <div className="grid grid-cols-2 gap-2">
@@ -131,7 +215,7 @@ function FormulaireSession({
         {savingSession ? "..." : isEdit ? "💾 Enregistrer les modifications" : "▶ Démarrer la prise de présence"}
       </button>
 
-      {isEdit && (
+      {onCancel && (
         <button
           type="button"
           onClick={onCancel}
@@ -175,7 +259,7 @@ function ToggleVisibilite({ visible, onToggle, saving }) {
   );
 }
 
-// ─── CARTE MEMBRE (absent) ─────────────────────────────────────
+// ─── CARTES MEMBRES ────────────────────────────────────────────
 function CarteAbsent({ m, onMark }) {
   return (
     <div
@@ -188,7 +272,6 @@ function CarteAbsent({ m, onMark }) {
   );
 }
 
-// ─── CARTE MEMBRE (présent) ────────────────────────────────────
 function CartePresent({ p, onUnmark }) {
   return (
     <div className="bg-white rounded-xl shadow px-4 py-3 flex items-center gap-3">
@@ -210,18 +293,17 @@ function CartePresent({ p, onUnmark }) {
 function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, view, color = "blue" }) {
   const [collapsed, setCollapsed] = useState(false);
 
-  const absents = members.filter(m => !presentIds.has(m.id || m.membre_id));
-  const presents = members.filter(m => presentIds.has(m.id || m.membre_id));
-  const shown = view === "absents" ? absents : presents;
-
+  const absents = members.filter(m => !presentIds.has(m.id));
+  const presentsItems = members.filter(m => presentIds.has(m.id));
+  const shown = view === "absents" ? absents : presentsItems;
   if (shown.length === 0) return null;
 
   const colorMap = {
-    blue:   { bg: "bg-blue-600",   text: "text-blue-100",  border: "border-blue-500" },
+    blue:   { bg: "bg-blue-600",    text: "text-blue-100",    border: "border-blue-500" },
     green:  { bg: "bg-emerald-600", text: "text-emerald-100", border: "border-emerald-500" },
-    purple: { bg: "bg-purple-600", text: "text-purple-100", border: "border-purple-500" },
-    amber:  { bg: "bg-amber-600",  text: "text-amber-100",  border: "border-amber-500" },
-    gray:   { bg: "bg-gray-600",   text: "text-gray-100",   border: "border-gray-500" },
+    purple: { bg: "bg-purple-600",  text: "text-purple-100",  border: "border-purple-500" },
+    amber:  { bg: "bg-amber-600",   text: "text-amber-100",   border: "border-amber-500" },
+    gray:   { bg: "bg-gray-600",    text: "text-gray-100",    border: "border-gray-500" },
   };
   const c = colorMap[color] || colorMap.blue;
 
@@ -236,25 +318,22 @@ function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, vie
           <span className="bg-white/20 px-2 py-0.5 rounded-full">
             {view === "absents"
               ? `${absents.length} absent${absents.length > 1 ? "s" : ""}`
-              : `${presents.length} présent${presents.length > 1 ? "s" : ""}`}
+              : `${presentsItems.length} présent${presentsItems.length > 1 ? "s" : ""}`}
           </span>
           <span>{collapsed ? "▼" : "▲"}</span>
         </span>
       </button>
-
       {!collapsed && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-white/5">
-          {shown.map(item => {
-            // item peut être un membre (absent) ou une présence (présent)
-            const isPresenceItem = !!item.membres_complets;
-            if (view === "absents" && !isPresenceItem) {
-              return <CarteAbsent key={item.id} m={item} onMark={onMark} />;
-            }
-            if (view === "presents" && isPresenceItem) {
-              return <CartePresent key={item.membre_id} p={item} onUnmark={onUnmark} />;
-            }
-            return null;
-          })}
+          {shown.map(m =>
+            view === "absents"
+              ? <CarteAbsent key={m.id} m={m} onMark={onMark} />
+              : <CartePresent
+                  key={m.id}
+                  p={{ membre_id: m.id, membres_complets: { nom: m.nom, prenom: m.prenom } }}
+                  onUnmark={onUnmark}
+                />
+          )}
         </div>
       )}
     </div>
@@ -263,11 +342,15 @@ function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, vie
 
 // ─── COMPOSANT PRINCIPAL ───────────────────────────────────────
 function Presence() {
-  const [sessionReady, setSessionReady] = useState(false);
+  // ── Étapes : "check" → "choix" → "form" → "ready"
+  const [etape, setEtape] = useState("check");
+  const [sessionsAujourdhui, setSessionsAujourdhui] = useState([]);
+
   const [attendanceId, setAttendanceId] = useState(null);
   const [editingSession, setEditingSession] = useState(false);
 
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState(today());
+  const [selectedTime, setSelectedTime] = useState(nowTime()); // ✅ heure auto
   const [typeTemps, setTypeTemps] = useState("");
   const [nouveauTemps, setNouveauTemps] = useState("");
   const [enregistrerTemps, setEnregistrerTemps] = useState(false);
@@ -275,23 +358,24 @@ function Presence() {
   const [tempsOptions, setTempsOptions] = useState([]);
   const [savingSession, setSavingSession] = useState(false);
 
-  // Données membres
-  const [allMembers, setAllMembers] = useState([]);       // tous les membres (myIds scope)
-  const [presentList, setPresentList] = useState([]);     // presences du jour
-  const [groupes, setGroupes] = useState([]);             // groupes pour Admin/RI
+  const [allMembers, setAllMembers] = useState([]);
+  const [presentList, setPresentList] = useState([]);
+  const [groupes, setGroupes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [view, setView] = useState("absents");
 
-  // Visibilité (Responsable seulement)
   const [listeVisible, setListeVisible] = useState(false);
   const [savingVisible, setSavingVisible] = useState(false);
 
+  // Session affichée dans le header (après avoir rejoint ou créé)
+  const [sessionCourante, setSessionCourante] = useState(null);
+
   const profileRef = useRef(null);
-  const myIdsRef = useRef(null);   // null = tout voir, [] = voir personne, [...] = scope limité
+  const myIdsRef = useRef(null);
   const isAdminRef = useRef(false);
 
-  // ─── INIT PROFIL ────────────────────────────────────────────
+  // ─── INIT PROFIL ──────────────────────────────────────────────
   const initProfile = useCallback(async () => {
     if (profileRef.current) return;
 
@@ -308,51 +392,52 @@ function Presence() {
     const isAdmin =
       profile.roles?.includes("Administrateur") ||
       profile.roles?.includes("ResponsableIntegration");
-
     isAdminRef.current = isAdmin;
 
-    if (isAdmin) {
-      myIdsRef.current = null; // voit tout
-      return;
-    }
+    if (isAdmin) { myIdsRef.current = null; return; }
 
-    // Responsable ou Conseiller : scope limité
     let ids = new Set();
-
-    const [assignmentsResult, celluleResult, familleResult] = await Promise.all([
+    const [assignmentsResult, cellulesResult, famillesResult] = await Promise.all([
       profile.roles?.includes("Conseiller")
         ? supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", user.id).eq("statut", "actif")
         : Promise.resolve({ data: [] }),
       profile.roles?.includes("ResponsableCellule")
-        ? supabase.from("cellules").select("id").eq("responsable_id", user.id).single()
-        : Promise.resolve({ data: null }),
+        ? supabase.from("cellules").select("id").eq("responsable_id", user.id)
+        : Promise.resolve({ data: [] }),
       profile.roles?.includes("ResponsableFamilles")
-        ? supabase.from("familles").select("id").eq("responsable_id", user.id).single()
-        : Promise.resolve({ data: null }),
+        ? supabase.from("familles").select("id").eq("responsable_id", user.id)
+        : Promise.resolve({ data: [] }),
     ]);
+
+    console.log("[initProfile] uid:", user.id);
+    console.log("[initProfile] cellules:", cellulesResult.data);
+    console.log("[initProfile] familles:", famillesResult.data);
+    console.log("[initProfile] assignments:", assignmentsResult.data);
 
     assignmentsResult.data?.forEach(a => ids.add(a.membre_id));
 
-    if (celluleResult.data?.id) {
+    if (cellulesResult.data?.length > 0) {
+      const celluleIds = cellulesResult.data.map(c => c.id);
       const { data: cm } = await supabase
-        .from("membres_complets").select("id").eq("cellule_id", celluleResult.data.id);
+        .from("membres_complets").select("id").in("cellule_id", celluleIds);
+      console.log("[initProfile] membres cellule:", cm);
       cm?.forEach(m => ids.add(m.id));
     }
 
-    if (familleResult.data?.id) {
+    if (famillesResult.data?.length > 0) {
+      const familleIds = famillesResult.data.map(f => f.id);
       const { data: fm } = await supabase
-        .from("membres_complets").select("id").eq("famille_id", familleResult.data.id);
+        .from("membres_complets").select("id").in("famille_id", familleIds);
       fm?.forEach(m => ids.add(m.id));
     }
 
     myIdsRef.current = [...ids];
   }, []);
 
-  // ─── CHARGER TYPES DE TEMPS ──────────────────────────────────
+  // ─── CHARGER TYPES DE TEMPS ───────────────────────────────────
   const loadTempsOptions = useCallback(async () => {
     await initProfile();
     const profile = profileRef.current;
-
     const { data } = await supabase
       .from("attendance")
       .select("typeTemps")
@@ -360,16 +445,45 @@ function Presence() {
       .not("typeTemps", "is", null);
 
     const unique = [...new Set(
-      (data || [])
-        .map(t => t.typeTemps?.trim())
-        .filter(t => t && t !== "" && t !== "Culte Dominical")
+      (data || []).map(t => t.typeTemps?.trim()).filter(t => t && t !== "" && t !== "Culte Dominical")
     )];
     setTempsOptions([...unique].sort((a, b) => a.localeCompare(b, "fr")));
   }, [initProfile]);
 
-  useEffect(() => { loadTempsOptions(); }, [loadTempsOptions]);
+  // ─── VÉRIFIER SESSIONS DU JOUR ────────────────────────────────
+  const checkSessionsDuJour = useCallback(async () => {
+    await initProfile();
+    const profile = profileRef.current;
 
-  // ─── TOGGLE VISIBILITÉ ───────────────────────────────────────
+    const { data } = await supabase
+      .from("attendance")
+      .select("id, typeTemps, date, heure, numero_culte")
+      .eq("eglise_id", profile.eglise_id)
+      .eq("date", today())
+      .order("created_at", { ascending: false });
+
+    setSessionsAujourdhui(data || []);
+    // S'il y a des sessions → écran de choix, sinon → formulaire direct
+    setEtape((data || []).length > 0 ? "choix" : "form");
+  }, [initProfile]);
+
+  useEffect(() => {
+    loadTempsOptions();
+    checkSessionsDuJour();
+  }, [loadTempsOptions, checkSessionsDuJour]);
+
+  // ─── REJOINDRE UNE SESSION EXISTANTE ─────────────────────────
+  const rejoindreSession = (session) => {
+    setAttendanceId(session.id);
+    setSelectedDate(session.date);
+    setSelectedTime(session.heure || "");
+    setTypeTemps(session.typeTemps || "");
+    setNumeroCulte(session.numero_culte?.toString() || "");
+    setSessionCourante(session);
+    setEtape("ready");
+  };
+
+  // ─── TOGGLE VISIBILITÉ ────────────────────────────────────────
   const toggleVisibilite = async () => {
     const newVal = !listeVisible;
     setSavingVisible(true);
@@ -378,36 +492,28 @@ function Presence() {
     profileRef.current.liste_presence_visible = newVal;
     setListeVisible(newVal);
     setSavingVisible(false);
-    // Recharger les données pour Admin/RI si besoin
-    if (sessionReady) fetchAll(selectedDate);
+    if (etape === "ready") fetchAll(selectedDate);
   };
 
-  // ─── FETCH MEMBRES + PRÉSENCES ───────────────────────────────
+  // ─── FETCH MEMBRES + PRÉSENCES ────────────────────────────────
   const fetchAll = useCallback(async (date) => {
     try {
       await initProfile();
       const profile = profileRef.current;
       const myIds = myIdsRef.current;
       const isAdmin = isAdminRef.current;
-      const today = date || selectedDate;
+      const d = date || selectedDate;
 
-      // 1. Présences du jour
       const { data: presencesData } = await supabase
         .from("presences")
         .select("membre_id, checked_by, membres_complets(prenom, nom)")
-        .eq("date", today);
+        .eq("date", d);
 
       const allPresences = presencesData || [];
       const presentIds = new Set(allPresences.map(p => p.membre_id));
 
       if (!isAdmin) {
-        // ── VUE RESPONSABLE / CONSEILLER ──────────────────────
-        if (!myIds || myIds.length === 0) {
-          setAllMembers([]);
-          setPresentList([]);
-          return;
-        }
-
+        if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); return; }
         const { data: membresData } = await supabase
           .from("membres_complets")
           .select("id, prenom, nom, telephone")
@@ -415,89 +521,58 @@ function Presence() {
           .in("etat_contact", ["existant", "nouveau"])
           .in("id", myIds);
 
-        const sorted = (membresData || []).sort((a, b) => {
-          const c = (a.nom || "").localeCompare(b.nom || "", "fr");
-          return c !== 0 ? c : (a.prenom || "").localeCompare(b.prenom || "", "fr");
-        });
-
+        const sorted = (membresData || []).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
         setAllMembers(sorted.filter(m => !presentIds.has(m.id)));
         setPresentList(
-          allPresences
-            .filter(p => myIds.includes(p.membre_id))
+          allPresences.filter(p => myIds.includes(p.membre_id))
             .sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"))
         );
         setGroupes([]);
         return;
       }
 
-      // ── VUE ADMIN / RI ────────────────────────────────────────
-      // Charger tous les membres de l'église
+      // ── VUE ADMIN/RI ──────────────────────────────────────────
       const { data: tousMembres } = await supabase
         .from("membres_complets")
-        .select("id, prenom, nom, telephone, cellule_id, famille_id, conseiller_id")
+        .select("id, prenom, nom, telephone, cellule_id, famille_id")
         .eq("eglise_id", profile.eglise_id)
         .in("etat_contact", ["existant", "nouveau"]);
 
       const membres = tousMembres || [];
 
-      // Charger les responsables ayant activé la visibilité
       const { data: responsablesVisibles } = await supabase
         .from("profiles")
         .select("id, prenom, nom, roles, liste_presence_visible")
         .eq("eglise_id", profile.eglise_id)
         .eq("liste_presence_visible", true);
 
-      // Charger les cellules avec responsable_id
       const { data: cellulesData } = await supabase
-        .from("cellules")
-        .select("id, cellule_full, ville, cellule, responsable_id")
+        .from("cellules").select("id, cellule_full, ville, cellule, responsable_id")
         .eq("eglise_id", profile.eglise_id);
 
-      // Charger les familles avec responsable_id
       const { data: famillesData } = await supabase
-        .from("familles")
-        .select("id, nom, responsable_id")
+        .from("familles").select("id, nom, responsable_id")
         .eq("eglise_id", profile.eglise_id);
 
-      // Charger les conseillers actifs
       const { data: assignmentsData } = await supabase
         .from("suivi_assignments")
         .select("membre_id, conseiller_id, profiles(prenom, nom)")
         .eq("statut", "actif");
 
       const visiblesIds = new Set((responsablesVisibles || []).map(r => r.id));
+
       const assignmentsByConseiller = {};
       (assignmentsData || []).forEach(a => {
-        if (!assignmentsByConseiller[a.conseiller_id]) assignmentsByConseiller[a.conseiller_id] = [];
-        assignmentsByConseiller[a.conseiller_id].push(a.membre_id);
+        if (!assignmentsByConseiller[a.conseiller_id]) assignmentsByConseiller[a.conseiller_id] = { ids: [], profile: a.profiles };
+        assignmentsByConseiller[a.conseiller_id].ids.push(a.membre_id);
       });
 
-      // Indexer les membres par cellule, famille, conseiller
-      const membreById = {};
-      membres.forEach(m => { membreById[m.id] = m; });
+      const membresDansConseiller = new Set(Object.values(assignmentsByConseiller).flatMap(v => v.ids));
 
-      const membresDansCelluleVisible = new Set();
-      const membresDansFamilleVisible = new Set();
-      const membresDansConseiller = new Set();
-
-      // Membres dans cellule dont responsable a activé visibilité
-      const cellulesVisibles = (cellulesData || []).filter(c => visiblesIds.has(c.responsable_id));
-      cellulesVisibles.forEach(c => {
-        membres.filter(m => m.cellule_id === c.id).forEach(m => membresDansCelluleVisible.add(m.id));
-      });
-
-      // Membres dans famille dont responsable a activé visibilité
-      const famillesVisibles = (famillesData || []).filter(f => visiblesIds.has(f.responsable_id));
-      famillesVisibles.forEach(f => {
-        membres.filter(m => m.famille_id === f.id).forEach(m => membresDansFamilleVisible.add(m.id));
-      });
-
-      // Membres avec un conseiller (toujours visible)
-      Object.values(assignmentsByConseiller).flat().forEach(id => membresDansConseiller.add(id));
-
-      // Membres masqués : dans une cellule ou famille dont responsable N'A PAS activé visibilité
       const cellulesNonVisibles = (cellulesData || []).filter(c => c.responsable_id && !visiblesIds.has(c.responsable_id));
       const famillesNonVisibles = (famillesData || []).filter(f => f.responsable_id && !visiblesIds.has(f.responsable_id));
+      const cellulesVisibles = (cellulesData || []).filter(c => visiblesIds.has(c.responsable_id));
+      const famillesVisibles = (famillesData || []).filter(f => visiblesIds.has(f.responsable_id));
 
       const membresMasques = new Set();
       cellulesNonVisibles.forEach(c => {
@@ -507,94 +582,48 @@ function Presence() {
         membres.filter(m => m.famille_id === f.id && !membresDansConseiller.has(m.id)).forEach(m => membresMasques.add(m.id));
       });
 
-      // Construire les groupes
       const groupesResult = [];
 
-      // Groupe : sans rattachement
-      const sansCellule = membres.filter(m =>
-        !m.cellule_id && !m.famille_id && !membresDansConseiller.has(m.id)
-      ).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-
+      // Sans rattachement
+      const sansCellule = membres
+        .filter(m => !m.cellule_id && !m.famille_id && !membresDansConseiller.has(m.id))
+        .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
       if (sansCellule.length > 0) {
-        groupesResult.push({
-          id: "sans-rattachement",
-          label: "Sans rattachement",
-          icon: "👤",
-          color: "gray",
-          membres: sansCellule,
-          presences: allPresences.filter(p => sansCellule.some(m => m.id === p.membre_id)),
-        });
+        groupesResult.push({ id: "sans", label: "Sans rattachement", icon: "👤", color: "gray", membres: sansCellule });
       }
 
-      // Groupes cellules visibles
+      // Cellules visibles
       cellulesVisibles.forEach(c => {
-        const cm = membres
-          .filter(m => m.cellule_id === c.id)
-          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-        if (cm.length > 0) {
-          groupesResult.push({
-            id: `cellule-${c.id}`,
-            label: c.cellule_full || `${c.ville} - ${c.cellule}`,
-            icon: "🏠",
-            color: "green",
-            membres: cm,
-            presences: allPresences.filter(p => cm.some(m => m.id === p.membre_id)),
-          });
-        }
+        const cm = membres.filter(m => m.cellule_id === c.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        if (cm.length > 0) groupesResult.push({ id: `c-${c.id}`, label: c.cellule_full || `${c.ville} - ${c.cellule}`, icon: "🏠", color: "green", membres: cm });
       });
 
-      // Groupes familles visibles
+      // Familles visibles
       famillesVisibles.forEach(f => {
-        const fm = membres
-          .filter(m => m.famille_id === f.id)
-          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-        if (fm.length > 0) {
-          groupesResult.push({
-            id: `famille-${f.id}`,
-            label: f.nom,
-            icon: "👨‍👩‍👦",
-            color: "purple",
-            membres: fm,
-            presences: allPresences.filter(p => fm.some(m => m.id === p.membre_id)),
-          });
-        }
+        const fm = membres.filter(m => m.famille_id === f.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.nom, icon: "👨‍👩‍👦", color: "purple", membres: fm });
       });
 
-      // Groupes conseillers (toujours visibles)
-      Object.entries(assignmentsByConseiller).forEach(([consId, memberIds]) => {
-        const cm = memberIds
-          .map(id => membreById[id])
-          .filter(Boolean)
+      // Conseillers (toujours visibles)
+      Object.entries(assignmentsByConseiller).forEach(([consId, { ids, profile: consProfile }]) => {
+        const cm = ids.map(id => membres.find(m => m.id === id)).filter(Boolean)
           .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
         if (cm.length > 0) {
-          const consProfile = (responsablesVisibles || []).find(r => r.id === consId)
-            || assignmentsData?.find(a => a.conseiller_id === consId)?.profiles;
           const consNom = consProfile ? `${consProfile.prenom} ${consProfile.nom}` : "Conseiller";
-          groupesResult.push({
-            id: `conseiller-${consId}`,
-            label: `Suivi par ${consNom}`,
-            icon: "🫂",
-            color: "amber",
-            membres: cm,
-            presences: allPresences.filter(p => cm.some(m => m.id === p.membre_id)),
-          });
+          groupesResult.push({ id: `cons-${consId}`, label: `Suivi par ${consNom}`, icon: "🫂", color: "amber", membres: cm });
         }
       });
 
       setGroupes(groupesResult);
       setPresentList(allPresences);
-
-      // Pour les compteurs globaux
       const visibleMembres = membres.filter(m => !membresMasques.has(m.id));
       setAllMembers(visibleMembres.filter(m => !presentIds.has(m.id)));
 
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   }, [selectedDate, initProfile]);
 
   useEffect(() => {
-    if (!sessionReady) return;
+    if (etape !== "ready") return;
     setLoading(true);
     fetchAll(selectedDate).finally(() => setLoading(false));
 
@@ -604,9 +633,9 @@ function Presence() {
       .subscribe();
 
     return () => supabase.removeChannel(channel);
-  }, [selectedDate, sessionReady]);
+  }, [selectedDate, etape]);
 
-  // ─── DÉMARRER SESSION ────────────────────────────────────────
+  // ─── CRÉER SESSION ────────────────────────────────────────────
   const demarrerSession = async () => {
     const typeFinal = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
     if (!typeFinal) return alert("Veuillez choisir un type de temps.");
@@ -623,6 +652,7 @@ function Presence() {
       const isCulte = typeFinal.toLowerCase().includes("culte");
       const payload = {
         date: selectedDate,
+        heure: selectedTime,        // ✅ heure enregistrée
         typeTemps: typeFinal,
         temps_nom: typeFinal,
         eglise_id: profile.eglise_id,
@@ -632,9 +662,10 @@ function Presence() {
       const { data, error } = await supabase.from("attendance").insert(payload).select("id").single();
       if (error) throw error;
 
+      const newSession = { id: data.id, typeTemps: typeFinal, date: selectedDate, heure: selectedTime, numero_culte: numeroCulte ? Number(numeroCulte) : null };
       setAttendanceId(data.id);
-      setSessionReady(true);
-      setEditingSession(false);
+      setSessionCourante(newSession);
+      setEtape("ready");
     } catch (err) {
       console.error(err);
       alert("Erreur : " + err.message);
@@ -643,7 +674,7 @@ function Presence() {
     }
   };
 
-  // ─── MODIFIER SESSION ────────────────────────────────────────
+  // ─── MODIFIER SESSION ─────────────────────────────────────────
   const modifierSession = async () => {
     const typeFinal = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
     if (!typeFinal || !attendanceId) return;
@@ -653,10 +684,13 @@ function Presence() {
       const isCulte = typeFinal.toLowerCase().includes("culte");
       await supabase.from("attendance").update({
         date: selectedDate,
+        heure: selectedTime,
         typeTemps: typeFinal,
         temps_nom: typeFinal,
         ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : { numero_culte: null }),
       }).eq("id", attendanceId);
+
+      setSessionCourante(prev => ({ ...prev, typeTemps: typeFinal, date: selectedDate, heure: selectedTime, numero_culte: numeroCulte ? Number(numeroCulte) : null }));
       setEditingSession(false);
     } catch (err) {
       console.error(err);
@@ -666,54 +700,84 @@ function Presence() {
     }
   };
 
-  // ─── PRÉSENCE ────────────────────────────────────────────────
+  // ─── PRÉSENCE ─────────────────────────────────────────────────
   const markPresent = async (membre) => {
     try {
       const { uid } = profileRef.current;
-      await supabase.from("presences").insert({
-        membre_id: membre.id,
-        date: selectedDate,
-        checked_by: uid,
-        attendance_id: attendanceId,
-      });
+      await supabase.from("presences").insert({ membre_id: membre.id, date: selectedDate, checked_by: uid, attendance_id: attendanceId });
       await fetchAll(selectedDate);
     } catch (err) { console.error(err); }
   };
 
   const markAbsent = async (memberId) => {
     try {
-      await supabase.from("presences").delete()
-        .eq("membre_id", memberId)
-        .eq("date", selectedDate);
+      await supabase.from("presences").delete().eq("membre_id", memberId).eq("date", selectedDate);
       await fetchAll(selectedDate);
     } catch (err) { console.error(err); }
   };
 
-  // ─── FILTRES ─────────────────────────────────────────────────
-  const filterMember = (m) =>
-    `${m.prenom} ${m.nom} ${m.telephone || ""}`.toLowerCase().includes(search.toLowerCase());
-
-  const filterPresence = (p) =>
-    `${p.membres_complets?.prenom} ${p.membres_complets?.nom}`.toLowerCase().includes(search.toLowerCase());
+  // ─── FILTRES ──────────────────────────────────────────────────
+  const filterM = (m) => `${m.prenom} ${m.nom} ${m.telephone || ""}`.toLowerCase().includes(search.toLowerCase());
+  const filterP = (p) => `${p.membres_complets?.prenom} ${p.membres_complets?.nom}`.toLowerCase().includes(search.toLowerCase());
 
   const isAdmin = isAdminRef.current;
-  const typeFinalLabel = typeTemps === "AUTRE" ? nouveauTemps : typeTemps;
-
-  // Compteurs globaux
   const totalPresents = presentList.length;
   const totalAbsents = allMembers.length;
 
-  // ━━━ ÉCRAN CONFIG ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  if (!sessionReady) {
+  // ━━━ ÉCRAN VÉRIFICATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (etape === "check") {
+    return (
+      <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+        <HeaderPages />
+        <div className="w-full max-w-lg mt-10 flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+          <p className="text-white/70 text-sm">Vérification des sessions...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // ━━━ ÉCRAN CHOIX SESSION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (etape === "choix") {
+    return (
+      <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+        <HeaderPages />
+        <h1 className="text-2xl font-bold text-white text-center mt-6 mb-1">📋 Présences</h1>
+        <p className="text-white/60 text-sm text-center mb-2">
+          {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+        </p>
+        <ChoixSession
+          sessions={sessionsAujourdhui}
+          onJoin={rejoindreSession}
+          onNew={() => setEtape("form")}
+          loadingCheck={false}
+        />
+        <Footer />
+      </div>
+    );
+  }
+
+  // ━━━ ÉCRAN FORMULAIRE CRÉATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (etape === "form") {
     return (
       <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
         <HeaderPages />
         <div className="w-full max-w-lg mt-6">
-          <h1 className="text-2xl font-bold text-white text-center mb-2">📋 Nouvelle Session</h1>
-          <p className="text-white/70 text-center text-sm mb-6">Configurez la session avant de commencer</p>
+          <h1 className="text-2xl font-bold text-white text-center mb-1">📋 Nouvelle Session</h1>
+          <p className="text-white/70 text-center text-sm mb-4">Configurez la session avant de commencer</p>
+          {sessionsAujourdhui.length > 0 && (
+            <button
+              onClick={() => setEtape("choix")}
+              className="w-full mb-4 py-2 text-sm text-white/70 hover:text-white border border-white/20 rounded-xl transition"
+            >
+              ← Revenir aux sessions existantes
+            </button>
+          )}
           <FormulaireSession
             isEdit={false}
             selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+            selectedTime={selectedTime} setSelectedTime={setSelectedTime}
             typeTemps={typeTemps} setTypeTemps={setTypeTemps}
             nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
             enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
@@ -721,7 +785,7 @@ function Presence() {
             tempsOptions={tempsOptions}
             savingSession={savingSession}
             onSubmit={demarrerSession}
-            onCancel={null}
+            onCancel={sessionsAujourdhui.length > 0 ? () => setEtape("choix") : null}
           />
         </div>
         <Footer />
@@ -729,7 +793,7 @@ function Presence() {
     );
   }
 
-  // ━━━ ÉCRAN PRÉSENCE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ━━━ ÉCRAN PRÉSENCE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
@@ -746,13 +810,16 @@ function Presence() {
         >
           <div className="flex items-center gap-2">
             <span className="text-white font-semibold text-sm">
-              {typeFinalLabel}
-              {numeroCulte ? ` — ${numeroCulte}${Number(numeroCulte) === 1 ? "er" : "ème"} culte` : ""}
+              {sessionCourante?.typeTemps}
+              {sessionCourante?.numero_culte
+                ? ` — ${sessionCourante.numero_culte}${sessionCourante.numero_culte === 1 ? "er" : "ème"} culte`
+                : ""}
             </span>
             <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>
           </div>
           <span className="text-white/60 text-xs mt-0.5">
             📅 {new Date(selectedDate + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+            {sessionCourante?.heure ? ` · 🕐 ${sessionCourante.heure}` : ""}
           </span>
           <span className="text-white/40 text-xs mt-0.5">Cliquer pour modifier</span>
         </div>
@@ -763,22 +830,19 @@ function Presence() {
         </div>
       </div>
 
-      {/* ── TOGGLE VISIBILITÉ (Responsable seulement) ── */}
+      {/* Toggle visibilité (non-admin) */}
       {!isAdmin && (
-        <ToggleVisibilite
-          visible={listeVisible}
-          onToggle={toggleVisibilite}
-          saving={savingVisible}
-        />
+        <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} />
       )}
 
-      {/* ── MODIFICATION SESSION INLINE ── */}
+      {/* Modification session inline */}
       {editingSession && (
         <div className="w-full max-w-lg mb-6">
           <h2 className="text-white font-semibold text-center mb-3">✏️ Modifier la session</h2>
           <FormulaireSession
             isEdit={true}
             selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+            selectedTime={selectedTime} setSelectedTime={setSelectedTime}
             typeTemps={typeTemps} setTypeTemps={setTypeTemps}
             nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
             enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
@@ -791,7 +855,7 @@ function Presence() {
         </div>
       )}
 
-      {/* ── LISTE ── */}
+      {/* Liste */}
       {!editingSession && (
         <>
           <div className="flex gap-3 mb-4">
@@ -826,66 +890,51 @@ function Presence() {
           {loading ? (
             <p className="text-white text-center">Chargement...</p>
           ) : isAdmin ? (
-            // ── VUE GROUPÉE (Admin/RI) ──────────────────────────
             <div className="w-full flex flex-col items-center">
-              {groupes.length === 0 ? (
-                <p className="text-white text-center">Aucun membre visible</p>
-              ) : (
-                groupes.map(g => {
-                  const presentIdsSet = new Set(g.presences.map(p => p.membre_id));
-                  const itemsToShow = view === "absents"
-                    ? g.membres.filter(m => !presentIdsSet.has(m.id) && filterMember(m))
-                    : g.presences.filter(p => presentIdsSet.has(p.membre_id) && filterPresence(p));
-
-                  if (itemsToShow.length === 0) return null;
-
-                  return (
-                    <SectionGroupe
-                      key={g.id}
-                      label={g.label}
-                      icon={g.icon}
-                      color={g.color}
-                      members={view === "absents" ? itemsToShow : g.membres}
-                      presentIds={presentIdsSet}
-                      onMark={markPresent}
-                      onUnmark={markAbsent}
-                      view={view}
-                    />
-                  );
-                })
-              )}
+              {groupes.length === 0
+                ? <p className="text-white text-center">Aucun membre visible</p>
+                : groupes.map(g => {
+                    const presentIdsSet = new Set(presentList.map(p => p.membre_id));
+                    const membresFiltrés = g.membres.filter(filterM);
+                    if (membresFiltrés.length === 0) return null;
+                    return (
+                      <SectionGroupe
+                        key={g.id}
+                        label={g.label}
+                        icon={g.icon}
+                        color={g.color}
+                        members={membresFiltrés}
+                        presentIds={presentIdsSet}
+                        onMark={markPresent}
+                        onUnmark={markAbsent}
+                        view={view}
+                      />
+                    );
+                  })
+              }
             </div>
           ) : (
-            // ── VUE SIMPLE (Responsable/Conseiller) ─────────────
             <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {view === "absents" ? (
-                allMembers.filter(filterMember).length === 0 ? (
-                  <p className="text-white text-center col-span-full">✅ Tout le monde est présent</p>
-                ) : (
-                  allMembers.filter(filterMember).map(m => (
-                    <CarteAbsent key={m.id} m={m} onMark={markPresent} />
-                  ))
-                )
-              ) : (
-                presentList.filter(filterPresence).length === 0 ? (
-                  <p className="text-white text-center col-span-full">Aucune présence</p>
-                ) : (
-                  presentList.filter(filterPresence).map(p => (
-                    <CartePresent key={p.membre_id} p={p} onUnmark={markAbsent} />
-                  ))
-                )
-              )}
+              {view === "absents"
+                ? allMembers.filter(filterM).length === 0
+                  ? <p className="text-white text-center col-span-full">✅ Tout le monde est présent</p>
+                  : allMembers.filter(filterM).map(m => <CarteAbsent key={m.id} m={m} onMark={markPresent} />)
+                : presentList.filter(filterP).length === 0
+                  ? <p className="text-white text-center col-span-full">Aucune présence</p>
+                  : presentList.filter(filterP).map(p => <CartePresent key={p.membre_id} p={p} onUnmark={markAbsent} />)
+              }
             </div>
           )}
 
           <button
             onClick={() => {
-              setSessionReady(false);
+              setEtape("check");
               setAttendanceId(null);
-              setTypeTemps("");
-              setNouveauTemps("");
-              setNumeroCulte("");
+              setSessionCourante(null);
+              setTypeTemps(""); setNouveauTemps(""); setNumeroCulte("");
               setEnregistrerTemps(false);
+              setSelectedTime(nowTime());
+              checkSessionsDuJour();
             }}
             className="mt-8 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm"
           >

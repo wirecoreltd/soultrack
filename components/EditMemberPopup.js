@@ -12,13 +12,11 @@ export default function EditMemberPopup({
   onUpdateMember,
   currentUserRoles,
 }) {
-  // ✅ Calculé avant le early return pour respecter l'ordre des hooks
+  // ✅ TOUS les hooks AVANT tout early return — règle absolue de React
   const isPrivileged = (currentUserRoles || []).some((r) =>
     ["Administrateur", "ResponsableIntegration"].includes(r)
   );
 
-  // ✅ Ces booléens pilotent l'affichage des sections — basés sur les tableaux reçus du parent
-  // Le parent envoie déjà [] si la feature est désactivée
   const showCellules = Array.isArray(cellules) && cellules.length > 0;
   const showFamilles = Array.isArray(familles) && familles.length > 0;
   const showConseillers = Array.isArray(conseillers) && conseillers.length > 0;
@@ -85,10 +83,10 @@ export default function EditMemberPopup({
 
   const modalRef = useRef(null);
 
-  // ✅ Early return APRÈS tous les hooks
-  if (!member) return null;
-
+  // ✅ useEffect AVANT le early return
   useEffect(() => {
+    if (!member?.id) return;
+
     const fetchAssignments = async () => {
       const { data, error } = await supabase
         .from("suivi_assignments")
@@ -114,9 +112,11 @@ export default function EditMemberPopup({
         setSelectedConseillers(objects);
       }
     };
-    fetchAssignments();
-  }, [member.id]);
 
+    fetchAssignments();
+  }, [member?.id]);
+
+  // ✅ useEffect AVANT le early return
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -126,6 +126,9 @@ export default function EditMemberPopup({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
+
+  // ✅ Early return APRÈS tous les hooks
+  if (!member) return null;
 
   const filteredConseillers = (conseillers || []).filter((c) =>
     `${c.prenom} ${c.nom}`.toLowerCase().includes(search.toLowerCase())
@@ -221,13 +224,11 @@ export default function EditMemberPopup({
         bapteme_esprit: formData.bapteme_esprit,
         priere_salut: formData.priere_salut || null,
         type_conversion: formData.type_conversion || null,
-        // ✅ cellule_id préservé si feature désactivée (showCellules)
         cellule_id: isPrivileged
           ? showCellules
             ? formData.cellule_id || null
             : member.cellule_id || null
           : member.cellule_id || null,
-        // ✅ famille_id préservé si feature désactivée (showFamilles)
         famille_id: isPrivileged
           ? showFamilles
             ? formData.famille_id || null
@@ -257,7 +258,6 @@ export default function EditMemberPopup({
         .eq("id", member.id);
       if (error) throw error;
 
-      // ✅ Conseillers préservés si feature désactivée
       if (isPrivileged && showConseillers) {
         await supabase
           .from("suivi_assignments")
@@ -387,14 +387,12 @@ export default function EditMemberPopup({
             </select>
           </Field>
 
-          {/* ✅ Section "Suivi par" — affichée seulement si au moins une feature active */}
           {isPrivileged && (showCellules || showFamilles || showConseillers) && (
             <SectionTitle>📌 Suivi par</SectionTitle>
           )}
 
           {isPrivileged ? (
             <>
-              {/* ✅ Cellule — masquée si feature désactivée */}
               {showCellules && (
                 <Field label="Cellule">
                   <select
@@ -413,7 +411,6 @@ export default function EditMemberPopup({
                 </Field>
               )}
 
-              {/* ✅ Famille — masquée si feature désactivée */}
               {showFamilles && (
                 <Field label="Famille">
                   <select
@@ -432,7 +429,6 @@ export default function EditMemberPopup({
                 </Field>
               )}
 
-              {/* ✅ Conseillers — masqués si feature désactivée */}
               {showConseillers && (
                 <>
                   <Field label="Ajouter conseiller">
@@ -513,7 +509,6 @@ export default function EditMemberPopup({
                 </>
               )}
 
-              {/* ✅ Message si toutes les features sont désactivées */}
               {!showCellules && !showFamilles && !showConseillers && (
                 <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
                   🔒 La cellule, la famille et les conseillers sont gérés par un

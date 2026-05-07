@@ -10,6 +10,7 @@ import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
 import { checkLimiteAtteinte } from "../../lib/checkLimite";
+import { useFeature } from "../../components/FeaturesContext";
 
 export default function SuivisEvangelisation() {
   return (
@@ -20,6 +21,13 @@ export default function SuivisEvangelisation() {
 }
 
 function SuivisEvangelisationContent() {
+  // ─────────────────────────────────────────────
+  // ✅ FEATURES — tous les hooks en premier
+  // ─────────────────────────────────────────────
+  const famillesActive = useFeature("familles");
+  const cellulesActive = useFeature("cellules");
+  const conseillerActive = useFeature("conseiller");
+
   const [allSuivis, setAllSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [cellules, setCellules] = useState([]);
@@ -27,7 +35,7 @@ function SuivisEvangelisationContent() {
   const [updating, setUpdating] = useState({});
   const [detailsCarteId, setDetailsCarteId] = useState(null);
   const [editingContact, setEditingContact] = useState(null);
-  const [suiviEvanMember, setSuiviEvanMember] = useState(null); // 🔥 état pour SuiviEvanPopup
+  const [suiviEvanMember, setSuiviEvanMember] = useState(null);
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
   const [showRefus, setShowRefus] = useState(false);
@@ -35,7 +43,6 @@ function SuivisEvangelisationContent() {
   const [phoneMenuId, setPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
   const [familles, setFamilles] = useState([]);
-
   const [assignmentsMap, setAssignmentsMap] = useState({});
 
   /* ================= INIT ================= */
@@ -51,23 +58,26 @@ function SuivisEvangelisationContent() {
 
   useEffect(() => {
     init();
-  }, []);
+  }, [cellulesActive, famillesActive, conseillerActive]); // ✅ re-init si features changent
 
   useEffect(() => {
     if (user) fetchSuivis(user, cellules, familles);
   }, [showRefus]);
 
- const init = async () => {
-  const userData = await fetchUser();
-  await fetchConseillers();
-  const cellulesData = await fetchCellules(userData);
-  const famillesData = await fetchFamilles(userData);
-  if (userData) {
-    await fetchSuivis(userData, cellulesData, famillesData);
-  }
-  setLoading(false);
-};
-  
+  const init = async () => {
+    const userData = await fetchUser();
+
+    // ✅ Chargement conditionné par feature
+    if (conseillerActive) await fetchConseillers();
+    const cellulesData = cellulesActive ? await fetchCellules(userData) : [];
+    const famillesData = famillesActive ? await fetchFamilles(userData) : [];
+
+    if (userData) {
+      await fetchSuivis(userData, cellulesData, famillesData);
+    }
+    setLoading(false);
+  };
+
   /* ================= USER ================= */
   const fetchUser = async () => {
     const { data: session } = await supabase.auth.getSession();
@@ -96,10 +106,9 @@ function SuivisEvangelisationContent() {
     const u = userData || user;
     if (!u) return [];
     const { data, error } = await supabase
-  .from("cellules")
-  .select("id, cellule_full, responsable_id")
-  .eq("eglise_id", u.eglise_id);
-    
+      .from("cellules")
+      .select("id, cellule_full, responsable_id")
+      .eq("eglise_id", u.eglise_id);
     if (error) {
       console.error("Erreur fetchCellules :", error);
       setCellules([]);
@@ -109,18 +118,23 @@ function SuivisEvangelisationContent() {
     return data || [];
   };
 
-   /* ================= FAMILLES ================= */
+  /* ================= FAMILLES ================= */
   const fetchFamilles = async (userData) => {
-  const u = userData || user;
-  if (!u) return [];
-  const { data, error } = await supabase
-    .from("familles")
-    .select("id, famille_full, responsable_id")
-    .eq("eglise_id", u.eglise_id);
-  if (error) { console.error("Erreur fetchFamilles :", error); setFamilles([]); return []; }
-  setFamilles(data || []);
-  return data || [];
-};
+    const u = userData || user;
+    if (!u) return [];
+    const { data, error } = await supabase
+      .from("familles")
+      .select("id, famille_full, responsable_id")
+      .eq("eglise_id", u.eglise_id);
+    if (error) {
+      console.error("Erreur fetchFamilles :", error);
+      setFamilles([]);
+      return [];
+    }
+    setFamilles(data || []);
+    return data || [];
+  };
+
   /* ================= ASSIGNMENTS MAP ================= */
   const fetchAssignmentsForSuivis = async (suivisIds) => {
     if (!suivisIds || suivisIds.length === 0) {
@@ -140,7 +154,9 @@ function SuivisEvangelisationContent() {
       return;
     }
 
-    const conseillerIds = [...new Set((assignments || []).map(a => a.conseiller_id).filter(Boolean))];
+    const conseillerIds = [
+      ...new Set((assignments || []).map((a) => a.conseiller_id).filter(Boolean)),
+    ];
 
     let profileMap = {};
     if (conseillerIds.length > 0) {
@@ -148,15 +164,17 @@ function SuivisEvangelisationContent() {
         .from("profiles")
         .select("id, prenom, nom")
         .in("id", conseillerIds);
-      (profiles || []).forEach(p => { profileMap[p.id] = p; });
+      (profiles || []).forEach((p) => {
+        profileMap[p.id] = p;
+      });
     }
 
     const map = {};
-    (assignments || []).forEach(row => {
+    (assignments || []).forEach((row) => {
       const profile = profileMap[row.conseiller_id];
       if (!profile) return;
       if (!map[row.suivi_evangelise_id]) map[row.suivi_evangelise_id] = [];
-      if (!map[row.suivi_evangelise_id].some(c => c.id === profile.id)) {
+      if (!map[row.suivi_evangelise_id].some((c) => c.id === profile.id)) {
         map[row.suivi_evangelise_id].push(profile);
       }
     });
@@ -169,11 +187,11 @@ function SuivisEvangelisationContent() {
     try {
       if (!userData) return;
 
-     const { data, error } = await supabase
-  .from("suivis_des_evangelises")
-  .select("*")
-  .eq("eglise_id", userData.eglise_id)
-  .order("id", { ascending: false });
+      const { data, error } = await supabase
+        .from("suivis_des_evangelises")
+        .select("*")
+        .eq("eglise_id", userData.eglise_id)
+        .order("id", { ascending: false });
 
       if (error) {
         console.error("Erreur fetchSuivis:", error);
@@ -189,28 +207,25 @@ function SuivisEvangelisationContent() {
           .select("suivi_evangelise_id")
           .eq("conseiller_id", userData.id)
           .eq("statut", "actif");
-        
 
-        const myIds = (myAssignments || []).map(a => a.suivi_evangelise_id);
-        filtered = filtered.filter(m => myIds.includes(m.id));
-      
+        const myIds = (myAssignments || []).map((a) => a.suivi_evangelise_id);
+        filtered = filtered.filter((m) => myIds.includes(m.id));
       } else if (userData.role === "ResponsableCellule") {
         const mesCellulesIds = (cellulesData || [])
           .filter((c) => c.responsable_id === userData.id)
           .map((c) => c.id);
         filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
       } else if (userData.role === "ResponsableFamilles") {
-  const mesFamillesIds = (famillesData || familles || [])
-    .filter((f) => f.responsable_id === userData.id)
-    .map((f) => f.id);
-  filtered = filtered.filter((m) => mesFamillesIds.includes(m.famille_id));
-}
+        const mesFamillesIds = (famillesData || familles || [])
+          .filter((f) => f.responsable_id === userData.id)
+          .map((f) => f.id);
+        filtered = filtered.filter((m) => mesFamillesIds.includes(m.famille_id));
+      }
 
       setAllSuivis(filtered);
 
-      const suivisIds = filtered.map(s => s.id);
+      const suivisIds = filtered.map((s) => s.id);
       await fetchAssignmentsForSuivis(suivisIds);
-
     } catch (err) {
       console.error("Erreur fetchSuivis:", err.message);
       setAllSuivis([]);
@@ -240,21 +255,24 @@ function SuivisEvangelisationContent() {
     if (!dateString) return "—";
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
-    const months = ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
+    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
   const getConseillersForSuivi = (suiviId) => {
     const assigned = assignmentsMap[suiviId];
     if (assigned && assigned.length > 0) {
-      return assigned.map(c => `${c.prenom} ${c.nom}`).join(", ");
+      return assigned.map((c) => `${c.prenom} ${c.nom}`).join(", ");
     }
     return "—";
   };
 
   const suivisAffiches = allSuivis.filter((m) => {
     if (showRefus) return m.status_suivis_evangelises === "Refus";
-    return m.status_suivis_evangelises === "En cours" || m.status_suivis_evangelises === "Envoyé";
+    return (
+      m.status_suivis_evangelises === "En cours" ||
+      m.status_suivis_evangelises === "Envoyé"
+    );
   });
 
   const handleCommentChange = (id, value) =>
@@ -268,7 +286,7 @@ function SuivisEvangelisationContent() {
     try {
       const payload = {
         suivi_int_id: suivi.id,
-        eglise_id: user.eglise_id,        
+        eglise_id: user.eglise_id,
         nom: suivi.nom || "",
         prenom: suivi.prenom || "",
         telephone: suivi.telephone || "",
@@ -328,15 +346,14 @@ function SuivisEvangelisationContent() {
       if (error) throw error;
 
       if (newStatus === "Intégré") {
-  // ✅ Vérifier la limite avant d'intégrer
-  const { atteinte, count, limite } = await checkLimiteAtteinte(user.eglise_id);
-  if (atteinte) {
-    alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan pour intégrer ce contact.`);
-    setUpdating((p) => ({ ...p, [id]: false }));
-    return;
-  }
+        const { atteinte, count, limite } = await checkLimiteAtteinte(user.eglise_id);
+        if (atteinte) {
+          alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan pour intégrer ce contact.`);
+          setUpdating((p) => ({ ...p, [id]: false }));
+          return;
+        }
 
-  const membreId = await upsertMembre({
+        const membreId = await upsertMembre({
           ...m,
           status_suivis_evangelises: newStatus,
           commentaire_evangelises: newComment,
@@ -374,7 +391,6 @@ function SuivisEvangelisationContent() {
 
       setCommentChanges((prev) => { const copy = { ...prev }; delete copy[id]; return copy; });
       setStatusChanges((prev) => { const copy = { ...prev }; delete copy[id]; return copy; });
-
     } catch (err) {
       console.error("Erreur lors de la sauvegarde :", err.message);
       alert("Erreur lors de la sauvegarde : " + err.message);
@@ -394,7 +410,9 @@ function SuivisEvangelisationContent() {
         .eq("id", m.id);
       if (error) throw error;
       setAllSuivis((prev) =>
-        prev.map((s) => s.id === m.id ? { ...s, status_suivis_evangelises: "En cours" } : s)
+        prev.map((s) =>
+          s.id === m.id ? { ...s, status_suivis_evangelises: "En cours" } : s
+        )
       );
     } catch (err) {
       console.error("Erreur réactivation :", err.message);
@@ -405,7 +423,9 @@ function SuivisEvangelisationContent() {
   };
 
   const updateSuiviLocal = (id, updates) => {
-    setAllSuivis(prev => prev.map(s => (s.id === id ? { ...s, ...updates } : s)));
+    setAllSuivis((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, ...updates } : s))
+    );
   };
 
   /* ================= RENDER ================= */
@@ -421,11 +441,21 @@ function SuivisEvangelisationContent() {
 
       <div className="max-w-3xl w-full mb-6 text-center">
         <p className="italic text-base text-white/90">
-          Suivez facilement tous vos <span className="text-blue-300 font-semibold">contacts évangélisés et leur progression</span>.
-          Attribuez-les à un conseiller ou à une cellule, partagez leurs informations via WhatsApp, et{" "}
-          <span className="text-blue-300 font-semibold">consultez chaque contact en détail</span>.
-          Vous pouvez modifier ou supprimer des contacts,{" "}
-          <span className="text-blue-300 font-semibold">assurant un suivi clair et structuré de l'évangélisation dans votre église</span>.
+          Suivez facilement tous vos{" "}
+          <span className="text-blue-300 font-semibold">
+            contacts évangélisés et leur progression
+          </span>
+          . Attribuez-les à un conseiller ou à une cellule, partagez leurs
+          informations via WhatsApp, et{" "}
+          <span className="text-blue-300 font-semibold">
+            consultez chaque contact en détail
+          </span>
+          . Vous pouvez modifier ou supprimer des contacts,{" "}
+          <span className="text-blue-300 font-semibold">
+            assurant un suivi clair et structuré de l'évangélisation dans votre
+            église
+          </span>
+          .
         </p>
       </div>
 
@@ -443,7 +473,12 @@ function SuivisEvangelisationContent() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-6xl justify-items-center">
         {suivisAffiches.map((m) => {
           const ouvert = detailsCarteId === m.id;
-          const cellule = cellules.find((c) => c.id === m.cellule_id);
+          const cellule = cellulesActive
+            ? cellules.find((c) => c.id === m.cellule_id)
+            : null;
+          const famille = famillesActive
+            ? familles.find((f) => f.id === m.famille_id)
+            : null;
 
           return (
             <div
@@ -481,16 +516,23 @@ function SuivisEvangelisationContent() {
                   )}
                 </div>
 
-                {/* Cellule, Conseiller(s), Ville */}
+                {/* ✅ Infos conditionnées par feature */}
                 <div className="flex flex-col items-center space-y-1 mb-1">
-                  <p className="text-sm text-black">🏠 Cellule : {cellule?.cellule_full || "—"}</p>
-                  {(() => {
-                      const famille = familles.find((f) => f.id === m.famille_id);
-                      return <p className="text-sm text-black">👨‍👩‍👦 Famille : {famille?.famille_full || "—"}</p>;
-                    })()}
-                  <p className="text-sm text-black">
-                    👤 Conseiller(s) : {getConseillersForSuivi(m.id)}
-                  </p>
+                  {cellulesActive && (
+                    <p className="text-sm text-black">
+                      🏠 Cellule : {cellule?.cellule_full || "—"}
+                    </p>
+                  )}
+                  {famillesActive && (
+                    <p className="text-sm text-black">
+                      👨‍👩‍👦 Famille : {famille?.famille_full || "—"}
+                    </p>
+                  )}
+                  {conseillerActive && (
+                    <p className="text-sm text-black">
+                      👤 Conseiller(s) : {getConseillersForSuivi(m.id)}
+                    </p>
+                  )}
                   <p className="text-sm text-black">🏙️ Ville : {m.ville || "—"}</p>
                 </div>
 
@@ -508,7 +550,9 @@ function SuivisEvangelisationContent() {
                     value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
                     onChange={(e) => handleCommentChange(m.id, e.target.value)}
                     disabled={showRefus}
-                    className={`w-full rounded-lg border px-3 py-2 text-sm ${showRefus ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-white"}`}
+                    className={`w-full rounded-lg border px-3 py-2 text-sm ${
+                      showRefus ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-white"
+                    }`}
                   />
 
                   <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2 text-sm">
@@ -518,7 +562,9 @@ function SuivisEvangelisationContent() {
                     value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
                     onChange={(e) => handleStatusChange(m.id, e.target.value)}
                     disabled={showRefus}
-                    className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm ${showRefus ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-white"}`}
+                    className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm ${
+                      showRefus ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-white"
+                    }`}
                   >
                     <option value="">-- Sélectionner un statut --</option>
                     <option value="En cours">En Suivis</option>
@@ -527,17 +573,23 @@ function SuivisEvangelisationContent() {
                   </select>
 
                   <button
-                    onClick={() => showRefus ? reactiverSuivi(m) : updateSuivi(m.id, m)}
+                    onClick={() =>
+                      showRefus ? reactiverSuivi(m) : updateSuivi(m.id, m)
+                    }
                     disabled={updating[m.id]}
                     className={`mt-3 w-full py-2 rounded-lg font-semibold shadow-md transition-all ${
                       updating[m.id]
                         ? "bg-slate-300 text-slate-600 cursor-not-allowed"
                         : showRefus
-                          ? "bg-green-500 text-white hover:bg-green-600"
-                          : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
+                        ? "bg-green-500 text-white hover:bg-green-600"
+                        : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
                     }`}
                   >
-                    {updating[m.id] ? "Traitement..." : showRefus ? "🔄 Réactiver" : "Sauvegarder"}
+                    {updating[m.id]
+                      ? "Traitement..."
+                      : showRefus
+                      ? "🔄 Réactiver"
+                      : "Sauvegarder"}
                   </button>
                 </div>
 
@@ -550,7 +602,11 @@ function SuivisEvangelisationContent() {
               </div>
 
               {/* Détails */}
-              <div className={`transition-all duration-500 overflow-hidden ${ouvert ? "max-h-[1000px] mt-3" : "max-h-0"}`}>
+              <div
+                className={`transition-all duration-500 overflow-hidden ${
+                  ouvert ? "max-h-[1000px] mt-3" : "max-h-0"
+                }`}
+              >
                 {ouvert && (
                   <div className="text-black text-sm mt-3 w-full space-y-4">
                     <div>
@@ -570,7 +626,10 @@ function SuivisEvangelisationContent() {
 
                     <div>
                       <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>
-                      <p>📅 {m.sexe === "Femme" ? "Évangélisée" : "Évangélisé"} le : {formatDateFr(m.date_evangelise)}</p>
+                      <p>
+                        📅 {m.sexe === "Femme" ? "Évangélisée" : "Évangélisé"} le :{" "}
+                        {formatDateFr(m.date_evangelise)}
+                      </p>
                       <p>📣 Type d'Evangélisation : {m.type_evangelisation || ""}</p>
                     </div>
                     <hr />
@@ -583,15 +642,12 @@ function SuivisEvangelisationContent() {
 
                     {!showRefus && (
                       <div className="mt-4 flex flex-col gap-2">
-                        {/* 🔥 Bouton Suivi évangélisation — au-dessus */}
                         <button
                           onClick={() => setSuiviEvanMember(m)}
                           className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
-                  >
-                    💡 Ajouter / Voir suivis
+                        >
+                          💡 Ajouter / Voir suivis
                         </button>
-
-                        {/* Bouton Modifier — en dessous */}
                         <button
                           onClick={() => setEditingContact(m)}
                           className="w-full py-2 rounded-lg bg-white text-orange-500 font-semibold border border-orange-200 shadow-sm hover:shadow-md transition-all"
@@ -608,24 +664,23 @@ function SuivisEvangelisationContent() {
         })}
       </div>
 
-      {/* ── EditEvangeliseSuiviPopup ── */}
+      {/* ✅ EditEvangeliseSuiviPopup — props filtrées par feature */}
       {editingContact && (
-      <EditEvangeliseSuiviPopup
-        member={editingContact}
-        conseillers={conseillers}
-        cellules={cellules}
-        currentUserRoles={user?.role ? [user.role] : []}
-        onClose={() => setEditingContact(null)}
-        closeDetails={() => {}}
-        onUpdateMember={(updates) => {
-          updateSuiviLocal(editingContact.id, updates);
-          setEditingContact(null);
-          fetchSuivis(user, cellules);
-        }}
-      />
-    )}
+        <EditEvangeliseSuiviPopup
+          member={editingContact}
+          conseillers={conseillerActive ? conseillers : []}
+          cellules={cellulesActive ? cellules : []}
+          currentUserRoles={user?.role ? [user.role] : []}
+          onClose={() => setEditingContact(null)}
+          closeDetails={() => {}}
+          onUpdateMember={(updates) => {
+            updateSuiviLocal(editingContact.id, updates);
+            setEditingContact(null);
+            fetchSuivis(user, cellules, familles);
+          }}
+        />
+      )}
 
-      {/* 🔥 SuiviEvanPopup — passe m directement, SuiviEvanPopup utilise evangelise_id comme clé */}
       {suiviEvanMember && (
         <SuiviEvanPopup
           member={suiviEvanMember}

@@ -177,12 +177,6 @@ function CellulesHubContent() {
           </div>
         </Link>
 
-        {/* Notifications */}
-        {NOTIF_CARD}
-
-        {/* Visible uniquement par Admin / Superviseur */}
-        {isAdmin && (
-          <>
             <Link
               href="/admin/import"
               className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
@@ -194,6 +188,12 @@ function CellulesHubContent() {
               </div>
             </Link>
 
+        {/* Notifications */}
+        {NOTIF_CARD}
+
+        {/* Visible uniquement par Admin / Superviseur */}
+        {isAdmin && (
+          <>           
             <Link
               href="/admin/create-cellule"
               className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"

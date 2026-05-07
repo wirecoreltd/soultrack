@@ -7,18 +7,7 @@ import EditUserModal from "../../components/EditUserModal";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
-
-/* =========================
-   Couleurs rôles
-========================= */
-const roleColors = {
-  Administrateur: "#EF4444",
-  ResponsableIntegration: "#3B82F6",
-  ResponsableCellule: "#10B981",
-  ResponsableEvangelisation: "#8B5CF6",
-  SuperviseurCellule: "#F59E0B",
-  Conseiller: "#14B8A6",
-};
+import { useFeature } from "../../components/FeaturesContext";
 
 /* =========================
    Format date
@@ -27,79 +16,6 @@ const formatDate = (date) => {
   if (!date) return "";
   return new Date(date).toLocaleDateString("fr-FR");
 };
-
-/* =========================
-   Ligne utilisateur
-========================= */
-function UserRow({ u, setSelectedUser, setDeleteUser }) {
-  const roleLabels = {
-    Administrateur: "Administrateur",
-    ResponsableIntegration: "Responsable Intégration",
-    ResponsableCellule: "Responsable Cellule",
-    ResponsableEvangelisation: "Responsable Évangélisation",
-    SuperviseurCellule: "Superviseur Cellule",
-    Conseiller: "Conseiller",
-  };
-
-  const roles = u.roles || [];
-  const rolesDisplay =
-    roles.length > 0
-      ? roles.map((r) => roleLabels[r] || r).join(" / ")
-      : "";
-
-  const mainRole = roles[0];
-  const borderColor = roleColors[mainRole] || "#F59E0B";
-
-  return (
-    <>
-      {/* ================= DESKTOP ================= */}
-      <div
-        className="hidden sm:flex flex-row items-center px-4 py-3 rounded-lg gap-2 bg-white/10 border-l-4 text-sm"
-        style={{ borderLeftColor: borderColor }}
-      >
-        <div className="flex-[2] text-white font-semibold">
-          {u.prenom} {u.nom}
-        </div>
-        <div className="flex-[2] text-white">{u.email}</div>
-        <div className="flex-[2] text-white">{u.telephone || "-"}</div>
-        <div className="flex-[2] text-white">{rolesDisplay}</div>
-        <div className="flex-[2] text-amber-300 text-sm">
-          {formatDate(u.created_at)}
-        </div>
-        <div className="flex-[1] flex justify-center gap-2">
-          <button onClick={() => setSelectedUser(u)} className="text-blue-400 hover:text-blue-600">✏️</button>
-          <button onClick={() => setDeleteUser(u)} className="text-red-400 hover:text-red-600">🗑️</button>
-        </div>
-      </div>
-
-      {/* ================= MOBILE ================= */}
-      <div
-        className="sm:hidden flex flex-col p-4 rounded-xl bg-white/10 border-l-4 gap-2"
-        style={{ borderLeftColor: borderColor }}
-      >
-        <div className="text-right text-amber-300 text-xs">
-          Créer le : {formatDate(u.created_at)}
-        </div>
-        <div className="text-center space-y-1.5">
-          <div className="text-white font-semibold">{u.prenom} {u.nom}</div>
-          <div className="text-white flex justify-center items-center gap-1">
-            <span>📞</span><span>{u.telephone || "-"}</span>
-          </div>
-          <div className="text-white flex justify-center items-center gap-1 break-all">
-            <span>📧</span><span>{u.email}</span>
-          </div>
-          <div className="flex justify-center items-center gap-1 text-orange-400 font-semibold mt-1">
-            <span>🎖️</span><span>{rolesDisplay}</span>
-          </div>
-        </div>
-        <div className="mt-2 flex justify-center gap-3 pt-2">
-          <button onClick={() => setSelectedUser(u)} className="text-blue-400 text-sm leading-none">✏️</button>
-          <button onClick={() => setDeleteUser(u)} className="text-red-400 text-base leading-none">🗑️</button>
-        </div>
-      </div>
-    </>
-  );
-}
 
 /* =========================
    Page principale
@@ -113,6 +29,13 @@ export default function ListUsers() {
 }
 
 function ListUsersContent() {
+  // ─────────────────────────────────────────────
+  // ✅ FEATURES — tous les hooks en premier
+  // ─────────────────────────────────────────────
+  const cellulesActive = useFeature("cellules");
+  const conseillerActive = useFeature("conseiller");
+  const famillesActive = useFeature("familles");
+
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -121,9 +44,42 @@ function ListUsersContent() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [deleteUser, setDeleteUser] = useState(null);
   const [search, setSearch] = useState("");
-
-  // ✅ Plus de branche_id dans le scope
   const [egliseId, setEgliseId] = useState(null);
+
+  // ─────────────────────────────────────────────
+  // ✅ roleColors conditionné par feature
+  // ─────────────────────────────────────────────
+  const roleColors = {
+    Administrateur: "#EF4444",
+    ResponsableIntegration: "#3B82F6",
+    ...(cellulesActive && { ResponsableCellule: "#10B981" }),
+    ResponsableEvangelisation: "#8B5CF6",
+    SuperviseurCellule: "#F59E0B",
+    ...(conseillerActive && { Conseiller: "#14B8A6" }),
+    ...(famillesActive && { ResponsableFamilles: "#F97316" }),
+  };
+
+  // ─────────────────────────────────────────────
+  // ✅ roleLabels conditionné par feature
+  // ─────────────────────────────────────────────
+  const roleLabels = {
+    Administrateur: "Administrateur",
+    ResponsableIntegration: "Responsable Intégration",
+    ...(cellulesActive && { ResponsableCellule: "Responsable Cellule" }),
+    ResponsableEvangelisation: "Responsable Évangélisation",
+    SuperviseurCellule: "Superviseur Cellule",
+    ...(conseillerActive && { Conseiller: "Conseiller" }),
+    ...(famillesActive && { ResponsableFamilles: "Responsable Familles" }),
+  };
+
+  // ─────────────────────────────────────────────
+  // ✅ Rôles à masquer dans le filtre selon features
+  // ─────────────────────────────────────────────
+  const hiddenRoles = [
+    ...(!cellulesActive ? ["ResponsableCellule"] : []),
+    ...(!conseillerActive ? ["Conseiller"] : []),
+    ...(!famillesActive ? ["ResponsableFamilles"] : []),
+  ];
 
   // ─── Récupérer eglise_id de l'admin connecté ───
   useEffect(() => {
@@ -132,7 +88,6 @@ function ListUsersContent() {
       const user = sessionData?.session?.user;
       if (!user) return;
 
-      // ✅ On ne sélectionne plus branche_id
       const { data: profile } = await supabase
         .from("profiles")
         .select("eglise_id")
@@ -155,7 +110,6 @@ function ListUsersContent() {
   const fetchUsers = async () => {
     setLoading(true);
 
-    // ✅ Filtre uniquement par eglise_id (plus de branche_id)
     const { data } = await supabase
       .from("profiles")
       .select("id, prenom, nom, email, telephone, roles, created_at")
@@ -164,9 +118,11 @@ function ListUsersContent() {
 
     setUsers(data || []);
 
+    // ✅ Exclure les rôles des features désactivées de la liste des rôles disponibles
     const allRoles = Array.from(
       new Set((data || []).flatMap((u) => u.roles || []))
-    );
+    ).filter((r) => !hiddenRoles.includes(r));
+
     setRoles(allRoles);
     setLoading(false);
   };
@@ -203,11 +159,21 @@ function ListUsersContent() {
         Gestion des <span className="text-emerald-300">utilisateurs</span>
       </h1>
 
+      {/* ✅ Texte intro conditionné par features */}
       <div className="max-w-3xl w-full mb-6 text-center mx-auto">
         <p className="italic text-base text-white/90">
           Visualiser, filtrer et gérer tous les utilisateurs de votre église. Chaque{" "}
-          <span className="text-blue-300 font-semibold">rôle a une responsabilité spécifique</span>, et
-          chaque utilisateur contribue à la croissance et au soutien des membres. Utilisez cette interface{" "}
+          <span className="text-blue-300 font-semibold">rôle a une responsabilité spécifique</span>
+          {cellulesActive && (
+            <> : responsables de cellules</>
+          )}
+          {conseillerActive && (
+            <>, conseillers</>
+          )}
+          {famillesActive && (
+            <>, responsables de familles</>
+          )}
+          {" "}et chaque utilisateur contribue à la croissance et au soutien des membres. Utilisez cette interface{" "}
           <span className="text-blue-300 font-semibold">
             pour accompagner, encadrer et développer une communauté solide et fraternelle
           </span>.
@@ -224,15 +190,20 @@ function ListUsersContent() {
         />
 
         <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
+          {/* ✅ Filtre rôles — options conditionnées par features */}
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
             className="px-4 py-2 rounded-md text-black"
           >
             <option value="">Tous les rôles</option>
-            {roles.map((r) => (
-              <option key={r}>{r}</option>
-            ))}
+            {roles
+              .filter((r) => !hiddenRoles.includes(r))
+              .map((r) => (
+                <option key={r} value={r}>
+                  {roleLabels[r] || r}
+                </option>
+              ))}
           </select>
           <span className="text-white text-sm">Total : {filteredUsers.length}</span>
         </div>
@@ -262,6 +233,9 @@ function ListUsersContent() {
           <UserRow
             key={u.id}
             u={u}
+            roleColors={roleColors}
+            roleLabels={roleLabels}
+            hiddenRoles={hiddenRoles}
             setSelectedUser={setSelectedUser}
             setDeleteUser={setDeleteUser}
           />
@@ -284,7 +258,9 @@ function ListUsersContent() {
             <p className="mb-2 font-semibold text-gray-800">
               Supprimer {deleteUser.prenom} {deleteUser.nom} ?
             </p>
-            <p className="text-sm text-gray-500 mb-4">Cette action est irréversible.</p>
+            <p className="text-sm text-gray-500 mb-4">
+              Cette action est irréversible.
+            </p>
             <div className="flex gap-3 justify-center">
               <button
                 onClick={() => setDeleteUser(null)}
@@ -305,5 +281,100 @@ function ListUsersContent() {
 
       <Footer />
     </div>
+  );
+}
+
+/* =========================
+   Ligne utilisateur
+   ✅ Reçoit roleColors, roleLabels, hiddenRoles depuis le parent
+========================= */
+function UserRow({ u, roleColors, roleLabels, hiddenRoles, setSelectedUser, setDeleteUser }) {
+  // ✅ Filtrer les rôles désactivés dans l'affichage de chaque ligne
+  const roles = (u.roles || []).filter((r) => !hiddenRoles.includes(r));
+
+  const rolesDisplay =
+    roles.length > 0
+      ? roles.map((r) => roleLabels[r] || r).join(" / ")
+      : "";
+
+  const mainRole = roles[0];
+  const borderColor = roleColors[mainRole] || "#F59E0B";
+
+  return (
+    <>
+      {/* ================= DESKTOP ================= */}
+      <div
+        className="hidden sm:flex flex-row items-center px-4 py-3 rounded-lg gap-2 bg-white/10 border-l-4 text-sm"
+        style={{ borderLeftColor: borderColor }}
+      >
+        <div className="flex-[2] text-white font-semibold">
+          {u.prenom} {u.nom}
+        </div>
+        <div className="flex-[2] text-white">{u.email}</div>
+        <div className="flex-[2] text-white">{u.telephone || "-"}</div>
+        <div className="flex-[2] text-white">{rolesDisplay}</div>
+        <div className="flex-[2] text-amber-300 text-sm">
+          {formatDate(u.created_at)}
+        </div>
+        <div className="flex-[1] flex justify-center gap-2">
+          <button
+            onClick={() => setSelectedUser(u)}
+            className="text-blue-400 hover:text-blue-600"
+          >
+            ✏️
+          </button>
+          <button
+            onClick={() => setDeleteUser(u)}
+            className="text-red-400 hover:text-red-600"
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+
+      {/* ================= MOBILE ================= */}
+      <div
+        className="sm:hidden flex flex-col p-4 rounded-xl bg-white/10 border-l-4 gap-2"
+        style={{ borderLeftColor: borderColor }}
+      >
+        <div className="text-right text-amber-300 text-xs">
+          Créer le : {formatDate(u.created_at)}
+        </div>
+        <div className="text-center space-y-1.5">
+          <div className="text-white font-semibold">
+            {u.prenom} {u.nom}
+          </div>
+          <div className="text-white flex justify-center items-center gap-1">
+            <span>📞</span>
+            <span>{u.telephone || "-"}</span>
+          </div>
+          <div className="text-white flex justify-center items-center gap-1 break-all">
+            <span>📧</span>
+            <span>{u.email}</span>
+          </div>
+          {/* ✅ Rôles filtrés — masqués si feature désactivée */}
+          {rolesDisplay && (
+            <div className="flex justify-center items-center gap-1 text-orange-400 font-semibold mt-1">
+              <span>🎖️</span>
+              <span>{rolesDisplay}</span>
+            </div>
+          )}
+        </div>
+        <div className="mt-2 flex justify-center gap-3 pt-2">
+          <button
+            onClick={() => setSelectedUser(u)}
+            className="text-blue-400 text-sm leading-none"
+          >
+            ✏️
+          </button>
+          <button
+            onClick={() => setDeleteUser(u)}
+            className="text-red-400 text-base leading-none"
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+    </>
   );
 }

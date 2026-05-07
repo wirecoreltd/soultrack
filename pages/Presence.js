@@ -26,7 +26,9 @@ function formatSessionLabel(s) {
 }
 
 // ─── ÉCRAN CHOIX SESSION ───────────────────────────────────────
-function ChoixSession({ sessions, onJoin, onNew, loadingCheck }) {
+function ChoixSession({ sessions, sessionsAnciennes, onJoin, onNew, loadingCheck }) {
+  const [showAnciennes, setShowAnciennes] = useState(false);
+
   if (loadingCheck) {
     return (
       <div className="w-full max-w-lg mt-6 flex flex-col items-center gap-4">
@@ -34,6 +36,13 @@ function ChoixSession({ sessions, onJoin, onNew, loadingCheck }) {
       </div>
     );
   }
+
+  // Grouper les anciennes sessions par date
+  const anciennesParDate = sessionsAnciennes.reduce((acc, s) => {
+    if (!acc[s.date]) acc[s.date] = [];
+    acc[s.date].push(s);
+    return acc;
+  }, {});
 
   return (
     <div className="w-full max-w-lg mt-6 flex flex-col gap-4">
@@ -77,6 +86,54 @@ function ChoixSession({ sessions, onJoin, onNew, loadingCheck }) {
           >
             ➕ Créer une session
           </button>
+        </div>
+      )}
+
+      {/* ── ANCIENNES SESSIONS (7 derniers jours) ── */}
+      {sessionsAnciennes.length > 0 && (
+        <div className="bg-white/10 rounded-2xl overflow-hidden">
+          <button
+            onClick={() => setShowAnciennes(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/10 transition"
+          >
+            <span className="text-white font-semibold text-sm flex items-center gap-2">
+              🕐 Anciennes sessions
+              <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">
+                {sessionsAnciennes.length}
+              </span>
+            </span>
+            <span className="text-white/60 text-xs">{showAnciennes ? "▲ Masquer" : "▼ Afficher"}</span>
+          </button>
+
+          {showAnciennes && (
+            <div className="flex flex-col gap-3 px-4 pb-4">
+              {Object.entries(anciennesParDate).map(([date, sessionsDuJour]) => (
+                <div key={date}>
+                  <p className="text-white/50 text-xs font-semibold mb-2 uppercase tracking-wide">
+                    📅 {new Date(date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long" })}
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {sessionsDuJour.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => onJoin(s)}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition group border border-white/10"
+                      >
+                        <span className="text-left text-sm">
+                          {s.typeTemps}
+                          {s.numero_culte ? ` — ${s.numero_culte}${s.numero_culte === 1 ? "er" : "ème"} culte` : ""}
+                          {s.heure ? ` · ${s.heure}` : ""}
+                        </span>
+                        <span className="text-xs bg-white/20 text-white/80 group-hover:bg-white/30 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
+                          Modifier →
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -229,8 +286,6 @@ function FormulaireSession({
 }
 
 // ─── TOGGLE VISIBILITÉ ─────────────────────────────────────────
-// FIX 1 : le thumb ne déborde plus du conteneur
-// Calcul : left 3px + translate 22px + width 18px + 3px right gap = 46px ≤ 48px (w-12)
 function ToggleVisibilite({ visible, onToggle, saving }) {
   return (
     <div className={`w-full max-w-lg mx-auto mb-4 rounded-xl px-4 py-3 flex items-center justify-between gap-3 border-2 transition ${
@@ -253,7 +308,6 @@ function ToggleVisibilite({ visible, onToggle, saving }) {
           visible ? "bg-emerald-500" : "bg-gray-400"
         } ${saving ? "opacity-50" : ""}`}
       >
-        {/* FIX : top/left fixes + translate calibré pour rester dans le bouton */}
         <span
           className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] bg-white rounded-full shadow transition-transform ${
             visible ? "translate-x-[22px]" : "translate-x-0"
@@ -350,6 +404,7 @@ function Presence() {
   // ── Étapes : "check" → "choix" → "form" → "ready"
   const [etape, setEtape] = useState("check");
   const [sessionsAujourdhui, setSessionsAujourdhui] = useState([]);
+  const [sessionsAnciennes, setSessionsAnciennes] = useState([]);
 
   const [attendanceId, setAttendanceId] = useState(null);
   const [editingSession, setEditingSession] = useState(false);
@@ -453,6 +508,7 @@ function Presence() {
     await initProfile();
     const profile = profileRef.current;
 
+    // Sessions d'aujourd'hui
     const { data } = await supabase
       .from("attendance")
       .select("id, typeTemps, date, heure, numero_culte")
@@ -460,7 +516,22 @@ function Presence() {
       .eq("date", today())
       .order("created_at", { ascending: false });
 
+    // Sessions des 7 derniers jours (hors aujourd'hui)
+    const il7joursDate = new Date();
+    il7joursDate.setDate(il7joursDate.getDate() - 7);
+    const il7jours = il7joursDate.toISOString().split("T")[0];
+
+    const { data: anciennes } = await supabase
+      .from("attendance")
+      .select("id, typeTemps, date, heure, numero_culte")
+      .eq("eglise_id", profile.eglise_id)
+      .lt("date", today())
+      .gte("date", il7jours)
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false });
+
     setSessionsAujourdhui(data || []);
+    setSessionsAnciennes(anciennes || []);
     setEtape((data || []).length > 0 ? "choix" : "form");
   }, [initProfile]);
 
@@ -489,9 +560,31 @@ function Presence() {
     profileRef.current.liste_presence_visible = newVal;
     setListeVisible(newVal);
     setSavingVisible(false);
-    // FIX bug 2 : on appelle fetchAll directement sans dépendre de etape (closure stale)
-    // fetchAll relit toujours depuis Supabase donc reflète immédiatement le nouvel état
     await fetchAll(selectedDate);
+  };
+
+  // ─── MISE À JOUR COMPTEURS ATTENDANCE ────────────────────────
+  const updateAttendanceCounters = async (currentAttendanceId, date) => {
+    if (!currentAttendanceId) return;
+
+    const { data: presences } = await supabase
+      .from("presences")
+      .select("membres_complets(sexe)")
+      .eq("date", date)
+      .eq("attendance_id", currentAttendanceId);
+
+    const counts = { hommes: 0, femmes: 0 };
+
+    (presences || []).forEach(p => {
+      const sexe = p.membres_complets?.sexe?.trim();
+      if (sexe === "Homme") counts.hommes++;
+      else if (sexe === "Femme") counts.femmes++;
+    });
+
+    await supabase
+      .from("attendance")
+      .update(counts)
+      .eq("id", currentAttendanceId);
   };
 
   // ─── FETCH MEMBRES + PRÉSENCES ────────────────────────────────
@@ -515,7 +608,7 @@ function Presence() {
         if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); return; }
         const { data: membresData } = await supabase
           .from("membres_complets")
-          .select("id, prenom, nom, telephone")
+          .select("id, prenom, nom, telephone, sexe")
           .eq("eglise_id", profile.eglise_id)
           .in("etat_contact", ["existant", "nouveau"])
           .in("id", myIds);
@@ -533,7 +626,7 @@ function Presence() {
       // ── VUE ADMIN/RI ──────────────────────────────────────────
       const { data: tousMembres } = await supabase
         .from("membres_complets")
-        .select("id, prenom, nom, telephone, cellule_id, famille_id")
+        .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
         .eq("eglise_id", profile.eglise_id)
         .in("etat_contact", ["existant", "nouveau"]);
 
@@ -558,10 +651,8 @@ function Presence() {
         .select("membre_id, conseiller_id, profiles(prenom, nom)")
         .eq("statut", "actif");
 
-      // IDs des responsables ayant activé leur liste
       const visiblesIds = new Set((responsablesVisibles || []).map(r => r.id));
 
-      // Map conseiller_id → { ids[], profile }
       const assignmentsByConseiller = {};
       (assignmentsData || []).forEach(a => {
         if (!assignmentsByConseiller[a.conseiller_id]) assignmentsByConseiller[a.conseiller_id] = { ids: [], profile: a.profiles };
@@ -569,10 +660,6 @@ function Presence() {
       });
 
       const membresDansConseiller = new Set(Object.values(assignmentsByConseiller).flatMap(v => v.ids));
-
-      // ── Approche additive : on construit les groupes visibles un par un.
-      // Un membre n'apparaît QUE si son groupe a activé la visibilité.
-      // Les membres sans groupe ni conseiller visible sont dans "Sans rattachement".
 
       const groupesResult = [];
       const membresCouvertsParGroupe = new Set();
@@ -608,13 +695,12 @@ function Presence() {
           groupesResult.push({
             id: `f-${f.id}`,
             label: f.famille_full || `${f.ville} - ${f.famille}`,
-            icon: "👨‍👩‍👦", color: "purple", membres: fm,
+            icon: "👑", color: "purple", membres: fm,
           });
         }
       });
 
       // ── Conseillers dont la liste est visible
-      // On n'affiche que les membres pas déjà couverts par une cellule/famille visible
       Object.entries(assignmentsByConseiller).forEach(([consId, { ids, profile: consProfile }]) => {
         if (!visiblesIds.has(consId)) return;
         const cm = ids
@@ -633,7 +719,7 @@ function Presence() {
         }
       });
 
-      // ── Sans rattachement : pas de cellule, pas de famille, pas de conseiller
+      // ── Sans rattachement
       const sansCellule = membres
         .filter(m => !m.cellule_id && !m.famille_id && !membresDansConseiller.has(m.id))
         .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
@@ -641,7 +727,6 @@ function Presence() {
         groupesResult.unshift({ id: "sans", label: "Sans rattachement", icon: "👤", color: "gray", membres: sansCellule });
       }
 
-      // Membres visibles pour le compteur absents/présents
       const membresVisiblesIds = new Set([
         ...membresCouvertsParGroupe,
         ...sansCellule.map(m => m.id),
@@ -688,6 +773,8 @@ function Presence() {
         typeTemps: typeFinal,
         temps_nom: typeFinal,
         eglise_id: profile.eglise_id,
+        hommes: 0,
+        femmes: 0,
         ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : {}),
       };
 
@@ -736,14 +823,23 @@ function Presence() {
   const markPresent = async (membre) => {
     try {
       const { uid } = profileRef.current;
-      await supabase.from("presences").insert({ membre_id: membre.id, date: selectedDate, checked_by: uid, attendance_id: attendanceId });
+      await supabase.from("presences").insert({
+        membre_id: membre.id,
+        date: selectedDate,
+        checked_by: uid,
+        attendance_id: attendanceId,
+      });
+      await updateAttendanceCounters(attendanceId, selectedDate);
       await fetchAll(selectedDate);
     } catch (err) { console.error(err); }
   };
 
   const markAbsent = async (memberId) => {
     try {
-      await supabase.from("presences").delete().eq("membre_id", memberId).eq("date", selectedDate);
+      await supabase.from("presences").delete()
+        .eq("membre_id", memberId)
+        .eq("date", selectedDate);
+      await updateAttendanceCounters(attendanceId, selectedDate);
       await fetchAll(selectedDate);
     } catch (err) { console.error(err); }
   };
@@ -781,6 +877,7 @@ function Presence() {
         </p>
         <ChoixSession
           sessions={sessionsAujourdhui}
+          sessionsAnciennes={sessionsAnciennes}
           onJoin={rejoindreSession}
           onNew={() => setEtape("form")}
           loadingCheck={false}

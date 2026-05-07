@@ -489,7 +489,9 @@ function Presence() {
     profileRef.current.liste_presence_visible = newVal;
     setListeVisible(newVal);
     setSavingVisible(false);
-    if (etape === "ready") fetchAll(selectedDate);
+    // FIX bug 2 : on appelle fetchAll directement sans dépendre de etape (closure stale)
+    // fetchAll relit toujours depuis Supabase donc reflète immédiatement le nouvel état
+    await fetchAll(selectedDate);
   };
 
   // ─── FETCH MEMBRES + PRÉSENCES ────────────────────────────────
@@ -566,10 +568,11 @@ function Presence() {
 
       const membresDansConseiller = new Set(Object.values(assignmentsByConseiller).flatMap(v => v.ids));
 
-      const cellulesNonVisibles = (cellulesData || []).filter(c => c.responsable_id && !visiblesIds.has(c.responsable_id));
-      const famillesNonVisibles = (famillesData || []).filter(f => f.responsable_id && !visiblesIds.has(f.responsable_id));
-      const cellulesVisibles = (cellulesData || []).filter(c => visiblesIds.has(c.responsable_id));
-      const famillesVisibles = (famillesData || []).filter(f => visiblesIds.has(f.responsable_id));
+      // FIX bug 1 : sans responsable_id (null) => non visible aussi
+      const cellulesNonVisibles = (cellulesData || []).filter(c => !visiblesIds.has(c.responsable_id));
+      const famillesNonVisibles = (famillesData || []).filter(f => !visiblesIds.has(f.responsable_id));
+      const cellulesVisibles = (cellulesData || []).filter(c => c.responsable_id && visiblesIds.has(c.responsable_id));
+      const famillesVisibles = (famillesData || []).filter(f => f.responsable_id && visiblesIds.has(f.responsable_id));
 
       // FIX 2 : on masque TOUS les membres des groupes privés,
       // même ceux suivis par un conseiller — la cellule/famille privée prime.

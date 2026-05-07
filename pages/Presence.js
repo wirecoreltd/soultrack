@@ -1,4 +1,3 @@
-numero culte doit est obligatoire
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";

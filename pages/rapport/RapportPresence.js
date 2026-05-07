@@ -54,12 +54,6 @@ const fmtMois  = (d) => { const M=["Jan","Fév","Mar","Avr","Mai","Jun","Jul","A
 const weekKey  = (d) => { const t=new Date(d); t.setHours(0,0,0,0); t.setDate(t.getDate()-t.getDay()+1); return t.toISOString().slice(0,10); };
 const monthKey = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
 
-const IconCellule = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-  </svg>
-);
-
 // ── composant principal ──────────────────────────────────────────────────────
 function RapportPresence() {
   const [userProfile, setUserProfile] = useState(null);
@@ -72,12 +66,10 @@ function RapportPresence() {
   const [allowedFamilleIds, setAllowedFamilleIds] = useState(null);
 
   // filtres formulaire génération
-  const [selCelluleId, setSelCelluleId] = useState("");
   const [dateDebut,    setDateDebut]    = useState("");
   const [dateFin,      setDateFin]      = useState("");
 
   // filtre global unique — affiché après génération, s'applique à tout
-  // "" = Tout | "cellule:<id>" | "famille:<id>"
   const [globalFilter, setGlobalFilter] = useState("");
 
   // données
@@ -182,9 +174,8 @@ function RapportPresence() {
         .eq("eglise_id", userProfile.eglise_id)
         .order("date", { ascending: true });
 
-      if (selCelluleId) q = q.eq("cellule_id", selCelluleId);
-      if (dateDebut)    q = q.gte("date", dateDebut);
-      if (dateFin)      q = q.lte("date", dateFin);
+      if (dateDebut) q = q.gte("date", dateDebut);
+      if (dateFin)   q = q.lte("date", dateFin);
 
       const { data, error } = await q;
       if (error) throw error;
@@ -223,8 +214,6 @@ function RapportPresence() {
   };
 
   // ── attendances filtrées par filtre global ────────────────────────────────
-  // filtre cellule → filtre direct sur attendance.cellule_id
-  // filtre famille → pas de lien direct sur attendance, on filtre via membres
   const attendancesFiltered = useMemo(() => {
     if (!globalFilter) return attendances;
     if (globalCelluleId) {
@@ -246,7 +235,6 @@ function RapportPresence() {
   );
 
   // membres filtrés selon rôle + filtre global
-  // cas possibles : cellule_id seul, famille_id seul, les deux, aucun
   const membresRep = useMemo(() => {
     let src = membres;
 
@@ -261,7 +249,8 @@ function RapportPresence() {
     if (globalCelluleId) {
       src = src.filter((m) => m.cellule_id === globalCelluleId);
     } else if (globalFamilleId) {
-      src = src.filter((m) => m.famille_id === globalFamilleId);
+      // FIX : comparer en string pour éviter les problèmes de type uuid vs string
+      src = src.filter((m) => String(m.famille_id) === String(globalFamilleId));
     }
 
     return src;
@@ -281,7 +270,7 @@ function RapportPresence() {
     : totalF;
   const dispTotal = globalFilter ? membresPresentsRep.length : totalPresences;
 
-  // tranches d'âge — sans tableau récap
+  // tranches d'âge
   const tranchesData = useMemo(() => {
     const counts = {};
     AGE_TRANCHES.forEach((t) => { counts[t] = 0; });
@@ -415,19 +404,8 @@ function RapportPresence() {
       <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl p-4 md:p-6 w-full max-w-2xl mx-auto text-white mb-6">
         <p className="text-sm font-semibold text-red-400 text-center mb-4">Choisissez les paramètres</p>
 
+        {/* FIX 1 : "Filtrer par cellule" supprimé — seulement date début/fin */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="flex flex-col md:col-span-2">
-            <label className="text-sm text-center mb-1 flex items-center justify-center gap-1 text-amber-200">
-              <IconCellule /> Filtrer par cellule (optionnel)
-            </label>
-            <select value={selCelluleId} onChange={(e) => setSelCelluleId(e.target.value)}
-              className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white">
-              <option value="">Toutes les cellules</option>
-              {cellulesVisibles.map((c) => (
-                <option key={c.id} value={c.id}>{c.cellule_full || c.cellule}</option>
-              ))}
-            </select>
-          </div>
           <div className="flex flex-col">
             <label className="text-sm text-center mb-1">Date de Début</label>
             <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)}
@@ -444,35 +422,16 @@ function RapportPresence() {
           className="w-full mt-4 h-10 bg-amber-300 text-white font-semibold rounded-lg hover:bg-amber-400 transition disabled:opacity-60">
           {loading ? "⏳ Chargement..." : "Générer"}
         </button>
-      </div>
 
-      {message && <p className="text-white mb-4">{message}</p>}
-
-      {/* ── RÉSULTATS ── */}
-      {attendances.length > 0 && (
-        <div className="w-full max-w-4xl">
-
-          {/* MÉTRIQUES GLOBALES */}
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            {[
-              { label:"Total présences", value:totalPresences.toLocaleString("fr-FR"), color:"text-white" },
-              { label:"Hommes",          value:totalH,                                  color:"text-blue-300" },
-              { label:"Femmes",          value:totalF,                                  color:"text-pink-300" },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="bg-white/10 border border-white/20 rounded-xl p-3 text-center text-white">
-                <p className="text-xs text-white/60 mb-1">{label}</p>
-                <p className={`text-xl font-bold ${color}`}>{value}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* ── FILTRE GLOBAL UNIQUE — affiché après génération ── */}
-          <div className="bg-white/10 border border-white/20 rounded-xl p-3 mb-4 flex flex-wrap items-center gap-3">
+        {/* FIX 3 : "Afficher par" déplacé ici, sous le bouton Générer, dans le même carré */}
+        {attendances.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-white/20 flex flex-wrap items-center gap-3">
             <label className="text-xs text-white/60 whitespace-nowrap">Afficher par</label>
+            {/* FIX 4 : texte noir dans le select */}
             <select
               value={globalFilter}
               onChange={(e) => setGlobalFilter(e.target.value)}
-              className="border border-white/20 rounded-lg px-3 py-1.5 bg-white/10 text-white text-sm min-w-[200px] flex-1"
+              className="border border-white/30 rounded-lg px-3 py-1.5 bg-white text-black text-sm min-w-[200px] flex-1"
             >
               <option value="">Tout</option>
               {cellulesVisibles.length > 0 && (
@@ -500,6 +459,28 @@ function RapportPresence() {
                 Réinitialiser
               </button>
             )}
+          </div>
+        )}
+      </div>
+
+      {message && <p className="text-white mb-4">{message}</p>}
+
+      {/* ── RÉSULTATS ── */}
+      {attendances.length > 0 && (
+        <div className="w-full max-w-4xl">
+
+          {/* MÉTRIQUES GLOBALES */}
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            {[
+              { label:"Total présences", value:totalPresences.toLocaleString("fr-FR"), color:"text-white" },
+              { label:"Hommes",          value:totalH,                                  color:"text-blue-300" },
+              { label:"Femmes",          value:totalF,                                  color:"text-pink-300" },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="bg-white/10 border border-white/20 rounded-xl p-3 text-center text-white">
+                <p className="text-xs text-white/60 mb-1">{label}</p>
+                <p className={`text-xl font-bold ${color}`}>{value}</p>
+              </div>
+            ))}
           </div>
 
           {/* ONGLETS */}
@@ -534,42 +515,52 @@ function RapportPresence() {
             </div>
           )}
 
-          {/* ── TAB RÉPARTITION ── */}
+          {/* ── TAB RÉPARTITION ── FIX 2 : donuts plus grands, labels lisibles */}
           {activeTab==="repartition" && (
             <div className="bg-white/10 border border-white/20 rounded-xl p-4">
               <p className="text-white font-semibold mb-4">Répartition des présences</p>
 
-              {/* Total uniquement */}
-              <div className="mb-5 max-w-[180px]">
-                <div className="bg-white/10 border border-white/10 rounded-xl p-3 text-center">
-                  <p className="text-xs text-white/50 mb-1">Total présences</p>
-                  <p className="text-xl font-bold text-white">{dispTotal}</p>
+              {/* Total */}
+              <div className="mb-5">
+                <div className="bg-white/10 border border-white/10 rounded-xl p-4 text-center inline-block min-w-[160px]">
+                  <p className="text-sm text-white/60 mb-1">Total présences</p>
+                  <p className="text-3xl font-bold text-white">{dispTotal}</p>
+                  <p className="text-xs text-white/40 mt-1">
+                    <span className="text-blue-300 font-semibold">{dispH} H</span>
+                    {" · "}
+                    <span className="text-pink-300 font-semibold">{dispF} F</span>
+                  </p>
                 </div>
               </div>
 
               {presentMemberIds.size === 0 && globalFilter && (
-                <p className="text-white/40 text-xs text-center mb-3 italic">
+                <p className="text-white/40 text-xs text-center mb-4 italic">
                   ℹ️ Composition des membres (présences individuelles non saisies)
                 </p>
               )}
 
-              {/* 2 donuts — sans tableau récap */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                  <p className="text-white/70 text-sm font-medium mb-3 text-center">Par civilité</p>
-                  <CiviliteDonut hommes={dispH} femmes={dispF} />
+              {/* 2 donuts — plus grands pour que les labels soient lisibles */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+                  <p className="text-white/80 text-sm font-semibold mb-4 text-center">Par civilité</p>
+                  {/* Wrapper agrandi */}
+                  <div className="w-full" style={{ minHeight: 260 }}>
+                    <CiviliteDonut hommes={dispH} femmes={dispF} />
+                  </div>
                 </div>
 
-                <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                  <p className="text-white/70 text-sm font-medium mb-3 text-center">Par tranche d'âge</p>
+                <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+                  <p className="text-white/80 text-sm font-semibold mb-4 text-center">Par tranche d'âge</p>
                   {tranchesData.length === 0 ? (
-                    <div className="flex items-center justify-center h-[180px]">
+                    <div className="flex items-center justify-center" style={{ minHeight: 260 }}>
                       <p className="text-white/30 text-xs text-center">
                         Aucune tranche d'âge<br/>renseignée
                       </p>
                     </div>
                   ) : (
-                    <TranchesDonut data={tranchesData} />
+                    <div className="w-full" style={{ minHeight: 260 }}>
+                      <TranchesDonut data={tranchesData} />
+                    </div>
                   )}
                 </div>
               </div>

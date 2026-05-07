@@ -83,7 +83,7 @@ function ConseillerHubContent() {
 
         <Link href="/Presence" className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer">
           <div className="text-5xl mb-2">✍🏻</div>
-          <div className="text-lg font-bold text-gray-800 text-center">Présence</div>
+          <div className="text-lg font-bold text-gray-800 text-center">Registre des présences</div>
         </Link>
 
         <Link href="/admin/notifications" className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer" style={{ borderTopColor: "#ef4444" }}>

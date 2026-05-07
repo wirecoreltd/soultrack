@@ -6,16 +6,17 @@ import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { CiviliteDonut, TranchesDonut } from "../../components/DonutCharts";
-import {
-  Chart as ChartJS,
-  CategoryScale, LinearScale, PointElement, LineElement,
-  Title, Tooltip, Legend, Filler,
-} from "chart.js";
-import { Line } from "react-chartjs-2";
+import dynamic from "next/dynamic";
 
-ChartJS.register(
-  CategoryScale, LinearScale, PointElement, LineElement,
-  Title, Tooltip, Legend, Filler
+const Line = dynamic(
+  () => import("react-chartjs-2").then(async (mod) => {
+    const { Chart, CategoryScale, LinearScale, PointElement,
+            LineElement, Title, Tooltip, Legend, Filler } = await import("chart.js");
+    Chart.register(CategoryScale, LinearScale, PointElement,
+                   LineElement, Title, Tooltip, Legend, Filler);
+    return mod.Line;
+  }),
+  { ssr: false }
 );
 
 export default function RapportPresencePage() {

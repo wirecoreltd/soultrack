@@ -549,9 +549,12 @@ function Presence() {
         .from("cellules").select("id, cellule_full, ville, cellule, responsable_id")
         .eq("eglise_id", profile.eglise_id);
 
-      const { data: famillesData } = await supabase
-        .from("familles").select("id, nom, responsable_id")
-        .eq("eglise_id", profile.eglise_id);
+      // NOTE : si la table "familles" n'a pas de colonne eglise_id, retirer le filtre ci-dessous
+      const { data: famillesData, error: famillesError } = await supabase
+        .from("familles").select("id, nom, responsable_id");
+      console.log("[fetchAll] famillesData:", famillesData, "error:", famillesError);
+      console.log("[fetchAll] visiblesIds:", [...visiblesIds]);
+      console.log("[fetchAll] famillesData responsable_ids:", (famillesData||[]).map(f => f.responsable_id));
 
       const { data: assignmentsData } = await supabase
         .from("suivi_assignments")

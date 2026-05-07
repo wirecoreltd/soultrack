@@ -229,6 +229,8 @@ function FormulaireSession({
 }
 
 // ─── TOGGLE VISIBILITÉ ─────────────────────────────────────────
+// FIX 1 : le thumb ne déborde plus du conteneur
+// Calcul : left 3px + translate 22px + width 18px + 3px right gap = 46px ≤ 48px (w-12)
 function ToggleVisibilite({ visible, onToggle, saving }) {
   return (
     <div className={`w-full max-w-lg mx-auto mb-4 rounded-xl px-4 py-3 flex items-center justify-between gap-3 border-2 transition ${
@@ -251,9 +253,12 @@ function ToggleVisibilite({ visible, onToggle, saving }) {
           visible ? "bg-emerald-500" : "bg-gray-400"
         } ${saving ? "opacity-50" : ""}`}
       >
-        <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-          visible ? "translate-x-6" : "translate-x-0.5"
-        }`} />
+        {/* FIX : top/left fixes + translate calibré pour rester dans le bouton */}
+        <span
+          className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] bg-white rounded-full shadow transition-transform ${
+            visible ? "translate-x-[22px]" : "translate-x-0"
+          }`}
+        />
       </button>
     </div>
   );
@@ -350,7 +355,7 @@ function Presence() {
   const [editingSession, setEditingSession] = useState(false);
 
   const [selectedDate, setSelectedDate] = useState(today());
-  const [selectedTime, setSelectedTime] = useState(nowTime()); // ✅ heure auto
+  const [selectedTime, setSelectedTime] = useState(nowTime());
   const [typeTemps, setTypeTemps] = useState("");
   const [nouveauTemps, setNouveauTemps] = useState("");
   const [enregistrerTemps, setEnregistrerTemps] = useState(false);
@@ -368,7 +373,6 @@ function Presence() {
   const [listeVisible, setListeVisible] = useState(false);
   const [savingVisible, setSavingVisible] = useState(false);
 
-  // Session affichée dans le header (après avoir rejoint ou créé)
   const [sessionCourante, setSessionCourante] = useState(null);
 
   const profileRef = useRef(null);
@@ -409,18 +413,12 @@ function Presence() {
         : Promise.resolve({ data: [] }),
     ]);
 
-    console.log("[initProfile] uid:", user.id);
-    console.log("[initProfile] cellules:", cellulesResult.data);
-    console.log("[initProfile] familles:", famillesResult.data);
-    console.log("[initProfile] assignments:", assignmentsResult.data);
-
     assignmentsResult.data?.forEach(a => ids.add(a.membre_id));
 
     if (cellulesResult.data?.length > 0) {
       const celluleIds = cellulesResult.data.map(c => c.id);
       const { data: cm } = await supabase
         .from("membres_complets").select("id").in("cellule_id", celluleIds);
-      console.log("[initProfile] membres cellule:", cm);
       cm?.forEach(m => ids.add(m.id));
     }
 
@@ -463,7 +461,6 @@ function Presence() {
       .order("created_at", { ascending: false });
 
     setSessionsAujourdhui(data || []);
-    // S'il y a des sessions → écran de choix, sinon → formulaire direct
     setEtape((data || []).length > 0 ? "choix" : "form");
   }, [initProfile]);
 
@@ -574,12 +571,14 @@ function Presence() {
       const cellulesVisibles = (cellulesData || []).filter(c => visiblesIds.has(c.responsable_id));
       const famillesVisibles = (famillesData || []).filter(f => visiblesIds.has(f.responsable_id));
 
+      // FIX 2 : on masque TOUS les membres des groupes privés,
+      // même ceux suivis par un conseiller — la cellule/famille privée prime.
       const membresMasques = new Set();
       cellulesNonVisibles.forEach(c => {
-        membres.filter(m => m.cellule_id === c.id && !membresDansConseiller.has(m.id)).forEach(m => membresMasques.add(m.id));
+        membres.filter(m => m.cellule_id === c.id).forEach(m => membresMasques.add(m.id));
       });
       famillesNonVisibles.forEach(f => {
-        membres.filter(m => m.famille_id === f.id && !membresDansConseiller.has(m.id)).forEach(m => membresMasques.add(m.id));
+        membres.filter(m => m.famille_id === f.id).forEach(m => membresMasques.add(m.id));
       });
 
       const groupesResult = [];
@@ -592,21 +591,28 @@ function Presence() {
         groupesResult.push({ id: "sans", label: "Sans rattachement", icon: "👤", color: "gray", membres: sansCellule });
       }
 
-      // Cellules visibles
+      // Cellules visibles uniquement (celles dont le responsable a activé la visibilité)
       cellulesVisibles.forEach(c => {
-        const cm = membres.filter(m => m.cellule_id === c.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        const cm = membres
+          .filter(m => m.cellule_id === c.id)
+          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
         if (cm.length > 0) groupesResult.push({ id: `c-${c.id}`, label: c.cellule_full || `${c.ville} - ${c.cellule}`, icon: "🏠", color: "green", membres: cm });
       });
 
-      // Familles visibles
+      // Familles visibles uniquement (celles dont le responsable a activé la visibilité)
       famillesVisibles.forEach(f => {
-        const fm = membres.filter(m => m.famille_id === f.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        const fm = membres
+          .filter(m => m.famille_id === f.id)
+          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
         if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.nom, icon: "👨‍👩‍👦", color: "purple", membres: fm });
       });
 
-      // Conseillers (toujours visibles)
+      // Conseillers — FIX 2 : on exclut les membres dont le groupe est masqué
       Object.entries(assignmentsByConseiller).forEach(([consId, { ids, profile: consProfile }]) => {
-        const cm = ids.map(id => membres.find(m => m.id === id)).filter(Boolean)
+        const cm = ids
+          .map(id => membres.find(m => m.id === id))
+          .filter(Boolean)
+          .filter(m => !membresMasques.has(m.id)) // ← exclure les membres de groupes privés
           .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
         if (cm.length > 0) {
           const consNom = consProfile ? `${consProfile.prenom} ${consProfile.nom}` : "Conseiller";
@@ -652,7 +658,7 @@ function Presence() {
       const isCulte = typeFinal.toLowerCase().includes("culte");
       const payload = {
         date: selectedDate,
-        heure: selectedTime,        // ✅ heure enregistrée
+        heure: selectedTime,
         typeTemps: typeFinal,
         temps_nom: typeFinal,
         eglise_id: profile.eglise_id,

@@ -549,20 +549,19 @@ function Presence() {
         .from("cellules").select("id, cellule_full, ville, cellule, responsable_id")
         .eq("eglise_id", profile.eglise_id);
 
-      // NOTE : si la table "familles" n'a pas de colonne eglise_id, retirer le filtre ci-dessous
-      const { data: famillesData, error: famillesError } = await supabase
-        .from("familles").select("id, nom, responsable_id");
-      console.log("[fetchAll] famillesData:", famillesData, "error:", famillesError);
-      console.log("[fetchAll] visiblesIds:", [...visiblesIds]);
-      console.log("[fetchAll] famillesData responsable_ids:", (famillesData||[]).map(f => f.responsable_id));
+      const { data: famillesData } = await supabase
+        .from("familles").select("id, nom, responsable_id")
+        .eq("eglise_id", profile.eglise_id);
 
       const { data: assignmentsData } = await supabase
         .from("suivi_assignments")
         .select("membre_id, conseiller_id, profiles(prenom, nom)")
         .eq("statut", "actif");
 
+      // IDs des responsables ayant activé leur liste
       const visiblesIds = new Set((responsablesVisibles || []).map(r => r.id));
 
+      // Map conseiller_id → { ids[], profile }
       const assignmentsByConseiller = {};
       (assignmentsData || []).forEach(a => {
         if (!assignmentsByConseiller[a.conseiller_id]) assignmentsByConseiller[a.conseiller_id] = { ids: [], profile: a.profiles };
@@ -571,65 +570,86 @@ function Presence() {
 
       const membresDansConseiller = new Set(Object.values(assignmentsByConseiller).flatMap(v => v.ids));
 
-      // FIX bug 1 : sans responsable_id (null) => non visible aussi
-      const cellulesNonVisibles = (cellulesData || []).filter(c => !visiblesIds.has(c.responsable_id));
-      const famillesNonVisibles = (famillesData || []).filter(f => !visiblesIds.has(f.responsable_id));
-      const cellulesVisibles = (cellulesData || []).filter(c => c.responsable_id && visiblesIds.has(c.responsable_id));
-      const famillesVisibles = (famillesData || []).filter(f => f.responsable_id && visiblesIds.has(f.responsable_id));
-
-      // FIX 2 : on masque TOUS les membres des groupes privés,
-      // même ceux suivis par un conseiller — la cellule/famille privée prime.
-      const membresMasques = new Set();
-      cellulesNonVisibles.forEach(c => {
-        membres.filter(m => m.cellule_id === c.id).forEach(m => membresMasques.add(m.id));
-      });
-      famillesNonVisibles.forEach(f => {
-        membres.filter(m => m.famille_id === f.id).forEach(m => membresMasques.add(m.id));
-      });
+      // ── Approche additive : on construit les groupes visibles un par un.
+      // Un membre n'apparaît QUE si son groupe a activé la visibilité.
+      // Les membres sans groupe ni conseiller visible sont dans "Sans rattachement".
 
       const groupesResult = [];
+      const membresCouvertsParGroupe = new Set();
 
-      // Sans rattachement
-      const sansCellule = membres
-        .filter(m => !m.cellule_id && !m.famille_id && !membresDansConseiller.has(m.id))
-        .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-      if (sansCellule.length > 0) {
-        groupesResult.push({ id: "sans", label: "Sans rattachement", icon: "👤", color: "gray", membres: sansCellule });
-      }
-
-      // Cellules visibles uniquement (celles dont le responsable a activé la visibilité)
+      // ── Cellules dont le responsable a activé la visibilité
+      const cellulesVisibles = (cellulesData || []).filter(
+        c => c.responsable_id && visiblesIds.has(c.responsable_id)
+      );
       cellulesVisibles.forEach(c => {
         const cm = membres
           .filter(m => m.cellule_id === c.id)
           .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-        if (cm.length > 0) groupesResult.push({ id: `c-${c.id}`, label: c.cellule_full || `${c.ville} - ${c.cellule}`, icon: "🏠", color: "green", membres: cm });
+        cm.forEach(m => membresCouvertsParGroupe.add(m.id));
+        if (cm.length > 0) {
+          groupesResult.push({
+            id: `c-${c.id}`,
+            label: c.cellule_full || `${c.ville} - ${c.cellule}`,
+            icon: "🏠", color: "green", membres: cm,
+          });
+        }
       });
 
-      // Familles visibles uniquement (celles dont le responsable a activé la visibilité)
+      // ── Familles dont le responsable a activé la visibilité
+      const famillesVisibles = (famillesData || []).filter(
+        f => f.responsable_id && visiblesIds.has(f.responsable_id)
+      );
       famillesVisibles.forEach(f => {
         const fm = membres
           .filter(m => m.famille_id === f.id)
           .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-        if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.nom, icon: "👨‍👩‍👦", color: "purple", membres: fm });
-      });
-
-      // Conseillers — FIX 2 : on exclut les membres dont le groupe est masqué
-      Object.entries(assignmentsByConseiller).forEach(([consId, { ids, profile: consProfile }]) => {
-        const cm = ids
-          .map(id => membres.find(m => m.id === id))
-          .filter(Boolean)
-          .filter(m => !membresMasques.has(m.id)) // ← exclure les membres de groupes privés
-          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-        if (cm.length > 0) {
-          const consNom = consProfile ? `${consProfile.prenom} ${consProfile.nom}` : "Conseiller";
-          groupesResult.push({ id: `cons-${consId}`, label: `Suivi par ${consNom}`, icon: "🫂", color: "amber", membres: cm });
+        fm.forEach(m => membresCouvertsParGroupe.add(m.id));
+        if (fm.length > 0) {
+          groupesResult.push({
+            id: `f-${f.id}`,
+            label: f.nom,
+            icon: "👨‍👩‍👦", color: "purple", membres: fm,
+          });
         }
       });
 
+      // ── Conseillers dont la liste est visible
+      // On n'affiche que les membres pas déjà couverts par une cellule/famille visible
+      Object.entries(assignmentsByConseiller).forEach(([consId, { ids, profile: consProfile }]) => {
+        if (!visiblesIds.has(consId)) return;
+        const cm = ids
+          .map(id => membres.find(m => m.id === id))
+          .filter(Boolean)
+          .filter(m => !membresCouvertsParGroupe.has(m.id))
+          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        cm.forEach(m => membresCouvertsParGroupe.add(m.id));
+        if (cm.length > 0) {
+          const consNom = consProfile ? `${consProfile.prenom} ${consProfile.nom}` : "Conseiller";
+          groupesResult.push({
+            id: `cons-${consId}`,
+            label: `Suivi par ${consNom}`,
+            icon: "🫂", color: "amber", membres: cm,
+          });
+        }
+      });
+
+      // ── Sans rattachement : pas de cellule, pas de famille, pas de conseiller
+      const sansCellule = membres
+        .filter(m => !m.cellule_id && !m.famille_id && !membresDansConseiller.has(m.id))
+        .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+      if (sansCellule.length > 0) {
+        groupesResult.unshift({ id: "sans", label: "Sans rattachement", icon: "👤", color: "gray", membres: sansCellule });
+      }
+
+      // Membres visibles pour le compteur absents/présents
+      const membresVisiblesIds = new Set([
+        ...membresCouvertsParGroupe,
+        ...sansCellule.map(m => m.id),
+      ]);
+
       setGroupes(groupesResult);
       setPresentList(allPresences);
-      const visibleMembres = membres.filter(m => !membresMasques.has(m.id));
-      setAllMembers(visibleMembres.filter(m => !presentIds.has(m.id)));
+      setAllMembers(membres.filter(m => membresVisiblesIds.has(m.id) && !presentIds.has(m.id)));
 
     } catch (err) { console.error(err); }
   }, [selectedDate, initProfile]);

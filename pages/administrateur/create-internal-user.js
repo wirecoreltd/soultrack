@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
 import Image from "next/image";
 import ProtectedRoute from "../../components/ProtectedRoute";
+import { useFeature } from "../../components/FeaturesContext";
 
 export default function CreateInternalUserPage() {
   return (
@@ -15,11 +16,19 @@ export default function CreateInternalUserPage() {
 }
 
 function CreateInternalUserContent() {
+  // ✅ Tous les hooks en premier — avant tout return conditionnel
+  const cellulesActive   = useFeature("cellules");
+  const conseillerActive = useFeature("conseiller");
+  const famillesActive   = useFeature("familles");
+
   const router = useRouter();
   const [members, setMembers] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const [duplicatePhone, setDuplicatePhone] = useState(null);
   const [duplicateEmail, setDuplicateEmail] = useState(null);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [rolesToHide, setRolesToHide] = useState([]);
 
   const [formData, setFormData] = useState({
     prenom: "",
@@ -35,37 +44,30 @@ function CreateInternalUserContent() {
     ministere: [],
   });
 
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [rolesToHide, setRolesToHide] = useState([]);
-
   const ministereOptions = [
-    "Intercession",
-    "Louange",
-    "Technique",
-    "Communication",
-    "Les Enfants",
-    "Les ados",
-    "Les jeunes",
-    "Finance",
-    "Nettoyage",
-    "Conseiller",
-    "Compassion",
-    "Visite",
-    "Berger",
-    "Modération",
+    "Intercession", "Louange", "Technique", "Communication",
+    "Les Enfants", "Les ados", "Les jeunes", "Finance",
+    "Nettoyage", "Conseiller", "Compassion", "Visite",
+    "Berger", "Modération",
   ];
 
-  const allRoles = [
+  // ✅ allRoles conditionné par features — rôles des features désactivées absents
+  const allRoles = useMemo(() => [
     { key: "Administrateur",            label: "Administrateur" },
-    { key: "ResponsableIntegration",    label: "Responsable Integration" },
-    { key: "SuperviseurCellule",        label: "Superviseur Cellule" },
-    { key: "ResponsableCellule",        label: "Responsable Cellule" },
-    { key: "ResponsableEvangelisation", label: "Responsable Evangelisation" },
-    { key: "SuperviseurFamilles",       label: "Superviseur Familles" },
-    { key: "ResponsableFamilles",       label: "Responsable Familles" },         
-    { key: "Conseiller",                label: "Conseiller" },
-  ];
+    { key: "ResponsableIntegration",    label: "Responsable Intégration" },
+    ...(cellulesActive ? [
+      { key: "SuperviseurCellule",      label: "Superviseur Cellule" },
+      { key: "ResponsableCellule",      label: "Responsable Cellule" },
+    ] : []),
+    { key: "ResponsableEvangelisation", label: "Responsable Évangélisation" },
+    ...(famillesActive ? [
+      { key: "SuperviseurFamilles",     label: "Superviseur Familles" },
+      { key: "ResponsableFamilles",     label: "Responsable Familles" },
+    ] : []),
+    ...(conseillerActive ? [
+      { key: "Conseiller",              label: "Conseiller" },
+    ] : []),
+  ], [cellulesActive, conseillerActive, famillesActive]);
 
   // ─── Récupérer les membres existants ───
   useEffect(() => {
@@ -103,12 +105,8 @@ function CreateInternalUserContent() {
     if (!selectedMemberId || selectedMemberId === "add-serviteur") {
       setFormData(prev => ({
         ...prev,
-        prenom: "",
-        nom: "",
-        sexe: "",
-        telephone: "",
-        roles: [],
-        ministere: [],
+        prenom: "", nom: "", sexe: "", telephone: "",
+        roles: [], ministere: [],
       }));
       setRolesToHide([]);
       return;
@@ -120,7 +118,7 @@ function CreateInternalUserContent() {
         ...prev,
         prenom: member.prenom,
         nom: member.nom,
-        sexe: member.sexe,        
+        sexe: member.sexe,
         telephone: member.telephone,
         roles: [],
       }));
@@ -137,7 +135,6 @@ function CreateInternalUserContent() {
         profilesData?.forEach(p => {
           if (p.roles?.length) hide.push(...p.roles);
         });
-
         setRolesToHide([...new Set(hide)]);
       };
 
@@ -145,7 +142,8 @@ function CreateInternalUserContent() {
     }
   }, [selectedMemberId, members]);
 
-  const handleChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = e =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleRoleChange = role => {
     setFormData(prev => {
@@ -173,7 +171,6 @@ function CreateInternalUserContent() {
       setMessage("❌ Les mots de passe ne correspondent pas.");
       return;
     }
-
     if (!formData.roles || formData.roles.length === 0) {
       setMessage("❌ Sélectionnez au moins un rôle !");
       return;
@@ -196,7 +193,7 @@ function CreateInternalUserContent() {
         .eq("telephone", formData.telephone)
         .in("etat_contact", ["existant", "nouveau"]);
 
-      if (existingMembers && existingMembers.length > 0 && !forceCreate) {
+      if (existingMembers?.length > 0 && !forceCreate) {
         const existing = existingMembers[0];
         setDuplicatePhone(existing);
         setMessage(`⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}`);
@@ -210,7 +207,7 @@ function CreateInternalUserContent() {
         .select("id, email, prenom, nom")
         .eq("email", formData.email);
 
-      if (existingUsers && existingUsers.length > 0 && !forceCreate) {
+      if (existingUsers?.length > 0 && !forceCreate) {
         const existing = existingUsers[0];
         setDuplicateEmail(existing);
         setMessage(`⚠️ L'email ${formData.email} est déjà utilisé par ${existing.prenom} ${existing.nom}`);
@@ -225,10 +222,7 @@ function CreateInternalUserContent() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          ...formData,
-          member_id: selectedMemberId,
-        }),
+        body: JSON.stringify({ ...formData, member_id: selectedMemberId }),
       });
 
       const data = await res.json();
@@ -242,19 +236,10 @@ function CreateInternalUserContent() {
       setMessage("✅ Utilisateur créé !");
       setDuplicatePhone(null);
       setDuplicateEmail(null);
-
       setFormData({
-        prenom: "",
-        nom: "",
-        sexe: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        telephone: "",
-        roles: [],
-        cellule_nom: "",
-        cellule_zone: "",
-        ministere: [],
+        prenom: "", nom: "", sexe: "", email: "",
+        password: "", confirmPassword: "", telephone: "",
+        roles: [], cellule_nom: "", cellule_zone: "", ministere: [],
       });
       setSelectedMemberId("");
 
@@ -267,6 +252,9 @@ function CreateInternalUserContent() {
 
   const handleCancel = () => router.push("/admin/list-users");
 
+  // ✅ Déduire depuis les données — pas useFeature dans les conditions d'affichage
+  const showCelluleFields = cellulesActive && formData.roles.includes("ResponsableCellule");
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
@@ -275,10 +263,7 @@ function CreateInternalUserContent() {
           ← Retour
         </button>
 
-        <div
-          className="flex justify-center mb-6 cursor-pointer"
-          onClick={() => router.push("/index")}
-        >
+        <div className="flex justify-center mb-6 cursor-pointer" onClick={() => router.push("/index")}>
           <Image src="/logo.png" alt="Logo SoulTrack" width={80} height={80} />
         </div>
 
@@ -287,6 +272,7 @@ function CreateInternalUserContent() {
           <span className="text-[#333699]">Utilisateur</span>
         </h1>
 
+        {/* ✅ Texte intro conditionné par features */}
         <div className="max-w-3xl w-full mb-6 text-center space-y-3">
           <p className="italic text-base text-black/90">
             Créez un utilisateur en sélectionnant un membre existant ou en ajoutant un nouveau serviteur.
@@ -296,14 +282,25 @@ function CreateInternalUserContent() {
             <span className="text-[#FFB07C] font-semibold">hub dédié</span> :
           </p>
 
-          <div className="italic text-sm text-black/90 space-y-1">
+          <div className="italic text-sm text-black/90 space-y-1 text-left">
             <p>• Administrateur – <span className="text-[#FFB07C] font-semibold">gestion complète du système</span> (Hub Admin)</p>
             <p>• Responsable Intégration – <span className="text-[#FFB07C] font-semibold">gestion des membres</span> (Hub Membres)</p>
             <p>• Responsable Évangélisation – <span className="text-[#FFB07C] font-semibold">suivi de l&apos;évangélisation</span> (Hub Évangélisation)</p>
-            <p>• Responsable Cellule – <span className="text-[#FFB07C] font-semibold">gestion des cellules</span> (Hub Cellule)</p>
-            <p>• Responsable Familles – <span className="text-[#FFB07C] font-semibold">gestion des familles</span> (Familles Cellule)</p>
-            <p>• Conseiller – <span className="text-[#FFB07C] font-semibold">accompagnement des membres</span> (Hub Conseiller)</p>
-            <p>• Superviseur Cellule – <span className="text-[#FFB07C] font-semibold">supervision et création de responsables</span> (Hub Cellule)</p>
+            {cellulesActive && (
+              <>
+                <p>• Responsable Cellule – <span className="text-[#FFB07C] font-semibold">gestion des cellules</span> (Hub Cellule)</p>
+                <p>• Superviseur Cellule – <span className="text-[#FFB07C] font-semibold">supervision et création de responsables</span> (Hub Cellule)</p>
+              </>
+            )}
+            {famillesActive && (
+              <>
+                <p>• Responsable Familles – <span className="text-[#FFB07C] font-semibold">gestion des familles</span> (Hub Familles)</p>
+                <p>• Superviseur Familles – <span className="text-[#FFB07C] font-semibold">supervision des familles</span> (Hub Familles)</p>
+              </>
+            )}
+            {conseillerActive && (
+              <p>• Conseiller – <span className="text-[#FFB07C] font-semibold">accompagnement des membres</span> (Hub Conseiller)</p>
+            )}
           </div>
         </div>
 
@@ -352,11 +349,12 @@ function CreateInternalUserContent() {
           <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
           <input name="confirmPassword" placeholder="Confirmer mot de passe" type="password" value={formData.confirmPassword} onChange={handleChange} className="input" required />
 
-          {/* Rôles */}
+          {/* ✅ Rôles — uniquement ceux dont la feature est active, minus rolesToHide */}
           <div className="flex flex-col gap-2">
             <label className="font-semibold">Rôles :</label>
-            {allRoles.map(role =>
-              !rolesToHide.includes(role.key) && (
+            {allRoles
+              .filter(role => !rolesToHide.includes(role.key))
+              .map(role => (
                 <label key={role.key} className="inline-flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -365,12 +363,12 @@ function CreateInternalUserContent() {
                   />
                   {role.label}
                 </label>
-              )
-            )}
+              ))
+            }
           </div>
 
-          {/* Cellule si ResponsableCellule */}
-          {formData.roles.includes("ResponsableCellule") && (
+          {/* ✅ Champs cellule — seulement si feature active ET rôle coché */}
+          {showCelluleFields && (
             <div className="flex flex-col gap-2">
               <input name="cellule_nom" placeholder="Nom cellule" value={formData.cellule_nom} onChange={handleChange} className="input" />
               <input name="cellule_zone" placeholder="Zone cellule" value={formData.cellule_zone} onChange={handleChange} className="input" />
@@ -386,7 +384,6 @@ function CreateInternalUserContent() {
             >
               Annuler
             </button>
-
             <button
               type="submit"
               disabled={loading || !!duplicatePhone || !!duplicateEmail}
@@ -400,22 +397,12 @@ function CreateInternalUserContent() {
         {/* Bandeau doublon téléphone */}
         {duplicatePhone && (
           <div className="mt-4 p-4 border border-yellow-500 bg-yellow-100 rounded-lg text-center">
-            <p>
-              ⚠️ Le numéro {formData.telephone} existe déjà pour {duplicatePhone.prenom} {duplicatePhone.nom}.
-            </p>
+            <p>⚠️ Le numéro {formData.telephone} existe déjà pour {duplicatePhone.prenom} {duplicatePhone.nom}.</p>
             <div className="flex justify-center gap-4 mt-2">
-              <button
-                type="button"
-                onClick={() => setDuplicatePhone(null)}
-                className="bg-gray-500 text-white py-2 px-4 rounded"
-              >
+              <button type="button" onClick={() => setDuplicatePhone(null)} className="bg-gray-500 text-white py-2 px-4 rounded">
                 Annuler
               </button>
-              <button
-                type="button"
-                onClick={(e) => handleSubmit(e, true)}
-                className="bg-green-500 text-white py-2 px-4 rounded"
-              >
+              <button type="button" onClick={(e) => handleSubmit(e, true)} className="bg-green-500 text-white py-2 px-4 rounded">
                 Continuer quand même
               </button>
             </div>
@@ -425,15 +412,9 @@ function CreateInternalUserContent() {
         {/* Bandeau doublon email */}
         {duplicateEmail && (
           <div className="mt-4 p-4 border border-red-500 bg-red-100 rounded-lg text-center">
-            <p>
-              ❌ L&apos;email {formData.email} est déjà utilisé par {duplicateEmail.prenom} {duplicateEmail.nom}.
-            </p>
+            <p>❌ L&apos;email {formData.email} est déjà utilisé par {duplicateEmail.prenom} {duplicateEmail.nom}.</p>
             <div className="flex justify-center gap-4 mt-2">
-              <button
-                type="button"
-                onClick={() => setDuplicateEmail(null)}
-                className="bg-gray-500 text-white py-2 px-4 rounded"
-              >
+              <button type="button" onClick={() => setDuplicateEmail(null)} className="bg-gray-500 text-white py-2 px-4 rounded">
                 Modifier
               </button>
             </div>

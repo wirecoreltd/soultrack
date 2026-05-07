@@ -495,16 +495,16 @@ function Presence() {
 
     const { data: presences } = await supabase
       .from("presences")
-      .select("membres_complets(civilite)")
+      .select("membres_complets(sexe)")
       .eq("date", date)
       .eq("attendance_id", currentAttendanceId);
 
     const counts = { hommes: 0, femmes: 0 };
 
     (presences || []).forEach(p => {
-      const civilite = p.membres_complets?.civilite?.trim();
-      if (civilite === "Homme") counts.hommes++;
-      else if (civilite === "Femme") counts.femmes++;
+      const sexe = p.membres_complets?.sexe?.trim();
+      if (sexe === "Homme") counts.hommes++;
+      else if (sexe === "Femme") counts.femmes++;
     });
 
     await supabase
@@ -524,7 +524,7 @@ function Presence() {
 
       const { data: presencesData } = await supabase
         .from("presences")
-        .select("membre_id, checked_by, membres_complets(prenom, nom, civilite)")
+        .select("membre_id, checked_by, membres_complets(prenom, nom)")
         .eq("date", d);
 
       const allPresences = presencesData || [];
@@ -534,7 +534,7 @@ function Presence() {
         if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); return; }
         const { data: membresData } = await supabase
           .from("membres_complets")
-          .select("id, prenom, nom, telephone, civilite")
+          .select("id, prenom, nom, telephone, sexe")
           .eq("eglise_id", profile.eglise_id)
           .in("etat_contact", ["existant", "nouveau"])
           .in("id", myIds);
@@ -552,7 +552,7 @@ function Presence() {
       // ── VUE ADMIN/RI ──────────────────────────────────────────
       const { data: tousMembres } = await supabase
         .from("membres_complets")
-        .select("id, prenom, nom, telephone, civilite, cellule_id, famille_id")
+        .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
         .eq("eglise_id", profile.eglise_id)
         .in("etat_contact", ["existant", "nouveau"]);
 

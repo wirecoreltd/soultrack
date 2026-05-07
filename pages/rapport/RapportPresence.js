@@ -67,11 +67,19 @@ const AGE_TRANCHES = [
 const normalizeAge = (age) => {
   if (!age) return "Non renseigné";
   const map = {
-    "12-17 ans": "13-17 ans",
-    "41-55 ans": "41-50 ans",
-    "56-69 ans": "Plus de 60 ans",
+    "12-17 ans":  "13-17 ans",
+    "13-17 ans":  "13-17 ans",
+    "18-25 ans":  "18-25 ans",
+    "26-30 ans":  "26-30 ans",
+    "31-40 ans":  "31-40 ans",
+    "41-55 ans":  "41-50 ans",
+    "41-50 ans":  "41-50 ans",
+    "51-60 ans":  "51-60 ans",
+    "56-69 ans":  "Plus de 60 ans",
+    "Plus de 60 ans": "Plus de 60 ans",
+    "Moins de 13 ans": "Moins de 13 ans",
   };
-  return map[age] || (AGE_TRANCHES.includes(age) ? age : "Non renseigné");
+  return map[age] || "Non renseigné";
 };
 
 const fmt = (d) =>
@@ -174,16 +182,16 @@ function RapportPresence() {
 
       const { data: fa } = await supabase
         .from("familles")
-        .select("id, nom, branche_id, responsable_id")
+        .select("id, famille, famille_full, branche_id, responsable_id, eglise_id")
         .eq("eglise_id", profile.eglise_id)
-        .order("nom");
+        .order("famille");
       setFamilles(fa || []);
 
       const { data: ce } = await supabase
         .from("cellules")
-        .select("id, nom, famille_id, branche_id, responsable_id, superviseur_id")
+        .select("id, cellule, cellule_full, famille_id, branche_id, responsable_id, superviseur_id, eglise_id")
         .eq("eglise_id", profile.eglise_id)
-        .order("nom");
+        .order("cellule");
       setCellules(ce || []);
 
       // Calcul des familles/cellules attachées à l'utilisateur
@@ -193,7 +201,6 @@ function RapportPresence() {
       if (role === "ResponsableFamilles") {
         const myFam = (fa || []).filter((f) => f.responsable_id === uid).map((f) => f.id);
         setMyFamilleIds(myFam);
-        // Les cellules de ces familles
         const myCel = (ce || []).filter((c) => myFam.includes(c.famille_id)).map((c) => c.id);
         setMyCelluleIds(myCel);
       } else if (role === "ResponsableCellule") {
@@ -207,11 +214,12 @@ function RapportPresence() {
         setMyFamilleIds(myFam);
       }
 
-      // Charger membres
-      const { data: mb } = await supabase
+      // Charger membres avec leurs cellule_id et famille_id
+      const { data: mb, error: mbErr } = await supabase
         .from("membres_complets")
         .select("id, age, sexe, cellule_id, famille_id, eglise_id")
         .eq("eglise_id", profile.eglise_id);
+      console.log("Membres chargés:", mb?.length, mbErr);
       setMembres(mb || []);
     };
     init();
@@ -372,10 +380,14 @@ function RapportPresence() {
     [presences]
   );
 
-  const membresPresents = useMemo(
-    () => membresFiltrés.filter((m) => presentMemberIds.has(m.id)),
-    [membresFiltrés, presentMemberIds]
-  );
+  // Si on a des presences individuelles → on filtre, sinon on prend tous les membres filtrés
+  const membresPresents = useMemo(() => {
+    if (presentMemberIds.size > 0) {
+      return membresFiltrés.filter((m) => presentMemberIds.has(m.id));
+    }
+    // Fallback: tous les membres filtrés (par cellule/famille si filtre actif)
+    return membresFiltrés;
+  }, [membresFiltrés, presentMemberIds]);
 
   // Métriques globales (basées sur attendances, pas sur le filtre répartition)
   const totalH = attendances.reduce((s, a) => s + (a.hommes || 0), 0);
@@ -388,9 +400,9 @@ function RapportPresence() {
   const repartTotal = membresPresents.length;
 
   // Utiliser les totaux attendance si pas de données presences individuelles
-  const displayH = repartTotal > 0 ? repartH : totalH;
-  const displayF = repartTotal > 0 ? repartF : totalF;
-  const hasIndividualData = repartTotal > 0;
+  const hasPresencesIndividuelles = presentMemberIds.size > 0;
+  const displayH = hasPresencesIndividuelles ? repartH : totalH;
+  const displayF = hasPresencesIndividuelles ? repartF : totalF;
 
   // ── évolution ────────────────────────────────────────────────────────────
   const rangeDays = useMemo(() => {
@@ -658,7 +670,7 @@ function RapportPresence() {
         >
           <option value="">Toutes les familles</option>
           {famillesVisibles.map((f) => (
-            <option key={f.id} value={f.id}>{f.nom || f.famille_full || f.id}</option>
+            <option key={f.id} value={f.id}>{f.famille_full || f.famille || f.id}</option>
           ))}
         </select>
       </div>
@@ -676,7 +688,7 @@ function RapportPresence() {
         >
           <option value="">Toutes les cellules</option>
           {repartCellulesFiltrees.map((c) => (
-            <option key={c.id} value={c.id}>{c.nom || c.cellule_full || c.id}</option>
+            <option key={c.id} value={c.id}>{c.cellule_full || c.cellule || c.id}</option>
           ))}
         </select>
       </div>
@@ -756,7 +768,7 @@ function RapportPresence() {
               >
                 <option value="">Toutes les familles</option>
                 {famillesFiltrees.map((f) => (
-                  <option key={f.id} value={f.id}>{f.nom || f.famille_full}</option>
+                  <option key={f.id} value={f.id}>{f.famille_full || f.famille}</option>
                 ))}
               </select>
             </div>
@@ -774,7 +786,7 @@ function RapportPresence() {
               >
                 <option value="">Toutes les cellules</option>
                 {cellulesFiltrees.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nom || c.cellule_full}</option>
+                  <option key={c.id} value={c.id}>{c.cellule_full || c.cellule}</option>
                 ))}
               </select>
             </div>
@@ -882,7 +894,7 @@ function RapportPresence() {
               {/* Compteurs filtrés */}
               <div className="grid grid-cols-3 gap-3 mb-5">
                 {[
-                  { label: "Total", value: hasIndividualData ? repartTotal : totalPresences, color: "text-white" },
+                  { label: "Total", value: hasPresencesIndividuelles ? repartTotal : totalPresences, color: "text-white" },
                   { label: "Hommes", value: displayH, color: "text-blue-300" },
                   { label: "Femmes", value: displayF, color: "text-pink-300" },
                 ].map(({ label, value, color }) => (
@@ -893,7 +905,7 @@ function RapportPresence() {
                 ))}
               </div>
 
-              {!hasIndividualData && (repartFamilleId || repartCelluleId) && (
+              {!hasPresencesIndividuelles && (repartFamilleId || repartCelluleId) && (
                 <p className="text-white/40 text-xs text-center mb-3">
                   ℹ️ Données individuelles non disponibles pour ce filtre — affichage des totaux globaux
                 </p>
@@ -927,7 +939,7 @@ function RapportPresence() {
                   {tranchesData.length === 0 ? (
                     <div className="flex items-center justify-center h-[200px]">
                       <p className="text-white/30 text-xs text-center">
-                        Aucune donnée de présences<br/>individuelles disponible
+                        Aucune tranche d'âge<br/>renseignée pour ces membres
                       </p>
                     </div>
                   ) : (
@@ -986,7 +998,7 @@ function RapportPresence() {
                   >
                     <option value="">Toutes les familles</option>
                     {famillesVisibles.map((f) => (
-                      <option key={f.id} value={f.id}>{f.nom || f.famille_full}</option>
+                      <option key={f.id} value={f.id}>{f.famille_full || f.famille}</option>
                     ))}
                   </select>
                 </div>
@@ -1001,7 +1013,7 @@ function RapportPresence() {
                   >
                     <option value="">Toutes les cellules</option>
                     {tblCellulesFiltrees.map((c) => (
-                      <option key={c.id} value={c.id}>{c.nom || c.cellule_full}</option>
+                      <option key={c.id} value={c.id}>{c.cellule_full || c.cellule}</option>
                     ))}
                   </select>
                 </div>

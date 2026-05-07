@@ -39,12 +39,8 @@ function ChoixSession({ sessions, onJoin, onNew, loadingCheck }) {
     <div className="w-full max-w-lg mt-6 flex flex-col gap-4">
       {sessions.length > 0 && (
         <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-3">
-          <h2 className="text-base font-bold text-gray-800 mb-1">
-            📋 Sessions du jour
-          </h2>
-          <p className="text-sm text-gray-500 mb-2">
-            Ces sessions ont déjà été créées. Cliquez pour rejoindre.
-          </p>
+          <h2 className="text-base font-bold text-gray-800 mb-1">📋 Sessions du jour</h2>
+          <p className="text-sm text-gray-500 mb-2">Ces sessions ont déjà été créées. Cliquez pour rejoindre.</p>
           {sessions.map(s => (
             <button
               key={s.id}
@@ -103,56 +99,28 @@ function FormulaireSession({
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-5">
-
-      {/* DATE + HEURE */}
       <div className="flex gap-3">
         <div className="flex-1">
           <label className="block text-sm font-semibold text-gray-700 mb-1">📅 Date</label>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
-          />
+          <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="w-full px-3 py-2 rounded-md border border-gray-300 text-black" />
         </div>
         <div className="flex-1">
           <label className="block text-sm font-semibold text-gray-700 mb-1">🕐 Heure</label>
-          <input
-            type="time"
-            value={selectedTime}
-            onChange={(e) => setSelectedTime(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
-          />
+          <input type="time" value={selectedTime} onChange={(e) => setSelectedTime(e.target.value)} className="w-full px-3 py-2 rounded-md border border-gray-300 text-black" />
         </div>
       </div>
 
-      {/* TYPE DE TEMPS */}
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">Sélectionner un Type de Temps</label>
         <div className="grid grid-cols-2 gap-2">
           {tempsOptions.filter(t => t !== "Culte Dominical").map(t => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => { setTypeTemps(t); setNouveauTemps(""); setNumeroCulte(""); }}
-              className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${
-                typeTemps === t
-                  ? "border-[#333699] bg-[#333699] text-white"
-                  : "border-gray-200 bg-gray-50 text-gray-700 hover:border-[#333699]"
-              }`}
-            >
+            <button key={t} type="button" onClick={() => { setTypeTemps(t); setNouveauTemps(""); setNumeroCulte(""); }}
+              className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${typeTemps === t ? "border-[#333699] bg-[#333699] text-white" : "border-gray-200 bg-gray-50 text-gray-700 hover:border-[#333699]"}`}>
               {t}
             </button>
           ))}
-          <button
-            type="button"
-            onClick={() => { setTypeTemps("AUTRE"); setNumeroCulte(""); }}
-            className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${
-              typeTemps === "AUTRE"
-                ? "border-[#333699] bg-[#333699] text-white"
-                : "border-dashed border-gray-300 bg-white text-gray-500 hover:border-[#333699]"
-            }`}
-          >
+          <button type="button" onClick={() => { setTypeTemps("AUTRE"); setNumeroCulte(""); }}
+            className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${typeTemps === "AUTRE" ? "border-[#333699] bg-[#333699] text-white" : "border-dashed border-gray-300 bg-white text-gray-500 hover:border-[#333699]"}`}>
             ➕ Nouveau type...
           </button>
         </div>
@@ -162,15 +130,9 @@ function FormulaireSession({
         <div className="flex flex-col gap-3">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">✏️ Nom du nouveau type</label>
-            <input
-              type="text"
-              placeholder="Ex: Tour de Prière, Camp..."
-              value={nouveauTemps}
-              onChange={(e) => setNouveauTemps(e.target.value.slice(0, 30))}
-              maxLength={30}
-              autoFocus
-              className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
-            />
+            <input type="text" placeholder="Ex: Tour de Prière, Camp..." value={nouveauTemps}
+              onChange={(e) => setNouveauTemps(e.target.value.slice(0, 30))} maxLength={30} autoFocus
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-black" />
             <p className="text-xs text-gray-400 mt-1">{nouveauTemps.length}/30 caractères</p>
           </div>
           <label className="flex items-center gap-2 text-sm text-amber-600 cursor-pointer select-none">
@@ -191,11 +153,7 @@ function FormulaireSession({
       {isCulte && (
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">🔢 Numéro de culte</label>
-          <select
-            value={numeroCulte}
-            onChange={e => setNumeroCulte(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
-          >
+          <select value={numeroCulte} onChange={e => setNumeroCulte(e.target.value)} className="w-full px-3 py-2 rounded-md border border-gray-300 text-black">
             <option value="">--- Sélectionner ---</option>
             {[1, 2, 3, 4, 5, 6, 7].map(n => (
               <option key={n} value={n}>{n}{n === 1 ? "er" : "ème"} Culte</option>
@@ -204,23 +162,13 @@ function FormulaireSession({
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={onSubmit}
-        disabled={isDisabled}
-        className={`w-full py-3 rounded-xl font-bold text-white text-base transition ${
-          isDisabled ? "bg-gray-300 cursor-not-allowed" : "bg-[#333699] hover:bg-[#2a2d80]"
-        }`}
-      >
+      <button type="button" onClick={onSubmit} disabled={isDisabled}
+        className={`w-full py-3 rounded-xl font-bold text-white text-base transition ${isDisabled ? "bg-gray-300 cursor-not-allowed" : "bg-[#333699] hover:bg-[#2a2d80]"}`}>
         {savingSession ? "..." : isEdit ? "💾 Enregistrer les modifications" : "▶ Démarrer la prise de présence"}
       </button>
 
       {onCancel && (
-        <button
-          type="button"
-          onClick={onCancel}
-          className="w-full py-2 rounded-xl font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 text-sm"
-        >
+        <button type="button" onClick={onCancel} className="w-full py-2 rounded-xl font-medium text-gray-500 border border-gray-200 hover:bg-gray-50 text-sm">
           Annuler
         </button>
       )}
@@ -229,50 +177,43 @@ function FormulaireSession({
 }
 
 // ─── TOGGLE VISIBILITÉ ─────────────────────────────────────────
-// FIX 1 : le thumb ne déborde plus du conteneur
-// Calcul : left 3px + translate 22px + width 18px + 3px right gap = 46px ≤ 48px (w-12)
 function ToggleVisibilite({ visible, onToggle, saving }) {
   return (
-    <div className={`w-full max-w-lg mx-auto mb-4 rounded-xl px-4 py-3 flex items-center justify-between gap-3 border-2 transition ${
-      visible ? "bg-emerald-50 border-emerald-400" : "bg-white/10 border-white/20"
-    }`}>
+    <div className={`w-full max-w-lg mx-auto mb-4 rounded-xl px-4 py-3 flex items-center justify-between gap-3 border-2 transition ${visible ? "bg-emerald-50 border-emerald-400" : "bg-white/10 border-white/20"}`}>
       <div className="flex flex-col">
         <span className={`text-sm font-semibold ${visible ? "text-emerald-800" : "text-white"}`}>
           {visible ? "👁 Liste visible par l'équipe" : "🔒 Liste privée"}
         </span>
         <span className={`text-xs mt-0.5 ${visible ? "text-emerald-600" : "text-white/60"}`}>
-          {visible
-            ? "Les Admins et Responsables Intégration voient vos membres"
-            : "Vos membres sont masqués de la liste globale"}
+          {visible ? "Les Admins et Responsables Intégration voient vos membres" : "Vos membres sont masqués de la liste globale"}
         </span>
       </div>
-      <button
-        onClick={onToggle}
-        disabled={saving}
-        className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${
-          visible ? "bg-emerald-500" : "bg-gray-400"
-        } ${saving ? "opacity-50" : ""}`}
-      >
-        {/* FIX : top/left fixes + translate calibré pour rester dans le bouton */}
-        <span
-          className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] bg-white rounded-full shadow transition-transform ${
-            visible ? "translate-x-[22px]" : "translate-x-0"
-          }`}
-        />
+      <button onClick={onToggle} disabled={saving}
+        className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${visible ? "bg-emerald-500" : "bg-gray-400"} ${saving ? "opacity-50" : ""}`}>
+        <span className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] bg-white rounded-full shadow transition-transform ${visible ? "translate-x-[22px]" : "translate-x-0"}`} />
       </button>
     </div>
+  );
+}
+
+// ─── BADGE SEXE ────────────────────────────────────────────────
+function BadgeSexe({ sexe }) {
+  if (!sexe) return null;
+  const isH = sexe.toLowerCase() === "homme";
+  return (
+    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0 ${isH ? "bg-blue-100 text-blue-700" : "bg-pink-100 text-pink-700"}`}>
+      {isH ? "H" : "F"}
+    </span>
   );
 }
 
 // ─── CARTES MEMBRES ────────────────────────────────────────────
 function CarteAbsent({ m, onMark }) {
   return (
-    <div
-      onClick={() => onMark(m)}
-      className="bg-white rounded-xl shadow px-4 py-3 cursor-pointer hover:bg-green-50 transition flex items-center gap-3"
-    >
+    <div onClick={() => onMark(m)} className="bg-white rounded-xl shadow px-4 py-3 cursor-pointer hover:bg-green-50 transition flex items-center gap-3">
       <span className="w-5 h-5 flex-shrink-0 rounded border-2 border-gray-300 inline-block" />
-      <span className="font-semibold text-black text-base">{m.nom} {m.prenom}</span>
+      <span className="font-semibold text-black text-base flex-1">{m.nom} {m.prenom}</span>
+      <BadgeSexe sexe={m.sexe} />
     </div>
   );
 }
@@ -281,15 +222,34 @@ function CartePresent({ p, onUnmark }) {
   return (
     <div className="bg-white rounded-xl shadow px-4 py-3 flex items-center gap-3">
       <span className="w-5 h-5 flex-shrink-0 rounded border-2 border-green-500 bg-green-500 inline-flex items-center justify-center text-white text-xs font-bold">✓</span>
-      <span className="font-semibold text-black text-base flex-1">
-        {p.membres_complets?.nom} {p.membres_complets?.prenom}
-      </span>
-      <button
-        onClick={() => onUnmark(p.membre_id)}
-        className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs flex-shrink-0"
-      >
+      <span className="font-semibold text-black text-base flex-1">{p.membres_complets?.nom} {p.membres_complets?.prenom}</span>
+      <BadgeSexe sexe={p.membres_complets?.sexe} />
+      <button onClick={() => onUnmark(p.membre_id)} className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs flex-shrink-0">
         − Absent
       </button>
+    </div>
+  );
+}
+
+// ─── COMPTEUR HOMMES / FEMMES ──────────────────────────────────
+function CompteurSexe({ presences }) {
+  const hommes = presences.filter(p => p.membres_complets?.sexe?.toLowerCase() === "homme").length;
+  const femmes = presences.filter(p => p.membres_complets?.sexe?.toLowerCase() === "femme").length;
+  const inconnus = presences.length - hommes - femmes;
+
+  return (
+    <div className="flex gap-3 justify-center mt-2 flex-wrap">
+      <span className="flex items-center gap-1.5 bg-blue-500/20 text-blue-200 text-xs px-3 py-1 rounded-full font-semibold">
+        👨 Hommes : {hommes}
+      </span>
+      <span className="flex items-center gap-1.5 bg-pink-500/20 text-pink-200 text-xs px-3 py-1 rounded-full font-semibold">
+        👩 Femmes : {femmes}
+      </span>
+      {inconnus > 0 && (
+        <span className="flex items-center gap-1.5 bg-white/10 text-white/50 text-xs px-3 py-1 rounded-full font-semibold">
+          ❓ Non renseigné : {inconnus}
+        </span>
+      )}
     </div>
   );
 }
@@ -314,16 +274,11 @@ function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, vie
 
   return (
     <div className={`w-full max-w-4xl mb-4 rounded-2xl border-2 ${c.border} overflow-hidden`}>
-      <button
-        onClick={() => setCollapsed(v => !v)}
-        className={`w-full flex items-center justify-between px-4 py-3 ${c.bg} ${c.text}`}
-      >
+      <button onClick={() => setCollapsed(v => !v)} className={`w-full flex items-center justify-between px-4 py-3 ${c.bg} ${c.text}`}>
         <span className="font-bold text-sm">{icon} {label}</span>
         <span className="flex items-center gap-3 text-xs">
           <span className="bg-white/20 px-2 py-0.5 rounded-full">
-            {view === "absents"
-              ? `${absents.length} absent${absents.length > 1 ? "s" : ""}`
-              : `${presentsItems.length} présent${presentsItems.length > 1 ? "s" : ""}`}
+            {view === "absents" ? `${absents.length} absent${absents.length > 1 ? "s" : ""}` : `${presentsItems.length} présent${presentsItems.length > 1 ? "s" : ""}`}
           </span>
           <span>{collapsed ? "▼" : "▲"}</span>
         </span>
@@ -333,11 +288,7 @@ function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, vie
           {shown.map(m =>
             view === "absents"
               ? <CarteAbsent key={m.id} m={m} onMark={onMark} />
-              : <CartePresent
-                  key={m.id}
-                  p={{ membre_id: m.id, membres_complets: { nom: m.nom, prenom: m.prenom } }}
-                  onUnmark={onUnmark}
-                />
+              : <CartePresent key={m.id} p={{ membre_id: m.id, membres_complets: { nom: m.nom, prenom: m.prenom, sexe: m.sexe } }} onUnmark={onUnmark} />
           )}
         </div>
       )}
@@ -347,7 +298,6 @@ function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, vie
 
 // ─── COMPOSANT PRINCIPAL ───────────────────────────────────────
 function Presence() {
-  // ── Étapes : "check" → "choix" → "form" → "ready"
   const [etape, setEtape] = useState("check");
   const [sessionsAujourdhui, setSessionsAujourdhui] = useState([]);
 
@@ -378,6 +328,10 @@ function Presence() {
   const profileRef = useRef(null);
   const myIdsRef = useRef(null);
   const isAdminRef = useRef(false);
+  // FIX : ref stable pour fetchAll appelable sans dépendances stale
+  const fetchAllRef = useRef(null);
+  const selectedDateRef = useRef(selectedDate);
+  useEffect(() => { selectedDateRef.current = selectedDate; }, [selectedDate]);
 
   // ─── INIT PROFIL ──────────────────────────────────────────────
   const initProfile = useCallback(async () => {
@@ -393,9 +347,7 @@ function Presence() {
     profileRef.current = { ...profile, uid: user.id };
     setListeVisible(!!profile.liste_presence_visible);
 
-    const isAdmin =
-      profile.roles?.includes("Administrateur") ||
-      profile.roles?.includes("ResponsableIntegration");
+    const isAdmin = profile.roles?.includes("Administrateur") || profile.roles?.includes("ResponsableIntegration");
     isAdminRef.current = isAdmin;
 
     if (isAdmin) { myIdsRef.current = null; return; }
@@ -417,15 +369,13 @@ function Presence() {
 
     if (cellulesResult.data?.length > 0) {
       const celluleIds = cellulesResult.data.map(c => c.id);
-      const { data: cm } = await supabase
-        .from("membres_complets").select("id").in("cellule_id", celluleIds);
+      const { data: cm } = await supabase.from("membres_complets").select("id").in("cellule_id", celluleIds);
       cm?.forEach(m => ids.add(m.id));
     }
 
     if (famillesResult.data?.length > 0) {
       const familleIds = famillesResult.data.map(f => f.id);
-      const { data: fm } = await supabase
-        .from("membres_complets").select("id").in("famille_id", familleIds);
+      const { data: fm } = await supabase.from("membres_complets").select("id").in("famille_id", familleIds);
       fm?.forEach(m => ids.add(m.id));
     }
 
@@ -436,15 +386,8 @@ function Presence() {
   const loadTempsOptions = useCallback(async () => {
     await initProfile();
     const profile = profileRef.current;
-    const { data } = await supabase
-      .from("attendance")
-      .select("typeTemps")
-      .eq("eglise_id", profile.eglise_id)
-      .not("typeTemps", "is", null);
-
-    const unique = [...new Set(
-      (data || []).map(t => t.typeTemps?.trim()).filter(t => t && t !== "" && t !== "Culte Dominical")
-    )];
+    const { data } = await supabase.from("attendance").select("typeTemps").eq("eglise_id", profile.eglise_id).not("typeTemps", "is", null);
+    const unique = [...new Set((data || []).map(t => t.typeTemps?.trim()).filter(t => t && t !== "" && t !== "Culte Dominical"))];
     setTempsOptions([...unique].sort((a, b) => a.localeCompare(b, "fr")));
   }, [initProfile]);
 
@@ -452,7 +395,6 @@ function Presence() {
   const checkSessionsDuJour = useCallback(async () => {
     await initProfile();
     const profile = profileRef.current;
-
     const { data } = await supabase
       .from("attendance")
       .select("id, typeTemps, date, heure, numero_culte")
@@ -473,6 +415,7 @@ function Presence() {
   const rejoindreSession = (session) => {
     setAttendanceId(session.id);
     setSelectedDate(session.date);
+    selectedDateRef.current = session.date;
     setSelectedTime(session.heure || "");
     setTypeTemps(session.typeTemps || "");
     setNumeroCulte(session.numero_culte?.toString() || "");
@@ -480,32 +423,20 @@ function Presence() {
     setEtape("ready");
   };
 
-  // ─── TOGGLE VISIBILITÉ ────────────────────────────────────────
-  const toggleVisibilite = async () => {
-    const newVal = !listeVisible;
-    setSavingVisible(true);
-    const { uid } = profileRef.current;
-    await supabase.from("profiles").update({ liste_presence_visible: newVal }).eq("id", uid);
-    profileRef.current.liste_presence_visible = newVal;
-    setListeVisible(newVal);
-    setSavingVisible(false);
-    // FIX bug 2 : on appelle fetchAll directement sans dépendre de etape (closure stale)
-    // fetchAll relit toujours depuis Supabase donc reflète immédiatement le nouvel état
-    await fetchAll(selectedDate);
-  };
-
   // ─── FETCH MEMBRES + PRÉSENCES ────────────────────────────────
+  // FIX PRINCIPAL : le select de presences inclut maintenant sexe via membres_complets
   const fetchAll = useCallback(async (date) => {
     try {
       await initProfile();
       const profile = profileRef.current;
       const myIds = myIdsRef.current;
       const isAdmin = isAdminRef.current;
-      const d = date || selectedDate;
+      const d = date || selectedDateRef.current;
 
+      // ✅ FIX : on récupère sexe dans le join membres_complets
       const { data: presencesData } = await supabase
         .from("presences")
-        .select("membre_id, checked_by, membres_complets(prenom, nom)")
+        .select("membre_id, checked_by, membres_complets(prenom, nom, sexe)")
         .eq("date", d);
 
       const allPresences = presencesData || [];
@@ -515,7 +446,7 @@ function Presence() {
         if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); return; }
         const { data: membresData } = await supabase
           .from("membres_complets")
-          .select("id, prenom, nom, telephone")
+          .select("id, prenom, nom, telephone, sexe")
           .eq("eglise_id", profile.eglise_id)
           .in("etat_contact", ["existant", "nouveau"])
           .in("id", myIds);
@@ -533,7 +464,7 @@ function Presence() {
       // ── VUE ADMIN/RI ──────────────────────────────────────────
       const { data: tousMembres } = await supabase
         .from("membres_complets")
-        .select("id, prenom, nom, telephone, cellule_id, famille_id")
+        .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
         .eq("eglise_id", profile.eglise_id)
         .in("etat_contact", ["existant", "nouveau"]);
 
@@ -558,10 +489,8 @@ function Presence() {
         .select("membre_id, conseiller_id, profiles(prenom, nom)")
         .eq("statut", "actif");
 
-      // IDs des responsables ayant activé leur liste
       const visiblesIds = new Set((responsablesVisibles || []).map(r => r.id));
 
-      // Map conseiller_id → { ids[], profile }
       const assignmentsByConseiller = {};
       (assignmentsData || []).forEach(a => {
         if (!assignmentsByConseiller[a.conseiller_id]) assignmentsByConseiller[a.conseiller_id] = { ids: [], profile: a.profiles };
@@ -569,103 +498,78 @@ function Presence() {
       });
 
       const membresDansConseiller = new Set(Object.values(assignmentsByConseiller).flatMap(v => v.ids));
-
-      // ── Approche additive : on construit les groupes visibles un par un.
-      // Un membre n'apparaît QUE si son groupe a activé la visibilité.
-      // Les membres sans groupe ni conseiller visible sont dans "Sans rattachement".
-
       const groupesResult = [];
       const membresCouvertsParGroupe = new Set();
 
-      // ── Cellules dont le responsable a activé la visibilité
-      const cellulesVisibles = (cellulesData || []).filter(
-        c => c.responsable_id && visiblesIds.has(c.responsable_id)
-      );
+      const cellulesVisibles = (cellulesData || []).filter(c => c.responsable_id && visiblesIds.has(c.responsable_id));
       cellulesVisibles.forEach(c => {
-        const cm = membres
-          .filter(m => m.cellule_id === c.id)
-          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        const cm = membres.filter(m => m.cellule_id === c.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
         cm.forEach(m => membresCouvertsParGroupe.add(m.id));
-        if (cm.length > 0) {
-          groupesResult.push({
-            id: `c-${c.id}`,
-            label: c.cellule_full || `${c.ville} - ${c.cellule}`,
-            icon: "🏠", color: "green", membres: cm,
-          });
-        }
+        if (cm.length > 0) groupesResult.push({ id: `c-${c.id}`, label: c.cellule_full || `${c.ville} - ${c.cellule}`, icon: "🏠", color: "green", membres: cm });
       });
 
-      // ── Familles dont le responsable a activé la visibilité
-      const famillesVisibles = (famillesData || []).filter(
-        f => f.responsable_id && visiblesIds.has(f.responsable_id)
-      );
+      const famillesVisibles = (famillesData || []).filter(f => f.responsable_id && visiblesIds.has(f.responsable_id));
       famillesVisibles.forEach(f => {
-        const fm = membres
-          .filter(m => m.famille_id === f.id)
-          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        const fm = membres.filter(m => m.famille_id === f.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
         fm.forEach(m => membresCouvertsParGroupe.add(m.id));
-        if (fm.length > 0) {
-          groupesResult.push({
-            id: `f-${f.id}`,
-            label: f.famille_full || `${f.ville} - ${f.famille}`,
-            icon: "👨‍👩‍👦", color: "purple", membres: fm,
-          });
-        }
+        if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.famille_full || `${f.ville} - ${f.famille}`, icon: "👨‍👩‍👦", color: "purple", membres: fm });
       });
 
-      // ── Conseillers dont la liste est visible
-      // On n'affiche que les membres pas déjà couverts par une cellule/famille visible
       Object.entries(assignmentsByConseiller).forEach(([consId, { ids, profile: consProfile }]) => {
         if (!visiblesIds.has(consId)) return;
-        const cm = ids
-          .map(id => membres.find(m => m.id === id))
-          .filter(Boolean)
+        const cm = ids.map(id => membres.find(m => m.id === id)).filter(Boolean)
           .filter(m => !membresCouvertsParGroupe.has(m.id))
           .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
         cm.forEach(m => membresCouvertsParGroupe.add(m.id));
         if (cm.length > 0) {
           const consNom = consProfile ? `${consProfile.prenom} ${consProfile.nom}` : "Conseiller";
-          groupesResult.push({
-            id: `cons-${consId}`,
-            label: `Suivi par ${consNom}`,
-            icon: "🫂", color: "amber", membres: cm,
-          });
+          groupesResult.push({ id: `cons-${consId}`, label: `Suivi par ${consNom}`, icon: "🫂", color: "amber", membres: cm });
         }
       });
 
-      // ── Sans rattachement : pas de cellule, pas de famille, pas de conseiller
       const sansCellule = membres
         .filter(m => !m.cellule_id && !m.famille_id && !membresDansConseiller.has(m.id))
         .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-      if (sansCellule.length > 0) {
-        groupesResult.unshift({ id: "sans", label: "Sans rattachement", icon: "👤", color: "gray", membres: sansCellule });
-      }
+      if (sansCellule.length > 0) groupesResult.unshift({ id: "sans", label: "Sans rattachement", icon: "👤", color: "gray", membres: sansCellule });
 
-      // Membres visibles pour le compteur absents/présents
-      const membresVisiblesIds = new Set([
-        ...membresCouvertsParGroupe,
-        ...sansCellule.map(m => m.id),
-      ]);
+      const membresVisiblesIds = new Set([...membresCouvertsParGroupe, ...sansCellule.map(m => m.id)]);
 
       setGroupes(groupesResult);
       setPresentList(allPresences);
       setAllMembers(membres.filter(m => membresVisiblesIds.has(m.id) && !presentIds.has(m.id)));
 
     } catch (err) { console.error(err); }
-  }, [selectedDate, initProfile]);
+  }, [initProfile]);
+
+  // Stocker fetchAll dans une ref pour l'utiliser dans markPresent/markAbsent sans closure stale
+  useEffect(() => { fetchAllRef.current = fetchAll; }, [fetchAll]);
 
   useEffect(() => {
     if (etape !== "ready") return;
     setLoading(true);
-    fetchAll(selectedDate).finally(() => setLoading(false));
+    fetchAll(selectedDateRef.current).finally(() => setLoading(false));
 
     const channel = supabase
       .channel("presence-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "presences" }, () => fetchAll(selectedDate))
+      .on("postgres_changes", { event: "*", schema: "public", table: "presences" }, () => {
+        fetchAllRef.current?.(selectedDateRef.current);
+      })
       .subscribe();
 
     return () => supabase.removeChannel(channel);
-  }, [selectedDate, etape]);
+  }, [etape, fetchAll]);
+
+  // ─── TOGGLE VISIBILITÉ ────────────────────────────────────────
+  const toggleVisibilite = async () => {
+    const newVal = !listeVisible;
+    setSavingVisible(true);
+    const { uid } = profileRef.current;
+    await supabase.from("profiles").update({ liste_presence_visible: newVal }).eq("id", uid);
+    profileRef.current.liste_presence_visible = newVal;
+    setListeVisible(newVal);
+    setSavingVisible(false);
+    await fetchAllRef.current?.(selectedDateRef.current);
+  };
 
   // ─── CRÉER SESSION ────────────────────────────────────────────
   const demarrerSession = async () => {
@@ -676,11 +580,9 @@ function Presence() {
     setSavingSession(true);
     try {
       const profile = profileRef.current;
-
       if (typeTemps === "AUTRE" && enregistrerTemps && !tempsOptions.includes(typeFinal)) {
         setTempsOptions(prev => [...prev, typeFinal].sort((a, b) => a.localeCompare(b, "fr")));
       }
-
       const isCulte = typeFinal.toLowerCase().includes("culte");
       const payload = {
         date: selectedDate,
@@ -690,13 +592,13 @@ function Presence() {
         eglise_id: profile.eglise_id,
         ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : {}),
       };
-
       const { data, error } = await supabase.from("attendance").insert(payload).select("id").single();
       if (error) throw error;
 
       const newSession = { id: data.id, typeTemps: typeFinal, date: selectedDate, heure: selectedTime, numero_culte: numeroCulte ? Number(numeroCulte) : null };
       setAttendanceId(data.id);
       setSessionCourante(newSession);
+      selectedDateRef.current = selectedDate;
       setEtape("ready");
     } catch (err) {
       console.error(err);
@@ -723,6 +625,7 @@ function Presence() {
       }).eq("id", attendanceId);
 
       setSessionCourante(prev => ({ ...prev, typeTemps: typeFinal, date: selectedDate, heure: selectedTime, numero_culte: numeroCulte ? Number(numeroCulte) : null }));
+      selectedDateRef.current = selectedDate;
       setEditingSession(false);
     } catch (err) {
       console.error(err);
@@ -733,19 +636,36 @@ function Presence() {
   };
 
   // ─── PRÉSENCE ─────────────────────────────────────────────────
+  // FIX : on utilise fetchAllRef pour éviter les closures stale
   const markPresent = async (membre) => {
     try {
       const { uid } = profileRef.current;
-      await supabase.from("presences").insert({ membre_id: membre.id, date: selectedDate, checked_by: uid, attendance_id: attendanceId });
-      await fetchAll(selectedDate);
-    } catch (err) { console.error(err); }
+      const d = selectedDateRef.current;
+      const { error } = await supabase.from("presences").insert({
+        membre_id: membre.id,
+        date: d,
+        checked_by: uid,
+        attendance_id: attendanceId,
+      });
+      if (error) throw error;
+      // Mise à jour immédiate sans attendre le realtime
+      await fetchAllRef.current?.(d);
+    } catch (err) {
+      console.error("Erreur markPresent:", err);
+    }
   };
 
   const markAbsent = async (memberId) => {
     try {
-      await supabase.from("presences").delete().eq("membre_id", memberId).eq("date", selectedDate);
-      await fetchAll(selectedDate);
-    } catch (err) { console.error(err); }
+      const d = selectedDateRef.current;
+      const { error } = await supabase.from("presences").delete()
+        .eq("membre_id", memberId)
+        .eq("date", d);
+      if (error) throw error;
+      await fetchAllRef.current?.(d);
+    } catch (err) {
+      console.error("Erreur markAbsent:", err);
+    }
   };
 
   // ─── FILTRES ──────────────────────────────────────────────────
@@ -779,12 +699,7 @@ function Presence() {
         <p className="text-white/60 text-sm text-center mb-2">
           {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
         </p>
-        <ChoixSession
-          sessions={sessionsAujourdhui}
-          onJoin={rejoindreSession}
-          onNew={() => setEtape("form")}
-          loadingCheck={false}
-        />
+        <ChoixSession sessions={sessionsAujourdhui} onJoin={rejoindreSession} onNew={() => setEtape("form")} loadingCheck={false} />
         <Footer />
       </div>
     );
@@ -799,10 +714,7 @@ function Presence() {
           <h1 className="text-2xl font-bold text-white text-center mb-1">📋 Nouvelle Session</h1>
           <p className="text-white/70 text-center text-sm mb-4">Configurez la session avant de commencer</p>
           {sessionsAujourdhui.length > 0 && (
-            <button
-              onClick={() => setEtape("choix")}
-              className="w-full mb-4 py-2 text-sm text-white/70 hover:text-white border border-white/20 rounded-xl transition"
-            >
+            <button onClick={() => setEtape("choix")} className="w-full mb-4 py-2 text-sm text-white/70 hover:text-white border border-white/20 rounded-xl transition">
               ← Revenir aux sessions existantes
             </button>
           )}
@@ -835,7 +747,6 @@ function Presence() {
           Présences du <span className="text-emerald-300">jour</span>
         </h1>
 
-        {/* Résumé session cliquable */}
         <div
           className="inline-flex flex-col items-center mt-3 px-4 py-2 bg-white/10 rounded-xl cursor-pointer hover:bg-white/20 transition group"
           onClick={() => setEditingSession(v => !v)}
@@ -843,31 +754,31 @@ function Presence() {
           <div className="flex items-center gap-2">
             <span className="text-white font-semibold text-sm">
               {sessionCourante?.typeTemps}
-              {sessionCourante?.numero_culte
-                ? ` — ${sessionCourante.numero_culte}${sessionCourante.numero_culte === 1 ? "er" : "ème"} culte`
-                : ""}
+              {sessionCourante?.numero_culte ? ` — ${sessionCourante.numero_culte}${sessionCourante.numero_culte === 1 ? "er" : "ème"} culte` : ""}
             </span>
             <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>
           </div>
           <span className="text-white/60 text-xs mt-0.5">
-            📅 {new Date(selectedDate + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+            📅 {new Date(selectedDateRef.current + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
             {sessionCourante?.heure ? ` · 🕐 ${sessionCourante.heure}` : ""}
           </span>
           <span className="text-white/40 text-xs mt-0.5">Cliquer pour modifier</span>
         </div>
 
+        {/* ✅ Compteur global présents / absents */}
         <div className="flex gap-4 justify-center mt-3 text-sm">
           <span className="text-green-300">✔ Présents : {totalPresents}</span>
           <span className="text-white">⚪ Restants : {totalAbsents}</span>
         </div>
+
+        {/* ✅ Compteur Hommes / Femmes (uniquement sur les présents) */}
+        {totalPresents > 0 && <CompteurSexe presences={presentList} />}
       </div>
 
-      {/* Toggle visibilité (non-admin) */}
       {!isAdmin && (
         <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} />
       )}
 
-      {/* Modification session inline */}
       {editingSession && (
         <div className="w-full max-w-lg mb-6">
           <h2 className="text-white font-semibold text-center mb-3">✏️ Modifier la session</h2>
@@ -887,20 +798,13 @@ function Presence() {
         </div>
       )}
 
-      {/* Liste */}
       {!editingSession && (
         <>
           <div className="flex gap-3 mb-4">
-            <button
-              onClick={() => setView("absents")}
-              className={`px-4 py-2 rounded ${view === "absents" ? "bg-white text-[#333699] font-bold" : "bg-white/20 text-white"}`}
-            >
+            <button onClick={() => setView("absents")} className={`px-4 py-2 rounded ${view === "absents" ? "bg-white text-[#333699] font-bold" : "bg-white/20 text-white"}`}>
               ⚪ Absents ({totalAbsents})
             </button>
-            <button
-              onClick={() => setView("presents")}
-              className={`px-4 py-2 rounded ${view === "presents" ? "bg-green-400 text-black font-bold" : "bg-white/20 text-white"}`}
-            >
+            <button onClick={() => setView("presents")} className={`px-4 py-2 rounded ${view === "presents" ? "bg-green-400 text-black font-bold" : "bg-white/20 text-white"}`}>
               ✔ Présents ({totalPresents})
             </button>
           </div>

@@ -550,7 +550,7 @@ function Presence() {
         .eq("eglise_id", profile.eglise_id);
 
       const { data: famillesData } = await supabase
-        .from("familles").select("id, nom, responsable_id")
+        .from("familles").select("id, famille_full, famille, ville, responsable_id")
         .eq("eglise_id", profile.eglise_id);
 
       const { data: assignmentsData } = await supabase
@@ -607,7 +607,7 @@ function Presence() {
         if (fm.length > 0) {
           groupesResult.push({
             id: `f-${f.id}`,
-            label: f.nom,
+            label: f.famille_full || `${f.ville} - ${f.famille}`,
             icon: "👨‍👩‍👦", color: "purple", membres: fm,
           });
         }

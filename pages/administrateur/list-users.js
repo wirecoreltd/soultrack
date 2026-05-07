@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient";
 import EditUserModal from "../../components/EditUserModal";
@@ -47,39 +47,33 @@ function ListUsersContent() {
   const [egliseId, setEgliseId] = useState(null);
 
   // ─────────────────────────────────────────────
-  // ✅ roleColors conditionné par feature
+  // ✅ hiddenRoles via useMemo — valeur stable et réactive
   // ─────────────────────────────────────────────
-  const roleColors = {
+  const hiddenRoles = useMemo(() => [
+    ...(!cellulesActive ? ["ResponsableCellule", "SuperviseurCellule"] : []),
+    ...(!conseillerActive ? ["Conseiller"] : []),
+    ...(!famillesActive ? ["ResponsableFamilles"] : []),
+  ], [cellulesActive, conseillerActive, famillesActive]);
+
+  const roleColors = useMemo(() => ({
     Administrateur: "#EF4444",
     ResponsableIntegration: "#3B82F6",
     ...(cellulesActive && { ResponsableCellule: "#10B981" }),
     ResponsableEvangelisation: "#8B5CF6",
-    SuperviseurCellule: "#F59E0B",
+    ...(cellulesActive && { SuperviseurCellule: "#F59E0B" }),
     ...(conseillerActive && { Conseiller: "#14B8A6" }),
     ...(famillesActive && { ResponsableFamilles: "#F97316" }),
-  };
+  }), [cellulesActive, conseillerActive, famillesActive]);
 
-  // ─────────────────────────────────────────────
-  // ✅ roleLabels conditionné par feature
-  // ─────────────────────────────────────────────
-  const roleLabels = {
+  const roleLabels = useMemo(() => ({
     Administrateur: "Administrateur",
     ResponsableIntegration: "Responsable Intégration",
     ...(cellulesActive && { ResponsableCellule: "Responsable Cellule" }),
     ResponsableEvangelisation: "Responsable Évangélisation",
-    SuperviseurCellule: "Superviseur Cellule",
+    ...(cellulesActive && { SuperviseurCellule: "Superviseur Cellule" }),
     ...(conseillerActive && { Conseiller: "Conseiller" }),
     ...(famillesActive && { ResponsableFamilles: "Responsable Familles" }),
-  };
-
-  // ─────────────────────────────────────────────
-  // ✅ Rôles à masquer dans le filtre selon features
-  // ─────────────────────────────────────────────
-  const hiddenRoles = [
-    ...(!cellulesActive ? ["ResponsableCellule"] : []),
-    ...(!conseillerActive ? ["Conseiller"] : []),
-    ...(!famillesActive ? ["ResponsableFamilles"] : []),
-  ];
+  }), [cellulesActive, conseillerActive, famillesActive]);
 
   // ─── Récupérer eglise_id de l'admin connecté ───
   useEffect(() => {
@@ -102,10 +96,12 @@ function ListUsersContent() {
   }, []);
 
   // ─── Charger les utilisateurs dès qu'on a eglise_id ───
+  // ✅ hiddenRoles dans les dépendances — la liste des rôles se recalcule
+  //    si les features changent APRÈS le fetch initial
   useEffect(() => {
     if (!egliseId) return;
     fetchUsers();
-  }, [egliseId]);
+  }, [egliseId, hiddenRoles]); // ← hiddenRoles ici
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -118,7 +114,7 @@ function ListUsersContent() {
 
     setUsers(data || []);
 
-    // ✅ Exclure les rôles des features désactivées de la liste des rôles disponibles
+    // ✅ Filtrer les rôles des features désactivées dès le fetch
     const allRoles = Array.from(
       new Set((data || []).flatMap((u) => u.roles || []))
     ).filter((r) => !hiddenRoles.includes(r));
@@ -126,6 +122,15 @@ function ListUsersContent() {
     setRoles(allRoles);
     setLoading(false);
   };
+
+  // ✅ Recalculer les rôles affichés si hiddenRoles change (sans re-fetch)
+  useEffect(() => {
+    if (users.length === 0) return;
+    const allRoles = Array.from(
+      new Set(users.flatMap((u) => u.roles || []))
+    ).filter((r) => !hiddenRoles.includes(r));
+    setRoles(allRoles);
+  }, [hiddenRoles, users]);
 
   const handleDelete = async () => {
     if (!deleteUser?.id) return;
@@ -164,15 +169,9 @@ function ListUsersContent() {
         <p className="italic text-base text-white/90">
           Visualiser, filtrer et gérer tous les utilisateurs de votre église. Chaque{" "}
           <span className="text-blue-300 font-semibold">rôle a une responsabilité spécifique</span>
-          {cellulesActive && (
-            <> : responsables de cellules</>
-          )}
-          {conseillerActive && (
-            <>, conseillers</>
-          )}
-          {famillesActive && (
-            <>, responsables de familles</>
-          )}
+          {cellulesActive && <> : responsables de cellules</>}
+          {conseillerActive && <>, conseillers</>}
+          {famillesActive && <>, responsables de familles</>}
           {" "}et chaque utilisateur contribue à la croissance et au soutien des membres. Utilisez cette interface{" "}
           <span className="text-blue-300 font-semibold">
             pour accompagner, encadrer et développer une communauté solide et fraternelle
@@ -197,13 +196,11 @@ function ListUsersContent() {
             className="px-4 py-2 rounded-md text-black"
           >
             <option value="">Tous les rôles</option>
-            {roles
-              .filter((r) => !hiddenRoles.includes(r))
-              .map((r) => (
-                <option key={r} value={r}>
-                  {roleLabels[r] || r}
-                </option>
-              ))}
+            {roles.map((r) => (
+              <option key={r} value={r}>
+                {roleLabels[r] || r}
+              </option>
+            ))}
           </select>
           <span className="text-white text-sm">Total : {filteredUsers.length}</span>
         </div>
@@ -286,10 +283,8 @@ function ListUsersContent() {
 
 /* =========================
    Ligne utilisateur
-   ✅ Reçoit roleColors, roleLabels, hiddenRoles depuis le parent
 ========================= */
 function UserRow({ u, roleColors, roleLabels, hiddenRoles, setSelectedUser, setDeleteUser }) {
-  // ✅ Filtrer les rôles désactivés dans l'affichage de chaque ligne
   const roles = (u.roles || []).filter((r) => !hiddenRoles.includes(r));
 
   const rolesDisplay =
@@ -317,18 +312,8 @@ function UserRow({ u, roleColors, roleLabels, hiddenRoles, setSelectedUser, setD
           {formatDate(u.created_at)}
         </div>
         <div className="flex-[1] flex justify-center gap-2">
-          <button
-            onClick={() => setSelectedUser(u)}
-            className="text-blue-400 hover:text-blue-600"
-          >
-            ✏️
-          </button>
-          <button
-            onClick={() => setDeleteUser(u)}
-            className="text-red-400 hover:text-red-600"
-          >
-            🗑️
-          </button>
+          <button onClick={() => setSelectedUser(u)} className="text-blue-400 hover:text-blue-600">✏️</button>
+          <button onClick={() => setDeleteUser(u)} className="text-red-400 hover:text-red-600">🗑️</button>
         </div>
       </div>
 
@@ -341,38 +326,22 @@ function UserRow({ u, roleColors, roleLabels, hiddenRoles, setSelectedUser, setD
           Créer le : {formatDate(u.created_at)}
         </div>
         <div className="text-center space-y-1.5">
-          <div className="text-white font-semibold">
-            {u.prenom} {u.nom}
-          </div>
+          <div className="text-white font-semibold">{u.prenom} {u.nom}</div>
           <div className="text-white flex justify-center items-center gap-1">
-            <span>📞</span>
-            <span>{u.telephone || "-"}</span>
+            <span>📞</span><span>{u.telephone || "-"}</span>
           </div>
           <div className="text-white flex justify-center items-center gap-1 break-all">
-            <span>📧</span>
-            <span>{u.email}</span>
+            <span>📧</span><span>{u.email}</span>
           </div>
-          {/* ✅ Rôles filtrés — masqués si feature désactivée */}
           {rolesDisplay && (
             <div className="flex justify-center items-center gap-1 text-orange-400 font-semibold mt-1">
-              <span>🎖️</span>
-              <span>{rolesDisplay}</span>
+              <span>🎖️</span><span>{rolesDisplay}</span>
             </div>
           )}
         </div>
         <div className="mt-2 flex justify-center gap-3 pt-2">
-          <button
-            onClick={() => setSelectedUser(u)}
-            className="text-blue-400 text-sm leading-none"
-          >
-            ✏️
-          </button>
-          <button
-            onClick={() => setDeleteUser(u)}
-            className="text-red-400 text-base leading-none"
-          >
-            🗑️
-          </button>
+          <button onClick={() => setSelectedUser(u)} className="text-blue-400 text-sm leading-none">✏️</button>
+          <button onClick={() => setDeleteUser(u)} className="text-red-400 text-base leading-none">🗑️</button>
         </div>
       </div>
     </>

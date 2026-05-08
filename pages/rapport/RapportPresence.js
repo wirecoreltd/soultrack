@@ -5,6 +5,7 @@ import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
+import { useFeature } from "../../components/FeaturesContext";
 import dynamic from "next/dynamic";
 
 const Line = dynamic(
@@ -129,10 +130,14 @@ function TranchePie({ data }) {
 
 // ── composant principal ──────────────────────────────────────────────────────
 function RapportPresence() {
+  // ✅ FEATURES — tous les hooks en premier, avant tout return conditionnel
+  const cellulesActive = useFeature("cellules");
+  const famillesActive = useFeature("familles");
+
   const [userProfile, setUserProfile] = useState(null);
   const [userRole,    setUserRole]    = useState(null);
-  const [familles, setFamilles] = useState([]);
-  const [cellules, setCellules] = useState([]);
+  const [familles,    setFamilles]    = useState([]);
+  const [cellules,    setCellules]    = useState([]);
   const [mesCellules, setMesCellules] = useState([]);
   const [mesFamilles, setMesFamilles] = useState([]);
   const [dateDebut,     setDateDebut]     = useState("");
@@ -169,11 +174,14 @@ function RapportPresence() {
       const egliseId = profile?.eglise_id;
       if (!egliseId) return;
 
-      const { data: fa } = await supabase
-        .from("familles")
-        .select("id, famille, famille_full, eglise_id, responsable_id")
-        .eq("eglise_id", egliseId);
-      setFamilles(fa || []);
+      // ✅ Fetch familles seulement si feature active
+      if (famillesActive) {
+        const { data: fa } = await supabase
+          .from("familles")
+          .select("id, famille, famille_full, eglise_id, responsable_id")
+          .eq("eglise_id", egliseId);
+        setFamilles(fa || []);
+      }
 
       const { data: membersData } = await supabase
         .from("membres_complets")
@@ -181,29 +189,43 @@ function RapportPresence() {
         .eq("eglise_id", egliseId);
       setAllMembers(membersData || []);
 
-      const { data: ce } = await supabase
-        .from("cellules")
-        .select("id, cellule, cellule_full, eglise_id, responsable_id, superviseur_id");
-      const ceOk = (ce || []).filter(c => c.eglise_id === egliseId);
-      setCellules(ceOk);
+      // ✅ Fetch cellules seulement si feature active
+      if (cellulesActive) {
+        const { data: ce } = await supabase
+          .from("cellules")
+          .select("id, cellule, cellule_full, eglise_id, responsable_id, superviseur_id");
+        const ceOk = (ce || []).filter(c => c.eglise_id === egliseId);
+        setCellules(ceOk);
 
-      const uid  = profile.id;
-      const role = profile.role;
+        const uid  = profile.id;
+        const role = profile.role;
 
-      if (role === "ResponsableCellule") {
-        const mine = ceOk.filter(c => c.responsable_id === uid);
-        setMesCellules(mine);
-        if (mine.length === 1) setFilterCellule(mine[0].id);
-      } else if (role === "ResponsableFamilles") {
-        const mine = (fa || []).filter(f => f.responsable_id === uid);
-        setMesFamilles(mine);
-        if (mine.length === 1) setFilterFamille(mine[0].id);
-      } else if (["SuperviseurCellule","SuperviseurFamille"].includes(role)) {
-        const mine = ceOk.filter(c => c.superviseur_id === uid);
-        setMesCellules(mine);
+        if (role === "ResponsableCellule") {
+          const mine = ceOk.filter(c => c.responsable_id === uid);
+          setMesCellules(mine);
+          if (mine.length === 1) setFilterCellule(mine[0].id);
+        } else if (["SuperviseurCellule","SuperviseurFamille"].includes(role)) {
+          const mine = ceOk.filter(c => c.superviseur_id === uid);
+          setMesCellules(mine);
+        }
+      }
+
+      // ✅ Fetch familles assignées seulement si feature active
+      if (famillesActive) {
+        const uid  = profile.id;
+        const role = profile.role;
+        if (role === "ResponsableFamilles") {
+          const { data: fa } = await supabase
+            .from("familles")
+            .select("id, famille, famille_full, eglise_id, responsable_id")
+            .eq("eglise_id", egliseId);
+          const mine = (fa || []).filter(f => f.responsable_id === uid);
+          setMesFamilles(mine);
+          if (mine.length === 1) setFilterFamille(mine[0].id);
+        }
       }
     })();
-  }, []);
+  }, [cellulesActive, famillesActive]);
 
   // ── sélecteurs selon rôle ─────────────────────────────────────────────────
   const cellulesSelect = useMemo(() => {
@@ -216,31 +238,28 @@ function RapportPresence() {
     return familles;
   }, [userRole, mesFamilles, familles]);
 
-  // ── visibilité des selects selon rôle ────────────────────────────────────
-  // ResponsableCellule / SuperviseurCellule : JAMAIS de sélecteur famille
-  // ResponsableFamilles : JAMAIS de sélecteur cellule
-  const showCelluleSelect = !["ResponsableFamilles"].includes(userRole);
-  const showFamilleSelect = !["ResponsableCellule","SuperviseurCellule"].includes(userRole);
+  // ✅ Visibilité des selects : rôle + feature
+  const showCelluleSelect = cellulesActive && !["ResponsableFamilles"].includes(userRole);
+  const showFamilleSelect = famillesActive && !["ResponsableCellule","SuperviseurCellule"].includes(userRole);
 
   // ── membres autorisés selon le rôle (pour le suivi absents) ──────────────
   const membresAutorisés = useMemo(() => {
-    if (userRole === "ResponsableCellule" && mesCellules.length > 0) {
+    if (cellulesActive && userRole === "ResponsableCellule" && mesCellules.length > 0) {
       const ids = new Set(mesCellules.map(c => c.id));
       return allMembers.filter(m => ids.has(m.cellule_id));
     }
-    if (userRole === "ResponsableFamilles" && mesFamilles.length > 0) {
+    if (famillesActive && userRole === "ResponsableFamilles" && mesFamilles.length > 0) {
       const ids = new Set(mesFamilles.map(f => f.id));
       return allMembers.filter(m => ids.has(m.famille_id));
     }
-    if (["SuperviseurCellule","SuperviseurFamille"].includes(userRole) && mesCellules.length > 0) {
+    if (cellulesActive && ["SuperviseurCellule","SuperviseurFamille"].includes(userRole) && mesCellules.length > 0) {
       const ids = new Set(mesCellules.map(c => c.id));
       return allMembers.filter(m => ids.has(m.cellule_id));
     }
-    // Filtre actif (admin avec select)
-    if (filterCellule) return allMembers.filter(m => m.cellule_id === filterCellule);
-    if (filterFamille) return allMembers.filter(m => m.famille_id === filterFamille);
+    if (cellulesActive && filterCellule) return allMembers.filter(m => m.cellule_id === filterCellule);
+    if (famillesActive && filterFamille) return allMembers.filter(m => m.famille_id === filterFamille);
     return allMembers;
-  }, [userRole, mesCellules, mesFamilles, allMembers, filterCellule, filterFamille]);
+  }, [userRole, mesCellules, mesFamilles, allMembers, filterCellule, filterFamille, cellulesActive, famillesActive]);
 
   // ── fetch ─────────────────────────────────────────────────────────────────
   const fetchRapport = async () => {
@@ -275,7 +294,7 @@ function RapportPresence() {
       (attData || []).forEach(a => { aMap[a.id] = a; });
       setAttendanceMap(aMap);
 
-      let pq = supabase
+      const { data: pData, error: pErr } = await supabase
         .from("presences")
         .select(`
           id,
@@ -288,20 +307,18 @@ function RapportPresence() {
           )
         `)
         .in("attendance_id", attIds);
-
-      const { data: pData, error: pErr } = await pq;
       if (pErr) throw pErr;
 
       let filtered = pData || [];
 
-      // Filtrage strict selon le rôle — appliqué dès le fetch
-      if (userRole === "ResponsableCellule" && mesCellules.length > 0) {
+      // ✅ Filtrage strict selon rôle + feature
+      if (cellulesActive && userRole === "ResponsableCellule" && mesCellules.length > 0) {
         const ids = new Set(mesCellules.map(c => c.id));
         filtered = filtered.filter(p => ids.has(p.membres_complets?.cellule_id));
-      } else if (userRole === "ResponsableFamilles" && mesFamilles.length > 0) {
+      } else if (famillesActive && userRole === "ResponsableFamilles" && mesFamilles.length > 0) {
         const ids = new Set(mesFamilles.map(f => f.id));
         filtered = filtered.filter(p => ids.has(p.membres_complets?.famille_id));
-      } else if (["SuperviseurCellule","SuperviseurFamille"].includes(userRole) && mesCellules.length > 0) {
+      } else if (cellulesActive && ["SuperviseurCellule","SuperviseurFamille"].includes(userRole) && mesCellules.length > 0) {
         const ids = new Set(mesCellules.map(c => c.id));
         filtered = filtered.filter(p => ids.has(p.membres_complets?.cellule_id));
       }
@@ -319,13 +336,13 @@ function RapportPresence() {
   // ── filtre secondaire (admin / superviseur avec select) ───────────────────
   const presencesFiltrees = useMemo(() => {
     let src = presencesRaw;
-    if (filterCellule) {
+    if (cellulesActive && filterCellule) {
       src = src.filter(p => p.membres_complets?.cellule_id === filterCellule);
-    } else if (filterFamille) {
+    } else if (famillesActive && filterFamille) {
       src = src.filter(p => p.membres_complets?.famille_id === filterFamille);
     }
     return src;
-  }, [presencesRaw, filterCellule, filterFamille]);
+  }, [presencesRaw, filterCellule, filterFamille, cellulesActive, famillesActive]);
 
   // ── enrichissement avec groupKey ─────────────────────────────────────────
   const presencesAvecGroupe = useMemo(() => {
@@ -440,10 +457,9 @@ function RapportPresence() {
     },
   };
 
-  // ── comparaison (respecte le rôle) ────────────────────────────────────────
-  // Pour les rôles cellule, on n'affiche pas la comparaison famille et inversement
+  // ✅ Comparaison cellules — seulement si feature active
   const comparaisonCellules = useMemo(() => {
-    // Ne pas calculer si le rôle est famille uniquement
+    if (!cellulesActive) return [];
     if (userRole === "ResponsableFamilles") return [];
     const map = {};
     presencesFiltrees.forEach(p => {
@@ -460,10 +476,11 @@ function RapportPresence() {
             || "Cellule inconnue",
       }))
       .sort((a, b) => b.total - a.total);
-  }, [presencesFiltrees, cellules, userRole]);
+  }, [presencesFiltrees, cellules, userRole, cellulesActive]);
 
+  // ✅ Comparaison familles — seulement si feature active
   const comparaisonFamilles = useMemo(() => {
-    // Ne pas calculer si le rôle est cellule uniquement
+    if (!famillesActive) return [];
     if (["ResponsableCellule","SuperviseurCellule"].includes(userRole)) return [];
     const map = {};
     presencesFiltrees.forEach(p => {
@@ -480,7 +497,7 @@ function RapportPresence() {
             || "Famille inconnue",
       }))
       .sort((a, b) => b.total - a.total);
-  }, [presencesFiltrees, familles, userRole]);
+  }, [presencesFiltrees, familles, userRole, famillesActive]);
 
   const topCellules = showAllComp ? comparaisonCellules : comparaisonCellules.slice(0, 15);
   const topFamilles = showAllComp ? comparaisonFamilles : comparaisonFamilles.slice(0, 15);
@@ -525,7 +542,6 @@ function RapportPresence() {
     return true;
   };
 
-  // Toutes les sessions dans la période (pour afficher la liste des cultes aux absents)
   const sessionsEnPeriode = useMemo(() => {
     const sessions = {};
     presencesAvecGroupe.forEach(p => {
@@ -546,24 +562,19 @@ function RapportPresence() {
     const filteredPresences = presencesAvecGroupe.filter(p => isInSelectedPeriod(p.attDate));
 
     if (suiviMode === "presents") {
-      // Map : un membre = toutes ses présences dans la période
       const presentMap = {};
       filteredPresences.forEach(p => {
         const membre = p.membres_complets;
         if (!membre?.id) return;
         const att = attendanceMap[p.attendance_id];
         if (!presentMap[membre.id]) {
-          presentMap[membre.id] = {
-            ...membre,
-            presences: [],
-          };
+          presentMap[membre.id] = { ...membre, presences: [] };
         }
         presentMap[membre.id].presences.push({
           date: p.attDate,
           label: formatSessionLabel(att?.typeTemps, att?.numero_culte),
         });
       });
-      // Trier chaque liste de présences par date
       return Object.values(presentMap)
         .map(m => ({
           ...m,
@@ -577,7 +588,6 @@ function RapportPresence() {
         });
     }
 
-    // Mode absents : membres autorisés qui n'ont PAS de présence dans la période
     const presentIds = new Set(filteredPresences.map(p => p.membres_complets?.id).filter(Boolean));
     return membresAutorisés
       .filter(m => !presentIds.has(m.id))
@@ -590,16 +600,16 @@ function RapportPresence() {
 
   // ── libellé du filtre actif ────────────────────────────────────────────────
   const filterLabel = useMemo(() => {
-    if (filterCellule) {
+    if (cellulesActive && filterCellule) {
       const c = cellules.find(x => x.id === filterCellule);
       return c ? `🏠 ${c.cellule_full || c.cellule}` : "";
     }
-    if (filterFamille) {
+    if (famillesActive && filterFamille) {
       const f = familles.find(x => x.id === filterFamille);
       return f ? `👨‍👩‍👧 ${f.famille_full || f.famille}` : "";
     }
     return "Tout";
-  }, [filterCellule, filterFamille, cellules, familles]);
+  }, [filterCellule, filterFamille, cellules, familles, cellulesActive, famillesActive]);
 
   const hasData = presencesRaw.length > 0;
 
@@ -633,7 +643,6 @@ function RapportPresence() {
     );
   };
 
-  // ── badge granularité suivi ────────────────────────────────────────────────
   const granLabel = { jour: "aujourd'hui", semaine: "cette semaine", mois: "ce mois-ci", annee: "cette année" };
 
   // ── render ────────────────────────────────────────────────────────────────
@@ -645,7 +654,10 @@ function RapportPresence() {
         Rapport <span className="text-emerald-300">Présences</span>
       </h1>
       <p className="italic text-sm text-white/80 mb-6 text-center max-w-2xl">
-        Analysez vos présences par période, cellule ou famille.
+        Analysez vos présences par période
+        {cellulesActive && ", cellule"}
+        {famillesActive && ", famille"}
+        .
       </p>
 
       {/* ── FORMULAIRE ── */}
@@ -670,7 +682,7 @@ function RapportPresence() {
           {loading ? "⏳ Chargement..." : "Générer"}
         </button>
 
-        {/* Sélecteurs secondaires — uniquement si pas de rôle restreint */}
+        {/* ✅ Sélecteurs secondaires — conditionnés par feature ET rôle */}
         {hasData && (showCelluleSelect || showFamilleSelect) && (
           <div className="mt-4 pt-4 border-t border-white/20 flex flex-wrap gap-3 items-end">
             {showCelluleSelect && cellulesSelect.length > 1 && (
@@ -691,6 +703,7 @@ function RapportPresence() {
               </div>
             )}
 
+            {/* ✅ Sélecteur famille — affiché seulement si feature active */}
             {showFamilleSelect && famillesSelect.length > 1 && (
               <div className="flex flex-col flex-1 min-w-[160px]">
                 <label className="text-xs text-white/60 mb-1 flex items-center gap-1">
@@ -752,7 +765,8 @@ function RapportPresence() {
             {[
               { key:"evolution",   label:"Évolution" },
               { key:"repartition", label:"Répartition" },
-              { key:"comparaison", label:"Comparaison" },
+              // ✅ Onglet comparaison affiché seulement si au moins une feature active
+              ...((cellulesActive || famillesActive) ? [{ key:"comparaison", label:"Comparaison" }] : []),
               { key:"tableau",     label:"Tableau" },
               { key:"suivi",       label:"Suivi pastoral" },
             ].map(({ key, label }) => (
@@ -806,12 +820,13 @@ function RapportPresence() {
             </div>
           )}
 
-          {/* ── TAB COMPARAISON ── */}
-          {activeTab === "comparaison" && (
+          {/* ✅ TAB COMPARAISON — affiché seulement si au moins une feature active */}
+          {activeTab === "comparaison" && (cellulesActive || famillesActive) && (
             <div className="bg-white/10 border border-white/20 rounded-xl p-4 flex flex-col gap-6">
               <p className="text-white font-semibold">Comparaison des présences</p>
 
-              {comparaisonCellules.length > 0 && (
+              {/* ✅ Bloc cellules — seulement si feature active */}
+              {cellulesActive && comparaisonCellules.length > 0 && (
                 <div>
                   <p className="text-white/70 text-sm font-medium mb-4 flex items-center gap-2">
                     <span className="text-amber-300"><IconCellule /></span>
@@ -833,7 +848,8 @@ function RapportPresence() {
                 </div>
               )}
 
-              {comparaisonFamilles.length > 0 && (
+              {/* ✅ Bloc familles — seulement si feature active */}
+              {famillesActive && comparaisonFamilles.length > 0 && (
                 <div>
                   <p className="text-white/70 text-sm font-medium mb-4 flex items-center gap-2">
                     <span className="text-emerald-300"><IconFamille /></span>
@@ -918,11 +934,7 @@ function RapportPresence() {
           {/* ── TAB SUIVI PASTORAL ── */}
           {activeTab === "suivi" && (
             <div className="flex flex-col gap-4">
-
-              {/* Contrôles */}
               <div className="bg-white/10 border border-white/20 rounded-xl p-4 flex flex-col gap-3">
-
-                {/* Mode présents / absents */}
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSuiviMode("presents")}
@@ -932,8 +944,7 @@ function RapportPresence() {
                         : "border-white/20 text-white/60 hover:border-white/40"
                     }`}
                   >
-                    <span className="text-lg">✅</span>
-                    Présents
+                    <span className="text-lg">✅</span> Présents
                   </button>
                   <button
                     onClick={() => setSuiviMode("absents")}
@@ -943,12 +954,10 @@ function RapportPresence() {
                         : "border-white/20 text-white/60 hover:border-white/40"
                     }`}
                   >
-                    <span className="text-lg">❌</span>
-                    Absents
+                    <span className="text-lg">❌</span> Absents
                   </button>
                 </div>
 
-                {/* Granularité */}
                 <div className="flex gap-2 flex-wrap">
                   {[
                     { k:"jour",    label:"Aujourd'hui" },
@@ -968,7 +977,6 @@ function RapportPresence() {
                 </div>
               </div>
 
-              {/* En-tête résumé */}
               <div className={`rounded-xl px-4 py-3 border flex items-center justify-between ${
                 suiviMode === "presents"
                   ? "bg-emerald-500/15 border-emerald-400/30"
@@ -985,7 +993,6 @@ function RapportPresence() {
                 </div>
               </div>
 
-              {/* Sessions de la période (pour contexte) */}
               {sessionsEnPeriode.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {sessionsEnPeriode.map((s, i) => (
@@ -996,7 +1003,6 @@ function RapportPresence() {
                 </div>
               )}
 
-              {/* Liste des membres */}
               {suiviData.length === 0 ? (
                 <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center text-white/40">
                   {suiviMode === "presents"
@@ -1014,13 +1020,9 @@ function RapportPresence() {
                     return (
                       <div key={membre.id || idx}
                         className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 flex items-start gap-3 transition">
-
-                        {/* Avatar initiales */}
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${avatarBg}`}>
                           {initiales}
                         </div>
-
-                        {/* Infos */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-white font-semibold text-sm">{nomComplet}</span>
@@ -1030,8 +1032,6 @@ function RapportPresence() {
                               {membre.sexe || "—"}
                             </span>
                           </div>
-
-                          {/* Présences (mode présents) */}
                           {suiviMode === "presents" && membre.presences?.length > 0 && (
                             <div className="mt-1.5 flex flex-wrap gap-1.5">
                               {membre.presences.map((p, pi) => (
@@ -1043,16 +1043,12 @@ function RapportPresence() {
                               ))}
                             </div>
                           )}
-
-                          {/* Message absent */}
                           {suiviMode === "absents" && (
                             <p className="text-xs text-white/40 mt-1">
                               Absent{membre.sexe === "Femme" ? "e" : ""} {granLabel[suiviGranularity]}
                             </p>
                           )}
                         </div>
-
-                        {/* Badge nombre de présences */}
                         {suiviMode === "presents" && membre.presences?.length > 0 && (
                           <div className="flex-shrink-0 text-right">
                             <span className="text-xs text-white/40">×</span>
@@ -1064,10 +1060,8 @@ function RapportPresence() {
                   })}
                 </div>
               )}
-
             </div>
           )}
-
         </div>
       )}
 

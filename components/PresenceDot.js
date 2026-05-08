@@ -27,106 +27,116 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
 
   // ── Calcul couleur ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!memberId || !egliseId) return;
+  if (!memberId || !egliseId) return;
 
-    const compute = async () => {
-      const since = new Date();
-      since.setDate(since.getDate() - 56);
-      const sinceStr = since.toISOString().slice(0, 10);
+  const compute = async () => {
+    // ✅ 5 semaines
+    const since = new Date();
+    since.setDate(since.getDate() - 35);
 
-      // ✅ Partir de date_venu si plus récent que 8 semaines
-      const effectiveSince =
-        dateVenu && dateVenu > sinceStr ? dateVenu : sinceStr;
+    const sinceStr = since.toISOString().slice(0, 10);
 
-      const { data: allCultes } = await supabase
-        .from("attendance")
-        .select("id, date")
-        .eq("eglise_id", egliseId)
-        .gte("date", effectiveSince)
-        .order("date", { ascending: false });
+    // ✅ Respecter date_venu
+    const effectiveSince =
+      dateVenu && dateVenu > sinceStr
+        ? dateVenu
+        : sinceStr;
 
-      if (!allCultes || allCultes.length === 0) {
-        setStatus("grey");
-        return;
-      }
+    // ✅ Toutes les présences du membre
+    const { data: presences } = await supabase
+      .from("presences")
+      .select(`
+        attendance_id,
+        attendance:attendance_id (
+          date
+        )
+      `)
+      .eq("membre_id", memberId);
 
-      const { data: presences } = await supabase
-        .from("presences")
-        .select("attendance_id")
-        .eq("membre_id", memberId);
+    if (!presences || presences.length === 0) {
+      setStatus("grey");
+      return;
+    }
 
-      const presentAttendanceIds = new Set(
-        (presences || []).map((p) => p.attendance_id)
-      );
+    // ✅ Dernière présence réelle
+    const dates = presences
+      .map((p) => p.attendance?.date)
+      .filter(Boolean)
+      .sort((a, b) => new Date(b) - new Date(a));
 
-      if (presentAttendanceIds.size === 0) {
-        setStatus("grey");
-        return;
-      }
+    if (dates.length === 0) {
+      setStatus("grey");
+      return;
+    }
 
-      const weekMap = {};
-      allCultes.forEach((c) => {
-        const wk = getWeekKey(c.date);
-        if (!weekMap[wk]) weekMap[wk] = { wasPresent: false };
-        if (presentAttendanceIds.has(c.id)) weekMap[wk].wasPresent = true;
-      });
+    const lastPresence = new Date(dates[0]);
 
-      const weeks = Object.keys(weekMap).sort((a, b) => b.localeCompare(a));
+    // ✅ Nombre de jours depuis dernière présence
+    const diffDays = Math.floor(
+      (new Date() - lastPresence) / (1000 * 60 * 60 * 24)
+    );
 
-      let consecutiveAbsent = 0;
-      for (const wk of weeks) {
-        if (!weekMap[wk].wasPresent) consecutiveAbsent++;
-        else break;
-      }
+    // ✅ Couleur pastorale
+    if (diffDays <= 7) {
+      setStatus("green");
+    } else if (diffDays <= 14) {
+      setStatus("yellow");
+    } else if (diffDays <= 21) {
+      setStatus("orange");
+    } else {
+      setStatus("red");
+    }
+  };
 
-      if (consecutiveAbsent === 0) setStatus("green");
-      else if (consecutiveAbsent === 1) setStatus("yellow");
-      else if (consecutiveAbsent === 2) setStatus("orange");
-      else setStatus("red");
-    };
-
-    compute();
-  }, [memberId, egliseId, dateVenu]);
+  compute();
+}, [memberId, egliseId, dateVenu]);
 
   // ── Données popup ──────────────────────────────────────────────────────────
   const loadMonthData = async () => {
-    setLoadingPopup(true);
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-      .toISOString().slice(0, 10);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-      .toISOString().slice(0, 10);
+  setLoadingPopup(true);
 
-    // ✅ Ne pas montrer cultes avant date_venu
-    const effectiveFirst =
-      dateVenu && dateVenu > firstDay ? dateVenu : firstDay;
+  // ✅ 5 semaines glissantes
+  const since = new Date();
+  since.setDate(since.getDate() - 35);
 
-    const { data: cultes } = await supabase
-      .from("attendance")
-      .select("id, date, heure")
-      .eq("eglise_id", egliseId)
-      .gte("date", effectiveFirst)
-      .lte("date", lastDay)
-      .order("date", { ascending: true });
+  const sinceStr = since.toISOString().slice(0, 10);
+  const todayStr = new Date().toISOString().slice(0, 10);
 
-    const { data: presences } = await supabase
-      .from("presences")
-      .select("attendance_id")
-      .eq("membre_id", memberId)
-      .gte("date", effectiveFirst)
-      .lte("date", lastDay);
+  // ✅ Respecter date_venu
+  const effectiveSince =
+    dateVenu && dateVenu > sinceStr
+      ? dateVenu
+      : sinceStr;
 
-    const presentSet = new Set((presences || []).map((p) => p.attendance_id));
+  // ✅ Tous les cultes utiles
+  const { data: cultes } = await supabase
+    .from("attendance")
+    .select("id, date, heure")
+    .eq("eglise_id", egliseId)
+    .gte("date", effectiveSince)
+    .lte("date", todayStr)
+    .order("date", { ascending: false });
 
-    setMonthData(
-      (cultes || []).map((c) => ({
-        date: c.date,
-        heure: c.heure,
-        present: presentSet.has(c.id),
-      }))
-    );
-    setLoadingPopup(false);
-  };
+  // ✅ Présences
+  const { data: presences } = await supabase
+    .from("presences")
+    .select("attendance_id")
+    .eq("membre_id", memberId);
+
+  const presentSet = new Set(
+    (presences || []).map((p) => p.attendance_id)
+  );
+
+  setMonthData(
+    (cultes || []).map((c) => ({
+      date: c.date,
+      heure: c.heure,
+      present: presentSet.has(c.id),
+    }))
+  );
+
+  setLoadingPopup(false);
+};
 
   const handleDotClick = (e) => {
     e.stopPropagation();
@@ -161,9 +171,7 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
     });
   };
 
-  const monthLabel = new Date().toLocaleDateString("fr-FR", {
-    month: "long", year: "numeric",
-  });
+  const monthLabel = "5 dernières semaines";
 
   // ── Rendu ──────────────────────────────────────────────────────────────────
   return (

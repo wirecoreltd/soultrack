@@ -33,8 +33,7 @@ function formatSessionLabel(s) {
   const d = new Date(s.date + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long" });
   const culte = s.numero_culte ? ` — ${s.numero_culte}${s.numero_culte === 1 ? "er" : "ème"} culte` : "";
   const heure = s.heure ? ` · ${s.heure}` : "";
-  const session = s.numero_session ? ` · Session n°${s.numero_session}` : "";
-  return `${s.typeTemps}${culte} · ${d}${heure}${session}`;
+  return `${s.typeTemps}${culte} · ${d}${heure}`;
 }
 
 function formatDateFr(dateStr) {
@@ -518,7 +517,7 @@ function Presence() {
     const last5 = getLast5Days();
     const { data } = await supabase
       .from("attendance")
-      .select("id, typeTemps, date, heure, numero_culte, numero_session")
+      .select("id, typeTemps, date, heure, numero_culte")
       .eq("eglise_id", profile.eglise_id)
       .in("date", last5)
       .order("date", { ascending: false })
@@ -539,7 +538,7 @@ function Presence() {
     const last5 = getLast5Days();
     const { data } = await supabase
       .from("attendance")
-      .select("id, typeTemps, date, heure, numero_culte, numero_session")
+      .select("id, typeTemps, date, heure, numero_culte")
       .eq("eglise_id", profile.eglise_id)
       .in("date", last5)
       .order("date", { ascending: false })
@@ -566,7 +565,6 @@ function Presence() {
     setSelectedTime(session.heure || "");
     setTypeTemps(session.typeTemps || "");
     setNumeroCulte(session.numero_culte?.toString() || "");
-    setNumeroSession(session.numero_session?.toString() || "");
     setSessionCourante(session);
     setReadOnly(false);
     setEtape("ready");
@@ -580,7 +578,6 @@ function Presence() {
     setSelectedTime(session.heure || "");
     setTypeTemps(session.typeTemps || "");
     setNumeroCulte(session.numero_culte?.toString() || "");
-    setNumeroSession(session.numero_session?.toString() || "");
     setSessionCourante(session);
     setReadOnly(true);   // ← lecture seule
     setEtape("ready");
@@ -773,8 +770,7 @@ function Presence() {
         temps_nom: typeFinal,
         eglise_id: profile.eglise_id,
         ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : {}),
-        // numero_session uniquement pour les types AUTRE
-        ...(typeTemps === "AUTRE" && numeroSession ? { numero_session: Number(numeroSession) } : {}),
+
       };
       const { data, error } = await supabase.from("attendance").insert(payload).select("id").single();
       if (error) throw error;
@@ -785,7 +781,6 @@ function Presence() {
         date: selectedDate,
         heure: selectedTime,
         numero_culte: numeroCulte ? Number(numeroCulte) : null,
-        numero_session: typeTemps === "AUTRE" && numeroSession ? Number(numeroSession) : null,
       };
       setAttendanceId(data.id);
       setSessionCourante(newSession);
@@ -816,7 +811,7 @@ function Presence() {
         typeTemps: typeFinal,
         temps_nom: typeFinal,
         ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : { numero_culte: null }),
-        ...(typeTemps === "AUTRE" && numeroSession ? { numero_session: Number(numeroSession) } : { numero_session: null }),
+
       }).eq("id", attendanceId);
 
       setSessionCourante(prev => ({
@@ -825,7 +820,6 @@ function Presence() {
         date: selectedDate,
         heure: selectedTime,
         numero_culte: numeroCulte ? Number(numeroCulte) : null,
-        numero_session: typeTemps === "AUTRE" && numeroSession ? Number(numeroSession) : null,
       }));
       selectedDateRef.current = selectedDate;
       setEditingSession(false);
@@ -976,7 +970,7 @@ function Presence() {
             <span className="text-white font-semibold text-sm">
               {sessionCourante?.typeTemps}
               {sessionCourante?.numero_culte ? ` — ${sessionCourante.numero_culte}${sessionCourante.numero_culte === 1 ? "er" : "ème"} culte` : ""}
-              {sessionCourante?.numero_session ? ` · Session n°${sessionCourante.numero_session}` : ""}
+
             </span>
             {!readOnly && <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>}
           </div>

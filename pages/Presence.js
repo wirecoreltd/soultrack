@@ -46,7 +46,6 @@ function formatDateFr(dateStr) {
 
 // ─── ÉCRAN CHOIX SESSION ───────────────────────────────────────
 function ChoixSession({ sessions, onJoin, onNew, loadingCheck, onConsulterAncienne }) {
-  // MODIF 1 : anciennes sessions cachées par défaut
   const [showOld, setShowOld] = useState(false);
 
   const byDate = sessions.reduce((acc, s) => {
@@ -69,7 +68,6 @@ function ChoixSession({ sessions, onJoin, onNew, loadingCheck, onConsulterAncien
 
   return (
     <div className="w-full max-w-lg mt-6 flex flex-col gap-4">
-      {/* Sessions du jour */}
       {todaySessions.length > 0 && (
         <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-3">
           <h2 className="text-base font-bold text-gray-800 mb-1">📋 Sessions du jour</h2>
@@ -97,7 +95,6 @@ function ChoixSession({ sessions, onJoin, onNew, loadingCheck, onConsulterAncien
         </div>
       )}
 
-      {/* MODIF 1 : Anciennes sessions avec toggle */}
       {oldDates.length > 0 && (
         <div className="flex flex-col gap-2">
           <button
@@ -135,10 +132,7 @@ function ChoixSession({ sessions, onJoin, onNew, loadingCheck, onConsulterAncien
       {sessions.length === 0 && (
         <div className="bg-white/10 rounded-2xl p-5 text-center">
           <p className="text-white/70 text-sm mb-3">Aucune session aujourd'hui.</p>
-          <button
-            onClick={onNew}
-            className="px-6 py-3 bg-white text-[#333699] font-bold rounded-xl hover:bg-white/90 transition"
-          >
+          <button onClick={onNew} className="px-6 py-3 bg-white text-[#333699] font-bold rounded-xl hover:bg-white/90 transition">
             ➕ Créer une session
           </button>
         </div>
@@ -147,10 +141,7 @@ function ChoixSession({ sessions, onJoin, onNew, loadingCheck, onConsulterAncien
       {sessions.length > 0 && todaySessions.length === 0 && (
         <div className="bg-white/10 rounded-2xl p-5 text-center">
           <p className="text-white/70 text-sm mb-3">Aucune session aujourd'hui.</p>
-          <button
-            onClick={onNew}
-            className="px-6 py-3 bg-white text-[#333699] font-bold rounded-xl hover:bg-white/90 transition"
-          >
+          <button onClick={onNew} className="px-6 py-3 bg-white text-[#333699] font-bold rounded-xl hover:bg-white/90 transition">
             ➕ Créer une session
           </button>
         </div>
@@ -176,7 +167,6 @@ function FormulaireSession({
 }) {
   const typeFinalLabel = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
   const isCulte = typeFinalLabel?.toLowerCase().includes("culte");
-
   const culteOk = !isCulte || (isCulte && numeroCulte);
   const isDisabled = savingSession || !typeTemps || (typeTemps === "AUTRE" && !nouveauTemps.trim()) || !culteOk;
 
@@ -222,14 +212,9 @@ function FormulaireSession({
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               🔢 Numéro de session <span className="text-gray-400 font-normal">(optionnel)</span>
             </label>
-            <input
-              type="number"
-              min="1"
-              placeholder="Ex: 1, 2, 3..."
-              value={numeroSession}
+            <input type="number" min="1" placeholder="Ex: 1, 2, 3..." value={numeroSession}
               onChange={(e) => setNumeroSession(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
-            />
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-black" />
           </div>
           <label className="flex items-center gap-2 text-sm text-amber-600 cursor-pointer select-none">
             <input type="checkbox" checked={enregistrerTemps} onChange={e => setEnregistrerTemps(e.target.checked)} />
@@ -258,9 +243,7 @@ function FormulaireSession({
               <option key={n} value={n}>{n}{n === 1 ? "er" : "ème"} Culte</option>
             ))}
           </select>
-          {!numeroCulte && (
-            <p className="text-xs text-red-500 mt-1">⚠️ Le numéro de culte est obligatoire.</p>
-          )}
+          {!numeroCulte && <p className="text-xs text-red-500 mt-1">⚠️ Le numéro de culte est obligatoire.</p>}
         </div>
       )}
 
@@ -340,10 +323,9 @@ function CartePresent({ p, onUnmark, readOnly }) {
 
 // ─── COMPTEUR HOMMES / FEMMES ──────────────────────────────────
 function CompteurSexe({ presences }) {
-  const hommes = presences.filter(p => p.membres_complets?.sexe?.toLowerCase() === "homme").length;
-  const femmes = presences.filter(p => p.membres_complets?.sexe?.toLowerCase() === "femme").length;
+  const hommes  = presences.filter(p => p.membres_complets?.sexe?.toLowerCase() === "homme").length;
+  const femmes  = presences.filter(p => p.membres_complets?.sexe?.toLowerCase() === "femme").length;
   const inconnus = presences.length - hommes - femmes;
-
   return (
     <div className="flex gap-3 justify-center mt-2 flex-wrap">
       <span className="flex items-center gap-1.5 bg-blue-500/20 text-blue-200 text-xs px-3 py-1 rounded-full font-semibold">
@@ -365,9 +347,9 @@ function CompteurSexe({ presences }) {
 function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, view, color = "blue", readOnly }) {
   const [collapsed, setCollapsed] = useState(false);
 
-  const absents = members.filter(m => !presentIds.has(m.id));
+  const absents       = members.filter(m => !presentIds.has(m.id));
   const presentsItems = members.filter(m => presentIds.has(m.id));
-  const shown = view === "absents" ? absents : presentsItems;
+  const shown         = view === "absents" ? absents : presentsItems;
   if (shown.length === 0) return null;
 
   const colorMap = {
@@ -385,7 +367,9 @@ function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, vie
         <span className="font-bold text-sm">{icon} {label}</span>
         <span className="flex items-center gap-3 text-xs">
           <span className="bg-white/20 px-2 py-0.5 rounded-full">
-            {view === "absents" ? `${absents.length} absent${absents.length > 1 ? "s" : ""}` : `${presentsItems.length} présent${presentsItems.length > 1 ? "s" : ""}`}
+            {view === "absents"
+              ? `${absents.length} absent${absents.length > 1 ? "s" : ""}`
+              : `${presentsItems.length} présent${presentsItems.length > 1 ? "s" : ""}`}
           </span>
           <span>{collapsed ? "▼" : "▲"}</span>
         </span>
@@ -451,14 +435,13 @@ function Presence() {
 
   const [sessionCourante, setSessionCourante] = useState(null);
 
-  const profileRef = useRef(null);
-  const myIdsRef = useRef(null);
-  const isAdminRef = useRef(false);
-  // MODIF 2 : ref pour savoir si le rôle génère une vue groupée
+  const profileRef   = useRef(null);
+  const myIdsRef     = useRef(null);
+  const isAdminRef   = useRef(false);
   const useGroupedViewRef = useRef(false);
-  const fetchAllRef = useRef(null);
-  const checkSessionsRef = useRef(null);
-  const selectedDateRef = useRef(selectedDate);
+  const fetchAllRef       = useRef(null);
+  const checkSessionsRef  = useRef(null);
+  const selectedDateRef   = useRef(selectedDate);
   useEffect(() => { selectedDateRef.current = selectedDate; }, [selectedDate]);
 
   // ─── INIT PROFIL ──────────────────────────────────────────────
@@ -478,7 +461,6 @@ function Presence() {
     const isAdmin = profile.roles?.includes("Administrateur") || profile.roles?.includes("ResponsableIntegration");
     isAdminRef.current = isAdmin;
 
-    // MODIF 2 : ResponsableCellule/Familles utilisent aussi une vue groupée
     const isRespGroupe = profile.roles?.includes("ResponsableCellule") || profile.roles?.includes("ResponsableFamilles");
     useGroupedViewRef.current = isAdmin || isRespGroupe;
 
@@ -501,14 +483,12 @@ function Presence() {
 
     if (cellulesResult.data?.length > 0) {
       const celluleIds = cellulesResult.data.map(c => c.id);
-      // MODIF 3 : exclure etat_contact = 'supprime'
       const { data: cm } = await supabase.from("membres_complets").select("id").in("cellule_id", celluleIds).in("etat_contact", ["existant", "nouveau"]);
       cm?.forEach(m => ids.add(m.id));
     }
 
     if (famillesResult.data?.length > 0) {
       const familleIds = famillesResult.data.map(f => f.id);
-      // MODIF 3 : exclure etat_contact = 'supprime'
       const { data: fm } = await supabase.from("membres_complets").select("id").in("famille_id", familleIds).in("etat_contact", ["existant", "nouveau"]);
       fm?.forEach(m => ids.add(m.id));
     }
@@ -598,29 +578,29 @@ function Presence() {
     try {
       await initProfile();
       const profile = profileRef.current;
-      const myIds = myIdsRef.current;
+      const myIds   = myIdsRef.current;
       const isAdmin = isAdminRef.current;
-      const d = date || selectedDateRef.current;
+      const d       = date || selectedDateRef.current;
 
+      // On récupère uniquement les présents (statut = 'present')
       const { data: presencesData } = await supabase
         .from("presences")
-        .select("membre_id, checked_by, membres_complets(prenom, nom, sexe)")
-        .eq("date", d);
+        .select("membre_id, statut, checked_by, membres_complets(prenom, nom, sexe)")
+        .eq("date", d)
+        .eq("statut", "present");
 
       const allPresences = presencesData || [];
-      const presentIds = new Set(allPresences.map(p => p.membre_id));
+      const presentIds   = new Set(allPresences.map(p => p.membre_id));
 
       // ── VUE NON-ADMIN ─────────────────────────────────────────
       if (!isAdmin) {
         if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); setGroupes([]); return; }
 
-        const roles = profile?.roles || [];
-        const isResponsableCellule = roles.includes("ResponsableCellule");
+        const roles               = profile?.roles || [];
+        const isResponsableCellule  = roles.includes("ResponsableCellule");
         const isResponsableFamilles = roles.includes("ResponsableFamilles");
 
-        // MODIF 2 : Vue groupée pour ResponsableCellule / ResponsableFamilles
         if (isResponsableCellule || isResponsableFamilles) {
-          // MODIF 3 : exclure 'supprime'
           const { data: membresData } = await supabase
             .from("membres_complets")
             .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
@@ -676,7 +656,6 @@ function Presence() {
             });
           }
 
-          // Membres sans groupe (absents de toutes cellules/familles)
           const sansCellule = membres
             .filter(m => !membresCouvertsParGroupe.has(m.id))
             .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
@@ -700,8 +679,7 @@ function Presence() {
           return;
         }
 
-        // Cas Conseiller (liste plate, ordre alphabétique)
-        // MODIF 3 : exclure 'supprime'
+        // Conseiller — liste plate
         const { data: membresData } = await supabase
           .from("membres_complets")
           .select("id, prenom, nom, telephone, sexe")
@@ -720,7 +698,6 @@ function Presence() {
       }
 
       // ── VUE ADMIN/RI ──────────────────────────────────────────
-      // MODIF 3 : exclure 'supprime' (filtre déjà présent, conservé)
       const { data: tousMembres } = await supabase
         .from("membres_complets")
         .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
@@ -842,6 +819,7 @@ function Presence() {
     await fetchAllRef.current?.(selectedDateRef.current);
   };
 
+  // ─── DÉMARRER SESSION : INSERT en masse des absents ───────────
   const demarrerSession = async () => {
     const typeFinal = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
     if (!typeFinal) return alert("Veuillez choisir un type de temps.");
@@ -856,6 +834,7 @@ function Presence() {
       if (typeTemps === "AUTRE" && enregistrerTemps && !tempsOptions.includes(typeFinal)) {
         setTempsOptions(prev => [...prev, typeFinal].sort((a, b) => a.localeCompare(b, "fr")));
       }
+
       const payload = {
         date: selectedDate,
         heure: selectedTime,
@@ -867,14 +846,19 @@ function Presence() {
       const { data, error } = await supabase.from("attendance").insert(payload).select("id").single();
       if (error) throw error;
 
+      const newAttendanceId = data.id;
+
+      // ── INSERT en masse : tous les membres = absent par défaut ──
+      await insererAbsentsEnMasse(newAttendanceId, selectedDate, profile);
+
       const newSession = {
-        id: data.id,
+        id: newAttendanceId,
         typeTemps: typeFinal,
         date: selectedDate,
         heure: selectedTime,
         numero_culte: numeroCulte ? Number(numeroCulte) : null,
       };
-      setAttendanceId(data.id);
+      setAttendanceId(newAttendanceId);
       setSessionCourante(newSession);
       selectedDateRef.current = selectedDate;
       setReadOnly(false);
@@ -884,6 +868,68 @@ function Presence() {
       alert("Erreur : " + err.message);
     } finally {
       setSavingSession(false);
+    }
+  };
+
+  // ─── INSERT EN MASSE : tous les membres absent au démarrage ───
+  const insererAbsentsEnMasse = async (newAttendanceId, date, profile) => {
+    try {
+      const myIds   = myIdsRef.current;
+      const isAdmin = isAdminRef.current;
+
+      let membresAInserer = [];
+
+      if (isAdmin) {
+        // Admin : tous les membres de l'église
+        const { data } = await supabase
+          .from("membres_complets")
+          .select("id")
+          .eq("eglise_id", profile.eglise_id)
+          .in("etat_contact", ["existant", "nouveau"]);
+        membresAInserer = data || [];
+      } else if (myIds && myIds.length > 0) {
+        // Rôle restreint : uniquement ses membres
+        const { data } = await supabase
+          .from("membres_complets")
+          .select("id")
+          .eq("eglise_id", profile.eglise_id)
+          .in("etat_contact", ["existant", "nouveau"])
+          .in("id", myIds);
+        membresAInserer = data || [];
+      }
+
+      if (membresAInserer.length === 0) return;
+
+      // Vérifier s'il existe déjà des lignes pour cette date+attendance
+      // (éviter les doublons si la session est rejointe plusieurs fois)
+      const { data: existantes } = await supabase
+        .from("presences")
+        .select("membre_id")
+        .eq("attendance_id", newAttendanceId)
+        .eq("date", date);
+
+      const existantIds = new Set((existantes || []).map(e => e.membre_id));
+      const nouveaux    = membresAInserer.filter(m => !existantIds.has(m.id));
+
+      if (nouveaux.length === 0) return;
+
+      // INSERT en masse avec statut = 'absent'
+      const rows = nouveaux.map(m => ({
+        membre_id:     m.id,
+        date:          date,
+        attendance_id: newAttendanceId,
+        statut:        "absent",
+        checked_by:    profile.uid,
+      }));
+
+      // Supabase limite les inserts en masse — on découpe par lots de 500
+      const BATCH = 500;
+      for (let i = 0; i < rows.length; i += BATCH) {
+        const { error } = await supabase.from("presences").insert(rows.slice(i, i + BATCH));
+        if (error) console.error("Erreur insert batch absents:", error);
+      }
+    } catch (err) {
+      console.error("Erreur insererAbsentsEnMasse:", err);
     }
   };
 
@@ -921,32 +967,50 @@ function Presence() {
     }
   };
 
+  // ─── MARQUER PRÉSENT : UPDATE statut → 'present' ─────────────
   const markPresent = async (membre) => {
     if (readOnly) return;
     try {
       const { uid } = profileRef.current;
       const d = selectedDateRef.current;
-      const { error } = await supabase.from("presences").insert({
-        membre_id: membre.id,
-        date: d,
-        checked_by: uid,
-        attendance_id: attendanceId,
-      });
-      if (error) throw error;
+
+      // On tente un UPDATE d'abord (la ligne existe déjà car insert en masse)
+      const { data: updated, error: updateError } = await supabase
+        .from("presences")
+        .update({ statut: "present", checked_by: uid })
+        .eq("membre_id", membre.id)
+        .eq("attendance_id", attendanceId)
+        .select("id");
+
+      // Si aucune ligne trouvée (session rejointe sans insert en masse), on insert
+      if (!updateError && (!updated || updated.length === 0)) {
+        await supabase.from("presences").insert({
+          membre_id:     membre.id,
+          date:          d,
+          attendance_id: attendanceId,
+          statut:        "present",
+          checked_by:    uid,
+        });
+      }
+
       await fetchAllRef.current?.(d);
     } catch (err) {
       console.error("Erreur markPresent:", err);
     }
   };
 
+  // ─── MARQUER ABSENT : UPDATE statut → 'absent' ────────────────
+  // (plus de DELETE — la ligne reste pour tracer l'absence)
   const markAbsent = async (memberId) => {
     if (readOnly) return;
     try {
       const d = selectedDateRef.current;
-      const { error } = await supabase.from("presences").delete()
+      await supabase
+        .from("presences")
+        .update({ statut: "absent" })
         .eq("membre_id", memberId)
-        .eq("date", d);
-      if (error) throw error;
+        .eq("attendance_id", attendanceId);
+
       await fetchAllRef.current?.(d);
     } catch (err) {
       console.error("Erreur markAbsent:", err);
@@ -956,15 +1020,12 @@ function Presence() {
   const filterM = (m) => `${m.prenom} ${m.nom} ${m.telephone || ""}`.toLowerCase().includes(search.toLowerCase());
   const filterP = (p) => `${p.membres_complets?.prenom} ${p.membres_complets?.nom}`.toLowerCase().includes(search.toLowerCase());
 
-  // MODIF 2 : vue groupée activée pour Admin ET ResponsableCellule/Familles
   const useGroupedView = isAdminRef.current || groupes.length > 0;
-  const totalPresents = presentList.length;
-  const totalAbsents = allMembers.length + (useGroupedView ? groupes.reduce((n, g) => n + g.membres.filter(m => !new Set(presentList.map(p => p.membre_id)).has(m.id)).length, 0) : 0);
+  const totalPresents  = presentList.length;
 
-  // Pour les groupes : total absents = membres non présents dans tous les groupes
-  const presentIdsSet = new Set(presentList.map(p => p.membre_id));
-  const totalAbsentsGroupes = groupes.reduce((n, g) => n + g.membres.filter(m => !presentIdsSet.has(m.id)).length, 0);
-  const totalAbsentsFinal = useGroupedView ? totalAbsentsGroupes : allMembers.length;
+  const presentIdsSet         = new Set(presentList.map(p => p.membre_id));
+  const totalAbsentsGroupes   = groupes.reduce((n, g) => n + g.membres.filter(m => !presentIdsSet.has(m.id)).length, 0);
+  const totalAbsentsFinal     = useGroupedView ? totalAbsentsGroupes : allMembers.length;
 
   const handleReset = () => {
     setEtape("check");
@@ -1085,11 +1146,6 @@ function Presence() {
         <BanniereConsultation session={sessionCourante} onRetour={handleReset} />
       )}
 
-      {!isAdminRef.current && !useGroupedView && !readOnly && (
-        <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} />
-      )}
-
-      {/* Toggle visible uniquement pour les Conseillers (pas les Resp. groupés) */}
       {!isAdminRef.current && !groupes.length && !readOnly && (
         <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} />
       )}
@@ -1145,7 +1201,6 @@ function Presence() {
           {loading ? (
             <p className="text-white text-center">Chargement...</p>
           ) : useGroupedView ? (
-            // MODIF 2 : Vue groupée pour Admin ET ResponsableCellule/Familles
             <div className="w-full flex flex-col items-center">
               {groupes.length === 0
                 ? <p className="text-white text-center">Aucun membre visible</p>
@@ -1170,7 +1225,6 @@ function Presence() {
               }
             </div>
           ) : (
-            // Vue liste plate (Conseiller)
             <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-2">
               {view === "absents"
                 ? allMembers.filter(filterM).length === 0
@@ -1183,10 +1237,7 @@ function Presence() {
             </div>
           )}
 
-          <button
-            onClick={handleReset}
-            className="mt-8 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm"
-          >
+          <button onClick={handleReset} className="mt-8 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm">
             {readOnly ? "↩ Retour aux sessions" : "↩ Nouvelle session"}
           </button>
         </>

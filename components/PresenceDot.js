@@ -4,26 +4,25 @@ import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 
 /**
- * PresenceDot
+ * PresenceDot v2
  * Props:
  *   - memberId  : string  (membre.id)
  *   - egliseId  : string  (userProfile.eglise_id)
+ *   - dateVenu  : string  (membre.date_venu — filtre les cultes avant l'arrivée)
  */
-export default function PresenceDot({ memberId, egliseId }) {
-  const [status, setStatus] = useState(null); // null=loading, 'grey','green','yellow','orange','red'
+export default function PresenceDot({ memberId, egliseId, dateVenu }) {
+  const [status, setStatus] = useState(null);
   const [open, setOpen] = useState(false);
-  const [monthData, setMonthData] = useState([]); // [{ date, heure, present }]
+  const [monthData, setMonthData] = useState([]);
   const [loadingPopup, setLoadingPopup] = useState(false);
   const popupRef = useRef(null);
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
   const getWeekKey = (dateStr) => {
     const d = new Date(dateStr);
-    // ISO week: Monday = start
-    const day = d.getDay() === 0 ? 7 : d.getDay(); // 1=Mon … 7=Sun
+    const day = d.getDay() === 0 ? 7 : d.getDay();
     const monday = new Date(d);
     monday.setDate(d.getDate() - (day - 1));
-    return monday.toISOString().slice(0, 10); // "YYYY-MM-DD" of Monday
+    return monday.toISOString().slice(0, 10);
   };
 
   // ── Calcul couleur ─────────────────────────────────────────────────────────
@@ -31,16 +30,19 @@ export default function PresenceDot({ memberId, egliseId }) {
     if (!memberId || !egliseId) return;
 
     const compute = async () => {
-      // 1. Récupérer tous les cultes des 8 dernières semaines (attendance)
       const since = new Date();
-      since.setDate(since.getDate() - 56); // 8 semaines
+      since.setDate(since.getDate() - 56);
       const sinceStr = since.toISOString().slice(0, 10);
+
+      // ✅ Partir de date_venu si plus récent que 8 semaines
+      const effectiveSince =
+        dateVenu && dateVenu > sinceStr ? dateVenu : sinceStr;
 
       const { data: allCultes } = await supabase
         .from("attendance")
         .select("id, date")
         .eq("eglise_id", egliseId)
-        .gte("date", sinceStr)
+        .gte("date", effectiveSince)
         .order("date", { ascending: false });
 
       if (!allCultes || allCultes.length === 0) {
@@ -48,47 +50,35 @@ export default function PresenceDot({ memberId, egliseId }) {
         return;
       }
 
-      // 2. Récupérer les présences du membre
       const { data: presences } = await supabase
         .from("presences")
-        .select("attendance_id, date")
+        .select("attendance_id")
         .eq("membre_id", memberId);
 
       const presentAttendanceIds = new Set(
         (presences || []).map((p) => p.attendance_id)
       );
 
-      if (presentAttendanceIds.size === 0 && allCultes.length > 0) {
-        // Aucune présence enregistrée → gris
+      if (presentAttendanceIds.size === 0) {
         setStatus("grey");
         return;
       }
 
-      // 3. Grouper les cultes par semaine, noter si présent dans chaque semaine
-      const weekMap = {}; // weekKey → { hasCulte, wasPresent }
+      const weekMap = {};
       allCultes.forEach((c) => {
         const wk = getWeekKey(c.date);
-        if (!weekMap[wk]) weekMap[wk] = { hasCulte: false, wasPresent: false };
-        weekMap[wk].hasCulte = true;
+        if (!weekMap[wk]) weekMap[wk] = { wasPresent: false };
         if (presentAttendanceIds.has(c.id)) weekMap[wk].wasPresent = true;
       });
 
-      // 4. Trier les semaines du plus récent au plus ancien
-      const weeks = Object.keys(weekMap).sort((a, b) =>
-        b.localeCompare(a)
-      );
+      const weeks = Object.keys(weekMap).sort((a, b) => b.localeCompare(a));
 
-      // 5. Compter semaines consécutives d'absence depuis la plus récente
       let consecutiveAbsent = 0;
       for (const wk of weeks) {
-        if (!weekMap[wk].wasPresent) {
-          consecutiveAbsent++;
-        } else {
-          break;
-        }
+        if (!weekMap[wk].wasPresent) consecutiveAbsent++;
+        else break;
       }
 
-      // 6. Déterminer couleur
       if (consecutiveAbsent === 0) setStatus("green");
       else if (consecutiveAbsent === 1) setStatus("yellow");
       else if (consecutiveAbsent === 2) setStatus("orange");
@@ -96,45 +86,45 @@ export default function PresenceDot({ memberId, egliseId }) {
     };
 
     compute();
-  }, [memberId, egliseId]);
+  }, [memberId, egliseId, dateVenu]);
 
-  // ── Données popup (mois en cours) ──────────────────────────────────────────
+  // ── Données popup ──────────────────────────────────────────────────────────
   const loadMonthData = async () => {
     setLoadingPopup(true);
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-      .toISOString()
-      .slice(0, 10);
+      .toISOString().slice(0, 10);
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-      .toISOString()
-      .slice(0, 10);
+      .toISOString().slice(0, 10);
 
-    // Tous les cultes du mois
+    // ✅ Ne pas montrer cultes avant date_venu
+    const effectiveFirst =
+      dateVenu && dateVenu > firstDay ? dateVenu : firstDay;
+
     const { data: cultes } = await supabase
       .from("attendance")
       .select("id, date, heure")
       .eq("eglise_id", egliseId)
-      .gte("date", firstDay)
+      .gte("date", effectiveFirst)
       .lte("date", lastDay)
       .order("date", { ascending: true });
 
-    // Présences du membre ce mois
     const { data: presences } = await supabase
       .from("presences")
       .select("attendance_id")
       .eq("membre_id", memberId)
-      .gte("date", firstDay)
+      .gte("date", effectiveFirst)
       .lte("date", lastDay);
 
     const presentSet = new Set((presences || []).map((p) => p.attendance_id));
 
-    const rows = (cultes || []).map((c) => ({
-      date: c.date,
-      heure: c.heure,
-      present: presentSet.has(c.id),
-    }));
-
-    setMonthData(rows);
+    setMonthData(
+      (cultes || []).map((c) => ({
+        date: c.date,
+        heure: c.heure,
+        present: presentSet.has(c.id),
+      }))
+    );
     setLoadingPopup(false);
   };
 
@@ -144,13 +134,11 @@ export default function PresenceDot({ memberId, egliseId }) {
     setOpen((v) => !v);
   };
 
-  // Fermer popup si clic dehors
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
-      if (popupRef.current && !popupRef.current.contains(e.target)) {
+      if (popupRef.current && !popupRef.current.contains(e.target))
         setOpen(false);
-      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -158,39 +146,29 @@ export default function PresenceDot({ memberId, egliseId }) {
 
   // ── Couleurs ───────────────────────────────────────────────────────────────
   const dotColors = {
-    grey:   { bg: "#9ca3af", label: "Aucune donnée",      ring: "#d1d5db" },
-    green:  { bg: "#22c55e", label: "Présent récemment",  ring: "#bbf7d0" },
-    yellow: { bg: "#eab308", label: "1 sem. d'absence",   ring: "#fef08a" },
-    orange: { bg: "#f97316", label: "2 sem. d'absence",   ring: "#fed7aa" },
-    red:    { bg: "#ef4444", label: "3+ sem. d'absence",  ring: "#fecaca" },
+    grey:   { bg: "#9ca3af", label: "Aucune donnée",     ring: "#d1d5db" },
+    green:  { bg: "#22c55e", label: "Présent récemment", ring: "#bbf7d0" },
+    yellow: { bg: "#eab308", label: "1 sem. d'absence",  ring: "#fef08a" },
+    orange: { bg: "#f97316", label: "2 sem. d'absence",  ring: "#fed7aa" },
+    red:    { bg: "#ef4444", label: "3+ sem. d'absence", ring: "#fecaca" },
   };
-
   const color = dotColors[status] ?? dotColors.grey;
 
   const formatDateFr = (dateStr) => {
     if (!dateStr) return "";
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("fr-FR", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
+    return new Date(dateStr).toLocaleDateString("fr-FR", {
+      weekday: "long", day: "numeric", month: "long",
     });
   };
 
-  const formatHeure = (h) => {
-    if (!h) return "";
-    return h.slice(0, 5); // "HH:MM"
-  };
-
-  const now = new Date();
-  const monthLabel = now.toLocaleDateString("fr-FR", {
-    month: "long",
-    year: "numeric",
+  const monthLabel = new Date().toLocaleDateString("fr-FR", {
+    month: "long", year: "numeric",
   });
 
   // ── Rendu ──────────────────────────────────────────────────────────────────
   return (
     <div className="relative inline-block" ref={popupRef}>
+
       {/* Le rond */}
       <button
         onClick={handleDotClick}
@@ -210,15 +188,14 @@ export default function PresenceDot({ memberId, egliseId }) {
         className="hover:scale-125"
       />
 
-      {/* Popup */}
+      {/* ✅ Popup vers le BAS, aligné à droite */}
       {open && (
         <div
           style={{
             position: "absolute",
             zIndex: 100,
-            bottom: "calc(100% + 10px)",
-            left: "50%",
-            transform: "translateX(-50%)",
+            top: "calc(100% + 10px)",
+            right: 0,
             width: 280,
             background: "#1e1b4b",
             borderRadius: 14,
@@ -228,13 +205,12 @@ export default function PresenceDot({ memberId, egliseId }) {
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Flèche */}
+          {/* Flèche pointant vers le haut */}
           <div
             style={{
               position: "absolute",
-              bottom: -7,
-              left: "50%",
-              transform: "translateX(-50%)",
+              top: -7,
+              right: 4,
               width: 14,
               height: 14,
               background: "#1e1b4b",
@@ -246,46 +222,21 @@ export default function PresenceDot({ memberId, egliseId }) {
           {/* En-tête */}
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p
-                style={{
-                  fontSize: 11,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  color: "#a5b4fc",
-                  marginBottom: 2,
-                }}
-              >
+              <p style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a5b4fc", marginBottom: 2 }}>
                 Présences
               </p>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "white" }}>
-                {monthLabel}
-              </p>
+              <p style={{ fontSize: 14, fontWeight: 700 }}>{monthLabel}</p>
             </div>
-            {/* Badge statut */}
-            <span
-              style={{
-                background: color.bg,
-                color: "white",
-                fontSize: 10,
-                fontWeight: 700,
-                padding: "3px 8px",
-                borderRadius: 20,
-                letterSpacing: "0.04em",
-              }}
-            >
+            <span style={{ background: color.bg, color: "white", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 20 }}>
               {color.label}
             </span>
           </div>
 
-          {/* Liste cultes */}
+          {/* Liste */}
           {loadingPopup ? (
-            <p style={{ fontSize: 12, color: "#a5b4fc", textAlign: "center" }}>
-              Chargement…
-            </p>
+            <p style={{ fontSize: 12, color: "#a5b4fc", textAlign: "center" }}>Chargement…</p>
           ) : monthData.length === 0 ? (
-            <p style={{ fontSize: 12, color: "#a5b4fc", textAlign: "center" }}>
-              Aucun culte enregistré ce mois-ci.
-            </p>
+            <p style={{ fontSize: 12, color: "#a5b4fc", textAlign: "center" }}>Aucun culte ce mois-ci.</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {monthData.map((row, i) => (
@@ -295,34 +246,21 @@ export default function PresenceDot({ memberId, egliseId }) {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    background: row.present
-                      ? "rgba(34,197,94,0.12)"
-                      : "rgba(239,68,68,0.10)",
+                    background: row.present ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.10)",
                     borderRadius: 8,
                     padding: "6px 10px",
                     borderLeft: `3px solid ${row.present ? "#22c55e" : "#ef4444"}`,
                   }}
                 >
                   <div>
-                    <p
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: "white",
-                        textTransform: "capitalize",
-                      }}
-                    >
+                    <p style={{ fontSize: 12, fontWeight: 600, color: "white", textTransform: "capitalize" }}>
                       {formatDateFr(row.date)}
                     </p>
                     {row.heure && (
-                      <p style={{ fontSize: 10, color: "#a5b4fc" }}>
-                        {formatHeure(row.heure)}
-                      </p>
+                      <p style={{ fontSize: 10, color: "#a5b4fc" }}>{row.heure.slice(0, 5)}</p>
                     )}
                   </div>
-                  <span style={{ fontSize: 16 }}>
-                    {row.present ? "✅" : "❌"}
-                  </span>
+                  <span style={{ fontSize: 16 }}>{row.present ? "✅" : "❌"}</span>
                 </div>
               ))}
             </div>
@@ -330,29 +268,10 @@ export default function PresenceDot({ memberId, egliseId }) {
 
           {/* Résumé */}
           {!loadingPopup && monthData.length > 0 && (
-            <div
-              style={{
-                marginTop: 10,
-                paddingTop: 8,
-                borderTop: "1px solid rgba(165,180,252,0.2)",
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: 11,
-                color: "#a5b4fc",
-              }}
-            >
-              <span>
-                ✅ {monthData.filter((r) => r.present).length} présence
-                {monthData.filter((r) => r.present).length > 1 ? "s" : ""}
-              </span>
-              <span>
-                ❌ {monthData.filter((r) => !r.present).length} absence
-                {monthData.filter((r) => !r.present).length > 1 ? "s" : ""}
-              </span>
-              <span>
-                📊 {monthData.length} culte
-                {monthData.length > 1 ? "s" : ""}
-              </span>
+            <div style={{ marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(165,180,252,0.2)", display: "flex", justifyContent: "space-between", fontSize: 11, color: "#a5b4fc" }}>
+              <span>✅ {monthData.filter((r) => r.present).length} présence{monthData.filter((r) => r.present).length > 1 ? "s" : ""}</span>
+              <span>❌ {monthData.filter((r) => !r.present).length} absence{monthData.filter((r) => !r.present).length > 1 ? "s" : ""}</span>
+              <span>📊 {monthData.length} culte{monthData.length > 1 ? "s" : ""}</span>
             </div>
           )}
         </div>

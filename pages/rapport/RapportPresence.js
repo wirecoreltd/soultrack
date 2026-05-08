@@ -302,8 +302,8 @@ function RapportPresence() {
             cellule_id, famille_id, statut, date_venu
           )
         `)
-        .in("attendance_id", attIds)
-        .eq("statut", "present");
+        .in("attendance_id", attIds);
+        
       if (pErr) throw pErr;
 
       let filtered = pData || [];

@@ -729,6 +729,7 @@ function ListMembersContent() {
               <PresenceDot
                 memberId={m.id}
                 egliseId={userProfile?.eglise_id}
+                dateVenu={m.date_venu}
               />
                 </div>
           </h2>

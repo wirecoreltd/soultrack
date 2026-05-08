@@ -444,6 +444,7 @@ function Presence() {
   const myIdsRef = useRef(null);
   const isAdminRef = useRef(false);
   const fetchAllRef = useRef(null);
+  const checkSessionsRef = useRef(null);
   const selectedDateRef = useRef(selectedDate);
   useEffect(() => { selectedDateRef.current = selectedDate; }, [selectedDate]);
 
@@ -681,6 +682,23 @@ function Presence() {
   }, [initProfile]);
 
   useEffect(() => { fetchAllRef.current = fetchAll; }, [fetchAll]);
+  useEffect(() => { checkSessionsRef.current = checkSessionsDuJour; }, [checkSessionsDuJour]);
+
+  // ─── REALTIME SESSIONS (écran choix) ─────────────────────────
+  // Quand on est sur l'écran "choix" ou "form", écouter les nouvelles sessions
+  // pour que les autres utilisateurs voient apparaître la session créée
+  useEffect(() => {
+    if (etape !== "choix" && etape !== "form") return;
+
+    const channel = supabase
+      .channel("attendance-live")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "attendance" }, () => {
+        checkSessionsRef.current?.();
+      })
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
+  }, [etape]);
 
   useEffect(() => {
     if (etape !== "ready") return;

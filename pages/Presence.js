@@ -589,8 +589,7 @@ function Presence() {
     setTypeTemps(session.typeTemps || "");
     setNumeroCulte(session.numero_culte?.toString() || "");
     setSessionCourante(session);
-    // Lecture seule uniquement si la session est strictement avant aujourd'hui
-    setReadOnly(session.date < today());
+    setReadOnly(false);
     setEtape("ready");
   };
 

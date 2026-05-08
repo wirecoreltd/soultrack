@@ -18,15 +18,44 @@ export default function PresencePage() {
 const today = () => new Date().toISOString().split("T")[0];
 const nowTime = () => new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
+// Retourne les dates des 5 derniers jours (aujourd'hui inclus)
+function getLast5Days() {
+  const days = [];
+  for (let i = 0; i < 5; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    days.push(d.toISOString().split("T")[0]);
+  }
+  return days;
+}
+
 function formatSessionLabel(s) {
   const d = new Date(s.date + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long" });
   const culte = s.numero_culte ? ` — ${s.numero_culte}${s.numero_culte === 1 ? "er" : "ème"} culte` : "";
   const heure = s.heure ? ` · ${s.heure}` : "";
-  return `${s.typeTemps}${culte} · ${d}${heure}`;
+  const session = s.numero_session ? ` · Session n°${s.numero_session}` : "";
+  return `${s.typeTemps}${culte} · ${d}${heure}${session}`;
+}
+
+function formatDateFr(dateStr) {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("fr-FR", {
+    weekday: "long", day: "2-digit", month: "long",
+  });
 }
 
 // ─── ÉCRAN CHOIX SESSION ───────────────────────────────────────
-function ChoixSession({ sessions, onJoin, onNew, loadingCheck }) {
+function ChoixSession({ sessions, onJoin, onNew, loadingCheck, onConsulterAncienne }) {
+  // Grouper les sessions par date
+  const byDate = sessions.reduce((acc, s) => {
+    if (!acc[s.date]) acc[s.date] = [];
+    acc[s.date].push(s);
+    return acc;
+  }, {});
+
+  const todayStr = today();
+  const todaySessions = byDate[todayStr] || [];
+  const oldDates = Object.keys(byDate).filter(d => d !== todayStr).sort((a, b) => b.localeCompare(a));
+
   if (loadingCheck) {
     return (
       <div className="w-full max-w-lg mt-6 flex flex-col items-center gap-4">
@@ -37,11 +66,12 @@ function ChoixSession({ sessions, onJoin, onNew, loadingCheck }) {
 
   return (
     <div className="w-full max-w-lg mt-6 flex flex-col gap-4">
-      {sessions.length > 0 && (
+      {/* Sessions du jour */}
+      {todaySessions.length > 0 && (
         <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-3">
           <h2 className="text-base font-bold text-gray-800 mb-1">📋 Sessions du jour</h2>
           <p className="text-sm text-gray-500 mb-2">Ces sessions ont déjà été créées. Cliquez pour rejoindre.</p>
-          {sessions.map(s => (
+          {todaySessions.map(s => (
             <button
               key={s.id}
               onClick={() => onJoin(s)}
@@ -64,7 +94,43 @@ function ChoixSession({ sessions, onJoin, onNew, loadingCheck }) {
         </div>
       )}
 
+      {/* Anciennes sessions (J-1 à J-4) */}
+      {oldDates.length > 0 && (
+        <div className="bg-white/10 rounded-2xl p-5 flex flex-col gap-3">
+          <h2 className="text-sm font-bold text-white mb-1">🕘 Sessions récentes (5 derniers jours)</h2>
+          {oldDates.map(date => (
+            <div key={date} className="flex flex-col gap-2">
+              <p className="text-white/50 text-xs font-semibold uppercase tracking-wide">{formatDateFr(date)}</p>
+              {byDate[date].map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => onConsulterAncienne(s)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-white/20 hover:bg-white/20 text-white transition"
+                >
+                  <span className="text-left text-sm">{formatSessionLabel(s)}</span>
+                  <span className="text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
+                    👁 Consulter
+                  </span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
       {sessions.length === 0 && (
+        <div className="bg-white/10 rounded-2xl p-5 text-center">
+          <p className="text-white/70 text-sm mb-3">Aucune session aujourd'hui.</p>
+          <button
+            onClick={onNew}
+            className="px-6 py-3 bg-white text-[#333699] font-bold rounded-xl hover:bg-white/90 transition"
+          >
+            ➕ Créer une session
+          </button>
+        </div>
+      )}
+
+      {sessions.length > 0 && todaySessions.length === 0 && (
         <div className="bg-white/10 rounded-2xl p-5 text-center">
           <p className="text-white/70 text-sm mb-3">Aucune session aujourd'hui.</p>
           <button
@@ -88,6 +154,7 @@ function FormulaireSession({
   nouveauTemps, setNouveauTemps,
   enregistrerTemps, setEnregistrerTemps,
   numeroCulte, setNumeroCulte,
+  numeroSession, setNumeroSession,
   tempsOptions,
   savingSession,
   onSubmit,
@@ -95,7 +162,10 @@ function FormulaireSession({
 }) {
   const typeFinalLabel = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
   const isCulte = typeFinalLabel?.toLowerCase().includes("culte");
-  const isDisabled = savingSession || !typeTemps || (typeTemps === "AUTRE" && !nouveauTemps.trim());
+
+  // Numéro de culte obligatoire si c'est un culte
+  const culteOk = !isCulte || (isCulte && numeroCulte);
+  const isDisabled = savingSession || !typeTemps || (typeTemps === "AUTRE" && !nouveauTemps.trim()) || !culteOk;
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-5">
@@ -135,6 +205,20 @@ function FormulaireSession({
               className="w-full px-3 py-2 rounded-md border border-gray-300 text-black" />
             <p className="text-xs text-gray-400 mt-1">{nouveauTemps.length}/30 caractères</p>
           </div>
+          {/* ─── NUMÉRO DE SESSION (optionnel, pour types AUTRE) ─── */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              🔢 Numéro de session <span className="text-gray-400 font-normal">(optionnel)</span>
+            </label>
+            <input
+              type="number"
+              min="1"
+              placeholder="Ex: 1, 2, 3..."
+              value={numeroSession}
+              onChange={(e) => setNumeroSession(e.target.value)}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-black"
+            />
+          </div>
           <label className="flex items-center gap-2 text-sm text-amber-600 cursor-pointer select-none">
             <input type="checkbox" checked={enregistrerTemps} onChange={e => setEnregistrerTemps(e.target.checked)} />
             Enregistrer ce type pour une prochaine fois
@@ -152,13 +236,19 @@ function FormulaireSession({
 
       {isCulte && (
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">🔢 Numéro de culte</label>
-          <select value={numeroCulte} onChange={e => setNumeroCulte(e.target.value)} className="w-full px-3 py-2 rounded-md border border-gray-300 text-black">
-            <option value="">--- Sélectionner ---</option>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            🔢 Numéro de culte <span className="text-red-500">*</span>
+          </label>
+          <select value={numeroCulte} onChange={e => setNumeroCulte(e.target.value)}
+            className={`w-full px-3 py-2 rounded-md border text-black ${!numeroCulte ? "border-red-400 bg-red-50" : "border-gray-300"}`}>
+            <option value="">--- Obligatoire : sélectionner ---</option>
             {[1, 2, 3, 4, 5, 6, 7].map(n => (
               <option key={n} value={n}>{n}{n === 1 ? "er" : "ème"} Culte</option>
             ))}
           </select>
+          {!numeroCulte && (
+            <p className="text-xs text-red-500 mt-1">⚠️ Le numéro de culte est obligatoire.</p>
+          )}
         </div>
       )}
 
@@ -208,9 +298,12 @@ function BadgeSexe({ sexe }) {
 }
 
 // ─── CARTES MEMBRES ────────────────────────────────────────────
-function CarteAbsent({ m, onMark }) {
+function CarteAbsent({ m, onMark, readOnly }) {
   return (
-    <div onClick={() => onMark(m)} className="bg-white rounded-xl shadow px-4 py-3 cursor-pointer hover:bg-green-50 transition flex items-center gap-3">
+    <div
+      onClick={() => !readOnly && onMark(m)}
+      className={`bg-white rounded-xl shadow px-4 py-3 flex items-center gap-3 ${readOnly ? "opacity-70" : "cursor-pointer hover:bg-green-50 transition"}`}
+    >
       <span className="w-5 h-5 flex-shrink-0 rounded border-2 border-gray-300 inline-block" />
       <span className="font-semibold text-black text-base flex-1">{m.nom} {m.prenom}</span>
       <BadgeSexe sexe={m.sexe} />
@@ -218,15 +311,17 @@ function CarteAbsent({ m, onMark }) {
   );
 }
 
-function CartePresent({ p, onUnmark }) {
+function CartePresent({ p, onUnmark, readOnly }) {
   return (
     <div className="bg-white rounded-xl shadow px-4 py-3 flex items-center gap-3">
       <span className="w-5 h-5 flex-shrink-0 rounded border-2 border-green-500 bg-green-500 inline-flex items-center justify-center text-white text-xs font-bold">✓</span>
       <span className="font-semibold text-black text-base flex-1">{p.membres_complets?.nom} {p.membres_complets?.prenom}</span>
       <BadgeSexe sexe={p.membres_complets?.sexe} />
-      <button onClick={() => onUnmark(p.membre_id)} className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs flex-shrink-0">
-        − Absent
-      </button>
+      {!readOnly && (
+        <button onClick={() => onUnmark(p.membre_id)} className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs flex-shrink-0">
+          − Absent
+        </button>
+      )}
     </div>
   );
 }
@@ -255,7 +350,7 @@ function CompteurSexe({ presences }) {
 }
 
 // ─── SECTION GROUPÉE (Admin/RI) ────────────────────────────────
-function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, view, color = "blue" }) {
+function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, view, color = "blue", readOnly }) {
   const [collapsed, setCollapsed] = useState(false);
 
   const absents = members.filter(m => !presentIds.has(m.id));
@@ -287,8 +382,8 @@ function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, vie
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-white/5">
           {shown.map(m =>
             view === "absents"
-              ? <CarteAbsent key={m.id} m={m} onMark={onMark} />
-              : <CartePresent key={m.id} p={{ membre_id: m.id, membres_complets: { nom: m.nom, prenom: m.prenom, sexe: m.sexe } }} onUnmark={onUnmark} />
+              ? <CarteAbsent key={m.id} m={m} onMark={onMark} readOnly={readOnly} />
+              : <CartePresent key={m.id} p={{ membre_id: m.id, membres_complets: { nom: m.nom, prenom: m.prenom, sexe: m.sexe } }} onUnmark={onUnmark} readOnly={readOnly} />
           )}
         </div>
       )}
@@ -296,13 +391,32 @@ function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, vie
   );
 }
 
+// ─── BANNIÈRE MODE LECTURE SEULE ───────────────────────────────
+function BanniereConsultation({ session, onRetour }) {
+  return (
+    <div className="w-full max-w-lg mx-auto mb-4 rounded-xl px-4 py-3 bg-amber-500/20 border-2 border-amber-400 flex items-center justify-between gap-3">
+      <div className="flex flex-col">
+        <span className="text-sm font-bold text-amber-200">👁 Mode consultation</span>
+        <span className="text-xs text-amber-300 mt-0.5">
+          {formatDateFr(session.date)} — liste en lecture seule
+        </span>
+      </div>
+      <button onClick={onRetour} className="text-xs text-amber-200 underline hover:text-white transition flex-shrink-0">
+        ← Retour
+      </button>
+    </div>
+  );
+}
+
 // ─── COMPOSANT PRINCIPAL ───────────────────────────────────────
 function Presence() {
   const [etape, setEtape] = useState("check");
-  const [sessionsAujourdhui, setSessionsAujourdhui] = useState([]);
+  const [sessionsRecentes, setSessionsRecentes] = useState([]);
 
   const [attendanceId, setAttendanceId] = useState(null);
   const [editingSession, setEditingSession] = useState(false);
+  // readOnly = true quand on consulte une ancienne session
+  const [readOnly, setReadOnly] = useState(false);
 
   const [selectedDate, setSelectedDate] = useState(today());
   const [selectedTime, setSelectedTime] = useState(nowTime());
@@ -310,6 +424,7 @@ function Presence() {
   const [nouveauTemps, setNouveauTemps] = useState("");
   const [enregistrerTemps, setEnregistrerTemps] = useState(false);
   const [numeroCulte, setNumeroCulte] = useState("");
+  const [numeroSession, setNumeroSession] = useState(""); // ← NOUVEAU
   const [tempsOptions, setTempsOptions] = useState([]);
   const [savingSession, setSavingSession] = useState(false);
 
@@ -328,7 +443,6 @@ function Presence() {
   const profileRef = useRef(null);
   const myIdsRef = useRef(null);
   const isAdminRef = useRef(false);
-  // FIX : ref stable pour fetchAll appelable sans dépendances stale
   const fetchAllRef = useRef(null);
   const selectedDateRef = useRef(selectedDate);
   useEffect(() => { selectedDateRef.current = selectedDate; }, [selectedDate]);
@@ -391,19 +505,30 @@ function Presence() {
     setTempsOptions([...unique].sort((a, b) => a.localeCompare(b, "fr")));
   }, [initProfile]);
 
-  // ─── VÉRIFIER SESSIONS DU JOUR ────────────────────────────────
+  // ─── VÉRIFIER SESSIONS DES 5 DERNIERS JOURS ──────────────────
   const checkSessionsDuJour = useCallback(async () => {
     await initProfile();
     const profile = profileRef.current;
+    const last5 = getLast5Days();
+
     const { data } = await supabase
       .from("attendance")
-      .select("id, typeTemps, date, heure, numero_culte")
+      .select("id, typeTemps, date, heure, numero_culte, numero_session")
       .eq("eglise_id", profile.eglise_id)
-      .eq("date", today())
+      .in("date", last5)
+      .order("date", { ascending: false })
       .order("created_at", { ascending: false });
 
-    setSessionsAujourdhui(data || []);
-    setEtape((data || []).length > 0 ? "choix" : "form");
+    const sessions = data || [];
+    setSessionsRecentes(sessions);
+
+    const todaySessions = sessions.filter(s => s.date === today());
+    setEtape(sessions.length > 0 ? "choix" : "form");
+    // Si aucune session du tout → formulaire direct
+    if (sessions.length === 0) setEtape("form");
+    // Si sessions récentes mais aucune aujourd'hui → on affiche quand même choix
+    else setEtape("choix");
+    void todaySessions;
   }, [initProfile]);
 
   useEffect(() => {
@@ -411,7 +536,7 @@ function Presence() {
     checkSessionsDuJour();
   }, [loadTempsOptions, checkSessionsDuJour]);
 
-  // ─── REJOINDRE UNE SESSION EXISTANTE ─────────────────────────
+  // ─── REJOINDRE UNE SESSION (aujourd'hui, éditable) ────────────
   const rejoindreSession = (session) => {
     setAttendanceId(session.id);
     setSelectedDate(session.date);
@@ -419,12 +544,27 @@ function Presence() {
     setSelectedTime(session.heure || "");
     setTypeTemps(session.typeTemps || "");
     setNumeroCulte(session.numero_culte?.toString() || "");
+    setNumeroSession(session.numero_session?.toString() || "");
     setSessionCourante(session);
+    setReadOnly(false);
+    setEtape("ready");
+  };
+
+  // ─── CONSULTER UNE ANCIENNE SESSION (lecture seule) ───────────
+  const consulterAncienne = (session) => {
+    setAttendanceId(session.id);
+    setSelectedDate(session.date);
+    selectedDateRef.current = session.date;
+    setSelectedTime(session.heure || "");
+    setTypeTemps(session.typeTemps || "");
+    setNumeroCulte(session.numero_culte?.toString() || "");
+    setNumeroSession(session.numero_session?.toString() || "");
+    setSessionCourante(session);
+    setReadOnly(true);   // ← lecture seule
     setEtape("ready");
   };
 
   // ─── FETCH MEMBRES + PRÉSENCES ────────────────────────────────
-  // FIX PRINCIPAL : le select de presences inclut maintenant sexe via membres_complets
   const fetchAll = useCallback(async (date) => {
     try {
       await initProfile();
@@ -433,7 +573,6 @@ function Presence() {
       const isAdmin = isAdminRef.current;
       const d = date || selectedDateRef.current;
 
-      // ✅ FIX : on récupère sexe dans le join membres_complets
       const { data: presencesData } = await supabase
         .from("presences")
         .select("membre_id, checked_by, membres_complets(prenom, nom, sexe)")
@@ -541,13 +680,15 @@ function Presence() {
     } catch (err) { console.error(err); }
   }, [initProfile]);
 
-  // Stocker fetchAll dans une ref pour l'utiliser dans markPresent/markAbsent sans closure stale
   useEffect(() => { fetchAllRef.current = fetchAll; }, [fetchAll]);
 
   useEffect(() => {
     if (etape !== "ready") return;
     setLoading(true);
     fetchAll(selectedDateRef.current).finally(() => setLoading(false));
+
+    // Pas de realtime en mode lecture seule (ancienne session)
+    if (readOnly) return;
 
     const channel = supabase
       .channel("presence-live")
@@ -557,7 +698,7 @@ function Presence() {
       .subscribe();
 
     return () => supabase.removeChannel(channel);
-  }, [etape, fetchAll]);
+  }, [etape, fetchAll, readOnly]);
 
   // ─── TOGGLE VISIBILITÉ ────────────────────────────────────────
   const toggleVisibilite = async () => {
@@ -577,13 +718,15 @@ function Presence() {
     if (!typeFinal) return alert("Veuillez choisir un type de temps.");
     if (!selectedDate) return alert("Veuillez choisir une date.");
 
+    const isCulte = typeFinal.toLowerCase().includes("culte");
+    if (isCulte && !numeroCulte) return alert("Le numéro de culte est obligatoire.");
+
     setSavingSession(true);
     try {
       const profile = profileRef.current;
       if (typeTemps === "AUTRE" && enregistrerTemps && !tempsOptions.includes(typeFinal)) {
         setTempsOptions(prev => [...prev, typeFinal].sort((a, b) => a.localeCompare(b, "fr")));
       }
-      const isCulte = typeFinal.toLowerCase().includes("culte");
       const payload = {
         date: selectedDate,
         heure: selectedTime,
@@ -591,14 +734,24 @@ function Presence() {
         temps_nom: typeFinal,
         eglise_id: profile.eglise_id,
         ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : {}),
+        // numero_session uniquement pour les types AUTRE
+        ...(typeTemps === "AUTRE" && numeroSession ? { numero_session: Number(numeroSession) } : {}),
       };
       const { data, error } = await supabase.from("attendance").insert(payload).select("id").single();
       if (error) throw error;
 
-      const newSession = { id: data.id, typeTemps: typeFinal, date: selectedDate, heure: selectedTime, numero_culte: numeroCulte ? Number(numeroCulte) : null };
+      const newSession = {
+        id: data.id,
+        typeTemps: typeFinal,
+        date: selectedDate,
+        heure: selectedTime,
+        numero_culte: numeroCulte ? Number(numeroCulte) : null,
+        numero_session: typeTemps === "AUTRE" && numeroSession ? Number(numeroSession) : null,
+      };
       setAttendanceId(data.id);
       setSessionCourante(newSession);
       selectedDateRef.current = selectedDate;
+      setReadOnly(false);
       setEtape("ready");
     } catch (err) {
       console.error(err);
@@ -613,18 +766,28 @@ function Presence() {
     const typeFinal = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
     if (!typeFinal || !attendanceId) return;
 
+    const isCulte = typeFinal.toLowerCase().includes("culte");
+    if (isCulte && !numeroCulte) return alert("Le numéro de culte est obligatoire.");
+
     setSavingSession(true);
     try {
-      const isCulte = typeFinal.toLowerCase().includes("culte");
       await supabase.from("attendance").update({
         date: selectedDate,
         heure: selectedTime,
         typeTemps: typeFinal,
         temps_nom: typeFinal,
         ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : { numero_culte: null }),
+        ...(typeTemps === "AUTRE" && numeroSession ? { numero_session: Number(numeroSession) } : { numero_session: null }),
       }).eq("id", attendanceId);
 
-      setSessionCourante(prev => ({ ...prev, typeTemps: typeFinal, date: selectedDate, heure: selectedTime, numero_culte: numeroCulte ? Number(numeroCulte) : null }));
+      setSessionCourante(prev => ({
+        ...prev,
+        typeTemps: typeFinal,
+        date: selectedDate,
+        heure: selectedTime,
+        numero_culte: numeroCulte ? Number(numeroCulte) : null,
+        numero_session: typeTemps === "AUTRE" && numeroSession ? Number(numeroSession) : null,
+      }));
       selectedDateRef.current = selectedDate;
       setEditingSession(false);
     } catch (err) {
@@ -636,8 +799,8 @@ function Presence() {
   };
 
   // ─── PRÉSENCE ─────────────────────────────────────────────────
-  // FIX : on utilise fetchAllRef pour éviter les closures stale
   const markPresent = async (membre) => {
+    if (readOnly) return;
     try {
       const { uid } = profileRef.current;
       const d = selectedDateRef.current;
@@ -648,7 +811,6 @@ function Presence() {
         attendance_id: attendanceId,
       });
       if (error) throw error;
-      // Mise à jour immédiate sans attendre le realtime
       await fetchAllRef.current?.(d);
     } catch (err) {
       console.error("Erreur markPresent:", err);
@@ -656,6 +818,7 @@ function Presence() {
   };
 
   const markAbsent = async (memberId) => {
+    if (readOnly) return;
     try {
       const d = selectedDateRef.current;
       const { error } = await supabase.from("presences").delete()
@@ -675,6 +838,18 @@ function Presence() {
   const isAdmin = isAdminRef.current;
   const totalPresents = presentList.length;
   const totalAbsents = allMembers.length;
+
+  // ─── RESET ────────────────────────────────────────────────────
+  const handleReset = () => {
+    setEtape("check");
+    setAttendanceId(null);
+    setSessionCourante(null);
+    setTypeTemps(""); setNouveauTemps(""); setNumeroCulte(""); setNumeroSession("");
+    setEnregistrerTemps(false);
+    setSelectedTime(nowTime());
+    setReadOnly(false);
+    checkSessionsDuJour();
+  };
 
   // ━━━ ÉCRAN VÉRIFICATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   if (etape === "check") {
@@ -699,7 +874,13 @@ function Presence() {
         <p className="text-white/60 text-sm text-center mb-2">
           {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
         </p>
-        <ChoixSession sessions={sessionsAujourdhui} onJoin={rejoindreSession} onNew={() => setEtape("form")} loadingCheck={false} />
+        <ChoixSession
+          sessions={sessionsRecentes}
+          onJoin={rejoindreSession}
+          onNew={() => setEtape("form")}
+          onConsulterAncienne={consulterAncienne}
+          loadingCheck={false}
+        />
         <Footer />
       </div>
     );
@@ -713,7 +894,7 @@ function Presence() {
         <div className="w-full max-w-lg mt-6">
           <h1 className="text-2xl font-bold text-white text-center mb-1">📋 Nouvelle Session</h1>
           <p className="text-white/70 text-center text-sm mb-4">Configurez la session avant de commencer</p>
-          {sessionsAujourdhui.length > 0 && (
+          {sessionsRecentes.length > 0 && (
             <button onClick={() => setEtape("choix")} className="w-full mb-4 py-2 text-sm text-white/70 hover:text-white border border-white/20 rounded-xl transition">
               ← Revenir aux sessions existantes
             </button>
@@ -726,10 +907,11 @@ function Presence() {
             nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
             enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
             numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
+            numeroSession={numeroSession} setNumeroSession={setNumeroSession}
             tempsOptions={tempsOptions}
             savingSession={savingSession}
             onSubmit={demarrerSession}
-            onCancel={sessionsAujourdhui.length > 0 ? () => setEtape("choix") : null}
+            onCancel={sessionsRecentes.length > 0 ? () => setEtape("choix") : null}
           />
         </div>
         <Footer />
@@ -744,42 +926,46 @@ function Presence() {
 
       <div className="text-center mb-4 mt-4 w-full">
         <h1 className="text-2xl font-bold text-white">
-          Présences du <span className="text-emerald-300">jour</span>
+          Présences{readOnly ? <span className="text-amber-300"> — Consultation</span> : <> du <span className="text-emerald-300">jour</span></>}
         </h1>
 
         <div
-          className="inline-flex flex-col items-center mt-3 px-4 py-2 bg-white/10 rounded-xl cursor-pointer hover:bg-white/20 transition group"
-          onClick={() => setEditingSession(v => !v)}
+          className={`inline-flex flex-col items-center mt-3 px-4 py-2 rounded-xl ${readOnly ? "bg-amber-500/20 cursor-default" : "bg-white/10 cursor-pointer hover:bg-white/20"} transition group`}
+          onClick={() => !readOnly && setEditingSession(v => !v)}
         >
           <div className="flex items-center gap-2">
             <span className="text-white font-semibold text-sm">
               {sessionCourante?.typeTemps}
               {sessionCourante?.numero_culte ? ` — ${sessionCourante.numero_culte}${sessionCourante.numero_culte === 1 ? "er" : "ème"} culte` : ""}
+              {sessionCourante?.numero_session ? ` · Session n°${sessionCourante.numero_session}` : ""}
             </span>
-            <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>
+            {!readOnly && <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>}
           </div>
           <span className="text-white/60 text-xs mt-0.5">
             📅 {new Date(selectedDateRef.current + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
             {sessionCourante?.heure ? ` · 🕐 ${sessionCourante.heure}` : ""}
           </span>
-          <span className="text-white/40 text-xs mt-0.5">Cliquer pour modifier</span>
+          {!readOnly && <span className="text-white/40 text-xs mt-0.5">Cliquer pour modifier</span>}
         </div>
 
-        {/* ✅ Compteur global présents / absents */}
         <div className="flex gap-4 justify-center mt-3 text-sm">
           <span className="text-green-300">✔ Présents : {totalPresents}</span>
           <span className="text-white">⚪ Restants : {totalAbsents}</span>
         </div>
 
-        {/* ✅ Compteur Hommes / Femmes (uniquement sur les présents) */}
         {totalPresents > 0 && <CompteurSexe presences={presentList} />}
       </div>
 
-      {!isAdmin && (
+      {/* Bannière lecture seule */}
+      {readOnly && (
+        <BanniereConsultation session={sessionCourante} onRetour={handleReset} />
+      )}
+
+      {!isAdmin && !readOnly && (
         <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} />
       )}
 
-      {editingSession && (
+      {editingSession && !readOnly && (
         <div className="w-full max-w-lg mb-6">
           <h2 className="text-white font-semibold text-center mb-3">✏️ Modifier la session</h2>
           <FormulaireSession
@@ -790,6 +976,7 @@ function Presence() {
             nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
             enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
             numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
+            numeroSession={numeroSession} setNumeroSession={setNumeroSession}
             tempsOptions={tempsOptions}
             savingSession={savingSession}
             onSubmit={modifierSession}
@@ -802,15 +989,18 @@ function Presence() {
         <>
           <div className="flex gap-3 mb-4">
             <button onClick={() => setView("absents")} className={`px-4 py-2 rounded ${view === "absents" ? "bg-white text-[#333699] font-bold" : "bg-white/20 text-white"}`}>
-              ⚪ Absents ({totalAbsents})
+              ⚪ {readOnly ? "Absents" : "Absents"} ({totalAbsents})
             </button>
             <button onClick={() => setView("presents")} className={`px-4 py-2 rounded ${view === "presents" ? "bg-green-400 text-black font-bold" : "bg-white/20 text-white"}`}>
               ✔ Présents ({totalPresents})
             </button>
           </div>
 
-          {view === "absents" && (
+          {view === "absents" && !readOnly && (
             <p className="text-amber-300 text-sm mb-2 italic">💡 Cliquer sur un nom pour marquer comme présent</p>
+          )}
+          {view === "absents" && readOnly && (
+            <p className="text-amber-200/60 text-sm mb-2 italic">👁 Mode consultation — modifications désactivées</p>
           )}
 
           <div className="w-full max-w-4xl flex justify-center mb-6">
@@ -844,6 +1034,7 @@ function Presence() {
                         onMark={markPresent}
                         onUnmark={markAbsent}
                         view={view}
+                        readOnly={readOnly}
                       />
                     );
                   })
@@ -854,27 +1045,19 @@ function Presence() {
               {view === "absents"
                 ? allMembers.filter(filterM).length === 0
                   ? <p className="text-white text-center col-span-full">✅ Tout le monde est présent</p>
-                  : allMembers.filter(filterM).map(m => <CarteAbsent key={m.id} m={m} onMark={markPresent} />)
+                  : allMembers.filter(filterM).map(m => <CarteAbsent key={m.id} m={m} onMark={markPresent} readOnly={readOnly} />)
                 : presentList.filter(filterP).length === 0
                   ? <p className="text-white text-center col-span-full">Aucune présence</p>
-                  : presentList.filter(filterP).map(p => <CartePresent key={p.membre_id} p={p} onUnmark={markAbsent} />)
+                  : presentList.filter(filterP).map(p => <CartePresent key={p.membre_id} p={p} onUnmark={markAbsent} readOnly={readOnly} />)
               }
             </div>
           )}
 
           <button
-            onClick={() => {
-              setEtape("check");
-              setAttendanceId(null);
-              setSessionCourante(null);
-              setTypeTemps(""); setNouveauTemps(""); setNumeroCulte("");
-              setEnregistrerTemps(false);
-              setSelectedTime(nowTime());
-              checkSessionsDuJour();
-            }}
+            onClick={handleReset}
             className="mt-8 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm"
           >
-            ↩ Nouvelle session
+            {readOnly ? "↩ Retour aux sessions" : "↩ Nouvelle session"}
           </button>
         </>
       )}

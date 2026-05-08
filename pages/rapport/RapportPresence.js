@@ -965,10 +965,36 @@ setAllMembers(membersData || []);
                   ) : tableRows.map((row, idx) => {
                     const pn = parseFloat(row.pct);
                     const pc = pn > 0 ? "#4ade80" : pn < 0 ? "#f87171" : "rgba(255,255,255,0.4)";
-                    const sessionLabel = [
-                      row.typeTemps,
-                      row.numero_culte ? `${row.numero_culte}${row.numero_culte === 1 ? "er" : "ème"} culte` : null,
-                    ].filter(Boolean).join(" — ");
+                    const formatSession = (typeTemps, numero, heure) => {
+                      const suffix =
+                        numero === 1 ? "er" :
+                        numero === 2 ? "ème" :
+                        numero === 3 ? "ème" :
+                        "ème";
+                    
+                      let label = "";
+                    
+                      if (typeTemps === "Culte") {
+                        label = `${numero || ""}${suffix} Culte`;
+                      } else if (typeTemps === "Temps de prière") {
+                        label = `${numero || ""}${suffix} session de prière`;
+                      } else {
+                        label = typeTemps || "Session";
+                      }
+                    
+                      if (heure) {
+                        label += ` (${heure.slice(0,5)})`;
+                      }
+                    
+                      return label;
+                    };
+
+                    const sessionLabel = formatSession(
+  row.typeTemps,
+  row.numero_culte,
+  row.heure
+);
+                    
                     return (
                       <tr key={idx} className="border-t border-white/10 hover:bg-white/5">
                         <td className="px-3 py-2">{new Date(row.date).toLocaleDateString("fr-FR")}</td>

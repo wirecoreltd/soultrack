@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import useChurchScope from "../../hooks/useChurchScope";
 import SuiviPopup from "../../components/SuiviPopup";
+import PresenceDot from "../../components/PresenceDot";
 import ImportMembresCSV from "../../components/ImportMembresCSV";
 import { useFeature } from "../../components/FeaturesContext";
 
@@ -724,6 +725,10 @@ function ListMembersContent() {
               m.etat_contact?.trim().toLowerCase() === "existant" && (
                 <span className="text-yellow-400">⭐</span>
               )}
+              <PresenceDot
+                memberId={m.id}
+                egliseId={userProfile?.eglise_id}
+              />
           </h2>
 
           {/* Téléphone */}

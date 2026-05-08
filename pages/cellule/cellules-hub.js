@@ -150,6 +150,13 @@ function CellulesHubContent() {
           </div>
         </Link>
 
+      <Link href="/Rapport/RapportPresence" className={CARD_CLASS} style={{ borderTop: "4px solid #06b6d4" }}>
+          <div className="text-5xl mb-2">✅</div>
+          <div className="text-lg font-bold text-gray-800 text-center">
+            Rapport de Registre
+          </div>
+        </Link>
+
         {/* Notifications */}
         <Link href="/admin/notifications" className={CARD_CLASS} style={{ borderTop: "4px solid #ef4444" }}>
           <div className="text-5xl mb-2">🔔</div>

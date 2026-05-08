@@ -192,30 +192,27 @@ function TranchePie({ data }) {
 function RapportPresence() {
   const [userProfile, setUserProfile] = useState(null);
   const [userRole,    setUserRole]    = useState(null);
-
   const [familles, setFamilles] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [mesCellules, setMesCellules] = useState([]);
   const [mesFamilles, setMesFamilles] = useState([]);
-
   const [dateDebut,      setDateDebut]      = useState("");
   const [dateFin,        setDateFin]        = useState("");
   const [filterCellule,  setFilterCellule]  = useState("");
   const [filterFamille,  setFilterFamille]  = useState("");
-
   const [presencesRaw, setPresencesRaw]   = useState([]);
   // MODIF : on stocke aussi les attendance pour regrouper
   const [attendanceMap, setAttendanceMap] = useState({}); // id → {date, typeTemps, numero_culte}
-
   const [loading,   setLoading]   = useState(false);
   const [message,   setMessage]   = useState("");
   const [activeTab, setActiveTab] = useState("evolution");
-
   const [showAllComp, setShowAllComp] = useState(false);
-
+  const [suiviMode, setSuiviMode] = useState("presents");
+  const [suiviGranularity, setSuiviGranularity] = useState("mois");
   const [evGranularity, setEvGranularity] = useState("auto");
   const [drillMois,     setDrillMois]     = useState(null);
   const [drillSemaine,  setDrillSemaine]  = useState(null);
+  const [allMembers, setAllMembers] = useState([]);
 
   // ── init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -239,6 +236,23 @@ function RapportPresence() {
         .select("id, famille, famille_full, eglise_id, responsable_id")
         .eq("eglise_id", egliseId);
       setFamilles(fa || []);
+
+      const { data: membersData } = await supabase
+  .from("membres_complets")
+  .select(`
+    id,
+    nom,
+    prenom,
+    sexe,
+    age,
+    statut,
+    cellule_id,
+    famille_id,
+    eglise_id
+  `)
+  .eq("eglise_id", egliseId);
+
+setAllMembers(membersData || []);
 
       const { data: ce } = await supabase
         .from("cellules")
@@ -320,12 +334,16 @@ function RapportPresence() {
           date,
           attendance_id,
           membres_complets (
-            id,
-            sexe,
-            age,
-            cellule_id,
-            famille_id
-          )
+          id,
+          nom,
+          prenom,
+          sexe,
+          age,
+          cellule_id,
+          famille_id,
+          statut,
+          date_venu
+        )  
         `)
         .in("attendance_id", attIds);
 
@@ -527,6 +545,87 @@ function RapportPresence() {
   const maxCellule = topCellules[0]?.total || 1;
   const maxFamille = topFamilles[0]?.total || 1;
 
+  const isInSelectedPeriod = (dateStr) => {
+  const d = new Date(dateStr);
+  const now = new Date();
+
+  if (suiviGranularity === "jour") {
+    return d.toDateString() === now.toDateString();
+  }
+
+  if (suiviGranularity === "semaine") {
+    const start = new Date(now);
+    start.setDate(now.getDate() - 7);
+    return d >= start;
+  }
+
+  if (suiviGranularity === "mois") {
+    return (
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear()
+    );
+  }
+
+  if (suiviGranularity === "annee") {
+    return d.getFullYear() === now.getFullYear();
+  }
+
+  return true;
+};
+
+  const suiviData = useMemo(() => {
+  const filteredPresences = presencesAvecGroupe.filter(p =>
+    isInSelectedPeriod(p.attDate)
+  );
+
+  const presentIds = new Set(
+    filteredPresences.map(p => p.membres_complets?.id)
+  );
+
+  const presentMap = {};
+
+  filteredPresences.forEach(p => {
+    const membre = p.membres_complets;
+
+    if (!membre?.id) return;
+
+    if (!presentMap[membre.id]) {
+      presentMap[membre.id] = {
+        ...membre,
+        total: 0,
+        lastDate: p.attDate,
+        session: attendanceMap[p.attendance_id]?.typeTemps || "Culte",
+      };
+    }
+
+    presentMap[membre.id].total++;
+
+    if (new Date(p.attDate) > new Date(presentMap[membre.id].lastDate)) {
+      presentMap[membre.id].lastDate = p.attDate;
+    }
+  });
+
+  if (suiviMode === "presents") {
+    return Object.values(presentMap).sort(
+      (a, b) => new Date(b.lastDate) - new Date(a.lastDate)
+    );
+  }
+
+  return allMembers
+    .filter(m => !presentIds.has(m.id))
+    .sort((a, b) => {
+      const na = `${a.nom || ""} ${a.prenom || ""}`;
+      const nb = `${b.nom || ""} ${b.prenom || ""}`;
+      return na.localeCompare(nb);
+    });
+}, [
+  presencesAvecGroupe,
+  suiviMode,
+  suiviGranularity,
+  allMembers,
+  attendanceMap,
+]);
+
   // ── tableau détaillé : groupé par (date + typeTemps + numero_culte) ───────
   const tableRows = useMemo(() => {
     // Grouper par groupKey
@@ -715,6 +814,7 @@ function RapportPresence() {
               { key:"repartition", label:"Répartition" },
               { key:"comparaison", label:"Comparaison" },
               { key:"tableau",     label:"Tableau détaillé" },
+              { key:"suivi", label:"Suivi" },
             ].map(({ key, label }) => (
               <button key={key} onClick={() => setActiveTab(key)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium border transition ${
@@ -893,6 +993,62 @@ function RapportPresence() {
 
         </div>
       )}
+
+        {/* ── TAB SUIVI ───────────────────────── */}
+          {activeTab === "suivi" && (
+            <div className="bg-white/10 border border-white/20 rounded-xl p-4 flex flex-col gap-4">
+          
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSuiviMode("presents")}
+                  className={`px-4 py-2 rounded-full text-sm border transition ${
+                    suiviMode === "presents"
+                      ? "bg-emerald-400 border-emerald-400 text-white"
+                      : "border-white/30 text-white/70"
+                  }`}
+                >
+                  Présents
+                </button>
+          
+                <button
+                  onClick={() => setSuiviMode("absents")}
+                  className={`px-4 py-2 rounded-full text-sm border transition ${
+                    suiviMode === "absents"
+                      ? "bg-red-400 border-red-400 text-white"
+                      : "border-white/30 text-white/70"
+                  }`}
+                >
+                  Absents
+                </button>
+              </div>
+          
+              <div className="flex flex-wrap gap-2">
+                {["jour", "semaine", "mois", "annee"].map(g => (
+                  <button
+                    key={g}
+                    onClick={() => setSuiviGranularity(g)}
+                    className={`px-3 py-1 rounded-full text-xs border transition ${
+                      suiviGranularity === g
+                        ? "bg-white text-[#333699] border-white"
+                        : "border-white/30 text-white/70"
+                    }`}
+                  >
+                    {g.charAt(0).toUpperCase() + g.slice(1)}
+                  </button>
+                ))}
+              </div>
+          
+              <div className="text-sm text-white/70">
+                {suiviData.length} personne(s)
+              </div>
+          
+              <div className="overflow-x-auto rounded-xl border border-white/20">
+                <table className="w-full text-sm text-white text-left">
+          
+                  <thead>
+                    <tr className="bg-white/10 text-xs uppercase">
+                      <th className="px-3 py-2">Civilité</th>
+                   )}
 
       <Footer />
     </div>

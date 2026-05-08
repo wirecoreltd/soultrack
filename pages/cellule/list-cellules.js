@@ -218,7 +218,8 @@ if (profile.role === "ResponsableCellule") {
           .from("membres_complets")
           .select("id", { count: "exact", head: true })
           .eq("cellule_id", c.id)
-          .eq("statut_suivis", 3);
+          .eq("statut_suivis", 3)
+          .neq("etat_contact", "supprime"); 
 
         return { ...c, membre_count: count || 0 };
       })

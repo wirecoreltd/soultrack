@@ -725,7 +725,7 @@ function ListMembersContent() {
               m.etat_contact?.trim().toLowerCase() === "existant" && (
                 <span className="text-yellow-400">⭐</span>
               )}
-             <div className="absolute right-4"> 
+             <div className="absolute right-8"> 
               <PresenceDot
                 memberId={m.id}
                 egliseId={userProfile?.eglise_id}

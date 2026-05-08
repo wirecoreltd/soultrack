@@ -48,11 +48,14 @@ function FamillesHubContent() {
   const isAdmin = role === "Administrateur" || role === "SuperAdmin";
   const isResponsableFamilles = role === "ResponsableFamilles";
 
+  const cardClass =
+    "flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 p-6 hover:shadow-2xl hover:scale-[1.02] transition-all duration-200 cursor-pointer";
+
   const NOTIF_CARD = (
     <Link
       href="/admin/notifications"
-      className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
-      style={{ borderTopColor: "#ef4444" }}
+      className={cardClass}
+      style={{ borderTopColor: "#EF4444" }}
     >
       <div className="text-5xl mb-2">🔔</div>
       <div className="text-lg font-bold text-gray-800 text-center">
@@ -71,21 +74,21 @@ function FamillesHubContent() {
       <HeaderPages />
 
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold mt-4 mb-6 text-white">
-          Espace Familles
+        <h1 className="text-3xl font-extrabold mt-4 mb-6 text-white drop-shadow-lg">
+          👨‍👩‍👧‍👦 Espace Familles
         </h1>
 
         <div className="max-w-3xl w-full mb-6 text-center">
-          <p className="italic text-base text-white/90">
+          <p className="italic text-base text-white/90 leading-relaxed">
             Chaque Famille est un{" "}
-            <span className="text-blue-300 font-semibold">espace</span> où les
+            <span className="text-blue-200 font-semibold">espace</span> où les
             âmes grandissent, sont{" "}
-            <span className="text-blue-300 font-semibold">
+            <span className="text-cyan-200 font-semibold">
               accompagnées et encouragées dans leur cheminement
             </span>
             . Ensemble, unissons nos forces, construisons et faisons fructifier
             chaque vie, afin que chacun puisse{" "}
-            <span className="text-blue-300 font-semibold">
+            <span className="text-yellow-200 font-semibold">
               s'épanouir pleinement dans la foi
             </span>
             .
@@ -93,11 +96,12 @@ function FamillesHubContent() {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-5xl mb-6 flex-wrap">
-        {/* Visible Admin + ResponsableFamilles */}
+      <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-6xl mb-6 flex-wrap">
+        {/* Liste Familles */}
         <Link
           href="/admin/list-familles"
-          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+          className={cardClass}
+          style={{ borderTopColor: "#3B82F6" }}
         >
           <div className="text-5xl mb-2">👑</div>
           <div className="text-lg font-bold text-gray-800 text-center">
@@ -105,36 +109,38 @@ function FamillesHubContent() {
           </div>
         </Link>
 
-        {/* Visible uniquement ResponsableFamilles */}
+        {/* Responsable Familles */}
         {isResponsableFamilles && (
           <>
             <Link
               href="/famille/ajouter-membre-famille"
-              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-blue-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+              className={cardClass}
+              style={{ borderTopColor: "#10B981" }}
             >
               <div className="text-5xl mb-2">➕</div>
               <div className="text-lg font-bold text-gray-800 text-center">
-                Ajouter un membre à la Famille
+                Ajouter un membre
               </div>
             </Link>
 
             <Link
               href="/admin/import-famille"
-              className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 p-3 hover:shadow-lg transition-all duration-200 cursor-pointer"
+              className={cardClass}
               style={{ borderTopColor: "#F97316" }}
             >
-              <div className="text-4xl mb-1">📤</div>
+              <div className="text-5xl mb-2">📤</div>
               <div className="text-lg font-bold text-gray-800 text-center">
-                Import Une liste des membres
+                Importer une liste
               </div>
             </Link>
           </>
         )}
 
-        {/* Visible Admin + ResponsableFamilles */}
+        {/* Membres */}
         <Link
           href="/famille/membres-famille"
-          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-green-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+          className={cardClass}
+          style={{ borderTopColor: "#22C55E" }}
         >
           <div className="text-5xl mb-2">👥</div>
           <div className="text-lg font-bold text-gray-800 text-center">
@@ -142,9 +148,11 @@ function FamillesHubContent() {
           </div>
         </Link>
 
+        {/* Evangelisation */}
         <Link
           href="/evangelisation/suivis-evangelisation"
-          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-orange-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+          className={cardClass}
+          style={{ borderTopColor: "#F97316" }}
         >
           <div className="text-5xl mb-2">💗</div>
           <div className="text-lg font-bold text-gray-800 text-center">
@@ -152,9 +160,11 @@ function FamillesHubContent() {
           </div>
         </Link>
 
+        {/* Suivis membres */}
         <Link
           href="/membres/suivis-membres"
-          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+          className={cardClass}
+          style={{ borderTopColor: "#EAB308" }}
         >
           <div className="text-5xl mb-2">💌</div>
           <div className="text-lg font-bold text-gray-800 text-center">
@@ -162,9 +172,11 @@ function FamillesHubContent() {
           </div>
         </Link>
 
+        {/* Présences */}
         <Link
           href="/famille/attendance_famille"
-          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+          className={cardClass}
+          style={{ borderTopColor: "#8B5CF6" }}
         >
           <div className="text-5xl mb-2">👨‍👩‍👦‍👦</div>
           <div className="text-lg font-bold text-gray-800 text-center">
@@ -172,9 +184,11 @@ function FamillesHubContent() {
           </div>
         </Link>
 
+        {/* Etat famille */}
         <Link
           href="/famille/EtatCellulePage"
-          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+          className={cardClass}
+          style={{ borderTopColor: "#14B8A6" }}
         >
           <div className="text-5xl mb-2">🌱</div>
           <div className="text-lg font-bold text-gray-800 text-center">
@@ -182,29 +196,35 @@ function FamillesHubContent() {
           </div>
         </Link>
 
+        {/* Registre */}
         <Link
           href="/Presence"
-          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+          className={cardClass}
+          style={{ borderTopColor: "#EC4899" }}
         >
           <div className="text-5xl mb-2">✍️</div>
           <div className="text-lg font-bold text-gray-800 text-center">
             Registre des présences
           </div>
         </Link>
-        
+
+        {/* Rapport */}
         <Link
           href="/rapport/RapportPresence"
-          className="flex-1 min-w-[250px] w-full h-32 bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+          className={cardClass}
+          style={{ borderTopColor: "#6366F1" }}
         >
           <div className="text-5xl mb-2">✅</div>
           <div className="text-lg font-bold text-gray-800 text-center">
             Rapport de Registre
           </div>
         </Link>
+
+        {/* Notifications */}
         {NOTIF_CARD}
       </div>
 
-      {/* Formulaires visibles uniquement ResponsableFamilles */}
+      {/* Formulaires */}
       {isResponsableFamilles && (
         <>
           <div className="w-full max-w-md mb-3">

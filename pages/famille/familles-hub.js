@@ -196,10 +196,8 @@ function FamillesHubContent() {
         >
           <div className="text-5xl mb-2">✅</div>
           <div className="text-lg font-bold text-gray-800 text-center">
-            Rapport de Registre
-          </div>
+            Rapport de Registre       
         </Link>
-
         {NOTIF_CARD}
       </div>
 

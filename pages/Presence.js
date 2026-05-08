@@ -183,7 +183,7 @@ function FormulaireSession({
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">Sélectionner un Type de Temps</label>
         <div className="grid grid-cols-2 gap-2">
-          {tempsOptions.filter(t => t !== "Culte Dominical").map(t => (
+          {tempsOptions.map(t => (
             <button key={t} type="button" onClick={() => { setTypeTemps(t); setNouveauTemps(""); setNumeroCulte(""); }}
               className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${typeTemps === t ? "border-[#333699] bg-[#333699] text-white" : "border-gray-200 bg-gray-50 text-gray-700 hover:border-[#333699]"}`}>
               {t}
@@ -497,21 +497,25 @@ function Presence() {
     myIdsRef.current = [...ids];
   }, []);
 
-  // ─── CHARGER TYPES DE TEMPS ───────────────────────────────────
-  const loadTempsOptions = useCallback(async () => {
+  // ─── INIT SÉRIALISÉ : profil → types → sessions ──────────────
+  // On sérialise pour éviter la race condition sur profileRef
+  const initAll = useCallback(async () => {
     await initProfile();
     const profile = profileRef.current;
-    const { data } = await supabase.from("attendance").select("typeTemps").eq("eglise_id", profile.eglise_id).not("typeTemps", "is", null);
-    const unique = [...new Set((data || []).map(t => t.typeTemps?.trim()).filter(t => t && t !== "" && t !== "Culte Dominical"))];
-    setTempsOptions([...unique].sort((a, b) => a.localeCompare(b, "fr")));
-  }, [initProfile]);
 
-  // ─── VÉRIFIER SESSIONS DES 5 DERNIERS JOURS ──────────────────
-  const checkSessionsDuJour = useCallback(async () => {
-    await initProfile();
-    const profile = profileRef.current;
+    // Types de temps (tous, sans filtre arbitraire)
+    const { data: tempsData } = await supabase
+      .from("attendance")
+      .select("typeTemps")
+      .eq("eglise_id", profile.eglise_id)
+      .not("typeTemps", "is", null);
+    const unique = [...new Set(
+      (tempsData || []).map(t => t.typeTemps?.trim()).filter(t => t && t !== "")
+    )].sort((a, b) => a.localeCompare(b, "fr"));
+    setTempsOptions(unique);
+
+    // Sessions des 5 derniers jours
     const last5 = getLast5Days();
-
     const { data } = await supabase
       .from("attendance")
       .select("id, typeTemps, date, heure, numero_culte, numero_session")
@@ -522,20 +526,37 @@ function Presence() {
 
     const sessions = data || [];
     setSessionsRecentes(sessions);
-
-    const todaySessions = sessions.filter(s => s.date === today());
     setEtape(sessions.length > 0 ? "choix" : "form");
-    // Si aucune session du tout → formulaire direct
-    if (sessions.length === 0) setEtape("form");
-    // Si sessions récentes mais aucune aujourd'hui → on affiche quand même choix
-    else setEtape("choix");
-    void todaySessions;
+  }, [initProfile]);
+
+  // checkSessionsDuJour : rafraîchit uniquement la liste des sessions
+  // utilisé par le realtime et le bouton reset
+  const checkSessionsDuJour = useCallback(async () => {
+    await initProfile();
+    const profile = profileRef.current;
+    if (!profile) return;
+
+    const last5 = getLast5Days();
+    const { data } = await supabase
+      .from("attendance")
+      .select("id, typeTemps, date, heure, numero_culte, numero_session")
+      .eq("eglise_id", profile.eglise_id)
+      .in("date", last5)
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    const sessions = data || [];
+    setSessionsRecentes(sessions);
+    // Ne pas écraser l'étape si on est déjà dans une session active
+    setEtape(prev => {
+      if (prev === "ready") return prev;
+      return sessions.length > 0 ? "choix" : "form";
+    });
   }, [initProfile]);
 
   useEffect(() => {
-    loadTempsOptions();
-    checkSessionsDuJour();
-  }, [loadTempsOptions, checkSessionsDuJour]);
+    initAll();
+  }, [initAll]);
 
   // ─── REJOINDRE UNE SESSION (aujourd'hui, éditable) ────────────
   const rejoindreSession = (session) => {

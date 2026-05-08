@@ -153,7 +153,7 @@ function CellulesHubContent() {
       <Link href="/rapport/RapportPresence" className={CARD_CLASS} style={{ borderTop: "4px solid #06b6d4" }}>
           <div className="text-5xl mb-2">✅</div>
           <div className="text-lg font-bold text-gray-800 text-center">
-            Rapport de Registre
+            Rapport des Registres
           </div>
         </Link>
 

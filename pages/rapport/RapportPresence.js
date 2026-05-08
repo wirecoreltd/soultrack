@@ -995,61 +995,112 @@ setAllMembers(membersData || []);
       )}
 
         {/* ── TAB SUIVI ───────────────────────── */}
-          {activeTab === "suivi" && (
-            <div className="bg-white/10 border border-white/20 rounded-xl p-4 flex flex-col gap-4">
-          
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSuiviMode("presents")}
-                  className={`px-4 py-2 rounded-full text-sm border transition ${
-                    suiviMode === "presents"
-                      ? "bg-emerald-400 border-emerald-400 text-white"
-                      : "border-white/30 text-white/70"
-                  }`}
-                >
-                  Présents
-                </button>
-          
-                <button
-                  onClick={() => setSuiviMode("absents")}
-                  className={`px-4 py-2 rounded-full text-sm border transition ${
-                    suiviMode === "absents"
-                      ? "bg-red-400 border-red-400 text-white"
-                      : "border-white/30 text-white/70"
-                  }`}
-                >
-                  Absents
-                </button>
-              </div>
-          
-              <div className="flex flex-wrap gap-2">
-                {["jour", "semaine", "mois", "annee"].map(g => (
-                  <button
-                    key={g}
-                    onClick={() => setSuiviGranularity(g)}
-                    className={`px-3 py-1 rounded-full text-xs border transition ${
-                      suiviGranularity === g
-                        ? "bg-white text-[#333699] border-white"
-                        : "border-white/30 text-white/70"
-                    }`}
-                  >
-                    {g.charAt(0).toUpperCase() + g.slice(1)}
-                  </button>
-                ))}
-              </div>
-          
-              <div className="text-sm text-white/70">
-                {suiviData.length} personne(s)
-              </div>
-          
-              <div className="overflow-x-auto rounded-xl border border-white/20">
-                <table className="w-full text-sm text-white text-left">
-          
-                  <thead>
-                    <tr className="bg-white/10 text-xs uppercase">
-                      <th className="px-3 py-2">Civilité</th>
-                   )}
+{activeTab === "suivi" && (
+  <div className="bg-white/10 border border-white/20 rounded-xl p-4 flex flex-col gap-4">
 
+    <div className="flex flex-wrap gap-2">
+      <button
+        onClick={() => setSuiviMode("presents")}
+        className={`px-4 py-2 rounded-full text-sm border transition ${
+          suiviMode === "presents"
+            ? "bg-emerald-400 border-emerald-400 text-white"
+            : "border-white/30 text-white/70"
+        }`}
+      >
+        Présents
+      </button>
+
+      <button
+        onClick={() => setSuiviMode("absents")}
+        className={`px-4 py-2 rounded-full text-sm border transition ${
+          suiviMode === "absents"
+            ? "bg-red-400 border-red-400 text-white"
+            : "border-white/30 text-white/70"
+        }`}
+      >
+        Absents
+      </button>
+    </div>
+
+    <div className="flex flex-wrap gap-2">
+      {["jour", "semaine", "mois", "annee"].map(g => (
+        <button
+          key={g}
+          onClick={() => setSuiviGranularity(g)}
+          className={`px-3 py-1 rounded-full text-xs border transition ${
+            suiviGranularity === g
+              ? "bg-white text-[#333699] border-white"
+              : "border-white/30 text-white/70"
+          }`}
+        >
+          {g.charAt(0).toUpperCase() + g.slice(1)}
+        </button>
+      ))}
+    </div>
+
+    <div className="text-sm text-white/70">
+      {suiviData.length} personne(s)
+    </div>
+
+    <div className="overflow-x-auto rounded-xl border border-white/20">
+      <table className="w-full text-sm text-white text-left">
+
+        <thead>
+          <tr className="bg-white/10 text-xs uppercase">
+            <th className="px-3 py-2">Civilité</th>
+            <th className="px-3 py-2">Prénom</th>
+            <th className="px-3 py-2">Nom</th>
+            <th className="px-3 py-2">Date présence</th>
+            <th className="px-3 py-2">Session</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {suiviData.length === 0 ? (
+            <tr>
+              <td
+                colSpan={5}
+                className="px-3 py-6 text-center text-white/40"
+              >
+                Aucune donnée
+              </td>
+            </tr>
+          ) : (
+            suiviData.map((membre, idx) => (
+              <tr
+                key={membre.id || idx}
+                className="border-t border-white/10 hover:bg-white/5"
+              >
+                <td className="px-3 py-2">
+                  {membre.sexe || "-"}
+                </td>
+
+                <td className="px-3 py-2">
+                  {membre.prenom || "-"}
+                </td>
+
+                <td className="px-3 py-2">
+                  {membre.nom || "-"}
+                </td>
+
+                <td className="px-3 py-2">
+                  {membre.lastDate
+                    ? new Date(membre.lastDate).toLocaleDateString("fr-FR")
+                    : "-"}
+                </td>
+
+                <td className="px-3 py-2">
+                  {membre.session || "-"}
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+)}
       <Footer />
     </div>
   );

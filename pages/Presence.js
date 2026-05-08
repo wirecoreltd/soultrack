@@ -18,7 +18,6 @@ export default function PresencePage() {
 const today = () => new Date().toISOString().split("T")[0];
 const nowTime = () => new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
-// Retourne les dates des 5 derniers jours (aujourd'hui inclus)
 function getLast5Days() {
   const days = [];
   for (let i = 0; i < 5; i++) {
@@ -44,7 +43,9 @@ function formatDateFr(dateStr) {
 
 // ─── ÉCRAN CHOIX SESSION ───────────────────────────────────────
 function ChoixSession({ sessions, onJoin, onNew, loadingCheck, onConsulterAncienne }) {
-  // Grouper les sessions par date
+  // MODIF 1 : anciennes sessions cachées par défaut
+  const [showOld, setShowOld] = useState(false);
+
   const byDate = sessions.reduce((acc, s) => {
     if (!acc[s.date]) acc[s.date] = [];
     acc[s.date].push(s);
@@ -93,27 +94,38 @@ function ChoixSession({ sessions, onJoin, onNew, loadingCheck, onConsulterAncien
         </div>
       )}
 
-      {/* Anciennes sessions (J-1 à J-4) */}
+      {/* MODIF 1 : Anciennes sessions avec toggle */}
       {oldDates.length > 0 && (
-        <div className="bg-white/10 rounded-2xl p-5 flex flex-col gap-3">
-          <h2 className="text-sm font-bold text-white mb-1">🕘 Sessions récentes (5 derniers jours)</h2>
-          {oldDates.map(date => (
-            <div key={date} className="flex flex-col gap-2">
-              <p className="text-white/50 text-xs font-semibold uppercase tracking-wide">{formatDateFr(date)}</p>
-              {byDate[date].map(s => (
-                <button
-                  key={s.id}
-                  onClick={() => onConsulterAncienne(s)}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-white/20 hover:bg-white/20 text-white transition"
-                >
-                  <span className="text-left text-sm">{formatSessionLabel(s)}</span>
-                  <span className="text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
-                    👁 Consulter
-                  </span>
-                </button>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => setShowOld(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/10 text-white text-sm font-semibold hover:bg-white/20 transition"
+          >
+            <span>🕘 Sessions récentes — {oldDates.reduce((n, d) => n + byDate[d].length, 0)} session(s)</span>
+            <span className="text-xs text-white/70">{showOld ? "▲ Masquer" : "▼ Afficher"}</span>
+          </button>
+          {showOld && (
+            <div className="bg-white/10 rounded-2xl p-5 flex flex-col gap-3">
+              <h2 className="text-sm font-bold text-white mb-1">🕘 Sessions récentes (5 derniers jours)</h2>
+              {oldDates.map(date => (
+                <div key={date} className="flex flex-col gap-2">
+                  <p className="text-white/50 text-xs font-semibold uppercase tracking-wide">{formatDateFr(date)}</p>
+                  {byDate[date].map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => onConsulterAncienne(s)}
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-white/20 hover:bg-white/20 text-white transition"
+                    >
+                      <span className="text-left text-sm">{formatSessionLabel(s)}</span>
+                      <span className="text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
+                        👁 Consulter
+                      </span>
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
-          ))}
+          )}
         </div>
       )}
 
@@ -162,7 +174,6 @@ function FormulaireSession({
   const typeFinalLabel = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
   const isCulte = typeFinalLabel?.toLowerCase().includes("culte");
 
-  // Numéro de culte obligatoire si c'est un culte
   const culteOk = !isCulte || (isCulte && numeroCulte);
   const isDisabled = savingSession || !typeTemps || (typeTemps === "AUTRE" && !nouveauTemps.trim()) || !culteOk;
 
@@ -204,7 +215,6 @@ function FormulaireSession({
               className="w-full px-3 py-2 rounded-md border border-gray-300 text-black" />
             <p className="text-xs text-gray-400 mt-1">{nouveauTemps.length}/30 caractères</p>
           </div>
-          {/* ─── NUMÉRO DE SESSION (optionnel, pour types AUTRE) ─── */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               🔢 Numéro de session <span className="text-gray-400 font-normal">(optionnel)</span>
@@ -348,7 +358,7 @@ function CompteurSexe({ presences }) {
   );
 }
 
-// ─── SECTION GROUPÉE (Admin/RI) ────────────────────────────────
+// ─── SECTION GROUPÉE ──────────────────────────────────────────
 function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, view, color = "blue", readOnly }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -414,7 +424,6 @@ function Presence() {
 
   const [attendanceId, setAttendanceId] = useState(null);
   const [editingSession, setEditingSession] = useState(false);
-  // readOnly = true quand on consulte une ancienne session
   const [readOnly, setReadOnly] = useState(false);
 
   const [selectedDate, setSelectedDate] = useState(today());
@@ -423,7 +432,7 @@ function Presence() {
   const [nouveauTemps, setNouveauTemps] = useState("");
   const [enregistrerTemps, setEnregistrerTemps] = useState(false);
   const [numeroCulte, setNumeroCulte] = useState("");
-  const [numeroSession, setNumeroSession] = useState(""); // ← NOUVEAU
+  const [numeroSession, setNumeroSession] = useState("");
   const [tempsOptions, setTempsOptions] = useState([]);
   const [savingSession, setSavingSession] = useState(false);
 
@@ -442,6 +451,8 @@ function Presence() {
   const profileRef = useRef(null);
   const myIdsRef = useRef(null);
   const isAdminRef = useRef(false);
+  // MODIF 2 : ref pour savoir si le rôle génère une vue groupée
+  const useGroupedViewRef = useRef(false);
   const fetchAllRef = useRef(null);
   const checkSessionsRef = useRef(null);
   const selectedDateRef = useRef(selectedDate);
@@ -464,6 +475,10 @@ function Presence() {
     const isAdmin = profile.roles?.includes("Administrateur") || profile.roles?.includes("ResponsableIntegration");
     isAdminRef.current = isAdmin;
 
+    // MODIF 2 : ResponsableCellule/Familles utilisent aussi une vue groupée
+    const isRespGroupe = profile.roles?.includes("ResponsableCellule") || profile.roles?.includes("ResponsableFamilles");
+    useGroupedViewRef.current = isAdmin || isRespGroupe;
+
     if (isAdmin) { myIdsRef.current = null; return; }
 
     let ids = new Set();
@@ -483,26 +498,26 @@ function Presence() {
 
     if (cellulesResult.data?.length > 0) {
       const celluleIds = cellulesResult.data.map(c => c.id);
-      const { data: cm } = await supabase.from("membres_complets").select("id").in("cellule_id", celluleIds);
+      // MODIF 3 : exclure etat_contact = 'supprime'
+      const { data: cm } = await supabase.from("membres_complets").select("id").in("cellule_id", celluleIds).in("etat_contact", ["existant", "nouveau"]);
       cm?.forEach(m => ids.add(m.id));
     }
 
     if (famillesResult.data?.length > 0) {
       const familleIds = famillesResult.data.map(f => f.id);
-      const { data: fm } = await supabase.from("membres_complets").select("id").in("famille_id", familleIds);
+      // MODIF 3 : exclure etat_contact = 'supprime'
+      const { data: fm } = await supabase.from("membres_complets").select("id").in("famille_id", familleIds).in("etat_contact", ["existant", "nouveau"]);
       fm?.forEach(m => ids.add(m.id));
     }
 
     myIdsRef.current = [...ids];
   }, []);
 
-  // ─── INIT SÉRIALISÉ : profil → types → sessions ──────────────
-  // On sérialise pour éviter la race condition sur profileRef
+  // ─── INIT SÉRIALISÉ ──────────────────────────────────────────
   const initAll = useCallback(async () => {
     await initProfile();
     const profile = profileRef.current;
 
-    // Types de temps (tous, sans filtre arbitraire)
     const { data: tempsData } = await supabase
       .from("attendance")
       .select("typeTemps")
@@ -513,7 +528,6 @@ function Presence() {
     )].sort((a, b) => a.localeCompare(b, "fr"));
     setTempsOptions(unique);
 
-    // Sessions des 5 derniers jours
     const last5 = getLast5Days();
     const { data } = await supabase
       .from("attendance")
@@ -528,8 +542,6 @@ function Presence() {
     setEtape(sessions.length > 0 ? "choix" : "form");
   }, [initProfile]);
 
-  // checkSessionsDuJour : rafraîchit uniquement la liste des sessions
-  // utilisé par le realtime et le bouton reset
   const checkSessionsDuJour = useCallback(async () => {
     await initProfile();
     const profile = profileRef.current;
@@ -546,18 +558,14 @@ function Presence() {
 
     const sessions = data || [];
     setSessionsRecentes(sessions);
-    // Ne pas écraser l'étape si on est déjà dans une session active
     setEtape(prev => {
       if (prev === "ready") return prev;
       return sessions.length > 0 ? "choix" : "form";
     });
   }, [initProfile]);
 
-  useEffect(() => {
-    initAll();
-  }, [initAll]);
+  useEffect(() => { initAll(); }, [initAll]);
 
-  // ─── REJOINDRE UNE SESSION (aujourd'hui, éditable) ────────────
   const rejoindreSession = (session) => {
     setAttendanceId(session.id);
     setSelectedDate(session.date);
@@ -570,7 +578,6 @@ function Presence() {
     setEtape("ready");
   };
 
-  // ─── CONSULTER UNE ANCIENNE SESSION (lecture seule) ───────────
   const consulterAncienne = (session) => {
     setAttendanceId(session.id);
     setSelectedDate(session.date);
@@ -579,7 +586,7 @@ function Presence() {
     setTypeTemps(session.typeTemps || "");
     setNumeroCulte(session.numero_culte?.toString() || "");
     setSessionCourante(session);
-    setReadOnly(true);   // ← lecture seule
+    setReadOnly(true);
     setEtape("ready");
   };
 
@@ -600,8 +607,98 @@ function Presence() {
       const allPresences = presencesData || [];
       const presentIds = new Set(allPresences.map(p => p.membre_id));
 
+      // ── VUE NON-ADMIN ─────────────────────────────────────────
       if (!isAdmin) {
-        if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); return; }
+        if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); setGroupes([]); return; }
+
+        const roles = profile?.roles || [];
+        const isResponsableCellule = roles.includes("ResponsableCellule");
+        const isResponsableFamilles = roles.includes("ResponsableFamilles");
+
+        // MODIF 2 : Vue groupée pour ResponsableCellule / ResponsableFamilles
+        if (isResponsableCellule || isResponsableFamilles) {
+          // MODIF 3 : exclure 'supprime'
+          const { data: membresData } = await supabase
+            .from("membres_complets")
+            .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
+            .eq("eglise_id", profile.eglise_id)
+            .in("etat_contact", ["existant", "nouveau"])
+            .in("id", myIds);
+
+          const membres = membresData || [];
+          const groupesResult = [];
+          const membresCouvertsParGroupe = new Set();
+
+          if (isResponsableCellule) {
+            const { data: cellulesData } = await supabase
+              .from("cellules")
+              .select("id, cellule_full, ville, cellule")
+              .eq("responsable_id", profile.uid);
+            (cellulesData || []).forEach(c => {
+              const cm = membres
+                .filter(m => m.cellule_id === c.id)
+                .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+              cm.forEach(m => membresCouvertsParGroupe.add(m.id));
+              if (cm.length > 0) {
+                groupesResult.push({
+                  id: `c-${c.id}`,
+                  label: c.cellule_full || `${c.ville} - ${c.cellule}`,
+                  icon: "🏠",
+                  color: "green",
+                  membres: cm,
+                });
+              }
+            });
+          }
+
+          if (isResponsableFamilles) {
+            const { data: famillesData } = await supabase
+              .from("familles")
+              .select("id, famille_full, famille, ville")
+              .eq("responsable_id", profile.uid);
+            (famillesData || []).forEach(f => {
+              const fm = membres
+                .filter(m => m.famille_id === f.id)
+                .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+              fm.forEach(m => membresCouvertsParGroupe.add(m.id));
+              if (fm.length > 0) {
+                groupesResult.push({
+                  id: `f-${f.id}`,
+                  label: f.famille_full || `${f.ville} - ${f.famille}`,
+                  icon: "👨‍👩‍👦",
+                  color: "purple",
+                  membres: fm,
+                });
+              }
+            });
+          }
+
+          // Membres sans groupe (absents de toutes cellules/familles)
+          const sansCellule = membres
+            .filter(m => !membresCouvertsParGroupe.has(m.id))
+            .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+          if (sansCellule.length > 0) {
+            groupesResult.unshift({
+              id: "sans",
+              label: "Sans rattachement",
+              icon: "👤",
+              color: "gray",
+              membres: sansCellule,
+            });
+          }
+
+          setGroupes(groupesResult);
+          setPresentList(
+            allPresences
+              .filter(p => myIds.includes(p.membre_id))
+              .sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"))
+          );
+          setAllMembers([]);
+          return;
+        }
+
+        // Cas Conseiller (liste plate, ordre alphabétique)
+        // MODIF 3 : exclure 'supprime'
         const { data: membresData } = await supabase
           .from("membres_complets")
           .select("id, prenom, nom, telephone, sexe")
@@ -620,6 +717,7 @@ function Presence() {
       }
 
       // ── VUE ADMIN/RI ──────────────────────────────────────────
+      // MODIF 3 : exclure 'supprime' (filtre déjà présent, conservé)
       const { data: tousMembres } = await supabase
         .from("membres_complets")
         .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
@@ -702,19 +800,14 @@ function Presence() {
   useEffect(() => { fetchAllRef.current = fetchAll; }, [fetchAll]);
   useEffect(() => { checkSessionsRef.current = checkSessionsDuJour; }, [checkSessionsDuJour]);
 
-  // ─── REALTIME SESSIONS (écran choix) ─────────────────────────
-  // Quand on est sur l'écran "choix" ou "form", écouter les nouvelles sessions
-  // pour que les autres utilisateurs voient apparaître la session créée
   useEffect(() => {
     if (etape !== "choix" && etape !== "form") return;
-
     const channel = supabase
       .channel("attendance-live")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "attendance" }, () => {
         checkSessionsRef.current?.();
       })
       .subscribe();
-
     return () => supabase.removeChannel(channel);
   }, [etape]);
 
@@ -723,7 +816,6 @@ function Presence() {
     setLoading(true);
     fetchAll(selectedDateRef.current).finally(() => setLoading(false));
 
-    // Pas de realtime en mode lecture seule (ancienne session)
     if (readOnly) return;
 
     const channel = supabase
@@ -736,7 +828,6 @@ function Presence() {
     return () => supabase.removeChannel(channel);
   }, [etape, fetchAll, readOnly]);
 
-  // ─── TOGGLE VISIBILITÉ ────────────────────────────────────────
   const toggleVisibilite = async () => {
     const newVal = !listeVisible;
     setSavingVisible(true);
@@ -748,7 +839,6 @@ function Presence() {
     await fetchAllRef.current?.(selectedDateRef.current);
   };
 
-  // ─── CRÉER SESSION ────────────────────────────────────────────
   const demarrerSession = async () => {
     const typeFinal = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
     if (!typeFinal) return alert("Veuillez choisir un type de temps.");
@@ -770,7 +860,6 @@ function Presence() {
         temps_nom: typeFinal,
         eglise_id: profile.eglise_id,
         ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : {}),
-
       };
       const { data, error } = await supabase.from("attendance").insert(payload).select("id").single();
       if (error) throw error;
@@ -795,7 +884,6 @@ function Presence() {
     }
   };
 
-  // ─── MODIFIER SESSION ─────────────────────────────────────────
   const modifierSession = async () => {
     const typeFinal = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
     if (!typeFinal || !attendanceId) return;
@@ -811,7 +899,6 @@ function Presence() {
         typeTemps: typeFinal,
         temps_nom: typeFinal,
         ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : { numero_culte: null }),
-
       }).eq("id", attendanceId);
 
       setSessionCourante(prev => ({
@@ -831,7 +918,6 @@ function Presence() {
     }
   };
 
-  // ─── PRÉSENCE ─────────────────────────────────────────────────
   const markPresent = async (membre) => {
     if (readOnly) return;
     try {
@@ -864,15 +950,19 @@ function Presence() {
     }
   };
 
-  // ─── FILTRES ──────────────────────────────────────────────────
   const filterM = (m) => `${m.prenom} ${m.nom} ${m.telephone || ""}`.toLowerCase().includes(search.toLowerCase());
   const filterP = (p) => `${p.membres_complets?.prenom} ${p.membres_complets?.nom}`.toLowerCase().includes(search.toLowerCase());
 
-  const isAdmin = isAdminRef.current;
+  // MODIF 2 : vue groupée activée pour Admin ET ResponsableCellule/Familles
+  const useGroupedView = isAdminRef.current || groupes.length > 0;
   const totalPresents = presentList.length;
-  const totalAbsents = allMembers.length;
+  const totalAbsents = allMembers.length + (useGroupedView ? groupes.reduce((n, g) => n + g.membres.filter(m => !new Set(presentList.map(p => p.membre_id)).has(m.id)).length, 0) : 0);
 
-  // ─── RESET ────────────────────────────────────────────────────
+  // Pour les groupes : total absents = membres non présents dans tous les groupes
+  const presentIdsSet = new Set(presentList.map(p => p.membre_id));
+  const totalAbsentsGroupes = groupes.reduce((n, g) => n + g.membres.filter(m => !presentIdsSet.has(m.id)).length, 0);
+  const totalAbsentsFinal = useGroupedView ? totalAbsentsGroupes : allMembers.length;
+
   const handleReset = () => {
     setEtape("check");
     setAttendanceId(null);
@@ -970,7 +1060,6 @@ function Presence() {
             <span className="text-white font-semibold text-sm">
               {sessionCourante?.typeTemps}
               {sessionCourante?.numero_culte ? ` — ${sessionCourante.numero_culte}${sessionCourante.numero_culte === 1 ? "er" : "ème"} culte` : ""}
-
             </span>
             {!readOnly && <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>}
           </div>
@@ -983,18 +1072,22 @@ function Presence() {
 
         <div className="flex gap-4 justify-center mt-3 text-sm">
           <span className="text-green-300">✔ Présents : {totalPresents}</span>
-          <span className="text-white">⚪ Restants : {totalAbsents}</span>
+          <span className="text-white">⚪ Restants : {totalAbsentsFinal}</span>
         </div>
 
         {totalPresents > 0 && <CompteurSexe presences={presentList} />}
       </div>
 
-      {/* Bannière lecture seule */}
       {readOnly && (
         <BanniereConsultation session={sessionCourante} onRetour={handleReset} />
       )}
 
-      {!isAdmin && !readOnly && (
+      {!isAdminRef.current && !useGroupedView && !readOnly && (
+        <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} />
+      )}
+
+      {/* Toggle visible uniquement pour les Conseillers (pas les Resp. groupés) */}
+      {!isAdminRef.current && !groupes.length && !readOnly && (
         <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} />
       )}
 
@@ -1022,7 +1115,7 @@ function Presence() {
         <>
           <div className="flex gap-3 mb-4">
             <button onClick={() => setView("absents")} className={`px-4 py-2 rounded ${view === "absents" ? "bg-white text-[#333699] font-bold" : "bg-white/20 text-white"}`}>
-              ⚪ {readOnly ? "Absents" : "Absents"} ({totalAbsents})
+              ⚪ Absents ({totalAbsentsFinal})
             </button>
             <button onClick={() => setView("presents")} className={`px-4 py-2 rounded ${view === "presents" ? "bg-green-400 text-black font-bold" : "bg-white/20 text-white"}`}>
               ✔ Présents ({totalPresents})
@@ -1048,12 +1141,12 @@ function Presence() {
 
           {loading ? (
             <p className="text-white text-center">Chargement...</p>
-          ) : isAdmin ? (
+          ) : useGroupedView ? (
+            // MODIF 2 : Vue groupée pour Admin ET ResponsableCellule/Familles
             <div className="w-full flex flex-col items-center">
               {groupes.length === 0
                 ? <p className="text-white text-center">Aucun membre visible</p>
                 : groupes.map(g => {
-                    const presentIdsSet = new Set(presentList.map(p => p.membre_id));
                     const membresFiltrés = g.membres.filter(filterM);
                     if (membresFiltrés.length === 0) return null;
                     return (
@@ -1074,6 +1167,7 @@ function Presence() {
               }
             </div>
           ) : (
+            // Vue liste plate (Conseiller)
             <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-2">
               {view === "absents"
                 ? allMembers.filter(filterM).length === 0

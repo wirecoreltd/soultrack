@@ -6,6 +6,7 @@ import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { useFeature } from "../../components/FeaturesContext";
+import PresenceDot from "../../components/PresenceDot";
 import dynamic from "next/dynamic";
 
 const Line = dynamic(
@@ -130,7 +131,6 @@ function TranchePie({ data }) {
 
 // ── composant principal ──────────────────────────────────────────────────────
 function RapportPresence() {
-  // ✅ FEATURES — tous les hooks en premier, avant tout return conditionnel
   const cellulesActive = useFeature("cellules");
   const famillesActive = useFeature("familles");
 
@@ -174,7 +174,6 @@ function RapportPresence() {
       const egliseId = profile?.eglise_id;
       if (!egliseId) return;
 
-      // ✅ Fetch familles seulement si feature active
       if (famillesActive) {
         const { data: fa } = await supabase
           .from("familles")
@@ -185,11 +184,10 @@ function RapportPresence() {
 
       const { data: membersData } = await supabase
         .from("membres_complets")
-        .select("id, nom, prenom, sexe, age, statut, cellule_id, famille_id, eglise_id")
+        .select("id, nom, prenom, sexe, age, statut, cellule_id, famille_id, eglise_id, date_venu")
         .eq("eglise_id", egliseId);
       setAllMembers(membersData || []);
 
-      // ✅ Fetch cellules seulement si feature active
       if (cellulesActive) {
         const { data: ce } = await supabase
           .from("cellules")
@@ -210,7 +208,6 @@ function RapportPresence() {
         }
       }
 
-      // ✅ Fetch familles assignées seulement si feature active
       if (famillesActive) {
         const uid  = profile.id;
         const role = profile.role;
@@ -238,11 +235,10 @@ function RapportPresence() {
     return familles;
   }, [userRole, mesFamilles, familles]);
 
-  // ✅ Visibilité des selects : rôle + feature
   const showCelluleSelect = cellulesActive && !["ResponsableFamilles"].includes(userRole);
   const showFamilleSelect = famillesActive && !["ResponsableCellule","SuperviseurCellule"].includes(userRole);
 
-  // ── membres autorisés selon le rôle (pour le suivi absents) ──────────────
+  // ── membres autorisés ─────────────────────────────────────────────────────
   const membresAutorisés = useMemo(() => {
     if (cellulesActive && userRole === "ResponsableCellule" && mesCellules.length > 0) {
       const ids = new Set(mesCellules.map(c => c.id));
@@ -306,12 +302,12 @@ function RapportPresence() {
             cellule_id, famille_id, statut, date_venu
           )
         `)
-        .in("attendance_id", attIds);
+        .in("attendance_id", attIds)
+        .eq("statut", "present");
       if (pErr) throw pErr;
 
       let filtered = pData || [];
 
-      // ✅ Filtrage strict selon rôle + feature
       if (cellulesActive && userRole === "ResponsableCellule" && mesCellules.length > 0) {
         const ids = new Set(mesCellules.map(c => c.id));
         filtered = filtered.filter(p => ids.has(p.membres_complets?.cellule_id));
@@ -333,7 +329,7 @@ function RapportPresence() {
     }
   };
 
-  // ── filtre secondaire (admin / superviseur avec select) ───────────────────
+  // ── filtre secondaire ─────────────────────────────────────────────────────
   const presencesFiltrees = useMemo(() => {
     let src = presencesRaw;
     if (cellulesActive && filterCellule) {
@@ -457,7 +453,7 @@ function RapportPresence() {
     },
   };
 
-  // ✅ Comparaison cellules — seulement si feature active
+  // ── comparaison cellules ──────────────────────────────────────────────────
   const comparaisonCellules = useMemo(() => {
     if (!cellulesActive) return [];
     if (userRole === "ResponsableFamilles") return [];
@@ -478,7 +474,7 @@ function RapportPresence() {
       .sort((a, b) => b.total - a.total);
   }, [presencesFiltrees, cellules, userRole, cellulesActive]);
 
-  // ✅ Comparaison familles — seulement si feature active
+  // ── comparaison familles ──────────────────────────────────────────────────
   const comparaisonFamilles = useMemo(() => {
     if (!famillesActive) return [];
     if (["ResponsableCellule","SuperviseurCellule"].includes(userRole)) return [];
@@ -588,6 +584,7 @@ function RapportPresence() {
         });
     }
 
+    // ── mode absents ──────────────────────────────────────────────────────
     const presentIds = new Set(filteredPresences.map(p => p.membres_complets?.id).filter(Boolean));
     return membresAutorisés
       .filter(m => !presentIds.has(m.id))
@@ -598,7 +595,7 @@ function RapportPresence() {
       });
   }, [presencesAvecGroupe, suiviMode, suiviGranularity, membresAutorisés, attendanceMap]);
 
-  // ── libellé du filtre actif ────────────────────────────────────────────────
+  // ── libellé filtre actif ──────────────────────────────────────────────────
   const filterLabel = useMemo(() => {
     if (cellulesActive && filterCellule) {
       const c = cellules.find(x => x.id === filterCellule);
@@ -682,7 +679,6 @@ function RapportPresence() {
           {loading ? "⏳ Chargement..." : "Générer"}
         </button>
 
-        {/* ✅ Sélecteurs secondaires — conditionnés par feature ET rôle */}
         {hasData && (showCelluleSelect || showFamilleSelect) && (
           <div className="mt-4 pt-4 border-t border-white/20 flex flex-wrap gap-3 items-end">
             {showCelluleSelect && cellulesSelect.length > 1 && (
@@ -703,7 +699,6 @@ function RapportPresence() {
               </div>
             )}
 
-            {/* ✅ Sélecteur famille — affiché seulement si feature active */}
             {showFamilleSelect && famillesSelect.length > 1 && (
               <div className="flex flex-col flex-1 min-w-[160px]">
                 <label className="text-xs text-white/60 mb-1 flex items-center gap-1">
@@ -765,7 +760,6 @@ function RapportPresence() {
             {[
               { key:"evolution",   label:"Évolution" },
               { key:"repartition", label:"Répartition" },
-              // ✅ Onglet comparaison affiché seulement si au moins une feature active
               ...((cellulesActive || famillesActive) ? [{ key:"comparaison", label:"Comparaison" }] : []),
               { key:"tableau",     label:"Tableau" },
               { key:"suivi",       label:"Suivi pastoral" },
@@ -820,12 +814,11 @@ function RapportPresence() {
             </div>
           )}
 
-          {/* ✅ TAB COMPARAISON — affiché seulement si au moins une feature active */}
+          {/* ── TAB COMPARAISON ── */}
           {activeTab === "comparaison" && (cellulesActive || famillesActive) && (
             <div className="bg-white/10 border border-white/20 rounded-xl p-4 flex flex-col gap-6">
               <p className="text-white font-semibold">Comparaison des présences</p>
 
-              {/* ✅ Bloc cellules — seulement si feature active */}
               {cellulesActive && comparaisonCellules.length > 0 && (
                 <div>
                   <p className="text-white/70 text-sm font-medium mb-4 flex items-center gap-2">
@@ -848,7 +841,6 @@ function RapportPresence() {
                 </div>
               )}
 
-              {/* ✅ Bloc familles — seulement si feature active */}
               {famillesActive && comparaisonFamilles.length > 0 && (
                 <div>
                   <p className="text-white/70 text-sm font-medium mb-4 flex items-center gap-2">
@@ -1020,10 +1012,14 @@ function RapportPresence() {
                     return (
                       <div key={membre.id || idx}
                         className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 flex items-start gap-3 transition">
+
+                        {/* Avatar */}
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${avatarBg}`}>
                           {initiales}
                         </div>
+
                         <div className="flex-1 min-w-0">
+                          {/* Nom + badge sexe + PresenceDot */}
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-white font-semibold text-sm">{nomComplet}</span>
                             <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -1031,7 +1027,15 @@ function RapportPresence() {
                             }`}>
                               {membre.sexe || "—"}
                             </span>
+                            {/* ✅ PresenceDot — affiché pour présents ET absents */}
+                            <PresenceDot
+                              memberId={membre.id}
+                              egliseId={userProfile?.eglise_id}
+                              dateVenu={membre.date_venu}
+                            />
                           </div>
+
+                          {/* ── PRÉSENTS : badges sessions assistées (vert) ── */}
                           {suiviMode === "presents" && membre.presences?.length > 0 && (
                             <div className="mt-1.5 flex flex-wrap gap-1.5">
                               {membre.presences.map((p, pi) => (
@@ -1043,16 +1047,34 @@ function RapportPresence() {
                               ))}
                             </div>
                           )}
-                          {suiviMode === "absents" && (
-                            <p className="text-xs text-white/40 mt-1">
-                              Absent{membre.sexe === "Femme" ? "e" : ""} {granLabel[suiviGranularity]}
-                            </p>
+
+                          {/* ── ABSENTS : badges sessions manquées (rouge) ── */}
+                          {suiviMode === "absents" && sessionsEnPeriode.length > 0 && (
+                            <div className="mt-1.5 flex flex-wrap gap-1.5">
+                              {sessionsEnPeriode.map((s, si) => (
+                                <span key={si} className="inline-flex items-center gap-1 text-xs bg-red-500/15 border border-red-400/20 text-red-300 px-2 py-0.5 rounded-full">
+                                  <span className="text-white/40">{new Date(s.date).toLocaleDateString("fr-FR")}</span>
+                                  <span>·</span>
+                                  <span>{s.label}</span>
+                                </span>
+                              ))}
+                            </div>
                           )}
                         </div>
+
+                        {/* ── Compteur présences (mode présents) ── */}
                         {suiviMode === "presents" && membre.presences?.length > 0 && (
                           <div className="flex-shrink-0 text-right">
                             <span className="text-xs text-white/40">×</span>
                             <span className="text-emerald-300 font-bold ml-0.5">{membre.presences.length}</span>
+                          </div>
+                        )}
+
+                        {/* ── Compteur absences (mode absents) ── */}
+                        {suiviMode === "absents" && sessionsEnPeriode.length > 0 && (
+                          <div className="flex-shrink-0 text-right">
+                            <span className="text-xs text-white/40">×</span>
+                            <span className="text-red-300 font-bold ml-0.5">{sessionsEnPeriode.length}</span>
                           </div>
                         )}
                       </div>

@@ -1,5 +1,6 @@
 // pages/api/signup-eglise.js
 import { createClient } from "@supabase/supabase-js";
+import { DEFAULT_FEATURES } from "../../lib/features";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -100,6 +101,19 @@ export default async function handler(req, res) {
       }]);
 
     if (subError) return res.status(400).json({ error: subError.message });
+
+    // 6️⃣ Seeder les features par défaut pour cette église
+    const featureRows = Object.entries(DEFAULT_FEATURES).map(([feature, active]) => ({
+      eglise_id: egliseId,
+      feature,
+      active,
+    }));
+
+    const { error: featuresError } = await supabaseAdmin
+      .from("eglise_features")
+      .insert(featureRows);
+
+    if (featuresError) console.error("Erreur seed features:", featuresError.message);
 
     return res.status(200).json({
       message: "Église et admin créés avec succès !",

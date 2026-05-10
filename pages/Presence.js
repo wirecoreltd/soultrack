@@ -606,6 +606,12 @@ function Presence() {
       // On priorise le paramètre passé explicitement, sinon on lit le ref
       const aId     = overrideAttendanceId ?? attendanceIdRef.current;
 
+      // Sécurité : si aId est null/undefined, on ne peut pas filtrer correctement
+      if (!aId) {
+        console.warn("fetchAll appelé sans attendanceId — abandon");
+        return;
+      }
+
       // Récupère uniquement les présents (statut = 'present') pour cette session
       const { data: presencesData } = await supabase
         .from("presences")
@@ -828,7 +834,8 @@ function Presence() {
     const channel = supabase
       .channel("presence-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "presences" }, () => {
-        fetchAllRef.current?.(selectedDateRef.current);
+        // On passe toujours l'attendanceId explicitement pour éviter les problèmes de closure
+        fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
       })
       .subscribe();
 
@@ -843,7 +850,7 @@ function Presence() {
     profileRef.current.liste_presence_visible = newVal;
     setListeVisible(newVal);
     setSavingVisible(false);
-    await fetchAllRef.current?.(selectedDateRef.current);
+    await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
   };
 
   // ─── DÉMARRER SESSION ─────────────────────────────────────────
@@ -1036,7 +1043,7 @@ function Presence() {
     } catch (err) {
       console.error("Erreur markPresent:", err);
       // Rollback en cas d'erreur
-      await fetchAllRef.current?.(selectedDateRef.current);
+      await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
     }
   };
 
@@ -1071,7 +1078,7 @@ function Presence() {
     } catch (err) {
       console.error("Erreur markAbsent:", err);
       // Rollback
-      await fetchAllRef.current?.(selectedDateRef.current);
+      await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
     }
   };
 

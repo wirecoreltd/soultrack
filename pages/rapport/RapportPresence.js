@@ -292,26 +292,34 @@ function RapportPresence() {
       (attData || []).forEach(a => { aMap[a.id] = a; });
       setAttendanceMap(aMap);
 
-      // ── CORRECTION CRITIQUE : ne récupérer que statut = 'present' ──
       const { data: pData, error: pErr } = await supabase
-        .from("presences")
-        .select(`
-          id,
-          membre_id,
-          date,
-          attendance_id,
-          statut,
-          membres_complets (
-            id, nom, prenom, sexe, age,
-            cellule_id, famille_id, statut, date_venu
-          )
-        `)
-        .in("attendance_id", attIds)
-        .eq("statut", "present"); // ← FILTRE CRITIQUE
+  .from("presences")
+  .select(`
+    id,
+    membre_id,
+    date,
+    attendance_id,
+    statut,
+    membres_complets (
+      id, nom, prenom, sexe, age,
+      cellule_id, famille_id, statut, date_venu
+    )
+  `)
+  .in("attendance_id", attIds)
+  .eq("statut", "present");
 
-      if (pErr) throw pErr;
+if (pErr) throw pErr;
 
-      let filtered = pData || [];
+// ── DÉDUPLICATION : 1 présence par (membre_id + attendance_id) ──
+const seen = new Set();
+const pDataDedup = (pData || []).filter(p => {
+  const key = `${p.membre_id}|${p.attendance_id}`;
+  if (seen.has(key)) return false;
+  seen.add(key);
+  return true;
+});
+
+let filtered = pDataDedup;
 
       if (cellulesActive && userRole === "ResponsableCellule" && mesCellules.length > 0) {
         const ids = new Set(mesCellules.map(c => c.id));

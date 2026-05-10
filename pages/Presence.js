@@ -44,6 +44,12 @@ function formatDateFr(dateStr) {
   });
 }
 
+// ─── CORRECTION 1 : "Culte" toujours en premier ──────────────
+function sortTempsOptions(options) {
+  const withoutCulte = options.filter(t => t !== "Culte");
+  return ["Culte", ...withoutCulte];
+}
+
 // ─── ÉCRAN CHOIX SESSION ───────────────────────────────────────
 function ChoixSession({ sessions, onJoin, onNew, loadingCheck, onConsulterAncienne }) {
   const [showOld, setShowOld] = useState(false);
@@ -170,6 +176,9 @@ function FormulaireSession({
   const culteOk = !isCulte || (isCulte && numeroCulte);
   const isDisabled = savingSession || !typeTemps || (typeTemps === "AUTRE" && !nouveauTemps.trim()) || !culteOk;
 
+  // CORRECTION 1 : "Culte" toujours en premier, puis les autres options triées
+  const optionsAffichees = sortTempsOptions(tempsOptions);
+
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-5">
       <div className="flex gap-3">
@@ -186,7 +195,7 @@ function FormulaireSession({
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-1">Sélectionner un Type de Temps</label>
         <div className="grid grid-cols-2 gap-2">
-          {tempsOptions.map(t => (
+          {optionsAffichees.map(t => (
             <button key={t} type="button" onClick={() => { setTypeTemps(t); setNouveauTemps(""); setNumeroCulte(""); }}
               className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${typeTemps === t ? "border-[#333699] bg-[#333699] text-white" : "border-gray-200 bg-gray-50 text-gray-700 hover:border-[#333699]"}`}>
               {t}
@@ -297,7 +306,7 @@ function CarteAbsent({ m, onMark, readOnly }) {
   return (
     <div
       onClick={() => !readOnly && onMark(m)}
-      className={`bg-white rounded-xl shadow px-4 py-3 flex items-center gap-3 ${readOnly ? "opacity-70" : "cursor-pointer hover:bg-green-50 transition"}`}
+      className={`bg-white rounded-xl shadow px-4 py-3 flex items-center gap-3 ${readOnly ? "opacity-70" : "cursor-pointer hover:bg-green-50 active:bg-green-100 transition"}`}
     >
       <span className="w-5 h-5 flex-shrink-0 rounded border-2 border-gray-300 inline-block" />
       <span className="font-semibold text-black text-base flex-1">{m.nom} {m.prenom}</span>
@@ -323,8 +332,8 @@ function CartePresent({ p, onUnmark, readOnly }) {
 
 // ─── COMPTEUR HOMMES / FEMMES ──────────────────────────────────
 function CompteurSexe({ presences }) {
-  const hommes  = presences.filter(p => p.membres_complets?.sexe?.toLowerCase() === "homme").length;
-  const femmes  = presences.filter(p => p.membres_complets?.sexe?.toLowerCase() === "femme").length;
+  const hommes   = presences.filter(p => p.membres_complets?.sexe?.toLowerCase() === "homme").length;
+  const femmes   = presences.filter(p => p.membres_complets?.sexe?.toLowerCase() === "femme").length;
   const inconnus = presences.length - hommes - femmes;
   return (
     <div className="flex gap-3 justify-center mt-2 flex-wrap">
@@ -435,14 +444,17 @@ function Presence() {
 
   const [sessionCourante, setSessionCourante] = useState(null);
 
-  const profileRef   = useRef(null);
-  const myIdsRef     = useRef(null);
-  const isAdminRef   = useRef(false);
-  const useGroupedViewRef = useRef(false);
-  const fetchAllRef       = useRef(null);
-  const checkSessionsRef  = useRef(null);
-  const selectedDateRef   = useRef(selectedDate);
+  const profileRef          = useRef(null);
+  const myIdsRef            = useRef(null);
+  const isAdminRef          = useRef(false);
+  const useGroupedViewRef   = useRef(false);
+  const fetchAllRef         = useRef(null);
+  const checkSessionsRef    = useRef(null);
+  const selectedDateRef     = useRef(selectedDate);
+  const attendanceIdRef     = useRef(attendanceId);
+
   useEffect(() => { selectedDateRef.current = selectedDate; }, [selectedDate]);
+  useEffect(() => { attendanceIdRef.current = attendanceId; }, [attendanceId]);
 
   // ─── INIT PROFIL ──────────────────────────────────────────────
   const initProfile = useCallback(async () => {
@@ -506,9 +518,13 @@ function Presence() {
       .select("typeTemps")
       .eq("eglise_id", profile.eglise_id)
       .not("typeTemps", "is", null);
-    const unique = [...new Set(
+
+    // CORRECTION 1 : On s'assure que "Culte" est dans la liste même si pas encore en DB
+    const fromDb = [...new Set(
       (tempsData || []).map(t => t.typeTemps?.trim()).filter(t => t && t !== "")
-    )].sort((a, b) => a.localeCompare(b, "fr"));
+    )];
+    if (!fromDb.includes("Culte")) fromDb.push("Culte");
+    const unique = sortTempsOptions(fromDb);
     setTempsOptions(unique);
 
     const last5 = getLast5Days();
@@ -551,6 +567,7 @@ function Presence() {
 
   const rejoindreSession = (session) => {
     setAttendanceId(session.id);
+    attendanceIdRef.current = session.id;
     setSelectedDate(session.date);
     selectedDateRef.current = session.date;
     setSelectedTime(session.heure || "");
@@ -563,6 +580,7 @@ function Presence() {
 
   const consulterAncienne = (session) => {
     setAttendanceId(session.id);
+    attendanceIdRef.current = session.id;
     setSelectedDate(session.date);
     selectedDateRef.current = session.date;
     setSelectedTime(session.heure || "");
@@ -581,12 +599,13 @@ function Presence() {
       const myIds   = myIdsRef.current;
       const isAdmin = isAdminRef.current;
       const d       = date || selectedDateRef.current;
+      const aId     = attendanceIdRef.current;
 
-      // On récupère uniquement les présents (statut = 'present')
+      // Récupère uniquement les présents (statut = 'present') pour cette session
       const { data: presencesData } = await supabase
         .from("presences")
         .select("membre_id, statut, checked_by, membres_complets(prenom, nom, sexe)")
-        .eq("date", d)
+        .eq("attendance_id", aId)
         .eq("statut", "present");
 
       const allPresences = presencesData || [];
@@ -596,7 +615,7 @@ function Presence() {
       if (!isAdmin) {
         if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); setGroupes([]); return; }
 
-        const roles               = profile?.roles || [];
+        const roles                 = profile?.roles || [];
         const isResponsableCellule  = roles.includes("ResponsableCellule");
         const isResponsableFamilles = roles.includes("ResponsableFamilles");
 
@@ -819,7 +838,7 @@ function Presence() {
     await fetchAllRef.current?.(selectedDateRef.current);
   };
 
-  // ─── DÉMARRER SESSION : INSERT en masse des absents ───────────
+  // ─── DÉMARRER SESSION ─────────────────────────────────────────
   const demarrerSession = async () => {
     const typeFinal = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
     if (!typeFinal) return alert("Veuillez choisir un type de temps.");
@@ -832,7 +851,7 @@ function Presence() {
     try {
       const profile = profileRef.current;
       if (typeTemps === "AUTRE" && enregistrerTemps && !tempsOptions.includes(typeFinal)) {
-        setTempsOptions(prev => [...prev, typeFinal].sort((a, b) => a.localeCompare(b, "fr")));
+        setTempsOptions(prev => sortTempsOptions([...prev, typeFinal]));
       }
 
       const payload = {
@@ -847,8 +866,9 @@ function Presence() {
       if (error) throw error;
 
       const newAttendanceId = data.id;
+      attendanceIdRef.current = newAttendanceId;
 
-      // ── INSERT en masse : tous les membres = absent par défaut ──
+      // CORRECTION 2 : INSERT en masse de tous les membres = absent par défaut
       await insererAbsentsEnMasse(newAttendanceId, selectedDate, profile);
 
       const newSession = {
@@ -871,7 +891,7 @@ function Presence() {
     }
   };
 
-  // ─── INSERT EN MASSE : tous les membres absent au démarrage ───
+  // ─── INSERT EN MASSE : tous absents au démarrage ───────────────
   const insererAbsentsEnMasse = async (newAttendanceId, date, profile) => {
     try {
       const myIds   = myIdsRef.current;
@@ -880,7 +900,6 @@ function Presence() {
       let membresAInserer = [];
 
       if (isAdmin) {
-        // Admin : tous les membres de l'église
         const { data } = await supabase
           .from("membres_complets")
           .select("id")
@@ -888,7 +907,6 @@ function Presence() {
           .in("etat_contact", ["existant", "nouveau"]);
         membresAInserer = data || [];
       } else if (myIds && myIds.length > 0) {
-        // Rôle restreint : uniquement ses membres
         const { data } = await supabase
           .from("membres_complets")
           .select("id")
@@ -900,8 +918,6 @@ function Presence() {
 
       if (membresAInserer.length === 0) return;
 
-      // Vérifier s'il existe déjà des lignes pour cette date+attendance
-      // (éviter les doublons si la session est rejointe plusieurs fois)
       const { data: existantes } = await supabase
         .from("presences")
         .select("membre_id")
@@ -913,7 +929,7 @@ function Presence() {
 
       if (nouveaux.length === 0) return;
 
-      // INSERT en masse avec statut = 'absent'
+      // CORRECTION 2 : statut = 'absent' par défaut pour tous
       const rows = nouveaux.map(m => ({
         membre_id:     m.id,
         date:          date,
@@ -922,7 +938,6 @@ function Presence() {
         checked_by:    profile.uid,
       }));
 
-      // Supabase limite les inserts en masse — on découpe par lots de 500
       const BATCH = 500;
       for (let i = 0; i < rows.length; i += BATCH) {
         const { error } = await supabase.from("presences").insert(rows.slice(i, i + BATCH));
@@ -967,53 +982,87 @@ function Presence() {
     }
   };
 
-  // ─── MARQUER PRÉSENT : UPDATE statut → 'present' ─────────────
+  // ─── CORRECTION 3 : MARQUER PRÉSENT — mise à jour optimiste ───
   const markPresent = async (membre) => {
     if (readOnly) return;
+
+    // Mise à jour optimiste immédiate : le nom disparaît des absents et apparaît dans présents
+    setPresentList(prev => {
+      if (prev.find(p => p.membre_id === membre.id)) return prev;
+      return [...prev, {
+        membre_id: membre.id,
+        statut: "present",
+        membres_complets: { nom: membre.nom, prenom: membre.prenom, sexe: membre.sexe },
+      }].sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"));
+    });
+    setAllMembers(prev => prev.filter(m => m.id !== membre.id));
+    // Mise à jour des groupes aussi (vue groupée)
+    setGroupes(prev => prev.map(g => ({
+      ...g,
+      membres: g.membres, // les membres restent, c'est presentIdsSet qui change le rendu
+    })));
+
     try {
       const { uid } = profileRef.current;
-      const d = selectedDateRef.current;
+      const d  = selectedDateRef.current;
+      const aId = attendanceIdRef.current;
 
-      // On tente un UPDATE d'abord (la ligne existe déjà car insert en masse)
       const { data: updated, error: updateError } = await supabase
         .from("presences")
         .update({ statut: "present", checked_by: uid })
         .eq("membre_id", membre.id)
-        .eq("attendance_id", attendanceId)
+        .eq("attendance_id", aId)
         .select("id");
 
-      // Si aucune ligne trouvée (session rejointe sans insert en masse), on insert
       if (!updateError && (!updated || updated.length === 0)) {
         await supabase.from("presences").insert({
           membre_id:     membre.id,
           date:          d,
-          attendance_id: attendanceId,
+          attendance_id: aId,
           statut:        "present",
           checked_by:    uid,
         });
       }
-
-      await fetchAllRef.current?.(d);
+      // Pas de fetchAll ici — le realtime ou l'optimiste suffisent
     } catch (err) {
       console.error("Erreur markPresent:", err);
+      // Rollback en cas d'erreur
+      await fetchAllRef.current?.(selectedDateRef.current);
     }
   };
 
-  // ─── MARQUER ABSENT : UPDATE statut → 'absent' ────────────────
-  // (plus de DELETE — la ligne reste pour tracer l'absence)
+  // ─── CORRECTION 3 : MARQUER ABSENT — mise à jour optimiste ────
   const markAbsent = async (memberId) => {
     if (readOnly) return;
+
+    // Mise à jour optimiste immédiate
+    const absent = presentList.find(p => p.membre_id === memberId);
+    if (absent) {
+      const membreInfo = {
+        id: memberId,
+        nom: absent.membres_complets?.nom,
+        prenom: absent.membres_complets?.prenom,
+        sexe: absent.membres_complets?.sexe,
+        cellule_id: absent.membres_complets?.cellule_id,
+        famille_id: absent.membres_complets?.famille_id,
+      };
+      setPresentList(prev => prev.filter(p => p.membre_id !== memberId));
+      setAllMembers(prev =>
+        [...prev, membreInfo].sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"))
+      );
+    }
+
     try {
-      const d = selectedDateRef.current;
+      const aId = attendanceIdRef.current;
       await supabase
         .from("presences")
         .update({ statut: "absent" })
         .eq("membre_id", memberId)
-        .eq("attendance_id", attendanceId);
-
-      await fetchAllRef.current?.(d);
+        .eq("attendance_id", aId);
     } catch (err) {
       console.error("Erreur markAbsent:", err);
+      // Rollback
+      await fetchAllRef.current?.(selectedDateRef.current);
     }
   };
 
@@ -1023,13 +1072,14 @@ function Presence() {
   const useGroupedView = isAdminRef.current || groupes.length > 0;
   const totalPresents  = presentList.length;
 
-  const presentIdsSet         = new Set(presentList.map(p => p.membre_id));
-  const totalAbsentsGroupes   = groupes.reduce((n, g) => n + g.membres.filter(m => !presentIdsSet.has(m.id)).length, 0);
-  const totalAbsentsFinal     = useGroupedView ? totalAbsentsGroupes : allMembers.length;
+  const presentIdsSet       = new Set(presentList.map(p => p.membre_id));
+  const totalAbsentsGroupes = groupes.reduce((n, g) => n + g.membres.filter(m => !presentIdsSet.has(m.id)).length, 0);
+  const totalAbsentsFinal   = useGroupedView ? totalAbsentsGroupes : allMembers.length;
 
   const handleReset = () => {
     setEtape("check");
     setAttendanceId(null);
+    attendanceIdRef.current = null;
     setSessionCourante(null);
     setTypeTemps(""); setNouveauTemps(""); setNumeroCulte(""); setNumeroSession("");
     setEnregistrerTemps(false);
@@ -1146,7 +1196,8 @@ function Presence() {
         <BanniereConsultation session={sessionCourante} onRetour={handleReset} />
       )}
 
-      {!isAdminRef.current && !groupes.length && !readOnly && (
+      {/* CORRECTION 4 : Toggle visible pour tous les non-admins (y compris ResponsableCellule et ResponsableFamilles) */}
+      {!isAdminRef.current && !readOnly && (
         <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} />
       )}
 

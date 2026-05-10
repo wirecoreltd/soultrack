@@ -956,7 +956,13 @@ function Presence() {
 
       const BATCH = 500;
       for (let i = 0; i < rows.length; i += BATCH) {
-        const { error } = await supabase.from("presences").upsert(rows.slice(i, i + BATCH), { onConflict: "membre_id,attendance_id", ignoreDuplicates: true });
+        const { error } = await supabase
+          .from("presences")
+          .upsert(rows.slice(i, i + BATCH), {
+            onConflict: "membre_id,attendance_id",
+            ignoreDuplicates: true, // ne pas écraser un 'present' existant
+          });
+        if (error) console.error("Erreur upsert batch absents:", error);
         if (error) console.error("Erreur insert batch absents:", error);
       }
     } catch (err) {
@@ -1031,7 +1037,7 @@ function Presence() {
         .select("id");
 
       if (!updateError && (!updated || updated.length === 0)) {
-        // Upsert pour éviter le 409 si la ligne existe déjà (contrainte unique membre_id+attendance_id)
+        // Ligne absente — upsert avec la contrainte (membre_id, attendance_id)
         await supabase.from("presences").upsert({
           membre_id:     membre.id,
           date:          d,

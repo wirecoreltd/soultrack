@@ -956,7 +956,7 @@ function Presence() {
 
       const BATCH = 500;
       for (let i = 0; i < rows.length; i += BATCH) {
-        const { error } = await supabase.from("presences").insert(rows.slice(i, i + BATCH));
+        const { error } = await supabase.from("presences").upsert(rows.slice(i, i + BATCH), { onConflict: "membre_id,attendance_id", ignoreDuplicates: true });
         if (error) console.error("Erreur insert batch absents:", error);
       }
     } catch (err) {
@@ -1031,13 +1031,14 @@ function Presence() {
         .select("id");
 
       if (!updateError && (!updated || updated.length === 0)) {
-        await supabase.from("presences").insert({
+        // Upsert pour éviter le 409 si la ligne existe déjà (contrainte unique membre_id+attendance_id)
+        await supabase.from("presences").upsert({
           membre_id:     membre.id,
           date:          d,
           attendance_id: aId,
           statut:        "present",
           checked_by:    uid,
-        });
+        }, { onConflict: "membre_id,attendance_id" });
       }
       // Pas de fetchAll ici — le realtime ou l'optimiste suffisent
     } catch (err) {

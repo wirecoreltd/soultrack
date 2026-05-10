@@ -44,7 +44,6 @@ function formatDateFr(dateStr) {
   });
 }
 
-// ─── CORRECTION 1 : "Culte" toujours en premier ──────────────
 function sortTempsOptions(options) {
   const withoutCulte = options.filter(t => t !== "Culte");
   return ["Culte", ...withoutCulte];
@@ -176,7 +175,6 @@ function FormulaireSession({
   const culteOk = !isCulte || (isCulte && numeroCulte);
   const isDisabled = savingSession || !typeTemps || (typeTemps === "AUTRE" && !nouveauTemps.trim()) || !culteOk;
 
-  // CORRECTION 1 : "Culte" toujours en premier, puis les autres options triées
   const optionsAffichees = sortTempsOptions(tempsOptions);
 
   return (
@@ -520,7 +518,6 @@ function Presence() {
       .eq("eglise_id", profile.eglise_id)
       .not("typeTemps", "is", null);
 
-    // CORRECTION 1 : On s'assure que "Culte" est dans la liste même si pas encore en DB
     const fromDb = [...new Set(
       (tempsData || []).map(t => t.typeTemps?.trim()).filter(t => t && t !== "")
     )];
@@ -576,7 +573,6 @@ function Presence() {
     setNumeroCulte(session.numero_culte?.toString() || "");
     setSessionCourante(session);
     setReadOnly(false);
-    // On stocke l'id de session à charger pour que l'useEffect "ready" l'utilise
     pendingSessionIdRef.current = session.id;
     setEtape("ready");
   };
@@ -603,16 +599,13 @@ function Presence() {
       const myIds   = myIdsRef.current;
       const isAdmin = isAdminRef.current;
       const d       = date || selectedDateRef.current;
-      // On priorise le paramètre passé explicitement, sinon on lit le ref
       const aId     = overrideAttendanceId ?? attendanceIdRef.current;
 
-      // Sécurité : si aId est null/undefined, on ne peut pas filtrer correctement
       if (!aId) {
         console.warn("fetchAll appelé sans attendanceId — abandon");
         return;
       }
 
-      // Récupère uniquement les présents (statut = 'present') pour cette session
       const { data: presencesData } = await supabase
         .from("presences")
         .select("membre_id, statut, checked_by, membres_complets(prenom, nom, sexe)")
@@ -801,7 +794,8 @@ function Presence() {
       const membresVisiblesIds = new Set([...membresCouvertsParGroupe, ...sansCellule.map(m => m.id)]);
 
       setGroupes(groupesResult);
-      setPresentList(allPresences);
+      // ── CORRECTION : presentList filtré aux membres visibles uniquement ──
+      setPresentList(allPresences.filter(p => membresVisiblesIds.has(p.membre_id)));
       setAllMembers(membres.filter(m => membresVisiblesIds.has(m.id) && !presentIds.has(m.id)));
 
     } catch (err) { console.error(err); }
@@ -824,7 +818,6 @@ function Presence() {
   useEffect(() => {
     if (etape !== "ready") return;
     setLoading(true);
-    // Passer l'attendanceId explicitement pour éviter les problèmes de closure
     const sessionId = pendingSessionIdRef.current ?? attendanceIdRef.current;
     pendingSessionIdRef.current = null;
     fetchAll(selectedDateRef.current, sessionId).finally(() => setLoading(false));
@@ -834,7 +827,6 @@ function Presence() {
     const channel = supabase
       .channel("presence-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "presences" }, () => {
-        // On passe toujours l'attendanceId explicitement pour éviter les problèmes de closure
         fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
       })
       .subscribe();
@@ -883,7 +875,6 @@ function Presence() {
       const newAttendanceId = data.id;
       attendanceIdRef.current = newAttendanceId;
 
-      // CORRECTION 2 : INSERT en masse de tous les membres = absent par défaut
       await insererAbsentsEnMasse(newAttendanceId, selectedDate, profile);
 
       const newSession = {
@@ -945,7 +936,6 @@ function Presence() {
 
       if (nouveaux.length === 0) return;
 
-      // CORRECTION 2 : statut = 'absent' par défaut pour tous
       const rows = nouveaux.map(m => ({
         membre_id:     m.id,
         date:          date,
@@ -960,10 +950,9 @@ function Presence() {
           .from("presences")
           .upsert(rows.slice(i, i + BATCH), {
             onConflict: "membre_id,attendance_id",
-            ignoreDuplicates: true, // ne pas écraser un 'present' existant
+            ignoreDuplicates: true,
           });
         if (error) console.error("Erreur upsert batch absents:", error);
-        if (error) console.error("Erreur insert batch absents:", error);
       }
     } catch (err) {
       console.error("Erreur insererAbsentsEnMasse:", err);
@@ -1004,11 +993,10 @@ function Presence() {
     }
   };
 
-  // ─── CORRECTION 3 : MARQUER PRÉSENT — mise à jour optimiste ───
+  // ─── MARQUER PRÉSENT — mise à jour optimiste ───────────────────
   const markPresent = async (membre) => {
     if (readOnly) return;
 
-    // Mise à jour optimiste immédiate : le nom disparaît des absents et apparaît dans présents
     setPresentList(prev => {
       if (prev.find(p => p.membre_id === membre.id)) return prev;
       return [...prev, {
@@ -1018,11 +1006,7 @@ function Presence() {
       }].sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"));
     });
     setAllMembers(prev => prev.filter(m => m.id !== membre.id));
-    // Mise à jour des groupes aussi (vue groupée)
-    setGroupes(prev => prev.map(g => ({
-      ...g,
-      membres: g.membres, // les membres restent, c'est presentIdsSet qui change le rendu
-    })));
+    setGroupes(prev => prev.map(g => ({ ...g, membres: g.membres })));
 
     try {
       const { uid } = profileRef.current;
@@ -1037,7 +1021,6 @@ function Presence() {
         .select("id");
 
       if (!updateError && (!updated || updated.length === 0)) {
-        // Ligne absente — upsert avec la contrainte (membre_id, attendance_id)
         await supabase.from("presences").upsert({
           membre_id:     membre.id,
           date:          d,
@@ -1046,19 +1029,16 @@ function Presence() {
           checked_by:    uid,
         }, { onConflict: "membre_id,attendance_id" });
       }
-      // Pas de fetchAll ici — le realtime ou l'optimiste suffisent
     } catch (err) {
       console.error("Erreur markPresent:", err);
-      // Rollback en cas d'erreur
       await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
     }
   };
 
-  // ─── CORRECTION 3 : MARQUER ABSENT — mise à jour optimiste ────
+  // ─── MARQUER ABSENT — mise à jour optimiste ────────────────────
   const markAbsent = async (memberId) => {
     if (readOnly) return;
 
-    // Mise à jour optimiste immédiate
     const absent = presentList.find(p => p.membre_id === memberId);
     if (absent) {
       const membreInfo = {
@@ -1084,7 +1064,6 @@ function Presence() {
         .eq("attendance_id", aId);
     } catch (err) {
       console.error("Erreur markAbsent:", err);
-      // Rollback
       await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
     }
   };
@@ -1207,10 +1186,7 @@ function Presence() {
           {!readOnly && <span className="text-white/40 text-xs mt-0.5">Cliquer pour modifier</span>}
         </div>
 
-        <div className="flex gap-4 justify-center mt-3 text-sm">
-          <span className="text-green-300">✔ Présents : {totalPresents}</span>
-          <span className="text-white">⚪ Restants : {totalAbsentsFinal}</span>
-        </div>
+        {/* ── CORRECTION 1 : ligne ✔ Présents / ⚪ Restants supprimée ── */}
 
         {totalPresents > 0 && <CompteurSexe presences={presentList} />}
       </div>
@@ -1219,7 +1195,6 @@ function Presence() {
         <BanniereConsultation session={sessionCourante} onRetour={handleReset} />
       )}
 
-      {/* CORRECTION 4 : Toggle visible pour tous les non-admins (y compris ResponsableCellule et ResponsableFamilles) */}
       {!isAdminRef.current && !readOnly && (
         <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} />
       )}

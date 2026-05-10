@@ -27,116 +27,106 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
 
   // ── Calcul couleur ─────────────────────────────────────────────────────────
   useEffect(() => {
-  if (!memberId || !egliseId) return;
+    if (!memberId || !egliseId) return;
 
-  const compute = async () => {
-    // ✅ 5 semaines
-    const since = new Date();
-    since.setDate(since.getDate() - 35);
+    const compute = async () => {
+      const since = new Date();
+      since.setDate(since.getDate() - 35);
+      const sinceStr = since.toISOString().slice(0, 10);
 
-    const sinceStr = since.toISOString().slice(0, 10);
+      const effectiveSince =
+        dateVenu && dateVenu > sinceStr ? dateVenu : sinceStr;
 
-    // ✅ Respecter date_venu
-    const effectiveSince =
-      dateVenu && dateVenu > sinceStr
-        ? dateVenu
-        : sinceStr;
+      // ✅ CORRECTION : filtrer uniquement statut = 'present'
+      const { data: presences } = await supabase
+        .from("presences")
+        .select(`
+          attendance_id,
+          attendance:attendance_id (
+            date
+          )
+        `)
+        .eq("membre_id", memberId)
+        .eq("statut", "present"); // ← AJOUT CRITIQUE
 
-    // ✅ Toutes les présences du membre
-    const { data: presences } = await supabase
-      .from("presences")
-      .select(`
-        attendance_id,
-        attendance:attendance_id (
-          date
-        )
-      `)
-      .eq("membre_id", memberId);
+      if (!presences || presences.length === 0) {
+        setStatus("grey");
+        return;
+      }
 
-    if (!presences || presences.length === 0) {
-      setStatus("grey");
-      return;
-    }
+      const dates = presences
+        .map((p) => p.attendance?.date)
+        .filter(Boolean)
+        .sort((a, b) => new Date(b) - new Date(a));
 
-    // ✅ Dernière présence réelle
-    const dates = presences
-      .map((p) => p.attendance?.date)
-      .filter(Boolean)
-      .sort((a, b) => new Date(b) - new Date(a));
+      if (dates.length === 0) {
+        setStatus("grey");
+        return;
+      }
 
-    if (dates.length === 0) {
-      setStatus("grey");
-      return;
-    }
+      const lastPresence = new Date(dates[0]);
+      const diffDays = Math.floor(
+        (new Date() - lastPresence) / (1000 * 60 * 60 * 24)
+      );
 
-    const lastPresence = new Date(dates[0]);
+      if (diffDays <= 7) {
+        setStatus("green");
+      } else if (diffDays <= 14) {
+        setStatus("yellow");
+      } else if (diffDays <= 21) {
+        setStatus("orange");
+      } else {
+        setStatus("red");
+      }
+    };
 
-    // ✅ Nombre de jours depuis dernière présence
-    const diffDays = Math.floor(
-      (new Date() - lastPresence) / (1000 * 60 * 60 * 24)
-    );
-
-    // ✅ Couleur pastorale
-    if (diffDays <= 7) {
-      setStatus("green");
-    } else if (diffDays <= 14) {
-      setStatus("yellow");
-    } else if (diffDays <= 21) {
-      setStatus("orange");
-    } else {
-      setStatus("red");
-    }
-  };
-
-  compute();
-}, [memberId, egliseId, dateVenu]);
+    compute();
+  }, [memberId, egliseId, dateVenu]);
 
   // ── Données popup ──────────────────────────────────────────────────────────
   const loadMonthData = async () => {
-  setLoadingPopup(true);
+    setLoadingPopup(true);
 
-  // ✅ 5 semaines glissantes
-  const since = new Date();
-  since.setDate(since.getDate() - 35);
+    const since = new Date();
+    since.setDate(since.getDate() - 35);
+    const sinceStr = since.toISOString().slice(0, 10);
+    const todayStr = new Date().toISOString().slice(0, 10);
 
-  const sinceStr = since.toISOString().slice(0, 10);
-  const todayStr = new Date().toISOString().slice(0, 10);
+    const effectiveSince =
+      dateVenu && dateVenu > sinceStr ? dateVenu : sinceStr;
 
-  // ✅ Respecter date_venu
-  const effectiveSince =
-    dateVenu && dateVenu > sinceStr
-      ? dateVenu
-      : sinceStr;
+    // Tous les cultes dans la fenêtre
+    const { data: cultes } = await supabase
+      .from("attendance")
+      .select("id, date, heure, typeTemps, numero_culte")
+      .eq("eglise_id", egliseId)
+      .gte("date", effectiveSince)
+      .lte("date", todayStr)
+      .order("date", { ascending: false });
 
-  // ✅ Tous les cultes utiles
-  const { data: cultes } = await supabase
-    .from("attendance")
-    .select("id, date, heure")
-    .eq("eglise_id", egliseId)
-    .gte("date", effectiveSince)
-    .lte("date", todayStr)
-    .order("date", { ascending: false });
+    // ✅ CORRECTION : filtrer uniquement statut = 'present'
+    const { data: presences } = await supabase
+      .from("presences")
+      .select("attendance_id")
+      .eq("membre_id", memberId)
+      .eq("statut", "present"); // ← AJOUT CRITIQUE
 
-  // ✅ Présences
-  const { data: presences } = await supabase
-    .from("presences")
-    .select("attendance_id")
-    .eq("membre_id", memberId);
+    const presentSet = new Set(
+      (presences || []).map((p) => p.attendance_id)
+    );
 
-  const presentSet = new Set(
-    (presences || []).map((p) => p.attendance_id)
-  );
+    setMonthData(
+      (cultes || []).map((c) => ({
+        date: c.date,
+        heure: c.heure,
+        typeTemps: c.typeTemps,
+        numeroCulte: c.numero_culte,
+        present: presentSet.has(c.id),
+      }))
+    );
 
-  setMonthData(
-    (cultes || []).map((c) => ({
-      date: c.date,
-      heure: c.heure,
-      present: presentSet.has(c.id),
-    }))
-  );
-
-  setLoadingPopup(false);
-};
+    setLoadingPopup(false);
+  };
 
   const handleDotClick = (e) => {
     e.stopPropagation();
@@ -171,6 +161,13 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
     });
   };
 
+  const formatSessionLabel = (row) => {
+    const culte = row.numeroCulte
+      ? ` — ${row.numeroCulte}${row.numeroCulte === 1 ? "er" : "ème"} culte`
+      : "";
+    return `${row.typeTemps || "Session"}${culte}`;
+  };
+
   const monthLabel = "5 dernières semaines";
 
   // ── Rendu ──────────────────────────────────────────────────────────────────
@@ -196,7 +193,7 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
         className="hover:scale-125"
       />
 
-      {/* ✅ Popup vers le BAS, aligné à droite */}
+      {/* Popup vers le BAS, aligné à droite */}
       {open && (
         <div
           style={{
@@ -244,7 +241,7 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
           {loadingPopup ? (
             <p style={{ fontSize: 12, color: "#a5b4fc", textAlign: "center" }}>Chargement…</p>
           ) : monthData.length === 0 ? (
-            <p style={{ fontSize: 12, color: "#a5b4fc", textAlign: "center" }}>Aucun culte ce mois-ci.</p>
+            <p style={{ fontSize: 12, color: "#a5b4fc", textAlign: "center" }}>Aucune session sur cette période.</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {monthData.map((row, i) => (
@@ -264,9 +261,9 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
                     <p style={{ fontSize: 12, fontWeight: 600, color: "white", textTransform: "capitalize" }}>
                       {formatDateFr(row.date)}
                     </p>
-                    {row.heure && (
-                      <p style={{ fontSize: 10, color: "#a5b4fc" }}>{row.heure.slice(0, 5)}</p>
-                    )}
+                    <p style={{ fontSize: 10, color: "#a5b4fc" }}>
+                      {formatSessionLabel(row)}{row.heure ? ` · ${row.heure.slice(0, 5)}` : ""}
+                    </p>
                   </div>
                   <span style={{ fontSize: 16 }}>{row.present ? "✅" : "❌"}</span>
                 </div>
@@ -279,7 +276,7 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
             <div style={{ marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(165,180,252,0.2)", display: "flex", justifyContent: "space-between", fontSize: 11, color: "#a5b4fc" }}>
               <span>✅ {monthData.filter((r) => r.present).length} présence{monthData.filter((r) => r.present).length > 1 ? "s" : ""}</span>
               <span>❌ {monthData.filter((r) => !r.present).length} absence{monthData.filter((r) => !r.present).length > 1 ? "s" : ""}</span>
-              <span>📊 {monthData.length} culte{monthData.length > 1 ? "s" : ""}</span>
+              <span>📊 {monthData.length} session{monthData.length > 1 ? "s" : ""}</span>
             </div>
           )}
         </div>

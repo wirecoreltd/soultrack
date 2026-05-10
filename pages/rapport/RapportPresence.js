@@ -144,7 +144,8 @@ function RapportPresence() {
   const [dateFin,       setDateFin]       = useState("");
   const [filterCellule, setFilterCellule] = useState("");
   const [filterFamille, setFilterFamille] = useState("");
-  const [presencesRaw,  setPresencesRaw]  = useState([]);
+  const [presencesRaw,  setPresencesRaw]  = useState([]); // statut = 'present' uniquement
+  const [absencesRaw,   setAbsencesRaw]   = useState([]); // tous les membres pour le mode absents
   const [attendanceMap, setAttendanceMap] = useState({});
   const [loading,   setLoading]   = useState(false);
   const [message,   setMessage]   = useState("");
@@ -263,6 +264,7 @@ function RapportPresence() {
     setLoading(true);
     setMessage("⏳ Chargement...");
     setPresencesRaw([]);
+    setAbsencesRaw([]);
     setAttendanceMap({});
     setDrillMois(null);
     setDrillSemaine(null);
@@ -290,6 +292,7 @@ function RapportPresence() {
       (attData || []).forEach(a => { aMap[a.id] = a; });
       setAttendanceMap(aMap);
 
+      // ── CORRECTION CRITIQUE : ne récupérer que statut = 'present' ──
       const { data: pData, error: pErr } = await supabase
         .from("presences")
         .select(`
@@ -297,13 +300,15 @@ function RapportPresence() {
           membre_id,
           date,
           attendance_id,
+          statut,
           membres_complets (
             id, nom, prenom, sexe, age,
             cellule_id, famille_id, statut, date_venu
           )
         `)
-        .in("attendance_id", attIds);
-        
+        .in("attendance_id", attIds)
+        .eq("statut", "present"); // ← FILTRE CRITIQUE
+
       if (pErr) throw pErr;
 
       let filtered = pData || [];
@@ -527,7 +532,7 @@ function RapportPresence() {
     });
   }, [presencesAvecGroupe, attendanceMap]);
 
-  // ── suivi pastoral ────────────────────────────────────────────────────────
+  // ── suivi pastoral : sessions en période ─────────────────────────────────
   const isInSelectedPeriod = (dateStr) => {
     const d   = new Date(dateStr);
     const now = new Date();
@@ -554,37 +559,37 @@ function RapportPresence() {
     return Object.values(sessions).sort((a, b) => a.date.localeCompare(b.date));
   }, [presencesAvecGroupe, attendanceMap, suiviGranularity]);
 
-  const suiviData = useMemo(() => {
+  // ── suivi pastoral : présents ─────────────────────────────────────────────
+  const suiviPresents = useMemo(() => {
     const filteredPresences = presencesAvecGroupe.filter(p => isInSelectedPeriod(p.attDate));
-
-    if (suiviMode === "presents") {
-      const presentMap = {};
-      filteredPresences.forEach(p => {
-        const membre = p.membres_complets;
-        if (!membre?.id) return;
-        const att = attendanceMap[p.attendance_id];
-        if (!presentMap[membre.id]) {
-          presentMap[membre.id] = { ...membre, presences: [] };
-        }
-        presentMap[membre.id].presences.push({
-          date: p.attDate,
-          label: formatSessionLabel(att?.typeTemps, att?.numero_culte),
-        });
+    const presentMap = {};
+    filteredPresences.forEach(p => {
+      const membre = p.membres_complets;
+      if (!membre?.id) return;
+      const att = attendanceMap[p.attendance_id];
+      if (!presentMap[membre.id]) {
+        presentMap[membre.id] = { ...membre, presences: [] };
+      }
+      presentMap[membre.id].presences.push({
+        date: p.attDate,
+        label: formatSessionLabel(att?.typeTemps, att?.numero_culte),
       });
-      return Object.values(presentMap)
-        .map(m => ({
-          ...m,
-          presences: m.presences.sort((a, b) => a.date.localeCompare(b.date)),
-          lastDate:  m.presences.sort((a, b) => b.date.localeCompare(a.date))[0]?.date,
-        }))
-        .sort((a, b) => {
-          const na = `${a.nom || ""} ${a.prenom || ""}`;
-          const nb = `${b.nom || ""} ${b.prenom || ""}`;
-          return na.localeCompare(nb);
-        });
-    }
+    });
+    return Object.values(presentMap)
+      .map(m => ({
+        ...m,
+        presences: m.presences.sort((a, b) => a.date.localeCompare(b.date)),
+      }))
+      .sort((a, b) => {
+        const na = `${a.nom || ""} ${a.prenom || ""}`;
+        const nb = `${b.nom || ""} ${b.prenom || ""}`;
+        return na.localeCompare(nb);
+      });
+  }, [presencesAvecGroupe, suiviGranularity, attendanceMap]);
 
-    // ── mode absents ──────────────────────────────────────────────────────
+  // ── suivi pastoral : absents ──────────────────────────────────────────────
+  const suiviAbsents = useMemo(() => {
+    const filteredPresences = presencesAvecGroupe.filter(p => isInSelectedPeriod(p.attDate));
     const presentIds = new Set(filteredPresences.map(p => p.membres_complets?.id).filter(Boolean));
     return membresAutorisés
       .filter(m => !presentIds.has(m.id))
@@ -593,7 +598,7 @@ function RapportPresence() {
         const nb = `${b.nom || ""} ${b.prenom || ""}`;
         return na.localeCompare(nb);
       });
-  }, [presencesAvecGroupe, suiviMode, suiviGranularity, membresAutorisés, attendanceMap]);
+  }, [presencesAvecGroupe, suiviGranularity, membresAutorisés]);
 
   // ── libellé filtre actif ──────────────────────────────────────────────────
   const filterLabel = useMemo(() => {
@@ -641,6 +646,78 @@ function RapportPresence() {
   };
 
   const granLabel = { jour: "aujourd'hui", semaine: "cette semaine", mois: "ce mois-ci", annee: "cette année" };
+
+  // ── carte membre (présent ou absent) ─────────────────────────────────────
+  const MembreCard = ({ membre, mode, idx }) => {
+    const nomComplet = [membre.prenom, membre.nom].filter(Boolean).join(" ") || "Inconnu";
+    const initiales  = [(membre.prenom || "?")[0], (membre.nom || "?")[0]].join("").toUpperCase();
+    const isHomme    = membre.sexe === "Homme";
+    const avatarBg   = isHomme ? "bg-blue-500/30 text-blue-300" : "bg-pink-500/30 text-pink-300";
+
+    return (
+      <div className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 flex items-start gap-3 transition">
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${avatarBg}`}>
+          {initiales}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-white font-semibold text-sm">{nomComplet}</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${
+              isHomme ? "bg-blue-500/20 text-blue-300" : "bg-pink-500/20 text-pink-300"
+            }`}>
+              {membre.sexe || "—"}
+            </span>
+            <PresenceDot
+              memberId={membre.id}
+              egliseId={userProfile?.eglise_id}
+              dateVenu={membre.date_venu}
+            />
+          </div>
+
+          {/* Sessions assistées (mode présents) */}
+          {mode === "presents" && membre.presences?.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {membre.presences.map((p, pi) => (
+                <span key={pi} className="inline-flex items-center gap-1 text-xs bg-emerald-500/15 border border-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded-full">
+                  <span className="text-white/40">{new Date(p.date).toLocaleDateString("fr-FR")}</span>
+                  <span>·</span>
+                  <span>{p.label}</span>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Sessions manquées (mode absents) */}
+          {mode === "absents" && sessionsEnPeriode.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {sessionsEnPeriode.map((s, si) => (
+                <span key={si} className="inline-flex items-center gap-1 text-xs bg-red-500/15 border border-red-400/20 text-red-300 px-2 py-0.5 rounded-full">
+                  <span className="text-white/40">{new Date(s.date).toLocaleDateString("fr-FR")}</span>
+                  <span>·</span>
+                  <span>{s.label}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {mode === "presents" && membre.presences?.length > 0 && (
+          <div className="flex-shrink-0 text-right">
+            <span className="text-xs text-white/40">×</span>
+            <span className="text-emerald-300 font-bold ml-0.5">{membre.presences.length}</span>
+          </div>
+        )}
+
+        {mode === "absents" && sessionsEnPeriode.length > 0 && (
+          <div className="flex-shrink-0 text-right">
+            <span className="text-xs text-white/40">×</span>
+            <span className="text-red-300 font-bold ml-0.5">{sessionsEnPeriode.length}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // ── render ────────────────────────────────────────────────────────────────
   return (
@@ -926,30 +1003,10 @@ function RapportPresence() {
           {/* ── TAB SUIVI PASTORAL ── */}
           {activeTab === "suivi" && (
             <div className="flex flex-col gap-4">
-              <div className="bg-white/10 border border-white/20 rounded-xl p-4 flex flex-col gap-3">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setSuiviMode("presents")}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition flex items-center justify-center gap-2 ${
-                      suiviMode === "presents"
-                        ? "bg-emerald-500 border-emerald-400 text-white shadow-lg shadow-emerald-500/30"
-                        : "border-white/20 text-white/60 hover:border-white/40"
-                    }`}
-                  >
-                    <span className="text-lg">✅</span> Présents
-                  </button>
-                  <button
-                    onClick={() => setSuiviMode("absents")}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition flex items-center justify-center gap-2 ${
-                      suiviMode === "absents"
-                        ? "bg-red-500 border-red-400 text-white shadow-lg shadow-red-500/30"
-                        : "border-white/20 text-white/60 hover:border-white/40"
-                    }`}
-                  >
-                    <span className="text-lg">❌</span> Absents
-                  </button>
-                </div>
 
+              {/* Sélecteur de granularité */}
+              <div className="bg-white/10 border border-white/20 rounded-xl p-4">
+                <p className="text-white/60 text-xs mb-2 font-semibold uppercase tracking-wide">Période d'analyse</p>
                 <div className="flex gap-2 flex-wrap">
                   {[
                     { k:"jour",    label:"Aujourd'hui" },
@@ -969,22 +1026,7 @@ function RapportPresence() {
                 </div>
               </div>
 
-              <div className={`rounded-xl px-4 py-3 border flex items-center justify-between ${
-                suiviMode === "presents"
-                  ? "bg-emerald-500/15 border-emerald-400/30"
-                  : "bg-red-500/15 border-red-400/30"
-              }`}>
-                <div>
-                  <p className="text-white font-semibold text-base">
-                    {suiviMode === "presents" ? "✅ Personnes présentes" : "❌ Personnes absentes"}
-                  </p>
-                  <p className="text-white/60 text-xs mt-0.5">{granLabel[suiviGranularity]}</p>
-                </div>
-                <div className={`text-2xl font-bold ${suiviMode === "presents" ? "text-emerald-300" : "text-red-300"}`}>
-                  {suiviData.length}
-                </div>
-              </div>
-
+              {/* Sessions de la période */}
               {sessionsEnPeriode.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {sessionsEnPeriode.map((s, i) => (
@@ -995,93 +1037,60 @@ function RapportPresence() {
                 </div>
               )}
 
-              {suiviData.length === 0 ? (
-                <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center text-white/40">
-                  {suiviMode === "presents"
-                    ? "Aucune présence enregistrée sur cette période."
-                    : "Tout le monde est présent — aucun absent 🎉"}
+              {/* ── DEUX COLONNES : Présents | Absents ── */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                {/* ── COLONNE PRÉSENTS ── */}
+                <div className="flex flex-col gap-3">
+                  <div className="bg-emerald-500/15 border-2 border-emerald-400/40 rounded-xl px-4 py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-white font-bold text-base flex items-center gap-2">
+                        ✅ <span>Présents</span>
+                      </p>
+                      <p className="text-white/50 text-xs mt-0.5">{granLabel[suiviGranularity]}</p>
+                    </div>
+                    <div className="text-3xl font-bold text-emerald-300">{suiviPresents.length}</div>
+                  </div>
+
+                  {suiviPresents.length === 0 ? (
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center text-white/40 text-sm">
+                      Aucune présence enregistrée sur cette période.
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {suiviPresents.map((membre, idx) => (
+                        <MembreCard key={membre.id || idx} membre={membre} mode="presents" idx={idx} />
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {suiviData.map((membre, idx) => {
-                    const nomComplet = [membre.prenom, membre.nom].filter(Boolean).join(" ") || "Inconnu";
-                    const initiales  = [(membre.prenom || "?")[0], (membre.nom || "?")[0]].join("").toUpperCase();
-                    const isHomme    = membre.sexe === "Homme";
-                    const avatarBg   = isHomme ? "bg-blue-500/30 text-blue-300" : "bg-pink-500/30 text-pink-300";
 
-                    return (
-                      <div key={membre.id || idx}
-                        className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 flex items-start gap-3 transition">
+                {/* ── COLONNE ABSENTS ── */}
+                <div className="flex flex-col gap-3">
+                  <div className="bg-red-500/15 border-2 border-red-400/40 rounded-xl px-4 py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-white font-bold text-base flex items-center gap-2">
+                        ❌ <span>Absents</span>
+                      </p>
+                      <p className="text-white/50 text-xs mt-0.5">{granLabel[suiviGranularity]}</p>
+                    </div>
+                    <div className="text-3xl font-bold text-red-300">{suiviAbsents.length}</div>
+                  </div>
 
-                        {/* Avatar */}
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${avatarBg}`}>
-                          {initiales}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          {/* Nom + badge sexe + PresenceDot */}
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-white font-semibold text-sm">{nomComplet}</span>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              isHomme ? "bg-blue-500/20 text-blue-300" : "bg-pink-500/20 text-pink-300"
-                            }`}>
-                              {membre.sexe || "—"}
-                            </span>
-                            {/* ✅ PresenceDot — affiché pour présents ET absents */}
-                            <PresenceDot
-                              memberId={membre.id}
-                              egliseId={userProfile?.eglise_id}
-                              dateVenu={membre.date_venu}
-                            />
-                          </div>
-
-                          {/* ── PRÉSENTS : badges sessions assistées (vert) ── */}
-                          {suiviMode === "presents" && membre.presences?.length > 0 && (
-                            <div className="mt-1.5 flex flex-wrap gap-1.5">
-                              {membre.presences.map((p, pi) => (
-                                <span key={pi} className="inline-flex items-center gap-1 text-xs bg-emerald-500/15 border border-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded-full">
-                                  <span className="text-white/40">{new Date(p.date).toLocaleDateString("fr-FR")}</span>
-                                  <span>·</span>
-                                  <span>{p.label}</span>
-                                </span>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* ── ABSENTS : badges sessions manquées (rouge) ── */}
-                          {suiviMode === "absents" && sessionsEnPeriode.length > 0 && (
-                            <div className="mt-1.5 flex flex-wrap gap-1.5">
-                              {sessionsEnPeriode.map((s, si) => (
-                                <span key={si} className="inline-flex items-center gap-1 text-xs bg-red-500/15 border border-red-400/20 text-red-300 px-2 py-0.5 rounded-full">
-                                  <span className="text-white/40">{new Date(s.date).toLocaleDateString("fr-FR")}</span>
-                                  <span>·</span>
-                                  <span>{s.label}</span>
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* ── Compteur présences (mode présents) ── */}
-                        {suiviMode === "presents" && membre.presences?.length > 0 && (
-                          <div className="flex-shrink-0 text-right">
-                            <span className="text-xs text-white/40">×</span>
-                            <span className="text-emerald-300 font-bold ml-0.5">{membre.presences.length}</span>
-                          </div>
-                        )}
-
-                        {/* ── Compteur absences (mode absents) ── */}
-                        {suiviMode === "absents" && sessionsEnPeriode.length > 0 && (
-                          <div className="flex-shrink-0 text-right">
-                            <span className="text-xs text-white/40">×</span>
-                            <span className="text-red-300 font-bold ml-0.5">{sessionsEnPeriode.length}</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                  {suiviAbsents.length === 0 ? (
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center text-white/40 text-sm">
+                      Tout le monde est présent 🎉
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {suiviAbsents.map((membre, idx) => (
+                        <MembreCard key={membre.id || idx} membre={membre} mode="absents" idx={idx} />
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+
+              </div>
             </div>
           )}
         </div>

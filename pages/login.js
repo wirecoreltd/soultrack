@@ -139,7 +139,7 @@ if (roles.includes("ResponsableCellule") || roles.includes("SuperviseurCellule")
         </button>
 
         <button
-          onClick={() => router.push("/site/pricing")}
+          onClick={() => router.push("/SignupEglise")}
           className="mt-4 text-orange-400 underline hover:text-orange-400"
         >
           Création de compte

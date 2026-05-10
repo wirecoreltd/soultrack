@@ -452,6 +452,7 @@ function Presence() {
   const checkSessionsRef    = useRef(null);
   const selectedDateRef     = useRef(selectedDate);
   const attendanceIdRef     = useRef(attendanceId);
+  const pendingSessionIdRef = useRef(null);
 
   useEffect(() => { selectedDateRef.current = selectedDate; }, [selectedDate]);
   useEffect(() => { attendanceIdRef.current = attendanceId; }, [attendanceId]);
@@ -575,6 +576,8 @@ function Presence() {
     setNumeroCulte(session.numero_culte?.toString() || "");
     setSessionCourante(session);
     setReadOnly(false);
+    // On stocke l'id de session à charger pour que l'useEffect "ready" l'utilise
+    pendingSessionIdRef.current = session.id;
     setEtape("ready");
   };
 
@@ -588,18 +591,20 @@ function Presence() {
     setNumeroCulte(session.numero_culte?.toString() || "");
     setSessionCourante(session);
     setReadOnly(false);
+    pendingSessionIdRef.current = session.id;
     setEtape("ready");
   };
 
   // ─── FETCH MEMBRES + PRÉSENCES ────────────────────────────────
-  const fetchAll = useCallback(async (date) => {
+  const fetchAll = useCallback(async (date, overrideAttendanceId) => {
     try {
       await initProfile();
       const profile = profileRef.current;
       const myIds   = myIdsRef.current;
       const isAdmin = isAdminRef.current;
       const d       = date || selectedDateRef.current;
-      const aId     = attendanceIdRef.current;
+      // On priorise le paramètre passé explicitement, sinon on lit le ref
+      const aId     = overrideAttendanceId ?? attendanceIdRef.current;
 
       // Récupère uniquement les présents (statut = 'present') pour cette session
       const { data: presencesData } = await supabase
@@ -813,7 +818,10 @@ function Presence() {
   useEffect(() => {
     if (etape !== "ready") return;
     setLoading(true);
-    fetchAll(selectedDateRef.current).finally(() => setLoading(false));
+    // Passer l'attendanceId explicitement pour éviter les problèmes de closure
+    const sessionId = pendingSessionIdRef.current ?? attendanceIdRef.current;
+    pendingSessionIdRef.current = null;
+    fetchAll(selectedDateRef.current, sessionId).finally(() => setLoading(false));
 
     if (readOnly) return;
 
@@ -881,6 +889,7 @@ function Presence() {
       setAttendanceId(newAttendanceId);
       setSessionCourante(newSession);
       selectedDateRef.current = selectedDate;
+      pendingSessionIdRef.current = newAttendanceId;
       setReadOnly(false);
       setEtape("ready");
     } catch (err) {

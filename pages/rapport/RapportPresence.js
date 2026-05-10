@@ -144,8 +144,7 @@ function RapportPresence() {
   const [dateFin,       setDateFin]       = useState("");
   const [filterCellule, setFilterCellule] = useState("");
   const [filterFamille, setFilterFamille] = useState("");
-  const [presencesRaw,  setPresencesRaw]  = useState([]); // statut = 'present' uniquement
-  const [absencesRaw,   setAbsencesRaw]   = useState([]); // tous les membres pour le mode absents
+  const [presencesRaw,  setPresencesRaw]  = useState([]);
   const [attendanceMap, setAttendanceMap] = useState({});
   const [loading,   setLoading]   = useState(false);
   const [message,   setMessage]   = useState("");
@@ -264,7 +263,6 @@ function RapportPresence() {
     setLoading(true);
     setMessage("⏳ Chargement...");
     setPresencesRaw([]);
-    setAbsencesRaw([]);
     setAttendanceMap({});
     setDrillMois(null);
     setDrillSemaine(null);
@@ -293,33 +291,33 @@ function RapportPresence() {
       setAttendanceMap(aMap);
 
       const { data: pData, error: pErr } = await supabase
-  .from("presences")
-  .select(`
-    id,
-    membre_id,
-    date,
-    attendance_id,
-    statut,
-    membres_complets (
-      id, nom, prenom, sexe, age,
-      cellule_id, famille_id, statut, date_venu
-    )
-  `)
-  .in("attendance_id", attIds)
-  .eq("statut", "present");
+        .from("presences")
+        .select(`
+          id,
+          membre_id,
+          date,
+          attendance_id,
+          statut,
+          membres_complets (
+            id, nom, prenom, sexe, age,
+            cellule_id, famille_id, statut, date_venu
+          )
+        `)
+        .in("attendance_id", attIds)
+        .eq("statut", "present");
 
-if (pErr) throw pErr;
+      if (pErr) throw pErr;
 
-// ── DÉDUPLICATION : 1 présence par (membre_id + attendance_id) ──
-const seen = new Set();
-const pDataDedup = (pData || []).filter(p => {
-  const key = `${p.membre_id}|${p.attendance_id}`;
-  if (seen.has(key)) return false;
-  seen.add(key);
-  return true;
-});
+      // ── DÉDUPLICATION GLOBALE : 1 ligne par (membre_id + attendance_id) ──
+      const seen = new Set();
+      const deduped = (pData || []).filter(p => {
+        const key = `${p.membre_id}|${p.attendance_id}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
 
-let filtered = pDataDedup;
+      let filtered = deduped;
 
       if (cellulesActive && userRole === "ResponsableCellule" && mesCellules.length > 0) {
         const ids = new Set(mesCellules.map(c => c.id));
@@ -357,37 +355,53 @@ let filtered = pDataDedup;
   const presencesAvecGroupe = useMemo(() => {
     return presencesFiltrees.map(p => {
       const att = attendanceMap[p.attendance_id];
-      const groupKey = att
-        ? `${att.date}|${att.typeTemps || ""}|${att.numero_culte || ""}`
-        : `${p.date}||`;
+      // groupKey basé sur attendance_id pour être 100% unique par session
+      const groupKey = p.attendance_id || `${p.date}||`;
       return { ...p, groupKey, attDate: att?.date || p.date };
     });
   }, [presencesFiltrees, attendanceMap]);
 
-  // ── métriques ─────────────────────────────────────────────────────────────
+  // ── métriques globales (membres uniques présents sur toute la période) ────
+  // On compte les membres uniques, pas les lignes de présence
+  const membresUniquesPresents = useMemo(() => {
+    const map = {};
+    presencesFiltrees.forEach(p => {
+      const membreId = p.membres_complets?.id || p.membre_id;
+      if (!membreId) return;
+      if (!map[membreId]) map[membreId] = p.membres_complets || {};
+    });
+    return Object.values(map);
+  }, [presencesFiltrees]);
+
+  // Pour les métriques H/F on compte les présences (lignes) pas les membres uniques
+  // car un membre peut assister à plusieurs sessions
   const totalPresences = presencesFiltrees.length;
   const totalH = presencesFiltrees.filter(p => p.membres_complets?.sexe === "Homme").length;
   const totalF = presencesFiltrees.filter(p => p.membres_complets?.sexe === "Femme").length;
+  const totalMembresUniques = membresUniquesPresents.length;
 
-  // ── tranches d'âge ────────────────────────────────────────────────────────
+  // ── tranches d'âge (membres uniques) ─────────────────────────────────────
   const tranchesData = useMemo(() => {
     const counts = {};
     AGE_TRANCHES.forEach(t => { counts[t] = 0; });
-    presencesFiltrees.forEach(p => { counts[normalizeAge(p.membres_complets?.age)]++; });
+    // On compte par membre unique pour la répartition
+    membresUniquesPresents.forEach(m => { counts[normalizeAge(m?.age)]++; });
     return AGE_TRANCHES.map(t => ({ tranche: t, count: counts[t] })).filter(t => t.count > 0);
-  }, [presencesFiltrees]);
+  }, [membresUniquesPresents]);
 
-  // ── évolution ─────────────────────────────────────────────────────────────
+  // ── évolution (par session / date) ───────────────────────────────────────
   const presencesParDate = useMemo(() => {
+    // Par session (attendance_id), compter les présences uniques
     const map = {};
     presencesAvecGroupe.forEach(p => {
-      const k = p.groupKey;
+      const k = p.groupKey; // = attendance_id
       const d = p.attDate;
       if (!map[k]) map[k] = { date: d, hommes: 0, femmes: 0, total: 0 };
       map[k].total++;
       if (p.membres_complets?.sexe === "Homme") map[k].hommes++;
       else if (p.membres_complets?.sexe === "Femme") map[k].femmes++;
     });
+    // Agréger par date
     const byDate = {};
     Object.values(map).forEach(g => {
       if (!byDate[g.date]) byDate[g.date] = { date: g.date, hommes: 0, femmes: 0, total: 0 };
@@ -518,7 +532,7 @@ let filtered = pDataDedup;
   const tableRows = useMemo(() => {
     const map = {};
     presencesAvecGroupe.forEach(p => {
-      const k   = p.groupKey;
+      const k   = p.groupKey; // = attendance_id
       const att = attendanceMap[p.attendance_id];
       if (!map[k]) map[k] = {
         date: p.attDate,
@@ -556,7 +570,7 @@ let filtered = pDataDedup;
     presencesAvecGroupe.forEach(p => {
       const att = attendanceMap[p.attendance_id];
       if (!att || !isInSelectedPeriod(p.attDate)) return;
-      const k = p.groupKey;
+      const k = p.attendance_id; // clé unique = attendance_id
       if (!sessions[k]) sessions[k] = {
         date: p.attDate,
         label: formatSessionLabel(att.typeTemps, att.numero_culte),
@@ -567,22 +581,35 @@ let filtered = pDataDedup;
     return Object.values(sessions).sort((a, b) => a.date.localeCompare(b.date));
   }, [presencesAvecGroupe, attendanceMap, suiviGranularity]);
 
-  // ── suivi pastoral : présents ─────────────────────────────────────────────
+  // ── suivi pastoral : présents (membres uniques dans la période) ───────────
   const suiviPresents = useMemo(() => {
     const filteredPresences = presencesAvecGroupe.filter(p => isInSelectedPeriod(p.attDate));
+
     const presentMap = {};
     filteredPresences.forEach(p => {
-      const membre = p.membres_complets;
-      if (!membre?.id) return;
-      const att = attendanceMap[p.attendance_id];
-      if (!presentMap[membre.id]) {
-        presentMap[membre.id] = { ...membre, presences: [] };
+      const membre    = p.membres_complets;
+      const membreId  = membre?.id || p.membre_id;
+      if (!membreId) return;
+
+      const att          = attendanceMap[p.attendance_id];
+      const sessionKey   = p.attendance_id; // unique par session réelle
+      const sessionLabel = formatSessionLabel(att?.typeTemps, att?.numero_culte);
+
+      if (!presentMap[membreId]) {
+        presentMap[membreId] = { ...(membre || {}), id: membreId, presences: [] };
       }
-      presentMap[membre.id].presences.push({
-        date: p.attDate,
-        label: formatSessionLabel(att?.typeTemps, att?.numero_culte),
-      });
+
+      // Éviter doublon de session pour ce même membre
+      const alreadyAdded = presentMap[membreId].presences.some(s => s.sessionKey === sessionKey);
+      if (!alreadyAdded) {
+        presentMap[membreId].presences.push({
+          sessionKey,
+          date: p.attDate,
+          label: sessionLabel,
+        });
+      }
     });
+
     return Object.values(presentMap)
       .map(m => ({
         ...m,
@@ -598,7 +625,11 @@ let filtered = pDataDedup;
   // ── suivi pastoral : absents ──────────────────────────────────────────────
   const suiviAbsents = useMemo(() => {
     const filteredPresences = presencesAvecGroupe.filter(p => isInSelectedPeriod(p.attDate));
-    const presentIds = new Set(filteredPresences.map(p => p.membres_complets?.id).filter(Boolean));
+    const presentIds = new Set(
+      filteredPresences
+        .map(p => p.membres_complets?.id || p.membre_id)
+        .filter(Boolean)
+    );
     return membresAutorisés
       .filter(m => !presentIds.has(m.id))
       .sort((a, b) => {
@@ -827,15 +858,17 @@ let filtered = pDataDedup;
           )}
 
           {/* ── MÉTRIQUES ── */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="grid grid-cols-4 gap-3 mb-6">
             {[
-              { label:"Total présences", value:totalPresences.toLocaleString("fr-FR"), color:"text-white" },
-              { label:"Hommes",          value:totalH,                                  color:"text-blue-300" },
-              { label:"Femmes",          value:totalF,                                  color:"text-pink-300" },
-            ].map(({ label, value, color }) => (
+              { label:"Présences totales", value:totalPresences.toLocaleString("fr-FR"), color:"text-white",        hint:"toutes sessions confondues" },
+              { label:"Membres uniques",   value:totalMembresUniques,                    color:"text-emerald-300",  hint:"personnes distinctes" },
+              { label:"Hommes",            value:totalH,                                 color:"text-blue-300",     hint:null },
+              { label:"Femmes",            value:totalF,                                 color:"text-pink-300",     hint:null },
+            ].map(({ label, value, color, hint }) => (
               <div key={label} className="bg-white/10 border border-white/20 rounded-xl p-3 text-center text-white">
                 <p className="text-xs text-white/60 mb-1">{label}</p>
                 <p className={`text-xl font-bold ${color}`}>{value}</p>
+                {hint && <p className="text-[10px] text-white/30 mt-0.5">{hint}</p>}
               </div>
             ))}
           </div>
@@ -889,7 +922,8 @@ let filtered = pDataDedup;
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white/5 border border-white/10 rounded-xl p-5">
                   <p className="text-white/80 text-sm font-semibold mb-4 text-center">Par civilité</p>
-                  <CivilitePie hommes={totalH} femmes={totalF} />
+                  <CivilitePie hommes={membresUniquesPresents.filter(m => m?.sexe === "Homme").length}
+                               femmes={membresUniquesPresents.filter(m => m?.sexe === "Femme").length} />
                 </div>
                 <div className="bg-white/5 border border-white/10 rounded-xl p-5">
                   <p className="text-white/80 text-sm font-semibold mb-4 text-center">Par tranche d'âge</p>

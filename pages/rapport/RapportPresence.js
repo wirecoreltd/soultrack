@@ -60,6 +60,7 @@ const normalizeAge = (age) => {
 };
 
 const fmt      = (d) => `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}`;
+const fmtFull  = (d) => new Date(d).toLocaleDateString("fr-FR");
 const fmtMois  = (d) => {
   const M = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
   return `${M[d.getMonth()]} ${d.getFullYear()}`;
@@ -74,6 +75,14 @@ const formatSessionLabel = (typeTemps, numero) => {
   if (typeTemps === "Culte") return `${n}${suffix} Culte`;
   if (typeTemps === "Temps de prière") return `${n}${suffix} Prière`;
   return `${typeTemps}${numero ? ` n°${numero}` : ""}`;
+};
+
+// Couleur selon taux de présence
+const tauxColor = (taux) => {
+  if (taux >= 0.75) return { bg: "bg-emerald-500/20", text: "text-emerald-300", border: "border-emerald-400/30" };
+  if (taux >= 0.5)  return { bg: "bg-yellow-500/20",  text: "text-yellow-300",  border: "border-yellow-400/30" };
+  if (taux >= 0.25) return { bg: "bg-orange-500/20",  text: "text-orange-300",  border: "border-orange-400/30" };
+  return                   { bg: "bg-red-500/20",      text: "text-red-300",    border: "border-red-400/30" };
 };
 
 const IconFamille = () => (
@@ -129,6 +138,24 @@ function TranchePie({ data }) {
   return <div style={{ height: Math.max(220, data.length * 28) }}><Doughnut data={chartData} options={options} /></div>;
 }
 
+// ── Barre de taux ─────────────────────────────────────────────────────────────
+function TauxBar({ present, total }) {
+  const taux = total > 0 ? present / total : 0;
+  const pct  = Math.round(taux * 100);
+  const col  = tauxColor(taux);
+  return (
+    <div className="flex items-center gap-2 mt-1">
+      <div className="flex-1 bg-white/10 rounded-full h-1.5 overflow-hidden">
+        <div className={`h-1.5 rounded-full transition-all duration-500 ${
+          taux >= 0.75 ? "bg-emerald-400" : taux >= 0.5 ? "bg-yellow-400" : taux >= 0.25 ? "bg-orange-400" : "bg-red-400"
+        }`} style={{ width: `${pct}%` }}/>
+      </div>
+      <span className={`text-xs font-bold ${col.text} w-12 text-right`}>{present}/{total}</span>
+      <span className={`text-xs ${col.text} w-8 text-right`}>{pct}%</span>
+    </div>
+  );
+}
+
 // ── composant principal ──────────────────────────────────────────────────────
 function RapportPresence() {
   const cellulesActive = useFeature("cellules");
@@ -146,16 +173,16 @@ function RapportPresence() {
   const [filterFamille, setFilterFamille] = useState("");
   const [presencesRaw,  setPresencesRaw]  = useState([]);
   const [attendanceMap, setAttendanceMap] = useState({});
+  const [allSessions,   setAllSessions]   = useState([]);
   const [loading,   setLoading]   = useState(false);
   const [message,   setMessage]   = useState("");
   const [activeTab, setActiveTab] = useState("evolution");
-  const [showAllComp, setShowAllComp] = useState(false);
-  const [suiviMode,        setSuiviMode]        = useState("presents");
-  const [suiviGranularity, setSuiviGranularity] = useState("mois");
-  const [evGranularity,    setEvGranularity]    = useState("auto");
-  const [drillMois,    setDrillMois]    = useState(null);
-  const [drillSemaine, setDrillSemaine] = useState(null);
-  const [allMembers, setAllMembers] = useState([]);
+  const [showAllComp,   setShowAllComp]   = useState(false);
+  const [evGranularity, setEvGranularity] = useState("auto");
+  const [drillMois,     setDrillMois]     = useState(null);
+  const [drillSemaine,  setDrillSemaine]  = useState(null);
+  const [allMembers,      setAllMembers]      = useState([]);
+  const [suiviTypeFilter, setSuiviTypeFilter] = useState("tous");
 
   // ── init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -182,10 +209,13 @@ function RapportPresence() {
         setFamilles(fa || []);
       }
 
+      // ── CRITIQUE : exclure les membres supprimés dès le fetch ──
       const { data: membersData } = await supabase
         .from("membres_complets")
-        .select("id, nom, prenom, sexe, age, statut, cellule_id, famille_id, eglise_id, date_venu")
-        .eq("eglise_id", egliseId);
+        .select("id, nom, prenom, sexe, age, statut, cellule_id, famille_id, eglise_id, date_venu, etat_contact")
+        .eq("eglise_id", egliseId)
+        .neq("etat_contact", "supprime");
+
       setAllMembers(membersData || []);
 
       if (cellulesActive) {
@@ -238,7 +268,7 @@ function RapportPresence() {
   const showCelluleSelect = cellulesActive && !["ResponsableFamilles"].includes(userRole);
   const showFamilleSelect = famillesActive && !["ResponsableCellule","SuperviseurCellule"].includes(userRole);
 
-  // ── membres autorisés ─────────────────────────────────────────────────────
+  // ── membres autorisés (jamais les supprimés) ──────────────────────────────
   const membresAutorisés = useMemo(() => {
     if (cellulesActive && userRole === "ResponsableCellule" && mesCellules.length > 0) {
       const ids = new Set(mesCellules.map(c => c.id));
@@ -264,10 +294,12 @@ function RapportPresence() {
     setMessage("⏳ Chargement...");
     setPresencesRaw([]);
     setAttendanceMap({});
+    setAllSessions([]);
     setDrillMois(null);
     setDrillSemaine(null);
     setActiveTab("evolution");
     setShowAllComp(false);
+    setSuiviTypeFilter("tous");
 
     try {
       let aq = supabase
@@ -289,6 +321,7 @@ function RapportPresence() {
       const aMap = {};
       (attData || []).forEach(a => { aMap[a.id] = a; });
       setAttendanceMap(aMap);
+      setAllSessions(attData || []);
 
       const { data: pData, error: pErr } = await supabase
         .from("presences")
@@ -300,7 +333,7 @@ function RapportPresence() {
           statut,
           membres_complets (
             id, nom, prenom, sexe, age,
-            cellule_id, famille_id, statut, date_venu
+            cellule_id, famille_id, statut, date_venu, etat_contact
           )
         `)
         .in("attendance_id", attIds)
@@ -308,9 +341,10 @@ function RapportPresence() {
 
       if (pErr) throw pErr;
 
-      // ── DÉDUPLICATION GLOBALE : 1 ligne par (membre_id + attendance_id) ──
+      // ── DÉDUPLICATION + exclure supprimés ──
       const seen = new Set();
       const deduped = (pData || []).filter(p => {
+        if (p.membres_complets?.etat_contact === "supprime") return false;
         const key = `${p.membre_id}|${p.attendance_id}`;
         if (seen.has(key)) return false;
         seen.add(key);
@@ -340,7 +374,7 @@ function RapportPresence() {
     }
   };
 
-  // ── filtre secondaire ─────────────────────────────────────────────────────
+  // ── filtre secondaire (cellule/famille) ───────────────────────────────────
   const presencesFiltrees = useMemo(() => {
     let src = presencesRaw;
     if (cellulesActive && filterCellule) {
@@ -351,57 +385,59 @@ function RapportPresence() {
     return src;
   }, [presencesRaw, filterCellule, filterFamille, cellulesActive, famillesActive]);
 
-  // ── enrichissement avec groupKey ─────────────────────────────────────────
+  // ── sessions filtrées pour le suivi ──────────────────────────────────────
+  const sessionsFiltrees = useMemo(() => {
+    if (suiviTypeFilter === "tous") return allSessions;
+    return allSessions.filter(s => s.typeTemps === suiviTypeFilter);
+  }, [allSessions, suiviTypeFilter]);
+
+  const typesDisponibles = useMemo(() => {
+    const types = new Set(allSessions.map(s => s.typeTemps).filter(Boolean));
+    return Array.from(types);
+  }, [allSessions]);
+
+  // ── enrichissement ────────────────────────────────────────────────────────
   const presencesAvecGroupe = useMemo(() => {
     return presencesFiltrees.map(p => {
       const att = attendanceMap[p.attendance_id];
-      // groupKey basé sur attendance_id pour être 100% unique par session
-      const groupKey = p.attendance_id || `${p.date}||`;
-      return { ...p, groupKey, attDate: att?.date || p.date };
+      return { ...p, groupKey: p.attendance_id, attDate: att?.date || p.date };
     });
   }, [presencesFiltrees, attendanceMap]);
 
-  // ── métriques globales (membres uniques présents sur toute la période) ────
-  // On compte les membres uniques, pas les lignes de présence
+  // ── métriques globales ────────────────────────────────────────────────────
   const membresUniquesPresents = useMemo(() => {
     const map = {};
     presencesFiltrees.forEach(p => {
-      const membreId = p.membres_complets?.id || p.membre_id;
-      if (!membreId) return;
-      if (!map[membreId]) map[membreId] = p.membres_complets || {};
+      const id = p.membres_complets?.id || p.membre_id;
+      if (!id) return;
+      if (!map[id]) map[id] = p.membres_complets || {};
     });
     return Object.values(map);
   }, [presencesFiltrees]);
 
-  // Pour les métriques H/F on compte les présences (lignes) pas les membres uniques
-  // car un membre peut assister à plusieurs sessions
-  const totalPresences = presencesFiltrees.length;
-  const totalH = presencesFiltrees.filter(p => p.membres_complets?.sexe === "Homme").length;
-  const totalF = presencesFiltrees.filter(p => p.membres_complets?.sexe === "Femme").length;
-  const totalMembresUniques = membresUniquesPresents.length;
+  const totalPresences   = presencesFiltrees.length;
+  const totalMembresUniq = membresUniquesPresents.length;
+  const totalSessions    = allSessions.length;
 
-  // ── tranches d'âge (membres uniques) ─────────────────────────────────────
+  // ── tranches d'âge ────────────────────────────────────────────────────────
   const tranchesData = useMemo(() => {
     const counts = {};
     AGE_TRANCHES.forEach(t => { counts[t] = 0; });
-    // On compte par membre unique pour la répartition
     membresUniquesPresents.forEach(m => { counts[normalizeAge(m?.age)]++; });
     return AGE_TRANCHES.map(t => ({ tranche: t, count: counts[t] })).filter(t => t.count > 0);
   }, [membresUniquesPresents]);
 
-  // ── évolution (par session / date) ───────────────────────────────────────
+  // ── évolution ─────────────────────────────────────────────────────────────
   const presencesParDate = useMemo(() => {
-    // Par session (attendance_id), compter les présences uniques
     const map = {};
     presencesAvecGroupe.forEach(p => {
-      const k = p.groupKey; // = attendance_id
+      const k = p.groupKey;
       const d = p.attDate;
       if (!map[k]) map[k] = { date: d, hommes: 0, femmes: 0, total: 0 };
       map[k].total++;
       if (p.membres_complets?.sexe === "Homme") map[k].hommes++;
       else if (p.membres_complets?.sexe === "Femme") map[k].femmes++;
     });
-    // Agréger par date
     const byDate = {};
     Object.values(map).forEach(g => {
       if (!byDate[g.date]) byDate[g.date] = { date: g.date, hommes: 0, femmes: 0, total: 0 };
@@ -480,10 +516,9 @@ function RapportPresence() {
     },
   };
 
-  // ── comparaison cellules ──────────────────────────────────────────────────
+  // ── comparaison ───────────────────────────────────────────────────────────
   const comparaisonCellules = useMemo(() => {
-    if (!cellulesActive) return [];
-    if (userRole === "ResponsableFamilles") return [];
+    if (!cellulesActive || userRole === "ResponsableFamilles") return [];
     const map = {};
     presencesFiltrees.forEach(p => {
       const cid = p.membres_complets?.cellule_id;
@@ -492,19 +527,12 @@ function RapportPresence() {
       map[cid].total++;
     });
     return Object.values(map)
-      .map(c => ({
-        ...c,
-        label: cellules.find(x => x.id === c.id)?.cellule_full
-            || cellules.find(x => x.id === c.id)?.cellule
-            || "Cellule inconnue",
-      }))
+      .map(c => ({ ...c, label: cellules.find(x => x.id === c.id)?.cellule_full || cellules.find(x => x.id === c.id)?.cellule || "Cellule inconnue" }))
       .sort((a, b) => b.total - a.total);
   }, [presencesFiltrees, cellules, userRole, cellulesActive]);
 
-  // ── comparaison familles ──────────────────────────────────────────────────
   const comparaisonFamilles = useMemo(() => {
-    if (!famillesActive) return [];
-    if (["ResponsableCellule","SuperviseurCellule"].includes(userRole)) return [];
+    if (!famillesActive || ["ResponsableCellule","SuperviseurCellule"].includes(userRole)) return [];
     const map = {};
     presencesFiltrees.forEach(p => {
       const fid = p.membres_complets?.famille_id;
@@ -513,12 +541,7 @@ function RapportPresence() {
       map[fid].total++;
     });
     return Object.values(map)
-      .map(f => ({
-        ...f,
-        label: familles.find(x => x.id === f.id)?.famille_full
-            || familles.find(x => x.id === f.id)?.famille
-            || "Famille inconnue",
-      }))
+      .map(f => ({ ...f, label: familles.find(x => x.id === f.id)?.famille_full || familles.find(x => x.id === f.id)?.famille || "Famille inconnue" }))
       .sort((a, b) => b.total - a.total);
   }, [presencesFiltrees, familles, userRole, famillesActive]);
 
@@ -532,14 +555,9 @@ function RapportPresence() {
   const tableRows = useMemo(() => {
     const map = {};
     presencesAvecGroupe.forEach(p => {
-      const k   = p.groupKey; // = attendance_id
+      const k   = p.groupKey;
       const att = attendanceMap[p.attendance_id];
-      if (!map[k]) map[k] = {
-        date: p.attDate,
-        typeTemps: att?.typeTemps || "",
-        numero_culte: att?.numero_culte || null,
-        total: 0, hommes: 0, femmes: 0,
-      };
+      if (!map[k]) map[k] = { date: p.attDate, typeTemps: att?.typeTemps || "", numero_culte: att?.numero_culte || null, total: 0, hommes: 0, femmes: 0 };
       map[k].total++;
       if (p.membres_complets?.sexe === "Homme") map[k].hommes++;
       else if (p.membres_complets?.sexe === "Femme") map[k].femmes++;
@@ -547,99 +565,54 @@ function RapportPresence() {
     const sorted = Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
     return sorted.map((row, i) => {
       const prev = i > 0 ? sorted[i - 1] : null;
-      const pct  = prev && prev.total > 0
-        ? (((row.total - prev.total) / prev.total) * 100).toFixed(1)
-        : null;
+      const pct  = prev && prev.total > 0 ? (((row.total - prev.total) / prev.total) * 100).toFixed(1) : null;
       return { ...row, pct };
     });
   }, [presencesAvecGroupe, attendanceMap]);
 
-  // ── suivi pastoral : sessions en période ─────────────────────────────────
-  const isInSelectedPeriod = (dateStr) => {
-    const d   = new Date(dateStr);
-    const now = new Date();
-    if (suiviGranularity === "jour") return d.toDateString() === now.toDateString();
-    if (suiviGranularity === "semaine") { const s = new Date(now); s.setDate(now.getDate() - 7); return d >= s; }
-    if (suiviGranularity === "mois")   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    if (suiviGranularity === "annee")  return d.getFullYear() === now.getFullYear();
-    return true;
-  };
+  // ── SUIVI PASTORAL ────────────────────────────────────────────────────────
+  // Taux de présence par membre sur la période fetchée
+  const suiviParMembre = useMemo(() => {
+    const sessionsIds = new Set(sessionsFiltrees.map(s => s.id));
+    const nbSessions  = sessionsIds.size;
+    if (nbSessions === 0) return [];
 
-  const sessionsEnPeriode = useMemo(() => {
-    const sessions = {};
-    presencesAvecGroupe.forEach(p => {
-      const att = attendanceMap[p.attendance_id];
-      if (!att || !isInSelectedPeriod(p.attDate)) return;
-      const k = p.attendance_id; // clé unique = attendance_id
-      if (!sessions[k]) sessions[k] = {
-        date: p.attDate,
-        label: formatSessionLabel(att.typeTemps, att.numero_culte),
-        typeTemps: att.typeTemps,
-        numero_culte: att.numero_culte,
-      };
-    });
-    return Object.values(sessions).sort((a, b) => a.date.localeCompare(b.date));
-  }, [presencesAvecGroupe, attendanceMap, suiviGranularity]);
-
-  // ── suivi pastoral : présents (membres uniques dans la période) ───────────
-  const suiviPresents = useMemo(() => {
-    const filteredPresences = presencesAvecGroupe.filter(p => isInSelectedPeriod(p.attDate));
-
-    const presentMap = {};
-    filteredPresences.forEach(p => {
-      const membre    = p.membres_complets;
-      const membreId  = membre?.id || p.membre_id;
-      if (!membreId) return;
-
-      const att          = attendanceMap[p.attendance_id];
-      const sessionKey   = p.attendance_id; // unique par session réelle
-      const sessionLabel = formatSessionLabel(att?.typeTemps, att?.numero_culte);
-
-      if (!presentMap[membreId]) {
-        presentMap[membreId] = { ...(membre || {}), id: membreId, presences: [] };
-      }
-
-      // Éviter doublon de session pour ce même membre
-      const alreadyAdded = presentMap[membreId].presences.some(s => s.sessionKey === sessionKey);
-      if (!alreadyAdded) {
-        presentMap[membreId].presences.push({
-          sessionKey,
-          date: p.attDate,
-          label: sessionLabel,
-        });
-      }
+    // Map des présences par membre (uniquement dans les sessions filtrées)
+    const presenceMap = {};
+    presencesFiltrees.forEach(p => {
+      if (!sessionsIds.has(p.attendance_id)) return;
+      const id = p.membres_complets?.id || p.membre_id;
+      if (!id) return;
+      if (!presenceMap[id]) presenceMap[id] = { membre: p.membres_complets || {}, sessions: new Set() };
+      presenceMap[id].sessions.add(p.attendance_id);
     });
 
-    return Object.values(presentMap)
-      .map(m => ({
-        ...m,
-        presences: m.presences.sort((a, b) => a.date.localeCompare(b.date)),
-      }))
-      .sort((a, b) => {
-        const na = `${a.nom || ""} ${a.prenom || ""}`;
-        const nb = `${b.nom || ""} ${b.prenom || ""}`;
-        return na.localeCompare(nb);
-      });
-  }, [presencesAvecGroupe, suiviGranularity, attendanceMap]);
+    // Un rapport pour CHAQUE membre autorisé (hors supprimés)
+    return membresAutorisés.map(m => {
+      const data      = presenceMap[m.id];
+      const nbPresent = data ? data.sessions.size : 0;
+      const taux      = nbSessions > 0 ? nbPresent / nbSessions : 0;
 
-  // ── suivi pastoral : absents ──────────────────────────────────────────────
-  const suiviAbsents = useMemo(() => {
-    const filteredPresences = presencesAvecGroupe.filter(p => isInSelectedPeriod(p.attDate));
-    const presentIds = new Set(
-      filteredPresences
-        .map(p => p.membres_complets?.id || p.membre_id)
-        .filter(Boolean)
-    );
-    return membresAutorisés
-      .filter(m => !presentIds.has(m.id))
-      .sort((a, b) => {
-        const na = `${a.nom || ""} ${a.prenom || ""}`;
-        const nb = `${b.nom || ""} ${b.prenom || ""}`;
-        return na.localeCompare(nb);
-      });
-  }, [presencesAvecGroupe, suiviGranularity, membresAutorisés]);
+      const sessionsAssistees = data
+        ? Array.from(data.sessions).map(sid => {
+            const att = attendanceMap[sid];
+            return { id: sid, date: att?.date || "", label: formatSessionLabel(att?.typeTemps, att?.numero_culte) };
+          }).sort((a, b) => a.date.localeCompare(b.date))
+        : [];
 
-  // ── libellé filtre actif ──────────────────────────────────────────────────
+      return { ...m, nbPresent, nbSessions, taux, sessionsAssistees };
+    })
+    // Trier : absents totaux en premier, puis taux croissant, puis nom
+    .sort((a, b) => {
+      if (a.taux !== b.taux) return a.taux - b.taux;
+      return `${a.nom} ${a.prenom}`.localeCompare(`${b.nom} ${b.prenom}`);
+    });
+  }, [membresAutorisés, presencesFiltrees, sessionsFiltrees, attendanceMap]);
+
+  const nbAbsentsTotaux  = suiviParMembre.filter(m => m.nbPresent === 0).length;
+  const nbPresentsPartiel = suiviParMembre.filter(m => m.nbPresent > 0 && m.nbPresent < m.nbSessions).length;
+  const nbPresentsTotaux  = suiviParMembre.filter(m => m.nbPresent === m.nbSessions && m.nbSessions > 0).length;
+
   const filterLabel = useMemo(() => {
     if (cellulesActive && filterCellule) {
       const c = cellules.find(x => x.id === filterCellule);
@@ -652,18 +625,14 @@ function RapportPresence() {
     return "Tout";
   }, [filterCellule, filterFamille, cellules, familles, cellulesActive, famillesActive]);
 
-  const hasData = presencesRaw.length > 0;
+  const hasData = presencesRaw.length > 0 || allSessions.length > 0;
 
   // ── granularité boutons ────────────────────────────────────────────────────
   const GranBtns = () => {
     const back = drillSemaine ? () => setDrillSemaine(null) : drillMois ? () => setDrillMois(null) : null;
     return (
       <div className="flex items-center gap-2 flex-wrap mb-3">
-        {back && (
-          <button onClick={back} className="px-3 py-1 rounded-full text-xs border border-white/30 text-white/70 hover:border-white">
-            ← Retour
-          </button>
-        )}
+        {back && <button onClick={back} className="px-3 py-1 rounded-full text-xs border border-white/30 text-white/70 hover:border-white">← Retour</button>}
         {!drillMois && !drillSemaine && ["mois","semaine","jour"].map(g => (
           <button key={g} onClick={() => setEvGranularity(g)}
             className={`px-3 py-1 rounded-full text-xs border transition ${
@@ -674,86 +643,53 @@ function RapportPresence() {
             {g.charAt(0).toUpperCase()+g.slice(1)}
           </button>
         ))}
-        {drillMois && !drillSemaine && (
-          <span className="text-white/60 text-xs">{fmtMois(new Date(drillMois+"-01"))} — cliquez une semaine</span>
-        )}
-        {drillSemaine && (
-          <span className="text-white/60 text-xs">Semaine du {fmt(new Date(drillSemaine))}</span>
-        )}
+        {drillMois && !drillSemaine && <span className="text-white/60 text-xs">{fmtMois(new Date(drillMois+"-01"))} — cliquez une semaine</span>}
+        {drillSemaine && <span className="text-white/60 text-xs">Semaine du {fmt(new Date(drillSemaine))}</span>}
       </div>
     );
   };
 
-  const granLabel = { jour: "aujourd'hui", semaine: "cette semaine", mois: "ce mois-ci", annee: "cette année" };
-
-  // ── carte membre (présent ou absent) ─────────────────────────────────────
-  const MembreCard = ({ membre, mode, idx }) => {
+  // ── carte membre suivi ────────────────────────────────────────────────────
+  const MembreSuiviCard = ({ membre }) => {
     const nomComplet = [membre.prenom, membre.nom].filter(Boolean).join(" ") || "Inconnu";
     const initiales  = [(membre.prenom || "?")[0], (membre.nom || "?")[0]].join("").toUpperCase();
     const isHomme    = membre.sexe === "Homme";
     const avatarBg   = isHomme ? "bg-blue-500/30 text-blue-300" : "bg-pink-500/30 text-pink-300";
+    const col        = tauxColor(membre.taux);
 
     return (
-      <div className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-3 flex items-start gap-3 transition">
+      <div className={`bg-white/5 hover:bg-white/10 border ${col.border} rounded-xl px-4 py-3 flex items-start gap-3 transition`}>
         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${avatarBg}`}>
           {initiales}
         </div>
-
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-white font-semibold text-sm">{nomComplet}</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              isHomme ? "bg-blue-500/20 text-blue-300" : "bg-pink-500/20 text-pink-300"
-            }`}>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${isHomme ? "bg-blue-500/20 text-blue-300" : "bg-pink-500/20 text-pink-300"}`}>
               {membre.sexe || "—"}
             </span>
-            <PresenceDot
-              memberId={membre.id}
-              egliseId={userProfile?.eglise_id}
-              dateVenu={membre.date_venu}
-            />
+            <PresenceDot memberId={membre.id} egliseId={userProfile?.eglise_id} dateVenu={membre.date_venu} />
           </div>
-
-          {/* Sessions assistées (mode présents) */}
-          {mode === "presents" && membre.presences?.length > 0 && (
+          <TauxBar present={membre.nbPresent} total={membre.nbSessions} />
+          {membre.sessionsAssistees.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {membre.presences.map((p, pi) => (
-                <span key={pi} className="inline-flex items-center gap-1 text-xs bg-emerald-500/15 border border-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded-full">
-                  <span className="text-white/40">{new Date(p.date).toLocaleDateString("fr-FR")}</span>
-                  <span>·</span>
-                  <span>{p.label}</span>
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Sessions manquées (mode absents) */}
-          {mode === "absents" && sessionsEnPeriode.length > 0 && (
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {sessionsEnPeriode.map((s, si) => (
-                <span key={si} className="inline-flex items-center gap-1 text-xs bg-red-500/15 border border-red-400/20 text-red-300 px-2 py-0.5 rounded-full">
-                  <span className="text-white/40">{new Date(s.date).toLocaleDateString("fr-FR")}</span>
+              {membre.sessionsAssistees.map((s, i) => (
+                <span key={i} className="inline-flex items-center gap-1 text-xs bg-emerald-500/15 border border-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded-full">
+                  <span className="text-white/40">{fmtFull(s.date)}</span>
                   <span>·</span>
                   <span>{s.label}</span>
                 </span>
               ))}
             </div>
           )}
+          {membre.nbPresent === 0 && (
+            <p className="text-red-400/70 text-xs mt-1">Absent sur toute la période</p>
+          )}
         </div>
-
-        {mode === "presents" && membre.presences?.length > 0 && (
-          <div className="flex-shrink-0 text-right">
-            <span className="text-xs text-white/40">×</span>
-            <span className="text-emerald-300 font-bold ml-0.5">{membre.presences.length}</span>
-          </div>
-        )}
-
-        {mode === "absents" && sessionsEnPeriode.length > 0 && (
-          <div className="flex-shrink-0 text-right">
-            <span className="text-xs text-white/40">×</span>
-            <span className="text-red-300 font-bold ml-0.5">{sessionsEnPeriode.length}</span>
-          </div>
-        )}
+        <div className={`flex-shrink-0 text-right px-2 py-1 rounded-lg ${col.bg}`}>
+          <p className={`text-sm font-bold ${col.text}`}>{membre.nbPresent}/{membre.nbSessions}</p>
+          <p className={`text-xs ${col.text}`}>{Math.round(membre.taux * 100)}%</p>
+        </div>
       </div>
     );
   };
@@ -767,16 +703,12 @@ function RapportPresence() {
         Rapport <span className="text-emerald-300">Présences</span>
       </h1>
       <p className="italic text-sm text-white/80 mb-6 text-center max-w-2xl">
-        Analysez vos présences par période
-        {cellulesActive && ", cellule"}
-        {famillesActive && ", famille"}
-        .
+        Analysez vos présences par période{cellulesActive && ", cellule"}{famillesActive && ", famille"}.
       </p>
 
       {/* ── FORMULAIRE ── */}
       <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl p-4 md:p-6 w-full max-w-2xl mx-auto text-white mb-6">
         <p className="text-sm font-semibold text-red-400 text-center mb-4">Choisissez les paramètres</p>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="flex flex-col">
             <label className="text-sm text-center mb-1">Date de Début</label>
@@ -789,7 +721,6 @@ function RapportPresence() {
               className="border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"/>
           </div>
         </div>
-
         <button onClick={fetchRapport} disabled={loading}
           className="w-full mt-4 h-10 bg-amber-300 text-white font-semibold rounded-lg hover:bg-amber-400 transition disabled:opacity-60">
           {loading ? "⏳ Chargement..." : "Générer"}
@@ -802,42 +733,28 @@ function RapportPresence() {
                 <label className="text-xs text-white/60 mb-1 flex items-center gap-1">
                   <span className="text-amber-300"><IconCellule /></span> Cellule
                 </label>
-                <select
-                  value={filterCellule}
-                  onChange={e => { setFilterCellule(e.target.value); setFilterFamille(""); }}
-                  className="border border-white/30 rounded-lg px-3 py-1.5 bg-white text-black text-sm"
-                >
+                <select value={filterCellule} onChange={e => { setFilterCellule(e.target.value); setFilterFamille(""); }}
+                  className="border border-white/30 rounded-lg px-3 py-1.5 bg-white text-black text-sm">
                   <option value="">Toutes les cellules</option>
-                  {cellulesSelect.map(c => (
-                    <option key={c.id} value={c.id}>{c.cellule_full || c.cellule}</option>
-                  ))}
+                  {cellulesSelect.map(c => <option key={c.id} value={c.id}>{c.cellule_full || c.cellule}</option>)}
                 </select>
               </div>
             )}
-
             {showFamilleSelect && famillesSelect.length > 1 && (
               <div className="flex flex-col flex-1 min-w-[160px]">
                 <label className="text-xs text-white/60 mb-1 flex items-center gap-1">
                   <span className="text-emerald-300"><IconFamille /></span> Famille
                 </label>
-                <select
-                  value={filterFamille}
-                  onChange={e => { setFilterFamille(e.target.value); setFilterCellule(""); }}
-                  className="border border-white/30 rounded-lg px-3 py-1.5 bg-white text-black text-sm"
-                >
+                <select value={filterFamille} onChange={e => { setFilterFamille(e.target.value); setFilterCellule(""); }}
+                  className="border border-white/30 rounded-lg px-3 py-1.5 bg-white text-black text-sm">
                   <option value="">Toutes les familles</option>
-                  {famillesSelect.map(f => (
-                    <option key={f.id} value={f.id}>{f.famille_full || f.famille}</option>
-                  ))}
+                  {famillesSelect.map(f => <option key={f.id} value={f.id}>{f.famille_full || f.famille}</option>)}
                 </select>
               </div>
             )}
-
             {(filterCellule || filterFamille) && (
-              <button
-                onClick={() => { setFilterCellule(""); setFilterFamille(""); }}
-                className="text-xs text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 self-end"
-              >
+              <button onClick={() => { setFilterCellule(""); setFilterFamille(""); }}
+                className="text-xs text-white/50 hover:text-white border border-white/20 rounded-lg px-3 py-1.5 self-end">
                 Réinitialiser
               </button>
             )}
@@ -858,12 +775,12 @@ function RapportPresence() {
           )}
 
           {/* ── MÉTRIQUES ── */}
-          <div className="grid grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             {[
-              { label:"Présences totales", value:totalPresences.toLocaleString("fr-FR"), color:"text-white",        hint:"toutes sessions confondues" },
-              { label:"Membres uniques",   value:totalMembresUniques,                    color:"text-emerald-300",  hint:"personnes distinctes" },
-              { label:"Hommes",            value:totalH,                                 color:"text-blue-300",     hint:null },
-              { label:"Femmes",            value:totalF,                                 color:"text-pink-300",     hint:null },
+              { label:"Sessions",          value:totalSessions,                          color:"text-amber-300",   hint:"sur la période" },
+              { label:"Membres suivis",    value:membresAutorisés.length,                color:"text-white",       hint:"hors supprimés" },
+              { label:"Présences totales", value:totalPresences.toLocaleString("fr-FR"), color:"text-emerald-300", hint:"toutes sessions" },
+              { label:"Membres uniques",   value:totalMembresUniq,                       color:"text-cyan-300",    hint:"au moins 1 fois" },
             ].map(({ label, value, color, hint }) => (
               <div key={label} className="bg-white/10 border border-white/20 rounded-xl p-3 text-center text-white">
                 <p className="text-xs text-white/60 mb-1">{label}</p>
@@ -884,9 +801,7 @@ function RapportPresence() {
             ].map(({ key, label }) => (
               <button key={key} onClick={() => setActiveTab(key)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium border transition ${
-                  activeTab === key
-                    ? "bg-white text-[#333699] border-white"
-                    : "border-white/30 text-white/70 hover:border-white"
+                  activeTab === key ? "bg-white text-[#333699] border-white" : "border-white/30 text-white/70 hover:border-white"
                 }`}>
                 {label}
               </button>
@@ -901,17 +816,12 @@ function RapportPresence() {
               <div className="flex flex-wrap gap-3 mb-3 text-xs text-white/70">
                 {[["Hommes","#3b82f6"],["Femmes","#ec4899"]].map(([l,c]) => (
                   <span key={l} className="flex items-center gap-1">
-                    <span style={{ background:c }} className="w-3 h-3 rounded-sm inline-block"/>
-                    {l}
+                    <span style={{ background:c }} className="w-3 h-3 rounded-sm inline-block"/>{l}
                   </span>
                 ))}
-                {effectiveGran !== "jour" && (
-                  <span className="text-white/40 ml-auto">💡 Cliquez pour zoomer</span>
-                )}
+                {effectiveGran !== "jour" && <span className="text-white/40 ml-auto">💡 Cliquez pour zoomer</span>}
               </div>
-              <div style={{ height:280 }}>
-                <Line data={lineData} options={lineOptions}/>
-              </div>
+              <div style={{ height:280 }}><Line data={lineData} options={lineOptions}/></div>
             </div>
           )}
 
@@ -922,8 +832,10 @@ function RapportPresence() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white/5 border border-white/10 rounded-xl p-5">
                   <p className="text-white/80 text-sm font-semibold mb-4 text-center">Par civilité</p>
-                  <CivilitePie hommes={membresUniquesPresents.filter(m => m?.sexe === "Homme").length}
-                               femmes={membresUniquesPresents.filter(m => m?.sexe === "Femme").length} />
+                  <CivilitePie
+                    hommes={membresUniquesPresents.filter(m => m?.sexe === "Homme").length}
+                    femmes={membresUniquesPresents.filter(m => m?.sexe === "Femme").length}
+                  />
                 </div>
                 <div className="bg-white/5 border border-white/10 rounded-xl p-5">
                   <p className="text-white/80 text-sm font-semibold mb-4 text-center">Par tranche d'âge</p>
@@ -937,12 +849,10 @@ function RapportPresence() {
           {activeTab === "comparaison" && (cellulesActive || famillesActive) && (
             <div className="bg-white/10 border border-white/20 rounded-xl p-4 flex flex-col gap-6">
               <p className="text-white font-semibold">Comparaison des présences</p>
-
               {cellulesActive && comparaisonCellules.length > 0 && (
                 <div>
                   <p className="text-white/70 text-sm font-medium mb-4 flex items-center gap-2">
-                    <span className="text-amber-300"><IconCellule /></span>
-                    Par cellule ({comparaisonCellules.length})
+                    <span className="text-amber-300"><IconCellule /></span>Par cellule ({comparaisonCellules.length})
                   </p>
                   <div className="flex flex-col gap-2">
                     {topCellules.map((c, i) => (
@@ -950,8 +860,7 @@ function RapportPresence() {
                         <span className="text-white/40 text-xs w-4 text-right flex-shrink-0">{i + 1}</span>
                         <span className="text-white text-xs w-32 sm:w-48 truncate flex-shrink-0">{c.label}</span>
                         <div className="flex-1 bg-white/10 rounded-full h-5 overflow-hidden">
-                          <div className="h-5 rounded-full bg-amber-400 transition-all duration-500"
-                            style={{ width: `${(c.total / maxCellule) * 100}%` }}/>
+                          <div className="h-5 rounded-full bg-amber-400 transition-all duration-500" style={{ width:`${(c.total/maxCellule)*100}%` }}/>
                         </div>
                         <span className="text-amber-300 font-bold text-sm w-8 text-right flex-shrink-0">{c.total}</span>
                       </div>
@@ -959,12 +868,10 @@ function RapportPresence() {
                   </div>
                 </div>
               )}
-
               {famillesActive && comparaisonFamilles.length > 0 && (
                 <div>
                   <p className="text-white/70 text-sm font-medium mb-4 flex items-center gap-2">
-                    <span className="text-emerald-300"><IconFamille /></span>
-                    Par famille ({comparaisonFamilles.length})
+                    <span className="text-emerald-300"><IconFamille /></span>Par famille ({comparaisonFamilles.length})
                   </p>
                   <div className="flex flex-col gap-2">
                     {topFamilles.map((f, i) => (
@@ -972,8 +879,7 @@ function RapportPresence() {
                         <span className="text-white/40 text-xs w-4 text-right flex-shrink-0">{i + 1}</span>
                         <span className="text-white text-xs w-32 sm:w-48 truncate flex-shrink-0">{f.label}</span>
                         <div className="flex-1 bg-white/10 rounded-full h-5 overflow-hidden">
-                          <div className="h-5 rounded-full bg-emerald-400 transition-all duration-500"
-                            style={{ width: `${(f.total / maxFamille) * 100}%` }}/>
+                          <div className="h-5 rounded-full bg-emerald-400 transition-all duration-500" style={{ width:`${(f.total/maxFamille)*100}%` }}/>
                         </div>
                         <span className="text-emerald-300 font-bold text-sm w-8 text-right flex-shrink-0">{f.total}</span>
                       </div>
@@ -981,14 +887,9 @@ function RapportPresence() {
                   </div>
                 </div>
               )}
-
               {comparaisonCellules.length === 0 && comparaisonFamilles.length === 0 && (
-                <p className="text-white/40 text-sm text-center py-8">
-                  Aucune donnée de comparaison disponible.<br/>
-                  <span className="text-xs">Les présences doivent être rattachées à des membres avec cellule/famille.</span>
-                </p>
+                <p className="text-white/40 text-sm text-center py-8">Aucune donnée de comparaison disponible.</p>
               )}
-
               {hasMoreComp && (
                 <div className="flex justify-center">
                   <button onClick={() => setShowAllComp(v => !v)}
@@ -1022,16 +923,14 @@ function RapportPresence() {
                     const pc = pn > 0 ? "#4ade80" : pn < 0 ? "#f87171" : "rgba(255,255,255,0.4)";
                     return (
                       <tr key={idx} className="border-t border-white/10 hover:bg-white/5">
-                        <td className="px-3 py-2">{new Date(row.date).toLocaleDateString("fr-FR")}</td>
+                        <td className="px-3 py-2">{fmtFull(row.date)}</td>
                         <td className="px-3 py-2 text-white/60 text-xs">{formatSessionLabel(row.typeTemps, row.numero_culte)}</td>
                         <td className="px-3 py-2 text-blue-300">{row.hommes}</td>
                         <td className="px-3 py-2 text-pink-300">{row.femmes}</td>
                         <td className="px-3 py-2 text-orange-400 font-semibold">{row.total}</td>
                         <td className="px-3 py-2">
                           {row.pct !== null && (
-                            <span style={{ color:pc, fontWeight:500 }}>
-                              {pn > 0 ? "+" : ""}{row.pct}%
-                            </span>
+                            <span style={{ color:pc, fontWeight:500 }}>{pn > 0 ? "+" : ""}{row.pct}%</span>
                           )}
                         </td>
                       </tr>
@@ -1046,93 +945,82 @@ function RapportPresence() {
           {activeTab === "suivi" && (
             <div className="flex flex-col gap-4">
 
-              {/* Sélecteur de granularité */}
+              {/* En-tête */}
               <div className="bg-white/10 border border-white/20 rounded-xl p-4">
-                <p className="text-white/60 text-xs mb-2 font-semibold uppercase tracking-wide">Période d'analyse</p>
-                <div className="flex gap-2 flex-wrap">
-                  {[
-                    { k:"jour",    label:"Aujourd'hui" },
-                    { k:"semaine", label:"7 derniers jours" },
-                    { k:"mois",    label:"Ce mois" },
-                    { k:"annee",   label:"Cette année" },
-                  ].map(({ k, label }) => (
-                    <button key={k} onClick={() => setSuiviGranularity(k)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
-                        suiviGranularity === k
-                          ? "bg-white text-[#333699] border-white"
-                          : "border-white/30 text-white/60 hover:border-white/60"
-                      }`}>
-                      {label}
-                    </button>
-                  ))}
+                <p className="text-white font-semibold mb-1">Suivi pastoral — taux de présence</p>
+                <p className="text-white/50 text-xs mb-3">
+                  Période : {dateDebut ? fmtFull(dateDebut) : "—"} → {dateFin ? fmtFull(dateFin) : "—"}
+                  {" · "}{totalSessions} session{totalSessions > 1 ? "s" : ""}
+                  {" · "}{membresAutorisés.length} membres suivis
+                </p>
+                {typesDisponibles.length > 1 && (
+                  <div className="flex gap-2 flex-wrap">
+                    <span className="text-white/50 text-xs self-center">Type :</span>
+                    {["tous", ...typesDisponibles].map(t => (
+                      <button key={t} onClick={() => setSuiviTypeFilter(t)}
+                        className={`px-3 py-1 rounded-full text-xs border transition ${
+                          suiviTypeFilter === t ? "bg-white text-[#333699] border-white" : "border-white/30 text-white/60 hover:border-white/60"
+                        }`}>
+                        {t === "tous" ? "Tous" : t}
+                        {t !== "tous" && <span className="ml-1 text-white/40">({allSessions.filter(s => s.typeTemps === t).length})</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Légende */}
+              <div className="flex flex-wrap gap-3 text-xs">
+                {[
+                  { label:"100% présent", color:"bg-emerald-400", text:"text-emerald-300" },
+                  { label:"50–99%",       color:"bg-yellow-400",  text:"text-yellow-300" },
+                  { label:"25–49%",       color:"bg-orange-400",  text:"text-orange-300" },
+                  { label:"0–24%",        color:"bg-red-400",     text:"text-red-300" },
+                ].map(({ label, color, text }) => (
+                  <span key={label} className={`flex items-center gap-1 ${text}`}>
+                    <span className={`w-2 h-2 rounded-full ${color}`}/>{label}
+                  </span>
+                ))}
+              </div>
+
+              {/* Résumé */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-emerald-500/15 border border-emerald-400/30 rounded-xl p-3 text-center">
+                  <p className="text-emerald-300 text-2xl font-bold">{nbPresentsTotaux}</p>
+                  <p className="text-white/60 text-xs mt-0.5">Toutes sessions ✅</p>
+                </div>
+                <div className="bg-yellow-500/15 border border-yellow-400/30 rounded-xl p-3 text-center">
+                  <p className="text-yellow-300 text-2xl font-bold">{nbPresentsPartiel}</p>
+                  <p className="text-white/60 text-xs mt-0.5">Présence partielle ⚠️</p>
+                </div>
+                <div className="bg-red-500/15 border border-red-400/30 rounded-xl p-3 text-center">
+                  <p className="text-red-300 text-2xl font-bold">{nbAbsentsTotaux}</p>
+                  <p className="text-white/60 text-xs mt-0.5">Absent total ❌</p>
                 </div>
               </div>
 
               {/* Sessions de la période */}
-              {sessionsEnPeriode.length > 0 && (
+              {sessionsFiltrees.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {sessionsEnPeriode.map((s, i) => (
+                  {sessionsFiltrees.sort((a,b) => a.date.localeCompare(b.date)).map((s, i) => (
                     <span key={i} className="text-xs bg-white/10 border border-white/20 text-white/70 px-3 py-1 rounded-full">
-                      📅 {new Date(s.date).toLocaleDateString("fr-FR")} · {s.label}
+                      📅 {fmtFull(s.date)} · {formatSessionLabel(s.typeTemps, s.numero_culte)}
                     </span>
                   ))}
                 </div>
               )}
 
-              {/* ── DEUX COLONNES : Présents | Absents ── */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                {/* ── COLONNE PRÉSENTS ── */}
-                <div className="flex flex-col gap-3">
-                  <div className="bg-emerald-500/15 border-2 border-emerald-400/40 rounded-xl px-4 py-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-white font-bold text-base flex items-center gap-2">
-                        ✅ <span>Présents</span>
-                      </p>
-                      <p className="text-white/50 text-xs mt-0.5">{granLabel[suiviGranularity]}</p>
-                    </div>
-                    <div className="text-3xl font-bold text-emerald-300">{suiviPresents.length}</div>
+              {/* Liste triée par taux croissant (absents en premier) */}
+              <div className="flex flex-col gap-2">
+                {suiviParMembre.length === 0 ? (
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center text-white/40 text-sm">
+                    Aucun membre à afficher.
                   </div>
-
-                  {suiviPresents.length === 0 ? (
-                    <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center text-white/40 text-sm">
-                      Aucune présence enregistrée sur cette période.
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      {suiviPresents.map((membre, idx) => (
-                        <MembreCard key={membre.id || idx} membre={membre} mode="presents" idx={idx} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* ── COLONNE ABSENTS ── */}
-                <div className="flex flex-col gap-3">
-                  <div className="bg-red-500/15 border-2 border-red-400/40 rounded-xl px-4 py-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-white font-bold text-base flex items-center gap-2">
-                        ❌ <span>Absents</span>
-                      </p>
-                      <p className="text-white/50 text-xs mt-0.5">{granLabel[suiviGranularity]}</p>
-                    </div>
-                    <div className="text-3xl font-bold text-red-300">{suiviAbsents.length}</div>
-                  </div>
-
-                  {suiviAbsents.length === 0 ? (
-                    <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center text-white/40 text-sm">
-                      Tout le monde est présent 🎉
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      {suiviAbsents.map((membre, idx) => (
-                        <MembreCard key={membre.id || idx} membre={membre} mode="absents" idx={idx} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-
+                ) : suiviParMembre.map(membre => (
+                  <MembreSuiviCard key={membre.id} membre={membre} />
+                ))}
               </div>
+
             </div>
           )}
         </div>

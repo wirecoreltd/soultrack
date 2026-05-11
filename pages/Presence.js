@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import supabase from "../../lib/supabaseClient";
-import HeaderPages from "../../components/HeaderPages";
-import Footer from "../../components/Footer";
-import ProtectedRoute from "../../components/ProtectedRoute";
-import { useFeature } from "../../components/FeaturesContext";
+import supabase from "../lib/supabaseClient";
+import HeaderPages from "../components/HeaderPages";
+import Footer from "../components/Footer";
+import ProtectedRoute from "../components/ProtectedRoute";
+import { useFeature } from "../components/FeaturesContext";
 import dynamic from "next/dynamic";
 
 const Bar = dynamic(

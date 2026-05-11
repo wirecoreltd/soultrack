@@ -24,13 +24,13 @@ export default function LinkEglise() {
   });
 
   const [eglise, setEglise] = useState({
-  id: null,
-  nom: "",
-  denomination: "",
-  ville: "",
-  pays: "",
-  branche: "",
-});
+    id: null,
+    nom: "",
+    denomination: "",
+    ville: "",
+    pays: "",
+    branche: "",
+  });
 
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
@@ -46,18 +46,13 @@ export default function LinkEglise() {
 
       if (!user) return;
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
-        .select(`
-          prenom,
-          nom,
-          eglise_id,
-          eglises(nom, denomination, ville, pays)
-        `)
+        .select(`prenom, nom, eglise_id, eglises(nom, denomination, ville, pays)`)
         .eq("id", user.id)
         .single();
 
-      if (!error && data) {
+      if (data) {
         setSuperviseur({
           prenom: data.prenom,
           nom: data.nom,
@@ -73,136 +68,92 @@ export default function LinkEglise() {
     loadSuperviseur();
   }, []);
 
-  const getStatusLabel = (statut) => {
-    switch (statut?.toLowerCase()) {
-      case "acceptee":
-        return "Accepté";
-      case "refusee":
-        return "Refusée";
-      case "lien_casse":
-        return "Lien Cassé";
-      case "pending":
-        return "En Attente";
-      case "expired":
-        return "Lien Expiré";
-      default:
-        return statut;
-    }
-  };
-
-  const getStatusStyle = (statut) => {
-    switch (statut?.toLowerCase()) {
-      case "acceptee":
-        return { text: "text-green-600", border: "border-green-600" };
-      case "refusee":
-        return { text: "text-red-600", border: "border-red-600" };
-      case "lien_casse":
-        return { text: "text-gray-400", border: "border-gray-400" };
-      case "pending":
-        return { text: "text-orange-500", border: "border-orange-500" };
-      default:
-        return { text: "text-white", border: "border-white/20" };
-    }
-  };
-
+  // 🔹 load
   const loadInvitations = async () => {
     if (!superviseur.eglise_id) return;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("eglise_supervisions")
       .select("*")
       .eq("superviseur_eglise_id", superviseur.eglise_id)
       .order("created_at", { ascending: false });
 
-    if (!error) setInvitations(data || []);
+    setInvitations(data || []);
   };
 
   useEffect(() => {
     loadInvitations();
   }, [superviseur.eglise_id]);
 
+  // 🔹 ACTION
   const handleAction = async () => {
-    try {
-      const token = crypto.randomUUID();
+    if (!responsable.prenom || !responsable.nom || !eglise.nom || !eglise.denomination || !eglise.pays) {
+      alert("Champs obligatoires manquants");
+      return;
+    }
 
-      if (!selectedInvitation && modeAction === null) {
-        await supabase.from("eglise_supervisions").insert([
-          {
-            superviseur_eglise_id: superviseur.eglise_id,
-            responsable_prenom: responsable.prenom,
-            responsable_nom: responsable.nom,
-            eglise_nom: eglise.nom,
-            eglise_denomination: eglise.denomination,
-            eglise_ville: eglise.ville,
-            eglise_pays: eglise.pays,
-            statut: "pending",
-            invitation_token: token,
-          },
-        ]);
+    const token = crypto.randomUUID();
 
-        // 🔥 MESSAGE WHATSAPP PLUS CHALEUREUX
-        const message = `
+    await supabase.from("eglise_supervisions").insert([
+      {
+        superviseur_eglise_id: superviseur.eglise_id,
+        responsable_prenom: responsable.prenom,
+        responsable_nom: responsable.nom,
+        eglise_nom: eglise.nom,
+        eglise_denomination: eglise.denomination,
+        eglise_ville: eglise.ville,
+        eglise_pays: eglise.pays,
+        eglise_branche: eglise.branche,
+        statut: "pending",
+        invitation_token: token,
+      },
+    ]);
+
+    const message = `
 ✨ Bonjour ${responsable.prenom} ${responsable.nom},
 
 Que la paix du Seigneur soit avec vous 🙏
 
-${superviseur.prenom} ${superviseur.nom} vous écrit avec amour dans le Seigneur.
-
-Nous vous invitons à placer votre église sous une supervision spirituelle afin de grandir ensemble dans l’œuvre de Dieu.
+${superviseur.prenom} ${superviseur.nom} vous invite à une supervision spirituelle.
 
 🏛️ Église superviseur :
-- Nom : ${superviseur.eglise_nom}
-- Dénomination : ${superviseur.eglise_denomination}
-- Ville : ${superviseur.eglise_ville}
-- Pays : ${superviseur.eglise_pays}
+- ${superviseur.eglise_nom}
+- ${superviseur.eglise_denomination}
+- ${superviseur.eglise_ville}
+- ${superviseur.eglise_pays}
 
-🌍 Église à relier :
-- Nom : ${eglise.nom}
-- Dénomination : ${eglise.denomination}
-- Ville : ${eglise.ville}
-- Pays : ${eglise.pays}
+🌍 Église concernée :
+- ${eglise.nom}
+- ${eglise.denomination}
+- ${eglise.ville}
+- ${eglise.pays}
 
-🔗 Cliquez ici pour accepter :
+🔗 Lien :
 https://soultrack-three.vercel.app/accept-invitation?token=${token}
 
-Nous prions pour vous et votre ministère 🙏
-Que Dieu vous guide puissamment.
-
 Avec amour en Christ ❤️
-        `;
+`;
 
-        if (canal === "whatsapp") {
-          window.open(
-            `https://wa.me/?text=${encodeURIComponent(message)}`,
-            "_blank"
-          );
-        } else if (canal === "email") {
-          window.location.href = `mailto:?subject=Invitation Spirituelle&body=${encodeURIComponent(
-            message
-          )}`;
-        }
-      }
-
-      setResponsable({ prenom: "", nom: "" });
-      setEglise({ id: null, nom: "", denomination: "", ville: "", pays: "", branche: "" });
-      setCanal("");
-      setSelectedInvitation(null);
-      setModeAction(null);
-
-      loadInvitations();
-    } catch (err) {
-      console.error(err);
+    if (canal === "whatsapp") {
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    } else if (canal === "email") {
+      window.location.href = `mailto:?subject=Invitation&body=${encodeURIComponent(message)}`;
     }
+
+    setResponsable({ prenom: "", nom: "" });
+    setEglise({ id: null, nom: "", denomination: "", ville: "", pays: "", branche: "" });
+    setCanal("");
+    loadInvitations();
   };
 
   return (
     <div className="min-h-screen bg-[#333699] text-white p-4 flex flex-col items-center">
       <HeaderPages />
 
-      {/* 🔥 TON BLOC RESTAURÉ À L’IDENTIQUE */}
+      {/* 🔥 BLOC TEXTE RESTAURÉ EXACT */}
       <div className="w-full flex flex-col items-center mb-8">
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-          Invitations & Liens <span className="text-emerald-300">d’Eglises</span>
+          Invitations & Liens d’Eglises
         </h1>
 
         <div className="max-w-3xl w-full text-center">
@@ -232,50 +183,50 @@ Avec amour en Christ ❤️
       {/* FORM */}
       <div ref={formRef} className="w-full max-w-md bg-white/10 p-6 rounded-xl space-y-4">
 
-        <input className="w-full p-2 text-black rounded"
-          placeholder="Prénom"
+        <input placeholder="Prénom responsable *"
+          className="w-full p-2 text-black rounded"
           value={responsable.prenom}
           onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
         />
 
-        <input className="w-full p-2 text-black rounded"
-          placeholder="Nom"
+        <input placeholder="Nom responsable *"
+          className="w-full p-2 text-black rounded"
           value={responsable.nom}
           onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
-        />        
+        />
 
-        <input className="w-full p-2 text-black rounded"
-          placeholder="Dénomination"
+        <input placeholder="Dénomination *"
+          className="w-full p-2 text-black rounded"
           value={eglise.denomination}
           onChange={(e) => setEglise({ ...eglise, denomination: e.target.value })}
         />
 
-            <input className="w-full p-2 text-black rounded"
-          placeholder="Nom église"
+        <input placeholder="Nom église *"
+          className="w-full p-2 text-black rounded"
           value={eglise.nom}
           onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
         />
 
-       <input
+        <input placeholder="Branche"
           className="w-full p-2 text-black rounded"
-          placeholder="Branche église"
           value={eglise.branche}
-          onChange={(e) =>
-            setEglise({ ...eglise, branche: e.target.value })
-          }
-        />     
+          onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+        />
 
-        <input className="w-full p-2 text-black rounded"
-          placeholder="Ville"
+        <input placeholder="Ville"
+          className="w-full p-2 text-black rounded"
           value={eglise.ville}
           onChange={(e) => setEglise({ ...eglise, ville: e.target.value })}
         />
 
-        <input className="w-full p-2 text-black rounded"
-          placeholder="Pays"
+        <input placeholder="Pays *"
+          className="w-full p-2 text-black rounded"
           value={eglise.pays}
           onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
         />
+
+        {/* 🔥 LABEL DEMANDÉ */}
+        <div className="text-sm text-white/80">Envoyer à</div>
 
         <select
           className="w-full p-2 text-black rounded"
@@ -292,73 +243,48 @@ Avec amour en Christ ❤️
         </button>
       </div>
 
-            {/* TABLE INVITATIONS */}
-<h3 className="w-full max-w-5xl text-center text-2xl font-bold text-amber-300 mb-6 mt-10">
-  Liste des églises supervisées
-</h3>
+      {/* TABLE MOBILE + DESKTOP */}
+      <h3 className="text-2xl font-bold mt-10 mb-6 text-amber-300">
+        Liste des églises supervisées
+      </h3>
 
-<div className="w-full max-w-5xl overflow-x-auto">
+      <div className="w-full max-w-5xl overflow-x-auto">
 
-  <div className="hidden md:grid md:grid-cols-[1.3fr_1fr_1fr_1fr_1fr] text-sm font-semibold uppercase border-b border-white/40 pb-2 gap-x-3">
-    <div className = "ml-3">Dénomination</div>
-    <div>Nom</div>
-    <div>Branche</div>
-    <div>Ville</div>
-    <div>Pays</div>
-    <div>Statut</div>
-    <div className="text-center">Action</div>
-  </div>
-
-  {invitations.map((inv) => {
-    const statusStyle = getStatusStyle(inv.statut);
-
-    return (
-      <div
-        key={inv.id}
-        className={`grid grid-cols-1 md:grid-cols-[1.3fr_1fr_1fr_1fr_1fr] gap-x-3 px-4 py-3 mt-3 items-center border-l-4 ${statusStyle.border} bg-white/5 rounded-lg`}
-      >
-        <div>{inv.eglise_denomination}</div>
-        <div>{inv.eglise_nom}</div>
-        <div>{inv.eglise_branche}</div>
-        <div>{inv.eglise_ville}</div>
-        <div>{inv.eglise_pays}</div>
-
-        <div className={`font-semibold ${statusStyle.text}`}>
-          {getStatusLabel(inv.statut)}
+        <div className="hidden md:grid md:grid-cols-6 text-sm font-semibold border-b pb-2">
+          <div>Dénomination</div>
+          <div>Nom</div>
+          <div>Branche</div>
+          <div>Ville</div>
+          <div>Pays</div>
+          <div>Statut</div>
         </div>
 
-        <div className="flex justify-center gap-2 text-sm">
-          {inv.statut === "pending" && (
-            <button
-              onClick={() => handleSelectInvitation(inv, "rappel")}
-              className="text-yellow-300"
-            >
-              Rappel
-            </button>
-          )}
+        {invitations.map((inv) => (
+          <div key={inv.id} className="border-b py-3">
 
-          {inv.statut === "acceptee" && (
-            <button
-              onClick={() => handleSelectInvitation(inv, "casser")}
-              className="text-gray-300"
-            >
-              Casser
-            </button>
-          )}
+            {/* DESKTOP */}
+            <div className="hidden md:grid md:grid-cols-6">
+              <div>{inv.eglise_denomination}</div>
+              <div>{inv.eglise_nom}</div>
+              <div>{inv.eglise_branche}</div>
+              <div>{inv.eglise_ville}</div>
+              <div>{inv.eglise_pays}</div>
+              <div>{inv.statut}</div>
+            </div>
 
-          {(inv.statut === "refusee" || inv.statut === "lien_casse") && (
-            <button
-              onClick={() => handleSelectInvitation(inv, "renvoyer")}
-              className="text-green-300"
-            >
-              Renvoyer
-            </button>
-          )}
-        </div>
+            {/* MOBILE (labels ajoutés) */}
+            <div className="md:hidden bg-white/5 p-3 rounded text-sm space-y-1">
+              <p><b>Dénomination:</b> {inv.eglise_denomination}</p>
+              <p><b>Nom:</b> {inv.eglise_nom}</p>
+              <p><b>Branche:</b> {inv.eglise_branche}</p>
+              <p><b>Ville:</b> {inv.eglise_ville}</p>
+              <p><b>Pays:</b> {inv.eglise_pays}</p>
+              <p><b>Statut:</b> {inv.statut}</p>
+            </div>
+
+          </div>
+        ))}
       </div>
-    );
-  })}
-</div>
 
       <Footer />
     </div>

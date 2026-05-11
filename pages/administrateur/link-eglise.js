@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
+import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
+import { useFeature } from "../../components/FeaturesContext";
 
 export default function LinkEglise() {
   const formRef = useRef(null);

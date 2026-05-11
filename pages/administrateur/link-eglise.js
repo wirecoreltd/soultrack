@@ -300,9 +300,11 @@ Avec amour en Christ ❤️
 <div className="w-full max-w-5xl overflow-x-auto">
 
   <div className="hidden md:grid md:grid-cols-[1.3fr_1fr_1fr_1fr_1fr] text-sm font-semibold uppercase border-b border-white/40 pb-2 gap-x-3">
-    <div>Église</div>
-    <div>Dénomination</div>
+    <div className = "ml-3">Dénomination</div>
+    <div>Nom</div>
+    <div>Branche</div>
     <div>Ville</div>
+    <div>Pays</div>
     <div>Statut</div>
     <div className="text-center">Action</div>
   </div>
@@ -315,9 +317,11 @@ Avec amour en Christ ❤️
         key={inv.id}
         className={`grid grid-cols-1 md:grid-cols-[1.3fr_1fr_1fr_1fr_1fr] gap-x-3 px-4 py-3 mt-3 items-center border-l-4 ${statusStyle.border} bg-white/5 rounded-lg`}
       >
-        <div>{inv.eglise_nom}</div>
         <div>{inv.eglise_denomination}</div>
+        <div>{inv.eglise_nom}</div>
+        <div>{inv.eglise_branche}</div>
         <div>{inv.eglise_ville}</div>
+        <div>{inv.eglise_pays}</div>
 
         <div className={`font-semibold ${statusStyle.text}`}>
           {getStatusLabel(inv.statut)}

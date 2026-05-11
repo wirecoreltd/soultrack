@@ -16,6 +16,7 @@ export default function LinkEglise() {
     eglise_denomination: "",
     eglise_ville: "",
     eglise_pays: "",
+    eglise_branche: "",
   });
 
   const [responsable, setResponsable] = useState({ prenom: "", nom: "" });
@@ -31,12 +32,11 @@ export default function LinkEglise() {
 
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
-  const [modeAction, setModeAction] = useState(null); // null | "rappel" | "renvoyer" | "casser"
+  const [modeAction, setModeAction] = useState(null);
   const [selectedInvitation, setSelectedInvitation] = useState(null);
   const [errors, setErrors] = useState({});
-  const [confirmDelete, setConfirmDelete] = useState(null); // id de l'invitation à supprimer
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
-  // 🔹 Charger superviseur
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -44,7 +44,7 @@ export default function LinkEglise() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select(`prenom, nom, eglise_id, eglises(nom, denomination, ville, pays)`)
+        .select(`prenom, nom, eglise_id, eglises(nom, denomination, ville, pays, branche)`)
         .eq("id", user.id)
         .single();
 
@@ -57,6 +57,7 @@ export default function LinkEglise() {
           eglise_denomination: data.eglises?.denomination || "",
           eglise_ville: data.eglises?.ville || "",
           eglise_pays: data.eglises?.pays || "",
+          eglise_branche: data.eglises?.branche || "",
         });
       }
     };
@@ -98,7 +99,6 @@ export default function LinkEglise() {
     loadInvitations();
   }, [superviseur.eglise_id]);
 
-  // 🔹 Remplir le formulaire + scroller
   const handleSelectInvitation = (inv, mode) => {
     setSelectedInvitation(inv);
     setModeAction(mode);
@@ -118,7 +118,6 @@ export default function LinkEglise() {
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
   };
 
-  // 🔹 Réinitialiser le formulaire
   const resetForm = () => {
     setResponsable({ prenom: "", nom: "" });
     setEglise({ id: null, nom: "", denomination: "", ville: "", pays: "", branche: "" });
@@ -128,26 +127,22 @@ export default function LinkEglise() {
     setErrors({});
   };
 
-  // 🔹 Supprimer une invitation
   const handleDelete = async (id) => {
     const { error } = await supabase
       .from("eglise_supervisions")
       .delete()
       .eq("id", id);
-
     if (!error) {
       setConfirmDelete(null);
       loadInvitations();
     }
   };
 
-  // 🔹 Casser le lien
   const handleCasser = async (inv) => {
     const { error } = await supabase
       .from("eglise_supervisions")
       .update({ statut: "lien_casse" })
       .eq("id", inv.id);
-
     if (!error) loadInvitations();
   };
 
@@ -161,34 +156,34 @@ export default function LinkEglise() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const buildMessage = (token) => `
-✨ Bonjour ${responsable.prenom} ${responsable.nom},
+  const buildMessage = (token, mode = "nouveau") => {
+    const branche = superviseur.eglise_branche ? `, ${superviseur.eglise_branche}` : "";
+    const superviseurInfo = `${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_denomination}, ${superviseur.eglise_nom}${branche}, ${superviseur.eglise_ville}`;
+    const destinataire = `${responsable.prenom} ${responsable.nom}`;
+    const lien = `https://soultrack-three.vercel.app/accept-invitation?token=${token}`;
 
-Que la paix du Seigneur soit avec vous 🙏
+    if (mode === "rappel") {
+      return `Bonjour ${destinataire},
 
-${superviseur.prenom} ${superviseur.nom} vous écrit avec amour dans le Seigneur.
-
-Nous vous invitons à placer votre église sous une supervision spirituelle afin de grandir ensemble dans l'œuvre de Dieu.
-
-🏛️ Église superviseur :
-- Nom : ${superviseur.eglise_nom}
-- Dénomination : ${superviseur.eglise_denomination}
-- Ville : ${superviseur.eglise_ville}
-- Pays : ${superviseur.eglise_pays}
-
-🌍 Église à relier :
-- Nom : ${eglise.nom}
-- Dénomination : ${eglise.denomination}
-- Ville : ${eglise.ville}
-- Pays : ${eglise.pays}
+${superviseurInfo} vous renvoie un rappel pour la supervision de votre église.
 
 🔗 Cliquez ici pour accepter :
-https://soultrack-three.vercel.app/accept-invitation?token=${token}
+${lien}
 
-Nous prions pour vous et votre ministère 🙏
 Que Dieu vous guide puissamment.
-
 Avec amour en Christ ❤️`;
+    }
+
+    return `Bonjour ${destinataire},
+
+${superviseurInfo} invite votre église à être sous sa supervision.
+
+🔗 Cliquez ici pour accepter :
+${lien}
+
+Que Dieu vous guide puissamment.
+Avec amour en Christ ❤️`;
+  };
 
   const sendMessage = (message) => {
     if (canal === "whatsapp") {
@@ -202,16 +197,15 @@ Avec amour en Christ ❤️`;
     if (!validate()) return;
 
     try {
-      // ✅ CAS 1 : Rappel — renvoyer le même lien existant
+      // CAS 1 : Rappel — même token
       if (modeAction === "rappel" && selectedInvitation) {
-        const token = selectedInvitation.invitation_token;
-        const message = buildMessage(token);
+        const message = buildMessage(selectedInvitation.invitation_token, "rappel");
         sendMessage(message);
         resetForm();
         return;
       }
 
-      // ✅ CAS 2 : Renvoyer (refusée ou lien cassé) — nouveau token
+      // CAS 2 : Renvoyer — nouveau token
       if (modeAction === "renvoyer" && selectedInvitation) {
         const token = crypto.randomUUID();
         await supabase
@@ -229,14 +223,14 @@ Avec amour en Christ ❤️`;
           })
           .eq("id", selectedInvitation.id);
 
-        const message = buildMessage(token);
+        const message = buildMessage(token, "nouveau");
         sendMessage(message);
         resetForm();
         loadInvitations();
         return;
       }
 
-      // ✅ CAS 3 : Nouvelle invitation
+      // CAS 3 : Nouvelle invitation
       const token = crypto.randomUUID();
       await supabase.from("eglise_supervisions").insert([{
         superviseur_eglise_id: superviseur.eglise_id,
@@ -251,7 +245,7 @@ Avec amour en Christ ❤️`;
         invitation_token: token,
       }]);
 
-      const message = buildMessage(token);
+      const message = buildMessage(token, "nouveau");
       sendMessage(message);
       resetForm();
       loadInvitations();
@@ -308,7 +302,6 @@ Avec amour en Christ ❤️`;
       {/* FORM */}
       <div ref={formRef} className="w-full max-w-md bg-white/10 p-6 rounded-xl space-y-4">
 
-        {/* Titre dynamique */}
         <div className="flex items-center justify-between border-b border-white/20 pb-2">
           <h2 className="text-lg font-semibold text-emerald-300">
             {modeAction === "rappel"
@@ -318,10 +311,7 @@ Avec amour en Christ ❤️`;
               : "Envoyer à"}
           </h2>
           {modeAction && (
-            <button
-              onClick={resetForm}
-              className="text-xs text-white/50 hover:text-white underline"
-            >
+            <button onClick={resetForm} className="text-xs text-white/50 hover:text-white underline">
               ✕ Annuler
             </button>
           )}
@@ -414,7 +404,6 @@ Avec amour en Christ ❤️`;
 
       <div className="w-full max-w-5xl overflow-x-auto">
 
-        {/* Header desktop */}
         <div className="hidden md:grid md:grid-cols-[1.3fr_1fr_1fr_1fr_1fr_0.8fr_1fr] text-sm font-semibold uppercase border-b border-white/40 pb-2 gap-x-3 px-4">
           <div>Dénomination</div>
           <div>Nom</div>
@@ -427,7 +416,6 @@ Avec amour en Christ ❤️`;
 
         {invitations.map((inv) => {
           const statusStyle = getStatusStyle(inv.statut);
-
           return (
             <div key={inv.id}
               className={`grid grid-cols-1 md:grid-cols-[1.3fr_1fr_1fr_1fr_1fr_0.8fr_1fr] gap-x-3 px-4 py-3 mt-3 items-center border-l-4 ${statusStyle.border} bg-white/5 rounded-lg`}
@@ -457,10 +445,7 @@ Avec amour en Christ ❤️`;
                 {getStatusLabel(inv.statut)}
               </div>
 
-              {/* ACTIONS */}
               <div className="flex flex-wrap justify-start md:justify-center gap-2 text-sm mt-2 md:mt-0">
-
-                {/* EN ATTENTE → Rappel + Supprimer */}
                 {inv.statut === "pending" && (
                   <>
                     <button
@@ -477,8 +462,6 @@ Avec amour en Christ ❤️`;
                     </button>
                   </>
                 )}
-
-                {/* ACCEPTEE → Casser */}
                 {inv.statut === "acceptee" && (
                   <button
                     onClick={() => handleCasser(inv)}
@@ -487,8 +470,6 @@ Avec amour en Christ ❤️`;
                     🔗 Casser
                   </button>
                 )}
-
-                {/* REFUSEE ou LIEN CASSÉ → Renvoyer */}
                 {(inv.statut === "refusee" || inv.statut === "lien_casse") && (
                   <button
                     onClick={() => handleSelectInvitation(inv, "renvoyer")}
@@ -503,15 +484,13 @@ Avec amour en Christ ❤️`;
         })}
       </div>
 
-      {/* MODAL CONFIRMATION SUPPRESSION */}
+      {/* MODAL SUPPRESSION */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div className="bg-[#1e2a7a] border border-red-500 rounded-xl p-6 max-w-sm w-full text-center space-y-4">
-            <p className="text-lg font-semibold text-white">
-              🗑️ Confirmer la suppression
-            </p>
+            <p className="text-lg font-semibold text-white">🗑️ Confirmer la suppression</p>
             <p className="text-white/70 text-sm">
-              Cette invitation sera définitivement supprimée de la base de données. Cette action est irréversible.
+              Cette invitation sera définitivement supprimée. Cette action est irréversible.
             </p>
             <div className="flex gap-3 justify-center mt-2">
               <button

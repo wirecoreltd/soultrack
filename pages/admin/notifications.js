@@ -33,8 +33,9 @@ function getBorderColor(type) {
     case "existant":             return "#4ade80";
     case "evangelise":           return "#a78bfa";
     case "new_in_cellule":       return "#38bdf8";
-    case "membre_assigne":       return "#f59e0b"; // or/jaune — suivi membre
-    case "membre_assigne_evang": return "#10b981"; // vert émeraude — évangélisé
+    case "membre_assigne":       return "#f59e0b";
+    case "membre_assigne_evang": return "#10b981";
+    case "invitation":           return "#818cf8"; // ✅ NOUVEAU
     default:                     return "#9ca3af";
   }
 }
@@ -46,7 +47,8 @@ function TypeBadge({ type }) {
     evangelise:           { bg: "#f5f3ff", text: "#7c3aed", dot: "#a78bfa", label: "Évangélisé" },
     new_in_cellule:       { bg: "#f0f9ff", text: "#0369a1", dot: "#38bdf8", label: "Ajouté en cellule/famille" },
     membre_assigne:       { bg: "#fffbeb", text: "#b45309", dot: "#f59e0b", label: "Membre assigné" },
-    membre_assigne_evang: { bg: "#ecfdf5", text: "#065f46", dot: "#10b981", label: "Évangélisé assigné" }, // ✅ NOUVEAU
+    membre_assigne_evang: { bg: "#ecfdf5", text: "#065f46", dot: "#10b981", label: "Évangélisé assigné" },
+    invitation:           { bg: "#eef2ff", text: "#4338ca", dot: "#818cf8", label: "Invitation en attente" }, // ✅ NOUVEAU
   };
   const c = config[type] || config.existant;
   return (
@@ -197,7 +199,6 @@ function NotificationsContent() {
     {
       let assignesNotifs = [];
 
-      // 4a. Conseiller
       const { data: parConseiller } = await supabase
         .from("membres_complets")
         .select("id, prenom, nom, ville, created_at, date_envoi_suivi, eglise_id, suivi_cellule_nom, famille_id, cellule_id")
@@ -206,7 +207,6 @@ function NotificationsContent() {
         .order("date_envoi_suivi", { ascending: false });
       assignesNotifs = [...assignesNotifs, ...(parConseiller || [])];
 
-      // 4b. ResponsableCellule
       const { data: cellulesDuResp } = await supabase
         .from("cellules")
         .select("id")
@@ -223,7 +223,6 @@ function NotificationsContent() {
         assignesNotifs = [...assignesNotifs, ...(parCellule || [])];
       }
 
-      // 4c. ResponsableFamilles
       const { data: famillesDuResp } = await supabase
         .from("familles")
         .select("id")
@@ -248,11 +247,10 @@ function NotificationsContent() {
       allNotifs = [...allNotifs, ...mapped];
     }
 
-    // ── 5. ✅ Évangélisés assignés (suivis_des_evangelises) ──
+    // ── 5. Évangélisés assignés (suivis_des_evangelises) ──
     {
       let assignesEvangNotifs = [];
 
-      // 5a. Conseiller
       const { data: parConseiller } = await supabase
         .from("suivis_des_evangelises")
         .select("id, prenom, nom, ville, date_suivi, date_evangelise, eglise_id, conseiller_id, cellule_id, famille_id")
@@ -261,7 +259,6 @@ function NotificationsContent() {
         .order("date_suivi", { ascending: false });
       assignesEvangNotifs = [...assignesEvangNotifs, ...(parConseiller || [])];
 
-      // 5b. ResponsableCellule
       const { data: cellulesDuResp } = await supabase
         .from("cellules")
         .select("id")
@@ -278,7 +275,6 @@ function NotificationsContent() {
         assignesEvangNotifs = [...assignesEvangNotifs, ...(parCellule || [])];
       }
 
-      // 5c. ResponsableFamilles
       const { data: famillesDuResp } = await supabase
         .from("familles")
         .select("id")
@@ -299,6 +295,28 @@ function NotificationsContent() {
         ...m,
         _type: "membre_assigne_evang",
         _date: m.date_suivi || m.date_evangelise,
+      }));
+      allNotifs = [...allNotifs, ...mapped];
+    }
+
+    // ── 6. ✅ Invitation en attente (Administrateur uniquement) ──
+    if (isAdmin) {
+      const { data } = await supabase
+        .from("eglise_supervisions")
+        .select("id, eglise_nom, eglise_denomination, eglise_ville, eglise_pays, invitation_token, created_at, statut")
+        .eq("eglise_id", profile.eglise_id)
+        .eq("statut", "pending")
+        .order("created_at", { ascending: false });
+
+      const mapped = (data || []).map((inv) => ({
+        ...inv,
+        // On réutilise prenom/nom pour l'affichage dans la carte
+        prenom: inv.eglise_denomination || "",
+        nom: inv.eglise_nom || "",
+        ville: inv.eglise_ville || "",
+        _type: "invitation",
+        _date: inv.created_at,
+        _token: inv.invitation_token,
       }));
       allNotifs = [...allNotifs, ...mapped];
     }
@@ -333,7 +351,7 @@ function NotificationsContent() {
 
     const channel = supabase.channel(`notifications-page-${userProfile.eglise_id}-${userProfile.id}`);
 
-    // ── membres_complets : nouveaux membres + new_in_cellule + membres assignés ──
+    // ── membres_complets ──
     channel
       .on("postgres_changes",
         { event: "INSERT", schema: "public", table: "membres_complets" },
@@ -361,7 +379,6 @@ function NotificationsContent() {
             setNotifications((prev) => prev.filter((n) => !(n._type === "new_in_cellule" && n.id === row.id)));
           }
 
-          // Membre assigné → ajout
           if (row.suivi_responsable_id === userProfile.id && row.notification_responsable === true) {
             setNotifications((prev) => {
               const exists = prev.some((n) => n._type === "membre_assigne" && n.id === row.id);
@@ -370,7 +387,6 @@ function NotificationsContent() {
             });
           }
 
-          // Membre assigné → suppression (lu)
           if (row.suivi_responsable_id === userProfile.id && row.notification_responsable === false) {
             setNotifications((prev) => prev.filter((n) => !(n._type === "membre_assigne" && n.id === row.id)));
           }
@@ -400,13 +416,12 @@ function NotificationsContent() {
         );
     }
 
-    // ── ✅ suivis_des_evangelises : évangélisés assignés ──
+    // ── suivis_des_evangelises ──
     channel.on("postgres_changes",
       { event: "UPDATE", schema: "public", table: "suivis_des_evangelises" },
       (payload) => {
         const row = payload.new;
 
-        // Ajout si notification activée
         if (row.notification_responsable === true) {
           setNotifications((prev) => {
             const exists = prev.some((n) => n._type === "membre_assigne_evang" && n.id === row.id);
@@ -415,7 +430,6 @@ function NotificationsContent() {
           });
         }
 
-        // Suppression si marqué comme lu
         if (row.notification_responsable === false) {
           setNotifications((prev) =>
             prev.filter((n) => !(n._type === "membre_assigne_evang" && n.id === row.id))
@@ -423,6 +437,54 @@ function NotificationsContent() {
         }
       }
     );
+
+    // ── ✅ eglise_supervisions : invitation en attente ──
+    if (isAdmin) {
+      channel
+        .on("postgres_changes",
+          { event: "INSERT", schema: "public", table: "eglise_supervisions" },
+          (payload) => {
+            const row = payload.new;
+            if (row.eglise_id === userProfile.eglise_id && row.statut === "pending") {
+              setNotifications((prev) => [{
+                ...row,
+                prenom: row.eglise_denomination || "",
+                nom: row.eglise_nom || "",
+                ville: row.eglise_ville || "",
+                _type: "invitation",
+                _date: row.created_at,
+                _token: row.invitation_token,
+              }, ...prev]);
+            }
+          }
+        )
+        .on("postgres_changes",
+          { event: "UPDATE", schema: "public", table: "eglise_supervisions" },
+          (payload) => {
+            const row = payload.new;
+            // Invitation qui revient en pending (edge case)
+            if (row.eglise_id === userProfile.eglise_id && row.statut === "pending") {
+              setNotifications((prev) => {
+                const exists = prev.some((n) => n._type === "invitation" && n.id === row.id);
+                if (exists) return prev;
+                return [{
+                  ...row,
+                  prenom: row.eglise_denomination || "",
+                  nom: row.eglise_nom || "",
+                  ville: row.eglise_ville || "",
+                  _type: "invitation",
+                  _date: row.created_at,
+                  _token: row.invitation_token,
+                }, ...prev];
+              });
+            }
+            // Invitation résolue (acceptée ou refusée) → on la retire
+            if (row.statut !== "pending") {
+              setNotifications((prev) => prev.filter((n) => !(n._type === "invitation" && n.id === row.id)));
+            }
+          }
+        );
+    }
 
     channel.subscribe();
     channelRef.current = channel;
@@ -439,7 +501,13 @@ function NotificationsContent() {
 
   // ─── Navigation au clic ───────────────────────────────────────────────────
   const handleClick = async (n) => {
-    // ✅ Membre assigné suivi → marquer lu + rediriger ListMembers
+    // ✅ Invitation en attente → rediriger vers accept-invitation
+    if (n._type === "invitation") {
+      router.push(`/accept-invitation?token=${n._token}`);
+      return;
+    }
+
+    // Membre assigné suivi → marquer lu + rediriger
     if (n._type === "membre_assigne") {
       await supabase
         .from("membres_complets")
@@ -451,7 +519,7 @@ function NotificationsContent() {
       return;
     }
 
-    // ✅ Évangélisé assigné → marquer lu + rediriger suivis-evangelisation
+    // Évangélisé assigné → marquer lu + rediriger
     if (n._type === "membre_assigne_evang") {
       await supabase
         .from("suivis_des_evangelises")
@@ -476,6 +544,7 @@ function NotificationsContent() {
       case "evangelise":           return "💗";
       case "membre_assigne":       return "🤝";
       case "membre_assigne_evang": return "📣";
+      case "invitation":           return "📩"; // ✅ NOUVEAU
       default:                     return "👤";
     }
   };
@@ -486,6 +555,7 @@ function NotificationsContent() {
       case "evangelise":           return "#f5f3ff";
       case "membre_assigne":       return "#fffbeb";
       case "membre_assigne_evang": return "#ecfdf5";
+      case "invitation":           return "#eef2ff"; // ✅ NOUVEAU
       default:                     return "#fff7ed";
     }
   };
@@ -576,6 +646,13 @@ function NotificationsContent() {
                     <TypeBadge type={n._type} />
                   </div>
 
+                  {/* Info spécifique : invitation */}
+                  {n._type === "invitation" && (
+                    <p style={{ fontSize: "12px", color: "#4338ca", margin: "2px 0 0" }}>
+                      📩 Cliquez pour répondre à l'invitation
+                    </p>
+                  )}
+
                   {/* Info spécifique : membre_assigne */}
                   {n._type === "membre_assigne" && n.suivi_cellule_nom && (
                     <p style={{ fontSize: "12px", color: "#6b7280", margin: "2px 0 0" }}>
@@ -583,14 +660,20 @@ function NotificationsContent() {
                     </p>
                   )}
 
-                  {/* Info spécifique : membre_assigne_evang — source évangélisation */}
+                  {/* Info spécifique : membre_assigne_evang */}
                   {n._type === "membre_assigne_evang" && (
                     <p style={{ fontSize: "12px", color: "#059669", margin: "2px 0 0" }}>
                       📣 Vient de l'évangélisation
                     </p>
                   )}
 
-                  {n.ville && n._type !== "membre_assigne" && n._type !== "membre_assigne_evang" && (
+                  {n.ville && n._type !== "membre_assigne" && n._type !== "membre_assigne_evang" && n._type !== "invitation" && (
+                    <p style={{ fontSize: "12px", color: "#6b7280", margin: "2px 0 0" }}>
+                      🏙️ {n.ville}
+                    </p>
+                  )}
+
+                  {n._type === "invitation" && n.ville && (
                     <p style={{ fontSize: "12px", color: "#6b7280", margin: "2px 0 0" }}>
                       🏙️ {n.ville}
                     </p>

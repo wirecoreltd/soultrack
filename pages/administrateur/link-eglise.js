@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useRef } from "react";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
@@ -266,7 +268,23 @@ Que Dieu vous bénisse 🙏
           <label className="font-semibold">Nom du responsable</label>
           <input className="w-full border rounded-xl px-3 py-2 text-black"
             value={responsable.nom} onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })} />
-        </div>     
+        </div>
+        <div>
+          <label className="font-semibold">Nom de l'Église</label>
+          <input className="w-full border rounded-xl px-3 py-2 text-black"
+            value={eglise.nom} onChange={(e) => setEglise({ ...eglise, nom: e.target.value })} />
+        </div>
+        <div>
+          <label className="font-semibold">Branche / Région</label>
+          <input className="w-full border rounded-xl px-3 py-2 text-black"
+            value={eglise.branche} onChange={(e) => setEglise({ ...eglise, branche: e.target.value })} />
+        </div>
+        <div>
+          <label className="font-semibold">Pays</label>
+          <input className="w-full border rounded-xl px-3 py-2 text-black"
+            value={eglise.pays} onChange={(e) => setEglise({ ...eglise, pays: e.target.value })} />
+        </div>
+
         {modeAction === "supprimer" && (
           <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded-xl text-sm">
             ⚠️ Si vous supprimez cette invitation, l'église sortira de la liste des

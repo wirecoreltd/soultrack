@@ -54,7 +54,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         const { count } = await supabase
           .from("membres_complets")
           .select("id", { count: "exact", head: true })
-          .eq("eglise_id", egliseId)
+          .eq("supervisee_eglise_id", egliseId)
           .eq("etat_contact", "nouveau");
         setCountMembres(count || 0);
       }
@@ -337,7 +337,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         const row = payload.new;
         const old = payload.old;
 
-        if (row.eglise_id !== egliseId) return;
+        if (row.supervisee_eglise_id !== egliseId) return;
 
         // Devient pending
         if (row.statut === "pending" && old.statut !== "pending") {
@@ -355,7 +355,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
       // INSERT d'une nouvelle invitation directement en pending
       channel.on("postgres_changes", { event: "INSERT", schema: "public", table: "eglise_supervisions" }, (payload) => {
         const row = payload.new;
-        if (row.eglise_id === egliseId && row.statut === "pending") {
+        if (row.supervisee_eglise_id === egliseId && row.statut === "pending") {
           setCountInvitations((prev) => prev + 1);
           setIsNew(true);
           setTimeout(() => setIsNew(false), 2000);

@@ -292,6 +292,70 @@ Avec amour en Christ ❤️
         </button>
       </div>
 
+            {/* TABLE INVITATIONS */}
+<h3 className="w-full max-w-5xl text-center text-2xl font-bold text-amber-300 mb-6 mt-10">
+  Liste des églises supervisées
+</h3>
+
+<div className="w-full max-w-5xl overflow-x-auto">
+
+  <div className="hidden md:grid md:grid-cols-[1.3fr_1fr_1fr_1fr_1fr] text-sm font-semibold uppercase border-b border-white/40 pb-2 gap-x-3">
+    <div>Église</div>
+    <div>Dénomination</div>
+    <div>Ville</div>
+    <div>Statut</div>
+    <div className="text-center">Action</div>
+  </div>
+
+  {invitations.map((inv) => {
+    const statusStyle = getStatusStyle(inv.statut);
+
+    return (
+      <div
+        key={inv.id}
+        className={`grid grid-cols-1 md:grid-cols-[1.3fr_1fr_1fr_1fr_1fr] gap-x-3 px-4 py-3 mt-3 items-center border-l-4 ${statusStyle.border} bg-white/5 rounded-lg`}
+      >
+        <div>{inv.eglise_nom}</div>
+        <div>{inv.eglise_denomination}</div>
+        <div>{inv.eglise_ville}</div>
+
+        <div className={`font-semibold ${statusStyle.text}`}>
+          {getStatusLabel(inv.statut)}
+        </div>
+
+        <div className="flex justify-center gap-2 text-sm">
+          {inv.statut === "pending" && (
+            <button
+              onClick={() => handleSelectInvitation(inv, "rappel")}
+              className="text-yellow-300"
+            >
+              Rappel
+            </button>
+          )}
+
+          {inv.statut === "acceptee" && (
+            <button
+              onClick={() => handleSelectInvitation(inv, "casser")}
+              className="text-gray-300"
+            >
+              Casser
+            </button>
+          )}
+
+          {(inv.statut === "refusee" || inv.statut === "lien_casse") && (
+            <button
+              onClick={() => handleSelectInvitation(inv, "renvoyer")}
+              className="text-green-300"
+            >
+              Renvoyer
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  })}
+</div>
+
       <Footer />
     </div>
   );

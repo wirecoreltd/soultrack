@@ -194,65 +194,94 @@ Avec amour en Christ ❤️`;
   };
 
   const handleAction = async () => {
-    if (!validate()) return;
+  if (!validate()) return;
 
-    try {
-      // CAS 1 : Rappel — même token
-      if (modeAction === "rappel" && selectedInvitation) {
-        const message = buildMessage(selectedInvitation.invitation_token, "rappel");
-        sendMessage(message);
-        resetForm();
-        return;
-      }
+  try {
+    const token = crypto.randomUUID();
+    const expireAt = new Date();
+    expireAt.setDate(expireAt.getDate() + 7);
 
-      // CAS 2 : Renvoyer — nouveau token
-      if (modeAction === "renvoyer" && selectedInvitation) {
-        const token = crypto.randomUUID();
-        await supabase
-          .from("eglise_supervisions")
-          .update({
-            statut: "pending",
-            invitation_token: token,
-            responsable_prenom: responsable.prenom,
-            responsable_nom: responsable.nom,
-            eglise_nom: eglise.nom,
-            eglise_denomination: eglise.denomination,
-            eglise_ville: eglise.ville,
-            eglise_pays: eglise.pays,
-            eglise_branche: eglise.branche,       // ✅ nom uniquement
-          })
-          .eq("id", selectedInvitation.id);
+    // CAS 1 : Rappel — nouveau token valide 7 jours
+    if (modeAction === "rappel" && selectedInvitation) {
+      await supabase
+        .from("eglise_supervisions")
+        .update({
+          invitation_token: token,
+          statut: "pending",
+          expire_at: expireAt.toISOString(),
+        })
+        .eq("id", selectedInvitation.id);
 
-        const message = buildMessage(token, "nouveau");
-        sendMessage(message);
-        resetForm();
-        loadInvitations();
-        return;
-      }
+      const message = buildMessage(token, "rappel");
+      sendMessage(message);
+      resetForm();
+      loadInvitations();
+      return;
+    }
 
-      // CAS 3 : Nouvelle invitation
-      const token = crypto.randomUUID();
-      await supabase.from("eglise_supervisions").insert([{
-        superviseur_eglise_id: superviseur.eglise_id,
-        responsable_prenom: responsable.prenom,
-        responsable_nom: responsable.nom,
-        eglise_nom: eglise.nom,
-        eglise_denomination: eglise.denomination,
-        eglise_ville: eglise.ville,
-        eglise_pays: eglise.pays,
-        eglise_branche: eglise.branche,           // ✅ nom uniquement
-        statut: "pending",
-        invitation_token: token,
-      }]);
+    // CAS 2 : Renvoyer (refusée ou lien cassé) — nouveau token 7 jours
+    if (modeAction === "renvoyer" && selectedInvitation) {
+      await supabase
+        .from("eglise_supervisions")
+        .update({
+          statut: "pending",
+          invitation_token: token,
+          expire_at: expireAt.toISOString(),
+          responsable_prenom: responsable.prenom,
+          responsable_nom: responsable.nom,
+          eglise_nom: eglise.nom,
+          eglise_denomination: eglise.denomination,
+          eglise_ville: eglise.ville,
+          eglise_pays: eglise.pays,
+          eglise_branche: eglise.branche,
+        })
+        .eq("id", selectedInvitation.id);
 
       const message = buildMessage(token, "nouveau");
       sendMessage(message);
       resetForm();
       loadInvitations();
-    } catch (err) {
-      console.error(err);
+      return;
     }
-  };
+
+    // CAS 3 : Nouvelle invitation
+    // On vérifie d'abord si une entrée existe déjà pour éviter le 409
+    const { data: existing } = await supabase
+      .from("eglise_supervisions")
+      .select("id, statut")
+      .eq("superviseur_eglise_id", superviseur.eglise_id)
+      .eq("eglise_denomination", eglise.denomination)
+      .eq("eglise_pays", eglise.pays)
+      .maybeSingle();
+
+    if (existing) {
+      alert(`Une invitation existe déjà pour cette église (statut : ${getStatusLabel(existing.statut)}). Utilisez le bouton correspondant dans le tableau.`);
+      return;
+    }
+
+    await supabase.from("eglise_supervisions").insert([{
+      superviseur_eglise_id: superviseur.eglise_id,
+      responsable_prenom: responsable.prenom,
+      responsable_nom: responsable.nom,
+      eglise_nom: eglise.nom,
+      eglise_denomination: eglise.denomination,
+      eglise_ville: eglise.ville,
+      eglise_pays: eglise.pays,
+      eglise_branche: eglise.branche,
+      statut: "pending",
+      invitation_token: token,
+      expire_at: expireAt.toISOString(),
+    }]);
+
+    const message = buildMessage(token, "nouveau");
+    sendMessage(message);
+    resetForm();
+    loadInvitations();
+
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const inputClass = (hasError) =>
     `w-full p-2 text-black rounded ${hasError ? "border-2 border-red-500" : ""}`;

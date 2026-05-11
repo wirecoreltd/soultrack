@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState, useCallback, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
@@ -49,112 +48,6 @@ function sortTempsOptions(options) {
   return ["Culte", ...withoutCulte];
 }
 
-// ─── ÉCRAN CHOIX SESSION ───────────────────────────────────────
-function ChoixSession({ sessions, onJoin, onNew, loadingCheck, onConsulterAncienne }) {
-  const [showOld, setShowOld] = useState(false);
-
-  const byDate = sessions.reduce((acc, s) => {
-    if (!acc[s.date]) acc[s.date] = [];
-    acc[s.date].push(s);
-    return acc;
-  }, {});
-
-  const todayStr = today();
-  const todaySessions = byDate[todayStr] || [];
-  const oldDates = Object.keys(byDate).filter(d => d !== todayStr).sort((a, b) => b.localeCompare(a));
-
-  if (loadingCheck) {
-    return (
-      <div className="w-full max-w-lg mt-6 flex flex-col items-center gap-4">
-        <p className="text-white/70 text-sm animate-pulse">Recherche de sessions en cours...</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full max-w-lg mt-6 flex flex-col gap-4">
-      {todaySessions.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-3">
-          <h2 className="text-base font-bold text-gray-800 mb-1">📋 Sessions du jour</h2>
-          <p className="text-sm text-gray-500 mb-2">Ces sessions ont déjà été créées. Cliquez pour rejoindre.</p>
-          {todaySessions.map(s => (
-            <button
-              key={s.id}
-              onClick={() => onJoin(s)}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-[#333699] hover:bg-[#333699] hover:text-white text-[#333699] font-semibold transition group"
-            >
-              <span className="text-left text-sm">{formatSessionLabel(s)}</span>
-              <span className="text-xs bg-emerald-100 text-emerald-700 group-hover:bg-white/20 group-hover:text-white px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
-                Rejoindre →
-              </span>
-            </button>
-          ))}
-          <div className="border-t border-gray-100 pt-3 mt-1">
-            <button
-              onClick={onNew}
-              className="w-full py-2 rounded-xl border border-dashed border-gray-300 text-gray-500 text-sm hover:border-[#333699] hover:text-[#333699] transition"
-            >
-              ➕ Créer une nouvelle session
-            </button>
-          </div>
-        </div>
-      )}
-
-      {oldDates.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <button
-            onClick={() => setShowOld(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/10 text-white text-sm font-semibold hover:bg-white/20 transition"
-          >
-            <span>🕘 Sessions récentes — {oldDates.reduce((n, d) => n + byDate[d].length, 0)} session(s)</span>
-            <span className="text-xs text-white/70">{showOld ? "▲ Masquer" : "▼ Afficher"}</span>
-          </button>
-          {showOld && (
-            <div className="bg-white/10 rounded-2xl p-5 flex flex-col gap-3">
-              <h2 className="text-sm font-bold text-white mb-1">🕘 Sessions récentes (5 derniers jours)</h2>
-              {oldDates.map(date => (
-                <div key={date} className="flex flex-col gap-2">
-                  <p className="text-white/50 text-xs font-semibold uppercase tracking-wide">{formatDateFr(date)}</p>
-                  {byDate[date].map(s => (
-                    <button
-                      key={s.id}
-                      onClick={() => onConsulterAncienne(s)}
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-white/20 hover:bg-white/20 text-white transition"
-                    >
-                      <span className="text-left text-sm">{formatSessionLabel(s)}</span>
-                      <span className="text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
-                        👁 Consulter
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {sessions.length === 0 && (
-        <div className="bg-white/10 rounded-2xl p-5 text-center">
-          <p className="text-white/70 text-sm mb-3">Aucune session aujourd'hui.</p>
-          <button onClick={onNew} className="px-6 py-3 bg-white text-[#333699] font-bold rounded-xl hover:bg-white/90 transition">
-            ➕ Créer une session
-          </button>
-        </div>
-      )}
-
-      {sessions.length > 0 && todaySessions.length === 0 && (
-        <div className="bg-white/10 rounded-2xl p-5 text-center">
-          <p className="text-white/70 text-sm mb-3">Aucune session aujourd'hui.</p>
-          <button onClick={onNew} className="px-6 py-3 bg-white text-[#333699] font-bold rounded-xl hover:bg-white/90 transition">
-            ➕ Créer une session
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── FORMULAIRE SESSION ────────────────────────────────────────
 function FormulaireSession({
   isEdit,
@@ -174,7 +67,6 @@ function FormulaireSession({
   const isCulte = typeFinalLabel?.toLowerCase().includes("culte");
   const culteOk = !isCulte || (isCulte && numeroCulte);
   const isDisabled = savingSession || !typeTemps || (typeTemps === "AUTRE" && !nouveauTemps.trim()) || !culteOk;
-
   const optionsAffichees = sortTempsOptions(tempsOptions);
 
   return (
@@ -411,6 +303,52 @@ function BanniereConsultation({ session, onRetour }) {
   );
 }
 
+// ─── SESSIONS RÉCENTES (autres jours) ─────────────────────────
+function OldSessionsBlock({ sessions, onConsulter }) {
+  const [showOld, setShowOld] = useState(false);
+
+  const byDate = sessions.reduce((acc, s) => {
+    if (!acc[s.date]) acc[s.date] = [];
+    acc[s.date].push(s);
+    return acc;
+  }, {});
+
+  const oldDates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        onClick={() => setShowOld(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/10 text-white text-sm font-semibold hover:bg-white/20 transition"
+      >
+        <span>🕘 Sessions récentes — {sessions.length} session(s)</span>
+        <span className="text-xs text-white/70">{showOld ? "▲ Masquer" : "▼ Afficher"}</span>
+      </button>
+      {showOld && (
+        <div className="bg-white/10 rounded-2xl p-5 flex flex-col gap-3">
+          {oldDates.map(date => (
+            <div key={date} className="flex flex-col gap-2">
+              <p className="text-white/50 text-xs font-semibold uppercase tracking-wide">{formatDateFr(date)}</p>
+              {byDate[date].map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => onConsulter(s)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-white/20 hover:bg-white/20 text-white transition"
+                >
+                  <span className="text-left text-sm">{formatSessionLabel(s)}</span>
+                  <span className="text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
+                    👁 Consulter
+                  </span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── COMPOSANT PRINCIPAL ───────────────────────────────────────
 function Presence() {
   const [etape, setEtape] = useState("check");
@@ -536,7 +474,8 @@ function Presence() {
 
     const sessions = data || [];
     setSessionsRecentes(sessions);
-    setEtape(sessions.length > 0 ? "choix" : "form");
+    // Toujours aller sur "choix" — le formulaire s'affiche dedans si pas de session aujourd'hui
+    setEtape("choix");
   }, [initProfile]);
 
   const checkSessionsDuJour = useCallback(async () => {
@@ -557,7 +496,7 @@ function Presence() {
     setSessionsRecentes(sessions);
     setEtape(prev => {
       if (prev === "ready") return prev;
-      return sessions.length > 0 ? "choix" : "form";
+      return "choix";
     });
   }, [initProfile]);
 
@@ -615,7 +554,6 @@ function Presence() {
       const allPresences = presencesData || [];
       const presentIds   = new Set(allPresences.map(p => p.membre_id));
 
-      // ── VUE NON-ADMIN ─────────────────────────────────────────
       if (!isAdmin) {
         if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); setGroupes([]); return; }
 
@@ -702,7 +640,6 @@ function Presence() {
           return;
         }
 
-        // Conseiller — liste plate
         const { data: membresData } = await supabase
           .from("membres_complets")
           .select("id, prenom, nom, telephone, sexe")
@@ -720,7 +657,6 @@ function Presence() {
         return;
       }
 
-      // ── VUE ADMIN/RI ──────────────────────────────────────────
       const { data: tousMembres } = await supabase
         .from("membres_complets")
         .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
@@ -794,7 +730,6 @@ function Presence() {
       const membresVisiblesIds = new Set([...membresCouvertsParGroupe, ...sansCellule.map(m => m.id)]);
 
       setGroupes(groupesResult);
-      // ── CORRECTION : presentList filtré aux membres visibles uniquement ──
       setPresentList(allPresences.filter(p => membresVisiblesIds.has(p.membre_id)));
       setAllMembers(membres.filter(m => membresVisiblesIds.has(m.id) && !presentIds.has(m.id)));
 
@@ -1104,77 +1039,80 @@ function Presence() {
     );
   }
 
-  // ━━━ ÉCRAN CHOIX SESSION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-if (etape === "choix") {
-  const todayStr = today();
-  const todaySessions = sessionsRecentes.filter(s => s.date === todayStr);
-  const oldSessions = sessionsRecentes.filter(s => s.date !== todayStr);
+  // ━━━ ÉCRAN CHOIX / FORMULAIRE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (etape === "choix") {
+    const todayStr = today();
+    const todaySessions = sessionsRecentes.filter(s => s.date === todayStr);
+    const oldSessions = sessionsRecentes.filter(s => s.date !== todayStr);
 
-  return (
-    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
-      <HeaderPages />
-      <h1 className="text-2xl font-bold text-white text-center mt-6 mb-1">📋 Présences</h1>
-      <p className="text-white/60 text-sm text-center mb-2">
-        {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
-      </p>
+    return (
+      <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+        <HeaderPages />
+        <h1 className="text-2xl font-bold text-white text-center mt-6 mb-1">📋 Présences</h1>
+        <p className="text-white/60 text-sm text-center mb-2">
+          {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+        </p>
 
-      <div className="w-full max-w-lg mt-2 flex flex-col gap-4">
-        {/* Sessions du jour si elles existent */}
-        {todaySessions.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-3">
-            <h2 className="text-base font-bold text-gray-800 mb-1">📋 Sessions du jour</h2>
-            <p className="text-sm text-gray-500 mb-2">Ces sessions ont déjà été créées. Cliquez pour rejoindre.</p>
-            {todaySessions.map(s => (
-              <button
-                key={s.id}
-                onClick={() => rejoindreSession(s)}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-[#333699] hover:bg-[#333699] hover:text-white text-[#333699] font-semibold transition group"
-              >
-                <span className="text-left text-sm">{formatSessionLabel(s)}</span>
-                <span className="text-xs bg-emerald-100 text-emerald-700 group-hover:bg-white/20 group-hover:text-white px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
-                  Rejoindre →
-                </span>
-              </button>
-            ))}
-            <div className="border-t border-gray-100 pt-3 mt-1">
-              <button
-                onClick={() => setEtape("form")}
-                className="w-full py-2 rounded-xl border border-dashed border-gray-300 text-gray-500 text-sm hover:border-[#333699] hover:text-[#333699] transition"
-              >
-                ➕ Créer une nouvelle session
-              </button>
+        <div className="w-full max-w-lg mt-2 flex flex-col gap-4">
+
+          {/* Sessions du jour si elles existent */}
+          {todaySessions.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-3">
+              <h2 className="text-base font-bold text-gray-800 mb-1">📋 Sessions du jour</h2>
+              <p className="text-sm text-gray-500 mb-2">Ces sessions ont déjà été créées. Cliquez pour rejoindre.</p>
+              {todaySessions.map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => rejoindreSession(s)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-[#333699] hover:bg-[#333699] hover:text-white text-[#333699] font-semibold transition group"
+                >
+                  <span className="text-left text-sm">{formatSessionLabel(s)}</span>
+                  <span className="text-xs bg-emerald-100 text-emerald-700 group-hover:bg-white/20 group-hover:text-white px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
+                    Rejoindre →
+                  </span>
+                </button>
+              ))}
+              <div className="border-t border-gray-100 pt-3 mt-1">
+                <button
+                  onClick={() => setEtape("form")}
+                  className="w-full py-2 rounded-xl border border-dashed border-gray-300 text-gray-500 text-sm hover:border-[#333699] hover:text-[#333699] transition"
+                >
+                  ➕ Créer une nouvelle session
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Formulaire directement si pas de session aujourd'hui */}
-        {todaySessions.length === 0 && (
-          <FormulaireSession
-            isEdit={false}
-            selectedDate={selectedDate} setSelectedDate={setSelectedDate}
-            selectedTime={selectedTime} setSelectedTime={setSelectedTime}
-            typeTemps={typeTemps} setTypeTemps={setTypeTemps}
-            nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
-            enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
-            numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
-            numeroSession={numeroSession} setNumeroSession={setNumeroSession}
-            tempsOptions={tempsOptions}
-            savingSession={savingSession}
-            onSubmit={demarrerSession}
-            onCancel={null}
-          />
-        )}
+          {/* Formulaire directement si pas de session aujourd'hui */}
+          {todaySessions.length === 0 && (
+            <FormulaireSession
+              isEdit={false}
+              selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+              selectedTime={selectedTime} setSelectedTime={setSelectedTime}
+              typeTemps={typeTemps} setTypeTemps={setTypeTemps}
+              nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
+              enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
+              numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
+              numeroSession={numeroSession} setNumeroSession={setNumeroSession}
+              tempsOptions={tempsOptions}
+              savingSession={savingSession}
+              onSubmit={demarrerSession}
+              onCancel={null}
+            />
+          )}
 
-        {/* Sessions récentes (autres jours) */}
-        {oldSessions.length > 0 && <OldSessionsBlock sessions={oldSessions} onConsulter={consulterAncienne} />}
+          {/* Sessions récentes (autres jours) */}
+          {oldSessions.length > 0 && (
+            <OldSessionsBlock sessions={oldSessions} onConsulter={consulterAncienne} />
+          )}
+
+        </div>
+        <Footer />
       </div>
+    );
+  }
 
-      <Footer />
-    </div>
-  );
-}
-
-  // ━━━ ÉCRAN FORMULAIRE CRÉATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ━━━ ÉCRAN FORMULAIRE CRÉATION (nouvelle session quand il y en a déjà une aujourd'hui) ━━━
   if (etape === "form") {
     return (
       <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
@@ -1182,11 +1120,9 @@ if (etape === "choix") {
         <div className="w-full max-w-lg mt-6">
           <h1 className="text-2xl font-bold text-white text-center mb-1">📋 Nouvelle Session</h1>
           <p className="text-white/70 text-center text-sm mb-4">Configurez la session avant de commencer</p>
-          {sessionsRecentes.length > 0 && (
-            <button onClick={() => setEtape("choix")} className="w-full mb-4 py-2 text-sm text-white/70 hover:text-white border border-white/20 rounded-xl transition">
-              ← Revenir aux sessions existantes
-            </button>
-          )}
+          <button onClick={() => setEtape("choix")} className="w-full mb-4 py-2 text-sm text-white/70 hover:text-white border border-white/20 rounded-xl transition">
+            ← Revenir aux sessions existantes
+          </button>
           <FormulaireSession
             isEdit={false}
             selectedDate={selectedDate} setSelectedDate={setSelectedDate}
@@ -1199,7 +1135,7 @@ if (etape === "choix") {
             tempsOptions={tempsOptions}
             savingSession={savingSession}
             onSubmit={demarrerSession}
-            onCancel={sessionsRecentes.length > 0 ? () => setEtape("choix") : null}
+            onCancel={() => setEtape("choix")}
           />
         </div>
         <Footer />
@@ -1234,8 +1170,6 @@ if (etape === "choix") {
           </span>
           {!readOnly && <span className="text-white/40 text-xs mt-0.5">Cliquer pour modifier</span>}
         </div>
-
-        {/* ── CORRECTION 1 : ligne ✔ Présents / ⚪ Restants supprimée ── */}
 
         {totalPresents > 0 && <CompteurSexe presences={presentList} />}
       </div>

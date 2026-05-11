@@ -1,10 +1,8 @@
 "use client";
-
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 
-// ─── Rôles par type de notification ──────────────────────────────────────────
 const ROLES_NOUVEAUX_MEMBRES     = ["Administrateur", "ResponsableIntegration"];
 const ROLES_NOUVEAUX_EVANGELISES = ["Administrateur", "ResponsableEvangelisation"];
 const ROLES_SUPERVISEUR_CELLULE  = ["SuperviseurCellule"];
@@ -17,7 +15,8 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
   const [countCellule,       setCountCellule]       = useState(0);
   const [countNewInCellule,  setCountNewInCellule]  = useState(0);
   const [countAssignes,      setCountAssignes]      = useState(0);
-  const [countAssignesEvang, setCountAssignesEvang] = useState(0); // ✅ NOUVEAU
+  const [countAssignesEvang, setCountAssignesEvang] = useState(0);
+  const [countInvitations,   setCountInvitations]   = useState(0); // ✅ NOUVEAU
   const [isNew,              setIsNew]              = useState(false);
 
   const [mesCelluleIds, setMesCelluleIds] = useState([]);
@@ -27,11 +26,12 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
   const router     = useRouter();
   const channelRef = useRef(null);
 
-  const canSeeMembres      = ROLES_NOUVEAUX_MEMBRES.includes(userRole);
-  const canSeeEvangelises  = ROLES_NOUVEAUX_EVANGELISES.includes(userRole);
-  const canSeeSuperviseur  = ROLES_SUPERVISEUR_CELLULE.includes(userRole);
-  const canSeeResponsable  = ROLES_RESPONSABLE_CELLULE.includes(userRole);
-  const canSeeNewInCellule = ROLES_NEW_IN_CELLULE.includes(userRole);
+  const isAdmin            = Array.isArray(userRole) ? userRole.includes("Administrateur") : userRole === "Administrateur";
+  const canSeeMembres      = ROLES_NOUVEAUX_MEMBRES.some(r => Array.isArray(userRole) ? userRole.includes(r) : userRole === r);
+  const canSeeEvangelises  = ROLES_NOUVEAUX_EVANGELISES.some(r => Array.isArray(userRole) ? userRole.includes(r) : userRole === r);
+  const canSeeSuperviseur  = ROLES_SUPERVISEUR_CELLULE.some(r => Array.isArray(userRole) ? userRole.includes(r) : userRole === r);
+  const canSeeResponsable  = ROLES_RESPONSABLE_CELLULE.some(r => Array.isArray(userRole) ? userRole.includes(r) : userRole === r);
+  const canSeeNewInCellule = ROLES_NEW_IN_CELLULE.some(r => Array.isArray(userRole) ? userRole.includes(r) : userRole === r);
 
   // ─── Total badge ──────────────────────────────────────────────────────────
   const totalCount =
@@ -40,7 +40,8 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
     + (canSeeSuperviseur || canSeeResponsable ? countCellule         : 0)
     + (canSeeNewInCellule                     ? countNewInCellule    : 0)
     + countAssignes
-    + countAssignesEvang; // ✅ NOUVEAU
+    + countAssignesEvang
+    + (isAdmin                                ? countInvitations     : 0); // ✅ NOUVEAU
 
   // ─── Chargement initial ───────────────────────────────────────────────────
   useEffect(() => {
@@ -117,7 +118,6 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
       // ── 6. Membres assignés (membres_complets) ──
       let totalAssignes = 0;
 
-      // 6a. Conseiller
       const { count: countConseiller } = await supabase
         .from("membres_complets")
         .select("id", { count: "exact", head: true })
@@ -125,7 +125,6 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         .eq("notification_responsable", true);
       totalAssignes += countConseiller || 0;
 
-      // 6b. ResponsableCellule
       const { data: cellulesDuResponsable } = await supabase
         .from("cellules")
         .select("id")
@@ -142,7 +141,6 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         totalAssignes += countCelluleAssign || 0;
       }
 
-      // 6c. ResponsableFamilles
       const { data: famillesDuResponsable } = await supabase
         .from("familles")
         .select("id")
@@ -161,11 +159,9 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
 
       setCountAssignes(totalAssignes);
 
-      // ── 7. ✅ Évangélisés assignés (suivis_des_evangelises) ──
-      // idsCellules et idsFamilles sont déjà définis au-dessus
+      // ── 7. Évangélisés assignés (suivis_des_evangelises) ──
       let totalAssignesEvang = 0;
 
-      // 7a. Conseiller
       const { count: countECons } = await supabase
         .from("suivis_des_evangelises")
         .select("id", { count: "exact", head: true })
@@ -173,7 +169,6 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         .eq("notification_responsable", true);
       totalAssignesEvang += countECons || 0;
 
-      // 7b. ResponsableCellule
       if (idsCellules.length > 0) {
         const { count: countECell } = await supabase
           .from("suivis_des_evangelises")
@@ -183,7 +178,6 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         totalAssignesEvang += countECell || 0;
       }
 
-      // 7c. ResponsableFamilles
       if (idsFamilles.length > 0) {
         const { count: countEFam } = await supabase
           .from("suivis_des_evangelises")
@@ -194,6 +188,16 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
       }
 
       setCountAssignesEvang(totalAssignesEvang);
+
+      // ── 8. ✅ Invitation en attente (Administrateur uniquement) ──
+      if (isAdmin) {
+        const { count } = await supabase
+          .from("eglise_supervisions")
+          .select("id", { count: "exact", head: true })
+          .eq("eglise_id", egliseId)
+          .eq("statut", "pending");
+        setCountInvitations(count || 0);
+      }
     };
 
     fetchCounts();
@@ -304,7 +308,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
       }
     });
 
-    // ── ✅ Évangélisés assignés (suivis_des_evangelises) ──
+    // ── Évangélisés assignés (suivis_des_evangelises) ──
     channel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "suivis_des_evangelises" }, (payload) => {
       const row = payload.new;
       const old = payload.old;
@@ -327,13 +331,45 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
       }
     });
 
+    // ── ✅ Invitation en attente (Realtime) ──
+    if (isAdmin) {
+      channel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "eglise_supervisions" }, (payload) => {
+        const row = payload.new;
+        const old = payload.old;
+
+        if (row.eglise_id !== egliseId) return;
+
+        // Devient pending
+        if (row.statut === "pending" && old.statut !== "pending") {
+          setCountInvitations((prev) => prev + 1);
+          setIsNew(true);
+          setTimeout(() => setIsNew(false), 2000);
+        }
+
+        // N'est plus pending (acceptée ou refusée)
+        if (row.statut !== "pending" && old.statut === "pending") {
+          setCountInvitations((prev) => Math.max(0, prev - 1));
+        }
+      });
+
+      // INSERT d'une nouvelle invitation directement en pending
+      channel.on("postgres_changes", { event: "INSERT", schema: "public", table: "eglise_supervisions" }, (payload) => {
+        const row = payload.new;
+        if (row.eglise_id === egliseId && row.statut === "pending") {
+          setCountInvitations((prev) => prev + 1);
+          setIsNew(true);
+          setTimeout(() => setIsNew(false), 2000);
+        }
+      });
+    }
+
     channel.subscribe();
     channelRef.current = channel;
 
     return () => {
       try { supabase.removeChannel(channel); } catch (_) {}
     };
-  }, [egliseId, userId, celluleIds, mesCelluleIds, mesFamilleIds, canSeeMembres, canSeeEvangelises, canSeeSuperviseur, canSeeResponsable, canSeeNewInCellule]);
+  }, [egliseId, userId, celluleIds, mesCelluleIds, mesFamilleIds, canSeeMembres, canSeeEvangelises, canSeeSuperviseur, canSeeResponsable, canSeeNewInCellule, isAdmin]);
 
   // ─── Rendu ────────────────────────────────────────────────────────────────
   return (

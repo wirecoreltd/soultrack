@@ -219,7 +219,7 @@ Avec amour en Christ ❤️`;
             eglise_denomination: eglise.denomination,
             eglise_ville: eglise.ville,
             eglise_pays: eglise.pays,
-            eglise_branche: eglise.branche,
+            eglise_branche: eglise.branche,       // ✅ nom uniquement
           })
           .eq("id", selectedInvitation.id);
 
@@ -240,7 +240,7 @@ Avec amour en Christ ❤️`;
         eglise_denomination: eglise.denomination,
         eglise_ville: eglise.ville,
         eglise_pays: eglise.pays,
-        eglise_branche: eglise.branche,
+        eglise_branche: eglise.branche,           // ✅ nom uniquement
         statut: "pending",
         invitation_token: token,
       }]);
@@ -403,7 +403,6 @@ Avec amour en Christ ❤️`;
       </h3>
 
       <div className="w-full max-w-5xl overflow-x-auto">
-
         <div className="hidden md:grid md:grid-cols-[1.3fr_1fr_1fr_1fr_1fr_0.8fr_1fr] text-sm font-semibold uppercase border-b border-white/40 pb-2 gap-x-3 px-4">
           <div>Dénomination</div>
           <div>Nom</div>

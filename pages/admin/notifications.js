@@ -120,7 +120,7 @@ function NotificationsContent() {
       let query = supabase
         .from("membres_complets")
         .select("id, prenom, nom, ville, etat_contact, created_at, cellule_id, eglise_id")
-        .eq("eglise_id", profile.eglise_id)
+        .eq("superviseur_eglise_id", profile.eglise_id)
         .eq("etat_contact", "nouveau")
         .order("created_at", { ascending: false });
 
@@ -166,7 +166,7 @@ function NotificationsContent() {
       const { data } = await supabase
         .from("evangelises")
         .select("id, prenom, nom, created_at, eglise_id")
-        .eq("eglise_id", profile.eglise_id)
+        .eq("superviseur_eglise_id", profile.eglise_id)
         .eq("status_suivi", "Non envoyé")
         .order("created_at", { ascending: false });
 
@@ -183,7 +183,7 @@ function NotificationsContent() {
       const { data } = await supabase
         .from("membres_complets")
         .select("id, prenom, nom, ville, etat_contact, created_at, cellule_id, eglise_id, is_new_in_cellule")
-        .eq("eglise_id", profile.eglise_id)
+        .eq("superviseur_eglise_id", profile.eglise_id)
         .eq("is_new_in_cellule", "true")
         .order("created_at", { ascending: false });
 
@@ -304,7 +304,7 @@ function NotificationsContent() {
       const { data } = await supabase
         .from("eglise_supervisions")
         .select("id, eglise_nom, eglise_denomination, eglise_ville, eglise_pays, invitation_token, created_at, statut")
-        .eq("eglise_id", profile.eglise_id)
+        .eq("superviseur_eglise_id", profile.eglise_id)
         .eq("statut", "pending")
         .order("created_at", { ascending: false });
 
@@ -445,7 +445,7 @@ function NotificationsContent() {
           { event: "INSERT", schema: "public", table: "eglise_supervisions" },
           (payload) => {
             const row = payload.new;
-            if (row.eglise_id === userProfile.eglise_id && row.statut === "pending") {
+            if (row.superviseur_eglise_id === userProfile.eglise_id && row.statut === "pending") {
               setNotifications((prev) => [{
                 ...row,
                 prenom: row.eglise_denomination || "",

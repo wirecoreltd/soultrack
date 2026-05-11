@@ -1104,26 +1104,75 @@ function Presence() {
     );
   }
 
-  // ━━━ ÉCRAN CHOIX SESSION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  if (etape === "choix") {
-    return (
-      <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
-        <HeaderPages />
-        <h1 className="text-2xl font-bold text-white text-center mt-6 mb-1">📋 Présences</h1>
-        <p className="text-white/60 text-sm text-center mb-2">
-          {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
-        </p>
-        <ChoixSession
-          sessions={sessionsRecentes}
-          onJoin={rejoindreSession}
-          onNew={() => setEtape("form")}
-          onConsulterAncienne={consulterAncienne}
-          loadingCheck={false}
-        />
-        <Footer />
+  // ━━━ ÉCRAN CHOIX SESSION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+if (etape === "choix") {
+  const todayStr = today();
+  const todaySessions = sessionsRecentes.filter(s => s.date === todayStr);
+  const oldSessions = sessionsRecentes.filter(s => s.date !== todayStr);
+
+  return (
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+      <HeaderPages />
+      <h1 className="text-2xl font-bold text-white text-center mt-6 mb-1">📋 Présences</h1>
+      <p className="text-white/60 text-sm text-center mb-2">
+        {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+      </p>
+
+      <div className="w-full max-w-lg mt-2 flex flex-col gap-4">
+        {/* Sessions du jour si elles existent */}
+        {todaySessions.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-3">
+            <h2 className="text-base font-bold text-gray-800 mb-1">📋 Sessions du jour</h2>
+            <p className="text-sm text-gray-500 mb-2">Ces sessions ont déjà été créées. Cliquez pour rejoindre.</p>
+            {todaySessions.map(s => (
+              <button
+                key={s.id}
+                onClick={() => rejoindreSession(s)}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-[#333699] hover:bg-[#333699] hover:text-white text-[#333699] font-semibold transition group"
+              >
+                <span className="text-left text-sm">{formatSessionLabel(s)}</span>
+                <span className="text-xs bg-emerald-100 text-emerald-700 group-hover:bg-white/20 group-hover:text-white px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
+                  Rejoindre →
+                </span>
+              </button>
+            ))}
+            <div className="border-t border-gray-100 pt-3 mt-1">
+              <button
+                onClick={() => setEtape("form")}
+                className="w-full py-2 rounded-xl border border-dashed border-gray-300 text-gray-500 text-sm hover:border-[#333699] hover:text-[#333699] transition"
+              >
+                ➕ Créer une nouvelle session
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Formulaire directement si pas de session aujourd'hui */}
+        {todaySessions.length === 0 && (
+          <FormulaireSession
+            isEdit={false}
+            selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+            selectedTime={selectedTime} setSelectedTime={setSelectedTime}
+            typeTemps={typeTemps} setTypeTemps={setTypeTemps}
+            nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
+            enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
+            numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
+            numeroSession={numeroSession} setNumeroSession={setNumeroSession}
+            tempsOptions={tempsOptions}
+            savingSession={savingSession}
+            onSubmit={demarrerSession}
+            onCancel={null}
+          />
+        )}
+
+        {/* Sessions récentes (autres jours) */}
+        {oldSessions.length > 0 && <OldSessionsBlock sessions={oldSessions} onConsulter={consulterAncienne} />}
       </div>
-    );
-  }
+
+      <Footer />
+    </div>
+  );
+}
 
   // ━━━ ÉCRAN FORMULAIRE CRÉATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   if (etape === "form") {

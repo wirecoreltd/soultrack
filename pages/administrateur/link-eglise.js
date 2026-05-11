@@ -18,7 +18,7 @@ export default function LinkEglise() {
     branche_nom: ""
   });
   const [responsable, setResponsable] = useState({ prenom: "", nom: "" });
-  const [eglise, setEglise] = useState({ id: null, branche_id: null, nom: "", branche: "", pays: "" });
+  const [eglise, setEglise] = useState({ id: null, nom: "", branche: "", pays: "" });
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
   const [modeAction, setModeAction] = useState(null); // null, "rappel", "supprimer", "casser", "renvoyer"
@@ -32,7 +32,7 @@ export default function LinkEglise() {
       if (!user) return;
       const { data, error } = await supabase
         .from("profiles")
-        .select(`prenom, nom, eglise_id, branche_id, eglises(nom), branches(nom)`)
+        .select(`prenom, nom, eglise_id, branche_id, eglises(nom)`)
         .eq("id", user.id)
         .single();
       if (!error && data) {
@@ -41,8 +41,7 @@ export default function LinkEglise() {
           nom: data.nom,
           eglise_id: data.eglise_id,
           branche_id: data.branche_id,
-          eglise_nom: data.eglises?.nom || "",
-          branche_nom: data.branches?.nom || ""
+          eglise_nom: data.eglises?.nom || ""          
         });
       }
     };
@@ -93,8 +92,7 @@ export default function LinkEglise() {
     });
 
     setEglise({
-      id: inv.supervisee_eglise_id,
-      branche_id: inv.supervisee_branche_id,
+      id: inv.supervisee_eglise_id,      
       nom: inv.eglise_nom,
       branche: inv.eglise_branche,
       pays: inv.eglise_pays
@@ -108,20 +106,18 @@ export default function LinkEglise() {
   // 🔹 Exécuter l'action
   const handleAction = async () => {
     try {
-      if (!selectedInvitation && modeAction === null && (!eglise.nom || !eglise.branche || !eglise.pays)) return;
+      if (!selectedInvitation && modeAction === null && !eglise.nom) return;
 
       // 🔹 NOUVELLE INVITATION
       if (!selectedInvitation && modeAction === null) {
         const token = crypto.randomUUID();
         await supabase.from("eglise_supervisions").insert([{
-          superviseur_eglise_id: superviseur.eglise_id,
-          superviseur_branche_id: superviseur.branche_id,
+          superviseur_eglise_id: superviseur.eglise_id,          
           supervisee_eglise_id: null,
           supervisee_branche_id: null,
           responsable_prenom: responsable.prenom,
           responsable_nom: responsable.nom,
-          eglise_nom: eglise.nom,
-          eglise_branche: eglise.branche,
+          eglise_nom: eglise.nom,          
           eglise_pays: eglise.pays,
           statut: "pending",
           invitation_token: token
@@ -183,10 +179,7 @@ Que Dieu vous bénisse 🙏
           .from("eglise_supervisions")
           .update({ statut: "lien_casse", superviseur_branche_id: null })
           .eq("id", selectedInvitation.id);
-        await supabase
-          .from("branches")
-          .update({ superviseur_nom: null, superviseur_id: null })
-          .eq("id", selectedInvitation.supervisee_branche_id);
+        
         const message = `💔 Le lien avec l'église ${selectedInvitation.eglise_nom} - ${selectedInvitation.eglise_branche} a été cassé.`;
         if (canal === "whatsapp") window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
         else if (canal === "email") window.location.href = `mailto:?subject=Lien cassé&body=${encodeURIComponent(message)}`;
@@ -208,7 +201,7 @@ Que Dieu vous bénisse 🙏
       setModeAction(null);
       setSelectedInvitation(null);
       setResponsable({ prenom: "", nom: "" });
-      setEglise({ id: null, branche_id: null, nom: "", branche: "", pays: "" });
+      setEglise({ id: null, branche_id: null, nom: "", pays: "" });
       setCanal("");
       loadInvitations();
 

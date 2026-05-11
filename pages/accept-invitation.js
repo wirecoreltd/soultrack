@@ -45,70 +45,31 @@ export default function AcceptInvitation() {
 
   const handleSubmit = async () => {
     if (!choice || !invitation) return;
-
     setSubmitting(true);
 
     try {
-      // 🔹 1. Récupérer utilisateur connecté
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error("Utilisateur non connecté");
-
-      // 🔹 2. Récupérer la branche du supervisee
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("branche_id")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError || !profile?.branche_id) throw new Error("Branche du supervisee introuvable");
-      const superviseeBrancheId = profile.branche_id;
-
-      // 🔹 3. Mettre à jour le statut de l'invitation
-      await supabase
+      const { error } = await supabase
         .from("eglise_supervisions")
         .update({
           statut: choice,
-          supervisee_branche_id: superviseeBrancheId,
           approved_at: choice === "acceptee" ? new Date().toISOString() : null,
         })
         .eq("invitation_token", token);
 
-      // 🔹 4. Si accepté → lier les branches
+      if (error) throw new Error(error.message);
+
       if (choice === "acceptee") {
-        const { data: brancheSup, error: supError } = await supabase
-          .from("branches")
-          .select("id, nom")
-          .eq("id", invitation.superviseur_branche_id)
-          .single();
-
-        if (supError || !brancheSup) throw new Error("Branche du superviseur introuvable");
-
-        const { error: updateError } = await supabase
-          .from("branches")
-          .update({
-            superviseur_id: brancheSup.id,
-            superviseur_nom: brancheSup.nom,
-          })
-          .eq("id", superviseeBrancheId);
-
-        if (updateError) throw new Error("Erreur mise à jour branche supervisee");
-
-        setMessage(`Vous êtes maintenant sous la supervision de ${brancheSup.nom}`);
-      }
-
-      if (choice === "refusee") {
-        setMessage(`Vous avez refusé l’invitation de ${invitation.eglise_nom}`);
-      }
-
-      if (choice === "pending") {
+        setMessage(`Vous êtes maintenant sous la supervision de ${invitation.eglise_denomination} — ${invitation.eglise_nom}`);
+      } else if (choice === "refusee") {
+        setMessage(`Vous avez refusé l'invitation de ${invitation.eglise_denomination}`);
+      } else if (choice === "pending") {
         setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
       }
 
-      // 🔹 Redirection après 3 secondes
       setTimeout(() => router.push("/"), 3000);
 
-    } catch (error) {
-      console.error("Erreur :", error.message);
+    } catch (err) {
+      console.error("Erreur :", err.message);
       setMessage("Une erreur est survenue lors du traitement de l'invitation.");
     } finally {
       setSubmitting(false);
@@ -130,8 +91,10 @@ export default function AcceptInvitation() {
 
       <div className="bg-white rounded-3xl shadow-xl p-6 max-w-md w-full space-y-4">
         <div className="space-y-1">
-          <p><b>Église superviseuse :</b> {invitation.eglise_nom}</p>
+          <p><b>Église superviseuse :</b> {invitation.eglise_denomination} — {invitation.eglise_nom}</p>
           <p><b>Branche :</b> {invitation.eglise_branche}</p>
+          <p><b>Ville :</b> {invitation.eglise_ville}</p>
+          <p><b>Pays :</b> {invitation.eglise_pays}</p>
         </div>
 
         <hr />

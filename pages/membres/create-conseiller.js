@@ -25,6 +25,7 @@ function CreateConseiller() {
     telephone: "",
     email: "",
     password: "",
+    membre_id: "",
   });
   const [responsableId, setResponsableId] = useState("");
   const [message, setMessage] = useState("");
@@ -90,9 +91,9 @@ function CreateConseiller() {
     }
     const member = members.find((m) => m.id === selectedMemberId);
     if (member) {
-      setFormData({ ...formData, prenom: member.prenom, nom: member.nom, telephone: member.telephone });
+      setFormData({ ...formData, prenom: member.prenom, nom: member.nom, telephone: member.telephone, membre_id: member.id });
     }
-  }, [selectedMemberId]);
+  }, [selectedMemberId, members]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -109,7 +110,11 @@ function CreateConseiller() {
       const res = await fetch("/api/create-conseiller", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, responsable_id: responsableId }),
+        body: JSON.stringify({
+  ...formData,
+  responsable_id: responsableId,
+  membre_id: formData.membre_id, // ✅ AJOUT IMPORTANT
+}),
       });
 
       const data = await res.json().catch(() => null);

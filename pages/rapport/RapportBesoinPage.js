@@ -83,6 +83,8 @@ const BESOIN_CONFIG = {
   "Logement / Sécurité":       { bar: "bg-yellow-400",  dot: "bg-yellow-400",  badge: "yellow" },
   "Communauté / Isolement":    { bar: "bg-cyan-400",    dot: "bg-cyan-400",    badge: "blue" },
   "Dépression / Santé mentale":{ bar: "bg-rose-500",    dot: "bg-rose-500",    badge: "red" },
+  "Miracle":                   { bar: "bg-violet-400",  dot: "bg-violet-400",  badge: "blue" },
+  "Délivrance":                { bar: "bg-fuchsia-400", dot: "bg-fuchsia-400", badge: "pink" },
   "Autres":                    { bar: "bg-white/60",    dot: "bg-white/40",    badge: "gray" },
 };
 function getCfg(b) { return BESOIN_CONFIG[b] || BESOIN_CONFIG["Autres"]; }
@@ -361,8 +363,8 @@ function RapportBesoin() {
         } catch { return; }
 
         items.forEach(item => {
-          const label = typeof item === "string" ? item.trim() : item.label;
-          const statut = typeof item === "string" ? null : item.statut;
+          const label = typeof item === "string" ? item.trim() : item?.label?.trim();
+          const statut = typeof item === "string" ? null : item?.statut;
           if (!label) return;
           if (!count[label]) count[label] = { total: 0, hommes: 0, femmes: 0, enSuivi: 0, resolu: 0 };
           count[label].total++;

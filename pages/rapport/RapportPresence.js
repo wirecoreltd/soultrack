@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState, useCallback, useRef } from "react";
-import supabase from "../lib/supabaseClient";
-import HeaderPages from "../components/HeaderPages";
-import ProtectedRoute from "../components/ProtectedRoute";
-import Footer from "../components/Footer";
+import supabase from "../../lib/supabaseClient";
+import HeaderPages from "../../components/HeaderPages";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import Footer from "../../components/Footer";
 
 export default function RapportPresencePage() {
   return (

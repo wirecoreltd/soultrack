@@ -19,7 +19,8 @@ export default function MembresCellule() {
 
 function MembresCelluleContent() {
   const router = useRouter();
-  const { memberId, celluleId } = router.query;
+  const { memberId, celluleId, highlight } = router.query;
+
   const [membres, setMembres] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [filterCellule, setFilterCellule] = useState("");
@@ -34,8 +35,6 @@ function MembresCelluleContent() {
   const [showBesoinLibre, setshowBesoinLibre] = useState(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
   const [userRole, setUserRole] = useState(null);
-  const { memberId, celluleId, highlight } = router.query;  
-  const highlightRef = useRef({});
 
   const memberIdStr =
     typeof memberId === "string"

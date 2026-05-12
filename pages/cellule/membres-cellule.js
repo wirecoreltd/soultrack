@@ -34,7 +34,7 @@ function MembresCelluleContent() {
   const [showBesoinLibre, setshowBesoinLibre] = useState(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
   const [userRole, setUserRole] = useState(null);
-  const { memberId, celluleId, highlight } = router.query;
+  const { memberId, celluleId, highlight } = router.query;  
   const highlightRef = useRef({});
 
   const memberIdStr =

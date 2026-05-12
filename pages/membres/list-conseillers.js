@@ -144,7 +144,7 @@ function ListConseillers() {
       {/* Bouton Ajouter un conseiller */}
       <div className="w-full max-w-6xl flex justify-end mb-6 px-2 sm:px-0">
         <button
-          onClick={() => router.push("/create-conseiller")}
+          onClick={() => router.push("/membres/create-conseiller")}
           className="text-white font-semibold px-4 py-2 rounded shadow text-sm sm:text-base hover:shadow-lg transition"
         >
           ➕ Ajouter un Conseiller

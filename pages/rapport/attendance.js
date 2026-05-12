@@ -601,9 +601,7 @@ function Attendance() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
-      <HeaderPages />
-
-      <div className="w-full max-w-2xl mt-6 flex flex-col gap-5 mb-10">
+      <HeaderPages />     
 
         {/* En-tête */}
         <div>        

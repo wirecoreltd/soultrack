@@ -606,9 +606,17 @@ function Attendance() {
       <div className="w-full max-w-2xl mt-6 flex flex-col gap-5 mb-10">
 
         {/* En-tête */}
-        <div>
-          <h1 className="text-2xl font-bold text-white">Rapport de présences & statistiques</h1>
-          <p className="text-white/50 text-sm mt-0.5">Suivi des rassemblements — chiffres & tendances</p>
+        <div>        
+          <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Rapport de <span className="text-emerald-300">Présences & Statistiques</span></h1>
+          <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-white/90">
+          Suivez et gérez facilement les <span className="text-blue-300 font-semibold">présences </span>
+          de tous les rassemblements spirituels.
+          Enregistrez l'ensemble des <span className="text-blue-300 font-semibold">participants</span>, y compris les
+          <span className="text-blue-300 font-semibold"> nouveaux venus</span> et les
+          <span className="text-blue-300 font-semibold"> convertis</span>, et générez des
+          <span className="text-blue-300 font-semibold"> rapports clairs</span> pour mieux accompagner chaque membre.
+        </p>
         </div>
 
         {/* Filtres */}

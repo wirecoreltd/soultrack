@@ -527,6 +527,9 @@ function Attendance() {
   const [tempsOptions, setTempsOptions] = useState(["Culte"]);
   const [filtrePeriode, setFiltrePeriode] = useState("30");
   const [filtreType, setFiltreType] = useState("");
+  const [modePerso, setModePerso] = useState(false);
+  const [dateDebut, setDateDebut] = useState("");
+  const [dateFin, setDateFin] = useState("");
   const [onglet, setOnglet] = useState("kpi");
   const [editData, setEditData] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -554,21 +557,27 @@ function Attendance() {
     loadTemps();
   }, [egliseId]);
 
-  const fetchReports = async () => {
+  const fetchReports = async (overrideModePerso = null) => {
     if (!egliseId) return;
     setLoading(true);
-    const depuis = new Date();
-    depuis.setDate(depuis.getDate() - Number(filtrePeriode));
-    const depuisStr = depuis.toISOString().split("T")[0];
+    const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
     let query = supabase.from("attendance").select("*").eq("eglise_id", egliseId)
-      .gte("date", depuisStr).order("date", { ascending: false });
+      .order("date", { ascending: false });
+    if (isPerso) {
+      if (dateDebut) query = query.gte("date", dateDebut);
+      if (dateFin)   query = query.lte("date", dateFin);
+    } else {
+      const depuis = new Date();
+      depuis.setDate(depuis.getDate() - Number(filtrePeriode));
+      query = query.gte("date", depuis.toISOString().split("T")[0]);
+    }
     if (filtreType) query = query.eq("typeTemps", filtreType);
     const { data } = await query;
     setReports(data || []);
     setLoading(false);
   };
 
-  useEffect(() => { fetchReports(); }, [egliseId, filtrePeriode, filtreType]);
+  useEffect(() => { if (!modePerso) fetchReports(false); }, [egliseId, filtrePeriode, filtreType, modePerso]);
 
   const handleDelete = async (id) => {
     if (!confirm("Supprimer ce rapport ?")) return;
@@ -604,15 +613,52 @@ function Attendance() {
 
         {/* Filtres */}
         <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-white/50 flex-shrink-0">Période :</span>
-            {[{ label: "7 j", val: "7" }, { label: "30 j", val: "30" }, { label: "90 j", val: "90" }, { label: "6 mois", val: "180" }].map(p => (
-              <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
-                {p.label}
-              </button>
-            ))}
+          {/* Toggle mode */}
+          <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
+            <button onClick={() => setModePerso(false)}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              Période rapide
+            </button>
+            <button onClick={() => setModePerso(true)}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              Tranche de dates
+            </button>
           </div>
+
+          {/* Période rapide */}
+          {!modePerso && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-white/50 flex-shrink-0">Période :</span>
+              {[{ label: "7 j", val: "7" }, { label: "30 j", val: "30" }, { label: "90 j", val: "90" }, { label: "6 mois", val: "180" }, { label: "1 an", val: "365" }].map(p => (
+                <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Tranche personnalisée */}
+          {modePerso && (
+            <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-white/50">Date de début</label>
+                  <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)}
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-white/50">Date de fin</label>
+                  <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
+                </div>
+              </div>
+              <button onClick={() => fetchReports(true)}
+                className="w-full py-2 rounded-xl bg-amber-500/80 hover:bg-amber-500 text-white text-sm font-semibold transition active:scale-95">
+                Générer le rapport
+              </button>
+            </div>
+          )}
           {typesDistincts.length > 1 && (
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-white/50 flex-shrink-0">Type :</span>

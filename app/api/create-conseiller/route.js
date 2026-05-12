@@ -19,6 +19,7 @@ export async function POST(req) {
       email,
       password,
       responsable_id,
+      membre_id, // ✅ AJOUT IMPORTANT
     } = body;
 
     if (!email || !password || !responsable_id) {
@@ -57,11 +58,13 @@ export async function POST(req) {
       );
     }
 
-    // 3️⃣ créer le profil conseiller lié à église + branche
+    const newUserId = authUser.user.id;
+
+    // 3️⃣ créer le profil conseiller
     const { error: profileErr } = await supabaseAdmin
       .from("profiles")
       .insert({
-        id: authUser.user.id,
+        id: newUserId,
         email,
         prenom,
         nom,
@@ -81,7 +84,29 @@ export async function POST(req) {
       );
     }
 
+    // 4️⃣ ⭐ AJOUT stats_ministere_besoin
+    if (membre_id) {
+      const { data: membre } = await supabaseAdmin
+        .from("membres_complets")
+        .select("sexe")
+        .eq("id", membre_id)
+        .single();
+
+      await supabaseAdmin
+        .from("stats_ministere_besoin")
+        .insert({
+          membre_id,
+          eglise_id: responsable.eglise_id,
+          branche_id: responsable.branche_id,
+          type: "ministere",
+          valeur: "Conseiller",
+          date_action: new Date().toISOString().split("T")[0],
+          sexe: membre?.sexe || null,
+        });
+    }
+
     return NextResponse.json({ success: true });
+
   } catch (err) {
     console.error("create-conseiller error:", err);
     return NextResponse.json(

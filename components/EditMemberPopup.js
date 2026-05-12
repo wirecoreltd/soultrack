@@ -12,7 +12,6 @@ export default function EditMemberPopup({
   onUpdateMember,
   currentUserRoles,
 }) {
-  // ✅ TOUS les hooks AVANT tout early return — règle absolue de React
   const isPrivileged = (currentUserRoles || []).some((r) =>
     ["Administrateur", "ResponsableIntegration"].includes(r)
   );
@@ -23,6 +22,7 @@ export default function EditMemberPopup({
 
   const [autreMinistere, setAutreMinistere] = useState("");
   const [search, setSearch] = useState("");
+  const [loadingData, setLoadingData] = useState(true); // ✅ chargement données fraîches
 
   const parseBesoin = (b) => {
     if (!b) return [];
@@ -35,39 +35,13 @@ export default function EditMemberPopup({
     }
   };
 
-  const initialBesoin = parseBesoin(member?.besoin);
+  const [formData, setFormData] = useState(null); // ✅ null jusqu'au chargement
+  const [showAutre, setShowAutre] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [selectedConseillers, setSelectedConseillers] = useState([]);
 
-  const [formData, setFormData] = useState({
-    prenom: member?.prenom || "",
-    nom: member?.nom || "",
-    telephone: member?.telephone || "",
-    ville: member?.ville || "",
-    sexe: member?.sexe || "",
-    age: member?.age || "",
-    star: !!member?.star,
-    etat_contact: member?.etat_contact || "Nouveau",
-    bapteme_eau: member?.bapteme_eau ?? null,
-    bapteme_esprit: member?.bapteme_esprit ?? null,
-    priere_salut: member?.priere_salut || "",
-    type_conversion: member?.type_conversion || "",
-    cellule_id: member?.cellule_id ?? "",
-    famille_id: member?.famille_id ?? "",
-    conseillers_ids: member?.conseillers_ids || [],
-    besoin: initialBesoin,
-    autreBesoin: "",
-    venu: member?.venu || "",
-    infos_supplementaires: member?.infos_supplementaires || "",
-    statut_initial: member?.statut_initial || "",
-    suivi_statut: member?.suivi_statut || "",
-    commentaire_suivis: member?.commentaire_suivis || "",
-    is_whatsapp: !!member?.is_whatsapp,
-    Formation: member?.Formation || "",
-    Soin_Pastoral: member?.Soin_Pastoral || "",
-    Ministere: parseBesoin(member?.Ministere),
-    veut_se_faire_baptiser: member?.veut_se_faire_baptiser || "",
-    Commentaire_Suivi_Evangelisation:
-      member?.Commentaire_Suivi_Evangelisation || "",
-  });
+  const modalRef = useRef(null);
 
   const ministereOptions = [
     "Intercession","Louange","Administration","Technique",
@@ -76,34 +50,40 @@ export default function EditMemberPopup({
     "Visite","Berger","Modération",
   ];
 
-  const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [selectedConseillers, setSelectedConseillers] = useState([]);
-
-  const modalRef = useRef(null);
-
-  // ✅ useEffect AVANT le early return
+  // ✅ Charger les données fraîches depuis Supabase à l'ouverture
   useEffect(() => {
     if (!member?.id) return;
 
-    const fetchAssignments = async () => {
-      const { data, error } = await supabase
+    const fetchFreshData = async () => {
+      setLoadingData(true);
+
+      // Données fraîches du membre
+      const { data: freshMember, error } = await supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("id", member.id)
+        .single();
+
+      if (error || !freshMember) {
+        console.error("Erreur chargement membre frais:", error);
+        // Fallback sur les données passées en prop
+        initForm(member);
+        setLoadingData(false);
+        return;
+      }
+
+      initForm(freshMember);
+
+      // Charger les assignments du conseiller
+      const { data: assignments, error: assignError } = await supabase
         .from("suivi_assignments")
-        .select(
-          "conseiller_id, role, profiles:conseiller_id(id, prenom, nom)"
-        )
+        .select("conseiller_id, role, profiles:conseiller_id(id, prenom, nom)")
         .eq("membre_id", member.id)
         .eq("statut", "actif")
         .order("created_at", { ascending: true });
 
-      if (error) {
-        console.error("fetchAssignments error:", error);
-        return;
-      }
-
-      if (data) {
-        const sorted = [...data].sort((a, b) => {
+      if (!assignError && assignments) {
+        const sorted = [...assignments].sort((a, b) => {
           if (a.role === "principal") return -1;
           if (b.role === "principal") return 1;
           return 0;
@@ -111,12 +91,64 @@ export default function EditMemberPopup({
         const objects = sorted.map((d) => d.profiles).filter(Boolean);
         setSelectedConseillers(objects);
       }
+
+      setLoadingData(false);
     };
 
-    fetchAssignments();
+    fetchFreshData();
   }, [member?.id]);
 
-  // ✅ useEffect AVANT le early return
+  // ✅ Initialiser le formulaire avec les données (fraîches ou fallback)
+  const initForm = (data) => {
+    const initialBesoin = parseBesoin(data?.besoin);
+    setShowAutre(initialBesoin.includes("Autre"));
+    setFormData({
+      prenom: data?.prenom || "",
+      nom: data?.nom || "",
+      telephone: data?.telephone || "",
+      ville: data?.ville || "",
+      sexe: data?.sexe || "",
+      age: data?.age || "",
+      star: !!data?.star,
+      etat_contact: data?.etat_contact || "Nouveau",
+      bapteme_eau: data?.bapteme_eau ?? null,
+      bapteme_esprit: data?.bapteme_esprit ?? null,
+      priere_salut: data?.priere_salut || "",
+      type_conversion: data?.type_conversion || "",
+      cellule_id: data?.cellule_id ?? "",
+      famille_id: data?.famille_id ?? "",
+      conseillers_ids: data?.conseillers_ids || [],
+      besoin: initialBesoin,
+      autreBesoin: "",
+      venu: data?.venu || "",
+      infos_supplementaires: data?.infos_supplementaires || "",
+      statut_initial: data?.statut_initial || "",
+      suivi_statut: data?.suivi_statut || "",
+      commentaire_suivis: data?.commentaire_suivis || "",
+      is_whatsapp: !!data?.is_whatsapp,
+      Formation: data?.Formation || "",
+      Soin_Pastoral: data?.Soin_Pastoral || "",
+      Ministere: parseBesoin(data?.Ministere),
+      veut_se_faire_baptiser: data?.veut_se_faire_baptiser || "",
+      Commentaire_Suivi_Evangelisation:
+        data?.Commentaire_Suivi_Evangelisation || "",
+    });
+
+    // Pré-remplir autreMinistere si une valeur hors liste existe
+    const ministereOptions = [
+      "Intercession","Louange","Administration","Technique",
+      "Communication","Les Enfants","Les ados","Les jeunes",
+      "Finance","Nettoyage","Conseiller","Compassion",
+      "Visite","Berger","Modération","Autre",
+    ];
+    const ministereList = parseBesoin(data?.Ministere);
+    const autreVal = ministereList.find((m) => !ministereOptions.includes(m));
+    if (autreVal) {
+      setAutreMinistere(autreVal);
+    }
+  };
+
+  // Click outside handler
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -127,7 +159,6 @@ export default function EditMemberPopup({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
-  // ✅ Early return APRÈS tous les hooks
   if (!member) return null;
 
   const filteredConseillers = (conseillers || []).filter((c) =>
@@ -330,461 +361,474 @@ export default function EditMemberPopup({
           className="overflow-y-auto px-6 py-5 flex flex-col gap-5"
           style={{ maxHeight: "68vh" }}
         >
-          <SectionTitle>👤 Identité</SectionTitle>
-
-          <Field label="Civilité">
-            <select
-              name="sexe"
-              value={formData.sexe}
-              onChange={handleChange}
-              className="inp"
-            >
-              <option value="">-- Civilité --</option>
-              <option value="Homme">Homme</option>
-              <option value="Femme">Femme</option>
-            </select>
-          </Field>
-
-          {["prenom", "nom", "telephone", "ville"].map((f) => (
-            <Field key={f} label={f.charAt(0).toUpperCase() + f.slice(1)}>
-              <input
-                name={f}
-                value={formData[f]}
-                onChange={handleChange}
-                className="inp"
+          {/* ✅ Indicateur de chargement */}
+          {loadingData || !formData ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <div
+                className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin"
+                style={{ borderColor: "#2E3192", borderTopColor: "transparent" }}
               />
-              {f === "telephone" && (
-                <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="is_whatsapp"
-                    checked={formData.is_whatsapp}
-                    onChange={handleChange}
-                    className="accent-[#2E3192]"
-                  />
-                  Numéro WhatsApp
-                </label>
-              )}
-            </Field>
-          ))}
-
-          <Field label="Âge">
-            <select
-              name="age"
-              value={formData.age}
-              onChange={handleChange}
-              className="inp"
-            >
-              <option value="">-- Choisir --</option>
-              {[
-                "12-17 ans","18-25 ans","26-30 ans","31-40 ans",
-                "41-55 ans","56-69 ans","70 ans et plus",
-              ].map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          {isPrivileged && (showCellules || showFamilles || showConseillers) && (
-            <SectionTitle>📌 Suivi par</SectionTitle>
-          )}
-
-          {isPrivileged ? (
+              <p className="text-sm text-gray-400">Chargement des données...</p>
+            </div>
+          ) : (
             <>
-              {showCellules && (
-                <Field label="Cellule">
-                  <select
-                    name="cellule_id"
-                    value={formData.cellule_id ?? ""}
+              <SectionTitle>👤 Identité</SectionTitle>
+
+              <Field label="Civilité">
+                <select
+                  name="sexe"
+                  value={formData.sexe}
+                  onChange={handleChange}
+                  className="inp"
+                >
+                  <option value="">-- Civilité --</option>
+                  <option value="Homme">Homme</option>
+                  <option value="Femme">Femme</option>
+                </select>
+              </Field>
+
+              {["prenom", "nom", "telephone", "ville"].map((f) => (
+                <Field key={f} label={f.charAt(0).toUpperCase() + f.slice(1)}>
+                  <input
+                    name={f}
+                    value={formData[f]}
                     onChange={handleChange}
                     className="inp"
-                  >
-                    <option value="">-- Cellule --</option>
-                    {cellules.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.cellule_full}
-                      </option>
-                    ))}
-                  </select>
+                  />
+                  {f === "telephone" && (
+                    <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="is_whatsapp"
+                        checked={formData.is_whatsapp}
+                        onChange={handleChange}
+                        className="accent-[#2E3192]"
+                      />
+                      Numéro WhatsApp
+                    </label>
+                  )}
                 </Field>
+              ))}
+
+              <Field label="Âge">
+                <select
+                  name="age"
+                  value={formData.age}
+                  onChange={handleChange}
+                  className="inp"
+                >
+                  <option value="">-- Choisir --</option>
+                  {[
+                    "12-17 ans","18-25 ans","26-30 ans","31-40 ans",
+                    "41-55 ans","56-69 ans","70 ans et plus",
+                  ].map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              {isPrivileged && (showCellules || showFamilles || showConseillers) && (
+                <SectionTitle>📌 Suivi par</SectionTitle>
               )}
 
-              {showFamilles && (
-                <Field label="Famille">
-                  <select
-                    name="famille_id"
-                    value={formData.famille_id ?? ""}
-                    onChange={handleChange}
-                    className="inp"
-                  >
-                    <option value="">-- Famille --</option>
-                    {familles.map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {f.famille_full}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              )}
-
-              {showConseillers && (
+              {isPrivileged ? (
                 <>
-                  <Field label="Ajouter conseiller">
-                    <input
-                      type="text"
-                      placeholder="Rechercher un conseiller..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="inp mb-2"
-                    />
-                    <div className="max-h-36 overflow-y-auto rounded-xl border border-gray-200 divide-y divide-gray-100">
-                      {filteredConseillers.map((c) => {
-                        const alreadySelected = selectedConseillers.some(
-                          (s) => s.id === c.id
-                        );
-                        return (
-                          <div
-                            key={c.id}
-                            onClick={() => {
-                              if (!alreadySelected) {
-                                setSelectedConseillers((prev) => [
-                                  ...prev,
-                                  { id: c.id, prenom: c.prenom, nom: c.nom },
-                                ]);
-                              }
-                            }}
-                            className={
-                              "px-3 py-2 text-sm transition-colors " +
-                              (alreadySelected
-                                ? "bg-gray-50 text-gray-300 cursor-not-allowed"
-                                : "cursor-pointer hover:bg-blue-50 text-gray-700")
-                            }
-                          >
-                            {c.prenom} {c.nom} {alreadySelected ? "✓" : ""}
-                          </div>
-                        );
-                      })}
-                      {filteredConseillers.length === 0 && (
-                        <p className="text-xs text-gray-400 px-3 py-2">
-                          Aucun résultat
-                        </p>
-                      )}
-                    </div>
-                  </Field>
+                  {showCellules && (
+                    <Field label="Cellule">
+                      <select
+                        name="cellule_id"
+                        value={formData.cellule_id ?? ""}
+                        onChange={handleChange}
+                        className="inp"
+                      >
+                        <option value="">-- Cellule --</option>
+                        {cellules.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.cellule_full}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
 
-                  {selectedConseillers.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {selectedConseillers.map((c, index) => (
-                        <div
-                          key={c.id}
-                          className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white"
-                          style={{
-                            background: index === 0 ? "#2E3192" : "#6b7280",
-                          }}
-                        >
-                          <span>
-                            {c.prenom} {c.nom}
-                          </span>
-                          {index === 0 && selectedConseillers.length > 1 && (
-                            <span className="text-xs opacity-60 ml-1">
-                              (principal)
-                            </span>
+                  {showFamilles && (
+                    <Field label="Famille">
+                      <select
+                        name="famille_id"
+                        value={formData.famille_id ?? ""}
+                        onChange={handleChange}
+                        className="inp"
+                      >
+                        <option value="">-- Famille --</option>
+                        {familles.map((f) => (
+                          <option key={f.id} value={f.id}>
+                            {f.famille_full}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
+
+                  {showConseillers && (
+                    <>
+                      <Field label="Ajouter conseiller">
+                        <input
+                          type="text"
+                          placeholder="Rechercher un conseiller..."
+                          value={search}
+                          onChange={(e) => setSearch(e.target.value)}
+                          className="inp mb-2"
+                        />
+                        <div className="max-h-36 overflow-y-auto rounded-xl border border-gray-200 divide-y divide-gray-100">
+                          {filteredConseillers.map((c) => {
+                            const alreadySelected = selectedConseillers.some(
+                              (s) => s.id === c.id
+                            );
+                            return (
+                              <div
+                                key={c.id}
+                                onClick={() => {
+                                  if (!alreadySelected) {
+                                    setSelectedConseillers((prev) => [
+                                      ...prev,
+                                      { id: c.id, prenom: c.prenom, nom: c.nom },
+                                    ]);
+                                  }
+                                }}
+                                className={
+                                  "px-3 py-2 text-sm transition-colors " +
+                                  (alreadySelected
+                                    ? "bg-gray-50 text-gray-300 cursor-not-allowed"
+                                    : "cursor-pointer hover:bg-blue-50 text-gray-700")
+                                }
+                              >
+                                {c.prenom} {c.nom} {alreadySelected ? "✓" : ""}
+                              </div>
+                            );
+                          })}
+                          {filteredConseillers.length === 0 && (
+                            <p className="text-xs text-gray-400 px-3 py-2">
+                              Aucun résultat
+                            </p>
                           )}
-                          <button
-                            onClick={() =>
-                              setSelectedConseillers((prev) =>
-                                prev.filter((x) => x.id !== c.id)
-                              )
-                            }
-                            className="ml-1 opacity-70 hover:opacity-100"
-                          >
-                            ✕
-                          </button>
                         </div>
-                      ))}
-                    </div>
+                      </Field>
+
+                      {selectedConseillers.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {selectedConseillers.map((c, index) => (
+                            <div
+                              key={c.id}
+                              className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white"
+                              style={{
+                                background: index === 0 ? "#2E3192" : "#6b7280",
+                              }}
+                            >
+                              <span>
+                                {c.prenom} {c.nom}
+                              </span>
+                              {index === 0 && selectedConseillers.length > 1 && (
+                                <span className="text-xs opacity-60 ml-1">
+                                  (principal)
+                                </span>
+                              )}
+                              <button
+                                onClick={() =>
+                                  setSelectedConseillers((prev) =>
+                                    prev.filter((x) => x.id !== c.id)
+                                  )
+                                }
+                                className="ml-1 opacity-70 hover:opacity-100"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {!showCellules && !showFamilles && !showConseillers && (
+                    <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
+                      🔒 La cellule, la famille et les conseillers sont gérés par un
+                      administrateur.
+                    </p>
                   )}
                 </>
-              )}
-
-              {!showCellules && !showFamilles && !showConseillers && (
+              ) : (
                 <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
                   🔒 La cellule, la famille et les conseillers sont gérés par un
                   administrateur.
                 </p>
               )}
-            </>
-          ) : (
-            <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
-              🔒 La cellule, la famille et les conseillers sont gérés par un
-              administrateur.
-            </p>
-          )}
 
-          <SectionTitle>💝 Suivi</SectionTitle>
+              <SectionTitle>💝 Suivi</SectionTitle>
 
-          <Field label="Suivi statut">
-            <select
-              value={formData.suivi_statut ?? ""}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  suivi_statut: e.target.value,
-                }))
-              }
-              className="inp"
-            >
-              <option value="">-- Sélectionner un statut --</option>
-              <option value="En Attente">En Attente</option>
-              <option value="Intégrer">Intégrer</option>
-              <option value="Refus">Refus</option>
-            </select>
-          </Field>
+              <Field label="Suivi statut">
+                <select
+                  value={formData.suivi_statut ?? ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      suivi_statut: e.target.value,
+                    }))
+                  }
+                  className="inp"
+                >
+                  <option value="">-- Sélectionner un statut --</option>
+                  <option value="En Attente">En Attente</option>
+                  <option value="Intégrer">Intégrer</option>
+                  <option value="Refus">Refus</option>
+                </select>
+              </Field>
 
-          <Field label="Commentaire suivis">
-            <textarea
-              name="commentaire_suivis"
-              value={formData.commentaire_suivis}
-              onChange={handleChange}
-              className="inp"
-              rows={2}
-            />
-          </Field>
+              <Field label="Commentaire suivis">
+                <textarea
+                  name="commentaire_suivis"
+                  value={formData.commentaire_suivis}
+                  onChange={handleChange}
+                  className="inp"
+                  rows={2}
+                />
+              </Field>
 
-          <Field label="Commentaire suivis Évangélisation">
-            <textarea
-              name="Commentaire_Suivi_Evangelisation"
-              value={formData.Commentaire_Suivi_Evangelisation}
-              onChange={handleChange}
-              className="inp"
-              rows={2}
-            />
-          </Field>
+              <Field label="Commentaire suivis Évangélisation">
+                <textarea
+                  name="Commentaire_Suivi_Evangelisation"
+                  value={formData.Commentaire_Suivi_Evangelisation}
+                  onChange={handleChange}
+                  className="inp"
+                  rows={2}
+                />
+              </Field>
 
-          <SectionTitle>🕊 Vie spirituelle</SectionTitle>
+              <SectionTitle>🕊 Vie spirituelle</SectionTitle>
 
-          <Field label="Baptême d'eau">
-            <select
-              name="bapteme_eau"
-              value={formData.bapteme_eau ?? ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                setFormData((prev) => ({
-                  ...prev,
-                  bapteme_eau: value,
-                  veut_se_faire_baptiser:
-                    value === "Oui" ? "Non" : prev.veut_se_faire_baptiser,
-                }));
-              }}
-              className="inp"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
-            </select>
-          </Field>
+              <Field label="Baptême d'eau">
+                <select
+                  name="bapteme_eau"
+                  value={formData.bapteme_eau ?? ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      bapteme_eau: value,
+                      veut_se_faire_baptiser:
+                        value === "Oui" ? "Non" : prev.veut_se_faire_baptiser,
+                    }));
+                  }}
+                  className="inp"
+                >
+                  <option value="">-- Sélectionner --</option>
+                  <option value="Oui">Oui</option>
+                  <option value="Non">Non</option>
+                </select>
+              </Field>
 
-          {formData.bapteme_eau === "Non" && (
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer ml-4">
-              <input
-                type="checkbox"
-                checked={formData.veut_se_faire_baptiser === "Oui"}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    veut_se_faire_baptiser: e.target.checked ? "Oui" : "Non",
-                  }))
-                }
-                className="accent-[#2E3192]"
-              />
-              💦 Veut se faire baptiser
-            </label>
-          )}
-
-          <Field label="Baptême de feu">
-            <select
-              name="bapteme_esprit"
-              value={formData.bapteme_esprit ?? ""}
-              onChange={handleChange}
-              className="inp"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
-            </select>
-          </Field>
-
-          <Field label="Prière du salut">
-            <select
-              name="priere_salut"
-              value={formData.priere_salut}
-              onChange={(e) => {
-                const value = e.target.value;
-                setFormData({
-                  ...formData,
-                  priere_salut: value,
-                  type_conversion:
-                    value === "Oui" ? formData.type_conversion : "",
-                });
-              }}
-              className="inp"
-            >
-              <option value="">-- Prière du salut ? --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
-            </select>
-            {formData.priere_salut === "Oui" && (
-              <select
-                name="type_conversion"
-                value={formData.type_conversion}
-                onChange={handleChange}
-                className="inp mt-2"
-              >
-                <option value="">Type</option>
-                <option value="Nouveau converti">Nouveau converti</option>
-                <option value="Réconciliation">Réconciliation</option>
-              </select>
-            )}
-          </Field>
-
-          <Field label="Formation">
-            <textarea
-              name="Formation"
-              value={formData.Formation}
-              onChange={handleChange}
-              className="inp"
-              rows={2}
-            />
-          </Field>
-
-          {isPrivileged && (
-            <>
-              <div className="flex items-center gap-3 py-2">
-                <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
+              {formData.bapteme_eau === "Non" && (
+                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer ml-4">
                   <input
                     type="checkbox"
-                    name="star"
-                    checked={formData.star}
-                    onChange={handleChange}
-                    className="accent-[#2E3192] w-4 h-4"
+                    checked={formData.veut_se_faire_baptiser === "Oui"}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        veut_se_faire_baptiser: e.target.checked ? "Oui" : "Non",
+                      }))
+                    }
+                    className="accent-[#2E3192]"
                   />
-                  ⭐ Définir en tant que serviteur
+                  💦 Veut se faire baptiser
                 </label>
-              </div>
+              )}
 
-              {formData.star && (
-                <Field label="Ministère">
-                  <div className="grid grid-cols-2 gap-1 mt-1">
-                    {ministereOptions.map((m) => (
-                      <label
-                        key={m}
-                        className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1"
-                      >
-                        <input
-                          type="checkbox"
-                          value={m}
-                          checked={formData.Ministere.includes(m)}
-                          onChange={(e) => {
-                            const { value, checked } = e.target;
-                            setFormData((prev) => ({
-                              ...prev,
-                              Ministere: checked
-                                ? [...prev.Ministere, value]
-                                : prev.Ministere.filter((v) => v !== value),
-                            }));
-                          }}
-                          className="accent-[#2E3192]"
-                        />
-                        {m}
-                      </label>
-                    ))}
-                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1">
+              <Field label="Baptême de feu">
+                <select
+                  name="bapteme_esprit"
+                  value={formData.bapteme_esprit ?? ""}
+                  onChange={handleChange}
+                  className="inp"
+                >
+                  <option value="">-- Sélectionner --</option>
+                  <option value="Oui">Oui</option>
+                  <option value="Non">Non</option>
+                </select>
+              </Field>
+
+              <Field label="Prière du salut">
+                <select
+                  name="priere_salut"
+                  value={formData.priere_salut}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({
+                      ...formData,
+                      priere_salut: value,
+                      type_conversion:
+                        value === "Oui" ? formData.type_conversion : "",
+                    });
+                  }}
+                  className="inp"
+                >
+                  <option value="">-- Prière du salut ? --</option>
+                  <option value="Oui">Oui</option>
+                  <option value="Non">Non</option>
+                </select>
+                {formData.priere_salut === "Oui" && (
+                  <select
+                    name="type_conversion"
+                    value={formData.type_conversion}
+                    onChange={handleChange}
+                    className="inp mt-2"
+                  >
+                    <option value="">Type</option>
+                    <option value="Nouveau converti">Nouveau converti</option>
+                    <option value="Réconciliation">Réconciliation</option>
+                  </select>
+                )}
+              </Field>
+
+              <Field label="Formation">
+                <textarea
+                  name="Formation"
+                  value={formData.Formation}
+                  onChange={handleChange}
+                  className="inp"
+                  rows={2}
+                />
+              </Field>
+
+              {isPrivileged && (
+                <>
+                  <div className="flex items-center gap-3 py-2">
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
                       <input
                         type="checkbox"
-                        checked={formData.Ministere.includes("Autre")}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setFormData((prev) => ({
-                            ...prev,
-                            Ministere: checked
-                              ? [...prev.Ministere, "Autre"]
-                              : prev.Ministere.filter((v) => v !== "Autre"),
-                          }));
-                          if (!checked) setAutreMinistere("");
-                        }}
-                        className="accent-[#2E3192]"
+                        name="star"
+                        checked={formData.star}
+                        onChange={handleChange}
+                        className="accent-[#2E3192] w-4 h-4"
                       />
-                      Autre
+                      ⭐ Définir en tant que serviteur
                     </label>
                   </div>
-                  {formData.Ministere.includes("Autre") && (
-                    <input
-                      type="text"
-                      className="inp mt-2"
-                      placeholder="Précisez le ministère"
-                      value={autreMinistere}
-                      onChange={(e) => setAutreMinistere(e.target.value)}
-                    />
+
+                  {formData.star && (
+                    <Field label="Ministère">
+                      <div className="grid grid-cols-2 gap-1 mt-1">
+                        {ministereOptions.map((m) => (
+                          <label
+                            key={m}
+                            className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1"
+                          >
+                            <input
+                              type="checkbox"
+                              value={m}
+                              checked={formData.Ministere.includes(m)}
+                              onChange={(e) => {
+                                const { value, checked } = e.target;
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  Ministere: checked
+                                    ? [...prev.Ministere, value]
+                                    : prev.Ministere.filter((v) => v !== value),
+                                }));
+                              }}
+                              className="accent-[#2E3192]"
+                            />
+                            {m}
+                          </label>
+                        ))}
+                        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1">
+                          <input
+                            type="checkbox"
+                            checked={formData.Ministere.includes("Autre")}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setFormData((prev) => ({
+                                ...prev,
+                                Ministere: checked
+                                  ? [...prev.Ministere, "Autre"]
+                                  : prev.Ministere.filter((v) => v !== "Autre"),
+                              }));
+                              if (!checked) setAutreMinistere("");
+                            }}
+                            className="accent-[#2E3192]"
+                          />
+                          Autre
+                        </label>
+                      </div>
+                      {formData.Ministere.includes("Autre") && (
+                        <input
+                          type="text"
+                          className="inp mt-2"
+                          placeholder="Précisez le ministère"
+                          value={autreMinistere}
+                          onChange={(e) => setAutreMinistere(e.target.value)}
+                        />
+                      )}
+                    </Field>
                   )}
-                </Field>
+                </>
               )}
+
+              <Field label="État du contact">
+                <select
+                  name="etat_contact"
+                  value={formData.etat_contact}
+                  onChange={handleChange}
+                  className="inp"
+                >
+                  <option value="">-- Sélectionner --</option>
+                  <option value="nouveau">Nouveau</option>
+                  <option value="existant">Existant</option>
+                  <option value="inactif">Inactif</option>
+                </select>
+              </Field>
+
+              <Field label="Comment est-il venu ?">
+                <select
+                  name="venu"
+                  value={formData.venu}
+                  onChange={handleChange}
+                  className="inp"
+                >
+                  <option value="">-- Sélectionner --</option>
+                  <option value="invité">Invité</option>
+                  <option value="réseaux">Réseaux</option>
+                  <option value="evangélisation">Évangélisation</option>
+                  <option value="autre">Autre</option>
+                </select>
+              </Field>
+
+              <Field label="Informations supplémentaires">
+                <textarea
+                  name="infos_supplementaires"
+                  value={formData.infos_supplementaires}
+                  onChange={handleChange}
+                  className="inp"
+                  rows={2}
+                />
+              </Field>
+
+              <Field label="Statut à l'arrivée">
+                <select
+                  name="statut_initial"
+                  value={formData.statut_initial}
+                  onChange={handleChange}
+                  className="inp"
+                >
+                  <option value="">-- Sélectionner --</option>
+                  <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
+                  <option value="a déjà son église">A déjà son église</option>
+                  <option value="visiteur">Visiteur</option>
+                </select>
+              </Field>
             </>
           )}
-
-          <Field label="État du contact">
-            <select
-              name="etat_contact"
-              value={formData.etat_contact}
-              onChange={handleChange}
-              className="inp"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="nouveau">Nouveau</option>
-              <option value="existant">Existant</option>
-              <option value="inactif">Inactif</option>
-            </select>
-          </Field>
-
-          <Field label="Comment est-il venu ?">
-            <select
-              name="venu"
-              value={formData.venu}
-              onChange={handleChange}
-              className="inp"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="invité">Invité</option>
-              <option value="réseaux">Réseaux</option>
-              <option value="evangélisation">Évangélisation</option>
-              <option value="autre">Autre</option>
-            </select>
-          </Field>
-
-          <Field label="Informations supplémentaires">
-            <textarea
-              name="infos_supplementaires"
-              value={formData.infos_supplementaires}
-              onChange={handleChange}
-              className="inp"
-              rows={2}
-            />
-          </Field>
-
-          <Field label="Statut à l'arrivée">
-            <select
-              name="statut_initial"
-              value={formData.statut_initial}
-              onChange={handleChange}
-              className="inp"
-            >
-              <option value="">-- Sélectionner --</option>
-              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="visiteur">Visiteur</option>
-            </select>
-          </Field>
         </div>
 
         {/* Footer */}
@@ -799,15 +843,15 @@ export default function EditMemberPopup({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || loadingData || !formData}
             className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
             style={{
-              background: loading
+              background: loading || loadingData
                 ? "#a0a0c0"
                 : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
             }}
           >
-            {loading ? "Enregistrement..." : "💾 Sauvegarder"}
+            {loading ? "Enregistrement..." : loadingData ? "Chargement..." : "💾 Sauvegarder"}
           </button>
         </div>
 

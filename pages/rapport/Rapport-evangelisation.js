@@ -267,65 +267,63 @@ function CarteSession({ r, onEdit }) {
   );
 }
 
-// ─── ONGLET PAR SESSION (groupé mois > type) ──────────────────
-function OngletSessions({ rapports, onEdit }) {
-  const [expandedMonths, setExpandedMonths] = useState({});
+// ─── ONGLET PAR TYPE D'ÉVANGÉLISATION ────────────────────────
+function OngletParType({ rapports, onEdit }) {
   const [expandedTypes, setExpandedTypes] = useState({});
 
+  // Grouper directement par type (sans mois)
   const grouped = {};
   rapports.forEach(r => {
-    const d = new Date(r.date_evangelise);
-    const monthKey = `${d.getFullYear()}-${d.getMonth()}`;
-    if (!grouped[monthKey]) grouped[monthKey] = { label: `${getMonthNameFR(d.getMonth())} ${d.getFullYear()}`, types: {} };
     const type = r.type_evangelisation || "Non défini";
-    if (!grouped[monthKey].types[type]) grouped[monthKey].types[type] = [];
-    grouped[monthKey].types[type].push(r);
+    if (!grouped[type]) grouped[type] = [];
+    grouped[type].push(r);
   });
 
   if (!Object.keys(grouped).length) return <p className="text-white/30 text-sm text-center py-8">Aucun rapport sur cette période</p>;
 
   return (
     <div className="flex flex-col gap-3">
-      {Object.entries(grouped).map(([monthKey, { label, types }]) => {
-        const isMonthOpen = expandedMonths[monthKey];
-        const monthTotals = getTotals(Object.values(types).flat());
+      {Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b, "fr")).map(([type, rows]) => {
+        const isOpen = expandedTypes[type];
+        const typeTotals = getTotals(rows);
         return (
-          <div key={monthKey} className="bg-white/10 rounded-2xl overflow-hidden">
-            <button onClick={() => setExpandedMonths(p => ({ ...p, [monthKey]: !p[monthKey] }))}
+          <div key={type} className="bg-white/10 rounded-2xl overflow-hidden">
+            <button onClick={() => setExpandedTypes(p => ({ ...p, [type]: !p[type] }))}
               className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
-              <span className="font-semibold text-white">{label}</span>
+              <div className="flex flex-col gap-0.5">
+                <span className="font-semibold text-white text-sm">{type}</span>
+                <span className="text-[11px] text-white/40">{rows.length} rapport{rows.length > 1 ? "s" : ""}</span>
+              </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <Badge color="amber">Total {monthTotals.total}</Badge>
-                <Badge color="green">🙏 {monthTotals.priere}</Badge>
-                <span className="text-white/30 text-xs">{isMonthOpen ? "▲" : "▼"}</span>
+                <Badge color="blue">H {typeTotals.hommes}</Badge>
+                <Badge color="pink">F {typeTotals.femmes}</Badge>
+                <Badge color="amber">Total {typeTotals.total}</Badge>
+                <Badge color="green">🙏 {typeTotals.priere}</Badge>
+                <span className="text-white/30 text-xs">{isOpen ? "▲" : "▼"}</span>
               </div>
             </button>
-            {isMonthOpen && (
+            {isOpen && (
               <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-2">
-                {Object.entries(types).map(([type, rows]) => {
-                  const typeKey = `${monthKey}-${type}`;
-                  const isTypeOpen = expandedTypes[typeKey];
-                  const typeTotals = getTotals(rows);
-                  return (
-                    <div key={typeKey} className="bg-white/5 rounded-xl overflow-hidden">
-                      <button onClick={() => setExpandedTypes(p => ({ ...p, [typeKey]: !p[typeKey] }))}
-                        className="w-full flex items-center justify-between px-3 py-3 hover:bg-white/5 transition text-left gap-3">
-                        <span className="text-sm text-white/80 font-semibold">{type}</span>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <Badge color="blue">H {typeTotals.hommes}</Badge>
-                          <Badge color="pink">F {typeTotals.femmes}</Badge>
-                          <Badge color="amber">{typeTotals.total}</Badge>
-                          <span className="text-white/30 text-xs">{isTypeOpen ? "▲" : "▼"}</span>
-                        </div>
-                      </button>
-                      {isTypeOpen && (
-                        <div className="border-t border-white/10 px-3 pb-3 pt-2 flex flex-col gap-2">
-                          {rows.map(r => <CarteSession key={r.id} r={r} onEdit={onEdit} />)}
-                        </div>
-                      )}
+                {/* Totaux récap */}
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2">
+                  {[
+                    { label: "Hommes", value: typeTotals.hommes, color: "text-blue-300" },
+                    { label: "Femmes", value: typeTotals.femmes, color: "text-pink-300" },
+                    { label: "Total", value: typeTotals.total, color: "text-amber-300 font-bold" },
+                    { label: "Prières", value: typeTotals.priere, color: "text-emerald-300" },
+                    { label: "Nv. conv.", value: typeTotals.nouveau, color: "text-white" },
+                    { label: "Moiss.", value: typeTotals.moissonneurs, color: "text-teal-300" },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="bg-white/5 rounded-xl px-2 py-2 text-center">
+                      <p className="text-[10px] text-white/40">{label}</p>
+                      <p className={`text-base font-bold ${color}`}>{value}</p>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+                {/* Lignes individuelles */}
+                {rows.sort((a, b) => new Date(b.date_evangelise) - new Date(a.date_evangelise)).map(r => (
+                  <CarteSession key={r.id} r={r} onEdit={onEdit} />
+                ))}
               </div>
             )}
           </div>
@@ -449,9 +447,18 @@ export default function RapportEvangelisation() {
 
   const typesDisponibles = [...new Set((allEvangelises || []).map(e => e.type_evangelisation).filter(Boolean))];
 
+  const TYPES_EVANGELISATION = [
+    "Individuel",
+    "Sortie de groupe",
+    "Campagne d'évangélisation",
+    "Évangélisation de rue",
+    "Évangélisation maison",
+    "Évangélisation stade",
+  ];
+
   const onglets = [
     { key: "kpi", label: "Vue d'ensemble" },
-    { key: "sessions", label: "Par session" },
+    { key: "type", label: "Par type" },
   ];
 
   return (
@@ -461,9 +468,13 @@ export default function RapportEvangelisation() {
       <div className="w-full max-w-2xl mt-6 flex flex-col gap-5 mb-10">
 
         {/* En-tête */}
-        <div>
-          <h1 className="text-2xl font-bold text-white">Tableau de bord évangélisation</h1>
-          <p className="text-white/50 text-sm mt-0.5">Suivi des activités — évangélisés, convertis, intégrés</p>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mt-4 mb-2 text-blue-300 text-center text-white">Tableau de Bord<span className="text-emerald-300"> Évangélisation</span></h1>
+          <p className="italic text-base text-white/90">
+            Suivez et analysez facilement vos activités d'évangélisation.
+            Filtrez par date et type, visualisez les rapports détaillés et
+            consultez rapidement les KPIs : <span className="text-blue-300 font-semibold">évangélisés, convertis, intégrés en cellule ou à l'église, et suivis en cours</span>.
+          </p>
         </div>
 
         {/* Filtres */}
@@ -515,22 +526,17 @@ export default function RapportEvangelisation() {
             </div>
           )}
 
-          {/* Filtre type */}
-          {typesDisponibles.length > 1 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">Type :</span>
-              <button onClick={() => setFiltreType("")}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${!filtreType ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
-                Tous
-              </button>
-              {typesDisponibles.map(t => (
-                <button key={t} onClick={() => setFiltreType(t)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtreType === t ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
-                  {t}
-                </button>
+          {/* Filtre type — menu déroulant */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-white/50">Type d'évangélisation</label>
+            <select value={filtreType} onChange={e => setFiltreType(e.target.value)}
+              className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
+              <option value="" className="bg-[#2a2d80]">Tous les types</option>
+              {TYPES_EVANGELISATION.map(t => (
+                <option key={t} value={t} className="bg-[#2a2d80]">{t}</option>
               ))}
-            </div>
-          )}
+            </select>
+          </div>
         </div>
 
         {/* Onglets */}
@@ -589,7 +595,7 @@ export default function RapportEvangelisation() {
           </div>
 
         ) : (
-          <OngletSessions rapports={rapports} onEdit={handleEdit} />
+          <OngletParType rapports={rapports} onEdit={handleEdit} />
         )}
 
         {message && <p className="text-center text-sm font-medium text-white/80 mt-2">{message}</p>}

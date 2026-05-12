@@ -222,7 +222,11 @@ function CreateInternalUserContent() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ ...formData, member_id: selectedMemberId }),
+        body: JSON.stringify({
+          ...formData,
+          member_id: selectedMemberId,
+          ministeresSelected: formData.ministere,
+        }),
       });
 
       const data = await res.json();

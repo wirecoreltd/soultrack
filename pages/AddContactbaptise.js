@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
+import { checkLimiteAtteinte } from "../lib/checkLimite"; // ✅ ajouté
 
 export default function AddContactbaptise() {
   const router = useRouter();
@@ -27,13 +28,13 @@ export default function AddContactbaptise() {
   });
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(""); // ✅ ajouté
 
   const besoinsOptions = [
     "Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances",
-    "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"
+    "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement","Dépression / Santé mentale"
   ];
 
-  // Récupérer eglise_id et branche_id de l'utilisateur connecté
   useEffect(() => {
     const fetchUserEglise = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -75,22 +76,30 @@ export default function AddContactbaptise() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const finalBesoin = showBesoinLibre && formData.besoinLibre
-      ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
-      : formData.besoin;
-
-    const dataToSend = {
-      ...formData,
-      etat_contact: "existant",         // forcer à "existant"
-      bapteme_eau: "Non",               // non encore baptisé
-      veut_se_faire_baptiser: "Oui",    // veut se faire baptiser
-      besoin: finalBesoin,
-    };
-
-    delete dataToSend.besoinLibre;
+    setErrorMsg(""); // ✅ reset erreur à chaque tentative
 
     try {
+      // ✅ Vérifier la limite du plan avant l'insertion
+      const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
+      if (atteinte) {
+        setErrorMsg(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+        return;
+      }
+
+      const finalBesoin = showBesoinLibre && formData.besoinLibre
+        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
+        : formData.besoin;
+
+      const dataToSend = {
+        ...formData,
+        etat_contact: "existant",
+        bapteme_eau: "Non",
+        veut_se_faire_baptiser: "Oui",
+        besoin: finalBesoin,
+      };
+
+      delete dataToSend.besoinLibre;
+
       const { error } = await supabase.from("membres_complets").insert([dataToSend]);
       if (error) throw error;
 
@@ -115,8 +124,9 @@ export default function AddContactbaptise() {
         infos_supplementaires: "",
       }));
       setShowBesoinLibre(false);
+
     } catch (err) {
-      alert(err.message);
+      setErrorMsg(err.message || "Erreur lors de l'ajout.");
     }
   };
 
@@ -140,7 +150,7 @@ export default function AddContactbaptise() {
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
-            {/* Civilité */}
+          {/* Civilité */}
           <div className="flex flex-col">
             <label className="text-sm sm:text-base font-bold mb-1">Civilité</label>
             <select value={formData.sexe} onChange={e => setFormData({...formData,sexe:e.target.value})} className="input" required>
@@ -149,32 +159,41 @@ export default function AddContactbaptise() {
               <option value="Femme">Femme</option>
             </select>
           </div>
-  
+
           {/* Prénom */}
           <div className="flex flex-col">
             <label className="text-sm sm:text-base font-bold mb-1">Prénom</label>
             <input type="text" value={formData.prenom} onChange={e => setFormData({...formData, prenom:e.target.value})} className="input" required/>
           </div>
+
           {/* Nom */}
           <div className="flex flex-col">
             <label className="text-sm sm:text-base font-bold mb-1">Nom</label>
             <input type="text" value={formData.nom} onChange={e => setFormData({...formData, nom:e.target.value})} className="input" required/>
           </div>
+
           {/* Téléphone */}
           <div className="flex flex-col">
             <label className="text-sm sm:text-base font-bold mb-1">Téléphone</label>
             <input type="text" value={formData.telephone} onChange={e => setFormData({...formData, telephone:e.target.value})} className="input"/>
           </div>
+
           {/* WhatsApp */}
           <label className="flex items-center gap-2 text-sm sm:text-base font-bold mb-1">
             <input type="checkbox" checked={formData.is_whatsapp} onChange={e => setFormData({...formData,is_whatsapp:e.target.checked})} className="w-4 h-4 sm:w-5 sm:h-5" />
             Numéro WhatsApp
           </label>
+
           {/* Ville */}
           <div className="flex flex-col">
             <label className="text-sm sm:text-base font-bold mb-1">Ville</label>
             <input type="text" value={formData.ville} onChange={e => setFormData({...formData,ville:e.target.value})} className="input"/>
-          </div>         
+          </div>
+
+          {/* ✅ Message d'erreur — limite plan ou erreur Supabase */}
+          {errorMsg && (
+            <p className="text-red-600 text-sm font-semibold text-center">{errorMsg}</p>
+          )}
 
           {/* Boutons */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">

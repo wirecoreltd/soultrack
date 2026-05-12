@@ -7,10 +7,20 @@ const supabaseAdmin = createClient(
 );
 
 const ministereOptions = [
-  "Intercession", "Louange", "Technique", "Communication",
-  "Les Enfants", "Les ados", "Les jeunes", "Finance",
-  "Nettoyage", "Conseiller", "Compassion", "Visite",
-  "Berger", "Modération",
+  "Intercession",
+  "Louange",
+  "Technique",
+  "Communication",
+  "Les Enfants",
+  "Les ados",
+  "Les jeunes",
+  "Finance",
+  "Nettoyage",
+  "Conseiller",
+  "Compassion",
+  "Visite",
+  "Berger",
+  "Modération",
 ];
 
 export default async function handler(req, res) {
@@ -20,43 +30,65 @@ export default async function handler(req, res) {
   try {
     // ── Auth ──
     const token = req.headers.authorization?.replace("Bearer ", "");
-    if (!token) return res.status(401).json({ error: "Non authentifié" });
-
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-    if (!user) return res.status(401).json({ error: "Non authentifié" });
+    if (!token)
+      return res.status(401).json({ error: "Non authentifié" });
 
     const {
-      prenom, nom, email, password, telephone,
-      roles, cellule_nom, cellule_zone, ministeresSelected,
+      data: { user },
+    } = await supabaseAdmin.auth.getUser(token);
+
+    if (!user)
+      return res.status(401).json({ error: "Non authentifié" });
+
+    const {
+      prenom,
+      nom,
+      email,
+      password,
+      telephone,
+      sexe,
+      roles,
+      cellule_nom,
+      cellule_zone,
+      ministeresSelected,
     } = req.body;
 
     if (!prenom || !nom || !email || !password || !roles?.length) {
-      return res.status(400).json({ error: "Champs obligatoires manquants" });
+      return res
+        .status(400)
+        .json({ error: "Champs obligatoires manquants" });
     }
 
-    // ── Profil de l'admin connecté (uniquement eglise_id) ──
-    // ✅ branche_id retiré du select et de toutes les insertions
+    // ── Profil admin connecté ──
     const { data: adminProfile } = await supabaseAdmin
       .from("profiles")
       .select("eglise_id")
       .eq("id", user.id)
       .single();
 
-    if (!adminProfile) return res.status(400).json({ error: "Profil admin introuvable" });
+    if (!adminProfile) {
+      return res
+        .status(400)
+        .json({ error: "Profil admin introuvable" });
+    }
 
     const eglise_id = adminProfile.eglise_id;
 
-    // ── 1️⃣ Création du compte Auth ──
-    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-    });
-    if (authError) return res.status(400).json({ error: authError.message });
+    // ── 1️⃣ Création Auth ──
+    const { data: authUser, error: authError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
+
+    if (authError) {
+      return res.status(400).json({ error: authError.message });
+    }
 
     const newUserId = authUser.user.id;
 
-    // ── 2️⃣ Création du profil (sans branche_id) ──
+    // ── 2️⃣ Création profile ──
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .insert({
@@ -69,12 +101,18 @@ export default async function handler(req, res) {
         role: roles[0],
         must_change_password: true,
         eglise_id,
-        // ✅ branche_id supprimé
       });
-    if (profileError) return res.status(400).json({ error: profileError.message });
 
-    // ── 3️⃣ Création cellule si ResponsableCellule (sans branche_id) ──
-    if (roles.includes("ResponsableCellule") && cellule_nom && cellule_zone) {
+    if (profileError) {
+      return res.status(400).json({ error: profileError.message });
+    }
+
+    // ── 3️⃣ Création cellule ──
+    if (
+      roles.includes("ResponsableCellule") &&
+      cellule_nom &&
+      cellule_zone
+    ) {
       const { error: celluleError } = await supabaseAdmin
         .from("cellules")
         .insert({
@@ -84,36 +122,85 @@ export default async function handler(req, res) {
           responsable_id: newUserId,
           telephone: telephone || "",
           eglise_id,
-          // ✅ branche_id supprimé
         });
-      if (celluleError) return res.status(400).json({ error: celluleError.message });
+
+      if (celluleError) {
+        return res.status(400).json({ error: celluleError.message });
+      }
     }
 
-    // ── 4️⃣ Création du membre complet (sans branche_id) ──
-    const ministereStr = Array.isArray(ministeresSelected)
-      ? ministeresSelected.filter(m => ministereOptions.includes(m)).join(", ")
-      : null;
+    // ── 4️⃣ Préparation ministères ──
+    const ministeresValides = Array.isArray(ministeresSelected)
+      ? ministeresSelected.filter((m) =>
+          ministereOptions.includes(m)
+        )
+      : [];
 
-    const { error: membreError } = await supabaseAdmin
-      .from("membres_complets")
-      .insert({
-        prenom,
-        nom,
-        email,
-        telephone,
-        star: true,
-        etat_contact: "existant",
-        Ministere: ministereStr,
-        conseiller_id: roles.includes("Conseiller") ? newUserId : null,
+    // ── 5️⃣ Création membre complet ──
+    const { data: createdMember, error: membreError } =
+      await supabaseAdmin
+        .from("membres_complets")
+        .insert({
+          prenom,
+          nom,
+          email,
+          telephone,
+          sexe: sexe || null,
+          star: true,
+          etat_contact: "existant",
+
+          // ✅ Format JSON cohérent avec EditMemberPopup
+          Ministere: JSON.stringify(ministeresValides),
+
+          conseiller_id: roles.includes("Conseiller")
+            ? newUserId
+            : null,
+
+          eglise_id,
+        })
+        .select()
+        .single();
+
+    if (membreError) {
+      return res.status(400).json({ error: membreError.message });
+    }
+
+    // ── 6️⃣ Écriture stats ministère ──
+    if (
+      createdMember &&
+      ministeresValides.length > 0
+    ) {
+      const statsRows = ministeresValides.map((ministere) => ({
+        membre_id: createdMember.id,
         eglise_id,
-        // ✅ branche_id supprimé
-      });
-    if (membreError) return res.status(400).json({ error: membreError.message });
+        type: "ministere",
+        valeur: ministere,
+        sexe: sexe || null,
+        date_action: new Date()
+          .toISOString()
+          .split("T")[0],
+      }));
 
-    return res.status(200).json({ message: "Utilisateur + membre créé avec succès" });
+      const { error: statsError } = await supabaseAdmin
+        .from("stats_ministere_besoin")
+        .insert(statsRows);
 
+      if (statsError) {
+        console.error(
+          "Erreur insertion stats ministère:",
+          statsError
+        );
+      }
+    }
+
+    return res.status(200).json({
+      message: "Utilisateur + membre créé avec succès",
+    });
   } catch (err) {
     console.error("create-user API error:", err);
-    return res.status(500).json({ error: err.message });
+
+    return res.status(500).json({
+      error: err.message,
+    });
   }
 }

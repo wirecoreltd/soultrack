@@ -14,818 +14,710 @@ export default function AttendancePage() {
   );
 }
 
-function Attendance() {
-  const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [showTable, setShowTable] = useState(false);
-  const [superviseur, setSuperviseur] = useState({ eglise_id: null });
-  const [tempsOptions, setTempsOptions] = useState(["Culte"]);
-  const formRef = useRef(null);
-  const selectRef = useRef(null);
-  const [expandedMonths, setExpandedMonths] = useState({});
-  const [typeCollapsedDesktop, setTypeCollapsedDesktop] = useState({});
-  const [availableTypes, setAvailableTypes] = useState([]);
-  const [filterType, setFilterType] = useState("");
-
-  // ✅ FIX 1 : numeroCulte retiré ici (rows non défini à ce niveau)
-
-  const [formData, setFormData] = useState({
-    date: "",
-    typeTemps: "",
-    nouveauTemps: "",
-    enregistrerTemps: false,
-    numero_culte: "",
-    hommes: 0,
-    femmes: 0,
-    jeunes: 0,
-    enfants: 0,
-    connectes: 0,
-    nouveauxVenus: 0,
-    nouveauxConvertis: 0,
+// ─── HELPERS ──────────────────────────────────────────────────
+function formatDateFr(dateStr) {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("fr-FR", {
+    day: "2-digit", month: "short", year: "numeric",
   });
+}
+function formatDateCourt(dateStr) {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("fr-FR", {
+    day: "2-digit", month: "short",
+  });
+}
+function getMonthNameFR(monthIndex) {
+  return ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"][monthIndex] || "";
+}
 
-  const [editId, setEditId] = useState(null);
+// ─── UI ATOMS ─────────────────────────────────────────────────
+function SectionTitle({ children }) {
+  return <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-3">{children}</p>;
+}
+function KpiCard({ label, value, sub, accent }) {
+  const c = { green: "text-emerald-400", red: "text-red-400", amber: "text-amber-400", white: "text-white", blue: "text-blue-300", pink: "text-pink-300" };
+  return (
+    <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
+      <p className="text-xs text-white/50">{label}</p>
+      <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
+      {sub && <p className="text-[11px] text-white/40 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+function Badge({ children, color }) {
+  const m = {
+    green: "bg-emerald-900/60 text-emerald-300",
+    red: "bg-red-900/60 text-red-300",
+    amber: "bg-amber-900/60 text-amber-300",
+    blue: "bg-blue-900/60 text-blue-300",
+    pink: "bg-pink-900/60 text-pink-300",
+    gray: "bg-white/10 text-white/50",
+  };
+  return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${m[color] || m.gray}`}>{children}</span>;
+}
+function BarreProgression({ pct, color }) {
+  const col = color || (pct >= 70 ? "bg-emerald-400" : pct >= 40 ? "bg-amber-400" : "bg-red-400");
+  return (
+    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+      <div className={`h-full rounded-full transition-all ${col}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+    </div>
+  );
+}
+
+// ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
+function BlocKpiGlobaux({ reports }) {
+  const totalSessions = reports.length;
+  const totalHommes = reports.reduce((a, r) => a + Number(r.hommes || 0), 0);
+  const totalFemmes = reports.reduce((a, r) => a + Number(r.femmes || 0), 0);
+  const totalJeunes = reports.reduce((a, r) => a + Number(r.jeunes || 0), 0);
+  const totalEnfants = reports.reduce((a, r) => a + Number(r.enfants || 0), 0);
+  const totalConnectes = reports.reduce((a, r) => a + Number(r.connectes || 0), 0);
+  const totalNV = reports.reduce((a, r) => a + Number(r.nouveauxVenus || 0), 0);
+  const totalNC = reports.reduce((a, r) => a + Number(r.nouveauxConvertis || 0), 0);
+  const totalPresents = totalHommes + totalFemmes + totalJeunes;
+  const totalGlobal = totalPresents + totalEnfants + totalConnectes;
+  const moyenneParSession = totalSessions > 0 ? Math.round(totalPresents / totalSessions) : 0;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <KpiCard label="Sessions" value={totalSessions} sub="sur la période" accent="white" />
+        <KpiCard label="Moy. présents" value={moyenneParSession} sub="par session (H+F+J)" accent="amber" />
+        <KpiCard label="Nouveaux venus" value={totalNV} sub="sur la période" accent="blue" />
+        <KpiCard label="Convertis" value={totalNC} sub="sur la période" accent="green" />
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <KpiCard label="Hommes" value={totalHommes} sub="total" accent="blue" />
+        <KpiCard label="Femmes" value={totalFemmes} sub="total" accent="pink" />
+        <KpiCard label="Jeunes" value={totalJeunes} sub="total" accent="amber" />
+        <KpiCard label="Enfants" value={totalEnfants} sub="total" accent="white" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <KpiCard label="Connectés (en ligne)" value={totalConnectes} sub="total" accent="white" />
+        <KpiCard label="Total global" value={totalGlobal} sub="H+F+J+Enfants+Connectés" accent="white" />
+      </div>
+    </div>
+  );
+}
+
+// ─── BLOC RÉPARTITION GENRE ────────────────────────────────────
+function BlocGenre({ reports }) {
+  const totalHommes = reports.reduce((a, r) => a + Number(r.hommes || 0), 0);
+  const totalFemmes = reports.reduce((a, r) => a + Number(r.femmes || 0), 0);
+  const totalJeunes = reports.reduce((a, r) => a + Number(r.jeunes || 0), 0);
+  const total = totalHommes + totalFemmes + totalJeunes;
+  const pctH = total > 0 ? Math.round((totalHommes / total) * 100) : 0;
+  const pctF = total > 0 ? Math.round((totalFemmes / total) * 100) : 0;
+  const pctJ = total > 0 ? Math.round((totalJeunes / total) * 100) : 100 - pctH - pctF;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-blue-900/40 rounded-xl px-3 py-3 text-center">
+          <p className="text-xl font-bold text-blue-300">{totalHommes}</p>
+          <p className="text-[11px] text-blue-400/70">Hommes</p>
+          <p className="text-[10px] text-blue-500/50">{pctH}%</p>
+        </div>
+        <div className="bg-pink-900/40 rounded-xl px-3 py-3 text-center">
+          <p className="text-xl font-bold text-pink-300">{totalFemmes}</p>
+          <p className="text-[11px] text-pink-400/70">Femmes</p>
+          <p className="text-[10px] text-pink-500/50">{pctF}%</p>
+        </div>
+        <div className="bg-amber-900/40 rounded-xl px-3 py-3 text-center">
+          <p className="text-xl font-bold text-amber-300">{totalJeunes}</p>
+          <p className="text-[11px] text-amber-400/70">Jeunes</p>
+          <p className="text-[10px] text-amber-500/50">{pctJ}%</p>
+        </div>
+      </div>
+      {total > 0 && (
+        <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
+          <div className="bg-blue-400 rounded-l-full transition-all" style={{ width: `${pctH}%` }} />
+          <div className="bg-pink-400 transition-all" style={{ width: `${pctF}%` }} />
+          <div className="bg-amber-400 rounded-r-full transition-all" style={{ width: `${pctJ}%` }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── BLOC TENDANCE ─────────────────────────────────────────────
+function BlocTendance({ reports }) {
+  const parSemaine = {};
+  reports.forEach(r => {
+    const d = new Date(r.date + "T00:00:00");
+    const jan = new Date(d.getFullYear(), 0, 1);
+    const sem = `${d.getFullYear()}-S${String(Math.ceil(((d - jan) / 86400000 + jan.getDay() + 1) / 7)).padStart(2, "0")}`;
+    if (!parSemaine[sem]) parSemaine[sem] = { total: 0, nv: 0, nc: 0, dates: [] };
+    parSemaine[sem].total += Number(r.hommes || 0) + Number(r.femmes || 0) + Number(r.jeunes || 0);
+    parSemaine[sem].nv += Number(r.nouveauxVenus || 0);
+    parSemaine[sem].nc += Number(r.nouveauxConvertis || 0);
+    parSemaine[sem].dates.push(r.date);
+  });
+  const semaines = Object.entries(parSemaine)
+    .sort(([a], [b]) => a.localeCompare(b)).slice(-8)
+    .map(([sem, v]) => ({
+      sem, ...v,
+      label: v.dates.length > 0 ? formatDateCourt(v.dates[0]) : sem,
+    }));
+  if (semaines.length < 2) return <p className="text-white/30 text-sm text-center py-4">Données insuffisantes (≥ 2 semaines)</p>;
+  const maxTotal = Math.max(...semaines.map(s => s.total), 1);
+  const derniere = semaines[semaines.length - 1];
+  const avantDerniere = semaines[semaines.length - 2];
+  const delta = derniere.total - avantDerniere.total;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <span className="text-2xl font-bold text-white">{derniere.total}</span>
+        <span className={`text-sm font-semibold ${delta >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+          {delta >= 0 ? "▲" : "▼"} {Math.abs(delta)} vs sem. préc.
+        </span>
+      </div>
+      <div className="flex items-end gap-1 h-16">
+        {semaines.map(({ sem, total, label }) => (
+          <div key={sem} className="flex-1 flex flex-col items-center gap-1">
+            <div className="w-full bg-blue-500/70 rounded-t-sm transition-all"
+              style={{ height: `${Math.max(4, (total / maxTotal) * 100)}%` }} />
+            <p className="text-[9px] text-white/30 truncate w-full text-center">{label}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── BLOC TAUX PAR TYPE ────────────────────────────────────────
+function BlocParType({ reports }) {
+  const parType = {};
+  reports.forEach(r => {
+    const type = r.typeTemps || "Autre";
+    if (!parType[type]) parType[type] = { total: 0, nv: 0, nc: 0, nb: 0 };
+    parType[type].total += Number(r.hommes || 0) + Number(r.femmes || 0) + Number(r.jeunes || 0);
+    parType[type].nv += Number(r.nouveauxVenus || 0);
+    parType[type].nc += Number(r.nouveauxConvertis || 0);
+    parType[type].nb++;
+  });
+  const maxTotal = Math.max(...Object.values(parType).map(v => v.total), 1);
+  const lignes = Object.entries(parType).sort((a, b) => b[1].total - a[1].total);
+  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">Aucune donnée</p>;
+  return (
+    <div className="flex flex-col gap-2">
+      {lignes.map(([type, { total, nv, nc, nb }]) => (
+        <div key={type} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-white w-32 flex-shrink-0 truncate">{type}</p>
+            <BarreProgression pct={(total / maxTotal) * 100} color="bg-blue-400" />
+            <p className="text-sm font-bold text-white w-12 text-right">{total}</p>
+            <p className="text-[11px] text-white/30 w-14 text-right flex-shrink-0">{nb} sess.</p>
+          </div>
+          <div className="flex gap-3 ml-32">
+            <Badge color="blue">NV: {nv}</Badge>
+            <Badge color="green">Conv: {nc}</Badge>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── BLOC NOUVEAUX VENUS & CONVERTIS ──────────────────────────
+function BlocEvangelisation({ reports }) {
+  const totalNV = reports.reduce((a, r) => a + Number(r.nouveauxVenus || 0), 0);
+  const totalNC = reports.reduce((a, r) => a + Number(r.nouveauxConvertis || 0), 0);
+  const totalSess = reports.length;
+  const moyNV = totalSess > 0 ? (totalNV / totalSess).toFixed(1) : 0;
+  const moyNC = totalSess > 0 ? (totalNC / totalSess).toFixed(1) : 0;
+  const tauxConversion = totalNV > 0 ? Math.round((totalNC / totalNV) * 100) : 0;
+
+  // Évolution mois par mois
+  const parMois = {};
+  reports.forEach(r => {
+    const d = new Date(r.date + "T00:00:00");
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (!parMois[key]) parMois[key] = { nv: 0, nc: 0, label: `${getMonthNameFR(d.getMonth()).slice(0,3)} ${d.getFullYear()}` };
+    parMois[key].nv += Number(r.nouveauxVenus || 0);
+    parMois[key].nc += Number(r.nouveauxConvertis || 0);
+  });
+  const mois = Object.entries(parMois).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
+  const maxNV = Math.max(...mois.map(([, v]) => v.nv), 1);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-blue-900/40 rounded-2xl px-4 py-4 text-center">
+          <p className="text-2xl font-bold text-blue-300">{totalNV}</p>
+          <p className="text-[11px] text-blue-400/70">Nouveaux venus</p>
+          <p className="text-[10px] text-blue-500/50">Moy: {moyNV}/sess.</p>
+        </div>
+        <div className="bg-emerald-900/40 rounded-2xl px-4 py-4 text-center">
+          <p className="text-2xl font-bold text-emerald-300">{totalNC}</p>
+          <p className="text-[11px] text-emerald-400/70">Convertis</p>
+          <p className="text-[10px] text-emerald-500/50">Moy: {moyNC}/sess.</p>
+        </div>
+        <div className="bg-purple-900/40 rounded-2xl px-4 py-4 text-center">
+          <p className="text-2xl font-bold text-purple-300">{tauxConversion}%</p>
+          <p className="text-[11px] text-purple-400/70">Taux conv.</p>
+          <p className="text-[10px] text-purple-500/50">NV → Conv.</p>
+        </div>
+      </div>
+      {mois.length >= 2 && (
+        <div className="flex items-end gap-2 h-20">
+          {mois.map(([key, { nv, nc, label }]) => (
+            <div key={key} className="flex-1 flex flex-col items-center gap-1">
+              <div className="w-full flex gap-0.5 items-end" style={{ height: "60px" }}>
+                <div className="flex-1 bg-blue-500/70 rounded-t-sm" style={{ height: `${Math.max(3, (nv / maxNV) * 60)}px` }} />
+                <div className="flex-1 bg-emerald-500/70 rounded-t-sm" style={{ height: `${Math.max(3, (nc / maxNV) * 60)}px` }} />
+              </div>
+              <p className="text-[9px] text-white/30 truncate w-full text-center">{label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="flex gap-3 text-[11px] text-white/40">
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500/70 inline-block" /> Nouveaux venus</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-500/70 inline-block" /> Convertis</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── CARTE SESSION ─────────────────────────────────────────────
+function CarteSession({ r, onEdit, onDelete }) {
+  const [open, setOpen] = useState(false);
+  const total = Number(r.hommes || 0) + Number(r.femmes || 0) + Number(r.jeunes || 0);
+  const totalGlobal = total + Number(r.enfants || 0) + Number(r.connectes || 0);
+  const label = r.typeTemps + (r.numero_culte ? ` — ${r.numero_culte}${r.numero_culte === 1 ? "er" : "ème"} culte` : "");
+
+  return (
+    <div className="bg-white/10 rounded-2xl overflow-hidden">
+      <button onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-semibold text-white text-sm">{label}</span>
+          <span className="text-[11px] text-white/40">{formatDateFr(r.date)}</span>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Badge color="blue">H {r.hommes}</Badge>
+          <Badge color="pink">F {r.femmes}</Badge>
+          <Badge color="amber">J {r.jeunes}</Badge>
+          <Badge color="gray">Total {total}</Badge>
+          <span className="text-white/30 text-xs">{open ? "▲" : "▼"}</span>
+        </div>
+      </button>
+      {open && (
+        <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {[
+              { label: "Hommes", value: r.hommes, color: "text-blue-300" },
+              { label: "Femmes", value: r.femmes, color: "text-pink-300" },
+              { label: "Jeunes", value: r.jeunes, color: "text-amber-300" },
+              { label: "Enfants", value: r.enfants, color: "text-white" },
+              { label: "Connectés", value: r.connectes, color: "text-white" },
+              { label: "Nv. venus", value: r.nouveauxVenus, color: "text-blue-300" },
+              { label: "Convertis", value: r.nouveauxConvertis, color: "text-emerald-300" },
+              { label: "Total global", value: totalGlobal, color: "text-white font-bold" },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="bg-white/5 rounded-xl px-3 py-2 flex flex-col">
+                <p className="text-[10px] text-white/40">{label}</p>
+                <p className={`text-lg font-bold ${color}`}>{value || 0}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button onClick={() => onEdit(r)}
+              className="flex-1 py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-blue-300 text-sm font-semibold transition">
+              ✏️ Modifier
+            </button>
+            <button onClick={() => onDelete(r.id)}
+              className="flex-1 py-2 rounded-xl bg-red-900/40 hover:bg-red-900/60 text-red-300 text-sm font-semibold transition">
+              🗑️ Supprimer
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── FORMULAIRE ────────────────────────────────────────────────
+function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, editData, onCancelEdit }) {
+  const [formData, setFormData] = useState({
+    date: "", typeTemps: "", nouveauTemps: "", enregistrerTemps: false,
+    numero_culte: "", hommes: 0, femmes: 0, jeunes: 0, enfants: 0,
+    connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0,
+  });
   const [message, setMessage] = useState("");
-  const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const selectRef = useRef(null);
 
-  /* ================= USER ================= */
   useEffect(() => {
-    const loadSuperviseur = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("eglise_id")
-        .eq("id", user.id)
-        .single();
-      if (error) console.error(error);
-      else setSuperviseur({ eglise_id: data.eglise_id});
-    };
-    loadSuperviseur();
-  }, []);
-
-  /* ================= UTIL ================= */
-  const splitTypeName = (name, lineLength = 15) => {
-    if (!name) return "";
-    const regex = new RegExp(`.{1,${lineLength}}`, "g");
-    return name.match(regex).join("\n");
-  };
-
-  const groupByMonthAndType = (reports) => {
-    const map = {};
-    reports.forEach(r => {
-      const d = new Date(r.date);
-      const monthKey = `${d.getFullYear()}-${d.getMonth()}`;
-      if (!map[monthKey]) map[monthKey] = {};
-      if (!map[monthKey][r.typeTemps]) map[monthKey][r.typeTemps] = [];
-      map[monthKey][r.typeTemps].push(r);
-    });
-    return map;
-  };
-
-  const calculateMonthTotals = (typesObj) => {
-    const totals = { hommes: 0, femmes: 0, jeunes: 0, total: 0, enfants: 0, connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0 };
-    Object.values(typesObj).forEach(rows => {
-      rows.forEach(r => {
-        totals.hommes += Number(r.hommes || 0);
-        totals.femmes += Number(r.femmes || 0);
-        totals.jeunes += Number(r.jeunes || 0);
-        totals.total += Number(r.hommes || 0) + Number(r.femmes || 0) + Number(r.jeunes || 0);
-        totals.enfants += Number(r.enfants || 0);
-        totals.connectes += Number(r.connectes || 0);
-        totals.nouveauxVenus += Number(r.nouveauxVenus || 0);
-        totals.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
+    if (editData) {
+      setFormData({
+        date: editData.date,
+        typeTemps: tempsOptions.includes(editData.typeTemps) ? editData.typeTemps : "AUTRE",
+        nouveauTemps: !tempsOptions.includes(editData.typeTemps) ? editData.typeTemps : "",
+        numero_culte: editData.numero_culte || "",
+        hommes: editData.hommes || 0, femmes: editData.femmes || 0,
+        jeunes: editData.jeunes || 0, enfants: editData.enfants || 0,
+        connectes: editData.connectes || 0, nouveauxVenus: editData.nouveauxVenus || 0,
+        nouveauxConvertis: editData.nouveauxConvertis || 0, enregistrerTemps: false,
       });
-    });
-    return totals;
-  };
+    }
+  }, [editData]);
 
-  const calculateTypeTotals = (rows) => {
-    const totals = { hommes: 0, femmes: 0, jeunes: 0, total: 0, enfants: 0, connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0 };
-    rows.forEach(r => {
-      totals.hommes += Number(r.hommes || 0);
-      totals.femmes += Number(r.femmes || 0);
-      totals.jeunes += Number(r.jeunes || 0);
-      totals.total += Number(r.hommes || 0) + Number(r.femmes || 0) + Number(r.jeunes || 0);
-      totals.enfants += Number(r.enfants || 0);
-      totals.connectes += Number(r.connectes || 0);
-      totals.nouveauxVenus += Number(r.nouveauxVenus || 0);
-      totals.nouveauxConvertis += Number(r.nouveauxConvertis || 0);
-    });
-    return totals;
-  };
-
-  /* ================= TEMPS ================= */
   useEffect(() => {
-    const loadTemps = async () => {
-      const { data, error } = await supabase
-        .from("attendance")
-        .select("typeTemps")
-        .eq("eglise_id", superviseur.eglise_id)        
-        .not("typeTemps", "is", null);
-
-      if (error) console.error(error);
-      else {
-        const uniqueTemps = [
-          "Culte",
-          ...new Set(
-            data.map(t => t.typeTemps?.trim())
-              .filter(t => t && t !== "" && t !== "Culte")
-          )
-        ];
-        setTempsOptions(uniqueTemps);
-      }
-    };
-
-    loadTemps();
-  }, [superviseur]);
-
-  /* ================= DROPDOWN CLICK OUTSIDE ================= */
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (selectRef.current && !selectRef.current.contains(event.target)) {
-        setDropdownOpen(false);
-      }
+    const handleClickOutside = (e) => {
+      if (selectRef.current && !selectRef.current.contains(e.target)) setDropdownOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleRenameTemps = async (ancienNom, nouveauNom) => {
-    if (!nouveauNom) return;
-    try {
-      const { error } = await supabase
-        .from("attendance")
-        .update({ typeTemps: nouveauNom })
-        .eq("typeTemps", ancienNom)
-        .eq("eglise_id", superviseur.eglise_id) ;
-      if (error) throw error;
-      fetchRapports();
-    } catch (err) {
-      console.error("Erreur renommer temps:", err.message);
-      alert("Erreur lors du renommage du temps.");
-    }
-  };
-
-  const handleDeleteTemps = async (nomTemps) => {
-    const confirmDelete = confirm(
-      "Voulez-vous vraiment supprimer ce temps ? Les rapports existants resteront mais sans nom de temps."
-    );
-    if (!confirmDelete) return;
-
-    try {
-      const { error } = await supabase
-        .from("attendance")
-        .update({ typeTemps: null })
-        .eq("typeTemps", nomTemps)
-        .eq("eglise_id", superviseur.eglise_id);
-      if (error) throw error;
-      fetchRapports();
-    } catch (err) {
-      console.error("Erreur suppression temps:", err.message);
-      alert("Erreur lors de la suppression du temps.");
-    }
-  };
-
-  // ✅ FIX 2 : handleDeleteReport défini (suppression d'un rapport par id)
-  const handleDeleteReport = async (id) => {
-    const confirmDelete = confirm("Voulez-vous vraiment supprimer ce rapport ?");
-    if (!confirmDelete) return;
-
-    try {
-      const { error } = await supabase
-        .from("attendance")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
-      fetchRapports();
-    } catch (err) {
-      console.error("Erreur suppression rapport:", err.message);
-      alert("Erreur lors de la suppression du rapport.");
-    }
-  };
-
-  /* ================= HANDLE FORM ================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: ["hommes", "femmes", "jeunes", "enfants", "connectes", "nouveauxVenus", "nouveauxConvertis"].includes(name)
-        ? Number(value) || 0
-        : value
-    }));
+    const numericFields = ["hommes","femmes","jeunes","enfants","connectes","nouveauxVenus","nouveauxConvertis"];
+    setFormData(prev => ({ ...prev, [name]: numericFields.includes(name) ? Number(value) || 0 : value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("⏳ Enregistrement en cours...");
+    setMessage("⏳ Enregistrement...");
+    let typeTempsFinal = formData.typeTemps === "AUTRE" ? formData.nouveauTemps.trim() : formData.typeTemps;
+    if (!typeTempsFinal) { setMessage("❌ Nom du temps requis."); return; }
 
-    if (!superviseur.eglise_id) {
-      setMessage("❌ Les informations de l'église ne sont pas encore chargées.");
-      return;
-    }
-
-    let typeTempsFinal =
-      formData.typeTemps === "AUTRE" ? formData.nouveauTemps.trim() : formData.typeTemps;
-
-    if (!typeTempsFinal) {
-      setMessage("❌ Le nom du temps ne peut pas être vide.");
-      return;
-    }
-
-    if (formData.enregistrerTemps && formData.typeTemps === "AUTRE" && !tempsOptions.includes(typeTempsFinal)) {
-      setTempsOptions(prev => [...prev, typeTempsFinal]);
-      try {
-        const { error } = await supabase.from("attendance").insert([{
-          typeTemps: typeTempsFinal,
-          eglise_id: superviseur.eglise_id          
-        }]);
-        if (error) throw error;
-      } catch (err) {
-        console.error("Erreur ajout nouveau temps :", err.message);
-        setMessage("❌ Impossible d'ajouter le nouveau temps.");
-        return;
-      }
-    }
-
-    const rapportAvecEglise = {
-      ...formData,
-      typeTemps: typeTempsFinal,
-      eglise_id: superviseur.eglise_id,      
-      hommes: Number(formData.hommes) || 0,
-      femmes: Number(formData.femmes) || 0,
-      jeunes: Number(formData.jeunes) || 0,
-      enfants: Number(formData.enfants) || 0,
-      connectes: Number(formData.connectes) || 0,
-      nouveauxVenus: Number(formData.nouveauxVenus) || 0,
+    const payload = {
+      date: formData.date, typeTemps: typeTempsFinal, eglise_id: egliseId,
+      hommes: Number(formData.hommes) || 0, femmes: Number(formData.femmes) || 0,
+      jeunes: Number(formData.jeunes) || 0, enfants: Number(formData.enfants) || 0,
+      connectes: Number(formData.connectes) || 0, nouveauxVenus: Number(formData.nouveauxVenus) || 0,
       nouveauxConvertis: Number(formData.nouveauxConvertis) || 0,
-      numero_culte: Number(formData.numero_culte) || 1
+      ...(formData.numero_culte ? { numero_culte: Number(formData.numero_culte) } : {}),
     };
 
-    const rapportClean = Object.fromEntries(
-      Object.entries(rapportAvecEglise).filter(([_, v]) => v !== "" && v !== null)
-    );
-
-    console.log("Insert vers Supabase :", rapportClean);
-
     try {
-      if (editId) {
-        const { error } = await supabase.from("attendance").update(rapportClean).eq("id", editId);
+      if (editData) {
+        const { error } = await supabase.from("attendance").update(payload).eq("id", editData.id);
         if (error) throw error;
         setMessage("✅ Rapport mis à jour !");
       } else {
-        const { error } = await supabase.from("attendance").insert([rapportClean]);
+        const { error } = await supabase.from("attendance").insert([payload]);
         if (error) throw error;
+        if (formData.enregistrerTemps && formData.typeTemps === "AUTRE" && !tempsOptions.includes(typeTempsFinal)) {
+          setTempsOptions(prev => [...prev, typeTempsFinal]);
+        }
         setMessage("✅ Rapport ajouté !");
       }
-
+      setFormData({ date:"", typeTemps:"", nouveauTemps:"", enregistrerTemps:false, numero_culte:"", hommes:0, femmes:0, jeunes:0, enfants:0, connectes:0, nouveauxVenus:0, nouveauxConvertis:0 });
       setTimeout(() => setMessage(""), 3000);
-      setFormData({
-        date: "",
-        typeTemps: "",
-        nouveauTemps: "",
-        enregistrerTemps: false,
-        numero_culte: 1,
-        hommes: 0,
-        femmes: 0,
-        jeunes: 0,
-        enfants: 0,
-        connectes: 0,
-        nouveauxVenus: 0,
-        nouveauxConvertis: 0,
-      });
-      setEditId(null);
-      fetchRapports();
+      onSaved();
     } catch (err) {
-      console.error(err);
       setMessage("❌ " + err.message);
     }
   };
 
-  const handleEdit = (r) => {
-    setEditId(r.id);
-    setFormData({
-      date: r.date,
-      typeTemps: r.typeTemps === "Culte" ? "Culte" : "AUTRE",
-      nouveauTemps: r.typeTemps !== "Culte" ? r.typeTemps : "",
-      numero_culte: r.numero_culte || 1,
-      hommes: r.hommes,
-      femmes: r.femmes,
-      jeunes: r.jeunes,
-      enfants: r.enfants,
-      connectes: r.connectes,
-      nouveauxVenus: r.nouveauxVenus,
-      nouveauxConvertis: r.nouveauxConvertis,
-      enregistrerTemps: false,
-    });
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  const fields = [
+    { name: "hommes", label: "Hommes", color: "text-blue-300" },
+    { name: "femmes", label: "Femmes", color: "text-pink-300" },
+    { name: "jeunes", label: "Jeunes", color: "text-amber-300" },
+    { name: "enfants", label: "Enfants", color: "text-white/70" },
+    { name: "connectes", label: "Connectés", color: "text-white/70" },
+    { name: "nouveauxVenus", label: "Nouveaux venus", color: "text-blue-300" },
+    { name: "nouveauxConvertis", label: "Nouveaux convertis", color: "text-emerald-300" },
+  ];
 
-  /* ================= FETCH RAPPORTS ================= */
-  const fetchRapports = async () => {
-    if (!superviseur.eglise_id) return;
-    setLoading(true);
-    let query = supabase.from("attendance").select("*")
-      .eq("eglise_id", superviseur.eglise_id);
-    if (dateDebut) query = query.gte("date", dateDebut);
-    if (dateFin) query = query.lte("date", dateFin);
-    query = query.order("date", { ascending: true }).order("numero_culte", { ascending: true });
-    const { data, error } = await query;
-    if (error) console.error(error);
-    else setReports(data || []);
-    setLoading(false);
-    setShowTable(true);
-  };
-
-  /* ================= UTIL ================= */
-  const getMonthNameFR = (monthIndex) => {
-    const months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
-    return months[monthIndex] || "";
-  };
-
-  const formatDateFR = (d) => {
-    const dateObj = new Date(d);
-    return `${String(dateObj.getDate()).padStart(2, "0")}/${String(dateObj.getMonth() + 1).padStart(2, "0")}/${dateObj.getFullYear()}`;
-  };
-
-  const groupByMonth = (reports) => {
-    const map = {};
-    reports.forEach(r => {
-      const d = new Date(r.date);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (!map[key]) map[key] = [];
-      map[key].push(r);
-    });
-    return map;
-  };
-
-  const toggleMonth = (key) => setExpandedMonths(prev => ({ ...prev, [key]: !prev[key] }));
-  const groupedReports = groupByMonth(reports);
-  const borderColors = ["border-red-500", "border-green-500", "border-blue-500", "border-yellow-500", "border-purple-500", "border-pink-500", "border-indigo-500"];
-
-  const filteredReports = filterType
-    ? reports.filter(r => r.typeTemps === filterType)
-    : reports;
-
-  useEffect(() => {
-    if (reports.length > 0) {
-      const types = [
-        ...new Set(
-          reports
-            .map(r => r.typeTemps?.trim())
-            .filter(t => t && t !== "")
-        )
-      ];
-      setAvailableTypes(types);
-    }
-  }, [reports]);
-
-  /* ================= RENDER ================= */
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
-      <HeaderPages />
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Rapport de <span className="text-emerald-300">Présences & Statistiques</span></h1>
-
-      <div className="max-w-3xl w-full mb-6 text-center">
-        <p className="italic text-base text-white/90">
-          Suivez et gérez facilement les <span className="text-blue-300 font-semibold">présences </span>
-          de tous les rassemblements spirituels.
-          Enregistrez l'ensemble des <span className="text-blue-300 font-semibold">participants</span>, y compris les
-          <span className="text-blue-300 font-semibold"> nouveaux venus</span> et les
-          <span className="text-blue-300 font-semibold"> convertis</span>, et générez des
-          <span className="text-blue-300 font-semibold"> rapports clairs</span> pour mieux accompagner chaque membre.
-        </p>
+    <div className="bg-white/10 rounded-2xl p-5 flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <p className="text-white font-semibold">{editData ? "✏️ Modifier le rapport" : "➕ Nouveau rapport"}</p>
+        {editData && (
+          <button onClick={onCancelEdit} className="text-xs text-white/40 hover:text-white/70 transition">Annuler</button>
+        )}
       </div>
 
-      {/* FORMULAIRE */}
-      <div ref={formRef} className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex flex-col">
-            <label className="text-white mb-1">Date du culte</label>
-            <input type="date" name="date" value={formData.date} onChange={handleChange} className="input w-full" required />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {/* Date */}
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-white/50">Date du culte</label>
+          <input type="date" name="date" value={formData.date} onChange={handleChange} required
+            className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40" />
+        </div>
+
+        {/* Type de temps */}
+        <div className="flex flex-col gap-1" ref={selectRef}>
+          <label className="text-xs text-white/50">Type de temps</label>
+          <div onClick={() => setDropdownOpen(v => !v)}
+            className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm flex justify-between items-center cursor-pointer hover:bg-white/15 transition">
+            <span className={formData.typeTemps ? "text-white" : "text-white/30"}>
+              {formData.typeTemps || "Sélectionner un temps"}
+            </span>
+            <span className="text-white/30">{dropdownOpen ? "▲" : "▼"}</span>
           </div>
-
-          <div className="flex flex-col relative w-full md:w-64" ref={selectRef}>
-            <label className="text-white mb-1">Type du temps</label>
-            <div
-              className="input h-12 flex items-center justify-between px-3 cursor-pointer text-black bg-white"
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-            >
-              {formData.typeTemps || "-- Sélectionner un temps --"} <span>▼</span>
-            </div>
-
-            {dropdownOpen && (
-              <div className="absolute top-full left-0 z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white border rounded shadow-lg">
-                {tempsOptions.map((t) => (
-                  <div
-                    key={t}
-                    className="flex justify-between items-center px-3 py-2 hover:bg-gray-200 cursor-pointer text-black"
-                    onClick={() => {
-                      setFormData(prev => ({ ...prev, typeTemps: t }));
-                      setDropdownOpen(false);
-                    }}
-                  >
+          {dropdownOpen && (
+            <div className="relative z-10">
+              <div className="absolute top-1 left-0 w-full bg-[#2a2d80] border border-white/20 rounded-xl shadow-2xl overflow-hidden">
+                {tempsOptions.map(t => (
+                  <div key={t} onClick={() => { setFormData(p => ({ ...p, typeTemps: t })); setDropdownOpen(false); }}
+                    className="px-4 py-2.5 text-sm text-white hover:bg-white/10 cursor-pointer transition flex justify-between items-center">
                     <span>{t}</span>
-                    {t !== "Culte" && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleRenameTemps(t, prompt("Nouveau nom ?", t)); }}
-                          className="text-blue-500"
-                        >✏️</button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDeleteTemps(t); }}
-                          className="text-red-500"
-                        >🗑️</button>
-                      </div>
-                    )}
                   </div>
                 ))}
-                <div
-                  className="px-3 py-2 text-[#333699] font-semibold hover:bg-gray-200 cursor-pointer"
-                  onClick={() => setFormData(prev => ({ ...prev, typeTemps: "AUTRE", nouveauTemps: "" }))}
-                >
+                <div onClick={() => { setFormData(p => ({ ...p, typeTemps: "AUTRE", nouveauTemps: "" })); setDropdownOpen(false); }}
+                  className="px-4 py-2.5 text-sm text-blue-300 hover:bg-white/10 cursor-pointer transition border-t border-white/10">
                   + Ajouter un temps
                 </div>
               </div>
-            )}
-          </div>
-
-          {formData.typeTemps === "AUTRE" && (
-            <>
-              <div className="flex flex-col col-span-1 md:col-span-2">
-                <label className="text-white mb-1">Nom du temps</label>
-                <input
-                  type="text"
-                  name="nouveauTemps"
-                  value={formData.nouveauTemps}
-                  onChange={(e) => {
-                    const value = e.target.value.slice(0, 30);
-                    setFormData(prev => ({ ...prev, nouveauTemps: value }));
-                  }}
-                  className="input w-full"
-                  placeholder="Ex: ADP"
-                  maxLength={30}
-                />
-              </div>
-              <div className="flex items-center gap-2 col-span-1 md:col-span-2">
-                <input
-                  type="checkbox"
-                  name="enregistrerTemps"
-                  checked={formData.enregistrerTemps}
-                  onChange={e => setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))}
-                />
-                <label className="text-amber-300 text-sm">Enregistrer ce temps pour le futur</label>
-              </div>
-            </>
-          )}
-
-          {formData.typeTemps === "Culte" && (
-            <div className="flex flex-col w-full">
-              <label className="text-white mb-1">Numéro de culte</label>
-              <select name="numero_culte" value={formData.numero_culte} onChange={handleChange} className="input w-full appearance-none pr-8 cursor-pointer">
-                <option value="">--- Sélectionner un numéro ---</option>
-                {[1, 2, 3, 4, 5, 6, 7].map(n => <option key={n} value={n}>{n} {n === 1 ? "er" : "ème"} Culte</option>)}
-              </select>
             </div>
           )}
+        </div>
 
-          {["hommes", "femmes", "jeunes", "enfants", "connectes", "nouveauxVenus", "nouveauxConvertis"].map(field => (
-            <div className="flex flex-col w-full" key={field}>
-              <label className="text-white mb-1">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-              <input
-                type="number"
-                name={field}
-                value={formData[field] || 0}
-                onChange={handleChange}
-                className="input w-full"
-              />
+        {formData.typeTemps === "AUTRE" && (
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-white/50">Nom du temps</label>
+              <input type="text" name="nouveauTemps" value={formData.nouveauTemps}
+                onChange={e => setFormData(p => ({ ...p, nouveauTemps: e.target.value.slice(0, 30) }))}
+                placeholder="Ex: ADP" maxLength={30}
+                className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40 placeholder:text-white/20" />
+            </div>
+            <label className="flex items-center gap-2 text-xs text-amber-300 cursor-pointer">
+              <input type="checkbox" checked={formData.enregistrerTemps}
+                onChange={e => setFormData(p => ({ ...p, enregistrerTemps: e.target.checked }))} />
+              Enregistrer ce temps pour le futur
+            </label>
+          </div>
+        )}
+
+        {formData.typeTemps === "Culte" && (
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-white/50">Numéro de culte</label>
+            <select name="numero_culte" value={formData.numero_culte} onChange={handleChange}
+              className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
+              <option value="" className="bg-[#2a2d80]">--- Sélectionner ---</option>
+              {[1,2,3,4,5,6,7].map(n => <option key={n} value={n} className="bg-[#2a2d80]">{n}{n===1?"er":"ème"} Culte</option>)}
+            </select>
+          </div>
+        )}
+
+        {/* Champs numériques */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {fields.map(({ name, label, color }) => (
+            <div key={name} className="flex flex-col gap-1">
+              <label className={`text-xs ${color}`}>{label}</label>
+              <input type="number" name={name} value={formData[name]} onChange={handleChange} min={0}
+                className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40 text-center" />
             </div>
           ))}
+        </div>
 
-          <button type="submit" className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all">
-            {editId ? "Mettre à jour" : "Ajouter le rapport"}
-          </button>
-        </form>
-        {message && <p className="mt-4 text-center text-white font-medium">{message}</p>}
-      </div>
+        <button type="submit"
+          className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm hover:from-blue-600 hover:to-indigo-700 transition-all active:scale-95">
+          {editData ? "Mettre à jour" : "Ajouter le rapport"}
+        </button>
 
-      {/* FILTRE DATE */}
-      <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl p-4 md:p-6 mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white">
-        <p className="text-base text-red-400 font-semibold text-center mb-4">
-          Choisissez les paramètres pour générer le rapport
-        </p>
-        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
-          <div className="flex flex-col w-full md:w-auto">
-            <label className="text-base text-center mb-1">Date de début</label>
-            <input
-              type="date"
-              value={dateDebut}
-              onChange={e => setDateDebut(e.target.value)}
-              className="w-full h-10 bg-white/10 border border-white/30 rounded-lg px-3 text-white"
-            />
+        {message && <p className="text-center text-sm font-medium text-white/80">{message}</p>}
+      </form>
+    </div>
+  );
+}
+
+// ─── PAGE PRINCIPALE ───────────────────────────────────────────
+function Attendance() {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [egliseId, setEgliseId] = useState(null);
+  const [tempsOptions, setTempsOptions] = useState(["Culte"]);
+  const [filtrePeriode, setFiltrePeriode] = useState("30");
+  const [filtreType, setFiltreType] = useState("");
+  const [onglet, setOnglet] = useState("kpi");
+  const [editData, setEditData] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const formRef = useRef(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("profiles").select("eglise_id").eq("id", user.id).single();
+      if (data) setEgliseId(data.eglise_id);
+    };
+    loadUser();
+  }, []);
+
+  useEffect(() => {
+    if (!egliseId) return;
+    const loadTemps = async () => {
+      const { data } = await supabase.from("attendance").select("typeTemps").eq("eglise_id", egliseId).not("typeTemps", "is", null);
+      if (data) {
+        const unique = ["Culte", ...new Set(data.map(t => t.typeTemps?.trim()).filter(t => t && t !== "Culte"))];
+        setTempsOptions(unique);
+      }
+    };
+    loadTemps();
+  }, [egliseId]);
+
+  const fetchReports = async () => {
+    if (!egliseId) return;
+    setLoading(true);
+    const depuis = new Date();
+    depuis.setDate(depuis.getDate() - Number(filtrePeriode));
+    const depuisStr = depuis.toISOString().split("T")[0];
+    let query = supabase.from("attendance").select("*").eq("eglise_id", egliseId)
+      .gte("date", depuisStr).order("date", { ascending: false });
+    if (filtreType) query = query.eq("typeTemps", filtreType);
+    const { data } = await query;
+    setReports(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchReports(); }, [egliseId, filtrePeriode, filtreType]);
+
+  const handleDelete = async (id) => {
+    if (!confirm("Supprimer ce rapport ?")) return;
+    await supabase.from("attendance").delete().eq("id", id);
+    fetchReports();
+  };
+
+  const handleEdit = (r) => {
+    setEditData(r);
+    setShowForm(true);
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+  };
+
+  const typesDistincts = [...new Set(reports.map(s => s.typeTemps).filter(Boolean))];
+
+  const onglets = [
+    { key: "kpi", label: "Vue d'ensemble" },
+    { key: "sessions", label: "Par session" },
+    { key: "saisie", label: "Saisie" },
+  ];
+
+  return (
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+      <HeaderPages />
+
+      <div className="w-full max-w-2xl mt-6 flex flex-col gap-5 mb-10">
+
+        {/* En-tête */}
+        <div>
+          <h1 className="text-2xl font-bold text-white">Rapport de présences & statistiques</h1>
+          <p className="text-white/50 text-sm mt-0.5">Suivi des rassemblements — chiffres & tendances</p>
+        </div>
+
+        {/* Filtres */}
+        <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-white/50 flex-shrink-0">Période :</span>
+            {[{ label: "7 j", val: "7" }, { label: "30 j", val: "30" }, { label: "90 j", val: "90" }, { label: "6 mois", val: "180" }].map(p => (
+              <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
+                {p.label}
+              </button>
+            ))}
           </div>
-          <div className="flex flex-col w-full md:w-auto">
-            <label className="text-base text-center mb-1">Date de fin</label>
-            <input
-              type="date"
-              value={dateFin}
-              onChange={e => setDateFin(e.target.value)}
-              className="w-full h-10 bg-white/10 border border-white/30 rounded-lg px-3 text-white"
-            />
-          </div>
-          <div className="flex flex-col w-full md:w-auto">
-            <label className="text-base text-center mb-1 opacity-0">btn</label>
-            <button
-              onClick={fetchRapports}
-              className="w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
-            >
-              {loading ? "Chargement..." : "Générer le rapport"}
-            </button>
-          </div>
-          {availableTypes.length > 0 && (
-            <div className="flex flex-col w-full md:w-auto">
-              <label className="text-base text-center mb-1">Type de temps</label>
-              <select
-                value={filterType}
-                onChange={e => setFilterType(e.target.value)}
-                className="w-full h-10 bg-white/10 border border-white/30 rounded-lg px-3 text-white text-center"
-              >
-                <option value="" className="text-black">Tous</option>
-                {availableTypes.map(t => (
-                  <option key={t} value={t} className="text-black">{t}</option>
-                ))}
-              </select>
+          {typesDistincts.length > 1 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-white/50 flex-shrink-0">Type :</span>
+              <button onClick={() => setFiltreType("")}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${!filtreType ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
+                Tous
+              </button>
+              {typesDistincts.map(t => (
+                <button key={t} onClick={() => setFiltreType(t)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtreType === t ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
+                  {t}
+                </button>
+              ))}
             </div>
           )}
         </div>
-      </div>
 
-      {/* TABLEAU / CARDS DESKTOP + MOBILE */}
-      {showTable && (
-        <div className="w-full px-4 mt-6 mb-6">
+        {/* Onglets */}
+        <div className="flex gap-1 bg-white/10 rounded-xl p-1">
+          {onglets.map(o => (
+            <button key={o.key} onClick={() => setOnglet(o.key)}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              {o.label}
+            </button>
+          ))}
+        </div>
 
-          {/* ================= DESKTOP ================= */}
-          <div className="hidden md:block overflow-x-auto">
-            <div className="w-max space-y-2">
-
-              {/* HEADER TABLE */}
-              <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
-                <div className="min-w-[220px]">Type / Date</div>
-                <div className="min-w-[120px] text-center">Hommes</div>
-                <div className="min-w-[120px] text-center">Femmes</div>
-                <div className="min-w-[120px] text-center">Jeunes</div>
-                <div className="min-w-[130px] text-center">Total</div>
-                <div className="min-w-[120px] text-center">Enfants</div>
-                <div className="min-w-[140px] text-center">Connectés</div>
-                <div className="min-w-[150px] text-center">Nouveaux venus</div>
-                <div className="min-w-[180px] text-center">Nouveaux convertis</div>
-                <div className="min-w-[180px] text-center">Total Global</div>
-                <div className="min-w-[140px] text-center">Actions</div>
+        {/* Contenu */}
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+          </div>
+        ) : onglet === "saisie" ? (
+          <div ref={formRef}>
+            <FormulaireSaisie
+              egliseId={egliseId}
+              tempsOptions={tempsOptions}
+              setTempsOptions={setTempsOptions}
+              onSaved={() => { fetchReports(); setEditData(null); }}
+              editData={editData}
+              onCancelEdit={() => setEditData(null)}
+            />
+          </div>
+        ) : reports.length === 0 ? (
+          <div className="bg-white/10 rounded-2xl p-8 text-center flex flex-col gap-3">
+            <p className="text-white/40 text-sm">Aucun rapport sur cette période</p>
+            <button onClick={() => setOnglet("saisie")}
+              className="mx-auto px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition">
+              ➕ Ajouter un rapport
+            </button>
+          </div>
+        ) : onglet === "kpi" ? (
+          <div className="flex flex-col gap-7">
+            <div>
+              <SectionTitle>Vue d'ensemble</SectionTitle>
+              <BlocKpiGlobaux reports={reports} />
+            </div>
+            <div>
+              <SectionTitle>Répartition H / F / J</SectionTitle>
+              <div className="bg-white/10 rounded-2xl px-4 py-4">
+                <BlocGenre reports={reports} />
               </div>
-
-              {Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj]) => {
-                const [year, monthIndex] = monthKey.split("-").map(Number);
-                const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-                const monthExpanded = expandedMonths[monthKey] || false;
-                const monthTotals = calculateMonthTotals(typesObj);
-                const totalGlobalMonth = (monthTotals.total || 0) + (monthTotals.enfants || 0) + (monthTotals.connectes || 0);
-
-                return (
-                  <div key={monthKey} className="space-y-1">
-                    {/* MOIS */}
-                    <div
-                      className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-orange-500 cursor-pointer"
-                      onClick={() => toggleMonth(monthKey)}
-                    >
-                      <div className="min-w-[220px] text-white font-semibold flex items-center gap-2">
-                        {monthExpanded ? "➖" : "➕"} {monthLabel}
-                      </div>
-                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotals.hommes}</div>
-                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotals.femmes}</div>
-                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotals.jeunes}</div>
-                      <div className="min-w-[130px] text-center text-orange-400 font-semibold">{monthTotals.total}</div>
-                      <div className="min-w-[120px] text-center text-orange-400 font-semibold">{monthTotals.enfants}</div>
-                      <div className="min-w-[140px] text-center text-orange-400 font-semibold">{monthTotals.connectes}</div>
-                      <div className="min-w-[150px] text-center text-orange-400 font-semibold">{monthTotals.nouveauxVenus}</div>
-                      <div className="min-w-[180px] text-center text-orange-400 font-semibold">{monthTotals.nouveauxConvertis}</div>
-                      {/* ✅ FIX 3 : min-w aligné avec le header (180px) */}
-                      <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGlobalMonth}</div>
-                      <div className="min-w-[140px]"></div>
-                    </div>
-
-                    {/* TYPES PAR MOIS */}
-                    {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows], typeIdx) => {
-                      const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
-                      const borderColorClass = borderColors[typeIdx % borderColors.length];
-                      const typeTotals = calculateTypeTotals(rows);
-                      // ✅ FIX 4 : numeroCulte calculé ici, dans le bon scope
-                      const numeroCulte = rows[0]?.numero_culte || "-";
-
-                      const totalGlobal =
-                        typeTotals.total +
-                        typeTotals.enfants +
-                        typeTotals.connectes +
-                        typeTotals.nouveauxVenus +
-                        typeTotals.nouveauxConvertis;
-
-                      return (
-                        <div key={typeTemps} className="space-y-1">
-                          {/* HEADER TYPE */}
-                          <div
-                            className={`flex items-center px-4 py-2 rounded-lg bg-white/5 cursor-pointer border-l-4 ${borderColorClass}`}
-                            onClick={() => setTypeCollapsedDesktop(prev => ({
-                              ...prev,
-                              [typeTemps]: !prev[typeTemps]
-                            }))}
-                          >
-                            <div className="min-w-[220px] max-w-[220px] text-white">
-                              <div className="ml-4 flex items-center gap-2 whitespace-pre-line break-words pl-2">
-                                <span>{typeExpanded ? "➖" : "➕"}</span>
-                                <span>{splitTypeName(typeTemps, 15)}</span>                                
-                              </div>
-                            </div>
-                            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.hommes}</div>
-                            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.femmes}</div>
-                            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.jeunes}</div>
-                            <div className="min-w-[130px] text-center text-orange-400 font-semibold">{typeTotals.total}</div>
-                            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{typeTotals.enfants}</div>
-                            <div className="min-w-[140px] text-center text-orange-400 font-semibold">{typeTotals.connectes}</div>
-                            <div className="min-w-[150px] text-center text-orange-400 font-semibold">{typeTotals.nouveauxVenus}</div>
-                            <div className="min-w-[180px] text-center text-orange-400 font-semibold">{typeTotals.nouveauxConvertis}</div>
-                            <div className="min-w-[180px] text-center text-orange-400 font-semibold">{totalGlobal}</div>
-                            <div className="min-w-[140px]"></div>
-                          </div>
-
-                          {/* LIGNES (DATE) */}
-                          {typeExpanded && rows.map(r => {
-                            const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
-                            return (
-                              <div
-                                key={r.id}
-                                className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColorClass} cursor-pointer ml-12`}
-                              >
-                                <div className="min-w-[220px] text-white">{formatDateFR(r.date)}</div>
-                                <div className="min-w-[120px] text-center text-white -ml-12">{r.hommes}</div>
-                                <div className="min-w-[120px] text-center text-white">{r.femmes}</div>
-                                <div className="min-w-[120px] text-center text-white">{r.jeunes}</div>
-                                <div className="min-w-[130px] text-center text-white">{total}</div>
-                                <div className="min-w-[120px] text-center text-white">{r.enfants}</div>
-                                <div className="min-w-[140px] text-center text-white">{r.connectes}</div>
-                                <div className="min-w-[150px] text-center text-white">{r.nouveauxVenus}</div>
-                                <div className="min-w-[180px] text-center text-white">{r.nouveauxConvertis}</div>
-                                <div className="min-w-[180px]"></div>
-                                <div className="min-w-[140px] flex justify-center gap-2">
-                                  <button onClick={() => handleEdit(r)} className="text-blue-400 hover:text-blue-500">✏️</button>
-                                  {/* ✅ FIX 5 : handleDeleteReport (par id) au lieu de handleDeleteTemps */}
-                                  <button onClick={() => handleDeleteReport(r.id)} className="text-red-400 hover:text-red-500">🗑️</button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
+            </div>
+            <div>
+              <SectionTitle>Évangélisation — nouveaux venus & convertis</SectionTitle>
+              <div className="bg-white/10 rounded-2xl px-4 py-4">
+                <BlocEvangelisation reports={reports} />
+              </div>
+            </div>
+            <div>
+              <SectionTitle>Fréquentation par type de temps</SectionTitle>
+              <BlocParType reports={reports} />
+            </div>
+            <div>
+              <SectionTitle>Tendance hebdomadaire (présents H+F+J)</SectionTitle>
+              <div className="bg-white/10 rounded-2xl px-4 py-4">
+                <BlocTendance reports={reports} />
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <button onClick={() => setOnglet("saisie")}
+                className="px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition active:scale-95">
+                ➕ Ajouter / modifier un rapport
+              </button>
             </div>
           </div>
 
-          {/* ================= MOBILE ================= */}
-          <div className="md:hidden space-y-4">
-            {Object.entries(groupByMonthAndType(filteredReports)).map(([monthKey, typesObj]) => {
-              const [year, monthIndex] = monthKey.split("-").map(Number);
-              const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-              const monthExpanded = expandedMonths[monthKey] || false;
-
-              return (
-                <div key={monthKey} className="space-y-2">
-                  {/* MOIS */}
-                  <div
-                    className="bg-white/10 rounded-xl p-3 text-white font-bold flex justify-between items-center cursor-pointer border-l-4 border-red-500"
-                    onClick={() => toggleMonth(monthKey)}
-                  >
-                    <span>{monthExpanded ? "➖" : "➕"} {monthLabel}</span>
-                  </div>
-
-                  {/* TYPES */}
-                  {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows], typeIdx) => {
-                    const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
-                    const borderColorClass = borderColors[typeIdx % borderColors.length];
-                    const typeTotals = calculateTypeTotals(rows);
-                    const totalHFJ = typeTotals.total;
-                    const totalGlobal = typeTotals.total + typeTotals.enfants + typeTotals.connectes;
-
-                    const totalH = rows.reduce((acc, r) => acc + Number(r.hommes || 0), 0);
-                    const totalF = rows.reduce((acc, r) => acc + Number(r.femmes || 0), 0);
-                    // ✅ FIX 6 : totalJ défini
-                    const totalJ = rows.reduce((acc, r) => acc + Number(r.jeunes || 0), 0);
-                    // ✅ FIX 7 : numeroCulte calculé ici dans le bon scope
-                    const numeroCulte = rows[0]?.numero_culte || "-";
-
-                    return (
-                      <div key={typeTemps} className="ml-3 space-y-2">
-                        {/* TYPE */}
-                        <div
-                          className={`bg-white/5 rounded-lg p-3 text-orange-400 font-semibold flex justify-between items-center cursor-pointer border-l-4 ${borderColorClass}`}
-                          onClick={() =>
-                            setTypeCollapsedDesktop((prev) => ({
-                              ...prev,
-                              [typeTemps]: !prev[typeTemps],
-                            }))
-                          }
-                        >
-                          <div className="text-white font-semibold flex items-center gap-2">
-                            <span>{typeExpanded ? "➖" : "➕"}</span>
-                            <span>{typeTemps}</span>                            
-                          </div>
-
-                          <div className="flex flex-col items-end text-sm leading-tight">
-                            <div className="flex gap-3 text-amber-300 font-semibold">
-                              <span>H: {totalH}</span>
-                              <span>F: {totalF}</span>
-                              <span>J: {totalJ}</span>
-                              <span>Total: {totalHFJ}</span>
-                            </div>
-                            <div className="text-orange-400 font-semibold">
-                              Total Global: {totalGlobal}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* DATES */}
-                        {typeExpanded && rows.map(r => (
-                          <div
-                            key={r.id}
-                            className={`ml-4 bg-white/10 rounded-lg p-3 text-white border-l-4 ${borderColorClass}`}
-                          >
-                            <p className="text-amber-300 text-right">{formatDateFR(r.date)}</p>
-                            <p className="mt-2">Hommes: {r.hommes} | Femmes: {r.femmes} | Jeunes: {r.jeunes}</p>
-                            <p className="font-semibold text-orange-400">Total: {Number(r.hommes) + Number(r.femmes) + Number(r.jeunes)}</p>
-                            <p className="mt-2">Enfants: {r.enfants} | Connectés: {r.connectes}</p>
-                            <p className="mt-1">Nouveaux Venus: {r.nouveauxVenus} | Nouveaux Convertis: {r.nouveauxConvertis}</p>
-                            <p className="font-semibold text-orange-400">Total Global: {Number(r.hommes) + Number(r.femmes) + Number(r.jeunes) + Number(r.enfants) + Number(r.connectes)}</p>
-
-                            <div className="flex justify-center gap-4 mt-3">
-                              <button
-                                onClick={() => handleEdit(r)}
-                                className="text-blue-400 hover:text-blue-500 text-lg"
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                onClick={() => handleDeleteReport(r.id)}
-                                className="text-red-600 hover:text-red-700 text-lg"
-                              >
-                                🗑️
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
+        ) : (
+          /* Sessions */
+          <div className="flex flex-col gap-3">
+            <div className="flex justify-end">
+              <button onClick={() => setOnglet("saisie")}
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition">
+                ➕ Nouveau rapport
+              </button>
+            </div>
+            {reports.map(r => (
+              <CarteSession key={r.id} r={r} onEdit={handleEdit} onDelete={handleDelete} />
+            ))}
           </div>
+        )}
 
-        </div>
-      )}
+      </div>
 
       <Footer />
-
-      <style jsx>{`
-        .input {
-          border: 1px solid #ccc;
-          padding: 12px 14px;
-          border-radius: 12px;
-          background: white;
-          color: black;
-          font-size: 16px;
-          height: 48px;
-          -webkit-appearance: none;
-          -moz-appearance: none;
-          appearance: none;
-          cursor: pointer;
-        }
-
-        select.input option[value='AUTRE'] {
-          color: #333699;
-        }
-
-        select.input option:hover {
-          background: #e0e0e0;
-          color: black;
-        }
-
-        select.input option[value='AUTRE']:hover {
-          background: #333699;
-          color: white;
-        }
-      `}</style>
     </div>
   );
 }

@@ -1,187 +1,438 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import supabase from "../../lib/supabaseClient"; // default export
+import supabase from "../../lib/supabaseClient";
 import EditEvanRapportLine from "../../components/EditEvanRapportLine";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import { useRouter } from "next/navigation";
 
-export default function RapportEvangelisation() {
-  const formRef = useRef(null);
-  const [rapports, setRapports] = useState([]);
-  const [filteredEvangelises, setFilteredEvangelises] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [selectedRapport, setSelectedRapport] = useState(null);
-  const [egliseId, setEgliseId] = useState(null);  
-  const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
-  const [message, setMessage] = useState("");
+// ─── HELPERS ──────────────────────────────────────────────────
+function formatDateFr(dateStr) {
+  return new Date(dateStr).toLocaleDateString("fr-FR", {
+    day: "2-digit", month: "short", year: "numeric",
+  });
+}
+function formatDateCourt(dateStr) {
+  return new Date(dateStr).toLocaleDateString("fr-FR", {
+    day: "2-digit", month: "short",
+  });
+}
+function getMonthNameFR(monthIndex) {
+  return ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"][monthIndex] || "";
+}
+
+// ─── UI ATOMS ─────────────────────────────────────────────────
+function SectionTitle({ children }) {
+  return <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-3">{children}</p>;
+}
+function KpiCard({ label, value, sub, accent, onClick }) {
+  const c = {
+    green: "text-emerald-400", red: "text-red-400", amber: "text-amber-400",
+    white: "text-white", blue: "text-blue-300", pink: "text-pink-300",
+    purple: "text-purple-300", teal: "text-teal-300", orange: "text-orange-300", gray: "text-white/40",
+  };
+  return (
+    <div onClick={onClick}
+      className={`bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1 ${onClick ? "cursor-pointer hover:bg-white/15 active:scale-95 transition" : ""}`}>
+      <p className="text-xs text-white/50">{label}</p>
+      <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
+      {sub && <p className="text-[11px] text-white/40 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+function Badge({ children, color }) {
+  const m = {
+    green: "bg-emerald-900/60 text-emerald-300", red: "bg-red-900/60 text-red-300",
+    amber: "bg-amber-900/60 text-amber-300", blue: "bg-blue-900/60 text-blue-300",
+    purple: "bg-purple-900/60 text-purple-300", gray: "bg-white/10 text-white/50",
+    pink: "bg-pink-900/60 text-pink-300", teal: "bg-teal-900/60 text-teal-300",
+    orange: "bg-orange-900/60 text-orange-300",
+  };
+  return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${m[color] || m.gray}`}>{children}</span>;
+}
+function BarreProgression({ pct, color }) {
+  const col = color || (pct >= 70 ? "bg-emerald-400" : pct >= 40 ? "bg-amber-400" : "bg-red-400");
+  return (
+    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+      <div className={`h-full rounded-full transition-all ${col}`} style={{ width: `${Math.min(pct || 0, 100)}%` }} />
+    </div>
+  );
+}
+
+// ─── CALCUL TOTAUX ─────────────────────────────────────────────
+function getTotals(reports) {
+  let hommes = 0, femmes = 0, priere = 0, nouveau = 0, reconciliation = 0, moissonneurs = 0;
+  (reports || []).forEach(r => {
+    hommes += Number(r.hommes) || 0;
+    femmes += Number(r.femmes) || 0;
+    priere += Number(r.priere) || 0;
+    nouveau += Number(r.nouveau_converti) || 0;
+    reconciliation += Number(r.reconciliation) || 0;
+    moissonneurs += Number(r.moissonneurs) || 0;
+  });
+  return { hommes, femmes, total: hommes + femmes, priere, nouveau, reconciliation, moissonneurs };
+}
+
+// ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
+function BlocKpiGlobaux({ filteredEvangelises, filteredSuivis, rapports, onKpiClick, onCelluleClick, onConseillerClick }) {
+  const totalEvangelises = filteredEvangelises.length;
+  const totalEnvoyes = filteredEvangelises.filter(e => e.status_suivi === "Envoyé").length;
+  const totalNonEnvoyes = filteredEvangelises.filter(e => e.status_suivi !== "Envoyé").length;
+  const totalConvertis = filteredEvangelises.filter(e => e.priere_salut === true).length;
+  const normalize = (str) => (str ? str.trim() : "");
+  const totalIntegres = filteredSuivis.filter(s => normalize(s.status_suivis_evangelises) === "Intégré").length;
+  const totalEncours = filteredSuivis.filter(s => normalize(s.status_suivis_evangelises) === "En cours").length;
+  const totalRefus = filteredSuivis.filter(s => normalize(s.status_suivis_evangelises) === "Refus").length;
+  const totalCellule = filteredSuivis.filter(s => s.cellule_id != null).length;
+  const totalEglise = filteredSuivis.filter(s => s.conseiller_id != null).length;
+  const pct = (n) => totalEvangelises > 0 ? Math.round((n / totalEvangelises) * 100) : 0;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Ligne 1 — chiffres clés */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <KpiCard label="Évangélisés" value={totalEvangelises} sub="sur la période" accent="white" onClick={() => onKpiClick(null)} />
+        <KpiCard label="Convertis" value={`${pct(totalConvertis)}%`} sub={`${totalConvertis} prières du salut`} accent="pink" onClick={() => onKpiClick("Converti")} />
+        <KpiCard label="Intégrés" value={`${pct(totalIntegres)}%`} sub={`${totalIntegres} personnes`} accent="green" onClick={() => onKpiClick("Intégré")} />
+        <KpiCard label="En cours" value={totalEncours} sub="de suivi" accent="amber" onClick={() => onKpiClick("En cours")} />
+      </div>
+      {/* Ligne 2 — envoi & refus */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <KpiCard label="Envoyés au suivi" value={totalEnvoyes} sub={`${pct(totalEnvoyes)}% des évangélisés`} accent="purple" onClick={() => onKpiClick("Envoyé")} />
+        <KpiCard label="Non envoyés" value={totalNonEnvoyes} sub={`${pct(totalNonEnvoyes)}%`} accent="gray" onClick={() => onKpiClick("NonEnvoye")} />
+        <KpiCard label="Refus" value={totalRefus} sub={`${pct(totalRefus)}%`} accent="red" onClick={() => onKpiClick("Refus")} />
+        <KpiCard label="Moissonneurs" value={getTotals(rapports).moissonneurs} sub="impliqués" accent="teal" />
+      </div>
+      {/* Ligne 3 — intégration */}
+      <div className="grid grid-cols-2 gap-3">
+        <KpiCard label="Intégrés en cellule" value={totalCellule} sub={filteredSuivis.length > 0 ? `${Math.round((totalCellule / filteredSuivis.length) * 100)}% des suivis` : "—"} accent="blue" onClick={onCelluleClick} />
+        <KpiCard label="Intégrés à l'église" value={totalEglise} sub={filteredSuivis.length > 0 ? `${Math.round((totalEglise / filteredSuivis.length) * 100)}% des suivis` : "—"} accent="teal" onClick={onConseillerClick} />
+      </div>
+    </div>
+  );
+}
+
+// ─── BLOC ENTONNOIR ─────────────────────────────────────────────
+function BlocEntonnoir({ filteredEvangelises, filteredSuivis }) {
+  const total = filteredEvangelises.length;
+  if (!total) return <p className="text-white/30 text-sm text-center py-4">Aucune donnée</p>;
+  const normalize = (str) => (str ? str.trim() : "");
+  const envoyes = filteredEvangelises.filter(e => e.status_suivi === "Envoyé").length;
+  const integres = filteredSuivis.filter(s => normalize(s.status_suivis_evangelises) === "Intégré").length;
+  const convertis = filteredEvangelises.filter(e => e.priere_salut === true).length;
+
+  const etapes = [
+    { label: "Évangélisés", val: total, pct: 100, color: "bg-blue-400" },
+    { label: "Envoyés au suivi", val: envoyes, pct: Math.round((envoyes / total) * 100), color: "bg-purple-400" },
+    { label: "Convertis", val: convertis, pct: Math.round((convertis / total) * 100), color: "bg-pink-400" },
+    { label: "Intégrés", val: integres, pct: Math.round((integres / total) * 100), color: "bg-emerald-400" },
+  ];
+
+  return (
+    <div className="flex flex-col gap-2">
+      {etapes.map(({ label, val, pct, color }) => (
+        <div key={label} className="flex items-center gap-3">
+          <p className="text-xs text-white/70 w-36 flex-shrink-0">{label}</p>
+          <BarreProgression pct={pct} color={color} />
+          <span className="text-xs font-bold text-white w-8 text-right">{val}</span>
+          <span className="text-[11px] text-white/40 w-9 text-right">{pct}%</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── BLOC PAR TYPE D'ÉVANGÉLISATION ────────────────────────────
+function BlocParType({ filteredEvangelises, rapports }) {
+  const parType = {};
+  filteredEvangelises.forEach(e => {
+    const t = e.type_evangelisation || "Non défini";
+    if (!parType[t]) parType[t] = { nb: 0, convertis: 0 };
+    parType[t].nb++;
+    if (e.priere_salut) parType[t].convertis++;
+  });
+  const max = Math.max(...Object.values(parType).map(v => v.nb), 1);
+  const lignes = Object.entries(parType).sort((a, b) => b[1].nb - a[1].nb);
+  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">Aucune donnée</p>;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {lignes.map(([type, { nb, convertis }]) => (
+        <div key={type} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-white w-40 flex-shrink-0 truncate">{type}</p>
+            <BarreProgression pct={(nb / max) * 100} color="bg-blue-400" />
+            <span className="text-sm font-bold text-white w-8 text-right">{nb}</span>
+          </div>
+          <div className="flex gap-2 ml-40">
+            <Badge color="pink">Convertis: {convertis}</Badge>
+            <Badge color="green">{nb > 0 ? Math.round((convertis / nb) * 100) : 0}%</Badge>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── BLOC TENDANCE MENSUELLE ───────────────────────────────────
+function BlocTendance({ filteredEvangelises }) {
+  const parMois = {};
+  filteredEvangelises.forEach(e => {
+    if (!e.date_evangelise) return;
+    const d = new Date(e.date_evangelise);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (!parMois[key]) parMois[key] = { nb: 0, convertis: 0, label: `${getMonthNameFR(d.getMonth()).slice(0, 3)} ${d.getFullYear()}` };
+    parMois[key].nb++;
+    if (e.priere_salut) parMois[key].convertis++;
+  });
+  const mois = Object.entries(parMois).sort(([a], [b]) => a.localeCompare(b)).slice(-8);
+  if (mois.length < 2) return <p className="text-white/30 text-sm text-center py-4">Données insuffisantes (≥ 2 mois)</p>;
+  const maxNb = Math.max(...mois.map(([, v]) => v.nb), 1);
+  const derniere = mois[mois.length - 1][1];
+  const avantDerniere = mois[mois.length - 2][1];
+  const delta = derniere.nb - avantDerniere.nb;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <span className="text-2xl font-bold text-white">{derniere.nb}</span>
+        <span className={`text-sm font-semibold ${delta >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+          {delta >= 0 ? "▲" : "▼"} {Math.abs(delta)} vs mois préc.
+        </span>
+      </div>
+      <div className="flex items-end gap-1 h-16">
+        {mois.map(([key, { nb, convertis, label }]) => (
+          <div key={key} className="flex-1 flex flex-col items-center gap-1">
+            <div className="w-full flex gap-0.5 items-end" style={{ height: "52px" }}>
+              <div className="flex-1 bg-blue-500/70 rounded-t-sm" style={{ height: `${Math.max(3, (nb / maxNb) * 52)}px` }} />
+              <div className="flex-1 bg-pink-500/70 rounded-t-sm" style={{ height: `${Math.max(2, (convertis / maxNb) * 52)}px` }} />
+            </div>
+            <p className="text-[9px] text-white/30 truncate w-full text-center">{label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-3 text-[11px] text-white/40">
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500/70 inline-block" /> Évangélisés</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-pink-500/70 inline-block" /> Convertis</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── CARTE SESSION (par mois > type > lignes) ──────────────────
+function CarteSession({ r, onEdit }) {
+  const [open, setOpen] = useState(false);
+  const total = (Number(r.hommes) || 0) + (Number(r.femmes) || 0);
+  return (
+    <div className="bg-white/10 rounded-2xl overflow-hidden">
+      <button onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left gap-3">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-semibold text-white text-sm">{r.type_evangelisation || "Non défini"}</span>
+          <span className="text-[11px] text-white/40">{formatDateFr(r.date_evangelise)}</span>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Badge color="blue">H {r.hommes ?? 0}</Badge>
+          <Badge color="pink">F {r.femmes ?? 0}</Badge>
+          <Badge color="amber">Total {total}</Badge>
+          <span className="text-white/30 text-xs">{open ? "▲" : "▼"}</span>
+        </div>
+      </button>
+      {open && (
+        <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {[
+              { label: "Hommes", value: r.hommes, color: "text-blue-300" },
+              { label: "Femmes", value: r.femmes, color: "text-pink-300" },
+              { label: "Total", value: total, color: "text-amber-300 font-bold" },
+              { label: "Prière du salut", value: r.priere, color: "text-emerald-300" },
+              { label: "Nv. convertis", value: r.nouveau_converti, color: "text-white" },
+              { label: "Réconciliation", value: r.reconciliation, color: "text-white" },
+              { label: "Moissonneurs", value: r.moissonneurs, color: "text-teal-300" },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="bg-white/5 rounded-xl px-3 py-2 flex flex-col">
+                <p className="text-[10px] text-white/40">{label}</p>
+                <p className={`text-lg font-bold ${color}`}>{value ?? 0}</p>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => onEdit(r)}
+            className="w-full py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-blue-300 text-sm font-semibold transition">
+            ✏️ Modifier
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── ONGLET PAR SESSION (groupé mois > type) ──────────────────
+function OngletSessions({ rapports, onEdit }) {
   const [expandedMonths, setExpandedMonths] = useState({});
   const [expandedTypes, setExpandedTypes] = useState({});
-  const [showTable, setShowTable] = useState(false);
-  const [statusFilter, setStatusFilter] = useState(null);
-  const [typeFilter, setTypeFilter] = useState("");
-  const router = useRouter();
-  const [filteredSuivisState, setFilteredSuivisState] = useState([]);
-  // KPI
-  const [totalEnvoyes, setTotalEnvoyes] = useState(0);
-  const [totalNonEnvoyes, setTotalNonEnvoyes] = useState(0); 
-  const [totalIntegres, setTotalIntegres] = useState(0);
-  const [totalEncour, setTotalEncour] = useState(0);
-  const [totalRefus, setTotalRefus] = useState(0);
-  const [totalCellule, setTotalCellule] = useState(0);
-  const [totalEglise, setTotalEglise] = useState(0);
-  const [totalPriereSalut, setTotalPriereSalut] = useState(0);
-  const [allEvangelises, setAllEvangelises] = useState([]);
-  const [allSuivis, setAllSuivis] = useState([]);
-  // ---------------- KPI CALCULS EN POURCENTAGES ----------------
-const [convertisPercent, setConvertisPercent] = useState(0);
-const [integrationPercent, setIntegrationPercent] = useState(0);
 
-  // ---------------- PROFIL USER ----------------
+  const grouped = {};
+  rapports.forEach(r => {
+    const d = new Date(r.date_evangelise);
+    const monthKey = `${d.getFullYear()}-${d.getMonth()}`;
+    if (!grouped[monthKey]) grouped[monthKey] = { label: `${getMonthNameFR(d.getMonth())} ${d.getFullYear()}`, types: {} };
+    const type = r.type_evangelisation || "Non défini";
+    if (!grouped[monthKey].types[type]) grouped[monthKey].types[type] = [];
+    grouped[monthKey].types[type].push(r);
+  });
+
+  if (!Object.keys(grouped).length) return <p className="text-white/30 text-sm text-center py-8">Aucun rapport sur cette période</p>;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {Object.entries(grouped).map(([monthKey, { label, types }]) => {
+        const isMonthOpen = expandedMonths[monthKey];
+        const monthTotals = getTotals(Object.values(types).flat());
+        return (
+          <div key={monthKey} className="bg-white/10 rounded-2xl overflow-hidden">
+            <button onClick={() => setExpandedMonths(p => ({ ...p, [monthKey]: !p[monthKey] }))}
+              className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
+              <span className="font-semibold text-white">{label}</span>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Badge color="amber">Total {monthTotals.total}</Badge>
+                <Badge color="green">🙏 {monthTotals.priere}</Badge>
+                <span className="text-white/30 text-xs">{isMonthOpen ? "▲" : "▼"}</span>
+              </div>
+            </button>
+            {isMonthOpen && (
+              <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-2">
+                {Object.entries(types).map(([type, rows]) => {
+                  const typeKey = `${monthKey}-${type}`;
+                  const isTypeOpen = expandedTypes[typeKey];
+                  const typeTotals = getTotals(rows);
+                  return (
+                    <div key={typeKey} className="bg-white/5 rounded-xl overflow-hidden">
+                      <button onClick={() => setExpandedTypes(p => ({ ...p, [typeKey]: !p[typeKey] }))}
+                        className="w-full flex items-center justify-between px-3 py-3 hover:bg-white/5 transition text-left gap-3">
+                        <span className="text-sm text-white/80 font-semibold">{type}</span>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <Badge color="blue">H {typeTotals.hommes}</Badge>
+                          <Badge color="pink">F {typeTotals.femmes}</Badge>
+                          <Badge color="amber">{typeTotals.total}</Badge>
+                          <span className="text-white/30 text-xs">{isTypeOpen ? "▲" : "▼"}</span>
+                        </div>
+                      </button>
+                      {isTypeOpen && (
+                        <div className="border-t border-white/10 px-3 pb-3 pt-2 flex flex-col gap-2">
+                          {rows.map(r => <CarteSession key={r.id} r={r} onEdit={onEdit} />)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── PAGE PRINCIPALE ───────────────────────────────────────────
+export default function RapportEvangelisation() {
+  const router = useRouter();
+  const [rapports, setRapports] = useState([]);
+  const [allEvangelises, setAllEvangelises] = useState([]);
+  const [filteredEvangelises, setFilteredEvangelises] = useState([]);
+  const [filteredSuivis, setFilteredSuivis] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [egliseId, setEgliseId] = useState(null);
+  const [onglet, setOnglet] = useState("kpi");
+
+  // Filtres
+  const [modePerso, setModePerso] = useState(false);
+  const [filtrePeriode, setFiltrePeriode] = useState("30");
+  const [dateDebut, setDateDebut] = useState("");
+  const [dateFin, setDateFin] = useState("");
+  const [filtreType, setFiltreType] = useState("");
+
+  // Edit
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedRapport, setSelectedRapport] = useState(null);
+  const [message, setMessage] = useState("");
+
+  // ─── Profil ─────────────────────────────────────
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData?.session?.user;
       if (!user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("eglise_id")
-        .eq("id", user.id)
-        .single();
-
-      if (profile) {
-        setEgliseId(profile.eglise_id);        
-      }
+      const { data: profile } = await supabase.from("profiles").select("eglise_id").eq("id", user.id).single();
+      if (profile) setEgliseId(profile.eglise_id);
     };
     fetchProfile();
   }, []);
 
-      // ---------------- FETCH RAPPORTS ----------------
-      const fetchRapports = async () => {
-        if (!egliseId) return;
-        setLoading(true);
-        setShowTable(false);
-      
-        try {
-          // 🔹 Récupérer tous les évangélisés (exclure les supprimés)
-          let { data: evangelisesData } = await supabase
-            .from("evangelises")
-            .select("*")
-            .eq("eglise_id", egliseId)            
-            .neq("status_suivi", "supprime");
-      
-          setAllEvangelises(evangelisesData || []);
-      
-          // Définir les dates correctement
-          const startDate = dateDebut ? new Date(dateDebut) : null;
-          const endDate = dateFin ? new Date(dateFin) : null;
-          if (endDate) endDate.setHours(23, 59, 59, 999); // inclure tout le dernier jour
-      
-          // 🔹 Filtrer évangélisés selon date et type
-          const filtered = (evangelisesData || []).filter((e) => {
-            const evangeliseDate = e.date_evangelise ? new Date(e.date_evangelise) : null;
-      
-            const afterStart = !startDate || (evangeliseDate && evangeliseDate >= startDate);
-            const beforeEnd = !endDate || (evangeliseDate && evangeliseDate <= endDate);
-      
-            const typeOk =
-              !typeFilter || typeFilter === "Tous" || e.type_evangelisation === typeFilter;
-      
-            return afterStart && beforeEnd && typeOk;
-          });
-      
-          setFilteredEvangelises(filtered);
-      
-          // 🔹 KPI à partir des évangélisés
-          const totalEvangelises = filtered.length;
-          const totalEnvoyes = filtered.filter(e => e.status_suivi === "Envoyé").length;
-          const totalNonEnvoyes = filtered.filter(e => e.status_suivi === "Non envoyé" || e.status_suivi === null).length;
-          const totalConvertis = filtered.filter(e => e.priere_salut === true).length;
-      
-          setTotalEnvoyes(totalEnvoyes);
-          setTotalNonEnvoyes(totalNonEnvoyes);
-          setTotalPriereSalut(totalConvertis);
-          setConvertisPercent(totalEvangelises > 0 ? ((totalConvertis / totalEvangelises) * 100).toFixed(2) : 0);
-      
-          // 🔹 Récupérer les rapports
-          let query = supabase
-            .from("rapport_evangelisation")
-            .select("*")
-            .eq("eglise_id", egliseId)            
-            .in("evangelise_member_id", filtered.map(e => e.id))
-            .order("date_evangelise", { ascending: true });
-      
-          if (startDate) query = query.gte("date_evangelise", startDate.toISOString());
-          if (endDate) query = query.lte("date_evangelise", endDate.toISOString());
-      
-          const { data: rapportsData } = await query;
-          setRapports(rapportsData || []);
-      
-          // 🔹 KPI Suivis
-          const evangeliseIds = filtered.map(e => e.id);
-          let { data: suivisData } = await supabase
-            .from("suivis_des_evangelises")
-            .select("*")
-            .eq("eglise_id", egliseId)
-            ;
-      
-          const filteredSuivisFinal = (suivisData || []).filter((s) => {
-            const suiviDate = s.date_suivi ? new Date(s.date_suivi) : null;
-            const matchEvangelise = evangeliseIds.includes(s.evangelise_id);
-      
-            const afterStart = !startDate || (suiviDate && suiviDate >= startDate);
-            const beforeEnd = !endDate || (suiviDate && suiviDate <= endDate);
-      
-            const typeOk =
-              !typeFilter || typeFilter === "Tous" || s.type_evangelisation === typeFilter;
-      
-            return matchEvangelise && afterStart && beforeEnd && typeOk;
-          });
-      
-          setFilteredSuivisState(filteredSuivisFinal);
-      
-          const normalize = (str) => (str ? str.trim() : "");
-      
-          setTotalIntegres(filteredSuivisFinal.filter(s => normalize(s.status_suivis_evangelises) === "Intégré").length);
-          setTotalEncour(filteredSuivisFinal.filter(s => normalize(s.status_suivis_evangelises) === "En cours").length);
-          setTotalRefus(filteredSuivisFinal.filter(s => normalize(s.status_suivis_evangelises) === "Refus").length);
-          setTotalCellule(filteredSuivisFinal.filter(s => s.cellule_id != null).length);
-          setTotalEglise(filteredSuivisFinal.filter(s => s.conseiller_id != null).length);
-      
-          setIntegrationPercent(totalEvangelises > 0 ? ((filteredSuivisFinal.filter(s => normalize(s.status_suivis_evangelises) === "Intégré").length / totalEvangelises) * 100).toFixed(2) : 0);
-      
-          // Expansion du dernier mois
-          setExpandedMonths({});
-      
-        } catch (err) {
-          console.error("Erreur fetchRapports:", err);
-        }
-      
-        setLoading(false);
-        setShowTable(true);
-      
-        setTimeout(() => {
-          document.getElementById("rapport-filtres")?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-        }, 100);
-      };
-  // ---------------- KPI PRIERE ----------------
-  useEffect(() => {
-    const totalEvangelises = filteredRapports.reduce(
-      (acc, r) => acc + (Number(r.hommes) || 0) + (Number(r.femmes) || 0),
-      0
-    );
-    const nbPriere = filteredEvangelises.filter((e) => e.priere_salut === true).length;
-    setTotalPriereSalut(nbPriere);
-  }, [filteredEvangelises]);  
+  // ─── Fetch ──────────────────────────────────────
+  const fetchRapports = async (overrideModePerso = null) => {
+    if (!egliseId) return;
+    setLoading(true);
+    const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
 
-  // ---------------- EDIT RAPPORT ----------------
+    // Calcul plage de dates
+    let startDate = null;
+    let endDate = null;
+    if (isPerso) {
+      if (dateDebut) startDate = new Date(dateDebut);
+      if (dateFin) { endDate = new Date(dateFin); endDate.setHours(23, 59, 59, 999); }
+    } else {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - Number(filtrePeriode));
+    }
+
+    try {
+      // Évangélisés
+      const { data: evangelisesData } = await supabase
+        .from("evangelises").select("*")
+        .eq("eglise_id", egliseId).neq("status_suivi", "supprime");
+      setAllEvangelises(evangelisesData || []);
+
+      const filtered = (evangelisesData || []).filter(e => {
+        const d = e.date_evangelise ? new Date(e.date_evangelise) : null;
+        const afterStart = !startDate || (d && d >= startDate);
+        const beforeEnd = !endDate || (d && d <= endDate);
+        const typeOk = !filtreType || filtreType === "Tous" || e.type_evangelisation === filtreType;
+        return afterStart && beforeEnd && typeOk;
+      });
+      setFilteredEvangelises(filtered);
+
+      // Rapports
+      let query = supabase.from("rapport_evangelisation").select("*")
+        .eq("eglise_id", egliseId)
+        .in("evangelise_member_id", filtered.map(e => e.id))
+        .order("date_evangelise", { ascending: false });
+      if (startDate) query = query.gte("date_evangelise", startDate.toISOString());
+      if (endDate) query = query.lte("date_evangelise", endDate.toISOString());
+      const { data: rapportsData } = await query;
+      setRapports(rapportsData || []);
+
+      // Suivis
+      const { data: suivisData } = await supabase.from("suivis_des_evangelises").select("*").eq("eglise_id", egliseId);
+      const evangeliseIds = new Set(filtered.map(e => e.id));
+      const filteredSuivisFinal = (suivisData || []).filter(s => {
+        const d = s.date_suivi ? new Date(s.date_suivi) : null;
+        const afterStart = !startDate || (d && d >= startDate);
+        const beforeEnd = !endDate || (d && d <= endDate);
+        const typeOk = !filtreType || filtreType === "Tous" || s.type_evangelisation === filtreType;
+        return evangeliseIds.has(s.evangelise_id) && afterStart && beforeEnd && typeOk;
+      });
+      setFilteredSuivis(filteredSuivisFinal);
+
+    } catch (err) {
+      console.error("Erreur fetchRapports:", err);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { if (egliseId && !modePerso) fetchRapports(false); }, [egliseId, filtrePeriode, filtreType, modePerso]);
+
   const handleSaveRapport = async (updated) => {
     await supabase.from("rapport_evangelisation").upsert(updated);
     fetchRapports();
@@ -189,140 +440,24 @@ const [integrationPercent, setIntegrationPercent] = useState(0);
     setTimeout(() => setMessage(""), 3000);
   };
 
-  //========================
-  useEffect(() => {
-  setExpandedMonths({});
-  setExpandedTypes({});
-}, []);
+  const handleEdit = (r) => { setSelectedRapport(r); setEditOpen(true); };
 
-  // ---------------- COLLAPSE ----------------
-  const toggleMonth = (monthKey) => {setExpandedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey]}));
-  setExpandedTypes({});
-};
-  const toggleType = (typeKey) => setExpandedTypes(prev => ({ ...prev, [typeKey]: !prev[typeKey] }));
-
-  // ---------------- GROUPING ----------------
-  const groupByMonth = (data) => {
-    const map = {};
-    (data || []).forEach((r) => {
-      const d = new Date(r.date_evangelise);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (!map[key]) map[key] = [];
-      map[key].push(r);
-    });
-    return map;
+  const handleKpiClick = (status) => {
+    const ids = filteredEvangelises.map(e => e.id);
+    router.push({ pathname: "/SuiviAmesPage", query: { status: status || "all", ids: ids.join(",") } });
   };
 
-  const groupByType = (data) => {
-    const map = {};
-    (data || []).forEach((r) => {
-      const type = r.type_evangelisation || "Non défini";
-      if (!map[type]) map[type] = [];
-      map[type].push(r);
-    });
-    return map;
-  };
+  const typesDisponibles = [...new Set((allEvangelises || []).map(e => e.type_evangelisation).filter(Boolean))];
 
-  // -------- TOTALS --------
-  const getTotals = (reports) => {
-    let hommes = 0, femmes = 0, priere = 0, nouveau = 0, reconciliation = 0, moissonneurs = 0;
-    (reports || []).forEach(r => {
-      hommes += Number(r.hommes) || 0;
-      femmes += Number(r.femmes) || 0;
-      priere += Number(r.priere) || 0;
-      nouveau += Number(r.nouveau_converti) || 0;
-      reconciliation += Number(r.reconciliation) || 0;
-      moissonneurs += Number(r.moissonneurs) || 0;
-    });
-    return { hommes, femmes, total: hommes+femmes, priere, nouveau, reconciliation, moissonneurs };
-  };
+  const onglets = [
+    { key: "kpi", label: "Vue d'ensemble" },
+    { key: "sessions", label: "Par session" },
+  ];
 
-  // ---------------- LAST MONTH ----------------
-  const getLastMonthKey = (data) => {
-    if (!data || data.length === 0) return null;
-    const dates = data.map(r => new Date(r.date_evangelise));
-    const lastDate = new Date(Math.max(...dates));
-    return `${lastDate.getFullYear()}-${lastDate.getMonth()}`;
-  };
-
-  // ---------------- UTILS ----------------
-  const getMonthNameFR = (monthIndex) => {
-    const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
-    return months[monthIndex] || "";
-  };        
-
-  const borderColors = ["border-red-500","border-green-500","border-blue-500","border-yellow-500","border-purple-500"];
-
-  // ================= KPI =================  
-  const filteredRapports = rapports.filter((r) => {
-    if (typeFilter && r.type_evangelisation !== typeFilter) return false;
-    if (statusFilter && r.status_suivi !== statusFilter) return false;
-    return true;
-  });
-
-  // Créer un tableau des types disponibles selon la plage de date sélectionnée
-const availableTypes = Array.from(
-  new Set(
-    (allEvangelises || [])
-      .filter((e) => {
-        const evangeliseDate = e.date_evangelise ? new Date(e.date_evangelise) : null;
-        const startDate = dateDebut ? new Date(dateDebut) : null;
-        const endDate = dateFin ? new Date(dateFin) : null;
-        if (endDate) endDate.setHours(23, 59, 59, 999);
-        const afterStart = !startDate || (evangeliseDate && evangeliseDate >= startDate);
-        const beforeEnd = !endDate || (evangeliseDate && evangeliseDate <= endDate);
-        return afterStart && beforeEnd;
-      })
-      .map((e) => e.type_evangelisation || "Non défini")
-  )
-);
-  //-------------------------//
-  // filtrer les évangélisés selon le type
-const filteredEvangelisesByType = filteredEvangelises.filter((e) => {
-  if (!typeFilter) return true;
-  return e.type_evangelisation === typeFilter;
-});
-  //------------------------
-
-  const groupedReports = groupByMonth(filteredRapports);
-  const totalEvangelises = filteredEvangelisesByType.length;
-  const tauxIntegration = totalEvangelises > 0 ? Math.round((totalIntegres / totalEvangelises) * 100) : 0;
-
-  // Ajouter ids filtrés pour que SuiviAmesPage sache quoi afficher
-    const handleKpiClick = (status) => {
-      // ids des évangélisés filtrés selon les critères actuels
-      const evangeliseIds = filteredEvangelises.map(e => e.id);
-    
-      router.push({
-        pathname: "/SuiviAmesPage",
-        query: {
-          status: status || "all",
-          ids: evangeliseIds.join(","), // passer les IDs en CSV
-        },
-      });
-    };
-
-  //==================
-  const handleCelluleClick = () => {
-  router.push("/SuiviAmesPage?cellule=true");
-};
-
-const handleConseillerClick = () => {
-  router.push("/SuiviAmesPage?conseiller=true");
-};
-
-  const typeColors = {
-   "Individuel": "border-blue-400 bg-blue-400/10",
-  "Sortie de groupe": "border-yellow-400 bg-blue-400/10",
-  "Campagne d’évangélisation": "border-purple-400 bg-blue-400/10",
-  "Évangélisation de rue": "border-green-400 bg-blue-400/10",
-  "Évangélisation maison": "border-pink-400 bg-blue-400/10",
-  "Évangélisation stade": "border-red-400 bg-blue-400/10",
-};
-  // ---------------- UI ----------------
   return (
-    <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
+
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Tableau de Bord<span className="text-emerald-300"> Évangélisation</span></h1>
 
     <div className="max-w-3xl w-full mb-6 text-center">
@@ -332,412 +467,141 @@ const handleConseillerClick = () => {
            consultez rapidement les KPIs :  <span className="text-blue-300 font-semibold">évangélisés, convertis, intégrés en cellule ou à l’église, et suivis en cours</span>.
           </p>
         </div>
-  
-    {/* FILTRES */}
-<div
-  id="rapport-filtres"
-  className="bg-white/10 p-4 md:p-6 rounded-2xl shadow-lg mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white">
-  
-  {/* TEXTE AU-DESSUS */}
-  <p className="text-base text-red-400 font-semibold text-center mb-4">
-    Choisissez les paramètres pour générer le rapport
-  </p> 
 
-  {/* CONTAINER DES FILTRES */}
-  <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full">
-
-    {/* Date début */}
-    <div className="flex flex-col w-full md:w-auto">
-      <label className="text-base text-center mb-1">Date début</label>
-      <input
-        type="date"
-        value={dateDebut}
-        onChange={(e) => setDateDebut(e.target.value)}
-        className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-      />
-    </div>
-
-    {/* Date fin */}
-    <div className="flex flex-col w-full md:w-auto">
-      <label className="text-base text-center mb-1">Date fin</label>
-      <input
-        type="date"
-        value={dateFin}
-        onChange={(e) => setDateFin(e.target.value)}
-        className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white"
-      />
-    </div>
-
-    {/* Bouton */}
-    <div className="flex flex-col w-full md:w-auto">
-      <label className="text-base text-center mb-1 opacity-0">btn</label>
-      <button
-        onClick={fetchRapports}
-        disabled={loading}
-        className="w-full md:w-auto h-10 bg-amber-300 text-white font-semibold px-6 rounded-lg hover:bg-amber-400 transition"
-      >
-        {loading ? "Chargement..." : "Générer le rapport"}
-      </button>
-    </div>
-
-    {/* TYPE (reste bien après le bouton) */}
-    {showTable && (
-      <div className="flex flex-col w-full md:w-auto">
-        <label className="text-base text-center mb-1">Type Evangélisation</label>
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="w-full h-10 border border-gray-400 rounded-lg px-3 py-2 bg-transparent text-white text-center"
-        >
-          <option value="">Tous</option>
-          {availableTypes.map((type) => (
-            <option key={type} value={type} className="text-black">
-              {type}
-            </option>
-          ))}
-        </select>
-      </div>
-    )}
-
-  </div>
-</div>
-     
-      {showTable && (
-        <div className="w-full max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 mt-6">
-      
-          {/* Évangélisés */}
-          <div
-            className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:scale-105 transition-transform flex flex-col items-center"
-            onClick={() => handleKpiClick(null)}
-          >
-            <div className="text-2xl sm:text-3xl font-semibold">{totalEvangelises}</div>
-            <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Évangélisés</div>
-          </div>
-      
-          {/* Envoyés au suivi */}
-          <div
-            className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:scale-105 transition-transform flex flex-col items-center"
-            onClick={() => handleKpiClick("Envoyé")}
-          >
-            <div className="text-2xl sm:text-3xl font-semibold">
-              {filteredEvangelisesByType.filter(e => e.status_suivi === "Envoyé").length}
-            </div>
-            <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Envoyés au suivi</div>
-            <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-              {totalEvangelises > 0
-                ? Math.round((filteredEvangelisesByType.filter(e => e.status_suivi === "Envoyé").length / totalEvangelises) * 100)
-                : 0}%
-            </div>
+        {/* Filtres */}
+        <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
+          {/* Toggle mode */}
+          <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
+            <button onClick={() => setModePerso(false)}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              Période rapide
+            </button>
+            <button onClick={() => setModePerso(true)}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              Tranche de dates
+            </button>
           </div>
 
-            {/* Non envoyés au suivi */}
-            <div
-              className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-gray-400 to-gray-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
-              onClick={() => handleKpiClick("NonEnvoye")} // tu peux gérer la navigation comme tu veux
-            >
-              <div className="text-2xl sm:text-3xl font-semibold">
-                {filteredEvangelisesByType.filter(e => e.status_suivi !== "Envoyé").length}
+          {/* Période rapide */}
+          {!modePerso && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-white/50 flex-shrink-0">Période :</span>
+              {[{ label: "7 j", val: "7" }, { label: "30 j", val: "30" }, { label: "90 j", val: "90" }, { label: "6 mois", val: "180" }, { label: "1 an", val: "365" }].map(p => (
+                <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Tranche personnalisée */}
+          {modePerso && (
+            <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-white/50">Date de début</label>
+                  <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)}
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-white/50">Date de fin</label>
+                  <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
+                </div>
               </div>
-              <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Non envoyés</div>
-              <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-                {totalEvangelises > 0
-                  ? Math.round((filteredEvangelisesByType.filter(e => e.status_suivi !== "Envoyé").length / totalEvangelises) * 100)
-                  : 0}%
-              </div>
+              <button onClick={() => fetchRapports(true)}
+                className="w-full py-2 rounded-xl bg-amber-500/80 hover:bg-amber-500 text-white text-sm font-semibold transition active:scale-95">
+                Générer le rapport
+              </button>
             </div>
-      
-          {/* Intégrés */}
-          <div
-            className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-green-400 to-green-600 text-white hover:scale-105 transition-transform flex flex-col items-center"
-            onClick={() => handleKpiClick("Intégré")}
-          >
-            <div className="text-2xl sm:text-3xl font-semibold">{totalIntegres}</div>
-            <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Intégrés</div>
-            <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-              {totalEvangelises > 0 ? Math.round((totalIntegres / totalEvangelises) * 100) : 0}%
+          )}
+
+          {/* Filtre type */}
+          {typesDisponibles.length > 1 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-white/50 flex-shrink-0">Type :</span>
+              <button onClick={() => setFiltreType("")}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${!filtreType ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
+                Tous
+              </button>
+              {typesDisponibles.map(t => (
+                <button key={t} onClick={() => setFiltreType(t)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtreType === t ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
+                  {t}
+                </button>
+              ))}
             </div>
-          </div>
-      
-          {/* En cours */}
-          <div
-            className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:scale-105 transition-transform flex flex-col items-center"
-            onClick={() => handleKpiClick("En cours")}
-          >
-            <div className="text-2xl sm:text-3xl font-semibold">{totalEncour}</div>
-            <div className="mt-1 text-xs sm:text-sm font-semibold text-center">En cours</div>
-            <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-              {totalEvangelises > 0 ? Math.round((totalEncour / totalEvangelises) * 100) : 0}%
-            </div>
-          </div>
-      
-          {/* Refus */}
-          <div
-            className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-red-400 to-red-600 text-white hover:scale-105 transition-transform flex flex-col items-center"
-            onClick={() => handleKpiClick("Refus")}
-          >
-            <div className="text-2xl sm:text-3xl font-semibold">{totalRefus}</div>
-            <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Refus</div>
-            <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-              {totalEvangelises > 0 ? Math.round((totalRefus / totalEvangelises) * 100) : 0}%
-            </div>
-          </div>
-      
-          {/* Intégrés en cellule */}
-          <div
-            className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-indigo-400 to-indigo-500 text-white flex flex-col items-center"
-            onClick={() => handleCelluleClick("all")}
-          >
-            <div className="text-2xl sm:text-3xl font-semibold">{totalCellule}</div>
-            <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Cellule</div>
-            <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-              {totalCellule > 0 ? Math.round((totalCellule / filteredSuivisState.length) * 100) : 0}%
-            </div>
-          </div>
-      
-          {/* Intégrés à l'église */}
-          <div
-            className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-teal-400 to-teal-500 text-white flex flex-col items-center"
-            onClick={() => handleConseillerClick("all")}
-          >
-            <div className="text-2xl sm:text-3xl font-semibold">{totalEglise}</div>
-            <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Église</div>
-            <div className="mt-2 w-12 sm:w-16 p-1.5 sm:p-2 bg-white/20 rounded-2xl text-center text-sm sm:text-lg font-semibold">
-              {totalEglise > 0 ? Math.round((totalEglise / filteredSuivisState.length) * 100) : 0}%
-            </div>
-          </div>
-      
-          {/* Convertis */}
-          <div
-            className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-pink-400 to-pink-500 text-white flex flex-col items-center"
-            onClick={() => handleKpiClick("Converti")}
-          >
-            <div className="text-2xl sm:text-3xl font-semibold">
-              {totalEvangelises > 0 ? Math.round((totalPriereSalut / totalEvangelises) * 100) : 0}%
-            </div>
-            <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Convertis</div>
-          </div>
-      
-          {/* Taux intégration */}
-          <div
-            className="p-4 sm:p-6 rounded-2xl shadow-lg cursor-pointer bg-gradient-to-r from-orange-400 to-orange-500 text-white flex flex-col items-center"
-            onClick={() => handleKpiClick("all")}
-          >
-            <div className="text-2xl sm:text-3xl font-semibold">{tauxIntegration}%</div>
-            <div className="mt-1 text-xs sm:text-sm font-semibold text-center">Intégration</div>
-          </div>
-      
+          )}
         </div>
-      )}
 
-      {message && <div className="text-center text-white mt-4 font-medium">{message}</div>}
+        {/* Onglets */}
+        <div className="flex gap-1 bg-white/10 rounded-xl p-1">
+          {onglets.map(o => (
+            <button key={o.key} onClick={() => setOnglet(o.key)}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              {o.label}
+            </button>
+          ))}
+        </div>
 
-     {/* TABLEAU */}
-{showTable && (
-  <div id="rapport-table" className="w-full flex justify-center mt-8">
-    <div className="w-full md:w-max space-y-2">
+        {/* Contenu */}
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+          </div>
+        ) : filteredEvangelises.length === 0 ? (
+          <div className="bg-white/10 rounded-2xl p-8 text-center text-white/40 text-sm">
+            Aucune donnée sur cette période
+          </div>
+        ) : onglet === "kpi" ? (
+          <div className="flex flex-col gap-7">
 
-      {/* HEADER DESKTOP */}
-      <div className="hidden md:flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/20 bg-white/20 rounded-t-xl whitespace-nowrap">
-        <div className="min-w-[150px] ml-2">Type / Date</div>
-        <div className="min-w-[110px] text-center ml-28">Hommes</div>
-        <div className="min-w-[110px] text-center">Femmes</div>
-        <div className="min-w-[110px] text-center text-orange-400 font-semibold">Total</div> 
-        <div className="min-w-[120px] text-center text-orange-400 font-semibold">Prières</div>
-        <div className="min-w-[140px] text-center">Nouv. conv</div>
-        <div className="min-w-[130px] text-center">Recon</div>
-        <div className="min-w-[130px] text-center">Moiss</div>
-        <div className="min-w-[120px] text-center">Actions</div>
-      </div>
-
-      {/* MOIS */}
-      {Object.entries(groupedReports).map(([monthKey, monthReports], idx) => {
-        const [year, monthIndex] = monthKey.split("-").map(Number);
-        const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-        const isExpanded = expandedMonths[monthKey] ?? false;
-        const borderColor = borderColors[idx % borderColors.length];
-        const monthTotals = getTotals(monthReports);
-
-        return (
-          <div key={monthKey} className="space-y-1">
-
-            {/* HEADER MOIS */}
-            <div
-              className={`px-4 py-3 rounded-lg bg-white/20 cursor-pointer border-l-4 ${borderColor}`}
-              onClick={() => toggleMonth(monthKey)}
-            >
-              <div className="hidden md:flex items-center">
-                <div className="min-w-[150px] text-white font-semibold">
-                  {isExpanded ? "➖ " : "➕ "} {monthLabel}
-                </div>
-
-                <div className="flex ml-auto text-white font-semibold text-sm">
-                  <div className="min-w-[110px] text-center ml-3">{monthTotals.hommes}</div>
-                  <div className="min-w-[110px] text-center">{monthTotals.femmes}</div>
-                  <div className="min-w-[110px] text-center text-orange-400 font-semibold">
-                    {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)}
-                  </div>
-                  <div className="min-w-[120px] text-center text-orange-400 font-semibold">
-                    {monthTotals.priere}
-                  </div>
-                  <div className="min-w-[140px] text-center">{monthTotals.nouveau}</div>
-                  <div className="min-w-[130px] text-center">{monthTotals.reconciliation}</div>
-                  <div className="min-w-[130px] text-center">{monthTotals.moissonneurs}</div>
-                  <div className="min-w-[120px]"></div>
-                </div>
-              </div>
-
-              {/* MOBILE */}
-              {/* MOBILE */}
-<div className="md:hidden text-white font-semibold flex items-center justify-between gap-3">
-
-  {/* LEFT : mois */}
-  <div className="flex items-center gap-2">
-    <span>{isExpanded ? "➖" : "➕"}</span>
-    <span>{monthLabel}</span>
-  </div>
-
-  {/* RIGHT : stats */}
-  <div className="flex gap-3 text-sm text-orange-400 whitespace-nowrap">
-    <span>H: {monthTotals.hommes}</span>
-    <span>F: {monthTotals.femmes}</span>
-    <span className="text-orange-400 font-semibold">
-      Total: {(monthTotals.hommes || 0) + (monthTotals.femmes || 0)}
-    </span>
-  </div>
-
-</div>
+            <div>
+              <SectionTitle>Vue d'ensemble</SectionTitle>
+              <BlocKpiGlobaux
+                filteredEvangelises={filteredEvangelises}
+                filteredSuivis={filteredSuivis}
+                rapports={rapports}
+                onKpiClick={handleKpiClick}
+                onCelluleClick={() => router.push("/SuiviAmesPage?cellule=true")}
+                onConseillerClick={() => router.push("/SuiviAmesPage?conseiller=true")}
+              />
             </div>
 
-            {/* TYPES (UNIQUEMENT SI MOIS OUVERT) */}
-            {isExpanded &&
-              Object.entries(groupByType(monthReports)).map(([type, typeReports]) => {
-                const typeKey = `${monthKey}-${type}`;
-                const typeExpanded = expandedTypes[typeKey] || false;
-                const typeTotals = getTotals(typeReports);
+            <div>
+              <SectionTitle>Entonnoir de conversion</SectionTitle>
+              <div className="bg-white/10 rounded-2xl px-4 py-4">
+                <BlocEntonnoir filteredEvangelises={filteredEvangelises} filteredSuivis={filteredSuivis} />
+              </div>
+            </div>
 
-                return (
-                  <div key={typeKey}>
+            <div>
+              <SectionTitle>Tendance mensuelle</SectionTitle>
+              <div className="bg-white/10 rounded-2xl px-4 py-4">
+                <BlocTendance filteredEvangelises={filteredEvangelises} />
+              </div>
+            </div>
 
-                    {/* HEADER TYPE */}
-                    <div
-                      onClick={() => toggleType(typeKey)}
-                      className={`px-4 py-2 rounded-lg bg-white/20 cursor-pointer border-l-4 ml-4 ${
-                        typeColors[type] || "border-white"
-                      }`}
-                    >
-                      <div className="hidden md:flex items-center">
-                        <div className="min-w-[150px] text-white font-semibold">
-                          {typeExpanded ? "➖ " : "➕ "} {type}
-                        </div>
+            <div>
+              <SectionTitle>Résultats par type d'évangélisation</SectionTitle>
+              <BlocParType filteredEvangelises={filteredEvangelises} rapports={rapports} />
+            </div>
 
-                        <div className="flex ml-auto text-white text-sm">
-                          <div className="min-w-[110px] text-center">{typeTotals.hommes}</div>
-                          <div className="min-w-[110px] text-center">{typeTotals.femmes}</div>
-                          <div className="min-w-[110px] text-center text-orange-400 font-semibold">
-                            {(typeTotals.hommes || 0) + (typeTotals.femmes || 0)}
-                          </div>
-                          <div className="min-w-[120px] text-center">{typeTotals.priere}</div>
-                          <div className="min-w-[140px] text-center">{typeTotals.nouveau}</div>
-                          <div className="min-w-[130px] text-center">{typeTotals.reconciliation}</div>
-                          <div className="min-w-[130px] text-center">{typeTotals.moissonneurs}</div>
-                          <div className="min-w-[120px]"></div>
-                        </div>
-                      </div>
-
-                      {/* MOBILE */}
-                        <div className="md:hidden text-white">  
-                          <div className="flex justify-between items-center font-semibold">
-                            
-                            {/* Type évangélisation */}
-                            <div>{typeExpanded ? "➖ " : "➕ "} {type}</div>
-                        
-                            {/* Total aligné à droite */}
-                            <div className="flex gap-3 text-sm text-orange-400">
-                                <span>H: {typeTotals?.hommes || 0}</span>
-                                <span>F: {typeTotals?.femmes || 0}</span>
-                                <span className="text-orange-400 font-semibold">
-                                  Total: {(typeTotals?.hommes || 0) + (typeTotals?.femmes || 0)}
-                                </span>
-
-                                </div>
-                              </div>
-                           </div> 
-                        </div>    
-
-                                    {/* LIGNES */}
-                    {typeExpanded &&
-                      typeReports.map((r) => (
-                        <div
-                          key={r.id}
-                          className={`px-4 py-2 rounded-lg border-l-4 mt-2 ml-8 ${
-                            typeColors[type] || "border-white"
-                          }`}
-                        >
-                          <div className="hidden md:flex items-center">
-                            <div className="min-w-[150px] text-white">
-                              {new Date(r.date_evangelise).toLocaleDateString()}
-                            </div>
-                            <div className="min-w-[110px] text-center text-white ml-20">{r.hommes ?? "-"}</div>
-                            <div className="min-w-[110px] text-center text-white">{r.femmes ?? "-"}</div>
-                            <div className="min-w-[110px] text-center text-orange-400 font-semibold">
-                              {(r.hommes || 0) + (r.femmes || 0)}
-                            </div>
-                            <div className="min-w-[120px] text-center text-orange-400 font-semibold">{r.priere ?? "-"}</div>
-                            <div className="min-w-[140px] text-center text-white">{r.nouveau_converti ?? "-"}</div>
-                            <div className="min-w-[130px] text-center text-white">{r.reconciliation ?? "-"}</div>
-                            <div className="min-w-[130px] text-center text-white">{r.moissonneurs ?? "-"}</div>
-                            <div className="min-w-[120px] text-center">
-                              <button
-                                onClick={() => {
-                                  setSelectedRapport(r);
-                                  setEditOpen(true);
-                                }}
-                                className="text-orange-400 underline"
-                              >
-                                Modifier
-                              </button>
-                            </div>
-                          </div>
-                         
-                          {/* MOBILE */}
-                          <div className="md:hidden text-white">
-                            
-                            {/* Date alignée à droite */}
-                            <div className="text-amber-300 mb-2 text-right"> {new Date(r.date_evangelise).toLocaleDateString()}</div>
-                            <div className="space-y-1">                              
-                            <div> Hommes: {r.hommes ?? "-"} | Femmes: {r.femmes ?? "-"}</div>
-                            <div className="font-semibold text-orange-400 mt-1">Total: {(r.hommes || 0) + (r.femmes || 0)}</div>
-                            <div className= "mt-2"> Nouveaux Convertis: {r.nouveau_converti ?? "-"} | Réconciliation: {r.reconciliation ?? "-"} </div>
-                            <div className="font-semibold text-orange-400 mt-1"> Prière du Salut: {r.priere ?? "-"} </div>
-                            <div className= "mt-2"> Moissonneurs: {r.moissonneurs ?? "-"}</div>
-                            </div>  
-                            
-                              <button
-                              onClick={() => {
-                                setSelectedRapport(r);
-                                setEditOpen(true);
-                              }}
-                              className="block mx-auto text-amber-300 underline mt-3"
-                            >
-                              Modifier
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                );
-              })}
           </div>
-        );
-      })}
-    </div>
-  </div>
-)}
+
+        ) : (
+          <OngletSessions rapports={rapports} onEdit={handleEdit} />
+        )}
+
+        {message && <p className="text-center text-sm font-medium text-white/80 mt-2">{message}</p>}
+
+      </div>
 
       {selectedRapport && (
         <EditEvanRapportLine
           isOpen={editOpen}
-          onClose={()=>setEditOpen(false)}
+          onClose={() => setEditOpen(false)}
           rapport={selectedRapport}
           onSave={handleSaveRapport}
         />

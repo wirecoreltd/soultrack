@@ -10,800 +10,614 @@ import DetailsEtatConsEvangePopup from "../../components/DetailsEtatConsEvangePo
 import EditMemberCellulePopup from "../../components/EditMemberCellulePopup";
 import DetailsEtatConseillerPopup from "../../components/DetailsEtatConseillerPopup";
 
-// ─────────────────────────────────────────────
-// ATOMES RÉUTILISABLES (copie locale, identiques aux autres pages)
-// ─────────────────────────────────────────────
-
-function SectionTitle({ children }) {
-  return (
-    <h2 className="text-base font-semibold text-white/60 uppercase tracking-widest mb-3">
-      {children}
-    </h2>
-  );
-}
-
-function KpiCard({ label, value, sub, color = "bg-white/10", onClick }) {
-  const base =
-    "p-4 rounded-2xl text-white text-center flex flex-col gap-1 transition";
-  return (
-    <div
-      className={`${base} ${color} ${onClick ? "cursor-pointer hover:opacity-80" : ""}`}
-      onClick={onClick}
-    >
-      <div className="text-2xl font-bold">{value}</div>
-      <div className="text-xs font-medium uppercase tracking-wide opacity-80">
-        {label}
-      </div>
-      {sub !== undefined && (
-        <div className="text-sm font-semibold opacity-90">{sub}</div>
-      )}
-    </div>
-  );
-}
-
-function Badge({ label, color }) {
-  const map = {
-    green: "bg-green-500/20 text-green-300 border border-green-500/30",
-    red: "bg-red-500/20 text-red-300 border border-red-500/30",
-    orange: "bg-orange-500/20 text-orange-300 border border-orange-500/30",
-    gray: "bg-white/10 text-white/50 border border-white/10",
-    blue: "bg-blue-500/20 text-blue-300 border border-blue-500/30",
-  };
-  return (
-    <span
-      className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${map[color] || map.gray}`}
-    >
-      {label}
-    </span>
-  );
-}
-
-function TogglePeriode({ active, onChange }) {
-  const options = [
-    { label: "7j", value: 7 },
-    { label: "30j", value: 30 },
-    { label: "90j", value: 90 },
-    { label: "6 mois", value: 180 },
-    { label: "1 an", value: 365 },
-  ];
-  return (
-    <div className="flex gap-1 flex-wrap">
-      {options.map((o) => (
-        <button
-          key={o.value}
-          onClick={() => onChange(o.value)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-            active === o.value
-              ? "bg-white text-[#333699]"
-              : "bg-white/10 text-white hover:bg-white/20"
-          }`}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// PAGE PRINCIPALE
-// ─────────────────────────────────────────────
-
 export default function EtatCellulePage() {
   return (
-    <ProtectedRoute
-      allowedRoles={["Administrateur", "SuperviseurCellule", "ResponsableCellule"]}
-    >
+    <ProtectedRoute allowedRoles={["Administrateur", "SuperviseurCellule", "ResponsableCellule"]}>
       <EtatCellule />
     </ProtectedRoute>
   );
 }
 
+// ─── HELPERS ──────────────────────────────────────────────────
+function formatDateFR(dateStr) {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+}
+function getMonthNameFR(monthIndex) {
+  return ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"][monthIndex] || "";
+}
+function getStatutNormalise(statut) {
+  if (!statut) return "";
+  const s = statut.toLowerCase();
+  if (s.includes("envoy")) return "en attente";
+  return s;
+}
+function formatStatut(statut) {
+  if (!statut) return "—";
+  const s = statut.toLowerCase();
+  if (s.includes("envoy")) return "En attente";
+  return statut;
+}
+
+// ─── UI ATOMS ─────────────────────────────────────────────────
+function SectionTitle({ children }) {
+  return <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-3">{children}</p>;
+}
+function KpiCard({ label, value, sub, accent }) {
+  const c = {
+    green: "text-emerald-400", red: "text-red-400", amber: "text-amber-400",
+    white: "text-white", blue: "text-blue-300", pink: "text-pink-300",
+    purple: "text-purple-300", teal: "text-teal-300", orange: "text-orange-300",
+    gray: "text-white/40", indigo: "text-indigo-300", yellow: "text-yellow-300",
+  };
+  return (
+    <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
+      <p className="text-xs text-white/50">{label}</p>
+      <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
+      {sub && <p className="text-[11px] text-white/40 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+function Badge({ children, color }) {
+  const m = {
+    green: "bg-emerald-900/60 text-emerald-300", red: "bg-red-900/60 text-red-300",
+    amber: "bg-amber-900/60 text-amber-300", blue: "bg-blue-900/60 text-blue-300",
+    purple: "bg-purple-900/60 text-purple-300", gray: "bg-white/10 text-white/50",
+    orange: "bg-orange-900/60 text-orange-300", yellow: "bg-yellow-900/60 text-yellow-300",
+    indigo: "bg-indigo-900/60 text-indigo-300",
+  };
+  return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${m[color] || m.gray}`}>{children}</span>;
+}
+function BarreProgression({ pct, color }) {
+  const col = color || (pct >= 70 ? "bg-emerald-400" : pct >= 40 ? "bg-amber-400" : "bg-red-400");
+  return (
+    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+      <div className={`h-full rounded-full transition-all ${col}`} style={{ width: `${Math.min(pct || 0, 100)}%` }} />
+    </div>
+  );
+}
+
+// ─── STATUT CONFIG ─────────────────────────────────────────────
+function statutConfig(statutNorm) {
+  switch (statutNorm) {
+    case "intégré":
+    case "integre": return { border: "border-emerald-500", badge: "green", label: "Intégré" };
+    case "en attente": return { border: "border-white/20", badge: "gray", label: "En attente" };
+    case "refus": return { border: "border-red-500", badge: "red", label: "Refus" };
+    case "en cours":
+    case "en suivis": return { border: "border-amber-500", badge: "amber", label: "En cours" };
+    default: return { border: "border-white/20", badge: "gray", label: formatStatut(statutNorm) };
+  }
+}
+
+// ─── BLOC KPI ─────────────────────────────────────────────────
+function BlocKpi({ kpis, totalAmes }) {
+  const pct = (n) => totalAmes > 0 ? Math.round((n / totalAmes) * 100) : 0;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <KpiCard label="Évangélisés" value={kpis.totalEvangelises} sub="contacts évangélisation" accent="blue" />
+        <KpiCard label="Venus à l'église" value={kpis.totalVenus} sub="contacts intégration" accent="purple" />
+        <KpiCard label="Intégrés" value={kpis.totalIntegration} sub={`${pct(kpis.totalIntegration)}% du total`} accent="green" />
+        <KpiCard label="Baptêmes" value={kpis.totalBapteme} sub={`${pct(kpis.totalBapteme)}% du total`} accent="indigo" />
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <KpiCard label="Ministère" value={kpis.totalMinistere} sub="début ministère" accent="teal" />
+        <KpiCard label="En cours" value={kpis.totalEncours} sub="suivi actif" accent="amber" />
+        <KpiCard label="En attente" value={kpis.totalAttente} sub="à traiter" accent="gray" />
+        <KpiCard label="Refus" value={kpis.totalRefus} sub={`${pct(kpis.totalRefus)}% du total`} accent="red" />
+      </div>
+
+      {/* Entonnoir de progression */}
+      {totalAmes > 0 && (
+        <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3 mt-1">
+          <SectionTitle>Entonnoir de progression</SectionTitle>
+          {[
+            { label: "Total âmes", val: totalAmes, color: "bg-blue-400" },
+            { label: "Intégrés", val: kpis.totalIntegration, color: "bg-emerald-400" },
+            { label: "Baptisés", val: kpis.totalBapteme, color: "bg-indigo-400" },
+            { label: "En ministère", val: kpis.totalMinistere, color: "bg-pink-400" },
+          ].map(({ label, val, color }) => (
+            <div key={label} className="flex items-center gap-3">
+              <p className="text-xs text-white/50 w-28 flex-shrink-0">{label}</p>
+              <BarreProgression pct={Math.round((val / totalAmes) * 100)} color={color} />
+              <span className="text-xs text-white font-semibold w-8 text-right">{val}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── BLOC PAR CELLULE (vue synthèse dans l'onglet KPI) ────────
+function BlocParCellule({ displayedReports }) {
+  const parCellule = {};
+  displayedReports.forEach(r => {
+    const c = r.cellule_full || "Non assignée";
+    if (!parCellule[c]) parCellule[c] = { total: 0, integres: 0, encours: 0, refus: 0 };
+    parCellule[c].total++;
+    const s = getStatutNormalise(r.statut);
+    if (s === "integre" || s === "intégré") parCellule[c].integres++;
+    else if (s === "en cours" || s === "en suivis") parCellule[c].encours++;
+    else if (s === "refus") parCellule[c].refus++;
+  });
+  const max = Math.max(...Object.values(parCellule).map(v => v.total), 1);
+  const lignes = Object.entries(parCellule).sort((a, b) => b[1].total - a[1].total);
+  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">Aucune donnée</p>;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {lignes.map(([cellule, { total, integres, encours, refus }]) => (
+        <div key={cellule} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-white w-36 flex-shrink-0 truncate">{cellule}</p>
+            <BarreProgression pct={(total / max) * 100} color="bg-blue-400" />
+            <span className="text-sm font-bold text-white w-6 text-right">{total}</span>
+          </div>
+          <div className="flex gap-2 ml-36">
+            <Badge color="green">✔ {integres}</Badge>
+            <Badge color="amber">⏳ {encours}</Badge>
+            <Badge color="red">✗ {refus}</Badge>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── CARTE LIGNE ──────────────────────────────────────────────
+function CarteLigne({ r, onDetails }) {
+  const [open, setOpen] = useState(false);
+  const sn = getStatutNormalise(r.statut);
+  const cfg = statutConfig(sn);
+
+  return (
+    <div className={`bg-white/10 rounded-xl overflow-hidden border-l-2 ${cfg.border}`}>
+      <button onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left gap-3">
+        <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+          <span className="text-sm font-semibold text-white truncate">{r.nom_complet}</span>
+          <span className="text-[11px] text-white/40">{r.type_evangelisation} · {formatDateFR(r.date_depart)}</span>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Badge color={cfg.badge}>{cfg.label}</Badge>
+          <span className="text-white/30 text-xs">{open ? "▲" : "▼"}</span>
+        </div>
+      </button>
+      {open && (
+        <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {[
+              { label: "Cellule", value: r.cellule_full },
+              { label: "Responsable", value: r.responsable },
+              { label: "Assigné le", value: formatDateFR(r.envoyer_au_suivi_le) },
+              { label: "Date évolution", value: formatDateFR(r.date_integration) },
+              { label: "Baptême", value: formatDateFR(r.date_baptise) },
+              { label: "Début ministère", value: formatDateFR(r.debut_ministere) },
+            ].map(({ label, value }) => (
+              <div key={label} className="bg-white/5 rounded-xl px-3 py-2">
+                <p className="text-[10px] text-white/40">{label}</p>
+                <p className="text-sm text-white font-medium">{value || "—"}</p>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => onDetails(r)}
+            className="w-full py-2 rounded-xl bg-amber-500/30 hover:bg-amber-500/50 text-amber-300 text-sm font-semibold transition">
+            Voir les détails
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── ONGLET PAR MOIS ──────────────────────────────────────────
+function OngletParMois({ displayedReports, onDetails }) {
+  const [expandedMonths, setExpandedMonths] = useState({});
+
+  const grouped = {};
+  displayedReports.forEach(r => {
+    const d = new Date(r.date_depart);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    if (!grouped[key]) grouped[key] = { label: `${getMonthNameFR(d.getMonth())} ${d.getFullYear()}`, rows: [] };
+    grouped[key].rows.push(r);
+  });
+
+  const sorted = Object.entries(grouped).sort((a, b) => {
+    const [yA, mA] = a[0].split("-").map(Number);
+    const [yB, mB] = b[0].split("-").map(Number);
+    return new Date(yB, mB) - new Date(yA, mA);
+  });
+
+  if (!sorted.length) return <p className="text-white/30 text-sm text-center py-8">Aucune donnée sur cette période</p>;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {sorted.map(([key, { label, rows }]) => {
+        const isOpen = expandedMonths[key];
+        const integres = rows.filter(r => ["integre","intégré"].includes(getStatutNormalise(r.statut))).length;
+        return (
+          <div key={key} className="bg-white/10 rounded-2xl overflow-hidden">
+            <button onClick={() => setExpandedMonths(p => ({ ...p, [key]: !p[key] }))}
+              className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
+              <span className="font-semibold text-white">{label}</span>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Badge color="gray">{rows.length} personnes</Badge>
+                <Badge color="green">✔ {integres}</Badge>
+                <span className="text-white/30 text-xs">{isOpen ? "▲" : "▼"}</span>
+              </div>
+            </button>
+            {isOpen && (
+              <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-2">
+                {rows.map((r, i) => <CarteLigne key={i} r={r} onDetails={onDetails} />)}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── ONGLET PAR CELLULE DÉTAIL ────────────────────────────────
+function OngletParCelluleDetail({ displayedReports, onDetails }) {
+  const [expandedCellules, setExpandedCellules] = useState({});
+
+  const grouped = {};
+  displayedReports.forEach(r => {
+    const c = r.cellule_full || "Non assignée";
+    if (!grouped[c]) grouped[c] = { rows: [], responsable: r.responsable || "—" };
+    grouped[c].rows.push(r);
+  });
+
+  const sorted = Object.entries(grouped).sort((a, b) => b[1].rows.length - a[1].rows.length);
+  if (!sorted.length) return <p className="text-white/30 text-sm text-center py-8">Aucune donnée</p>;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {sorted.map(([cellule, { rows, responsable }]) => {
+        const isOpen = expandedCellules[cellule];
+        const integres = rows.filter(r => ["integre","intégré"].includes(getStatutNormalise(r.statut))).length;
+        const encours = rows.filter(r => ["en cours","en suivis"].includes(getStatutNormalise(r.statut))).length;
+        const refus = rows.filter(r => getStatutNormalise(r.statut) === "refus").length;
+        const baptises = rows.filter(r => r.date_baptise).length;
+        const ministeres = rows.filter(r => r.debut_ministere).length;
+        const pctInt = rows.length > 0 ? Math.round((integres / rows.length) * 100) : 0;
+
+        return (
+          <div key={cellule} className="bg-white/10 rounded-2xl overflow-hidden">
+            <button onClick={() => setExpandedCellules(p => ({ ...p, [cellule]: !p[cellule] }))}
+              className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
+              <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                <span className="font-semibold text-white truncate">{cellule}</span>
+                <span className="text-[11px] text-white/40">{responsable} · {rows.length} personne{rows.length > 1 ? "s" : ""} · {pctInt}% intégrées</span>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Badge color="green">✔ {integres}</Badge>
+                <Badge color="amber">⏳ {encours}</Badge>
+                <Badge color="red">✗ {refus}</Badge>
+                <span className="text-white/30 text-xs">{isOpen ? "▲" : "▼"}</span>
+              </div>
+            </button>
+            {isOpen && (
+              <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
+                {/* Barre intégration */}
+                <div className="flex items-center gap-2">
+                  <BarreProgression pct={pctInt} color="bg-emerald-400" />
+                  <span className="text-xs text-white/50">{pctInt}% intégrés</span>
+                </div>
+
+                {/* Chiffres détail cellule */}
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { label: "Baptisés", val: baptises, color: "text-indigo-300" },
+                    { label: "Ministère", val: ministeres, color: "text-pink-300" },
+                    { label: "En cours", val: encours, color: "text-amber-300" },
+                    { label: "Refus", val: refus, color: "text-red-300" },
+                  ].map(({ label, val, color }) => (
+                    <div key={label} className="bg-white/5 rounded-xl px-3 py-2 text-center">
+                      <p className={`text-sm font-bold ${color}`}>{val}</p>
+                      <p className="text-[10px] text-white/40">{label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Liste des personnes */}
+                {rows.map((r, i) => <CarteLigne key={i} r={r} onDetails={onDetails} />)}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── PAGE PRINCIPALE ───────────────────────────────────────────
 function EtatCellule() {
   const router = useRouter();
-
-  // ── State ──
   const [reports, setReports] = useState([]);
   const [allReports, setAllReports] = useState([]);
-  const [selectedMember, setSelectedMember] = useState(null);
-  const [editMember, setEditMember] = useState(null);
-  const [selectedEvangelise, setSelectedEvangelise] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // Filtres
-  const [modeFiltre, setModeFiltre] = useState("rapide"); // "rapide" | "tranche"
-  const [periodeDays, setPeriodeDays] = useState(30);
+  const [modePerso, setModePerso] = useState(true);
+  const [filtrePeriode, setFiltrePeriode] = useState("30");
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
   const [filterCellule, setFilterCellule] = useState("");
+  const [availableCellules, setAvailableCellules] = useState([]);
 
-  const [showTable, setShowTable] = useState(false);
-  const [expandedMonths, setExpandedMonths] = useState({});
-  const [Cellules, setCellules] = useState([]);
-  const [activeTab, setActiveTab] = useState("tableau"); // "tableau" | "synthese"
+  // Onglets
+  const [onglet, setOnglet] = useState("kpi");
 
+  // Popups
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [editMember, setEditMember] = useState(null);
+  const [selectedEvangelise, setSelectedEvangelise] = useState(null);
+
+  // KPIs
   const [kpis, setKpis] = useState({
-    totalEvangelises: 0,
-    totalVenus: 0,
-    totalIntegration: 0,
-    totalBapteme: 0,
-    totalMinistere: 0,
-    totalRefus: 0,
-    totalEncours: 0,
-    totalAttente: 0,
+    totalEvangelises: 0, totalVenus: 0, totalIntegration: 0,
+    totalBapteme: 0, totalMinistere: 0, totalRefus: 0,
+    totalEncours: 0, totalAttente: 0,
   });
 
-  // ── Init ──
+  // ─── Profil ─────────────────────────────────────
   useEffect(() => {
-    fetchUserProfile();
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+      if (data) setUserProfile(data);
+    };
+    fetchProfile();
   }, []);
 
-  const fetchUserProfile = async () => {
-    const userRes = await supabase.auth.getUser();
-    const user = userRes.data?.user;
-    if (!user) return;
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-    if (error) return console.error("Erreur fetch user profile:", error);
-    setUserProfile(data);
-  };
-
-  // ── Calcul des bornes selon le mode ──
-  const getDateBornes = () => {
-    if (modeFiltre === "rapide") {
-      const fin = new Date();
-      const debut = new Date();
-      debut.setDate(debut.getDate() - periodeDays);
-      return {
-        debut: debut.toISOString().split("T")[0],
-        fin: fin.toISOString().split("T")[0],
-      };
-    }
-    return { debut: filterDebut, fin: filterFin };
-  };
-
-  // ── Fetch principal ──
-  const fetchReports = async () => {
+  // ─── Fetch ──────────────────────────────────────
+  const fetchReports = async (overrideModePerso = null) => {
     if (!userProfile) return;
-    setShowTable(false);
-
-    const { debut, fin } = getDateBornes();
+    setLoading(true);
+    const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
+    const isAdmin = userProfile.roles?.includes("Administrateur");
 
     try {
-      let query = supabase
-        .from("vue_flow_personnes")
-        .select("*")
+      let query = supabase.from("vue_flow_personnes").select("*")
         .eq("eglise_id", userProfile.eglise_id)
         .order("date_depart", { ascending: false });
 
-      if (!userProfile.roles?.includes("Administrateur")) {
+      if (!isAdmin) {
         query = query.ilike("responsable", `%${userProfile.prenom}%`);
       }
 
       const { data, error } = await query;
       if (error) throw error;
 
-      let filtered = data;
-      if (debut) filtered = filtered.filter((r) => new Date(r.date_depart) >= new Date(debut));
-      if (fin) filtered = filtered.filter((r) => new Date(r.date_depart) <= new Date(fin));
+      let filtered = data || [];
 
-      const cellulesDisponibles = Array.from(
-        new Set(filtered.map((r) => r.cellule_full))
-      ).sort();
-      setCellules(cellulesDisponibles.map((c) => ({ id: c, cellule_full: c })));
+      if (isPerso) {
+        if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
+        if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
+      } else {
+        const depuis = new Date();
+        depuis.setDate(depuis.getDate() - Number(filtrePeriode));
+        filtered = filtered.filter(r => new Date(r.date_depart) >= depuis);
+      }
 
       setAllReports(filtered);
       setReports(filtered);
-      updateKpis(filtered);
+      setAvailableCellules([...new Set(filtered.map(r => r.cellule_full).filter(Boolean))].sort());
       setFilterCellule("");
-      setShowTable(true);
+      updateKpis(filtered);
     } catch (err) {
       console.error("Erreur fetch:", err);
-      setAllReports([]);
       setReports([]);
-      setCellules([]);
-      setShowTable(false);
+      setAllReports([]);
     }
+    setLoading(false);
   };
 
-  // ── Filtre cellule réactif ──
   useEffect(() => {
-    if (!showTable) return;
-    const filtered = filterCellule
-      ? allReports.filter((r) =>
-          r.cellule_full?.toLowerCase().includes(filterCellule.toLowerCase())
-        )
-      : allReports;
-    setReports(filtered);
-    updateKpis(filtered);
-  }, [filterCellule, showTable]);
+    if (userProfile && !modePerso) fetchReports(false);
+  }, [userProfile, filtrePeriode, modePerso]);
 
-  // ── KPIs ──
+  // ─── Filtre cellule réactif ──────────────────────
+  const displayedReports = filterCellule
+    ? allReports.filter(r => r.cellule_full === filterCellule)
+    : allReports;
+
+  // ─── KPIs ────────────────────────────────────────
   const updateKpis = (filtered) => {
     const normalize = (text) =>
-      text
-        ?.toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") || "";
+      text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
 
     setKpis({
-      totalEvangelises: filtered.filter((r) =>
-        [
-          "individuel",
-          "sortie de groupe",
-          "campagne d'evangelisation",
-          "evangelisation de rue",
-          "evangelisation maison",
-          "evangelisation stade",
-          "evangelisation",
-        ].some((t) => normalize(r.type_evangelisation).includes(normalize(t)))
+      totalEvangelises: filtered.filter(r =>
+        ["individuel","sortie de groupe","campagne d'evangelisation","evangelisation de rue","evangelisation maison","evangelisation stade","evangelisation"]
+          .some(t => normalize(r.type_evangelisation).includes(normalize(t)))
       ).length,
-      totalVenus: filtered.filter((r) =>
-        normalize(r.type_evangelisation).includes("integration")
-      ).length,
-      totalIntegration: filtered.filter(
-        (r) => normalize(r.statut) === "integre"
-      ).length,
-      totalBapteme: filtered.filter((r) => r.date_baptise).length,
-      totalMinistere: filtered.filter((r) => r.debut_ministere).length,
-      totalRefus: filtered.filter((r) => normalize(r.statut) === "refus").length,
-      totalEncours: filtered.filter((r) =>
-        normalize(r.statut).includes("cours")
-      ).length,
-      totalAttente: filtered.filter((r) => {
+      totalVenus: filtered.filter(r => normalize(r.type_evangelisation).includes("integration")).length,
+      totalIntegration: filtered.filter(r => normalize(r.statut) === "integre").length,
+      totalBapteme: filtered.filter(r => r.date_baptise).length,
+      totalMinistere: filtered.filter(r => r.debut_ministere).length,
+      totalRefus: filtered.filter(r => normalize(r.statut) === "refus").length,
+      totalEncours: filtered.filter(r => normalize(r.statut).includes("cours")).length,
+      totalAttente: filtered.filter(r => {
         const s = normalize(r.statut);
         return s.includes("attente") || s.includes("envoye");
       }).length,
     });
   };
 
-  // ── Utilitaires ──
-  const getMonthNameFR = (m) =>
-    [
-      "Janvier","Février","Mars","Avril","Mai","Juin",
-      "Juillet","Août","Septembre","Octobre","Novembre","Décembre",
-    ][m] || "";
+  // Recalcule les KPIs quand le filtre cellule change
+  useEffect(() => {
+    updateKpis(displayedReports);
+  }, [filterCellule, allReports]);
 
-  const formatDateFR = (d) => {
-    if (!d) return "—";
-    const dt = new Date(d);
-    return `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}/${dt.getFullYear()}`;
+  // ─── Details ─────────────────────────────────────
+  const handleDetailsClick = async (row) => {
+    setSelectedEvangelise(row);
   };
 
-  const getStatutNormalise = (statut) => {
-    if (!statut) return "";
-    const s = statut.toLowerCase();
-    if (s.includes("envoy")) return "en attente";
-    return s;
-  };
-
-  const formatStatut = (statut) => {
-    if (!statut) return "—";
-    const s = statut.toLowerCase();
-    if (s.includes("envoy")) return "En attente";
-    return statut;
-  };
-
-  const getStatutBadge = (statut) => {
-    const s = getStatutNormalise(statut);
-    if (s === "integre" || s === "intégré") return { color: "green", label: formatStatut(statut) };
-    if (s === "refus") return { color: "red", label: "Refus" };
-    if (s.includes("cours") || s.includes("suivis")) return { color: "orange", label: formatStatut(statut) };
-    if (s.includes("attente")) return { color: "gray", label: "En attente" };
-    return { color: "blue", label: formatStatut(statut) };
-  };
-
-  const getRowBorderColor = (statut) => {
-    const s = getStatutNormalise(statut);
-    if (s === "integre" || s === "intégré") return "border-green-500";
-    if (s === "refus") return "border-red-500";
-    if (s.includes("cours") || s.includes("suivis")) return "border-orange-500";
-    if (s.includes("attente")) return "border-white/20";
-    return "border-white/10";
-  };
-
-  const groupByMonth = (data) => {
-    const map = {};
-    data.forEach((r) => {
-      const d = new Date(r.date_depart);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (!map[key]) map[key] = [];
-      map[key].push(r);
-    });
-    return map;
-  };
-
-  const toggleMonth = (key) =>
-    setExpandedMonths((prev) => ({ ...prev, [key]: !prev[key] }));
-
-  const groupedReports = Object.entries(groupByMonth(reports)).sort((a, b) => {
-    const [yA, mA] = a[0].split("-").map(Number);
-    const [yB, mB] = b[0].split("-").map(Number);
-    return new Date(yB, mB) - new Date(yA, mA);
-  });
-
-  // ── Synthèse par cellule ──
-  const synthParCellule = () => {
-    const map = {};
-    reports.forEach((r) => {
-      const key = r.cellule_full || "Non assignée";
-      if (!map[key]) {
-        map[key] = {
-          cellule: key,
-          responsable: r.responsable || "—",
-          total: 0,
-          integres: 0,
-          encours: 0,
-          attente: 0,
-          refus: 0,
-          baptises: 0,
-          ministeres: 0,
-        };
-      }
-      const s = getStatutNormalise(r.statut);
-      map[key].total += 1;
-      if (s === "integre" || s === "intégré") map[key].integres += 1;
-      if (s.includes("cours") || s.includes("suivis")) map[key].encours += 1;
-      if (s.includes("attente")) map[key].attente += 1;
-      if (s === "refus") map[key].refus += 1;
-      if (r.date_baptise) map[key].baptises += 1;
-      if (r.debut_ministere) map[key].ministeres += 1;
-    });
-    return Object.values(map).sort((a, b) => b.total - a.total);
-  };
-
+  const hasData = allReports.length > 0;
   const totalAmes = kpis.totalEvangelises + kpis.totalVenus;
-  const txIntegration = totalAmes > 0 ? Math.round((kpis.totalIntegration / totalAmes) * 100) : 0;
-  const txBapteme = totalAmes > 0 ? Math.round((kpis.totalBapteme / totalAmes) * 100) : 0;
 
-  // ── Render ──
+  const onglets = [
+    { key: "kpi", label: "Vue d'ensemble" },
+    { key: "cellules", label: "Par cellule" },
+    { key: "mois", label: "Par mois" },
+  ];
+
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-4 md:p-6"
-      style={{ background: "#333699" }}
-    >
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
 
-      {/* EN-TÊTE */}
-      <h1 className="text-2xl font-bold mt-6 mb-2 text-white text-center">
-        L'Évolution des Âmes par{" "}
-        <span className="text-emerald-300">Cellule</span>
-      </h1>
-      <div className="max-w-2xl w-full mb-6 text-center">
-        <p className="italic text-sm text-white/80 leading-relaxed">
-          <span className="text-blue-300 font-semibold">
-            Outil de vision et de gestion spirituelle.
-          </span>{" "}
-          Les âmes viennent de{" "}
-          <span className="text-blue-300 font-semibold">
-            l'évangélisation ou de l'église
-          </span>
-          , puis sont orientées vers les cellules pour grandir.{" "}
-          <span className="text-blue-300 font-semibold">
-            Chaque donnée représente une vie précieuse
-          </span>
-          , chaque progression témoigne de{" "}
-          <span className="text-blue-300 font-semibold">l'œuvre de Dieu</span>.
-        </p>
-      </div>
+      <div className="w-full max-w-2xl mt-6 flex flex-col gap-5 mb-10">
 
-      {/* ── FILTRES ── */}
-      <div className="w-full max-w-4xl bg-white/10 rounded-2xl p-4 md:p-6 mb-6 space-y-4">
-        {/* Toggle mode */}
-        <div className="flex gap-2 bg-white/10 rounded-xl p-1 w-fit">
-          {["rapide", "tranche"].map((m) => (
-            <button
-              key={m}
-              onClick={() => setModeFiltre(m)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
-                modeFiltre === m
-                  ? "bg-white text-[#333699]"
-                  : "text-white hover:bg-white/10"
-              }`}
-            >
-              {m === "rapide" ? "⚡ Période rapide" : "📅 Tranche de dates"}
+        {/* En-tête */}
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mt-4 mb-2 text-blue-300 text-center text-white">
+            L'Évolution des Âmes par <span className="text-emerald-300">Cellule</span>
+          </h1>
+          <p className="italic text-base text-white/90">
+            <span className="text-blue-300 font-semibold">Outil de vision et de gestion spirituelle.</span>{" "}
+            Les âmes viennent de <span className="text-blue-300 font-semibold">l'évangélisation ou de l'église</span>,
+            puis sont orientées vers les cellules pour grandir.{" "}
+            <span className="text-blue-300 font-semibold">Chaque donnée représente une vie précieuse</span>,
+            chaque progression témoigne de <span className="text-blue-300 font-semibold">l'œuvre de Dieu</span>.
+          </p>
+        </div>
+
+        {/* Filtres */}
+        <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
+          {/* Toggle mode */}
+          <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
+            <button onClick={() => setModePerso(false)}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              Période rapide
+            </button>
+            <button onClick={() => setModePerso(true)}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              Tranche de dates
+            </button>
+          </div>
+
+          {/* Période rapide */}
+          {!modePerso && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-white/50 flex-shrink-0">Période :</span>
+              {[{ label: "7 j", val: "7" }, { label: "30 j", val: "30" }, { label: "90 j", val: "90" }, { label: "6 mois", val: "180" }, { label: "1 an", val: "365" }].map(p => (
+                <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Tranche personnalisée */}
+          {modePerso && (
+            <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-white/50">Date de début</label>
+                  <input type="date" value={filterDebut} onChange={e => setFilterDebut(e.target.value)}
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-white/50">Date de fin</label>
+                  <input type="date" value={filterFin} onChange={e => setFilterFin(e.target.value)}
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
+                </div>
+              </div>
+              <button onClick={() => fetchReports(true)}
+                className="w-full py-2 rounded-xl bg-amber-500/80 hover:bg-amber-500 text-white text-sm font-semibold transition active:scale-95">
+                Générer le rapport
+              </button>
+            </div>
+          )}
+
+          {/* Filtre cellule */}
+          {hasData && availableCellules.length > 1 && (
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-white/50">Cellule</label>
+              <select value={filterCellule} onChange={e => setFilterCellule(e.target.value)}
+                className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
+                <option value="" className="bg-[#2a2d80]">Toutes les cellules</option>
+                {availableCellules.map((c, i) => (
+                  <option key={i} value={c} className="bg-[#2a2d80]">{c}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {/* Onglets */}
+        <div className="flex gap-1 bg-white/10 rounded-xl p-1">
+          {onglets.map(o => (
+            <button key={o.key} onClick={() => setOnglet(o.key)}
+              className={`flex-1 py-2 px-2 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              {o.label}
             </button>
           ))}
         </div>
 
-        {/* Contenu filtre */}
-        {modeFiltre === "rapide" ? (
-          <div className="flex flex-col gap-3">
-            <TogglePeriode active={periodeDays} onChange={setPeriodeDays} />
-            <button
-              onClick={fetchReports}
-              className="w-fit bg-amber-400 hover:bg-amber-300 text-white font-semibold px-6 py-2 rounded-xl transition"
-            >
-              Générer
-            </button>
+        {/* Contenu */}
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
           </div>
+        ) : !hasData ? (
+          <div className="bg-white/10 rounded-2xl p-8 text-center text-white/40 text-sm">
+            {modePerso ? "Choisissez une plage de dates et cliquez sur « Générer le rapport »" : "Aucune donnée sur cette période"}
+          </div>
+        ) : onglet === "kpi" ? (
+          <div className="flex flex-col gap-7">
+            <div>
+              <SectionTitle>Vue d'ensemble</SectionTitle>
+              <BlocKpi kpis={kpis} totalAmes={totalAmes} />
+            </div>
+            <div>
+              <SectionTitle>Performance par cellule</SectionTitle>
+              <BlocParCellule displayedReports={displayedReports} />
+            </div>
+          </div>
+
+        ) : onglet === "cellules" ? (
+          <OngletParCelluleDetail displayedReports={displayedReports} onDetails={handleDetailsClick} />
+
         ) : (
-          <div className="flex flex-col md:flex-row gap-3 items-end flex-wrap">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-white/60 uppercase tracking-wide">
-                Date début
-              </label>
-              <input
-                type="date"
-                value={filterDebut}
-                onChange={(e) => setFilterDebut(e.target.value)}
-                className="h-10 border border-white/20 rounded-xl px-3 bg-white/5 text-white text-sm"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-white/60 uppercase tracking-wide">
-                Date fin
-              </label>
-              <input
-                type="date"
-                value={filterFin}
-                onChange={(e) => setFilterFin(e.target.value)}
-                className="h-10 border border-white/20 rounded-xl px-3 bg-white/5 text-white text-sm"
-              />
-            </div>
-            <button
-              onClick={fetchReports}
-              className="h-10 bg-amber-400 hover:bg-amber-300 text-white font-semibold px-6 rounded-xl transition"
-            >
-              Générer
-            </button>
-          </div>
+          <OngletParMois displayedReports={displayedReports} onDetails={handleDetailsClick} />
         )}
 
-        {/* Filtre cellule (après génération) */}
-        {showTable && (
-          <div className="flex flex-col gap-1 w-full md:w-64">
-            <label className="text-xs text-white/60 uppercase tracking-wide">
-              Filtrer par cellule
-            </label>
-            <select
-              value={filterCellule}
-              onChange={(e) => setFilterCellule(e.target.value)}
-              className="h-10 border border-white/20 rounded-xl px-3 bg-white/5 text-white text-sm"
-            >
-              <option value="" className="text-black">
-                Toutes les cellules
-              </option>
-              {Cellules.map((c) => (
-                <option key={c.id} value={c.cellule_full} className="text-black">
-                  {c.cellule_full}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
       </div>
 
-      {/* ── KPIs ── */}
-      {showTable && (
-        <div className="w-full max-w-4xl mb-6 space-y-3">
-          <SectionTitle>Indicateurs clés</SectionTitle>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <KpiCard label="Évangélisés" value={kpis.totalEvangelises} color="bg-blue-500/30" />
-            <KpiCard label="Venus à l'église" value={kpis.totalVenus} color="bg-purple-500/30" />
-            <KpiCard
-              label="Intégrés"
-              value={kpis.totalIntegration}
-              sub={`${txIntegration}%`}
-              color="bg-green-500/30"
-            />
-            <KpiCard
-              label="Baptêmes"
-              value={kpis.totalBapteme}
-              sub={`${txBapteme}%`}
-              color="bg-indigo-500/30"
-            />
-            <KpiCard label="Ministère" value={kpis.totalMinistere} color="bg-pink-500/30" />
-            <KpiCard label="Refus" value={kpis.totalRefus} color="bg-red-500/30" />
-            <KpiCard label="En cours" value={kpis.totalEncours} color="bg-orange-500/30" />
-            <KpiCard label="En attente" value={kpis.totalAttente} color="bg-white/10" />
-          </div>
-
-          {/* Barre entonnoir conversion */}
-          {totalAmes > 0 && (
-            <div className="bg-white/10 rounded-2xl p-4 space-y-3">
-              <SectionTitle>Entonnoir de progression</SectionTitle>
-              {[
-                { label: "Total âmes", val: totalAmes, color: "bg-blue-400" },
-                { label: "Intégrés", val: kpis.totalIntegration, color: "bg-green-400" },
-                { label: "Baptisés", val: kpis.totalBapteme, color: "bg-indigo-400" },
-                { label: "En ministère", val: kpis.totalMinistere, color: "bg-pink-400" },
-              ].map(({ label, val, color }) => (
-                <div key={label} className="flex items-center gap-3">
-                  <div className="w-28 text-xs text-white/60 shrink-0">{label}</div>
-                  <div className="flex-1 bg-white/10 rounded-full h-2.5 overflow-hidden">
-                    <div
-                      className={`${color} h-full rounded-full transition-all`}
-                      style={{ width: `${Math.min(100, Math.round((val / totalAmes) * 100))}%` }}
-                    />
-                  </div>
-                  <div className="w-10 text-right text-xs text-white font-semibold">
-                    {val}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── ONGLETS ── */}
-      {showTable && (
-        <div className="w-full max-w-4xl mb-4">
-          <div className="bg-white/10 rounded-xl p-1 flex gap-1 w-fit">
-            {[
-              { key: "tableau", label: "📋 Tableau" },
-              { key: "synthese", label: "📊 Synthèse par cellule" },
-            ].map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setActiveTab(t.key)}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
-                  activeTab === t.key
-                    ? "bg-white text-[#333699]"
-                    : "text-white hover:bg-white/10"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── CONTENU ONGLET TABLEAU ── */}
-      {showTable && activeTab === "tableau" && (
-        <div className="w-full max-w-7xl mb-8">
-
-          {/* DESKTOP */}
-          <div className="hidden md:block w-full overflow-x-auto">
-            <div className="w-max mx-auto space-y-2 bg-white/5 p-2 rounded-xl">
-              {/* Header */}
-              <div className="flex text-xs font-semibold uppercase text-white/50 tracking-wider px-4 py-3 border-b border-white/10 whitespace-nowrap">
-                <div className="min-w-[130px]">Date départ</div>
-                <div className="min-w-[190px] text-center">Nom complet</div>
-                <div className="min-w-[190px] text-center">Type</div>
-                <div className="min-w-[130px] text-center">Statut</div>
-                <div className="min-w-[130px] text-center">Assigné le</div>
-                <div className="min-w-[130px] text-center">Date évolution</div>
-                <div className="min-w-[130px] text-center">Baptême</div>
-                <div className="min-w-[130px] text-center">Ministère</div>
-                <div className="min-w-[200px] text-center">Cellule</div>
-                <div className="min-w-[180px] text-center">Responsable</div>
-                <div className="min-w-[90px] text-center">Action</div>
-              </div>
-
-              {groupedReports.length === 0 && (
-                <div className="text-center text-white/40 py-10 text-sm">
-                  Aucune donnée pour cette période.
-                </div>
-              )}
-
-              {groupedReports.map(([monthKey, rows]) => {
-                const [year, monthIndex] = monthKey.split("-").map(Number);
-                const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-                const isExpanded = expandedMonths[monthKey] || false;
-
-                return (
-                  <div key={monthKey} className="w-full">
-                    {/* Ligne mois */}
-                    <div
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 transition border-l-4 border-amber-300 cursor-pointer"
-                      onClick={() => toggleMonth(monthKey)}
-                    >
-                      <span className="text-white font-semibold text-sm">
-                        {isExpanded ? "▼" : "▶"} {monthLabel}
-                      </span>
-                      <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full font-medium">
-                        {rows.length}
-                      </span>
-                    </div>
-
-                    {isExpanded && (
-                      <div className="ml-4 mt-1 space-y-1">
-                        {rows.map((r, i) => {
-                          const badge = getStatutBadge(r.statut);
-                          const border = getRowBorderColor(r.statut);
-                          return (
-                            <div
-                              key={i}
-                              className={`flex items-center px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition border-l-4 ${border}`}
-                            >
-                              <div className="min-w-[130px] text-white/80 text-sm">
-                                {formatDateFR(r.date_depart)}
-                              </div>
-                              <div className="min-w-[190px] text-center text-white text-sm font-medium">
-                                {r.nom_complet}
-                              </div>
-                              <div className="min-w-[190px] text-center text-white/70 text-xs">
-                                {r.type_evangelisation}
-                              </div>
-                              <div className="min-w-[130px] text-center">
-                                <Badge label={badge.label} color={badge.color} />
-                              </div>
-                              <div className="min-w-[130px] text-center text-white/60 text-xs">
-                                {formatDateFR(r.envoyer_au_suivi_le)}
-                              </div>
-                              <div className="min-w-[130px] text-center text-white/60 text-xs">
-                                {formatDateFR(r.date_integration)}
-                              </div>
-                              <div className="min-w-[130px] text-center text-white/60 text-xs">
-                                {formatDateFR(r.date_baptise)}
-                              </div>
-                              <div className="min-w-[130px] text-center text-white/60 text-xs">
-                                {formatDateFR(r.debut_ministere)}
-                              </div>
-                              <div className="min-w-[200px] text-center text-white/80 text-xs">
-                                {r.cellule_full}
-                              </div>
-                              <div className="min-w-[180px] text-center text-white/80 text-xs">
-                                {r.responsable}
-                              </div>
-                              <div className="min-w-[90px] text-center">
-                                <button
-                                  className="text-orange-400 hover:text-orange-300 text-xs underline font-medium"
-                                  onClick={() => setSelectedEvangelise(r)}
-                                >
-                                  Détails
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* MOBILE */}
-          <div className="md:hidden space-y-3 w-full">
-            {groupedReports.map(([monthKey, rows]) => {
-              const [year, monthIndex] = monthKey.split("-").map(Number);
-              const monthLabel = `${getMonthNameFR(monthIndex)} ${year}`;
-              const isExpanded = expandedMonths[monthKey] || false;
-
-              return (
-                <div key={monthKey} className="space-y-2 w-full">
-                  <div
-                    className="flex items-center justify-between px-4 py-3 rounded-xl bg-white/10 border-l-4 border-amber-300 cursor-pointer"
-                    onClick={() => toggleMonth(monthKey)}
-                  >
-                    <span className="text-white font-semibold text-sm">
-                      {isExpanded ? "▼" : "▶"} {monthLabel}
-                    </span>
-                    <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">
-                      {rows.length}
-                    </span>
-                  </div>
-
-                  {isExpanded && (
-                    <div className="space-y-2">
-                      {rows.map((r, i) => {
-                        const badge = getStatutBadge(r.statut);
-                        const border = getRowBorderColor(r.statut);
-                        return (
-                          <div
-                            key={i}
-                            className={`bg-white/10 rounded-xl p-4 text-white space-y-1.5 border-l-4 ${border}`}
-                          >
-                            <p className="text-xs text-white/50">{formatDateFR(r.date_depart)}</p>
-                            <p className="font-semibold">{r.nom_complet}</p>
-                            <p className="text-xs text-white/70">{r.type_evangelisation}</p>
-                            <div>
-                              <Badge label={badge.label} color={badge.color} />
-                            </div>
-                            <p className="text-xs text-white/60">
-                              Envoyé : {formatDateFR(r.envoyer_au_suivi_le)}
-                            </p>
-                            <p className="text-xs text-white/60">
-                              Intégration : {formatDateFR(r.date_integration)}
-                            </p>
-                            <p className="text-xs text-white/60">
-                              Baptême : {formatDateFR(r.date_baptise)}
-                            </p>
-                            <p className="text-xs text-white/60">
-                              Ministère : {formatDateFR(r.debut_ministere)}
-                            </p>
-                            <p className="text-xs text-white/80 font-medium">
-                              {r.cellule_full}
-                            </p>
-                            <p className="text-xs text-white/60">{r.responsable}</p>
-                            <button
-                              className="text-orange-400 text-xs underline"
-                              onClick={() => setSelectedEvangelise(r)}
-                            >
-                              Détails
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── ONGLET SYNTHÈSE PAR CELLULE ── */}
-      {showTable && activeTab === "synthese" && (
-        <div className="w-full max-w-4xl mb-8 space-y-3">
-          <SectionTitle>Synthèse par cellule</SectionTitle>
-          {synthParCellule().map((row) => {
-            const pct = row.total > 0 ? Math.round((row.integres / row.total) * 100) : 0;
-            return (
-              <div
-                key={row.cellule}
-                className="bg-white/10 rounded-2xl p-4 space-y-3"
-              >
-                <div className="flex items-start justify-between gap-2 flex-wrap">
-                  <div>
-                    <p className="text-white font-semibold">{row.cellule}</p>
-                    <p className="text-xs text-white/50">{row.responsable}</p>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    <Badge label={`${row.total} âmes`} color="blue" />
-                    <Badge label={`${row.integres} intégrés`} color="green" />
-                    {row.refus > 0 && <Badge label={`${row.refus} refus`} color="red" />}
-                  </div>
-                </div>
-
-                {/* Barre de progression intégration */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 bg-white/10 rounded-full h-2 overflow-hidden">
-                    <div
-                      className="bg-green-400 h-full rounded-full"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-white/60 w-10 text-right">{pct}%</span>
-                </div>
-
-                {/* Détail chiffres */}
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-center">
-                  {[
-                    { label: "En cours", val: row.encours, color: "text-orange-300" },
-                    { label: "Attente", val: row.attente, color: "text-white/50" },
-                    { label: "Baptisés", val: row.baptises, color: "text-indigo-300" },
-                    { label: "Ministère", val: row.ministeres, color: "text-pink-300" },
-                  ].map(({ label, val, color }) => (
-                    <div key={label} className="bg-white/5 rounded-xl p-2">
-                      <div className={`font-bold text-sm ${color}`}>{val}</div>
-                      <div className="text-xs text-white/40">{label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ── POPUPS ── */}
+      {/* Popups */}
       {selectedEvangelise && (
         <DetailsEtatConseillerPopup
           member={selectedEvangelise}
           onClose={() => setSelectedEvangelise(null)}
           onUpdate={(id, updates) => {
-            setReports((prev) =>
-              prev.map((r) => (r.id === id ? { ...r, ...updates } : r))
-            );
+            setAllReports(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+            setReports(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
           }}
         />
       )}
-
       {selectedMember && (
         <DetailsEtatConsEvangePopup
           member={selectedMember}
           onClose={() => setSelectedMember(null)}
           onEdit={(member) => setEditMember(member)}
+        />
+      )}
+      {editMember && (
+        <EditMemberCellulePopup
+          member={editMember}
+          onClose={() => setEditMember(null)}
         />
       )}
 

@@ -34,6 +34,8 @@ function MembresCelluleContent() {
   const [showBesoinLibre, setshowBesoinLibre] = useState(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const { memberId, celluleId, highlight } = router.query;
+  const highlightRef = useRef({});
 
   const memberIdStr =
     typeof memberId === "string"
@@ -86,6 +88,15 @@ function MembresCelluleContent() {
   const handleUpdateMember = (updated) => {
     setMembres((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
   };
+
+  //---------------scroll Auto
+  useEffect(() => {
+  if (!highlight || loading) return;
+  const el = highlightRef.current[highlight];
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+}, [highlight, loading]);
 
   // ------------------- FETCH USER + CELLULES -------------------
   useEffect(() => {
@@ -332,8 +343,17 @@ useEffect(() => {
                 return (
                   <div
                     key={m.id}
+                    ref={(el) => (highlightRef.current[m.id] = el)}
                     className="bg-white p-4 rounded-2xl shadow-xl border-l-4"
-                    style={{ borderLeftColor: getBorderColor(m) }}
+                    style={{
+                      borderLeftColor: getBorderColor(m),
+                      // ✅ surlignage si c'est le membre ciblé
+                      outline: highlight === m.id ? "3px solid #f59e0b" : "none",
+                      boxShadow: highlight === m.id
+                        ? "0 0 0 4px #fef3c7, 0 4px 24px rgba(245,158,11,0.3)"
+                        : "0 4px 6px rgba(0,0,0,0.1)",
+                      transition: "box-shadow 0.3s ease",
+                    }}
                   >
                     <h2 className="text-center font-bold text-lg">
                       <span>{m.prenom} {m.nom}</span>

@@ -1,26 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import HeaderInvitation from "../components/HeaderInvitation";
 
 export default function AcceptInvitation() {
   const router = useRouter();
-  const { token } = router.query;
 
+  const [token, setToken] = useState(null);
   const [invitation, setInvitation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [choice, setChoice] = useState("");
   const [message, setMessage] = useState("");
 
+  // ── Lire le token depuis l'URL manuellement (compatible App Router) ──
   useEffect(() => {
-    if (!router.isReady || !token) return;
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("token");
+    if (t) setToken(t);
+  }, []);
 
-    const fetchInvitation = async () => {
+  // ── Charger l'invitation + remplir supervisee_eglise_id ──
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchAndLink = async () => {
       setLoading(true);
       try {
+        // 1. Récupérer l'invitation
         const { data, error } = await supabase
           .from("eglise_supervisions")
           .select("*")
@@ -29,9 +38,33 @@ export default function AcceptInvitation() {
 
         if (error || !data) {
           setInvitation(null);
-        } else {
-          setInvitation(data);
+          setLoading(false);
+          return;
         }
+
+        setInvitation(data);
+
+        // 2. Récupérer l'église de l'utilisateur connecté
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setLoading(false);
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("eglise_id")
+          .eq("id", user.id)
+          .single();
+
+        // 3. Remplir supervisee_eglise_id si pas encore rempli
+        if (profile?.eglise_id && !data.supervisee_eglise_id) {
+          await supabase
+            .from("eglise_supervisions")
+            .update({ supervisee_eglise_id: profile.eglise_id })
+            .eq("invitation_token", token);
+        }
+
       } catch (err) {
         console.error(err);
         setInvitation(null);
@@ -40,8 +73,8 @@ export default function AcceptInvitation() {
       }
     };
 
-    fetchInvitation();
-  }, [router.isReady, token]);
+    fetchAndLink();
+  }, [token]);
 
   const handleSubmit = async () => {
     if (!choice || !invitation) return;
@@ -76,8 +109,8 @@ export default function AcceptInvitation() {
     }
   };
 
-  if (loading) return <div className="p-10">Chargement…</div>;
-  if (!invitation) return <div className="p-10 text-red-600">Invitation introuvable</div>;
+  if (loading) return <div className="p-10 text-white">Chargement…</div>;
+  if (!invitation) return <div className="p-10 text-red-400">Invitation introuvable ou expirée.</div>;
 
   return (
     <div className="min-h-screen bg-[#333699] flex flex-col items-center p-6">

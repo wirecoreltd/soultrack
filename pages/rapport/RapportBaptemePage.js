@@ -438,10 +438,15 @@ function RapportBaptemes() {
       for (const id of selectedCandidats) {
         const membre = candidats.find(c => c.id === id);
         if (!membre) continue;
-        await supabase.from("baptemes").insert([{
-          ...formData, baptise_par: formData.baptise_par,
+        const payload = {
+          date: formData.date,
+          hommes: Number(formData.hommes) || 0,
+          femmes: Number(formData.femmes) || 0,
+          baptise_par: formData.baptise_par.trim(),
+          eglise_id: formData.eglise_id,
           evangelise_member_id: membre.evangelise_member_id || membre.id,
-        }]);
+        };
+        await supabase.from("baptemes").insert([payload]);
         await supabase.from("membres_complets").update({ bapteme_eau: "Oui", veut_se_faire_baptiser: "Non" }).eq("id", id);
       }
       setSelectedCandidats([]);

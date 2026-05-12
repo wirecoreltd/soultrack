@@ -258,7 +258,7 @@ function RapportMinistere() {
   const [message, setMessage] = useState("");
 
   // Filtres
-  const [filtrePeriode, setFiltrePeriode] = useState("90");
+  const [filtrePeriode, setFiltrePeriode] = useState("tout");
   const [modePerso, setModePerso] = useState(false);
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
@@ -304,7 +304,7 @@ function RapportMinistere() {
       if (isPerso) {
         if (dateDebut) query = query.gte("date_action", dateDebut);
         if (dateFin) query = query.lte("date_action", dateFin);
-      } else {
+      } else if (filtrePeriode !== "tout") {
         const depuis = new Date();
         depuis.setDate(depuis.getDate() - Number(filtrePeriode));
         query = query.gte("date_action", depuis.toISOString().split("T")[0]);
@@ -406,7 +406,7 @@ function RapportMinistere() {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-white/50 flex-shrink-0">Période :</span>
               {[
-                { label: "7 j", val: "7" }, { label: "30 j", val: "30" },
+                { label: "Tout", val: "tout" }, { label: "30 j", val: "30" },
                 { label: "90 j", val: "90" }, { label: "6 mois", val: "180" },
                 { label: "1 an", val: "365" },
               ].map(p => (

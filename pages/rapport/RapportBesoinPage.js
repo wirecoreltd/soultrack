@@ -394,7 +394,10 @@ function RapportBesoin() {
   }, [egliseId, filtrePeriode, modePerso]);
 
   const handleNavigate = (besoin) => {
-    router.push(`/list-members?besoin=${encodeURIComponent(besoin)}&dateDebut=${dateDebut}&dateFin=${dateFin}`);
+    const params = new URLSearchParams({ besoin });
+    if (dateDebut) params.set("dateDebut", dateDebut);
+    if (dateFin) params.set("dateFin", dateFin);
+    router.push(`/membres/list-members?${params.toString()}`);
   };
 
   const hasBesoins = Object.keys(besoinsCount).length > 0;

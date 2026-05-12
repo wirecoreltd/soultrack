@@ -3,6 +3,21 @@
 import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 
+// ── Utilitaire hors composant pour éviter les problèmes de référence ──
+function parseHistoriqueBesoin(besoinJson) {
+  if (!besoinJson) return [];
+  try {
+    const parsed = JSON.parse(besoinJson);
+    if (!Array.isArray(parsed)) return [];
+    if (parsed.length > 0 && typeof parsed[0] === "object" && parsed[0].label) {
+      return parsed;
+    }
+    return parsed.map((b) => ({ label: b, statut: "En suivi" }));
+  } catch {
+    return [];
+  }
+}
+
 export default function SuiviPopup({ member, onClose, user }) {
   const [loading, setLoading] = useState(false);
   const [suivis, setSuivis] = useState([]);
@@ -139,13 +154,42 @@ export default function SuiviPopup({ member, onClose, user }) {
     fetchSuivis();
   }, []);
 
+  // ── Fetch + pré-remplissage du formulaire avec le dernier suivi ──
   const fetchSuivis = async () => {
     const { data } = await supabase
       .from("suivis")
       .select("*, profiles:created_by(prenom, nom)")
       .eq("membre_id", member.id)
       .order("date_action", { ascending: false });
+
     setSuivis(data || []);
+
+    // Pré-remplir le formulaire avec le dernier suivi enregistré
+    if (data && data.length > 0) {
+      const last = data[0];
+      const besoinsArr = parseHistoriqueBesoin(last.besoin);
+      const besoinChecked = [];
+      const besoinStatuts = {};
+      const resolved = [];
+
+      besoinsArr.forEach(({ label, statut }) => {
+        if (statut === "Résolu") {
+          resolved.push(label);
+        } else {
+          besoinChecked.push(label);
+          besoinStatuts[label] = statut || "En suivi";
+        }
+      });
+
+      setResolvedBesoins(resolved);
+      setForm({
+        date_action: last.date_action || "",
+        type: last.action_type || last.type || "",
+        besoin: besoinChecked,
+        besoinStatuts,
+        commentaire: last.commentaire || "",
+      });
+    }
   };
 
   const handleEditSuivi = (s) => {
@@ -350,20 +394,6 @@ export default function SuiviPopup({ member, onClose, user }) {
       return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
     } catch {
       return dateStr;
-    }
-  };
-
-  const parseHistoriqueBesoin = (besoinJson) => {
-    if (!besoinJson) return [];
-    try {
-      const parsed = JSON.parse(besoinJson);
-      if (!Array.isArray(parsed)) return [];
-      if (parsed.length > 0 && typeof parsed[0] === "object" && parsed[0].label) {
-        return parsed;
-      }
-      return parsed.map((b) => ({ label: b, statut: "En suivi" }));
-    } catch {
-      return [];
     }
   };
 

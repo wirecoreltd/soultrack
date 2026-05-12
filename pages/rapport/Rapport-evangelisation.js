@@ -458,14 +458,12 @@ export default function RapportEvangelisation() {
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Tableau de Bord<span className="text-emerald-300"> Évangélisation</span></h1>
+      <div className="w-full max-w-2xl mt-6 flex flex-col gap-5 mb-10">
 
-    <div className="max-w-3xl w-full mb-6 text-center">
-          <p className="italic text-base text-white/90">                
-           Suivez et analysez facilement vos activités d’évangélisation. 
-         Filtrez par date et type, visualisez les rapports détaillés et 
-           consultez rapidement les KPIs :  <span className="text-blue-300 font-semibold">évangélisés, convertis, intégrés en cellule ou à l’église, et suivis en cours</span>.
-          </p>
+        {/* En-tête */}
+        <div>
+          <h1 className="text-2xl font-bold text-white">Tableau de bord évangélisation</h1>
+          <p className="text-white/50 text-sm mt-0.5">Suivi des activités — évangélisés, convertis, intégrés</p>
         </div>
 
         {/* Filtres */}

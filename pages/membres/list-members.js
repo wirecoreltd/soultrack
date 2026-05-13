@@ -292,27 +292,37 @@ function ListMembersContent() {
 
   // -------------------- Supprimer --------------------
   const handleSupprimerMembre = async (id) => {
-    localUpdateInProgressRef.current = true;
-    const { error } = await supabase
+  localUpdateInProgressRef.current = true;
+
+  try {
+    // 1. Soft-delete membres_complets → le trigger supprime profiles automatiquement
+    const { error: updateError } = await supabase
       .from("membres_complets")
       .update({ etat_contact: "supprime" })
       .eq("id", id);
-    if (error) {
-      console.error("Erreur suppression :", error);
-      localUpdateInProgressRef.current = false;
-      return;
-    }
-    setAllMembers((prev) =>
-      prev.map((m) =>
-        m.id === id ? { ...m, etat_contact: "supprime" } : m
-      )
-    );
-    showToast("❌ Contact supprimé");
+
+    if (updateError) throw updateError;
+
+    // 2. Supprimer auth.users via Edge Function (service_role obligatoire)
+    const { error: authError } = await supabase.functions.invoke("delete-auth-user", {
+      body: { member_id: id },
+    });
+
+    if (authError) throw authError;
+
+    // 3. Retirer de l'affichage
+    setAllMembers((prev) => prev.filter((m) => m.id !== id));
+    showToast("✅ Contact supprimé définitivement");
+
+  } catch (err) {
+    console.error("Erreur suppression :", err);
+    showToast("❌ Erreur lors de la suppression : " + (err.message || "inconnue"));
+  } finally {
     setTimeout(() => {
       localUpdateInProgressRef.current = false;
     }, 2000);
-  };
-
+  }
+};
   const handleCommentChange = (id, value) =>
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 

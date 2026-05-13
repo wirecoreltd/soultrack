@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient";
 import Image from "next/image";
 import LogoutLink from "../../components/LogoutLink";
@@ -27,6 +28,11 @@ function SuivisEvangelisationContent() {
   const famillesActive = useFeature("familles");
   const cellulesActive = useFeature("cellules");
   const conseillerActive = useFeature("conseiller");
+
+  // ✅ Highlight
+  const router = useRouter();
+  const { highlight } = router.query;
+  const highlightRef = useRef({});
 
   const [allSuivis, setAllSuivis] = useState([]);
   const [conseillers, setConseillers] = useState([]);
@@ -63,6 +69,13 @@ function SuivisEvangelisationContent() {
   useEffect(() => {
     if (user) fetchSuivis(user, cellules, familles);
   }, [showRefus]);
+
+  // ✅ Scroll automatique vers la carte surlignée
+  useEffect(() => {
+    if (!highlight || loading) return;
+    const el = highlightRef.current[highlight];
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlight, loading]);
 
   const init = async () => {
     const userData = await fetchUser();
@@ -483,7 +496,10 @@ function SuivisEvangelisationContent() {
           return (
             <div
               key={m.id}
-              className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
+              ref={(el) => (highlightRef.current[m.id] = el)}
+              className={`bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4 ${
+                highlight === String(m.id) ? "highlight-pulse" : ""
+              }`}
               style={{ borderLeftColor: getBorderColor(m) }}
             >
               <div className="flex flex-col items-center">

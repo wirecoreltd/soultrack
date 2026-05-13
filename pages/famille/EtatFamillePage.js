@@ -14,9 +14,6 @@ export default function EtatFamillePage() {
   );
 }
 
-const [modePerso, setModePerso] = useState(false);   // ← était true
-const [filtrePeriode, setFiltrePeriode] = useState("30");  // déjà "30", rien à changer
-
 // ─── HELPERS ──────────────────────────────────────────────────
 function formatDateFR(dateStr) {
   if (!dateStr) return "—";
@@ -364,7 +361,7 @@ function EtatFamille() {
   const [loadingMembres, setLoadingMembres] = useState(false);
 
   // Filtres
-  const [modePerso, setModePerso] = useState(true);
+  const [modePerso, setModePerso] = useState(false); 
   const [filtrePeriode, setFiltrePeriode] = useState("30");
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");

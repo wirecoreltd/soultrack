@@ -75,7 +75,7 @@ function FamillesHubContent() {
 
       <div className="text-center mb-6">
         <h1 className="text-3xl font-extrabold mt-4 mb-6 text-white drop-shadow-lg">
-          👨‍👩‍👧‍👦 Espace Familles
+          Espace Familles
         </h1>
 
         <div className="max-w-3xl w-full mb-6 text-center">

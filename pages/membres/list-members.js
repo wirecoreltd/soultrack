@@ -65,7 +65,7 @@ function ListMembersContent() {
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
   const toBoolean = (val) => val === true || val === "true";
-  const [userRole, setUserRole] = useState(null);
+  const [userRole, setUserRole] = useState(null); // ✅ sera assigné dans fetchData
   const besoinFromUrl = searchParams.get("besoin");
   const dateDebut = searchParams.get("dateDebut");
   const dateFin = searchParams.get("dateFin");
@@ -103,8 +103,8 @@ function ListMembersContent() {
   // ✅ FEATURES — source unique via useFeature
   // ─────────────────────────────────────────────
   const famillesActive = useFeature("familles");
-  const cellulesActive = useFeature("cellules");
-  const conseillerActive = useFeature("conseiller");
+  const cellulesActive = useFeature("cellules");     // ✅ AJOUTÉ
+  const conseillerActive = useFeature("conseiller"); // ✅ AJOUTÉ
 
   const roles = getRoles(userProfile);
   const isAdmin = roles.includes("Administrateur");
@@ -190,8 +190,8 @@ function ListMembersContent() {
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
     const months = [
-      "Janv", "Févr", "Mars", "Avr", "Mai", "Juin",
-      "Juil", "Août", "Sept", "Oct", "Nov", "Déc",
+      "Janv","Févr","Mars","Avr","Mai","Juin",
+      "Juil","Août","Sept","Oct","Nov","Déc",
     ];
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
@@ -291,54 +291,26 @@ function ListMembersContent() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   // -------------------- Supprimer --------------------
-  // ✅ Appelle la Edge Function qui :
-  //    - garde membres_complets en etat_contact = "supprime"
-  //    - supprime profiles
-  //    - supprime auth.users via service_role (bypass RLS)
-  //
-  // ⚠️ Si vous obtenez une erreur CORS, le problème vient de la Edge Function
-  //    elle-même (pas déployée, headers CORS manquants, ou erreur de boot).
-  //    Voir : supabase/functions/delete-member/index.ts
   const handleSupprimerMembre = async (id) => {
     localUpdateInProgressRef.current = true;
-
-    try {
-      const { error } = await supabase.functions.invoke("delete-member", {
-        body: { member_id: id },
-      });
-
-      if (error) {
-        // ✅ Message d'erreur plus précis selon le type d'erreur
-        const isCorsError =
-          error.message?.toLowerCase().includes("cors") ||
-          error.message?.toLowerCase().includes("failed to send") ||
-          error.message?.toLowerCase().includes("fetch");
-
-        console.error("Erreur suppression complète :", error);
-
-        if (isCorsError) {
-          showToast(
-            "❌ Erreur de connexion à la fonction de suppression. Vérifiez que la Edge Function est bien déployée."
-          );
-        } else {
-          showToast("❌ Erreur lors de la suppression : " + (error.message || "inconnue"));
-        }
-
-        localUpdateInProgressRef.current = false;
-        return;
-      }
-
-      // Retirer de la liste affichée (la ligne reste en BDD avec etat_contact="supprime")
-      setAllMembers((prev) => prev.filter((m) => m.id !== id));
-      showToast("✅ Contact supprimé définitivement");
-    } catch (err) {
-      console.error("Erreur inattendue suppression :", err);
-      showToast("❌ Erreur inattendue lors de la suppression");
-    } finally {
-      setTimeout(() => {
-        localUpdateInProgressRef.current = false;
-      }, 2000);
+    const { error } = await supabase
+      .from("membres_complets")
+      .update({ etat_contact: "supprime" })
+      .eq("id", id);
+    if (error) {
+      console.error("Erreur suppression :", error);
+      localUpdateInProgressRef.current = false;
+      return;
     }
+    setAllMembers((prev) =>
+      prev.map((m) =>
+        m.id === id ? { ...m, etat_contact: "supprime" } : m
+      )
+    );
+    showToast("❌ Contact supprimé");
+    setTimeout(() => {
+      localUpdateInProgressRef.current = false;
+    }, 2000);
   };
 
   const handleCommentChange = (id, value) =>
@@ -753,13 +725,13 @@ function ListMembersContent() {
               m.etat_contact?.trim().toLowerCase() === "existant" && (
                 <span className="text-yellow-400">⭐</span>
               )}
-            <div className="absolute right-8">
+             <div className="absolute right-8"> 
               <PresenceDot
                 memberId={m.id}
                 egliseId={userProfile?.eglise_id}
                 dateVenu={m.date_venu}
               />
-            </div>
+                </div>
           </h2>
 
           {/* Téléphone */}
@@ -870,6 +842,7 @@ function ListMembersContent() {
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
               <option value="">-- Choisir une option --</option>
+              {/* ✅ Options conditionnées aux features */}
               {cellulesActive && (
                 <option value="cellule">Une Cellule</option>
               )}
@@ -882,6 +855,7 @@ function ListMembersContent() {
               <option value="numero">Saisir un numéro</option>
             </select>
 
+            {/* ✅ Select secondaire conditionné aux features */}
             {(
               (cellulesActive && selectedTargetType[m.id] === "cellule") ||
               (conseillerActive && selectedTargetType[m.id] === "conseiller") ||
@@ -1136,7 +1110,7 @@ function ListMembersContent() {
                     ✏️ Modifier le contact
                   </button>
 
-                  {/* ✅ userRole correctement assigné */}
+                  {/* ✅ userRole maintenant correctement assigné */}
                   {userRole === "Conseiller" &&
                     m.integration_fini !== "fini" && (
                       <button
@@ -1172,11 +1146,6 @@ function ListMembersContent() {
                       </button>
                     )}
 
-                  {/* ✅ Suppression via Edge Function delete-member
-                      - membres_complets : garde la ligne en etat_contact="supprime"
-                      - profiles : supprimé
-                      - auth.users : supprimé via service_role (bypass RLS)
-                  */}
                   <button
                     onClick={() => {
                       if (
@@ -1327,9 +1296,9 @@ function ListMembersContent() {
 
       <EditMemberPopup
         member={editMember}
-        cellules={cellulesActive ? cellules : []}
-        familles={famillesActive ? familles : []}
-        conseillers={conseillerActive ? conseillers : []}
+        cellules={cellulesActive ? cellules : []}       // ✅
+        familles={famillesActive ? familles : []}       // ✅
+        conseillers={conseillerActive ? conseillers : []} // ✅
         currentUserRoles={getRoles(userProfile)}
         onClose={() => setEditMember(null)}
         onUpdateMember={async (updatedMember) => {

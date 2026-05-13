@@ -417,7 +417,7 @@ function NotificationsContent() {
       return;
     }
     if (n._type === "evangelise") {
-      router.push(`/evangelisation?highlight=${n.id}`);
+      router.push(`/evangelisation/evangelisation?highlight=${n.id}`);
       return;
     }
     // ✅ new_in_cellule → marquer comme lu en DB + retirer du state + rediriger

@@ -304,9 +304,9 @@ function ListMembersContent() {
     if (updateError) throw updateError;
 
     // 2. Supprimer auth.users via Edge Function (service_role obligatoire)
-    const { error: authError } = await supabase.functions.invoke("delete-auth-user", {
-      body: { member_id: id },
-    });
+    const { error: authError } = await supabase.functions.invoke("dynamic-worker", {
+  body: { member_id: id },
+});
 
     if (authError) throw authError;
 

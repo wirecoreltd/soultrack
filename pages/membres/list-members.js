@@ -291,11 +291,11 @@ function ListMembersContent() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   // -------------------- Supprimer --------------------
-  const handleSupprimerMembre = async (id) => {
+ const handleSupprimerMembre = async (id) => {
   localUpdateInProgressRef.current = true;
 
   try {
-    // 1. Soft-delete membres_complets → le trigger supprime profiles automatiquement
+    // 1. Soft-delete membres_complets
     const { error: updateError } = await supabase
       .from("membres_complets")
       .update({ etat_contact: "supprime" })
@@ -303,26 +303,27 @@ function ListMembersContent() {
 
     if (updateError) throw updateError;
 
-    // 2. Supprimer auth.users via Edge Function (service_role obligatoire)
-    const { error: authError } = await supabase.functions.invoke("dynamic-worker", {
-  body: { member_id: id },
-});
+    // 2. Supprimer profiles + auth.users via Edge Function
+    const { error } = await supabase.functions.invoke("dynamic-worker", {
+      body: { member_id: id },
+    });
 
-    if (authError) throw authError;
+    if (error) throw error;
 
-    // 3. Retirer de l'affichage
     setAllMembers((prev) => prev.filter((m) => m.id !== id));
     showToast("✅ Contact supprimé définitivement");
 
   } catch (err) {
     console.error("Erreur suppression :", err);
-    showToast("❌ Erreur lors de la suppression : " + (err.message || "inconnue"));
+    showToast("❌ Erreur : " + (err.message || "inconnue"));
   } finally {
     setTimeout(() => {
       localUpdateInProgressRef.current = false;
     }, 2000);
   }
 };
+
+  
   const handleCommentChange = (id, value) =>
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 

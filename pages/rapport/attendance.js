@@ -228,7 +228,6 @@ function BlocEvangelisation({ reports }) {
   const moyNC = totalSess > 0 ? (totalNC / totalSess).toFixed(1) : 0;
   const tauxConversion = totalNV > 0 ? Math.round((totalNC / totalNV) * 100) : 0;
 
-  // Évolution mois par mois
   const parMois = {};
   reports.forEach(r => {
     const d = new Date(r.date + "T00:00:00");
@@ -323,6 +322,7 @@ function CarteSession({ r, onEdit, onDelete }) {
             ))}
           </div>
           <div className="flex gap-2 pt-1">
+            {/* FIX #6 : onEdit appelé directement, sans wrapper inutile */}
             <button onClick={() => onEdit(r)}
               className="flex-1 py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-blue-300 text-sm font-semibold transition">
               ✏️ Modifier
@@ -360,6 +360,13 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
         jeunes: editData.jeunes || 0, enfants: editData.enfants || 0,
         connectes: editData.connectes || 0, nouveauxVenus: editData.nouveauxVenus || 0,
         nouveauxConvertis: editData.nouveauxConvertis || 0, enregistrerTemps: false,
+      });
+    } else {
+      // Reset form when switching to "add" mode
+      setFormData({
+        date: "", typeTemps: "", nouveauTemps: "", enregistrerTemps: false,
+        numero_culte: "", hommes: 0, femmes: 0, jeunes: 0, enfants: 0,
+        connectes: 0, nouveauxVenus: 0, nouveauxConvertis: 0,
       });
     }
   }, [editData]);
@@ -425,9 +432,11 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
   ];
 
   return (
-    <div className="bg-white/10 rounded-2xl p-5 flex flex-col gap-4">
+    // FIX #7 : mt-6 pour espacer du bloc onglets
+    <div className="bg-white/10 rounded-2xl p-5 flex flex-col gap-4 mt-6">
       <div className="flex items-center justify-between">
-        <p className="text-white font-semibold">{editData ? "✏️ Modifier le rapport" : "➕ Nouveau rapport"}</p>
+        {/* FIX #4 : supprimé "➕ Nouveau rapport" — titre contextuel seulement */}
+        <p className="text-white font-semibold">{editData ? "✏️ Modifier le rapport" : "Saisie du rapport"}</p>
         {editData && (
           <button onClick={onCancelEdit} className="text-xs text-white/40 hover:text-white/70 transition">Annuler</button>
         )}
@@ -532,7 +541,6 @@ function Attendance() {
   const [dateFin, setDateFin] = useState("");
   const [onglet, setOnglet] = useState("kpi");
   const [editData, setEditData] = useState(null);
-  const [showForm, setShowForm] = useState(false);
   const formRef = useRef(null);
 
   useEffect(() => {
@@ -585,10 +593,24 @@ function Attendance() {
     fetchReports();
   };
 
+  // FIX #6 : handleEdit redirige vers l'onglet "saisie" et charge les données
   const handleEdit = (r) => {
     setEditData(r);
-    setShowForm(true);
+    setOnglet("saisie");
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+  };
+
+  // FIX #3 : handleAjouter redirige vers saisie sans editData
+  const handleAjouter = () => {
+    setEditData(null);
+    setOnglet("saisie");
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+  };
+
+  // FIX #5 : handleModifier redirige vers sessions
+  const handleModifier = () => {
+    setEditData(null);
+    setOnglet("sessions");
   };
 
   const typesDistincts = [...new Set(reports.map(s => s.typeTemps).filter(Boolean))];
@@ -601,25 +623,26 @@ function Attendance() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
-      <HeaderPages />     
+      <HeaderPages />
 
+      <div>
         {/* En-tête */}
-        <div>        
-          <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Rapport de <span className="text-emerald-300">Présences & Statistiques</span></h1>
-          <div className="max-w-3xl w-full mb-6 text-center">
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+          Rapport de <span className="text-emerald-300">Présences & Statistiques</span>
+        </h1>
+        <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-white/90">
-          Suivez et gérez facilement les <span className="text-blue-300 font-semibold">présences </span>
-          de tous les rassemblements spirituels.
-          Enregistrez l'ensemble des <span className="text-blue-300 font-semibold">participants</span>, y compris les
-          <span className="text-blue-300 font-semibold"> nouveaux venus</span> et les
-          <span className="text-blue-300 font-semibold"> convertis</span>, et générez des
-          <span className="text-blue-300 font-semibold"> rapports clairs</span> pour mieux accompagner chaque membre.
-        </p>
+            Suivez et gérez facilement les <span className="text-blue-300 font-semibold">présences </span>
+            de tous les rassemblements spirituels.
+            Enregistrez l'ensemble des <span className="text-blue-300 font-semibold">participants</span>, y compris les
+            <span className="text-blue-300 font-semibold"> nouveaux venus</span> et les
+            <span className="text-blue-300 font-semibold"> convertis</span>, et générez des
+            <span className="text-blue-300 font-semibold"> rapports clairs</span> pour mieux accompagner chaque membre.
+          </p>
         </div>
 
         {/* Filtres */}
         <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
-          {/* Toggle mode */}
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button onClick={() => setModePerso(false)}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
@@ -631,7 +654,6 @@ function Attendance() {
             </button>
           </div>
 
-          {/* Période rapide */}
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-white/50 flex-shrink-0">Période :</span>
@@ -644,7 +666,6 @@ function Attendance() {
             </div>
           )}
 
-          {/* Tranche personnalisée */}
           {modePerso && (
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
@@ -665,6 +686,7 @@ function Attendance() {
               </button>
             </div>
           )}
+
           {typesDistincts.length > 1 && (
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-white/50 flex-shrink-0">Type :</span>
@@ -692,6 +714,18 @@ function Attendance() {
           ))}
         </div>
 
+        {/* FIX #2 : 2 boutons sous les onglets */}
+        <div className="flex gap-2 mt-3">
+          <button onClick={handleAjouter}
+            className="flex-1 py-2 rounded-xl bg-emerald-600/40 hover:bg-emerald-600/60 text-emerald-300 text-sm font-semibold transition active:scale-95">
+            ➕ Ajouter un rapport
+          </button>
+          <button onClick={handleModifier}
+            className="flex-1 py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-blue-300 text-sm font-semibold transition active:scale-95">
+            ✏️ Modifier un rapport
+          </button>
+        </div>
+
         {/* Contenu */}
         {loading ? (
           <div className="flex justify-center py-16">
@@ -709,15 +743,16 @@ function Attendance() {
             />
           </div>
         ) : reports.length === 0 ? (
-          <div className="bg-white/10 rounded-2xl p-8 text-center flex flex-col gap-3">
+          <div className="bg-white/10 rounded-2xl p-8 text-center flex flex-col gap-3 mt-4">
             <p className="text-white/40 text-sm">Aucun rapport sur cette période</p>
-            <button onClick={() => setOnglet("saisie")}
+            <button onClick={handleAjouter}
               className="mx-auto px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition">
               ➕ Ajouter un rapport
             </button>
           </div>
         ) : onglet === "kpi" ? (
-          <div className="flex flex-col gap-7">
+          // FIX #1 : bouton "Ajouter / modifier" supprimé du bas de la vue d'ensemble
+          <div className="flex flex-col gap-7 mt-4">
             <div>
               <SectionTitle>Vue d'ensemble</SectionTitle>
               <BlocKpiGlobaux reports={reports} />
@@ -744,29 +779,15 @@ function Attendance() {
                 <BlocTendance reports={reports} />
               </div>
             </div>
-            <div className="flex justify-center">
-              <button onClick={() => setOnglet("saisie")}
-                className="px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition active:scale-95">
-                ➕ Ajouter / modifier un rapport
-              </button>
-            </div>
           </div>
-
         ) : (
-          /* Sessions */
-          <div className="flex flex-col gap-3">
-            <div className="flex justify-end">
-              <button onClick={() => setOnglet("saisie")}
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition mt-2">
-                ➕ Nouveau rapport
-              </button>
-            </div>
+          /* Sessions — FIX #5 : bouton "Nouveau rapport" retiré du haut */
+          <div className="flex flex-col gap-3 mt-4">
             {reports.map(r => (
               <CarteSession key={r.id} r={r} onEdit={handleEdit} onDelete={handleDelete} />
             ))}
           </div>
         )}
-
       </div>
 
       <Footer />

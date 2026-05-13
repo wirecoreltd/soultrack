@@ -14,6 +14,9 @@ export default function EtatFamillePage() {
   );
 }
 
+const [modePerso, setModePerso] = useState(false);   // ← était true
+const [filtrePeriode, setFiltrePeriode] = useState("30");  // déjà "30", rien à changer
+
 // ─── HELPERS ──────────────────────────────────────────────────
 function formatDateFR(dateStr) {
   if (!dateStr) return "—";
@@ -489,7 +492,7 @@ function EtatFamille() {
 
   const onglets = [
     { key: "kpi", label: "Vue d'ensemble" },
-    { key: "villes", label: "Par ville" },
+    { key: "familles", label: "Par famille" },
     { key: "mois", label: "Par mois" },
   ];
 
@@ -603,7 +606,7 @@ function EtatFamille() {
               <BlocParVille familles={displayedFamilles} />
             </div>
           </div>
-        ) : onglet === "villes" ? (
+        ) : onglet === "familles" ? (
           <OngletParVilleDetail
             familles={displayedFamilles}
             membresParFamille={membresParFamille}

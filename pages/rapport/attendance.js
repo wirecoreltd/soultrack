@@ -737,7 +737,7 @@ function Attendance() {
               egliseId={egliseId}
               tempsOptions={tempsOptions}
               setTempsOptions={setTempsOptions}
-              onSaved={() => { fetchReports(); setEditData(null); }}
+              onSaved={() => {fetchReports();setEditData(null);setOnglet("kpi");}}
               editData={editData}
               onCancelEdit={() => setEditData(null)}
             />

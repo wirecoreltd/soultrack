@@ -20,16 +20,32 @@ export default function SignupEglise() {
 }, []);
 
   const PLANS_LABELS = {
-   free: {
+  free: {
     label: "🌱 Départ",
     range: "0 – 50 membres",
     price: "Gratuit",
   },
-    starter: "📈 Croissance — $19/mois",
-    vision: "🔥 Vision — $39/mois",
-    expansion: "🌍 Expansion — $79/mois",
-    enterprise: "🔗 Réseaux — Sur mesure",
-  };
+  starter: {
+    label: "📈 Croissance",
+    range: "51 – 200 membres",
+    price: "$19/mois",
+  },
+  vision: {
+    label: "🔥 Vision",
+    range: "201 – 500 membres",
+    price: "$39/mois",
+  },
+  expansion: {
+    label: "🌍 Expansion",
+    range: "501 – 1500 membres",
+    price: "$79/mois",
+  },
+  enterprise: {
+    label: "🔗 Réseaux",
+    range: "1500+ • Multi-églises",
+    price: "Sur mesure",
+  },
+};
 
   const [formData, setFormData] = useState({
     nomEglise: "",
@@ -129,16 +145,16 @@ export default function SignupEglise() {
         <div className="w-full bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 text-center">
           <p className="text-xs text-gray-500 mb-1">Plan sélectionné</p>
           <select
-  value={planId}
-  onChange={(e) => setPlanId(e.target.value)}
-  className="w-full mt-2 border border-blue-200 rounded-lg p-2 text-center font-semibold text-blue-700 bg-white"
->
-  {Object.entries(PLANS_LABELS).map(([key, label]) => (
-    <option key={key} value={key}>
-      {label}
-    </option>
-  ))}
-</select>
+            value={planId}
+            onChange={(e) => setPlanId(e.target.value)}
+            className="w-full mt-2 border border-blue-200 rounded-lg p-2 text-center font-semibold text-blue-700 bg-white"
+          >
+            {Object.entries(PLANS_LABELS).map(([key, plan]) => (
+              <option key={key} value={key}>
+                {plan.label} • {plan.range} • {plan.price}
+              </option>
+            ))}
+          </select>
           <button
             type="button"
             onClick={() => router.push("/site/pricing")}

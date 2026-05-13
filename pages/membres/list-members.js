@@ -190,8 +190,8 @@ function ListMembersContent() {
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
     const months = [
-      "Janv","Févr","Mars","Avr","Mai","Juin",
-      "Juil","Août","Sept","Oct","Nov","Déc",
+      "Janv", "Févr", "Mars", "Avr", "Mai", "Juin",
+      "Juil", "Août", "Sept", "Oct", "Nov", "Déc",
     ];
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
@@ -295,27 +295,50 @@ function ListMembersContent() {
   //    - garde membres_complets en etat_contact = "supprime"
   //    - supprime profiles
   //    - supprime auth.users via service_role (bypass RLS)
+  //
+  // ⚠️ Si vous obtenez une erreur CORS, le problème vient de la Edge Function
+  //    elle-même (pas déployée, headers CORS manquants, ou erreur de boot).
+  //    Voir : supabase/functions/delete-member/index.ts
   const handleSupprimerMembre = async (id) => {
     localUpdateInProgressRef.current = true;
 
-    const { error } = await supabase.functions.invoke("delete-member", {
-      body: { member_id: id },
-    });
+    try {
+      const { error } = await supabase.functions.invoke("delete-member", {
+        body: { member_id: id },
+      });
 
-    if (error) {
-      console.error("Erreur suppression complète :", error);
-      showToast("❌ Erreur lors de la suppression");
-      localUpdateInProgressRef.current = false;
-      return;
+      if (error) {
+        // ✅ Message d'erreur plus précis selon le type d'erreur
+        const isCorsError =
+          error.message?.toLowerCase().includes("cors") ||
+          error.message?.toLowerCase().includes("failed to send") ||
+          error.message?.toLowerCase().includes("fetch");
+
+        console.error("Erreur suppression complète :", error);
+
+        if (isCorsError) {
+          showToast(
+            "❌ Erreur de connexion à la fonction de suppression. Vérifiez que la Edge Function est bien déployée."
+          );
+        } else {
+          showToast("❌ Erreur lors de la suppression : " + (error.message || "inconnue"));
+        }
+
+        localUpdateInProgressRef.current = false;
+        return;
+      }
+
+      // Retirer de la liste affichée (la ligne reste en BDD avec etat_contact="supprime")
+      setAllMembers((prev) => prev.filter((m) => m.id !== id));
+      showToast("✅ Contact supprimé définitivement");
+    } catch (err) {
+      console.error("Erreur inattendue suppression :", err);
+      showToast("❌ Erreur inattendue lors de la suppression");
+    } finally {
+      setTimeout(() => {
+        localUpdateInProgressRef.current = false;
+      }, 2000);
     }
-
-    // Retirer de la liste affichée (la ligne reste en BDD avec etat_contact="supprime")
-    setAllMembers((prev) => prev.filter((m) => m.id !== id));
-    showToast("❌ Contact supprimé définitivement");
-
-    setTimeout(() => {
-      localUpdateInProgressRef.current = false;
-    }, 2000);
   };
 
   const handleCommentChange = (id, value) =>
@@ -730,13 +753,13 @@ function ListMembersContent() {
               m.etat_contact?.trim().toLowerCase() === "existant" && (
                 <span className="text-yellow-400">⭐</span>
               )}
-             <div className="absolute right-8">
+            <div className="absolute right-8">
               <PresenceDot
                 memberId={m.id}
                 egliseId={userProfile?.eglise_id}
                 dateVenu={m.date_venu}
               />
-             </div>
+            </div>
           </h2>
 
           {/* Téléphone */}

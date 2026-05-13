@@ -68,7 +68,7 @@ function CellulesHubContent() {
     >
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-white">
+      <h1 className="text-3xl font-extrabold mt-4 mb-6 text-white drop-shadow-lg">
         Espace Cellule
       </h1>
 

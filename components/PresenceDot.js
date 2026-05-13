@@ -100,7 +100,7 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
       .from("attendance")
       .select("id, date, heure, typeTemps, numero_culte")
       .eq("eglise_id", egliseId)
-      .gte("date", effectiveSince)
+      .gte("date", effectiveSince)   // ← était sinceStr, maintenant effectiveSince
       .lte("date", todayStr)
       .order("date", { ascending: false });
 

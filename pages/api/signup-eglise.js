@@ -1,6 +1,5 @@
 // pages/api/signup-eglise.js
 import { createClient } from "@supabase/supabase-js";
-import { seedDefaultFeatures } from "../../lib/features";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -42,25 +41,6 @@ export default async function handler(req, res) {
     if (existing) {
       return res.status(400).json({ error: "Email déjà utilisé" });
     }
-
-    // 6️⃣ Seeder les features par défaut
-const { error: featuresError } = await supabaseAdmin
-  .from("eglise_features")
-  .insert([
-    { eglise_id: egliseId, feature: "membres",        active: true  },
-    { eglise_id: egliseId, feature: "evangelisation", active: true  },
-    { eglise_id: egliseId, feature: "cellules",       active: true  },
-    { eglise_id: egliseId, feature: "conseiller",     active: true  },
-    { eglise_id: egliseId, feature: "rapport",        active: true  },
-    { eglise_id: egliseId, feature: "administrateur", active: true  },
-    { eglise_id: egliseId, feature: "presence",       active: true  },
-    { eglise_id: egliseId, feature: "notifications",  active: true  },
-    { eglise_id: egliseId, feature: "familles",       active: false },
-  ]);
-
-if (featuresError) {
-  console.error("Erreur seed features:", featuresError.message);
-}
 
     // 2️⃣ Créer l'église
     const { data: egliseData, error: egliseError } = await supabaseAdmin
@@ -108,7 +88,7 @@ if (featuresError) {
 
     if (profileError) return res.status(400).json({ error: profileError.message });
 
-    // 5️⃣ Créer la souscription — 1 mois pour tous les plans
+    // 5️⃣ Créer la souscription
     const { error: subError } = await supabaseAdmin
       .from("subscriptions")
       .insert([{
@@ -121,8 +101,22 @@ if (featuresError) {
 
     if (subError) return res.status(400).json({ error: subError.message });
 
-    // 6️⃣ Seeder les features par défaut via source unique lib/features
-    await seedDefaultFeatures(supabaseAdmin, egliseId);
+    // 6️⃣ Seeder les features par défaut
+    const { error: featuresError } = await supabaseAdmin
+      .from("eglise_features")
+      .insert([
+        { eglise_id: egliseId, feature: "membres",        active: true  },
+        { eglise_id: egliseId, feature: "evangelisation", active: true  },
+        { eglise_id: egliseId, feature: "cellules",       active: true  },
+        { eglise_id: egliseId, feature: "conseiller",     active: true  },
+        { eglise_id: egliseId, feature: "rapport",        active: true  },
+        { eglise_id: egliseId, feature: "administrateur", active: true  },
+        { eglise_id: egliseId, feature: "presence",       active: true  },
+        { eglise_id: egliseId, feature: "notifications",  active: true  },
+        { eglise_id: egliseId, feature: "familles",       active: false },
+      ]);
+
+    if (featuresError) console.error("Erreur seed features:", featuresError.message);
 
     return res.status(200).json({
       message: "Église et admin créés avec succès !",

@@ -252,9 +252,7 @@ function NotificationsContent() {
       allNotifs = [...allNotifs, ...assignesEvangNotifs.map((m) => ({ ...m, _type: "membre_assigne_evang", _date: m.date_suivi || m.date_evangelise }))];
     }
 
-    // ── 6. Invitations en attente reçues (pour l'église invitée) ──
-    // Filtre sur supervisee_eglise_id = mon église ET statut = pending
-    // Cela fonctionne car on remplit supervisee_eglise_id dès que l'église ouvre le lien
+    // ── 6. Invitations en attente reçues ──
     {
       const { data } = await supabase
         .from("eglise_supervisions")
@@ -303,7 +301,6 @@ function NotificationsContent() {
 
     const channel = supabase.channel(`notifications-page-${userProfile.eglise_id}-${userProfile.id}`);
 
-    // ── membres_complets ──
     channel
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "membres_complets" }, (payload) => {
         const row = payload.new;
@@ -335,7 +332,6 @@ function NotificationsContent() {
         }
       });
 
-    // ── evangelises ──
     if (isAdmin || isResponsableEvang) {
       channel
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "evangelises" }, (payload) => {
@@ -352,7 +348,6 @@ function NotificationsContent() {
         });
     }
 
-    // ── suivis_des_evangelises ──
     channel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "suivis_des_evangelises" }, (payload) => {
       const row = payload.new;
       if (row.notification_responsable === true) {
@@ -367,12 +362,9 @@ function NotificationsContent() {
       }
     });
 
-    // ── eglise_supervisions : invitation reçue (supervisee) ──
     channel
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "eglise_supervisions" }, (payload) => {
         const row = payload.new;
-
-        // Quand supervisee_eglise_id vient d'être rempli avec notre église → on est l'invité
         if (row.supervisee_eglise_id === userProfile.eglise_id && row.statut === "pending") {
           setNotifications((prev) => {
             const exists = prev.some((n) => n._type === "invitation" && n.id === row.id);
@@ -388,8 +380,6 @@ function NotificationsContent() {
             }, ...prev];
           });
         }
-
-        // Si l'invitation est résolue (acceptée ou refusée) → on la retire
         if (row.supervisee_eglise_id === userProfile.eglise_id && row.statut !== "pending") {
           setNotifications((prev) => prev.filter((n) => !(n._type === "invitation" && n.id === row.id)));
         }
@@ -417,7 +407,7 @@ function NotificationsContent() {
     if (n._type === "membre_assigne") {
       await supabase.from("membres_complets").update({ notification_responsable: false }).eq("id", n.id);
       setNotifications((prev) => prev.filter((notif) => !(notif._type === "membre_assigne" && notif.id === n.id)));
-      router.push(`/cellule/membres-cellule?search=${encodeURIComponent(`${n.prenom} ${n.nom}`)}`);
+      router.push(`/cellule/membres-cellule?highlight=${n.id}`);
       return;
     }
     if (n._type === "membre_assigne_evang") {
@@ -428,9 +418,15 @@ function NotificationsContent() {
     }
     if (n._type === "evangelise") {
       router.push(`/evangelisation/suivis-evangelisation`);
-    } else {
-      router.push(`/ListMembers?search=${encodeURIComponent(`${n.prenom} ${n.nom}`)}`);
+      return;
     }
+    // ✅ new_in_cellule → membres-cellule avec highlight
+    if (n._type === "new_in_cellule") {
+      router.push(`/cellule/membres-cellule?highlight=${n.id}`);
+      return;
+    }
+    // nouveau + existant → ListMembers avec highlight
+    router.push(`/ListMembers?highlight=${n.id}`);
   };
 
   const getIcon = (type) => {

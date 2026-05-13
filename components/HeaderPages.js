@@ -36,13 +36,30 @@ function getIsoCode(countryName) {
 }
 
 /**
- * Génère le label complet du superviseur avec séparateurs " - " intelligents.
- * Ignore les champs vides : pas de tiret orphelin.
- * Format : denomination - nom - branche - ville
+ * Abrège la dénomination : premières lettres de chaque mot en majuscule.
+ * Ex: "Assemble de Dieu" → "ADD"
+ */
+function abbrevDenomination(str) {
+  return (str || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase())
+    .join("");
+}
+
+/**
+ * Génère le label du superviseur : dénomination abrégée + autres champs en clair.
+ * Champs vides ignorés, pas de tiret orphelin.
+ * Format : ADD - Centre Apostolique - branche - ville
  */
 function getSupervisionLabel({ denomination, nom, branche, ville }) {
-  return [denomination, nom, branche, ville]
-    .map((s) => (s || "").trim())
+  return [
+    abbrevDenomination(denomination),
+    (nom || "").trim(),
+    (branche || "").trim(),
+    (ville || "").trim(),
+  ]
     .filter(Boolean)
     .join(" - ");
 }
@@ -259,13 +276,11 @@ export default function HeaderPages() {
             Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
           </p>
 
-          {/* ✅ Supervisé par — même style que Déconnexion */}
+          {/* ✅ Supervisé par — même style que Déconnexion, 2 lignes si long */}
           {supervision && (
-            <p className="text-amber-300 text-sm mt-0.5">
-              🔗 Supervisé par{" "}
-              <span className="font-medium">
-                {getSupervisionLabel(supervision)}
-              </span>
+            <p className="text-amber-300 text-sm mt-0.5 text-right leading-snug break-words max-w-[220px]">
+              🔗 Supervisé par :{" "}
+              {getSupervisionLabel(supervision)}
             </p>
           )}
         </div>

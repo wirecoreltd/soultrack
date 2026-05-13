@@ -757,7 +757,7 @@ function Attendance() {
           <div className="flex flex-col gap-3">
             <div className="flex justify-end">
               <button onClick={() => setOnglet("saisie")}
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition">
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition mt-2">
                 ➕ Nouveau rapport
               </button>
             </div>

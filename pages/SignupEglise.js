@@ -145,16 +145,29 @@ export default function SignupEglise() {
         <div className="w-full bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 text-center">
           <p className="text-xs text-gray-500 mb-1">Plan sélectionné</p>
           <select
-            value={planId}
-            onChange={(e) => setPlanId(e.target.value)}
-            className="w-full mt-2 border border-blue-200 rounded-lg p-3 text-center font-semibold text-blue-700 bg-white"
-          >
-            {Object.entries(PLANS_LABELS).map(([key, plan]) => (
-              <option key={key} value={key}>
-                {`${plan.label}\n${plan.range}\n${plan.price}`}
-              </option>
-            ))}
-          </select>         
+  value={planId}
+  onChange={(e) => setPlanId(e.target.value)}
+  className="w-full mt-2 border border-blue-200 rounded-lg p-3 text-center font-semibold text-blue-700 bg-white"
+>
+  {Object.entries(PLANS_LABELS).map(([key, plan]) => (
+    <option key={key} value={key}>
+      {plan.label}
+    </option>
+  ))}
+</select>     
+  <div className="mt-3 bg-white border border-blue-100 rounded-xl p-4 text-center shadow-sm">
+  <p className="text-lg font-bold text-blue-700">
+    {PLANS_LABELS[planId]?.label}
+  </p>
+
+  <p className="text-sm text-gray-500 mt-1">
+    {PLANS_LABELS[planId]?.range}
+  </p>
+
+  <p className="text-2xl font-extrabold text-green-600 mt-2">
+    {PLANS_LABELS[planId]?.price}
+  </p>
+</div>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">

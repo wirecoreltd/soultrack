@@ -209,22 +209,7 @@ export default function PricingPage() {
               }}
             >
               {t.login}
-            </button>
-            <button
-              onClick={() => router.push("/site/pricing")}
-              style={{
-                background: "#fff",
-                color: "#333699",
-                border: "none",
-                padding: "7px 18px",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              {t.signup}
-            </button>
+            </button>            
           </div>
 
           {/* Switcher langue desktop */}

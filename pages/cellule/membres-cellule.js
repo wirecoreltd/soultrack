@@ -32,6 +32,7 @@ function MembresCelluleContent() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
+  const highlightRef = useRef({});                          // ✅ AJOUTÉ
   const [showBesoinLibre, setshowBesoinLibre] = useState(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
   const [userRole, setUserRole] = useState(null);
@@ -88,64 +89,18 @@ function MembresCelluleContent() {
     setMembres((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
   };
 
-  //---------------scroll Auto
+  // ------------------- Scroll automatique vers le membre surligné -------------------
   useEffect(() => {
-  if (!highlight || loading) return;
-  const el = highlightRef.current[highlight];
-  if (el) {
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-}, [highlight, loading]);
+    if (!highlight || loading) return;
+    const el = highlightRef.current[highlight];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlight, loading]);
 
   // ------------------- FETCH USER + CELLULES -------------------
   useEffect(() => {
-  const fetchCellules = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, role, eglise_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile) return;
-
-    // ✅ stocker le rôle
-    setUserRole(profile.role);
-
-    let query = supabase
-      .from("cellules")
-      .select("*")
-      .eq("eglise_id", profile.eglise_id)
-      .order("cellule_full");
-
-    if (profile.role === "ResponsableCellule") {
-  query = query.eq("responsable_id", profile.id);
-
-} else if (profile.role === "SuperviseurCellule") {
-  query = query.eq("superviseur_id", profile.id);
-
-} else if (profile.role !== "Administrateur") {
-  // 🚨 bloque tout
-  query = query.eq("id", "00000000-0000-0000-0000-000000000000");
-}
-
-    const { data } = await query;
-    setCellules(data || []);
-  };
-
-  fetchCellules();
-}, []);
-
-  // ------------------- FETCH MEMBRES -------------------
-useEffect(() => {
-  if (memberIdStr) return;
-
-  const fetchAllMembers = async () => {
-    setLoading(true);
-
-    try {
+    const fetchCellules = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -157,106 +112,140 @@ useEffect(() => {
 
       if (!profile) return;
 
+      setUserRole(profile.role);
+
       let query = supabase
-        .from("membres_complets")
+        .from("cellules")
         .select("*")
-        .eq("statut_suivis", 3)
         .eq("eglise_id", profile.eglise_id)
-        .not("cellule_id", "is", null)   
-        .neq("etat_contact", "supprime")
-        .order("created_at", { ascending: false });
+        .order("cellule_full");
 
-      let mesCelluleIds = [];
-
-      // ---------------- ADMIN ----------------
-      if (profile.role === "Administrateur") {
-
-        if (celluleId) {
-          query = query.eq("cellule_id", celluleId);
-        }
-
+      if (profile.role === "ResponsableCellule") {
+        query = query.eq("responsable_id", profile.id);
+      } else if (profile.role === "SuperviseurCellule") {
+        query = query.eq("superviseur_id", profile.id);
+      } else if (profile.role !== "Administrateur") {
+        query = query.eq("id", "00000000-0000-0000-0000-000000000000");
       }
 
-      // ---------------- RESPONSABLE ----------------
-      else if (profile.role === "ResponsableCellule") {
+      const { data } = await query;
+      setCellules(data || []);
+    };
 
-        const { data: mesCellules } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", profile.id)
-          .eq("eglise_id", profile.eglise_id);
+    fetchCellules();
+  }, []);
 
-        mesCelluleIds = (mesCellules || []).map(c => c.id);
+  // ------------------- FETCH MEMBRES -------------------
+  useEffect(() => {
+    if (memberIdStr) return;
 
-        if (!mesCelluleIds.length) {
+    const fetchAllMembers = async () => {
+      setLoading(true);
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, role, eglise_id")
+          .eq("id", user.id)
+          .single();
+
+        if (!profile) return;
+
+        let query = supabase
+          .from("membres_complets")
+          .select("*")
+          .eq("statut_suivis", 3)
+          .eq("eglise_id", profile.eglise_id)
+          .not("cellule_id", "is", null)
+          .neq("etat_contact", "supprime")
+          .order("created_at", { ascending: false });
+
+        let mesCelluleIds = [];
+
+        // ---------------- ADMIN ----------------
+        if (profile.role === "Administrateur") {
+          if (celluleId) {
+            query = query.eq("cellule_id", celluleId);
+          }
+        }
+
+        // ---------------- RESPONSABLE ----------------
+        else if (profile.role === "ResponsableCellule") {
+          const { data: mesCellules } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", profile.id)
+            .eq("eglise_id", profile.eglise_id);
+
+          mesCelluleIds = (mesCellules || []).map(c => c.id);
+
+          if (!mesCelluleIds.length) {
+            setMembres([]);
+            setMessage("Aucun membre trouvé");
+            setLoading(false);
+            return;
+          }
+
+          query = query.in("cellule_id", mesCelluleIds);
+
+          if (celluleId && mesCelluleIds.includes(celluleId)) {
+            query = query.eq("cellule_id", celluleId);
+          }
+        }
+
+        // ---------------- SUPERVISEUR ----------------
+        else if (profile.role === "SuperviseurCellule") {
+          const { data: mesCellules } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("superviseur_id", profile.id)
+            .eq("eglise_id", profile.eglise_id);
+
+          mesCelluleIds = (mesCellules || []).map(c => c.id);
+
+          if (!mesCelluleIds.length) {
+            setMembres([]);
+            setMessage("Aucun membre trouvé");
+            setLoading(false);
+            return;
+          }
+
+          query = query.in("cellule_id", mesCelluleIds);
+
+          if (celluleId && mesCelluleIds.includes(celluleId)) {
+            query = query.eq("cellule_id", celluleId);
+          }
+        }
+
+        // ---------------- AUTRE ROLE ----------------
+        else {
           setMembres([]);
-          setMessage("Aucun membre trouvé");
+          setMessage("Accès non autorisé");
           setLoading(false);
           return;
         }
 
-        // sécurité de base
-        query = query.in("cellule_id", mesCelluleIds);
+        const { data, error } = await query;
+        if (error) throw error;
 
-        // filtre optionnel sécurisé
-        if (celluleId && mesCelluleIds.includes(celluleId)) {
-          query = query.eq("cellule_id", celluleId);
-        }
-      }
-
-      // ---------------- SUPERVISEUR ----------------
-      else if (profile.role === "SuperviseurCellule") {
-
-        const { data: mesCellules } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("superviseur_id", profile.id)
-          .eq("eglise_id", profile.eglise_id);
-
-        mesCelluleIds = (mesCellules || []).map(c => c.id);
-
-        if (!mesCelluleIds.length) {
-          setMembres([]);
+        setMembres(data || []);
+        if (!data || data.length === 0) {
           setMessage("Aucun membre trouvé");
-          setLoading(false);
-          return;
         }
 
-        // sécurité de base
-        query = query.in("cellule_id", mesCelluleIds);
-
-        // filtre optionnel sécurisé
-        if (celluleId && mesCelluleIds.includes(celluleId)) {
-          query = query.eq("cellule_id", celluleId);
-        }
-      }
-
-      // ---------------- AUTRE ROLE ----------------
-      else {
-        setMembres([]);
-        setMessage("Accès non autorisé");
+      } catch (err) {
+        console.error(err);
+        setMessage("Erreur de chargement");
+      } finally {
         setLoading(false);
-        return;
       }
+    };
 
-      const { data, error } = await query;
-      if (error) throw error;
-
-      setMembres(data || []);
-      if (!data || data.length === 0) {
-        setMessage("Aucun membre trouvé");
-      }
-
-    } catch (err) {
-      console.error(err);
-      setMessage("Erreur de chargement");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchAllMembers();
-}, [memberIdStr, celluleId]);
+    fetchAllMembers();
+  }, [memberIdStr, celluleId]);
 
   // ------------------- CLICK OUTSIDE -------------------
   const handleClickOutside = useCallback((e) => {
@@ -315,22 +304,22 @@ useEffect(() => {
         <>
           {/* BOUTONS */}
           {userRole === "ResponsableCellule" && (
-  <div className="flex justify-end mt-4 mb-4 gap-2">
-    <button
-      onClick={() => router.push("/cellule/ajouter-membre-cellule")}
-      className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-    >
-      ➕ Ajouter un membre
-    </button>
+            <div className="flex justify-end mt-4 mb-4 gap-2">
+              <button
+                onClick={() => router.push("/cellule/ajouter-membre-cellule")}
+                className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+              >
+                ➕ Ajouter un membre
+              </button>
 
-    <button
-      onClick={() => router.push("/admin/import")}
-      className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-    >
-      📥 Importer une Liste
-    </button>
-  </div>
-)}
+              <button
+                onClick={() => router.push("/admin/import")}
+                className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+              >
+                📥 Importer une Liste
+              </button>
+            </div>
+          )}
 
           <div className="flex justify-center">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
@@ -342,7 +331,7 @@ useEffect(() => {
                 return (
                   <div
                     key={m.id}
-                    ref={(el) => (highlightRef.current[m.id] = el)}
+                    ref={(el) => (highlightRef.current[m.id] = el)}   // ✅ ref pour le scroll
                     className="bg-white p-4 rounded-2xl shadow-xl border-l-4"
                     style={{
                       borderLeftColor: getBorderColor(m),

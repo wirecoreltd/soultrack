@@ -453,9 +453,9 @@ function EvangelisationContent() {
             {contacts.map((member) => (
               <div
                 key={member.id}
-                ref={(el) => (highlightRef.current[member.id] = el)}     // ✅ ref
+                ref={(el) => (highlightRef.current[member.id] = el)}
                 className={`bg-white rounded-2xl shadow-xl p-4 border-l-4 relative ${
-                  highlight === member.id ? "highlight-pulse" : ""        // ✅ pulse
+                  highlight === String(member.id) ? "highlight-pulse" : ""
                 }`}
                 style={{ borderLeftColor: getBorderColor(member) }}
               >

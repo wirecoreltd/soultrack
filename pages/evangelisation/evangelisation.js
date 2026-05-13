@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import EditEvangelisePopup from "../../components/EditEvangelisePopup";
@@ -18,11 +19,11 @@ export default function Evangelisation() {
 }
 
 function EvangelisationContent() {
+  const router = useRouter();
+  const { highlight } = router.query;                          // ✅ param highlight
+
   const { profile, loading: loadingProfile, error: profileError, scopedQuery } = useChurchScope();
 
-  // ─────────────────────────────────────────────
-  // ✅ FEATURES
-  // ─────────────────────────────────────────────
   const famillesActive = useFeature("familles");
   const conseillerActive = useFeature("conseiller");
   const cellulesActive = useFeature("cellules");
@@ -40,9 +41,11 @@ function EvangelisationContent() {
   const [loadingSend, setLoadingSend] = useState(false);
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
+  const highlightRef = useRef({});                             // ✅ ref pour scroll
   const [showWhatsappPopup, setShowWhatsappPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [targetName, setTargetName] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const contactsToSendRef = useRef([]);
   const [contactsToSendNow, setContactsToSendNow] = useState([]);
@@ -65,7 +68,13 @@ function EvangelisationContent() {
     localStorage.setItem("members_view", view);
   }, [view]);
 
-  /* ================= FETCH ================= */
+  // ✅ Scroll automatique vers la carte surlignée
+  useEffect(() => {
+    if (!highlight || loading) return;
+    const el = highlightRef.current[highlight];
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlight, loading]);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
@@ -78,14 +87,10 @@ function EvangelisationContent() {
 
   useEffect(() => {
     if (!profile) return;
-
     fetchContacts();
-
-    // ✅ Chargement conditionné par feature
     if (cellulesActive) fetchCellules();
     if (famillesActive) fetchFamilles();
     if (conseillerActive) fetchConseillers();
-
   }, [profile, cellulesActive, famillesActive, conseillerActive]);
 
   const fetchContacts = async () => {
@@ -101,6 +106,8 @@ function EvangelisationContent() {
     } catch (err) {
       console.error("Erreur fetchContacts:", err.message);
       setContacts([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -143,7 +150,6 @@ function EvangelisationContent() {
     }
   };
 
-  /* ================= UTILS ================= */
   const handleCheck = (id) =>
     setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -188,7 +194,6 @@ function EvangelisationContent() {
     return cible.responsable || cible.cellule_full || cible.famille_full || "";
   };
 
-  /* ================= SUPPRESSION ================= */
   const handleSupprimerMembre = async (id) => {
     try {
       const { error } = await supabase
@@ -207,7 +212,6 @@ function EvangelisationContent() {
     }
   };
 
-  /* ================= VÉRIFICATION DOUBLONS ================= */
   const checkDoublons = async () => {
     if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
 
@@ -230,17 +234,14 @@ function EvangelisationContent() {
     } else {
       setContactsToSendNow(selectedContacts);
       contactsToSendRef.current = selectedContacts;
-
       const cible = resolveCible(selectedTargetType, selectedTarget);
       const cibleName = getCibleName(selectedTargetType, cible);
-
       setPhoneNumber(cible?.telephone || "");
       setTargetName(cibleName);
       setShowWhatsappPopup(true);
     }
   };
 
-  /* ================= ÉCRITURE suivi_assignments_evangelises ================= */
   const writeAssignments = async (insertedSuivis, targetType, targetId) => {
     if (!insertedSuivis || insertedSuivis.length === 0) return;
     if (targetType !== "conseiller") return;
@@ -262,7 +263,6 @@ function EvangelisationContent() {
     if (error) console.error("Erreur écriture suivi_assignments_evangelises :", error);
   };
 
-  /* ================= SEND MESSAGE ================= */
   const sendToWhatsapp = async (contactsToSend, targetType, targetId) => {
     setShowDoublonPopup(false);
     setShowWhatsappPopup(false);
@@ -376,7 +376,6 @@ function EvangelisationContent() {
     }
   };
 
-  /* ================= UI ================= */
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
@@ -396,7 +395,6 @@ function EvangelisationContent() {
         </p>
       </div>
 
-      {/* ✅ Sélection cible — options conditionnées par feature */}
       <div className="w-full max-w-md mb-6">
         <select
           value={selectedTargetType}
@@ -455,7 +453,10 @@ function EvangelisationContent() {
             {contacts.map((member) => (
               <div
                 key={member.id}
-                className="bg-white rounded-2xl shadow-xl p-4 border-l-4 relative"
+                ref={(el) => (highlightRef.current[member.id] = el)}     // ✅ ref
+                className={`bg-white rounded-2xl shadow-xl p-4 border-l-4 relative ${
+                  highlight === member.id ? "highlight-pulse" : ""        // ✅ pulse
+                }`}
                 style={{ borderLeftColor: getBorderColor(member) }}
               >
                 <h2 className="font-bold text-center">
@@ -550,7 +551,6 @@ function EvangelisationContent() {
         )}
       </div>
 
-      {/* ✅ POPUP EDIT — props filtrées par feature */}
       {editMember && (
         <EditEvangelisePopup
           member={editMember}
@@ -565,7 +565,6 @@ function EvangelisationContent() {
         />
       )}
 
-      {/* 🔹 Popup Doublon */}
       {showDoublonPopup && doublonsDetected.length > 0 && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 max-w-lg w-full space-y-4 text-center">
@@ -607,7 +606,6 @@ function EvangelisationContent() {
         </div>
       )}
 
-      {/* 🔹 Popup WhatsApp */}
       {showWhatsappPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">

@@ -71,6 +71,14 @@ function CellulesHubContent() {
       <h1 className="text-3xl font-extrabold mt-4 mb-6 text-white drop-shadow-lg">
         Espace Cellule
       </h1>
+      <div className="max-w-3xl w-full mb-6 text-center">
+            <p className="italic text-base text-white/90">
+              Chaque cellule est un <span className="text-blue-300 font-semibold">espace</span> où les âmes grandissent,
+              sont <span className="text-blue-300 font-semibold">accompagnées et encouragées dans leur cheminement</span>.
+              Ensemble, unissons nos forces, construisons et faisons fructifier chaque vie,
+              afin que chacun puisse <span className="text-blue-300 font-semibold">s'épanouir pleinement dans la foi</span>.
+            </p>
+          </div>
 
       <div className="flex flex-col md:flex-row gap-6 flex-wrap w-full max-w-5xl">
 

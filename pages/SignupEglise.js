@@ -20,7 +20,11 @@ export default function SignupEglise() {
 }, []);
 
   const PLANS_LABELS = {
-    free: "🌱 Départ — Gratuit",
+   free: {
+    label: "🌱 Départ",
+    range: "0 – 50 membres",
+    price: "Gratuit",
+  },
     starter: "📈 Croissance — $19/mois",
     vision: "🔥 Vision — $39/mois",
     expansion: "🌍 Expansion — $79/mois",

@@ -417,6 +417,7 @@ function NotificationsContent() {
       return;
     }
     if (n._type === "evangelise") {
+      setNotifications((prev) => prev.filter((notif) => !(notif._type === "evangelise" && notif.id === n.id)));
       router.push(`/evangelisation/evangelisation?highlight=${n.id}`);
       return;
     }

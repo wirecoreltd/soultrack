@@ -77,38 +77,49 @@ export default function AcceptInvitation() {
   }, [token]);
 
   const handleSubmit = async () => {
-    if (!choice || !invitation) return;
-    setSubmitting(true);
+  if (!choice || !invitation) return;
+  setSubmitting(true);
 
-    try {
-      const { error } = await supabase
-        .from("eglise_supervisions")
-        .update({
-          statut: choice,
-          approved_at: choice === "acceptee" ? new Date().toISOString() : null,
-        })
-        .eq("invitation_token", token);
+  try {
+    // 1. Mettre à jour le statut de l'invitation
+    const { error } = await supabase
+      .from("eglise_supervisions")
+      .update({
+        statut: choice,
+        approved_at: choice === "acceptee" ? new Date().toISOString() : null,
+      })
+      .eq("invitation_token", token);
 
-      if (error) throw new Error(error.message);
+    if (error) throw new Error(error.message);
 
-      if (choice === "acceptee") {
-        setMessage(`Vous êtes maintenant sous la supervision de ${invitation.eglise_denomination} — ${invitation.eglise_nom}`);
-      } else if (choice === "refusee") {
-        setMessage(`Vous avez refusé l'invitation de ${invitation.eglise_denomination}`);
-      } else if (choice === "pending") {
-        setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
-      }
+    // 2. Si acceptée → mettre à jour parent_eglise_id dans eglises
+    if (choice === "acceptee" && invitation.supervisee_eglise_id && invitation.superviseur_eglise_id) {
+      const { error: linkError } = await supabase
+        .from("eglises")
+        .update({ parent_eglise_id: invitation.superviseur_eglise_id })
+        .eq("id", invitation.supervisee_eglise_id);
 
-      setTimeout(() => router.push("/"), 3000);
-
-    } catch (err) {
-      console.error("Erreur :", err.message);
-      setMessage("Une erreur est survenue lors du traitement de l'invitation.");
-    } finally {
-      setSubmitting(false);
+      if (linkError) throw new Error(linkError.message);
     }
-  };
 
+    if (choice === "acceptee") {
+      setMessage(`Vous êtes maintenant sous la supervision de ${invitation.eglise_denomination} — ${invitation.eglise_nom}`);
+    } else if (choice === "refusee") {
+      setMessage(`Vous avez refusé l'invitation de ${invitation.eglise_denomination}`);
+    } else if (choice === "pending") {
+      setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
+    }
+
+    setTimeout(() => router.push("/"), 3000);
+
+  } catch (err) {
+    console.error("Erreur :", err.message);
+    setMessage("Une erreur est survenue lors du traitement de l'invitation.");
+  } finally {
+    setSubmitting(false);
+  }
+};
+  
   if (loading) return <div className="p-10 text-white">Chargement…</div>;
   if (!invitation) return <div className="p-10 text-red-400">Invitation introuvable ou expirée.</div>;
 

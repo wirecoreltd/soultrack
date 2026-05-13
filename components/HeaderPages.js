@@ -35,6 +35,30 @@ function getIsoCode(countryName) {
   return isoMap[countryName] || "un";
 }
 
+/**
+ * Génère les initiales / abréviations à partir des champs du superviseur.
+ * Format : premières lettres de chaque mot de denomination + nom + ville + pays
+ * Ex: "Gospiel Ministries" + "Canada" + "Gospiel" => "GM · C · G"
+ */
+function getSupervisionAbbrev({ denomination, nom, ville, pays }) {
+  const abbrev = (str) =>
+    (str || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((w) => w[0].toUpperCase())
+      .join("");
+
+  const parts = [
+    abbrev(denomination),
+    abbrev(nom),
+    abbrev(ville),
+    abbrev(pays),
+  ].filter(Boolean);
+
+  return parts.join(" · ");
+}
+
 export default function HeaderPages() {
   const router = useRouter();
 
@@ -46,8 +70,8 @@ export default function HeaderPages() {
   const [logoUrl, setLogoUrl] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [roles, setRoles] = useState([]); // ✅ roles tableau
-  const [userRole, setUserRole] = useState([]); // ✅ utilisé pour UI
+  const [roles, setRoles] = useState([]);
+  const [userRole, setUserRole] = useState([]);
 
   const [invitationPending, setInvitationPending] = useState(false);
   const [pendingToken, setPendingToken] = useState(null);
@@ -55,10 +79,12 @@ export default function HeaderPages() {
   const [egliseId, setEgliseId] = useState(null);
   const [userId, setUserId] = useState(null);
 
+  // ✅ Supervision
+  const [supervision, setSupervision] = useState(null); // { denomination, nom, ville, pays }
+
   // 🔁 Récupérer rôles depuis localStorage
   useEffect(() => {
     const storedRoles = localStorage.getItem("userRole");
-
     if (storedRoles) {
       try {
         const parsed = JSON.parse(storedRoles);
@@ -104,6 +130,50 @@ export default function HeaderPages() {
             setDenomination(egliseData.denomination || "");
             setVille(egliseData.ville || "");
             setPays(egliseData.pays || "");
+          }
+
+          // ✅ Chercher si cette église est supervisée (statut acceptée)
+          const { data: supervisionData } = await supabase
+            .from("eglise_supervisions")
+            .select("eglise_denomination, eglise_nom, eglise_ville, eglise_pays, superviseur_eglise_id")
+            .eq("supervisee_eglise_id", profile.eglise_id)
+            .eq("statut", "acceptee")
+            .maybeSingle();
+
+          if (supervisionData) {
+            // Les champs viennent directement de la table eglise_supervisions
+            // (eglise_denomination, eglise_nom, eglise_ville, eglise_pays = infos du superviseur)
+            // Si ces champs sont vides, on fetch l'église superviseur directement
+            const hasDirectInfo =
+              supervisionData.eglise_denomination ||
+              supervisionData.eglise_nom ||
+              supervisionData.eglise_ville ||
+              supervisionData.eglise_pays;
+
+            if (hasDirectInfo) {
+              setSupervision({
+                denomination: supervisionData.eglise_denomination,
+                nom: supervisionData.eglise_nom,
+                ville: supervisionData.eglise_ville,
+                pays: supervisionData.eglise_pays,
+              });
+            } else if (supervisionData.superviseur_eglise_id) {
+              // Fallback : fetch l'église superviseur
+              const { data: superviseurEglise } = await supabase
+                .from("eglises")
+                .select("nom, denomination, ville, pays")
+                .eq("id", supervisionData.superviseur_eglise_id)
+                .single();
+
+              if (superviseurEglise) {
+                setSupervision({
+                  denomination: superviseurEglise.denomination,
+                  nom: superviseurEglise.nom,
+                  ville: superviseurEglise.ville,
+                  pays: superviseurEglise.pays,
+                });
+              }
+            }
           }
         }
 
@@ -244,6 +314,29 @@ export default function HeaderPages() {
             />
             {pays}
           </p>
+        )}
+
+        {/* ✅ Badge supervision */}
+        {supervision && (
+          <div
+            className="mt-2 flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-400/40 bg-amber-400/10"
+            title={[
+              supervision.denomination,
+              supervision.nom,
+              supervision.ville,
+              supervision.pays,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          >
+            <span className="text-amber-400 text-xs">🔗</span>
+            <span className="text-amber-300 text-xs font-medium tracking-wide">
+              Supervisé par{" "}
+              <span className="font-bold">
+                {getSupervisionAbbrev(supervision)}
+              </span>
+            </span>
+          </div>
         )}
       </div>
     </div>

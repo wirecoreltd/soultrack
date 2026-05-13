@@ -147,21 +147,14 @@ export default function SignupEglise() {
           <select
             value={planId}
             onChange={(e) => setPlanId(e.target.value)}
-            className="w-full mt-2 border border-blue-200 rounded-lg p-2 text-center font-semibold text-blue-700 bg-white"
+            className="w-full mt-2 border border-blue-200 rounded-lg p-3 text-center font-semibold text-blue-700 bg-white"
           >
             {Object.entries(PLANS_LABELS).map(([key, plan]) => (
               <option key={key} value={key}>
-                {plan.label} • {plan.range} • {plan.price}
+                {`${plan.label}\n${plan.range}\n${plan.price}`}
               </option>
             ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => router.push("/site/pricing")}
-            className="text-xs text-blue-400 underline mt-1"
-          >
-            Changer de plan
-          </button>
+          </select>         
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">

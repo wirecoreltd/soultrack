@@ -155,10 +155,7 @@ export default function SignupEglise() {
     </option>
   ))}
 </select>     
-  <div className="mt-3 bg-white border border-blue-100 rounded-xl p-4 text-center shadow-sm">
-  <p className="text-lg font-bold text-blue-700">
-    {PLANS_LABELS[planId]?.label}
-  </p>
+  <div className="mt-3 bg-white border border-blue-100 rounded-xl p-4 text-center shadow-sm"> 
 
   <p className="text-sm text-gray-500 mt-1">
     {PLANS_LABELS[planId]?.range}

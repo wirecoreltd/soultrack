@@ -136,28 +136,18 @@ function ListUsersContent() {
   if (!deleteUser?.id) return;
 
   try {
-    // 1. Supprimer profiles (ou laisser le trigger faire si tu préfères)
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .delete()
-      .eq("id", deleteUser.id);
-
-    if (profileError) throw profileError;
-
-    // 2. Supprimer auth.users via Edge Function
-    const { error: authError } = await supabase.functions.invoke("dynamic-worker", {
+    const { error } = await supabase.functions.invoke("dynamic-worker", {
       body: { member_id: deleteUser.id },
     });
 
-    if (authError) throw authError;
+    if (error) throw error;
 
-    // 3. Retirer de l'affichage
     setUsers(users.filter((u) => u.id !== deleteUser.id));
     setDeleteUser(null);
 
   } catch (err) {
-    console.error("Erreur suppression utilisateur :", err);
-    alert("❌ Erreur lors de la suppression : " + (err.message || "inconnue"));
+    console.error("Erreur suppression :", err);
+    alert("❌ Erreur : " + (err.message || "inconnue"));
   }
 };
 

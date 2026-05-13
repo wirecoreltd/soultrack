@@ -292,11 +292,13 @@ export default function HeaderPages() {
           <img src={logoUrl} className="w-12 h-12 object-contain mb-2" />
         )}
 
-        <p className="text-white font-semibold text-lg mt-2">
-          {denomination && `${denomination} - `}{eglise}
-        </p>
+        {(denomination || eglise) && (
+          <p className="text-white font-semibold text-lg mt-2">
+            {[denomination, eglise].filter(Boolean).join(" - ")}
+          </p>
+        )}
 
-        <p className="text-amber-300 mt-2 text-sm">{ville}</p>
+        {ville && <p className="text-amber-300 mt-2 text-sm">{ville}</p>}
 
         {pays && (
           <p className="text-white mt-2 text-sm flex items-center gap-1">

@@ -400,34 +400,38 @@ function NotificationsContent() {
 
   // ─── Navigation au clic ───────────────────────────────────────────────────
   const handleClick = async (n) => {
-    if (n._type === "invitation") {
-      router.push(`/accept-invitation?token=${n._token}`);
-      return;
-    }
-    if (n._type === "membre_assigne") {
-      await supabase.from("membres_complets").update({ notification_responsable: false }).eq("id", n.id);
-      setNotifications((prev) => prev.filter((notif) => !(notif._type === "membre_assigne" && notif.id === n.id)));
-      router.push(`/cellule/membres-cellule?highlight=${n.id}`);
-      return;
-    }
-    if (n._type === "membre_assigne_evang") {
-      await supabase.from("suivis_des_evangelises").update({ notification_responsable: false }).eq("id", n.id);
-      setNotifications((prev) => prev.filter((notif) => !(notif._type === "membre_assigne_evang" && notif.id === n.id)));
-      router.push(`/evangelisation/suivis-evangelisation`);
-      return;
-    }
-    if (n._type === "evangelise") {
-      router.push(`/evangelisation/suivis-evangelisation`);
-      return;
-    }
-    // ✅ new_in_cellule → membres-cellule avec highlight
-    if (n._type === "new_in_cellule") {
-      router.push(`/cellule/membres-cellule?highlight=${n.id}`);
-      return;
-    }
-    // nouveau + existant → ListMembers avec highlight
-    router.push(`/ListMembers?highlight=${n.id}`);
-  };
+  if (n._type === "invitation") {
+    router.push(`/accept-invitation?token=${n._token}`);
+    return;
+  }
+  if (n._type === "membre_assigne") {
+    await supabase.from("membres_complets").update({ notification_responsable: false }).eq("id", n.id);
+    setNotifications((prev) => prev.filter((notif) => !(notif._type === "membre_assigne" && notif.id === n.id)));
+    router.push(`/cellule/membres-cellule?highlight=${n.id}`);
+    return;
+  }
+  if (n._type === "membre_assigne_evang") {
+    await supabase.from("suivis_des_evangelises").update({ notification_responsable: false }).eq("id", n.id);
+    setNotifications((prev) => prev.filter((notif) => !(notif._type === "membre_assigne_evang" && notif.id === n.id)));
+    router.push(`/evangelisation/suivis-evangelisation`);
+    return;
+  }
+  if (n._type === "evangelise") {
+    router.push(`/evangelisation/suivis-evangelisation`);
+    return;
+  }
+  // ✅ new_in_cellule → marquer comme lu en DB + retirer du state + rediriger
+  if (n._type === "new_in_cellule") {
+    await supabase.from("membres_complets").update({ is_new_in_cellule: false }).eq("id", n.id);
+    setNotifications((prev) => prev.filter((notif) => !(notif._type === "new_in_cellule" && notif.id === n.id)));
+    const params = new URLSearchParams({ highlight: n.id });
+    if (n.cellule_id) params.set("celluleId", n.cellule_id);
+    router.push(`/cellule/membres-cellule?${params.toString()}`);
+    return;
+  }
+  // nouveau + existant
+  router.push(`/ListMembers?highlight=${n.id}`);
+};
 
   const getIcon = (type) => {
     switch (type) {

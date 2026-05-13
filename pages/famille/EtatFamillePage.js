@@ -560,16 +560,16 @@ function EtatFamille() {
           )}
 
           {hasData && availableVilles.length > 1 && (
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-white/50">Ville</label>
-              <select value={filterVille} onChange={e => setFilterVille(e.target.value)}
-                className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
-                <option value="" className="bg-[#2a2d80]">Toutes les villes</option>
-                {availableVilles.map((v, i) => (
-                  <option key={i} value={v} className="bg-[#2a2d80]">{v}</option>
-                ))}
-              </select>
-            </div>
+  <div className="flex flex-col gap-1">
+    <label className="text-xs text-white/50">Famille</label>  {/* ← était "Ville" */}
+    <select value={filterVille} onChange={e => setFilterVille(e.target.value)}
+      className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
+      <option value="" className="bg-[#2a2d80]">Toutes les familles</option>  {/* ← était "Toutes les villes" */}
+      {availableVilles.map((v, i) => (
+        <option key={i} value={v} className="bg-[#2a2d80]">{v}</option>
+      ))}
+    </select>
+  </div>
           )}
         </div>
 

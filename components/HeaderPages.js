@@ -36,27 +36,15 @@ function getIsoCode(countryName) {
 }
 
 /**
- * Génère les initiales / abréviations à partir des champs du superviseur.
- * Format : premières lettres de chaque mot de denomination + nom + ville + pays
- * Ex: "Gospiel Ministries" + "Canada" + "Gospiel" => "GM · C · G"
+ * Génère le label complet du superviseur avec séparateurs " - " intelligents.
+ * Ignore les champs vides : pas de tiret orphelin.
+ * Format : denomination - nom - branche - ville
  */
-function getSupervisionAbbrev({ denomination, nom, ville, pays }) {
-  const abbrev = (str) =>
-    (str || "")
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((w) => w[0].toUpperCase())
-      .join("");
-
-  const parts = [
-    abbrev(denomination),
-    abbrev(nom),
-    abbrev(ville),
-    abbrev(pays),
-  ].filter(Boolean);
-
-  return parts.join(" · ");
+function getSupervisionLabel({ denomination, nom, branche, ville }) {
+  return [denomination, nom, branche, ville]
+    .map((s) => (s || "").trim())
+    .filter(Boolean)
+    .join(" - ");
 }
 
 export default function HeaderPages() {
@@ -80,7 +68,7 @@ export default function HeaderPages() {
   const [userId, setUserId] = useState(null);
 
   // ✅ Supervision
-  const [supervision, setSupervision] = useState(null); // { denomination, nom, ville, pays }
+  const [supervision, setSupervision] = useState(null); // { denomination, nom, branche, ville }
 
   // 🔁 Récupérer rôles depuis localStorage
   useEffect(() => {
@@ -135,44 +123,25 @@ export default function HeaderPages() {
           // ✅ Chercher si cette église est supervisée (statut acceptée)
           const { data: supervisionData } = await supabase
             .from("eglise_supervisions")
-            .select("eglise_denomination, eglise_nom, eglise_ville, eglise_pays, superviseur_eglise_id")
+            .select("superviseur_eglise_id")
             .eq("supervisee_eglise_id", profile.eglise_id)
             .eq("statut", "acceptee")
             .maybeSingle();
 
-          if (supervisionData) {
-            // Les champs viennent directement de la table eglise_supervisions
-            // (eglise_denomination, eglise_nom, eglise_ville, eglise_pays = infos du superviseur)
-            // Si ces champs sont vides, on fetch l'église superviseur directement
-            const hasDirectInfo =
-              supervisionData.eglise_denomination ||
-              supervisionData.eglise_nom ||
-              supervisionData.eglise_ville ||
-              supervisionData.eglise_pays;
+          if (supervisionData?.superviseur_eglise_id) {
+            const { data: superviseurEglise } = await supabase
+              .from("eglises")
+              .select("nom, denomination, ville, branche")
+              .eq("id", supervisionData.superviseur_eglise_id)
+              .single();
 
-            if (hasDirectInfo) {
+            if (superviseurEglise) {
               setSupervision({
-                denomination: supervisionData.eglise_denomination,
-                nom: supervisionData.eglise_nom,
-                ville: supervisionData.eglise_ville,
-                pays: supervisionData.eglise_pays,
+                denomination: superviseurEglise.denomination,
+                nom: superviseurEglise.nom,
+                branche: superviseurEglise.branche,
+                ville: superviseurEglise.ville,
               });
-            } else if (supervisionData.superviseur_eglise_id) {
-              // Fallback : fetch l'église superviseur
-              const { data: superviseurEglise } = await supabase
-                .from("eglises")
-                .select("nom, denomination, ville, pays")
-                .eq("id", supervisionData.superviseur_eglise_id)
-                .single();
-
-              if (superviseurEglise) {
-                setSupervision({
-                  denomination: superviseurEglise.denomination,
-                  nom: superviseurEglise.nom,
-                  ville: superviseurEglise.ville,
-                  pays: superviseurEglise.pays,
-                });
-              }
             }
           }
         }
@@ -289,6 +258,16 @@ export default function HeaderPages() {
           <p className="text-white text-sm mt-1">
             Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
           </p>
+
+          {/* ✅ Supervisé par — même style que Déconnexion */}
+          {supervision && (
+            <p className="text-amber-300 text-sm mt-0.5">
+              🔗 Supervisé par{" "}
+              <span className="font-medium">
+                {getSupervisionLabel(supervision)}
+              </span>
+            </p>
+          )}
         </div>
       </div>
 
@@ -314,29 +293,6 @@ export default function HeaderPages() {
             />
             {pays}
           </p>
-        )}
-
-        {/* ✅ Badge supervision */}
-        {supervision && (
-          <div
-            className="mt-2 flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-400/40 bg-amber-400/10"
-            title={[
-              supervision.denomination,
-              supervision.nom,
-              supervision.ville,
-              supervision.pays,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          >
-            <span className="text-amber-400 text-xs">🔗</span>
-            <span className="text-amber-300 text-xs font-medium tracking-wide">
-              Supervisé par{" "}
-              <span className="font-bold">
-                {getSupervisionAbbrev(supervision)}
-              </span>
-            </span>
-          </div>
         )}
       </div>
     </div>

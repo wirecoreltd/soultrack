@@ -43,6 +43,25 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Email déjà utilisé" });
     }
 
+    // 6️⃣ Seeder les features par défaut
+const { error: featuresError } = await supabaseAdmin
+  .from("eglise_features")
+  .insert([
+    { eglise_id: egliseId, feature: "membres",        active: true  },
+    { eglise_id: egliseId, feature: "evangelisation", active: true  },
+    { eglise_id: egliseId, feature: "cellules",       active: true  },
+    { eglise_id: egliseId, feature: "conseiller",     active: true  },
+    { eglise_id: egliseId, feature: "rapport",        active: true  },
+    { eglise_id: egliseId, feature: "administrateur", active: true  },
+    { eglise_id: egliseId, feature: "presence",       active: true  },
+    { eglise_id: egliseId, feature: "notifications",  active: true  },
+    { eglise_id: egliseId, feature: "familles",       active: false },
+  ]);
+
+if (featuresError) {
+  console.error("Erreur seed features:", featuresError.message);
+}
+
     // 2️⃣ Créer l'église
     const { data: egliseData, error: egliseError } = await supabaseAdmin
       .from("eglises")

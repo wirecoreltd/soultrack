@@ -186,7 +186,7 @@ function FamillesHubContent() {
 
         {/* Etat famille */}
         <Link
-          href="/famille/EtatCellulePage"
+          href="/famille/EtatFamillePage"
           className={cardClass}
           style={{ borderTopColor: "#14B8A6" }}
         >

@@ -59,9 +59,7 @@ function ConseillerHubContent() {
 
       {/* HEADER */}
       <div className="text-center mb-8 mt-4">
-        <h1 className="text-3xl font-bold mb-4 text-white">
-          Espace Conseiller
-        </h1>
+        <h1 className="text-3xl font-extrabold mt-4 mb-6 text-white drop-shadow-lg">Espace Conseiller</h1>
 
         <div className="max-w-3xl mx-auto">
           <p className="italic text-base text-white/90 leading-relaxed">

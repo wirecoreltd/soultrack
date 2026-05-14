@@ -393,7 +393,8 @@ function EvangelisationContent() {
       window.open(whatsappLink, "_blank");
       setPhoneNumber("");
       setTargetName("");
-      
+
+      console.log("🚀 triggerRefresh appelé");
       triggerRefresh();
       alert("✅ Contacts envoyés et enregistrés");
       

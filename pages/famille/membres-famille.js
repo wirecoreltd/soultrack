@@ -399,7 +399,7 @@ useEffect(() => {
 
                         <div className="w-full flex justify-end mt-3">
               <p className="text-[11px] text-gray-400">
-                Créé le {m.date_venu}
+                Créé le {m.date_venu)}
               </p>
             </div>
 
@@ -422,7 +422,7 @@ useEffect(() => {
 
                         <div>
                           <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
-                          <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
+                          <p>📆 Envoyé en suivi : {m.date_envoi_suivi)}</p>
                           <p>
                             💡 Statut Suivi :{" "}
                             {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}

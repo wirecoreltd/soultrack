@@ -422,7 +422,7 @@ useEffect(() => {
 
                         <div>
                           <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
-                          <p>📆 Envoyé en suivi : {m.date_envoi_suivi)}</p>
+                          <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
                           <p>
                             💡 Statut Suivi :{" "}
                             {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}

@@ -69,11 +69,36 @@ function EvangelisationContent() {
   }, [view]);
 
   // ✅ Scroll automatique vers la carte surlignée
+  // ✅ Scroll automatique vers la carte surlignée
+  const highlightDoneRef = useRef(false);
+
   useEffect(() => {
-    if (!highlight || loading) return;
-    const el = highlightRef.current[highlight];
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [highlight, loading]);
+    if (!highlight || loading || highlightDoneRef.current) return;
+
+    let attempts = 0;
+    const tryHighlight = () => {
+      const el = highlightRef.current[highlight];
+      if (!el) {
+        attempts++;
+        if (attempts < 20) setTimeout(tryHighlight, 150);
+        return;
+      }
+      highlightDoneRef.current = true;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
+      el.style.boxShadow = "0 0 0 3px rgba(167,139,250,0.7), 0 0 32px 10px rgba(167,139,250,0.25)";
+      el.style.transform = "scale(1.02)";
+      setTimeout(() => {
+        el.style.transition = "box-shadow 1.5s ease, transform 1.5s ease";
+        el.style.boxShadow = "";
+        el.style.transform = "";
+      }, 5000);
+    };
+
+    const timer = setTimeout(tryHighlight, 300);
+    return () => clearTimeout(timer);
+  }, [loading, highlight]);
+  
 
   useEffect(() => {
     const handleClickOutside = (e) => {

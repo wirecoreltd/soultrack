@@ -10,7 +10,7 @@ import EditMemberPopup from "../../components/EditMemberPopup";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useSearchParams } from "next/navigation";
-import { useMembers } from "../../context/MembersContext";F
+import { useMembers } from "../../context/MembersContext";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import { useRouter } from "next/navigation";

@@ -4,7 +4,6 @@ import supabase from "../../lib/supabaseClient";
 import EditMemberSuivisPopup from "../../components/EditMemberSuivisPopup";
 import { useMembers } from "../../context/MembersContext";
 import { useRouter } from "next/router";
-import { useSearchParams } from "next/navigation";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import useChurchScope from "../../hooks/useChurchScope";
@@ -151,7 +150,7 @@ export default function SuivisMembres() {
 
 function SuivisMembresContent() {
   const router = useRouter();
-  const searchParams = useSearchParams(); // ✅ pour lire ?highlight=
+
   const { profile, loading: scopeLoading, error: scopeError, scopedQuery } = useChurchScope();
   const { members, setAllMembers, updateMember } = useMembers();
   const [loading, setLoading] = useState(true);
@@ -324,9 +323,9 @@ function SuivisMembresContent() {
     fetchMembresComplets();
   }, [setAllMembers, fetchAssignments]);
 
-  // ✅ Highlight au chargement depuis ?highlight=id
+  // ✅ Highlight depuis ?highlight=id — bleu transparent, scale 5s puis retour
   useEffect(() => {
-    const highlightId = searchParams.get("highlight");
+    const highlightId = router.query?.highlight;
     if (!highlightId || loading) return;
 
     const timer = setTimeout(() => {
@@ -334,19 +333,24 @@ function SuivisMembresContent() {
       if (!el) return;
 
       el.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      // Appliquer le glow bleu + scale
       el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
-      el.style.boxShadow = "0 0 0 4px #f59e0b, 0 0 24px 8px rgba(245,158,11,0.4)";
+      el.style.boxShadow = "0 0 0 3px rgba(59,130,246,0.6), 0 0 32px 10px rgba(59,130,246,0.25)";
       el.style.transform = "scale(1.02)";
 
-      setTimeout(() => {
+      // Retirer après 5 secondes
+      const removeTimer = setTimeout(() => {
         el.style.transition = "box-shadow 1s ease, transform 1s ease";
         el.style.boxShadow = "";
         el.style.transform = "";
       }, 5000);
+
+      return () => clearTimeout(removeTimer);
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [loading, searchParams]);
+  }, [loading, router.query]);
 
   const handleCommentChange = (id, value) => {
     setCommentChanges(prev => ({ ...prev, [id]: value }));

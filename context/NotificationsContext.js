@@ -4,6 +4,8 @@ import { createContext, useContext, useState } from "react";
 const NotificationsContext = createContext(null);
 
 export function NotificationsProvider({ children }) {
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const triggerRefresh = () => setRefreshTrigger((prev) => prev + 1);
   const [seenIds, setSeenIds] = useState(() => {
     if (typeof window === "undefined") return [];
     return JSON.parse(localStorage.getItem("seen_nouveaux") || "[]");
@@ -19,7 +21,7 @@ export function NotificationsProvider({ children }) {
   };
 
   return (
-    <NotificationsContext.Provider value={{ seenIds, markAsSeen }}>
+    <NotificationsContext.Provider value={{ seenIds, markAsSeen, refreshTrigger, triggerRefresh }}>
       {children}
     </NotificationsContext.Provider>
   );

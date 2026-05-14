@@ -413,6 +413,12 @@ function MembresCelluleContent() {
                     <p className="text-center text-sm mt-1">🏠 {cellule?.cellule_full || "—"}</p>
                     <p className="text-center text-sm mt-1">👤 {cellule?.responsable || "—"}</p>
 
+                        <div className="w-full flex justify-end mt-3">
+              <p className="text-[11px] text-gray-400">
+                Créé le {formatDateFr(m.date_venu)}
+              </p>
+            </div>
+
                     <button
                       onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
                       className="text-orange-500 underline mt-2 block mx-auto text-sm"

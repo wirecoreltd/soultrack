@@ -322,7 +322,7 @@ function NotificationsContent() {
       setNotifications((prev) =>
         prev.filter((notif) => !(notif._type === "membre_assigne" && notif.id === n.id))
       );
-      router.push(`/cellule/membres-cellule?highlight=${n.id}`);
+      router.push(`/membres/suivis-membres?highlight=${n.id}`);
       return;
     }
 

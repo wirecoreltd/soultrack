@@ -198,6 +198,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
 
   // ─── Fetch initial ────────────────────────────────────────────────────────
   useEffect(() => {
+    console.log("🔄 refreshTrigger changé:", refreshTrigger);
   fetchCounts();
 }, [refreshTrigger]);
 

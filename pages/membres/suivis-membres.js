@@ -1,12 +1,10 @@
-"use client";
-
 import { useEffect, useState, useRef, useCallback } from "react";
 import React from "react";
 import supabase from "../../lib/supabaseClient";
-import LogoutLink from "../../components/LogoutLink";
 import EditMemberSuivisPopup from "../../components/EditMemberSuivisPopup";
 import { useMembers } from "../../context/MembersContext";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
+import { useSearchParams } from "next/navigation";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import useChurchScope from "../../hooks/useChurchScope";
@@ -69,7 +67,6 @@ const DetailsPopup = React.memo(function DetailsPopup({
 
   return (
     <div className="text-black text-sm space-y-2 w-full">
-
       <div>
         <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
         <p>🎗️ Civilité : {m.sexe || "—"}</p>
@@ -154,13 +151,13 @@ export default function SuivisMembres() {
 
 function SuivisMembresContent() {
   const router = useRouter();
+  const searchParams = useSearchParams(); // ✅ pour lire ?highlight=
   const { profile, loading: scopeLoading, error: scopeError, scopedQuery } = useChurchScope();
   const { members, setAllMembers, updateMember } = useMembers();
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prenom, setPrenom] = useState("");
   const [userProfile, setUserProfile] = useState(null);
-  const [DetailsSuivisPopupMember, setDetailsSuivisPopupMember] = useState(null);
   const [statusChanges, setStatusChanges] = useState({});
   const [commentChanges, setCommentChanges] = useState({});
   const [updating, setUpdating] = useState({});
@@ -168,12 +165,11 @@ function SuivisMembresContent() {
   const [showRefus, setShowRefus] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(null);
   const [cellules, setCellules] = useState([]);
-  const [familles, setFamilles] = useState([]); // ✅ familles state
+  const [familles, setFamilles] = useState([]);
   const [conseillers, setConseillers] = useState([]);
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
-
   const [assignmentsMap, setAssignmentsMap] = useState({});
 
   const [view, setView] = useState(() => {
@@ -272,21 +268,18 @@ function SuivisMembresContent() {
         setPrenom(profileData.prenom || "cher membre");
         setUserProfile(profileData);
 
-        // ─── Fetch cellules ───
         const { data: cellulesData } = await supabase
           .from("cellules")
           .select("id, cellule_full, responsable_id")
           .eq("eglise_id", profileData.eglise_id);
         setCellules(cellulesData || []);
 
-        // ─── Fetch familles ✅ ───
         const { data: famillesData } = await supabase
           .from("familles")
           .select("id, famille_full, responsable_id")
           .eq("eglise_id", profileData.eglise_id);
         setFamilles(famillesData || []);
 
-        // ─── Fetch conseillers ───
         const { data: conseillersData } = await supabase
           .from("profiles")
           .select("id, prenom, nom")
@@ -307,7 +300,6 @@ function SuivisMembresContent() {
           if (celluleIds.length > 0) query = query.in("cellule_id", celluleIds);
           else query = query.eq("id", -1);
         } else if (profileData.role === "ResponsableFamilles") {
-          // ✅ Même logique que ResponsableCellule, mais sur famille_id
           const familleIds = famillesData?.filter(f => f.responsable_id === profileData.id).map(f => f.id) || [];
           if (familleIds.length > 0) query = query.in("famille_id", familleIds);
           else query = query.eq("id", -1);
@@ -331,6 +323,30 @@ function SuivisMembresContent() {
 
     fetchMembresComplets();
   }, [setAllMembers, fetchAssignments]);
+
+  // ✅ Highlight au chargement depuis ?highlight=id
+  useEffect(() => {
+    const highlightId = searchParams.get("highlight");
+    if (!highlightId || loading) return;
+
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`member-${highlightId}`);
+      if (!el) return;
+
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
+      el.style.boxShadow = "0 0 0 4px #f59e0b, 0 0 24px 8px rgba(245,158,11,0.4)";
+      el.style.transform = "scale(1.02)";
+
+      setTimeout(() => {
+        el.style.transition = "box-shadow 1s ease, transform 1s ease";
+        el.style.boxShadow = "";
+        el.style.transform = "";
+      }, 5000);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [loading, searchParams]);
 
   const handleCommentChange = (id, value) => {
     setCommentChanges(prev => ({ ...prev, [id]: value }));
@@ -453,6 +469,7 @@ function SuivisMembresContent() {
           {uniqueMembers.map((m) => (
             <div
               key={m.id}
+              id={`member-${m.id}`} // ✅ id pour le highlight
               className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
               style={{ borderLeftColor: getBorderColor(m) }}
             >
@@ -491,7 +508,6 @@ function SuivisMembresContent() {
                   🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}
                 </p>
 
-                {/* ✅ Famille affichée comme Cellule */}
                 <p className="text-sm text-black-700 mb-1">
                   👨‍👩‍👦 Famille : {m.famille_id ? (familles.find(f => f.id === m.famille_id)?.famille_full || "—") : "—"}
                 </p>

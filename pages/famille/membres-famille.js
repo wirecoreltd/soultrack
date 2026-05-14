@@ -332,11 +332,19 @@ useEffect(() => {
                     className="bg-white p-4 rounded-2xl shadow-xl border-l-4"
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
-                    <h2 className="text-center font-bold text-lg">
-                      <span>{m.prenom} {m.nom}</span>
+                    <h2 className="relative w-full text-center font-bold text-lg flex items-center justify-center gap-1">
+                      <span>
+                        {m.prenom} {m.nom}
+                      </span>
+                    
                       {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
                         <span className="text-yellow-400">⭐</span>
                       )}
+                    
+                      {/* Zone future dot propre */}
+                      <div className="absolute right-2">
+                        {/* PresenceDot si besoin */}
+                      </div>
                     </h2>
 
                     {/* Téléphone */}
@@ -388,6 +396,12 @@ useEffect(() => {
                     <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
                     <p className="text-center text-sm mt-1">🏠 {famille?.famille_full || "—"}</p>
                     <p className="text-center text-sm mt-1">👤 {famille?.responsable || "—"}</p>
+
+                        <div className="w-full flex justify-end mt-3">
+              <p className="text-[11px] text-gray-400">
+                Créé le {m.date_venu}
+              </p>
+            </div>
 
                     <button
                       onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}

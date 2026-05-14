@@ -54,7 +54,7 @@ function SubscriptionContent() {
   const [egliseId, setEgliseId]           = useState(null);
   const [loading, setLoading]             = useState(true);
   const [message, setMessage]             = useState(null);
-  const [selectedPlan, setSelectedPlan]   = useState(null); // "upgrade" | "downgrade" | null
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [confirming, setConfirming]       = useState(false);
 
   useEffect(() => { loadData(); }, []);
@@ -92,33 +92,40 @@ function SubscriptionContent() {
 
   const planActuelIndex = PLANS.findIndex(p => p.id === subscription?.plan_id);
   const planActuel      = PLANS[planActuelIndex] ?? null;
-  const planDowngrade   = planActuelIndex > 0 ? PLANS[planActuelIndex - 1] : null;
-  const planUpgrade     = planActuelIndex >= 0 && planActuelIndex < PLANS.length - 1
-    ? PLANS[planActuelIndex + 1]
-    : null;
 
   const pctActuel = planActuel?.limite
     ? Math.min(100, (nombreMembres / planActuel.limite) * 100)
     : 0;
 
-  // --- Confirmation inline ---
+  // Plans disponibles = tous sauf le plan actuel
+  const autresPlans = PLANS.filter(p => p.id !== subscription?.plan_id);
+
+  const confirmTarget = PLANS.find(p => p.id === selectedPlanId) ?? null;
+
+  const isDowngrade = confirmTarget && planActuel
+    ? confirmTarget.prixNum < planActuel.prixNum
+    : false;
+
+  const downgradeWarning =
+    isDowngrade &&
+    confirmTarget?.limite &&
+    nombreMembres > confirmTarget.limite;
+
   async function handleConfirm() {
-    const target = selectedPlan === "upgrade" ? planUpgrade : planDowngrade;
-    if (!target) return;
+    if (!confirmTarget) return;
     setConfirming(true);
     setMessage(null);
 
     try {
-      // Remplacer par votre logique Stripe / Supabase réelle
       const { error } = await supabase
         .from("subscriptions")
-        .update({ plan_id: target.id })
+        .update({ plan_id: confirmTarget.id })
         .eq("eglise_id", egliseId);
 
       if (error) throw error;
 
-      setMessage({ type: "success", text: `Plan mis à jour vers ${target.nom} avec succès.` });
-      setSelectedPlan(null);
+      setMessage({ type: "success", text: `Plan mis à jour vers ${confirmTarget.nom} avec succès.` });
+      setSelectedPlanId(null);
       await loadData();
     } catch (err) {
       setMessage({ type: "error", text: "Une erreur est survenue. Veuillez réessayer." });
@@ -126,12 +133,6 @@ function SubscriptionContent() {
       setConfirming(false);
     }
   }
-
-  const confirmTarget = selectedPlan === "upgrade" ? planUpgrade : planDowngrade;
-  const downgradeWarning =
-    selectedPlan === "downgrade" &&
-    planDowngrade?.limite &&
-    nombreMembres > planDowngrade.limite;
 
   // ---- Render ----
   return (
@@ -177,7 +178,6 @@ function SubscriptionContent() {
                   borderLeft: `4px solid ${planActuel.color}`,
                 }}
               >
-                {/* Badge */}
                 <span
                   className="inline-block text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full mb-3"
                   style={{ background: `${planActuel.color}22`, color: planActuel.color }}
@@ -185,7 +185,6 @@ function SubscriptionContent() {
                   Plan actuel
                 </span>
 
-                {/* Nom + prix */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <span className="text-3xl">{planActuel.emoji}</span>
@@ -208,7 +207,6 @@ function SubscriptionContent() {
                   </div>
                 </div>
 
-                {/* Barre d'utilisation */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs text-white/50">
                     <span>{nombreMembres} membres utilisés</span>
@@ -227,85 +225,99 @@ function SubscriptionContent() {
             )}
 
             {/* ── 2. CHANGER DE PLAN ── */}
-            {(planDowngrade || planUpgrade) && (
+            {autresPlans.length > 0 && (
               <div>
                 <p className="text-white/40 text-xs uppercase font-semibold tracking-widest mb-3">
                   Changer de plan
                 </p>
-                <div className={`grid gap-3 ${planDowngrade && planUpgrade ? "grid-cols-2" : "grid-cols-1"}`}>
 
-                  {/* Downgrade */}
-                  {planDowngrade && (
-                    <button
-                      onClick={() => setSelectedPlan(selectedPlan === "downgrade" ? null : "downgrade")}
-                      className="rounded-2xl p-4 flex flex-col items-start text-left transition-all duration-200"
-                      style={{
-                        background: selectedPlan === "downgrade"
-                          ? "rgba(255,255,255,0.12)"
-                          : "rgba(255,255,255,0.06)",
-                        border: selectedPlan === "downgrade"
-                          ? "1.5px solid rgba(255,255,255,0.35)"
-                          : "1px solid rgba(255,255,255,0.12)",
-                      }}
-                    >
-                      <p className="text-white/40 text-xs uppercase font-semibold tracking-wider mb-2">
-                        ↓ Downgrade
-                      </p>
-                      <span className="text-2xl mb-1">{planDowngrade.emoji}</span>
-                      <p className="text-white font-semibold">{planDowngrade.nom}</p>
-                      <p className="text-white/50 text-sm">{planDowngrade.prix}</p>
-                      <div className="w-full mt-3 space-y-1">
-                        <div className="flex justify-between text-xs text-white/40">
-                          <span>{nombreMembres} membres</span>
-                          <span>{planDowngrade.limite ?? "∞"}</span>
-                        </div>
-                        <ProgressBar value={nombreMembres} max={planDowngrade.limite ?? nombreMembres} height={5} />
-                      </div>
-                    </button>
-                  )}
+                <div className="space-y-2">
+                  {autresPlans.map((plan) => {
+                    const isUpgrade   = planActuel ? plan.prixNum > planActuel.prixNum : false;
+                    const isSelected  = selectedPlanId === plan.id;
+                    const pctSurCePlan = plan.limite
+                      ? Math.min(100, (nombreMembres / plan.limite) * 100)
+                      : 0;
+                    const depasseLimit = plan.limite && nombreMembres > plan.limite;
 
-                  {/* Upgrade */}
-                  {planUpgrade && (
-                    <button
-                      onClick={() => setSelectedPlan(selectedPlan === "upgrade" ? null : "upgrade")}
-                      className="relative rounded-2xl p-4 flex flex-col items-start text-left transition-all duration-200"
-                      style={{
-                        background: selectedPlan === "upgrade"
-                          ? `${planUpgrade.color}22`
-                          : `${planUpgrade.color}11`,
-                        border: selectedPlan === "upgrade"
-                          ? `1.5px solid ${planUpgrade.color}99`
-                          : `1px solid ${planUpgrade.color}33`,
-                      }}
-                    >
-                      {pctActuel >= 70 && (
-                        <span className="absolute top-2.5 right-2.5 bg-amber-400 text-black text-[10px] font-bold px-2 py-0.5 rounded-full">
-                          Recommandé
-                        </span>
-                      )}
-                      <p className="text-amber-300 text-xs uppercase font-semibold tracking-wider mb-2">
-                        ↑ Upgrade
-                      </p>
-                      <span className="text-2xl mb-1">{planUpgrade.emoji}</span>
-                      <p className="text-white font-semibold">{planUpgrade.nom}</p>
-                      <p className="text-sm font-semibold" style={{ color: planUpgrade.color }}>
-                        {planUpgrade.prix}
-                      </p>
-                      <div className="w-full mt-3 space-y-1">
-                        <div className="flex justify-between text-xs text-white/40">
-                          <span>{nombreMembres} membres</span>
-                          <span>{planUpgrade.limite ?? "∞"}</span>
+                    return (
+                      <button
+                        key={plan.id}
+                        onClick={() => setSelectedPlanId(isSelected ? null : plan.id)}
+                        className="w-full rounded-2xl p-4 flex items-center gap-4 text-left transition-all duration-200"
+                        style={{
+                          background: isSelected
+                            ? isUpgrade ? `${plan.color}22` : "rgba(255,255,255,0.12)"
+                            : isUpgrade ? `${plan.color}11` : "rgba(255,255,255,0.05)",
+                          border: isSelected
+                            ? isUpgrade
+                              ? `1.5px solid ${plan.color}99`
+                              : "1.5px solid rgba(255,255,255,0.35)"
+                            : isUpgrade
+                              ? `1px solid ${plan.color}33`
+                              : "1px solid rgba(255,255,255,0.10)",
+                        }}
+                      >
+                        {/* Emoji */}
+                        <span className="text-2xl shrink-0">{plan.emoji}</span>
+
+                        {/* Infos */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className="text-white font-semibold text-sm">{plan.nom}</p>
+                            <span
+                              className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full"
+                              style={
+                                isUpgrade
+                                  ? { background: `${plan.color}22`, color: plan.color }
+                                  : { background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)" }
+                              }
+                            >
+                              {isUpgrade ? "↑ Upgrade" : "↓ Downgrade"}
+                            </span>
+                            {pctActuel >= 70 && isUpgrade && (
+                              <span className="text-[10px] font-bold bg-amber-400 text-black px-1.5 py-0.5 rounded-full">
+                                Recommandé
+                              </span>
+                            )}
+                            {depasseLimit && (
+                              <span className="text-[10px] font-bold bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">
+                                ⚠️ Limite dépassée
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Mini progress bar */}
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <div className="flex-1">
+                              <ProgressBar
+                                value={nombreMembres}
+                                max={plan.limite ?? nombreMembres}
+                                height={4}
+                              />
+                            </div>
+                            <span className="text-white/30 text-[11px] shrink-0">
+                              {plan.limite ? `${nombreMembres}/${plan.limite}` : "Illimité"}
+                            </span>
+                          </div>
                         </div>
-                        <ProgressBar value={nombreMembres} max={planUpgrade.limite ?? nombreMembres} height={5} />
-                      </div>
-                    </button>
-                  )}
+
+                        {/* Prix */}
+                        <p
+                          className="text-sm font-semibold shrink-0"
+                          style={{ color: isUpgrade ? plan.color : "rgba(255,255,255,0.5)" }}
+                        >
+                          {plan.prix}
+                        </p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             {/* ── 3. CONFIRMATION INLINE ── */}
-            {selectedPlan && confirmTarget && (
+            {selectedPlanId && confirmTarget && (
               <div
                 className="rounded-2xl p-5 space-y-3"
                 style={{
@@ -321,18 +333,18 @@ function SubscriptionContent() {
 
                 {downgradeWarning && (
                   <div className="bg-red-500/15 border border-red-500/30 rounded-xl px-3 py-2.5 text-red-300 text-sm">
-                    ⚠️ Vos {nombreMembres} membres dépassent la limite de {planDowngrade?.limite} du plan{" "}
-                    {planDowngrade?.nom}. Certains membres pourraient devenir inaccessibles.
+                    ⚠️ Vos {nombreMembres} membres dépassent la limite de {confirmTarget.limite} du plan{" "}
+                    {confirmTarget.nom}. Certains membres pourraient devenir inaccessibles.
                   </div>
                 )}
 
-                {!downgradeWarning && selectedPlan === "downgrade" && (
+                {!downgradeWarning && isDowngrade && (
                   <p className="text-white/50 text-sm">
                     Votre plan sera réduit à la fin du cycle actuel.
                   </p>
                 )}
 
-                {selectedPlan === "upgrade" && (
+                {!isDowngrade && (
                   <p className="text-white/50 text-sm">
                     Le nouveau tarif sera appliqué dès le prochain cycle de facturation.
                   </p>
@@ -352,7 +364,7 @@ function SubscriptionContent() {
                     {confirming ? "En cours…" : `Confirmer — ${confirmTarget.prix}`}
                   </button>
                   <button
-                    onClick={() => setSelectedPlan(null)}
+                    onClick={() => setSelectedPlanId(null)}
                     className="px-4 py-2.5 rounded-xl text-sm text-white/50 hover:text-white/80 transition"
                     style={{ border: "1px solid rgba(255,255,255,0.15)" }}
                   >
@@ -361,16 +373,6 @@ function SubscriptionContent() {
                 </div>
               </div>
             )}
-
-            {/* Voir tous les plans */}
-            <div className="text-center">
-              <button
-                onClick={() => router.push("/site/pricing")}
-                className="text-white/30 hover:text-white/60 text-sm underline underline-offset-4 transition"
-              >
-                Voir tous les plans
-              </button>
-            </div>
           </>
         )}
       </div>

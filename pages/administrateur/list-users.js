@@ -230,7 +230,7 @@ function ListUsersContent() {
 
         <div className="flex justify-end">
           <button
-            onClick={() => router.push("/admin/create-internal-user")}
+            onClick={() => router.push("/administrateur/create-internal-user")}
             className="text-white px-4 py-2"
           >
             ➕ Ajouter

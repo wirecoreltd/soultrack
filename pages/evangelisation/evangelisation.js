@@ -397,7 +397,9 @@ function EvangelisationContent() {
       setPhoneNumber("");
       setTargetName("");
 
+      window.dispatchEvent(new CustomEvent("refresh-notif-count")); // ✅
       alert("✅ Contacts envoyés et enregistrés");
+      
     } catch (err) {
       console.error("Erreur envoi WhatsApp :", err);
       alert("❌ Erreur lors de l'envoi : " + err.message);

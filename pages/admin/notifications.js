@@ -322,14 +322,8 @@ function NotificationsContent() {
       setNotifications((prev) =>
         prev.filter((notif) => !(notif._type === "membre_assigne" && notif.id === n.id))
       );
-      // ✅ Redirection selon le type d'assignation
-      if (n.suivi_responsable_id) {
-        // Envoyé à un conseiller → page suivis membres
-        router.push(`/membres/suivis-membres?highlight=${n.id}`);
-      } else {
-        // Envoyé à une cellule ou famille → page membres-cellule
-        router.push(`/cellule/membres-cellule?highlight=${n.id}`);
-      }
+      // ✅ Tous les cas → suivis-membres (contact en statut_suivis 1 ou 2, pas encore intégré)
+      router.push(`/membres/suivis-membres?highlight=${n.id}`);
       return;
     }
 

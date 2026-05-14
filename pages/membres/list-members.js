@@ -10,7 +10,7 @@ import EditMemberPopup from "../../components/EditMemberPopup";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useSearchParams } from "next/navigation";
-import { useMembers } from "../../context/MembersContext";
+import { useMembers } from "../../context/MembersContext";F
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import { useRouter } from "next/navigation";
@@ -843,7 +843,7 @@ useEffect(() => {
             </p>
             <div className="w-full flex justify-end mt-3">
               <p className="text-[11px] text-gray-400">
-                Créé le {formatDateFr(m.created_at)}
+                Créé le {formatDateFr(m.date_venu)}
               </p>
             </div>
 

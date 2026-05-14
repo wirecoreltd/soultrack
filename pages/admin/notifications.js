@@ -336,13 +336,14 @@ function NotificationsContent() {
       return;
     }
 
-    if (n._type === "evangelise") {
-      setNotifications((prev) =>
-        prev.filter((notif) => !(notif._type === "evangelise" && notif.id === n.id))
-      );
-      router.push(`/evangelisation/evangelisation?highlight=${n.id}`);
-      return;
-    }
+   if (n._type === "evangelise") {
+  setNotifications((prev) =>
+    prev.filter((notif) => !(notif._type === "evangelise" && notif.id === n.id))
+  );
+  window.dispatchEvent(new CustomEvent("refresh-notif-count")); // ✅
+  router.push(`/evangelisation/evangelisation?highlight=${n.id}`);
+  return;
+}
 
     if (n._type === "new_in_cellule") {
       await supabase.from("membres_complets").update({ is_new_in_cellule: false }).eq("id", n.id);

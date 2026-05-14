@@ -330,7 +330,7 @@ function NotificationsContent() {
       router.push(`/cellule/membres-cellule?${params.toString()}`);
       return;
     }
-    router.push(`/ListMembers?highlight=${n.id}`);
+    router.push(`/membres/list-members?highlight=${n.id}`);
   };
 
   const getIcon = (type) => {

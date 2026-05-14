@@ -19,20 +19,22 @@ export default function EditFamilleModal({ famille, onClose, onUpdated }) {
   // ── Charger les responsables depuis profiles ──
   useEffect(() => {
     const fetchResponsables = async () => {
-      setLoadingResponsables(true);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, telephone")
-        .eq("role", "ResponsableFamille")
-        .order("nom");
+  setLoadingResponsables(true);
 
-      if (!error && data) {
-        setResponsables(data);
-      } else {
-        console.error("Erreur chargement responsables:", error);
-      }
-      setLoadingResponsables(false);
-    };
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, prenom, nom, telephone")
+    .contains("roles", ["ResponsableFamilles"])
+    .order("nom");
+
+  if (!error && data) {
+    setResponsables(data);
+  } else {
+    console.error("Erreur chargement responsables:", error);
+  }
+
+  setLoadingResponsables(false);
+};
 
     fetchResponsables();
   }, []);

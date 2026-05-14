@@ -395,7 +395,7 @@ function EvangelisationContent() {
       setTargetName("");
 
       console.log("✅ avant triggerRefresh", typeof triggerRefresh);
-      triggerRefresh();
+      window.dispatchEvent(new CustomEvent("refresh-notif-count"));
       alert("✅ Contacts envoyés et enregistrés");
       
     } catch (err) {

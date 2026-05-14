@@ -125,7 +125,7 @@ function EvangelisationContent() {
       const query = scopedQuery("evangelises");
       if (!query) return;
       const { data, error } = await query
-        .eq("status_suivi", "Non envoyé")
+        .in("status_suivi", ["Non envoyé", "vu"])
         .order("created_at", { ascending: false })
         .limit(1000);
       if (error) throw error;

@@ -51,12 +51,11 @@ export default async function handler(req, res) {
       cellule_nom,
       cellule_zone,
       ministeresSelected,
+      member_id,
     } = req.body;
 
     if (!prenom || !nom || !email || !password || !roles?.length) {
-      return res
-        .status(400)
-        .json({ error: "Champs obligatoires manquants" });
+      return res.status(400).json({ error: "Champs obligatoires manquants" });
     }
 
     // ── Profil admin connecté ──
@@ -67,9 +66,7 @@ export default async function handler(req, res) {
       .single();
 
     if (!adminProfile) {
-      return res
-        .status(400)
-        .json({ error: "Profil admin introuvable" });
+      return res.status(400).json({ error: "Profil admin introuvable" });
     }
 
     const eglise_id = adminProfile.eglise_id;
@@ -108,11 +105,7 @@ export default async function handler(req, res) {
     }
 
     // ── 3️⃣ Création cellule ──
-    if (
-      roles.includes("ResponsableCellule") &&
-      cellule_nom &&
-      cellule_zone
-    ) {
+    if (roles.includes("ResponsableCellule") && cellule_nom && cellule_zone) {
       const { error: celluleError } = await supabaseAdmin
         .from("cellules")
         .insert({
@@ -131,14 +124,39 @@ export default async function handler(req, res) {
 
     // ── 4️⃣ Préparation ministères ──
     const ministeresValides = Array.isArray(ministeresSelected)
-      ? ministeresSelected.filter((m) =>
-          ministereOptions.includes(m)
-        )
+      ? ministeresSelected.filter((m) => ministereOptions.includes(m))
       : [];
 
-    // ── 5️⃣ Création membre complet ──
-    const { data: createdMember, error: membreError } =
-      await supabaseAdmin
+    // ── 5️⃣ Création OU mise à jour membre complet ──
+    let createdMember;
+
+    const isExistingMember = member_id && member_id !== "add-serviteur";
+
+    if (isExistingMember) {
+      // Membre existant — on met à jour
+      const { data: updatedMember, error: membreError } = await supabaseAdmin
+        .from("membres_complets")
+        .update({
+          email,
+          telephone: telephone || null,
+          star: true,
+          Ministere: JSON.stringify(ministeresValides),
+          conseiller_id: roles.includes("Conseiller") ? newUserId : null,
+          profile_id: newUserId,
+        })
+        .eq("id", member_id)
+        .select()
+        .single();
+
+      if (membreError) {
+        return res.status(400).json({ error: membreError.message });
+      }
+
+      createdMember = updatedMember;
+
+    } else {
+      // Nouveau serviteur — on crée
+      const { data: newMember, error: membreError } = await supabaseAdmin
         .from("membres_complets")
         .insert({
           prenom,
@@ -148,37 +166,30 @@ export default async function handler(req, res) {
           sexe: sexe || null,
           star: true,
           etat_contact: "existant",
-
-          // ✅ Format JSON cohérent avec EditMemberPopup
           Ministere: JSON.stringify(ministeresValides),
-
-          conseiller_id: roles.includes("Conseiller")
-            ? newUserId
-            : null,
-
+          conseiller_id: roles.includes("Conseiller") ? newUserId : null,
+          profile_id: newUserId,
           eglise_id,
         })
         .select()
         .single();
 
-    if (membreError) {
-      return res.status(400).json({ error: membreError.message });
+      if (membreError) {
+        return res.status(400).json({ error: membreError.message });
+      }
+
+      createdMember = newMember;
     }
 
     // ── 6️⃣ Écriture stats ministère ──
-    if (
-      createdMember &&
-      ministeresValides.length > 0
-    ) {
+    if (createdMember && ministeresValides.length > 0) {
       const statsRows = ministeresValides.map((ministere) => ({
         membre_id: createdMember.id,
         eglise_id,
         type: "ministere",
         valeur: ministere,
         sexe: sexe || null,
-        date_action: new Date()
-          .toISOString()
-          .split("T")[0],
+        date_action: new Date().toISOString().split("T")[0],
       }));
 
       const { error: statsError } = await supabaseAdmin
@@ -186,21 +197,16 @@ export default async function handler(req, res) {
         .insert(statsRows);
 
       if (statsError) {
-        console.error(
-          "Erreur insertion stats ministère:",
-          statsError
-        );
+        console.error("Erreur insertion stats ministère:", statsError);
       }
     }
 
     return res.status(200).json({
       message: "Utilisateur + membre créé avec succès",
     });
+
   } catch (err) {
     console.error("create-user API error:", err);
-
-    return res.status(500).json({
-      error: err.message,
-    });
+    return res.status(500).json({ error: err.message });
   }
 }

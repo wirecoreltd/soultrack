@@ -295,7 +295,26 @@ function ListMembersContent() {
   localUpdateInProgressRef.current = true;
 
   try {
-    // 1. Soft-delete membres_complets → le trigger supprime profiles automatiquement
+    // 1. Récupérer le profile_id
+    const { data: membreData, error: fetchError } = await supabase
+      .from("membres_complets")
+      .select("profile_id")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const profileId = membreData?.profile_id;
+
+    // 2. Supprimer auth.users EN PREMIER (avant le trigger)
+    if (profileId) {
+      const { error: authError } = await supabase.functions.invoke("dynamic-worker", {
+        body: { member_id: profileId },
+      });
+      if (authError) console.warn("Edge Function:", authError);
+    }
+
+    // 3. Soft-delete membres_complets → trigger supprime profiles
     const { error: updateError } = await supabase
       .from("membres_complets")
       .update({ etat_contact: "supprime" })
@@ -303,14 +322,7 @@ function ListMembersContent() {
 
     if (updateError) throw updateError;
 
-    // 2. Supprimer auth.users via Edge Function (service_role obligatoire)
-    const { error: authError } = await supabase.functions.invoke("dynamic-worker", {
-  body: { member_id: id },
-});
-
-    if (authError) throw authError;
-
-    // 3. Retirer de l'affichage
+    // 4. Retirer de l'affichage
     setAllMembers((prev) => prev.filter((m) => m.id !== id));
     showToast("✅ Contact supprimé définitivement");
 
@@ -323,6 +335,8 @@ function ListMembersContent() {
     }, 2000);
   }
 };
+
+  
   const handleCommentChange = (id, value) =>
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 

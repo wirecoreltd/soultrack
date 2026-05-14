@@ -136,10 +136,12 @@ function SubscriptionContent() {
 
   // ---- Render ----
   return (
-    <div className="min-h-screen" style={{ background: "#333699" }}>
+    <div className="min-h-screen p-6 bg-[#333699]">
       <HeaderPages />
 
-      <div className="max-w-xl mx-auto px-4 py-10 space-y-6">
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+        Subscription <span className="text-emerald-300">Planspan>
+      </h1>
 
         {/* Titre */}
         <div className="text-center">

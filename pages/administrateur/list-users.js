@@ -132,16 +132,25 @@ function ListUsersContent() {
     setRoles(allRoles);
   }, [hiddenRoles, users]);
 
+   
   const handleDelete = async () => {
   if (!deleteUser?.id) return;
 
   try {
-    const { error } = await supabase.functions.invoke("dynamic-worker", {
+    // 1. Supprimer auth.users EN PREMIER via Edge Function
+    const { error: authError } = await supabase.functions.invoke("dynamic-worker", {
       body: { member_id: deleteUser.id },
     });
+    if (authError) throw authError;
 
-    if (error) throw error;
+    // 2. Supprimer profiles
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", deleteUser.id);
+    if (profileError) throw profileError;
 
+    // 3. Mettre à jour l'affichage
     setUsers(users.filter((u) => u.id !== deleteUser.id));
     setDeleteUser(null);
 

@@ -3,9 +3,38 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
-import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
+
+function CompactHeader() {
+  const router = useRouter();
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+  return (
+    <div className="flex items-center justify-between px-4 py-3 mb-2">
+      <button
+        onClick={() => router.back()}
+        className="text-amber-300 hover:text-white text-sm transition flex items-center gap-1"
+      >
+        ← Retour
+      </button>
+      <img
+        src="/logo.png"
+        alt="Logo SoulTrack"
+        className="w-8 h-auto cursor-pointer hover:opacity-80 transition"
+        onClick={() => router.push("/index")}
+      />
+      <button
+        onClick={handleLogout}
+        className="text-amber-300 hover:text-white text-sm transition"
+      >
+        Déconnexion
+      </button>
+    </div>
+  );
+}
 
 const PLANS = [
   { id: "free",       nom: "Départ",     prix: "Gratuit",    prixNum: 0,  limite: 50,   emoji: "🌱", color: "#10b981" },
@@ -137,9 +166,8 @@ function SubscriptionContent() {
   // ---- Render ----
   return (
     <div className="min-h-screen" style={{ background: "#333699" }}>
-      <HeaderPages />
-
-      <div className="max-w-xl mx-auto px-4 py-10 space-y-6">
+      <CompactHeader />
+      <div className="max-w-xl mx-auto px-4 py-6 space-y-6">
 
         {/* Titre */}
         <div className="text-center">

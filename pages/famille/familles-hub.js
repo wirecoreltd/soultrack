@@ -99,7 +99,7 @@ function FamillesHubContent() {
       <div className="flex flex-col md:flex-row gap-6 justify-center w-full max-w-6xl mb-6 flex-wrap">
         {/* Liste Familles */}
         <Link
-          href="/admin/list-familles"
+          href="/famille/list-familles"
           className={cardClass}
           style={{ borderTopColor: "#3B82F6" }}
         >

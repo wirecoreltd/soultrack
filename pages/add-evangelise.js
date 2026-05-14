@@ -12,7 +12,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const urlEgliseId = router.query.eglise_id || null;
   const urlCelluleId = router.query.cellule_id || null;
   const urlFamilleId = router.query.famille_id || null;
-  const isFromLink = !!urlEgliseId && (!!urlCelluleId || !!urlFamilleId);
+  //const isFromLink = !!urlEgliseId && (!!urlCelluleId || !!urlFamilleId);
+  const isFromLink = !!urlEgliseId;
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -44,6 +45,16 @@ export default function AddEvangelise({ onNewEvangelise }) {
     "Communauté / Isolement", "Dépression / Santé mentale"
   ];
 
+  //------------------------
+      useEffect(() => {
+      if (urlEgliseId) {
+        setFormData(prev => ({
+          ...prev,
+          eglise_id: urlEgliseId,
+        }));
+      }
+    }, [urlEgliseId]);
+  
   // ✅ Si pas de params URL → récupérer eglise_id depuis le profil connecté
   useEffect(() => {
     if (isFromLink) return;

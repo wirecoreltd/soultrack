@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import supabase from "../lib/supabaseClient";
-import { useNotificationsContext } from "../context/NotificationsContext";
+import supabase from "../../lib/supabaseClient";
+import { useNotificationsContext } from "../../context/NotificationsContext";
 
 const ROLES_NOUVEAUX_MEMBRES     = ["Administrateur", "ResponsableIntegration"];
 const ROLES_NOUVEAUX_EVANGELISES = ["Administrateur", "ResponsableEvangelisation"];

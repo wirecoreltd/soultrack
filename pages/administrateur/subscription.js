@@ -142,6 +142,7 @@ function SubscriptionContent() {
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
         Subscription <span className="text-emerald-300">Planspan></span>
       </h1>
+  </div>
 
         {/* Titre */}
         <div className="text-center">

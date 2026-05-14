@@ -323,18 +323,28 @@ function SuivisMembresContent() {
     fetchMembresComplets();
   }, [setAllMembers, fetchAssignments]);
 
-  // ✅ Highlight depuis ?highlight=id — une seule fois, bleu transparent, 5s puis retour
+  // ✅ Highlight depuis ?highlight=id — retry jusqu'à trouver l'élément, une seule fois
   const highlightDoneRef = useRef(false);
 
   useEffect(() => {
     const highlightId = router.query?.highlight;
     if (!highlightId || loading || highlightDoneRef.current) return;
 
-    const timer = setTimeout(() => {
-      const el = document.getElementById(`member-${highlightId}`);
-      if (!el) return;
+    let attempts = 0;
+    const maxAttempts = 20; // 20 x 150ms = 3s max
 
-      // ✅ Marquer comme fait — ne se re-déclenche plus jamais
+    const tryHighlight = () => {
+      const el = document.getElementById(`member-${highlightId}`);
+
+      if (!el) {
+        attempts++;
+        if (attempts < maxAttempts) {
+          setTimeout(tryHighlight, 150); // réessayer
+        }
+        return;
+      }
+
+      // ✅ Élément trouvé — marquer fait immédiatement
       highlightDoneRef.current = true;
 
       el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -346,12 +356,14 @@ function SuivisMembresContent() {
 
       // Retirer proprement après 5 secondes
       setTimeout(() => {
-        el.style.transition = "box-shadow 1s ease, transform 1s ease";
+        el.style.transition = "box-shadow 1.5s ease, transform 1.5s ease";
         el.style.boxShadow = "";
         el.style.transform = "";
       }, 5000);
-    }, 500);
+    };
 
+    // Lancer le premier essai après un court délai
+    const timer = setTimeout(tryHighlight, 300);
     return () => clearTimeout(timer);
   }, [loading, router.query?.highlight]);
 

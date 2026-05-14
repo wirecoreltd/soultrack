@@ -204,13 +204,10 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
 
   // ─── Custom event depuis evangelisation.js pour forcer un re-fetch ────────
   useEffect(() => {
-    const handler = () => {
-      console.log("🔔 refresh-notif-count reçu");
-      fetchCounts();
-    };
-    window.addEventListener("refresh-notif-count", handler);
-    return () => window.removeEventListener("refresh-notif-count", handler);
-  }, [fetchCounts]);
+  const handler = () => fetchCounts();
+  window.addEventListener("refresh-notif-count", handler);
+  return () => window.removeEventListener("refresh-notif-count", handler);
+}, [fetchCounts]);
 
   // ─── Realtime ─────────────────────────────────────────────────────────────
   useEffect(() => {

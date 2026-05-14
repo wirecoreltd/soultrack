@@ -11,7 +11,7 @@ import Footer from "../../components/Footer";
 /* =========================
    Ligne Cellule (RESPONSIVE)
 ========================= */
-function CelluleRow({ c, router }) {
+function CelluleRow({ c, router, canEdit, onEdit }) {
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const phoneMenuRef = useRef(null);
 
@@ -35,11 +35,11 @@ function CelluleRow({ c, router }) {
         style={{ borderLeftColor: "#F59E0B" }}
       >
         <div className="flex-[2] text-white text-sm">{c.ville}</div>
-        <div className="flex-[2] text-white font-semibold text-sm">
-          {c.cellule_full}
-        </div>
+        <div className="flex-[2] text-white font-semibold text-sm">{c.cellule_full}</div>
         <div className="flex-[2] text-white text-sm">{c.responsable}</div>
-        <div className="flex-[2] text-white text-sm">{c.superviseur ? `${c.superviseur.prenom} ${c.superviseur.nom}` : "—"}</div>
+        <div className="flex-[2] text-white text-sm">
+          {c.superviseur ? `${c.superviseur.prenom} ${c.superviseur.nom}` : "—"}
+        </div>
 
         {/* Téléphone */}
         <div className="flex-[2] flex justify-center relative text-sm">
@@ -49,7 +49,6 @@ function CelluleRow({ c, router }) {
           >
             {c.telephone || "—"}
           </span>
-
           {openPhoneMenu && (
             <div
               ref={phoneMenuRef}
@@ -63,17 +62,25 @@ function CelluleRow({ c, router }) {
           )}
         </div>
 
-        <div className="flex-[1] flex justify-center text-white text-sm">
-          {c.membre_count}
-        </div>
+        <div className="flex-[1] flex justify-center text-white text-sm">{c.membre_count}</div>
 
-        <div className="flex-[1] flex justify-center">
+        <div className="flex-[1] flex justify-center gap-2">
           <span
             className="text-orange-400 underline cursor-pointer text-sm"
-            onClick={() => router.push(`${window.location.origin}/cellule/membres-cellule?celluleId=${c.id}`)}           
+            onClick={() =>
+              router.push(`${window.location.origin}/cellule/membres-cellule?celluleId=${c.id}`)
+            }
           >
             Détails
           </span>
+          {canEdit && (
+            <span
+              className="text-blue-300 underline cursor-pointer text-sm"
+              onClick={() => onEdit(c)}
+            >
+              ✏️
+            </span>
+          )}
         </div>
       </div>
 
@@ -83,9 +90,7 @@ function CelluleRow({ c, router }) {
         style={{ borderLeftColor: "#F59E0B" }}
       >
         {/* Nom */}
-        <div className="text-white font-semibold text-lg">
-          {c.cellule_full}
-        </div>
+        <div className="text-white font-semibold text-lg">{c.cellule_full}</div>
 
         {/* Ville */}
         <div className="text-white text-sm mb-2 mt-3">
@@ -95,12 +100,10 @@ function CelluleRow({ c, router }) {
         {/* Responsable */}
         <div className="text-white text-sm mb-2">
           👤 Responsable :{" "}
-          <span className="text-amber-300 font-semibold">
-            {c.responsable || "—"}
-          </span>
+          <span className="text-amber-300 font-semibold">{c.responsable || "—"}</span>
         </div>
 
-         {/* Superviseur */}
+        {/* Superviseur */}
         <div className="text-white text-sm mb-2">
           ⚜️ Superviseur :{" "}
           <span className="text-amber-300 font-semibold">
@@ -115,11 +118,8 @@ function CelluleRow({ c, router }) {
             onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
           >
             📞{" "}
-            <span className="text-orange-400 underline">
-              {c.telephone || "—"}
-            </span>
+            <span className="text-orange-400 underline">{c.telephone || "—"}</span>
           </span>
-
           {openPhoneMenu && (
             <div
               ref={phoneMenuRef}
@@ -138,13 +138,24 @@ function CelluleRow({ c, router }) {
           <div className="text-white text-sm">
             👥 {c.membre_count} membre{c.membre_count > 1 ? "s" : ""}
           </div>
-
-          <button
-            onClick={() => router.push(`${window.location.origin}/cellule/membres-cellule?celluleId=${c.id}`)}
-            className="text-orange-400 underline text-sm"
-          >
-            Voir détails →
-          </button>
+          <div className="flex gap-3 items-center">
+            {canEdit && (
+              <button
+                onClick={() => onEdit(c)}
+                className="text-blue-300 underline text-sm"
+              >
+                ✏️ Modifier
+              </button>
+            )}
+            <button
+              onClick={() =>
+                router.push(`${window.location.origin}/cellule/membres-cellule?celluleId=${c.id}`)
+              }
+              className="text-orange-400 underline text-sm"
+            >
+              Voir détails →
+            </button>
+          </div>
         </div>
       </div>
     </>
@@ -167,7 +178,10 @@ function ListCellulesContent() {
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
+
+  // ── Modal état ──
   const [selectedCellule, setSelectedCellule] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const [search, setSearch] = useState("");
   const [filterCellule, setFilterCellule] = useState("");
@@ -192,23 +206,19 @@ function ListCellulesContent() {
 
     setUserRole(profile.role);
 
-   let query = supabase
-  .from("cellules")
-  .select(`*, superviseur:superviseur_id ( nom, prenom )`)
-  .eq("eglise_id", profile.eglise_id)
-  .order("cellule_full");
+    let query = supabase
+      .from("cellules")
+      .select(`*, superviseur:superviseur_id ( nom, prenom )`)
+      .eq("eglise_id", profile.eglise_id)
+      .order("cellule_full");
 
-// 🔐 FILTRAGE STRICT
-if (profile.role === "ResponsableCellule") {
-  query = query.eq("responsable_id", profile.id);
-
-} else if (profile.role === "SuperviseurCellule") {
-  query = query.eq("superviseur_id", profile.id);
-
-} else if (profile.role !== "Administrateur") {
-  // 🚨 BLOQUE TOUT si rôle inattendu
-  query = query.eq("id", "00000000-0000-0000-0000-000000000000");
-}
+    if (profile.role === "ResponsableCellule") {
+      query = query.eq("responsable_id", profile.id);
+    } else if (profile.role === "SuperviseurCellule") {
+      query = query.eq("superviseur_id", profile.id);
+    } else if (profile.role !== "Administrateur") {
+      query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
 
     const { data: cellsData } = await query;
 
@@ -219,8 +229,7 @@ if (profile.role === "ResponsableCellule") {
           .select("id", { count: "exact", head: true })
           .eq("cellule_id", c.id)
           .eq("statut_suivis", 3)
-          .neq("etat_contact", "supprime"); 
-
+          .neq("etat_contact", "supprime");
         return { ...c, membre_count: count || 0 };
       })
     );
@@ -228,6 +237,40 @@ if (profile.role === "ResponsableCellule") {
     setCellules(withCount);
     setLoading(false);
   };
+
+  // Ouvrir le modal d'édition
+  const handleEdit = (cellule) => {
+    setSelectedCellule(cellule);
+    setShowEditModal(true);
+  };
+
+  // Fermer le modal
+  const handleCloseModal = () => {
+    setShowEditModal(false);
+    setSelectedCellule(null);
+  };
+
+  // Mise à jour locale après save
+  const handleUpdated = (updatedCellule) => {
+    setCellules((prev) =>
+      prev.map((c) =>
+        c.id === updatedCellule.id
+          ? {
+              ...c,
+              cellule: updatedCellule.cellule,
+              ville: updatedCellule.ville,
+              responsable: updatedCellule.responsable,
+              telephone: updatedCellule.telephone,
+              // Recalcul du nom complet si votre DB le fait côté client
+              cellule_full: updatedCellule.cellule_full ?? c.cellule_full,
+            }
+          : c
+      )
+    );
+  };
+
+  // Qui peut éditer ?
+  const canEdit = ["Administrateur", "SuperviseurCellule"].includes(userRole);
 
   const cellulesFiltrees = cellules.filter((c) => {
     const matchSearch = c.cellule_full?.toLowerCase().includes(search.toLowerCase());
@@ -243,15 +286,17 @@ if (profile.role === "ResponsableCellule") {
     <div className="min-h-screen p-6 bg-[#333699]">
       <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">Liste des <span className="text-emerald-300">Cellules</span></h1>
-      
-    <div className="max-w-3xl w-full mb-6 text-center mx-auto">
-          <p className="italic text-base text-white/90">
-     <span className="text-blue-300 font-semibold">Gérez et consultez facilement vos cellules</span>.
-               Recherchez par nom, filtrez rapidement, visualisez les responsables et le nombre de membres, 
-               et accédez aux<span className="text-blue-300 font-semibold"> détails pour un suivi précis</span>.
-     </p>
-        </div>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+        Liste des <span className="text-emerald-300">Cellules</span>
+      </h1>
+
+      <div className="max-w-3xl w-full mb-6 text-center mx-auto">
+        <p className="italic text-base text-white/90">
+          <span className="text-blue-300 font-semibold">Gérez et consultez facilement vos cellules</span>.
+          Recherchez par nom, filtrez rapidement, visualisez les responsables et le nombre de membres,
+          et accédez aux <span className="text-blue-300 font-semibold">détails pour un suivi précis</span>.
+        </p>
+      </div>
 
       {/* Recherche */}
       <div className="flex justify-center mb-4">
@@ -284,17 +329,17 @@ if (profile.role === "ResponsableCellule") {
         </span>
       </div>
 
-      {/* Bouton */}
+      {/* Bouton ajout */}
       {userRole === "SuperviseurCellule" && (
-  <div className="max-w-6xl mx-auto flex justify-end mb-3">
-    <button
-      onClick={() => router.push("/admin/create-cellule")}
-      className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-    >
-      ➕ Ajouter une Cellule
-    </button>
-  </div>
-)}
+        <div className="max-w-6xl mx-auto flex justify-end mb-3">
+          <button
+            onClick={() => router.push("/admin/create-cellule")}
+            className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+          >
+            ➕ Ajouter une Cellule
+          </button>
+        </div>
+      )}
 
       {/* Tableau */}
       <div className="max-w-6xl mx-auto space-y-2">
@@ -314,10 +359,25 @@ if (profile.role === "ResponsableCellule") {
           <p className="text-white text-center mt-6">Aucune cellule</p>
         ) : (
           cellulesFiltrees.map((c) => (
-            <CelluleRow key={c.id} c={c} router={router} />
+            <CelluleRow
+              key={c.id}
+              c={c}
+              router={router}
+              canEdit={canEdit}
+              onEdit={handleEdit}
+            />
           ))
         )}
       </div>
+
+      {/* ── Modal d'édition ── */}
+      {showEditModal && selectedCellule && (
+        <EditCelluleModal
+          cellule={selectedCellule}
+          onClose={handleCloseModal}
+          onUpdated={handleUpdated}
+        />
+      )}
 
       <Footer />
     </div>

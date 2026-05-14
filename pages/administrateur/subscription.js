@@ -140,7 +140,7 @@ function SubscriptionContent() {
       <HeaderPages />
 
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
-        Subscription <span className="text-emerald-300">Planspan>
+        Subscription <span className="text-emerald-300">Planspan></span>
       </h1>
 
         {/* Titre */}

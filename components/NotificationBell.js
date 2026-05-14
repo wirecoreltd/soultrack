@@ -281,6 +281,7 @@ if (canSeeEvangelises) {
     }
 
     channel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "membres_complets" }, (payload) => {
+      console.log("UPDATE evangelises payload:", payload.new);
       const row = payload.new;
       const old = payload.old;
       const estPourMoi =

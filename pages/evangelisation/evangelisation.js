@@ -9,6 +9,7 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import useChurchScope from "../../hooks/useChurchScope";
 import Footer from "../../components/Footer";
 import { useFeature } from "../../components/FeaturesContext";
+import { useNotificationsContext } from "../../context/NotificationsContext";
 
 export default function Evangelisation() {
   return (

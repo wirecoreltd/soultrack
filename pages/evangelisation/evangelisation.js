@@ -84,6 +84,11 @@ function EvangelisationContent() {
         return;
       }
       highlightDoneRef.current = true;
+
+      const url = new URL(window.location.href);
+      url.searchParams.delete("highlight");
+      window.history.replaceState({}, "", url.toString());
+      
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
       el.style.boxShadow = "0 0 0 3px rgba(167,139,250,0.7), 0 0 32px 10px rgba(167,139,250,0.25)";

@@ -4,15 +4,40 @@ import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 
 export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
-  const [celluleName, setCelluleName] = useState(cellule?.cellule || "");
   const [ville, setVille] = useState(cellule?.ville || "");
-  const [responsable, setResponsable] = useState(cellule?.responsable || "");
   const [telephone, setTelephone] = useState(cellule?.telephone || "");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  // Dropdown responsable
+  const [responsables, setResponsables] = useState([]);
+  const [selectedResponsableId, setSelectedResponsableId] = useState(cellule?.responsable_id || "");
+  const [loadingResponsables, setLoadingResponsables] = useState(true);
+
   const modalRef = useRef(null);
 
+  // ── Charger les responsables depuis profiles ──
+  useEffect(() => {
+    const fetchResponsables = async () => {
+      setLoadingResponsables(true);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .eq("role", "ResponsableCellule")
+        .order("nom");
+
+      if (!error && data) {
+        setResponsables(data);
+      } else {
+        console.error("Erreur chargement responsables:", error);
+      }
+      setLoadingResponsables(false);
+    };
+
+    fetchResponsables();
+  }, []);
+
+  // ── Click outside → fermer ──
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -25,15 +50,25 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
 
   const handleSave = async () => {
     setMessage("");
-    if (!celluleName.trim()) return setMessage("❌ Le nom de la cellule est obligatoire.");
     if (!ville.trim()) return setMessage("❌ La ville est obligatoire.");
+
+    // Retrouver le nom texte du responsable sélectionné
+    const responsableObj = responsables.find((r) => r.id === selectedResponsableId);
+    const responsableNom = responsableObj
+      ? `${responsableObj.prenom} ${responsableObj.nom}`
+      : cellule?.responsable || "";
 
     setLoading(true);
     const { data, error } = await supabase
       .from("cellules")
-      .update({ cellule: celluleName, ville, responsable, telephone })
+      .update({
+        ville,
+        telephone,
+        responsable_id: selectedResponsableId || null,
+        responsable: responsableNom,
+      })
       .eq("id", cellule.id)
-      .select()
+      .select("*, superviseur:superviseur_id(nom, prenom)")
       .single();
 
     setLoading(false);
@@ -71,7 +106,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
         >
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-white font-bold text-sm transition-all"
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-white font-bold text-sm"
             style={{ background: "rgba(255,255,255,0.2)" }}
           >
             ✕
@@ -91,13 +126,14 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
         >
           <SectionTitle>📋 Informations générales</SectionTitle>
 
+          {/* Nom cellule — lecture seule, géré par la DB */}
           <Field label="Nom de la cellule">
-            <input
-              className="inp"
-              value={celluleName}
-              onChange={(e) => setCelluleName(e.target.value)}
-              placeholder="Ex : Cellule Espoir"
-            />
+            <div className="inp-readonly">
+              {cellule.cellule_full || cellule.cellule}
+            </div>
+            <p className="text-xs text-gray-400 mt-1 ml-1">
+              Le nom est géré automatiquement par le système.
+            </p>
           </Field>
 
           <Field label="Ville">
@@ -111,16 +147,32 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
 
           <SectionTitle>👤 Responsable</SectionTitle>
 
-          <Field label="Nom du responsable">
-            <input
-              className="inp"
-              value={responsable}
-              onChange={(e) => setResponsable(e.target.value)}
-              placeholder="Prénom Nom"
-            />
+          <Field label="Responsable de cellule">
+            {loadingResponsables ? (
+              <div className="inp flex items-center gap-2 text-gray-400 text-sm">
+                <span
+                  className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin inline-block"
+                  style={{ borderColor: "#2E3192", borderTopColor: "transparent" }}
+                />
+                Chargement...
+              </div>
+            ) : (
+              <select
+                className="inp"
+                value={selectedResponsableId}
+                onChange={(e) => setSelectedResponsableId(e.target.value)}
+              >
+                <option value="">-- Choisir un responsable --</option>
+                {responsables.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.prenom} {r.nom}
+                  </option>
+                ))}
+              </select>
+            )}
           </Field>
 
-          <Field label="Téléphone">
+          <Field label="Téléphone du responsable">
             <input
               className="inp"
               value={telephone}
@@ -142,15 +194,20 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
           <button
             type="button"
             onClick={handleSave}
-            disabled={loading}
+            disabled={loading || loadingResponsables}
             className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
             style={{
-              background: loading
-                ? "#a0a0c0"
-                : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
+              background:
+                loading || loadingResponsables
+                  ? "#a0a0c0"
+                  : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
             }}
           >
-            {loading ? "Enregistrement..." : "💾 Sauvegarder"}
+            {loading
+              ? "Enregistrement..."
+              : loadingResponsables
+              ? "Chargement..."
+              : "💾 Sauvegarder"}
           </button>
         </div>
 
@@ -178,6 +235,20 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
           .inp:focus {
             border-color: #2E3192;
             background: #fff;
+          }
+          select.inp option {
+            background: white;
+            color: #1e293b;
+          }
+          .inp-readonly {
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 600;
           }
         `}</style>
       </div>

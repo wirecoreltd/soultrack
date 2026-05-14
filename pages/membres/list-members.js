@@ -842,8 +842,8 @@ useEffect(() => {
               🕊 Etat Contact : {m.etat_contact || "—"}
             </p>
             <div className="w-full flex justify-end mt-3">
-              <p className="text-[11px] text-gray-400">
-                Créé le {m.date_venu}
+              <p className="text-[11px] text-gray-400">               
+                Créé le {formatDateFr(m.date_venu)}
               </p>
             </div>
 

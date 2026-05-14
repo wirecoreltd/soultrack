@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import { useNotificationsContext } from "../context/NotificationsContext";
@@ -45,162 +45,170 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
     + countAssignesEvang
     + countInvitations;
 
-  useEffect(() => {
+  // ─── fetchCounts extrait pour pouvoir être appelé via custom event ─────────
+  const fetchCounts = useCallback(async () => {
     if (!egliseId || !userId) return;
 
-    const fetchCounts = async () => {
+    // 1. Nouveaux membres — soustraire les vus
+    if (canSeeMembres) {
+      const { data: nouveaux } = await supabase
+        .from("membres_complets")
+        .select("id")
+        .eq("eglise_id", egliseId)
+        .eq("etat_contact", "nouveau");
 
-      // 1. Nouveaux membres — soustraire les vus
-      if (canSeeMembres) {
-        const { data: nouveaux } = await supabase
+      const unseen = (nouveaux || []).filter((m) => !seenIds.includes(m.id));
+      setCountMembres(unseen.length);
+    }
+
+    // 2. Évangélisés non envoyés
+    if (canSeeEvangelises) {
+      const { count } = await supabase
+        .from("evangelises")
+        .select("id", { count: "exact", head: true })
+        .eq("eglise_id", egliseId)
+        .eq("status_suivi", "Non envoyé");
+      setCountEvangelises(count || 0);
+    }
+
+    // 3. SuperviseurCellule
+    if (canSeeSuperviseur) {
+      const { data: cellules } = await supabase
+        .from("cellules")
+        .select("id")
+        .eq("superviseur_id", userId);
+      const ids = (cellules || []).map((c) => c.id);
+      setCelluleIds(ids);
+      if (ids.length > 0) {
+        const { count } = await supabase
           .from("membres_complets")
-          .select("id")
-          .eq("eglise_id", egliseId)
+          .select("id", { count: "exact", head: true })
+          .in("cellule_id", ids)
           .eq("etat_contact", "nouveau");
-
-        const unseen = (nouveaux || []).filter((m) => !seenIds.includes(m.id));
-        setCountMembres(unseen.length);
+        setCountCellule(count || 0);
       }
+    }
 
-      // 2. Évangélisés non envoyés
-      if (canSeeEvangelises) {
-        const { count } = await supabase
-          .from("evangelises")
-          .select("id", { count: "exact", head: true })
-          .eq("eglise_id", egliseId)
-          .eq("status_suivi", "Non envoyé");
-        setCountEvangelises(count || 0);
-      }
-
-      // 3. SuperviseurCellule
-      if (canSeeSuperviseur) {
-        const { data: cellules } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("superviseur_id", userId);
-        const ids = (cellules || []).map((c) => c.id);
-        setCelluleIds(ids);
-        if (ids.length > 0) {
-          const { count } = await supabase
-            .from("membres_complets")
-            .select("id", { count: "exact", head: true })
-            .in("cellule_id", ids)
-            .eq("etat_contact", "nouveau");
-          setCountCellule(count || 0);
-        }
-      }
-
-      // 4. ResponsableCellule
-      if (canSeeResponsable) {
-        const { data: cellules } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", userId);
-        const ids = (cellules || []).map((c) => c.id);
-        setCelluleIds(ids);
-        if (ids.length > 0) {
-          const { count } = await supabase
-            .from("membres_complets")
-            .select("id", { count: "exact", head: true })
-            .in("cellule_id", ids)
-            .eq("etat_contact", "nouveau");
-          setCountCellule(count || 0);
-        }
-      }
-
-      // 5. is_new_in_cellule
-      if (canSeeNewInCellule) {
+    // 4. ResponsableCellule
+    if (canSeeResponsable) {
+      const { data: cellules } = await supabase
+        .from("cellules")
+        .select("id")
+        .eq("responsable_id", userId);
+      const ids = (cellules || []).map((c) => c.id);
+      setCelluleIds(ids);
+      if (ids.length > 0) {
         const { count } = await supabase
           .from("membres_complets")
           .select("id", { count: "exact", head: true })
-          .eq("eglise_id", egliseId)
-          .eq("is_new_in_cellule", "true");
-        setCountNewInCellule(count || 0);
+          .in("cellule_id", ids)
+          .eq("etat_contact", "nouveau");
+        setCountCellule(count || 0);
       }
+    }
 
-      // 6. Membres assignés
-      let totalAssignes = 0;
-
-      const { count: countConseiller } = await supabase
+    // 5. is_new_in_cellule
+    if (canSeeNewInCellule) {
+      const { count } = await supabase
         .from("membres_complets")
         .select("id", { count: "exact", head: true })
-        .eq("suivi_responsable_id", userId)
+        .eq("eglise_id", egliseId)
+        .eq("is_new_in_cellule", "true");
+      setCountNewInCellule(count || 0);
+    }
+
+    // 6. Membres assignés
+    let totalAssignes = 0;
+
+    const { count: countConseiller } = await supabase
+      .from("membres_complets")
+      .select("id", { count: "exact", head: true })
+      .eq("suivi_responsable_id", userId)
+      .eq("notification_responsable", true);
+    totalAssignes += countConseiller || 0;
+
+    const { data: cellulesDuResponsable } = await supabase
+      .from("cellules").select("id").eq("responsable_id", userId);
+    const idsCellules = (cellulesDuResponsable || []).map((c) => c.id);
+    setMesCelluleIds(idsCellules);
+
+    if (idsCellules.length > 0) {
+      const { count: countCelluleAssign } = await supabase
+        .from("membres_complets")
+        .select("id", { count: "exact", head: true })
+        .in("cellule_id", idsCellules)
         .eq("notification_responsable", true);
-      totalAssignes += countConseiller || 0;
+      totalAssignes += countCelluleAssign || 0;
+    }
 
-      const { data: cellulesDuResponsable } = await supabase
-        .from("cellules").select("id").eq("responsable_id", userId);
-      const idsCellules = (cellulesDuResponsable || []).map((c) => c.id);
-      setMesCelluleIds(idsCellules);
+    const { data: famillesDuResponsable } = await supabase
+      .from("familles").select("id").eq("responsable_id", userId);
+    const idsFamilles = (famillesDuResponsable || []).map((f) => f.id);
+    setMesFamilleIds(idsFamilles);
 
-      if (idsCellules.length > 0) {
-        const { count: countCelluleAssign } = await supabase
-          .from("membres_complets")
-          .select("id", { count: "exact", head: true })
-          .in("cellule_id", idsCellules)
-          .eq("notification_responsable", true);
-        totalAssignes += countCelluleAssign || 0;
-      }
+    if (idsFamilles.length > 0) {
+      const { count: countFamilleAssign } = await supabase
+        .from("membres_complets")
+        .select("id", { count: "exact", head: true })
+        .in("famille_id", idsFamilles)
+        .eq("notification_responsable", true);
+      totalAssignes += countFamilleAssign || 0;
+    }
 
-      const { data: famillesDuResponsable } = await supabase
-        .from("familles").select("id").eq("responsable_id", userId);
-      const idsFamilles = (famillesDuResponsable || []).map((f) => f.id);
-      setMesFamilleIds(idsFamilles);
+    setCountAssignes(totalAssignes);
 
-      if (idsFamilles.length > 0) {
-        const { count: countFamilleAssign } = await supabase
-          .from("membres_complets")
-          .select("id", { count: "exact", head: true })
-          .in("famille_id", idsFamilles)
-          .eq("notification_responsable", true);
-        totalAssignes += countFamilleAssign || 0;
-      }
+    // 7. Évangélisés assignés
+    let totalAssignesEvang = 0;
 
-      setCountAssignes(totalAssignes);
+    const { count: countECons } = await supabase
+      .from("suivis_des_evangelises")
+      .select("id", { count: "exact", head: true })
+      .eq("conseiller_id", userId)
+      .eq("notification_responsable", true);
+    totalAssignesEvang += countECons || 0;
 
-      // 7. Évangélisés assignés
-      let totalAssignesEvang = 0;
-
-      const { count: countECons } = await supabase
+    if (idsCellules.length > 0) {
+      const { count: countECell } = await supabase
         .from("suivis_des_evangelises")
         .select("id", { count: "exact", head: true })
-        .eq("conseiller_id", userId)
+        .in("cellule_id", idsCellules)
         .eq("notification_responsable", true);
-      totalAssignesEvang += countECons || 0;
+      totalAssignesEvang += countECell || 0;
+    }
 
-      if (idsCellules.length > 0) {
-        const { count: countECell } = await supabase
-          .from("suivis_des_evangelises")
-          .select("id", { count: "exact", head: true })
-          .in("cellule_id", idsCellules)
-          .eq("notification_responsable", true);
-        totalAssignesEvang += countECell || 0;
-      }
+    if (idsFamilles.length > 0) {
+      const { count: countEFam } = await supabase
+        .from("suivis_des_evangelises")
+        .select("id", { count: "exact", head: true })
+        .in("famille_id", idsFamilles)
+        .eq("notification_responsable", true);
+      totalAssignesEvang += countEFam || 0;
+    }
 
-      if (idsFamilles.length > 0) {
-        const { count: countEFam } = await supabase
-          .from("suivis_des_evangelises")
-          .select("id", { count: "exact", head: true })
-          .in("famille_id", idsFamilles)
-          .eq("notification_responsable", true);
-        totalAssignesEvang += countEFam || 0;
-      }
+    setCountAssignesEvang(totalAssignesEvang);
 
-      setCountAssignesEvang(totalAssignesEvang);
+    // 8. Invitations en attente
+    {
+      const { count } = await supabase
+        .from("eglise_supervisions")
+        .select("id", { count: "exact", head: true })
+        .eq("supervisee_eglise_id", egliseId)
+        .eq("statut", "pending");
+      setCountInvitations(count || 0);
+    }
+  }, [egliseId, userId, seenIds, canSeeMembres, canSeeEvangelises, canSeeSuperviseur, canSeeResponsable, canSeeNewInCellule]);
 
-      // 8. Invitations en attente
-      {
-        const { count } = await supabase
-          .from("eglise_supervisions")
-          .select("id", { count: "exact", head: true })
-          .eq("supervisee_eglise_id", egliseId)
-          .eq("statut", "pending");
-        setCountInvitations(count || 0);
-      }
-    };
-
+  // ─── Fetch initial ────────────────────────────────────────────────────────
+  useEffect(() => {
     fetchCounts();
-  }, [egliseId, userId, seenIds]); // ✅ seenIds dans les dépendances
+  }, [fetchCounts]);
+
+  // ─── Custom event depuis evangelisation.js pour forcer un re-fetch ────────
+  useEffect(() => {
+    const handler = () => fetchCounts();
+    window.addEventListener("refresh-notif-count", handler);
+    return () => window.removeEventListener("refresh-notif-count", handler);
+  }, [fetchCounts]);
 
   // ─── Realtime ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -229,7 +237,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         });
     }
 
-if (canSeeEvangelises) {
+    if (canSeeEvangelises) {
       channel
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "evangelises" }, (payload) => {
           const row = payload.new;
@@ -237,14 +245,16 @@ if (canSeeEvangelises) {
             setCountEvangelises((prev) => prev + 1);
             setIsNew(true); setTimeout(() => setIsNew(false), 2000);
           }
-        })
-        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "evangelises" }, (payload) => {
-          const row = payload.new;
-          if (row.eglise_id === egliseId && row.status_suivi !== "Non envoyé") {
-            setCountEvangelises((prev) => Math.max(0, prev - 1));
-          }
         });
     }
+
+    // ✅ UPDATE evangelises toujours écouté pour le décrément
+    channel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "evangelises" }, (payload) => {
+      const row = payload.new;
+      if (row.eglise_id === egliseId && row.status_suivi !== "Non envoyé") {
+        setCountEvangelises((prev) => Math.max(0, prev - 1));
+      }
+    });
 
     if ((canSeeSuperviseur || canSeeResponsable) && celluleIds.length > 0) {
       channel
@@ -281,7 +291,6 @@ if (canSeeEvangelises) {
     }
 
     channel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "membres_complets" }, (payload) => {
-      console.log("UPDATE evangelises payload:", payload.new);
       const row = payload.new;
       const old = payload.old;
       const estPourMoi =

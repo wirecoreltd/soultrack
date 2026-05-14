@@ -309,6 +309,13 @@ function NotificationsContent() {
       setNotifications((prev) => prev.filter((notif) => !(notif._type === "membre_assigne" && notif.id === n.id)));
       router.push(`/cellule/membres-cellule?highlight=${n.id}`);
       return;
+      if (n._type === "nouveau") {
+        await supabase.from("membres_complets")
+    .update({ notification_responsable: false }).eq("id", n.id);
+    setNotifications((prev) => prev.filter((notif) => !(notif._type === "nouveau" && notif.id === n.id)));
+    router.push(`/membres/list-members?highlight=${n.id}`);
+    return;
+}
     }
     if (n._type === "membre_assigne_evang") {
       await supabase.from("suivis_des_evangelises").update({ notification_responsable: false }).eq("id", n.id);

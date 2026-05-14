@@ -20,14 +20,11 @@ export default function Evangelisation() {
 
 function EvangelisationContent() {
   const router = useRouter();
-  const { highlight } = router.query;                          // ✅ param highlight
-
+  const { highlight } = router.query;
   const { profile, loading: loadingProfile, error: profileError, scopedQuery } = useChurchScope();
-
   const famillesActive = useFeature("familles");
   const conseillerActive = useFeature("conseiller");
   const cellulesActive = useFeature("cellules");
-
   const [contacts, setContacts] = useState([]);
   const [cellules, setCellules] = useState([]);
   const [familles, setFamilles] = useState([]);
@@ -46,16 +43,15 @@ function EvangelisationContent() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [targetName, setTargetName] = useState("");
   const [loading, setLoading] = useState(true);
-
   const contactsToSendRef = useRef([]);
   const [contactsToSendNow, setContactsToSendNow] = useState([]);
-
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
   const [doublonsDetected, setDoublonsDetected] = useState([]);
   const [pendingContacts, setPendingContacts] = useState([]);
-
   const selectedTargetTypeRef = useRef("");
   const selectedTargetRef = useRef("");
+  const { triggerRefresh } = useNotificationsContext();
+  
 
   const [view, setView] = useState(() => {
     if (typeof window !== "undefined") {
@@ -396,8 +392,8 @@ function EvangelisationContent() {
       window.open(whatsappLink, "_blank");
       setPhoneNumber("");
       setTargetName("");
-
-      window.dispatchEvent(new CustomEvent("refresh-notif-count")); // ✅
+      
+      triggerRefresh();
       alert("✅ Contacts envoyés et enregistrés");
       
     } catch (err) {

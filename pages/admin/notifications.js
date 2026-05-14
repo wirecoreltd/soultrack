@@ -5,6 +5,7 @@ import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
+import { useNotificationsContext } from "../../context/NotificationsContext"; // ✅ FIX 1 — import ajouté
 
 function getRoles(profile) {
   if (!profile) return [];
@@ -65,6 +66,8 @@ export default function NotificationsPage() {
 
 function NotificationsContent() {
   const router = useRouter();
+  const { markAsSeen } = useNotificationsContext(); // ✅ FIX 2 — markAsSeen extrait du context
+
   const [userProfile,   setUserProfile]   = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [loading,       setLoading]       = useState(true);
@@ -304,39 +307,54 @@ function NotificationsContent() {
       router.push(`/accept-invitation?token=${n._token}`);
       return;
     }
+
+    // ✅ FIX 3 — bloc "nouveau" sorti du bloc "membre_assigne" + markAsSeen appelé
+    if (n._type === "nouveau") {
+      markAsSeen(n.id);
+      setNotifications((prev) =>
+        prev.filter((notif) => !(notif._type === "nouveau" && notif.id === n.id))
+      );
+      router.push(`/membres/list-members?highlight=${n.id}`);
+      return;
+    }
+
     if (n._type === "membre_assigne") {
       await supabase.from("membres_complets").update({ notification_responsable: false }).eq("id", n.id);
-      setNotifications((prev) => prev.filter((notif) => !(notif._type === "membre_assigne" && notif.id === n.id)));
+      setNotifications((prev) =>
+        prev.filter((notif) => !(notif._type === "membre_assigne" && notif.id === n.id))
+      );
       router.push(`/cellule/membres-cellule?highlight=${n.id}`);
       return;
-      if (n._type === "nouveau") {
-        await supabase.from("membres_complets")
-    .update({ notification_responsable: false }).eq("id", n.id);
-    setNotifications((prev) => prev.filter((notif) => !(notif._type === "nouveau" && notif.id === n.id)));
-    router.push(`/membres/list-members?highlight=${n.id}`);
-    return;
-}
     }
+
     if (n._type === "membre_assigne_evang") {
       await supabase.from("suivis_des_evangelises").update({ notification_responsable: false }).eq("id", n.id);
-      setNotifications((prev) => prev.filter((notif) => !(notif._type === "membre_assigne_evang" && notif.id === n.id)));
+      setNotifications((prev) =>
+        prev.filter((notif) => !(notif._type === "membre_assigne_evang" && notif.id === n.id))
+      );
       router.push(`/evangelisation/suivis-evangelisation?highlight=${n.id}`);
       return;
     }
+
     if (n._type === "evangelise") {
-      // ✅ Retirer du state immédiatement (bell diminue + ligne disparaît) + highlight
-      setNotifications((prev) => prev.filter((notif) => !(notif._type === "evangelise" && notif.id === n.id)));
+      setNotifications((prev) =>
+        prev.filter((notif) => !(notif._type === "evangelise" && notif.id === n.id))
+      );
       router.push(`/evangelisation/evangelisation?highlight=${n.id}`);
       return;
     }
+
     if (n._type === "new_in_cellule") {
       await supabase.from("membres_complets").update({ is_new_in_cellule: false }).eq("id", n.id);
-      setNotifications((prev) => prev.filter((notif) => !(notif._type === "new_in_cellule" && notif.id === n.id)));
+      setNotifications((prev) =>
+        prev.filter((notif) => !(notif._type === "new_in_cellule" && notif.id === n.id))
+      );
       const params = new URLSearchParams({ highlight: n.id });
       if (n.cellule_id) params.set("celluleId", n.cellule_id);
       router.push(`/cellule/membres-cellule?${params.toString()}`);
       return;
     }
+
     router.push(`/membres/list-members?highlight=${n.id}`);
   };
 

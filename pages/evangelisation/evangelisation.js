@@ -394,7 +394,7 @@ function EvangelisationContent() {
       setPhoneNumber("");
       setTargetName("");
 
-      console.log("🚀 triggerRefresh appelé");
+      console.log("✅ avant triggerRefresh", typeof triggerRefresh);
       triggerRefresh();
       alert("✅ Contacts envoyés et enregistrés");
       

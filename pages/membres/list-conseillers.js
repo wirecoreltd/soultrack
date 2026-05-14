@@ -172,7 +172,7 @@ function ListConseillers() {
                   🔔 Contacts assignés : {c.totalContacts}
                 </p>
                 <button
-                  onClick={() => router.push(`/list-members?conseiller_id=${c.id}`)}
+                  onClick={() => router.push(`/membres/list-members?conseiller_id=${c.id}`)}
                   className="mt-2 px-3 py-1 bg-[#333699] text-white rounded-md hover:bg-blue-600 text-sm sm:text-base"
                 >
                   Voir les contacts

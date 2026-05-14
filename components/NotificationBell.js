@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
+import { useNotificationsContext } from "../context/NotificationsContext";
 
 const ROLES_NOUVEAUX_MEMBRES     = ["Administrateur", "ResponsableIntegration"];
 const ROLES_NOUVEAUX_EVANGELISES = ["Administrateur", "ResponsableEvangelisation"];
@@ -26,6 +27,8 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
   const router     = useRouter();
   const channelRef = useRef(null);
 
+  const { seenIds } = useNotificationsContext();
+
   const isAdmin            = Array.isArray(userRole) ? userRole.includes("Administrateur") : userRole === "Administrateur";
   const canSeeMembres      = ROLES_NOUVEAUX_MEMBRES.some(r => Array.isArray(userRole) ? userRole.includes(r) : userRole === r);
   const canSeeEvangelises  = ROLES_NOUVEAUX_EVANGELISES.some(r => Array.isArray(userRole) ? userRole.includes(r) : userRole === r);
@@ -40,21 +43,23 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
     + (canSeeNewInCellule                     ? countNewInCellule    : 0)
     + countAssignes
     + countAssignesEvang
-    + countInvitations; // visible par tous (chacun voit ses propres invitations reçues)
+    + countInvitations;
 
   useEffect(() => {
     if (!egliseId || !userId) return;
 
     const fetchCounts = async () => {
 
-      // 1. Nouveaux membres
+      // 1. Nouveaux membres — soustraire les vus
       if (canSeeMembres) {
-        const { count } = await supabase
+        const { data: nouveaux } = await supabase
           .from("membres_complets")
-          .select("id", { count: "exact", head: true })
+          .select("id")
           .eq("eglise_id", egliseId)
           .eq("etat_contact", "nouveau");
-        setCountMembres(count || 0);
+
+        const unseen = (nouveaux || []).filter((m) => !seenIds.includes(m.id));
+        setCountMembres(unseen.length);
       }
 
       // 2. Évangélisés non envoyés
@@ -183,8 +188,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
 
       setCountAssignesEvang(totalAssignesEvang);
 
-      // 8. Invitations en attente reçues (supervisee_eglise_id = mon église)
-      // Visible par tous les utilisateurs connectés à une église invitée
+      // 8. Invitations en attente
       {
         const { count } = await supabase
           .from("eglise_supervisions")
@@ -196,7 +200,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
     };
 
     fetchCounts();
-  }, [egliseId, userId]);
+  }, [egliseId, userId, seenIds]); // ✅ seenIds dans les dépendances
 
   // ─── Realtime ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -212,7 +216,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
       channel
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "membres_complets" }, (payload) => {
           const row = payload.new;
-          if (row.eglise_id === egliseId && row.etat_contact === "nouveau") {
+          if (row.eglise_id === egliseId && row.etat_contact === "nouveau" && !seenIds.includes(row.id)) {
             setCountMembres((prev) => prev + 1);
             setIsNew(true); setTimeout(() => setIsNew(false), 2000);
           }
@@ -310,22 +314,15 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
       }
     });
 
-    // ── eglise_supervisions : invitations reçues (supervisee) ──
     channel
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "eglise_supervisions" }, (payload) => {
         const row = payload.new;
         const old = payload.old;
-
-        // Pas notre église → ignorer
         if (row.supervisee_eglise_id !== egliseId) return;
-
-        // supervisee_eglise_id vient d'être rempli avec notre église → nouvelle invitation
         if (row.statut === "pending" && old.supervisee_eglise_id !== egliseId) {
           setCountInvitations((prev) => prev + 1);
           setIsNew(true); setTimeout(() => setIsNew(false), 2000);
         }
-
-        // Invitation résolue (acceptée ou refusée) → on décrémente
         if (row.statut !== "pending" && old.statut === "pending") {
           setCountInvitations((prev) => Math.max(0, prev - 1));
         }
@@ -337,7 +334,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
     return () => {
       try { supabase.removeChannel(channel); } catch (_) {}
     };
-  }, [egliseId, userId, celluleIds, mesCelluleIds, mesFamilleIds, canSeeMembres, canSeeEvangelises, canSeeSuperviseur, canSeeResponsable, canSeeNewInCellule]);
+  }, [egliseId, userId, celluleIds, mesCelluleIds, mesFamilleIds, canSeeMembres, canSeeEvangelises, canSeeSuperviseur, canSeeResponsable, canSeeNewInCellule, seenIds]);
 
   return (
     <>

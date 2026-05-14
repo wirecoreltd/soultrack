@@ -26,9 +26,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
   const { seenIds, refreshTrigger } = useNotificationsContext();
   const router     = useRouter();
   const channelRef = useRef(null);
-
-  const { seenIds } = useNotificationsContext();
-
+ 
   const isAdmin            = Array.isArray(userRole) ? userRole.includes("Administrateur") : userRole === "Administrateur";
   const canSeeMembres      = ROLES_NOUVEAUX_MEMBRES.some(r => Array.isArray(userRole) ? userRole.includes(r) : userRole === r);
   const canSeeEvangelises  = ROLES_NOUVEAUX_EVANGELISES.some(r => Array.isArray(userRole) ? userRole.includes(r) : userRole === r);

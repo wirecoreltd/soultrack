@@ -1,0 +1,290 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import supabase from "../lib/supabaseClient";
+
+export default function EditFamilleModal({ famille, onClose, onUpdated }) {
+  const [ville, setVille] = useState(famille?.ville || "");
+  const [telephone, setTelephone] = useState(famille?.telephone_responsable || "");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  // Dropdown responsable
+  const [responsables, setResponsables] = useState([]);
+  const [selectedResponsableId, setSelectedResponsableId] = useState(famille?.responsable_id || "");
+  const [loadingResponsables, setLoadingResponsables] = useState(true);
+
+  const modalRef = useRef(null);
+
+  // ── Charger les responsables depuis profiles ──
+  useEffect(() => {
+    const fetchResponsables = async () => {
+      setLoadingResponsables(true);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, telephone")
+        .eq("role", "ResponsableFamille")
+        .order("nom");
+
+      if (!error && data) {
+        setResponsables(data);
+      } else {
+        console.error("Erreur chargement responsables:", error);
+      }
+      setLoadingResponsables(false);
+    };
+
+    fetchResponsables();
+  }, []);
+
+  // ── Click outside → fermer ──
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (modalRef.current && !modalRef.current.contains(e.target)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
+  const handleSave = async () => {
+    setMessage("");
+    if (!ville.trim()) return setMessage("❌ La ville est obligatoire.");
+
+    // Retrouver le nom texte du responsable sélectionné
+    const responsableObj = responsables.find((r) => r.id === selectedResponsableId);
+    const responsableNom = responsableObj
+      ? `${responsableObj.prenom} ${responsableObj.nom}`
+      : famille?.responsable || "";
+
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("familles")
+      .update({
+        ville,
+        telephone_responsable: telephone,
+        responsable_id: selectedResponsableId || null,
+        responsable: responsableNom,
+      })
+      .eq("id", famille.id)
+      .select("*")
+      .single();
+
+    setLoading(false);
+
+    if (!error) {
+      onUpdated(data);
+      onClose();
+    } else {
+      console.error("❌ UPDATE ERROR:", error);
+      setMessage("❌ Une erreur est survenue lors de l'enregistrement.");
+    }
+  };
+
+  if (!famille) return null;
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      style={{
+        background: "rgba(30,35,90,0.35)",
+        backdropFilter: "blur(6px)",
+      }}
+    >
+      <div
+        ref={modalRef}
+        className="relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
+        style={{ background: "#ffffff", border: "1px solid #e2e8f0" }}
+      >
+        {/* ── Header ── */}
+        <div
+          className="px-6 pt-6 pb-4"
+          style={{
+            background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
+          }}
+        >
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-white font-bold text-sm"
+            style={{ background: "rgba(255,255,255,0.2)" }}
+          >
+            ✕
+          </button>
+          <h2 className="text-xl font-bold text-white pr-10">
+            👨‍👩‍👧 {famille.famille_full || famille.famille}
+          </h2>
+          <p className="text-blue-100 text-sm mt-1 opacity-80">
+            Modifier la famille
+          </p>
+        </div>
+
+        {/* ── Body ── */}
+        <div
+          className="overflow-y-auto px-6 py-5 flex flex-col gap-5"
+          style={{ maxHeight: "68vh" }}
+        >
+          <SectionTitle>📋 Informations générales</SectionTitle>
+
+          {/* Nom famille — lecture seule, géré par la DB */}
+          <Field label="Nom de la famille">
+            <div className="inp-readonly">
+              {famille.famille_full || famille.famille}
+            </div>
+            <p className="text-xs text-gray-400 mt-1 ml-1">
+              Le nom est géré automatiquement par le système.
+            </p>
+          </Field>
+
+          <Field label="Ville">
+            <input
+              className="inp"
+              value={ville}
+              onChange={(e) => setVille(e.target.value)}
+              placeholder="Ex : Paris"
+            />
+          </Field>
+
+          <SectionTitle>👤 Responsable</SectionTitle>
+
+          <Field label="Responsable de famille">
+            {loadingResponsables ? (
+              <div className="inp flex items-center gap-2 text-gray-400 text-sm">
+                <span
+                  className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin inline-block"
+                  style={{ borderColor: "#2E3192", borderTopColor: "transparent" }}
+                />
+                Chargement...
+              </div>
+            ) : (
+              <select
+                className="inp"
+                value={selectedResponsableId}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  setSelectedResponsableId(id);
+                  const responsableObj = responsables.find((r) => r.id === id);
+                  setTelephone(responsableObj?.telephone || "");
+                }}
+              >
+                <option value="">-- Choisir un responsable --</option>
+                {responsables.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.prenom} {r.nom}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
+
+          <Field label="Téléphone du responsable">
+            <input
+              className="inp"
+              value={telephone}
+              onChange={(e) => setTelephone(e.target.value)}
+              placeholder="+33 6 00 00 00 00"
+            />
+          </Field>
+        </div>
+
+        {/* ── Footer ── */}
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={loading || loadingResponsables}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
+            style={{
+              background:
+                loading || loadingResponsables
+                  ? "#a0a0c0"
+                  : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
+            }}
+          >
+            {loading
+              ? "Enregistrement..."
+              : loadingResponsables
+              ? "Chargement..."
+              : "💾 Sauvegarder"}
+          </button>
+        </div>
+
+        {message && (
+          <p
+            className="text-center text-sm font-semibold px-6 pb-4"
+            style={{ color: message.includes("❌") ? "#dc2626" : "#2E3192" }}
+          >
+            {message}
+          </p>
+        )}
+
+        <style jsx>{`
+          .inp {
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            color: #1e293b;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+          }
+          .inp:focus {
+            border-color: #2E3192;
+            background: #fff;
+          }
+          select.inp option {
+            background: white;
+            color: #1e293b;
+          }
+          .inp-readonly {
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 600;
+          }
+        `}</style>
+      </div>
+    </div>
+  );
+}
+
+function SectionTitle({ children }) {
+  return (
+    <div className="flex items-center gap-2 pt-2">
+      <span
+        className="text-xs font-bold uppercase tracking-widest"
+        style={{ color: "#2E3192" }}
+      >
+        {children}
+      </span>
+      <div className="flex-1 h-px" style={{ background: "#e2e8f0" }} />
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label
+        className="text-xs font-semibold uppercase tracking-wide"
+        style={{ color: "#64748b" }}
+      >
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}

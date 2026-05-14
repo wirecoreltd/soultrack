@@ -709,6 +709,31 @@ function ListMembersContent() {
     return "—";
   };
 
+  // Ajouter après les autres useEffect
+useEffect(() => {
+  const highlightId = searchParams.get("highlight");
+  if (!highlightId || loading) return;
+
+  // Attendre que le DOM soit rendu
+  const timer = setTimeout(() => {
+    const el = document.getElementById(`member-${highlightId}`);
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
+    el.style.boxShadow = "0 0 0 4px #f59e0b, 0 0 24px 8px rgba(245,158,11,0.4)";
+    el.style.transform = "scale(1.02)";
+
+    setTimeout(() => {
+      el.style.transition = "box-shadow 1s ease, transform 1s ease";
+      el.style.boxShadow = "";
+      el.style.transform = "";
+    }, 5000);
+  }, 500);
+
+  return () => clearTimeout(timer);
+}, [loading, searchParams]);
+
   // -------------------- renderMemberCard --------------------
   const renderMemberCard = (m) => {
     const isOpen = detailsOpen[m.id];
@@ -728,6 +753,7 @@ function ListMembersContent() {
     return (
       <div
         key={m.id}
+        id={`member-${m.id}`} 
         className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative"
         style={{ borderLeftColor: getBorderColor(m) }}
       >

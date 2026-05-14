@@ -293,8 +293,21 @@ function SuivisMembresContent() {
           .order("created_at", { ascending: false });
 
         if (profileData.role === "Conseiller") {
-          query = query.eq("conseiller_id", profileData.id);
-        } else if (profileData.role === "ResponsableCellule") {
+          const { data: assignments } = await supabase
+            .from("suivi_assignments")
+            .select("membre_id")
+            .eq("conseiller_id", profileData.id);
+        
+          const assignedIds = (assignments || []).map(a => a.membre_id).filter(Boolean);
+        
+          if (assignedIds.length > 0) {
+            query = query.in("id", assignedIds);
+          } else {
+            query = query.eq("id", -1);
+          }
+        }
+        
+        else if (profileData.role === "ResponsableCellule") {
           const celluleIds = cellulesData?.filter(c => c.responsable_id === profileData.id).map(c => c.id) || [];
           if (celluleIds.length > 0) query = query.in("cellule_id", celluleIds);
           else query = query.eq("id", -1);

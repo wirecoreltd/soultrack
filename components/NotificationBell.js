@@ -229,7 +229,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         });
     }
 
-    if (canSeeEvangelises) {
+if (canSeeEvangelises) {
       channel
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "evangelises" }, (payload) => {
           const row = payload.new;

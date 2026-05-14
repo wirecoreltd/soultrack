@@ -137,17 +137,19 @@ function ListUsersContent() {
   if (!deleteUser?.id) return;
 
   try {
-    // 1. Supprimer auth.users EN PREMIER via Edge Function
+    // 1. Supprimer auth.users (on ignore si déjà supprimé)
     const { error: authError } = await supabase.functions.invoke("dynamic-worker", {
       body: { member_id: deleteUser.id },
     });
-    if (authError) throw authError;
+    // On ne throw pas — l'user peut déjà ne plus être dans auth.users
+    if (authError) console.warn("Edge Function (ignoré):", authError);
 
-    // 2. Supprimer profiles
+    // 2. Supprimer profiles — toujours exécuté
     const { error: profileError } = await supabase
       .from("profiles")
       .delete()
       .eq("id", deleteUser.id);
+
     if (profileError) throw profileError;
 
     // 3. Mettre à jour l'affichage

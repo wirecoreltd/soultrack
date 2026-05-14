@@ -8,6 +8,7 @@ import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import EditMemberSuivisPopup from "../../components/EditMemberSuivisPopup";
 import SuiviPopup from "../../components/SuiviPopup";
+import PresenceDot from "../../components/PresenceDot";
 
 export default function MembresFamille() {
   return (

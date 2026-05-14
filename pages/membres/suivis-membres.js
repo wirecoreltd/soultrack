@@ -323,34 +323,37 @@ function SuivisMembresContent() {
     fetchMembresComplets();
   }, [setAllMembers, fetchAssignments]);
 
-  // ✅ Highlight depuis ?highlight=id — bleu transparent, scale 5s puis retour
+  // ✅ Highlight depuis ?highlight=id — une seule fois, bleu transparent, 5s puis retour
+  const highlightDoneRef = useRef(false);
+
   useEffect(() => {
     const highlightId = router.query?.highlight;
-    if (!highlightId || loading) return;
+    if (!highlightId || loading || highlightDoneRef.current) return;
 
     const timer = setTimeout(() => {
       const el = document.getElementById(`member-${highlightId}`);
       if (!el) return;
 
+      // ✅ Marquer comme fait — ne se re-déclenche plus jamais
+      highlightDoneRef.current = true;
+
       el.scrollIntoView({ behavior: "smooth", block: "center" });
 
-      // Appliquer le glow bleu + scale
+      // Glow bleu transparent + scale
       el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
       el.style.boxShadow = "0 0 0 3px rgba(59,130,246,0.6), 0 0 32px 10px rgba(59,130,246,0.25)";
       el.style.transform = "scale(1.02)";
 
-      // Retirer après 5 secondes
-      const removeTimer = setTimeout(() => {
+      // Retirer proprement après 5 secondes
+      setTimeout(() => {
         el.style.transition = "box-shadow 1s ease, transform 1s ease";
         el.style.boxShadow = "";
         el.style.transform = "";
       }, 5000);
-
-      return () => clearTimeout(removeTimer);
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [loading, router.query]);
+  }, [loading, router.query?.highlight]);
 
   const handleCommentChange = (id, value) => {
     setCommentChanges(prev => ({ ...prev, [id]: value }));

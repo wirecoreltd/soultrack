@@ -23,7 +23,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
   const [mesCelluleIds, setMesCelluleIds] = useState([]);
   const [mesFamilleIds, setMesFamilleIds] = useState([]);
   const [celluleIds,    setCelluleIds]    = useState([]);
-
+  const { seenIds, refreshTrigger } = useNotificationsContext();
   const router     = useRouter();
   const channelRef = useRef(null);
 
@@ -200,8 +200,8 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
 
   // ─── Fetch initial ────────────────────────────────────────────────────────
   useEffect(() => {
-    fetchCounts();
-  }, [fetchCounts]);
+  fetchCounts();
+}, [refreshTrigger]);
 
   // ─── Custom event depuis evangelisation.js pour forcer un re-fetch ────────
   useEffect(() => {

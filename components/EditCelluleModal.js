@@ -22,7 +22,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
       setLoadingResponsables(true);
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, prenom, nom")
+        .select("id, prenom, nom, telephone")
         .eq("role", "ResponsableCellule")
         .order("nom");
 
@@ -160,7 +160,12 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
               <select
                 className="inp"
                 value={selectedResponsableId}
-                onChange={(e) => setSelectedResponsableId(e.target.value)}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  setSelectedResponsableId(id);
+                  const responsableObj = responsables.find((r) => r.id === id);
+                  setTelephone(responsableObj?.telephone || "");
+                }}
               >
                 <option value="">-- Choisir un responsable --</option>
                 {responsables.map((r) => (

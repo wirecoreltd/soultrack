@@ -187,19 +187,22 @@ function CreateInternalUserContent() {
       }
 
       // 1️⃣ Vérification téléphone
-      const { data: existingMembers } = await supabase
-        .from("membres_complets")
-        .select("prenom, nom, sexe, telephone, etat_contact")
-        .eq("telephone", formData.telephone)
-        .in("etat_contact", ["existant", "nouveau"]);
+      // Après
+if (selectedMemberId === "add-serviteur" && formData.telephone) {
+  const { data: existingMembers } = await supabase
+    .from("membres_complets")
+    .select("prenom, nom, sexe, telephone, etat_contact")
+    .eq("telephone", formData.telephone)
+    .in("etat_contact", ["existant", "nouveau"]);
 
-      if (existingMembers?.length > 0 && !forceCreate) {
-        const existing = existingMembers[0];
-        setDuplicatePhone(existing);
-        setMessage(`⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}`);
-        setLoading(false);
-        return;
-      }
+  if (existingMembers?.length > 0 && !forceCreate) {
+    const existing = existingMembers[0];
+    setDuplicatePhone(existing);
+    setMessage(`⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}`);
+    setLoading(false);
+    return;
+  }
+}
 
       // 2️⃣ Vérification email
       const { data: existingUsers } = await supabase

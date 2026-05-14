@@ -334,20 +334,22 @@ useEffect(() => {
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
                     <h2 className="relative w-full text-center font-bold text-lg flex items-center justify-center gap-1">
-                      <span>
-                        {m.prenom} {m.nom}
-                      </span>
-                    
-                      {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
-                        <span className="text-yellow-400">⭐</span>
-                      )}
-                    
-                      {/* Zone future dot propre */}
-                      <div className="absolute right-2">
-                        {/* PresenceDot si besoin */}
-                      </div>
-                    </h2>
+  <span>
+    {m.prenom} {m.nom}
+  </span>
 
+  {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
+    <span className="text-yellow-400">⭐</span>
+  )}
+
+  <div className="absolute right-2 top-1/2 -translate-y-1/2">
+    <PresenceDot
+      memberId={m.id}
+      egliseId={m.eglise_id}
+      dateVenu={m.date_venu}
+    />
+  </div>
+</h2>
                     {/* Téléphone */}
                     <div className="relative text-center mt-2 phone-menu-container">
                       {m.telephone ? (

@@ -151,6 +151,7 @@ useEffect(() => {
         .eq("statut_suivis", 3)
         .eq("eglise_id", profile.eglise_id)
         .not("famille_id", "is", null)
+        .not("etat_contact", "eq", "supprime")
         .order("created_at", { ascending: false });
 
       let mesFamilleIds = [];

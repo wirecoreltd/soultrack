@@ -100,7 +100,8 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess }) {
     window.Paddle.Checkout.open({
       items: [{ priceId: data.priceId, quantity: 1 }],
       customer: {
-        email: data.email,
+        //email: data.email,
+        email: data.email || "test@soultrack.app",
         ...(data.customerId ? { id: data.customerId } : {}),
       },
       customData: { egliseId, planId: plan.id },

@@ -1055,8 +1055,7 @@ useEffect(() => {
 {/* Bouton PDF à droite */}
 <div className="w-full flex justify-end mt-3">
   <ExportMembrePDF
-    membre={m}
-    suivis={[]}
+    membre={m}    
     churchName="Ton Église"
     celluleName={
       cellules.find(c => String(c.id) === String(m.cellule_id))?.cellule_full

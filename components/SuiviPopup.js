@@ -558,8 +558,7 @@ export default function SuiviPopup({ member, onClose, user }) {
 {/* ── ASSISTANT PASTORAL ── */}
           <PastoralAssistant
             membre={member}
-            suivis={suivis}
-            egliseId={member.eglise_id}
+            suivis={suivis}            
           />
 
           {/* ── SECTION HISTORIQUE ── */}

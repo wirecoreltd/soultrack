@@ -1044,14 +1044,8 @@ useEffect(() => {
             </div>
           )}
 
-          {/* Bouton Détails */}
-          <button
-            onClick={() => toggleDetails(m.id)}
-            className="text-orange-500 underline text-sm mt-3"
-          >
-            {isOpen ? "Fermer détails" : "Détails"}
-          </button>
-            
+//bouton pdf
+
 <ExportMembrePDF
   membre={m}
   suivis={[]}
@@ -1060,6 +1054,14 @@ useEffect(() => {
   familleName={familles.find(f => String(f.id) === String(m.famille_id))?.famille_full}
   conseillerName={getConseillersForMember(m.id)}
 />
+
+          {/* Bouton Détails */}
+          <button
+            onClick={() => toggleDetails(m.id)}
+            className="text-orange-500 underline text-sm mt-3"
+          >
+            {isOpen ? "Fermer détails" : "Détails"}
+          </button>          
 
           {/* Détails */}
           {isOpen && (

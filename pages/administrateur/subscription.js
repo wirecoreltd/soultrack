@@ -137,18 +137,19 @@ function SubscriptionContent() {
   // ---- Render ----
   return (
     <div className="min-h-screen p-6 bg-[#333699]">
-      <HeaderPages />
+    <HeaderPages />
 
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
- Mon <span className="text-emerald-300">Abonnement</span>
-  </h1>
-   </div> 
-    
-     <div className="max-w-3xl w-full mb-6 text-center mx-auto">
-        <p className="italic text-base text-white/90">
-          <span className="text-blue-300 font-semibold">Gérez votre plan et suivez votre utilisation</span>.          
-        </p>
-      </div>   
+    <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
+      Mon <span className="text-emerald-300">Abonnement</span>
+    </h1>
+
+    <div className="max-w-3xl w-full mb-6 text-center mx-auto">
+      <p className="italic text-base text-white/90">
+        <span className="text-blue-300 font-semibold">
+          Gérez votre plan et suivez votre utilisation
+        </span>.
+      </p>
+    </div>
        
         {loading ? (
           <p className="text-center text-white/60 py-20">Chargement...</p>

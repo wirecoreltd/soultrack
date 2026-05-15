@@ -22,6 +22,10 @@ const PLAN_NOMS = {
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
+  console.log("PAYPAL_ENV:", process.env.PAYPAL_ENV);
+console.log("PAYPAL_CLIENT_ID:", process.env.PAYPAL_CLIENT_ID?.slice(0, 10) + "...");
+console.log("PAYPAL_CLIENT_SECRET:", process.env.PAYPAL_CLIENT_SECRET?.slice(0, 5) + "...");
+
   const { egliseId, planId } = req.body;
   if (!egliseId || !planId) return res.status(400).json({ error: "Paramètres manquants" });
 

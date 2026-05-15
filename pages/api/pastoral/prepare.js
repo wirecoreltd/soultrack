@@ -1,86 +1,100 @@
-// pages/api/pastoral/prepare.js
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-   console.log("GROQ_API_KEY:", process.env.GROQ_API_KEY?.slice(0, 8) + "...");
 
-  const { membre, suivis, egliseId } = req.body;
+  const { membre, suivis } = req.body;
 
-  const REFERENCES_PAR_EGLISE = {
-    "9bc9ddf4-dbbb-4a99-8859-0cb1c3c529c4": {
-      nom: "Gloire",
-      references: ["Yvan Castanou", "Myles Munroe", "T.D. Jakes"],
-    },
-    "1c59fd6b-2e82-4027-b24c-532c2d7d5d68": {
-      nom: "Centre Missionnaire",
-      references: ["Rick Warren", "Derek Prince", "Myles Munroe"],
-    },
-    "3e5148d1-2244-4e44-a9c1-76c538ce0106": {
-      nom: "Centre Apostolique",
-      references: ["Yvan Castanou", "Yves Castanou", "Derek Prince"],
-    },
-  };
-
-  const eglise = REFERENCES_PAR_EGLISE[egliseId] ?? {
-    nom: "Église",
-    references: ["Myles Munroe", "T.D. Jakes", "Rick Warren"],
-  };
+  const besoins = (() => {
+    if (!membre.besoin) return "Non précisé";
+    try {
+      const p = JSON.parse(membre.besoin);
+      return Array.isArray(p) ? p.join(", ") : String(p);
+    } catch { return String(membre.besoin); }
+  })();
 
   const historiqueTexte = suivis.length > 0
-    ? suivis.slice(0, 5).map(s => {
-        const besoins = s.besoin ? JSON.parse(s.besoin).map(b => b.label).join(", ") : "";
-        return `- ${s.date_action} (${s.action_type}) : ${s.commentaire || ""}${besoins ? ` | Besoins : ${besoins}` : ""}`;
+    ? suivis.slice(0, 6).map(s => {
+        const b = (() => {
+          if (!s.besoin) return "";
+          try {
+            const p = JSON.parse(s.besoin);
+            if (Array.isArray(p)) return p.map(x => typeof x === "object" ? x.label : x).join(", ");
+            return String(p);
+          } catch { return String(s.besoin); }
+        })();
+        return `- ${s.date_action} (${s.action_type})${b ? ` | Besoins : ${b}` : ""}${s.commentaire ? ` | Note : ${s.commentaire}` : ""}`;
       }).join("\n")
     : "Aucun suivi enregistré.";
 
-  const besoins = membre.besoin
-    ? JSON.parse(membre.besoin).join(", ")
-    : "Non précisé";
+  const nombreSuivis = suivis.length;
+  const aDesRecidives = nombreSuivis >= 2;
 
-  const prompt = `Tu es un assistant pastoral bienveillant, formé à la sagesse biblique et aux enseignements de ${eglise.references.join(", ")}. Tu prépares le cœur d'un responsable avant un entretien pastoral.
+  const prompt = `Tu es un berger aimant, sage et bienveillant. Tu prépares le cœur d'un responsable pastoral avant qu'il rencontre une personne de son troupeau.
 
-Membre : ${membre.prenom} ${membre.nom}
-Besoins : ${besoins}
+Voici ce que tu sais sur cette personne :
+- Prénom : ${membre.prenom}
+- Besoins identifiés : ${besoins}
+- Nombre de suivis passés : ${nombreSuivis}
+- Cycles répétitifs détectés : ${aDesRecidives ? "Oui" : "Non"}
+
 Historique :
 ${historiqueTexte}
 
-Génère une préparation pastorale en JSON uniquement (aucun texte avant ou après, aucun markdown) :
+En tant que berger sage, génère un support de préparation pastoral en JSON uniquement. Sois doux, profond, humain — jamais froid ni académique.
+
 {
-  "comprehension": "2-3 phrases douces sur ce que l'historique révèle en profondeur : blessures, blocages, cycles intérieurs.",
-  "questions": ["question 1", "question 2", "question 3", "question 4"],
-  "directions": ["direction concrète 1", "direction 2", "direction 3"],
-  "versets": [{"reference": "Livre chapitre:verset", "texte": "texte du verset"}, {"reference": "...", "texte": "..."}],
-  "references": [{"nom": "nom du pasteur", "sujet": "thème précis lié au besoin de cette personne"}]
+  "avant_dentrer": "1-2 phrases essentielles sur l'état intérieur probable de cette personne aujourd'hui. Ce que le responsable doit garder dans son cœur avant même de dire bonjour.",
+  "cles_comprehension": "2-3 phrases sur les blessures profondes, les blocages, les cycles intérieurs détectés dans l'historique. Aller à la racine, pas aux symptômes.",
+  "mots_cles": ["mot 1", "mot 2", "mot 3", "mot 4", "mot 5"],
+  "questions_a_poser": [
+    "question douce et ouverte 1",
+    "question 2",
+    "question 3",
+    "question 4"
+  ],
+  "pistes_accompagnement": [
+    "piste concrète et humaine 1",
+    "piste 2",
+    "piste 3"
+  ],
+  "versets": [
+    {"reference": "Livre chapitre:verset", "texte": "texte du verset"},
+    {"reference": "Livre chapitre:verset", "texte": "texte du verset"}
+  ]
 }`;
 
   try {
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        max_tokens: 1200,
+        messages: [
+          {
+            role: "system",
+            content: "Tu es un berger aimant et sage. Tu réponds UNIQUEMENT en JSON valide, sans aucun texte avant ou après.",
           },
-          body: JSON.stringify({
-            model: "llama-3.3-70b-versatile", // gratuit et très capable
-            max_tokens: 1000,
-            messages: [
-              {
-                role: "system",
-                content: "Tu es un assistant pastoral bienveillant. Réponds UNIQUEMENT en JSON valide, aucun texte avant ou après.",
-              },
-              {
-                role: "user",
-                content: prompt,
-              },
-            ],
-            response_format: { type: "json_object" },
-          }),
-        });
-        
-        const data = await response.json();
-        const text = data.choices[0].message.content;
-        const parsed = JSON.parse(text);       
-           
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+
+    const data = await response.json();
+    const text = data.choices[0].message.content;
+    const parsed = JSON.parse(text);
     return res.status(200).json(parsed);
+
   } catch (err) {
     console.error("[pastoral/prepare]", err);
     return res.status(500).json({ error: err.message });

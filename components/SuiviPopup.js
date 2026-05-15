@@ -380,7 +380,7 @@ export default function SuiviPopup({ member, onClose, user }) {
                   </div>
                 )}
 
-                {s.commentaire && <p className="text-gray-600"> Commentaire : {s.commentaire}</p>}
+                {s.commentaire && <p className="text-gray-600 mt-2"> Commentaire : {s.commentaire}</p>}
                 {/* VOIR PLUS / MOINS */}
                 {hasInterview && (
                   <>
@@ -389,7 +389,7 @@ export default function SuiviPopup({ member, onClose, user }) {
                       className="text-xs font-semibold mt-1 flex items-center gap-1"
                       style={{ color: "#2E3192", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                     >
-                      {isExpanded ? "▲ Voir moins" : "▼ Voir les réponses d'entretien"}
+                      {isExpanded ? "▲ Voir moins" : "▼ Voir les réponses de l'entretien"}
                     </button>
 
                     {isExpanded && (

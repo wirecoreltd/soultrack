@@ -586,23 +586,7 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
               )}
 
               {/* ── Bouton submit ── */}
-              <button
-                onClick={handleSubmit}
-                disabled={loading || !evangeliseId}
-                className="w-full py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
-                style={{
-                  background: loading
-                    ? "#a0a0c0"
-                    : editingSuivi
-                    ? "linear-gradient(135deg, #ea580c 0%, #f97316 100%)"
-                    : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
-                }}
-              >
-                {loading
-                  ? editingSuivi ? "Mise à jour..." : "Ajout..."
-                  : editingSuivi ? "💾 Enregistrer les modifications" : "➕ Ajouter suivi"
-                }
-              </button>
+              
             </>
           )}
 
@@ -684,6 +668,23 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
           >
             Fermer
           </button>
+              <button
+                onClick={handleSubmit}
+                disabled={loading || !evangeliseId}
+                className="w-full py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
+                style={{
+                  background: loading
+                    ? "#a0a0c0"
+                    : editingSuivi
+                    ? "linear-gradient(135deg, #ea580c 0%, #f97316 100%)"
+                    : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
+                }}
+              >
+                {loading
+                  ? editingSuivi ? "Mise à jour..." : "Ajout..."
+                  : editingSuivi ? "💾 Enregistrer les modifications" : "➕ Ajouter suivi"
+                }
+              </button>
         </div>
 
         <style jsx>{`

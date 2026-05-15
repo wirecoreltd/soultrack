@@ -1142,7 +1142,7 @@ useEffect(() => {
                   >
                     💡 Ajouter / Voir suivis
                   </button>
-                      // Juste après le bouton "💡 Ajouter / Voir suivis"
+                     
 <ExportMembrePDF
   membre={m}
   suivis={[]}

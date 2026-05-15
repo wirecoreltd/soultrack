@@ -29,11 +29,13 @@ export default async function handler(req, res) {
       .single();
     
     // Email depuis profiles
-    const { data: profile } = await supabaseAdmin
+    const { data: profiles } = await supabaseAdmin
       .from("profiles")
       .select("email")
       .eq("eglise_id", egliseId)
-      .single();
+      .limit(1);
+    
+    const profile = profiles?.[0] ?? null;  
     
     return res.status(200).json({
       priceId,

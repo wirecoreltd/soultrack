@@ -7,6 +7,7 @@
 // Installation requise : npm install jspdf
 
 import { useState } from "react";
+import supabase from "../lib/supabaseClient";
 import { generateMembrePDF } from "../utils/generateMembrePDF";
 
 export default function ExportMembrePDF({

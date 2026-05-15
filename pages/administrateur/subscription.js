@@ -140,20 +140,15 @@ function SubscriptionContent() {
       <HeaderPages />
 
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
-        Subscription <span className="text-emerald-300">Planspan></span>
-      </h1>
-  </div>
+ Mon <span className="text-emerald-300">Abonnement</span>
+  </h1>
 
-        {/* Titre */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-1">
-            Mon <span className="text-emerald-300">Abonnement</span>
-          </h1>
-          <p className="text-white/50 text-sm">
-            Gérez votre plan et suivez votre utilisation
-          </p>
-        </div>
-
+     <div className="max-w-3xl w-full mb-6 text-center mx-auto">
+        <p className="italic text-base text-white/90">
+          <span className="text-blue-300 font-semibold">Gérez votre plan et suivez votre utilisation</span>.          
+        </p>
+      </div>   
+       
         {loading ? (
           <p className="text-center text-white/60 py-20">Chargement...</p>
         ) : (

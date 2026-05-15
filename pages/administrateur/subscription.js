@@ -150,23 +150,25 @@ function SubscriptionContent() {
         </span>.
       </p>
     </div>
-       
-        {loading ? (
-          <p className="text-center text-white/60 py-20">Chargement...</p>
-        ) : (
-          <>
-            {/* Message de retour */}
-            {message && (
-              <div
-                className={`rounded-xl px-4 py-3 text-sm font-medium border ${
-                  message.type === "error"
-                    ? "bg-red-500/15 border-red-500/40 text-red-300"
-                    : "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
-                }`}
-              >
-                {message.text}
-              </div>
-            )}
+
+    {loading ? (
+      <p className="text-center text-white/60 py-20">
+        Chargement...
+      </p>
+    ) : (
+      <>
+        {/* Message de retour */}
+        {message && (
+          <div
+            className={`rounded-xl px-4 py-3 text-sm font-medium border ${
+              message.type === "error"
+                ? "bg-red-500/15 border-red-500/40 text-red-300"
+                : "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
 
             {/* ── 1. PLAN ACTUEL ── */}
             {planActuel ? (

@@ -136,4 +136,85 @@ function Section({ emoji, titre, children }) {
 
 function Spinner() {
   return (
-    <svg className="animate-spin" width="16" heigh
+    <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+      <path d="M12 2a10 10 0 0 1 10 10" />
+    </svg>
+  );
+}
+
+const styles = {
+  body: {
+    fontSize: 13,
+    color: "#374151",
+    lineHeight: 1.6,
+    margin: 0,
+  },
+  tag: {
+    fontSize: 11,
+    background: "#e8eaf6",
+    color: "#2E3192",
+    borderRadius: 20,
+    padding: "3px 10px",
+    fontWeight: 600,
+  },
+  question: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 10,
+    padding: "8px 0",
+    borderBottom: "1px solid #e8eaf6",
+    fontSize: 13,
+    color: "#374151",
+    lineHeight: 1.5,
+  },
+  qNum: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: "50%",
+    background: "#2E3192",
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: 700,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  piste: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 10,
+    padding: "6px 0",
+  },
+  num: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: "50%",
+    background: "#e8eaf6",
+    color: "#2E3192",
+    fontSize: 11,
+    fontWeight: 700,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  verset: {
+    fontSize: 13,
+    color: "#374151",
+    lineHeight: 1.6,
+    padding: "8px 0",
+    borderBottom: "1px solid #e8eaf6",
+    display: "flex",
+    flexDirection: "column",
+    gap: 2,
+  },
+  versetRef: {
+    color: "#2E3192",
+    fontSize: 11,
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
+  },
+};

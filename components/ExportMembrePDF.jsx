@@ -71,7 +71,7 @@ export default function ExportMembrePDF({
         </>
       ) : (
         <>
-          <span role="img" aria-label="PDF">🛑</span>          
+          <imgsrc ="/pdf.png" alt="PDF" width={40} height={40}/>         
         </>
       )}
     </button>

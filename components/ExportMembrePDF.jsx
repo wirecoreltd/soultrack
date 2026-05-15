@@ -71,7 +71,7 @@ export default function ExportMembrePDF({
         </>
       ) : (
         <>
-          <img src ="/pdf.png" alt="PDF" width={20} height={20}/>         
+          <img src ="/pdf.png" alt="PDF" width={10} height={10}/>         
         </>
       )}
     </button>

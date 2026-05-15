@@ -24,15 +24,23 @@ export default async function handler(req, res) {
   try {
     const { data: eglise } = await supabaseAdmin
       .from("eglises")
-      .select("email, paddle_customer_id")
+      .select("paddle_customer_id")
       .eq("id", egliseId)
       .single();
-
+    
+    // Email depuis profiles
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("email")
+      .eq("eglise_id", egliseId)
+      .single();
+    
     return res.status(200).json({
       priceId,
-      email: eglise?.email ?? "",
+      email: profile?.email ?? "",
       customerId: eglise?.paddle_customer_id ?? null,
     });
+        
   } catch (err) {
     console.error("[paddle/create-checkout]", err);
     return res.status(500).json({ error: err.message });

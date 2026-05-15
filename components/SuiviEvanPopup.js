@@ -660,31 +660,31 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
         </div>
 
         {/* ── Footer ── */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all"
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all"
           >
             Fermer
           </button>
-              <button
-                onClick={handleSubmit}
-                disabled={loading || !evangeliseId}
-                className="w-full py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
-                style={{
-                  background: loading
-                    ? "#a0a0c0"
-                    : editingSuivi
-                    ? "linear-gradient(135deg, #ea580c 0%, #f97316 100%)"
-                    : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
-                }}
-              >
-                {loading
-                  ? editingSuivi ? "Mise à jour..." : "Ajout..."
-                  : editingSuivi ? "💾 Enregistrer les modifications" : "➕ Ajouter suivi"
-                }
-              </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading || !evangeliseId}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
+            style={{
+              background: loading
+                ? "#a0a0c0"
+                : editingSuivi
+                ? "linear-gradient(135deg, #f97316 0%, #ea580c 100%)"
+                : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
+            }}
+          >
+            {loading
+              ? editingSuivi ? "Mise à jour..." : "Ajout..."
+              : editingSuivi ? "💾 Enregistrer les modifications" : "Ajouter suivi"}
+          </button>
         </div>
 
         <style jsx>{`

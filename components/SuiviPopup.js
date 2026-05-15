@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
+import PastoralAssistant from "../PastoralAssistant";
 
 // ── Utilitaire hors composant pour éviter les problèmes de référence ──
 function parseHistoriqueBesoin(besoinJson) {
@@ -553,6 +554,13 @@ export default function SuiviPopup({ member, onClose, user }) {
           {currentUserName && (
             <p className="text-center text-sm text-gray-400">👤 {currentUserName}</p>
           )}
+
+{/* ── ASSISTANT PASTORAL ── */}
+          <PastoralAssistant
+            membre={member}
+            suivis={suivis}
+            egliseId={member.eglise_id}
+          />
 
           {/* ── SECTION HISTORIQUE ── */}
           <SectionTitle>📅 Historique</SectionTitle>

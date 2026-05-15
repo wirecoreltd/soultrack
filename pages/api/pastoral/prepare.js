@@ -1,6 +1,7 @@
 // pages/api/pastoral/prepare.js
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+   console.log("GROQ_API_KEY:", process.env.GROQ_API_KEY?.slice(0, 8) + "...");
 
   const { membre, suivis, egliseId } = req.body;
 

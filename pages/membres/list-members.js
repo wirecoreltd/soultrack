@@ -1044,16 +1044,21 @@ useEffect(() => {
             </div>
           )}
 
-//bouton pdf
-
-<ExportMembrePDF
-  membre={m}
-  suivis={[]}
-  churchName="Ton Église"
-  celluleName={cellules.find(c => String(c.id) === String(m.cellule_id))?.cellule_full}
-  familleName={familles.find(f => String(f.id) === String(m.famille_id))?.famille_full}
-  conseillerName={getConseillersForMember(m.id)}
-/>
+{/* Bouton PDF à droite */}
+<div className="w-full flex justify-end mt-3">
+  <ExportMembrePDF
+    membre={m}
+    suivis={[]}
+    churchName="Ton Église"
+    celluleName={
+      cellules.find(c => String(c.id) === String(m.cellule_id))?.cellule_full
+    }
+    familleName={
+      familles.find(f => String(f.id) === String(m.famille_id))?.famille_full
+    }
+    conseillerName={getConseillersForMember(m.id)}
+  />
+</div>
 
           {/* Bouton Détails */}
           <button

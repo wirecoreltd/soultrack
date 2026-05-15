@@ -475,7 +475,7 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
                     </div>
                   )}
 
-                  {s.commentaire && <p className="text-gray-600">📝 {s.commentaire}</p>}
+                  {s.commentaire && <p className="text-gray-600">Commentaire : {s.commentaire}</p>}
 
                   {/* VOIR PLUS / MOINS */}
                   {hasInterview && (

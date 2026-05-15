@@ -20,6 +20,7 @@ import SuiviPopup from "../../components/SuiviPopup";
 import PresenceDot from "../../components/PresenceDot";
 import ImportMembresCSV from "../../components/ImportMembresCSV";
 import { useFeature } from "../../components/FeaturesContext";
+import ExportMembrePDF from "../../components/ExportMembrePDF";
 
 function getRoles(profile) {
   if (!profile) return [];
@@ -1141,6 +1142,15 @@ useEffect(() => {
                   >
                     💡 Ajouter / Voir suivis
                   </button>
+                      // Juste après le bouton "💡 Ajouter / Voir suivis"
+<ExportMembrePDF
+  membre={m}
+  suivis={[]}
+  churchName="Ton Église"
+  celluleName={cellules.find(c => String(c.id) === String(m.cellule_id))?.cellule_full}
+  familleName={familles.find(f => String(f.id) === String(m.famille_id))?.famille_full}
+  conseillerName={getConseillersForMember(m.id)}
+/>
                 </div>
                 {openSuiviMemberId === m.id && (
                   <SuiviPopup

@@ -141,32 +141,7 @@ export default function SuiviPopup({ member, onClose, user }) {
 
     setSuivis(data || []);
 
-    if (data && data.length > 0) {
-      const last = data[0];
-      const besoinsArr = parseHistoriqueBesoin(last.besoin);
-      const besoinChecked = [], besoinStatuts = {}, resolved = [];
-      besoinsArr.forEach(({ label, statut }) => {
-        if (statut === "Résolu") resolved.push(label);
-        else { besoinChecked.push(label); besoinStatuts[label] = statut || "En suivi"; }
-      });
-      setResolvedBesoins(resolved);
-      setForm({
-        date_action: last.date_action || "",
-        type: last.action_type || last.type || "",
-        besoin: besoinChecked,
-        besoinStatuts,
-        commentaire: last.commentaire || "",
-        etat_general: last.etat_general || "",
-        vie_spirituelle: last.vie_spirituelle || "",
-        intention_priere: last.intention_priere || "",
-        combats_luttes: last.combats_luttes || "",
-        blocages: last.blocages || "",
-        vie_personnelle: last.vie_personnelle || "",
-        besoins_avancement: last.besoins_avancement || "",
-        talents: last.talents || "",
-        domaine_service: last.domaine_service || "",
-      });
-    }
+
   };
 
   const handleEditSuivi = (s) => {

@@ -415,7 +415,12 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
       const accentColor = statut === "Resolu" ? C.green : C.navyLight;
 
       // Questions d'entretien présentes
-      const interviewRows = INTERVIEW_QUESTIONS.filter((q) => s[q.key]);
+      const interviewRows = INTERVIEW_QUESTIONS.filter(
+  (q) =>
+    s[q.key] !== null &&
+    s[q.key] !== undefined &&
+    String(s[q.key]).trim() !== ""
+);
       const hasInterview  = interviewRows.length > 0;
 
       // Calcul précis de la hauteur de la carte
@@ -432,8 +437,16 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
 
       if (hasInterview) {
         cardH += 8; // titre "QUESTIONS D'ENTRETIEN"
-        const rows = Math.ceil(interviewRows.length / 2);
-        cardH += rows * 14; // chaque paire de questions = 14mm
+        interviewRows.forEach((q) => {
+  const lines = doc.splitTextToSize(
+    safe(s[q.key]),
+    (CW - 14) / 2 - 6
+  );
+
+  cardH += Math.max(12, 8 + lines.length * 4) / 2;
+});
+
+cardH += 12; // chaque paire de questions = 14mm
       }
 
       const authorName = s.profiles
@@ -502,6 +515,56 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
         const halfI = (CW - 14) / 2;
 
         for (let i = 0; i < interviewRows.length; i += 2) {
+  const leftQ = interviewRows[i];
+  const rightQ = interviewRows[i + 1];
+
+  const leftValue = safe(s[leftQ.key]);
+  const rightValue = rightQ ? safe(s[rightQ.key]) : "";
+
+  const leftLines = doc.splitTextToSize(leftValue, halfI - 6);
+  const rightLines = rightQ
+    ? doc.splitTextToSize(rightValue, halfI - 6)
+    : [];
+
+  const leftHeight = Math.max(12, 8 + leftLines.length * 4);
+  const rightHeight = Math.max(12, 8 + rightLines.length * 4);
+
+  const boxHeight = Math.max(leftHeight, rightHeight);
+
+  // LEFT
+  fillRoundedRect(doc, ML + 4, cy, halfI, boxHeight, 2, C.white);
+  strokeRoundedRect(doc, ML + 4, cy, halfI, boxHeight, 2, C.gray100);
+
+  setTextColor(doc, C.navyLight);
+  doc.setFontSize(6.5);
+  doc.setFont("helvetica", "bold");
+  doc.text(leftQ.label, ML + 7, cy + 4);
+
+  setTextColor(doc, C.gray700);
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "normal");
+  doc.text(leftLines, ML + 7, cy + 9);
+
+  // RIGHT
+  if (rightQ) {
+    const rx = ML + 6 + halfI;
+
+    fillRoundedRect(doc, rx, cy, halfI, boxHeight, 2, C.white);
+    strokeRoundedRect(doc, rx, cy, halfI, boxHeight, 2, C.gray100);
+
+    setTextColor(doc, C.navyLight);
+    doc.setFontSize(6.5);
+    doc.setFont("helvetica", "bold");
+    doc.text(rightQ.label, rx + 3, cy + 4);
+
+    setTextColor(doc, C.gray700);
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "normal");
+    doc.text(rightLines, rx + 3, cy + 9);
+  }
+
+  cy += boxHeight + 2;
+} {
           const leftQ  = interviewRows[i];
           const rightQ = interviewRows[i + 1];
 
@@ -516,7 +579,7 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
           doc.setFontSize(7.5);
           doc.setFont("helvetica", "normal");
           const lVal   = doc.splitTextToSize(safe(s[leftQ.key]), halfI - 6);
-          doc.text(lVal[0] || "", ML + 7, cy + 9);
+          doc.text(lVal, ML + 7, cy + 9);
 
           // Cellule droite
           if (rightQ) {
@@ -531,7 +594,7 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
             doc.setFontSize(7.5);
             doc.setFont("helvetica", "normal");
             const rVal = doc.splitTextToSize(safe(s[rightQ.key]), halfI - 6);
-            doc.text(rVal[0] || "", rx + 3, cy + 9);
+            doc.text(rVal, rx + 3, cy + 9);
           }
 
           cy += 14;

@@ -49,13 +49,13 @@ function ProgressBar({ value, max, height = 8 }) {
 function SubscriptionContent() {
   const router = useRouter();
 
-  const [subscription, setSubscription]   = useState(null);
-  const [nombreMembres, setNombreMembres] = useState(0);
-  const [egliseId, setEgliseId]           = useState(null);
-  const [loading, setLoading]             = useState(true);
-  const [message, setMessage]             = useState(null);
+  const [subscription, setSubscription]     = useState(null);
+  const [nombreMembres, setNombreMembres]   = useState(0);
+  const [egliseId, setEgliseId]             = useState(null);
+  const [loading, setLoading]               = useState(true);
+  const [message, setMessage]               = useState(null);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
-  const [confirming, setConfirming]       = useState(false);
+  const [confirming, setConfirming]         = useState(false);
 
   useEffect(() => { loadData(); }, []);
 
@@ -97,7 +97,6 @@ function SubscriptionContent() {
     ? Math.min(100, (nombreMembres / planActuel.limite) * 100)
     : 0;
 
-  // Plans disponibles = tous sauf le plan actuel
   const autresPlans = PLANS.filter(p => p.id !== subscription?.plan_id);
 
   const confirmTarget = PLANS.find(p => p.id === selectedPlanId) ?? null;
@@ -117,17 +116,29 @@ function SubscriptionContent() {
     setMessage(null);
 
     try {
+      const now = new Date();
+      const periodEnd = new Date(now);
+      periodEnd.setMonth(periodEnd.getMonth() + 1);
+
       const { error } = await supabase
         .from("subscriptions")
-        .update({ plan_id: confirmTarget.id })
+        .update({
+          plan_id:              confirmTarget.id,
+          statut:               "active",
+          current_period_start: now.toISOString(),
+          current_period_end:   periodEnd.toISOString(),
+          updated_at:           now.toISOString(),
+          started_at:           now.toISOString(),
+        })
         .eq("eglise_id", egliseId);
 
       if (error) throw error;
 
-      setMessage({ type: "success", text: `Plan mis à jour vers ${confirmTarget.nom} avec succès.` });
+      setMessage({ type: "success", text: `Plan mis à jour vers « ${confirmTarget.nom} » avec succès.` });
       setSelectedPlanId(null);
       await loadData();
     } catch (err) {
+      console.error(err);
       setMessage({ type: "error", text: "Une erreur est survenue. Veuillez réessayer." });
     } finally {
       setConfirming(false);
@@ -137,38 +148,35 @@ function SubscriptionContent() {
   // ---- Render ----
   return (
     <div className="min-h-screen p-6 bg-[#333699]">
-    <HeaderPages />
+      <HeaderPages />
 
-    <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-      Mon <span className="text-emerald-300">Abonnement</span>
-    </h1>
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
+        Mon <span className="text-emerald-300">Abonnement</span>
+      </h1>
 
-    <div className="max-w-3xl w-full mb-6 text-center mx-auto">
-      <p className="italic text-base text-white/90">
-        <span className="text-blue-300 font-semibold">
-          Gérez votre plan et suivez votre utilisation
-        </span>.
-      </p>
-    </div>
+      <div className="max-w-3xl w-full mb-6 text-center mx-auto">
+        <p className="italic text-base text-white/90">
+          <span className="text-blue-300 font-semibold">Gérez votre plan et suivez votre utilisation</span>.
+        </p>
+      </div>
 
-    {loading ? (
-      <p className="text-center text-white/60 py-20">
-        Chargement...
-      </p>
-    ) : (
-      <>
-        {/* Message de retour */}
-        {message && (
-          <div
-            className={`rounded-xl px-4 py-3 text-sm font-medium border ${
-              message.type === "error"
-                ? "bg-red-500/15 border-red-500/40 text-red-300"
-                : "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
+      <div className="max-w-3xl mx-auto space-y-5">
+        {loading ? (
+          <p className="text-center text-white/60 py-20">Chargement...</p>
+        ) : (
+          <>
+            {/* Message de retour */}
+            {message && (
+              <div
+                className={`rounded-xl px-4 py-3 text-sm font-medium border ${
+                  message.type === "error"
+                    ? "bg-red-500/15 border-red-500/40 text-red-300"
+                    : "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
 
             {/* ── 1. PLAN ACTUEL ── */}
             {planActuel ? (
@@ -235,11 +243,8 @@ function SubscriptionContent() {
 
                 <div className="space-y-2">
                   {autresPlans.map((plan) => {
-                    const isUpgrade   = planActuel ? plan.prixNum > planActuel.prixNum : false;
-                    const isSelected  = selectedPlanId === plan.id;
-                    const pctSurCePlan = plan.limite
-                      ? Math.min(100, (nombreMembres / plan.limite) * 100)
-                      : 0;
+                    const isUpgrade    = planActuel ? plan.prixNum > planActuel.prixNum : false;
+                    const isSelected   = selectedPlanId === plan.id;
                     const depasseLimit = plan.limite && nombreMembres > plan.limite;
 
                     return (
@@ -265,7 +270,7 @@ function SubscriptionContent() {
 
                         {/* Infos */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
+                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                             <p className="text-white font-semibold text-sm">{plan.nom}</p>
                             <span
                               className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full"

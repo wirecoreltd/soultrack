@@ -71,8 +71,7 @@ export default function ExportMembrePDF({
         </>
       ) : (
         <>
-          <span role="img" aria-label="PDF">📄</span>
-          {!compact && <span>Exporter PDF</span>}
+          <span role="img" aria-label="PDF">🛑</span>          
         </>
       )}
     </button>

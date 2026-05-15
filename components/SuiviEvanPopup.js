@@ -12,9 +12,7 @@ const INTERVIEW_QUESTIONS = [
     question: "Comment vas-tu vraiment en ce moment ?"
   },
   {
-    key: "situation_actuelle",
-    emoji: "🧭",
-    section: "1. État actuel",
+    key: "situation_actuelle",    
     question: "Qu'est-ce que tu traverses actuellement dans ta vie ?"
   },
   {

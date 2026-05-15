@@ -6,26 +6,54 @@ import jsPDF from "jspdf";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/**
+ * Remplace les caractères accentués par leurs équivalents ASCII.
+ * jsPDF avec les polices built-in (helvetica) utilise l'encodage WinAnsi/Latin-1.
+ * Les caractères hors de cette plage s'affichent en caractères bizarres.
+ * On normalise donc tout le texte avant de l'envoyer à doc.text().
+ */
+function da(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/[àâä]/g, "a")
+    .replace(/[ÀÂÄÁ]/g, "A")
+    .replace(/[éèêë]/g, "e")
+    .replace(/[ÉÈÊË]/g, "E")
+    .replace(/[îï]/g, "i")
+    .replace(/[ÎÏ]/g, "I")
+    .replace(/[ôö]/g, "o")
+    .replace(/[ÔÖÓ]/g, "O")
+    .replace(/[ùûü]/g, "u")
+    .replace(/[ÙÛÜ]/g, "U")
+    .replace(/ç/g, "c")
+    .replace(/Ç/g, "C")
+    .replace(/ñ/g, "n")
+    .replace(/Ñ/g, "N")
+    .replace(/—/g, "-")
+    .replace(/['']/g, "'")
+    .replace(/[""]/g, '"');
+}
+
 function safe(val) {
-  if (val === null || val === undefined || val === "") return "—";
-  return String(val);
+  if (val === null || val === undefined || val === "") return "-";
+  return da(String(val));
 }
 
 function formatDateFr(dateStr) {
-  if (!dateStr) return "—";
+  if (!dateStr) return "-";
   try {
     const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
+    if (isNaN(d.getTime())) return da(dateStr);
+    const months = ["Janv","Fevr","Mars","Avr","Mai","Juin","Juil","Aout","Sept","Oct","Nov","Dec"];
     return `${d.getDate().toString().padStart(2,"0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
-  } catch { return dateStr; }
+  } catch { return da(String(dateStr)); }
 }
 
 function parseBesoins(val) {
   if (!val) return [];
   try {
     const parsed = typeof val === "string" ? JSON.parse(val) : val;
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.map((b) => da(String(b))) : [];
   } catch { return []; }
 }
 
@@ -34,8 +62,10 @@ function parseHistoriqueBesoin(besoinJson) {
   try {
     const parsed = typeof besoinJson === "string" ? JSON.parse(besoinJson) : besoinJson;
     if (!Array.isArray(parsed)) return [];
-    if (parsed.length > 0 && typeof parsed[0] === "object" && parsed[0].label) return parsed;
-    return parsed.map((b) => ({ label: String(b), statut: "En suivi" }));
+    if (parsed.length > 0 && typeof parsed[0] === "object" && parsed[0].label) {
+      return parsed.map((b) => ({ label: da(b.label), statut: da(b.statut || "En suivi") }));
+    }
+    return parsed.map((b) => ({ label: da(String(b)), statut: "En suivi" }));
   } catch { return []; }
 }
 
@@ -44,7 +74,7 @@ function formatMinistere(mj, autre) {
     let list = Array.isArray(mj) ? mj : JSON.parse(mj || "[]");
     list = list.filter((m) => m.toLowerCase() !== "autre");
     if (autre?.trim()) list.push(autre.trim());
-    return list.join(", ") || "—";
+    return da(list.join(", ")) || "-";
   } catch { return safe(mj); }
 }
 
@@ -268,11 +298,11 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   // — Colonne gauche : IDENTITE —
   let yL = sectionHeader(doc, "IDENTITE", ML, section1Y, COL_W);
   const identiteRows = [
-    ["Civilite",      safe(membre.sexe)],
-    ["Tranche d'age", safe(membre.age)],
-    ["Ville",         safe(membre.ville)],
-    ["WhatsApp",      membre.is_whatsapp ? "Oui" : "Non"],
-    ["Ajoute le",     formatDateFr(membre.date_venu)],
+    ["Civilite",       safe(membre.sexe)],
+    ["Tranche d'age",  safe(membre.age)],
+    ["Ville",          safe(membre.ville)],
+    ["WhatsApp",       membre.is_whatsapp ? "Oui" : "Non"],
+    ["Ajoute le",      formatDateFr(membre.date_venu)],
   ];
   identiteRows.forEach(([k, v]) => {
     const extra = kvRow(doc, k, v, ML, yL, COL_W);

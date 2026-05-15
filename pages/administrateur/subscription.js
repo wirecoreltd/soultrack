@@ -83,24 +83,41 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess }) {
 
   // Checkout Paddle
   async function handlePaddle() {
-    setLoading("paddle");
-    setError(null);
-    try {
-      const res  = await fetch("/api/paddle/create-checkout", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ egliseId, planId: plan.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+  setLoading("paddle");
+  setError(null);
+  try {
+    const res  = await fetch("/api/paddle/create-checkout", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ egliseId, planId: plan.id }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
 
-      // Redirige vers Paddle Checkout
-      window.location.href = data.checkoutUrl;
-    } catch (e) {
-      setError("Erreur Paddle : " + e.message);
-      setLoading(null);
-    }
+    // Ouvre le checkout Paddle en overlay (pas de redirect)
+    if (!window.Paddle) throw new Error("Paddle.js non chargé");
+
+    window.Paddle.Checkout.open({
+      items: [{ priceId: data.priceId, quantity: 1 }],
+      customer: {
+        email: data.email,
+        ...(data.customerId ? { id: data.customerId } : {}),
+      },
+      customData: { egliseId, planId: plan.id },
+      settings: {
+        successUrl: `${window.location.origin}/subscription?success=true`,
+        displayMode: "overlay",
+        theme: "dark",
+      },
+    });
+
+    onClose(); // Ferme ton modal SoulTrack
+  } catch (e) {
+    setError("Erreur Paddle : " + e.message);
+  } finally {
+    setLoading(null);
   }
+}
 
   // Checkout PayPal
   async function handlePayPal() {

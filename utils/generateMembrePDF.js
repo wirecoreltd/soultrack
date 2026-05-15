@@ -4,12 +4,6 @@ import jsPDF from "jspdf";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Remplace les caractères accentués par leurs équivalents ASCII.
- * jsPDF avec les polices built-in (helvetica) utilise l'encodage WinAnsi/Latin-1.
- * Les caractères hors de cette plage s'affichent en caractères bizarres.
- * On normalise donc tout le texte avant de l'envoyer à doc.text().
- */
 function da(str) {
   if (!str) return "";
   return String(str)
@@ -129,18 +123,15 @@ function strokeRoundedRect(doc, x, y, w, h, r, rgb, lw = 0.3) {
   doc.roundedRect(x, y, w, h, r, r, "S");
 }
 
-// Dessine un en-tête de section avec bande navy
 function sectionHeader(doc, label, x, y, w) {
   fillRect(doc, x, y, w, 7, C.navy);
   setTextColor(doc, C.white);
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
   doc.text(label, x + 3, y + 4.8);
-  return y + 9; // retourne le y après le header
+  return y + 9;
 }
 
-// Ligne clé / valeur dans deux colonnes
-// Retourne la hauteur supplémentaire si le texte wraps
 function kvRow(doc, key, value, x, y, totalWidth) {
   const keyWidth   = totalWidth * 0.45;
   const valueWidth = totalWidth * 0.52;
@@ -161,11 +152,6 @@ function kvRow(doc, key, value, x, y, totalWidth) {
 
 // ─── Export principal ─────────────────────────────────────────────────────────
 
-/**
- * @param {object} membre   — ligne de la vue membres_complets
- * @param {Array}  suivis   — tableau de lignes suivi (avec .profiles)
- * @param {object} options  — { churchName, logoBase64, celluleName, familleName, conseillerName }
- */
 export async function generateMembrePDF(membre, suivis = [], options = {}) {
   const {
     churchName    = "Eglise",
@@ -180,11 +166,10 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   const PH = 297;
   const ML = 12;
   const MR = 12;
-  const CW = PW - ML - MR;  // 186 mm
+  const CW = PW - ML - MR;
 
   let y = 0;
 
-  // Helper : saut de page si besoin
   const ensureSpace = (needed) => {
     if (y + needed > PH - 15) {
       doc.addPage();
@@ -198,7 +183,6 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   fillRect(doc, 0, 0, PW, 28, C.navy);
   fillRect(doc, 0, 22, PW, 6, C.navyLight);
 
-  // Logo
   if (logoBase64) {
     try {
       doc.addImage(logoBase64, "PNG", ML, 4, 18, 18);
@@ -217,7 +201,6 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
     doc.text("+", ML + 9, 15.5, { align: "center" });
   }
 
-  // Nom de l'église
   setTextColor(doc, C.white);
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
@@ -227,7 +210,6 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   setTextColor(doc, [180, 185, 230]);
   doc.text("FICHE CONFIDENTIELLE", ML + 22, 17);
 
-  // Date de génération
   setTextColor(doc, [180, 185, 230]);
   doc.setFontSize(7);
   doc.text("Genere le", PW - MR, 10, { align: "right" });
@@ -261,14 +243,12 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
 
   y += 11;
 
-  // Nom complet
   setTextColor(doc, C.navy);
   doc.setFontSize(20);
   doc.setFont("helvetica", "bold");
   doc.text(`${safe(membre.prenom)} ${safe(membre.nom)}`, PW / 2, y, { align: "center" });
   y += 7;
 
-  // Téléphone
   if (membre.telephone) {
     setTextColor(doc, C.orange);
     doc.setFontSize(10);
@@ -277,23 +257,21 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
     y += 6;
   }
 
-  // Séparateur
   setDraw(doc, C.orange);
   doc.setLineWidth(0.5);
   doc.line(ML, y, PW - MR, y);
   y += 6;
 
   // ══════════════════════════════════════════════════════════════════
-  // IDENTITE + SUIVI  (2 colonnes, curseurs indépendants)
+  // IDENTITE + SUIVI
   // ══════════════════════════════════════════════════════════════════
-  const COL_W   = CW / 2 - 3;   // largeur d'une colonne (~90mm)
+  const COL_W   = CW / 2 - 3;
   const COL2_X  = ML + COL_W + 6;
   const ROW_H   = 5.5;
 
   ensureSpace(50);
   const section1Y = y;
 
-  // — Colonne gauche : IDENTITE —
   let yL = sectionHeader(doc, "IDENTITE", ML, section1Y, COL_W);
   const identiteRows = [
     ["Civilite",       safe(membre.sexe)],
@@ -307,7 +285,6 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
     yL += ROW_H + extra;
   });
 
-  // — Colonne droite : SUIVI —
   const statutSuiviLabels = { 1:"En Attente", 2:"En Suivis", 3:"Integre", 4:"Refus" };
   let yR = sectionHeader(doc, "SUIVI", COL2_X, section1Y, COL_W);
   const suiviRows = [
@@ -412,17 +389,16 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
       const statutColor = statut === "Resolu" ? C.green : C.blue;
       const accentColor = statut === "Resolu" ? C.green : C.navyLight;
 
-      // Questions d'entretien présentes
       const interviewRows = INTERVIEW_QUESTIONS.filter(
-  (q) =>
-    s[q.key] !== null &&
-    s[q.key] !== undefined &&
-    String(s[q.key]).trim() !== ""
-);
-      const hasInterview  = interviewRows.length > 0;
+        (q) =>
+          s[q.key] !== null &&
+          s[q.key] !== undefined &&
+          String(s[q.key]).trim() !== ""
+      );
+      const hasInterview = interviewRows.length > 0;
 
-      // Calcul précis de la hauteur de la carte
-      let cardH = 14; // date + statut + marge basse
+      // Calcul de la hauteur de la carte
+      let cardH = 14;
 
       if (besoinsArr.length > 0) {
         cardH += 7;
@@ -434,17 +410,12 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
       }
 
       if (hasInterview) {
-        cardH += 8; // titre "QUESTIONS D'ENTRETIEN"
+        cardH += 8;
         interviewRows.forEach((q) => {
-  const lines = doc.splitTextToSize(
-    safe(s[q.key]),
-    (CW - 14) / 2 - 6
-  );
-
-  cardH += Math.max(12, 8 + lines.length * 4) / 2;
-});
-
-cardH += 12; // chaque paire de questions = 14mm
+          const lines = doc.splitTextToSize(safe(s[q.key]), (CW - 14) / 2 - 6);
+          cardH += Math.max(12, 8 + lines.length * 4) / 2;
+        });
+        cardH += 12;
       }
 
       const authorName = s.profiles
@@ -469,7 +440,7 @@ cardH += 12; // chaque paire de questions = 14mm
       doc.text(`${formatDateFr(s.date_action)}  -  ${safe(s.action_type)}`, ML + 5, y + 7);
 
       // Badge statut
-      const sbw = doc.getTextWidth(statut) + 8;
+      const sbw   = doc.getTextWidth(statut) + 8;
       const sbBg   = statut === "Resolu" ? C.greenLight : C.blueLight;
       const sbText = statut === "Resolu" ? C.green : C.blue;
       fillRoundedRect(doc, PW - MR - sbw, y + 2, sbw, 6, 2, sbBg);
@@ -485,7 +456,7 @@ cardH += 12; // chaque paire de questions = 14mm
         setTextColor(doc, C.gray400);
         doc.setFontSize(7.5);
         doc.setFont("helvetica", "normal");
-        const bLine = "Besoin : " + besoinsArr.map((b) => `${b.label} (${b.statut})`).join(", ");
+        const bLine  = "Besoin : " + besoinsArr.map((b) => `${b.label} (${b.statut})`).join(", ");
         const bLines = doc.splitTextToSize(bLine, CW - 12);
         doc.text(bLines, ML + 5, cy);
         cy += bLines.length * 4.5 + 2;
@@ -513,61 +484,22 @@ cardH += 12; // chaque paire de questions = 14mm
         const halfI = (CW - 14) / 2;
 
         for (let i = 0; i < interviewRows.length; i += 2) {
-  const leftQ = interviewRows[i];
-  const rightQ = interviewRows[i + 1];
+          const leftQ  = interviewRows[i];
+          const rightQ = interviewRows[i + 1];
 
-  const leftValue = safe(s[leftQ.key]);
-  const rightValue = rightQ ? safe(s[rightQ.key]) : "";
+          const leftValue  = safe(s[leftQ.key]);
+          const rightValue = rightQ ? safe(s[rightQ.key]) : "";
 
-  const leftLines = doc.splitTextToSize(leftValue, halfI - 6);
-  const rightLines = rightQ
-    ? doc.splitTextToSize(rightValue, halfI - 6)
-    : [];
+          const leftLines  = doc.splitTextToSize(leftValue, halfI - 6);
+          const rightLines = rightQ ? doc.splitTextToSize(rightValue, halfI - 6) : [];
 
-  const leftHeight = Math.max(12, 8 + leftLines.length * 4);
-  const rightHeight = Math.max(12, 8 + rightLines.length * 4);
-
-  const boxHeight = Math.max(leftHeight, rightHeight);
-
-  // LEFT
-  fillRoundedRect(doc, ML + 4, cy, halfI, boxHeight, 2, C.white);
-  strokeRoundedRect(doc, ML + 4, cy, halfI, boxHeight, 2, C.gray100);
-
-  setTextColor(doc, C.navyLight);
-  doc.setFontSize(6.5);
-  doc.setFont("helvetica", "bold");
-  doc.text(leftQ.label, ML + 7, cy + 4);
-
-  setTextColor(doc, C.gray700);
-  doc.setFontSize(7.5);
-  doc.setFont("helvetica", "normal");
-  doc.text(leftLines, ML + 7, cy + 9);
-
-  // RIGHT
-  if (rightQ) {
-    const rx = ML + 6 + halfI;
-
-    fillRoundedRect(doc, rx, cy, halfI, boxHeight, 2, C.white);
-    strokeRoundedRect(doc, rx, cy, halfI, boxHeight, 2, C.gray100);
-
-    setTextColor(doc, C.navyLight);
-    doc.setFontSize(6.5);
-    doc.setFont("helvetica", "bold");
-    doc.text(rightQ.label, rx + 3, cy + 4);
-
-    setTextColor(doc, C.gray700);
-    doc.setFontSize(7.5);
-    doc.setFont("helvetica", "normal");
-    doc.text(rightLines, rx + 3, cy + 9);
-  }
-
-  cy += boxHeight + 2;
-} {
-
+          const leftHeight  = Math.max(12, 8 + leftLines.length * 4);
+          const rightHeight = Math.max(12, 8 + rightLines.length * 4);
+          const boxHeight   = Math.max(leftHeight, rightHeight);
 
           // Cellule gauche
-          fillRoundedRect(doc, ML + 4, cy, halfI, 12, 2, C.white);
-          strokeRoundedRect(doc, ML + 4, cy, halfI, 12, 2, C.gray100);
+          fillRoundedRect(doc, ML + 4, cy, halfI, boxHeight, 2, C.white);
+          strokeRoundedRect(doc, ML + 4, cy, halfI, boxHeight, 2, C.gray100);
           setTextColor(doc, C.navyLight);
           doc.setFontSize(6.5);
           doc.setFont("helvetica", "bold");
@@ -575,14 +507,13 @@ cardH += 12; // chaque paire de questions = 14mm
           setTextColor(doc, C.gray700);
           doc.setFontSize(7.5);
           doc.setFont("helvetica", "normal");
-          const lVal   = doc.splitTextToSize(safe(s[leftQ.key]), halfI - 6);
-          doc.text(lVal, ML + 7, cy + 9);
+          doc.text(leftLines, ML + 7, cy + 9);
 
           // Cellule droite
           if (rightQ) {
             const rx = ML + 6 + halfI;
-            fillRoundedRect(doc, rx, cy, halfI, 12, 2, C.white);
-            strokeRoundedRect(doc, rx, cy, halfI, 12, 2, C.gray100);
+            fillRoundedRect(doc, rx, cy, halfI, boxHeight, 2, C.white);
+            strokeRoundedRect(doc, rx, cy, halfI, boxHeight, 2, C.gray100);
             setTextColor(doc, C.navyLight);
             doc.setFontSize(6.5);
             doc.setFont("helvetica", "bold");
@@ -590,11 +521,10 @@ cardH += 12; // chaque paire de questions = 14mm
             setTextColor(doc, C.gray700);
             doc.setFontSize(7.5);
             doc.setFont("helvetica", "normal");
-            const rVal = doc.splitTextToSize(safe(s[rightQ.key]), halfI - 6);
-            doc.text(rVal, rx + 3, cy + 9);
+            doc.text(rightLines, rx + 3, cy + 9);
           }
 
-          cy += 14;
+          cy += boxHeight + 2;
         }
       }
 

@@ -13,6 +13,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const { egliseId, planId } = req.body;
+    console.log("planId:", planId, "priceId:", PADDLE_PRICE_IDS[planId]);
 
   if (!egliseId || !planId) {
     return res.status(400).json({ error: "egliseId et planId sont requis" });

@@ -565,8 +565,7 @@ cardH += 12; // chaque paire de questions = 14mm
 
   cy += boxHeight + 2;
 } {
-          //const leftQ  = interviewRows[i];
-          //const rightQ = interviewRows[i + 1];
+
 
           // Cellule gauche
           fillRoundedRect(doc, ML + 4, cy, halfI, 12, 2, C.white);

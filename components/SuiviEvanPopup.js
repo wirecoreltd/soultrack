@@ -5,21 +5,51 @@ import supabase from "../lib/supabaseClient";
 import PastoralAssistant from "../components/PastoralAssistant";
 
 const INTERVIEW_QUESTIONS = [
-  { key: "etat_general",       emoji: "🧭", section: "1. État général",       question: "Comment vas-tu vraiment en ce moment ?" },
-  { key: "vie_spirituelle",    emoji: "🙏", section: "2. Vie spirituelle",     question: "Comment est ta relation avec Dieu ces derniers temps ?" },
-  { key: "intention_priere",   emoji: "🙏", section: null,                     question: "Dans quoi aimerais-tu voir Dieu intervenir dans ta vie ?", indent: true },
-  { key: "combats_luttes",     emoji: "⚔️", section: "3. Combats & blocages",  question: "Est-ce qu'il y a une lutte ou un défi actuellement ?" },
-  { key: "blocages",           emoji: "⚔️", section: null,                     question: "Qu'est-ce qui te bloque aujourd'hui pour avancer ?", indent: true },
-  { key: "vie_personnelle",    emoji: "👨‍👩‍👧", section: "4. Vie personnelle",  question: "Comment ça se passe dans ta vie personnelle (famille, travail…) ?" },
-  { key: "besoins_avancement", emoji: "🎯", section: "5. Besoins",             question: "De quoi aurais-tu besoin pour aller mieux ou progresser ?" },
-  { key: "talents",            emoji: "🌱", section: "6. Talents & potentiel", question: "Qu'est-ce que tu fais naturellement bien ?" },
-  { key: "domaine_service",    emoji: "🌱", section: null,                     question: "Dans quel domaine aimerais-tu servir ou te développer ?", indent: true },
+  {
+    key: "conversion",
+    emoji: "✨",
+    section: "1. Conversion",
+    question: "Comment as-tu connu Jésus ?"
+  },
+  {
+    key: "eglise",
+    emoji: "⛪",
+    section: "2. Vie d'église",
+    question: "Est-ce que tu fréquentes une église actuellement ?"
+  },
+  {
+    key: "priere",
+    emoji: "🙏",
+    section: "3. Vie spirituelle",
+    question: "Est-ce que tu prends un temps de prière ou de lecture biblique ?"
+  },
+  {
+    key: "besoin_spirituel",
+    emoji: "💛",
+    section: "4. Besoins spirituels",
+    question: "Dans quel domaine aimerais-tu être accompagné spirituellement ?"
+  },
+  {
+    key: "questions_foi",
+    emoji: "❓",
+    section: "5. Questions",
+    question: "As-tu des questions concernant la foi ou la Bible ?"
+  },
+  {
+    key: "engagement",
+    emoji: "🔥",
+    section: "6. Engagement",
+    question: "Souhaites-tu avancer davantage avec Dieu ?"
+  }
 ];
 
 const EMPTY_INTERVIEW = {
-  etat_general: "", vie_spirituelle: "", intention_priere: "",
-  combats_luttes: "", blocages: "", vie_personnelle: "",
-  besoins_avancement: "", talents: "", domaine_service: "",
+  conversion: "",
+  eglise: "",
+  priere: "",
+  besoin_spirituel: "",
+  questions_foi: "",
+  engagement: "",
 };
 
 export default function SuiviEvanPopup({ member, onClose, user }) {
@@ -172,15 +202,12 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
       besoin: besoinChecked,
       besoinStatuts,
       commentaire: s.commentaire || "",
-      etat_general: s.etat_general || "",
-      vie_spirituelle: s.vie_spirituelle || "",
-      intention_priere: s.intention_priere || "",
-      combats_luttes: s.combats_luttes || "",
-      blocages: s.blocages || "",
-      vie_personnelle: s.vie_personnelle || "",
-      besoins_avancement: s.besoins_avancement || "",
-      talents: s.talents || "",
-      domaine_service: s.domaine_service || "",
+      conversion: s.conversion || "",
+      eglise: s.eglise || "",
+      priere: s.priere || "",
+      besoin_spirituel: s.besoin_spirituel || "",
+      questions_foi: s.questions_foi || "",
+      engagement: s.engagement || "",
     });
     setTimeout(() => formTopRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
@@ -235,15 +262,12 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
     ];
 
     const interviewFields = {
-      etat_general: form.etat_general || null,
-      vie_spirituelle: form.vie_spirituelle || null,
-      intention_priere: form.intention_priere || null,
-      combats_luttes: form.combats_luttes || null,
-      blocages: form.blocages || null,
-      vie_personnelle: form.vie_personnelle || null,
-      besoins_avancement: form.besoins_avancement || null,
-      talents: form.talents || null,
-      domaine_service: form.domaine_service || null,
+      conversion: form.conversion || null,
+      eglise: form.eglise || null,
+      priere: form.priere || null,
+      besoin_spirituel: form.besoin_spirituel || null,
+      questions_foi: form.questions_foi || null,
+      engagement: form.engagement || null,
     };
 
     const payload = {

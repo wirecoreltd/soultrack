@@ -52,24 +52,33 @@ Génère une préparation pastorale en JSON uniquement (aucun texte avant ou apr
 }`;
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-
-    const data = await response.json();
-    const text = data.content.map(i => i.text || "").join("").replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(text);
-
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile", // gratuit et très capable
+            max_tokens: 1000,
+            messages: [
+              {
+                role: "system",
+                content: "Tu es un assistant pastoral bienveillant. Réponds UNIQUEMENT en JSON valide, aucun texte avant ou après.",
+              },
+              {
+                role: "user",
+                content: prompt,
+              },
+            ],
+            response_format: { type: "json_object" },
+          }),
+        });
+        
+        const data = await response.json();
+        const text = data.choices[0].message.content;
+        const parsed = JSON.parse(text);       
+           
     return res.status(200).json(parsed);
   } catch (err) {
     console.error("[pastoral/prepare]", err);

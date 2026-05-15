@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import PastoralAssistant from "../components/PastoralAssistant";
 
-// ── Utilitaire hors composant pour éviter les problèmes de référence ──
 function parseHistoriqueBesoin(besoinJson) {
   if (!besoinJson) return [];
   try {
@@ -54,6 +53,16 @@ export default function SuiviPopup({ member, onClose, user }) {
     type: "",
     besoin: parseBesoinsList(member?.besoin),
     besoinStatuts: initStatuts(parseBesoinsList(member?.besoin)),
+    // Pastoral interview fields
+    etat_general: member?.etat_general || "",
+    vie_spirituelle: member?.vie_spirituelle || "",
+    intention_priere: member?.intention_priere || "",
+    combats_luttes: member?.combats_luttes || "",
+    blocages: member?.blocages || "",
+    vie_personnelle: member?.vie_personnelle || "",
+    besoins_avancement: member?.besoins_avancement || "",
+    talents: member?.talents || "",
+    domaine_service: member?.domaine_service || "",
     commentaire: "",
   };
 
@@ -75,7 +84,6 @@ export default function SuiviPopup({ member, onClose, user }) {
     "Dépression / Santé mentale",
   ];
 
-  // Click outside handler
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -155,7 +163,6 @@ export default function SuiviPopup({ member, onClose, user }) {
     fetchSuivis();
   }, []);
 
-  // ── Fetch + pré-remplissage du formulaire avec le dernier suivi ──
   const fetchSuivis = async () => {
     const { data } = await supabase
       .from("suivis")
@@ -165,7 +172,6 @@ export default function SuiviPopup({ member, onClose, user }) {
 
     setSuivis(data || []);
 
-    // Pré-remplir le formulaire avec le dernier suivi enregistré
     if (data && data.length > 0) {
       const last = data[0];
       const besoinsArr = parseHistoriqueBesoin(last.besoin);
@@ -183,13 +189,14 @@ export default function SuiviPopup({ member, onClose, user }) {
       });
 
       setResolvedBesoins(resolved);
-      setForm({
+      setForm((prev) => ({
+        ...prev,
         date_action: last.date_action || "",
         type: last.action_type || last.type || "",
         besoin: besoinChecked,
         besoinStatuts,
         commentaire: last.commentaire || "",
-      });
+      }));
     }
   };
 
@@ -210,13 +217,14 @@ export default function SuiviPopup({ member, onClose, user }) {
 
     setEditingSuivi(s);
     setResolvedBesoins(resolved);
-    setForm({
+    setForm((prev) => ({
+      ...prev,
       date_action: s.date_action || "",
       type: s.action_type || s.type || "",
       besoin: besoinChecked,
       besoinStatuts,
       commentaire: s.commentaire || "",
-    });
+    }));
 
     setTimeout(() => {
       formTopRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -334,13 +342,8 @@ export default function SuiviPopup({ member, onClose, user }) {
         return;
       }
 
-      const updatedSuivi = {
-        ...editingSuivi,
-        ...payload,
-      };
-
       setSuivis((prev) =>
-        prev.map((s) => (s.id === editingSuivi.id ? updatedSuivi : s))
+        prev.map((s) => (s.id === editingSuivi.id ? { ...editingSuivi, ...payload } : s))
       );
     } else {
       const { error: insertError } = await supabase.from("suivis").insert({
@@ -359,9 +362,21 @@ export default function SuiviPopup({ member, onClose, user }) {
       await fetchSuivis();
     }
 
+    // Save pastoral fields + besoins to membres_complets
     await supabase
       .from("membres_complets")
-      .update({ besoin: JSON.stringify(newMemberBesoins) })
+      .update({
+        besoin: JSON.stringify(newMemberBesoins),
+        etat_general: form.etat_general || null,
+        vie_spirituelle: form.vie_spirituelle || null,
+        intention_priere: form.intention_priere || null,
+        combats_luttes: form.combats_luttes || null,
+        blocages: form.blocages || null,
+        vie_personnelle: form.vie_personnelle || null,
+        besoins_avancement: form.besoins_avancement || null,
+        talents: form.talents || null,
+        domaine_service: form.domaine_service || null,
+      })
       .eq("id", member.id);
 
     setMemberBesoins(newMemberBesoins);
@@ -372,13 +387,14 @@ export default function SuiviPopup({ member, onClose, user }) {
     const newStatuts = {};
     newMemberBesoins.forEach((b) => { newStatuts[b] = "En suivi"; });
 
-    setForm({
+    setForm((prev) => ({
+      ...prev,
       date_action: "",
       type: "",
       besoin: newMemberBesoins,
       besoinStatuts: newStatuts,
       commentaire: "",
-    });
+    }));
   };
 
   const formatDateForInput = (date) => {
@@ -436,7 +452,6 @@ export default function SuiviPopup({ member, onClose, user }) {
         {/* ── BODY ── */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
 
-          {/* Bandeau mode édition */}
           {editingSuivi && (
             <div className="flex items-center justify-between bg-orange-50 border border-orange-300 rounded-xl px-4 py-2">
               <p className="text-orange-700 text-sm font-semibold">
@@ -451,10 +466,9 @@ export default function SuiviPopup({ member, onClose, user }) {
             </div>
           )}
 
-          {/* ── SECTION FORMULAIRE ── */}
+          {/* ── FORMULAIRE ── */}
           <SectionTitle>📋 {editingSuivi ? "Modifier le suivi" : "Nouveau suivi"}</SectionTitle>
 
-          {/* Date */}
           <Field label="Date">
             <input
               type="date"
@@ -464,7 +478,6 @@ export default function SuiviPopup({ member, onClose, user }) {
             />
           </Field>
 
-          {/* Type */}
           <Field label="Type d'action">
             <select
               value={form.type}
@@ -478,7 +491,6 @@ export default function SuiviPopup({ member, onClose, user }) {
             </select>
           </Field>
 
-          {/* Besoins */}
           <Field label="Besoins">
             <div className="space-y-2 mt-1">
               {besoinsOptions.map((b) => {
@@ -540,7 +552,94 @@ export default function SuiviPopup({ member, onClose, user }) {
             </div>
           </Field>
 
-          {/* Commentaire */}
+          {/* ── QUESTIONS D'ENTRETIEN ── */}
+          <SectionTitle>🗣️ Questions d'entretien</SectionTitle>
+
+          <InterviewField
+            emoji="🧭"
+            numero="1"
+            titre="État général"
+            question="Comment vas-tu vraiment en ce moment ?"
+            value={form.etat_general}
+            onChange={(v) => setForm((p) => ({ ...p, etat_general: v }))}
+          />
+
+          <InterviewField
+            emoji="🙏"
+            numero="2"
+            titre="Vie spirituelle"
+            question="Comment est ta relation avec Dieu ces derniers temps ?"
+            value={form.vie_spirituelle}
+            onChange={(v) => setForm((p) => ({ ...p, vie_spirituelle: v }))}
+          />
+
+          <InterviewField
+            emoji="🙏"
+            numero=""
+            titre=""
+            question="Dans quoi aimerais-tu voir Dieu intervenir dans ta vie ?"
+            value={form.intention_priere}
+            onChange={(v) => setForm((p) => ({ ...p, intention_priere: v }))}
+            indent
+          />
+
+          <InterviewField
+            emoji="⚔️"
+            numero="3"
+            titre="Combats & blocages"
+            question="Est-ce qu'il y a une lutte ou un défi actuellement ?"
+            value={form.combats_luttes}
+            onChange={(v) => setForm((p) => ({ ...p, combats_luttes: v }))}
+          />
+
+          <InterviewField
+            emoji="⚔️"
+            numero=""
+            titre=""
+            question="Qu'est-ce qui te bloque aujourd'hui pour avancer ?"
+            value={form.blocages}
+            onChange={(v) => setForm((p) => ({ ...p, blocages: v }))}
+            indent
+          />
+
+          <InterviewField
+            emoji="👨‍👩‍👧"
+            numero="4"
+            titre="Vie personnelle"
+            question="Comment ça se passe dans ta vie personnelle (famille, travail…) ?"
+            value={form.vie_personnelle}
+            onChange={(v) => setForm((p) => ({ ...p, vie_personnelle: v }))}
+          />
+
+          <InterviewField
+            emoji="🎯"
+            numero="5"
+            titre="Besoins"
+            question="De quoi aurais-tu besoin pour aller mieux ou progresser ?"
+            value={form.besoins_avancement}
+            onChange={(v) => setForm((p) => ({ ...p, besoins_avancement: v }))}
+          />
+
+          <InterviewField
+            emoji="🌱"
+            numero="6"
+            titre="Talents & potentiel"
+            question="Qu'est-ce que tu fais naturellement bien ?"
+            value={form.talents}
+            onChange={(v) => setForm((p) => ({ ...p, talents: v }))}
+          />
+
+          <InterviewField
+            emoji="🌱"
+            numero=""
+            titre=""
+            question="Dans quel domaine aimerais-tu servir ou te développer ?"
+            value={form.domaine_service}
+            onChange={(v) => setForm((p) => ({ ...p, domaine_service: v }))}
+            indent
+          />
+
+          {/* ── COMMENTAIRE ── */}
           <Field label="Commentaire">
             <textarea
               placeholder="Commentaire..."
@@ -555,13 +654,10 @@ export default function SuiviPopup({ member, onClose, user }) {
             <p className="text-center text-sm text-gray-400">👤 {currentUserName}</p>
           )}
 
-{/* ── ASSISTANT PASTORAL ── */}
-          <PastoralAssistant
-            membre={member}
-            suivis={suivis}            
-          />
+          {/* ── ASSISTANT PASTORAL ── */}
+          <PastoralAssistant membre={member} suivis={suivis} />
 
-          {/* ── SECTION HISTORIQUE ── */}
+          {/* ── HISTORIQUE ── */}
           <SectionTitle>📅 Historique</SectionTitle>
 
           {suivis.length === 0 && (
@@ -677,14 +773,55 @@ export default function SuiviPopup({ member, onClose, user }) {
   );
 }
 
+// ── Interview field sub-component ──
+function InterviewField({ emoji, numero, titre, question, value, onChange, indent = false }) {
+  return (
+    <div
+      style={{
+        background: indent ? "#fafafa" : "#f0f4ff",
+        borderRadius: 10,
+        padding: "10px 12px",
+        border: `1px solid ${indent ? "#e8eaf6" : "#c7cef5"}`,
+        marginLeft: indent ? 16 : 0,
+      }}
+    >
+      {titre && (
+        <p style={{ fontSize: 11, fontWeight: 700, color: "#2E3192", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.07em" }}>
+          {emoji} {numero && `${numero}. `}{titre}
+        </p>
+      )}
+      <p style={{ fontSize: 13, color: "#4b5563", marginBottom: 6, fontStyle: "italic" }}>
+        {question}
+      </p>
+      <textarea
+        placeholder="Notes..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={2}
+        style={{
+          width: "100%",
+          border: "1px solid #dde1f5",
+          borderRadius: 8,
+          padding: "8px 10px",
+          background: "#fff",
+          color: "#1e293b",
+          fontSize: 13,
+          outline: "none",
+          resize: "vertical",
+          fontFamily: "inherit",
+        }}
+        onFocus={(e) => (e.target.style.borderColor = "#2E3192")}
+        onBlur={(e) => (e.target.style.borderColor = "#dde1f5")}
+      />
+    </div>
+  );
+}
+
 // ── Helper sub-components ──
 function SectionTitle({ children }) {
   return (
     <div className="flex items-center gap-2 pt-2">
-      <span
-        className="text-xs font-bold uppercase tracking-widest"
-        style={{ color: "#2E3192" }}
-      >
+      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#2E3192" }}>
         {children}
       </span>
       <div className="flex-1 h-px" style={{ background: "#e2e8f0" }} />
@@ -695,10 +832,7 @@ function SectionTitle({ children }) {
 function Field({ label, children }) {
   return (
     <div className="flex flex-col gap-1">
-      <label
-        className="text-xs font-semibold uppercase tracking-wide"
-        style={{ color: "#64748b" }}
-      >
+      <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#64748b" }}>
         {label}
       </label>
       {children}

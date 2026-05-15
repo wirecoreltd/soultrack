@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
+import PastoralAssistant from "../components/PastoralAssistant";
 
 export default function SuiviEvanPopup({ member, onClose, user }) {
   const [loading, setLoading] = useState(false);

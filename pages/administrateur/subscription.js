@@ -107,7 +107,7 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess }) {
       customData: { egliseId, planId: plan.id },
       settings: {
         successUrl: `${window.location.origin}/subscription?success=true`,
-        displayMode: "overlay",
+        displayMode: "redirect",
         theme: "dark",
       },
     });

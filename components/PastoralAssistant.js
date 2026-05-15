@@ -54,7 +54,7 @@ export default function PastoralAssistant({ membre, suivis, egliseId }) {
             <Spinner /> Analyse en cours...
           </>
         ) : (
-          "✨ Préparer l'entretien avec l'IA"
+          "✨ Support pour l'entretien"
         )}
       </button>
 

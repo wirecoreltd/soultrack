@@ -17,26 +17,22 @@ const INTERVIEW_QUESTIONS = [
   },
   {
     key: "relation_avec_dieu",
-    emoji: "🔍",
+    emoji: "❤️",
     section: "2. Vie spirituelle",
     question: "Est-ce que tu as déjà réfléchi à ta relation avec Dieu après notre échange ?"
   },
   {
-    key: "perception_spirituelle",
-    emoji: "🌿",
-    section: "2. Vie spirituelle",
+    key: "perception_spirituelle",    
     question: "Qu'est-ce que Dieu représente pour toi aujourd'hui ?"
   },
   {
     key: "besoins_principaux",
-    emoji: "💔",
+    emoji: "❓",
     section: "3. Besoins & situation",
     question: "Y a-t-il un domaine où tu ressens un besoin ou une difficulté en ce moment ?"
   },
   {
-    key: "preoccupations",
-    emoji: "🧠",
-    section: "3. Besoins & situation",
+    key: "preoccupations",    
     question: "Qu'est-ce qui te préoccupe le plus actuellement ?"
   },
   {
@@ -46,9 +42,7 @@ const INTERVIEW_QUESTIONS = [
     question: "Est-ce que tu aimerais que Dieu intervienne dans une situation de ta vie ?"
   },
   {
-    key: "ouverture_priere",
-    emoji: "🙏",
-    section: "4. Ouverture à Dieu",
+    key: "ouverture_priere",    
     question: "Est-ce que tu serais ouvert à prier ensemble pour cela ?"
   },
   {
@@ -58,9 +52,7 @@ const INTERVIEW_QUESTIONS = [
     question: "Est-ce que tu serais d'accord pour qu'on continue à avancer ensemble dans ce cheminement ?"
   },
   {
-    key: "etudes_parole",
-    emoji: "📖",
-    section: "5. Suivi",
+    key: "etudes_parole",    
     question: "Est-ce que tu aimerais découvrir davantage la Parole de Dieu avec nous ?"
   }
 ];

@@ -17,6 +17,7 @@
     "next-intl": "^3.0.0",
     "react-dom": "18.2.0",
     "recharts": "^2.12.7",
+    "jspdf": "^2.5.1",
     "dayjs": "^1.11.9",
     "chart.js": "^4.3.0",
     "chartjs-plugin-datalabels": "^2.2.0",

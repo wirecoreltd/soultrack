@@ -24,23 +24,40 @@ export default function ExportMembrePDF({
   const [loading, setLoading] = useState(false);
 
   const handleExport = async (e) => {
-    e.stopPropagation(); // évite de déclencher toggleDetails ou autres handlers parents
-    setLoading(true);
-    try {
-      await generateMembrePDF(membre, suivis, {
-        churchName,
-        logoBase64,
-        celluleName,
-        familleName,
-        conseillerName,
-      });
-    } catch (err) {
-      console.error("Erreur export PDF :", err);
-      alert("Impossible de générer le PDF. Vérifiez la console.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  e.stopPropagation();
+  setLoading(true);
+
+  try {
+    // 🔥 Charger les vrais suivis
+    const { data: suivisData, error } = await supabase
+      .from("suivis")
+      .select(`
+        *,
+        profiles (
+          prenom,
+          nom
+        )
+      `)
+      .eq("membre_id", membre.id)
+      .order("date_action", { ascending: false });
+
+    if (error) throw error;
+
+    await generateMembrePDF(membre, suivisData || [], {
+      churchName,
+      logoBase64,
+      celluleName,
+      familleName,
+      conseillerName,
+    });
+
+  } catch (err) {
+    console.error("Erreur export PDF :", err);
+    alert("Impossible de générer le PDF.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <button

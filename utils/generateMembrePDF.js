@@ -14,7 +14,11 @@ function da(str) {
     .replace(/[ùûü]/g, "u").replace(/[ÙÛÜ]/g, "U")
     .replace(/ç/g, "c").replace(/Ç/g, "C")
     .replace(/ñ/g, "n").replace(/Ñ/g, "N")
-    .replace(/—/g, "-").replace(/['']/g, "'").replace(/[""]/g, '"');
+    .replace(/—/g, "-").replace(/['']/g, "'").replace(/[""]/g, '"')
+    // Supprimer les emojis (jsPDF ne les supporte pas)
+    .replace(/[\u{1F300}-\u{1FAFF}]/gu, "")
+    .replace(/[\u2600-\u27BF]/g, "")
+    .trim();
 }
 
 function safe(val) {
@@ -36,7 +40,14 @@ function parseBesoins(val) {
   if (!val) return [];
   try {
     const parsed = typeof val === "string" ? JSON.parse(val) : val;
-    return Array.isArray(parsed) ? parsed.map((b) => da(String(b))) : [];
+    if (!Array.isArray(parsed)) return [];
+    // Support ancien format (strings) et nouveau format (objets {label, statut})
+    return parsed.map((b) => {
+      if (typeof b === "object" && b !== null) {
+        return { label: da(String(b.label || b)), statut: da(String(b.statut || "En suivi")) };
+      }
+      return { label: da(String(b)), statut: "En suivi" };
+    });
   } catch { return []; }
 }
 
@@ -73,24 +84,31 @@ const INTERVIEW_QUESTIONS = [
   { key: "domaine_service",    label: "Domaine de service" },
 ];
 
+// ─── Couleurs ─────────────────────────────────────────────────────────────────
 const C = {
   navy:        [46,  49,  146],
   navyLight:   [79,  84,  201],
+  navyXLight:  [235, 238, 255],
   white:       [255, 255, 255],
   gray50:      [248, 250, 252],
   gray100:     [226, 232, 240],
+  gray200:     [203, 213, 225],
   gray400:     [148, 163, 184],
+  gray500:     [100, 116, 139],
   gray600:     [71,  85,  105],
   gray700:     [51,  65,  85],
   green:       [22,  163, 74],
   greenLight:  [220, 252, 231],
+  greenDark:   [15,  118, 55],
   orange:      [249, 115, 22],
   orangeLight: [255, 237, 213],
   blue:        [37,  99,  235],
   blueLight:   [219, 234, 254],
   amber:       [217, 119, 6],
+  amberLight:  [254, 243, 199],
 };
 
+// ─── Primitives ───────────────────────────────────────────────────────────────
 const setFill      = (doc, rgb) => doc.setFillColor(rgb[0], rgb[1], rgb[2]);
 const setDraw      = (doc, rgb) => doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
 const setTextColor = (doc, rgb) => doc.setTextColor(rgb[0], rgb[1], rgb[2]);
@@ -105,19 +123,21 @@ function strokeRoundedRect(doc, x, y, w, h, r, rgb, lw = 0.3) {
   setDraw(doc, rgb); doc.setLineWidth(lw); doc.roundedRect(x, y, w, h, r, r, "S");
 }
 
+// Header de section : barre navy avec texte blanc, retourne y après
 function sectionHeader(doc, label, x, y, w) {
-  fillRect(doc, x, y, w, 7, C.navy);
+  fillRoundedRect(doc, x, y, w, 8, 2, C.navy);
   setTextColor(doc, C.white);
-  doc.setFontSize(8); doc.setFont("helvetica", "bold");
-  doc.text(label, x + 3, y + 4.8);
-  return y + 9;
+  doc.setFontSize(8.5); doc.setFont("helvetica", "bold");
+  doc.text(label, x + 4, y + 5.5);
+  return y + 11;
 }
 
+// Ligne clé/valeur, retourne l'extra-hauteur si wrap
 function kvRow(doc, key, value, x, y, totalWidth) {
-  const kw = totalWidth * 0.45;
-  const vw = totalWidth * 0.52;
+  const kw = totalWidth * 0.48;
+  const vw = totalWidth * 0.50;
   doc.setFont("helvetica", "normal"); doc.setFontSize(8);
-  setTextColor(doc, C.gray600);
+  setTextColor(doc, C.gray500);
   doc.text(key, x, y);
   doc.setFont("helvetica", "bold"); doc.setFontSize(8);
   setTextColor(doc, C.gray700);
@@ -129,7 +149,7 @@ function kvRow(doc, key, value, x, y, totalWidth) {
 function kvBlockHeight(doc, rows, colWidth, rowH) {
   let h = 0;
   rows.forEach(([, v]) => {
-    const lines = doc.splitTextToSize(String(v ?? "-"), colWidth * 0.52);
+    const lines = doc.splitTextToSize(String(v ?? "-"), colWidth * 0.50);
     h += rowH + (lines.length > 1 ? (lines.length - 1) * 4.5 : 0);
   });
   return h;
@@ -147,91 +167,106 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   } = options;
 
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-  const PW = 210, PH = 297, ML = 12, MR = 12;
-  const CW = PW - ML - MR;
+  const PW = 210, PH = 297, ML = 14, MR = 14;
+  const CW = PW - ML - MR; // 182mm
   let y = 0;
 
   const ensureSpace = (needed) => {
-    if (y + needed > PH - 15) { doc.addPage(); y = 15; }
+    if (y + needed > PH - 14) { doc.addPage(); y = 16; }
   };
 
-  // ── HEADER ────────────────────────────────────────────────────────
-  fillRect(doc, 0, 0, PW, 28, C.navy);
-  fillRect(doc, 0, 22, PW, 6, C.navyLight);
+  // ════════════════════════════════════════════════════════════════
+  // HEADER
+  // ════════════════════════════════════════════════════════════════
+  fillRect(doc, 0, 0, PW, 30, C.navy);
+  fillRect(doc, 0, 24, PW, 6, C.navyLight);
 
+  // Logo
   if (logoBase64) {
-    try { doc.addImage(logoBase64, "PNG", ML, 4, 18, 18); }
-    catch {
-      fillRoundedRect(doc, ML, 4, 18, 18, 3, [100, 105, 200]);
-      setTextColor(doc, C.white); doc.setFontSize(16); doc.setFont("helvetica", "bold");
-      doc.text("+", ML + 9, 15.5, { align: "center" });
-    }
+    try { doc.addImage(logoBase64, "PNG", ML, 5, 18, 18); }
+    catch { _drawLogoPlaceholder(doc, ML); }
   } else {
-    fillRoundedRect(doc, ML, 4, 18, 18, 3, [100, 105, 200]);
-    setTextColor(doc, C.white); doc.setFontSize(16); doc.setFont("helvetica", "bold");
-    doc.text("+", ML + 9, 15.5, { align: "center" });
+    _drawLogoPlaceholder(doc, ML);
   }
 
-  setTextColor(doc, C.white); doc.setFontSize(12); doc.setFont("helvetica", "bold");
-  doc.text(churchName, ML + 22, 11);
+  function _drawLogoPlaceholder(d, x) {
+    fillRoundedRect(d, x, 5, 18, 18, 3, [100, 105, 200]);
+    setTextColor(d, C.white); d.setFontSize(14); d.setFont("helvetica", "bold");
+    d.text("+", x + 9, 16, { align: "center" });
+  }
+
+  setTextColor(doc, C.white);
+  doc.setFontSize(13); doc.setFont("helvetica", "bold");
+  doc.text(da(churchName), ML + 22, 13);
   doc.setFontSize(7.5); doc.setFont("helvetica", "normal");
   setTextColor(doc, [180, 185, 230]);
-  doc.text("FICHE CONFIDENTIELLE", ML + 22, 17);
+  doc.text("FICHE CONFIDENTIELLE", ML + 22, 19);
 
   setTextColor(doc, [180, 185, 230]); doc.setFontSize(7);
-  doc.text("Genere le", PW - MR, 10, { align: "right" });
+  doc.text("Genere le", PW - MR, 11, { align: "right" });
   setTextColor(doc, C.white); doc.setFontSize(9); doc.setFont("helvetica", "bold");
-  doc.text(formatDateFr(new Date().toISOString()), PW - MR, 16, { align: "right" });
+  doc.text(formatDateFr(new Date().toISOString()), PW - MR, 17, { align: "right" });
 
-  y = 33;
+  y = 36;
 
-  // ── BADGE + NOM ───────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  // BADGE + NOM + TEL
+  // ════════════════════════════════════════════════════════════════
   const etat      = (membre.etat_contact || "").toLowerCase().trim();
   const etatLabel = etat === "nouveau" ? "Nouveau" : etat === "existant" ? "Existant" : etat === "inactif" ? "Inactif" : safe(membre.etat_contact);
   const etatColor = etat === "nouveau" ? C.orange : etat === "existant" ? C.green : C.gray400;
   const etatBg    = etat === "nouveau" ? C.orangeLight : etat === "existant" ? C.greenLight : C.gray100;
 
-  const badgeW = 30;
-  fillRoundedRect(doc, PW / 2 - badgeW / 2, y, badgeW, 7, 3, etatBg);
+  // Badge statut
+  const badgeW = doc.getTextWidth(etatLabel) + 10;
+  const badgeX = PW / 2 - badgeW / 2;
+  fillRoundedRect(doc, badgeX, y, badgeW, 7, 3, etatBg);
   setTextColor(doc, etatColor); doc.setFontSize(8); doc.setFont("helvetica", "bold");
-  doc.text(etatLabel, PW / 2, y + 4.8, { align: "center" });
+  doc.text(etatLabel, PW / 2, y + 5, { align: "center" });
+
+  // Etoile si star
   if (membre.star === true && etat === "existant") {
     setTextColor(doc, C.amber); doc.setFontSize(11);
-    doc.text("*", PW / 2 + badgeW / 2 + 3, y + 5.5);
+    doc.text("*", badgeX + badgeW + 3, y + 5.5);
   }
-  y += 11;
+  y += 10;
 
-  setTextColor(doc, C.navy); doc.setFontSize(20); doc.setFont("helvetica", "bold");
+  // Nom
+  setTextColor(doc, C.navy); doc.setFontSize(22); doc.setFont("helvetica", "bold");
   doc.text(`${safe(membre.prenom)} ${safe(membre.nom)}`, PW / 2, y, { align: "center" });
-  y += 7;
+  y += 8;
 
+  // Téléphone
   if (membre.telephone) {
     setTextColor(doc, C.orange); doc.setFontSize(10); doc.setFont("helvetica", "normal");
-    doc.text(`Tel : ${membre.telephone}`, PW / 2, y, { align: "center" });
-    y += 6;
+    doc.text(`Tel : ${da(String(membre.telephone))}`, PW / 2, y, { align: "center" });
+    y += 7;
   }
 
-  setDraw(doc, C.orange); doc.setLineWidth(0.5);
-  doc.line(ML, y, PW - MR, y);
-  y += 5;
+  // Séparateur orange
+  setDraw(doc, C.orange); doc.setLineWidth(0.6);
+  doc.line(ML + 20, y, PW - MR - 20, y);
+  y += 7;
 
-  // ── Sections 2 colonnes ───────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  // Sections 2 colonnes
+  // ════════════════════════════════════════════════════════════════
   const COL_W  = CW / 2 - 3;
   const COL2_X = ML + COL_W + 6;
-  const ROW_H  = 5.5;
+  const ROW_H  = 6;
 
   function renderTwoColSection(leftHeader, leftRows, rightHeader, rightRows) {
-    const leftH  = 9 + kvBlockHeight(doc, leftRows,  COL_W, ROW_H);
-    const rightH = 9 + kvBlockHeight(doc, rightRows, COL_W, ROW_H);
-    ensureSpace(Math.max(leftH, rightH) + 4);
+    const lH = 11 + kvBlockHeight(doc, leftRows,  COL_W, ROW_H);
+    const rH = 11 + kvBlockHeight(doc, rightRows, COL_W, ROW_H);
+    ensureSpace(Math.max(lH, rH) + 5);
 
-    let yL = sectionHeader(doc, leftHeader, ML, y, COL_W);
+    let yL = sectionHeader(doc, leftHeader,  ML,      y, COL_W);
     leftRows.forEach(([k, v]) => { yL += ROW_H + kvRow(doc, k, v, ML, yL, COL_W); });
 
-    let yR = sectionHeader(doc, rightHeader, COL2_X, y, COL_W);
+    let yR = sectionHeader(doc, rightHeader, COL2_X,  y, COL_W);
     rightRows.forEach(([k, v]) => { yR += ROW_H + kvRow(doc, k, v, COL2_X, yR, COL_W); });
 
-    y = Math.max(yL, yR) + 4;
+    y = Math.max(yL, yR) + 5;
   }
 
   const statutSuiviLabels = { 1:"En Attente", 2:"En Suivis", 3:"Integre", 4:"Refus" };
@@ -273,186 +308,216 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
     ]
   );
 
-  // ── SOIN PASTORAL ─────────────────────────────────────────────────
-  ensureSpace(16);
-  y = sectionHeader(doc, "SOIN PASTORAL - BESOINS", ML, y, CW);
+  // ════════════════════════════════════════════════════════════════
+  // SOIN PASTORAL — BESOINS
+  // ════════════════════════════════════════════════════════════════
+  ensureSpace(18);
+  y = sectionHeader(doc, "SOIN PASTORAL  -  BESOINS", ML, y, CW);
 
   const besoins = parseBesoins(membre.besoin);
   if (besoins.length > 0) {
     let bx = ML;
+    const tagH = 7;
     besoins.forEach((b) => {
-      const bLabel = String(b);
+      const resolu = (b.statut || "").toLowerCase().includes("resolu") ||
+                     (b.statut || "").toLowerCase().includes("résolu");
+      const tagLabel = resolu ? `v ${b.label} - Resolu` : b.label;
       doc.setFontSize(7.5); doc.setFont("helvetica", "bold");
-      const bw = Math.max(doc.getTextWidth(bLabel) + 8, 20);
-      if (bx + bw > PW - MR) { bx = ML; y += 8; ensureSpace(10); }
-      fillRoundedRect(doc, bx, y - 4, bw, 6.5, 2, C.orangeLight);
-      strokeRoundedRect(doc, bx, y - 4, bw, 6.5, 2, C.orange);
-      setTextColor(doc, C.orange);
-      doc.text(bLabel, bx + 4, y + 0.5);
-      bx += bw + 3;
+      const bw = Math.max(doc.getTextWidth(tagLabel) + 10, 22);
+      if (bx + bw > PW - MR) { bx = ML; y += tagH + 3; ensureSpace(12); }
+
+      const tagBg  = resolu ? C.greenLight  : C.orangeLight;
+      const tagStroke = resolu ? C.green    : C.orange;
+      const tagTx  = resolu ? C.greenDark   : C.orange;
+
+      fillRoundedRect(doc, bx, y - 1, bw, tagH, 3, tagBg);
+      strokeRoundedRect(doc, bx, y - 1, bw, tagH, 3, tagStroke, 0.4);
+      setTextColor(doc, tagTx);
+      doc.text(tagLabel, bx + 5, y + 4);
+      bx += bw + 4;
     });
-    y += 8;
+    y += tagH + 4;
   } else {
     setTextColor(doc, C.gray400); doc.setFontSize(8); doc.setFont("helvetica", "italic");
-    doc.text("Aucun besoin enregistre", ML, y);
-    y += 6;
+    doc.text("Aucun besoin enregistre", ML, y + 3);
+    y += 9;
   }
 
   if (membre.commentaire_suivis) {
     ensureSpace(10);
-    setTextColor(doc, C.gray600); doc.setFontSize(8); doc.setFont("helvetica", "italic");
-    const lines = doc.splitTextToSize(`Commentaire : ${da(membre.commentaire_suivis)}`, CW);
-    doc.text(lines, ML, y);
-    y += lines.length * 4.5 + 2;
+    // Séparateur
+    setDraw(doc, C.gray200); doc.setLineWidth(0.3);
+    doc.line(ML, y, PW - MR, y);
+    y += 4;
+    setTextColor(doc, C.gray500); doc.setFontSize(8); doc.setFont("helvetica", "italic");
+    const cLines = doc.splitTextToSize(`Commentaire suivi : ${da(membre.commentaire_suivis)}`, CW);
+    doc.text(cLines, ML, y);
+    y += cLines.length * 4.5 + 3;
   }
 
-  y += 3;
+  y += 4;
 
-  // ── HISTORIQUE DES SUIVIS ─────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  // HISTORIQUE DES SUIVIS
+  // ════════════════════════════════════════════════════════════════
   if (suivis.length > 0) {
-    ensureSpace(14);
+    ensureSpace(15);
     y = sectionHeader(doc, "HISTORIQUE DES SUIVIS", ML, y, CW);
+    y += 1;
 
     suivis.forEach((s) => {
       const besoinsArr  = parseHistoriqueBesoin(s.besoin);
-      const statut      = s.statut || "En suivi";
-      const accentColor = statut === "Resolu" ? C.green : C.navyLight;
-      const halfI       = (CW - 14) / 2;
+      const statut      = da(s.statut || "En suivi");
+      const resolu      = statut.toLowerCase().includes("resolu") || statut.toLowerCase().includes("résolu");
+      const accentColor = resolu ? C.green : C.navyLight;
+      const halfI       = (CW - 16) / 2;
 
       const interviewRows = INTERVIEW_QUESTIONS.filter(
         (q) => s[q.key] !== null && s[q.key] !== undefined && String(s[q.key]).trim() !== ""
       );
-      const hasInterview  = interviewRows.length > 0;
+      const hasInterview = interviewRows.length > 0;
 
       const authorName = s.profiles
-        ? `${s.profiles.prenom || ""} ${s.profiles.nom || ""}`.trim()
+        ? da(`${s.profiles.prenom || ""} ${s.profiles.nom || ""}`.trim())
         : "";
 
-      // ── Stratégie : on mesure d'abord, on dessine ensuite ─────────
-      // Passe 1 : calculer la hauteur exacte du contenu
-      // (même logique que le rendu, sans appel doc.text/rect)
-
+      // ── Mesures ──────────────────────────────────────────────────
       const bLineText = besoinsArr.length > 0
         ? "Besoin : " + besoinsArr.map((b) => `${b.label} (${b.statut})`).join(", ")
         : null;
-      const bLinesArr = bLineText ? doc.splitTextToSize(bLineText, CW - 12) : [];
-
+      const bLinesArr = bLineText ? doc.splitTextToSize(bLineText, CW - 14) : [];
       const cLinesArr = s.commentaire
-        ? doc.splitTextToSize(`"${da(s.commentaire)}"`, CW - 14)
+        ? doc.splitTextToSize(`"${da(s.commentaire)}"`, CW - 16)
         : [];
 
-      // Paires de questions avec leurs hauteurs de boîte
+      // Paires questions
       const pairsData = [];
       if (hasInterview) {
         for (let i = 0; i < interviewRows.length; i += 2) {
           const lq = interviewRows[i];
           const rq = interviewRows[i + 1];
-          const ll = doc.splitTextToSize(safe(s[lq.key]), halfI - 6);
-          const rl = rq ? doc.splitTextToSize(safe(s[rq.key]), halfI - 6) : [];
-          const lh = Math.max(13, 9 + ll.length * 4);
-          const rh = Math.max(13, 9 + rl.length * 4);
+          const ll = doc.splitTextToSize(safe(s[lq.key]), halfI - 8);
+          const rl = rq ? doc.splitTextToSize(safe(s[rq.key]), halfI - 8) : [];
+          const lh = Math.max(14, 10 + ll.length * 4.5);
+          const rh = Math.max(14, 10 + rl.length * 4.5);
           pairsData.push({ lq, rq, ll, rl, boxH: Math.max(lh, rh) });
         }
       }
 
-      // Hauteur totale
-      let cardH = 13; // header date+statut (12mm contenu + 1mm padding)
+      // Hauteur totale de la carte
+      let cardH = 14; // en-tête
       if (bLinesArr.length > 0)  cardH += bLinesArr.length * 4.5 + 3;
-      if (cLinesArr.length > 0)  cardH += cLinesArr.length * 4.5 + 3;
+      if (cLinesArr.length > 0)  cardH += cLinesArr.length * 4.5 + 4;
       if (hasInterview) {
-        cardH += 9; // barre titre questions
-        pairsData.forEach((p) => { cardH += p.boxH + 2; });
+        cardH += 10; // barre titre
+        pairsData.forEach((p) => { cardH += p.boxH + 3; });
+        cardH += 2;
       }
-      if (authorName) cardH += 5;
-      cardH += 4; // marge basse
+      if (authorName) cardH += 7;
+      cardH += 5; // marge basse
 
-      // Saut de page si besoin, puis on pose la carte
-      ensureSpace(cardH + 4);
+      ensureSpace(cardH + 5);
       const cardY = y;
 
-      // ── Passe 2 : rendu ───────────────────────────────────────────
-      // Fond + bordure + accent
-      fillRoundedRect(doc, ML, cardY, CW, cardH, 3, C.gray50);
-      strokeRoundedRect(doc, ML, cardY, CW, cardH, 3, C.gray100);
-      setFill(doc, accentColor); doc.rect(ML, cardY, 2, cardH, "F");
+      // ── Fond de carte ─────────────────────────────────────────────
+      // Bordure extérieure légère
+      fillRoundedRect(doc, ML, cardY, CW, cardH, 3, C.white);
+      strokeRoundedRect(doc, ML, cardY, CW, cardH, 3, C.gray200, 0.5);
+      // Barre accent gauche arrondie
+      fillRoundedRect(doc, ML, cardY, 3, cardH, 1.5, accentColor);
 
-      // En-tête date / statut
-      setTextColor(doc, C.gray700); doc.setFontSize(9); doc.setFont("helvetica", "bold");
-      doc.text(`${formatDateFr(s.date_action)}  -  ${safe(s.action_type)}`, ML + 5, cardY + 7);
+      // ── En-tête carte ─────────────────────────────────────────────
+      setTextColor(doc, C.gray700); doc.setFontSize(9.5); doc.setFont("helvetica", "bold");
+      doc.text(
+        `${formatDateFr(s.date_action)}  \u2014  ${safe(s.action_type)}`,
+        ML + 7, cardY + 9
+      );
 
-      const sbw  = doc.getTextWidth(statut) + 8;
-      const sbBg = statut === "Resolu" ? C.greenLight : C.blueLight;
-      const sbTx = statut === "Resolu" ? C.green : C.blue;
-      fillRoundedRect(doc, PW - MR - sbw, cardY + 2, sbw, 6, 2, sbBg);
+      // Badge statut
+      const sbLabel = resolu ? "Resolu" : statut;
+      const sbw     = doc.getTextWidth(sbLabel) + 10;
+      const sbBg    = resolu ? C.greenLight : C.blueLight;
+      const sbTx    = resolu ? C.greenDark  : C.blue;
+      fillRoundedRect(doc, PW - MR - sbw, cardY + 3, sbw, 7, 3, sbBg);
       setTextColor(doc, sbTx); doc.setFontSize(7.5); doc.setFont("helvetica", "bold");
-      doc.text(statut, PW - MR - sbw + 4, cardY + 6.5);
+      doc.text(sbLabel, PW - MR - sbw + 5, cardY + 8);
 
-      // cy suit le curseur de contenu
-      let cy = cardY + 12;
+      let cy = cardY + 13;
 
+      // Besoins
       if (bLinesArr.length > 0) {
         setTextColor(doc, C.gray400); doc.setFontSize(7.5); doc.setFont("helvetica", "normal");
-        doc.text(bLinesArr, ML + 5, cy);
+        doc.text(bLinesArr, ML + 7, cy);
         cy += bLinesArr.length * 4.5 + 3;
       }
 
+      // Commentaire
       if (cLinesArr.length > 0) {
-        setTextColor(doc, C.gray600); doc.setFontSize(8); doc.setFont("helvetica", "italic");
-        doc.text(cLinesArr, ML + 5, cy);
-        cy += cLinesArr.length * 4.5 + 3;
+        setTextColor(doc, C.gray600); doc.setFontSize(8.5); doc.setFont("helvetica", "italic");
+        doc.text(cLinesArr, ML + 7, cy);
+        cy += cLinesArr.length * 4.5 + 4;
       }
 
+      // Questions d'entretien
       if (hasInterview) {
-        fillRoundedRect(doc, ML + 4, cy - 1, CW - 8, 7, 2, [235, 238, 255]);
+        // Barre titre questions
+        fillRoundedRect(doc, ML + 4, cy, CW - 8, 8, 2, C.navyXLight);
         setTextColor(doc, C.navy); doc.setFontSize(7.5); doc.setFont("helvetica", "bold");
-        doc.text("QUESTIONS D'ENTRETIEN", ML + 7, cy + 4);
-        cy += 9;
+        doc.text("QUESTIONS D'ENTRETIEN", ML + 8, cy + 5.5);
+        cy += 11;
 
         pairsData.forEach(({ lq, rq, ll, rl, boxH }) => {
+          const gap = 4;
+          const lx  = ML + 4;
+          const rx  = ML + 4 + halfI + gap;
+
           // Cellule gauche
-          fillRoundedRect(doc, ML + 4, cy, halfI, boxH, 2, C.white);
-          strokeRoundedRect(doc, ML + 4, cy, halfI, boxH, 2, C.gray100);
+          fillRoundedRect(doc, lx, cy, halfI, boxH, 2, C.gray50);
+          strokeRoundedRect(doc, lx, cy, halfI, boxH, 2, C.gray100, 0.3);
           setTextColor(doc, C.navyLight); doc.setFontSize(6.5); doc.setFont("helvetica", "bold");
-          doc.text(lq.label, ML + 7, cy + 4);
-          setTextColor(doc, C.gray700); doc.setFontSize(7.5); doc.setFont("helvetica", "normal");
-          doc.text(ll, ML + 7, cy + 9);
+          doc.text(lq.label, lx + 4, cy + 5);
+          setTextColor(doc, C.gray700); doc.setFontSize(8); doc.setFont("helvetica", "italic");
+          doc.text(ll, lx + 4, cy + 10);
 
           // Cellule droite
           if (rq) {
-            const rx = ML + 6 + halfI;
-            fillRoundedRect(doc, rx, cy, halfI, boxH, 2, C.white);
-            strokeRoundedRect(doc, rx, cy, halfI, boxH, 2, C.gray100);
+            fillRoundedRect(doc, rx, cy, halfI, boxH, 2, C.gray50);
+            strokeRoundedRect(doc, rx, cy, halfI, boxH, 2, C.gray100, 0.3);
             setTextColor(doc, C.navyLight); doc.setFontSize(6.5); doc.setFont("helvetica", "bold");
-            doc.text(rq.label, rx + 3, cy + 4);
-            setTextColor(doc, C.gray700); doc.setFontSize(7.5); doc.setFont("helvetica", "normal");
-            doc.text(rl, rx + 3, cy + 9);
+            doc.text(rq.label, rx + 4, cy + 5);
+            setTextColor(doc, C.gray700); doc.setFontSize(8); doc.setFont("helvetica", "italic");
+            doc.text(rl, rx + 4, cy + 10);
           }
 
-          cy += boxH + 2;
+          cy += boxH + 3;
         });
+        cy += 2;
       }
 
+      // Auteur
       if (authorName) {
-        setTextColor(doc, C.gray400); doc.setFontSize(7); doc.setFont("helvetica", "normal");
-        doc.text(`Redige par : ${authorName}`, ML + 5, cy + 2);
+        setTextColor(doc, C.gray400); doc.setFontSize(7.5); doc.setFont("helvetica", "normal");
+        doc.text(`Redige par : ${authorName}`, ML + 7, cy + 3);
       }
 
-      y = cardY + cardH + 4;
+      y = cardY + cardH + 5;
     });
   }
 
-  // ── FOOTER ────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  // FOOTER
+  // ════════════════════════════════════════════════════════════════
   const totalPages = doc.internal.getNumberOfPages();
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
-    fillRect(doc, 0, PH - 10, PW, 10, C.gray50);
-    setDraw(doc, C.gray100); doc.setLineWidth(0.3);
-    doc.line(0, PH - 10, PW, PH - 10);
+    setDraw(doc, C.gray200); doc.setLineWidth(0.3);
+    doc.line(ML, PH - 12, PW - MR, PH - 12);
     setTextColor(doc, C.gray400); doc.setFontSize(7); doc.setFont("helvetica", "normal");
-    doc.text("Document confidentiel - Usage pastoral uniquement", ML, PH - 4);
-    doc.text(`Page ${p} / ${totalPages}`, PW - MR, PH - 4, { align: "right" });
+    doc.text("Document confidentiel  -  Usage pastoral uniquement", ML, PH - 7);
+    doc.text(`Page ${p} / ${totalPages}`, PW - MR, PH - 7, { align: "right" });
   }
 
+  // Sauvegarde
   const prenom = (membre.prenom || "").toLowerCase().replace(/\s+/g, "_");
   const nom    = (membre.nom    || "").toLowerCase().replace(/\s+/g, "_");
   const date   = new Date().toISOString().split("T")[0];

@@ -12,27 +12,33 @@ const INTERVIEW_QUESTIONS = [
     question: "Comment vas-tu vraiment en ce moment ?"
   },
   {
-    key: "situation_actuelle",    
+    key: "situation_actuelle",
+    emoji: "🧭",
+    section: "1. État actuel",
     question: "Qu'est-ce que tu traverses actuellement dans ta vie ?"
   },
   {
     key: "relation_avec_dieu",
-    emoji: "❤️",
+    emoji: "🔍",
     section: "2. Vie spirituelle",
     question: "Est-ce que tu as déjà réfléchi à ta relation avec Dieu après notre échange ?"
   },
   {
-    key: "perception_spirituelle",    
+    key: "perception_spirituelle",
+    emoji: "🌿",
+    section: "2. Vie spirituelle",
     question: "Qu'est-ce que Dieu représente pour toi aujourd'hui ?"
   },
   {
     key: "besoins_principaux",
-    emoji: "❓",
+    emoji: "💔",
     section: "3. Besoins & situation",
     question: "Y a-t-il un domaine où tu ressens un besoin ou une difficulté en ce moment ?"
   },
   {
-    key: "preoccupations",    
+    key: "preoccupations",
+    emoji: "🧠",
+    section: "3. Besoins & situation",
     question: "Qu'est-ce qui te préoccupe le plus actuellement ?"
   },
   {
@@ -42,7 +48,9 @@ const INTERVIEW_QUESTIONS = [
     question: "Est-ce que tu aimerais que Dieu intervienne dans une situation de ta vie ?"
   },
   {
-    key: "ouverture_priere",    
+    key: "ouverture_priere",
+    emoji: "🙏",
+    section: "4. Ouverture à Dieu",
     question: "Est-ce que tu serais ouvert à prier ensemble pour cela ?"
   },
   {
@@ -52,7 +60,9 @@ const INTERVIEW_QUESTIONS = [
     question: "Est-ce que tu serais d'accord pour qu'on continue à avancer ensemble dans ce cheminement ?"
   },
   {
-    key: "etudes_parole",    
+    key: "etudes_parole",
+    emoji: "📖",
+    section: "5. Suivi",
     question: "Est-ce que tu aimerais découvrir davantage la Parole de Dieu avec nous ?"
   }
 ];
@@ -506,17 +516,20 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
           {!evangeliseNotFound && (
             <>
               <SectionTitle>🗣️ Questions d'entretien</SectionTitle>
-              {INTERVIEW_QUESTIONS.map((q) => (
-                <InterviewField
-                  key={q.key}
-                  emoji={q.emoji}
-                  section={q.section}
-                  question={q.question}
-                  indent={q.indent}
-                  value={form[q.key]}
-                  onChange={(v) => setForm((p) => ({ ...p, [q.key]: v }))}
-                />
-              ))}
+              {INTERVIEW_QUESTIONS.map((q, i) => {
+                const isFirstInSection = i === 0 || INTERVIEW_QUESTIONS[i - 1].section !== q.section;
+                return (
+                  <InterviewField
+                    key={q.key}
+                    emoji={q.emoji}
+                    section={isFirstInSection ? q.section : null}
+                    question={q.question}
+                    indent={q.indent}
+                    value={form[q.key]}
+                    onChange={(v) => setForm((p) => ({ ...p, [q.key]: v }))}
+                  />
+                );
+              })}
 
               <Field label="Commentaire">
                 <textarea placeholder="Commentaire..." value={form.commentaire} onChange={(e) => setForm({ ...form, commentaire: e.target.value })} className="inp" rows={3} />

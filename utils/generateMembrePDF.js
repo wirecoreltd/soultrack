@@ -1,6 +1,4 @@
 // utils/generateMembrePDF.js
-// Génère une fiche PDF pour un membre
-// Dépendances : npm install jspdf 
 
 import jsPDF from "jspdf";
 

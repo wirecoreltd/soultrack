@@ -6,50 +6,78 @@ import PastoralAssistant from "../components/PastoralAssistant";
 
 const INTERVIEW_QUESTIONS = [
   {
-    key: "conversion",
-    emoji: "✨",
-    section: "1. Conversion",
-    question: "Comment as-tu connu Jésus ?"
+    key: "etat_actuel",
+    emoji: "❤️",
+    section: "1. État actuel",
+    question: "Comment vas-tu vraiment en ce moment ?"
   },
   {
-    key: "eglise",
-    emoji: "⛪",
-    section: "2. Vie d'église",
-    question: "Est-ce que tu fréquentes une église actuellement ?"
+    key: "situation_actuelle",
+    emoji: "🧭",
+    section: "1. État actuel",
+    question: "Qu'est-ce que tu traverses actuellement dans ta vie ?"
   },
   {
-    key: "priere",
+    key: "relation_avec_dieu",
+    emoji: "🔍",
+    section: "2. Vie spirituelle",
+    question: "Est-ce que tu as déjà réfléchi à ta relation avec Dieu après notre échange ?"
+  },
+  {
+    key: "perception_spirituelle",
+    emoji: "🌿",
+    section: "2. Vie spirituelle",
+    question: "Qu'est-ce que Dieu représente pour toi aujourd'hui ?"
+  },
+  {
+    key: "besoins_principaux",
+    emoji: "💔",
+    section: "3. Besoins & situation",
+    question: "Y a-t-il un domaine où tu ressens un besoin ou une difficulté en ce moment ?"
+  },
+  {
+    key: "preoccupations",
+    emoji: "🧠",
+    section: "3. Besoins & situation",
+    question: "Qu'est-ce qui te préoccupe le plus actuellement ?"
+  },
+  {
+    key: "ouverture_spirituelle",
+    emoji: "✝️",
+    section: "4. Ouverture à Dieu",
+    question: "Est-ce que tu aimerais que Dieu intervienne dans une situation de ta vie ?"
+  },
+  {
+    key: "ouverture_priere",
     emoji: "🙏",
-    section: "3. Vie spirituelle",
-    question: "Est-ce que tu prends un temps de prière ou de lecture biblique ?"
+    section: "4. Ouverture à Dieu",
+    question: "Est-ce que tu serais ouvert à prier ensemble pour cela ?"
   },
   {
-    key: "besoin_spirituel",
-    emoji: "💛",
-    section: "4. Besoins spirituels",
-    question: "Dans quel domaine aimerais-tu être accompagné spirituellement ?"
+    key: "accompagnement_suivi",
+    emoji: "🌱",
+    section: "5. Suivi",
+    question: "Est-ce que tu serais d'accord pour qu'on continue à avancer ensemble dans ce cheminement ?"
   },
   {
-    key: "questions_foi",
-    emoji: "❓",
-    section: "5. Questions",
-    question: "As-tu des questions concernant la foi ou la Bible ?"
-  },
-  {
-    key: "engagement",
-    emoji: "🔥",
-    section: "6. Engagement",
-    question: "Souhaites-tu avancer davantage avec Dieu ?"
+    key: "etudes_parole",
+    emoji: "📖",
+    section: "5. Suivi",
+    question: "Est-ce que tu aimerais découvrir davantage la Parole de Dieu avec nous ?"
   }
 ];
 
 const EMPTY_INTERVIEW = {
-  conversion: "",
-  eglise: "",
-  priere: "",
-  besoin_spirituel: "",
-  questions_foi: "",
-  engagement: "",
+  etat_actuel: "",
+  situation_actuelle: "",
+  relation_avec_dieu: "",
+  perception_spirituelle: "",
+  besoins_principaux: "",
+  preoccupations: "",
+  ouverture_spirituelle: "",
+  ouverture_priere: "",
+  accompagnement_suivi: "",
+  etudes_parole: "",
 };
 
 export default function SuiviEvanPopup({ member, onClose, user }) {
@@ -202,12 +230,16 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
       besoin: besoinChecked,
       besoinStatuts,
       commentaire: s.commentaire || "",
-      conversion: s.conversion || "",
-      eglise: s.eglise || "",
-      priere: s.priere || "",
-      besoin_spirituel: s.besoin_spirituel || "",
-      questions_foi: s.questions_foi || "",
-      engagement: s.engagement || "",
+      etat_actuel: s.etat_actuel || "",
+      situation_actuelle: s.situation_actuelle || "",
+      relation_avec_dieu: s.relation_avec_dieu || "",
+      perception_spirituelle: s.perception_spirituelle || "",
+      besoins_principaux: s.besoins_principaux || "",
+      preoccupations: s.preoccupations || "",
+      ouverture_spirituelle: s.ouverture_spirituelle || "",
+      ouverture_priere: s.ouverture_priere || "",
+      accompagnement_suivi: s.accompagnement_suivi || "",
+      etudes_parole: s.etudes_parole || "",
     });
     setTimeout(() => formTopRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
@@ -262,12 +294,16 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
     ];
 
     const interviewFields = {
-      conversion: form.conversion || null,
-      eglise: form.eglise || null,
-      priere: form.priere || null,
-      besoin_spirituel: form.besoin_spirituel || null,
-      questions_foi: form.questions_foi || null,
-      engagement: form.engagement || null,
+      etat_actuel: form.etat_actuel || null,
+      situation_actuelle: form.situation_actuelle || null,
+      relation_avec_dieu: form.relation_avec_dieu || null,
+      perception_spirituelle: form.perception_spirituelle || null,
+      besoins_principaux: form.besoins_principaux || null,
+      preoccupations: form.preoccupations || null,
+      ouverture_spirituelle: form.ouverture_spirituelle || null,
+      ouverture_priere: form.ouverture_priere || null,
+      accompagnement_suivi: form.accompagnement_suivi || null,
+      etudes_parole: form.etudes_parole || null,
     };
 
     const payload = {

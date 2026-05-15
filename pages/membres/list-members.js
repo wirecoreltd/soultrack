@@ -1044,6 +1044,14 @@ useEffect(() => {
             </div>
           )}
 
+          {/* Bouton Détails */}
+          <button
+            onClick={() => toggleDetails(m.id)}
+            className="text-orange-500 underline text-sm mt-3"
+          >
+            {isOpen ? "Fermer détails" : "Détails"}
+          </button>         
+
 {/* Bouton PDF à droite */}
 <div className="w-full flex justify-end mt-3">
   <ExportMembrePDF
@@ -1059,14 +1067,6 @@ useEffect(() => {
     conseillerName={getConseillersForMember(m.id)}
   />
 </div>
-
-          {/* Bouton Détails */}
-          <button
-            onClick={() => toggleDetails(m.id)}
-            className="text-orange-500 underline text-sm mt-3"
-          >
-            {isOpen ? "Fermer détails" : "Détails"}
-          </button>          
 
           {/* Détails */}
           {isOpen && (

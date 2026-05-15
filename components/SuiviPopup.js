@@ -346,25 +346,6 @@ export default function SuiviPopup({ member, onClose, user }) {
             </div>
           </Field>
 
-          {/* QUESTIONS D'ENTRETIEN */}
-          <SectionTitle>🗣️ Questions d'entretien</SectionTitle>
-          {INTERVIEW_QUESTIONS.map((q) => (
-            <InterviewField
-              key={q.key}
-              emoji={q.emoji}
-              section={q.section}
-              question={q.question}
-              indent={q.indent}
-              value={form[q.key]}
-              onChange={(v) => setForm((p) => ({ ...p, [q.key]: v }))}
-            />
-          ))}
-
-          {/* COMMENTAIRE */}
-          <Field label="Commentaire">
-            <textarea placeholder="Commentaire..." value={form.commentaire} onChange={(e) => setForm({ ...form, commentaire: e.target.value })} className="inp" rows={3} />
-          </Field>
-
           {currentUserName && <p className="text-center text-sm text-gray-400">👤 {currentUserName}</p>}
 
           {/* ASSISTANT PASTORAL */}
@@ -434,6 +415,26 @@ export default function SuiviPopup({ member, onClose, user }) {
               </div>
             );
           })}
+
+          {/* QUESTIONS D'ENTRETIEN */}
+          <SectionTitle>🗣️ Questions d'entretien</SectionTitle>
+          {INTERVIEW_QUESTIONS.map((q) => (
+            <InterviewField
+              key={q.key}
+              emoji={q.emoji}
+              section={q.section}
+              question={q.question}
+              indent={q.indent}
+              value={form[q.key]}
+              onChange={(v) => setForm((p) => ({ ...p, [q.key]: v }))}
+            />
+          ))}
+
+          {/* COMMENTAIRE */}
+          <Field label="Commentaire">
+            <textarea placeholder="Commentaire..." value={form.commentaire} onChange={(e) => setForm({ ...form, commentaire: e.target.value })} className="inp" rows={3} />
+          </Field>
+
         </div>
 
         {/* FOOTER */}

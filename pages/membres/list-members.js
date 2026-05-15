@@ -1051,6 +1051,15 @@ useEffect(() => {
           >
             {isOpen ? "Fermer détails" : "Détails"}
           </button>
+            
+<ExportMembrePDF
+  membre={m}
+  suivis={[]}
+  churchName="Ton Église"
+  celluleName={cellules.find(c => String(c.id) === String(m.cellule_id))?.cellule_full}
+  familleName={familles.find(f => String(f.id) === String(m.famille_id))?.famille_full}
+  conseillerName={getConseillersForMember(m.id)}
+/>
 
           {/* Détails */}
           {isOpen && (
@@ -1141,16 +1150,8 @@ useEffect(() => {
                     className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
                   >
                     💡 Ajouter / Voir suivis
-                  </button>
-                     
-<ExportMembrePDF
-  membre={m}
-  suivis={[]}
-  churchName="Ton Église"
-  celluleName={cellules.find(c => String(c.id) === String(m.cellule_id))?.cellule_full}
-  familleName={familles.find(f => String(f.id) === String(m.famille_id))?.famille_full}
-  conseillerName={getConseillersForMember(m.id)}
-/>
+                  </button>                    
+
                 </div>
                 {openSuiviMemberId === m.id && (
                   <SuiviPopup

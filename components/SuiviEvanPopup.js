@@ -606,6 +606,12 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
             </>
           )}
 
+{/* ── ASSISTANT PASTORAL ── */}
+          <PastoralAssistant
+            membre={member}
+            suivis={suivis}            
+          />
+
           {/* ── Historique ── */}
           <SectionTitle>📅 Historique</SectionTitle>
 

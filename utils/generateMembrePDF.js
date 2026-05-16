@@ -407,31 +407,8 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
         return v !== null && v !== undefined && String(v).trim() !== "";
       });
 
-      // ── Pré-calcul hauteur exacte ──────────────────────────────────
-      doc.setFontSize(8.5);
-      let bH = 8; // titre ligne (date — type)
-
-      if (besoinsArr.length > 0) {
-        const bt = besoinsArr.map(b => `${da(b.label)} (${da(b.statut)})`).join(", ");
-        bH += doc.splitTextToSize(bt, CW - 6).length * 4.2 + 3;
-      }
-      if (s.commentaire) {
-        bH += doc.splitTextToSize(`"${da(s.commentaire)}"`, CW).length * 4.5 + 3;
-      }
-      if (filledQ.length > 0) {
-        for (const q of filledQ) {
-          bH += 5; // label question
-          bH += doc.splitTextToSize(safe(s[q.key]), CW - 4).length * 4.5 + 2;
-        }
-      }
-      if (authorName) bH += 5;
-      bH += 3; // petit espace bas avant séparateur
-
-      need(bH + 4);
-
-      const blockY = y;
-
       // ── Ligne de titre : date — type + badge statut ────────────────
+      need(10);
       doc.setFontSize(9.5); doc.setFont("helvetica", "bold"); st(doc, C.gray700);
       doc.text(`${formatDate(s.date_action)}  —  ${safe(s.action_type)}`, ML, y);
 
@@ -448,9 +425,10 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
         const bt = besoinsArr.map(b => `${da(b.label)} (${da(b.statut)})`).join(", ");
         doc.setFontSize(7.5); doc.setFont("helvetica", "bold"); st(doc, C.gray500);
         const bpw = doc.getTextWidth("Besoin : ");
+        const btL = doc.splitTextToSize(bt, CW - bpw);
+        need(btL.length * 4.2 + 3);
         doc.text("Besoin : ", ML, y);
         doc.setFont("helvetica", "normal"); st(doc, C.gray700);
-        const btL = doc.splitTextToSize(bt, CW - bpw);
         doc.text(btL, ML + bpw, y);
         y += btL.length * 4.2 + 3;
       }
@@ -458,28 +436,28 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
       // ── Commentaire ────────────────────────────────────────────────
       if (s.commentaire) {
         const cl = doc.splitTextToSize(`"${da(s.commentaire)}"`, CW);
+        need(cl.length * 4.5 + 3);
         doc.setFontSize(8.5); doc.setFont("helvetica", "italic"); st(doc, C.gray700);
         doc.text(cl, ML, y);
         y += cl.length * 4.5 + 3;
       }
 
-      // ── Questions / Réponses — texte seul, sans fond ni bordure ───
-      if (filledQ.length > 0) {
-        for (const q of filledQ) {
-          // Label question : semi-bold navy
-          doc.setFontSize(8); doc.setFont("helvetica", "bold"); st(doc, C.navyMid);
-          doc.text(`${q.label} :`, ML, y);
-          y += 5;
-          // Réponse : normal gris700, légèrement indenté
-          const vL = doc.splitTextToSize(safe(s[q.key]), CW - 4);
-          doc.setFontSize(8.5); doc.setFont("helvetica", "normal"); st(doc, C.gray700);
-          doc.text(vL, ML + 3, y);
-          y += vL.length * 4.5 + 2;
-        }
+      // ── Questions / Réponses — chaque Q/R coule librement ─────────
+      for (const q of filledQ) {
+        need(5);
+        doc.setFontSize(8); doc.setFont("helvetica", "bold"); st(doc, C.navyMid);
+        doc.text(`${q.label} :`, ML, y);
+        y += 5;
+        const vL = doc.splitTextToSize(safe(s[q.key]), CW - 4);
+        need(vL.length * 4.5 + 2);
+        doc.setFontSize(8.5); doc.setFont("helvetica", "normal"); st(doc, C.gray700);
+        doc.text(vL, ML + 3, y);
+        y += vL.length * 4.5 + 2;
       }
 
       // ── Auteur ─────────────────────────────────────────────────────
       if (authorName) {
+        need(6);
         doc.setFontSize(7); doc.setFont("helvetica", "italic"); st(doc, C.gray400);
         doc.text(`Redige par ${authorName}`, ML, y);
         y += 5;

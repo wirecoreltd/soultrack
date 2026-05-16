@@ -1,6 +1,9 @@
-// utils/generateMembreHTML.js
+// utils/generateMembrePDF.js
+// Layout flux vertical — aucune grille, aucun espace blanc mort
 
-// ─── Nettoyage strict ─────────────────────────────────────────────────────────
+import jsPDF from "jspdf";
+
+// ─── Nettoyage ────────────────────────────────────────────────────────────────
 
 function da(str) {
   if (str === null || str === undefined) return "";
@@ -27,22 +30,14 @@ function safe(val) {
   return da(String(val));
 }
 
-function esc(str) {
-  return String(str || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 function formatDate(dateStr) {
   if (!dateStr) return "-";
   try {
     const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return esc(safe(dateStr));
+    if (isNaN(d.getTime())) return safe(dateStr);
     const M = ["Janv","Fevr","Mars","Avr","Mai","Juin","Juil","Aout","Sept","Oct","Nov","Dec"];
     return `${String(d.getDate()).padStart(2,"0")} ${M[d.getMonth()]} ${d.getFullYear()}`;
-  } catch { return esc(safe(String(dateStr))); }
+  } catch { return safe(String(dateStr)); }
 }
 
 function parseBesoins(val) {
@@ -74,8 +69,8 @@ function formatMinistere(mj, autre) {
     let list = Array.isArray(mj) ? mj : JSON.parse(mj || "[]");
     list = list.filter(m => String(m).toLowerCase() !== "autre");
     if (autre && String(autre).trim()) list.push(String(autre).trim());
-    return esc(da(list.join(", "))) || "-";
-  } catch { return esc(safe(mj)); }
+    return da(list.join(", ")) || "-";
+  } catch { return safe(mj); }
 }
 
 const IQ = [
@@ -90,20 +85,45 @@ const IQ = [
   { key: "domaine_service",    label: "Domaine de service" },
 ];
 
-// ─── Helpers HTML ─────────────────────────────────────────────────────────────
+// ─── Palette ──────────────────────────────────────────────────────────────────
 
-function infoRow(label, value) {
-  const v = esc(da(value) || "-");
-  return `<div class="info-row"><span class="info-label">${esc(da(label))}</span><span class="info-value">${v}</span></div>`;
+const C = {
+  navy:       [46,  49,  146],
+  navyMid:    [79,  84,  201],
+  navyLight:  [230, 231, 248],
+  white:      [255, 255, 255],
+  gray50:     [248, 250, 252],
+  gray100:    [226, 232, 240],
+  gray200:    [203, 213, 225],
+  gray400:    [148, 163, 184],
+  gray500:    [100, 116, 139],
+  gray600:    [71,  85,  105],
+  gray700:    [51,  65,  85],
+  green:      [22,  163, 74],
+  greenLight: [220, 252, 231],
+  greenDark:  [15,  118, 55],
+  orange:     [234, 88,  12],
+  orangeLight:[255, 237, 213],
+  blue:       [37,  99,  235],
+  blueLight:  [219, 234, 254],
+  amber:      [180, 90,  0],
+};
+
+// ─── Helpers dessin ───────────────────────────────────────────────────────────
+
+const sf = (doc, rgb) => doc.setFillColor(...rgb);
+const sd = (doc, rgb) => doc.setDrawColor(...rgb);
+const st = (doc, rgb) => doc.setTextColor(...rgb);
+
+function frect(doc, x, y, w, h, rgb) { sf(doc, rgb); doc.rect(x, y, w, h, "F"); }
+function rrect(doc, x, y, w, h, r, rgb) { sf(doc, rgb); doc.roundedRect(x, y, w, h, r, r, "F"); }
+function hline(doc, x1, x2, yy, rgb, lw) {
+  sd(doc, rgb); doc.setLineWidth(lw || 0.3); doc.line(x1, yy, x2, yy);
 }
 
-function rubrique(title) {
-  return `<div class="rubrique"><span>${esc(da(title)).toUpperCase()}</span></div>`;
-}
+// ─── Export ───────────────────────────────────────────────────────────────────
 
-// ─── Export principal ─────────────────────────────────────────────────────────
-
-export function generateMembreHTML(membre, suivis = [], options = {}) {
+export async function generateMembrePDF(membre, suivis = [], options = {}) {
   const {
     churchName     = "Eglise",
     logoBase64     = null,
@@ -112,49 +132,246 @@ export function generateMembreHTML(membre, suivis = [], options = {}) {
     conseillerName = null,
   } = options;
 
-  if (!membre) return "";
+  if (!membre) return;
 
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  const PW  = 210;
+  const PH  = 297;
+  const ML  = 14;
+  const MR  = 14;
+  const CW  = PW - ML - MR;   // 182 mm
+  const BOT = 18;
+  const LH  = 5;               // line height de base
+
+  let y = 0;
+
+  // ── Utilitaires de rendu ──────────────────────────────────────────────────
+
+  /** Saute de page si la hauteur h ne rentre plus */
+  const need = (h) => {
+    if (y + h > PH - BOT) { doc.addPage(); y = 16; }
+  };
+
+  /**
+   * Puce "Label : valeur" sur une ligne (ou plusieurs si wrap).
+   * Retourne true. y est avancé.
+   */
+  const pill = (label, value, indent = 0) => {
+    const lbl = da(label);
+    const val = da(value) || "-";
+    const prefix = `${lbl} : `;
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "normal"); st(doc, C.gray500);
+    const pw = doc.getTextWidth(prefix);
+    const maxVal = CW - indent - pw;
+    const lines = doc.splitTextToSize(val, maxVal);
+    need(LH * lines.length + 1);
+    doc.text(prefix, ML + indent, y);
+    doc.setFont("helvetica", "bold"); st(doc, C.gray700);
+    doc.text(lines, ML + indent + pw, y);
+    y += LH * lines.length;
+  };
+
+  /**
+   * Groupe de puces avec titre de section sur fond léger.
+   * rows = [[label, value], ...]
+   */
+  const sectionBox = (title, rows) => {
+    // Calcul hauteur réelle du bloc
+    let blockH = 8; // titre
+    doc.setFontSize(8.5);
+    for (const [lbl, val] of rows) {
+      const prefix = `${da(lbl)} : `;
+      const pw = doc.getTextWidth(prefix);
+      const lines = doc.splitTextToSize(da(val) || "-", CW - 4 - pw);
+      blockH += LH * lines.length;
+    }
+    blockH += 3; // padding bas
+
+    need(blockH);
+
+    // Fond du bloc
+    rrect(doc, ML, y, CW, blockH, 2, C.gray50);
+    // Barre gauche accent
+    frect(doc, ML, y, 2.5, blockH, C.navyMid);
+
+    // Titre
+    doc.setFontSize(7); doc.setFont("helvetica", "bold");
+    st(doc, C.navyMid);
+    doc.text(da(title).toUpperCase(), ML + 6, y + 5.5);
+    y += 8;
+
+    // Lignes
+    for (const [lbl, val] of rows) {
+      pill(lbl, val, 4);
+    }
+
+    y += 3; // padding bas
+  };
+
+  /**
+   * Titre de rubrique pleine largeur.
+   */
+  const rubrique = (title) => {
+    need(10);
+    y += 4;
+    doc.setFontSize(8); doc.setFont("helvetica", "bold");
+    st(doc, C.navy);
+    doc.text(da(title).toUpperCase(), ML, y);
+    y += 2;
+    hline(doc, ML, PW - MR, y, C.navy, 0.4);
+    y += 5;
+  };
+
+  // ══════════════════════════════════════════════════════════════════
+  // HEADER
+  // ══════════════════════════════════════════════════════════════════
+  frect(doc, 0, 0, PW, 26, C.navy);
+  frect(doc, 0, 20, PW, 6, C.navyMid);
+
+  const drawLogo = (d) => {
+    rrect(d, ML, 4, 14, 14, 2, [95, 100, 195]);
+    st(d, C.white);
+    d.setFontSize(13); d.setFont("helvetica", "bold");
+    d.text("+", ML + 7, 13.5, { align: "center" });
+  };
+  if (logoBase64) {
+    try { doc.addImage(logoBase64, "PNG", ML, 4, 14, 14); }
+    catch { drawLogo(doc); }
+  } else {
+    drawLogo(doc);
+  }
+
+  st(doc, C.white);
+  doc.setFontSize(11); doc.setFont("helvetica", "bold");
+  doc.text(safe(churchName) || "Eglise", ML + 18, 11);
+  st(doc, [180, 185, 230]);
+  doc.setFontSize(6.5); doc.setFont("helvetica", "normal");
+  doc.text("FICHE CONFIDENTIELLE", ML + 18, 17);
+
+  st(doc, [180, 185, 230]);
+  doc.setFontSize(6.5);
+  doc.text("Genere le", PW - MR, 9, { align: "right" });
+  st(doc, C.white);
+  doc.setFontSize(8); doc.setFont("helvetica", "bold");
+  doc.text(formatDate(new Date().toISOString()), PW - MR, 15, { align: "right" });
+
+  y = 34;
+
+  // ══════════════════════════════════════════════════════════════════
+  // BADGE + NOM + TEL
+  // ══════════════════════════════════════════════════════════════════
   const etat      = da((membre.etat_contact || "")).toLowerCase().trim();
   const etatLabel = etat === "nouveau"  ? "Nouveau"
                   : etat === "existant" ? "Existant"
                   : etat === "inactif"  ? "Inactif"
                   : safe(membre.etat_contact) || "Inconnu";
-  const etatClass = etat === "nouveau"  ? "badge-nouveau"
-                  : etat === "existant" ? "badge-existant"
-                  : "badge-inconnu";
+  const etatClr = etat === "nouveau"  ? C.orange
+                : etat === "existant" ? C.green
+                : C.gray400;
+  const etatBg  = etat === "nouveau"  ? C.orangeLight
+                : etat === "existant" ? C.greenLight
+                : C.gray100;
 
+  doc.setFontSize(7.5); doc.setFont("helvetica", "bold");
+  const bw = doc.getTextWidth(etatLabel) + 10;
+  rrect(doc, PW / 2 - bw / 2, y, bw, 6, 3, etatBg);
+  st(doc, etatClr);
+  doc.text(etatLabel, PW / 2, y + 4.3, { align: "center" });
+
+  if (membre.star === true && etat === "existant") {
+    st(doc, C.amber); doc.setFontSize(10);
+    doc.text("*", PW / 2 + bw / 2 + 3, y + 5);
+  }
+  y += 10;
+
+  st(doc, C.navy);
+  doc.setFontSize(19); doc.setFont("helvetica", "bold");
+  doc.text(`${safe(membre.prenom)} ${safe(membre.nom)}`.trim() || "-", PW / 2, y, { align: "center" });
+  y += 8;
+
+  if (membre.telephone) {
+    st(doc, C.orange); doc.setFontSize(9); doc.setFont("helvetica", "normal");
+    doc.text(`Tel. : ${da(String(membre.telephone))}`, PW / 2, y, { align: "center" });
+    y += 5;
+  }
+
+  hline(doc, ML + 20, PW - MR - 20, y, C.orange, 0.5);
+  y += 8;
+
+  // ══════════════════════════════════════════════════════════════════
+  // INFORMATIONS — blocs section compacts
+  // ══════════════════════════════════════════════════════════════════
   const statutLabel = { 1:"En Attente", 2:"En Suivis", 3:"Integre", 4:"Refus" };
 
-  const prenom = esc(safe(membre.prenom));
-  const nom    = esc(safe(membre.nom));
-  const dateGen = formatDate(new Date().toISOString());
+  sectionBox("Identite", [
+    ["Civilite",  safe(membre.sexe)],
+    ["Age",       safe(membre.age)],
+    ["Ville",     safe(membre.ville)],
+    ["WhatsApp",  membre.is_whatsapp ? "Oui" : "Non"],
+    ["Ajoute le", formatDate(membre.date_venu)],
+  ]);
+  y += 2;
 
-  // ── Logo ────────────────────────────────────────────────────────────────────
-  const logoHTML = logoBase64
-    ? `<img src="${logoBase64}" alt="Logo" class="logo-img" />`
-    : `<div class="logo-placeholder">+</div>`;
+  sectionBox("Suivi pastoral", [
+    ["Statut",      safe(statutLabel[membre.statut_suivis] || membre.suivi_statut)],
+    ["Envoi suivi", formatDate(membre.date_envoi_suivi)],
+    ["Cellule",     safe(celluleName)],
+    ["Famille",     safe(familleName)],
+    ["Conseiller",  safe(conseillerName)],
+  ]);
+  y += 2;
 
-  // ── Soin pastoral ───────────────────────────────────────────────────────────
+  sectionBox("Vie spirituelle", [
+    ["Bapteme eau",  safe(membre.bapteme_eau)],
+    ["Bapteme feu",  safe(membre.bapteme_esprit)],
+    ["Priere salut", safe(membre.priere_salut)],
+    ["Conversion",   safe(membre.type_conversion)],
+    ["Ministere",    formatMinistere(membre.Ministere, membre.Autre_Ministere)],
+  ]);
+  y += 2;
+
+  sectionBox("Parcours", [
+    ["Comment venu", safe(membre.venu)],
+    ["Raison",       safe(membre.statut_initial)],
+    ["Formation",    safe(membre.Formation)],
+    ["Infos supp.",  safe(membre.infos_supplementaires)],
+  ]);
+  y += 2;
+
+  // ══════════════════════════════════════════════════════════════════
+  // SOIN PASTORAL
+  // ══════════════════════════════════════════════════════════════════
+  rubrique("Soin pastoral");
+
   const besoins = parseBesoins(membre.besoin);
-  let soinHTML = "";
   if (besoins.length > 0) {
     const besoinsStr = besoins.map(b => {
       const r = (b.statut || "").toLowerCase().includes("resolu");
-      return `${esc(b.label)}${r ? ' <span class="tag-resolu">[resolu]</span>' : ""}`;
+      return `${da(b.label)}${r ? " [resolu]" : ""}`;
     }).join(", ");
-    soinHTML += `<div class="info-row"><span class="info-label">Besoins</span><span class="info-value">${besoinsStr}</span></div>`;
+    pill("Besoins", besoinsStr);
+    y += 1;
   } else {
-    soinHTML += `<p class="empty-note">Aucun besoin enregistre.</p>`;
-  }
-  if (membre.commentaire_suivis) {
-    soinHTML += `<blockquote class="commentaire">${esc(da(membre.commentaire_suivis))}</blockquote>`;
+    need(6);
+    doc.setFontSize(8.5); doc.setFont("helvetica", "italic"); st(doc, C.gray400);
+    doc.text("Aucun besoin enregistre.", ML, y);
+    y += 5;
   }
 
-  // ── Historique des suivis ───────────────────────────────────────────────────
-  let histHTML = "";
+  if (membre.commentaire_suivis) {
+    const cL = doc.splitTextToSize(`"${da(membre.commentaire_suivis)}"`, CW);
+    need(cL.length * 4.5 + 4);
+    doc.setFontSize(8.5); doc.setFont("helvetica", "italic"); st(doc, C.gray600);
+    doc.text(cL, ML, y);
+    y += cL.length * 4.5 + 3;
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // HISTORIQUE DES SUIVIS
+  // ══════════════════════════════════════════════════════════════════
   if (Array.isArray(suivis) && suivis.length > 0) {
-    histHTML += rubrique("Historique des suivis");
-    histHTML += `<div class="suivis-list">`;
+    rubrique("Historique des suivis");
 
     for (let idx = 0; idx < suivis.length; idx++) {
       const s = suivis[idx];
@@ -167,504 +384,109 @@ export function generateMembreHTML(membre, suivis = [], options = {}) {
         ? `${s.profiles.prenom || ""} ${s.profiles.nom || ""}`.trim()
         : "";
       const authorName = da(authorRaw);
-
-      const filledQ = IQ.filter(q => {
+      const filledQ    = IQ.filter(q => {
         const v = s[q.key];
         return v !== null && v !== undefined && String(v).trim() !== "";
       });
 
-      const isLast = idx === suivis.length - 1;
+      // ── Pré-calcul hauteur réelle du bloc ──────────────────────────
+      doc.setFontSize(8.5);
+      let bH = 9; // entete
+      if (besoinsArr.length > 0) {
+        const bt = besoinsArr.map(b => `${da(b.label)} (${da(b.statut)})`).join(", ");
+        bH += doc.splitTextToSize(`Besoin : ${bt}`, CW - 8).length * 4.2 + 2;
+      }
+      if (s.commentaire) {
+        bH += doc.splitTextToSize(`"${da(s.commentaire)}"`, CW - 8).length * 4.5 + 3;
+      }
+      for (const q of filledQ) {
+        const vL = doc.splitTextToSize(safe(s[q.key]), CW - 14);
+        bH += 4.5 + vL.length * 4.5 + 2;
+      }
+      if (authorName) bH += 5;
+      bH += 4; // padding bas
 
-      histHTML += `<div class="suivi-bloc ${resolu ? "suivi-resolu" : ""} ${isLast ? "suivi-last" : ""}">`;
-      histHTML += `<div class="suivi-accent"></div>`;
-      histHTML += `<div class="suivi-content">`;
+      need(bH);
 
-      // En-tête
-      histHTML += `<div class="suivi-header">`;
-      histHTML += `<span class="suivi-date-type">${formatDate(s.date_action)}&nbsp;&nbsp;—&nbsp;&nbsp;${esc(safe(s.action_type))}</span>`;
-      histHTML += `<span class="suivi-statut ${resolu ? "statut-resolu" : "statut-encours"}">${resolu ? "Resolu" : esc(statut)}</span>`;
-      histHTML += `</div>`;
+      const accentClr = resolu ? C.green : C.navyMid;
+      const blockY    = y;
+
+      // Fond léger
+      rrect(doc, ML, blockY, CW, bH, 2, C.gray50);
+      // Barre accent
+      frect(doc, ML, blockY, 2.5, bH, accentClr);
+
+      const X = ML + 7;
+
+      // Entête : date — type + statut
+      y = blockY + 6;
+      doc.setFontSize(9); doc.setFont("helvetica", "bold"); st(doc, C.gray700);
+      doc.text(`${formatDate(s.date_action)}  -  ${safe(s.action_type)}`, X, y);
+
+      doc.setFontSize(7); doc.setFont("helvetica", "bold");
+      st(doc, resolu ? C.greenDark : C.blue);
+      rrect(doc, PW - MR - 22, blockY + 2, 22, 6, 3,
+            resolu ? C.greenLight : C.blueLight);
+      doc.text(resolu ? "Resolu" : statut, PW - MR - 11, blockY + 6.3, { align: "center" });
+
+      y += 5;
 
       // Besoins
       if (besoinsArr.length > 0) {
-        const bt = besoinsArr.map(b => `${esc(b.label)} <em>(${esc(b.statut)})</em>`).join(", ");
-        histHTML += `<p class="suivi-besoins"><span class="suivi-besoins-label">Besoin :</span> ${bt}</p>`;
+        const bt  = besoinsArr.map(b => `${da(b.label)} (${da(b.statut)})`).join(", ");
+        const btL = doc.splitTextToSize(`Besoin : ${bt}`, CW - 8);
+        doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); st(doc, C.gray400);
+        doc.text(btL, X, y);
+        y += btL.length * 4.2 + 2;
       }
 
       // Commentaire
       if (s.commentaire) {
-        histHTML += `<blockquote class="suivi-commentaire">${esc(da(s.commentaire))}</blockquote>`;
+        const cl = doc.splitTextToSize(`"${da(s.commentaire)}"`, CW - 8);
+        doc.setFontSize(8.5); doc.setFont("helvetica", "italic"); st(doc, C.gray600);
+        doc.text(cl, X, y);
+        y += cl.length * 4.5 + 3;
       }
 
-      // Questions d'entretien
+      // Questions
       for (const q of filledQ) {
-        histHTML += `<div class="suivi-question">`;
-        histHTML += `<div class="suivi-q-label">${esc(q.label)} :</div>`;
-        histHTML += `<div class="suivi-q-value">${esc(safe(s[q.key]))}</div>`;
-        histHTML += `</div>`;
+        doc.setFontSize(7); doc.setFont("helvetica", "bold"); st(doc, C.navyMid);
+        doc.text(`${q.label} :`, X, y);
+        y += 4.5;
+        const vL = doc.splitTextToSize(safe(s[q.key]), CW - 14);
+        doc.setFontSize(8.5); doc.setFont("helvetica", "normal"); st(doc, C.gray700);
+        doc.text(vL, X + 4, y);
+        y += vL.length * 4.5 + 2;
       }
 
       // Auteur
       if (authorName) {
-        histHTML += `<p class="suivi-auteur">Redige par ${esc(authorName)}</p>`;
+        doc.setFontSize(7); doc.setFont("helvetica", "italic"); st(doc, C.gray400);
+        doc.text(`Redige par ${authorName}`, X, y);
+        y += 5;
       }
 
-      histHTML += `</div></div>`;
+      y = blockY + bH + 3; // toujours après le bloc complet
     }
-
-    histHTML += `</div>`;
   }
 
-  // ── CSS ─────────────────────────────────────────────────────────────────────
-  const css = `
-    @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+  // ══════════════════════════════════════════════════════════════════
+  // FOOTER
+  // ══════════════════════════════════════════════════════════════════
+  const total = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= total; p++) {
+    doc.setPage(p);
+    hline(doc, ML, PW - MR, PH - 12, C.gray200, 0.3);
+    st(doc, C.gray400); doc.setFontSize(7); doc.setFont("helvetica", "normal");
+    doc.text("Document confidentiel  -  Usage pastoral uniquement", ML, PH - 7);
+    doc.text(`Page ${p} / ${total}`, PW - MR, PH - 7, { align: "right" });
+  }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --navy:        #2E3192;
-      --navy-mid:    #4F54C9;
-      --white:       #ffffff;
-      --gray-50:     #f8fafc;
-      --gray-100:    #e2e8f0;
-      --gray-200:    #cbd5e1;
-      --gray-400:    #94a3b8;
-      --gray-500:    #64748b;
-      --gray-600:    #475569;
-      --gray-700:    #334155;
-      --green:       #16a34a;
-      --green-light: #dcfce7;
-      --green-dark:  #166534;
-      --orange:      #ea580c;
-      --orange-light:#fff7ed;
-      --blue:        #2563eb;
-      --amber:       #b45309;
-      --radius:      10px;
-    }
-
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: #eef1f8;
-      color: var(--gray-700);
-      padding: 28px 16px 48px;
-      min-height: 100vh;
-    }
-
-    .page {
-      max-width: 780px;
-      margin: 0 auto;
-      background: var(--white);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 8px 40px rgba(46,49,146,.12), 0 1px 4px rgba(0,0,0,.06);
-    }
-
-    /* ── Header ── */
-    .header {
-      background: var(--navy);
-      padding: 20px 28px 0;
-      position: relative;
-    }
-    .header-top {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding-bottom: 16px;
-    }
-    .logo-img {
-      width: 48px; height: 48px;
-      border-radius: 8px;
-      object-fit: contain;
-    }
-    .logo-placeholder {
-      width: 48px; height: 48px;
-      border-radius: 8px;
-      background: #5f64c3;
-      color: #fff;
-      font-size: 24px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .header-title { flex: 1; }
-    .church-name {
-      color: var(--white);
-      font-family: 'Lora', serif;
-      font-size: 18px; font-weight: 700;
-      line-height: 1.2;
-    }
-    .fiche-label {
-      color: #b4b9e6;
-      font-size: 10px; font-weight: 400;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      margin-top: 3px;
-    }
-    .header-date { text-align: right; }
-    .header-date .date-small { color: #b4b9e6; font-size: 10px; }
-    .header-date .date-val   { color: var(--white); font-size: 13px; font-weight: 600; margin-top: 2px; }
-    .header-stripe {
-      background: var(--navy-mid);
-      height: 6px;
-      margin: 0 -28px; /* full bleed */
-    }
-
-    /* ── Hero ── */
-    .hero {
-      text-align: center;
-      padding: 28px 28px 20px;
-      border-bottom: 1px solid var(--gray-100);
-    }
-    .badge {
-      display: inline-block;
-      padding: 3px 14px;
-      border-radius: 20px;
-      font-size: 11px; font-weight: 600;
-      letter-spacing: .04em;
-      margin-bottom: 12px;
-    }
-    .badge-existant { background: var(--green-light);  color: var(--green-dark); }
-    .badge-nouveau  { background: var(--orange-light); color: var(--orange); }
-    .badge-inconnu  { background: var(--gray-100);     color: var(--gray-500); }
-    .star-badge { color: var(--amber); font-size: 16px; margin-left: 4px; vertical-align: middle; }
-    .hero-name {
-      font-family: 'Lora', serif;
-      font-size: 30px; font-weight: 700;
-      color: var(--navy);
-      line-height: 1.1;
-    }
-    .hero-tel {
-      color: var(--orange);
-      font-size: 13px; font-weight: 500;
-      margin-top: 8px;
-    }
-    .hero-divider {
-      width: 80px; height: 2px;
-      background: var(--orange);
-      border-radius: 2px;
-      margin: 14px auto 0;
-    }
-
-    /* ── Body ── */
-    .body { padding: 0 28px 28px; }
-
-    /* ── Grid 2-col ── */
-    .two-col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0 24px;
-      padding: 20px 0 16px;
-      border-bottom: 1px solid var(--gray-100);
-    }
-    .col-block { }
-    .col-heading {
-      font-size: 10px; font-weight: 600;
-      letter-spacing: .1em; text-transform: uppercase;
-      color: var(--navy-mid);
-      padding-bottom: 5px;
-      border-bottom: 1.5px solid var(--navy-mid);
-      margin-bottom: 10px;
-    }
-
-    /* ── Info rows ── */
-    .info-row {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-      margin-bottom: 5px;
-      font-size: 12px;
-      line-height: 1.5;
-    }
-    .info-label {
-      color: var(--gray-500);
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .info-label::after { content: " :"; }
-    .info-value {
-      color: var(--gray-700);
-      font-weight: 600;
-      word-break: break-word;
-    }
-
-    /* ── Rubrique ── */
-    .rubrique {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 22px 0 12px;
-    }
-    .rubrique span {
-      font-size: 9.5px; font-weight: 700;
-      letter-spacing: .12em;
-      color: var(--navy);
-      white-space: nowrap;
-    }
-    .rubrique::after {
-      content: '';
-      flex: 1;
-      height: 1.5px;
-      background: var(--navy);
-      border-radius: 2px;
-    }
-
-    /* ── Commentaire ── */
-    .commentaire {
-      margin: 10px 0 0;
-      padding: 10px 14px;
-      border-left: 3px solid var(--navy-mid);
-      background: #f4f5fd;
-      border-radius: 0 6px 6px 0;
-      font-style: italic;
-      font-size: 12px;
-      color: var(--gray-600);
-    }
-    .empty-note {
-      font-size: 12px;
-      font-style: italic;
-      color: var(--gray-400);
-    }
-    .tag-resolu {
-      font-size: 10px; font-weight: 600;
-      color: var(--green-dark);
-      background: var(--green-light);
-      border-radius: 4px;
-      padding: 1px 5px;
-    }
-
-    /* ── Suivis ── */
-    .suivis-list { display: flex; flex-direction: column; gap: 0; }
-    .suivi-bloc {
-      display: flex;
-      gap: 0;
-      padding: 14px 0;
-      border-bottom: 1px solid var(--gray-100);
-    }
-    .suivi-bloc.suivi-last { border-bottom: none; }
-    .suivi-accent {
-      width: 3px;
-      border-radius: 3px;
-      background: var(--navy-mid);
-      flex-shrink: 0;
-      margin-right: 14px;
-    }
-    .suivi-resolu .suivi-accent { background: var(--green); }
-    .suivi-content { flex: 1; min-width: 0; }
-
-    .suivi-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 7px;
-    }
-    .suivi-date-type {
-      font-size: 13px; font-weight: 600;
-      color: var(--gray-700);
-    }
-    .suivi-statut {
-      font-size: 10.5px; font-weight: 700;
-      border-radius: 12px;
-      padding: 2px 10px;
-    }
-    .statut-resolu  { background: var(--green-light); color: var(--green-dark); }
-    .statut-encours { background: #dbeafe; color: var(--blue); }
-
-    .suivi-besoins {
-      font-size: 11px;
-      color: var(--gray-400);
-      margin-bottom: 6px;
-    }
-    .suivi-besoins-label { font-weight: 600; }
-    .suivi-besoins em { font-style: italic; }
-
-    .suivi-commentaire {
-      padding: 8px 12px;
-      border-left: 2.5px solid var(--gray-200);
-      background: var(--gray-50);
-      border-radius: 0 6px 6px 0;
-      font-style: italic;
-      font-size: 12.5px;
-      color: var(--gray-700);
-      margin-bottom: 8px;
-    }
-
-    .suivi-question { margin-bottom: 8px; }
-    .suivi-q-label {
-      font-size: 10px; font-weight: 700;
-      color: var(--navy-mid);
-      letter-spacing: .05em;
-      margin-bottom: 2px;
-    }
-    .suivi-q-value {
-      font-size: 13px;
-      color: var(--gray-700);
-      padding-left: 8px;
-    }
-
-    .suivi-auteur {
-      font-size: 10.5px;
-      font-style: italic;
-      color: var(--gray-400);
-      margin-top: 6px;
-    }
-
-    /* ── Footer ── */
-    .footer {
-      border-top: 1px solid var(--gray-200);
-      padding: 10px 28px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 9.5px;
-      color: var(--gray-400);
-    }
-
-    /* ── Print ── */
-    @media print {
-      body { background: #fff; padding: 0; }
-      .page {
-        box-shadow: none;
-        border-radius: 0;
-        max-width: 100%;
-      }
-      .print-btn { display: none; }
-    }
-
-    /* ── Print button ── */
-    .print-btn {
-      display: block;
-      margin: 20px auto 0;
-      padding: 10px 28px;
-      background: var(--navy);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 13px; font-weight: 600;
-      cursor: pointer;
-      letter-spacing: .04em;
-      transition: background .2s;
-    }
-    .print-btn:hover { background: var(--navy-mid); }
-  `;
-
-  // ── HTML complet ────────────────────────────────────────────────────────────
-  return `<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fiche — ${prenom} ${nom}</title>
-  <style>${css}</style>
-</head>
-<body>
-
-<button class="print-btn" onclick="window.print()">Imprimer / Sauvegarder en PDF</button>
-
-<div class="page">
-
-  <!-- HEADER -->
-  <div class="header">
-    <div class="header-top">
-      ${logoHTML}
-      <div class="header-title">
-        <div class="church-name">${esc(da(churchName))}</div>
-        <div class="fiche-label">Fiche confidentielle</div>
-      </div>
-      <div class="header-date">
-        <div class="date-small">Genere le</div>
-        <div class="date-val">${dateGen}</div>
-      </div>
-    </div>
-    <div class="header-stripe"></div>
-  </div>
-
-  <!-- HERO -->
-  <div class="hero">
-    <div>
-      <span class="badge ${etatClass}">${esc(etatLabel)}</span>
-      ${membre.star === true && etat === "existant" ? '<span class="star-badge">★</span>' : ""}
-    </div>
-    <div class="hero-name">${prenom} ${nom}</div>
-    ${membre.telephone ? `<div class="hero-tel">Tél. : ${esc(da(String(membre.telephone)))}</div>` : ""}
-    <div class="hero-divider"></div>
-  </div>
-
-  <!-- BODY -->
-  <div class="body">
-
-    <!-- Bloc 1 : Identite / Suivi -->
-    <div class="two-col">
-      <div class="col-block">
-        <div class="col-heading">Identite</div>
-        ${infoRow("Civilite",  safe(membre.sexe))}
-        ${infoRow("Age",       safe(membre.age))}
-        ${infoRow("Ville",     safe(membre.ville))}
-        ${infoRow("WhatsApp",  membre.is_whatsapp ? "Oui" : "Non")}
-        ${infoRow("Ajoute le", formatDate(membre.date_venu))}
-      </div>
-      <div class="col-block">
-        <div class="col-heading">Suivi pastoral</div>
-        ${infoRow("Statut",      safe(statutLabel[membre.statut_suivis] || membre.suivi_statut))}
-        ${infoRow("Envoi suivi", formatDate(membre.date_envoi_suivi))}
-        ${infoRow("Cellule",     safe(celluleName))}
-        ${infoRow("Famille",     safe(familleName))}
-        ${infoRow("Conseiller",  safe(conseillerName))}
-      </div>
-    </div>
-
-    <!-- Bloc 2 : Vie spirituelle / Parcours -->
-    <div class="two-col">
-      <div class="col-block">
-        <div class="col-heading">Vie spirituelle</div>
-        ${infoRow("Bapteme eau",  safe(membre.bapteme_eau))}
-        ${infoRow("Bapteme feu",  safe(membre.bapteme_esprit))}
-        ${infoRow("Priere salut", safe(membre.priere_salut))}
-        ${infoRow("Conversion",   safe(membre.type_conversion))}
-        ${infoRow("Ministere",    formatMinistere(membre.Ministere, membre.Autre_Ministere))}
-      </div>
-      <div class="col-block">
-        <div class="col-heading">Parcours</div>
-        ${infoRow("Comment venu", safe(membre.venu))}
-        ${infoRow("Raison",       safe(membre.statut_initial))}
-        ${infoRow("Formation",    safe(membre.Formation))}
-        ${infoRow("Infos supp.",  safe(membre.infos_supplementaires))}
-      </div>
-    </div>
-
-    <!-- Soin pastoral -->
-    ${rubrique("Soin pastoral")}
-    ${soinHTML}
-
-    <!-- Historique -->
-    ${histHTML}
-
-  </div><!-- /body -->
-
-  <!-- FOOTER -->
-  <div class="footer">
-    <span>Document confidentiel &mdash; Usage pastoral uniquement</span>
-    <span>Fiche generee le ${dateGen}</span>
-  </div>
-
-</div><!-- /page -->
-
-</body>
-</html>`;
-}
-
-// ─── Utilitaire : déclenche le téléchargement du fichier HTML ─────────────────
-
-export function downloadMembreHTML(membre, suivis = [], options = {}) {
-  if (!membre) return;
-  const html = generateMembreHTML(membre, suivis, options);
-  const blob  = new Blob([html], { type: "text/html;charset=utf-8" });
-  const url   = URL.createObjectURL(blob);
-  const a     = document.createElement("a");
-  const prenom = (da(membre.prenom || "") || "inconnu").toLowerCase().replace(/\s+/g, "_");
-  const nom    = (da(membre.nom    || "") || "membre").toLowerCase().replace(/\s+/g, "_");
-  const date   = new Date().toISOString().split("T")[0];
-  a.href     = url;
-  a.download = `fiche_${prenom}_${nom}_${date}.html`;
-  a.click();
-  URL.revokeObjectURL(url);
+  // ══════════════════════════════════════════════════════════════════
+  // SAUVEGARDE
+  // ══════════════════════════════════════════════════════════════════
+  const prenomFile = da(membre.prenom || "").toLowerCase().replace(/\s+/g, "_") || "inconnu";
+  const nomFile    = da(membre.nom    || "").toLowerCase().replace(/\s+/g, "_") || "membre";
+  const dateFile   = new Date().toISOString().split("T")[0];
+  doc.save(`fiche_${prenomFile}_${nomFile}_${dateFile}.pdf`);
 }

@@ -1,5 +1,5 @@
 // utils/generateMembrePDF.js
-// Layout flux vertical — aucune grille, aucun espace blanc mort
+// Grille 2 colonnes avec mesure exacte des hauteurs avant dessin — zéro espace mort
 
 import jsPDF from "jspdf";
 
@@ -90,7 +90,6 @@ const IQ = [
 const C = {
   navy:       [46,  49,  146],
   navyMid:    [79,  84,  201],
-  navyLight:  [230, 231, 248],
   white:      [255, 255, 255],
   gray50:     [248, 250, 252],
   gray100:    [226, 232, 240],
@@ -109,19 +108,96 @@ const C = {
   amber:      [180, 90,  0],
 };
 
-// ─── Helpers dessin ───────────────────────────────────────────────────────────
-
 const sf = (doc, rgb) => doc.setFillColor(...rgb);
 const sd = (doc, rgb) => doc.setDrawColor(...rgb);
 const st = (doc, rgb) => doc.setTextColor(...rgb);
 
-function frect(doc, x, y, w, h, rgb) { sf(doc, rgb); doc.rect(x, y, w, h, "F"); }
-function rrect(doc, x, y, w, h, r, rgb) { sf(doc, rgb); doc.roundedRect(x, y, w, h, r, r, "F"); }
-function hline(doc, x1, x2, yy, rgb, lw) {
-  sd(doc, rgb); doc.setLineWidth(lw || 0.3); doc.line(x1, yy, x2, yy);
+function frect(doc, x, y, w, h, rgb)      { sf(doc, rgb); doc.rect(x, y, w, h, "F"); }
+function rrect(doc, x, y, w, h, r, rgb)   { sf(doc, rgb); doc.roundedRect(x, y, w, h, r, r, "F"); }
+function hline(doc, x1, x2, yy, rgb, lw)  { sd(doc, rgb); doc.setLineWidth(lw || 0.3); doc.line(x1, yy, x2, yy); }
+
+// ─── Mesure exacte d'un bloc de rows (sans dessiner) ──────────────────────────
+
+function measureRows(doc, rows, colW, fs = 8.5, lh = 5) {
+  doc.setFontSize(fs);
+  let h = 0;
+  for (const [lbl, val] of rows) {
+    const prefix = `${da(lbl)} : `;
+    const pw     = doc.getTextWidth(prefix);
+    const lines  = doc.splitTextToSize(da(val) || "-", colW - pw);
+    h += lh * lines.length;
+  }
+  return h;
 }
 
-// ─── Export ───────────────────────────────────────────────────────────────────
+// ─── Dessin d'un bloc de rows à position fixe ─────────────────────────────────
+
+function drawRows(doc, rows, x, startY, colW, fs = 8.5, lh = 5) {
+  let cy = startY;
+  doc.setFontSize(fs);
+  for (const [lbl, val] of rows) {
+    const prefix = `${da(lbl)} : `;
+    doc.setFont("helvetica", "normal"); st(doc, C.gray500);
+    const pw = doc.getTextWidth(prefix);
+    doc.text(prefix, x, cy);
+    doc.setFont("helvetica", "bold"); st(doc, C.gray700);
+    const lines = doc.splitTextToSize(da(val) || "-", colW - pw);
+    doc.text(lines, x + pw, cy);
+    cy += lh * lines.length;
+  }
+  return cy;
+}
+
+// ─── Bloc grille 2 colonnes ───────────────────────────────────────────────────
+// Mesure les deux colonnes d'abord, prend le max, dessine en une passe.
+// Retourne le y suivant.
+
+function draw2ColBlock(doc, leftTitle, leftRows, rightTitle, rightRows, y, ML, CW) {
+  const PAD_H  = 5;   // padding horizontal intérieur
+  const PAD_T  = 6;   // espace entre entête et première ligne
+  const PAD_B  = 5;   // padding bas
+  const HDR_H  = 7.5; // hauteur barre de titre
+  const GAP    = 3;   // espace entre les 2 colonnes
+  const COL_W  = (CW - GAP) / 2;
+  const X2     = ML + COL_W + GAP;
+
+  // Mesure exacte
+  const hL  = measureRows(doc, leftRows,  COL_W - PAD_H * 2);
+  const hR  = measureRows(doc, rightRows, COL_W - PAD_H * 2);
+  const bodyH  = Math.max(hL, hR) + PAD_T + PAD_B;
+  const totalH = HDR_H + bodyH;
+
+  // ── Col gauche ────────────────────────────────────────────────────
+  rrect(doc, ML, y, COL_W, totalH, 2.5, C.gray50);
+  sd(doc, C.gray100); doc.setLineWidth(0.2);
+  doc.roundedRect(ML, y, COL_W, totalH, 2.5, 2.5, "S");
+
+  // Entête gauche : fond navy plein, coins ronds haut seulement
+  rrect(doc, ML, y, COL_W, HDR_H, 2.5, C.navy);
+  frect(doc, ML, y + HDR_H / 2, COL_W, HDR_H / 2, C.navy);
+
+  doc.setFontSize(7.5); doc.setFont("helvetica", "bold"); st(doc, C.white);
+  doc.text(da(leftTitle).toUpperCase(), ML + PAD_H, y + 5.5);
+
+  drawRows(doc, leftRows, ML + PAD_H, y + HDR_H + PAD_T, COL_W - PAD_H * 2);
+
+  // ── Col droite ────────────────────────────────────────────────────
+  rrect(doc, X2, y, COL_W, totalH, 2.5, C.gray50);
+  sd(doc, C.gray100); doc.setLineWidth(0.2);
+  doc.roundedRect(X2, y, COL_W, totalH, 2.5, 2.5, "S");
+
+  rrect(doc, X2, y, COL_W, HDR_H, 2.5, C.navyMid);
+  frect(doc, X2, y + HDR_H / 2, COL_W, HDR_H / 2, C.navyMid);
+
+  doc.setFontSize(7.5); doc.setFont("helvetica", "bold"); st(doc, C.white);
+  doc.text(da(rightTitle).toUpperCase(), X2 + PAD_H, y + 5.5);
+
+  drawRows(doc, rightRows, X2 + PAD_H, y + HDR_H + PAD_T, COL_W - PAD_H * 2);
+
+  return y + totalH + 3;
+}
+
+// ─── Export principal ─────────────────────────────────────────────────────────
 
 export async function generateMembrePDF(membre, suivis = [], options = {}) {
   const {
@@ -139,88 +215,26 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   const PH  = 297;
   const ML  = 14;
   const MR  = 14;
-  const CW  = PW - ML - MR;   // 182 mm
+  const CW  = PW - ML - MR;
   const BOT = 18;
-  const LH  = 5;               // line height de base
 
   let y = 0;
 
-  // ── Utilitaires de rendu ──────────────────────────────────────────────────
-
-  /** Saute de page si la hauteur h ne rentre plus */
   const need = (h) => {
     if (y + h > PH - BOT) { doc.addPage(); y = 16; }
   };
 
-  /**
-   * Puce "Label : valeur" sur une ligne (ou plusieurs si wrap).
-   * Retourne true. y est avancé.
-   */
-  const pill = (label, value, indent = 0) => {
-    const lbl = da(label);
-    const val = da(value) || "-";
-    const prefix = `${lbl} : `;
-    doc.setFontSize(8.5);
-    doc.setFont("helvetica", "normal"); st(doc, C.gray500);
-    const pw = doc.getTextWidth(prefix);
-    const maxVal = CW - indent - pw;
-    const lines = doc.splitTextToSize(val, maxVal);
-    need(LH * lines.length + 1);
-    doc.text(prefix, ML + indent, y);
-    doc.setFont("helvetica", "bold"); st(doc, C.gray700);
-    doc.text(lines, ML + indent + pw, y);
-    y += LH * lines.length;
-  };
-
-  /**
-   * Groupe de puces avec titre de section sur fond léger.
-   * rows = [[label, value], ...]
-   */
-  const sectionBox = (title, rows) => {
-    // Calcul hauteur réelle du bloc
-    let blockH = 8; // titre
-    doc.setFontSize(8.5);
-    for (const [lbl, val] of rows) {
-      const prefix = `${da(lbl)} : `;
-      const pw = doc.getTextWidth(prefix);
-      const lines = doc.splitTextToSize(da(val) || "-", CW - 4 - pw);
-      blockH += LH * lines.length;
-    }
-    blockH += 3; // padding bas
-
-    need(blockH);
-
-    // Fond du bloc
-    rrect(doc, ML, y, CW, blockH, 2, C.gray50);
-    // Barre gauche accent
-    frect(doc, ML, y, 2.5, blockH, C.navyMid);
-
-    // Titre
-    doc.setFontSize(7); doc.setFont("helvetica", "bold");
-    st(doc, C.navyMid);
-    doc.text(da(title).toUpperCase(), ML + 6, y + 5.5);
-    y += 8;
-
-    // Lignes
-    for (const [lbl, val] of rows) {
-      pill(lbl, val, 4);
-    }
-
-    y += 3; // padding bas
-  };
-
-  /**
-   * Titre de rubrique pleine largeur.
-   */
+  // Rubrique : filet avec label centré en médaillon
   const rubrique = (title) => {
-    need(10);
-    y += 4;
-    doc.setFontSize(8); doc.setFont("helvetica", "bold");
-    st(doc, C.navy);
-    doc.text(da(title).toUpperCase(), ML, y);
-    y += 2;
-    hline(doc, ML, PW - MR, y, C.navy, 0.4);
+    need(12);
     y += 5;
+    hline(doc, ML, PW - MR, y, C.gray200, 0.3);
+    doc.setFontSize(7.5); doc.setFont("helvetica", "bold");
+    const tw = doc.getTextWidth(da(title).toUpperCase()) + 10;
+    rrect(doc, PW / 2 - tw / 2, y - 3, tw, 6, 3, C.navy);
+    st(doc, C.white);
+    doc.text(da(title).toUpperCase(), PW / 2, y + 0.8, { align: "center" });
+    y += 7;
   };
 
   // ══════════════════════════════════════════════════════════════════
@@ -228,11 +242,12 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   // ══════════════════════════════════════════════════════════════════
   frect(doc, 0, 0, PW, 26, C.navy);
   frect(doc, 0, 20, PW, 6, C.navyMid);
+  frect(doc, 0, 26, PW, 1.5, C.orange);
 
   const drawLogo = (d) => {
     rrect(d, ML, 4, 14, 14, 2, [95, 100, 195]);
     st(d, C.white);
-    d.setFontSize(13); d.setFont("helvetica", "bold");
+    d.setFontSize(14); d.setFont("helvetica", "bold");
     d.text("+", ML + 7, 13.5, { align: "center" });
   };
   if (logoBase64) {
@@ -243,7 +258,7 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   }
 
   st(doc, C.white);
-  doc.setFontSize(11); doc.setFont("helvetica", "bold");
+  doc.setFontSize(12); doc.setFont("helvetica", "bold");
   doc.text(safe(churchName) || "Eglise", ML + 18, 11);
   st(doc, [180, 185, 230]);
   doc.setFontSize(6.5); doc.setFont("helvetica", "normal");
@@ -251,120 +266,130 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
 
   st(doc, [180, 185, 230]);
   doc.setFontSize(6.5);
-  doc.text("Genere le", PW - MR, 9, { align: "right" });
+  doc.text("Genere le", PW - MR, 10, { align: "right" });
   st(doc, C.white);
-  doc.setFontSize(8); doc.setFont("helvetica", "bold");
-  doc.text(formatDate(new Date().toISOString()), PW - MR, 15, { align: "right" });
+  doc.setFontSize(8.5); doc.setFont("helvetica", "bold");
+  doc.text(formatDate(new Date().toISOString()), PW - MR, 16.5, { align: "right" });
 
   y = 34;
 
   // ══════════════════════════════════════════════════════════════════
-  // BADGE + NOM + TEL
+  // HERO
   // ══════════════════════════════════════════════════════════════════
   const etat      = da((membre.etat_contact || "")).toLowerCase().trim();
   const etatLabel = etat === "nouveau"  ? "Nouveau"
                   : etat === "existant" ? "Existant"
                   : etat === "inactif"  ? "Inactif"
                   : safe(membre.etat_contact) || "Inconnu";
-  const etatClr = etat === "nouveau"  ? C.orange
-                : etat === "existant" ? C.green
-                : C.gray400;
-  const etatBg  = etat === "nouveau"  ? C.orangeLight
-                : etat === "existant" ? C.greenLight
-                : C.gray100;
+  const etatClr = etat === "nouveau"  ? C.orange  : etat === "existant" ? C.green  : C.gray400;
+  const etatBg  = etat === "nouveau"  ? C.orangeLight : etat === "existant" ? C.greenLight : C.gray100;
 
-  doc.setFontSize(7.5); doc.setFont("helvetica", "bold");
-  const bw = doc.getTextWidth(etatLabel) + 10;
-  rrect(doc, PW / 2 - bw / 2, y, bw, 6, 3, etatBg);
+  doc.setFontSize(8); doc.setFont("helvetica", "bold");
+  const bw = doc.getTextWidth(etatLabel) + 12;
+  rrect(doc, PW / 2 - bw / 2, y, bw, 6.5, 3, etatBg);
   st(doc, etatClr);
-  doc.text(etatLabel, PW / 2, y + 4.3, { align: "center" });
-
+  doc.text(etatLabel, PW / 2, y + 4.8, { align: "center" });
   if (membre.star === true && etat === "existant") {
     st(doc, C.amber); doc.setFontSize(10);
     doc.text("*", PW / 2 + bw / 2 + 3, y + 5);
   }
-  y += 10;
+  y += 11;
 
   st(doc, C.navy);
-  doc.setFontSize(19); doc.setFont("helvetica", "bold");
+  doc.setFontSize(20); doc.setFont("helvetica", "bold");
   doc.text(`${safe(membre.prenom)} ${safe(membre.nom)}`.trim() || "-", PW / 2, y, { align: "center" });
   y += 8;
 
   if (membre.telephone) {
-    st(doc, C.orange); doc.setFontSize(9); doc.setFont("helvetica", "normal");
+    st(doc, C.orange); doc.setFontSize(9.5); doc.setFont("helvetica", "normal");
     doc.text(`Tel. : ${da(String(membre.telephone))}`, PW / 2, y, { align: "center" });
     y += 5;
   }
 
-  hline(doc, ML + 20, PW - MR - 20, y, C.orange, 0.5);
+  frect(doc, PW / 2 - 25, y, 50, 0.8, C.orange);
   y += 8;
 
   // ══════════════════════════════════════════════════════════════════
-  // INFORMATIONS — blocs section compacts
+  // GRILLES — mesure avant dessin, aucun gap
   // ══════════════════════════════════════════════════════════════════
   const statutLabel = { 1:"En Attente", 2:"En Suivis", 3:"Integre", 4:"Refus" };
 
-  sectionBox("Identite", [
-    ["Civilite",  safe(membre.sexe)],
-    ["Age",       safe(membre.age)],
-    ["Ville",     safe(membre.ville)],
-    ["WhatsApp",  membre.is_whatsapp ? "Oui" : "Non"],
-    ["Ajoute le", formatDate(membre.date_venu)],
-  ]);
-  y += 2;
+  need(40);
+  y = draw2ColBlock(doc,
+    "Identite", [
+      ["Civilite",  safe(membre.sexe)],
+      ["Age",       safe(membre.age)],
+      ["Ville",     safe(membre.ville)],
+      ["WhatsApp",  membre.is_whatsapp ? "Oui" : "Non"],
+      ["Ajoute le", formatDate(membre.date_venu)],
+    ],
+    "Suivi pastoral", [
+      ["Statut",      safe(statutLabel[membre.statut_suivis] || membre.suivi_statut)],
+      ["Envoi suivi", formatDate(membre.date_envoi_suivi)],
+      ["Cellule",     safe(celluleName)],
+      ["Famille",     safe(familleName)],
+      ["Conseiller",  safe(conseillerName)],
+    ],
+    y, ML, CW
+  );
 
-  sectionBox("Suivi pastoral", [
-    ["Statut",      safe(statutLabel[membre.statut_suivis] || membre.suivi_statut)],
-    ["Envoi suivi", formatDate(membre.date_envoi_suivi)],
-    ["Cellule",     safe(celluleName)],
-    ["Famille",     safe(familleName)],
-    ["Conseiller",  safe(conseillerName)],
-  ]);
-  y += 2;
-
-  sectionBox("Vie spirituelle", [
-    ["Bapteme eau",  safe(membre.bapteme_eau)],
-    ["Bapteme feu",  safe(membre.bapteme_esprit)],
-    ["Priere salut", safe(membre.priere_salut)],
-    ["Conversion",   safe(membre.type_conversion)],
-    ["Ministere",    formatMinistere(membre.Ministere, membre.Autre_Ministere)],
-  ]);
-  y += 2;
-
-  sectionBox("Parcours", [
-    ["Comment venu", safe(membre.venu)],
-    ["Raison",       safe(membre.statut_initial)],
-    ["Formation",    safe(membre.Formation)],
-    ["Infos supp.",  safe(membre.infos_supplementaires)],
-  ]);
-  y += 2;
+  need(40);
+  y = draw2ColBlock(doc,
+    "Vie spirituelle", [
+      ["Bapteme eau",  safe(membre.bapteme_eau)],
+      ["Bapteme feu",  safe(membre.bapteme_esprit)],
+      ["Priere salut", safe(membre.priere_salut)],
+      ["Conversion",   safe(membre.type_conversion)],
+      ["Ministere",    formatMinistere(membre.Ministere, membre.Autre_Ministere)],
+    ],
+    "Parcours", [
+      ["Comment venu", safe(membre.venu)],
+      ["Raison",       safe(membre.statut_initial)],
+      ["Formation",    safe(membre.Formation)],
+      ["Infos supp.",  safe(membre.infos_supplementaires)],
+    ],
+    y, ML, CW
+  );
 
   // ══════════════════════════════════════════════════════════════════
   // SOIN PASTORAL
   // ══════════════════════════════════════════════════════════════════
-  rubrique("Soin pastoral");
+  rubrique("Soin pastoral — Besoins");
 
   const besoins = parseBesoins(membre.besoin);
   if (besoins.length > 0) {
-    const besoinsStr = besoins.map(b => {
-      const r = (b.statut || "").toLowerCase().includes("resolu");
-      return `${da(b.label)}${r ? " [resolu]" : ""}`;
-    }).join(", ");
-    pill("Besoins", besoinsStr);
-    y += 1;
+    let tx = ML;
+    const TAG_H = 6.5;
+    doc.setFontSize(8); doc.setFont("helvetica", "bold");
+    for (const b of besoins) {
+      const resolu = (b.statut || "").toLowerCase().includes("resolu");
+      const label  = resolu ? `${da(b.label)} - Resolu` : da(b.label);
+      const tw2    = doc.getTextWidth(label) + 10;
+      if (tx + tw2 > PW - MR) { tx = ML; y += TAG_H + 2; }
+      need(TAG_H + 2);
+      rrect(doc, tx, y, tw2, TAG_H, 3, resolu ? C.greenLight : C.orangeLight);
+      sd(doc, resolu ? C.green : C.orange); doc.setLineWidth(0.3);
+      doc.roundedRect(tx, y, tw2, TAG_H, 3, 3, "S");
+      st(doc, resolu ? C.greenDark : C.orange);
+      doc.text(label, tx + tw2 / 2, y + 4.8, { align: "center" });
+      tx += tw2 + 3;
+    }
+    y += TAG_H + 4;
   } else {
     need(6);
     doc.setFontSize(8.5); doc.setFont("helvetica", "italic"); st(doc, C.gray400);
     doc.text("Aucun besoin enregistre.", ML, y);
-    y += 5;
+    y += 6;
   }
 
   if (membre.commentaire_suivis) {
-    const cL = doc.splitTextToSize(`"${da(membre.commentaire_suivis)}"`, CW);
-    need(cL.length * 4.5 + 4);
+    const cL = doc.splitTextToSize(`"${da(membre.commentaire_suivis)}"`, CW - 8);
+    need(cL.length * 4.5 + 7);
+    rrect(doc, ML, y - 1, CW, cL.length * 4.5 + 5, 2, C.gray50);
+    frect(doc, ML, y - 1, 2.5, cL.length * 4.5 + 5, C.navyMid);
     doc.setFontSize(8.5); doc.setFont("helvetica", "italic"); st(doc, C.gray600);
-    doc.text(cL, ML, y);
-    y += cL.length * 4.5 + 3;
+    doc.text(cL, ML + 6, y + 3);
+    y += cL.length * 4.5 + 7;
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -389,74 +414,112 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
         return v !== null && v !== undefined && String(v).trim() !== "";
       });
 
-      // ── Pré-calcul hauteur réelle du bloc ──────────────────────────
+      // ── Pré-calcul hauteur exacte ──────────────────────────────────
       doc.setFontSize(8.5);
-      let bH = 9; // entete
+      let bH = 12;
+
       if (besoinsArr.length > 0) {
         const bt = besoinsArr.map(b => `${da(b.label)} (${da(b.statut)})`).join(", ");
-        bH += doc.splitTextToSize(`Besoin : ${bt}`, CW - 8).length * 4.2 + 2;
+        bH += doc.splitTextToSize(bt, CW - 10).length * 4.2 + 3;
       }
       if (s.commentaire) {
-        bH += doc.splitTextToSize(`"${da(s.commentaire)}"`, CW - 8).length * 4.5 + 3;
+        bH += doc.splitTextToSize(`"${da(s.commentaire)}"`, CW - 10).length * 4.5 + 4;
       }
-      for (const q of filledQ) {
-        const vL = doc.splitTextToSize(safe(s[q.key]), CW - 14);
-        bH += 4.5 + vL.length * 4.5 + 2;
+      if (filledQ.length > 0) {
+        bH += 7;
+        const qCW = (CW - 14) / 2;
+        for (let qi = 0; qi < filledQ.length; qi += 2) {
+          const q1 = filledQ[qi];
+          const q2 = filledQ[qi + 1];
+          doc.setFontSize(8.5);
+          const h1 = doc.splitTextToSize(safe(s[q1.key]), qCW - 2).length * 4.5;
+          const h2 = q2 ? doc.splitTextToSize(safe(s[q2.key]), qCW - 2).length * 4.5 : 0;
+          bH += 4 + Math.max(h1, h2) + 3;
+        }
+        bH += 2;
       }
-      if (authorName) bH += 5;
-      bH += 4; // padding bas
+      if (authorName) bH += 6;
+      bH += 5;
 
       need(bH);
 
-      const accentClr = resolu ? C.green : C.navyMid;
       const blockY    = y;
+      const accentClr = resolu ? C.green : C.navyMid;
 
-      // Fond léger
-      rrect(doc, ML, blockY, CW, bH, 2, C.gray50);
-      // Barre accent
-      frect(doc, ML, blockY, 2.5, bH, accentClr);
+      // Fond + bordure
+      rrect(doc, ML, blockY, CW, bH, 2.5, C.gray50);
+      sd(doc, C.gray100); doc.setLineWidth(0.2);
+      doc.roundedRect(ML, blockY, CW, bH, 2.5, 2.5, "S");
+      frect(doc, ML, blockY, 3, bH, accentClr);
 
       const X = ML + 7;
+      y = blockY + 7;
 
-      // Entête : date — type + statut
-      y = blockY + 6;
-      doc.setFontSize(9); doc.setFont("helvetica", "bold"); st(doc, C.gray700);
-      doc.text(`${formatDate(s.date_action)}  -  ${safe(s.action_type)}`, X, y);
+      // Date — type
+      doc.setFontSize(9.5); doc.setFont("helvetica", "bold"); st(doc, C.gray700);
+      doc.text(`${formatDate(s.date_action)}  —  ${safe(s.action_type)}`, X, y);
 
-      doc.setFontSize(7); doc.setFont("helvetica", "bold");
+      // Badge statut
+      doc.setFontSize(7.5); doc.setFont("helvetica", "bold");
+      const sLabel = resolu ? "Resolu" : statut;
+      const sw     = doc.getTextWidth(sLabel) + 8;
+      rrect(doc, PW - MR - sw, blockY + 3, sw, 6, 3, resolu ? C.greenLight : C.blueLight);
       st(doc, resolu ? C.greenDark : C.blue);
-      rrect(doc, PW - MR - 22, blockY + 2, 22, 6, 3,
-            resolu ? C.greenLight : C.blueLight);
-      doc.text(resolu ? "Resolu" : statut, PW - MR - 11, blockY + 6.3, { align: "center" });
+      doc.text(sLabel, PW - MR - sw / 2, blockY + 7.3, { align: "center" });
 
       y += 5;
 
       // Besoins
       if (besoinsArr.length > 0) {
         const bt  = besoinsArr.map(b => `${da(b.label)} (${da(b.statut)})`).join(", ");
-        const btL = doc.splitTextToSize(`Besoin : ${bt}`, CW - 8);
-        doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); st(doc, C.gray400);
-        doc.text(btL, X, y);
-        y += btL.length * 4.2 + 2;
+        doc.setFontSize(7.5); doc.setFont("helvetica", "bold"); st(doc, C.gray400);
+        const bpw = doc.getTextWidth("Besoin : ");
+        doc.text("Besoin : ", X, y);
+        doc.setFont("helvetica", "normal");
+        const btL = doc.splitTextToSize(bt, CW - 10 - bpw);
+        doc.text(btL, X + bpw, y);
+        y += btL.length * 4.2 + 3;
       }
 
       // Commentaire
       if (s.commentaire) {
-        const cl = doc.splitTextToSize(`"${da(s.commentaire)}"`, CW - 8);
-        doc.setFontSize(8.5); doc.setFont("helvetica", "italic"); st(doc, C.gray600);
+        const cl = doc.splitTextToSize(`"${da(s.commentaire)}"`, CW - 10);
+        doc.setFontSize(9); doc.setFont("helvetica", "italic"); st(doc, C.gray700);
         doc.text(cl, X, y);
-        y += cl.length * 4.5 + 3;
+        y += cl.length * 4.5 + 4;
       }
 
-      // Questions
-      for (const q of filledQ) {
-        doc.setFontSize(7); doc.setFont("helvetica", "bold"); st(doc, C.navyMid);
-        doc.text(`${q.label} :`, X, y);
-        y += 4.5;
-        const vL = doc.splitTextToSize(safe(s[q.key]), CW - 14);
-        doc.setFontSize(8.5); doc.setFont("helvetica", "normal"); st(doc, C.gray700);
-        doc.text(vL, X + 4, y);
-        y += vL.length * 4.5 + 2;
+      // Questions en 2 mini-colonnes
+      if (filledQ.length > 0) {
+        const qCW = (CW - 14) / 2;
+        const QX2 = X + qCW + 4;
+
+        doc.setFontSize(6.5); doc.setFont("helvetica", "bold"); st(doc, C.gray400);
+        doc.text("QUESTIONS D'ENTRETIEN", X, y);
+        y += 5;
+
+        for (let qi = 0; qi < filledQ.length; qi += 2) {
+          const q1 = filledQ[qi];
+          const q2 = filledQ[qi + 1];
+
+          doc.setFontSize(7); doc.setFont("helvetica", "bold"); st(doc, C.navyMid);
+          doc.text(`${q1.label} :`, X, y);
+          if (q2) doc.text(`${q2.label} :`, QX2, y);
+          y += 4;
+
+          doc.setFontSize(8.5); doc.setFont("helvetica", "normal"); st(doc, C.gray700);
+          const v1L = doc.splitTextToSize(safe(s[q1.key]), qCW - 2);
+          doc.text(v1L, X + 2, y);
+
+          if (q2) {
+            const v2L = doc.splitTextToSize(safe(s[q2.key]), qCW - 2);
+            doc.text(v2L, QX2 + 2, y);
+            y += Math.max(v1L.length, v2L.length) * 4.5 + 3;
+          } else {
+            y += v1L.length * 4.5 + 3;
+          }
+        }
+        y += 2;
       }
 
       // Auteur
@@ -466,20 +529,24 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
         y += 5;
       }
 
-      y = blockY + bH + 3; // toujours après le bloc complet
+      // y repart toujours depuis la hauteur calculée — jamais de gap flottant
+      y = blockY + bH + 4;
     }
   }
 
   // ══════════════════════════════════════════════════════════════════
-  // FOOTER
+  // FOOTER navy sur chaque page
   // ══════════════════════════════════════════════════════════════════
   const total = doc.internal.getNumberOfPages();
   for (let p = 1; p <= total; p++) {
     doc.setPage(p);
-    hline(doc, ML, PW - MR, PH - 12, C.gray200, 0.3);
-    st(doc, C.gray400); doc.setFontSize(7); doc.setFont("helvetica", "normal");
-    doc.text("Document confidentiel  -  Usage pastoral uniquement", ML, PH - 7);
-    doc.text(`Page ${p} / ${total}`, PW - MR, PH - 7, { align: "right" });
+    frect(doc, 0, PH - 13, PW, 13, C.navy);
+    st(doc, [180, 185, 230]);
+    doc.setFontSize(6.5); doc.setFont("helvetica", "normal");
+    doc.text("Document confidentiel  -  Usage pastoral uniquement", ML, PH - 5.5);
+    st(doc, C.white);
+    doc.setFontSize(7); doc.setFont("helvetica", "bold");
+    doc.text(`Page ${p} / ${total}`, PW - MR, PH - 5.5, { align: "right" });
   }
 
   // ══════════════════════════════════════════════════════════════════

@@ -426,20 +426,15 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
         bH += doc.splitTextToSize(`"${da(s.commentaire)}"`, CW - 10).length * 4.5 + 4;
       }
       if (filledQ.length > 0) {
-        bH += 7;
-        const qCW = (CW - 14) / 2;
-        for (let qi = 0; qi < filledQ.length; qi += 2) {
-          const q1 = filledQ[qi];
-          const q2 = filledQ[qi + 1];
+        for (const q of filledQ) {
+          bH += 5; // label
           doc.setFontSize(8.5);
-          const h1 = doc.splitTextToSize(safe(s[q1.key]), qCW - 2).length * 4.5;
-          const h2 = q2 ? doc.splitTextToSize(safe(s[q2.key]), qCW - 2).length * 4.5 : 0;
-          bH += 4 + Math.max(h1, h2) + 3;
+          bH += doc.splitTextToSize(safe(s[q.key]), CW - 12).length * 4.5 + 2;
         }
         bH += 2;
       }
       if (authorName) bH += 6;
-      bH += 5;
+      bH += 4;
 
       need(bH);
 
@@ -489,35 +484,17 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
         y += cl.length * 4.5 + 4;
       }
 
-      // Questions en 2 mini-colonnes
+      // Questions — label gras navy, réponse dessous en texte normal
       if (filledQ.length > 0) {
-        const qCW = (CW - 14) / 2;
-        const QX2 = X + qCW + 4;
-
-        doc.setFontSize(6.5); doc.setFont("helvetica", "bold"); st(doc, C.gray400);
-        doc.text("QUESTIONS D'ENTRETIEN", X, y);
-        y += 5;
-
-        for (let qi = 0; qi < filledQ.length; qi += 2) {
-          const q1 = filledQ[qi];
-          const q2 = filledQ[qi + 1];
-
-          doc.setFontSize(7); doc.setFont("helvetica", "bold"); st(doc, C.navyMid);
-          doc.text(`${q1.label} :`, X, y);
-          if (q2) doc.text(`${q2.label} :`, QX2, y);
-          y += 4;
-
+        for (const q of filledQ) {
+          need(10);
+          doc.setFontSize(7.5); doc.setFont("helvetica", "bold"); st(doc, C.navyMid);
+          doc.text(`${q.label} :`, X, y);
+          y += 5;
+          const vL = doc.splitTextToSize(safe(s[q.key]), CW - 12);
           doc.setFontSize(8.5); doc.setFont("helvetica", "normal"); st(doc, C.gray700);
-          const v1L = doc.splitTextToSize(safe(s[q1.key]), qCW - 2);
-          doc.text(v1L, X + 2, y);
-
-          if (q2) {
-            const v2L = doc.splitTextToSize(safe(s[q2.key]), qCW - 2);
-            doc.text(v2L, QX2 + 2, y);
-            y += Math.max(v1L.length, v2L.length) * 4.5 + 3;
-          } else {
-            y += v1L.length * 4.5 + 3;
-          }
+          doc.text(vL, X + 2, y);
+          y += vL.length * 4.5 + 2;
         }
         y += 2;
       }

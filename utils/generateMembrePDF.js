@@ -1,21 +1,21 @@
 // utils/generateMembrePDF.js
+// Fiche pastorale confidentielle — design epure, fluide, sans emoji
 
 import jsPDF from "jspdf";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Nettoyage texte ──────────────────────────────────────────────────────────
 
 function da(str) {
   if (!str) return "";
   return String(str)
     .replace(/[àâä]/g, "a").replace(/[ÀÂÄÁ]/g, "A")
     .replace(/[éèêë]/g, "e").replace(/[ÉÈÊË]/g, "E")
-    .replace(/[îï]/g, "i").replace(/[ÎÏ]/g, "I")
-    .replace(/[ôö]/g, "o").replace(/[ÔÖÓ]/g, "O")
-    .replace(/[ùûü]/g, "u").replace(/[ÙÛÜ]/g, "U")
+    .replace(/[îï]/g,   "i").replace(/[ÎÏ]/g,   "I")
+    .replace(/[ôö]/g,   "o").replace(/[ÔÖÓ]/g,  "O")
+    .replace(/[ùûü]/g,  "u").replace(/[ÙÛÜ]/g,  "U")
     .replace(/ç/g, "c").replace(/Ç/g, "C")
     .replace(/ñ/g, "n").replace(/Ñ/g, "N")
-    .replace(/—/g, "-").replace(/['']/g, "'").replace(/[""]/g, '"')
-    // Supprimer les emojis (jsPDF ne les supporte pas)
+    .replace(/—/g, "-").replace(/['']/g, "'").replace(/[""«»]/g, '"')
     .replace(/[\u{1F300}-\u{1FAFF}]/gu, "")
     .replace(/[\u2600-\u27BF]/g, "")
     .trim();
@@ -26,133 +26,139 @@ function safe(val) {
   return da(String(val));
 }
 
-function formatDateFr(dateStr) {
+function formatDate(dateStr) {
   if (!dateStr) return "-";
   try {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return da(dateStr);
-    const months = ["Janv","Fevr","Mars","Avr","Mai","Juin","Juil","Aout","Sept","Oct","Nov","Dec"];
-    return `${d.getDate().toString().padStart(2,"0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    const M = ["Janv","Fevr","Mars","Avr","Mai","Juin","Juil","Aout","Sept","Oct","Nov","Dec"];
+    return `${String(d.getDate()).padStart(2,"0")} ${M[d.getMonth()]} ${d.getFullYear()}`;
   } catch { return da(String(dateStr)); }
 }
 
 function parseBesoins(val) {
   if (!val) return [];
   try {
-    const parsed = typeof val === "string" ? JSON.parse(val) : val;
-    if (!Array.isArray(parsed)) return [];
-    // Support ancien format (strings) et nouveau format (objets {label, statut})
-    return parsed.map((b) => {
-      if (typeof b === "object" && b !== null) {
-        return { label: da(String(b.label || b)), statut: da(String(b.statut || "En suivi")) };
-      }
-      return { label: da(String(b)), statut: "En suivi" };
-    });
+    const p = typeof val === "string" ? JSON.parse(val) : val;
+    if (!Array.isArray(p)) return [];
+    return p.map(b =>
+      typeof b === "object" && b !== null
+        ? { label: da(String(b.label || b)), statut: da(String(b.statut || "En suivi")) }
+        : { label: da(String(b)), statut: "En suivi" }
+    );
   } catch { return []; }
 }
 
-function parseHistoriqueBesoin(besoinJson) {
-  if (!besoinJson) return [];
+function parseHistoriqueBesoin(val) {
+  if (!val) return [];
   try {
-    const parsed = typeof besoinJson === "string" ? JSON.parse(besoinJson) : besoinJson;
-    if (!Array.isArray(parsed)) return [];
-    if (parsed.length > 0 && typeof parsed[0] === "object" && parsed[0].label) {
-      return parsed.map((b) => ({ label: da(b.label), statut: da(b.statut || "En suivi") }));
-    }
-    return parsed.map((b) => ({ label: da(String(b)), statut: "En suivi" }));
+    const p = typeof val === "string" ? JSON.parse(val) : val;
+    if (!Array.isArray(p)) return [];
+    if (p.length > 0 && typeof p[0] === "object" && p[0].label)
+      return p.map(b => ({ label: da(b.label), statut: da(b.statut || "En suivi") }));
+    return p.map(b => ({ label: da(String(b)), statut: "En suivi" }));
   } catch { return []; }
 }
 
 function formatMinistere(mj, autre) {
   try {
     let list = Array.isArray(mj) ? mj : JSON.parse(mj || "[]");
-    list = list.filter((m) => m.toLowerCase() !== "autre");
+    list = list.filter(m => m.toLowerCase() !== "autre");
     if (autre?.trim()) list.push(autre.trim());
     return da(list.join(", ")) || "-";
   } catch { return safe(mj); }
 }
 
-const INTERVIEW_QUESTIONS = [
+// ─── Questions d'entretien ────────────────────────────────────────────────────
+
+const IQ = [
   { key: "etat_general",       label: "Etat general" },
   { key: "vie_spirituelle",    label: "Vie spirituelle" },
   { key: "intention_priere",   label: "Intention de priere" },
-  { key: "combats_luttes",     label: "Combats & luttes" },
+  { key: "combats_luttes",     label: "Combats et luttes" },
   { key: "blocages",           label: "Blocages" },
   { key: "vie_personnelle",    label: "Vie personnelle" },
-  { key: "besoins_avancement", label: "Besoins / Avancement" },
+  { key: "besoins_avancement", label: "Besoins et avancement" },
   { key: "talents",            label: "Talents" },
   { key: "domaine_service",    label: "Domaine de service" },
 ];
 
-// ─── Couleurs ─────────────────────────────────────────────────────────────────
+// ─── Palette ──────────────────────────────────────────────────────────────────
+
 const C = {
-  navy:        [46,  49,  146],
-  navyLight:   [79,  84,  201],
-  navyXLight:  [235, 238, 255],
-  white:       [255, 255, 255],
-  gray50:      [248, 250, 252],
-  gray100:     [226, 232, 240],
-  gray200:     [203, 213, 225],
-  gray400:     [148, 163, 184],
-  gray500:     [100, 116, 139],
-  gray600:     [71,  85,  105],
-  gray700:     [51,  65,  85],
-  green:       [22,  163, 74],
-  greenLight:  [220, 252, 231],
-  greenDark:   [15,  118, 55],
-  orange:      [249, 115, 22],
-  orangeLight: [255, 237, 213],
-  blue:        [37,  99,  235],
-  blueLight:   [219, 234, 254],
-  amber:       [217, 119, 6],
-  amberLight:  [254, 243, 199],
+  navy:       [46,  49,  146],
+  navyMid:    [79,  84,  201],
+  navyLight:  [235, 238, 255],
+  white:      [255, 255, 255],
+  gray50:     [248, 250, 252],
+  gray100:    [226, 232, 240],
+  gray200:    [203, 213, 225],
+  gray400:    [148, 163, 184],
+  gray500:    [100, 116, 139],
+  gray600:    [71,  85,  105],
+  gray700:    [51,  65,  85],
+  green:      [22,  163, 74],
+  greenLight: [220, 252, 231],
+  greenDark:  [15,  118, 55],
+  orange:     [234, 88,  12],
+  orangeLight:[255, 237, 213],
+  blue:       [37,  99,  235],
+  blueLight:  [219, 234, 254],
+  amber:      [180, 90,  0],
 };
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
-const setFill      = (doc, rgb) => doc.setFillColor(rgb[0], rgb[1], rgb[2]);
-const setDraw      = (doc, rgb) => doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
-const setTextColor = (doc, rgb) => doc.setTextColor(rgb[0], rgb[1], rgb[2]);
 
-function fillRect(doc, x, y, w, h, rgb) {
-  setFill(doc, rgb); doc.rect(x, y, w, h, "F");
-}
-function fillRoundedRect(doc, x, y, w, h, r, rgb) {
-  setFill(doc, rgb); doc.roundedRect(x, y, w, h, r, r, "F");
-}
-function strokeRoundedRect(doc, x, y, w, h, r, rgb, lw = 0.3) {
-  setDraw(doc, rgb); doc.setLineWidth(lw); doc.roundedRect(x, y, w, h, r, r, "S");
-}
+const sf = (doc, rgb) => doc.setFillColor(...rgb);
+const sd = (doc, rgb) => doc.setDrawColor(...rgb);
+const st = (doc, rgb) => doc.setTextColor(...rgb);
 
-// Header de section : barre navy avec texte blanc, retourne y après
-function sectionHeader(doc, label, x, y, w) {
-  fillRoundedRect(doc, x, y, w, 8, 2, C.navy);
-  setTextColor(doc, C.white);
-  doc.setFontSize(8.5); doc.setFont("helvetica", "bold");
-  doc.text(label, x + 4, y + 5.5);
-  return y + 11;
+function frect(doc, x, y, w, h, rgb) {
+  sf(doc, rgb); doc.rect(x, y, w, h, "F");
+}
+function rrect(doc, x, y, w, h, r, rgb) {
+  sf(doc, rgb); doc.roundedRect(x, y, w, h, r, r, "F");
+}
+function srect(doc, x, y, w, h, r, rgb, lw) {
+  sd(doc, rgb); doc.setLineWidth(lw || 0.3); doc.roundedRect(x, y, w, h, r, r, "S");
+}
+function hline(doc, x1, x2, y, rgb, lw) {
+  sd(doc, rgb); doc.setLineWidth(lw || 0.3); doc.line(x1, y, x2, y);
 }
 
-// Ligne clé/valeur, retourne l'extra-hauteur si wrap
-function kvRow(doc, key, value, x, y, totalWidth) {
-  const kw = totalWidth * 0.48;
-  const vw = totalWidth * 0.50;
+// ─── Hauteur d'un bloc de lignes kv ──────────────────────────────────────────
+
+function kvBlockH(doc, rows, colW, rowGap) {
+  let h = 0;
+  for (const [, v] of rows) {
+    const lines = doc.splitTextToSize(String(v ?? "-"), colW * 0.52);
+    h += rowGap + (lines.length > 1 ? (lines.length - 1) * 4.5 : 0);
+  }
+  return h;
+}
+
+// ─── Ligne clé / valeur — valeur alignée à droite ────────────────────────────
+
+function kvRow(doc, key, value, x, y, colW) {
   doc.setFont("helvetica", "normal"); doc.setFontSize(8);
-  setTextColor(doc, C.gray500);
+  st(doc, C.gray500);
   doc.text(key, x, y);
+
   doc.setFont("helvetica", "bold"); doc.setFontSize(8);
-  setTextColor(doc, C.gray700);
-  const lines = doc.splitTextToSize(value, vw);
-  doc.text(lines, x + kw, y);
+  st(doc, C.gray700);
+  const lines = doc.splitTextToSize(value, colW * 0.52);
+  lines.forEach((ln, i) => doc.text(ln, x + colW, y + i * 4.5, { align: "right" }));
   return lines.length > 1 ? (lines.length - 1) * 4.5 : 0;
 }
 
-function kvBlockHeight(doc, rows, colWidth, rowH) {
-  let h = 0;
-  rows.forEach(([, v]) => {
-    const lines = doc.splitTextToSize(String(v ?? "-"), colWidth * 0.50);
-    h += rowH + (lines.length > 1 ? (lines.length - 1) * 4.5 : 0);
-  });
-  return h;
+// ─── Barre de section navy ────────────────────────────────────────────────────
+
+function sectionBar(doc, label, x, y, w) {
+  rrect(doc, x, y, w, 7.5, 2, C.navy);
+  st(doc, C.white);
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8);
+  doc.text(label, x + 4, y + 5.2);
+  return y + 10;
 }
 
 // ─── Export principal ─────────────────────────────────────────────────────────
@@ -167,130 +173,144 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   } = options;
 
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-  const PW = 210, PH = 297, ML = 14, MR = 14;
-  const CW = PW - ML - MR; // 182mm
+  const PW  = 210;
+  const PH  = 297;
+  const ML  = 14;
+  const MR  = 14;
+  const CW  = PW - ML - MR; // 182 mm
+  const BOT = 18;            // marge basse réservée footer
+
   let y = 0;
 
-  const ensureSpace = (needed) => {
-    if (y + needed > PH - 14) { doc.addPage(); y = 16; }
+  const need = (h) => {
+    if (y + h > PH - BOT) { doc.addPage(); y = 16; }
   };
 
-  // ════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════
   // HEADER
-  // ════════════════════════════════════════════════════════════════
-  fillRect(doc, 0, 0, PW, 30, C.navy);
-  fillRect(doc, 0, 24, PW, 6, C.navyLight);
+  // ══════════════════════════════════════════════════════════════════
+  frect(doc, 0, 0, PW, 28, C.navy);
+  frect(doc, 0, 22, PW, 6, C.navyMid);
 
   // Logo
   if (logoBase64) {
-    try { doc.addImage(logoBase64, "PNG", ML, 5, 18, 18); }
-    catch { _drawLogoPlaceholder(doc, ML); }
+    try { doc.addImage(logoBase64, "PNG", ML, 4, 16, 16); }
+    catch { _logoBox(doc, ML); }
   } else {
-    _drawLogoPlaceholder(doc, ML);
+    _logoBox(doc, ML);
   }
 
-  function _drawLogoPlaceholder(d, x) {
-    fillRoundedRect(d, x, 5, 18, 18, 3, [100, 105, 200]);
-    setTextColor(d, C.white); d.setFontSize(14); d.setFont("helvetica", "bold");
-    d.text("+", x + 9, 16, { align: "center" });
+  function _logoBox(d, x) {
+    rrect(d, x, 4, 16, 16, 2, [95, 100, 195]);
+    st(d, C.white); d.setFontSize(13); d.setFont("helvetica", "bold");
+    d.text("+", x + 8, 14.5, { align: "center" });
   }
 
-  setTextColor(doc, C.white);
-  doc.setFontSize(13); doc.setFont("helvetica", "bold");
-  doc.text(da(churchName), ML + 22, 13);
-  doc.setFontSize(7.5); doc.setFont("helvetica", "normal");
-  setTextColor(doc, [180, 185, 230]);
-  doc.text("FICHE CONFIDENTIELLE", ML + 22, 19);
+  st(doc, C.white);
+  doc.setFontSize(12); doc.setFont("helvetica", "bold");
+  doc.text(da(churchName), ML + 20, 12);
+  doc.setFontSize(7); doc.setFont("helvetica", "normal");
+  st(doc, [180, 185, 230]);
+  doc.text("FICHE CONFIDENTIELLE", ML + 20, 18);
 
-  setTextColor(doc, [180, 185, 230]); doc.setFontSize(7);
-  doc.text("Genere le", PW - MR, 11, { align: "right" });
-  setTextColor(doc, C.white); doc.setFontSize(9); doc.setFont("helvetica", "bold");
-  doc.text(formatDateFr(new Date().toISOString()), PW - MR, 17, { align: "right" });
+  st(doc, [180, 185, 230]); doc.setFontSize(7);
+  doc.text("Genere le", PW - MR, 10, { align: "right" });
+  st(doc, C.white); doc.setFontSize(8.5); doc.setFont("helvetica", "bold");
+  doc.text(formatDate(new Date().toISOString()), PW - MR, 16.5, { align: "right" });
 
-  y = 36;
+  y = 34;
 
-  // ════════════════════════════════════════════════════════════════
-  // BADGE + NOM + TEL
-  // ════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════
+  // BANDEAU IDENTITE (badge + nom + tel)
+  // ══════════════════════════════════════════════════════════════════
   const etat      = (membre.etat_contact || "").toLowerCase().trim();
-  const etatLabel = etat === "nouveau" ? "Nouveau" : etat === "existant" ? "Existant" : etat === "inactif" ? "Inactif" : safe(membre.etat_contact);
-  const etatColor = etat === "nouveau" ? C.orange : etat === "existant" ? C.green : C.gray400;
-  const etatBg    = etat === "nouveau" ? C.orangeLight : etat === "existant" ? C.greenLight : C.gray100;
+  const etatLabel = etat === "nouveau"  ? "Nouveau"
+                  : etat === "existant" ? "Existant"
+                  : etat === "inactif"  ? "Inactif"
+                  : safe(membre.etat_contact);
+  const etatClr = etat === "nouveau"  ? C.orange
+                : etat === "existant" ? C.green
+                : C.gray400;
+  const etatBg  = etat === "nouveau"  ? C.orangeLight
+                : etat === "existant" ? C.greenLight
+                : C.gray100;
 
   // Badge statut
-  const badgeW = doc.getTextWidth(etatLabel) + 10;
-  const badgeX = PW / 2 - badgeW / 2;
-  fillRoundedRect(doc, badgeX, y, badgeW, 7, 3, etatBg);
-  setTextColor(doc, etatColor); doc.setFontSize(8); doc.setFont("helvetica", "bold");
-  doc.text(etatLabel, PW / 2, y + 5, { align: "center" });
+  doc.setFontSize(8); doc.setFont("helvetica", "bold");
+  const bw = doc.getTextWidth(etatLabel) + 10;
+  rrect(doc, PW / 2 - bw / 2, y, bw, 6.5, 3, etatBg);
+  st(doc, etatClr);
+  doc.text(etatLabel, PW / 2, y + 4.8, { align: "center" });
 
-  // Etoile si star
+  // Etoile serviteur
   if (membre.star === true && etat === "existant") {
-    setTextColor(doc, C.amber); doc.setFontSize(11);
-    doc.text("*", badgeX + badgeW + 3, y + 5.5);
+    st(doc, C.amber); doc.setFontSize(10);
+    doc.text("*", PW / 2 + bw / 2 + 3, y + 5);
   }
-  y += 10;
+  y += 9;
 
   // Nom
-  setTextColor(doc, C.navy); doc.setFontSize(22); doc.setFont("helvetica", "bold");
+  st(doc, C.navy); doc.setFontSize(20); doc.setFont("helvetica", "bold");
   doc.text(`${safe(membre.prenom)} ${safe(membre.nom)}`, PW / 2, y, { align: "center" });
-  y += 8;
-
-  // Téléphone
-  if (membre.telephone) {
-    setTextColor(doc, C.orange); doc.setFontSize(10); doc.setFont("helvetica", "normal");
-    doc.text(`Tel : ${da(String(membre.telephone))}`, PW / 2, y, { align: "center" });
-    y += 7;
-  }
-
-  // Séparateur orange
-  setDraw(doc, C.orange); doc.setLineWidth(0.6);
-  doc.line(ML + 20, y, PW - MR - 20, y);
   y += 7;
 
-  // ════════════════════════════════════════════════════════════════
-  // Sections 2 colonnes
-  // ════════════════════════════════════════════════════════════════
+  // Telephone
+  if (membre.telephone) {
+    st(doc, C.orange); doc.setFontSize(9.5); doc.setFont("helvetica", "normal");
+    doc.text(`Tel. : ${da(String(membre.telephone))}`, PW / 2, y, { align: "center" });
+    y += 6;
+  }
+
+  // Filet separateur
+  hline(doc, ML + 18, PW - MR - 18, y + 1, C.orange, 0.5);
+  y += 6;
+
+  // ══════════════════════════════════════════════════════════════════
+  // SECTIONS 2 COLONNES
+  // ══════════════════════════════════════════════════════════════════
   const COL_W  = CW / 2 - 3;
   const COL2_X = ML + COL_W + 6;
   const ROW_H  = 6;
 
-  function renderTwoColSection(leftHeader, leftRows, rightHeader, rightRows) {
-    const lH = 11 + kvBlockHeight(doc, leftRows,  COL_W, ROW_H);
-    const rH = 11 + kvBlockHeight(doc, rightRows, COL_W, ROW_H);
-    ensureSpace(Math.max(lH, rH) + 5);
+  function twoCol(lTitle, lRows, rTitle, rRows) {
+    const lH = 10 + kvBlockH(doc, lRows, COL_W, ROW_H);
+    const rH = 10 + kvBlockH(doc, rRows, COL_W, ROW_H);
+    need(Math.max(lH, rH) + 3);
 
-    let yL = sectionHeader(doc, leftHeader,  ML,      y, COL_W);
-    leftRows.forEach(([k, v]) => { yL += ROW_H + kvRow(doc, k, v, ML, yL, COL_W); });
+    const startY = y;
 
-    let yR = sectionHeader(doc, rightHeader, COL2_X,  y, COL_W);
-    rightRows.forEach(([k, v]) => { yR += ROW_H + kvRow(doc, k, v, COL2_X, yR, COL_W); });
+    let yL = sectionBar(doc, lTitle, ML, startY, COL_W);
+    for (const [k, v] of lRows) yL += ROW_H + kvRow(doc, k, v, ML, yL, COL_W);
 
-    y = Math.max(yL, yR) + 5;
+    let yR = sectionBar(doc, rTitle, COL2_X, startY, COL_W);
+    for (const [k, v] of rRows) yR += ROW_H + kvRow(doc, k, v, COL2_X, yR, COL_W);
+
+    // Pas de y += 4 additionnel — gap minimal de 3 mm
+    y = Math.max(yL, yR) + 3;
   }
 
-  const statutSuiviLabels = { 1:"En Attente", 2:"En Suivis", 3:"Integre", 4:"Refus" };
+  const statutLabel = { 1:"En Attente", 2:"En Suivis", 3:"Integre", 4:"Refus" };
 
-  renderTwoColSection(
+  twoCol(
     "IDENTITE",
     [
       ["Civilite",      safe(membre.sexe)],
       ["Tranche d'age", safe(membre.age)],
       ["Ville",         safe(membre.ville)],
       ["WhatsApp",      membre.is_whatsapp ? "Oui" : "Non"],
-      ["Ajoute le",     formatDateFr(membre.date_venu)],
+      ["Ajoute le",     formatDate(membre.date_venu)],
     ],
     "SUIVI",
     [
-      ["Statut",           safe(statutSuiviLabels[membre.statut_suivis] || membre.suivi_statut)],
-      ["Date envoi suivi", formatDateFr(membre.date_envoi_suivi)],
-      ["Cellule",          safe(celluleName)],
-      ["Famille",          safe(familleName)],
-      ["Conseiller",       safe(conseillerName)],
+      ["Statut",      safe(statutLabel[membre.statut_suivis] || membre.suivi_statut)],
+      ["Envoi suivi", formatDate(membre.date_envoi_suivi)],
+      ["Cellule",     safe(celluleName)],
+      ["Famille",     safe(familleName)],
+      ["Conseiller",  safe(conseillerName)],
     ]
   );
 
-  renderTwoColSection(
+  twoCol(
     "VIE SPIRITUELLE",
     [
       ["Bapteme eau",  safe(membre.bapteme_eau)],
@@ -308,216 +328,207 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
     ]
   );
 
-  // ════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════
   // SOIN PASTORAL — BESOINS
-  // ════════════════════════════════════════════════════════════════
-  ensureSpace(18);
-  y = sectionHeader(doc, "SOIN PASTORAL  -  BESOINS", ML, y, CW);
+  // ══════════════════════════════════════════════════════════════════
+  need(16);
+  y = sectionBar(doc, "SOIN PASTORAL  —  BESOINS", ML, y, CW);
 
   const besoins = parseBesoins(membre.besoin);
+
   if (besoins.length > 0) {
-    let bx = ML;
-    const tagH = 7;
-    besoins.forEach((b) => {
+    let bx  = ML;
+    const TH = 6.5;
+
+    for (const b of besoins) {
       const resolu = (b.statut || "").toLowerCase().includes("resolu") ||
                      (b.statut || "").toLowerCase().includes("résolu");
-      const tagLabel = resolu ? `v ${b.label} - Resolu` : b.label;
-      doc.setFontSize(7.5); doc.setFont("helvetica", "bold");
-      const bw = Math.max(doc.getTextWidth(tagLabel) + 10, 22);
-      if (bx + bw > PW - MR) { bx = ML; y += tagH + 3; ensureSpace(12); }
+      const label  = resolu ? `v ${b.label}  Resolu` : b.label;
 
-      const tagBg  = resolu ? C.greenLight  : C.orangeLight;
-      const tagStroke = resolu ? C.green    : C.orange;
-      const tagTx  = resolu ? C.greenDark   : C.orange;
+      doc.setFontSize(7.5); doc.setFont("helvetica", resolu ? "bolditalic" : "bold");
+      const tw = Math.max(doc.getTextWidth(label) + 10, 20);
 
-      fillRoundedRect(doc, bx, y - 1, bw, tagH, 3, tagBg);
-      strokeRoundedRect(doc, bx, y - 1, bw, tagH, 3, tagStroke, 0.4);
-      setTextColor(doc, tagTx);
-      doc.text(tagLabel, bx + 5, y + 4);
-      bx += bw + 4;
-    });
-    y += tagH + 4;
+      if (bx + tw > PW - MR) { bx = ML; y += TH + 3; need(TH + 6); }
+
+      rrect(doc, bx, y - 1, tw, TH, 2.5, resolu ? C.greenLight  : C.orangeLight);
+      srect(doc, bx, y - 1, tw, TH, 2.5, resolu ? C.green       : C.orange, 0.4);
+      st(doc,                                      resolu ? C.greenDark    : C.orange);
+      doc.text(label, bx + 5, y + 4);
+      bx += tw + 3;
+    }
+    y += TH + 2;
   } else {
-    setTextColor(doc, C.gray400); doc.setFontSize(8); doc.setFont("helvetica", "italic");
-    doc.text("Aucun besoin enregistre", ML, y + 3);
-    y += 9;
+    st(doc, C.gray400); doc.setFontSize(8); doc.setFont("helvetica", "italic");
+    doc.text("Aucun besoin enregistre", ML, y + 4);
+    y += 8;
   }
 
+  // Commentaire de suivi
   if (membre.commentaire_suivis) {
-    ensureSpace(10);
-    // Séparateur
-    setDraw(doc, C.gray200); doc.setLineWidth(0.3);
-    doc.line(ML, y, PW - MR, y);
+    need(8);
+    hline(doc, ML, PW - MR, y, C.gray200, 0.25);
     y += 4;
-    setTextColor(doc, C.gray500); doc.setFontSize(8); doc.setFont("helvetica", "italic");
-    const cLines = doc.splitTextToSize(`Commentaire suivi : ${da(membre.commentaire_suivis)}`, CW);
-    doc.text(cLines, ML, y);
-    y += cLines.length * 4.5 + 3;
+    st(doc, C.gray500); doc.setFontSize(7.5); doc.setFont("helvetica", "italic");
+    const cL = doc.splitTextToSize(`Commentaire : ${da(membre.commentaire_suivis)}`, CW);
+    need(cL.length * 4.5 + 3);
+    doc.text(cL, ML, y);
+    y += cL.length * 4.5 + 1;
   }
 
-  y += 4;
-
-  // ════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════
   // HISTORIQUE DES SUIVIS
-  // ════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════
   if (suivis.length > 0) {
-    ensureSpace(15);
-    y = sectionHeader(doc, "HISTORIQUE DES SUIVIS", ML, y, CW);
-    y += 1;
+    y += 4;
+    need(14);
+    y = sectionBar(doc, "HISTORIQUE DES SUIVIS", ML, y, CW);
 
-    suivis.forEach((s) => {
-      const besoinsArr  = parseHistoriqueBesoin(s.besoin);
-      const statut      = da(s.statut || "En suivi");
-      const resolu      = statut.toLowerCase().includes("resolu") || statut.toLowerCase().includes("résolu");
-      const accentColor = resolu ? C.green : C.navyLight;
-      const halfI       = (CW - 16) / 2;
-
-      const interviewRows = INTERVIEW_QUESTIONS.filter(
-        (q) => s[q.key] !== null && s[q.key] !== undefined && String(s[q.key]).trim() !== ""
-      );
-      const hasInterview = interviewRows.length > 0;
+    for (const s of suivis) {
+      const besoinsArr = parseHistoriqueBesoin(s.besoin);
+      const statut     = da(s.statut || "En suivi");
+      const resolu     = statut.toLowerCase().includes("resolu") ||
+                         statut.toLowerCase().includes("résolu");
+      const accentClr  = resolu ? C.green : C.navyMid;
 
       const authorName = s.profiles
         ? da(`${s.profiles.prenom || ""} ${s.profiles.nom || ""}`.trim())
         : "";
 
-      // ── Mesures ──────────────────────────────────────────────────
-      const bLineText = besoinsArr.length > 0
-        ? "Besoin : " + besoinsArr.map((b) => `${b.label} (${b.statut})`).join(", ")
-        : null;
-      const bLinesArr = bLineText ? doc.splitTextToSize(bLineText, CW - 14) : [];
-      const cLinesArr = s.commentaire
-        ? doc.splitTextToSize(`"${da(s.commentaire)}"`, CW - 16)
-        : [];
+      // Questions renseignées
+      const filledQ = IQ.filter(q =>
+        s[q.key] !== null && s[q.key] !== undefined && String(s[q.key]).trim() !== ""
+      );
 
-      // Paires questions
-      const pairsData = [];
-      if (hasInterview) {
-        for (let i = 0; i < interviewRows.length; i += 2) {
-          const lq = interviewRows[i];
-          const rq = interviewRows[i + 1];
-          const ll = doc.splitTextToSize(safe(s[lq.key]), halfI - 8);
-          const rl = rq ? doc.splitTextToSize(safe(s[rq.key]), halfI - 8) : [];
-          const lh = Math.max(14, 10 + ll.length * 4.5);
-          const rh = Math.max(14, 10 + rl.length * 4.5);
-          pairsData.push({ lq, rq, ll, rl, boxH: Math.max(lh, rh) });
+      // ── Pré-calcul hauteur carte ──────────────────────────────────
+      let cardH = 14; // en-tête + filet
+
+      if (besoinsArr.length > 0) {
+        const bT = "Besoin : " + besoinsArr.map(b => `${b.label} (${b.statut})`).join(", ");
+        cardH += doc.splitTextToSize(bT, CW - 14).length * 4.5 + 2;
+      }
+
+      if (s.commentaire) {
+        cardH += doc.splitTextToSize(`"${da(s.commentaire)}"`, CW - 14).length * 4.5 + 3;
+      }
+
+      if (filledQ.length > 0) {
+        cardH += 8; // barre titre questions
+        for (const q of filledQ) {
+          cardH += 4.5; // label
+          cardH += doc.splitTextToSize(safe(s[q.key]), CW - 22).length * 4 + 3;
         }
+        cardH += 1;
       }
 
-      // Hauteur totale de la carte
-      let cardH = 14; // en-tête
-      if (bLinesArr.length > 0)  cardH += bLinesArr.length * 4.5 + 3;
-      if (cLinesArr.length > 0)  cardH += cLinesArr.length * 4.5 + 4;
-      if (hasInterview) {
-        cardH += 10; // barre titre
-        pairsData.forEach((p) => { cardH += p.boxH + 3; });
-        cardH += 2;
-      }
-      if (authorName) cardH += 7;
-      cardH += 5; // marge basse
+      if (authorName) cardH += 6;
+      cardH += 4;
 
-      ensureSpace(cardH + 5);
+      need(cardH + 4);
       const cardY = y;
 
-      // ── Fond de carte ─────────────────────────────────────────────
-      // Bordure extérieure légère
-      fillRoundedRect(doc, ML, cardY, CW, cardH, 3, C.white);
-      strokeRoundedRect(doc, ML, cardY, CW, cardH, 3, C.gray200, 0.5);
-      // Barre accent gauche arrondie
-      fillRoundedRect(doc, ML, cardY, 3, cardH, 1.5, accentColor);
+      // ── Fond carte ────────────────────────────────────────────────
+      rrect(doc, ML, cardY, CW, cardH, 2.5, C.white);
+      srect(doc, ML, cardY, CW, cardH, 2.5, C.gray100, 0.4);
+      // Accent gauche
+      rrect(doc, ML, cardY, 3, cardH, 1.5, accentClr);
 
-      // ── En-tête carte ─────────────────────────────────────────────
-      setTextColor(doc, C.gray700); doc.setFontSize(9.5); doc.setFont("helvetica", "bold");
+      // ── Header carte ──────────────────────────────────────────────
+      st(doc, C.gray700); doc.setFontSize(9); doc.setFont("helvetica", "bold");
       doc.text(
-        `${formatDateFr(s.date_action)}  \u2014  ${safe(s.action_type)}`,
-        ML + 7, cardY + 9
+        `${formatDate(s.date_action)}  —  ${safe(s.action_type)}`,
+        ML + 7, cardY + 8.5
       );
 
       // Badge statut
       const sbLabel = resolu ? "Resolu" : statut;
-      const sbw     = doc.getTextWidth(sbLabel) + 10;
-      const sbBg    = resolu ? C.greenLight : C.blueLight;
-      const sbTx    = resolu ? C.greenDark  : C.blue;
-      fillRoundedRect(doc, PW - MR - sbw, cardY + 3, sbw, 7, 3, sbBg);
-      setTextColor(doc, sbTx); doc.setFontSize(7.5); doc.setFont("helvetica", "bold");
-      doc.text(sbLabel, PW - MR - sbw + 5, cardY + 8);
+      doc.setFontSize(7); doc.setFont("helvetica", "bold");
+      const sbW = doc.getTextWidth(sbLabel) + 8;
+      rrect(doc, PW - MR - sbW, cardY + 3.5, sbW, 6, 2.5,
+            resolu ? C.greenLight : C.blueLight);
+      st(doc, resolu ? C.greenDark : C.blue);
+      doc.text(sbLabel, PW - MR - sbW / 2, cardY + 7.8, { align: "center" });
 
-      let cy = cardY + 13;
+      // Filet sous header
+      let cy = cardY + 12;
+      hline(doc, ML + 4, PW - MR - 4, cy, C.gray200, 0.25);
+      cy += 3;
 
-      // Besoins
-      if (bLinesArr.length > 0) {
-        setTextColor(doc, C.gray400); doc.setFontSize(7.5); doc.setFont("helvetica", "normal");
-        doc.text(bLinesArr, ML + 7, cy);
-        cy += bLinesArr.length * 4.5 + 3;
+      // ── Besoins du suivi ──────────────────────────────────────────
+      if (besoinsArr.length > 0) {
+        const bT  = "Besoin : " + besoinsArr.map(b => `${b.label} (${b.statut})`).join(", ");
+        const bLn = doc.splitTextToSize(bT, CW - 14);
+        st(doc, C.gray400); doc.setFontSize(7.5); doc.setFont("helvetica", "normal");
+        doc.text(bLn, ML + 7, cy);
+        cy += bLn.length * 4.5 + 2;
       }
 
-      // Commentaire
-      if (cLinesArr.length > 0) {
-        setTextColor(doc, C.gray600); doc.setFontSize(8.5); doc.setFont("helvetica", "italic");
-        doc.text(cLinesArr, ML + 7, cy);
-        cy += cLinesArr.length * 4.5 + 4;
+      // ── Commentaire ───────────────────────────────────────────────
+      if (s.commentaire) {
+        const cLn = doc.splitTextToSize(`"${da(s.commentaire)}"`, CW - 14);
+        st(doc, C.gray600); doc.setFontSize(8.5); doc.setFont("helvetica", "italic");
+        doc.text(cLn, ML + 7, cy);
+        cy += cLn.length * 4.5 + 3;
       }
 
-      // Questions d'entretien
-      if (hasInterview) {
-        // Barre titre questions
-        fillRoundedRect(doc, ML + 4, cy, CW - 8, 8, 2, C.navyXLight);
-        setTextColor(doc, C.navy); doc.setFontSize(7.5); doc.setFont("helvetica", "bold");
-        doc.text("QUESTIONS D'ENTRETIEN", ML + 8, cy + 5.5);
-        cy += 11;
+      // ── Questions d'entretien (1 colonne, compact, avec filets) ───
+      if (filledQ.length > 0) {
+        // Barre titre
+        rrect(doc, ML + 4, cy, CW - 8, 6.5, 1.5, C.navyLight);
+        st(doc, C.navy); doc.setFontSize(7); doc.setFont("helvetica", "bold");
+        doc.text("QUESTIONS D'ENTRETIEN", ML + 8, cy + 4.5);
+        cy += 8.5;
 
-        pairsData.forEach(({ lq, rq, ll, rl, boxH }) => {
-          const gap = 4;
-          const lx  = ML + 4;
-          const rx  = ML + 4 + halfI + gap;
+        for (let i = 0; i < filledQ.length; i++) {
+          const q = filledQ[i];
 
-          // Cellule gauche
-          fillRoundedRect(doc, lx, cy, halfI, boxH, 2, C.gray50);
-          strokeRoundedRect(doc, lx, cy, halfI, boxH, 2, C.gray100, 0.3);
-          setTextColor(doc, C.navyLight); doc.setFontSize(6.5); doc.setFont("helvetica", "bold");
-          doc.text(lq.label, lx + 4, cy + 5);
-          setTextColor(doc, C.gray700); doc.setFontSize(8); doc.setFont("helvetica", "italic");
-          doc.text(ll, lx + 4, cy + 10);
+          // Label
+          st(doc, C.navyMid); doc.setFontSize(6.5); doc.setFont("helvetica", "bold");
+          doc.text(q.label, ML + 8, cy);
+          cy += 4.5;
 
-          // Cellule droite
-          if (rq) {
-            fillRoundedRect(doc, rx, cy, halfI, boxH, 2, C.gray50);
-            strokeRoundedRect(doc, rx, cy, halfI, boxH, 2, C.gray100, 0.3);
-            setTextColor(doc, C.navyLight); doc.setFontSize(6.5); doc.setFont("helvetica", "bold");
-            doc.text(rq.label, rx + 4, cy + 5);
-            setTextColor(doc, C.gray700); doc.setFontSize(8); doc.setFont("helvetica", "italic");
-            doc.text(rl, rx + 4, cy + 10);
+          // Réponse
+          const vLn = doc.splitTextToSize(safe(s[q.key]), CW - 20);
+          st(doc, C.gray700); doc.setFontSize(8); doc.setFont("helvetica", "italic");
+          doc.text(vLn, ML + 10, cy);
+          cy += vLn.length * 4;
+
+          // Filet entre questions (sauf la dernière)
+          if (i < filledQ.length - 1) {
+            cy += 2;
+            hline(doc, ML + 8, PW - MR - 8, cy, C.gray100, 0.2);
+            cy += 2;
+          } else {
+            cy += 3;
           }
-
-          cy += boxH + 3;
-        });
-        cy += 2;
+        }
       }
 
-      // Auteur
+      // ── Auteur ────────────────────────────────────────────────────
       if (authorName) {
-        setTextColor(doc, C.gray400); doc.setFontSize(7.5); doc.setFont("helvetica", "normal");
+        st(doc, C.gray400); doc.setFontSize(7); doc.setFont("helvetica", "normal");
         doc.text(`Redige par : ${authorName}`, ML + 7, cy + 3);
+        cy += 6;
       }
 
-      y = cardY + cardH + 5;
-    });
+      y = cardY + cardH + 4;
+    }
   }
 
-  // ════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════
   // FOOTER
-  // ════════════════════════════════════════════════════════════════
-  const totalPages = doc.internal.getNumberOfPages();
-  for (let p = 1; p <= totalPages; p++) {
+  // ══════════════════════════════════════════════════════════════════
+  const total = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= total; p++) {
     doc.setPage(p);
-    setDraw(doc, C.gray200); doc.setLineWidth(0.3);
-    doc.line(ML, PH - 12, PW - MR, PH - 12);
-    setTextColor(doc, C.gray400); doc.setFontSize(7); doc.setFont("helvetica", "normal");
-    doc.text("Document confidentiel  -  Usage pastoral uniquement", ML, PH - 7);
-    doc.text(`Page ${p} / ${totalPages}`, PW - MR, PH - 7, { align: "right" });
+    hline(doc, ML, PW - MR, PH - 12, C.gray200, 0.3);
+    st(doc, C.gray400); doc.setFontSize(7); doc.setFont("helvetica", "normal");
+    doc.text("Document confidentiel  —  Usage pastoral uniquement", ML, PH - 7);
+    doc.text(`Page ${p} / ${total}`, PW - MR, PH - 7, { align: "right" });
   }
 
-  // Sauvegarde
+  // ══════════════════════════════════════════════════════════════════
+  // SAUVEGARDE
+  // ══════════════════════════════════════════════════════════════════
   const prenom = (membre.prenom || "").toLowerCase().replace(/\s+/g, "_");
   const nom    = (membre.nom    || "").toLowerCase().replace(/\s+/g, "_");
   const date   = new Date().toISOString().split("T")[0];

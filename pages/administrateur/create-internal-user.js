@@ -389,6 +389,20 @@ if (selectedMemberId === "add-serviteur" && formData.telephone) {
             <div className="flex flex-col gap-2">
               <input name="cellule_nom" placeholder="Nom cellule" value={formData.cellule_nom} onChange={handleChange} className="input" />
               <input name="cellule_zone" placeholder="Zone cellule" value={formData.cellule_zone} onChange={handleChange} className="input" />
+          
+              {/* ✅ Cellule mère */}
+              <label className="font-semibold text-black">Cellule mère :</label>
+              <select
+                name="cellule_mere_id"
+                value={formData.cellule_mere_id}
+                onChange={handleChange}
+                className="input"
+              >
+                <option value="">-- Pas de cellule mère --</option>
+                {cellules.map(c => (
+                  <option key={c.id} value={c.id}>{c.cellule_full}</option>
+                ))}
+              </select>
             </div>
           )}
 

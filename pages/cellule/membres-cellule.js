@@ -33,7 +33,7 @@ function MembresCelluleContent() {
   const [detailsOpen, setDetailsOpen] = useState({});
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
-  const highlightRef = useRef({});                          // ✅ AJOUTÉ
+  const highlightRef = useRef({});
   const [showBesoinLibre, setshowBesoinLibre] = useState(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
   const [userRole, setUserRole] = useState(null);
@@ -115,15 +115,37 @@ function MembresCelluleContent() {
 
       setUserRole(profile.role);
 
+      // ✅ RESPONSABLE — cellules directes + cellules filles
+      if (profile.role === "ResponsableCellule") {
+        const { data: directes } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", profile.id)
+          .eq("eglise_id", profile.eglise_id);
+
+        const directIds = (directes || []).map(c => c.id);
+
+        const { data: directesData } = await supabase
+          .from("cellules")
+          .select("*, profiles:responsable_id(prenom, nom)")
+          .in("id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
+
+        const { data: fillesData } = await supabase
+          .from("cellules")
+          .select("*, profiles:responsable_id(prenom, nom)")
+          .in("cellule_mere_id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
+
+        setCellules([...(directesData || []), ...(fillesData || [])]);
+        return;
+      }
+
       let query = supabase
         .from("cellules")
-        .select("*")
+        .select("*, profiles:responsable_id(prenom, nom)")
         .eq("eglise_id", profile.eglise_id)
         .order("cellule_full");
 
-      if (profile.role === "ResponsableCellule") {
-        query = query.eq("responsable_id", profile.id);
-      } else if (profile.role === "SuperviseurCellule") {
+      if (profile.role === "SuperviseurCellule") {
         query = query.eq("superviseur_id", profile.id);
       } else if (profile.role !== "Administrateur") {
         query = query.eq("id", "00000000-0000-0000-0000-000000000000");
@@ -175,39 +197,39 @@ function MembresCelluleContent() {
 
         // ---------------- RESPONSABLE ----------------
         else if (profile.role === "ResponsableCellule") {
-  // 1️⃣ Ses cellules directes
-  const { data: cellulesDirect } = await supabase
-    .from("cellules")
-    .select("id")
-    .eq("responsable_id", profile.id)
-    .eq("eglise_id", profile.eglise_id);
+          // 1️⃣ Ses cellules directes
+          const { data: cellulesDirect } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq("responsable_id", profile.id)
+            .eq("eglise_id", profile.eglise_id);
 
-  const directIds = (cellulesDirect || []).map(c => c.id);
+          const directIds = (cellulesDirect || []).map(c => c.id);
 
-  // 2️⃣ Ses cellules filles (via cellule_mere_id)
-  const { data: cellulesFillesData } = await supabase
-    .from("cellules")
-    .select("id")
-    .in("cellule_mere_id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
+          // 2️⃣ Ses cellules filles (via cellule_mere_id)
+          const { data: cellulesFillesData } = await supabase
+            .from("cellules")
+            .select("id")
+            .in("cellule_mere_id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
 
-  const fillesIds = (cellulesFillesData || []).map(c => c.id);
+          const fillesIds = (cellulesFillesData || []).map(c => c.id);
 
-  // 3️⃣ Union des deux
-  mesCelluleIds = [...new Set([...directIds, ...fillesIds])];
+          // 3️⃣ Union des deux
+          mesCelluleIds = [...new Set([...directIds, ...fillesIds])];
 
-  if (!mesCelluleIds.length) {
-    setMembres([]);
-    setMessage("Aucun membre trouvé");
-    setLoading(false);
-    return;
-  }
+          if (!mesCelluleIds.length) {
+            setMembres([]);
+            setMessage("Aucun membre trouvé");
+            setLoading(false);
+            return;
+          }
 
-  query = query.in("cellule_id", mesCelluleIds);
+          query = query.in("cellule_id", mesCelluleIds);
 
-  if (celluleId && mesCelluleIds.includes(celluleId)) {
-    query = query.eq("cellule_id", celluleId);
-  }
-}
+          if (celluleId && mesCelluleIds.includes(celluleId)) {
+            query = query.eq("cellule_id", celluleId);
+          }
+        }
 
         // ---------------- SUPERVISEUR ----------------
         else if (profile.role === "SuperviseurCellule") {
@@ -311,11 +333,10 @@ function MembresCelluleContent() {
       </div>
 
       {loading && <div className="text-white text-center mt-10">Chargement...</div>}
-      {!loading && message && <div className="text-white text-center mt-10">{message}</div>}
 
+      {/* ✅ Boutons toujours visibles pour ResponsableCellule même si liste vide */}
       {!loading && (
         <>
-          {/* BOUTONS */}
           {userRole === "ResponsableCellule" && (
             <div className="flex justify-end mt-4 mb-4 gap-2">
               <button
@@ -334,189 +355,198 @@ function MembresCelluleContent() {
             </div>
           )}
 
-          <div className="flex justify-center">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
-              {filteredMembres.map((m) => {
-                const cellule = cellules.find((c) => c.id === m.cellule_id);
-                const besoins = parseJsonArray(m.besoin).join(", ") || "—";
-                const isOpen = detailsOpen[m.id];
+          {message && <div className="text-white text-center mt-10">{message}</div>}
 
-                return (
-                  <div
-                    key={m.id}
-                    ref={(el) => (highlightRef.current[m.id] = el)}   // ✅ ref pour le scroll
-                    className="bg-white p-4 rounded-2xl shadow-xl border-l-4"
-                    style={{
-                      borderLeftColor: getBorderColor(m),
-                      // ✅ surlignage si c'est le membre ciblé
-                      outline: highlight === m.id ? "3px solid #f59e0b" : "none",
-                      boxShadow: highlight === m.id
-                        ? "0 0 0 4px #fef3c7, 0 4px 24px rgba(245,158,11,0.3)"
-                        : "0 4px 6px rgba(0,0,0,0.1)",
-                      transition: "box-shadow 0.3s ease",
-                    }}
-                  >
-                    <h2 className="relative w-full text-center font-bold text-lg flex items-center justify-center gap-1">
-                    <span>
-                      {m.prenom} {m.nom}
-                    </span>
-                  
-                    {m.star === true &&
-                      m.etat_contact?.trim().toLowerCase() === "existant" && (
-                        <span className="text-yellow-400">⭐</span>
-                      )}
-                  
-                    <div className="absolute right-2">
-                      <PresenceDot
-                        memberId={m.id}
-                        egliseId={m.eglise_id}
-                        dateVenu={m.date_venu}
-                      />
-                    </div>
-                  </h2>
+          {!message && (
+            <div className="flex justify-center">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
+                {filteredMembres.map((m) => {
+                  const cellule = cellules.find((c) => c.id === m.cellule_id);
+                  const besoins = parseJsonArray(m.besoin).join(", ") || "—";
+                  const isOpen = detailsOpen[m.id];
 
-                    {/* Téléphone */}
-                    <div className="relative text-center mt-2 phone-menu-container">
-                      {m.telephone ? (
-                        <>
-                          <p
-                            className="text-orange-500 underline cursor-pointer font-semibold"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenPhoneId(openPhoneId === m.id ? null : m.id);
-                            }}
-                          >
-                            {m.telephone}
-                          </p>
+                  // ✅ Nom du responsable depuis la jointure profiles
+                  const nomResponsable = cellule?.profiles
+                    ? `${cellule.profiles.prenom} ${cellule.profiles.nom}`
+                    : cellule?.responsable || "—";
 
-                          {openPhoneId === m.id && (
-                            <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56">
-                              <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">
-                                📞 Appeler
-                              </a>
-                              <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">
-                                ✉️ SMS
-                              </a>
-                              <a
-                                href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                              >
-                                📱 Appel WhatsApp
-                              </a>
-                              <a
-                                href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
-                              >
-                                💬 Message WhatsApp
-                              </a>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </div>
-
-                    <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
-                    <p className="text-center text-sm mt-1">🏠 {cellule?.cellule_full || "—"}</p>
-                    <p className="text-center text-sm mt-1">👤 {cellule?.responsable || "—"}</p>
-
-                        <div className="w-full flex justify-end mt-3">
-              <p className="text-[11px] text-gray-400">
-                Créé le {formatDateFr(m.date_venu)}
-              </p>
-            </div>
-
-                    <button
-                      onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
-                      className="text-orange-500 underline mt-2 block mx-auto text-sm"
+                  return (
+                    <div
+                      key={m.id}
+                      ref={(el) => (highlightRef.current[m.id] = el)}
+                      className="bg-white p-4 rounded-2xl shadow-xl border-l-4"
+                      style={{
+                        borderLeftColor: getBorderColor(m),
+                        outline: highlight === m.id ? "3px solid #f59e0b" : "none",
+                        boxShadow: highlight === m.id
+                          ? "0 0 0 4px #fef3c7, 0 4px 24px rgba(245,158,11,0.3)"
+                          : "0 4px 6px rgba(0,0,0,0.1)",
+                        transition: "box-shadow 0.3s ease",
+                      }}
                     >
-                      {isOpen ? "Fermer détails" : "Détails"}
-                    </button>
+                      <h2 className="relative w-full text-center font-bold text-lg flex items-center justify-center gap-1">
+                        <span>
+                          {m.prenom} {m.nom}
+                        </span>
 
-                    {isOpen && (
-                      <div className="text-black text-sm space-y-2 w-full">
-                        <div>
-                          <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
-                          <p>🎗️ Civilité : {m.sexe || ""}</p>
-                          <p>⏳ Tranche d'age : {m.age || ""}</p>
-                          <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                        </div>
-                        <hr />
-
-                        <div>
-                          <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
-                          <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
-                          <p>
-                            💡 Statut Suivi :{" "}
-                            {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}
-                          </p>
-                        </div>
-                        <hr />
-
-                        <div>
-                          <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
-                          <p>💧 Baptême d'Eau : {m.bapteme_eau || "—"}</p>
-                          {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
-                            <p className="ml-6">💦 Veut se faire baptiser</p>
+                        {m.star === true &&
+                          m.etat_contact?.trim().toLowerCase() === "existant" && (
+                            <span className="text-yellow-400">⭐</span>
                           )}
-                          <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
-                          <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
-                          <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
-                          <p>✒️ Formation : {m.Formation || ""}</p>
-                          <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
+
+                        <div className="absolute right-2">
+                          <PresenceDot
+                            memberId={m.id}
+                            egliseId={m.eglise_id}
+                            dateVenu={m.date_venu}
+                          />
                         </div>
-                        <hr />
+                      </h2>
 
-                        <div>
-                          <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>
-                          <p>🧩 Comment est-il venu : {m.venu || ""}</p>
-                          <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? "—"}</p>
-                          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                          <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
-                        </div>
-                        <hr />
-
-                        <div>
-                          <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
-                          <p>❓ Difficultés / Besoins : {besoins}</p>
-
-                          <div className="flex justify-center">
-                            <button
-                              onClick={() => setOpenSuiviMemberId(m.id)}
-                              className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
+                      {/* Téléphone */}
+                      <div className="relative text-center mt-2 phone-menu-container">
+                        {m.telephone ? (
+                          <>
+                            <p
+                              className="text-orange-500 underline cursor-pointer font-semibold"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenPhoneId(openPhoneId === m.id ? null : m.id);
+                              }}
                             >
-                              💡 Ajouter / Voir suivis
-                            </button>
+                              {m.telephone}
+                            </p>
+
+                            {openPhoneId === m.id && (
+                              <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56">
+                                <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">
+                                  📞 Appeler
+                                </a>
+                                <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">
+                                  ✉️ SMS
+                                </a>
+                                <a
+                                  href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                                >
+                                  📱 Appel WhatsApp
+                                </a>
+                                <a
+                                  href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                                >
+                                  💬 Message WhatsApp
+                                </a>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </div>
+
+                      <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
+                      <p className="text-center text-sm mt-1">🏠 {cellule?.cellule_full || "—"}</p>
+                      {/* ✅ Nom du responsable depuis profiles */}
+                      <p className="text-center text-sm mt-1">👤 {nomResponsable}</p>
+
+                      <div className="w-full flex justify-end mt-3">
+                        <p className="text-[11px] text-gray-400">
+                          Créé le {formatDateFr(m.date_venu)}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
+                        className="text-orange-500 underline mt-2 block mx-auto text-sm"
+                      >
+                        {isOpen ? "Fermer détails" : "Détails"}
+                      </button>
+
+                      {isOpen && (
+                        <div className="text-black text-sm space-y-2 w-full">
+                          <div>
+                            <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
+                            <p>🎗️ Civilité : {m.sexe || ""}</p>
+                            <p>⏳ Tranche d'age : {m.age || ""}</p>
+                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                          </div>
+                          <hr />
+
+                          <div>
+                            <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
+                            <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
+                            <p>
+                              💡 Statut Suivi :{" "}
+                              {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}
+                            </p>
+                          </div>
+                          <hr />
+
+                          <div>
+                            <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
+                            <p>💧 Baptême d'Eau : {m.bapteme_eau || "—"}</p>
+                            {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
+                              <p className="ml-6">💦 Veut se faire baptiser</p>
+                            )}
+                            <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
+                            <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
+                            <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
+                            <p>✒️ Formation : {m.Formation || ""}</p>
+                            <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
+                          </div>
+                          <hr />
+
+                          <div>
+                            <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>
+                            <p>🧩 Comment est-il venu : {m.venu || ""}</p>
+                            <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? "—"}</p>
+                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                            <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
+                          </div>
+                          <hr />
+
+                          <div>
+                            <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
+                            <p>❓ Difficultés / Besoins : {besoins}</p>
+
+                            <div className="flex justify-center">
+                              <button
+                                onClick={() => setOpenSuiviMemberId(m.id)}
+                                className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
+                              >
+                                💡 Ajouter / Voir suivis
+                              </button>
+                            </div>
+
+                            {openSuiviMemberId === m.id && (
+                              <SuiviPopup
+                                member={m}
+                                onClose={() => setOpenSuiviMemberId(null)}
+                              />
+                            )}
                           </div>
 
-                          {openSuiviMemberId === m.id && (
-                            <SuiviPopup
-                              member={m}
-                              onClose={() => setOpenSuiviMemberId(null)}
-                            />
-                          )}
+                          <div className="mt-4 rounded-xl w-full shadow-md p-4 bg-white">
+                            <button
+                              onClick={() => setEditMember(m)}
+                              className="text-blue-600 text-sm mt-2 block mx-auto underline"
+                            >
+                              ✏️ Modifier le contact
+                            </button>
+                          </div>
                         </div>
-
-                        <div className="mt-4 rounded-xl w-full shadow-md p-4 bg-white">
-                          <button
-                            onClick={() => setEditMember(m)}
-                            className="text-blue-600 text-sm mt-2 block mx-auto underline"
-                          >
-                            ✏️ Modifier le contact
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </>
       )}
 

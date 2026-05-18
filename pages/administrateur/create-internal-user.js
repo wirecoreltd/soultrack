@@ -295,12 +295,6 @@ if (selectedMemberId === "add-serviteur" && formData.telephone) {
             <p>• Responsable Évangélisation – <span className="text-[#FFB07C] font-semibold">suivi de l&apos;évangélisation</span> (Hub Évangélisation)</p>
             {cellulesActive && (
               <>
-              <select name="cellule_mere_id" onChange={handleChange}>
-                  <option value="">-- Pas de cellule mère --</option>
-                  {cellules.map(c => (
-                    <option key={c.id} value={c.id}>{c.cellule_full}</option>
-                  ))}
-                </select>
                 <p>• Responsable Cellule – <span className="text-[#FFB07C] font-semibold">gestion des cellules</span> (Hub Cellule)</p>
                 <p>• Superviseur Cellule – <span className="text-[#FFB07C] font-semibold">supervision et création de responsables</span> (Hub Cellule)</p>
               </>

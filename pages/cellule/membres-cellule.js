@@ -313,7 +313,7 @@ function MembresCelluleContent() {
       {loading && <div className="text-white text-center mt-10">Chargement...</div>}
       {!loading && message && <div className="text-white text-center mt-10">{message}</div>}
 
-      {!loading && !message && (
+      {!loading && (
         <>
           {/* BOUTONS */}
           {userRole === "ResponsableCellule" && (

@@ -50,6 +50,7 @@ export default async function handler(req, res) {
       roles,
       cellule_nom,
       cellule_zone,
+      cellule_mere_id, // ✅ AJOUTÉ — déstructuré depuis req.body
       ministeresSelected,
       member_id,
     } = req.body;
@@ -115,6 +116,7 @@ export default async function handler(req, res) {
           responsable_id: newUserId,
           telephone: telephone || "",
           eglise_id,
+          mere_id: cellule_mere_id || null, // ✅ AJOUTÉ — cellule mère liée
         });
 
       if (celluleError) {

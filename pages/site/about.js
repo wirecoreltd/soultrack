@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
+import { useLang } from "../../hooks/useLang";
 
 import { Great_Vibes } from "next/font/google";
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
@@ -160,7 +161,7 @@ export default function AboutPage() {
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [lang, setLang] = useState("fr");
+  const { lang, changeLang } = useLang();
   const pathname = usePathname();
 
   const t = translations[lang];
@@ -238,10 +239,10 @@ export default function AboutPage() {
 
           {/* Switcher langue desktop */}
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }} className="nav-hide">
-            <button onClick={() => setLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
+            <button onClick={() => changeLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
               <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="32" height="22" alt="Français" style={{ display: "block", borderRadius: "3px" }} />
             </button>
-            <button onClick={() => setLang("en")} title="English" style={langBtnStyle(lang === "en")}>
+            <button onClick={() => changeLang("en")} title="English" style={langBtnStyle(lang === "en")}>
               <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="32" height="22" alt="English" style={{ display: "block", borderRadius: "3px" }} />
             </button>
           </div>

@@ -175,27 +175,39 @@ function MembresCelluleContent() {
 
         // ---------------- RESPONSABLE ----------------
         else if (profile.role === "ResponsableCellule") {
-          const { data: mesCellules } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", profile.id)
-            .eq("eglise_id", profile.eglise_id);
+  // 1️⃣ Ses cellules directes
+  const { data: cellulesDirect } = await supabase
+    .from("cellules")
+    .select("id")
+    .eq("responsable_id", profile.id)
+    .eq("eglise_id", profile.eglise_id);
 
-          mesCelluleIds = (mesCellules || []).map(c => c.id);
+  const directIds = (cellulesDirect || []).map(c => c.id);
 
-          if (!mesCelluleIds.length) {
-            setMembres([]);
-            setMessage("Aucun membre trouvé");
-            setLoading(false);
-            return;
-          }
+  // 2️⃣ Ses cellules filles (via cellule_mere_id)
+  const { data: cellulesFillesData } = await supabase
+    .from("cellules")
+    .select("id")
+    .in("cellule_mere_id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
 
-          query = query.in("cellule_id", mesCelluleIds);
+  const fillesIds = (cellulesFillesData || []).map(c => c.id);
 
-          if (celluleId && mesCelluleIds.includes(celluleId)) {
-            query = query.eq("cellule_id", celluleId);
-          }
-        }
+  // 3️⃣ Union des deux
+  mesCelluleIds = [...new Set([...directIds, ...fillesIds])];
+
+  if (!mesCelluleIds.length) {
+    setMembres([]);
+    setMessage("Aucun membre trouvé");
+    setLoading(false);
+    return;
+  }
+
+  query = query.in("cellule_id", mesCelluleIds);
+
+  if (celluleId && mesCelluleIds.includes(celluleId)) {
+    query = query.eq("cellule_id", celluleId);
+  }
+}
 
         // ---------------- SUPERVISEUR ----------------
         else if (profile.role === "SuperviseurCellule") {

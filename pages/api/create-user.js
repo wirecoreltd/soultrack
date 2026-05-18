@@ -1,214 +1,493 @@
-// pages/api/create-user.js
-import { createClient } from "@supabase/supabase-js";
+"use client";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import supabase from "../../lib/supabaseClient";
+import Image from "next/image";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import { useFeature } from "../../components/FeaturesContext";
 
-const ministereOptions = [
-  "Intercession",
-  "Louange",
-  "Technique",
-  "Communication",
-  "Les Enfants",
-  "Les ados",
-  "Les jeunes",
-  "Finance",
-  "Nettoyage",
-  "Conseiller",
-  "Compassion",
-  "Visite",
-  "Berger",
-  "Modération",
-];
+export default function CreateInternalUserPage() {
+  return (
+    <ProtectedRoute>
+      <CreateInternalUserContent />
+    </ProtectedRoute>
+  );
+}
 
-export default async function handler(req, res) {
-  if (req.method !== "POST")
-    return res.status(405).json({ error: "Method Not Allowed" });
+function CreateInternalUserContent() {
+  // ✅ Tous les hooks en premier — avant tout return conditionnel
+  const cellulesActive   = useFeature("cellules");
+  const conseillerActive = useFeature("conseiller");
+  const famillesActive   = useFeature("familles");
 
-  try {
-    // ── Auth ──
-    const token = req.headers.authorization?.replace("Bearer ", "");
-    if (!token)
-      return res.status(401).json({ error: "Non authentifié" });
+  const router = useRouter();
+  const [members, setMembers] = useState([]);
+  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [duplicatePhone, setDuplicatePhone] = useState(null);
+  const [duplicateEmail, setDuplicateEmail] = useState(null);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [rolesToHide, setRolesToHide] = useState([]);
+  const [cellules, setCellules] = useState([]);
 
-    const {
-      data: { user },
-    } = await supabaseAdmin.auth.getUser(token);
+  const [formData, setFormData] = useState({
+    prenom: "",
+    nom: "",
+    sexe: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    telephone: "",
+    roles: [],
+    cellule_nom: "",
+    cellule_zone: "",
+    cellule_mere_id: "", // ✅ présent dès l'initialisation
+    ministere: [],
+  });
 
-    if (!user)
-      return res.status(401).json({ error: "Non authentifié" });
+  const ministereOptions = [
+    "Intercession", "Louange", "Technique", "Communication",
+    "Les Enfants", "Les ados", "Les jeunes", "Finance",
+    "Nettoyage", "Conseiller", "Compassion", "Visite",
+    "Berger", "Modération",
+  ];
 
-    const {
-      prenom,
-      nom,
-      email,
-      password,
-      telephone,
-      sexe,
-      roles,
-      cellule_nom,
-      cellule_zone,
-      cellule_mere_id, // ✅ AJOUTÉ — déstructuré depuis req.body
-      ministeresSelected,
-      member_id,
-    } = req.body;
+  // ✅ allRoles conditionné par features
+  const allRoles = useMemo(() => [
+    { key: "Administrateur",            label: "Administrateur" },
+    { key: "ResponsableIntegration",    label: "Responsable Intégration" },
+    ...(cellulesActive ? [
+      { key: "SuperviseurCellule",      label: "Superviseur Cellule" },
+      { key: "ResponsableCellule",      label: "Responsable Cellule" },
+    ] : []),
+    { key: "ResponsableEvangelisation", label: "Responsable Évangélisation" },
+    ...(famillesActive ? [
+      { key: "SuperviseurFamilles",     label: "Superviseur Familles" },
+      { key: "ResponsableFamilles",     label: "Responsable Familles" },
+    ] : []),
+    ...(conseillerActive ? [
+      { key: "Conseiller",              label: "Conseiller" },
+    ] : []),
+  ], [cellulesActive, conseillerActive, famillesActive]);
 
-    if (!prenom || !nom || !email || !password || !roles?.length) {
-      return res.status(400).json({ error: "Champs obligatoires manquants" });
-    }
+  // ─── Récupérer les membres et cellules existants ───
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return;
 
-    // ── Profil admin connecté ──
-    const { data: adminProfile } = await supabaseAdmin
-      .from("profiles")
-      .select("eglise_id")
-      .eq("id", user.id)
-      .single();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("eglise_id")
+          .eq("id", session.user.id)
+          .single();
 
-    if (!adminProfile) {
-      return res.status(400).json({ error: "Profil admin introuvable" });
-    }
+        if (!profile) return;
 
-    const eglise_id = adminProfile.eglise_id;
+        const { data: cellulesData } = await supabase
+          .from("cellules")
+          .select("id, cellule_full")
+          .eq("eglise_id", profile.eglise_id)
+          .order("cellule_full");
 
-    // ── 1️⃣ Création Auth ──
-    const { data: authUser, error: authError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-      });
+        setCellules(cellulesData || []);
 
-    if (authError) {
-      return res.status(400).json({ error: authError.message });
-    }
+        const { data: membersData } = await supabase
+          .from("membres_complets")
+          .select("id, prenom, nom, sexe, telephone, etat_contact")
+          .eq("star", true)
+          .eq("eglise_id", profile.eglise_id)
+          .in("etat_contact", ["existant"]);
 
-    const newUserId = authUser.user.id;
-
-    // ── 2️⃣ Création profile ──
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .insert({
-        id: newUserId,
-        prenom,
-        nom,
-        email,
-        telephone: telephone || null,
-        roles,
-        role: roles[0],
-        must_change_password: true,
-        eglise_id,
-      });
-
-    if (profileError) {
-      return res.status(400).json({ error: profileError.message });
-    }
-
-    // ── 3️⃣ Création cellule ──
-    if (roles.includes("ResponsableCellule") && cellule_nom && cellule_zone) {
-      const { error: celluleError } = await supabaseAdmin
-        .from("cellules")
-        .insert({
-          cellule: cellule_nom,
-          ville: cellule_zone,
-          responsable: `${prenom} ${nom}`,
-          responsable_id: newUserId,
-          telephone: telephone || "",
-          eglise_id,
-          mere_id: cellule_mere_id || null, // ✅ AJOUTÉ — cellule mère liée
-        });
-
-      if (celluleError) {
-        return res.status(400).json({ error: celluleError.message });
+        setMembers(membersData || []);
+      } catch (err) {
+        console.error("Erreur fetchData:", err);
       }
+    };
+
+    fetchData();
+  }, []);
+
+  // ─── Pré-remplissage infos + calcul des rôles à cacher ───
+  useEffect(() => {
+    if (!selectedMemberId || selectedMemberId === "add-serviteur") {
+      setFormData(prev => ({
+        ...prev,
+        prenom: "", nom: "", sexe: "", telephone: "",
+        roles: [], ministere: [],
+      }));
+      setRolesToHide([]);
+      return;
     }
 
-    // ── 4️⃣ Préparation ministères ──
-    const ministeresValides = Array.isArray(ministeresSelected)
-      ? ministeresSelected.filter((m) => ministereOptions.includes(m))
-      : [];
-
-    // ── 5️⃣ Création OU mise à jour membre complet ──
-    let createdMember;
-
-    const isExistingMember = member_id && member_id !== "add-serviteur";
-
-    if (isExistingMember) {
-      // Membre existant — on met à jour
-      const { data: updatedMember, error: membreError } = await supabaseAdmin
-        .from("membres_complets")
-        .update({
-          email,
-          telephone: telephone || null,
-          star: true,
-          Ministere: JSON.stringify(ministeresValides),
-          conseiller_id: roles.includes("Conseiller") ? newUserId : null,
-          profile_id: newUserId,
-        })
-        .eq("id", member_id)
-        .select()
-        .single();
-
-      if (membreError) {
-        return res.status(400).json({ error: membreError.message });
-      }
-
-      createdMember = updatedMember;
-
-    } else {
-      // Nouveau serviteur — on crée
-      const { data: newMember, error: membreError } = await supabaseAdmin
-        .from("membres_complets")
-        .insert({
-          prenom,
-          nom,
-          email,
-          telephone,
-          sexe: sexe || null,
-          star: true,
-          etat_contact: "existant",
-          Ministere: JSON.stringify(ministeresValides),
-          conseiller_id: roles.includes("Conseiller") ? newUserId : null,
-          profile_id: newUserId,
-          eglise_id,
-        })
-        .select()
-        .single();
-
-      if (membreError) {
-        return res.status(400).json({ error: membreError.message });
-      }
-
-      createdMember = newMember;
-    }
-
-    // ── 6️⃣ Écriture stats ministère ──
-    if (createdMember && ministeresValides.length > 0) {
-      const statsRows = ministeresValides.map((ministere) => ({
-        membre_id: createdMember.id,
-        eglise_id,
-        type: "ministere",
-        valeur: ministere,
-        sexe: sexe || null,
-        date_action: new Date().toISOString().split("T")[0],
+    const member = members.find(m => m.id === selectedMemberId);
+    if (member) {
+      setFormData(prev => ({
+        ...prev,
+        prenom: member.prenom,
+        nom: member.nom,
+        sexe: member.sexe,
+        telephone: member.telephone,
+        roles: [],
       }));
 
-      const { error: statsError } = await supabaseAdmin
-        .from("stats_ministere_besoin")
-        .insert(statsRows);
+      const checkExistingRoles = async () => {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("roles")
+          .eq("prenom", member.prenom)
+          .eq("nom", member.nom)
+          .eq("telephone", member.telephone);
 
-      if (statsError) {
-        console.error("Erreur insertion stats ministère:", statsError);
-      }
+        let hide = [];
+        profilesData?.forEach(p => {
+          if (p.roles?.length) hide.push(...p.roles);
+        });
+        setRolesToHide([...new Set(hide)]);
+      };
+
+      checkExistingRoles();
+    }
+  }, [selectedMemberId, members]);
+
+  const handleChange = e =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const handleRoleChange = role => {
+    setFormData(prev => {
+      const roles = prev.roles.includes(role)
+        ? prev.roles.filter(r => r !== role)
+        : [...prev.roles, role];
+      return { ...prev, roles };
+    });
+  };
+
+  const handleMinistereChange = ministere => {
+    setFormData(prev => {
+      const list = prev.ministere.includes(ministere)
+        ? prev.ministere.filter(m => m !== ministere)
+        : [...prev.ministere, ministere];
+      return { ...prev, ministere: list };
+    });
+  };
+
+  // ─── Soumission ───
+  const handleSubmit = async (e, forceCreate = false) => {
+    e.preventDefault();
+
+    if (formData.password !== formData.confirmPassword) {
+      setMessage("❌ Les mots de passe ne correspondent pas.");
+      return;
+    }
+    if (!formData.roles || formData.roles.length === 0) {
+      setMessage("❌ Sélectionnez au moins un rôle !");
+      return;
     }
 
-    return res.status(200).json({
-      message: "Utilisateur + membre créé avec succès",
-    });
+    setLoading(true);
 
-  } catch (err) {
-    console.error("create-user API error:", err);
-    return res.status(500).json({ error: err.message });
-  }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setMessage("❌ Session expirée");
+        setLoading(false);
+        return;
+      }
+
+      // 1️⃣ Vérification téléphone
+      if (selectedMemberId === "add-serviteur" && formData.telephone) {
+        const { data: existingMembers } = await supabase
+          .from("membres_complets")
+          .select("prenom, nom, sexe, telephone, etat_contact")
+          .eq("telephone", formData.telephone)
+          .in("etat_contact", ["existant", "nouveau"]);
+
+        if (existingMembers?.length > 0 && !forceCreate) {
+          const existing = existingMembers[0];
+          setDuplicatePhone(existing);
+          setMessage(`⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}`);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 2️⃣ Vérification email
+      const { data: existingUsers } = await supabase
+        .from("profiles")
+        .select("id, email, prenom, nom")
+        .eq("email", formData.email);
+
+      if (existingUsers?.length > 0 && !forceCreate) {
+        const existing = existingUsers[0];
+        setDuplicateEmail(existing);
+        setMessage(`⚠️ L'email ${formData.email} est déjà utilisé par ${existing.prenom} ${existing.nom}`);
+        setLoading(false);
+        return;
+      }
+
+      // 3️⃣ Création utilisateur via API
+      const res = await fetch("/api/create-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          ...formData,
+          member_id: selectedMemberId,
+          ministeresSelected: formData.ministere,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setMessage(`❌ ${data?.error}`);
+        setLoading(false);
+        return;
+      }
+
+      setMessage("✅ Utilisateur créé !");
+      setDuplicatePhone(null);
+      setDuplicateEmail(null);
+
+      // ✅ Reset complet — cellule_mere_id inclus
+      setFormData({
+        prenom: "", nom: "", sexe: "", email: "",
+        password: "", confirmPassword: "", telephone: "",
+        roles: [], cellule_nom: "", cellule_zone: "",
+        cellule_mere_id: "", // ✅ CORRIGÉ
+        ministere: [],
+      });
+      setSelectedMemberId("");
+
+    } catch (err) {
+      setMessage("❌ " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancel = () => router.push("/admin/list-users");
+
+  // ✅ FIX PRINCIPAL — on vérifie cellulesActive ET le rôle coché
+  // cellulesActive doit être truthy (pas undefined/null/false)
+  const showCelluleFields =
+    cellulesActive === true &&
+    formData.roles.includes("ResponsableCellule");
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
+      <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
+
+        <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700 hover:text-gray-900">
+          ← Retour
+        </button>
+
+        <div className="flex justify-center mb-6 cursor-pointer" onClick={() => router.push("/index")}>
+          <Image src="/logo.png" alt="Logo SoulTrack" width={80} height={80} />
+        </div>
+
+        <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">
+          Créer un <br />
+          <span className="text-[#333699]">Utilisateur</span>
+        </h1>
+
+        {/* Texte intro conditionné par features */}
+        <div className="max-w-3xl w-full mb-6 text-center space-y-3">
+          <p className="italic text-base text-black/90">
+            Créez un utilisateur en sélectionnant un membre existant ou en ajoutant un nouveau serviteur.
+            Chaque utilisateur doit se voir attribuer au moins un{" "}
+            <span className="text-[#FFB07C] font-semibold">rôle</span>.
+            Selon le rôle choisi, il aura accès à son{" "}
+            <span className="text-[#FFB07C] font-semibold">hub dédié</span> :
+          </p>
+
+          <div className="italic text-sm text-black/90 space-y-1 text-left">
+            <p>• Administrateur – <span className="text-[#FFB07C] font-semibold">gestion complète du système</span> (Hub Admin)</p>
+            <p>• Responsable Intégration – <span className="text-[#FFB07C] font-semibold">gestion des membres</span> (Hub Membres)</p>
+            <p>• Responsable Évangélisation – <span className="text-[#FFB07C] font-semibold">suivi de l&apos;évangélisation</span> (Hub Évangélisation)</p>
+            {cellulesActive && (
+              <>
+                <p>• Responsable Cellule – <span className="text-[#FFB07C] font-semibold">gestion des cellules</span> (Hub Cellule)</p>
+                <p>• Superviseur Cellule – <span className="text-[#FFB07C] font-semibold">supervision et création de responsables</span> (Hub Cellule)</p>
+              </>
+            )}
+            {famillesActive && (
+              <>
+                <p>• Responsable Familles – <span className="text-[#FFB07C] font-semibold">gestion des familles</span> (Hub Familles)</p>
+                <p>• Superviseur Familles – <span className="text-[#FFB07C] font-semibold">supervision des familles</span> (Hub Familles)</p>
+              </>
+            )}
+            {conseillerActive && (
+              <p>• Conseiller – <span className="text-[#FFB07C] font-semibold">accompagnement des membres</span> (Hub Conseiller)</p>
+            )}
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+          {/* Sélection membre */}
+          <select
+            value={selectedMemberId}
+            onChange={e => setSelectedMemberId(e.target.value)}
+            className="input"
+            required
+          >
+            <option value="">-- Choisir un membre existant --</option>
+            {members.map(m => (
+              <option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>
+            ))}
+            <option value="add-serviteur">➕ Ajouter un Serviteur</option>
+          </select>
+
+          {(selectedMemberId === "add-serviteur" || selectedMemberId) && (
+            <>
+              <input name="sexe" placeholder="Civilité" value={formData.sexe} onChange={handleChange} className="input" required />
+              <input name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" required />
+              <input name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" required />
+              <input name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" required />
+            </>
+          )}
+
+          {selectedMemberId === "add-serviteur" && (
+            <div className="flex flex-col gap-2">
+              <label className="font-semibold">Ministères :</label>
+              {ministereOptions.map(m => (
+                <label key={m} className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.ministere.includes(m)}
+                    onChange={() => handleMinistereChange(m)}
+                  />
+                  {m}
+                </label>
+              ))}
+            </div>
+          )}
+
+          <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="input" required />
+          <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
+          <input name="confirmPassword" placeholder="Confirmer mot de passe" type="password" value={formData.confirmPassword} onChange={handleChange} className="input" required />
+
+          {/* ✅ Rôles — uniquement ceux dont la feature est active, minus rolesToHide */}
+          {(selectedMemberId === "add-serviteur" || selectedMemberId) && (
+            <div className="flex flex-col gap-2">
+              <label className="font-semibold">Rôles :</label>
+              {allRoles
+                .filter(role => !rolesToHide.includes(role.key))
+                .map(role => (
+                  <label key={role.key} className="inline-flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.roles.includes(role.key)}
+                      onChange={() => handleRoleChange(role.key)}
+                    />
+                    {role.label}
+                  </label>
+                ))
+              }
+            </div>
+          )}
+
+          {/* ✅ Champs cellule — seulement si cellulesActive === true ET rôle coché */}
+          {showCelluleFields && (
+            <div className="flex flex-col gap-2">
+              <input
+                name="cellule_nom"
+                placeholder="Nom cellule"
+                value={formData.cellule_nom}
+                onChange={handleChange}
+                className="input"
+              />
+              <input
+                name="cellule_zone"
+                placeholder="Zone cellule"
+                value={formData.cellule_zone}
+                onChange={handleChange}
+                className="input"
+              />
+
+              {/* ✅ Cellule mère */}
+              <label className="font-semibold text-black">Cellule mère :</label>
+              <select
+                name="cellule_mere_id"
+                value={formData.cellule_mere_id}
+                onChange={handleChange}
+                className="input"
+              >
+                <option value="">-- Pas de cellule mère --</option>
+                {cellules.map(c => (
+                  <option key={c.id} value={c.id}>{c.cellule_full}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="flex gap-4 mt-4">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={!!duplicatePhone}
+              className={`flex-1 py-3 rounded-xl text-white ${duplicatePhone ? "bg-gray-300 cursor-not-allowed" : "bg-gray-400 hover:bg-gray-500"}`}
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !!duplicatePhone || !!duplicateEmail}
+              className={`flex-1 py-3 rounded-xl text-white ${duplicatePhone || duplicateEmail ? "bg-gray-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
+            >
+              {loading ? "Création..." : "Créer"}
+            </button>
+          </div>
+        </form>
+
+        {/* Bandeau doublon téléphone */}
+        {duplicatePhone && (
+          <div className="mt-4 p-4 border border-yellow-500 bg-yellow-100 rounded-lg text-center">
+            <p>⚠️ Le numéro {formData.telephone} existe déjà pour {duplicatePhone.prenom} {duplicatePhone.nom}.</p>
+            <div className="flex justify-center gap-4 mt-2">
+              <button type="button" onClick={() => setDuplicatePhone(null)} className="bg-gray-500 text-white py-2 px-4 rounded">
+                Annuler
+              </button>
+              <button type="button" onClick={(e) => handleSubmit(e, true)} className="bg-green-500 text-white py-2 px-4 rounded">
+                Continuer quand même
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Bandeau doublon email */}
+        {duplicateEmail && (
+          <div className="mt-4 p-4 border border-red-500 bg-red-100 rounded-lg text-center">
+            <p>❌ L&apos;email {formData.email} est déjà utilisé par {duplicateEmail.prenom} {duplicateEmail.nom}.</p>
+            <div className="flex justify-center gap-4 mt-2">
+              <button type="button" onClick={() => setDuplicateEmail(null)} className="bg-gray-500 text-white py-2 px-4 rounded">
+                Modifier
+              </button>
+            </div>
+          </div>
+        )}
+
+        {message && !duplicatePhone && !duplicateEmail && (
+          <p className={`mt-4 text-center font-semibold ${message.startsWith("❌") ? "text-red-600" : "text-green-600"}`}>
+            {message}
+          </p>
+        )}
+
+        <style jsx>{`
+          .input {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 12px;
+            color: black;
+          }
+        `}</style>
+      </div>
+    </div>
+  );
 }

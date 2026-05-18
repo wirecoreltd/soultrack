@@ -465,7 +465,7 @@ gap: "10px",
               />
             </button>
             <button
-              onClick={() => setLang("en")}
+              onClick={() => changeLang("en")}
               title="English"
               style={{
                 background: "none",

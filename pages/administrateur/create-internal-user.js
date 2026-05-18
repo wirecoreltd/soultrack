@@ -29,6 +29,7 @@ function CreateInternalUserContent() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [rolesToHide, setRolesToHide] = useState([]);
+  const [cellules, setCellules] = useState([]); // ✅ AJOUTER
 
   const [formData, setFormData] = useState({
     prenom: "",
@@ -41,6 +42,7 @@ function CreateInternalUserContent() {
     roles: [],
     cellule_nom: "",
     cellule_zone: "",
+    cellule_mere_id: "",
     ministere: [],
   });
 
@@ -83,6 +85,14 @@ function CreateInternalUserContent() {
           .single();
 
         if (!profile) return;
+
+        const { data: cellulesData } = await supabase
+          .from("cellules")
+          .select("id, cellule_full")
+          .eq("eglise_id", profile.eglise_id)
+          .order("cellule_full");
+
+setCellules(cellulesData || []); // ✅ AJOUTER
 
         const { data: membersData } = await supabase
           .from("membres_complets")

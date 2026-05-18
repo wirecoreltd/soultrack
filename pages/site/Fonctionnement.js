@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
+import { useLang } from "../../hooks/useLang";
 
 import { Great_Vibes } from "next/font/google";
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
@@ -196,7 +197,7 @@ export default function Fonctionnement() {
   const [openMenu, setOpenMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState(null);
-  const [lang, setLang] = useState("fr");
+  const { lang, changeLang } = useLang();
 
   const t = translations[lang];
 
@@ -353,10 +354,10 @@ export default function Fonctionnement() {
 
           {/* Switcher langue */}
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <button onClick={() => setLang("fr")} title="Français" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "fr" ? 1 : 0.45, transition: "opacity 0.2s" }}>
+            <button onClick={() => changeLang("fr")} title="Français" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "fr" ? 1 : 0.45, transition: "opacity 0.2s" }}>
               <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="32" height="22" alt="Français" style={{ display: "block", borderRadius: "3px" }} />
             </button>
-            <button onClick={() => setLang("en")} title="English" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "en" ? 1 : 0.45, transition: "opacity 0.2s" }}>
+            <button onClick={() => changeLang("en")} title="English" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "en" ? 1 : 0.45, transition: "opacity 0.2s" }}>
               <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="32" height="22" alt="English" style={{ display: "block", borderRadius: "3px" }} />
             </button>
           </div>

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
+import { useLang } from "../../hooks/useLang";
 
 import { Great_Vibes } from "next/font/google";
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
@@ -64,7 +65,7 @@ export default function PricingPage() {
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [lang, setLang] = useState("fr");
+  const { lang, changeLang } = useLang();
   const pathname = usePathname();
 
   const t = translations[lang];
@@ -215,7 +216,7 @@ export default function PricingPage() {
           {/* Switcher langue desktop */}
           <div style={{ display: "flex", gap: "8px", alignItems: "center", marginLeft: "8px" }}>
             <button
-              onClick={() => setLang("fr")}
+              onClick={() => changeLang("fr")}
               title="Français"
               style={{
                 background: "none", border: "none", cursor: "pointer", padding: 0,
@@ -230,7 +231,7 @@ export default function PricingPage() {
               />
             </button>
             <button
-              onClick={() => setLang("en")}
+              onClick={() => changeLang("en")}
               title="English"
               style={{
                 background: "none", border: "none", cursor: "pointer", padding: 0,

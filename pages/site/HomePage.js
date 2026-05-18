@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
+import { useLang } from "../../hooks/useLang";
 
 import { Great_Vibes } from "next/font/google";
 const greatVibes = Great_Vibes({
@@ -151,7 +152,7 @@ export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
   const fadeRefs = useRef([]);
   const pathname = usePathname();
-  const [lang, setLang] = useState("fr");
+  const { lang, changeLang } = useLang();
   const [testimonials, setTestimonials] = useState([]);
 
   const CARD_WIDTH = 280;
@@ -443,7 +444,7 @@ gap: "10px",
           {/* Switcher langue desktop */}
           <div style={{ display: "flex", gap: "8px", alignItems: "center", marginLeft: "8px"}}>
             <button
-              onClick={() => setLang("fr")}
+              onClick={() => changeLang("fr")}
               title="Français"
               style={{
                 background: "none",

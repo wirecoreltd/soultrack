@@ -29,7 +29,7 @@ function CreateInternalUserContent() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [rolesToHide, setRolesToHide] = useState([]);
-  const [cellules, setCellules] = useState([]); // ✅ AJOUTER
+  const [cellules, setCellules] = useState([]);
 
   const [formData, setFormData] = useState({
     prenom: "",
@@ -42,7 +42,7 @@ function CreateInternalUserContent() {
     roles: [],
     cellule_nom: "",
     cellule_zone: "",
-    cellule_mere_id: "",
+    cellule_mere_id: "", // ✅ présent dès l'initialisation
     ministere: [],
   });
 
@@ -53,7 +53,7 @@ function CreateInternalUserContent() {
     "Berger", "Modération",
   ];
 
-  // ✅ allRoles conditionné par features — rôles des features désactivées absents
+  // ✅ allRoles conditionné par features
   const allRoles = useMemo(() => [
     { key: "Administrateur",            label: "Administrateur" },
     { key: "ResponsableIntegration",    label: "Responsable Intégration" },
@@ -71,9 +71,9 @@ function CreateInternalUserContent() {
     ] : []),
   ], [cellulesActive, conseillerActive, famillesActive]);
 
-  // ─── Récupérer les membres existants ───
+  // ─── Récupérer les membres et cellules existants ───
   useEffect(() => {
-    const fetchMembers = async () => {
+    const fetchData = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return;
@@ -92,7 +92,7 @@ function CreateInternalUserContent() {
           .eq("eglise_id", profile.eglise_id)
           .order("cellule_full");
 
-setCellules(cellulesData || []); // ✅ AJOUTER
+        setCellules(cellulesData || []);
 
         const { data: membersData } = await supabase
           .from("membres_complets")
@@ -103,11 +103,11 @@ setCellules(cellulesData || []); // ✅ AJOUTER
 
         setMembers(membersData || []);
       } catch (err) {
-        console.error("Erreur fetchMembers:", err);
+        console.error("Erreur fetchData:", err);
       }
     };
 
-    fetchMembers();
+    fetchData();
   }, []);
 
   // ─── Pré-remplissage infos + calcul des rôles à cacher ───
@@ -197,22 +197,21 @@ setCellules(cellulesData || []); // ✅ AJOUTER
       }
 
       // 1️⃣ Vérification téléphone
-      // Après
-if (selectedMemberId === "add-serviteur" && formData.telephone) {
-  const { data: existingMembers } = await supabase
-    .from("membres_complets")
-    .select("prenom, nom, sexe, telephone, etat_contact")
-    .eq("telephone", formData.telephone)
-    .in("etat_contact", ["existant", "nouveau"]);
+      if (selectedMemberId === "add-serviteur" && formData.telephone) {
+        const { data: existingMembers } = await supabase
+          .from("membres_complets")
+          .select("prenom, nom, sexe, telephone, etat_contact")
+          .eq("telephone", formData.telephone)
+          .in("etat_contact", ["existant", "nouveau"]);
 
-  if (existingMembers?.length > 0 && !forceCreate) {
-    const existing = existingMembers[0];
-    setDuplicatePhone(existing);
-    setMessage(`⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}`);
-    setLoading(false);
-    return;
-  }
-}
+        if (existingMembers?.length > 0 && !forceCreate) {
+          const existing = existingMembers[0];
+          setDuplicatePhone(existing);
+          setMessage(`⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}`);
+          setLoading(false);
+          return;
+        }
+      }
 
       // 2️⃣ Vérification email
       const { data: existingUsers } = await supabase
@@ -253,10 +252,14 @@ if (selectedMemberId === "add-serviteur" && formData.telephone) {
       setMessage("✅ Utilisateur créé !");
       setDuplicatePhone(null);
       setDuplicateEmail(null);
+
+      // ✅ Reset complet — cellule_mere_id inclus
       setFormData({
         prenom: "", nom: "", sexe: "", email: "",
         password: "", confirmPassword: "", telephone: "",
-        roles: [], cellule_nom: "", cellule_zone: "", ministere: [],
+        roles: [], cellule_nom: "", cellule_zone: "",
+        cellule_mere_id: "", // ✅ CORRIGÉ
+        ministere: [],
       });
       setSelectedMemberId("");
 
@@ -269,8 +272,11 @@ if (selectedMemberId === "add-serviteur" && formData.telephone) {
 
   const handleCancel = () => router.push("/admin/list-users");
 
-  // ✅ Déduire depuis les données — pas useFeature dans les conditions d'affichage
-  const showCelluleFields = cellulesActive && formData.roles.includes("ResponsableCellule");
+  // ✅ FIX PRINCIPAL — on vérifie cellulesActive ET le rôle coché
+  // cellulesActive doit être truthy (pas undefined/null/false)
+  const showCelluleFields =
+    cellulesActive === true &&
+    formData.roles.includes("ResponsableCellule");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
@@ -289,7 +295,7 @@ if (selectedMemberId === "add-serviteur" && formData.telephone) {
           <span className="text-[#333699]">Utilisateur</span>
         </h1>
 
-        {/* ✅ Texte intro conditionné par features */}
+        {/* Texte intro conditionné par features */}
         <div className="max-w-3xl w-full mb-6 text-center space-y-3">
           <p className="italic text-base text-black/90">
             Créez un utilisateur en sélectionnant un membre existant ou en ajoutant un nouveau serviteur.
@@ -367,29 +373,43 @@ if (selectedMemberId === "add-serviteur" && formData.telephone) {
           <input name="confirmPassword" placeholder="Confirmer mot de passe" type="password" value={formData.confirmPassword} onChange={handleChange} className="input" required />
 
           {/* ✅ Rôles — uniquement ceux dont la feature est active, minus rolesToHide */}
-          <div className="flex flex-col gap-2">
-            <label className="font-semibold">Rôles :</label>
-            {allRoles
-              .filter(role => !rolesToHide.includes(role.key))
-              .map(role => (
-                <label key={role.key} className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.roles.includes(role.key)}
-                    onChange={() => handleRoleChange(role.key)}
-                  />
-                  {role.label}
-                </label>
-              ))
-            }
-          </div>
+          {(selectedMemberId === "add-serviteur" || selectedMemberId) && (
+            <div className="flex flex-col gap-2">
+              <label className="font-semibold">Rôles :</label>
+              {allRoles
+                .filter(role => !rolesToHide.includes(role.key))
+                .map(role => (
+                  <label key={role.key} className="inline-flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.roles.includes(role.key)}
+                      onChange={() => handleRoleChange(role.key)}
+                    />
+                    {role.label}
+                  </label>
+                ))
+              }
+            </div>
+          )}
 
-          {/* ✅ Champs cellule — seulement si feature active ET rôle coché */}
+          {/* ✅ Champs cellule — seulement si cellulesActive === true ET rôle coché */}
           {showCelluleFields && (
             <div className="flex flex-col gap-2">
-              <input name="cellule_nom" placeholder="Nom cellule" value={formData.cellule_nom} onChange={handleChange} className="input" />
-              <input name="cellule_zone" placeholder="Zone cellule" value={formData.cellule_zone} onChange={handleChange} className="input" />
-          
+              <input
+                name="cellule_nom"
+                placeholder="Nom cellule"
+                value={formData.cellule_nom}
+                onChange={handleChange}
+                className="input"
+              />
+              <input
+                name="cellule_zone"
+                placeholder="Zone cellule"
+                value={formData.cellule_zone}
+                onChange={handleChange}
+                className="input"
+              />
+
               {/* ✅ Cellule mère */}
               <label className="font-semibold text-black">Cellule mère :</label>
               <select

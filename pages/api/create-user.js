@@ -16,7 +16,6 @@ export default function CreateInternalUserPage() {
 }
 
 function CreateInternalUserContent() {
-  // ✅ Tous les hooks en premier — avant tout return conditionnel
   const cellulesActive   = useFeature("cellules");
   const conseillerActive = useFeature("conseiller");
   const famillesActive   = useFeature("familles");
@@ -42,7 +41,7 @@ function CreateInternalUserContent() {
     roles: [],
     cellule_nom: "",
     cellule_zone: "",
-    cellule_mere_id: "", // ✅ présent dès l'initialisation
+    cellule_mere_id: "",
     ministere: [],
   });
 
@@ -53,7 +52,6 @@ function CreateInternalUserContent() {
     "Berger", "Modération",
   ];
 
-  // ✅ allRoles conditionné par features
   const allRoles = useMemo(() => [
     { key: "Administrateur",            label: "Administrateur" },
     { key: "ResponsableIntegration",    label: "Responsable Intégration" },
@@ -173,10 +171,9 @@ function CreateInternalUserContent() {
     });
   };
 
-  // ─── Soumission ───
-  const handleSubmit = async (e, forceCreate = false) => {
-    e.preventDefault();
-
+  // ─── Logique métier découplée du formulaire ───
+  // ✅ FIX PRINCIPAL : submitForm ne dépend plus de l'event
+  const submitForm = async (forceCreate = false) => {
     if (formData.password !== formData.confirmPassword) {
       setMessage("❌ Les mots de passe ne correspondent pas.");
       return;
@@ -192,7 +189,6 @@ function CreateInternalUserContent() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         setMessage("❌ Session expirée");
-        setLoading(false);
         return;
       }
 
@@ -208,7 +204,6 @@ function CreateInternalUserContent() {
           const existing = existingMembers[0];
           setDuplicatePhone(existing);
           setMessage(`⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}`);
-          setLoading(false);
           return;
         }
       }
@@ -223,7 +218,6 @@ function CreateInternalUserContent() {
         const existing = existingUsers[0];
         setDuplicateEmail(existing);
         setMessage(`⚠️ L'email ${formData.email} est déjà utilisé par ${existing.prenom} ${existing.nom}`);
-        setLoading(false);
         return;
       }
 
@@ -245,7 +239,6 @@ function CreateInternalUserContent() {
 
       if (!res.ok) {
         setMessage(`❌ ${data?.error}`);
-        setLoading(false);
         return;
       }
 
@@ -253,12 +246,12 @@ function CreateInternalUserContent() {
       setDuplicatePhone(null);
       setDuplicateEmail(null);
 
-      // ✅ Reset complet — cellule_mere_id inclus
+      // ✅ Reset complet
       setFormData({
         prenom: "", nom: "", sexe: "", email: "",
         password: "", confirmPassword: "", telephone: "",
         roles: [], cellule_nom: "", cellule_zone: "",
-        cellule_mere_id: "", // ✅ CORRIGÉ
+        cellule_mere_id: "",
         ministere: [],
       });
       setSelectedMemberId("");
@@ -266,14 +259,19 @@ function CreateInternalUserContent() {
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {
+      // ✅ FIX : always resets loading, even if an early return was hit
       setLoading(false);
     }
   };
 
+  // ✅ handleSubmit appelle submitForm — e.preventDefault() est sécurisé
+  const handleSubmit = async (e, forceCreate = false) => {
+    if (e && typeof e.preventDefault === "function") e.preventDefault();
+    await submitForm(forceCreate);
+  };
+
   const handleCancel = () => router.push("/admin/list-users");
 
-  // ✅ FIX PRINCIPAL — on vérifie cellulesActive ET le rôle coché
-  // cellulesActive doit être truthy (pas undefined/null/false)
   const showCelluleFields =
     cellulesActive === true &&
     formData.roles.includes("ResponsableCellule");
@@ -372,7 +370,7 @@ function CreateInternalUserContent() {
           <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
           <input name="confirmPassword" placeholder="Confirmer mot de passe" type="password" value={formData.confirmPassword} onChange={handleChange} className="input" required />
 
-          {/* ✅ Rôles — uniquement ceux dont la feature est active, minus rolesToHide */}
+          {/* Rôles */}
           {(selectedMemberId === "add-serviteur" || selectedMemberId) && (
             <div className="flex flex-col gap-2">
               <label className="font-semibold">Rôles :</label>
@@ -392,7 +390,7 @@ function CreateInternalUserContent() {
             </div>
           )}
 
-          {/* ✅ Champs cellule — seulement si cellulesActive === true ET rôle coché */}
+          {/* Champs cellule */}
           {showCelluleFields && (
             <div className="flex flex-col gap-2">
               <input
@@ -409,8 +407,6 @@ function CreateInternalUserContent() {
                 onChange={handleChange}
                 className="input"
               />
-
-              {/* ✅ Cellule mère */}
               <label className="font-semibold text-black">Cellule mère :</label>
               <select
                 name="cellule_mere_id"
@@ -430,15 +426,15 @@ function CreateInternalUserContent() {
             <button
               type="button"
               onClick={handleCancel}
-              disabled={!!duplicatePhone}
-              className={`flex-1 py-3 rounded-xl text-white ${duplicatePhone ? "bg-gray-300 cursor-not-allowed" : "bg-gray-400 hover:bg-gray-500"}`}
+              disabled={loading || !!duplicatePhone}
+              className={`flex-1 py-3 rounded-xl text-white ${loading || duplicatePhone ? "bg-gray-300 cursor-not-allowed" : "bg-gray-400 hover:bg-gray-500"}`}
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={loading || !!duplicatePhone || !!duplicateEmail}
-              className={`flex-1 py-3 rounded-xl text-white ${duplicatePhone || duplicateEmail ? "bg-gray-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
+              className={`flex-1 py-3 rounded-xl text-white ${loading || duplicatePhone || duplicateEmail ? "bg-gray-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
             >
               {loading ? "Création..." : "Créer"}
             </button>
@@ -450,10 +446,21 @@ function CreateInternalUserContent() {
           <div className="mt-4 p-4 border border-yellow-500 bg-yellow-100 rounded-lg text-center">
             <p>⚠️ Le numéro {formData.telephone} existe déjà pour {duplicatePhone.prenom} {duplicatePhone.nom}.</p>
             <div className="flex justify-center gap-4 mt-2">
-              <button type="button" onClick={() => setDuplicatePhone(null)} className="bg-gray-500 text-white py-2 px-4 rounded">
+              <button
+                type="button"
+                onClick={() => {
+                  setDuplicatePhone(null);
+                  setMessage("");
+                }}
+                className="bg-gray-500 text-white py-2 px-4 rounded"
+              >
                 Annuler
               </button>
-              <button type="button" onClick={(e) => handleSubmit(e, true)} className="bg-green-500 text-white py-2 px-4 rounded">
+              <button
+                type="button"
+                onClick={() => submitForm(true)} // ✅ FIX : appel direct sans event
+                className="bg-green-500 text-white py-2 px-4 rounded"
+              >
                 Continuer quand même
               </button>
             </div>
@@ -465,7 +472,14 @@ function CreateInternalUserContent() {
           <div className="mt-4 p-4 border border-red-500 bg-red-100 rounded-lg text-center">
             <p>❌ L&apos;email {formData.email} est déjà utilisé par {duplicateEmail.prenom} {duplicateEmail.nom}.</p>
             <div className="flex justify-center gap-4 mt-2">
-              <button type="button" onClick={() => setDuplicateEmail(null)} className="bg-gray-500 text-white py-2 px-4 rounded">
+              <button
+                type="button"
+                onClick={() => {
+                  setDuplicateEmail(null);
+                  setMessage("");
+                }}
+                className="bg-gray-500 text-white py-2 px-4 rounded"
+              >
                 Modifier
               </button>
             </div>

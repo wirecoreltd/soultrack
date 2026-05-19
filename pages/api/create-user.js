@@ -116,7 +116,7 @@ export default async function handler(req, res) {
           responsable_id: newUserId,
           telephone: telephone || "",
           eglise_id,
-          mere_id: cellule_mere_id || null, // ✅ AJOUTÉ — cellule mère liée
+          cellule_mere_id: cellule_mere_id || null, // ✅ AJOUTÉ — cellule mère liée
         });
 
       if (celluleError) {

@@ -4,7 +4,8 @@ import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import { useNotificationsContext } from "../../context/NotificationsContext"; // 
+import { useNotificationsContext } from "../../context/NotificationsContext";
+import { useLang } from "../../hooks/useLang";
 
 const translations = {
   fr: {

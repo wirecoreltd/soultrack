@@ -44,12 +44,16 @@ export default function ExportMembrePDF({
     if (error) throw error;
 
     await generateMembrePDF(membre, suivisData || [], {
-      churchName,
-      logoBase64,
-      celluleName,
-      familleName,
-      conseillerName,
-    });
+  churchName,
+  logoBase64,
+  celluleName,
+  familleName,
+  conseillerName,
+
+  eglise: {
+    nom: churchName,
+  },
+});
 
   } catch (err) {
     console.error("Erreur export PDF :", err);

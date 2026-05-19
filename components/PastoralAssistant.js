@@ -48,7 +48,7 @@ export default function PastoralAssistant({ membre, suivis }) {
       const res = await fetch("/api/pastoral/prepare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ membre, suivis }),
+        body: JSON.stringify({ membre, suivis, lang }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);

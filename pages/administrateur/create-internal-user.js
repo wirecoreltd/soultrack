@@ -45,21 +45,22 @@ function CreateInternalUserContent() {
   ];
 
   const allRoles = useMemo(() => [
-    { key: "Administrateur",            label: "Administrateur" },
-    { key: "ResponsableIntegration",    label: "Responsable Intégration" },
-    ...(cellulesActive ? [
-      { key: "SuperviseurCellule",      label: "Superviseur Cellule" },
-      { key: "ResponsableCellule",      label: "Responsable Cellule" },
-    ] : []),
-    { key: "ResponsableEvangelisation", label: "Responsable Évangélisation" },
-    ...(famillesActive ? [
-      { key: "SuperviseurFamilles",     label: "Superviseur Familles" },
-      { key: "ResponsableFamilles",     label: "Responsable Familles" },
-    ] : []),
-    ...(conseillerActive ? [
-      { key: "Conseiller", label: "Conseiller" },
-    ] : []),
-  ], [cellulesActive, conseillerActive, famillesActive]);
+  { key: "Administrateur",            label: "Administrateur" },
+  { key: "ResponsableIntegration",    label: "Responsable Intégration" },
+  ...(cellulesActive ? [
+    { key: "SuperviseurCellule",      label: "Superviseur Cellule" },
+    { key: "ResponsableCellule",      label: "Responsable Cellule" },
+  ] : []),
+  { key: "ResponsableEvangelisation", label: "Responsable Évangélisation" },
+  ...(famillesActive ? [
+    { key: "SuperviseurFamilles",     label: "Superviseur Familles" },
+    { key: "ResponsableFamilles",     label: "Responsable Familles" },
+  ] : []),
+  ...(conseillerActive ? [
+    { key: "Conseiller",              label: "Conseiller" },
+  ] : []),
+// Ajoute String() pour forcer React à détecter le changement
+], [String(cellulesActive), String(conseillerActive), String(famillesActive)]);
 
   // ─── Fetch membres + cellules ───
   useEffect(() => {
@@ -272,8 +273,8 @@ function CreateInternalUserContent() {
   const handleCancel = () => router.back();
 
   const showCelluleFields =
-    cellulesActive === true &&
-    formData.roles.includes("ResponsableCellule");
+  !!cellulesActive &&
+  formData.roles.includes("ResponsableCellule");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">

@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import PastoralAssistant from "../components/PastoralAssistant";
-import { useLang } from "../../hooks/useLang";
+import { useLang } from "../hooks/useLang";
 
 const translations = {
   fr: {

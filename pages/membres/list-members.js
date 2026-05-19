@@ -1236,17 +1236,47 @@ function ListMembersContent() {
 
           {/* Bouton PDF à droite */}
           <div className="w-full flex justify-end mt-3">
-            <ExportMembrePDF
-              membre={m}
-              churchName="Ton Église"
-              celluleName={
-                cellules.find(c => String(c.id) === String(m.cellule_id))?.cellule_full
+           export default function ExportMembrePDF({
+            membre,
+            suivis = [],
+            churchName = "Église",
+            logoBase64 = null,
+            eglise = null,          // ← ajouter
+            celluleName = null,
+            familleName = null,
+            conseillerName = null,
+            className = "",
+            compact = false,
+          }) {
+            // ...
+          
+            const handleExport = async (e) => {
+              e.stopPropagation();
+              setLoading(true);
+              try {
+                const { data: suivisData, error } = await supabase
+                  .from("suivis")
+                  .select(`*, profiles (prenom, nom)`)
+                  .eq("membre_id", membre.id)
+                  .order("date_action", { ascending: false });
+          
+                if (error) throw error;
+          
+                await generateMembrePDF(membre, suivisData || [], {
+                  churchName,
+                  logoBase64,
+                  celluleName,
+                  familleName,
+                  conseillerName,
+                  eglise,             // ← passer l'objet complet
+                });
+              } catch (err) {
+                console.error("Erreur export PDF :", err);
+                alert("Impossible de générer le PDF.");
+              } finally {
+                setLoading(false);
               }
-              familleName={
-                familles.find(f => String(f.id) === String(m.famille_id))?.famille_full
-              }
-              conseillerName={getConseillersForMember(m.id)}
-            />
+            };
           </div>
 
           {/* Détails */}

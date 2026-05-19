@@ -440,7 +440,7 @@ function CreateInternalUserContent() {
                   <option value="">-- Aucune cellule mère --</option>
                   {cellules.map(c => (
                     <option key={c.id} value={c.id}>
-                      {c.responsable}
+                      {c.ville} - {c.cellule} ({c.responsable})
                     </option>
                   ))}
                 </select>

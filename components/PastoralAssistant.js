@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useLang } from "../../hooks/useLang";
+import { useLang } from "../hooks/useLang";
 
 const translations = {
   fr: {

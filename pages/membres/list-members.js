@@ -21,6 +21,184 @@ import PresenceDot from "../../components/PresenceDot";
 import ImportMembresCSV from "../../components/ImportMembresCSV";
 import { useFeature } from "../../components/FeaturesContext";
 import ExportMembrePDF from "../../components/ExportMembrePDF";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    pageTitle: "Liste des",
+    pageTitleHighlight: "Membres",
+    pageSubtitle1: "Visualisez et gérez",
+    pageSubtitle2: "tous les membres,",
+    pageSubtitle3: "nouveaux contacts",
+    pageSubtitle4: "et",
+    pageSubtitle5: "membres existants",
+    pageSubtitle6: ". Vous pouvez filtrer par état, consulter les détails,",
+    pageSubtitle7: "envoyer des suivis",
+    pageSubtitle8: "et mettre à jour les informations en toute sécurité selon votre rôle.",
+    search: "🔍Recherche...",
+    allStates: "-- Tous les états de contact --",
+    nouveau: "Nouveau",
+    existant: "Existant",
+    inactif: "Inactif",
+    membersCount: (n) => `${n} membres`,
+    addMember: "➕ Ajouter un membre",
+    importList: "📥 Importer une liste",
+    loading: "Chargement...",
+    newMembersTitle: (date) => `💖 Bien aimé venu le ${date}`,
+    existingTitle: "Membres existants",
+    inactifTitle: "Contacts inactifs",
+    city: "🏙️ Ville :",
+    etatContact: "🕊 Etat Contact :",
+    createdAt: "Créé le",
+    cellule: "🏠 Cellule :",
+    famille: "👨‍👩‍👦 Famille :",
+    conseiller: "👤 Conseiller(s) :",
+    sendToSuivi: "Envoyer ce contact en suivi :",
+    chooseOption: "-- Choisir une option --",
+    oneCellule: "Une Cellule",
+    oneConseiller: "Un Conseiller",
+    oneFamille: "Une Famille",
+    enterNumber: "Saisir un numéro",
+    chooseTarget: (type) => `-- Choisir ${type} --`,
+    enterNumberPlaceholder: "Saisir un numéro",
+    markAsMember: "✅ Marquer comme membre",
+    closeDetails: "Fermer détails",
+    details: "Détails",
+    identity: "👤 Identité",
+    civility: "🎗️ Civilité :",
+    age: "⏳ Tranche d'âge :",
+    whatsapp: "💬 WhatsApp :",
+    yes: "Oui",
+    no: "Non",
+    suivi: "📊 Suivi",
+    status: "💡 Statut :",
+    sentDate: "📆 Envoyé en suivi :",
+    comment: "📝 Commentaire :",
+    evangComment: "📑 Évangélisation :",
+    spiritual: "🕊 Vie spirituelle",
+    baptemeEau: "💧 Baptême d'eau :",
+    wantsBaptism: "💦 Veut se faire baptiser",
+    baptemeFeu: "🔥 Baptême de feu :",
+    prayer: "🙏 Prière du salut :",
+    conversion: "✨ Conversion :",
+    formation: "✒️ Formation :",
+    ministere: "💢 Ministère :",
+    parcours: "🌱 Parcours",
+    howCame: "🧩 Comment venu :",
+    reason: "✨ Raison :",
+    infos: "📝 Infos :",
+    pastoral: "❤️‍🩹 Soin pastoral",
+    needs: "❓ Besoins :",
+    addSuivi: "💡 Ajouter / Voir suivis",
+    editContact: "✏️ Modifier le contact",
+    integrationDone: "✅ Intégration terminée",
+    deleteContact: "🗑️ Supprimer le contact",
+    confirmMember: "⚠️ Confirmation\n\nCe contact n'a plus besoin d'être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?",
+    confirmDetach: "⚠️ Confirmation\n\nCe contact ne sera plus attribué à vous.\nVoulez-vous continuer ?",
+    confirmDelete: "⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?\n\nCette action supprimera également TOUT l'historique du contact.\nCette action est irréversible.",
+    toastMoved: "✅ Contact déplacé dans membres existants",
+    toastMoveError: "❌ Erreur lors du déplacement",
+    toastIntegDone: "✅ Intégration terminée. Contact détaché.",
+    toastIntegError: "❌ Erreur lors de l'opération",
+    toastDeleted: "✅ Contact supprimé définitivement",
+    toastDeleteError: "❌ Erreur lors de la suppression : ",
+    toastSent: "✅ Contact envoyé !",
+    toastUpdated: "✅ Contact mis à jour !",
+    toastSuivi: "✅ Suivi enregistré !",
+    statutSuivi: { 1: "En Attente", 2: "En Suivis", 3: "Intégré", 4: "Refus" },
+    call: "📞 Appeler",
+    sms: "✉️ SMS",
+    waCall: "📱 Appel WhatsApp",
+    waMsg: "💬 Message WhatsApp",
+  },
+  en: {
+    pageTitle: "Members",
+    pageTitleHighlight: "List",
+    pageSubtitle1: "View and manage",
+    pageSubtitle2: "all members,",
+    pageSubtitle3: "new contacts",
+    pageSubtitle4: "and",
+    pageSubtitle5: "existing members",
+    pageSubtitle6: ". You can filter by status, view details,",
+    pageSubtitle7: "send follow-ups",
+    pageSubtitle8: "and update information securely according to your role.",
+    search: "🔍Search...",
+    allStates: "-- All contact states --",
+    nouveau: "New",
+    existant: "Existing",
+    inactif: "Inactive",
+    membersCount: (n) => `${n} members`,
+    addMember: "➕ Add a member",
+    importList: "📥 Import a list",
+    loading: "Loading...",
+    newMembersTitle: (date) => `💖 Beloved who came on ${date}`,
+    existingTitle: "Existing members",
+    inactifTitle: "Inactive contacts",
+    city: "🏙️ City:",
+    etatContact: "🕊 Contact state:",
+    createdAt: "Created on",
+    cellule: "🏠 Cell:",
+    famille: "👨‍👩‍👦 Family:",
+    conseiller: "👤 Counsellor(s):",
+    sendToSuivi: "Send this contact for follow-up:",
+    chooseOption: "-- Choose an option --",
+    oneCellule: "A Cell",
+    oneConseiller: "A Counsellor",
+    oneFamille: "A Family",
+    enterNumber: "Enter a number",
+    chooseTarget: (type) => `-- Choose ${type} --`,
+    enterNumberPlaceholder: "Enter a number",
+    markAsMember: "✅ Mark as member",
+    closeDetails: "Close details",
+    details: "Details",
+    identity: "👤 Identity",
+    civility: "🎗️ Title:",
+    age: "⏳ Age range:",
+    whatsapp: "💬 WhatsApp:",
+    yes: "Yes",
+    no: "No",
+    suivi: "📊 Follow-up",
+    status: "💡 Status:",
+    sentDate: "📆 Sent for follow-up:",
+    comment: "📝 Comment:",
+    evangComment: "📑 Evangelisation:",
+    spiritual: "🕊 Spiritual life",
+    baptemeEau: "💧 Water baptism:",
+    wantsBaptism: "💦 Wants to be baptised",
+    baptemeFeu: "🔥 Fire baptism:",
+    prayer: "🙏 Prayer of salvation:",
+    conversion: "✨ Conversion:",
+    formation: "✒️ Training:",
+    ministere: "💢 Ministry:",
+    parcours: "🌱 Journey",
+    howCame: "🧩 How they came:",
+    reason: "✨ Reason:",
+    infos: "📝 Info:",
+    pastoral: "❤️‍🩹 Pastoral care",
+    needs: "❓ Needs:",
+    addSuivi: "💡 Add / View follow-ups",
+    editContact: "✏️ Edit contact",
+    integrationDone: "✅ Integration complete",
+    deleteContact: "🗑️ Delete contact",
+    confirmMember: "⚠️ Confirmation\n\nThis contact no longer needs follow-up.\nDo you really want to move them to existing members?",
+    confirmDetach: "⚠️ Confirmation\n\nThis contact will no longer be assigned to you.\nDo you want to continue?",
+    confirmDelete: "⚠️ Permanent deletion\n\nDo you really want to delete this contact?\n\nThis will also delete ALL the contact's history.\nThis action is irreversible.",
+    toastMoved: "✅ Contact moved to existing members",
+    toastMoveError: "❌ Error moving contact",
+    toastIntegDone: "✅ Integration complete. Contact detached.",
+    toastIntegError: "❌ Error during operation",
+    toastDeleted: "✅ Contact permanently deleted",
+    toastDeleteError: "❌ Error during deletion: ",
+    toastSent: "✅ Contact sent!",
+    toastUpdated: "✅ Contact updated!",
+    toastSuivi: "✅ Follow-up saved!",
+    statutSuivi: { 1: "Pending", 2: "In Follow-up", 3: "Integrated", 4: "Refused" },
+    call: "📞 Call",
+    sms: "✉️ SMS",
+    waCall: "📱 WhatsApp Call",
+    waMsg: "💬 WhatsApp Message",
+  },
+};
 
 function getRoles(profile) {
   if (!profile) return [];
@@ -52,6 +230,9 @@ export default function ListMembers() {
 }
 
 function ListMembersContent() {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
@@ -66,7 +247,7 @@ function ListMembersContent() {
   const searchParams = useSearchParams();
   const conseillerIdFromUrl = searchParams.get("conseiller_id");
   const toBoolean = (val) => val === true || val === "true";
-  const [userRole, setUserRole] = useState(null); // ✅ sera assigné dans fetchData
+  const [userRole, setUserRole] = useState(null);
   const besoinFromUrl = searchParams.get("besoin");
   const dateDebut = searchParams.get("dateDebut");
   const dateFin = searchParams.get("dateFin");
@@ -97,15 +278,11 @@ function ListMembersContent() {
   const assignmentsLoadedRef = useRef(false);
   const [fetchTrigger, setFetchTrigger] = useState(0);
 
-  // ✅ Ref pour bloquer le realtime pendant nos propres mises à jour
   const localUpdateInProgressRef = useRef(false);
 
-  // ─────────────────────────────────────────────
-  // ✅ FEATURES — source unique via useFeature
-  // ─────────────────────────────────────────────
   const famillesActive = useFeature("familles");
-  const cellulesActive = useFeature("cellules");     // ✅ AJOUTÉ
-  const conseillerActive = useFeature("conseiller"); // ✅ AJOUTÉ
+  const cellulesActive = useFeature("cellules");
+  const conseillerActive = useFeature("conseiller");
 
   const roles = getRoles(userProfile);
   const isAdmin = roles.includes("Administrateur");
@@ -133,12 +310,7 @@ function ListMembersContent() {
     );
   };
 
-  const statutSuiviLabels = {
-    1: "En Attente",
-    2: "En Suivis",
-    3: "Intégré",
-    4: "Refus",
-  };
+  const statutSuiviLabels = t.statutSuivi;
 
   const logStats = async (member, updatedMember, userProfile) => {
     if (!userProfile) return;
@@ -293,51 +465,46 @@ function ListMembersContent() {
 
   // -------------------- Supprimer --------------------
   const handleSupprimerMembre = async (id) => {
-  localUpdateInProgressRef.current = true;
+    localUpdateInProgressRef.current = true;
 
-  try {
-    // 1. Récupérer le profile_id
-    const { data: membreData, error: fetchError } = await supabase
-      .from("membres_complets")
-      .select("profile_id")
-      .eq("id", id)
-      .single();
+    try {
+      const { data: membreData, error: fetchError } = await supabase
+        .from("membres_complets")
+        .select("profile_id")
+        .eq("id", id)
+        .single();
 
-    if (fetchError) throw fetchError;
+      if (fetchError) throw fetchError;
 
-    const profileId = membreData?.profile_id;
+      const profileId = membreData?.profile_id;
 
-    // 2. Supprimer auth.users EN PREMIER (avant le trigger)
-    if (profileId) {
-      const { error: authError } = await supabase.functions.invoke("dynamic-worker", {
-        body: { member_id: profileId },
-      });
-      if (authError) console.warn("Edge Function:", authError);
+      if (profileId) {
+        const { error: authError } = await supabase.functions.invoke("dynamic-worker", {
+          body: { member_id: profileId },
+        });
+        if (authError) console.warn("Edge Function:", authError);
+      }
+
+      const { error: updateError } = await supabase
+        .from("membres_complets")
+        .update({ etat_contact: "supprime" })
+        .eq("id", id);
+
+      if (updateError) throw updateError;
+
+      setAllMembers((prev) => prev.filter((m) => m.id !== id));
+      showToast(t.toastDeleted);
+
+    } catch (err) {
+      console.error("Erreur suppression :", err);
+      showToast(t.toastDeleteError + (err.message || "inconnue"));
+    } finally {
+      setTimeout(() => {
+        localUpdateInProgressRef.current = false;
+      }, 2000);
     }
+  };
 
-    // 3. Soft-delete membres_complets → trigger supprime profiles
-    const { error: updateError } = await supabase
-      .from("membres_complets")
-      .update({ etat_contact: "supprime" })
-      .eq("id", id);
-
-    if (updateError) throw updateError;
-
-    // 4. Retirer de l'affichage
-    setAllMembers((prev) => prev.filter((m) => m.id !== id));
-    showToast("✅ Contact supprimé définitivement");
-
-  } catch (err) {
-    console.error("Erreur suppression :", err);
-    showToast("❌ Erreur lors de la suppression : " + (err.message || "inconnue"));
-  } finally {
-    setTimeout(() => {
-      localUpdateInProgressRef.current = false;
-    }, 2000);
-  }
-};
-
-  
   const handleCommentChange = (id, value) =>
     setCommentChanges((prev) => ({ ...prev, [id]: value }));
 
@@ -346,7 +513,7 @@ function ListMembersContent() {
     try {
       setTimeout(() => {
         setUpdating((prev) => ({ ...prev, [id]: false }));
-        showToast("✅ Suivi enregistré !");
+        showToast(t.toastSuivi);
       }, 1000);
     } catch (err) {
       console.error("Erreur update suivi:", err);
@@ -374,7 +541,7 @@ function ListMembersContent() {
       )
     );
 
-    showToast("✅ Contact envoyé !");
+    showToast(t.toastSent);
     setTimeout(() => {
       localUpdateInProgressRef.current = false;
     }, 2000);
@@ -510,7 +677,6 @@ function ListMembersContent() {
       userProfileRef.current = profile;
       setUserProfile(profile);
 
-      // ✅ Assigner userRole correctement
       const rolesArray = getRoles(profile);
       if (rolesArray.includes("Conseiller")) {
         setUserRole("Conseiller");
@@ -518,7 +684,6 @@ function ListMembersContent() {
         setUserRole(rolesArray[0] || null);
       }
 
-      // ✅ Charger cellules seulement si feature active
       if (cellulesActive) {
         const { data: cellulesData } = await supabase
           .from("cellules")
@@ -528,7 +693,6 @@ function ListMembersContent() {
         if (cellulesData) setCellules(cellulesData);
       }
 
-      // ✅ Charger familles seulement si feature active
       if (famillesActive) {
         const { data: famillesData } = await supabase
           .from("familles")
@@ -538,7 +702,6 @@ function ListMembersContent() {
         if (famillesData) setFamilles(famillesData);
       }
 
-      // ✅ Charger conseillers seulement si feature active
       if (conseillerActive) {
         const { data: conseillersData } = await supabase
           .from("profiles")
@@ -710,30 +873,28 @@ function ListMembersContent() {
     return "—";
   };
 
-  // Ajouter après les autres useEffect
-useEffect(() => {
-  const highlightId = searchParams.get("highlight");
-  if (!highlightId || loading) return;
+  useEffect(() => {
+    const highlightId = searchParams.get("highlight");
+    if (!highlightId || loading) return;
 
-  // Attendre que le DOM soit rendu
-  const timer = setTimeout(() => {
-    const el = document.getElementById(`member-${highlightId}`);
-    if (!el) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`member-${highlightId}`);
+      if (!el) return;
 
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
-    el.style.boxShadow = "0 0 0 4px #f59e0b, 0 0 24px 8px rgba(245,158,11,0.4)";
-    el.style.transform = "scale(1.02)";
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
+      el.style.boxShadow = "0 0 0 4px #f59e0b, 0 0 24px 8px rgba(245,158,11,0.4)";
+      el.style.transform = "scale(1.02)";
 
-    setTimeout(() => {
-      el.style.transition = "box-shadow 1s ease, transform 1s ease";
-      el.style.boxShadow = "";
-      el.style.transform = "";
-    }, 5000);
-  }, 500);
+      setTimeout(() => {
+        el.style.transition = "box-shadow 1s ease, transform 1s ease";
+        el.style.boxShadow = "";
+        el.style.transform = "";
+      }, 5000);
+    }, 500);
 
-  return () => clearTimeout(timer);
-}, [loading, searchParams]);
+    return () => clearTimeout(timer);
+  }, [loading, searchParams]);
 
   // -------------------- renderMemberCard --------------------
   const renderMemberCard = (m) => {
@@ -754,7 +915,7 @@ useEffect(() => {
     return (
       <div
         key={m.id}
-        id={`member-${m.id}`} 
+        id={`member-${m.id}`}
         className="bg-white px-3 pb-3 pt-1 rounded-xl shadow-md border-l-4 relative"
         style={{ borderLeftColor: getBorderColor(m) }}
       >
@@ -762,7 +923,7 @@ useEffect(() => {
           <div className="absolute top-2 right-3 flex items-center gap-1">
             <span className="inline-flex items-center gap-2 text-xs font-semibold text-blue-600 bg-white px-3 py-1 rounded-md shadow">
               <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-600" />
-              Nouveau
+              {t.nouveau}
             </span>
           </div>
         )}
@@ -776,13 +937,13 @@ useEffect(() => {
               m.etat_contact?.trim().toLowerCase() === "existant" && (
                 <span className="text-yellow-400">⭐</span>
               )}
-             <div className="absolute right-8"> 
+            <div className="absolute right-8">
               <PresenceDot
                 memberId={m.id}
                 egliseId={userProfile?.eglise_id}
                 dateVenu={m.date_venu}
               />
-                </div>
+            </div>
           </h2>
 
           {/* Téléphone */}
@@ -804,13 +965,13 @@ useEffect(() => {
                       href={`tel:${m.telephone}`}
                       className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
                     >
-                      📞 Appeler
+                      {t.call}
                     </a>
                     <a
                       href={`sms:${m.telephone}`}
                       className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
                     >
-                      ✉️ SMS
+                      {t.sms}
                     </a>
                     <a
                       href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`}
@@ -818,7 +979,7 @@ useEffect(() => {
                       rel="noopener noreferrer"
                       className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
                     >
-                      📱 Appel WhatsApp
+                      {t.waCall}
                     </a>
                     <a
                       href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
@@ -826,7 +987,7 @@ useEffect(() => {
                       rel="noopener noreferrer"
                       className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
                     >
-                      💬 Message WhatsApp
+                      {t.waMsg}
                     </a>
                   </div>
                 )}
@@ -838,20 +999,19 @@ useEffect(() => {
 
           {/* Infos principales */}
           <div className="w-full mt-2 text-sm text-black space-y-1">
-            <p className="text-center">🏙️ Ville : {m.ville || "—"}</p>
+            <p className="text-center">{t.city} {m.ville || "—"}</p>
             <p className="text-center">
-              🕊 Etat Contact : {m.etat_contact || "—"}
+              {t.etatContact} {m.etat_contact || "—"}
             </p>
             <div className="w-full flex justify-end mt-3">
-              <p className="text-[11px] text-gray-400">               
-                Créé le {formatDateFr(m.date_venu)}
+              <p className="text-[11px] text-gray-400">
+                {t.createdAt} {formatDateFr(m.date_venu)}
               </p>
             </div>
 
-            {/* ✅ Cellule cachée si feature désactivée */}
             {cellulesActive && (
               <p>
-                🏠 Cellule :{" "}
+                {t.cellule}{" "}
                 {m.cellule_id
                   ? cellules.find(
                       (c) => String(c.id) === String(m.cellule_id)
@@ -860,10 +1020,9 @@ useEffect(() => {
               </p>
             )}
 
-            {/* ✅ Famille cachée si feature désactivée */}
             {famillesActive && (
               <p>
-                👨‍👩‍👦 Famille :{" "}
+                {t.famille}{" "}
                 {m.famille_id
                   ? familles.find(
                       (f) => String(f.id) === String(m.famille_id)
@@ -872,16 +1031,15 @@ useEffect(() => {
               </p>
             )}
 
-            {/* ✅ Conseiller caché si feature désactivée */}
             {conseillerActive && (
-              <p>👤 Conseiller(s) : {getConseillersForMember(m.id)}</p>
+              <p>{t.conseiller} {getConseillersForMember(m.id)}</p>
             )}
           </div>
 
           {/* Envoyer en suivi */}
           <div className="mt-2 w-full">
             <label className="font-semibold text-sm">
-              Envoyer ce contact en suivi :
+              {t.sendToSuivi}
             </label>
             <select
               value={selectedTargetType[m.id] || ""}
@@ -892,21 +1050,19 @@ useEffect(() => {
               }}
               className="mt-1 w-full border rounded px-2 py-1 text-sm"
             >
-              <option value="">-- Choisir une option --</option>
-              {/* ✅ Options conditionnées aux features */}
+              <option value="">{t.chooseOption}</option>
               {cellulesActive && (
-                <option value="cellule">Une Cellule</option>
+                <option value="cellule">{t.oneCellule}</option>
               )}
               {conseillerActive && (
-                <option value="conseiller">Un Conseiller</option>
+                <option value="conseiller">{t.oneConseiller}</option>
               )}
               {famillesActive && (
-                <option value="famille">Une Famille</option>
+                <option value="famille">{t.oneFamille}</option>
               )}
-              <option value="numero">Saisir un numéro</option>
+              <option value="numero">{t.enterNumber}</option>
             </select>
 
-            {/* ✅ Select secondaire conditionné aux features */}
             {(
               (cellulesActive && selectedTargetType[m.id] === "cellule") ||
               (conseillerActive && selectedTargetType[m.id] === "conseiller") ||
@@ -923,7 +1079,7 @@ useEffect(() => {
                 className="mt-1 w-full border rounded px-2 py-1 text-sm"
               >
                 <option value="">
-                  -- Choisir {selectedTargetType[m.id]} --
+                  {t.chooseTarget(selectedTargetType[m.id])}
                 </option>
                 {cellulesActive &&
                   selectedTargetType[m.id] === "cellule" &&
@@ -952,7 +1108,7 @@ useEffect(() => {
             {selectedTargetType[m.id] === "numero" && (
               <input
                 type="tel"
-                placeholder="Saisir un numéro"
+                placeholder={t.enterNumberPlaceholder}
                 value={selectedTargets[m.id] || ""}
                 onChange={(e) =>
                   setSelectedTargets((prev) => ({
@@ -1005,11 +1161,7 @@ useEffect(() => {
             <div className="w-full flex justify-end mt-4">
               <button
                 onClick={() => {
-                  if (
-                    window.confirm(
-                      "⚠️ Confirmation\n\nCe contact n'a plus besoin d'être suivi.\nVoulez-vous vraiment le déplacer dans les membres existants ?"
-                    )
-                  ) {
+                  if (window.confirm(t.confirmMember)) {
                     localUpdateInProgressRef.current = true;
                     supabase
                       .from("membres_complets")
@@ -1017,7 +1169,7 @@ useEffect(() => {
                       .eq("id", m.id)
                       .then(({ error }) => {
                         if (error) {
-                          showToast("❌ Erreur lors du déplacement");
+                          showToast(t.toastMoveError);
                           localUpdateInProgressRef.current = false;
                         } else {
                           setAllMembers((prev) =>
@@ -1027,9 +1179,7 @@ useEffect(() => {
                                 : mem
                             )
                           );
-                          showToast(
-                            "✅ Contact déplacé dans membres existants"
-                          );
+                          showToast(t.toastMoved);
                           setTimeout(() => {
                             localUpdateInProgressRef.current = false;
                           }, 2000);
@@ -1039,7 +1189,7 @@ useEffect(() => {
                 }}
                 className="ml-auto bg-white text-green-600 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
               >
-                ✅ Marquer comme membre
+                {t.markAsMember}
               </button>
             </div>
           )}
@@ -1049,54 +1199,50 @@ useEffect(() => {
             onClick={() => toggleDetails(m.id)}
             className="text-orange-500 underline text-sm mt-3"
           >
-            {isOpen ? "Fermer détails" : "Détails"}
-          </button>         
+            {isOpen ? t.closeDetails : t.details}
+          </button>
 
-{/* Bouton PDF à droite */}
-<div className="w-full flex justify-end mt-3">
-  <ExportMembrePDF
-    membre={m}    
-    churchName="Ton Église"
-    celluleName={
-      cellules.find(c => String(c.id) === String(m.cellule_id))?.cellule_full
-    }
-    familleName={
-      familles.find(f => String(f.id) === String(m.famille_id))?.famille_full
-    }
-    conseillerName={getConseillersForMember(m.id)}
-  />
-</div>
+          {/* Bouton PDF à droite */}
+          <div className="w-full flex justify-end mt-3">
+            <ExportMembrePDF
+              membre={m}
+              churchName="Ton Église"
+              celluleName={
+                cellules.find(c => String(c.id) === String(m.cellule_id))?.cellule_full
+              }
+              familleName={
+                familles.find(f => String(f.id) === String(m.famille_id))?.famille_full
+              }
+              conseillerName={getConseillersForMember(m.id)}
+            />
+          </div>
 
           {/* Détails */}
           {isOpen && (
             <div className="text-black text-sm mt-3 w-full space-y-4">
               <div>
-                <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
-                <p>🎗️ Civilité : {m.sexe || "—"}</p>
-                <p>⏳ Tranche d'âge : {m.age || "—"}</p>
-                <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                <p className="font-bold text-[#2E3192] mb-1">{t.identity}</p>
+                <p>{t.civility} {m.sexe || "—"}</p>
+                <p>{t.age} {m.age || "—"}</p>
+                <p>{t.whatsapp} {m.is_whatsapp ? t.yes : t.no}</p>
               </div>
               <hr />
 
               <div>
-                <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
+                <p className="font-bold text-[#2E3192] mb-1">{t.suivi}</p>
                 <p className="font-semibold text-[#2E3192]">
-                  💡 Statut :{" "}
+                  {t.status}{" "}
                   {statutSuiviLabels[m.statut_suivis] ||
                     m.suivi_statut ||
                     "—"}
                 </p>
-                <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
-                <p>📝 Commentaire : {m.commentaire_suivis || "—"}</p>
-                <p>
-                  📑 Évangélisation :{" "}
-                  {m.Commentaire_Suivi_Evangelisation || "—"}
-                </p>
+                <p>{t.sentDate} {formatDateFr(m.date_envoi_suivi)}</p>
+                <p>{t.comment} {m.commentaire_suivis || "—"}</p>
+                <p>{t.evangComment} {m.Commentaire_Suivi_Evangelisation || "—"}</p>
 
-                {/* ✅ Conseiller dans Détails — caché si feature désactivée */}
                 {conseillerActive && (
                   <div className="mt-1">
-                    <span className="font-semibold">👤 Conseiller(s) : </span>
+                    <span className="font-semibold">{t.conseiller} </span>
                     {assignmentsMap[m.id]?.length > 0 ? (
                       <span>
                         {assignmentsMap[m.id].map((c, i) => (
@@ -1118,46 +1264,41 @@ useEffect(() => {
               <hr />
 
               <div>
-                <p className="font-bold text-[#2E3192] mb-1">
-                  🕊 Vie spirituelle
-                </p>
-                <p>💧 Baptême d'eau : {m.bapteme_eau || "—"}</p>
+                <p className="font-bold text-[#2E3192] mb-1">{t.spiritual}</p>
+                <p>{t.baptemeEau} {m.bapteme_eau || "—"}</p>
                 {m.bapteme_eau === "Non" &&
                   m.veut_se_faire_baptiser === "Oui" && (
-                    <p className="ml-4">💦 Veut se faire baptiser</p>
+                    <p className="ml-4">{t.wantsBaptism}</p>
                   )}
-                <p>🔥 Baptême de feu : {m.bapteme_esprit || "—"}</p>
-                <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
-                <p>✨ Conversion : {m.type_conversion || "—"}</p>
-                <p>✒️ Formation : {m.Formation || "—"}</p>
+                <p>{t.baptemeFeu} {m.bapteme_esprit || "—"}</p>
+                <p>{t.prayer} {m.priere_salut || "—"}</p>
+                <p>{t.conversion} {m.type_conversion || "—"}</p>
+                <p>{t.formation} {m.Formation || "—"}</p>
                 <p>
-                  💢 Ministère :{" "}
+                  {t.ministere}{" "}
                   {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}
                 </p>
               </div>
               <hr />
 
               <div>
-                <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>
-                <p>🧩 Comment venu : {m.venu || "—"}</p>
-                <p>✨ Raison : {m.statut_initial || "—"}</p>
-                <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+                <p className="font-bold text-[#2E3192] mb-1">{t.parcours}</p>
+                <p>{t.howCame} {m.venu || "—"}</p>
+                <p>{t.reason} {m.statut_initial || "—"}</p>
+                <p>{t.infos} {m.infos_supplementaires || "—"}</p>
               </div>
               <hr />
 
               <div>
-                <p className="font-bold text-[#2E3192] mb-1">
-                  ❤️‍🩹 Soin pastoral
-                </p>
-                <p>❓ Besoins : {besoins}</p>
+                <p className="font-bold text-[#2E3192] mb-1">{t.pastoral}</p>
+                <p>{t.needs} {besoins}</p>
                 <div className="flex justify-center">
                   <button
                     onClick={() => setOpenSuiviMemberId(m.id)}
                     className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
                   >
-                    💡 Ajouter / Voir suivis
-                  </button>                    
-
+                    {t.addSuivi}
+                  </button>
                 </div>
                 {openSuiviMemberId === m.id && (
                   <SuiviPopup
@@ -1174,20 +1315,14 @@ useEffect(() => {
                     onClick={() => setEditMember(m)}
                     className="w-full text-orange-500 text-sm py-2 rounded-md"
                   >
-                    ✏️ Modifier le contact
+                    {t.editContact}
                   </button>
 
-                  {/* ✅ userRole maintenant correctement assigné */}
                   {userRole === "Conseiller" &&
                     m.integration_fini !== "fini" && (
                       <button
                         onClick={async () => {
-                          if (
-                            !window.confirm(
-                              "⚠️ Confirmation\n\nCe contact ne sera plus attribué à vous.\nVoulez-vous continuer ?"
-                            )
-                          )
-                            return;
+                          if (!window.confirm(t.confirmDetach)) return;
                           try {
                             const { error } = await supabase
                               .from("membres_complets")
@@ -1200,32 +1335,26 @@ useEffect(() => {
                             setAllMembers((prev) =>
                               prev.filter((mem) => mem.id !== m.id)
                             );
-                            showToast(
-                              "✅ Intégration terminée. Contact détaché."
-                            );
+                            showToast(t.toastIntegDone);
                           } catch (err) {
-                            showToast("❌ Erreur lors de l'opération");
+                            showToast(t.toastIntegError);
                           }
                         }}
                         className="ml-auto bg-white text-blue-600 w-full py-2 rounded-md font-semibold shadow-sm"
                       >
-                        ✅ Intégration terminée
+                        {t.integrationDone}
                       </button>
                     )}
 
                   <button
                     onClick={() => {
-                      if (
-                        window.confirm(
-                          "⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?\n\nCette action supprimera également TOUT l'historique du contact.\nCette action est irréversible."
-                        )
-                      ) {
+                      if (window.confirm(t.confirmDelete)) {
                         handleSupprimerMembre(m.id);
                       }
                     }}
                     className="w-full text-red-600 text-xs font-semibold py-1.5 rounded-md"
                   >
-                    🗑️ Supprimer le contact
+                    {t.deleteContact}
                   </button>
                 </div>
               </div>
@@ -1244,37 +1373,26 @@ useEffect(() => {
     >
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
-        Liste des <span className="text-emerald-300">Membres</span>
+        {t.pageTitle} <span className="text-emerald-300">{t.pageTitleHighlight}</span>
       </h1>
 
       <div className="max-w-3xl w-full mb-6 text-center">
         <p className="italic text-base text-white/90">
-          <span className="text-blue-300 font-semibold">
-            Visualisez et gérez
-          </span>{" "}
-          tous les membres,{" "}
-          <span className="text-blue-300 font-semibold">
-            {" "}
-            nouveaux contacts
-          </span>{" "}
-          et{" "}
-          <span className="text-blue-300 font-semibold">
-            {" "}
-            membres existants
-          </span>
-          . Vous pouvez filtrer par état, consulter les détails,{" "}
-          <span className="text-blue-300 font-semibold">
-            {" "}
-            envoyer des suivis
-          </span>{" "}
-          et mettre à jour les informations en toute sécurité selon votre rôle.
+          <span className="text-blue-300 font-semibold">{t.pageSubtitle1}</span>{" "}
+          {t.pageSubtitle2}{" "}
+          <span className="text-blue-300 font-semibold">{t.pageSubtitle3}</span>{" "}
+          {t.pageSubtitle4}{" "}
+          <span className="text-blue-300 font-semibold">{t.pageSubtitle5}</span>
+          {t.pageSubtitle6}{" "}
+          <span className="text-blue-300 font-semibold">{t.pageSubtitle7}</span>{" "}
+          {t.pageSubtitle8}
         </p>
       </div>
 
       <div className="mt-3 w-full max-w-4xl flex justify-center mb-2">
         <input
           type="text"
-          placeholder="🔍Recherche..."
+          placeholder={t.search}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full sm:w-2/3 px-3 py-1 rounded-md border text-black"
@@ -1287,13 +1405,13 @@ useEffect(() => {
           onChange={(e) => setFilter(e.target.value)}
           className="px-3 py-1 rounded-md border text-black text-sm"
         >
-          <option value="">-- Tous les états de contact --</option>
-          <option value="nouveau">Nouveau</option>
-          <option value="existant">Existant</option>
-          <option value="inactif">Inactif</option>
+          <option value="">{t.allStates}</option>
+          <option value="nouveau">{t.nouveau}</option>
+          <option value="existant">{t.existant}</option>
+          <option value="inactif">{t.inactif}</option>
         </select>
         <span className="text-white text-sm ml-2">
-          {filteredMembers.length} membres
+          {t.membersCount(filteredMembers.length)}
         </span>
       </div>
 
@@ -1304,13 +1422,13 @@ useEffect(() => {
               onClick={() => router.push("/AddContact")}
               className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
             >
-              ➕ Ajouter un membre
+              {t.addMember}
             </button>
             <button
               onClick={() => router.push("/admin/import")}
               className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
             >
-              📥 Importer une liste
+              {t.importList}
             </button>
           </>
         )}
@@ -1319,13 +1437,13 @@ useEffect(() => {
       {view === "card" && (
         <>
           {loading ? (
-            <p className="text-white text-center w-full">Chargement...</p>
+            <p className="text-white text-center w-full">{t.loading}</p>
           ) : (
             <>
               {filteredNouveaux.length > 0 && (
                 <>
                   <h2 className="w-full max-w-6xl text-white font-bold mb-2 text-lg text-sm">
-                    💖 Bien aimé venu le {dateDuJour}
+                    {t.newMembersTitle(dateDuJour)}
                   </h2>
                   <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
                     {filteredNouveaux.map((m) =>
@@ -1338,7 +1456,7 @@ useEffect(() => {
               {filteredAnciens.length > 0 && (
                 <>
                   <h2 className="w-full max-w-6xl font-bold mb-2 text-lg bg-gradient-to-r from-blue-500 to-gray-300 bg-clip-text text-transparent">
-                    Membres existants
+                    {t.existingTitle}
                   </h2>
                   <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
                     {filteredAnciens.map((m) => renderMemberCard(m))}
@@ -1349,7 +1467,7 @@ useEffect(() => {
               {filteredInactifs.length > 0 && (
                 <>
                   <h2 className="w-full max-w-6xl text-gray-400 font-bold mb-2 text-lg">
-                    Contacts inactifs
+                    {t.inactifTitle}
                   </h2>
                   <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                     {filteredInactifs.map((m) => renderMemberCard(m))}
@@ -1363,9 +1481,9 @@ useEffect(() => {
 
       <EditMemberPopup
         member={editMember}
-        cellules={cellulesActive ? cellules : []}       // ✅
-        familles={famillesActive ? familles : []}       // ✅
-        conseillers={conseillerActive ? conseillers : []} // ✅
+        cellules={cellulesActive ? cellules : []}
+        familles={famillesActive ? familles : []}
+        conseillers={conseillerActive ? conseillers : []}
         currentUserRoles={getRoles(userProfile)}
         onClose={() => setEditMember(null)}
         onUpdateMember={async (updatedMember) => {
@@ -1377,7 +1495,7 @@ useEffect(() => {
           );
           await fetchAssignments(userProfile);
           setEditMember(null);
-          showToast("✅ Contact mis à jour !");
+          showToast(t.toastUpdated);
         }}
       />
 

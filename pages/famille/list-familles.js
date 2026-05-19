@@ -7,11 +7,105 @@ import EditFamilleModal from "../../components/EditFamilleModal";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    // Page
+    pageTitle1: "Liste des",
+    pageTitle2: "Familles",
+    intro1: "Gérez et consultez facilement vos familles",
+    introMid:
+      ". Recherchez par nom, filtrez rapidement, visualisez les responsables et le nombre de membres, et accédez aux ",
+    intro2: "détails pour un suivi précis",
+    loading: "Chargement...",
+
+    // Filtres / recherche
+    searchPlaceholder: "Chercher...",
+    filterAll: "Toutes",
+    total: "Total :",
+
+    // Bouton ajout
+    addFamille: "➕ Ajouter une Famille",
+
+    // Header tableau desktop
+    colVille: "Ville",
+    colFamille: "Famille",
+    colResponsable: "Responsable",
+    colTelephone: "Téléphone",
+    colCount: "Count",
+    colAction: "Action",
+
+    // Ligne famille
+    labelVille: "📍 Ville :",
+    labelResponsable: "👤 Responsable :",
+    labelMembres: "👥",
+    membre: "membre",
+    membres: "membres",
+    details: "Détails",
+    voirDetails: "Voir détails →",
+    modifier: "✏️ Modifier",
+
+    // Menu téléphone
+    call: "📞 Appeler",
+    sms: "✉️ SMS",
+    whatsappCall: "📱 Appel WhatsApp",
+    whatsappMsg: "💬 WhatsApp",
+
+    // Vide
+    noFamille: "Aucune famille",
+  },
+  en: {
+    // Page
+    pageTitle1: "List of",
+    pageTitle2: "Families",
+    intro1: "Easily manage and browse your families",
+    introMid:
+      ". Search by name, filter quickly, view responsible people and member counts, and access ",
+    intro2: "details for precise follow-up",
+    loading: "Loading...",
+
+    // Filtres / recherche
+    searchPlaceholder: "Search...",
+    filterAll: "All",
+    total: "Total:",
+
+    // Bouton ajout
+    addFamille: "➕ Add a Family",
+
+    // Header tableau desktop
+    colVille: "City",
+    colFamille: "Family",
+    colResponsable: "Leader",
+    colTelephone: "Phone",
+    colCount: "Count",
+    colAction: "Action",
+
+    // Ligne famille
+    labelVille: "📍 City:",
+    labelResponsable: "👤 Leader:",
+    labelMembres: "👥",
+    membre: "member",
+    membres: "members",
+    details: "Details",
+    voirDetails: "View details →",
+    modifier: "✏️ Edit",
+
+    // Menu téléphone
+    call: "📞 Call",
+    sms: "✉️ SMS",
+    whatsappCall: "📱 WhatsApp call",
+    whatsappMsg: "💬 WhatsApp",
+
+    // Vide
+    noFamille: "No family found",
+  },
+};
 
 /* =========================
    Ligne Famille (RESPONSIVE)
 ========================= */
-function FamilleRow({ f, router, canEdit, onEdit }) {
+function FamilleRow({ f, router, canEdit, onEdit, t }) {
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const phoneMenuRef = useRef(null);
 
@@ -26,6 +120,18 @@ function FamilleRow({ f, router, canEdit, onEdit }) {
   }, []);
 
   const phoneClean = (f.telephone_responsable || "").replace(/[^0-9]/g, "");
+
+  const phoneMenu = (
+    <div
+      ref={phoneMenuRef}
+      className="absolute top-full mt-1 bg-white rounded-lg shadow-lg border z-[9999] w-56"
+    >
+      <a href={`tel:${f.telephone_responsable}`} className="block px-4 py-2 hover:bg-gray-100">{t.call}</a>
+      <a href={`sms:${f.telephone_responsable}`} className="block px-4 py-2 hover:bg-gray-100">{t.sms}</a>
+      <a href={`https://wa.me/${phoneClean}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100">{t.whatsappCall}</a>
+      <a href={`https://wa.me/${phoneClean}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100">{t.whatsappMsg}</a>
+    </div>
+  );
 
   return (
     <>
@@ -46,17 +152,7 @@ function FamilleRow({ f, router, canEdit, onEdit }) {
           >
             {f.telephone_responsable || "—"}
           </span>
-          {openPhoneMenu && (
-            <div
-              ref={phoneMenuRef}
-              className="absolute top-full mt-1 bg-white rounded-lg shadow-lg border z-[9999] w-56"
-            >
-              <a href={`tel:${f.telephone_responsable}`} className="block px-4 py-2 hover:bg-gray-100">📞 Appeler</a>
-              <a href={`sms:${f.telephone_responsable}`} className="block px-4 py-2 hover:bg-gray-100">✉️ SMS</a>
-              <a href={`https://wa.me/${phoneClean}?call`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">📱 Appel WhatsApp</a>
-              <a href={`https://wa.me/${phoneClean}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">💬 WhatsApp</a>
-            </div>
-          )}
+          {openPhoneMenu && phoneMenu}
         </div>
 
         <div className="flex-[1] flex justify-center text-white text-sm">{f.membre_count}</div>
@@ -65,10 +161,12 @@ function FamilleRow({ f, router, canEdit, onEdit }) {
           <span
             className="text-emerald-400 underline cursor-pointer text-sm"
             onClick={() =>
-              router.push(`${window.location.origin}/famille/membres-famille?familleId=${f.id}`)
+              router.push(
+                `${window.location.origin}/famille/membres-famille?familleId=${f.id}`
+              )
             }
           >
-            Détails
+            {t.details}
           </span>
           {canEdit && (
             <span
@@ -91,13 +189,15 @@ function FamilleRow({ f, router, canEdit, onEdit }) {
 
         {/* Ville */}
         <div className="text-white text-sm mb-2 mt-3">
-          📍 Ville : <span className="font-semibold">{f.ville}</span>
+          {t.labelVille} <span className="font-semibold">{f.ville}</span>
         </div>
 
         {/* Responsable */}
         <div className="text-white text-sm mb-2">
-          👤 Responsable :{" "}
-          <span className="text-emerald-300 font-semibold">{f.responsable || "—"}</span>
+          {t.labelResponsable}{" "}
+          <span className="text-emerald-300 font-semibold">
+            {f.responsable || "—"}
+          </span>
         </div>
 
         {/* Téléphone */}
@@ -107,17 +207,19 @@ function FamilleRow({ f, router, canEdit, onEdit }) {
             onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
           >
             📞{" "}
-            <span className="text-emerald-400 underline">{f.telephone_responsable || "—"}</span>
+            <span className="text-emerald-400 underline">
+              {f.telephone_responsable || "—"}
+            </span>
           </span>
           {openPhoneMenu && (
             <div
               ref={phoneMenuRef}
               className="absolute z-[9999] mt-2 bg-white rounded-lg shadow-xl border w-56"
             >
-              <a href={`tel:${f.telephone_responsable}`} className="block px-4 py-2 hover:bg-gray-100">📞 Appeler</a>
-              <a href={`sms:${f.telephone_responsable}`} className="block px-4 py-2 hover:bg-gray-100">✉️ SMS</a>
-              <a href={`https://wa.me/${phoneClean}?call`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">📱 Appel WhatsApp</a>
-              <a href={`https://wa.me/${phoneClean}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">💬 WhatsApp</a>
+              <a href={`tel:${f.telephone_responsable}`} className="block px-4 py-2 hover:bg-gray-100">{t.call}</a>
+              <a href={`sms:${f.telephone_responsable}`} className="block px-4 py-2 hover:bg-gray-100">{t.sms}</a>
+              <a href={`https://wa.me/${phoneClean}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100">{t.whatsappCall}</a>
+              <a href={`https://wa.me/${phoneClean}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100">{t.whatsappMsg}</a>
             </div>
           )}
         </div>
@@ -125,7 +227,8 @@ function FamilleRow({ f, router, canEdit, onEdit }) {
         {/* Footer */}
         <div className="flex justify-between items-center mt-3">
           <div className="text-white text-sm">
-            👥 {f.membre_count} membre{f.membre_count > 1 ? "s" : ""}
+            {t.labelMembres} {f.membre_count}{" "}
+            {f.membre_count > 1 ? t.membres : t.membre}
           </div>
           <div className="flex gap-3 items-center">
             {canEdit && (
@@ -133,16 +236,18 @@ function FamilleRow({ f, router, canEdit, onEdit }) {
                 onClick={() => onEdit(f)}
                 className="text-blue-300 underline text-sm"
               >
-                ✏️ Modifier
+                {t.modifier}
               </button>
             )}
             <button
               onClick={() =>
-                router.push(`${window.location.origin}/famille/membres-famille?familleId=${f.id}`)
+                router.push(
+                  `${window.location.origin}/famille/membres-famille?familleId=${f.id}`
+                )
               }
               className="text-emerald-400 underline text-sm"
             >
-              Voir détails →
+              {t.voirDetails}
             </button>
           </div>
         </div>
@@ -156,13 +261,18 @@ function FamilleRow({ f, router, canEdit, onEdit }) {
 ========================= */
 export default function ListFamilles() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFamille", "SuperviseurFamille"]}>
+    <ProtectedRoute
+      allowedRoles={["Administrateur", "ResponsableFamille", "SuperviseurFamille"]}
+    >
       <ListFamillesContent />
     </ProtectedRoute>
   );
 }
 
 function ListFamillesContent() {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const router = useRouter();
   const [familles, setFamilles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -182,7 +292,9 @@ function ListFamillesContent() {
   const fetchFamilles = async () => {
     setLoading(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return;
 
     const { data: profile } = await supabase
@@ -227,19 +339,16 @@ function ListFamillesContent() {
     setLoading(false);
   };
 
-  // Ouvrir le modal d'édition
   const handleEdit = (famille) => {
     setSelectedFamille(famille);
     setShowEditModal(true);
   };
 
-  // Fermer le modal
   const handleCloseModal = () => {
     setShowEditModal(false);
     setSelectedFamille(null);
   };
 
-  // Mise à jour locale après save
   const handleUpdated = (updatedFamille) => {
     setFamilles((prev) =>
       prev.map((f) =>
@@ -257,17 +366,18 @@ function ListFamillesContent() {
     );
   };
 
-  // Qui peut éditer ?
   const canEdit = ["Administrateur", "SuperviseurFamille"].includes(userRole);
 
   const famillesFiltrees = familles.filter((f) => {
-    const matchSearch = f.famille_full?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = f.famille_full
+      ?.toLowerCase()
+      .includes(search.toLowerCase());
     const matchFilter = filterFamille ? f.famille_full === filterFamille : true;
     return matchSearch && matchFilter;
   });
 
   if (loading) {
-    return <p className="text-center mt-10 text-white">Chargement...</p>;
+    return <p className="text-center mt-10 text-white">{t.loading}</p>;
   }
 
   return (
@@ -275,14 +385,15 @@ function ListFamillesContent() {
       <HeaderPages />
 
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
-        Liste des <span className="text-emerald-300">Familles</span>
+        {t.pageTitle1}{" "}
+        <span className="text-emerald-300">{t.pageTitle2}</span>
       </h1>
 
       <div className="max-w-3xl w-full mb-6 text-center mx-auto">
         <p className="italic text-base text-white/90">
-          <span className="text-blue-300 font-semibold">Gérez et consultez facilement vos familles</span>.
-          Recherchez par nom, filtrez rapidement, visualisez les responsables et le nombre de membres,
-          et accédez aux <span className="text-blue-300 font-semibold">détails pour un suivi précis</span>.
+          <span className="text-blue-300 font-semibold">{t.intro1}</span>
+          {t.introMid}
+          <span className="text-blue-300 font-semibold">{t.intro2}</span>.
         </p>
       </div>
 
@@ -290,7 +401,7 @@ function ListFamillesContent() {
       <div className="flex justify-center mb-4">
         <input
           type="text"
-          placeholder="Chercher..."
+          placeholder={t.searchPlaceholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full max-w-md px-3 py-2 rounded-md text-black"
@@ -304,7 +415,7 @@ function ListFamillesContent() {
           onChange={(e) => setFilterFamille(e.target.value)}
           className="px-3 py-2 rounded-md text-black"
         >
-          <option value="">Toutes</option>
+          <option value="">{t.filterAll}</option>
           {familles.map((f) => (
             <option key={f.id} value={f.famille_full}>
               {f.famille_full}
@@ -313,7 +424,7 @@ function ListFamillesContent() {
         </select>
 
         <span className="text-white font-semibold">
-          Total : {famillesFiltrees.length}
+          {t.total} {famillesFiltrees.length}
         </span>
       </div>
 
@@ -324,7 +435,7 @@ function ListFamillesContent() {
             onClick={() => router.push("/admin/create-famille")}
             className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
           >
-            ➕ Ajouter une Famille
+            {t.addFamille}
           </button>
         </div>
       )}
@@ -334,16 +445,16 @@ function ListFamillesContent() {
 
         {/* Header Desktop */}
         <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
-          <div className="flex-[2]">Ville</div>
-          <div className="flex-[2]">Famille</div>
-          <div className="flex-[2]">Responsable</div>
-          <div className="flex-[2] text-center">Téléphone</div>
-          <div className="flex-[1] text-center">Count</div>
-          <div className="flex-[1] text-center">Action</div>
+          <div className="flex-[2]">{t.colVille}</div>
+          <div className="flex-[2]">{t.colFamille}</div>
+          <div className="flex-[2]">{t.colResponsable}</div>
+          <div className="flex-[2] text-center">{t.colTelephone}</div>
+          <div className="flex-[1] text-center">{t.colCount}</div>
+          <div className="flex-[1] text-center">{t.colAction}</div>
         </div>
 
         {famillesFiltrees.length === 0 ? (
-          <p className="text-white text-center mt-6">Aucune famille</p>
+          <p className="text-white text-center mt-6">{t.noFamille}</p>
         ) : (
           famillesFiltrees.map((f) => (
             <FamilleRow
@@ -352,6 +463,7 @@ function ListFamillesContent() {
               router={router}
               canEdit={canEdit}
               onEdit={handleEdit}
+              t={t}
             />
           ))
         )}

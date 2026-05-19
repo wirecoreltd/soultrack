@@ -389,9 +389,43 @@ function EtatCellule() {
       let query = supabase.from("vue_flow_personnes").select("*")
         .eq("eglise_id", userProfile.eglise_id)
         .order("date_depart", { ascending: false });
-
+      
       if (!isAdmin) {
-        query = query.ilike("responsable", `%${userProfile.prenom}%`);
+        const isSuperviseur = userProfile.roles?.includes("SuperviseurCellule");
+        const isResponsable = userProfile.roles?.includes("ResponsableCellule");
+      
+        if (isSuperviseur || isResponsable) {
+          // 1️⃣ Cellules directes
+          const colonne = isSuperviseur ? "superviseur_id" : "responsable_id";
+          const { data: directes } = await supabase
+            .from("cellules")
+            .select("id")
+            .eq(colonne, userProfile.id)
+            .eq("eglise_id", userProfile.eglise_id);
+      
+          const directIds = (directes || []).map(c => c.id);
+      
+          // 2️⃣ Cellules filles
+          const { data: filles } = await supabase
+            .from("cellules")
+            .select("id")
+            .in("cellule_mere_id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
+      
+          const fillesIds = (filles || []).map(c => c.id);
+      
+          // 3️⃣ Union
+          const tousLesIds = [...new Set([...directIds, ...fillesIds])];
+      
+          if (tousLesIds.length) {
+            query = query.in("cellule_id", tousLesIds);
+          } else {
+            // Aucune cellule → aucun résultat
+            query = query.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
+          }
+        } else {
+          // Autre rôle non admin → filtre par nom comme avant
+          query = query.ilike("responsable", `%${userProfile.prenom}%`);
+        }
       }
 
       const { data, error } = await query;

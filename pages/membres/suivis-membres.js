@@ -9,10 +9,183 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import useChurchScope from "../../hooks/useChurchScope";
 import Footer from "../../components/Footer";
 import SuiviPopup from "../../components/SuiviPopup";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    // Page header
+    titre1: "Suivis des",
+    titre2: "Membres",
+    description: "Ici, vous pouvez voir,",
+    descriptionAccent1: " suivre et accompagner ",
+    descriptionMid: "chaque membre de votre Assemblée.",
+    descriptionAccent2: " Chaque Personne est précieuse ",
+    descriptionMid2: ": cette page vous permet de gérer les nouveaux venus, de",
+    descriptionAccent3: " soutenir ",
+    descriptionMid3: "chaque membre de la famille, et de cultiver la croissance de chaque membre avec",
+    descriptionAccent4: " amour et discipline",
+    descriptionEnd: ".",
+
+    // Toggle
+    voirRefus: "Voir les refus",
+    voirTous: "Voir tous les suivis",
+
+    // Messages
+    aucunMembre: "Aucun membre à afficher.",
+    erreurFetch: "Erreur lors de la récupération des membres.",
+    utilisateurNonConnecte: "Utilisateur non connecté",
+
+    // Card fields
+    cellule: "🏠 Cellule :",
+    famille: "👨‍👩‍👦 Famille :",
+    conseiller: "👤 Conseiller(s) :",
+    creeeLe: "Créé le",
+    commentaireSuivis: "Commentaire Suivis",
+    statutIntegration: "Statut Intégration",
+
+    // Status options
+    selectionnerStatut: "-- Sélectionner un statut --",
+    enSuivis: "En Suivis",
+    integrer: "Intégrer",
+    refus: "Refus",
+
+    // Buttons
+    reactiver: "Réactiver",
+    reactivation: "Réactivation...",
+    sauvegarder: "Sauvegarder",
+    enregistrement: "Enregistrement...",
+    details: "Détails",
+    fermerDetails: "Fermer détails",
+
+    // Phone menu
+    appeler: "📞 Appeler",
+    sms: "✉️ SMS",
+    appelWhatsApp: "📱 Appel WhatsApp",
+    messageWhatsApp: "💬 Message WhatsApp",
+
+    // Details popup sections
+    identite: "👤 Identité",
+    civilite: "🎗️ Civilité :",
+    age: "⏳ Âge :",
+    whatsapp: "💬 WhatsApp :",
+    oui: "Oui",
+    non: "Non",
+
+    suivi: "📊 Suivi",
+    arriveLe: "Arrivé le :",
+    arrivedLe: "Arrivée le :",
+    conseillersLabel: "👤 Conseiller(s) :",
+
+    vieSpirituelle: "🕊 Vie spirituelle",
+    baptemeEau: "💧 Baptême d'Eau :",
+    baptemeFeu: "🔥 Baptême de Feu :",
+    priereSalut: "🙏 Prière du salut :",
+    typeConversion: "☀️ Type de conversion :",
+    formation: "✒️ Formation :",
+    ministere: "💢 Ministère :",
+
+    parcours: "🌱 Parcours",
+    commentEstVenu: "🧩 Comment est-il venu :",
+    raisonVenue: "✨ Raison de la venue :",
+    infos: "📝 Infos :",
+
+    soinPastoral: "❤️‍🩹 Soin pastoral",
+    besoins: "❓ Difficultés / Besoins :",
+    ajouterVoirSuivis: "💡 Ajouter / Voir suivis",
+    modifierContact: "✏️ Modifier le contact",
+
+    // Months
+    months: ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"],
+  },
+  en: {
+    // Page header
+    titre1: "Member",
+    titre2: "Follow-ups",
+    description: "Here you can view,",
+    descriptionAccent1: " track and support ",
+    descriptionMid: "every member of your Assembly.",
+    descriptionAccent2: " Every person matters ",
+    descriptionMid2: ": this page lets you manage newcomers,",
+    descriptionAccent3: " support ",
+    descriptionMid3: "every family member, and nurture each member's growth with",
+    descriptionAccent4: " love and discipline",
+    descriptionEnd: ".",
+
+    // Toggle
+    voirRefus: "View declined",
+    voirTous: "View all follow-ups",
+
+    // Messages
+    aucunMembre: "No members to display.",
+    erreurFetch: "Error fetching members.",
+    utilisateurNonConnecte: "User not logged in",
+
+    // Card fields
+    cellule: "🏠 Cell:",
+    famille: "👨‍👩‍👦 Family:",
+    conseiller: "👤 Counsellor(s):",
+    creeeLe: "Created on",
+    commentaireSuivis: "Follow-up Comment",
+    statutIntegration: "Integration Status",
+
+    // Status options
+    selectionnerStatut: "-- Select a status --",
+    enSuivis: "In Follow-up",
+    integrer: "Integrated",
+    refus: "Declined",
+
+    // Buttons
+    reactiver: "Reactivate",
+    reactivation: "Reactivating...",
+    sauvegarder: "Save",
+    enregistrement: "Saving...",
+    details: "Details",
+    fermerDetails: "Close details",
+
+    // Phone menu
+    appeler: "📞 Call",
+    sms: "✉️ SMS",
+    appelWhatsApp: "📱 WhatsApp Call",
+    messageWhatsApp: "💬 WhatsApp Message",
+
+    // Details popup sections
+    identite: "👤 Identity",
+    civilite: "🎗️ Gender:",
+    age: "⏳ Age:",
+    whatsapp: "💬 WhatsApp:",
+    oui: "Yes",
+    non: "No",
+
+    suivi: "📊 Follow-up",
+    arriveLe: "Arrived on:",
+    arrivedLe: "Arrived on:",
+    conseillersLabel: "👤 Counsellor(s):",
+
+    vieSpirituelle: "🕊 Spiritual life",
+    baptemeEau: "💧 Water Baptism:",
+    baptemeFeu: "🔥 Spirit Baptism:",
+    priereSalut: "🙏 Salvation prayer:",
+    typeConversion: "☀️ Conversion type:",
+    formation: "✒️ Training:",
+    ministere: "💢 Ministry:",
+
+    parcours: "🌱 Journey",
+    commentEstVenu: "🧩 How they came:",
+    raisonVenue: "✨ Reason for coming:",
+    infos: "📝 Notes:",
+
+    soinPastoral: "❤️‍🩹 Pastoral care",
+    besoins: "❓ Difficulties / Needs:",
+    ajouterVoirSuivis: "💡 Add / View follow-ups",
+    modifierContact: "✏️ Edit contact",
+
+    // Months
+    months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+  },
+};
 
 // ─────────────────────────────────────────────────────────────
-// DetailsPopup extrait HORS du composant parent pour éviter
-// le re-mount à chaque render (qui causait le scroll instable)
+// DetailsPopup extrait HORS du composant parent
 // ─────────────────────────────────────────────────────────────
 const DetailsPopup = React.memo(function DetailsPopup({
   m,
@@ -25,6 +198,7 @@ const DetailsPopup = React.memo(function DetailsPopup({
   familles,
   conseillers,
   assignmentsMap,
+  t,
 }) {
   const formatMinistere = (ministere) => {
     if (!ministere) return "—";
@@ -42,12 +216,11 @@ const DetailsPopup = React.memo(function DetailsPopup({
     } catch { return "—"; }
   };
 
-  const formatDateFr = (dateString) => {
+  const formatDate = (dateString) => {
     if (!dateString) return "—";
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
-    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
-    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    return `${day} ${t.months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
   const getConseillersForMember = (memberId) => {
@@ -67,51 +240,51 @@ const DetailsPopup = React.memo(function DetailsPopup({
   return (
     <div className="text-black text-sm space-y-2 w-full">
       <div>
-        <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
-        <p>🎗️ Civilité : {m.sexe || "—"}</p>
-        <p>⏳ Âge : {m.age || "—"}</p>
-        <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+        <p className="font-bold text-[#2E3192] mb-1">{t.identite}</p>
+        <p>{t.civilite} {m.sexe || "—"}</p>
+        <p>{t.age} {m.age || "—"}</p>
+        <p>{t.whatsapp} {m.is_whatsapp ? t.oui : t.non}</p>
       </div>
       <hr />
 
       <div>
-        <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
-        <p>📅 {m.sexe === "Femme" ? "Arrivée" : "Arrivé"} le : {formatDateFr(m.date_venu)}</p>
+        <p className="font-bold text-[#2E3192] mb-1">{t.suivi}</p>
+        <p>📅 {m.sexe === "Femme" ? t.arrivedLe : t.arriveLe} {formatDate(m.date_venu)}</p>
         <div className="mt-1">
-          <span className="font-semibold">👤 Conseiller(s) : </span>
+          <span className="font-semibold">{t.conseillersLabel} </span>
           {getConseillersForMember(m.id)}
         </div>
       </div>
       <hr />
 
       <div>
-        <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
-        <p>💧 Baptême d'Eau : {m.bapteme_eau || "—"}</p>
-        <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
-        <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
-        <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
-        <p>✒️ Formation : {m.Formation || "—"}</p>
-        <p>💢 Ministère : {formatMinistere(m.Ministere) || "—"}</p>
+        <p className="font-bold text-[#2E3192] mb-1">{t.vieSpirituelle}</p>
+        <p>{t.baptemeEau} {m.bapteme_eau || "—"}</p>
+        <p>{t.baptemeFeu} {m.bapteme_esprit || "—"}</p>
+        <p>{t.priereSalut} {m.priere_salut || "—"}</p>
+        <p>{t.typeConversion} {m.type_conversion || "—"}</p>
+        <p>{t.formation} {m.Formation || "—"}</p>
+        <p>{t.ministere} {formatMinistere(m.Ministere) || "—"}</p>
       </div>
       <hr />
 
       <div>
-        <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>
-        <p>🧩 Comment est-il venu : {m.venu || "—"}</p>
-        <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? "—"}</p>
-        <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
+        <p className="font-bold text-[#2E3192] mb-1">{t.parcours}</p>
+        <p>{t.commentEstVenu} {m.venu || "—"}</p>
+        <p>{t.raisonVenue} {m.statut_initial ?? m.statut ?? "—"}</p>
+        <p>{t.infos} {m.infos_supplementaires || "—"}</p>
       </div>
       <hr />
 
       <div>
-        <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
-        <p>❓ Difficultés / Besoins : {formatArrayField(m.besoin)}</p>
+        <p className="font-bold text-[#2E3192] mb-1">{t.soinPastoral}</p>
+        <p>{t.besoins} {formatArrayField(m.besoin)}</p>
         <div className="flex justify-center">
           <button
             onClick={() => setOpenSuiviMemberId(m.id)}
             className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
           >
-            💡 Ajouter / Voir suivis
+            {t.ajouterVoirSuivis}
           </button>
         </div>
 
@@ -130,7 +303,7 @@ const DetailsPopup = React.memo(function DetailsPopup({
             onClick={() => setEditMember(m)}
             className="w-full py-2 rounded-md bg-white text-orange-500 shadow-md"
           >
-            ✏️ Modifier le contact
+            {t.modifierContact}
           </button>
         </div>
       )}
@@ -150,6 +323,8 @@ export default function SuivisMembres() {
 
 function SuivisMembresContent() {
   const router = useRouter();
+  const { lang } = useLang();
+  const t = translations[lang];
 
   const { profile, loading: scopeLoading, error: scopeError, scopedQuery } = useChurchScope();
   const { members, setAllMembers, updateMember } = useMembers();
@@ -255,7 +430,7 @@ function SuivisMembresContent() {
       setLoading(true);
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) throw new Error("Utilisateur non connecté");
+        if (userError || !user) throw new Error(t.utilisateurNonConnecte);
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
@@ -264,7 +439,7 @@ function SuivisMembresContent() {
           .single();
         if (profileError || !profileData) throw profileError;
 
-        setPrenom(profileData.prenom || "cher membre");
+        setPrenom(profileData.prenom || "");
         setUserProfile(profileData);
 
         const { data: cellulesData } = await supabase
@@ -297,17 +472,12 @@ function SuivisMembresContent() {
             .from("suivi_assignments")
             .select("membre_id")
             .eq("conseiller_id", profileData.id);
-        
+
           const assignedIds = (assignments || []).map(a => a.membre_id).filter(Boolean);
-        
-          if (assignedIds.length > 0) {
-            query = query.in("id", assignedIds);
-          } else {
-            query = query.eq("id", -1);
-          }
-        }
-        
-        else if (profileData.role === "ResponsableCellule") {
+
+          if (assignedIds.length > 0) query = query.in("id", assignedIds);
+          else query = query.eq("id", -1);
+        } else if (profileData.role === "ResponsableCellule") {
           const celluleIds = cellulesData?.filter(c => c.responsable_id === profileData.id).map(c => c.id) || [];
           if (celluleIds.length > 0) query = query.in("cellule_id", celluleIds);
           else query = query.eq("id", -1);
@@ -321,13 +491,13 @@ function SuivisMembresContent() {
         if (error) throw error;
 
         setAllMembers(data || []);
-        if (!data || data.length === 0) setMessage("Aucun membre à afficher.");
+        if (!data || data.length === 0) setMessage(t.aucunMembre);
 
         await fetchAssignments();
 
       } catch (err) {
         console.error("❌ Erreur fetchMembresComplets:", err);
-        setMessage("Erreur lors de la récupération des membres.");
+        setMessage(t.erreurFetch);
       } finally {
         setLoading(false);
       }
@@ -336,7 +506,7 @@ function SuivisMembresContent() {
     fetchMembresComplets();
   }, [setAllMembers, fetchAssignments]);
 
-  // ✅ Highlight depuis ?highlight=id — retry jusqu'à trouver l'élément, une seule fois
+  // ✅ Highlight depuis ?highlight=id
   const highlightDoneRef = useRef(false);
 
   useEffect(() => {
@@ -344,30 +514,20 @@ function SuivisMembresContent() {
     if (!highlightId || loading || highlightDoneRef.current) return;
 
     let attempts = 0;
-    const maxAttempts = 20; // 20 x 150ms = 3s max
+    const maxAttempts = 20;
 
     const tryHighlight = () => {
       const el = document.getElementById(`member-${highlightId}`);
-
       if (!el) {
         attempts++;
-        if (attempts < maxAttempts) {
-          setTimeout(tryHighlight, 150); // réessayer
-        }
+        if (attempts < maxAttempts) setTimeout(tryHighlight, 150);
         return;
       }
-
-      // ✅ Élément trouvé — marquer fait immédiatement
       highlightDoneRef.current = true;
-
       el.scrollIntoView({ behavior: "smooth", block: "center" });
-
-      // Glow bleu transparent + scale
       el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
       el.style.boxShadow = "0 0 0 3px rgba(59,130,246,0.6), 0 0 32px 10px rgba(59,130,246,0.25)";
       el.style.transform = "scale(1.02)";
-
-      // Retirer proprement après 5 secondes
       setTimeout(() => {
         el.style.transition = "box-shadow 1.5s ease, transform 1.5s ease";
         el.style.boxShadow = "";
@@ -375,7 +535,6 @@ function SuivisMembresContent() {
       }, 5000);
     };
 
-    // Lancer le premier essai après un court délai
     const timer = setTimeout(tryHighlight, 300);
     return () => clearTimeout(timer);
   }, [loading, router.query?.highlight]);
@@ -394,6 +553,13 @@ function SuivisMembresContent() {
     if (status === 4) return "#FF4B5C";
     if (status === 1) return "#3B82F6";
     return "#ccc";
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "—";
+    const d = new Date(dateString);
+    const day = d.getDate().toString().padStart(2, "0");
+    return `${day} ${t.months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
   const updateSuivi = async (id) => {
@@ -445,14 +611,6 @@ function SuivisMembresContent() {
     }
   };
 
-  const formatDateFr = (dateString) => {
-    if (!dateString) return "—";
-    const d = new Date(dateString);
-    const day = d.getDate().toString().padStart(2, "0");
-    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
-    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
-  };
-
   const filteredMembers = members.filter(m => {
     if (m.etat_contact === "supprime") return false;
     const status = m.statut_suivis ?? 0;
@@ -469,14 +627,14 @@ function SuivisMembresContent() {
 
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
-          Suivis des <span className="text-emerald-300">Membres</span>
+          {t.titre1} <span className="text-emerald-300">{t.titre2}</span>
         </h1>
         <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-white/90">
-            Ici, vous pouvez voir,<span className="text-blue-300 font-semibold"> suivre et accompagner </span> chaque membre de votre Assemblée.
-            <span className="text-blue-300 font-semibold"> Chaque Personne est précieuse </span> : cette page vous permet de gérer les nouveaux venus,
-            de <span className="text-blue-300 font-semibold">soutenir</span> chaque membre de la famille, et de cultiver la croissance de chaque
-            membre avec <span className="text-blue-300 font-semibold">amour et discipline</span>.
+            {t.description}<span className="text-blue-300 font-semibold">{t.descriptionAccent1}</span>{t.descriptionMid}
+            <span className="text-blue-300 font-semibold">{t.descriptionAccent2}</span>{t.descriptionMid2}
+            <span className="text-blue-300 font-semibold">{t.descriptionAccent3}</span>{t.descriptionMid3}
+            <span className="text-blue-300 font-semibold">{t.descriptionAccent4}</span>{t.descriptionEnd}
           </p>
         </div>
       </div>
@@ -486,7 +644,7 @@ function SuivisMembresContent() {
           onClick={() => setShowRefus(prev => !prev)}
           className="text-orange-400 text-sm underline hover:text-orange-500"
         >
-          {showRefus ? "Voir tous les suivis" : "Voir les refus"}
+          {showRefus ? t.voirTous : t.voirRefus}
         </button>
       </div>
 
@@ -501,7 +659,7 @@ function SuivisMembresContent() {
           {uniqueMembers.map((m) => (
             <div
               key={m.id}
-              id={`member-${m.id}`} // ✅ id pour le highlight
+              id={`member-${m.id}`}
               className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
               style={{ borderLeftColor: getBorderColor(m) }}
             >
@@ -527,31 +685,31 @@ function SuivisMembresContent() {
                         className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-52 text-center"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <a href={`tel:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">📞 Appeler</a>
-                        <a href={`sms:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">✉️ SMS</a>
-                        <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100 text-black">📱 Appel WhatsApp</a>
-                        <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100 text-black">💬 Message WhatsApp</a>
+                        <a href={`tel:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">{t.appeler}</a>
+                        <a href={`sms:${m.telephone}`} className="block px-4 py-2 hover:bg-gray-100 text-black">{t.sms}</a>
+                        <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100 text-black">{t.appelWhatsApp}</a>
+                        <a href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100 text-black">{t.messageWhatsApp}</a>
                       </div>
                     )}
                   </div>
                 )}
 
                 <p className="text-sm text-black-700 mb-1">
-                  🏠 Cellule : {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}
+                  {t.cellule} {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}
                 </p>
 
                 <p className="text-sm text-black-700 mb-1">
-                  👨‍👩‍👦 Famille : {m.famille_id ? (familles.find(f => f.id === m.famille_id)?.famille_full || "—") : "—"}
+                  {t.famille} {m.famille_id ? (familles.find(f => f.id === m.famille_id)?.famille_full || "—") : "—"}
                 </p>
 
                 <p className="text-sm text-black-700 mb-1">
-                  👤 Conseiller(s) : {getConseillersForMember(m.id)}
+                  {t.conseiller} {getConseillersForMember(m.id)}
                 </p>
 
-                <p className="self-end text-[11px] text-gray-400 mt-3">Créé le {formatDateFr(m.date_envoi_suivi)}</p>
+                <p className="self-end text-[11px] text-gray-400 mt-3">{t.creeeLe} {formatDate(m.date_envoi_suivi)}</p>
 
                 <div className="flex flex-col w-full mt-2">
-                  <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">Commentaire Suivis</label>
+                  <label className="font-semibold text-blue-700 mb-1 mt-2 text-center">{t.commentaireSuivis}</label>
 
                   {showRefus ? (
                     <textarea value={m.commentaire_suivis ?? ""} readOnly className="w-full border rounded-lg p-2 bg-gray-100 text-gray-600 cursor-not-allowed" rows={2} />
@@ -564,11 +722,11 @@ function SuivisMembresContent() {
                     />
                   )}
 
-                  <label className="font-semibold mb-1 text-center mt-2">Statut Intégration</label>
+                  <label className="font-semibold mb-1 text-center mt-2">{t.statutIntegration}</label>
 
                   {showRefus ? (
                     <select value="4" disabled className="w-full border rounded-lg p-2 text-red-600 bg-gray-100 cursor-not-allowed">
-                      <option value="4">Refus</option>
+                      <option value="4">{t.refus}</option>
                     </select>
                   ) : (
                     <select
@@ -576,26 +734,26 @@ function SuivisMembresContent() {
                       onChange={(e) => setStatusChanges(prev => ({ ...prev, [m.id]: e.target.value }))}
                       className="w-full border rounded-lg p-2 mb-2"
                     >
-                      <option value="1">-- Sélectionner un statut --</option>
-                      <option value="2">En Suivis</option>
-                      <option value="3">Intégrer</option>
-                      <option value="4">Refus</option>
+                      <option value="1">{t.selectionnerStatut}</option>
+                      <option value="2">{t.enSuivis}</option>
+                      <option value="3">{t.integrer}</option>
+                      <option value="4">{t.refus}</option>
                     </select>
                   )}
 
                   {showRefus ? (
                     <button onClick={() => reactivateMember(m.id)} disabled={updating[m.id]} className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"}`}>
-                      {updating[m.id] ? "Réactivation..." : "Réactiver"}
+                      {updating[m.id] ? t.reactivation : t.reactiver}
                     </button>
                   ) : (
                     <button onClick={() => updateSuivi(m.id)} disabled={updating[m.id]} className={`mt-2 py-1 rounded w-full transition ${updating[m.id] ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 text-white"}`}>
-                      {updating[m.id] ? "Enregistrement..." : "Sauvegarder"}
+                      {updating[m.id] ? t.enregistrement : t.sauvegarder}
                     </button>
                   )}
                 </div>
 
                 <button onClick={() => toggleDetails(m.id)} className="text-orange-500 underline text-sm mt-2">
-                  {detailsOpen === m.id ? "Fermer détails" : "Détails"}
+                  {detailsOpen === m.id ? t.fermerDetails : t.details}
                 </button>
               </div>
 
@@ -613,6 +771,7 @@ function SuivisMembresContent() {
                       familles={familles}
                       conseillers={conseillers}
                       assignmentsMap={assignmentsMap}
+                      t={t}
                     />
                   </div>
                 )}

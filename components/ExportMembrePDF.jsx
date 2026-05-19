@@ -1,11 +1,5 @@
 "use client";
 
-// components/ExportMembrePDF.jsx
-// Usage dans ListMembers ou SuiviPopup :
-//   <ExportMembrePDF membre={m} suivis={suivis} celluleName="..." familleName="..." conseillerName="..." />
-//
-// Installation requise : npm install jspdf
-
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import { generateMembrePDF } from "../utils/generateMembrePDF";
@@ -14,54 +8,43 @@ export default function ExportMembrePDF({
   membre,
   suivis = [],
   churchName = "Église",
-  logoBase64 = null,   // optionnel — string base64 PNG du logo de l'église
+  logoBase64 = null,
+  eglise = null,
   celluleName = null,
   familleName = null,
   conseillerName = null,
-  className = "",      // classes Tailwind supplémentaires
-  compact = false,     // true = icône seule (pour les cartes), false = icône + texte
+  className = "",
+  compact = false,
 }) {
   const [loading, setLoading] = useState(false);
 
   const handleExport = async (e) => {
-  e.stopPropagation();
-  setLoading(true);
+    e.stopPropagation();
+    setLoading(true);
+    try {
+      const { data: suivisData, error } = await supabase
+        .from("suivis")
+        .select(`*, profiles (prenom, nom)`)
+        .eq("membre_id", membre.id)
+        .order("date_action", { ascending: false });
 
-  try {
-    // 🔥 Charger les vrais suivis
-    const { data: suivisData, error } = await supabase
-      .from("suivis")
-      .select(`
-        *,
-        profiles (
-          prenom,
-          nom
-        )
-      `)
-      .eq("membre_id", membre.id)
-      .order("date_action", { ascending: false });
+      if (error) throw error;
 
-    if (error) throw error;
-
-    await generateMembrePDF(membre, suivisData || [], {
-  churchName,
-  logoBase64,
-  celluleName,
-  familleName,
-  conseillerName,
-
-  eglise: {
-    nom: churchName,
-  },
-});
-
-  } catch (err) {
-    console.error("Erreur export PDF :", err);
-    alert("Impossible de générer le PDF.");
-  } finally {
-    setLoading(false);
-  }
-};
+      await generateMembrePDF(membre, suivisData || [], {
+        churchName,
+        logoBase64,
+        celluleName,
+        familleName,
+        conseillerName,
+        eglise,
+      });
+    } catch (err) {
+      console.error("Erreur export PDF :", err);
+      alert("Impossible de générer le PDF.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <button
@@ -86,15 +69,24 @@ export default function ExportMembrePDF({
             fill="none"
             viewBox="0 0 24 24"
           >
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v8H4z"
+            />
           </svg>
           {!compact && <span>Génération...</span>}
         </>
       ) : (
-        <>
-          <img src ="/pdf.png" alt="PDF" width={15} height={15}/>         
-        </>
+        <img src="/pdf.png" alt="PDF" width={15} height={15} />
       )}
     </button>
   );

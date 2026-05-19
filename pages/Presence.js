@@ -732,4 +732,455 @@ function Presence() {
       });
 
       const famillesVisibles = (famillesData || []).filter(f => f.responsable_id && visiblesIds.has(f.responsable_id));
-      famil
+      famillesVisibles.forEach(f => {
+        const fm = membres.filter(m => m.famille_id === f.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        fm.forEach(m => membresCouvertsParGroupe.add(m.id));
+        if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.famille_full || `${f.ville} - ${f.famille}`, icon: "👨‍👩‍👦", color: "purple", membres: fm });
+      });
+
+      Object.entries(assignmentsByConseiller).forEach(([consId, { ids, profile: consProfile }]) => {
+        if (!visiblesIds.has(consId)) return;
+        const cm = ids.map(id => membres.find(m => m.id === id)).filter(Boolean)
+          .filter(m => !membresCouvertsParGroupe.has(m.id))
+          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        cm.forEach(m => membresCouvertsParGroupe.add(m.id));
+        if (cm.length > 0) {
+          const consNom = consProfile ? `${consProfile.prenom} ${consProfile.nom}` : "Conseiller";
+          groupesResult.push({ id: `cons-${consId}`, label: `${t.suiviPar} ${consNom}`, icon: "🫂", color: "amber", membres: cm });
+        }
+      });
+
+      const sansCellule = membres.filter(m => !m.cellule_id && !m.famille_id && !membresDansConseiller.has(m.id)).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+      if (sansCellule.length > 0) groupesResult.unshift({ id: "sans", label: t.sansRattachement, icon: "👤", color: "gray", membres: sansCellule });
+
+      const membresVisiblesIds = new Set([...membresCouvertsParGroupe, ...sansCellule.map(m => m.id)]);
+      setGroupes(groupesResult);
+      setPresentList(allPresences.filter(p => membresVisiblesIds.has(p.membre_id)));
+      setAllMembers(membres.filter(m => membresVisiblesIds.has(m.id) && !presentIds.has(m.id)));
+
+    } catch (err) { console.error(err); }
+  }, [initProfile, t]);
+
+  useEffect(() => { fetchAllRef.current = fetchAll; }, [fetchAll]);
+  useEffect(() => { checkSessionsRef.current = checkSessionsDuJour; }, [checkSessionsDuJour]);
+
+  useEffect(() => {
+    if (etape !== "choix" && etape !== "form") return;
+    const channel = supabase.channel("attendance-live")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "attendance" }, () => {
+        checkSessionsRef.current?.();
+      }).subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [etape]);
+
+  useEffect(() => {
+    if (etape !== "ready") return;
+    setLoading(true);
+    const sessionId = pendingSessionIdRef.current ?? attendanceIdRef.current;
+    pendingSessionIdRef.current = null;
+    fetchAll(selectedDateRef.current, sessionId).finally(() => setLoading(false));
+
+    if (readOnly) return;
+
+    const channel = supabase.channel("presence-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "presences" }, () => {
+        fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
+      }).subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [etape, fetchAll, readOnly]);
+
+  const toggleVisibilite = async () => {
+    const newVal = !listeVisible;
+    setSavingVisible(true);
+    const { uid } = profileRef.current;
+    await supabase.from("profiles").update({ liste_presence_visible: newVal }).eq("id", uid);
+    profileRef.current.liste_presence_visible = newVal;
+    setListeVisible(newVal);
+    setSavingVisible(false);
+    await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
+  };
+
+  const demarrerSession = async () => {
+    const typeFinal = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
+    if (!typeFinal) return alert(t.form.alertType);
+    if (!selectedDate) return alert(t.form.alertDate);
+    const isCulte = typeFinal.toLowerCase().includes("culte") || typeFinal.toLowerCase().includes("service");
+    if (isCulte && !numeroCulte) return alert(t.form.alertCulte);
+
+    setSavingSession(true);
+    try {
+      const profile = profileRef.current;
+      if (typeTemps === "AUTRE" && enregistrerTemps && !tempsOptions.includes(typeFinal)) {
+        setTempsOptions(prev => sortTempsOptions([...prev, typeFinal]));
+      }
+
+      const payload = {
+        date: selectedDate, heure: selectedTime, typeTemps: typeFinal, temps_nom: typeFinal,
+        eglise_id: profile.eglise_id,
+        ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : {}),
+      };
+      const { data, error } = await supabase.from("attendance").insert(payload).select("id").single();
+      if (error) throw error;
+
+      const newAttendanceId = data.id;
+      attendanceIdRef.current = newAttendanceId;
+      await insererAbsentsEnMasse(newAttendanceId, selectedDate, profile);
+
+      const newSession = { id: newAttendanceId, typeTemps: typeFinal, date: selectedDate, heure: selectedTime, numero_culte: numeroCulte ? Number(numeroCulte) : null };
+      setAttendanceId(newAttendanceId);
+      setSessionCourante(newSession);
+      selectedDateRef.current = selectedDate;
+      pendingSessionIdRef.current = newAttendanceId;
+      setReadOnly(false);
+      setEtape("ready");
+    } catch (err) {
+      console.error(err);
+      alert(t.form.alertError + err.message);
+    } finally {
+      setSavingSession(false);
+    }
+  };
+
+  const insererAbsentsEnMasse = async (newAttendanceId, date, profile) => {
+    try {
+      const myIds = myIdsRef.current;
+      const isAdmin = isAdminRef.current;
+      let membresAInserer = [];
+
+      if (isAdmin) {
+        const { data } = await supabase.from("membres_complets").select("id").eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]);
+        membresAInserer = data || [];
+      } else if (myIds && myIds.length > 0) {
+        const { data } = await supabase.from("membres_complets").select("id").eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]).in("id", myIds);
+        membresAInserer = data || [];
+      }
+
+      if (membresAInserer.length === 0) return;
+
+      const { data: existantes } = await supabase.from("presences").select("membre_id").eq("attendance_id", newAttendanceId).eq("date", date);
+      const existantIds = new Set((existantes || []).map(e => e.membre_id));
+      const nouveaux = membresAInserer.filter(m => !existantIds.has(m.id));
+      if (nouveaux.length === 0) return;
+
+      const rows = nouveaux.map(m => ({ membre_id: m.id, date, attendance_id: newAttendanceId, statut: "absent", checked_by: profile.uid }));
+      const BATCH = 500;
+      for (let i = 0; i < rows.length; i += BATCH) {
+        const { error } = await supabase.from("presences").upsert(rows.slice(i, i + BATCH), { onConflict: "membre_id,attendance_id", ignoreDuplicates: true });
+        if (error) console.error("Erreur upsert batch absents:", error);
+      }
+    } catch (err) { console.error("Erreur insererAbsentsEnMasse:", err); }
+  };
+
+  const modifierSession = async () => {
+    const typeFinal = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
+    if (!typeFinal || !attendanceId) return;
+    const isCulte = typeFinal.toLowerCase().includes("culte") || typeFinal.toLowerCase().includes("service");
+    if (isCulte && !numeroCulte) return alert(t.form.alertCulte);
+
+    setSavingSession(true);
+    try {
+      await supabase.from("attendance").update({
+        date: selectedDate, heure: selectedTime, typeTemps: typeFinal, temps_nom: typeFinal,
+        ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : { numero_culte: null }),
+      }).eq("id", attendanceId);
+
+      setSessionCourante(prev => ({ ...prev, typeTemps: typeFinal, date: selectedDate, heure: selectedTime, numero_culte: numeroCulte ? Number(numeroCulte) : null }));
+      selectedDateRef.current = selectedDate;
+      setEditingSession(false);
+    } catch (err) {
+      console.error(err);
+      alert(t.form.alertError + err.message);
+    } finally {
+      setSavingSession(false);
+    }
+  };
+
+  const markPresent = async (membre) => {
+    if (readOnly) return;
+    setPresentList(prev => {
+      if (prev.find(p => p.membre_id === membre.id)) return prev;
+      return [...prev, { membre_id: membre.id, statut: "present", membres_complets: { nom: membre.nom, prenom: membre.prenom, sexe: membre.sexe } }]
+        .sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"));
+    });
+    setAllMembers(prev => prev.filter(m => m.id !== membre.id));
+    try {
+      const { uid } = profileRef.current;
+      const d  = selectedDateRef.current;
+      const aId = attendanceIdRef.current;
+      const { data: updated, error: updateError } = await supabase.from("presences")
+        .update({ statut: "present", checked_by: uid }).eq("membre_id", membre.id).eq("attendance_id", aId).select("id");
+      if (!updateError && (!updated || updated.length === 0)) {
+        await supabase.from("presences").upsert({ membre_id: membre.id, date: d, attendance_id: aId, statut: "present", checked_by: uid }, { onConflict: "membre_id,attendance_id" });
+      }
+    } catch (err) {
+      console.error("Erreur markPresent:", err);
+      await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
+    }
+  };
+
+  const markAbsent = async (memberId) => {
+    if (readOnly) return;
+    const absent = presentList.find(p => p.membre_id === memberId);
+    if (absent) {
+      const membreInfo = { id: memberId, nom: absent.membres_complets?.nom, prenom: absent.membres_complets?.prenom, sexe: absent.membres_complets?.sexe };
+      setPresentList(prev => prev.filter(p => p.membre_id !== memberId));
+      setAllMembers(prev => [...prev, membreInfo].sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr")));
+    }
+    try {
+      await supabase.from("presences").update({ statut: "absent" }).eq("membre_id", memberId).eq("attendance_id", attendanceIdRef.current);
+    } catch (err) {
+      console.error("Erreur markAbsent:", err);
+      await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
+    }
+  };
+
+  const filterM = (m) => `${m.prenom} ${m.nom} ${m.telephone || ""}`.toLowerCase().includes(search.toLowerCase());
+  const filterP = (p) => `${p.membres_complets?.prenom} ${p.membres_complets?.nom}`.toLowerCase().includes(search.toLowerCase());
+
+  const useGroupedView = isAdminRef.current || groupes.length > 0;
+  const totalPresents  = presentList.length;
+  const presentIdsSet  = new Set(presentList.map(p => p.membre_id));
+  const totalAbsentsGroupes = groupes.reduce((n, g) => n + g.membres.filter(m => !presentIdsSet.has(m.id)).length, 0);
+  const totalAbsentsFinal   = useGroupedView ? totalAbsentsGroupes : allMembers.length;
+
+  const handleReset = () => {
+    setEtape("check");
+    setAttendanceId(null);
+    attendanceIdRef.current = null;
+    setSessionCourante(null);
+    setTypeTemps(""); setNouveauTemps(""); setNumeroCulte(""); setNumeroSession("");
+    setEnregistrerTemps(false);
+    setSelectedTime(nowTime());
+    setReadOnly(false);
+    checkSessionsDuJour();
+  };
+
+  const locale = lang === "en" ? "en-GB" : "fr-FR";
+
+  // ━━━ ÉCRAN VÉRIFICATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (etape === "check") {
+    return (
+      <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+        <HeaderPages />
+        <div className="w-full max-w-lg mt-10 flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+          <p className="text-white/70 text-sm">{t.checking}</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // ━━━ ÉCRAN CHOIX / FORMULAIRE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (etape === "choix") {
+    const todayStr = today();
+    const todaySessions = sessionsRecentes.filter(s => s.date === todayStr);
+    const oldSessions = sessionsRecentes.filter(s => s.date !== todayStr);
+
+    return (
+      <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+        <HeaderPages />
+        <h1 className="text-2xl font-bold text-white text-center mt-6 mb-1">{t.title}</h1>
+        <p className="text-white/60 text-sm text-center mb-2">
+          {new Date().toLocaleDateString(locale, { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+        </p>
+
+        <div className="w-full max-w-lg mt-2 flex flex-col gap-4">
+
+          {todaySessions.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-3">
+              <h2 className="text-base font-bold text-gray-800 mb-1">{t.todaySessions}</h2>
+              <p className="text-sm text-gray-500 mb-2">{t.todaySessionsSub}</p>
+              {todaySessions.map(s => (
+                <button key={s.id} onClick={() => rejoindreSession(s)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-[#333699] hover:bg-[#333699] hover:text-white text-[#333699] font-semibold transition group">
+                  <span className="text-left text-sm">{formatSessionLabel(s, lang)}</span>
+                  <span className="text-xs bg-emerald-100 text-emerald-700 group-hover:bg-white/20 group-hover:text-white px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
+                    {t.rejoinBtn}
+                  </span>
+                </button>
+              ))}
+              <div className="border-t border-gray-100 pt-3 mt-1">
+                <button onClick={() => setEtape("form")}
+                  className="w-full py-2 rounded-xl border border-dashed border-gray-300 text-gray-500 text-sm hover:border-[#333699] hover:text-[#333699] transition">
+                  {t.newSession}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {todaySessions.length === 0 && (
+            <FormulaireSession
+              isEdit={false}
+              selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+              selectedTime={selectedTime} setSelectedTime={setSelectedTime}
+              typeTemps={typeTemps} setTypeTemps={setTypeTemps}
+              nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
+              enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
+              numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
+              numeroSession={numeroSession} setNumeroSession={setNumeroSession}
+              tempsOptions={tempsOptions} savingSession={savingSession}
+              onSubmit={demarrerSession} onCancel={null} t={t}
+            />
+          )}
+
+          {oldSessions.length > 0 && <OldSessionsBlock sessions={oldSessions} onConsulter={consulterAncienne} t={t} lang={lang} />}
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // ━━━ ÉCRAN FORMULAIRE CRÉATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (etape === "form") {
+    return (
+      <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+        <HeaderPages />
+        <div className="w-full max-w-lg mt-6">
+          <h1 className="text-2xl font-bold text-white text-center mb-1">{t.newSessionTitle}</h1>
+          <p className="text-white/70 text-center text-sm mb-4">{t.newSessionSub}</p>
+          <button onClick={() => setEtape("choix")} className="w-full mb-4 py-2 text-sm text-white/70 hover:text-white border border-white/20 rounded-xl transition">
+            {t.backToExisting}
+          </button>
+          <FormulaireSession
+            isEdit={false}
+            selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+            selectedTime={selectedTime} setSelectedTime={setSelectedTime}
+            typeTemps={typeTemps} setTypeTemps={setTypeTemps}
+            nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
+            enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
+            numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
+            numeroSession={numeroSession} setNumeroSession={setNumeroSession}
+            tempsOptions={tempsOptions} savingSession={savingSession}
+            onSubmit={demarrerSession} onCancel={() => setEtape("choix")} t={t}
+          />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // ━━━ ÉCRAN PRÉSENCE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  return (
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+      <HeaderPages />
+
+      <div className="text-center mb-4 mt-4 w-full">
+        <h1 className="text-2xl font-bold text-white">
+          {readOnly
+            ? t.titleConsultation
+            : <>{t.titleJour} <span className="text-emerald-300">{t.titleJourHighlight}</span></>}
+        </h1>
+
+        <div
+          className={`inline-flex flex-col items-center mt-3 px-4 py-2 rounded-xl ${readOnly ? "bg-amber-500/20 cursor-default" : "bg-white/10 cursor-pointer hover:bg-white/20"} transition group`}
+          onClick={() => !readOnly && setEditingSession(v => !v)}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-white font-semibold text-sm">
+              {sessionCourante?.typeTemps}
+              {sessionCourante?.numero_culte ? ` — ${sessionCourante.numero_culte}${sessionCourante.numero_culte === 1 ? t.form.er : t.form.eme} ${t.form.culte}` : ""}
+            </span>
+            {!readOnly && <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>}
+          </div>
+          <span className="text-white/60 text-xs mt-0.5">
+            📅 {new Date(selectedDateRef.current + "T00:00:00").toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric" })}
+            {sessionCourante?.heure ? ` · 🕐 ${sessionCourante.heure}` : ""}
+          </span>
+          {!readOnly && <span className="text-white/40 text-xs mt-0.5">{t.clickToEdit}</span>}
+        </div>
+
+        {totalPresents > 0 && <CompteurSexe presences={presentList} t={t} />}
+      </div>
+
+      {readOnly && <BanniereConsultation session={sessionCourante} onRetour={handleReset} t={t} lang={lang} />}
+
+      {!isAdminRef.current && !readOnly && (
+        <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} t={t} />
+      )}
+
+      {editingSession && !readOnly && (
+        <div className="w-full max-w-lg mb-6">
+          <h2 className="text-white font-semibold text-center mb-3">{t.editSession}</h2>
+          <FormulaireSession
+            isEdit={true}
+            selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+            selectedTime={selectedTime} setSelectedTime={setSelectedTime}
+            typeTemps={typeTemps} setTypeTemps={setTypeTemps}
+            nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
+            enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
+            numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
+            numeroSession={numeroSession} setNumeroSession={setNumeroSession}
+            tempsOptions={tempsOptions} savingSession={savingSession}
+            onSubmit={modifierSession} onCancel={() => setEditingSession(false)} t={t}
+          />
+        </div>
+      )}
+
+      {!editingSession && (
+        <>
+          <div className="flex gap-3 mb-4">
+            <button onClick={() => setView("absents")} className={`px-4 py-2 rounded ${view === "absents" ? "bg-white text-[#333699] font-bold" : "bg-white/20 text-white"}`}>
+              {t.absents} ({totalAbsentsFinal})
+            </button>
+            <button onClick={() => setView("presents")} className={`px-4 py-2 rounded ${view === "presents" ? "bg-green-400 text-black font-bold" : "bg-white/20 text-white"}`}>
+              {t.presents} ({totalPresents})
+            </button>
+          </div>
+
+          {view === "absents" && !readOnly && <p className="text-amber-300 text-sm mb-2 italic">{t.clickToMarkPresent}</p>}
+          {view === "absents" && readOnly && <p className="text-amber-200/60 text-sm mb-2 italic">{t.readOnlyHint}</p>}
+
+          <div className="w-full max-w-4xl flex justify-center mb-6">
+            <input type="text" placeholder={t.search} value={search} onChange={(e) => setSearch(e.target.value)}
+              className="w-full sm:w-2/3 px-3 py-2 rounded-md border text-black" />
+          </div>
+
+          {loading ? (
+            <p className="text-white text-center">{t.loading}</p>
+          ) : useGroupedView ? (
+            <div className="w-full flex flex-col items-center">
+              {groupes.length === 0
+                ? <p className="text-white text-center">{t.noMembers}</p>
+                : groupes.map(g => {
+                    const membresFiltrés = g.membres.filter(filterM);
+                    if (membresFiltrés.length === 0) return null;
+                    return (
+                      <SectionGroupe key={g.id} label={g.label} icon={g.icon} color={g.color}
+                        members={membresFiltrés} presentIds={presentIdsSet}
+                        onMark={markPresent} onUnmark={markAbsent} view={view} readOnly={readOnly} t={t} />
+                    );
+                  })
+              }
+            </div>
+          ) : (
+            <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {view === "absents"
+                ? allMembers.filter(filterM).length === 0
+                  ? <p className="text-white text-center col-span-full">{t.allPresent}</p>
+                  : allMembers.filter(filterM).map(m => <CarteAbsent key={m.id} m={m} onMark={markPresent} readOnly={readOnly} />)
+                : presentList.filter(filterP).length === 0
+                  ? <p className="text-white text-center col-span-full">{t.noPresence}</p>
+                  : presentList.filter(filterP).map(p => <CartePresent key={p.membre_id} p={p} onUnmark={markAbsent} readOnly={readOnly} t={t} />)
+              }
+            </div>
+          )}
+
+          <button onClick={handleReset} className="mt-8 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm">
+            {readOnly ? t.backBtn : t.newSessionBtn}
+          </button>
+        </>
+      )}
+
+      <Footer />
+    </div>
+  );
+}
+
+export default function PresencePage() {
+  return (
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "Conseiller", "ResponsableCellule", "ResponsableFamilles"]}>
+      <Presence />
+    </ProtectedRoute>
+  );
+}

@@ -2,6 +2,94 @@
 
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
+import { useLang } from "../hooks/useLang";
+
+const translations = {
+  fr: {
+    title: "Modifier le suivi évangélisé",
+    sectionIdentite: "👤 Identité",
+    civilite: "Civilité",
+    civiliteDefault: "-- Civilité --",
+    homme: "Homme",
+    femme: "Femme",
+    prenom: "Prénom",
+    nom: "Nom",
+    ville: "Ville",
+    telephone: "Téléphone",
+    isWhatsapp: "Numéro WhatsApp",
+    sectionConseiller: "👤 Ajouter conseiller",
+    searchConseiller: "Rechercher un conseiller...",
+    noResult: "Aucun résultat",
+    principal: "(principal)",
+    conseillerLocked: "🔒 Les conseillers sont gérés par un administrateur.",
+    sectionSpirituel: "🕊 Vie spirituelle",
+    priereSalut: "Prière du salut",
+    priereSalutDefault: "-- Prière du salut ? --",
+    oui: "Oui",
+    non: "Non",
+    typeConversion: "Type de conversion",
+    nouveauConverti: "Nouveau converti",
+    reconciliation: "Réconciliation",
+    sectionBesoins: "🙏 Besoins",
+    autre: "Autre",
+    preciser: "Précisez...",
+    sectionSuivi: "📝 Suivi",
+    infosSupp: "Informations supplémentaires",
+    commentaire: "Commentaire",
+    annuler: "Annuler",
+    sauvegarder: "💾 Sauvegarder",
+    enregistrement: "Enregistrement...",
+    erreur: "❌ Une erreur est survenue : ",
+    succes: "✅ Changement enregistré !",
+    besoins: [
+      "Finances", "Santé", "Travail / Études", "Famille / Enfants", "Miracle", "Délivrance",
+      "Relations / Conflits", "Addictions / Dépendances", "Guidance spirituelle",
+      "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
+    ],
+  },
+  en: {
+    title: "Edit evangelism follow-up",
+    sectionIdentite: "👤 Identity",
+    civilite: "Title",
+    civiliteDefault: "-- Title --",
+    homme: "Male",
+    femme: "Female",
+    prenom: "First name",
+    nom: "Last name",
+    ville: "City",
+    telephone: "Phone",
+    isWhatsapp: "WhatsApp number",
+    sectionConseiller: "👤 Add counselor",
+    searchConseiller: "Search for a counselor...",
+    noResult: "No results",
+    principal: "(primary)",
+    conseillerLocked: "🔒 Counselors are managed by an administrator.",
+    sectionSpirituel: "🕊 Spiritual life",
+    priereSalut: "Salvation prayer",
+    priereSalutDefault: "-- Salvation prayer? --",
+    oui: "Yes",
+    non: "No",
+    typeConversion: "Conversion type",
+    nouveauConverti: "New convert",
+    reconciliation: "Reconciliation",
+    sectionBesoins: "🙏 Needs",
+    autre: "Other",
+    preciser: "Specify...",
+    sectionSuivi: "📝 Follow-up",
+    infosSupp: "Additional information",
+    commentaire: "Comment",
+    annuler: "Cancel",
+    sauvegarder: "💾 Save",
+    enregistrement: "Saving...",
+    erreur: "❌ An error occurred: ",
+    succes: "✅ Changes saved!",
+    besoins: [
+      "Finances", "Health", "Work / Studies", "Family / Children", "Miracle", "Deliverance",
+      "Relationships / Conflicts", "Addictions / Dependencies", "Spiritual guidance",
+      "Housing / Safety", "Community / Isolation", "Depression / Mental health",
+    ],
+  },
+};
 
 export default function EditEvangeliseSuiviPopup({
   member,
@@ -13,15 +101,12 @@ export default function EditEvangeliseSuiviPopup({
   onUpdateMember,
   currentUserRoles,
 }) {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const isPrivileged = (currentUserRoles || []).some((r) =>
     ["Administrateur", "ResponsableEvangelisation", "Superadmin"].includes(r)
   );
-
-  const besoinsOptions = [
-    "Finances", "Santé", "Travail / Études", "Famille / Enfants", "Miracle", "Délivrance",
-    "Relations / Conflits", "Addictions / Dépendances", "Guidance spirituelle",
-    "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
-  ];
 
   const initialBesoin =
     typeof member.besoin === "string" ? JSON.parse(member.besoin || "[]") : member.besoin || [];
@@ -51,7 +136,6 @@ export default function EditEvangeliseSuiviPopup({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Conseillers assignment
   const [selectedConseillers, setSelectedConseillers] = useState([]);
   const [search, setSearch] = useState("");
 
@@ -148,11 +232,10 @@ export default function EditEvangeliseSuiviPopup({
         .single();
 
       if (error) {
-        setMessage("❌ Une erreur est survenue : " + error.message);
+        setMessage(t.erreur + error.message);
         return;
       }
 
-      // Sauvegarder les assignments conseillers
       if (isPrivileged) {
         await supabase
           .from("suivi_assignments_evangelises")
@@ -171,14 +254,14 @@ export default function EditEvangeliseSuiviPopup({
       }
 
       if (onUpdateMember) onUpdateMember(data);
-      setMessage("✅ Changement enregistré !");
+      setMessage(t.succes);
       setTimeout(() => {
         setMessage("");
         onClose();
         if (closeDetails) closeDetails();
       }, 1200);
     } catch (err) {
-      setMessage("❌ Une erreur est survenue : " + err.message);
+      setMessage(t.erreur + err.message);
     } finally {
       setLoading(false);
     }
@@ -208,34 +291,34 @@ export default function EditEvangeliseSuiviPopup({
           <h2 className="text-xl font-bold text-white pr-10">
             ✏️ {member.prenom} {member.nom}
           </h2>
-          <p className="text-blue-100 text-sm mt-1 opacity-80">Modifier le suivi évangélisé</p>
+          <p className="text-blue-100 text-sm mt-1 opacity-80">{t.title}</p>
         </div>
 
         {/* Body */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
 
           {/* Section: Identité */}
-          <SectionTitle>👤 Identité</SectionTitle>
+          <SectionTitle>{t.sectionIdentite}</SectionTitle>
 
-          <Field label="Civilité">
+          <Field label={t.civilite}>
             <select name="sexe" value={formData.sexe} onChange={handleChange} className="inp">
-              <option value="">-- Civilité --</option>
-              <option value="Homme">Homme</option>
-              <option value="Femme">Femme</option>
+              <option value="">{t.civiliteDefault}</option>
+              <option value="Homme">{t.homme}</option>
+              <option value="Femme">{t.femme}</option>
             </select>
           </Field>
 
           {[
-            { name: "prenom", label: "Prénom" },
-            { name: "nom", label: "Nom" },
-            { name: "ville", label: "Ville" },
+            { name: "prenom", label: t.prenom },
+            { name: "nom", label: t.nom },
+            { name: "ville", label: t.ville },
           ].map(({ name, label }) => (
             <Field key={name} label={label}>
               <input name={name} value={formData[name]} onChange={handleChange} className="inp" />
             </Field>
           ))}
 
-          <Field label="Téléphone">
+          <Field label={t.telephone}>
             <input name="telephone" value={formData.telephone} onChange={handleChange} className="inp" />
             <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
               <input
@@ -245,18 +328,18 @@ export default function EditEvangeliseSuiviPopup({
                 onChange={handleChange}
                 className="accent-[#2E3192]"
               />
-              Numéro WhatsApp
+              {t.isWhatsapp}
             </label>
           </Field>
 
           {/* Section: Ajouter conseiller */}
-          <SectionTitle>👤 Ajouter conseiller</SectionTitle>
+          <SectionTitle>{t.sectionConseiller}</SectionTitle>
 
           {isPrivileged ? (
             <>
               <input
                 type="text"
-                placeholder="Rechercher un conseiller..."
+                placeholder={t.searchConseiller}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="inp"
@@ -290,7 +373,7 @@ export default function EditEvangeliseSuiviPopup({
                   );
                 })}
                 {filteredConseillers.length === 0 && (
-                  <p className="text-xs text-gray-400 px-3 py-2">Aucun résultat</p>
+                  <p className="text-xs text-gray-400 px-3 py-2">{t.noResult}</p>
                 )}
               </div>
 
@@ -304,7 +387,7 @@ export default function EditEvangeliseSuiviPopup({
                     >
                       <span>{c.prenom} {c.nom}</span>
                       {index === 0 && selectedConseillers.length > 1 && (
-                        <span className="text-xs opacity-60 ml-1">(principal)</span>
+                        <span className="text-xs opacity-60 ml-1">{t.principal}</span>
                       )}
                       <button
                         onClick={() =>
@@ -321,29 +404,29 @@ export default function EditEvangeliseSuiviPopup({
             </>
           ) : (
             <p className="text-sm text-gray-400 italic rounded-xl px-4 py-3" style={{ background: "#f8fafc" }}>
-              🔒 Les conseillers sont gérés par un administrateur.
+              {t.conseillerLocked}
             </p>
           )}
 
           {/* Section: Vie spirituelle */}
-          <SectionTitle>🕊 Vie spirituelle</SectionTitle>
+          <SectionTitle>{t.sectionSpirituel}</SectionTitle>
 
-          <Field label="Prière du salut">
+          <Field label={t.priereSalut}>
             <select
               className="inp"
-              value={formData.priere_salut ? "Oui" : "Non"}
+              value={formData.priere_salut ? t.oui : t.non}
               onChange={(e) => {
                 const value = e.target.value;
                 setFormData((prev) => ({
                   ...prev,
-                  priere_salut: value === "Oui",
-                  type_conversion: value === "Oui" ? prev.type_conversion : "",
+                  priere_salut: value === t.oui,
+                  type_conversion: value === t.oui ? prev.type_conversion : "",
                 }));
               }}
             >
-              <option value="">-- Prière du salut ? --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
+              <option value="">{t.priereSalutDefault}</option>
+              <option value={t.oui}>{t.oui}</option>
+              <option value={t.non}>{t.non}</option>
             </select>
             {formData.priere_salut && (
               <select
@@ -352,18 +435,18 @@ export default function EditEvangeliseSuiviPopup({
                 onChange={handleChange}
                 className="inp mt-2"
               >
-                <option value="">Type de conversion</option>
-                <option value="Nouveau converti">Nouveau converti</option>
-                <option value="Réconciliation">Réconciliation</option>
+                <option value="">{t.typeConversion}</option>
+                <option value="Nouveau converti">{t.nouveauConverti}</option>
+                <option value="Réconciliation">{t.reconciliation}</option>
               </select>
             )}
           </Field>
 
           {/* Section: Besoins */}
-          <SectionTitle>🙏 Besoins</SectionTitle>
+          <SectionTitle>{t.sectionBesoins}</SectionTitle>
 
           <div className="flex flex-wrap gap-2 mb-2">
-            {besoinsOptions.map((item) => (
+            {t.besoins.map((item) => (
               <label key={item} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                 <input
                   type="checkbox"
@@ -383,7 +466,7 @@ export default function EditEvangeliseSuiviPopup({
                 onChange={handleBesoinChange}
                 className="accent-[#2E3192]"
               />
-              Autre
+              {t.autre}
             </label>
             {showAutre && (
               <input
@@ -391,16 +474,16 @@ export default function EditEvangeliseSuiviPopup({
                 name="autreBesoin"
                 value={formData.autreBesoin}
                 onChange={handleChange}
-                placeholder="Précisez..."
+                placeholder={t.preciser}
                 className="inp mt-1"
               />
             )}
           </div>
 
           {/* Section: Suivi */}
-          <SectionTitle>📝 Suivi</SectionTitle>
+          <SectionTitle>{t.sectionSuivi}</SectionTitle>
 
-          <Field label="Informations supplémentaires">
+          <Field label={t.infosSupp}>
             <textarea
               name="infos_supplementaires"
               value={formData.infos_supplementaires}
@@ -410,7 +493,7 @@ export default function EditEvangeliseSuiviPopup({
             />
           </Field>
 
-          <Field label="Commentaire">
+          <Field label={t.commentaire}>
             <textarea
               name="commentaire_evangelises"
               value={formData.commentaire_evangelises}
@@ -428,7 +511,7 @@ export default function EditEvangeliseSuiviPopup({
             onClick={onClose}
             className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all"
           >
-            Annuler
+            {t.annuler}
           </button>
           <button
             type="button"
@@ -441,7 +524,7 @@ export default function EditEvangeliseSuiviPopup({
                 : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
             }}
           >
-            {loading ? "Enregistrement..." : "💾 Sauvegarder"}
+            {loading ? t.enregistrement : t.sauvegarder}
           </button>
         </div>
 

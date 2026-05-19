@@ -171,36 +171,52 @@ function CreateInternalUserContent() {
     });
   };
 
-  // ─── Logique métier découplée du formulaire ───
-  // ✅ FIX PRINCIPAL : submitForm ne dépend plus de l'event
+  // ─── Soumission ───
   const submitForm = async (forceCreate = false) => {
+    console.log("🚀 submitForm appelé", { forceCreate, formData, selectedMemberId });
+
+    // Validation locale
     if (formData.password !== formData.confirmPassword) {
       setMessage("❌ Les mots de passe ne correspondent pas.");
+      console.log("❌ Mots de passe différents");
       return;
     }
     if (!formData.roles || formData.roles.length === 0) {
       setMessage("❌ Sélectionnez au moins un rôle !");
+      console.log("❌ Aucun rôle sélectionné");
       return;
     }
 
     setLoading(true);
+    setMessage("");
+    console.log("⏳ setLoading(true)");
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Session
+      console.log("🔐 Récupération session...");
+      const sessionResult = await supabase.auth.getSession();
+      console.log("🔐 Session result:", sessionResult);
+      const session = sessionResult?.data?.session;
+
       if (!session) {
-        setMessage("❌ Session expirée");
+        setMessage("❌ Session expirée. Veuillez vous reconnecter.");
+        console.log("❌ Pas de session");
         return;
       }
+      console.log("✅ Session OK:", session.user.email);
 
       // 1️⃣ Vérification téléphone
-      if (selectedMemberId === "add-serviteur" && formData.telephone) {
-        const { data: existingMembers } = await supabase
+      if (selectedMemberId === "add-serviteur" && formData.telephone && !forceCreate) {
+        console.log("📞 Vérification téléphone...");
+        const { data: existingMembers, error: telError } = await supabase
           .from("membres_complets")
           .select("prenom, nom, sexe, telephone, etat_contact")
           .eq("telephone", formData.telephone)
           .in("etat_contact", ["existant", "nouveau"]);
 
-        if (existingMembers?.length > 0 && !forceCreate) {
+        console.log("📞 Résultat téléphone:", { existingMembers, telError });
+
+        if (existingMembers?.length > 0) {
           const existing = existingMembers[0];
           setDuplicatePhone(existing);
           setMessage(`⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}`);
@@ -209,44 +225,70 @@ function CreateInternalUserContent() {
       }
 
       // 2️⃣ Vérification email
-      const { data: existingUsers } = await supabase
-        .from("profiles")
-        .select("id, email, prenom, nom")
-        .eq("email", formData.email);
+      if (!forceCreate) {
+        console.log("📧 Vérification email...");
+        const { data: existingUsers, error: emailError } = await supabase
+          .from("profiles")
+          .select("id, email, prenom, nom")
+          .eq("email", formData.email);
 
-      if (existingUsers?.length > 0 && !forceCreate) {
-        const existing = existingUsers[0];
-        setDuplicateEmail(existing);
-        setMessage(`⚠️ L'email ${formData.email} est déjà utilisé par ${existing.prenom} ${existing.nom}`);
+        console.log("📧 Résultat email:", { existingUsers, emailError });
+
+        if (existingUsers?.length > 0) {
+          const existing = existingUsers[0];
+          setDuplicateEmail(existing);
+          setMessage(`⚠️ L'email ${formData.email} est déjà utilisé par ${existing.prenom} ${existing.nom}`);
+          return;
+        }
+      }
+
+      // 3️⃣ Appel API
+      const payload = {
+        ...formData,
+        member_id: selectedMemberId,
+        ministeresSelected: formData.ministere,
+      };
+      console.log("📤 Appel /api/create-user avec payload:", payload);
+
+      let res;
+      try {
+        res = await fetch("/api/create-user", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+      } catch (fetchErr) {
+        console.error("❌ Erreur fetch réseau:", fetchErr);
+        setMessage("❌ Erreur réseau : " + fetchErr.message);
         return;
       }
 
-      // 3️⃣ Création utilisateur via API
-      const res = await fetch("/api/create-user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          ...formData,
-          member_id: selectedMemberId,
-          ministeresSelected: formData.ministere,
-        }),
-      });
+      console.log("📥 Réponse HTTP status:", res.status);
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        console.error("❌ Erreur parsing JSON réponse:", jsonErr);
+        setMessage("❌ Réponse invalide du serveur.");
+        return;
+      }
+
+      console.log("📥 Réponse JSON:", data);
 
       if (!res.ok) {
-        setMessage(`❌ ${data?.error}`);
+        setMessage(`❌ ${data?.error ?? "Erreur inconnue du serveur"}`);
         return;
       }
 
+      // ✅ Succès
+      console.log("✅ Utilisateur créé avec succès !");
       setMessage("✅ Utilisateur créé !");
       setDuplicatePhone(null);
       setDuplicateEmail(null);
-
-      // ✅ Reset complet
       setFormData({
         prenom: "", nom: "", sexe: "", email: "",
         password: "", confirmPassword: "", telephone: "",
@@ -257,17 +299,19 @@ function CreateInternalUserContent() {
       setSelectedMemberId("");
 
     } catch (err) {
-      setMessage("❌ " + err.message);
+      console.error("❌ Erreur inattendue dans submitForm:", err);
+      setMessage("❌ Erreur inattendue : " + err.message);
     } finally {
-      // ✅ FIX : always resets loading, even if an early return was hit
+      console.log("🔓 setLoading(false) — finally exécuté");
       setLoading(false);
     }
   };
 
-  // ✅ handleSubmit appelle submitForm — e.preventDefault() est sécurisé
-  const handleSubmit = async (e, forceCreate = false) => {
-    if (e && typeof e.preventDefault === "function") e.preventDefault();
-    await submitForm(forceCreate);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("📋 handleSubmit déclenché");
+    submitForm(false);
   };
 
   const handleCancel = () => router.push("/admin/list-users");

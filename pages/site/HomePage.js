@@ -155,19 +155,26 @@ export default function HomePage() {
   const { lang, changeLang } = useLang();
   const [testimonials, setTestimonials] = useState([]);
 
+  const t = translations[lang];
+
+  // ── Carousel ──────────────────────────────────────────────────────────────
   const CARD_WIDTH = 280;
   const GAP = 16;
   const STEP = CARD_WIDTH + GAP;
-  const max = testimonials.length || 1;
+
+  // On triple le tableau pour avoir assez de marge des deux côtés
   const looped = testimonials.length
     ? [...testimonials, ...testimonials, ...testimonials]
     : [];
-  const [tIndex, setTIndex] = useState(max);
+
+  // On démarre au milieu de la copie centrale
+  const startIndex = testimonials.length; // index de la première carte de la copie du milieu
+  const [tIndex, setTIndex] = useState(startIndex);
   const trackRef = useRef(null);
-  const animating = useRef(false);
+  const isJumping = useRef(false);
+  const intervalRef = useRef(null);
 
-  const t = translations[lang];
-
+  // ── Scroll + fade ─────────────────────────────────────────────────────────
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
@@ -196,34 +203,7 @@ export default function HomePage() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (animating.current) return;
-      setTIndex((prev) => prev - 1);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (tIndex <= 0) {
-      animating.current = true;
-      setTimeout(() => {
-        if (trackRef.current) {
-          trackRef.current.style.transition = "none";
-          setTIndex(max);
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              if (trackRef.current) {
-                trackRef.current.style.transition = "transform 700ms ease-in-out";
-              }
-              animating.current = false;
-            });
-          });
-        }
-      }, 720);
-    }
-  }, [tIndex]);
-
+  // ── Témoignages fetch ─────────────────────────────────────────────────────
   useEffect(() => {
     const fetchTestimonials = async () => {
       const { data, error } = await supabase
@@ -238,13 +218,13 @@ export default function HomePage() {
         return;
       }
 
-      const formatted = data.map((t) => ({
-        id: t.id,
-        title: t.titre || "",
-        name: t.nom,
-        church: t.nom_eglise,
-        message: t.message,
-        note: t.note || 5,
+      const formatted = data.map((item) => ({
+        id: item.id,
+        title: item.titre || "",
+        name: item.nom,
+        church: item.nom_eglise,
+        message: item.message,
+        note: item.note || 5,
       }));
 
       setTestimonials(formatted);
@@ -253,23 +233,58 @@ export default function HomePage() {
     fetchTestimonials();
   }, []);
 
+  // Recentre l'index quand les témoignages sont chargés
+  useEffect(() => {
+    if (testimonials.length > 0) {
+      setTIndex(testimonials.length);
+    }
+  }, [testimonials.length]);
+
+  // ── Auto-défilement infini sans saut visible ──────────────────────────────
+  useEffect(() => {
+    if (testimonials.length === 0) return;
+
+    intervalRef.current = setInterval(() => {
+      if (isJumping.current) return;
+      setTIndex((prev) => prev + 1);
+    }, 3000);
+
+    return () => clearInterval(intervalRef.current);
+  }, [testimonials.length]);
+
+  // Quand on atteint la fin de la 3e copie → jump invisible vers la copie du milieu
+  useEffect(() => {
+    if (testimonials.length === 0) return;
+    const total = looped.length; // testimonials.length * 3
+
+    if (tIndex >= total - testimonials.length) {
+      // On attend la fin de la transition CSS (700ms) puis on saute sans animation
+      isJumping.current = true;
+      setTimeout(() => {
+        if (trackRef.current) {
+          trackRef.current.style.transition = "none";
+        }
+        setTIndex(testimonials.length); // retour silencieux au début de la copie centrale
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (trackRef.current) {
+              trackRef.current.style.transition = "transform 700ms ease-in-out";
+            }
+            isJumping.current = false;
+          });
+        });
+      }, 700);
+    }
+  }, [tIndex, testimonials.length, looped.length]);
+
   const addRef = (el) => {
     if (el && !fadeRefs.current.includes(el)) fadeRefs.current.push(el);
   };
 
   const renderStars = (note = 5) => "⭐".repeat(note);
 
-  const langBtnStyle = (active) => ({
-    background: active ? "rgba(255,255,255,0.18)" : "transparent",
-    border: active
-      ? "1px solid rgba(255,255,255,0.55)"
-      : "1px solid rgba(255,255,255,0.2)",
-    borderRadius: "6px",
-    padding: "4px 6px",
-    cursor: "pointer",
-    lineHeight: 0,
-    transition: "background 0.2s, border-color 0.2s",
-  });
+  // index réel dans le tableau original (pour les dots)
+  const realIndex = testimonials.length > 0 ? tIndex % testimonials.length : 0;
 
   return (
     <div
@@ -338,7 +353,7 @@ export default function HomePage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-gap: "10px",
+            gap: "10px",
             boxSizing: "border-box",
           }}
         >
@@ -442,7 +457,14 @@ gap: "10px",
           </div>
 
           {/* Switcher langue desktop */}
-          <div style={{ display: "flex", gap: "8px", alignItems: "center", marginLeft: "8px"}}>
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              alignItems: "center",
+              marginLeft: "8px",
+            }}
+          >
             <button
               onClick={() => changeLang("fr")}
               title="Français"
@@ -554,8 +576,52 @@ gap: "10px",
               >
                 {item.label}
               </span>
-            ))}      
-           
+            ))}
+
+            {/* Switcher langue mobile */}
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <button
+                onClick={() => changeLang("fr")}
+                title="Français"
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  opacity: lang === "fr" ? 1 : 0.45,
+                }}
+              >
+                <img
+                  src="https://flagcdn.com/w20/fr.png"
+                  srcSet="https://flagcdn.com/w40/fr.png 2x"
+                  width="20"
+                  height="14"
+                  alt="Français"
+                  style={{ display: "block", borderRadius: "2px" }}
+                />
+              </button>
+              <button
+                onClick={() => changeLang("en")}
+                title="English"
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  opacity: lang === "en" ? 1 : 0.45,
+                }}
+              >
+                <img
+                  src="https://flagcdn.com/w20/gb.png"
+                  srcSet="https://flagcdn.com/w40/gb.png 2x"
+                  width="20"
+                  height="14"
+                  alt="English"
+                  style={{ display: "block", borderRadius: "2px" }}
+                />
+              </button>
+            </div>
+
             <div
               style={{
                 display: "flex",
@@ -565,7 +631,7 @@ gap: "10px",
               }}
             >
               <button
-                onClick={() => router.push("/login")}
+                onClick={() => { router.push("/login"); setOpenMenu(false); }}
                 style={{
                   background: "transparent",
                   color: "#fff",
@@ -579,7 +645,7 @@ gap: "10px",
                 {t.login}
               </button>
               <button
-                onClick={() => router.push("/site/pricing")}
+                onClick={() => { router.push("/site/pricing"); setOpenMenu(false); }}
                 style={{
                   background: "#fff",
                   color: "#333699",
@@ -885,7 +951,7 @@ gap: "10px",
               left: 0,
               top: 0,
               bottom: 0,
-              width: "60px",
+              width: "80px",
               background: "linear-gradient(90deg, #333699, transparent)",
               zIndex: 2,
               pointerEvents: "none",
@@ -898,7 +964,7 @@ gap: "10px",
               right: 0,
               top: 0,
               bottom: 0,
-              width: "60px",
+              width: "80px",
               background: "linear-gradient(270deg, #333699, transparent)",
               zIndex: 2,
               pointerEvents: "none",
@@ -910,7 +976,8 @@ gap: "10px",
             style={{
               display: "flex",
               gap: `${GAP}px`,
-              transform: `translateX(calc(50% - ${tIndex * STEP + CARD_WIDTH / 2}px))`,
+              // Centre la carte active au milieu de l'écran
+              transform: `translateX(calc(50vw - ${tIndex * STEP + CARD_WIDTH / 2}px))`,
               transition: "transform 700ms ease-in-out",
               alignItems: "center",
               padding: "24px 0",
@@ -1033,13 +1100,15 @@ gap: "10px",
           {testimonials.map((_, i) => (
             <div
               key={i}
+              onClick={() => setTIndex(testimonials.length + i)}
               style={{
-                width: tIndex % max === i ? "20px" : "6px",
+                width: realIndex === i ? "20px" : "6px",
                 height: "6px",
                 borderRadius: "3px",
                 background:
-                  tIndex % max === i ? "#fff" : "rgba(255,255,255,0.25)",
+                  realIndex === i ? "#fff" : "rgba(255,255,255,0.25)",
                 transition: "width 0.3s ease, background 0.3s ease",
+                cursor: "pointer",
               }}
             />
           ))}
@@ -1120,44 +1189,22 @@ gap: "10px",
       </footer>
 
       <style>{`
-  html, body {
-    width: 100%;
-    overflow-x: hidden;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
-
-  img {
-    max-width: 100%;
-    height: auto;
-  }
-
-  @media (max-width: 768px) {
-
-    /* Cache le menu desktop */
-    .nav-hide {
-      display: none !important;
-    }
-
-    /* Affiche hamburger */
-    .nav-show {
-      display: flex !important;
-    }
-
-    /* Header plus compact */
-    header > div {
-      padding: 14px 12px !important;
-      height: auto !important;
-    }
-
-    /* Évite que les éléments débordent */
-    header div {
-      min-width: 0;
-    }
-  }
-`}</style>
+        html, body {
+          width: 100%;
+          overflow-x: hidden;
+        }
+        * { box-sizing: border-box; }
+        img { max-width: 100%; height: auto; }
+        @media (max-width: 768px) {
+          .nav-hide { display: none !important; }
+          .nav-show { display: flex !important; }
+          header > div {
+            padding: 14px 12px !important;
+            height: auto !important;
+          }
+          header div { min-width: 0; }
+        }
+      `}</style>
     </div>
   );
 }

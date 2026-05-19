@@ -114,8 +114,7 @@ export default async function handler(req, res) {
         .from("cellules")
         .insert({
           cellule: cellule_nom,
-          ville: cellule_zone,
-          cellule_full,
+          ville: cellule_zone,         
           responsable: `${prenom} ${nom}`,
           responsable_id: newUserId,
           telephone: telephone || "",

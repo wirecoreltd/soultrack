@@ -7,52 +7,90 @@ import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
+import { useLang } from "../../hooks/useLang";
+
+// ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
+const translations = {
+  fr: {
+    title: "Espace Cellule",
+    subtitle1: "Chaque cellule est un",
+    highlight1: "espace",
+    subtitle2: "où les âmes grandissent, sont",
+    highlight2: "accompagnées et encouragées dans leur cheminement",
+    subtitle3: ". Ensemble, unissons nos forces, construisons et faisons fructifier chaque vie, afin que chacun puisse",
+    highlight3: "s'épanouir pleinement dans la foi",
+    cards: {
+      listeCellules:    "Liste des Cellules",
+      ajouterMembre:    "Ajouter un membre",
+      import:           "Import liste membres",
+      membresCellule:   "Membres de la Cellule",
+      suivisEvang:      "Suivis évangélisation",
+      suivisMembres:    "Suivis des membres",
+      presencesStats:   "Présences & stats",
+      etatCellule:      "État Cellule",
+      registrePresences:"Registre des présences",
+      rapportRegistres: "Rapport des Registres",
+      notifications:    "Notifications",
+    },
+    sendLinkMembre:   "Envoyer formulaire Cellule – Nouveau membre",
+    sendLinkEvang:    "Envoyer formulaire Cellule – Évangélisation",
+    footer: "La famille est le plus grand trésor. Prenez soin les uns des autres avec amour et patience.",
+  },
+  en: {
+    title: "Cell Group Space",
+    subtitle1: "Every cell group is a",
+    highlight1: "space",
+    subtitle2: "where souls grow, are",
+    highlight2: "supported and encouraged in their journey",
+    subtitle3: ". Together, let us unite our strengths, build and help every life flourish, so that each person can",
+    highlight3: "fully thrive in faith",
+    cards: {
+      listeCellules:    "Cell groups list",
+      ajouterMembre:    "Add a member",
+      import:           "Import member list",
+      membresCellule:   "Cell group members",
+      suivisEvang:      "Evangelism follow-up",
+      suivisMembres:    "Member follow-up",
+      presencesStats:   "Attendance & stats",
+      etatCellule:      "Cell group status",
+      registrePresences:"Attendance register",
+      rapportRegistres: "Register report",
+      notifications:    "Notifications",
+    },
+    sendLinkMembre:   "Send Cell form – New member",
+    sendLinkEvang:    "Send Cell form – Evangelism",
+    footer: "Family is the greatest treasure. Take care of one another with love and patience.",
+  },
+};
 
 export default function CellulesHub() {
   return (
-    <ProtectedRoute
-      allowedRoles={[
-        "Administrateur",
-        "ResponsableCellule",
-        "SuperviseurCellule",
-      ]}
-    >
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableCellule", "SuperviseurCellule"]}>
       <CellulesHubContent />
     </ProtectedRoute>
   );
 }
 
 function CellulesHubContent() {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [role, setRole] = useState(null);
   const [loadingRole, setLoadingRole] = useState(true);
 
   useEffect(() => {
     const fetchRole = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
       const { data } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
+        .from("profiles").select("role").eq("id", user.id).single();
       setRole(data?.role || null);
       setLoadingRole(false);
     };
-
     fetchRole();
   }, []);
 
   if (loadingRole) return null;
-
-  const isAdmin =
-    role === "Administrateur" ||
-    role === "SuperviseurCellule" ||
-    role === "SuperAdmin";
 
   const isResponsableCellule = role === "ResponsableCellule";
 
@@ -62,132 +100,95 @@ function CellulesHubContent() {
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6"
-      style={{
-        background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)",
-      }}
+      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
     >
       <HeaderPages />
 
-      <h1 className="text-3xl font-extrabold mt-4 mb-6 text-white drop-shadow-lg">
-        Espace Cellule
-      </h1>
+      <h1 className="text-3xl font-extrabold mt-4 mb-6 text-white drop-shadow-lg">{t.title}</h1>
+
       <div className="max-w-3xl w-full mb-6 text-center">
-            <p className="italic text-base text-white/90">
-              Chaque cellule est un <span className="text-blue-300 font-semibold">espace</span> où les âmes grandissent,
-              sont <span className="text-blue-300 font-semibold">accompagnées et encouragées dans leur cheminement</span>.
-              Ensemble, unissons nos forces, construisons et faisons fructifier chaque vie,
-              afin que chacun puisse <span className="text-blue-300 font-semibold">s'épanouir pleinement dans la foi</span>.
-            </p>
-          </div>
+        <p className="italic text-base text-white/90">
+          {t.subtitle1} <span className="text-blue-300 font-semibold">{t.highlight1}</span> {t.subtitle2}{" "}
+          <span className="text-blue-300 font-semibold">{t.highlight2}</span>{t.subtitle3}{" "}
+          <span className="text-blue-300 font-semibold">{t.highlight3}</span>.
+        </p>
+      </div>
 
       <div className="flex flex-col md:flex-row gap-6 flex-wrap w-full max-w-5xl">
 
-        {/* Liste Cellules */}
         <Link href="/cellule/list-cellules" className={CARD_CLASS} style={{ borderTop: "4px solid #3b82f6" }}>
           <div className="text-5xl mb-2">🏠</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Liste des Cellules
-          </div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.listeCellules}</div>
         </Link>
 
-        {/* Ajouter membre */}
         {isResponsableCellule && (
           <Link href="/cellule/ajouter-membre-cellule" className={CARD_CLASS} style={{ borderTop: "4px solid #10b981" }}>
             <div className="text-5xl mb-2">➕</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Ajouter un membre
-            </div>
+            <div className="text-lg font-bold text-gray-800 text-center">{t.cards.ajouterMembre}</div>
           </Link>
         )}
 
-        {/* Import */}
         {isResponsableCellule && (
           <Link href="/admin/import" className={CARD_CLASS} style={{ borderTop: "4px solid #f97316" }}>
             <div className="text-4xl mb-1">📤</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              Import liste membres
-            </div>
+            <div className="text-lg font-bold text-gray-800 text-center">{t.cards.import}</div>
           </Link>
         )}
 
-        {/* Membres */}
         <Link href="/cellule/membres-cellule" className={CARD_CLASS} style={{ borderTop: "4px solid #22c55e" }}>
           <div className="text-5xl mb-2">👥</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Membres de la Cellule
-          </div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.membresCellule}</div>
         </Link>
 
-        {/* Évangélisation */}
         <Link href="/evangelisation/suivis-evangelisation" className={CARD_CLASS} style={{ borderTop: "4px solid #ec4899" }}>
           <div className="text-5xl mb-2">💗</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Suivis évangélisation
-          </div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.suivisEvang}</div>
         </Link>
 
-        {/* Suivis membres */}
         <Link href="/membres/suivis-membres" className={CARD_CLASS} style={{ borderTop: "4px solid #eab308" }}>
           <div className="text-5xl mb-2">💌</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Suivis des membres
-          </div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.suivisMembres}</div>
         </Link>
 
-        {/* Présences stats */}
         <Link href="/cellule/attendance_cellule" className={CARD_CLASS} style={{ borderTop: "4px solid #6366f1" }}>
           <div className="text-5xl mb-2">👨‍👩‍👦‍👦</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Présences & stats
-          </div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.presencesStats}</div>
         </Link>
 
-        {/* Etat cellule */}
         <Link href="/cellule/EtatCellulePage" className={CARD_CLASS} style={{ borderTop: "4px solid #a855f7" }}>
           <div className="text-5xl mb-2">🌱</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            État Cellule
-          </div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.etatCellule}</div>
         </Link>
 
-        {/* Registre présences */}
         <Link href="/Presence" className={CARD_CLASS} style={{ borderTop: "4px solid #06b6d4" }}>
           <div className="text-5xl mb-2">✍️</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Registre des présences
-          </div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.registrePresences}</div>
         </Link>
 
-      <Link href="/rapport/RapportPresence" className={CARD_CLASS} style={{ borderTop: "4px solid #06b6d4" }}>
+        <Link href="/rapport/RapportPresence" className={CARD_CLASS} style={{ borderTop: "4px solid #06b6d4" }}>
           <div className="text-5xl mb-2">✅</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Rapport des Registres
-          </div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.rapportRegistres}</div>
         </Link>
 
-        {/* Notifications */}
         <Link href="/admin/notifications" className={CARD_CLASS} style={{ borderTop: "4px solid #ef4444" }}>
           <div className="text-5xl mb-2">🔔</div>
-          <div className="text-lg font-bold text-gray-800 text-center">
-            Notifications
-          </div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.notifications}</div>
         </Link>
 
       </div>
-      {/* Formulaires visibles uniquement ResponsableCellule */}
+
       {isResponsableCellule && (
         <>
           <div className="w-full max-w-md mt-5 mb-3">
             <SendLinkPopup
-              label="Envoyer formulaire Cellule – Nouveau membre"
+              label={t.sendLinkMembre}
               type="ajouter_membre_cellule"
               buttonColor="from-[#f7971e] to-[#ffd200]"
             />
           </div>
-
           <div className="w-full max-w-md mb-6">
             <SendLinkPopup
-              label="Envoyer formulaire Cellule – Évangélisation"
+              label={t.sendLinkEvang}
               type="ajouter_evangelise_cellule"
               buttonColor="from-[#11998e] to-[#38ef7d]"
             />
@@ -196,10 +197,7 @@ function CellulesHubContent() {
       )}
 
       <div className="max-w-3xl w-full mb-6 text-center">
-        <p className="italic text-base text-white/90">
-          La famille est le plus grand trésor. Prenez soin les uns des autres
-          avec amour et patience.
-        </p>
+        <p className="italic text-base text-white/90">{t.footer}</p>
       </div>
 
       <Footer />

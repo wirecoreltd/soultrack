@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
-import { useLang } from "../../hooks/useLang";
+import { useLang } from "../hooks/useLang";
 
 const translations = {
   fr: {

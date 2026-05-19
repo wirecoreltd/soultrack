@@ -6,63 +6,106 @@ import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import { FEATURE_ROUTES, buildFeaturesState, canAccessFeature } from "../lib/features";
+import { useLang } from "../hooks/useLang";
 
-// ─── Rôles dont le hub contient déjà la carte Notifications ───────────────
+// ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
+const translations = {
+  fr: {
+    dashboard: "Tableau de bord",
+    welcome: "Bienvenue dans votre espace",
+    welcomeSub: "Accédez aux différents hubs selon votre rôle pour servir et organiser l'église.",
+    footer: "Une vision, plusieurs rôles, un même objectif : voir des vies transformées.",
+    cards: {
+      membres:        "Gestion des membres",
+      evangelisation: "Évangélisation",
+      cellule:        "Cellule",
+      conseiller:     "Conseiller",
+      conseillerHub:  "Conseiller Hub",
+      familles:       "Familles",
+      rapport:        "Rapport",
+      admin:          "Admin",
+      presence:       "Registre des présences",
+      notifications:  "Notifications",
+      superadmin:     "Admin SoulTrack",
+    },
+  },
+  en: {
+    dashboard: "Dashboard",
+    welcome: "Welcome to your space",
+    welcomeSub: "Access the different hubs according to your role to serve and organise the church.",
+    footer: "One vision, multiple roles, one goal: seeing lives transformed.",
+    cards: {
+      membres:        "Member management",
+      evangelisation: "Evangelism",
+      cellule:        "Cell group",
+      conseiller:     "Counselor",
+      conseillerHub:  "Counselor Hub",
+      familles:       "Families",
+      rapport:        "Report",
+      admin:          "Admin",
+      presence:       "Attendance register",
+      notifications:  "Notifications",
+      superadmin:     "SoulTrack Admin",
+    },
+  },
+};
+
 const ROLES_WITH_NOTIF_IN_HUB = ["ResponsableFamilles", "ResponsableCellule", "Conseiller", "SuperviseurCellule"];
 
+// Les cards utilisent des clés pour récupérer le label traduit
 const roleCards = {
   Administrateur: [
-    { path: "/membres/membres-hub",               label: "Gestion des membres",    emoji: "🧭", color: "#0E7490" },
-    { path: "/evangelisation/evangelisation-hub", label: "Évangélisation",         emoji: "✝️", color: "#F97316" },
-    { path: "/cellule/cellules-hub",              label: "Cellule",                emoji: "🏠", color: "#10B981" },
-    { path: "/conseiller/conseiller-hub",         label: "Conseiller",             emoji: "🤝", color: "#0EA5E9" },
-    { path: "/famille/familles-hub",              label: "Familles",               emoji: "👑", color: "#F59E0B" },
-    { path: "/rapport/rapport-hub",               label: "Rapport",                emoji: "📈", color: "#FBBF24" },
-    { path: "/administrateur/administrateur",     label: "Admin",                  emoji: "⚙️", color: "#0EA5E9" },
-    { path: "/Presence",                          label: "Registre des présences", emoji: "✍🏻", color: "#0EA5E9" },
-    { path: "/admin/notifications",               label: "Notifications",          emoji: "🔔", color: "#ef4444" },
+    { path: "/membres/membres-hub",               key: "membres",        emoji: "🧭", color: "#0E7490" },
+    { path: "/evangelisation/evangelisation-hub", key: "evangelisation", emoji: "✝️", color: "#F97316" },
+    { path: "/cellule/cellules-hub",              key: "cellule",        emoji: "🏠", color: "#10B981" },
+    { path: "/conseiller/conseiller-hub",         key: "conseiller",     emoji: "🤝", color: "#0EA5E9" },
+    { path: "/famille/familles-hub",              key: "familles",       emoji: "👑", color: "#F59E0B" },
+    { path: "/rapport/rapport-hub",               key: "rapport",        emoji: "📈", color: "#FBBF24" },
+    { path: "/administrateur/administrateur",     key: "admin",          emoji: "⚙️", color: "#0EA5E9" },
+    { path: "/Presence",                          key: "presence",       emoji: "✍🏻", color: "#0EA5E9" },
+    { path: "/admin/notifications",               key: "notifications",  emoji: "🔔", color: "#ef4444" },
   ],
-
   Superadmin: [
-    { path: "/membres/membres-hub",               label: "Gestion des membres",    emoji: "🧭", color: "#0E7490" },
-    { path: "/evangelisation/evangelisation-hub", label: "Évangélisation",         emoji: "✝️", color: "#F97316" },
-    { path: "/cellule/cellules-hub",              label: "Cellule",                emoji: "🏠", color: "#10B981" },
-    { path: "/conseiller/conseiller-hub",         label: "Conseiller",             emoji: "🤝", color: "#0EA5E9" },
-    { path: "/famille/familles-hub",              label: "Familles",               emoji: "👑", color: "#F59E0B" },
-    { path: "/rapport/rapport-hub",               label: "Rapport",                emoji: "📈", color: "#FBBF24" },
-    { path: "/administrateur/administrateur",     label: "Admin",                  emoji: "⚙️", color: "#0EA5E9" },
-    { path: "/Presence",                          label: "Registre des présences", emoji: "✍🏻", color: "#0EA5E9" },
-    { path: "/admin/notifications",               label: "Notifications",          emoji: "🔔", color: "#ef4444" },
-    { path: "/Superadmin/Superadmin-hub",         label: "Admin SoulTrack",        emoji: "🔐", color: "#000000" },
+    { path: "/membres/membres-hub",               key: "membres",        emoji: "🧭", color: "#0E7490" },
+    { path: "/evangelisation/evangelisation-hub", key: "evangelisation", emoji: "✝️", color: "#F97316" },
+    { path: "/cellule/cellules-hub",              key: "cellule",        emoji: "🏠", color: "#10B981" },
+    { path: "/conseiller/conseiller-hub",         key: "conseiller",     emoji: "🤝", color: "#0EA5E9" },
+    { path: "/famille/familles-hub",              key: "familles",       emoji: "👑", color: "#F59E0B" },
+    { path: "/rapport/rapport-hub",               key: "rapport",        emoji: "📈", color: "#FBBF24" },
+    { path: "/administrateur/administrateur",     key: "admin",          emoji: "⚙️", color: "#0EA5E9" },
+    { path: "/Presence",                          key: "presence",       emoji: "✍🏻", color: "#0EA5E9" },
+    { path: "/admin/notifications",               key: "notifications",  emoji: "🔔", color: "#ef4444" },
+    { path: "/Superadmin/Superadmin-hub",         key: "superadmin",     emoji: "🔐", color: "#000000" },
   ],
-
   ResponsableIntegration: [
-    { path: "/membres/membres-hub", label: "Gestion des membres", emoji: "🧭", color: "#0284C7" },
+    { path: "/membres/membres-hub", key: "membres", emoji: "🧭", color: "#0284C7" },
   ],
   ResponsableEvangelisation: [
-    { path: "/evangelisation/evangelisation-hub", label: "Évangélisation", emoji: "✝️", color: "#0D9488" },
+    { path: "/evangelisation/evangelisation-hub", key: "evangelisation", emoji: "✝️", color: "#0D9488" },
   ],
   ResponsableCellule: [
-    { path: "/cellule/cellules-hub",  label: "Cellule",    emoji: "🏠", color: "#06B6D4" },
-    { path: "/admin/notifications",   label: "Notifications", emoji: "🔔", color: "#ef4444" },
+    { path: "/cellule/cellules-hub", key: "cellule",       emoji: "🏠", color: "#06B6D4" },
+    { path: "/admin/notifications",  key: "notifications", emoji: "🔔", color: "#ef4444" },
   ],
   SuperviseurCellule: [
-    { path: "/cellule/cellules-hub",  label: "Cellule",    emoji: "🏠", color: "#06B6D4" },
-    { path: "/admin/notifications",   label: "Notifications", emoji: "🔔", color: "#ef4444" },
+    { path: "/cellule/cellules-hub", key: "cellule",       emoji: "🏠", color: "#06B6D4" },
+    { path: "/admin/notifications",  key: "notifications", emoji: "🔔", color: "#ef4444" },
   ],
   Conseiller: [
-    { path: "/conseiller/conseiller-hub", label: "Conseiller Hub", emoji: "🤝", color: "#F59E0B" },
-    { path: "/admin/notifications",       label: "Notifications",  emoji: "🔔", color: "#ef4444" },
+    { path: "/conseiller/conseiller-hub", key: "conseillerHub",  emoji: "🤝", color: "#F59E0B" },
+    { path: "/admin/notifications",       key: "notifications",  emoji: "🔔", color: "#ef4444" },
   ],
   ResponsableFamilles: [
-    { path: "/famille/familles-hub", label: "Familles",      emoji: "👑", color: "#F59E0B" },
-    { path: "/admin/notifications",  label: "Notifications", emoji: "🔔", color: "#ef4444" },
+    { path: "/famille/familles-hub", key: "familles",      emoji: "👑", color: "#F59E0B" },
+    { path: "/admin/notifications",  key: "notifications", emoji: "🔔", color: "#ef4444" },
   ],
   Membre: [],
 };
 
 export default function IndexPage() {
   const router = useRouter();
+  const { lang } = useLang();
+  const t = translations[lang];
 
   const [roles, setRoles] = useState([]);
   const [features, setFeatures] = useState(null);
@@ -73,43 +116,30 @@ export default function IndexPage() {
     const init = async () => {
       try {
         const { data } = await supabase.auth.getSession();
+        if (!data?.session) { router.replace("/SignupEglise"); return; }
 
-        if (!data?.session) {
-          router.replace("/SignupEglise");
-          return;
-        }
-
-        // ─── Rôles ───────────────────────────────────────────────────────
         const storedRoles = localStorage.getItem("userRole");
         let parsedRoles = [];
         if (storedRoles) {
           try {
             const parsed = JSON.parse(storedRoles);
             parsedRoles = Array.isArray(parsed) ? parsed : [parsed];
-          } catch {
-            parsedRoles = [storedRoles];
-          }
+          } catch { parsedRoles = [storedRoles]; }
         }
         setRoles(parsedRoles);
 
-        // ─── Features (uniquement pour Administrateur) ────────────────────
         if (parsedRoles.includes("Administrateur") && !parsedRoles.includes("Superadmin")) {
           const { data: profile } = await supabase
-            .from("profiles")
-            .select("eglise_id")
-            .eq("id", data.session.user.id)
-            .single();
+            .from("profiles").select("eglise_id")
+            .eq("id", data.session.user.id).single();
 
           if (profile?.eglise_id) {
             const { data: dbFeatures } = await supabase
-              .from("eglise_features")
-              .select("feature, active")
+              .from("eglise_features").select("feature, active")
               .eq("eglise_id", profile.eglise_id);
-
             setFeatures(buildFeaturesState(dbFeatures || []));
           }
         }
-
         setReady(true);
       } catch (err) {
         console.error("Init error:", err);
@@ -117,7 +147,6 @@ export default function IndexPage() {
         setLoading(false);
       }
     };
-
     init();
   }, [router]);
 
@@ -127,44 +156,30 @@ export default function IndexPage() {
   let cardsToShow = [];
 
   if (roles.includes("Superadmin")) {
-    // Superadmin voit tout, pas de filtre features
     cardsToShow = [...roleCards.Superadmin];
-
   } else if (roles.includes("Administrateur")) {
-    // ✅ Toutes les cards filtrées par les features de l'église (notifications incluse)
     cardsToShow = roleCards.Administrateur.filter((card) => {
-      const featureKey = Object.keys(FEATURE_ROUTES).find(
-        (k) => FEATURE_ROUTES[k] === card.path
-      );
-      if (!featureKey) return true; // pas de feature associée = toujours visible
+      const featureKey = Object.keys(FEATURE_ROUTES).find((k) => FEATURE_ROUTES[k] === card.path);
+      if (!featureKey) return true;
       return canAccessFeature(features, featureKey);
     });
-
   } else {
-    // ✅ Autres rôles — cards fixes définies dans roleCards (notifications déjà incluse)
     roles.forEach((role) => {
       const key = role.trim();
       if (roleCards[key]) {
         roleCards[key].forEach((card) => {
-          if (!cardsToShow.find((c) => c.path === card.path)) {
-            cardsToShow.push(card);
-          }
+          if (!cardsToShow.find((c) => c.path === card.path)) cardsToShow.push(card);
         });
       }
     });
-
-    // ✅ Notifications pour les rôles qui ne l'ont pas encore (ex: ResponsableIntegration)
     const isMemberOnly = roles.length === 1 && roles[0] === "Membre";
     const notifAlreadyInCards = cardsToShow.find((c) => c.path === "/admin/notifications");
-
     if (!isMemberOnly && !notifAlreadyInCards) {
-      cardsToShow.push({ path: "/admin/notifications", label: "Notifications", emoji: "🔔", color: "#ef4444" });
+      cardsToShow.push({ path: "/admin/notifications", key: "notifications", emoji: "🔔", color: "#ef4444" });
     }
   }
 
-  const handleRedirect = (path) => {
-    router.push(path.startsWith("/") ? path : "/" + path);
-  };
+  const handleRedirect = (path) => router.push(path.startsWith("/") ? path : "/" + path);
 
   return (
     <div
@@ -175,12 +190,11 @@ export default function IndexPage() {
 
       <div className="text-center mb-6">
         <h1 className="text-3xl font-extrabold mt-4 mb-6 text-white drop-shadow-lg">
-          Tableau de bord
+          {t.dashboard}
         </h1>
         <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-white/90">
-            <span className="text-blue-300 font-semibold">Bienvenue dans votre espace</span>.
-            Accédez aux différents hubs selon votre rôle pour servir et organiser l'église.
+            <span className="text-blue-300 font-semibold">{t.welcome}</span>. {t.welcomeSub}
           </p>
         </div>
       </div>
@@ -194,15 +208,15 @@ export default function IndexPage() {
             style={{ borderTopColor: card.color }}
           >
             <div className="text-4xl mb-1">{card.emoji}</div>
-            <div className="text-lg font-bold text-gray-800">{card.label}</div>
+            <div className="text-lg font-bold text-gray-800">
+              {t.cards[card.key]}
+            </div>
           </div>
         ))}
       </div>
 
       <div className="max-w-3xl w-full mb-6 text-center">
-        <p className="italic text-base text-white/90">
-          Une vision, plusieurs rôles, un même objectif : voir des vies transformées.
-        </p>
+        <p className="italic text-base text-white/90">{t.footer}</p>
       </div>
 
       <Footer />

@@ -7,20 +7,10 @@ const supabaseAdmin = createClient(
 );
 
 const ministereOptions = [
-  "Intercession",
-  "Louange",
-  "Technique",
-  "Communication",
-  "Les Enfants",
-  "Les ados",
-  "Les jeunes",
-  "Finance",
-  "Nettoyage",
-  "Conseiller",
-  "Compassion",
-  "Visite",
-  "Berger",
-  "Modération",
+  "Intercession", "Louange", "Technique", "Communication",
+  "Les Enfants", "Les ados", "Les jeunes", "Finance",
+  "Nettoyage", "Conseiller", "Compassion", "Visite",
+  "Berger", "Modération",
 ];
 
 export default async function handler(req, res) {
@@ -33,10 +23,7 @@ export default async function handler(req, res) {
     if (!token)
       return res.status(401).json({ error: "Non authentifié" });
 
-    const {
-      data: { user },
-    } = await supabaseAdmin.auth.getUser(token);
-
+    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
     if (!user)
       return res.status(401).json({ error: "Non authentifié" });
 
@@ -50,7 +37,7 @@ export default async function handler(req, res) {
       roles,
       cellule_nom,
       cellule_zone,
-      cellule_mere_id, // ✅ AJOUTÉ — déstructuré depuis req.body
+      cellule_mere_id,
       ministeresSelected,
       member_id,
     } = req.body;
@@ -66,9 +53,8 @@ export default async function handler(req, res) {
       .eq("id", user.id)
       .single();
 
-    if (!adminProfile) {
+    if (!adminProfile)
       return res.status(400).json({ error: "Profil admin introuvable" });
-    }
 
     const eglise_id = adminProfile.eglise_id;
 
@@ -80,9 +66,8 @@ export default async function handler(req, res) {
         email_confirm: true,
       });
 
-    if (authError) {
+    if (authError)
       return res.status(400).json({ error: authError.message });
-    }
 
     const newUserId = authUser.user.id;
 
@@ -101,41 +86,58 @@ export default async function handler(req, res) {
         eglise_id,
       });
 
-    if (profileError) {
+    if (profileError)
       return res.status(400).json({ error: profileError.message });
-    }
 
-    // ── 3️⃣ Création cellule ──
+    // ── 3️⃣ Création cellule si ResponsableCellule ──
     if (roles.includes("ResponsableCellule") && cellule_nom && cellule_zone) {
+
+      // Construire cellule_full manuellement : "Zone - Nom"
+      const cellule_full = `${cellule_zone} - ${cellule_nom}`;
+
+      // Récupérer superviseur_id depuis la cellule mère si elle existe
+      let superviseur_id = null;
+      if (cellule_mere_id) {
+        const { data: celluleMere } = await supabaseAdmin
+          .from("cellules")
+          .select("superviseur_id, responsable_id")
+          .eq("id", cellule_mere_id)
+          .single();
+
+        // Le superviseur de la cellule fille = responsable de la cellule mère
+        if (celluleMere?.responsable_id) {
+          superviseur_id = celluleMere.responsable_id;
+        }
+      }
+
       const { error: celluleError } = await supabaseAdmin
         .from("cellules")
         .insert({
           cellule: cellule_nom,
           ville: cellule_zone,
+          cellule_full,
           responsable: `${prenom} ${nom}`,
           responsable_id: newUserId,
           telephone: telephone || "",
           eglise_id,
-          cellule_mere_id: cellule_mere_id || null, // ✅ AJOUTÉ — cellule mère liée
+          cellule_mere_id: cellule_mere_id || null,
+          superviseur_id,             // ✅ lié au responsable de la cellule mère
         });
 
-      if (celluleError) {
+      if (celluleError)
         return res.status(400).json({ error: celluleError.message });
-      }
     }
 
-    // ── 4️⃣ Préparation ministères ──
+    // ── 4️⃣ Ministères valides ──
     const ministeresValides = Array.isArray(ministeresSelected)
       ? ministeresSelected.filter((m) => ministereOptions.includes(m))
       : [];
 
-    // ── 5️⃣ Création OU mise à jour membre complet ──
+    // ── 5️⃣ Création OU mise à jour membre ──
     let createdMember;
-
     const isExistingMember = member_id && member_id !== "add-serviteur";
 
     if (isExistingMember) {
-      // Membre existant — on met à jour
       const { data: updatedMember, error: membreError } = await supabaseAdmin
         .from("membres_complets")
         .update({
@@ -150,14 +152,12 @@ export default async function handler(req, res) {
         .select()
         .single();
 
-      if (membreError) {
+      if (membreError)
         return res.status(400).json({ error: membreError.message });
-      }
 
       createdMember = updatedMember;
 
     } else {
-      // Nouveau serviteur — on crée
       const { data: newMember, error: membreError } = await supabaseAdmin
         .from("membres_complets")
         .insert({
@@ -176,14 +176,13 @@ export default async function handler(req, res) {
         .select()
         .single();
 
-      if (membreError) {
+      if (membreError)
         return res.status(400).json({ error: membreError.message });
-      }
 
       createdMember = newMember;
     }
 
-    // ── 6️⃣ Écriture stats ministère ──
+    // ── 6️⃣ Stats ministère ──
     if (createdMember && ministeresValides.length > 0) {
       const statsRows = ministeresValides.map((ministere) => ({
         membre_id: createdMember.id,
@@ -198,14 +197,11 @@ export default async function handler(req, res) {
         .from("stats_ministere_besoin")
         .insert(statsRows);
 
-      if (statsError) {
+      if (statsError)
         console.error("Erreur insertion stats ministère:", statsError);
-      }
     }
 
-    return res.status(200).json({
-      message: "Utilisateur + membre créé avec succès",
-    });
+    return res.status(200).json({ message: "Utilisateur + membre créé avec succès" });
 
   } catch (err) {
     console.error("create-user API error:", err);

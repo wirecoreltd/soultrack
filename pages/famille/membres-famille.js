@@ -9,6 +9,166 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import EditMemberSuivisPopup from "../../components/EditMemberSuivisPopup";
 import SuiviPopup from "../../components/SuiviPopup";
 import PresenceDot from "../../components/PresenceDot";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    // Page
+    titleMyFamilies: "Membres de mes",
+    titleMyFamily: "Membres de ma",
+    titleHighlight: "familles",
+    intro: "Consultez et gérez facilement les membres de vos familles.",
+    introSearch: " Recherchez",
+    introMid: ", filtrez par famille,",
+    introDetails: " accédez aux détails complets ",
+    introEnd: "et mettez à jour les informations pour un",
+    introFollow: " suivi précis et personnalisé",
+
+    // États
+    loading: "Chargement...",
+    noMember: "Aucun membre trouvé",
+    loadError: "Erreur de chargement",
+    accessDenied: "Accès non autorisé",
+
+    // Boutons
+    addMember: "➕ Ajouter un membre",
+    importList: "📥 Importer une Liste",
+
+    // Carte membre
+    createdOn: "Créé le",
+    details: "Détails",
+    closeDetails: "Fermer détails",
+
+    // Menu téléphone
+    call: "📞 Appeler",
+    sms: "✉️ SMS",
+    whatsappCall: "📱 Appel WhatsApp",
+    whatsappMsg: "💬 Message WhatsApp",
+
+    // Sections détail
+    identiteTitle: "👤 Identité",
+    civilite: "🎗️ Civilité",
+    age: "⏳ Tranche d'age",
+    whatsapp: "💬 WhatsApp",
+    oui: "Oui",
+    non: "Non",
+
+    suiviTitle: "📊 Suivi",
+    envoiSuivi: "📆 Envoyé en suivi",
+    statutSuivi: "💡 Statut Suivi",
+
+    spiritualTitle: "🕊 Vie spirituelle",
+    baptemeEau: "💧 Baptême d'Eau",
+    veutBaptise: "💦 Veut se faire baptiser",
+    baptemeFeu: "🔥 Baptême de Feu",
+    priereSalut: "🙏 Prière du salut",
+    typeConversion: "☀️ Type de conversion",
+    formation: "✒️ Formation",
+    ministere: "💢 Ministère",
+
+    parcoursTitle: "🌱 Parcours",
+    commentVenu: "🧩 Comment est-il venu",
+    raisonVenue: "✨ Raison de la venue",
+    infos: "📝 Infos",
+    commentaireSuivi: "📝 Commentaire Suivis",
+
+    pastoralTitle: "❤️‍🩹 Soin pastoral",
+    besoins: "❓ Difficultés / Besoins",
+    addSuivi: "💡 Ajouter / Voir suivis",
+    editContact: "✏️ Modifier le contact",
+
+    // Infos carte
+    ville: "🏙️",
+    famille: "🏠",
+    responsable: "👤",
+
+    // Statuts suivi
+    statutLabels: {
+      1: "En attente",
+      2: "En Suivis",
+      3: "Intégré",
+      4: "Refus",
+    },
+  },
+  en: {
+    // Page
+    titleMyFamilies: "Members of my",
+    titleMyFamily: "Members of my",
+    titleHighlight: "families",
+    intro: "Easily view and manage the members of your families.",
+    introSearch: " Search",
+    introMid: ", filter by family,",
+    introDetails: " access full details ",
+    introEnd: "and update information for",
+    introFollow: " precise, personalised follow-up",
+
+    // États
+    loading: "Loading...",
+    noMember: "No member found",
+    loadError: "Loading error",
+    accessDenied: "Access denied",
+
+    // Boutons
+    addMember: "➕ Add a member",
+    importList: "📥 Import a list",
+
+    // Carte membre
+    createdOn: "Created on",
+    details: "Details",
+    closeDetails: "Close details",
+
+    // Menu téléphone
+    call: "📞 Call",
+    sms: "✉️ SMS",
+    whatsappCall: "📱 WhatsApp call",
+    whatsappMsg: "💬 WhatsApp message",
+
+    // Sections détail
+    identiteTitle: "👤 Identity",
+    civilite: "🎗️ Title",
+    age: "⏳ Age range",
+    whatsapp: "💬 WhatsApp",
+    oui: "Yes",
+    non: "No",
+
+    suiviTitle: "📊 Follow-up",
+    envoiSuivi: "📆 Sent to follow-up",
+    statutSuivi: "💡 Follow-up status",
+
+    spiritualTitle: "🕊 Spiritual life",
+    baptemeEau: "💧 Water baptism",
+    veutBaptise: "💦 Wants to be baptised",
+    baptemeFeu: "🔥 Spirit baptism",
+    priereSalut: "🙏 Salvation prayer",
+    typeConversion: "☀️ Conversion type",
+    formation: "✒️ Training",
+    ministere: "💢 Ministry",
+
+    parcoursTitle: "🌱 Journey",
+    commentVenu: "🧩 How they came",
+    raisonVenue: "✨ Reason for coming",
+    infos: "📝 Info",
+    commentaireSuivi: "📝 Follow-up comment",
+
+    pastoralTitle: "❤️‍🩹 Pastoral care",
+    besoins: "❓ Difficulties / Needs",
+    addSuivi: "💡 Add / View follow-ups",
+    editContact: "✏️ Edit contact",
+
+    // Infos carte
+    ville: "🏙️",
+    famille: "🏠",
+    responsable: "👤",
+
+    // Statuts suivi
+    statutLabels: {
+      1: "Pending",
+      2: "In follow-up",
+      3: "Integrated",
+      4: "Refusal",
+    },
+  },
+};
 
 export default function MembresFamille() {
   return (
@@ -19,6 +179,9 @@ export default function MembresFamille() {
 }
 
 function MembresFamilleContent() {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const router = useRouter();
   const { memberId, familleId } = router.query;
 
@@ -56,7 +219,9 @@ function MembresFamilleContent() {
   };
 
   const formatMinistere = (ministereJson, autreMinistere) => {
-    let list = parseJsonArray(ministereJson).filter((m) => m.toLowerCase() !== "autre");
+    let list = parseJsonArray(ministereJson).filter(
+      (m) => m.toLowerCase() !== "autre"
+    );
     if (autreMinistere?.trim()) list.push(autreMinistere.trim());
     return list.join(", ") || "—";
   };
@@ -65,23 +230,24 @@ function MembresFamilleContent() {
     if (!dateString) return "—";
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
-    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
+    const monthsFr = [
+      "Janv","Févr","Mars","Avr","Mai","Juin",
+      "Juil","Août","Sept","Oct","Nov","Déc",
+    ];
+    const monthsEn = [
+      "Jan","Feb","Mar","Apr","May","Jun",
+      "Jul","Aug","Sep","Oct","Nov","Dec",
+    ];
+    const months = lang === "en" ? monthsEn : monthsFr;
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
-  };
-
-  const statutSuiviLabels = {
-    1: "En attente",
-    2: "En Suivis",
-    3: "Intégré",
-    4: "Refus",
   };
 
   const getBorderColor = (member) => {
     switch ((member?.etat_contact || "").toLowerCase().trim()) {
-      case "nouveau": return "#fb923c";
+      case "nouveau":  return "#fb923c";
       case "existant": return "#4ade80";
-      case "inactif": return "#9ca3af";
-      default: return "#9ca3af";
+      case "inactif":  return "#9ca3af";
+      default:         return "#9ca3af";
     }
   };
 
@@ -89,10 +255,12 @@ function MembresFamilleContent() {
     setMembres((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
   };
 
-  // ------------------- FETCH USER + FamilleS -------------------
+  // ------------------- FETCH USER + FAMILLES -------------------
   useEffect(() => {
     const fetchFamilles = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: profile } = await supabase
@@ -100,13 +268,10 @@ function MembresFamilleContent() {
         .select("id, role, eglise_id")
         .eq("id", user.id)
         .single();
-      
-      if (!profile) return;
-      
-      // ✅ IMPORTANT
-      setUserRole(profile.role);
 
       if (!profile) return;
+
+      setUserRole(profile.role);
 
       let query = supabase
         .from("familles")
@@ -114,8 +279,10 @@ function MembresFamilleContent() {
         .eq("eglise_id", profile.eglise_id)
         .order("familles_full");
 
-      // ✅ ResponsableCellule : seulement ses propres cellules
-      if (profile.roles?.includes("ResponsableFamilles") && !profile.roles?.includes("Administrateur")){
+      if (
+        profile.roles?.includes("ResponsableFamilles") &&
+        !profile.roles?.includes("Administrateur")
+      ) {
         query = query.eq("responsable_id", profile.id);
       }
 
@@ -127,126 +294,119 @@ function MembresFamilleContent() {
   }, []);
 
   // ------------------- FETCH MEMBRES -------------------
-  // ------------------- FETCH MEMBRES -------------------
-useEffect(() => {
-  if (memberIdStr) return;
+  useEffect(() => {
+    if (memberIdStr) return;
 
-  const fetchAllMembers = async () => {
-    setLoading(true);
+    const fetchAllMembers = async () => {
+      setLoading(true);
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, role, eglise_id")
-        .eq("id", user.id)
-        .single();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, role, eglise_id")
+          .eq("id", user.id)
+          .single();
 
-      if (!profile) return;
+        if (!profile) return;
 
-      let query = supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("statut_suivis", 3)
-        .eq("eglise_id", profile.eglise_id)
-        .not("famille_id", "is", null)
-        .not("etat_contact", "eq", "supprime")
-        .order("created_at", { ascending: false });
+        let query = supabase
+          .from("membres_complets")
+          .select("*")
+          .eq("statut_suivis", 3)
+          .eq("eglise_id", profile.eglise_id)
+          .not("famille_id", "is", null)
+          .not("etat_contact", "eq", "supprime")
+          .order("created_at", { ascending: false });
 
-      let mesFamilleIds = [];
+        let mesFamilleIds = [];
 
-      // ---------------- ADMIN ----------------
-      if (profile.role === "Administrateur") {
-
-        if (familleId) {
-          query = query.eq("famille_id", familleId);
+        // ---------------- ADMIN ----------------
+        if (profile.role === "Administrateur") {
+          if (familleId) {
+            query = query.eq("famille_id", familleId);
+          }
         }
 
-      }
+        // ---------------- RESPONSABLE FAMILLES ----------------
+        else if (profile.role === "ResponsableFamilles") {
+          const { data: mesFamilles } = await supabase
+            .from("familles")
+            .select("id")
+            .eq("responsable_id", profile.id)
+            .eq("eglise_id", profile.eglise_id);
 
-      // ---------------- RESPONSABLE FAMILLES ----------------
-      else if (profile.role === "ResponsableFamilles") {
+          mesFamilleIds = (mesFamilles || []).map((f) => f.id);
 
-        const { data: mesFamilles } = await supabase
-          .from("familles")
-          .select("id")
-          .eq("responsable_id", profile.id)
-          .eq("eglise_id", profile.eglise_id);
+          if (!mesFamilleIds.length) {
+            setMembres([]);
+            setMessage(t.noMember);
+            setLoading(false);
+            return;
+          }
 
-        mesFamilleIds = (mesFamilles || []).map(f => f.id);
+          query = query.in("famille_id", mesFamilleIds);
 
-        if (!mesFamilleIds.length) {
+          if (familleId && mesFamilleIds.includes(familleId)) {
+            query = query.eq("famille_id", familleId);
+          }
+        }
+
+        // ---------------- SUPERVISEUR FAMILLES ----------------
+        else if (profile.role === "SuperviseurFamilles") {
+          const { data: mesFamilles } = await supabase
+            .from("familles")
+            .select("id")
+            .eq("superviseur_id", profile.id)
+            .eq("eglise_id", profile.eglise_id);
+
+          mesFamilleIds = (mesFamilles || []).map((f) => f.id);
+
+          if (!mesFamilleIds.length) {
+            setMembres([]);
+            setMessage(t.noMember);
+            setLoading(false);
+            return;
+          }
+
+          query = query.in("famille_id", mesFamilleIds);
+
+          if (familleId && mesFamilleIds.includes(familleId)) {
+            query = query.eq("famille_id", familleId);
+          }
+        }
+
+        // ---------------- AUTRES ROLES ----------------
+        else {
           setMembres([]);
-          setMessage("Aucun membre trouvé");
+          setMessage(t.accessDenied);
           setLoading(false);
           return;
         }
 
-        // sécurité de base
-        query = query.in("famille_id", mesFamilleIds);
+        const { data, error } = await query;
+        if (error) throw error;
 
-        // filtre optionnel sécurisé
-        if (familleId && mesFamilleIds.includes(familleId)) {
-          query = query.eq("famille_id", familleId);
+        setMembres(data || []);
+
+        if (!data || data.length === 0) {
+          setMessage(t.noMember);
         }
-      }
-
-      // ---------------- SUPERVISEUR FAMILLES ----------------
-      else if (profile.role === "SuperviseurFamilles") {
-
-        const { data: mesFamilles } = await supabase
-          .from("familles")
-          .select("id")
-          .eq("superviseur_id", profile.id)
-          .eq("eglise_id", profile.eglise_id);
-
-        mesFamilleIds = (mesFamilles || []).map(f => f.id);
-
-        if (!mesFamilleIds.length) {
-          setMembres([]);
-          setMessage("Aucun membre trouvé");
-          setLoading(false);
-          return;
-        }
-
-        // sécurité de base
-        query = query.in("famille_id", mesFamilleIds);
-
-        // filtre optionnel sécurisé
-        if (familleId && mesFamilleIds.includes(familleId)) {
-          query = query.eq("famille_id", familleId);
-        }
-      }
-
-      // ---------------- AUTRES ROLES ----------------
-      else {
-        setMembres([]);
-        setMessage("Accès non autorisé");
+      } catch (err) {
+        console.error(err);
+        setMessage(t.loadError);
+      } finally {
         setLoading(false);
-        return;
       }
+    };
 
-      const { data, error } = await query;
-      if (error) throw error;
+    fetchAllMembers();
+  }, [memberIdStr, familleId]);
 
-      setMembres(data || []);
-
-      if (!data || data.length === 0) {
-        setMessage("Aucun membre trouvé");
-      }
-
-    } catch (err) {
-      console.error(err);
-      setMessage("Erreur de chargement");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchAllMembers();
-}, [memberIdStr, familleId]);
   // ------------------- CLICK OUTSIDE -------------------
   const handleClickOutside = useCallback((e) => {
     if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
@@ -280,46 +440,48 @@ useEffect(() => {
 
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
         <span className="text-white">
-          {familles.length > 1 ? "Membres de mes " : "Membres de ma "}
+          {familles.length > 1 ? t.titleMyFamilies : t.titleMyFamily}{" "}
         </span>
-        <span className="text-emerald-300">
-          {familles.length > 1 ? "familles" : "familles"}
-        </span>
+        <span className="text-emerald-300">{t.titleHighlight}</span>
       </h1>
 
       <div className="max-w-3xl w-full mb-6 text-center mx-auto">
         <p className="italic text-base text-white/90">
-          Consultez et gérez facilement les membres de vos familles.
-          <span className="text-blue-300 font-semibold"> Recherchez</span>, filtrez par famille,{" "}
-          <span className="text-blue-300 font-semibold">accédez aux détails complets </span>
-          et mettez à jour les informations pour un{" "}
-          <span className="text-blue-300 font-semibold">suivi précis et personnalisé</span>.
+          {t.intro}
+          <span className="text-blue-300 font-semibold">{t.introSearch}</span>
+          {t.introMid}{" "}
+          <span className="text-blue-300 font-semibold">{t.introDetails}</span>
+          {t.introEnd}{" "}
+          <span className="text-blue-300 font-semibold">{t.introFollow}</span>.
         </p>
       </div>
 
-      {loading && <div className="text-white text-center mt-10">Chargement...</div>}
-      {!loading && message && <div className="text-white text-center mt-10">{message}</div>}
+      {loading && (
+        <div className="text-white text-center mt-10">{t.loading}</div>
+      )}
+      {!loading && message && (
+        <div className="text-white text-center mt-10">{message}</div>
+      )}
 
       {!loading && !message && (
         <>
           {/* BOUTONS */}
-         {userRole === "ResponsableFamilles" && (
-          <div className="flex justify-end mt-4 mb-4 gap-2">
-            <button
-              onClick={() => router.push("/ajouter-membre-famille")}
-              className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-            >
-              ➕ Ajouter un membre
-            </button>
-        
-            <button
-              onClick={() => router.push("/admin/import")}
-              className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-            >
-              📥 Importer une Liste
-            </button>
-          </div>
-        )}
+          {userRole === "ResponsableFamilles" && (
+            <div className="flex justify-end mt-4 mb-4 gap-2">
+              <button
+                onClick={() => router.push("/ajouter-membre-famille")}
+                className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+              >
+                {t.addMember}
+              </button>
+              <button
+                onClick={() => router.push("/admin/import")}
+                className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
+              >
+                {t.importList}
+              </button>
+            </div>
+          )}
 
           <div className="flex justify-center">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
@@ -335,22 +497,22 @@ useEffect(() => {
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
                     <h2 className="relative w-full text-center font-bold text-lg flex items-center justify-center gap-1">
-  <span>
-    {m.prenom} {m.nom}
-  </span>
+                      <span>
+                        {m.prenom} {m.nom}
+                      </span>
+                      {m.star === true &&
+                        m.etat_contact?.trim().toLowerCase() === "existant" && (
+                          <span className="text-yellow-400">⭐</span>
+                        )}
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                        <PresenceDot
+                          memberId={m.id}
+                          egliseId={m.eglise_id}
+                          dateVenu={m.date_venu}
+                        />
+                      </div>
+                    </h2>
 
-  {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
-    <span className="text-yellow-400">⭐</span>
-  )}
-
-  <div className="absolute right-2 top-1/2 -translate-y-1/2">
-    <PresenceDot
-      memberId={m.id}
-      egliseId={m.eglise_id}
-      dateVenu={m.date_venu}
-    />
-  </div>
-</h2>
                     {/* Téléphone */}
                     <div className="relative text-center mt-2 phone-menu-container">
                       {m.telephone ? (
@@ -359,19 +521,26 @@ useEffect(() => {
                             className="text-orange-500 underline cursor-pointer font-semibold"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setOpenPhoneId(openPhoneId === m.id ? null : m.id);
+                              setOpenPhoneId(
+                                openPhoneId === m.id ? null : m.id
+                              );
                             }}
                           >
                             {m.telephone}
                           </p>
-
                           {openPhoneId === m.id && (
                             <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56">
-                              <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">
-                                📞 Appeler
+                              <a
+                                href={`tel:${m.telephone}`}
+                                className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                              >
+                                {t.call}
                               </a>
-                              <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">
-                                ✉️ SMS
+                              <a
+                                href={`sms:${m.telephone}`}
+                                className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                              >
+                                {t.sms}
                               </a>
                               <a
                                 href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`}
@@ -379,7 +548,7 @@ useEffect(() => {
                                 rel="noopener noreferrer"
                                 className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
                               >
-                                📱 Appel WhatsApp
+                                {t.whatsappCall}
                               </a>
                               <a
                                 href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
@@ -387,7 +556,7 @@ useEffect(() => {
                                 rel="noopener noreferrer"
                                 className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
                               >
-                                💬 Message WhatsApp
+                                {t.whatsappMsg}
                               </a>
                             </div>
                           )}
@@ -397,76 +566,118 @@ useEffect(() => {
                       )}
                     </div>
 
-                    <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
-                    <p className="text-center text-sm mt-1">🏠 {famille?.famille_full || "—"}</p>
-                    <p className="text-center text-sm mt-1">👤 {famille?.responsable || "—"}</p>
+                    <p className="text-center text-sm mt-1">
+                      {t.ville} {m.ville || ""}
+                    </p>
+                    <p className="text-center text-sm mt-1">
+                      {t.famille} {famille?.famille_full || "—"}
+                    </p>
+                    <p className="text-center text-sm mt-1">
+                      {t.responsable} {famille?.responsable || "—"}
+                    </p>
 
-                        <div className="w-full flex justify-end mt-3">
-              <p className="text-[11px] text-gray-400">
-                Créé le {formatDateFr(m.date_venu)}
-              </p>
-            </div>
+                    <div className="w-full flex justify-end mt-3">
+                      <p className="text-[11px] text-gray-400">
+                        {t.createdOn} {formatDateFr(m.date_venu)}
+                      </p>
+                    </div>
 
                     <button
-                      onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
+                      onClick={() =>
+                        setDetailsOpen((prev) => ({
+                          ...prev,
+                          [m.id]: !prev[m.id],
+                        }))
+                      }
                       className="text-orange-500 underline mt-2 block mx-auto text-sm"
                     >
-                      {isOpen ? "Fermer détails" : "Détails"}
+                      {isOpen ? t.closeDetails : t.details}
                     </button>
 
                     {isOpen && (
                       <div className="text-black text-sm space-y-2 w-full">
+                        {/* Identité */}
                         <div>
-                          <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
-                          <p>🎗️ Civilité : {m.sexe || ""}</p>
-                          <p>⏳ Tranche d'age : {m.age || ""}</p>
-                          <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                        </div>
-                        <hr />
-
-                        <div>
-                          <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
-                          <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
+                          <p className="font-bold text-[#2E3192] mb-1">
+                            {t.identiteTitle}
+                          </p>
+                          <p>{t.civilite} : {m.sexe || ""}</p>
+                          <p>{t.age} : {m.age || ""}</p>
                           <p>
-                            💡 Statut Suivi :{" "}
-                            {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}
+                            {t.whatsapp} : {m.is_whatsapp ? t.oui : t.non}
                           </p>
                         </div>
                         <hr />
 
+                        {/* Suivi */}
                         <div>
-                          <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
-                          <p>💧 Baptême d'Eau : {m.bapteme_eau || "—"}</p>
-                          {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
-                            <p className="ml-6">💦 Veut se faire baptiser</p>
-                          )}
-                          <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
-                          <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
-                          <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
-                          <p>✒️ Formation : {m.Formation || ""}</p>
-                          <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
+                          <p className="font-bold text-[#2E3192] mb-1">
+                            {t.suiviTitle}
+                          </p>
+                          <p>
+                            {t.envoiSuivi} : {formatDateFr(m.date_envoi_suivi)}
+                          </p>
+                          <p>
+                            {t.statutSuivi} :{" "}
+                            {t.statutLabels[m.statut_suivis] ||
+                              m.suivi_statut ||
+                              ""}
+                          </p>
                         </div>
                         <hr />
 
+                        {/* Vie spirituelle */}
                         <div>
-                          <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>
-                          <p>🧩 Comment est-il venu : {m.venu || ""}</p>
-                          <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? "—"}</p>
-                          <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                          <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
+                          <p className="font-bold text-[#2E3192] mb-1">
+                            {t.spiritualTitle}
+                          </p>
+                          <p>{t.baptemeEau} : {m.bapteme_eau || "—"}</p>
+                          {m.bapteme_eau === "Non" &&
+                            m.veut_se_faire_baptiser === "Oui" && (
+                              <p className="ml-6">{t.veutBaptise}</p>
+                            )}
+                          <p>{t.baptemeFeu} : {m.bapteme_esprit || "—"}</p>
+                          <p>{t.priereSalut} : {m.priere_salut || "—"}</p>
+                          <p>{t.typeConversion} : {m.type_conversion || "—"}</p>
+                          <p>{t.formation} : {m.Formation || ""}</p>
+                          <p>
+                            {t.ministere} :{" "}
+                            {formatMinistere(m.Ministere, m.Autre_Ministere)}
+                          </p>
                         </div>
                         <hr />
 
+                        {/* Parcours */}
                         <div>
-                          <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
-                          <p>❓ Difficultés / Besoins : {besoins}</p>
+                          <p className="font-bold text-[#2E3192] mb-1">
+                            {t.parcoursTitle}
+                          </p>
+                          <p>{t.commentVenu} : {m.venu || ""}</p>
+                          <p>
+                            {t.raisonVenue} :{" "}
+                            {m.statut_initial ?? m.statut ?? "—"}
+                          </p>
+                          <p>{t.infos} : {m.infos_supplementaires || "—"}</p>
+                          <p>
+                            {t.commentaireSuivi} :{" "}
+                            {m.commentaire_suivis || ""}
+                          </p>
+                        </div>
+                        <hr />
+
+                        {/* Soin pastoral */}
+                        <div>
+                          <p className="font-bold text-[#2E3192] mb-1">
+                            {t.pastoralTitle}
+                          </p>
+                          <p>{t.besoins} : {besoins}</p>
 
                           <div className="flex justify-center">
                             <button
                               onClick={() => setOpenSuiviMemberId(m.id)}
                               className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
                             >
-                              💡 Ajouter / Voir suivis
+                              {t.addSuivi}
                             </button>
                           </div>
 
@@ -483,7 +694,7 @@ useEffect(() => {
                             onClick={() => setEditMember(m)}
                             className="text-blue-600 text-sm mt-2 block mx-auto underline"
                           >
-                            ✏️ Modifier le contact
+                            {t.editContact}
                           </button>
                         </div>
                       </div>

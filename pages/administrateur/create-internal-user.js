@@ -269,7 +269,7 @@ function CreateInternalUserContent() {
     submitForm(false);
   };
 
-  const handleCancel = () => router.push("/admin/list-users");
+  const handleCancel = () => router.back();
 
   const showCelluleFields =
     cellulesActive === true &&

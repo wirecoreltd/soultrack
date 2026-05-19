@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useLang } from "../../hooks/useLang";
+import { useLang } from "../hooks/useLang";
 
 // ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
 const translations = {

@@ -4,6 +4,22 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import NotificationBell from "./NotificationBell";
+import { useLang } from "../hooks/useLang";
+
+const translations = {
+  fr: {
+    back: "← Retour",
+    logout: "Déconnexion",
+    connected: "Connecté :",
+    supervisedBy: "🔗 Supervisé par :",
+  },
+  en: {
+    back: "← Back",
+    logout: "Log out",
+    connected: "Logged in:",
+    supervisedBy: "🔗 Supervised by:",
+  },
+};
 
 function getIsoCode(countryName) {
   const isoMap = {
@@ -35,10 +51,6 @@ function getIsoCode(countryName) {
   return isoMap[countryName] || "un";
 }
 
-/**
- * Abrège la dénomination : premières lettres de chaque mot en majuscule.
- * Ex: "Assemble de Dieu" → "ADD"
- */
 function abbrevDenomination(str) {
   return (str || "")
     .trim()
@@ -48,11 +60,6 @@ function abbrevDenomination(str) {
     .join("");
 }
 
-/**
- * Génère le label du superviseur : dénomination abrégée + autres champs en clair.
- * Champs vides ignorés, pas de tiret orphelin.
- * Format : ADD - Centre Apostolique - branche - ville
- */
 function getSupervisionLabel({ denomination, nom, branche, ville }) {
   return [
     abbrevDenomination(denomination),
@@ -66,6 +73,8 @@ function getSupervisionLabel({ denomination, nom, branche, ville }) {
 
 export default function HeaderPages() {
   const router = useRouter();
+  const { lang } = useLang();
+  const t = translations[lang];
 
   const [prenom, setPrenom] = useState("Utilisateur");
   const [eglise, setEglise] = useState("");
@@ -84,10 +93,8 @@ export default function HeaderPages() {
   const [egliseId, setEgliseId] = useState(null);
   const [userId, setUserId] = useState(null);
 
-  // ✅ Supervision
-  const [supervision, setSupervision] = useState(null); // { denomination, nom, branche, ville }
+  const [supervision, setSupervision] = useState(null);
 
-  // 🔁 Récupérer rôles depuis localStorage
   useEffect(() => {
     const storedRoles = localStorage.getItem("userRole");
     if (storedRoles) {
@@ -100,7 +107,6 @@ export default function HeaderPages() {
     }
   }, []);
 
-  // 🔁 Fetch profil
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -137,7 +143,6 @@ export default function HeaderPages() {
             setPays(egliseData.pays || "");
           }
 
-          // ✅ Chercher si cette église est supervisée (statut acceptée)
           const { data: supervisionData } = await supabase
             .from("eglise_supervisions")
             .select("superviseur_eglise_id")
@@ -162,7 +167,6 @@ export default function HeaderPages() {
             }
           }
         }
-
       } catch (err) {
         console.error("Erreur récupération profil :", err);
       } finally {
@@ -173,20 +177,11 @@ export default function HeaderPages() {
     fetchProfile();
   }, []);
 
-  // 🔁 Navigation intelligente via logo
   const handleLogoClick = () => {
-    if (!roles || roles.length === 0) {
-      router.push("/index");
-      return;
-    }
-
-    if (roles.length > 1) {
-      router.push("/index");
-      return;
-    }
+    if (!roles || roles.length === 0) { router.push("/index"); return; }
+    if (roles.length > 1) { router.push("/index"); return; }
 
     const role = roles[0];
-
     if (role === "ResponsableCellule" || role === "SuperviseurCellule") {
       router.push("/cellule/cellules-hub");
     } else if (role === "ResponsableFamilles") {
@@ -208,9 +203,7 @@ export default function HeaderPages() {
   };
 
   const handleClickInvitation = () => {
-    if (pendingToken) {
-      router.push(`/accept-invitation?token=${pendingToken}`);
-    }
+    if (pendingToken) router.push(`/accept-invitation?token=${pendingToken}`);
   };
 
   return (
@@ -225,7 +218,7 @@ export default function HeaderPages() {
             onClick={() => router.back()}
             className="text-amber-300 hover:text-gray-200 transition"
           >
-            ← Retour
+            {t.back}
           </button>
 
           <div className="mt-2">
@@ -268,19 +261,17 @@ export default function HeaderPages() {
               onClick={handleLogout}
               className="text-amber-300 text-sm hover:text-gray-200 transition"
             >
-              Déconnexion
+              {t.logout}
             </button>
           </div>
 
           <p className="text-white text-sm mt-1">
-            Connecté : <span className="font-semibold">{loading ? "..." : prenom}</span>
+            {t.connected} <span className="font-semibold">{loading ? "..." : prenom}</span>
           </p>
 
-          {/* ✅ Supervisé par — même style que Déconnexion, 2 lignes si long */}
           {supervision && (
             <p className="text-amber-300 text-sm mt-0.5 text-right leading-snug break-words max-w-[220px]">
-              🔗 Supervisé par :{" "}
-              {getSupervisionLabel(supervision)}
+              {t.supervisedBy} {getSupervisionLabel(supervision)}
             </p>
           )}
         </div>

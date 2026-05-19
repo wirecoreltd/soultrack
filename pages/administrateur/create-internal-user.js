@@ -16,34 +16,25 @@ export default function CreateInternalUserPage() {
 }
 
 function CreateInternalUserContent() {
-  // ✅ Tous les hooks en premier — avant tout return conditionnel
   const cellulesActive   = useFeature("cellules");
   const conseillerActive = useFeature("conseiller");
   const famillesActive   = useFeature("familles");
 
   const router = useRouter();
-  const [members, setMembers] = useState([]);
+  const [members, setMembers]                   = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState("");
-  const [duplicatePhone, setDuplicatePhone] = useState(null);
-  const [duplicateEmail, setDuplicateEmail] = useState(null);
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [rolesToHide, setRolesToHide] = useState([]);
-  const [cellules, setCellules] = useState([]);
+  const [duplicatePhone, setDuplicatePhone]     = useState(null);
+  const [duplicateEmail, setDuplicateEmail]     = useState(null);
+  const [message, setMessage]                   = useState("");
+  const [loading, setLoading]                   = useState(false);
+  const [rolesToHide, setRolesToHide]           = useState([]);
+  const [cellules, setCellules]                 = useState([]);
 
   const [formData, setFormData] = useState({
-    prenom: "",
-    nom: "",
-    sexe: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    telephone: "",
-    roles: [],
-    cellule_nom: "",
-    cellule_zone: "",
-    cellule_mere_id: "", // ✅ présent dès l'initialisation
-    ministere: [],
+    prenom: "", nom: "", sexe: "", email: "",
+    password: "", confirmPassword: "", telephone: "",
+    roles: [], cellule_nom: "", cellule_zone: "",
+    cellule_mere_id: "", ministere: [],
   });
 
   const ministereOptions = [
@@ -53,7 +44,6 @@ function CreateInternalUserContent() {
     "Berger", "Modération",
   ];
 
-  // ✅ allRoles conditionné par features
   const allRoles = useMemo(() => [
     { key: "Administrateur",            label: "Administrateur" },
     { key: "ResponsableIntegration",    label: "Responsable Intégration" },
@@ -67,11 +57,11 @@ function CreateInternalUserContent() {
       { key: "ResponsableFamilles",     label: "Responsable Familles" },
     ] : []),
     ...(conseillerActive ? [
-      { key: "Conseiller",              label: "Conseiller" },
+      { key: "Conseiller", label: "Conseiller" },
     ] : []),
   ], [cellulesActive, conseillerActive, famillesActive]);
 
-  // ─── Récupérer les membres et cellules existants ───
+  // ─── Fetch membres + cellules ───
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -88,7 +78,7 @@ function CreateInternalUserContent() {
 
         const { data: cellulesData } = await supabase
           .from("cellules")
-          .select("id, cellule_full")
+          .select("id, cellule_full, cellule, ville, responsable")
           .eq("eglise_id", profile.eglise_id)
           .order("cellule_full");
 
@@ -106,11 +96,10 @@ function CreateInternalUserContent() {
         console.error("Erreur fetchData:", err);
       }
     };
-
     fetchData();
   }, []);
 
-  // ─── Pré-remplissage infos + calcul des rôles à cacher ───
+  // ─── Pré-remplissage membre sélectionné ───
   useEffect(() => {
     if (!selectedMemberId || selectedMemberId === "add-serviteur") {
       setFormData(prev => ({
@@ -142,41 +131,39 @@ function CreateInternalUserContent() {
           .eq("telephone", member.telephone);
 
         let hide = [];
-        profilesData?.forEach(p => {
-          if (p.roles?.length) hide.push(...p.roles);
-        });
+        profilesData?.forEach(p => { if (p.roles?.length) hide.push(...p.roles); });
         setRolesToHide([...new Set(hide)]);
       };
-
       checkExistingRoles();
     }
   }, [selectedMemberId, members]);
 
   const handleChange = e =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleRoleChange = role => {
-    setFormData(prev => {
-      const roles = prev.roles.includes(role)
+    setFormData(prev => ({
+      ...prev,
+      roles: prev.roles.includes(role)
         ? prev.roles.filter(r => r !== role)
-        : [...prev.roles, role];
-      return { ...prev, roles };
-    });
+        : [...prev.roles, role],
+      ...(role === "ResponsableCellule" && prev.roles.includes(role)
+        ? { cellule_nom: "", cellule_zone: "", cellule_mere_id: "" }
+        : {}),
+    }));
   };
 
-  const handleMinistereChange = ministere => {
-    setFormData(prev => {
-      const list = prev.ministere.includes(ministere)
-        ? prev.ministere.filter(m => m !== ministere)
-        : [...prev.ministere, ministere];
-      return { ...prev, ministere: list };
-    });
+  const handleMinistereChange = m => {
+    setFormData(prev => ({
+      ...prev,
+      ministere: prev.ministere.includes(m)
+        ? prev.ministere.filter(x => x !== m)
+        : [...prev.ministere, m],
+    }));
   };
 
   // ─── Soumission ───
-  const handleSubmit = async (e, forceCreate = false) => {
-    e.preventDefault();
-
+  const submitForm = async (forceCreate = false) => {
     if (formData.password !== formData.confirmPassword) {
       setMessage("❌ Les mots de passe ne correspondent pas.");
       return;
@@ -185,49 +172,59 @@ function CreateInternalUserContent() {
       setMessage("❌ Sélectionnez au moins un rôle !");
       return;
     }
+    if (formData.roles.includes("ResponsableCellule")) {
+      if (!formData.cellule_nom?.trim()) {
+        setMessage("❌ Le nom de la cellule est obligatoire.");
+        return;
+      }
+      if (!formData.cellule_zone?.trim()) {
+        setMessage("❌ La zone de la cellule est obligatoire.");
+        return;
+      }
+    }
 
     setLoading(true);
+    setMessage("");
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setMessage("❌ Session expirée");
-        setLoading(false);
+        setMessage("❌ Session expirée. Veuillez vous reconnecter.");
         return;
       }
 
       // 1️⃣ Vérification téléphone
-      if (selectedMemberId === "add-serviteur" && formData.telephone) {
+      if (selectedMemberId === "add-serviteur" && formData.telephone && !forceCreate) {
         const { data: existingMembers } = await supabase
           .from("membres_complets")
-          .select("prenom, nom, sexe, telephone, etat_contact")
+          .select("prenom, nom, telephone")
           .eq("telephone", formData.telephone)
           .in("etat_contact", ["existant", "nouveau"]);
 
-        if (existingMembers?.length > 0 && !forceCreate) {
+        if (existingMembers?.length > 0) {
           const existing = existingMembers[0];
           setDuplicatePhone(existing);
           setMessage(`⚠️ Le numéro ${formData.telephone} existe déjà pour ${existing.prenom} ${existing.nom}`);
-          setLoading(false);
           return;
         }
       }
 
       // 2️⃣ Vérification email
-      const { data: existingUsers } = await supabase
-        .from("profiles")
-        .select("id, email, prenom, nom")
-        .eq("email", formData.email);
+      if (!forceCreate) {
+        const { data: existingUsers } = await supabase
+          .from("profiles")
+          .select("id, email, prenom, nom")
+          .eq("email", formData.email);
 
-      if (existingUsers?.length > 0 && !forceCreate) {
-        const existing = existingUsers[0];
-        setDuplicateEmail(existing);
-        setMessage(`⚠️ L'email ${formData.email} est déjà utilisé par ${existing.prenom} ${existing.nom}`);
-        setLoading(false);
-        return;
+        if (existingUsers?.length > 0) {
+          const existing = existingUsers[0];
+          setDuplicateEmail(existing);
+          setMessage(`⚠️ L'email ${formData.email} est déjà utilisé par ${existing.prenom} ${existing.nom}`);
+          return;
+        }
       }
 
-      // 3️⃣ Création utilisateur via API
+      // 3️⃣ Appel API
       const res = await fetch("/api/create-user", {
         method: "POST",
         headers: {
@@ -244,22 +241,18 @@ function CreateInternalUserContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage(`❌ ${data?.error}`);
-        setLoading(false);
+        setMessage(`❌ ${data?.error ?? "Erreur inconnue du serveur"}`);
         return;
       }
 
       setMessage("✅ Utilisateur créé !");
       setDuplicatePhone(null);
       setDuplicateEmail(null);
-
-      // ✅ Reset complet — cellule_mere_id inclus
       setFormData({
         prenom: "", nom: "", sexe: "", email: "",
         password: "", confirmPassword: "", telephone: "",
         roles: [], cellule_nom: "", cellule_zone: "",
-        cellule_mere_id: "", // ✅ CORRIGÉ
-        ministere: [],
+        cellule_mere_id: "", ministere: [],
       });
       setSelectedMemberId("");
 
@@ -270,10 +263,14 @@ function CreateInternalUserContent() {
     }
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    submitForm(false);
+  };
+
   const handleCancel = () => router.push("/admin/list-users");
 
-  // ✅ FIX PRINCIPAL — on vérifie cellulesActive ET le rôle coché
-  // cellulesActive doit être truthy (pas undefined/null/false)
   const showCelluleFields =
     cellulesActive === true &&
     formData.roles.includes("ResponsableCellule");
@@ -291,45 +288,39 @@ function CreateInternalUserContent() {
         </div>
 
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">
-          Créer un <br />
-          <span className="text-[#333699]">Utilisateur</span>
+          Créer un <br /><span className="text-[#333699]">Utilisateur</span>
         </h1>
 
-        {/* Texte intro conditionné par features */}
         <div className="max-w-3xl w-full mb-6 text-center space-y-3">
           <p className="italic text-base text-black/90">
             Créez un utilisateur en sélectionnant un membre existant ou en ajoutant un nouveau serviteur.
             Chaque utilisateur doit se voir attribuer au moins un{" "}
             <span className="text-[#FFB07C] font-semibold">rôle</span>.
-            Selon le rôle choisi, il aura accès à son{" "}
-            <span className="text-[#FFB07C] font-semibold">hub dédié</span> :
           </p>
-
           <div className="italic text-sm text-black/90 space-y-1 text-left">
-            <p>• Administrateur – <span className="text-[#FFB07C] font-semibold">gestion complète du système</span> (Hub Admin)</p>
-            <p>• Responsable Intégration – <span className="text-[#FFB07C] font-semibold">gestion des membres</span> (Hub Membres)</p>
-            <p>• Responsable Évangélisation – <span className="text-[#FFB07C] font-semibold">suivi de l&apos;évangélisation</span> (Hub Évangélisation)</p>
+            <p>• Administrateur – <span className="text-[#FFB07C] font-semibold">gestion complète du système</span></p>
+            <p>• Responsable Intégration – <span className="text-[#FFB07C] font-semibold">gestion des membres</span></p>
+            <p>• Responsable Évangélisation – <span className="text-[#FFB07C] font-semibold">suivi de l&apos;évangélisation</span></p>
             {cellulesActive && (
               <>
-                <p>• Responsable Cellule – <span className="text-[#FFB07C] font-semibold">gestion des cellules</span> (Hub Cellule)</p>
-                <p>• Superviseur Cellule – <span className="text-[#FFB07C] font-semibold">supervision et création de responsables</span> (Hub Cellule)</p>
+                <p>• Responsable Cellule – <span className="text-[#FFB07C] font-semibold">gestion des cellules</span></p>
+                <p>• Superviseur Cellule – <span className="text-[#FFB07C] font-semibold">supervision des cellules</span></p>
               </>
             )}
             {famillesActive && (
               <>
-                <p>• Responsable Familles – <span className="text-[#FFB07C] font-semibold">gestion des familles</span> (Hub Familles)</p>
-                <p>• Superviseur Familles – <span className="text-[#FFB07C] font-semibold">supervision des familles</span> (Hub Familles)</p>
+                <p>• Responsable Familles – <span className="text-[#FFB07C] font-semibold">gestion des familles</span></p>
+                <p>• Superviseur Familles – <span className="text-[#FFB07C] font-semibold">supervision des familles</span></p>
               </>
             )}
             {conseillerActive && (
-              <p>• Conseiller – <span className="text-[#FFB07C] font-semibold">accompagnement des membres</span> (Hub Conseiller)</p>
+              <p>• Conseiller – <span className="text-[#FFB07C] font-semibold">accompagnement des membres</span></p>
             )}
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
-          {/* Sélection membre */}
           <select
             value={selectedMemberId}
             onChange={e => setSelectedMemberId(e.target.value)}
@@ -357,11 +348,7 @@ function CreateInternalUserContent() {
               <label className="font-semibold">Ministères :</label>
               {ministereOptions.map(m => (
                 <label key={m} className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.ministere.includes(m)}
-                    onChange={() => handleMinistereChange(m)}
-                  />
+                  <input type="checkbox" checked={formData.ministere.includes(m)} onChange={() => handleMinistereChange(m)} />
                   {m}
                 </label>
               ))}
@@ -372,7 +359,6 @@ function CreateInternalUserContent() {
           <input name="password" placeholder="Mot de passe" type="password" value={formData.password} onChange={handleChange} className="input" required />
           <input name="confirmPassword" placeholder="Confirmer mot de passe" type="password" value={formData.confirmPassword} onChange={handleChange} className="input" required />
 
-          {/* ✅ Rôles — uniquement ceux dont la feature est active, minus rolesToHide */}
           {(selectedMemberId === "add-serviteur" || selectedMemberId) && (
             <div className="flex flex-col gap-2">
               <label className="font-semibold">Rôles :</label>
@@ -392,37 +378,47 @@ function CreateInternalUserContent() {
             </div>
           )}
 
-          {/* ✅ Champs cellule — seulement si cellulesActive === true ET rôle coché */}
+          {/* ✅ Champs cellule avec cellule mère optionnelle */}
           {showCelluleFields && (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3 p-4 bg-blue-50 rounded-2xl border border-blue-200">
+              <p className="font-semibold text-[#333699]">📍 Informations de la cellule</p>
+
               <input
                 name="cellule_nom"
-                placeholder="Nom cellule"
+                placeholder="Nom de la cellule *"
                 value={formData.cellule_nom}
                 onChange={handleChange}
                 className="input"
               />
               <input
                 name="cellule_zone"
-                placeholder="Zone cellule"
+                placeholder="Zone / Ville *"
                 value={formData.cellule_zone}
                 onChange={handleChange}
                 className="input"
               />
 
-              {/* ✅ Cellule mère */}
-              <label className="font-semibold text-black">Cellule mère :</label>
-              <select
-                name="cellule_mere_id"
-                value={formData.cellule_mere_id}
-                onChange={handleChange}
-                className="input"
-              >
-                <option value="">-- Pas de cellule mère --</option>
-                {cellules.map(c => (
-                  <option key={c.id} value={c.id}>{c.cellule_full}</option>
-                ))}
-              </select>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-semibold text-gray-700">
+                  Cellule mère <span className="text-gray-400 font-normal">(optionnel)</span>
+                </label>
+                <p className="text-xs text-gray-500">
+                  Le responsable de la cellule mère deviendra automatiquement superviseur de cette cellule.
+                </p>
+                <select
+                  name="cellule_mere_id"
+                  value={formData.cellule_mere_id}
+                  onChange={handleChange}
+                  className="input"
+                >
+                  <option value="">-- Aucune cellule mère --</option>
+                  {cellules.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.cellule_full || `${c.ville} - ${c.cellule}`} — Resp: {c.responsable}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
 
@@ -430,42 +426,40 @@ function CreateInternalUserContent() {
             <button
               type="button"
               onClick={handleCancel}
-              disabled={!!duplicatePhone}
-              className={`flex-1 py-3 rounded-xl text-white ${duplicatePhone ? "bg-gray-300 cursor-not-allowed" : "bg-gray-400 hover:bg-gray-500"}`}
+              disabled={loading || !!duplicatePhone}
+              className={`flex-1 py-3 rounded-xl text-white ${loading || duplicatePhone ? "bg-gray-300 cursor-not-allowed" : "bg-gray-400 hover:bg-gray-500"}`}
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={loading || !!duplicatePhone || !!duplicateEmail}
-              className={`flex-1 py-3 rounded-xl text-white ${duplicatePhone || duplicateEmail ? "bg-gray-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
+              className={`flex-1 py-3 rounded-xl text-white font-semibold ${loading || duplicatePhone || duplicateEmail ? "bg-gray-300 cursor-not-allowed" : "bg-[#333699] hover:bg-blue-800"}`}
             >
-              {loading ? "Création..." : "Créer"}
+              {loading ? "Création en cours..." : "Créer"}
             </button>
           </div>
         </form>
 
-        {/* Bandeau doublon téléphone */}
         {duplicatePhone && (
           <div className="mt-4 p-4 border border-yellow-500 bg-yellow-100 rounded-lg text-center">
             <p>⚠️ Le numéro {formData.telephone} existe déjà pour {duplicatePhone.prenom} {duplicatePhone.nom}.</p>
             <div className="flex justify-center gap-4 mt-2">
-              <button type="button" onClick={() => setDuplicatePhone(null)} className="bg-gray-500 text-white py-2 px-4 rounded">
+              <button type="button" onClick={() => { setDuplicatePhone(null); setMessage(""); }} className="bg-gray-500 text-white py-2 px-4 rounded">
                 Annuler
               </button>
-              <button type="button" onClick={(e) => handleSubmit(e, true)} className="bg-green-500 text-white py-2 px-4 rounded">
+              <button type="button" onClick={() => { setDuplicatePhone(null); submitForm(true); }} className="bg-green-500 text-white py-2 px-4 rounded">
                 Continuer quand même
               </button>
             </div>
           </div>
         )}
 
-        {/* Bandeau doublon email */}
         {duplicateEmail && (
           <div className="mt-4 p-4 border border-red-500 bg-red-100 rounded-lg text-center">
             <p>❌ L&apos;email {formData.email} est déjà utilisé par {duplicateEmail.prenom} {duplicateEmail.nom}.</p>
             <div className="flex justify-center gap-4 mt-2">
-              <button type="button" onClick={() => setDuplicateEmail(null)} className="bg-gray-500 text-white py-2 px-4 rounded">
+              <button type="button" onClick={() => { setDuplicateEmail(null); setMessage(""); }} className="bg-gray-500 text-white py-2 px-4 rounded">
                 Modifier
               </button>
             </div>
@@ -473,7 +467,7 @@ function CreateInternalUserContent() {
         )}
 
         {message && !duplicatePhone && !duplicateEmail && (
-          <p className={`mt-4 text-center font-semibold ${message.startsWith("❌") ? "text-red-600" : "text-green-600"}`}>
+          <p className={`mt-4 text-center font-semibold ${message.startsWith("❌") ? "text-red-600" : message.startsWith("⚠️") ? "text-yellow-600" : "text-green-600"}`}>
             {message}
           </p>
         )}
@@ -485,6 +479,7 @@ function CreateInternalUserContent() {
             border-radius: 12px;
             padding: 12px;
             color: black;
+            background: white;
           }
         `}</style>
       </div>

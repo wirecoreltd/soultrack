@@ -285,7 +285,7 @@ function CreateInternalUserContent() {
         </button>
 
         <div className="flex justify-center mb-6 cursor-pointer" onClick={() => router.push("/index")}>
-          <Image src="/logo.png" alt="Logo SoulTrack" width={80} height={80} />
+          <Image src="/logo.png" alt="Logo SoulTrack" className="w-10 h-auto cursor-pointer hover:opacity-80 transition" onClick={handleLogoClick} />
         </div>
 
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">

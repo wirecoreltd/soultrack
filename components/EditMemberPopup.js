@@ -2,6 +2,166 @@
 
 import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
+import { useLang } from "../hooks/useLang";
+
+const translations = {
+  fr: {
+    // Header
+    editProfile: "Modifier le profil",
+    // Loading
+    loadingData: "Chargement des données...",
+    // Sections
+    identity: "👤 Identité",
+    followedBy: "📌 Suivi par",
+    suivi: "💝 Suivi",
+    spiritual: "🕊 Vie spirituelle",
+    // Fields labels
+    civility: "Civilité",
+    age: "Âge",
+    cellule: "Cellule",
+    famille: "Famille",
+    addConseiller: "Ajouter conseiller",
+    suiviStatut: "Suivi statut",
+    commentaireSuivis: "Commentaire suivis",
+    commentaireEvang: "Commentaire suivis Évangélisation",
+    baptemeEau: "Baptême d'eau",
+    baptemeFeu: "Baptême de feu",
+    prieresSalut: "Prière du salut",
+    formation: "Formation",
+    etatContact: "État du contact",
+    howCame: "Comment est-il venu ?",
+    extraInfos: "Informations supplémentaires",
+    statutArrivee: "Statut à l'arrivée",
+    ministere: "Ministère",
+    // Select placeholders
+    chooseCivility: "-- Civilité --",
+    choose: "-- Choisir --",
+    chooseCellule: "-- Cellule --",
+    chooseFamille: "-- Famille --",
+    chooseStatut: "-- Sélectionner un statut --",
+    chooseSelect: "-- Sélectionner --",
+    choosePriere: "-- Prière du salut ? --",
+    chooseType: "Type",
+    // Civility options
+    homme: "Homme",
+    femme: "Femme",
+    // Age options
+    ages: [
+      "12-17 ans","18-25 ans","26-30 ans","31-40 ans",
+      "41-55 ans","56-69 ans","70 ans et plus",
+    ],
+    // Suivi statut options
+    enAttente: "En Attente",
+    integrer: "Intégrer",
+    refus: "Refus",
+    // Etat contact options
+    nouveau: "Nouveau",
+    existant: "Existant",
+    inactif: "Inactif",
+    // How came options
+    invite: "Invité",
+    reseaux: "Réseaux",
+    evangelisation: "Évangélisation",
+    autre: "Autre",
+    // Statut arrivée options
+    veutRejoindre: "Veut rejoindre ICC",
+    aDejaEglise: "A déjà son église",
+    visiteur: "Visiteur",
+    // Conversion types
+    nouveauConverti: "Nouveau converti",
+    reconciliation: "Réconciliation",
+    // Checkboxes
+    whatsapp: "Numéro WhatsApp",
+    wantsBaptism: "💦 Veut se faire baptiser",
+    serviteur: "⭐ Définir en tant que serviteur",
+    // Conseiller search
+    searchConseiller: "Rechercher un conseiller...",
+    noResult: "Aucun résultat",
+    principal: "(principal)",
+    // Locked message
+    lockedMessage: "🔒 La cellule, la famille et les conseillers sont gérés par un administrateur.",
+    // Ministere
+    autreMinistere: "Précisez le ministère",
+    // Footer buttons
+    cancel: "Annuler",
+    saving: "Enregistrement...",
+    loading: "Chargement...",
+    save: "💾 Sauvegarder",
+    // Errors
+    errPrenom: "❌ Le prénom est obligatoire.",
+    errNom: "❌ Le nom est obligatoire.",
+    errSave: "❌ Une erreur est survenue lors de l'enregistrement.",
+  },
+  en: {
+    editProfile: "Edit profile",
+    loadingData: "Loading data...",
+    identity: "👤 Identity",
+    followedBy: "📌 Followed by",
+    suivi: "💝 Follow-up",
+    spiritual: "🕊 Spiritual life",
+    civility: "Title",
+    age: "Age",
+    cellule: "Cell",
+    famille: "Family",
+    addConseiller: "Add counsellor",
+    suiviStatut: "Follow-up status",
+    commentaireSuivis: "Follow-up comment",
+    commentaireEvang: "Evangelisation follow-up comment",
+    baptemeEau: "Water baptism",
+    baptemeFeu: "Fire baptism",
+    prieresSalut: "Prayer of salvation",
+    formation: "Training",
+    etatContact: "Contact state",
+    howCame: "How did they come?",
+    extraInfos: "Additional information",
+    statutArrivee: "Status on arrival",
+    ministere: "Ministry",
+    chooseCivility: "-- Title --",
+    choose: "-- Choose --",
+    chooseCellule: "-- Cell --",
+    chooseFamille: "-- Family --",
+    chooseStatut: "-- Select a status --",
+    chooseSelect: "-- Select --",
+    choosePriere: "-- Prayer of salvation? --",
+    chooseType: "Type",
+    homme: "Man",
+    femme: "Woman",
+    ages: [
+      "12-17 yrs","18-25 yrs","26-30 yrs","31-40 yrs",
+      "41-55 yrs","56-69 yrs","70 yrs and over",
+    ],
+    enAttente: "Pending",
+    integrer: "Integrate",
+    refus: "Refused",
+    nouveau: "New",
+    existant: "Existing",
+    inactif: "Inactive",
+    invite: "Invited",
+    reseaux: "Social networks",
+    evangelisation: "Evangelisation",
+    autre: "Other",
+    veutRejoindre: "Wants to join ICC",
+    aDejaEglise: "Already has a church",
+    visiteur: "Visitor",
+    nouveauConverti: "New convert",
+    reconciliation: "Reconciliation",
+    whatsapp: "WhatsApp number",
+    wantsBaptism: "💦 Wants to be baptised",
+    serviteur: "⭐ Define as a servant",
+    searchConseiller: "Search for a counsellor...",
+    noResult: "No results",
+    principal: "(main)",
+    lockedMessage: "🔒 Cell, family and counsellors are managed by an administrator.",
+    autreMinistere: "Specify the ministry",
+    cancel: "Cancel",
+    saving: "Saving...",
+    loading: "Loading...",
+    save: "💾 Save",
+    errPrenom: "❌ First name is required.",
+    errNom: "❌ Last name is required.",
+    errSave: "❌ An error occurred while saving.",
+  },
+};
 
 export default function EditMemberPopup({
   member,
@@ -12,6 +172,9 @@ export default function EditMemberPopup({
   onUpdateMember,
   currentUserRoles,
 }) {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const isPrivileged = (currentUserRoles || []).some((r) =>
     ["Administrateur", "ResponsableIntegration"].includes(r)
   );
@@ -22,7 +185,7 @@ export default function EditMemberPopup({
 
   const [autreMinistere, setAutreMinistere] = useState("");
   const [search, setSearch] = useState("");
-  const [loadingData, setLoadingData] = useState(true); // ✅ chargement données fraîches
+  const [loadingData, setLoadingData] = useState(true);
 
   const parseBesoin = (b) => {
     if (!b) return [];
@@ -35,7 +198,7 @@ export default function EditMemberPopup({
     }
   };
 
-  const [formData, setFormData] = useState(null); // ✅ null jusqu'au chargement
+  const [formData, setFormData] = useState(null);
   const [showAutre, setShowAutre] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -50,14 +213,12 @@ export default function EditMemberPopup({
     "Visite","Berger","Modération",
   ];
 
-  // ✅ Charger les données fraîches depuis Supabase à l'ouverture
   useEffect(() => {
     if (!member?.id) return;
 
     const fetchFreshData = async () => {
       setLoadingData(true);
 
-      // Données fraîches du membre
       const { data: freshMember, error } = await supabase
         .from("membres_complets")
         .select("*")
@@ -66,7 +227,6 @@ export default function EditMemberPopup({
 
       if (error || !freshMember) {
         console.error("Erreur chargement membre frais:", error);
-        // Fallback sur les données passées en prop
         initForm(member);
         setLoadingData(false);
         return;
@@ -74,7 +234,6 @@ export default function EditMemberPopup({
 
       initForm(freshMember);
 
-      // Charger les assignments du conseiller
       const { data: assignments, error: assignError } = await supabase
         .from("suivi_assignments")
         .select("conseiller_id, role, profiles:conseiller_id(id, prenom, nom)")
@@ -98,7 +257,6 @@ export default function EditMemberPopup({
     fetchFreshData();
   }, [member?.id]);
 
-  // ✅ Initialiser le formulaire avec les données (fraîches ou fallback)
   const initForm = (data) => {
     const initialBesoin = parseBesoin(data?.besoin);
     setShowAutre(initialBesoin.includes("Autre"));
@@ -134,21 +292,19 @@ export default function EditMemberPopup({
         data?.Commentaire_Suivi_Evangelisation || "",
     });
 
-    // Pré-remplir autreMinistere si une valeur hors liste existe
-    const ministereOptions = [
+    const ministereOptionsFull = [
       "Intercession","Louange","Administration","Technique",
       "Communication","Les Enfants","Les ados","Les jeunes",
       "Finance","Nettoyage","Conseiller","Compassion",
       "Visite","Berger","Modération","Autre",
     ];
     const ministereList = parseBesoin(data?.Ministere);
-    const autreVal = ministereList.find((m) => !ministereOptions.includes(m));
+    const autreVal = ministereList.find((m) => !ministereOptionsFull.includes(m));
     if (autreVal) {
       setAutreMinistere(autreVal);
     }
   };
 
-  // Click outside handler
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -201,10 +357,8 @@ export default function EditMemberPopup({
 
   const handleSubmit = async () => {
     setMessage("");
-    if (!formData.prenom.trim())
-      return setMessage("❌ Le prénom est obligatoire.");
-    if (!formData.nom.trim())
-      return setMessage("❌ Le nom est obligatoire.");
+    if (!formData.prenom.trim()) return setMessage(t.errPrenom);
+    if (!formData.nom.trim()) return setMessage(t.errNom);
 
     setLoading(true);
 
@@ -256,14 +410,10 @@ export default function EditMemberPopup({
         priere_salut: formData.priere_salut || null,
         type_conversion: formData.type_conversion || null,
         cellule_id: isPrivileged
-          ? showCellules
-            ? formData.cellule_id || null
-            : member.cellule_id || null
+          ? showCellules ? formData.cellule_id || null : member.cellule_id || null
           : member.cellule_id || null,
         famille_id: isPrivileged
-          ? showFamilles
-            ? formData.famille_id || null
-            : member.famille_id || null
+          ? showFamilles ? formData.famille_id || null : member.famille_id || null
           : member.famille_id || null,
         besoin: JSON.stringify(finalBesoin),
         venu: formData.venu || null,
@@ -315,7 +465,7 @@ export default function EditMemberPopup({
       onClose();
     } catch (err) {
       console.error(err);
-      setMessage("❌ Une erreur est survenue lors de l'enregistrement.");
+      setMessage(t.errSave);
     } finally {
       setLoading(false);
     }
@@ -352,7 +502,7 @@ export default function EditMemberPopup({
             ✏️ {member.prenom} {member.nom}
           </h2>
           <p className="text-blue-100 text-sm mt-1 opacity-80">
-            Modifier le profil
+            {t.editProfile}
           </p>
         </div>
 
@@ -361,29 +511,28 @@ export default function EditMemberPopup({
           className="overflow-y-auto px-6 py-5 flex flex-col gap-5"
           style={{ maxHeight: "68vh" }}
         >
-          {/* ✅ Indicateur de chargement */}
           {loadingData || !formData ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <div
                 className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin"
                 style={{ borderColor: "#2E3192", borderTopColor: "transparent" }}
               />
-              <p className="text-sm text-gray-400">Chargement des données...</p>
+              <p className="text-sm text-gray-400">{t.loadingData}</p>
             </div>
           ) : (
             <>
-              <SectionTitle>👤 Identité</SectionTitle>
+              <SectionTitle>{t.identity}</SectionTitle>
 
-              <Field label="Civilité">
+              <Field label={t.civility}>
                 <select
                   name="sexe"
                   value={formData.sexe}
                   onChange={handleChange}
                   className="inp"
                 >
-                  <option value="">-- Civilité --</option>
-                  <option value="Homme">Homme</option>
-                  <option value="Femme">Femme</option>
+                  <option value="">{t.chooseCivility}</option>
+                  <option value="Homme">{t.homme}</option>
+                  <option value="Femme">{t.femme}</option>
                 </select>
               </Field>
 
@@ -404,24 +553,21 @@ export default function EditMemberPopup({
                         onChange={handleChange}
                         className="accent-[#2E3192]"
                       />
-                      Numéro WhatsApp
+                      {t.whatsapp}
                     </label>
                   )}
                 </Field>
               ))}
 
-              <Field label="Âge">
+              <Field label={t.age}>
                 <select
                   name="age"
                   value={formData.age}
                   onChange={handleChange}
                   className="inp"
                 >
-                  <option value="">-- Choisir --</option>
-                  {[
-                    "12-17 ans","18-25 ans","26-30 ans","31-40 ans",
-                    "41-55 ans","56-69 ans","70 ans et plus",
-                  ].map((v) => (
+                  <option value="">{t.choose}</option>
+                  {t.ages.map((v) => (
                     <option key={v} value={v}>
                       {v}
                     </option>
@@ -430,20 +576,20 @@ export default function EditMemberPopup({
               </Field>
 
               {isPrivileged && (showCellules || showFamilles || showConseillers) && (
-                <SectionTitle>📌 Suivi par</SectionTitle>
+                <SectionTitle>{t.followedBy}</SectionTitle>
               )}
 
               {isPrivileged ? (
                 <>
                   {showCellules && (
-                    <Field label="Cellule">
+                    <Field label={t.cellule}>
                       <select
                         name="cellule_id"
                         value={formData.cellule_id ?? ""}
                         onChange={handleChange}
                         className="inp"
                       >
-                        <option value="">-- Cellule --</option>
+                        <option value="">{t.chooseCellule}</option>
                         {cellules.map((c) => (
                           <option key={c.id} value={c.id}>
                             {c.cellule_full}
@@ -454,14 +600,14 @@ export default function EditMemberPopup({
                   )}
 
                   {showFamilles && (
-                    <Field label="Famille">
+                    <Field label={t.famille}>
                       <select
                         name="famille_id"
                         value={formData.famille_id ?? ""}
                         onChange={handleChange}
                         className="inp"
                       >
-                        <option value="">-- Famille --</option>
+                        <option value="">{t.chooseFamille}</option>
                         {familles.map((f) => (
                           <option key={f.id} value={f.id}>
                             {f.famille_full}
@@ -473,10 +619,10 @@ export default function EditMemberPopup({
 
                   {showConseillers && (
                     <>
-                      <Field label="Ajouter conseiller">
+                      <Field label={t.addConseiller}>
                         <input
                           type="text"
-                          placeholder="Rechercher un conseiller..."
+                          placeholder={t.searchConseiller}
                           value={search}
                           onChange={(e) => setSearch(e.target.value)}
                           className="inp mb-2"
@@ -510,7 +656,7 @@ export default function EditMemberPopup({
                           })}
                           {filteredConseillers.length === 0 && (
                             <p className="text-xs text-gray-400 px-3 py-2">
-                              Aucun résultat
+                              {t.noResult}
                             </p>
                           )}
                         </div>
@@ -531,7 +677,7 @@ export default function EditMemberPopup({
                               </span>
                               {index === 0 && selectedConseillers.length > 1 && (
                                 <span className="text-xs opacity-60 ml-1">
-                                  (principal)
+                                  {t.principal}
                                 </span>
                               )}
                               <button
@@ -553,21 +699,19 @@ export default function EditMemberPopup({
 
                   {!showCellules && !showFamilles && !showConseillers && (
                     <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
-                      🔒 La cellule, la famille et les conseillers sont gérés par un
-                      administrateur.
+                      {t.lockedMessage}
                     </p>
                   )}
                 </>
               ) : (
                 <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
-                  🔒 La cellule, la famille et les conseillers sont gérés par un
-                  administrateur.
+                  {t.lockedMessage}
                 </p>
               )}
 
-              <SectionTitle>💝 Suivi</SectionTitle>
+              <SectionTitle>{t.suivi}</SectionTitle>
 
-              <Field label="Suivi statut">
+              <Field label={t.suiviStatut}>
                 <select
                   value={formData.suivi_statut ?? ""}
                   onChange={(e) =>
@@ -578,14 +722,14 @@ export default function EditMemberPopup({
                   }
                   className="inp"
                 >
-                  <option value="">-- Sélectionner un statut --</option>
-                  <option value="En Attente">En Attente</option>
-                  <option value="Intégrer">Intégrer</option>
-                  <option value="Refus">Refus</option>
+                  <option value="">{t.chooseStatut}</option>
+                  <option value="En Attente">{t.enAttente}</option>
+                  <option value="Intégrer">{t.integrer}</option>
+                  <option value="Refus">{t.refus}</option>
                 </select>
               </Field>
 
-              <Field label="Commentaire suivis">
+              <Field label={t.commentaireSuivis}>
                 <textarea
                   name="commentaire_suivis"
                   value={formData.commentaire_suivis}
@@ -595,7 +739,7 @@ export default function EditMemberPopup({
                 />
               </Field>
 
-              <Field label="Commentaire suivis Évangélisation">
+              <Field label={t.commentaireEvang}>
                 <textarea
                   name="Commentaire_Suivi_Evangelisation"
                   value={formData.Commentaire_Suivi_Evangelisation}
@@ -605,9 +749,9 @@ export default function EditMemberPopup({
                 />
               </Field>
 
-              <SectionTitle>🕊 Vie spirituelle</SectionTitle>
+              <SectionTitle>{t.spiritual}</SectionTitle>
 
-              <Field label="Baptême d'eau">
+              <Field label={t.baptemeEau}>
                 <select
                   name="bapteme_eau"
                   value={formData.bapteme_eau ?? ""}
@@ -622,7 +766,7 @@ export default function EditMemberPopup({
                   }}
                   className="inp"
                 >
-                  <option value="">-- Sélectionner --</option>
+                  <option value="">{t.chooseSelect}</option>
                   <option value="Oui">Oui</option>
                   <option value="Non">Non</option>
                 </select>
@@ -641,24 +785,24 @@ export default function EditMemberPopup({
                     }
                     className="accent-[#2E3192]"
                   />
-                  💦 Veut se faire baptiser
+                  {t.wantsBaptism}
                 </label>
               )}
 
-              <Field label="Baptême de feu">
+              <Field label={t.baptemeFeu}>
                 <select
                   name="bapteme_esprit"
                   value={formData.bapteme_esprit ?? ""}
                   onChange={handleChange}
                   className="inp"
                 >
-                  <option value="">-- Sélectionner --</option>
+                  <option value="">{t.chooseSelect}</option>
                   <option value="Oui">Oui</option>
                   <option value="Non">Non</option>
                 </select>
               </Field>
 
-              <Field label="Prière du salut">
+              <Field label={t.prieresSalut}>
                 <select
                   name="priere_salut"
                   value={formData.priere_salut}
@@ -673,7 +817,7 @@ export default function EditMemberPopup({
                   }}
                   className="inp"
                 >
-                  <option value="">-- Prière du salut ? --</option>
+                  <option value="">{t.choosePriere}</option>
                   <option value="Oui">Oui</option>
                   <option value="Non">Non</option>
                 </select>
@@ -684,14 +828,14 @@ export default function EditMemberPopup({
                     onChange={handleChange}
                     className="inp mt-2"
                   >
-                    <option value="">Type</option>
-                    <option value="Nouveau converti">Nouveau converti</option>
-                    <option value="Réconciliation">Réconciliation</option>
+                    <option value="">{t.chooseType}</option>
+                    <option value="Nouveau converti">{t.nouveauConverti}</option>
+                    <option value="Réconciliation">{t.reconciliation}</option>
                   </select>
                 )}
               </Field>
 
-              <Field label="Formation">
+              <Field label={t.formation}>
                 <textarea
                   name="Formation"
                   value={formData.Formation}
@@ -712,12 +856,12 @@ export default function EditMemberPopup({
                         onChange={handleChange}
                         className="accent-[#2E3192] w-4 h-4"
                       />
-                      ⭐ Définir en tant que serviteur
+                      {t.serviteur}
                     </label>
                   </div>
 
                   {formData.star && (
-                    <Field label="Ministère">
+                    <Field label={t.ministere}>
                       <div className="grid grid-cols-2 gap-1 mt-1">
                         {ministereOptions.map((m) => (
                           <label
@@ -758,14 +902,14 @@ export default function EditMemberPopup({
                             }}
                             className="accent-[#2E3192]"
                           />
-                          Autre
+                          {t.autre}
                         </label>
                       </div>
                       {formData.Ministere.includes("Autre") && (
                         <input
                           type="text"
                           className="inp mt-2"
-                          placeholder="Précisez le ministère"
+                          placeholder={t.autreMinistere}
                           value={autreMinistere}
                           onChange={(e) => setAutreMinistere(e.target.value)}
                         />
@@ -775,36 +919,36 @@ export default function EditMemberPopup({
                 </>
               )}
 
-              <Field label="État du contact">
+              <Field label={t.etatContact}>
                 <select
                   name="etat_contact"
                   value={formData.etat_contact}
                   onChange={handleChange}
                   className="inp"
                 >
-                  <option value="">-- Sélectionner --</option>
-                  <option value="nouveau">Nouveau</option>
-                  <option value="existant">Existant</option>
-                  <option value="inactif">Inactif</option>
+                  <option value="">{t.chooseSelect}</option>
+                  <option value="nouveau">{t.nouveau}</option>
+                  <option value="existant">{t.existant}</option>
+                  <option value="inactif">{t.inactif}</option>
                 </select>
               </Field>
 
-              <Field label="Comment est-il venu ?">
+              <Field label={t.howCame}>
                 <select
                   name="venu"
                   value={formData.venu}
                   onChange={handleChange}
                   className="inp"
                 >
-                  <option value="">-- Sélectionner --</option>
-                  <option value="invité">Invité</option>
-                  <option value="réseaux">Réseaux</option>
-                  <option value="evangélisation">Évangélisation</option>
-                  <option value="autre">Autre</option>
+                  <option value="">{t.chooseSelect}</option>
+                  <option value="invité">{t.invite}</option>
+                  <option value="réseaux">{t.reseaux}</option>
+                  <option value="evangélisation">{t.evangelisation}</option>
+                  <option value="autre">{t.autre}</option>
                 </select>
               </Field>
 
-              <Field label="Informations supplémentaires">
+              <Field label={t.extraInfos}>
                 <textarea
                   name="infos_supplementaires"
                   value={formData.infos_supplementaires}
@@ -814,17 +958,17 @@ export default function EditMemberPopup({
                 />
               </Field>
 
-              <Field label="Statut à l'arrivée">
+              <Field label={t.statutArrivee}>
                 <select
                   name="statut_initial"
                   value={formData.statut_initial}
                   onChange={handleChange}
                   className="inp"
                 >
-                  <option value="">-- Sélectionner --</option>
-                  <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-                  <option value="a déjà son église">A déjà son église</option>
-                  <option value="visiteur">Visiteur</option>
+                  <option value="">{t.chooseSelect}</option>
+                  <option value="veut rejoindre ICC">{t.veutRejoindre}</option>
+                  <option value="a déjà son église">{t.aDejaEglise}</option>
+                  <option value="visiteur">{t.visiteur}</option>
                 </select>
               </Field>
             </>
@@ -838,7 +982,7 @@ export default function EditMemberPopup({
             onClick={onClose}
             className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all"
           >
-            Annuler
+            {t.cancel}
           </button>
           <button
             type="button"
@@ -851,7 +995,7 @@ export default function EditMemberPopup({
                 : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
             }}
           >
-            {loading ? "Enregistrement..." : loadingData ? "Chargement..." : "💾 Sauvegarder"}
+            {loading ? t.saving : loadingData ? t.loading : t.save}
           </button>
         </div>
 

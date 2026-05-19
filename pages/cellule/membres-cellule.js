@@ -450,8 +450,7 @@ function MembresCelluleContent() {
                       </div>
 
                       <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
-                      <p className="text-center text-sm mt-1">🏠 {cellule?.cellule_full || "—"}</p>
-                      {/* ✅ Nom du responsable depuis profiles */}
+                      <p className="text-center text-sm mt-1">🏠 {m.cellule_full || cellule?.cellule_full || "—"}</p>                      
                       <p className="text-center text-sm mt-1">👤 {nomResponsable}</p>
 
                       <div className="w-full flex justify-end mt-3">

@@ -10,6 +10,204 @@ import useChurchScope from "../../hooks/useChurchScope";
 import Footer from "../../components/Footer";
 import { useFeature } from "../../components/FeaturesContext";
 import { useNotificationsContext } from "../../context/NotificationsContext";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    // Page header
+    titre1: "Gestion des contacts",
+    titre2: " Evangélisés",
+    description: "Cette page",
+    descAccent1: " centralise ",
+    descMid1: "tous les contacts évangélisés et facilite la",
+    descAccent2: " gestion de leur suivi.",
+    descMid2: "Vous pouvez transmettre chaque contact à un conseiller ou à une cellule, et envoyer les informations directement via WhatsApp. Chaque contact peut être consulté en détail, modifié ou supprimé,",
+    descAccent3: " garantissant un suivi précis et organisé de l'évangélisation au sein de votre église",
+    descEnd: ".",
+
+    // Send selectors
+    envoyerA: "-- Envoyer à --",
+    uneCellule: "Une Cellule",
+    uneFamille: "Une Famille",
+    unConseiller: "Un Conseiller",
+    choisir: "-- Choisir --",
+    envoiBtn: "📤 Envoyer WhatsApp",
+    envoiLoading: "Envoi...",
+
+    // Card
+    ville: "🏙️ Ville :",
+    selectionner: "Sélectionner",
+    evangeliseLe: "Evangélisé le",
+    details: "Détails",
+    fermerDetails: "Fermer détails",
+
+    // Phone menu
+    appeler: "📞 Appeler",
+    sms: "✉️ SMS",
+    appelWhatsApp: "📱 Appel WhatsApp",
+    messageWhatsApp: "💬 Message WhatsApp",
+
+    // Details sections
+    typeEvang: "📣 Type d'Evangélisation :",
+    identite: "👤 Identité",
+    civilite: "🎗️ Civilité :",
+    age: "⏳ Tranche d'age :",
+    whatsapp: "💬 WhatsApp :",
+    oui: "Oui",
+    non: "Non",
+    vieSpirituelle: "🕊 Vie spirituelle",
+    priereSalut: "🙏 Prière du salut :",
+    typeConversion: "☀️ Type de conversion :",
+    soinPastoral: "❤️‍🩹 Soin pastoral",
+    besoins: "❓ Difficultés / Besoins :",
+    infosSup: "📝 Infos supplémentaires :",
+    modifierContact: "✏️ Modifier le contact",
+    supprimerContact: "🗑️ Supprimer le contact",
+    confirmSuppression: "⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?",
+
+    // Doublon popup
+    doublonsDetectes: "⚠️ Doublons détectés",
+    doublonsInfo: "Ces contacts sont déjà enregistrés dans les suivis.",
+    envoyer: "Envoyer",
+    annuler: "Annuler",
+    fermer: "Fermer",
+
+    // WhatsApp popup
+    whatsappInfo: "Vérifiez les informations du responsable avant d'envoyer. Si le numéro est effacé, WhatsApp s'ouvrira sur vos contacts.",
+    nomResponsable: "👤 Nom du responsable",
+    nomResponsablePl: "Nom du responsable",
+    numeroWhatsApp: "📞 Numéro WhatsApp",
+    numeroWhatsAppPl: "+3363xxx... — laisser vide pour choisir dans vos contacts",
+    envoyerBtn: "Envoyer",
+
+    // WhatsApp message
+    msgBonjour: "👋 Bonjour",
+    msgIntroPlural: "Nous te confions avec joie les personnes suivantes rencontrées lors de l'évangélisation.\n\n",
+    msgIntroSingular: "Nous te confions avec joie la personne suivante rencontrée lors de l'évangélisation.\n\n",
+    msgPersonne: "👥 Personne",
+    msgTypeEvang: "📣 Type d'Evangélisation :",
+    msgDate: "📅 Date évangélisé :",
+    msgCivilite: "🎗️ Civilité :",
+    msgNom: "👤 Nom :",
+    msgAge: "⏳ Tranche d'age :",
+    msgVille: "🏙️ Ville :",
+    msgTel: "📞 Téléphone:",
+    msgWa: "💬 WhatsApp :",
+    msgPriere: "🙏 Prière du salut :",
+    msgConversion: "☀️ Type de conversion :",
+    msgBesoins: "❓ Difficultés / Besoins :",
+    msgInfos: "📝 Infos :",
+    msgMerci: "Merci pour ton engagement ✨",
+
+    // Alerts
+    alertCible: "⚠️ Veuillez sélectionner une cible",
+    alertAucunContact: "⚠️ Aucun contact sélectionné",
+    alertCibleIntrouvable: "⚠️ Cible introuvable",
+    alertSucces: "✅ Contacts envoyés et enregistrés",
+    alertErreurSuppression: "❌ Erreur lors de la suppression",
+    alertErreurEnvoi: "❌ Erreur lors de l'envoi : ",
+
+    // Months
+    months: ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"],
+  },
+  en: {
+    // Page header
+    titre1: "Evangelism Contact",
+    titre2: " Management",
+    description: "This page",
+    descAccent1: " centralises ",
+    descMid1: "all evangelised contacts and simplifies",
+    descAccent2: " their follow-up management.",
+    descMid2: "You can assign each contact to a counsellor or a cell group, and send information directly via WhatsApp. Each contact can be viewed in detail, edited or deleted,",
+    descAccent3: " ensuring accurate and organised evangelism follow-up within your church",
+    descEnd: ".",
+
+    // Send selectors
+    envoyerA: "-- Send to --",
+    uneCellule: "A Cell group",
+    uneFamille: "A Family",
+    unConseiller: "A Counsellor",
+    choisir: "-- Choose --",
+    envoiBtn: "📤 Send via WhatsApp",
+    envoiLoading: "Sending...",
+
+    // Card
+    ville: "🏙️ City:",
+    selectionner: "Select",
+    evangeliseLe: "Evangelised on",
+    details: "Details",
+    fermerDetails: "Close details",
+
+    // Phone menu
+    appeler: "📞 Call",
+    sms: "✉️ SMS",
+    appelWhatsApp: "📱 WhatsApp Call",
+    messageWhatsApp: "💬 WhatsApp Message",
+
+    // Details sections
+    typeEvang: "📣 Evangelism type:",
+    identite: "👤 Identity",
+    civilite: "🎗️ Gender:",
+    age: "⏳ Age range:",
+    whatsapp: "💬 WhatsApp:",
+    oui: "Yes",
+    non: "No",
+    vieSpirituelle: "🕊 Spiritual life",
+    priereSalut: "🙏 Salvation prayer:",
+    typeConversion: "☀️ Conversion type:",
+    soinPastoral: "❤️‍🩹 Pastoral care",
+    besoins: "❓ Difficulties / Needs:",
+    infosSup: "📝 Additional info:",
+    modifierContact: "✏️ Edit contact",
+    supprimerContact: "🗑️ Delete contact",
+    confirmSuppression: "⚠️ Permanent deletion\n\nAre you sure you want to delete this contact?",
+
+    // Doublon popup
+    doublonsDetectes: "⚠️ Duplicates detected",
+    doublonsInfo: "These contacts are already registered in the follow-ups.",
+    envoyer: "Send",
+    annuler: "Cancel",
+    fermer: "Close",
+
+    // WhatsApp popup
+    whatsappInfo: "Check the leader's information before sending. If the number is cleared, WhatsApp will open on your contacts.",
+    nomResponsable: "👤 Leader's name",
+    nomResponsablePl: "Leader's name",
+    numeroWhatsApp: "📞 WhatsApp number",
+    numeroWhatsAppPl: "+3363xxx... — leave blank to choose from your contacts",
+    envoyerBtn: "Send",
+
+    // WhatsApp message (stays professional in English)
+    msgBonjour: "👋 Hello",
+    msgIntroPlural: "We are entrusting you with the following people met during evangelism.\n\n",
+    msgIntroSingular: "We are entrusting you with the following person met during evangelism.\n\n",
+    msgPersonne: "👥 Person",
+    msgTypeEvang: "📣 Evangelism type:",
+    msgDate: "📅 Evangelised on:",
+    msgCivilite: "🎗️ Gender:",
+    msgNom: "👤 Name:",
+    msgAge: "⏳ Age range:",
+    msgVille: "🏙️ City:",
+    msgTel: "📞 Phone:",
+    msgWa: "💬 WhatsApp:",
+    msgPriere: "🙏 Salvation prayer:",
+    msgConversion: "☀️ Conversion type:",
+    msgBesoins: "❓ Difficulties / Needs:",
+    msgInfos: "📝 Notes:",
+    msgMerci: "Thank you for your commitment ✨",
+
+    // Alerts
+    alertCible: "⚠️ Please select a target",
+    alertAucunContact: "⚠️ No contact selected",
+    alertCibleIntrouvable: "⚠️ Target not found",
+    alertSucces: "✅ Contacts sent and recorded",
+    alertErreurSuppression: "❌ Error while deleting",
+    alertErreurEnvoi: "❌ Error while sending: ",
+
+    // Months
+    months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+  },
+};
 
 export default function Evangelisation() {
   return (
@@ -22,6 +220,9 @@ export default function Evangelisation() {
 function EvangelisationContent() {
   const router = useRouter();
   const { highlight } = router.query;
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const { profile, loading: loadingProfile, error: profileError, scopedQuery } = useChurchScope();
   const famillesActive = useFeature("familles");
   const conseillerActive = useFeature("conseiller");
@@ -39,7 +240,7 @@ function EvangelisationContent() {
   const [loadingSend, setLoadingSend] = useState(false);
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
-  const highlightRef = useRef({});                             // ✅ ref pour scroll
+  const highlightRef = useRef({});
   const [showWhatsappPopup, setShowWhatsappPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [targetName, setTargetName] = useState("");
@@ -52,7 +253,6 @@ function EvangelisationContent() {
   const selectedTargetTypeRef = useRef("");
   const selectedTargetRef = useRef("");
   const { triggerRefresh } = useNotificationsContext();
-  
 
   const [view, setView] = useState(() => {
     if (typeof window !== "undefined") {
@@ -61,12 +261,8 @@ function EvangelisationContent() {
     return "card";
   });
 
-  useEffect(() => {
-    localStorage.setItem("members_view", view);
-  }, [view]);
+  useEffect(() => { localStorage.setItem("members_view", view); }, [view]);
 
-  // ✅ Scroll automatique vers la carte surlignée
-  // ✅ Scroll automatique vers la carte surlignée
   const highlightDoneRef = useRef(false);
 
   useEffect(() => {
@@ -85,7 +281,7 @@ function EvangelisationContent() {
       const url = new URL(window.location.href);
       url.searchParams.delete("highlight");
       window.history.replaceState({}, "", url.toString());
-      
+
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
       el.style.boxShadow = "0 0 0 3px rgba(167,139,250,0.7), 0 0 32px 10px rgba(167,139,250,0.25)";
@@ -100,7 +296,6 @@ function EvangelisationContent() {
     const timer = setTimeout(tryHighlight, 300);
     return () => clearTimeout(timer);
   }, [loading, highlight]);
-  
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -186,20 +381,17 @@ function EvangelisationContent() {
     try {
       const arr = JSON.parse(b);
       return Array.isArray(arr) ? arr.join(", ") : b;
-    } catch {
-      return b;
-    }
+    } catch { return b; }
   };
 
   const selectedContacts = contacts?.filter((c) => checkedContacts[c.id]) || [];
   const hasSelectedContacts = selectedContacts.length > 0;
 
-  const formatDateFr = (dateString) => {
+  const formatDate = (dateString) => {
     if (!dateString) return "—";
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
-    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
-    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    return `${day} ${t.months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
   const getBorderColor = (member) => {
@@ -229,13 +421,13 @@ function EvangelisationContent() {
         .eq("id", id);
       if (error) {
         console.error("Erreur suppression :", error);
-        alert("❌ Erreur lors de la suppression");
+        alert(t.alertErreurSuppression);
         return;
       }
       setContacts((prev) => prev.filter((m) => m.id !== id));
     } catch (err) {
       console.error(err);
-      alert("❌ Erreur lors de la suppression");
+      alert(t.alertErreurSuppression);
     }
   };
 
@@ -296,23 +488,11 @@ function EvangelisationContent() {
     setLoadingSend(true);
 
     try {
-      if (!targetType || !targetId) {
-        alert("⚠️ Veuillez sélectionner une cible");
-        setLoadingSend(false);
-        return;
-      }
-      if (!contactsToSend || contactsToSend.length === 0) {
-        alert("⚠️ Aucun contact sélectionné");
-        setLoadingSend(false);
-        return;
-      }
+      if (!targetType || !targetId) { alert(t.alertCible); setLoadingSend(false); return; }
+      if (!contactsToSend || contactsToSend.length === 0) { alert(t.alertAucunContact); setLoadingSend(false); return; }
 
       const cible = resolveCible(targetType, targetId);
-      if (!cible) {
-        alert("⚠️ Cible introuvable");
-        setLoadingSend(false);
-        return;
-      }
+      if (!cible) { alert(t.alertCibleIntrouvable); setLoadingSend(false); return; }
 
       const inserts = contactsToSend.map((m) => ({
         prenom: m.prenom,
@@ -357,32 +537,29 @@ function EvangelisationContent() {
       setCheckedContacts({});
 
       const cibleName = getCibleName(targetType, cible);
-      let message = `👋 Bonjour ${cibleName},\n\n`;
-      message +=
-        contactsToSend.length > 1
-          ? "Nous te confions avec joie les personnes suivantes rencontrées lors de l'évangélisation.\n\n"
-          : "Nous te confions avec joie la personne suivante rencontrée lors de l'évangélisation.\n\n";
+      let message = `${t.msgBonjour} ${cibleName},\n\n`;
+      message += contactsToSend.length > 1 ? t.msgIntroPlural : t.msgIntroSingular;
 
       contactsToSend.forEach((m, i) => {
         message += "────────────────────\n";
-        if (contactsToSend.length > 1) message += `👥 Personne ${i + 1}\n`;
-        message += `📣 Type d'Evangélisation : ${m.type_evangelisation || "—"}
-📅 Date évangélisé : ${formatDateFr(m.date_evangelise)}  
-🎗️ Civilité : ${m.sexe || "—"}  
-👤 Nom : ${m.prenom} ${m.nom}      
-⏳ Tranche d'age : ${m.age || "—"}  
-🏙️ Ville : ${m.ville || "—"}      
-📞 Téléphone: ${m.telephone || "—"}  
-💬 WhatsApp : ${m.is_whatsapp ? "Oui" : "Non"}     
-🙏 Prière du salut : ${m.priere_salut ? "Oui" : "Non"}      
-☀️ Type de conversion : ${m.type_conversion || "—"}               
-❓ Difficultés / Besoins : ${formatBesoin(m.besoin)}      
-📝 Infos : ${m.infos_supplementaires || "—"}
+        if (contactsToSend.length > 1) message += `${t.msgPersonne} ${i + 1}\n`;
+        message += `${t.msgTypeEvang} ${m.type_evangelisation || "—"}
+${t.msgDate} ${formatDate(m.date_evangelise)}  
+${t.msgCivilite} ${m.sexe || "—"}  
+${t.msgNom} ${m.prenom} ${m.nom}      
+${t.msgAge} ${m.age || "—"}  
+${t.msgVille} ${m.ville || "—"}      
+${t.msgTel} ${m.telephone || "—"}  
+${t.msgWa} ${m.is_whatsapp ? t.oui : t.non}     
+${t.msgPriere} ${m.priere_salut ? t.oui : "—"}      
+${t.msgConversion} ${m.type_conversion || "—"}               
+${t.msgBesoins} ${formatBesoin(m.besoin)}      
+${t.msgInfos} ${m.infos_supplementaires || "—"}
 
 `;
       });
 
-      message += "Merci pour ton engagement ✨";
+      message += t.msgMerci;
 
       const rawPhone = phoneNumber ? phoneNumber.replace(/\D/g, "") : "";
       const targetPhone = rawPhone.length >= 8 ? rawPhone : "";
@@ -394,13 +571,12 @@ function EvangelisationContent() {
       setPhoneNumber("");
       setTargetName("");
 
-      console.log("✅ avant triggerRefresh", typeof triggerRefresh);
       window.dispatchEvent(new CustomEvent("refresh-notif-count"));
-      alert("✅ Contacts envoyés et enregistrés");
-      
+      alert(t.alertSucces);
+
     } catch (err) {
       console.error("Erreur envoi WhatsApp :", err);
-      alert("❌ Erreur lors de l'envoi : " + err.message);
+      alert(t.alertErreurEnvoi + err.message);
     } finally {
       setLoadingSend(false);
     }
@@ -410,34 +586,27 @@ function EvangelisationContent() {
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
-        Gestion des contacts <span className="text-emerald-300"> Evangélisés</span>
+        {t.titre1}<span className="text-emerald-300">{t.titre2}</span>
       </h1>
       <div className="max-w-3xl w-full mb-6 text-center">
         <p className="italic text-base text-white/90">
-          Cette page <span className="text-blue-300 font-semibold">centralise </span> tous les contacts évangélisés et facilite la
-          <span className="text-blue-300 font-semibold"> gestion de leur suivi.</span>
-          Vous pouvez transmettre chaque contact à un conseiller ou à une cellule, et envoyer les informations directement via WhatsApp.
-          Chaque contact peut être consulté en détail, modifié ou supprimé,{" "}
-          <span className="text-blue-300 font-semibold">
-            garantissant un suivi précis et organisé de l'évangélisation au sein de votre église
-          </span>
-          .
+          {t.description}<span className="text-blue-300 font-semibold">{t.descAccent1}</span>{t.descMid1}
+          <span className="text-blue-300 font-semibold">{t.descAccent2}</span>
+          {t.descMid2}{" "}
+          <span className="text-blue-300 font-semibold">{t.descAccent3}</span>{t.descEnd}
         </p>
       </div>
 
       <div className="w-full max-w-md mb-6">
         <select
           value={selectedTargetType}
-          onChange={(e) => {
-            setSelectedTargetType(e.target.value);
-            setSelectedTarget("");
-          }}
+          onChange={(e) => { setSelectedTargetType(e.target.value); setSelectedTarget(""); }}
           className="w-full border rounded px-3 py-2 mb-3 text-center"
         >
-          <option value="">-- Envoyer à --</option>
-          {cellulesActive && <option value="cellule">Une Cellule</option>}
-          {famillesActive && <option value="famille">Une Famille</option>}
-          {conseillerActive && <option value="conseiller">Un Conseiller</option>}
+          <option value="">{t.envoyerA}</option>
+          {cellulesActive && <option value="cellule">{t.uneCellule}</option>}
+          {famillesActive && <option value="famille">{t.uneFamille}</option>}
+          {conseillerActive && <option value="conseiller">{t.unConseiller}</option>}
         </select>
 
         {selectedTargetType && (
@@ -446,21 +615,15 @@ function EvangelisationContent() {
             onChange={(e) => setSelectedTarget(e.target.value)}
             className="w-full border rounded px-3 py-2 mb-3 text-center"
           >
-            <option value="">-- Choisir --</option>
+            <option value="">{t.choisir}</option>
             {cellulesActive && selectedTargetType === "cellule" && cellules.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.ville ? `${c.cellule_full} - ${c.ville}` : c.cellule_full}
-              </option>
+              <option key={c.id} value={c.id}>{c.ville ? `${c.cellule_full} - ${c.ville}` : c.cellule_full}</option>
             ))}
             {famillesActive && selectedTargetType === "famille" && familles.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.ville ? `${f.famille_full} - ${f.ville}` : f.famille_full}
-              </option>
+              <option key={f.id} value={f.id}>{f.ville ? `${f.famille_full} - ${f.ville}` : f.famille_full}</option>
             ))}
             {conseillerActive && selectedTargetType === "conseiller" && conseillers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.prenom} {c.nom}
-              </option>
+              <option key={c.id} value={c.id}>{c.prenom} {c.nom}</option>
             ))}
           </select>
         )}
@@ -471,12 +634,12 @@ function EvangelisationContent() {
             disabled={loadingSend}
             className="w-full bg-green-500 text-white font-bold px-4 py-2 rounded"
           >
-            {loadingSend ? "Envoi..." : "📤 Envoyer WhatsApp"}
+            {loadingSend ? t.envoiLoading : t.envoiBtn}
           </button>
         )}
       </div>
 
-      {/* ================= AFFICHAGE CONTACTS ================= */}
+      {/* ===== CONTACTS ===== */}
       <div className="w-full max-w-6xl flex flex-col items-center">
         {contacts && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
@@ -484,14 +647,10 @@ function EvangelisationContent() {
               <div
                 key={member.id}
                 ref={(el) => (highlightRef.current[member.id] = el)}
-                className={`bg-white rounded-2xl shadow-xl p-4 border-l-4 relative ${
-                  highlight === String(member.id) ? "highlight-pulse" : ""
-                }`}
+                className={`bg-white rounded-2xl shadow-xl p-4 border-l-4 relative ${highlight === String(member.id) ? "highlight-pulse" : ""}`}
                 style={{ borderLeftColor: getBorderColor(member) }}
               >
-                <h2 className="font-bold text-center">
-                  {member.prenom} {member.nom}
-                </h2>
+                <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
                 <p
                   className="text-center text-sm text-orange-500 font-semibold underline cursor-pointer"
                   onClick={() => setOpenPhoneMenuId(member.id)}
@@ -504,54 +663,50 @@ function EvangelisationContent() {
                     className="phone-menu absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <a href={member.telephone ? `tel:${member.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📞 Appeler</a>
-                    <a href={member.telephone ? `sms:${member.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">✉️ SMS</a>
-                    <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">📱 Appel WhatsApp</a>
-                    <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">💬 Message WhatsApp</a>
+                    <a href={member.telephone ? `tel:${member.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">{t.appeler}</a>
+                    <a href={member.telephone ? `sms:${member.telephone}` : "#"} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">{t.sms}</a>
+                    <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}?call` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">{t.appelWhatsApp}</a>
+                    <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">{t.messageWhatsApp}</a>
                   </div>
                 )}
-                <p className="text-center mt-3 text-sm">🏙️ Ville : {member.ville || "—"}</p>
+                <p className="text-center mt-3 text-sm">{t.ville} {member.ville || "—"}</p>
                 <label className="flex justify-center gap-2 mt-4">
-                  <input
-                    type="checkbox"
-                    checked={checkedContacts[member.id] || false}
-                    onChange={() => handleCheck(member.id)}
-                  />{" "}
-                  Sélectionner
+                  <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} />
+                  {" "}{t.selectionner}
                 </label>
                 <p className="text-[11px] text-gray-400 text-right mt-3">
-                  Evangélisé le {formatDateFr(member.date_evangelise)}
+                  {t.evangeliseLe} {formatDate(member.date_evangelise)}
                 </p>
                 <button
                   onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}
                   className="text-orange-500 underline text-sm block mx-auto mt-2"
                 >
-                  {detailsOpen[member.id] ? "Fermer détails" : "Détails"}
+                  {detailsOpen[member.id] ? t.fermerDetails : t.details}
                 </button>
 
                 {detailsOpen[member.id] && (
                   <div className="text-black text-sm mt-3 w-full space-y-4">
                     <div>
-                      <p>📣 Type d'Evangélisation : {member.type_evangelisation || ""}</p>
+                      <p>{t.typeEvang} {member.type_evangelisation || ""}</p>
                     </div>
                     <hr />
                     <div>
-                      <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
-                      <p>🎗️ Civilité : {member.sexe || "—"}</p>
-                      <p>⏳ Tranche d'age : {member.age || "—"}</p>
-                      <p>💬 WhatsApp : {member.is_whatsapp ? "Oui" : "Non"}</p>
+                      <p className="font-bold text-[#2E3192] mb-1">{t.identite}</p>
+                      <p>{t.civilite} {member.sexe || "—"}</p>
+                      <p>{t.age} {member.age || "—"}</p>
+                      <p>{t.whatsapp} {member.is_whatsapp ? t.oui : t.non}</p>
                     </div>
                     <hr />
                     <div>
-                      <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
-                      <p>🙏 Prière du salut : {member.priere_salut ? "Oui" : "—"}</p>
-                      <p>☀️ Type de conversion : {member.type_conversion || "—"}</p>
+                      <p className="font-bold text-[#2E3192] mb-1">{t.vieSpirituelle}</p>
+                      <p>{t.priereSalut} {member.priere_salut ? t.oui : "—"}</p>
+                      <p>{t.typeConversion} {member.type_conversion || "—"}</p>
                     </div>
                     <hr />
                     <div>
-                      <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
-                      <p>❓ Difficultés / Besoins : {formatBesoin(member.besoin)}</p>
-                      <p>📝 Infos supplémentaires : {formatBesoin(member.infos_supplementaires)}</p>
+                      <p className="font-bold text-[#2E3192] mb-1">{t.soinPastoral}</p>
+                      <p>{t.besoins} {formatBesoin(member.besoin)}</p>
+                      <p>{t.infosSup} {formatBesoin(member.infos_supplementaires)}</p>
                     </div>
                     <div className="mt-3 bg-gray-50 rounded-xl shadow-md p-4">
                       <div className="flex flex-col gap-2">
@@ -559,17 +714,17 @@ function EvangelisationContent() {
                           onClick={() => { setEditMember(member); setPopupMember(null); }}
                           className="w-full py-2 rounded-lg text-orange-500"
                         >
-                          ✏️ Modifier le contact
+                          {t.modifierContact}
                         </button>
                         <button
                           onClick={() => {
-                            if (window.confirm("⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?")) {
+                            if (window.confirm(t.confirmSuppression)) {
                               handleSupprimerMembre(member.id);
                             }
                           }}
                           className="w-full py-2 rounded-lg text-red-600 text-xs"
                         >
-                          🗑️ Supprimer le contact
+                          {t.supprimerContact}
                         </button>
                       </div>
                     </div>
@@ -595,11 +750,12 @@ function EvangelisationContent() {
         />
       )}
 
+      {/* Doublon popup */}
       {showDoublonPopup && doublonsDetected.length > 0 && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 max-w-lg w-full space-y-4 text-center">
-            <h2 className="text-xl font-bold">⚠️ Doublons détectés</h2>
-            <p className="text-sm">Ces contacts sont déjà enregistrés dans les suivis.</p>
+            <h2 className="text-xl font-bold">{t.doublonsDetectes}</h2>
+            <p className="text-sm">{t.doublonsInfo}</p>
             <ul className="text-left list-disc list-inside max-h-60 overflow-y-auto space-y-2">
               {doublonsDetected.map((d) => (
                 <li key={d.id} className="flex flex-col sm:flex-row justify-between items-center gap-2 bg-gray-100 p-2 rounded">
@@ -613,13 +769,13 @@ function EvangelisationContent() {
                       }}
                       className="bg-green-500 text-white px-3 py-1 rounded font-semibold"
                     >
-                      Envoyer
+                      {t.envoyer}
                     </button>
                     <button
                       onClick={() => setDoublonsDetected((prev) => prev.filter((c) => c.id !== d.id))}
                       className="bg-gray-300 px-3 py-1 rounded font-semibold"
                     >
-                      Annuler
+                      {t.annuler}
                     </button>
                   </div>
                 </li>
@@ -627,7 +783,7 @@ function EvangelisationContent() {
               {doublonsDetected.length === 0 && (
                 <div className="mt-4">
                   <button onClick={() => setShowDoublonPopup(false)} className="bg-blue-500 text-white px-4 py-2 rounded font-semibold">
-                    Fermer
+                    {t.fermer}
                   </button>
                 </div>
               )}
@@ -636,25 +792,23 @@ function EvangelisationContent() {
         </div>
       )}
 
+      {/* WhatsApp confirmation popup */}
       {showWhatsappPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
-            <p className="text-gray-700 mb-4">
-              Vérifiez les informations du responsable avant d'envoyer. Si le numéro est effacé,
-              WhatsApp s'ouvrira sur vos contacts.
-            </p>
-            <label className="text-sm font-semibold text-gray-600 mb-1 block">👤 Nom du responsable</label>
+            <p className="text-gray-700 mb-4">{t.whatsappInfo}</p>
+            <label className="text-sm font-semibold text-gray-600 mb-1 block">{t.nomResponsable}</label>
             <input
               type="text"
-              placeholder="Nom du responsable"
+              placeholder={t.nomResponsablePl}
               value={targetName}
               onChange={(e) => setTargetName(e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-3"
             />
-            <label className="text-sm font-semibold text-gray-600 mb-1 block">📞 Numéro WhatsApp</label>
+            <label className="text-sm font-semibold text-gray-600 mb-1 block">{t.numeroWhatsApp}</label>
             <input
               type="text"
-              placeholder="+3363xxx... — laisser vide pour choisir dans vos contacts"
+              placeholder={t.numeroWhatsAppPl}
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4"
@@ -664,13 +818,13 @@ function EvangelisationContent() {
                 onClick={() => { setShowWhatsappPopup(false); setPhoneNumber(""); setTargetName(""); }}
                 className="flex-1 py-3 bg-gray-300 rounded-2xl font-semibold"
               >
-                Annuler
+                {t.annuler}
               </button>
               <button
                 onClick={() => sendToWhatsapp(contactsToSendRef.current, selectedTargetTypeRef.current, selectedTargetRef.current)}
                 className="flex-1 py-3 bg-green-500 text-white rounded-2xl font-semibold"
               >
-                Envoyer
+                {t.envoyerBtn}
               </button>
             </div>
           </div>

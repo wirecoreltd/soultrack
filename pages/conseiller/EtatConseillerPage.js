@@ -594,6 +594,16 @@ function OngletParConseillerDetail({ displayedReports, onDetails, t, lang }) {
 }
 
 // ─── PAGE PRINCIPALE ───────────────────────────────────────────
+export default function EtatConseillerPage() {
+  return (
+    <ProtectedRoute
+      allowedRoles={["Administrateur", "Conseiller", "ResponsableIntegration"]}
+    >
+      <EtatConseiller />
+    </ProtectedRoute>
+  );
+}
+
 function EtatConseiller() {
   const { lang } = useLang();
   const t = translations[lang];
@@ -973,4 +983,4 @@ function EtatConseiller() {
   );
 }
 
-export default EtatConseillerPage;
+

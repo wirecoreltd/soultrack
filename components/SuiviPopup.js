@@ -3,6 +3,180 @@
 import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import PastoralAssistant from "../components/PastoralAssistant";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    // Header
+    suiviPastoral: "Suivi pastoral",
+
+    // Section titles
+    nouveauSuivi: "Nouveau suivi",
+    modifierSuivi: "Modifier le suivi",
+    historique: "📅 Historique",
+    questionsEntretien: "🗣️ Questions d'entretien",
+    nouveauSuiviSection: "📋 Nouveau suivi",
+    modifierSuiviSection: "📋 Modifier le suivi",
+
+    // Edit banner
+    modificationDu: "✏️ Modification du suivi du",
+    annuler: "Annuler",
+
+    // Form fields
+    date: "Date",
+    typeAction: "Type d'action",
+    selectionner: "-- Sélectionner --",
+    appel: "Appel",
+    visite: "Visite",
+    entretien: "Entretien",
+    besoins: "Besoins",
+    commentaire: "Commentaire",
+    commentairePlaceholder: "Commentaire...",
+
+    // Besoins options
+    finances: "Finances",
+    sante: "Santé",
+    travailEtudes: "Travail / Études",
+    familleEnfants: "Famille / Enfants",
+    miracle: "Miracle",
+    delivrance: "Délivrance",
+    relationsConflits: "Relations / Conflits",
+    addictions: "Addictions / Dépendances",
+    guidanceSpirituelle: "Guidance spirituelle",
+    logement: "Logement / Sécurité",
+    communaute: "Communauté / Isolement",
+    depression: "Dépression / Santé mentale",
+
+    // Statuts
+    enSuivi: "En suivi",
+    resolu: "Résolu",
+    resoluTick: "✓ Résolu",
+
+    // Historique
+    aucunSuivi: "Aucun suivi pour le moment",
+    besoinLabel: "Besoin :",
+    commentaireLabel: " Commentaire :",
+    voirMoins: "▲ Voir moins",
+    voirReponses: "▼ Voir les réponses de l'entretien",
+    modifier: "✏️ Modifier",
+    enCours: "✏️ En cours...",
+
+    // Interview questions
+    q_etat_general_section: "1. État général",
+    q_etat_general_question: "Comment vas-tu vraiment en ce moment ?",
+    q_vie_spirituelle_section: "2. Vie spirituelle",
+    q_vie_spirituelle_question: "Comment est ta relation avec Dieu ces derniers temps ?",
+    q_intention_priere_question: "Dans quoi aimerais-tu voir Dieu intervenir dans ta vie ?",
+    q_combats_luttes_section: "3. Combats & blocages",
+    q_combats_luttes_question: "Est-ce qu'il y a une lutte ou un défi actuellement ?",
+    q_blocages_question: "Qu'est-ce qui te bloque aujourd'hui pour avancer ?",
+    q_vie_personnelle_section: "4. Vie personnelle",
+    q_vie_personnelle_question: "Comment ça se passe dans ta vie personnelle (famille, travail…) ?",
+    q_besoins_avancement_section: "5. Besoins",
+    q_besoins_avancement_question: "De quoi aurais-tu besoin pour aller mieux ou progresser ?",
+    q_talents_section: "6. Talents & potentiel",
+    q_talents_question: "Qu'est-ce que tu fais naturellement bien ?",
+    q_domaine_service_question: "Dans quel domaine aimerais-tu servir ou te développer ?",
+    notesPl: "Notes...",
+
+    // Footer buttons
+    fermer: "Fermer",
+    ajouterSuivi: "Ajouter suivi",
+    enregistrer: "💾 Enregistrer les modifications",
+    ajoutEnCours: "Ajout...",
+    miseAJour: "Mise à jour...",
+
+    // Alerts
+    alerteChamps: "Date et type sont obligatoires",
+    alerteSession: "Session introuvable. Veuillez vous déconnecter et vous reconnecter.",
+    erreur: "Erreur : ",
+  },
+  en: {
+    // Header
+    suiviPastoral: "Pastoral Follow-up",
+
+    // Section titles
+    nouveauSuivi: "New follow-up",
+    modifierSuivi: "Edit follow-up",
+    historique: "📅 History",
+    questionsEntretien: "🗣️ Interview Questions",
+    nouveauSuiviSection: "📋 New follow-up",
+    modifierSuiviSection: "📋 Edit follow-up",
+
+    // Edit banner
+    modificationDu: "✏️ Editing follow-up from",
+    annuler: "Cancel",
+
+    // Form fields
+    date: "Date",
+    typeAction: "Action type",
+    selectionner: "-- Select --",
+    appel: "Call",
+    visite: "Visit",
+    entretien: "Meeting",
+    besoins: "Needs",
+    commentaire: "Comment",
+    commentairePlaceholder: "Comment...",
+
+    // Besoins options
+    finances: "Finances",
+    sante: "Health",
+    travailEtudes: "Work / Studies",
+    familleEnfants: "Family / Children",
+    miracle: "Miracle",
+    delivrance: "Deliverance",
+    relationsConflits: "Relationships / Conflicts",
+    addictions: "Addictions / Dependencies",
+    guidanceSpirituelle: "Spiritual Guidance",
+    logement: "Housing / Safety",
+    communaute: "Community / Isolation",
+    depression: "Depression / Mental Health",
+
+    // Statuts
+    enSuivi: "In follow-up",
+    resolu: "Resolved",
+    resoluTick: "✓ Resolved",
+
+    // Historique
+    aucunSuivi: "No follow-ups yet",
+    besoinLabel: "Need:",
+    commentaireLabel: " Comment:",
+    voirMoins: "▲ Show less",
+    voirReponses: "▼ View interview answers",
+    modifier: "✏️ Edit",
+    enCours: "✏️ Editing...",
+
+    // Interview questions
+    q_etat_general_section: "1. General state",
+    q_etat_general_question: "How are you really doing right now?",
+    q_vie_spirituelle_section: "2. Spiritual life",
+    q_vie_spirituelle_question: "How is your relationship with God lately?",
+    q_intention_priere_question: "Where would you like to see God intervene in your life?",
+    q_combats_luttes_section: "3. Struggles & blocks",
+    q_combats_luttes_question: "Is there a struggle or challenge right now?",
+    q_blocages_question: "What is holding you back from moving forward today?",
+    q_vie_personnelle_section: "4. Personal life",
+    q_vie_personnelle_question: "How is your personal life going (family, work…)?",
+    q_besoins_avancement_section: "5. Needs",
+    q_besoins_avancement_question: "What would you need to feel better or grow?",
+    q_talents_section: "6. Talents & potential",
+    q_talents_question: "What do you naturally do well?",
+    q_domaine_service_question: "In what area would you like to serve or develop yourself?",
+    notesPl: "Notes...",
+
+    // Footer buttons
+    fermer: "Close",
+    ajouterSuivi: "Add follow-up",
+    enregistrer: "💾 Save changes",
+    ajoutEnCours: "Adding...",
+    miseAJour: "Updating...",
+
+    // Alerts
+    alerteChamps: "Date and type are required",
+    alerteSession: "Session not found. Please log out and log back in.",
+    erreur: "Error: ",
+  },
+};
 
 function parseHistoriqueBesoin(besoinJson) {
   if (!besoinJson) return [];
@@ -18,25 +192,35 @@ function parseHistoriqueBesoin(besoinJson) {
   }
 }
 
-const INTERVIEW_QUESTIONS = [
-  { key: "etat_general",      emoji: "🧭", section: "1. État général",       question: "Comment vas-tu vraiment en ce moment ?" },
-  { key: "vie_spirituelle",   emoji: "🙏", section: "2. Vie spirituelle",     question: "Comment est ta relation avec Dieu ces derniers temps ?" },
-  { key: "intention_priere",  emoji: "🙏", section: null,                     question: "Dans quoi aimerais-tu voir Dieu intervenir dans ta vie ?", indent: true },
-  { key: "combats_luttes",    emoji: "⚔️", section: "3. Combats & blocages",  question: "Est-ce qu'il y a une lutte ou un défi actuellement ?" },
-  { key: "blocages",          emoji: "⚔️", section: null,                     question: "Qu'est-ce qui te bloque aujourd'hui pour avancer ?", indent: true },
-  { key: "vie_personnelle",   emoji: "👨‍👩‍👧", section: "4. Vie personnelle",   question: "Comment ça se passe dans ta vie personnelle (famille, travail…) ?" },
-  { key: "besoins_avancement",emoji: "🎯", section: "5. Besoins",             question: "De quoi aurais-tu besoin pour aller mieux ou progresser ?" },
-  { key: "talents",           emoji: "🌱", section: "6. Talents & potentiel", question: "Qu'est-ce que tu fais naturellement bien ?" },
-  { key: "domaine_service",   emoji: "🌱", section: null,                     question: "Dans quel domaine aimerais-tu servir ou te développer ?", indent: true },
-];
-
-const EMPTY_INTERVIEW = {
-  etat_general: "", vie_spirituelle: "", intention_priere: "",
-  combats_luttes: "", blocages: "", vie_personnelle: "",
-  besoins_avancement: "", talents: "", domaine_service: "",
-};
-
 export default function SuiviPopup({ member, onClose, user }) {
+  const { lang } = useLang();
+  const t = translations[lang];
+
+  // Build interview questions from translations (keeps data-driven pattern)
+  const INTERVIEW_QUESTIONS = [
+    { key: "etat_general",       emoji: "🧭", section: t.q_etat_general_section,        question: t.q_etat_general_question },
+    { key: "vie_spirituelle",    emoji: "🙏", section: t.q_vie_spirituelle_section,      question: t.q_vie_spirituelle_question },
+    { key: "intention_priere",   emoji: "🙏", section: null,                             question: t.q_intention_priere_question, indent: true },
+    { key: "combats_luttes",     emoji: "⚔️", section: t.q_combats_luttes_section,      question: t.q_combats_luttes_question },
+    { key: "blocages",           emoji: "⚔️", section: null,                             question: t.q_blocages_question, indent: true },
+    { key: "vie_personnelle",    emoji: "👨‍👩‍👧", section: t.q_vie_personnelle_section,  question: t.q_vie_personnelle_question },
+    { key: "besoins_avancement", emoji: "🎯", section: t.q_besoins_avancement_section,  question: t.q_besoins_avancement_question },
+    { key: "talents",            emoji: "🌱", section: t.q_talents_section,              question: t.q_talents_question },
+    { key: "domaine_service",    emoji: "🌱", section: null,                             question: t.q_domaine_service_question, indent: true },
+  ];
+
+  const EMPTY_INTERVIEW = {
+    etat_general: "", vie_spirituelle: "", intention_priere: "",
+    combats_luttes: "", blocages: "", vie_personnelle: "",
+    besoins_avancement: "", talents: "", domaine_service: "",
+  };
+
+  const besoinsOptions = [
+    t.finances, t.sante, t.travailEtudes, t.familleEnfants, t.miracle, t.delivrance,
+    t.relationsConflits, t.addictions, t.guidanceSpirituelle,
+    t.logement, t.communaute, t.depression,
+  ];
+
   const [loading, setLoading] = useState(false);
   const [suivis, setSuivis] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -59,7 +243,7 @@ export default function SuiviPopup({ member, onClose, user }) {
 
   const initStatuts = (besoins) => {
     const s = {};
-    besoins.forEach((b) => { s[b] = "En suivi"; });
+    besoins.forEach((b) => { s[b] = t.enSuivi; });
     return s;
   };
 
@@ -74,12 +258,6 @@ export default function SuiviPopup({ member, onClose, user }) {
 
   const [form, setForm] = useState(emptyForm);
   const [resolvedBesoins, setResolvedBesoins] = useState([]);
-
-  const besoinsOptions = [
-    "Finances","Santé","Travail / Études","Famille / Enfants","Miracle","Délivrance",
-    "Relations / Conflits","Addictions / Dépendances","Guidance spirituelle",
-    "Logement / Sécurité","Communauté / Isolement","Dépression / Santé mentale",
-  ];
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -138,10 +316,7 @@ export default function SuiviPopup({ member, onClose, user }) {
       .select("*, profiles:created_by(prenom, nom)")
       .eq("membre_id", member.id)
       .order("date_action", { ascending: false });
-
     setSuivis(data || []);
-
-
   };
 
   const handleEditSuivi = (s) => {
@@ -149,7 +324,7 @@ export default function SuiviPopup({ member, onClose, user }) {
     const besoinChecked = [], besoinStatuts = {}, resolved = [];
     besoinsArr.forEach(({ label, statut }) => {
       if (statut === "Résolu") resolved.push(label);
-      else { besoinChecked.push(label); besoinStatuts[label] = statut || "En suivi"; }
+      else { besoinChecked.push(label); besoinStatuts[label] = statut || t.enSuivi; }
     });
     setEditingSuivi(s);
     setResolvedBesoins(resolved);
@@ -183,7 +358,7 @@ export default function SuiviPopup({ member, onClose, user }) {
     const isResolved = resolvedBesoins.includes(value);
     if (isResolved) {
       setResolvedBesoins((prev) => prev.filter((b) => b !== value));
-      setForm((prev) => ({ ...prev, besoin: [...prev.besoin, value], besoinStatuts: { ...prev.besoinStatuts, [value]: "En suivi" } }));
+      setForm((prev) => ({ ...prev, besoin: [...prev.besoin, value], besoinStatuts: { ...prev.besoinStatuts, [value]: t.enSuivi } }));
       return;
     }
     if (isChecked) {
@@ -191,29 +366,29 @@ export default function SuiviPopup({ member, onClose, user }) {
       setForm((prev) => ({ ...prev, besoin: prev.besoin.filter((b) => b !== value), besoinStatuts: Object.fromEntries(Object.entries(prev.besoinStatuts).filter(([k]) => k !== value)) }));
       return;
     }
-    setForm((prev) => ({ ...prev, besoin: [...prev.besoin, value], besoinStatuts: { ...prev.besoinStatuts, [value]: "En suivi" } }));
+    setForm((prev) => ({ ...prev, besoin: [...prev.besoin, value], besoinStatuts: { ...prev.besoinStatuts, [value]: t.enSuivi } }));
   };
 
   const toggleStatutBesoin = (besoin) => {
     setForm((prev) => ({
       ...prev,
-      besoinStatuts: { ...prev.besoinStatuts, [besoin]: prev.besoinStatuts[besoin] === "Résolu" ? "En suivi" : "Résolu" },
+      besoinStatuts: { ...prev.besoinStatuts, [besoin]: prev.besoinStatuts[besoin] === t.resolu ? t.enSuivi : t.resolu },
     }));
   };
 
   const handleSubmit = async () => {
-    if (!form.date_action || !form.type) { alert("Date et type sont obligatoires"); return; }
-    if (!currentUserId) { alert("Session introuvable. Veuillez vous déconnecter et vous reconnecter."); return; }
+    if (!form.date_action || !form.type) { alert(t.alerteChamps); return; }
+    if (!currentUserId) { alert(t.alerteSession); return; }
     setLoading(true);
 
-    const resolvedFromChecked = form.besoin.filter((b) => form.besoinStatuts[b] === "Résolu");
+    const resolvedFromChecked = form.besoin.filter((b) => form.besoinStatuts[b] === t.resolu);
     const allResolved = [...new Set([...resolvedBesoins, ...resolvedFromChecked])];
     const newMemberBesoins = [
       ...memberBesoins.filter((b) => !allResolved.includes(b)),
-      ...form.besoin.filter((b) => !memberBesoins.includes(b) && form.besoinStatuts[b] !== "Résolu"),
+      ...form.besoin.filter((b) => !memberBesoins.includes(b) && form.besoinStatuts[b] !== t.resolu),
     ];
     const besoinAvecStatut = [
-      ...form.besoin.map((b) => ({ label: b, statut: form.besoinStatuts[b] || "En suivi" })),
+      ...form.besoin.map((b) => ({ label: b, statut: form.besoinStatuts[b] || t.enSuivi })),
       ...resolvedBesoins.map((b) => ({ label: b, statut: "Résolu" })),
     ];
 
@@ -232,7 +407,7 @@ export default function SuiviPopup({ member, onClose, user }) {
     const payload = {
       type: form.type,
       action_type: form.type,
-      statut: allResolved.length > 0 && form.besoin.filter((b) => form.besoinStatuts[b] !== "Résolu").length === 0 ? "Résolu" : "En suivi",
+      statut: allResolved.length > 0 && form.besoin.filter((b) => form.besoinStatuts[b] !== t.resolu).length === 0 ? "Résolu" : "En suivi",
       besoin: besoinAvecStatut.length ? JSON.stringify(besoinAvecStatut) : null,
       commentaire: form.commentaire,
       date_action: form.date_action,
@@ -241,11 +416,11 @@ export default function SuiviPopup({ member, onClose, user }) {
 
     if (editingSuivi) {
       const { error } = await supabase.from("suivis").update(payload).eq("id", editingSuivi.id);
-      if (error) { setLoading(false); alert("Erreur : " + error.message); return; }
+      if (error) { setLoading(false); alert(t.erreur + error.message); return; }
       setSuivis((prev) => prev.map((s) => s.id === editingSuivi.id ? { ...s, ...payload } : s));
     } else {
       const { error } = await supabase.from("suivis").insert({ ...payload, membre_id: member.id, created_by: currentUserId });
-      if (error) { setLoading(false); alert("Erreur : " + error.message); return; }
+      if (error) { setLoading(false); alert(t.erreur + error.message); return; }
       await fetchSuivis();
     }
 
@@ -255,7 +430,7 @@ export default function SuiviPopup({ member, onClose, user }) {
     setEditingSuivi(null);
     setLoading(false);
     const newStatuts = {};
-    newMemberBesoins.forEach((b) => { newStatuts[b] = "En suivi"; });
+    newMemberBesoins.forEach((b) => { newStatuts[b] = t.enSuivi; });
     setForm({ date_action: "", type: "", besoin: newMemberBesoins, besoinStatuts: newStatuts, commentaire: "", ...EMPTY_INTERVIEW });
   };
 
@@ -265,14 +440,16 @@ export default function SuiviPopup({ member, onClose, user }) {
     if (!dateStr) return "";
     try {
       const d = new Date(dateStr);
-      const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
+      const months = lang === "en"
+        ? ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+        : ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
       return `${d.getDate().toString().padStart(2,"0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
     } catch { return dateStr; }
   };
 
   const statutColor = (statut) => {
-    if (statut === "Résolu") return "text-green-600 font-semibold";
-    if (statut === "En suivi") return "text-blue-600 font-semibold";
+    if (statut === "Résolu" || statut === t.resolu) return "text-green-600 font-semibold";
+    if (statut === "En suivi" || statut === t.enSuivi) return "text-blue-600 font-semibold";
     return "text-orange-500 font-semibold";
   };
 
@@ -288,7 +465,7 @@ export default function SuiviPopup({ member, onClose, user }) {
         <div ref={formTopRef} className="px-6 pt-6 pb-4 relative" style={{ background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}>
           <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-white font-bold text-sm" style={{ background: "rgba(255,255,255,0.2)" }}>✕</button>
           <h2 className="text-xl font-bold text-white pr-10">💡 {member.prenom} {member.nom}</h2>
-          <p className="text-blue-100 text-sm mt-1 opacity-80">Suivi pastoral</p>
+          <p className="text-blue-100 text-sm mt-1 opacity-80">{t.suiviPastoral}</p>
         </div>
 
         {/* BODY */}
@@ -296,32 +473,32 @@ export default function SuiviPopup({ member, onClose, user }) {
 
           {editingSuivi && (
             <div className="flex items-center justify-between bg-orange-50 border border-orange-300 rounded-xl px-4 py-2">
-              <p className="text-orange-700 text-sm font-semibold">✏️ Modification du suivi du {formatDate(editingSuivi.date_action)}</p>
-              <button onClick={handleCancelEdit} className="text-xs text-gray-500 underline hover:text-gray-700">Annuler</button>
+              <p className="text-orange-700 text-sm font-semibold">{t.modificationDu} {formatDate(editingSuivi.date_action)}</p>
+              <button onClick={handleCancelEdit} className="text-xs text-gray-500 underline hover:text-gray-700">{t.annuler}</button>
             </div>
           )}
 
-          <SectionTitle>📋 {editingSuivi ? "Modifier le suivi" : "Nouveau suivi"}</SectionTitle>
+          <SectionTitle>{editingSuivi ? t.modifierSuiviSection : t.nouveauSuiviSection}</SectionTitle>
 
-          <Field label="Date">
+          <Field label={t.date}>
             <input type="date" value={formatDateForInput(form.date_action)} onChange={(e) => setForm((p) => ({ ...p, date_action: e.target.value }))} className="inp" />
           </Field>
 
-          <Field label="Type d'action">
+          <Field label={t.typeAction}>
             <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="inp">
-              <option value="">-- Sélectionner --</option>
-              <option value="Appel">Appel</option>
-              <option value="Visite">Visite</option>
-              <option value="Entretien">Entretien</option>
+              <option value="">{t.selectionner}</option>
+              <option value="Appel">{t.appel}</option>
+              <option value="Visite">{t.visite}</option>
+              <option value="Entretien">{t.entretien}</option>
             </select>
           </Field>
 
-          <Field label="Besoins">
+          <Field label={t.besoins}>
             <div className="space-y-2 mt-1">
               {besoinsOptions.map((b) => {
                 const isChecked = form.besoin.includes(b);
                 const isResolved = resolvedBesoins.includes(b);
-                const statut = form.besoinStatuts[b] || "En suivi";
+                const statut = form.besoinStatuts[b] || t.enSuivi;
                 let boxStyle = "bg-white border-gray-300";
                 let showTick = false;
                 if (isResolved) boxStyle = "bg-green-500 border-green-500";
@@ -335,11 +512,11 @@ export default function SuiviPopup({ member, onClose, user }) {
                       <span className={isResolved ? "line-through text-gray-400" : "text-gray-700"}>{b}</span>
                     </label>
                     {isChecked && (
-                      <button type="button" onClick={() => toggleStatutBesoin(b)} className={`text-xs px-2 py-0.5 rounded-full border font-semibold transition-colors whitespace-nowrap ${statut === "Résolu" ? "bg-green-100 border-green-400 text-green-700" : "bg-blue-50 border-blue-300 text-blue-600"}`}>
-                        {statut === "Résolu" ? "✓ Résolu" : "En suivi"}
+                      <button type="button" onClick={() => toggleStatutBesoin(b)} className={`text-xs px-2 py-0.5 rounded-full border font-semibold transition-colors whitespace-nowrap ${statut === t.resolu ? "bg-green-100 border-green-400 text-green-700" : "bg-blue-50 border-blue-300 text-blue-600"}`}>
+                        {statut === t.resolu ? t.resoluTick : t.enSuivi}
                       </button>
                     )}
-                    {isResolved && <span className="text-xs px-2 py-0.5 rounded-full border bg-green-100 border-green-400 text-green-700 font-semibold whitespace-nowrap">✓ Résolu</span>}
+                    {isResolved && <span className="text-xs px-2 py-0.5 rounded-full border bg-green-100 border-green-400 text-green-700 font-semibold whitespace-nowrap">{t.resoluTick}</span>}
                   </div>
                 );
               })}
@@ -352,9 +529,9 @@ export default function SuiviPopup({ member, onClose, user }) {
           <PastoralAssistant membre={member} suivis={suivis} />
 
           {/* HISTORIQUE */}
-          <SectionTitle>📅 Historique</SectionTitle>
+          <SectionTitle>{t.historique}</SectionTitle>
 
-          {suivis.length === 0 && <p className="text-sm text-gray-400 italic">Aucun suivi pour le moment</p>}
+          {suivis.length === 0 && <p className="text-sm text-gray-400 italic">{t.aucunSuivi}</p>}
 
           {suivis.map((s) => {
             const besoinsArr = parseHistoriqueBesoin(s.besoin);
@@ -367,21 +544,21 @@ export default function SuiviPopup({ member, onClose, user }) {
                 <div className="flex items-center justify-between">
                   <p className="font-semibold text-gray-800">📅 {formatDate(s.date_action)} — {s.action_type}</p>
                   <button onClick={() => handleEditSuivi(s)} className={`text-xs px-2 py-1 rounded-lg font-semibold border transition-colors ${isBeingEdited ? "bg-orange-100 border-orange-400 text-orange-700" : "bg-white border-gray-300 text-gray-600 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600"}`}>
-                    {isBeingEdited ? "✏️ En cours..." : "✏️ Modifier"}
+                    {isBeingEdited ? t.enCours : t.modifier}
                   </button>
                 </div>
 
                 {besoinsArr.length > 0 && (
                   <div className="mt-1">
-                    <p className="text-gray-400 text-xs mb-0.5">Besoin :</p>
+                    <p className="text-gray-400 text-xs mb-0.5">{t.besoinLabel}</p>
                     {besoinsArr.map((item, i) => (
                       <p key={i} className="text-gray-700">{item.label} — <span className={statutColor(item.statut)}>{item.statut}</span></p>
                     ))}
                   </div>
                 )}
 
-                {s.commentaire && <p className="text-gray-600 mt-2"> Commentaire : {s.commentaire}</p>}
-                {/* VOIR PLUS / MOINS */}
+                {s.commentaire && <p className="text-gray-600 mt-2">{t.commentaireLabel} {s.commentaire}</p>}
+
                 {hasInterview && (
                   <>
                     <button
@@ -389,7 +566,7 @@ export default function SuiviPopup({ member, onClose, user }) {
                       className="text-xs font-semibold mt-1 flex items-center gap-1"
                       style={{ color: "#2E3192", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                     >
-                      {isExpanded ? "▲ Voir moins" : "▼ Voir les réponses de l'entretien"}
+                      {isExpanded ? t.voirMoins : t.voirReponses}
                     </button>
 
                     {isExpanded && (
@@ -416,7 +593,7 @@ export default function SuiviPopup({ member, onClose, user }) {
           })}
 
           {/* QUESTIONS D'ENTRETIEN */}
-          <SectionTitle>🗣️ Questions d'entretien</SectionTitle>
+          <SectionTitle>{t.questionsEntretien}</SectionTitle>
           {INTERVIEW_QUESTIONS.map((q) => (
             <InterviewField
               key={q.key}
@@ -426,22 +603,26 @@ export default function SuiviPopup({ member, onClose, user }) {
               indent={q.indent}
               value={form[q.key]}
               onChange={(v) => setForm((p) => ({ ...p, [q.key]: v }))}
+              placeholder={t.notesPl}
             />
           ))}
 
           {/* COMMENTAIRE */}
-          <Field label="Commentaire">
-            <textarea placeholder="Commentaire..." value={form.commentaire} onChange={(e) => setForm({ ...form, commentaire: e.target.value })} className="inp" rows={3} />
+          <Field label={t.commentaire}>
+            <textarea placeholder={t.commentairePlaceholder} value={form.commentaire} onChange={(e) => setForm({ ...form, commentaire: e.target.value })} className="inp" rows={3} />
           </Field>
 
         </div>
 
         {/* FOOTER */}
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row gap-3">
-          <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all">Fermer</button>
+          <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all">{t.fermer}</button>
           <button type="button" onClick={handleSubmit} disabled={loading} className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
             style={{ background: loading ? "#a0a0c0" : editingSuivi ? "linear-gradient(135deg, #f97316 0%, #ea580c 100%)" : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}>
-            {loading ? (editingSuivi ? "Mise à jour..." : "Ajout...") : editingSuivi ? "💾 Enregistrer les modifications" : "Ajouter suivi"}
+            {loading
+              ? (editingSuivi ? t.miseAJour : t.ajoutEnCours)
+              : (editingSuivi ? t.enregistrer : t.ajouterSuivi)
+            }
           </button>
         </div>
 
@@ -455,7 +636,7 @@ export default function SuiviPopup({ member, onClose, user }) {
   );
 }
 
-function InterviewField({ emoji, section, question, value, onChange, indent = false }) {
+function InterviewField({ emoji, section, question, value, onChange, indent = false, placeholder = "Notes..." }) {
   return (
     <div style={{ background: indent ? "#fafafa" : "#f0f4ff", borderRadius: 10, padding: "10px 12px", border: `1px solid ${indent ? "#e8eaf6" : "#c7cef5"}`, marginLeft: indent ? 16 : 0 }}>
       {section && (
@@ -465,7 +646,7 @@ function InterviewField({ emoji, section, question, value, onChange, indent = fa
       )}
       <p style={{ fontSize: 13, color: "#4b5563", marginBottom: 6, fontStyle: "italic" }}>{question}</p>
       <textarea
-        placeholder="Notes..."
+        placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={2}

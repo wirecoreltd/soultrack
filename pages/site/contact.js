@@ -192,6 +192,16 @@ export default function ContactPage() {
     letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "7px",
   };
 
+  const langBtnStyle = (active) => ({
+    background: active ? "rgba(255,255,255,0.15)" : "none",
+    border: active ? "0.5px solid rgba(255,255,255,0.3)" : "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    padding: "3px 5px",
+    opacity: active ? 1 : 0.45,
+    transition: "opacity 0.2s",
+  });
+
   const socialLinks = [
     {
       label: "Email", href: "mailto:support@soultrack.org",
@@ -219,7 +229,7 @@ export default function ContactPage() {
 
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative" }}>
-     
+
       {/* ───── HEADER ───── */}
       <header
         style={{
@@ -270,7 +280,7 @@ export default function ContactPage() {
             </span>
           </div>
 
-          {/* NAV */}
+          {/* NAV desktop */}
           <nav
             style={{
               display: "flex",
@@ -290,9 +300,7 @@ export default function ContactPage() {
                   cursor: "pointer",
                   transition: "color 0.2s",
                 }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.color = "#fff")
-                }
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
                 onMouseLeave={(e) =>
                   (e.currentTarget.style.color =
                     pathname === item.path ? "#fbbf24" : "#fff")
@@ -304,7 +312,7 @@ export default function ContactPage() {
             ))}
           </nav>
 
-          {/* BOUTONS + SWITCHER LANGUE */}
+          {/* BOUTONS desktop */}
           <div
             style={{
               display: "flex",
@@ -346,13 +354,38 @@ export default function ContactPage() {
             </button>
           </div>
 
-          {/* Switcher langue */}
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <button onClick={() => changeLang("fr")} title="Français" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "fr" ? 1 : 0.45, transition: "opacity 0.2s" }}>
-              <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="32" height="22" alt="Français" style={{ display: "block", borderRadius: "3px" }} />
+          {/* Switcher langue desktop */}
+          <div
+            style={{ display: "flex", gap: "8px", alignItems: "center" }}
+            className="nav-hide"
+          >
+            <button
+              onClick={() => changeLang("fr")}
+              title="Français"
+              style={langBtnStyle(lang === "fr")}
+            >
+              <img
+                src="https://flagcdn.com/w40/fr.png"
+                srcSet="https://flagcdn.com/w80/fr.png 2x"
+                width="32"
+                height="22"
+                alt="Français"
+                style={{ display: "block", borderRadius: "3px" }}
+              />
             </button>
-            <button onClick={() => changeLang("en")} title="English" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "en" ? 1 : 0.45, transition: "opacity 0.2s" }}>
-              <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="32" height="22" alt="English" style={{ display: "block", borderRadius: "3px" }} />
+            <button
+              onClick={() => changeLang("en")}
+              title="English"
+              style={langBtnStyle(lang === "en")}
+            >
+              <img
+                src="https://flagcdn.com/w40/gb.png"
+                srcSet="https://flagcdn.com/w80/gb.png 2x"
+                width="32"
+                height="22"
+                alt="English"
+                style={{ display: "block", borderRadius: "3px" }}
+              />
             </button>
           </div>
 
@@ -425,13 +458,35 @@ export default function ContactPage() {
               </span>
             ))}
 
-            {/* Switcher langue dans le menu mobile */}
+            {/* Switcher langue dans le menu mobile — changeLang au lieu de setLang */}
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <button onClick={() => setLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
-                <img src="https://flagcdn.com/w20/fr.png" srcSet="https://flagcdn.com/w40/fr.png 2x" width="20" height="14" alt="Français" style={{ display: "block", borderRadius: "2px" }} />
+              <button
+                onClick={() => changeLang("fr")}
+                title="Français"
+                style={langBtnStyle(lang === "fr")}
+              >
+                <img
+                  src="https://flagcdn.com/w20/fr.png"
+                  srcSet="https://flagcdn.com/w40/fr.png 2x"
+                  width="20"
+                  height="14"
+                  alt="Français"
+                  style={{ display: "block", borderRadius: "2px" }}
+                />
               </button>
-              <button onClick={() => setLang("en")} title="English" style={langBtnStyle(lang === "en")}>
-                <img src="https://flagcdn.com/w20/gb.png" srcSet="https://flagcdn.com/w40/gb.png 2x" width="20" height="14" alt="English" style={{ display: "block", borderRadius: "2px" }} />
+              <button
+                onClick={() => changeLang("en")}
+                title="English"
+                style={langBtnStyle(lang === "en")}
+              >
+                <img
+                  src="https://flagcdn.com/w20/gb.png"
+                  srcSet="https://flagcdn.com/w40/gb.png 2x"
+                  width="20"
+                  height="14"
+                  alt="English"
+                  style={{ display: "block", borderRadius: "2px" }}
+                />
               </button>
             </div>
 
@@ -444,7 +499,7 @@ export default function ContactPage() {
               }}
             >
               <button
-                onClick={() => router.push("/login")}
+                onClick={() => { router.push("/login"); setOpenMenu(false); }}
                 style={{
                   background: "transparent",
                   color: "#fff",
@@ -458,7 +513,7 @@ export default function ContactPage() {
                 {t.login}
               </button>
               <button
-                onClick={() => router.push("/site/pricing")}
+                onClick={() => { router.push("/site/pricing"); setOpenMenu(false); }}
                 style={{
                   background: "#fff",
                   color: "#333699",
@@ -504,8 +559,14 @@ export default function ContactPage() {
                 <div style={{ fontSize: "48px", marginBottom: "16px" }}>{successInfo.icon}</div>
                 <h3 style={{ color: "#fff", fontSize: "20px", fontWeight: 600, marginBottom: "12px" }}>{successInfo.title}</h3>
                 <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "14px", lineHeight: 1.8, maxWidth: "380px", margin: "0 auto" }}>{successInfo.text}</p>
-                <button onClick={() => { setSent(false); setForm({ nom: "", email: "", type: "", message: "", titre: "", nom_eglise: "", note: 0 }); setHoveredStar(0); }}
-                  style={{ marginTop: "28px", background: "transparent", color: "rgba(255,255,255,0.7)", border: "0.5px solid rgba(255,255,255,0.25)", padding: "8px 20px", borderRadius: "8px", fontSize: "13px", cursor: "pointer" }}>
+                <button
+                  onClick={() => {
+                    setSent(false);
+                    setForm({ nom: "", email: "", type: "", message: "", titre: "", nom_eglise: "", note: 0 });
+                    setHoveredStar(0);
+                  }}
+                  style={{ marginTop: "28px", background: "transparent", color: "rgba(255,255,255,0.7)", border: "0.5px solid rgba(255,255,255,0.25)", padding: "8px 20px", borderRadius: "8px", fontSize: "13px", cursor: "pointer" }}
+                >
                   {t.btnSendAnother}
                 </button>
               </div>
@@ -521,11 +582,13 @@ export default function ContactPage() {
                     <div key={f.key}>
                       <label style={labelStyle}>{f.label}</label>
                       <input
-                        type={f.type} placeholder={f.placeholder} value={form[f.key]}
-                        onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                        type={f.type}
+                        placeholder={f.placeholder}
+                        value={form[f.key]}
+                        onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
                         style={inputStyle}
-                        onFocus={e => e.target.style.borderColor = "rgba(255,255,255,0.45)"}
-                        onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.18)"}
+                        onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
+                        onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
                       />
                     </div>
                   ))}
@@ -536,7 +599,9 @@ export default function ContactPage() {
                   <label style={labelStyle}>{t.fieldType}</label>
                   <select
                     value={form.type}
-                    onChange={e => setForm({ ...form, type: e.target.value, titre: "", nom_eglise: "", note: 0 })}
+                    onChange={(e) =>
+                      setForm({ ...form, type: e.target.value, titre: "", nom_eglise: "", note: 0 })
+                    }
                     style={{
                       width: "100%", background: "rgba(30,35,100,0.85)", border: "0.5px solid rgba(255,255,255,0.18)",
                       borderRadius: "10px", padding: "10px 14px", color: form.type ? "#fff" : "rgba(255,255,255,0.3)",
@@ -544,8 +609,8 @@ export default function ContactPage() {
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.4)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
                       backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center",
                     }}
-                    onFocus={e => e.target.style.borderColor = "rgba(255,255,255,0.45)"}
-                    onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.18)"}
+                    onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
+                    onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
                   >
                     <option value="" disabled style={{ background: "#333699" }}>{t.fieldTypePlaceholder}</option>
                     <option value="amelioration" style={{ background: "#333699", color: "#fff" }}>{t.typeAmelioration}</option>
@@ -559,32 +624,46 @@ export default function ContactPage() {
                   <>
                     <div>
                       <label style={labelStyle}>{t.fieldTitre}</label>
-                      <input type="text" placeholder={t.fieldTitrePlaceholder} value={form.titre}
-                        onChange={e => setForm({ ...form, titre: e.target.value })} style={inputStyle}
-                        onFocus={e => e.target.style.borderColor = "rgba(255,255,255,0.45)"}
-                        onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.18)"}
+                      <input
+                        type="text"
+                        placeholder={t.fieldTitrePlaceholder}
+                        value={form.titre}
+                        onChange={(e) => setForm({ ...form, titre: e.target.value })}
+                        style={inputStyle}
+                        onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
+                        onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
                       />
                     </div>
                     <div>
                       <label style={labelStyle}>{t.fieldEglise}</label>
-                      <input type="text" placeholder={t.fieldEglisePlaceholder} value={form.nom_eglise}
-                        onChange={e => setForm({ ...form, nom_eglise: e.target.value })} style={inputStyle}
-                        onFocus={e => e.target.style.borderColor = "rgba(255,255,255,0.45)"}
-                        onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.18)"}
+                      <input
+                        type="text"
+                        placeholder={t.fieldEglisePlaceholder}
+                        value={form.nom_eglise}
+                        onChange={(e) => setForm({ ...form, nom_eglise: e.target.value })}
+                        style={inputStyle}
+                        onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
+                        onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
                       />
                     </div>
                     <div>
                       <label style={labelStyle}>{t.fieldNote}</label>
                       <div style={{ display: "flex", gap: "8px" }}>
                         {[1, 2, 3, 4, 5].map((star) => (
-                          <span key={star} onClick={() => setForm({ ...form, note: star })}
-                            onMouseEnter={() => setHoveredStar(star)} onMouseLeave={() => setHoveredStar(0)}
+                          <span
+                            key={star}
+                            onClick={() => setForm({ ...form, note: star })}
+                            onMouseEnter={() => setHoveredStar(star)}
+                            onMouseLeave={() => setHoveredStar(0)}
                             style={{
                               fontSize: "32px", cursor: "pointer", transition: "transform 0.15s",
                               transform: (hoveredStar || form.note) >= star ? "scale(1.2)" : "scale(1)",
                               color: (hoveredStar || form.note) >= star ? "#fbbf24" : "rgba(255,255,255,0.2)",
                               userSelect: "none",
-                            }}>★</span>
+                            }}
+                          >
+                            ★
+                          </span>
                         ))}
                       </div>
                     </div>
@@ -602,11 +681,12 @@ export default function ContactPage() {
                       form.type === "temoignage" ? t.placeholderTemoignage :
                       t.placeholderDefault
                     }
-                    rows={5} value={form.message}
-                    onChange={e => setForm({ ...form, message: e.target.value })}
+                    rows={5}
+                    value={form.message}
+                    onChange={(e) => setForm({ ...form, message: e.target.value })}
                     style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }}
-                    onFocus={e => e.target.style.borderColor = "rgba(255,255,255,0.45)"}
-                    onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.18)"}
+                    onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
+                    onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
                   />
                   {form.type === "temoignage" && (
                     <div style={{ textAlign: "right", fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>
@@ -615,17 +695,24 @@ export default function ContactPage() {
                   )}
                 </div>
 
-                {error && <p style={{ color: "#fca5a5", fontSize: "13px", textAlign: "center", margin: 0 }}>{error}</p>}
+                {error && (
+                  <p style={{ color: "#fca5a5", fontSize: "13px", textAlign: "center", margin: 0 }}>
+                    {error}
+                  </p>
+                )}
 
                 <div style={{ display: "flex", justifyContent: "center" }}>
-                  <button onClick={handleSubmit} disabled={loading}
+                  <button
+                    onClick={handleSubmit}
+                    disabled={loading}
                     style={{
-                      background: loading ? "rgba(255,255,255,0.5)" : "#fff", color: "#333699", border: "none",
+                      background: loading ? "rgba(255,255,255,0.5)" : "#fff",
+                      color: "#333699", border: "none",
                       padding: "13px 36px", borderRadius: "10px", fontSize: "15px",
                       fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", transition: "opacity 0.2s",
                     }}
-                    onMouseEnter={e => { if (!loading) e.currentTarget.style.opacity = "0.9"; }}
-                    onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
+                    onMouseEnter={(e) => { if (!loading) e.currentTarget.style.opacity = "0.9"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
                   >
                     {loading ? t.btnSending : t.btnSend}
                   </button>
@@ -640,10 +727,15 @@ export default function ContactPage() {
       <section style={{ padding: "32px 24px 80px", position: "relative", zIndex: 1 }}>
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "40px", flexWrap: "wrap" }}>
           {socialLinks.map((s) => (
-            <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" title={s.label}
+            <a
+              key={s.label}
+              href={s.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={s.label}
               style={{ color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", textDecoration: "none", transition: "opacity 0.2s" }}
-              onMouseEnter={e => e.currentTarget.style.opacity = "0.6"}
-              onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.6")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
               {s.icon}
               <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em" }}>{s.label}</span>

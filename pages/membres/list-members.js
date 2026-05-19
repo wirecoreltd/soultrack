@@ -680,34 +680,29 @@ function ListMembersContent() {
       setUserProfile(profile);
 
       // ─── Charger infos église ─────────────────────────
-        const { data: egliseInfo } = await supabase
-          .from("eglises")
-          .select("*")
-          .eq("id", profile.eglise_id)
-          .single();
-        
-        if (egliseInfo) {
-          setEgliseData(egliseInfo);
-        
-          if (egliseInfo.logo_url) {
-            try {
-              const response = await fetch(egliseInfo.logo_url);
-              const blob = await response.blob();
-        
-              const reader = new FileReader();
-        
-              reader.onloadend = () => {
-                setLogoBase64(reader.result);
-              };
-        
-              reader.readAsDataURL(blob);
-        
-            } catch (err) {
-              console.error("Erreur logo:", err);
-            }
+      const { data: egliseInfo } = await supabase
+        .from("eglises")
+        .select("*")
+        .eq("id", profile.eglise_id)
+        .single();
+
+      if (egliseInfo) {
+        setEgliseData(egliseInfo);
+
+        if (egliseInfo.logo_url) {
+          try {
+            const response = await fetch(egliseInfo.logo_url);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setLogoBase64(reader.result);
+            };
+            reader.readAsDataURL(blob);
+          } catch (err) {
+            console.error("Erreur logo:", err);
           }
         }
-              
+      }
 
       const rolesArray = getRoles(profile);
       if (rolesArray.includes("Conseiller")) {
@@ -824,9 +819,7 @@ function ListMembersContent() {
             } catch {
               besoinsArray = m.besoin.split(",");
             }
-            return besoinsArray
-              .map((b) => b.trim())
-              .includes(besoinFromUrl);
+            return besoinsArray.map((b) => b.trim()).includes(besoinFromUrl);
           })
         : actifs;
 
@@ -1234,49 +1227,25 @@ function ListMembersContent() {
             {isOpen ? t.closeDetails : t.details}
           </button>
 
-          {/* Bouton PDF à droite */}
+          {/* Bouton PDF */}
           <div className="w-full flex justify-end mt-3">
-           export default function ExportMembrePDF({
-            membre,
-            suivis = [],
-            churchName = "Église",
-            logoBase64 = null,
-            eglise = null,          // ← ajouter
-            celluleName = null,
-            familleName = null,
-            conseillerName = null,
-            className = "",
-            compact = false,
-          }) {
-            // ...
-          
-            const handleExport = async (e) => {
-              e.stopPropagation();
-              setLoading(true);
-              try {
-                const { data: suivisData, error } = await supabase
-                  .from("suivis")
-                  .select(`*, profiles (prenom, nom)`)
-                  .eq("membre_id", membre.id)
-                  .order("date_action", { ascending: false });
-          
-                if (error) throw error;
-          
-                await generateMembrePDF(membre, suivisData || [], {
-                  churchName,
-                  logoBase64,
-                  celluleName,
-                  familleName,
-                  conseillerName,
-                  eglise,             // ← passer l'objet complet
-                });
-              } catch (err) {
-                console.error("Erreur export PDF :", err);
-                alert("Impossible de générer le PDF.");
-              } finally {
-                setLoading(false);
+            <ExportMembrePDF
+              membre={m}
+              logoBase64={logoBase64}
+              eglise={egliseData}
+              churchName={egliseData?.nom}
+              celluleName={
+                cellules.find(
+                  (c) => String(c.id) === String(m.cellule_id)
+                )?.cellule_full
               }
-            };
+              familleName={
+                familles.find(
+                  (f) => String(f.id) === String(m.famille_id)
+                )?.famille_full
+              }
+              conseillerName={getConseillersForMember(m.id)}
+            />
           </div>
 
           {/* Détails */}

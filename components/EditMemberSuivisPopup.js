@@ -2,10 +2,148 @@
 
 import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
+import { useLang } from "../../hooks/useLang";
 
-// Pass `currentUserRoles` (array) as a prop from the parent
+const translations = {
+  fr: {
+    // Header
+    modifierProfil: "Modifier le profil",
+
+    // Section titles
+    identite: "👤 Identité",
+    vieSpirituelle: "🕊 Vie spirituelle",
+
+    // Identity fields
+    civilite: "Civilité",
+    civiliteOpt: "-- Civilité --",
+    homme: "Homme",
+    femme: "Femme",
+    prenom: "Prénom",
+    nom: "Nom",
+    telephone: "Téléphone",
+    ville: "Ville",
+    numeroWhatsapp: "Numéro WhatsApp",
+    age: "Âge",
+    ageOpt: "-- Choisir --",
+    ages: ["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"],
+
+    // Spiritual life
+    baptemeEau: "Baptême d'eau",
+    selectionner: "-- Sélectionner --",
+    oui: "Oui",
+    non: "Non",
+    veutBaptiser: "💦 Veut se faire baptiser",
+    baptemeFeu: "Baptême de feu",
+    priereSalut: "Prière du salut",
+    priereSalutOpt: "-- Prière du salut ? --",
+    typeConversion: "Type",
+    nouveauConverti: "Nouveau converti",
+    reconciliation: "Réconciliation",
+    formation: "Formation",
+    commentVenu: "Comment est-il venu ?",
+    commentVenuOpt: "-- Sélectionner --",
+    invite: "Invité",
+    reseaux: "Réseaux",
+    evangelisation: "Évangélisation",
+    autre: "Autre",
+    infosSup: "Informations supplémentaires",
+    statutArrivee: "Statut à l'arrivée",
+    statutArriveeOpt: "-- Sélectionner --",
+    veutRejoindre: "Veut rejoindre ICC",
+    aDejaEglise: "A déjà son église",
+    visiteur: "Visiteur",
+
+    // Footer
+    annuler: "Annuler",
+    sauvegarder: "💾 Sauvegarder",
+    enregistrement: "Enregistrement...",
+
+    // Validation messages
+    erreurPrenom: "❌ Le prénom est obligatoire.",
+    erreurNom: "❌ Le nom est obligatoire.",
+    erreurEnregistrement: "❌ Une erreur est survenue lors de l'enregistrement.",
+
+    // Field labels for dynamic map
+    fieldLabels: {
+      prenom: "Prénom",
+      nom: "Nom",
+      telephone: "Téléphone",
+      ville: "Ville",
+    },
+  },
+  en: {
+    // Header
+    modifierProfil: "Edit profile",
+
+    // Section titles
+    identite: "👤 Identity",
+    vieSpirituelle: "🕊 Spiritual life",
+
+    // Identity fields
+    civilite: "Title",
+    civiliteOpt: "-- Title --",
+    homme: "Male",
+    femme: "Female",
+    prenom: "First name",
+    nom: "Last name",
+    telephone: "Phone",
+    ville: "City",
+    numeroWhatsapp: "WhatsApp number",
+    age: "Age",
+    ageOpt: "-- Choose --",
+    ages: ["12-17 yrs","18-25 yrs","26-30 yrs","31-40 yrs","41-55 yrs","56-69 yrs","70 yrs and over"],
+
+    // Spiritual life
+    baptemeEau: "Water baptism",
+    selectionner: "-- Select --",
+    oui: "Yes",
+    non: "No",
+    veutBaptiser: "💦 Wants to be baptised",
+    baptemeFeu: "Spirit baptism",
+    priereSalut: "Salvation prayer",
+    priereSalutOpt: "-- Salvation prayer? --",
+    typeConversion: "Type",
+    nouveauConverti: "New convert",
+    reconciliation: "Reconciliation",
+    formation: "Training",
+    commentVenu: "How did they come?",
+    commentVenuOpt: "-- Select --",
+    invite: "Invited",
+    reseaux: "Social media",
+    evangelisation: "Evangelism",
+    autre: "Other",
+    infosSup: "Additional information",
+    statutArrivee: "Status on arrival",
+    statutArriveeOpt: "-- Select --",
+    veutRejoindre: "Wants to join ICC",
+    aDejaEglise: "Already has a church",
+    visiteur: "Visitor",
+
+    // Footer
+    annuler: "Cancel",
+    sauvegarder: "💾 Save",
+    enregistrement: "Saving...",
+
+    // Validation messages
+    erreurPrenom: "❌ First name is required.",
+    erreurNom: "❌ Last name is required.",
+    erreurEnregistrement: "❌ An error occurred while saving.",
+
+    // Field labels for dynamic map
+    fieldLabels: {
+      prenom: "First name",
+      nom: "Last name",
+      telephone: "Phone",
+      ville: "City",
+    },
+  },
+};
+
 export default function EditMemberSuivisPopup({ member, cellules, familles, conseillers, onClose, onUpdateMember, currentUserRoles }) {
   if (!member) return null;
+
+  const { lang } = useLang();
+  const t = translations[lang];
 
   const isPrivileged = (currentUserRoles || []).some(r => ["Administrateur", "ResponsableIntegration"].includes(r));
 
@@ -39,7 +177,7 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
     priere_salut: member?.priere_salut || "",
     type_conversion: member?.type_conversion || "",
     cellule_id: member?.cellule_id ?? "",
-    famille_id: member?.famille_id ?? "",      // ✅ famille_id
+    famille_id: member?.famille_id ?? "",
     conseillers_ids: member?.conseillers_ids || [],
     besoin: initialBesoin,
     autreBesoin: "",
@@ -68,7 +206,6 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
   const [message, setMessage] = useState("");
   const [selectedConseillers, setSelectedConseillers] = useState([]);
 
-  // Ref for click-outside detection
   const modalRef = useRef(null);
 
   useEffect(() => {
@@ -83,7 +220,6 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
       if (error) { console.error("fetchAssignments error:", error); return; }
 
       if (data) {
-        // Trier: principal en premier
         const sorted = [...data].sort((a, b) => {
           if (a.role === "principal") return -1;
           if (b.role === "principal") return 1;
@@ -96,12 +232,9 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
     fetchAssignments();
   }, [member.id]);
 
-  // Click outside handler
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (modalRef.current && !modalRef.current.contains(e.target)) {
-        onClose();
-      }
+      if (modalRef.current && !modalRef.current.contains(e.target)) onClose();
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -145,8 +278,8 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
   // -------------------- SUBMIT --------------------
   const handleSubmit = async () => {
     setMessage("");
-    if (!formData.prenom.trim()) return setMessage("❌ Le prénom est obligatoire.");
-    if (!formData.nom.trim()) return setMessage("❌ Le nom est obligatoire.");
+    if (!formData.prenom.trim()) return setMessage(t.erreurPrenom);
+    if (!formData.nom.trim()) return setMessage(t.erreurNom);
 
     setLoading(true);
 
@@ -192,9 +325,7 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
         bapteme_esprit: formData.bapteme_esprit,
         priere_salut: formData.priere_salut || null,
         type_conversion: formData.type_conversion || null,
-        // ✅ cellule_id : géré par isPrivileged comme avant
         cellule_id: isPrivileged ? (formData.cellule_id || null) : (member.cellule_id || null),
-        // ✅ famille_id : même logique que cellule_id
         famille_id: isPrivileged ? (formData.famille_id || null) : (member.famille_id || null),
         besoin: JSON.stringify(finalBesoin),
         venu: formData.venu || null,
@@ -232,7 +363,7 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
       onClose();
     } catch (err) {
       console.error(err);
-      setMessage("❌ Une erreur est survenue lors de l'enregistrement.");
+      setMessage(t.erreurEnregistrement);
     } finally {
       setLoading(false);
     }
@@ -258,48 +389,48 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
           <h2 className="text-xl font-bold text-white pr-10">
             ✏️ {member.prenom} {member.nom}
           </h2>
-          <p className="text-blue-100 text-sm mt-1 opacity-80">Modifier le profil</p>
+          <p className="text-blue-100 text-sm mt-1 opacity-80">{t.modifierProfil}</p>
         </div>
 
         {/* Body */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
 
           {/* Section: Identité */}
-          <SectionTitle>👤 Identité</SectionTitle>
+          <SectionTitle>{t.identite}</SectionTitle>
 
-          <Field label="Civilité">
+          <Field label={t.civilite}>
             <select name="sexe" value={formData.sexe} onChange={handleChange} className="inp">
-              <option value="">-- Civilité --</option>
-              <option value="Homme">Homme</option>
-              <option value="Femme">Femme</option>
+              <option value="">{t.civiliteOpt}</option>
+              <option value="Homme">{t.homme}</option>
+              <option value="Femme">{t.femme}</option>
             </select>
           </Field>
 
           {["prenom", "nom", "telephone", "ville"].map((f) => (
-            <Field key={f} label={f.charAt(0).toUpperCase() + f.slice(1)}>
+            <Field key={f} label={t.fieldLabels[f]}>
               <input name={f} value={formData[f]} onChange={handleChange} className="inp" />
               {f === "telephone" && (
                 <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
                   <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} className="accent-[#2E3192]" />
-                  Numéro WhatsApp
+                  {t.numeroWhatsapp}
                 </label>
               )}
             </Field>
           ))}
 
-          <Field label="Âge">
+          <Field label={t.age}>
             <select name="age" value={formData.age} onChange={handleChange} className="inp">
-              <option value="">-- Choisir --</option>
-              {["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"].map(v => (
+              <option value="">{t.ageOpt}</option>
+              {t.ages.map(v => (
                 <option key={v} value={v}>{v}</option>
               ))}
             </select>
           </Field>
-         
-          {/* Section: Vie spirituelle */}
-          <SectionTitle>🕊 Vie spirituelle</SectionTitle>
 
-          <Field label="Baptême d'eau">
+          {/* Section: Vie spirituelle */}
+          <SectionTitle>{t.vieSpirituelle}</SectionTitle>
+
+          <Field label={t.baptemeEau}>
             <select
               name="bapteme_eau"
               value={formData.bapteme_eau ?? ""}
@@ -313,9 +444,9 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
               }}
               className="inp"
             >
-              <option value="">-- Sélectionner --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
+              <option value="">{t.selectionner}</option>
+              <option value="Oui">{t.oui}</option>
+              <option value="Non">{t.non}</option>
             </select>
           </Field>
 
@@ -327,19 +458,19 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
                 onChange={(e) => setFormData(prev => ({ ...prev, veut_se_faire_baptiser: e.target.checked ? "Oui" : "Non" }))}
                 className="accent-[#2E3192]"
               />
-              💦 Veut se faire baptiser
+              {t.veutBaptiser}
             </label>
           )}
 
-          <Field label="Baptême de feu">
+          <Field label={t.baptemeFeu}>
             <select name="bapteme_esprit" value={formData.bapteme_esprit ?? ""} onChange={handleChange} className="inp">
-              <option value="">-- Sélectionner --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
+              <option value="">{t.selectionner}</option>
+              <option value="Oui">{t.oui}</option>
+              <option value="Non">{t.non}</option>
             </select>
           </Field>
 
-          <Field label="Prière du salut">
+          <Field label={t.priereSalut}>
             <select
               name="priere_salut"
               value={formData.priere_salut}
@@ -349,43 +480,43 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
               }}
               className="inp"
             >
-              <option value="">-- Prière du salut ? --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
+              <option value="">{t.priereSalutOpt}</option>
+              <option value="Oui">{t.oui}</option>
+              <option value="Non">{t.non}</option>
             </select>
             {formData.priere_salut === "Oui" && (
               <select name="type_conversion" value={formData.type_conversion} onChange={handleChange} className="inp mt-2">
-                <option value="">Type</option>
-                <option value="Nouveau converti">Nouveau converti</option>
-                <option value="Réconciliation">Réconciliation</option>
+                <option value="">{t.typeConversion}</option>
+                <option value="Nouveau converti">{t.nouveauConverti}</option>
+                <option value="Réconciliation">{t.reconciliation}</option>
               </select>
             )}
           </Field>
 
-          <Field label="Formation">
+          <Field label={t.formation}>
             <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="inp" rows={2} />
           </Field>
 
-          <Field label="Comment est-il venu ?">
+          <Field label={t.commentVenu}>
             <select name="venu" value={formData.venu} onChange={handleChange} className="inp">
-              <option value="">-- Sélectionner --</option>
-              <option value="invité">Invité</option>
-              <option value="réseaux">Réseaux</option>
-              <option value="evangélisation">Évangélisation</option>
-              <option value="autre">Autre</option>
+              <option value="">{t.commentVenuOpt}</option>
+              <option value="invité">{t.invite}</option>
+              <option value="réseaux">{t.reseaux}</option>
+              <option value="evangélisation">{t.evangelisation}</option>
+              <option value="autre">{t.autre}</option>
             </select>
           </Field>
 
-          <Field label="Informations supplémentaires">
+          <Field label={t.infosSup}>
             <textarea name="infos_supplementaires" value={formData.infos_supplementaires} onChange={handleChange} className="inp" rows={2} />
           </Field>
 
-          <Field label="Statut à l'arrivée">
+          <Field label={t.statutArrivee}>
             <select name="statut_initial" value={formData.statut_initial} onChange={handleChange} className="inp">
-              <option value="">-- Sélectionner --</option>
-              <option value="veut rejoindre ICC">Veut rejoindre ICC</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="visiteur">Visiteur</option>
+              <option value="">{t.statutArriveeOpt}</option>
+              <option value="veut rejoindre ICC">{t.veutRejoindre}</option>
+              <option value="a déjà son église">{t.aDejaEglise}</option>
+              <option value="visiteur">{t.visiteur}</option>
             </select>
           </Field>
 
@@ -398,7 +529,7 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
             onClick={onClose}
             className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all"
           >
-            Annuler
+            {t.annuler}
           </button>
           <button
             type="button"
@@ -407,7 +538,7 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
             className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
             style={{ background: loading ? "#a0a0c0" : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}
           >
-            {loading ? "Enregistrement..." : "💾 Sauvegarder"}
+            {loading ? t.enregistrement : t.sauvegarder}
           </button>
         </div>
 
@@ -443,7 +574,6 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
   );
 }
 
-// ---- Helper sub-components ----
 function SectionTitle({ children }) {
   return (
     <div className="flex items-center gap-2 pt-2">

@@ -8,10 +8,11 @@ const supabaseAdmin = createClient(
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { membre, suivis } = req.body;
+  const { membre, suivis, lang = "fr" } = req.body;
+  const isEn = lang === "en";
 
   const besoins = (() => {
-    if (!membre.besoin) return "Non précisé";
+    if (!membre.besoin) return isEn ? "Not specified" : "Non précisé";
     try {
       const p = JSON.parse(membre.besoin);
       return Array.isArray(p) ? p.join(", ") : String(p);
@@ -28,26 +29,54 @@ export default async function handler(req, res) {
             return String(p);
           } catch { return String(s.besoin); }
         })();
-        return `- ${s.date_action} (${s.action_type})${b ? ` | Besoins : ${b}` : ""}${s.commentaire ? ` | Note : ${s.commentaire}` : ""}`;
+        const needsLabel  = isEn ? "Needs" : "Besoins";
+        const noteLabel   = isEn ? "Note"  : "Note";
+        return `- ${s.date_action} (${s.action_type})${b ? ` | ${needsLabel}: ${b}` : ""}${s.commentaire ? ` | ${noteLabel}: ${s.commentaire}` : ""}`;
       }).join("\n")
-    : "Aucun suivi enregistré.";
+    : (isEn ? "No follow-ups recorded." : "Aucun suivi enregistré.");
 
   const nombreSuivis = suivis.length;
   const aDesRecidives = nombreSuivis >= 2;
 
-  const prompt = `Tu es un berger aimant, sage et bienveillant. Tu prépares le cœur d'un responsable pastoral avant qu'il rencontre une personne de son troupeau.
-
+  const prompt = isEn
+    ? `You are a loving, wise and caring shepherd. You are preparing the heart of a pastoral leader before they meet someone from their flock.
+Here is what you know about this person:
+- First name: ${membre.prenom}
+- Identified needs: ${besoins}
+- Number of past follow-ups: ${nombreSuivis}
+- Recurring patterns detected: ${aDesRecidives ? "Yes" : "No"}
+History:
+${historiqueTexte}
+As a wise shepherd, generate a pastoral preparation support in JSON only. Be gentle, deep, human — never cold or academic.
+{
+  "avant_dentrer": "1-2 essential sentences about this person's likely inner state today. What the leader should hold in their heart before even saying hello.",
+  "cles_comprehension": "2-3 sentences about the deep wounds, blocks, and inner cycles detected in the history. Go to the root, not the symptoms.",
+  "mots_cles": ["word 1", "word 2", "word 3", "word 4", "word 5"],
+  "questions_a_poser": [
+    "gentle and open question 1",
+    "question 2",
+    "question 3",
+    "question 4"
+  ],
+  "pistes_accompagnement": [
+    "concrete and human path 1",
+    "path 2",
+    "path 3"
+  ],
+  "versets": [
+    {"reference": "Book chapter:verse", "texte": "verse text"},
+    {"reference": "Book chapter:verse", "texte": "verse text"}
+  ]
+}`
+    : `Tu es un berger aimant, sage et bienveillant. Tu prépares le cœur d'un responsable pastoral avant qu'il rencontre une personne de son troupeau.
 Voici ce que tu sais sur cette personne :
 - Prénom : ${membre.prenom}
 - Besoins identifiés : ${besoins}
 - Nombre de suivis passés : ${nombreSuivis}
 - Cycles répétitifs détectés : ${aDesRecidives ? "Oui" : "Non"}
-
 Historique :
 ${historiqueTexte}
-
 En tant que berger sage, génère un support de préparation pastoral en JSON uniquement. Sois doux, profond, humain — jamais froid ni académique.
-
 {
   "avant_dentrer": "1-2 phrases essentielles sur l'état intérieur probable de cette personne aujourd'hui. Ce que le responsable doit garder dans son cœur avant même de dire bonjour.",
   "cles_comprehension": "2-3 phrases sur les blessures profondes, les blocages, les cycles intérieurs détectés dans l'historique. Aller à la racine, pas aux symptômes.",
@@ -69,6 +98,10 @@ En tant que berger sage, génère un support de préparation pastoral en JSON un
   ]
 }`;
 
+  const systemPrompt = isEn
+    ? "You are a loving and wise shepherd. Respond ONLY in valid JSON, with no text before or after."
+    : "Tu es un berger aimant et sage. Tu réponds UNIQUEMENT en JSON valide, sans aucun texte avant ou après.";
+
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -80,11 +113,8 @@ En tant que berger sage, génère un support de préparation pastoral en JSON un
         model: "llama-3.3-70b-versatile",
         max_tokens: 1200,
         messages: [
-          {
-            role: "system",
-            content: "Tu es un berger aimant et sage. Tu réponds UNIQUEMENT en JSON valide, sans aucun texte avant ou après.",
-          },
-          { role: "user", content: prompt },
+          { role: "system", content: systemPrompt },
+          { role: "user",   content: prompt },
         ],
         response_format: { type: "json_object" },
       }),
@@ -94,7 +124,6 @@ En tant que berger sage, génère un support de préparation pastoral en JSON un
     const text = data.choices[0].message.content;
     const parsed = JSON.parse(text);
     return res.status(200).json(parsed);
-
   } catch (err) {
     console.error("[pastoral/prepare]", err);
     return res.status(500).json({ error: err.message });

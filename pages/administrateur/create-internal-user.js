@@ -364,7 +364,11 @@ function CreateInternalUserContent() {
             <div className="flex flex-col gap-2">
               <label className="font-semibold">Rôles :</label>
               {allRoles
-                .filter(role => !rolesToHide.includes(role.key))
+                .filter(role =>
+    role.key === "ResponsableCellule"
+      ? true
+      : !rolesToHide.includes(role.key)
+  )
                 .map(role => (
                   <label key={role.key} className="inline-flex items-center gap-2">
                     <input

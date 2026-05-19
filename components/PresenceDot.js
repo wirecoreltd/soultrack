@@ -2,6 +2,70 @@
 
 import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
+import { useLang } from "../hooks/useLang";
+
+const translations = {
+  fr: {
+    // Dot status labels
+    aucuneDonnee: "Aucune donnée",
+    presentRecemment: "Présent récemment",
+    abs1sem: "1 sem. d'absence",
+    abs2sem: "2 sem. d'absence",
+    abs3sem: "3+ sem. d'absence",
+
+    // Popup header
+    presences: "Présences",
+    cinqSemaines: "5 dernières semaines",
+
+    // Popup states
+    chargement: "Chargement…",
+    aucuneSession: "Aucune session sur cette période.",
+
+    // Summary
+    presence: "présence",
+    presences_pl: "présences",
+    absence: "absence",
+    absences_pl: "absences",
+    session: "session",
+    sessions_pl: "sessions",
+
+    // Session label
+    culte: "culte",
+    er: "er",
+    eme: "ème",
+    session: "Session",
+  },
+  en: {
+    // Dot status labels
+    aucuneDonnee: "No data",
+    presentRecemment: "Present recently",
+    abs1sem: "1 week absent",
+    abs2sem: "2 weeks absent",
+    abs3sem: "3+ weeks absent",
+
+    // Popup header
+    presences: "Attendance",
+    cinqSemaines: "Last 5 weeks",
+
+    // Popup states
+    chargement: "Loading…",
+    aucuneSession: "No sessions in this period.",
+
+    // Summary
+    presence: "attendance",
+    presences_pl: "attendances",
+    absence: "absence",
+    absences_pl: "absences",
+    session: "session",
+    sessions_pl: "sessions",
+
+    // Session label
+    culte: "service",
+    er: "st",
+    eme: "th",
+    session: "Session",
+  },
+};
 
 /**
  * PresenceDot v2
@@ -11,19 +75,14 @@ import supabase from "../lib/supabaseClient";
  *   - dateVenu  : string  (membre.date_venu — filtre les cultes avant l'arrivée)
  */
 export default function PresenceDot({ memberId, egliseId, dateVenu }) {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [status, setStatus] = useState(null);
   const [open, setOpen] = useState(false);
   const [monthData, setMonthData] = useState([]);
   const [loadingPopup, setLoadingPopup] = useState(false);
   const popupRef = useRef(null);
-
-  const getWeekKey = (dateStr) => {
-    const d = new Date(dateStr);
-    const day = d.getDay() === 0 ? 7 : d.getDay();
-    const monday = new Date(d);
-    monday.setDate(d.getDate() - (day - 1));
-    return monday.toISOString().slice(0, 10);
-  };
 
   // ── Calcul couleur ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -37,7 +96,6 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
       const effectiveSince =
         dateVenu && dateVenu > sinceStr ? dateVenu : sinceStr;
 
-      // ✅ CORRECTION : filtrer uniquement statut = 'present'
       const { data: presences } = await supabase
         .from("presences")
         .select(`
@@ -47,7 +105,7 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
           )
         `)
         .eq("membre_id", memberId)
-        .eq("statut", "present"); // ← AJOUT CRITIQUE
+        .eq("statut", "present");
 
       if (!presences || presences.length === 0) {
         setStatus("grey");
@@ -69,15 +127,10 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
         (new Date() - lastPresence) / (1000 * 60 * 60 * 24)
       );
 
-      if (diffDays <= 7) {
-        setStatus("green");
-      } else if (diffDays <= 14) {
-        setStatus("yellow");
-      } else if (diffDays <= 21) {
-        setStatus("orange");
-      } else {
-        setStatus("red");
-      }
+      if (diffDays <= 7)       setStatus("green");
+      else if (diffDays <= 14) setStatus("yellow");
+      else if (diffDays <= 21) setStatus("orange");
+      else                     setStatus("red");
     };
 
     compute();
@@ -95,21 +148,19 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
     const effectiveSince =
       dateVenu && dateVenu > sinceStr ? dateVenu : sinceStr;
 
-    // Tous les cultes dans la fenêtre
     const { data: cultes } = await supabase
       .from("attendance")
       .select("id, date, heure, typeTemps, numero_culte")
       .eq("eglise_id", egliseId)
-      .gte("date", effectiveSince)   // ← était sinceStr, maintenant effectiveSince
+      .gte("date", effectiveSince)
       .lte("date", todayStr)
       .order("date", { ascending: false });
 
-    // ✅ CORRECTION : filtrer uniquement statut = 'present'
     const { data: presences } = await supabase
       .from("presences")
       .select("attendance_id")
       .eq("membre_id", memberId)
-      .eq("statut", "present"); // ← AJOUT CRITIQUE
+      .eq("statut", "present");
 
     const presentSet = new Set(
       (presences || []).map((p) => p.attendance_id)
@@ -146,29 +197,30 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
 
   // ── Couleurs ───────────────────────────────────────────────────────────────
   const dotColors = {
-    grey:   { bg: "#9ca3af", label: "Aucune donnée",     ring: "#d1d5db" },
-    green:  { bg: "#22c55e", label: "Présent récemment", ring: "#bbf7d0" },
-    yellow: { bg: "#eab308", label: "1 sem. d'absence",  ring: "#fef08a" },
-    orange: { bg: "#f97316", label: "2 sem. d'absence",  ring: "#fed7aa" },
-    red:    { bg: "#ef4444", label: "3+ sem. d'absence", ring: "#fecaca" },
+    grey:   { bg: "#9ca3af", label: t.aucuneDonnee,      ring: "#d1d5db" },
+    green:  { bg: "#22c55e", label: t.presentRecemment,  ring: "#bbf7d0" },
+    yellow: { bg: "#eab308", label: t.abs1sem,           ring: "#fef08a" },
+    orange: { bg: "#f97316", label: t.abs2sem,           ring: "#fed7aa" },
+    red:    { bg: "#ef4444", label: t.abs3sem,           ring: "#fecaca" },
   };
   const color = dotColors[status] ?? dotColors.grey;
 
-  const formatDateFr = (dateStr) => {
+  const formatDate = (dateStr) => {
     if (!dateStr) return "";
-    return new Date(dateStr).toLocaleDateString("fr-FR", {
+    return new Date(dateStr).toLocaleDateString(lang === "en" ? "en-GB" : "fr-FR", {
       weekday: "long", day: "numeric", month: "long",
     });
   };
 
   const formatSessionLabel = (row) => {
-    const culte = row.numeroCulte
-      ? ` — ${row.numeroCulte}${row.numeroCulte === 1 ? "er" : "ème"} culte`
-      : "";
-    return `${row.typeTemps || "Session"}${culte}`;
+    if (!row.numeroCulte) return row.typeTemps || t.session;
+    const suffix = row.numeroCulte === 1 ? t.er : t.eme;
+    return `${row.typeTemps || t.session} — ${row.numeroCulte}${suffix} ${t.culte}`;
   };
 
-  const monthLabel = "5 dernières semaines";
+  const presenceCount  = monthData.filter((r) => r.present).length;
+  const absenceCount   = monthData.filter((r) => !r.present).length;
+  const sessionCount   = monthData.length;
 
   // ── Rendu ──────────────────────────────────────────────────────────────────
   return (
@@ -228,9 +280,9 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
           <div className="flex items-center justify-between mb-3">
             <div>
               <p style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: "#a5b4fc", marginBottom: 2 }}>
-                Présences
+                {t.presences}
               </p>
-              <p style={{ fontSize: 14, fontWeight: 700 }}>{monthLabel}</p>
+              <p style={{ fontSize: 14, fontWeight: 700 }}>{t.cinqSemaines}</p>
             </div>
             <span style={{ background: color.bg, color: "white", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 20 }}>
               {color.label}
@@ -239,9 +291,9 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
 
           {/* Liste */}
           {loadingPopup ? (
-            <p style={{ fontSize: 12, color: "#a5b4fc", textAlign: "center" }}>Chargement…</p>
+            <p style={{ fontSize: 12, color: "#a5b4fc", textAlign: "center" }}>{t.chargement}</p>
           ) : monthData.length === 0 ? (
-            <p style={{ fontSize: 12, color: "#a5b4fc", textAlign: "center" }}>Aucune session sur cette période.</p>
+            <p style={{ fontSize: 12, color: "#a5b4fc", textAlign: "center" }}>{t.aucuneSession}</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {monthData.map((row, i) => (
@@ -259,7 +311,7 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
                 >
                   <div>
                     <p style={{ fontSize: 12, fontWeight: 600, color: "white", textTransform: "capitalize" }}>
-                      {formatDateFr(row.date)}
+                      {formatDate(row.date)}
                     </p>
                     <p style={{ fontSize: 10, color: "#a5b4fc" }}>
                       {formatSessionLabel(row)}{row.heure ? ` · ${row.heure.slice(0, 5)}` : ""}
@@ -274,9 +326,9 @@ export default function PresenceDot({ memberId, egliseId, dateVenu }) {
           {/* Résumé */}
           {!loadingPopup && monthData.length > 0 && (
             <div style={{ marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(165,180,252,0.2)", display: "flex", justifyContent: "space-between", fontSize: 11, color: "#a5b4fc" }}>
-              <span>✅ {monthData.filter((r) => r.present).length} présence{monthData.filter((r) => r.present).length > 1 ? "s" : ""}</span>
-              <span>❌ {monthData.filter((r) => !r.present).length} absence{monthData.filter((r) => !r.present).length > 1 ? "s" : ""}</span>
-              <span>📊 {monthData.length} session{monthData.length > 1 ? "s" : ""}</span>
+              <span>✅ {presenceCount} {presenceCount > 1 ? t.presences_pl : t.presence}</span>
+              <span>❌ {absenceCount} {absenceCount > 1 ? t.absences_pl : t.absence}</span>
+              <span>📊 {sessionCount} {sessionCount > 1 ? t.sessions_pl : t.session}</span>
             </div>
           )}
         </div>

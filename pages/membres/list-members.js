@@ -270,6 +270,8 @@ function ListMembersContent() {
   const [userProfile, setUserProfile] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
+  const [egliseData, setEgliseData] = useState(null);
+  const [logoBase64, setLogoBase64] = useState(null);
 
   const [assignmentsMap, setAssignmentsMap] = useState({});
   const [conseillerMembreIds, setConseillerMembreIds] = useState(null);
@@ -676,6 +678,36 @@ function ListMembersContent() {
 
       userProfileRef.current = profile;
       setUserProfile(profile);
+
+      // ─── Charger infos église ─────────────────────────
+        const { data: egliseInfo } = await supabase
+          .from("eglises")
+          .select("*")
+          .eq("id", profile.eglise_id)
+          .single();
+        
+        if (egliseInfo) {
+          setEgliseData(egliseInfo);
+        
+          if (egliseInfo.logo_url) {
+            try {
+              const response = await fetch(egliseInfo.logo_url);
+              const blob = await response.blob();
+        
+              const reader = new FileReader();
+        
+              reader.onloadend = () => {
+                setLogoBase64(reader.result);
+              };
+        
+              reader.readAsDataURL(blob);
+        
+            } catch (err) {
+              console.error("Erreur logo:", err);
+            }
+          }
+        }
+              
 
       const rolesArray = getRoles(profile);
       if (rolesArray.includes("Conseiller")) {

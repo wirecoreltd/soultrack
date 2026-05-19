@@ -417,6 +417,9 @@ function EtatCellule() {
           const tousLesIds = [...new Set([...directIds, ...fillesIds])];
       
           if (tousLesIds.length) {
+            console.log("DIRECT IDS", directIds);
+console.log("FILLES IDS", fillesIds);
+console.log("TOUS IDS", tousLesIds);
             query = query.in("cellule_id", tousLesIds);
           } else {
             // Aucune cellule → aucun résultat
@@ -429,6 +432,8 @@ function EtatCellule() {
       }
 
       const { data, error } = await query;
+      console.log("DATA", data);
+console.log("ERROR", error);
       if (error) throw error;
 
       let filtered = data || [];

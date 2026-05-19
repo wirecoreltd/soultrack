@@ -439,8 +439,7 @@ function NotificationsContent() {
               {t.newLabel(filtered.length)}
             </span>
         </div>
-        <p className="text-white/60 text-sm mb-4">{t.subtitle}</p>
-        <input
+        <p className="text-white/60 text-sm mb-4">{t.subtitle}</p>        
           <input
         type="text" placeholder={t.searchPlaceholder} value={search}
           onChange={(e) => setSearch(e.target.value)}

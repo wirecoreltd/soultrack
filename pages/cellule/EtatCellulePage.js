@@ -416,10 +416,7 @@ function EtatCellule() {
           // 3️⃣ Union
           const tousLesIds = [...new Set([...directIds, ...fillesIds])];
       
-          if (tousLesIds.length) {
-            console.log("DIRECT IDS", directIds);
-console.log("FILLES IDS", fillesIds);
-console.log("TOUS IDS", tousLesIds);
+          if (tousLesIds.length) {           
             query = query.in("cellule_id", tousLesIds);
           } else {
             // Aucune cellule → aucun résultat
@@ -431,9 +428,7 @@ console.log("TOUS IDS", tousLesIds);
         }
       }
 
-      const { data, error } = await query;
-      console.log("DATA", data);
-console.log("ERROR", error);
+      const { data, error } = await query;      
       if (error) throw error;
 
       let filtered = data || [];

@@ -44,6 +44,27 @@ function CreateInternalUserContent() {
     "Berger", "Modération",
   ];
 
+  const handleLogoClick = () => {
+    if (!roles || roles.length === 0) { router.push("/index"); return; }
+    if (roles.length > 1) { router.push("/index"); return; }
+
+    const role = roles[0];
+    if (role === "ResponsableCellule" || role === "SuperviseurCellule") {
+      router.push("/cellule/cellules-hub");
+    } else if (role === "ResponsableFamilles") {
+      router.push("/famille/familles-hub");
+    } else if (role === "Conseiller") {
+      router.push("/conseiller/conseiller-hub");
+    } else if (role === "ResponsableEvangelisation") {
+      router.push("/evangelisation/evangelisation-hub");
+    } else if (role === "ResponsableIntegration") {
+      router.push("/membres/membres-hub");
+    } else {
+      router.push("/index");
+    }
+  };
+
+
   const allRoles = useMemo(() => [
   { key: "Administrateur",            label: "Administrateur" },
   { key: "ResponsableIntegration",    label: "Responsable Intégration" },

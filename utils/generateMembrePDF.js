@@ -244,7 +244,6 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   // ══════════════════════════════════════════════════════════════════
   frect(doc, 0, 0, PW, 30, C.navy);
   frect(doc, 0, 24, PW, 6, C.navyMid);
-  frect(doc, 0, 30, PW, 1.5, C.orange);
 
   const drawLogo = (d) => {
     rrect(d, ML, 5, 16, 16, 2, [95, 100, 195]);
@@ -306,10 +305,7 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   st(doc, C.navy);
   doc.setFontSize(20); doc.setFont("helvetica", "bold");
   doc.text(`${safe(membre.prenom)} ${safe(membre.nom)}`.trim() || "-", PW / 2, y, { align: "center" });
-  y += 7;
-
-  frect(doc, PW / 2 - 25, y, 50, 0.8, C.orange);
-  y += 8;
+  y += 10;
 
   // ══════════════════════════════════════════════════════════════════
   // GRILLES — mesure avant dessin, aucun gap
@@ -326,13 +322,13 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   need(40);
   y = draw2ColBlock(doc,
     "Identite", [
-      ["Etat",      etatLabel + starSuffix],
+      ["Etat",      etatLabel],
       ["Tel.",      membre.telephone ? da(String(membre.telephone)) : "-"],
       ["Civilite",  safe(membre.sexe)],
       ["Age",       safe(membre.age)],
       ["Ville",     safe(membre.ville)],
       ["WhatsApp",  membre.is_whatsapp ? "Oui" : "Non"],
-      ["Ajoute le", formatDate(membre.date_venu)],
+      ["Date de sa venu", formatDate(membre.date_venu)],
     ],
     "Suivi pastoral", [
       ["Statut",      safe(statutLabel[membre.statut_suivis] || membre.suivi_statut)],
@@ -355,7 +351,7 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
     ],
     "Parcours", [
       ["Comment venu", safe(membre.venu)],
-      ["Raison",       safe(membre.statut_initial)],
+      ["Raison de sa venu",       safe(membre.statut_initial)],
       ["Formation",    safe(membre.Formation)],
       ["Infos supp.",  safe(membre.infos_supplementaires)],
     ],

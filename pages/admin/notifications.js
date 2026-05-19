@@ -4,7 +4,49 @@ import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import { useNotificationsContext } from "../../context/NotificationsContext"; // ✅ FIX 1 — import ajouté
+import { useNotificationsContext } from "../../context/NotificationsContext"; // 
+
+const translations = {
+  fr: {
+    title: "Notifications",
+    subtitle: "Toutes vos notifications",
+    searchPlaceholder: "🔍 Rechercher...",
+    loading: "Chargement...",
+    empty: "Aucune nouvelle notification",
+    newLabel: (count) => `${count} nouveau${count > 1 ? "x" : ""}`,
+    clickInvitation: "📩 Cliquez pour répondre à l'invitation",
+    fromEvang: "📣 Vient de l'évangélisation",
+    badges: {
+      nouveau:              "Nouveau membre",
+      existant:             "Existant",
+      evangelise:           "Évangélisé",
+      new_in_cellule:       "Ajouté en cellule/famille",
+      membre_assigne:       "Membre assigné",
+      membre_assigne_evang: "Évangélisé assigné",
+      invitation:           "Invitation en attente",
+    },
+  },
+  en: {
+    title: "Notifications",
+    subtitle: "All your notifications",
+    searchPlaceholder: "🔍 Search...",
+    loading: "Loading...",
+    empty: "No new notifications",
+    newLabel: (count) => `${count} new`,
+    clickInvitation: "📩 Click to respond to the invitation",
+    fromEvang: "📣 From evangelisation",
+    badges: {
+      nouveau:              "New member",
+      existant:             "Existing",
+      evangelise:           "Evangelised",
+      new_in_cellule:       "Added to cell/family",
+      membre_assigne:       "Assigned member",
+      membre_assigne_evang: "Assigned evangelised",
+      invitation:           "Pending invitation",
+    },
+  },
+};
+
 
 function getRoles(profile) {
   if (!profile) return [];
@@ -36,17 +78,19 @@ function getBorderColor(type) {
   }
 }
 
-function TypeBadge({ type }) {
+function TypeBadge({ type, lang = "fr" }) {
+  const labels = translations[lang]?.badges || translations.fr.badges;
   const config = {
-    nouveau:              { bg: "#fff7ed", text: "#ea580c", dot: "#fb923c", label: "Nouveau membre" },
-    existant:             { bg: "#f0fdf4", text: "#16a34a", dot: "#4ade80", label: "Existant" },
-    evangelise:           { bg: "#f5f3ff", text: "#7c3aed", dot: "#a78bfa", label: "Évangélisé" },
-    new_in_cellule:       { bg: "#f0f9ff", text: "#0369a1", dot: "#38bdf8", label: "Ajouté en cellule/famille" },
-    membre_assigne:       { bg: "#fffbeb", text: "#b45309", dot: "#f59e0b", label: "Membre assigné" },
-    membre_assigne_evang: { bg: "#ecfdf5", text: "#065f46", dot: "#10b981", label: "Évangélisé assigné" },
-    invitation:           { bg: "#eef2ff", text: "#4338ca", dot: "#818cf8", label: "Invitation en attente" },
+    nouveau:              { bg: "#fff7ed", text: "#ea580c", dot: "#fb923c", label: labels.nouveau },
+    existant:             { bg: "#f0fdf4", text: "#16a34a", dot: "#4ade80", label: labels.existant },
+    evangelise:           { bg: "#f5f3ff", text: "#7c3aed", dot: "#a78bfa", label: labels.evangelise },
+    new_in_cellule:       { bg: "#f0f9ff", text: "#0369a1", dot: "#38bdf8", label: labels.new_in_cellule },
+    membre_assigne:       { bg: "#fffbeb", text: "#b45309", dot: "#f59e0b", label: labels.membre_assigne },
+    membre_assigne_evang: { bg: "#ecfdf5", text: "#065f46", dot: "#10b981", label: labels.membre_assigne_evang },
+    invitation:           { bg: "#eef2ff", text: "#4338ca", dot: "#818cf8", label: labels.invitation },
   };
   const c = config[type] || config.existant;
+  
   return (
     <span style={{ background: c.bg, color: c.text, fontSize: "11px", fontWeight: "700", borderRadius: "999px", padding: "2px 10px", display: "inline-flex", alignItems: "center", gap: "5px" }}>
       <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: c.dot, display: "inline-block" }} />
@@ -65,8 +109,9 @@ export default function NotificationsPage() {
 
 function NotificationsContent() {
   const router = useRouter();
-  const { markAsSeen } = useNotificationsContext(); // ✅ FIX 2 — markAsSeen extrait du context
-
+  const { markAsSeen } = useNotificationsContext();
+  const { lang } = useLang();
+  const t = translations[lang];
   const [userProfile,   setUserProfile]   = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [loading,       setLoading]       = useState(true);
@@ -389,24 +434,25 @@ function NotificationsContent() {
       <HeaderPages />
       <div className="w-full max-w-3xl mt-4 mb-6">
         <div className="flex items-center justify-between mb-1">
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">🔔 <span>Notifications</span></h1>
-          <span style={{ background: "#ef4444", color: "#fff", fontSize: "12px", fontWeight: "700", borderRadius: "999px", padding: "2px 12px" }}>
-            {filtered.length} nouveau{filtered.length > 1 ? "x" : ""}
-          </span>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">🔔 <span>{t.title}</span></h1>
+            <span style={{ background: "#ef4444", color: "#fff", fontSize: "12px", fontWeight: "700", borderRadius: "999px", padding: "2px 12px" }}>
+              {t.newLabel(filtered.length)}
+            </span>
         </div>
-        <p className="text-white/60 text-sm mb-4">Toutes vos notifications</p>
+        <p className="text-white/60 text-sm mb-4">{t.subtitle}</p>
         <input
-          type="text" placeholder="🔍 Rechercher..." value={search}
+          <input
+        type="text" placeholder={t.searchPlaceholder} value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full px-4 py-2 rounded-lg border-0 text-black text-sm mb-4"
           style={{ outline: "none" }}
         />
         {loading ? (
-          <p className="text-white text-center py-10">Chargement...</p>
+          <p className="text-white text-center py-10">{t.loading}</p>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
             <div style={{ fontSize: "48px" }}>✅</div>
-            <p className="text-white/70 mt-3 text-sm">Aucune nouvelle notification</p>
+            <p className="text-white/70 mt-3 text-sm">{t.empty}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -427,11 +473,11 @@ function NotificationsContent() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                     <p style={{ fontWeight: "700", fontSize: "14px", color: "#111827", margin: 0 }}>{n.prenom} {n.nom}</p>
-                    <TypeBadge type={n._type} />
+                    <TypeBadge type={n._type} lang={lang} />
                   </div>
-                  {n._type === "invitation" && <p style={{ fontSize: "12px", color: "#4338ca", margin: "2px 0 0" }}>📩 Cliquez pour répondre à l'invitation</p>}
+                 {n._type === "invitation" && <p style={{ fontSize: "12px", color: "#4338ca", margin: "2px 0 0" }}>{t.clickInvitation}</p>}
                   {n._type === "membre_assigne" && n.suivi_cellule_nom && <p style={{ fontSize: "12px", color: "#6b7280", margin: "2px 0 0" }}>🏠 {n.suivi_cellule_nom}</p>}
-                  {n._type === "membre_assigne_evang" && <p style={{ fontSize: "12px", color: "#059669", margin: "2px 0 0" }}>📣 Vient de l'évangélisation</p>}
+                 {n._type === "membre_assigne_evang" && <p style={{ fontSize: "12px", color: "#059669", margin: "2px 0 0" }}>{t.fromEvang}</p>}
                   {n.ville && !["membre_assigne", "membre_assigne_evang", "invitation"].includes(n._type) && <p style={{ fontSize: "12px", color: "#6b7280", margin: "2px 0 0" }}>🏙️ {n.ville}</p>}
                   {n._type === "invitation" && n.ville && <p style={{ fontSize: "12px", color: "#6b7280", margin: "2px 0 0" }}>🏙️ {n.ville}</p>}
                   <p style={{ fontSize: "11px", color: "#9ca3af", margin: "2px 0 0" }}>📅 {formatDateFr(n._date)}</p>

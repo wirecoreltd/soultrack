@@ -391,59 +391,8 @@ function EtatCellule() {
         .order("date_depart", { ascending: false });
 
       if (!isAdmin) {
-
-  // ─────────────────────────────
-  // RESPONSABLE CELLULE
-  // ─────────────────────────────
-  if (userProfile.role === "ResponsableCellule") {
-
-    // Ma cellule principale
-    const { data: myCellules } = await supabase
-      .from("cellules")
-      .select("id")
-      .eq("responsable_id", userProfile.id);
-
-    const myIds = (myCellules || []).map(c => c.id);
-
-    // Cellules filles
-    const { data: filles } = await supabase
-      .from("cellules")
-      .select("id")
-      .in("cellule_mere_id", myIds);
-
-    const filleIds = (filles || []).map(c => c.id);
-
-    const allIds = [...myIds, ...filleIds];
-
-    query = query.in("cellule_id", allIds);
-  }
-
-  // ─────────────────────────────
-  // SUPERVISEUR
-  // ─────────────────────────────
-  else if (userProfile.role === "SuperviseurCellule") {
-
-    // Cellules supervisées
-    const { data: supervisees } = await supabase
-      .from("cellules")
-      .select("id")
-      .eq("superviseur_id", userProfile.id);
-
-    const superviseIds = (supervisees || []).map(c => c.id);
-
-    // Cellules filles
-    const { data: filles } = await supabase
-      .from("cellules")
-      .select("id")
-      .in("cellule_mere_id", superviseIds);
-
-    const filleIds = (filles || []).map(c => c.id);
-
-    const allIds = [...superviseIds, ...filleIds];
-
-    query = query.in("cellule_id", allIds);
-  }
-}
+        query = query.ilike("responsable", `%${userProfile.prenom}%`);
+      }
 
       const { data, error } = await query;
       if (error) throw error;

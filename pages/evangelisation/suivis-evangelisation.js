@@ -12,16 +12,151 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
 import { checkLimiteAtteinte } from "../../lib/checkLimite";
 import { useFeature } from "../../components/FeaturesContext";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    loading: "Chargement...",
+    notConnected: "Non connecté",
+    pageTitle1: "Suivis des",
+    pageTitle2: "Evangélisés",
+    intro: "Suivez facilement tous vos",
+    introHighlight1: "contacts évangélisés et leur progression",
+    introMid:
+      ". Attribuez-les à un conseiller ou à une cellule, partagez leurs informations via WhatsApp, et",
+    introHighlight2: "consultez chaque contact en détail",
+    introEnd: ". Vous pouvez modifier ou supprimer des contacts,",
+    introHighlight3:
+      "assurant un suivi clair et structuré de l'évangélisation dans votre église",
+    toggleRefus: "Voir les refus",
+    toggleSuivis: "Voir tous les suivis",
+    cellule: "🏠 Cellule",
+    famille: "👨‍👩‍👦 Famille",
+    conseiller: "👤 Conseiller(s)",
+    ville: "🏙️ Ville",
+    sentToSuivis: "Envoyé au suivis le",
+    commentLabel: "Commentaire Suivis",
+    statusLabel: "Statut du suivis",
+    statusDefault: "-- Sélectionner un statut --",
+    statusEnCours: "En Suivis",
+    statusIntegre: "Intégrer",
+    statusRefus: "Refus",
+    processing: "Traitement...",
+    reactivate: "🔄 Réactiver",
+    save: "Sauvegarder",
+    details: "Détails",
+    closeDetails: "Fermer détails",
+    identiteTitle: "👤 Identité",
+    civilite: "🎗️ Civilité",
+    age: "⏳ Tranche d'age",
+    whatsapp: "💬 WhatsApp",
+    oui: "Oui",
+    non: "Non",
+    spiritualTitle: "🕊 Vie spirituelle",
+    priereSalut: "🙏 Prière salut",
+    typeConversion: "☀️ Type de conversion",
+    parcoursTitle: "🌱 Parcours",
+    evangeliseLeM: "📅 Évangélisé le",
+    evangeliseLeFemme: "📅 Évangélisée le",
+    typeEvang: "📣 Type d'Evangélisation",
+    pastoralTitle: "❤️‍🩹 Soin pastoral",
+    besoins: "❓ Difficultés / Besoins",
+    infos: "📝 Infos",
+    addSuivi: "💡 Ajouter / Voir suivis",
+    editContact: "✏️ Modifier le contact",
+    call: "📞 Appeler",
+    sms: "✉️ SMS",
+    whatsappCall: "📱 Appel WhatsApp",
+    whatsappMsg: "💬 Message WhatsApp",
+    limitError: "❌ Limite atteinte",
+    limitMsg: "membres. Upgradez votre plan pour intégrer ce contact.",
+    saveError: "Erreur lors de la sauvegarde : ",
+    reactivateError: "Erreur lors de la réactivation",
+    insertError: "Erreur insertion membre : ",
+    upsertError: "Erreur upsert membre : ",
+  },
+  en: {
+    loading: "Loading...",
+    notConnected: "Not connected",
+    pageTitle1: "Follow-ups of",
+    pageTitle2: "Evangelised",
+    intro: "Easily track all your",
+    introHighlight1: "evangelised contacts and their progress",
+    introMid:
+      ". Assign them to a counsellor or a cell, share their information via WhatsApp, and",
+    introHighlight2: "view each contact in detail",
+    introEnd: ". You can edit or delete contacts,",
+    introHighlight3:
+      "ensuring clear and structured evangelisation follow-up in your church",
+    toggleRefus: "View refusals",
+    toggleSuivis: "View all follow-ups",
+    cellule: "🏠 Cell",
+    famille: "👨‍👩‍👦 Family",
+    conseiller: "👤 Counsellor(s)",
+    ville: "🏙️ City",
+    sentToSuivis: "Sent to follow-up on",
+    commentLabel: "Follow-up comment",
+    statusLabel: "Follow-up status",
+    statusDefault: "-- Select a status --",
+    statusEnCours: "In follow-up",
+    statusIntegre: "Integrate",
+    statusRefus: "Refusal",
+    processing: "Processing...",
+    reactivate: "🔄 Reactivate",
+    save: "Save",
+    details: "Details",
+    closeDetails: "Close details",
+    identiteTitle: "👤 Identity",
+    civilite: "🎗️ Title",
+    age: "⏳ Age range",
+    whatsapp: "💬 WhatsApp",
+    oui: "Yes",
+    non: "No",
+    spiritualTitle: "🕊 Spiritual life",
+    priereSalut: "🙏 Salvation prayer",
+    typeConversion: "☀️ Conversion type",
+    parcoursTitle: "🌱 Journey",
+    evangeliseLeM: "📅 Evangelised on",
+    evangeliseLeFemme: "📅 Evangelised on",
+    typeEvang: "📣 Evangelisation type",
+    pastoralTitle: "❤️‍🩹 Pastoral care",
+    besoins: "❓ Difficulties / Needs",
+    infos: "📝 Info",
+    addSuivi: "💡 Add / View follow-ups",
+    editContact: "✏️ Edit contact",
+    call: "📞 Call",
+    sms: "✉️ SMS",
+    whatsappCall: "📱 WhatsApp call",
+    whatsappMsg: "💬 WhatsApp message",
+    limitError: "❌ Limit reached",
+    limitMsg: "members. Upgrade your plan to integrate this contact.",
+    saveError: "Save error: ",
+    reactivateError: "Reactivation error",
+    insertError: "Member insertion error: ",
+    upsertError: "Member upsert error: ",
+  },
+};
 
 export default function SuivisEvangelisation() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEvangelisation", "ResponsableCellule", "ResponsableFamilles", "Conseiller"]}>
+    <ProtectedRoute
+      allowedRoles={[
+        "Administrateur",
+        "ResponsableEvangelisation",
+        "ResponsableCellule",
+        "ResponsableFamilles",
+        "Conseiller",
+      ]}
+    >
       <SuivisEvangelisationContent />
     </ProtectedRoute>
   );
 }
 
 function SuivisEvangelisationContent() {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   // ─────────────────────────────────────────────
   // ✅ FEATURES — tous les hooks en premier
   // ─────────────────────────────────────────────
@@ -64,14 +199,12 @@ function SuivisEvangelisationContent() {
 
   useEffect(() => {
     init();
-  }, [cellulesActive, famillesActive, conseillerActive]); // ✅ re-init si features changent
+  }, [cellulesActive, famillesActive, conseillerActive]);
 
   useEffect(() => {
     if (user) fetchSuivis(user, cellules, familles);
   }, [showRefus]);
 
-  // ✅ Scroll automatique vers la carte surlignée
-  // ✅ Scroll automatique vers la carte surlignée
   const highlightDoneRef = useRef(false);
 
   useEffect(() => {
@@ -93,7 +226,8 @@ function SuivisEvangelisationContent() {
 
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
-      el.style.boxShadow = "0 0 0 3px rgba(167,139,250,0.7), 0 0 32px 10px rgba(167,139,250,0.25)";
+      el.style.boxShadow =
+        "0 0 0 3px rgba(167,139,250,0.7), 0 0 32px 10px rgba(167,139,250,0.25)";
       el.style.transform = "scale(1.02)";
       setTimeout(() => {
         el.style.transition = "box-shadow 1.5s ease, transform 1.5s ease";
@@ -105,19 +239,13 @@ function SuivisEvangelisationContent() {
     const timer = setTimeout(tryHighlight, 300);
     return () => clearTimeout(timer);
   }, [loading, highlight]);
-  
 
   const init = async () => {
     const userData = await fetchUser();
-
-    // ✅ Chargement conditionné par feature
     if (conseillerActive) await fetchConseillers();
     const cellulesData = cellulesActive ? await fetchCellules(userData) : [];
     const famillesData = famillesActive ? await fetchFamilles(userData) : [];
-
-    if (userData) {
-      await fetchSuivis(userData, cellulesData, famillesData);
-    }
+    if (userData) await fetchSuivis(userData, cellulesData, famillesData);
     setLoading(false);
   };
 
@@ -198,7 +326,9 @@ function SuivisEvangelisationContent() {
     }
 
     const conseillerIds = [
-      ...new Set((assignments || []).map((a) => a.conseiller_id).filter(Boolean)),
+      ...new Set(
+        (assignments || []).map((a) => a.conseiller_id).filter(Boolean)
+      ),
     ];
 
     let profileMap = {};
@@ -298,7 +428,10 @@ function SuivisEvangelisationContent() {
     if (!dateString) return "—";
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
-    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
+    const months =
+      lang === "fr"
+        ? ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"]
+        : ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
@@ -355,14 +488,14 @@ function SuivisEvangelisationContent() {
 
       if (error) {
         console.error("Erreur insertion membre :", error);
-        alert("Erreur insertion membre : " + error.message);
+        alert(t.insertError + error.message);
         return null;
       }
 
       return data?.id || null;
     } catch (err) {
       console.error("Erreur upsert membre :", err.message);
-      alert("Erreur upsert membre : " + err.message);
+      alert(t.upsertError + err.message);
       return null;
     }
   };
@@ -389,9 +522,11 @@ function SuivisEvangelisationContent() {
       if (error) throw error;
 
       if (newStatus === "Intégré") {
-        const { atteinte, count, limite } = await checkLimiteAtteinte(user.eglise_id);
+        const { atteinte, count, limite } = await checkLimiteAtteinte(
+          user.eglise_id
+        );
         if (atteinte) {
-          alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan pour intégrer ce contact.`);
+          alert(`${t.limitError} : ${count}/${limite} ${t.limitMsg}`);
           setUpdating((p) => ({ ...p, [id]: false }));
           return;
         }
@@ -415,7 +550,10 @@ function SuivisEvangelisationContent() {
               .from("suivi_assignments")
               .insert(rows);
             if (assignError) {
-              console.error("Erreur création suivi_assignments pour membre intégré:", assignError);
+              console.error(
+                "Erreur création suivi_assignments pour membre intégré:",
+                assignError
+              );
             }
           }
         }
@@ -427,16 +565,28 @@ function SuivisEvangelisationContent() {
       setAllSuivis((prev) =>
         prev.map((s) =>
           s.id === id
-            ? { ...s, commentaire_evangelises: newComment, status_suivis_evangelises: newStatus }
+            ? {
+                ...s,
+                commentaire_evangelises: newComment,
+                status_suivis_evangelises: newStatus,
+              }
             : s
         )
       );
 
-      setCommentChanges((prev) => { const copy = { ...prev }; delete copy[id]; return copy; });
-      setStatusChanges((prev) => { const copy = { ...prev }; delete copy[id]; return copy; });
+      setCommentChanges((prev) => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
+      setStatusChanges((prev) => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
     } catch (err) {
       console.error("Erreur lors de la sauvegarde :", err.message);
-      alert("Erreur lors de la sauvegarde : " + err.message);
+      alert(t.saveError + err.message);
     } finally {
       setUpdating((p) => ({ ...p, [id]: false }));
     }
@@ -459,7 +609,7 @@ function SuivisEvangelisationContent() {
       );
     } catch (err) {
       console.error("Erreur réactivation :", err.message);
-      alert("Erreur lors de la réactivation");
+      alert(t.reactivateError);
     } finally {
       setUpdating((p) => ({ ...p, [m.id]: false }));
     }
@@ -472,31 +622,34 @@ function SuivisEvangelisationContent() {
   };
 
   /* ================= RENDER ================= */
-  if (loading) return <p className="text-center mt-10">Chargement...</p>;
-  if (!user) return <p className="text-center mt-10 text-red-600">Non connecté</p>;
+  if (loading)
+    return <p className="text-center mt-10">{t.loading}</p>;
+  if (!user)
+    return (
+      <p className="text-center mt-10 text-red-600">{t.notConnected}</p>
+    );
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
-        Suivis des <span className="text-emerald-300">Evangélisés</span>
+        {t.pageTitle1}{" "}
+        <span className="text-emerald-300">{t.pageTitle2}</span>
       </h1>
 
       <div className="max-w-3xl w-full mb-6 text-center">
         <p className="italic text-base text-white/90">
-          Suivez facilement tous vos{" "}
+          {t.intro}{" "}
           <span className="text-blue-300 font-semibold">
-            contacts évangélisés et leur progression
+            {t.introHighlight1}
           </span>
-          . Attribuez-les à un conseiller ou à une cellule, partagez leurs
-          informations via WhatsApp, et{" "}
+          {t.introMid}{" "}
           <span className="text-blue-300 font-semibold">
-            consultez chaque contact en détail
+            {t.introHighlight2}
           </span>
-          . Vous pouvez modifier ou supprimer des contacts,{" "}
+          {t.introEnd}{" "}
           <span className="text-blue-300 font-semibold">
-            assurant un suivi clair et structuré de l'évangélisation dans votre
-            église
+            {t.introHighlight3}
           </span>
           .
         </p>
@@ -508,7 +661,7 @@ function SuivisEvangelisationContent() {
           onClick={() => setShowRefus(!showRefus)}
           className="text-orange-400 text-sm underline hover:text-orange-500"
         >
-          {showRefus ? "Voir tous les suivis" : "Voir les refus"}
+          {showRefus ? t.toggleSuivis : t.toggleRefus}
         </button>
       </div>
 
@@ -554,10 +707,50 @@ function SuivisEvangelisationContent() {
                       className="absolute mt-2 bg-white rounded-lg shadow-lg border z-50 w-52 left-1/2 -translate-x-1/2"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <a href={m.telephone ? `tel:${m.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>📞 Appeler</a>
-                      <a href={m.telephone ? `sms:${m.telephone}` : "#"} className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>✉️ SMS</a>
-                      <a href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>📱 Appel WhatsApp</a>
-                      <a href={m.telephone ? `https://wa.me/${m.telephone.replace(/\D/g, "")}` : "#"} target="_blank" rel="noopener noreferrer" className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${!m.telephone ? "opacity-50 pointer-events-none" : ""}`}>💬 Message WhatsApp</a>
+                      <a
+                        href={m.telephone ? `tel:${m.telephone}` : "#"}
+                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                          !m.telephone ? "opacity-50 pointer-events-none" : ""
+                        }`}
+                      >
+                        {t.call}
+                      </a>
+                      <a
+                        href={m.telephone ? `sms:${m.telephone}` : "#"}
+                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                          !m.telephone ? "opacity-50 pointer-events-none" : ""
+                        }`}
+                      >
+                        {t.sms}
+                      </a>
+                      <a
+                        href={
+                          m.telephone
+                            ? `https://wa.me/${m.telephone.replace(/\D/g, "")}?call`
+                            : "#"
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                          !m.telephone ? "opacity-50 pointer-events-none" : ""
+                        }`}
+                      >
+                        {t.whatsappCall}
+                      </a>
+                      <a
+                        href={
+                          m.telephone
+                            ? `https://wa.me/${m.telephone.replace(/\D/g, "")}`
+                            : "#"
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`block px-4 py-2 text-sm text-black hover:bg-gray-100 ${
+                          !m.telephone ? "opacity-50 pointer-events-none" : ""
+                        }`}
+                      >
+                        {t.whatsappMsg}
+                      </a>
                     </div>
                   )}
                 </div>
@@ -566,56 +759,71 @@ function SuivisEvangelisationContent() {
                 <div className="flex flex-col items-center space-y-1 mb-1">
                   {cellulesActive && (
                     <p className="text-sm text-black">
-                      🏠 Cellule : {cellule?.cellule_full || "—"}
+                      {t.cellule} : {cellule?.cellule_full || "—"}
                     </p>
                   )}
                   {famillesActive && (
                     <p className="text-sm text-black">
-                      👨‍👩‍👦 Famille : {famille?.famille_full || "—"}
+                      {t.famille} : {famille?.famille_full || "—"}
                     </p>
                   )}
                   {conseillerActive && (
                     <p className="text-sm text-black">
-                      👤 Conseiller(s) : {getConseillersForSuivi(m.id)}
+                      {t.conseiller} : {getConseillersForSuivi(m.id)}
                     </p>
                   )}
-                  <p className="text-sm text-black">🏙️ Ville : {m.ville || "—"}</p>
+                  <p className="text-sm text-black">
+                    {t.ville} : {m.ville || "—"}
+                  </p>
                 </div>
 
                 <p className="self-end text-[11px] text-gray-400 mt-2">
-                  Envoyé au suivis le {formatDateFr(m.date_suivi)}
+                  {t.sentToSuivis} {formatDateFr(m.date_suivi)}
                 </p>
 
                 {/* Commentaire + statut */}
                 <div className="w-full rounded-xl p-3 mt-2">
                   <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2 text-sm">
-                    Commentaire Suivis
+                    {t.commentLabel}
                   </label>
                   <textarea
                     rows={2}
-                    value={commentChanges[m.id] ?? m.commentaire_evangelises ?? ""}
+                    value={
+                      commentChanges[m.id] ?? m.commentaire_evangelises ?? ""
+                    }
                     onChange={(e) => handleCommentChange(m.id, e.target.value)}
                     disabled={showRefus}
                     className={`w-full rounded-lg border px-3 py-2 text-sm ${
-                      showRefus ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-white"
+                      showRefus
+                        ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                        : "bg-white"
                     }`}
                   />
 
                   <label className="block w-full text-center font-semibold text-blue-700 mb-1 mt-2 text-sm">
-                    Statut du suivis
+                    {t.statusLabel}
                   </label>
                   <select
-                    value={statusChanges[m.id] ?? m.status_suivis_evangelises ?? ""}
-                    onChange={(e) => handleStatusChange(m.id, e.target.value)}
+                    value={
+                      statusChanges[m.id] ??
+                      m.status_suivis_evangelises ??
+                      ""
+                    }
+                    onChange={(e) =>
+                      handleStatusChange(m.id, e.target.value)
+                    }
                     disabled={showRefus}
                     className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm ${
-                      showRefus ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-white"
+                      showRefus
+                        ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                        : "bg-white"
                     }`}
                   >
-                    <option value="">-- Sélectionner un statut --</option>
-                    <option value="En cours">En Suivis</option>
-                    <option value="Intégré">Intégrer</option>
-                    <option value="Refus">Refus</option>
+                    {/* Status values stored as "En cours"/"Intégré"/"Refus" in DB */}
+                    <option value="">{t.statusDefault}</option>
+                    <option value="En cours">{t.statusEnCours}</option>
+                    <option value="Intégré">{t.statusIntegre}</option>
+                    <option value="Refus">{t.statusRefus}</option>
                   </select>
 
                   <button
@@ -632,10 +840,10 @@ function SuivisEvangelisationContent() {
                     }`}
                   >
                     {updating[m.id]
-                      ? "Traitement..."
+                      ? t.processing
                       : showRefus
-                      ? "🔄 Réactiver"
-                      : "Sauvegarder"}
+                      ? t.reactivate
+                      : t.save}
                   </button>
                 </div>
 
@@ -643,7 +851,7 @@ function SuivisEvangelisationContent() {
                   onClick={() => setDetailsCarteId(ouvert ? null : m.id)}
                   className="text-orange-500 underline text-sm mt-3"
                 >
-                  {ouvert ? "Fermer détails" : "Détails"}
+                  {ouvert ? t.closeDetails : t.details}
                 </button>
               </div>
 
@@ -656,34 +864,60 @@ function SuivisEvangelisationContent() {
                 {ouvert && (
                   <div className="text-black text-sm mt-3 w-full space-y-4">
                     <div>
-                      <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
-                      <p>🎗️ Civilité : {m.sexe || ""}</p>
-                      <p>⏳ Tranche d'age : {m.age || ""}</p>
-                      <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
-                    </div>
-                    <hr />
-
-                    <div>
-                      <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
-                      <p>🙏 Prière salut : {m.priere_salut ? "Oui" : "Non"}</p>
-                      <p>☀️ Type de conversion : {m.type_conversion || ""}</p>
-                    </div>
-                    <hr />
-
-                    <div>
-                      <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>
+                      <p className="font-bold text-[#2E3192] mb-1">
+                        {t.identiteTitle}
+                      </p>
                       <p>
-                        📅 {m.sexe === "Femme" ? "Évangélisée" : "Évangélisé"} le :{" "}
+                        {t.civilite} : {m.sexe || ""}
+                      </p>
+                      <p>
+                        {t.age} : {m.age || ""}
+                      </p>
+                      <p>
+                        {t.whatsapp} : {m.is_whatsapp ? t.oui : t.non}
+                      </p>
+                    </div>
+                    <hr />
+
+                    <div>
+                      <p className="font-bold text-[#2E3192] mb-1">
+                        {t.spiritualTitle}
+                      </p>
+                      <p>
+                        {t.priereSalut} : {m.priere_salut ? t.oui : t.non}
+                      </p>
+                      <p>
+                        {t.typeConversion} : {m.type_conversion || ""}
+                      </p>
+                    </div>
+                    <hr />
+
+                    <div>
+                      <p className="font-bold text-[#2E3192] mb-1">
+                        {t.parcoursTitle}
+                      </p>
+                      <p>
+                        {m.sexe === "Femme"
+                          ? t.evangeliseLeFemme
+                          : t.evangeliseLeM}{" "}
                         {formatDateFr(m.date_evangelise)}
                       </p>
-                      <p>📣 Type d'Evangélisation : {m.type_evangelisation || ""}</p>
+                      <p>
+                        {t.typeEvang} : {m.type_evangelisation || ""}
+                      </p>
                     </div>
                     <hr />
 
                     <div>
-                      <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
-                      <p>❓ Difficultés / Besoins : {formatBesoin(m.besoin)}</p>
-                      <p>📝 Infos : {m.infos_supplementaires || ""}</p>
+                      <p className="font-bold text-[#2E3192] mb-1">
+                        {t.pastoralTitle}
+                      </p>
+                      <p>
+                        {t.besoins} : {formatBesoin(m.besoin)}
+                      </p>
+                      <p>
+                        {t.infos} : {m.infos_supplementaires || ""}
+                      </p>
                     </div>
 
                     {!showRefus && (
@@ -692,13 +926,13 @@ function SuivisEvangelisationContent() {
                           onClick={() => setSuiviEvanMember(m)}
                           className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
                         >
-                          💡 Ajouter / Voir suivis
+                          {t.addSuivi}
                         </button>
                         <button
                           onClick={() => setEditingContact(m)}
                           className="w-full py-2 rounded-lg bg-white text-orange-500 font-semibold border border-orange-200 shadow-sm hover:shadow-md transition-all"
                         >
-                          ✏️ Modifier le contact
+                          {t.editContact}
                         </button>
                       </div>
                     )}

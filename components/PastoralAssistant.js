@@ -1,7 +1,40 @@
 "use client";
 import { useState } from "react";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    btnPreparer: "✨ Préparer cet entretien",
+    btnLoading: "Préparation en cours...",
+    erreur: "Erreur : ",
+    fermer: "Fermer le support ↑",
+
+    // Section titles
+    avantDentrer: "Avant d'entrer",
+    clesComprehension: "Clés de compréhension",
+    questionsAPoser: "Questions à poser pendant l'entretien",
+    pistesAider: "Pistes pour l'aider à avancer",
+    parolesAPartager: "Paroles à partager",
+  },
+  en: {
+    btnPreparer: "✨ Prepare this meeting",
+    btnLoading: "Preparing...",
+    erreur: "Error: ",
+    fermer: "Close support ↑",
+
+    // Section titles
+    avantDentrer: "Before you begin",
+    clesComprehension: "Key insights",
+    questionsAPoser: "Questions to ask during the meeting",
+    pistesAider: "Ways to help them move forward",
+    parolesAPartager: "Scriptures to share",
+  },
+};
 
 export default function PastoralAssistant({ membre, suivis }) {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [loading, setLoading] = useState(false);
   const [result, setResult]   = useState(null);
   const [error, setError]     = useState(null);
@@ -21,7 +54,7 @@ export default function PastoralAssistant({ membre, suivis }) {
       if (!res.ok) throw new Error(data.error);
       setResult(data);
     } catch (e) {
-      setError("Erreur : " + e.message);
+      setError(t.erreur + e.message);
     } finally {
       setLoading(false);
     }
@@ -52,8 +85,8 @@ export default function PastoralAssistant({ membre, suivis }) {
         }}
       >
         {loading
-          ? <><Spinner /> Préparation en cours...</>
-          : "✨ Préparer cet entretien"}
+          ? <><Spinner /> {t.btnLoading}</>
+          : t.btnPreparer}
       </button>
 
       {error && (
@@ -66,12 +99,12 @@ export default function PastoralAssistant({ membre, suivis }) {
         <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
 
           {/* Avant d'entrer */}
-          <Section emoji="🚪" titre="Avant d'entrer">
+          <Section emoji="🚪" titre={t.avantDentrer}>
             <p style={styles.body}>{result.avant_dentrer}</p>
           </Section>
 
           {/* Clés de compréhension */}
-          <Section emoji="💡" titre="Clés de compréhension">
+          <Section emoji="💡" titre={t.clesComprehension}>
             <p style={styles.body}>{result.cles_comprehension}</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
               {result.mots_cles?.map((m, i) => (
@@ -81,7 +114,7 @@ export default function PastoralAssistant({ membre, suivis }) {
           </Section>
 
           {/* Questions à poser */}
-          <Section emoji="🙏" titre="Questions à poser pendant l'entretien">
+          <Section emoji="🙏" titre={t.questionsAPoser}>
             {result.questions_a_poser?.map((q, i) => (
               <div key={i} style={styles.question}>
                 <span style={styles.qNum}>{i + 1}</span>
@@ -91,7 +124,7 @@ export default function PastoralAssistant({ membre, suivis }) {
           </Section>
 
           {/* Pistes */}
-          <Section emoji="🧭" titre="Pistes pour l'aider à avancer">
+          <Section emoji="🧭" titre={t.pistesAider}>
             {result.pistes_accompagnement?.map((p, i) => (
               <div key={i} style={styles.piste}>
                 <span style={styles.num}>{i + 1}</span>
@@ -101,7 +134,7 @@ export default function PastoralAssistant({ membre, suivis }) {
           </Section>
 
           {/* Versets */}
-          <Section emoji="📖" titre="Paroles à partager">
+          <Section emoji="📖" titre={t.parolesAPartager}>
             {result.versets?.map((v, i) => (
               <div key={i} style={styles.verset}>
                 <strong style={styles.versetRef}>{v.reference}</strong>
@@ -114,7 +147,7 @@ export default function PastoralAssistant({ membre, suivis }) {
             onClick={() => { setResult(null); setOpen(false); }}
             style={{ fontSize: 12, color: "#6b7280", background: "none", border: "none", cursor: "pointer", textAlign: "center", marginTop: 4 }}
           >
-            Fermer le support ↑
+            {t.fermer}
           </button>
 
         </div>

@@ -213,12 +213,39 @@ function ListCellulesContent() {
       .order("cellule_full");
 
     if (profile.role === "ResponsableCellule") {
-      query = query.eq("responsable_id", profile.id);
-    } else if (profile.role === "SuperviseurCellule") {
-      query = query.eq("superviseur_id", profile.id);
-    } else if (profile.role !== "Administrateur") {
-      query = query.eq("id", "00000000-0000-0000-0000-000000000000");
-    }
+
+  // 1️⃣ Cellules directes
+  const { data: directes } = await supabase
+    .from("cellules")
+    .select("id")
+    .eq("responsable_id", profile.id)
+    .eq("eglise_id", profile.eglise_id);
+
+  const directIds = (directes || []).map(c => c.id);
+
+  // 2️⃣ Cellules filles
+  const { data: filles } = await supabase
+    .from("cellules")
+    .select("id")
+    .in(
+      "cellule_mere_id",
+      directIds.length
+        ? directIds
+        : ["00000000-0000-0000-0000-000000000000"]
+    );
+
+  const fillesIds = (filles || []).map(c => c.id);
+
+  // 3️⃣ Union
+  const allIds = [...new Set([...directIds, ...fillesIds])];
+
+  query = query.in(
+    "id",
+    allIds.length
+      ? allIds
+      : ["00000000-0000-0000-0000-000000000000"]
+  );
+}
 
     const { data: cellsData } = await query;
 

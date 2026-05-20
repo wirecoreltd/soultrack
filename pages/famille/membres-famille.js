@@ -637,8 +637,8 @@ function MembresFamilleContent() {
                           logoBase64={logoBase64}
                           eglise={egliseData}
                           churchName={egliseData?.nom}
-                          celluleName={
-                            cellules.find((c) => String(c.id) === String(m.cellule_id))?.cellule_full
+                          familleName={
+                            familles.find((c) => String(c.id) === String(m.famille_id))?.cellule_full
                           }
                         />
                       </div>

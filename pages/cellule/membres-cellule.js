@@ -274,7 +274,7 @@ const directIds = (directesData || []).map(c => c.id);
 
 const { data: fillesData } = await supabase
   .from("cellules")
-  .select("*, profiles:responsable_id(prenom, nom)")
+  .select("*")
   .in(
     "cellule_mere_id",
     directIds.length
@@ -463,11 +463,9 @@ setCellules([
                   const besoins = parseJsonArray(m.besoin).join(", ") || "—";
                   const isOpen = detailsOpen[m.id];
 
-                  const nomResponsable = cellule?.profiles
-  ? `${cellule.profiles.prenom} ${cellule.profiles.nom}`
-  : cellule?.responsable || "—";
+                  const nomResponsable = cellule?.responsable || "—";
 
-console.log("RESPONSABLE =", nomResponsable);
+                console.log("RESPONSABLE =", nomResponsable);
 
                   return (
                     <div

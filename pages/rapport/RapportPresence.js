@@ -4,6 +4,163 @@ import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    // Page header
+    pageTitle: "Rapport de présences",
+    pageSubtitle: "Suivi pastoral & indicateurs de fidélité",
+    // Filters
+    periodLabel: "Période :",
+    typeLabel: "Type :",
+    tous: "Tous",
+    periods: [
+      { label: "7 j", val: "7" },
+      { label: "30 j", val: "30" },
+      { label: "90 j", val: "90" },
+      { label: "6 mois", val: "180" },
+    ],
+    // Tabs
+    tabKpi: "Vue d'ensemble",
+    tabCellules: "Cellules",
+    tabFamilles: "Familles",
+    tabSessions: "Par session",
+    // Empty / Loading
+    noSession: "Aucune session sur cette période",
+    // KPI labels
+    kpiSessions: "Sessions",
+    kpiSessionsSub: "sur la période",
+    kpiTauxMoyen: "Taux moyen",
+    kpiTauxSub: "de présence",
+    kpiMembres: "Membres suivis",
+    kpiMembresSub: "actifs",
+    kpiAlertes: "En alerte",
+    kpiAlertesSub: "≥ 3 abs. consécutives",
+    // Section titles
+    sectionOverview: "Vue d'ensemble",
+    sectionSegmentation: "Segmentation fidélité — cliquer pour voir la liste",
+    sectionAlertes: "Alertes pastorales — à visiter en priorité",
+    sectionTauxType: "Taux de présence par type de temps",
+    sectionTendance: "Tendance hebdomadaire",
+    sectionTopFideles: "Top fidèles",
+    sectionGenre: "Répartition par genre",
+    // Segmentation
+    reguliers: "Réguliers",
+    irreguliers: "Irréguliers",
+    decrocheurs: "Décrocheurs",
+    absentsChroniques: "Absents chroniques",
+    // Alertes
+    vuLe: (date) => `Vu le ${date}`,
+    jamaisPresent: "Jamais présent(e)",
+    showMore: (n) => `▼ Voir ${n} de plus`,
+    reduce: "▲ Réduire",
+    absences: (n) => `${n} abs.`,
+    // Tendance
+    vsSemPrec: (delta, sign) => `${sign} ${Math.abs(delta)}% vs sem. préc.`,
+    insuffisantData: "Données insuffisantes (≥ 2 semaines)",
+    // Taux par type
+    noData: "Aucune donnée",
+    sessions_count: (n) => `${n} sess.`,
+    // Top fidèles
+    topNoData: "Aucune donnée",
+    // Genre
+    lastSession: (date) => `Dernière session · ${date}`,
+    hommes: "Hommes",
+    femmes: "Femmes",
+    nonRenseigne: "Non renseigné",
+    // Carte session
+    presents: (n) => `✔ Présents (${n})`,
+    absents: (n) => `✗ Absents (${n})`,
+    aucun: "Aucun",
+    // Carte groupe
+    membre: (n) => `${n} membre${n > 1 ? "s" : ""}`,
+    aucunMembre: "Aucun membre",
+    // Onglet cellules
+    compCellules: "Comparaison des cellules",
+    aucuneCellule: "Aucune cellule visible",
+    // Onglet familles
+    compFamilles: "Comparaison des familles",
+    aucuneFamille: "Aucune famille visible",
+    // Tri
+    meilleurTaux: "Meilleur taux",
+    moinsBonTaux: "Moins bon taux",
+    enProgression: "En progression ▲",
+    enRegression: "En régression ▼",
+    stable: "→ stable",
+    // Drawer
+    aucunMembre: "Aucun membre",
+    // Tendance puce
+    tendanceStable: "→ stable",
+  },
+  en: {
+    pageTitle: "Attendance Report",
+    pageSubtitle: "Pastoral follow-up & loyalty indicators",
+    periodLabel: "Period:",
+    typeLabel: "Type:",
+    tous: "All",
+    periods: [
+      { label: "7 d", val: "7" },
+      { label: "30 d", val: "30" },
+      { label: "90 d", val: "90" },
+      { label: "6 mo", val: "180" },
+    ],
+    tabKpi: "Overview",
+    tabCellules: "Cells",
+    tabFamilles: "Families",
+    tabSessions: "By session",
+    noSession: "No session for this period",
+    kpiSessions: "Sessions",
+    kpiSessionsSub: "for the period",
+    kpiTauxMoyen: "Average rate",
+    kpiTauxSub: "attendance",
+    kpiMembres: "Tracked members",
+    kpiMembresSub: "active",
+    kpiAlertes: "On alert",
+    kpiAlertesSub: "≥ 3 consecutive abs.",
+    sectionOverview: "Overview",
+    sectionSegmentation: "Loyalty segmentation — click to see list",
+    sectionAlertes: "Pastoral alerts — priority visits",
+    sectionTauxType: "Attendance rate by time type",
+    sectionTendance: "Weekly trend",
+    sectionTopFideles: "Top regulars",
+    sectionGenre: "Gender breakdown",
+    reguliers: "Regulars",
+    irreguliers: "Irregulars",
+    decrocheurs: "Dropping off",
+    absentsChroniques: "Chronic absents",
+    vuLe: (date) => `Last seen ${date}`,
+    jamaisPresent: "Never present",
+    showMore: (n) => `▼ See ${n} more`,
+    reduce: "▲ Reduce",
+    absences: (n) => `${n} abs.`,
+    vsSemPrec: (delta, sign) => `${sign} ${Math.abs(delta)}% vs prev. week`,
+    insuffisantData: "Insufficient data (≥ 2 weeks)",
+    noData: "No data",
+    sessions_count: (n) => `${n} sess.`,
+    topNoData: "No data",
+    lastSession: (date) => `Last session · ${date}`,
+    hommes: "Men",
+    femmes: "Women",
+    nonRenseigne: "Not specified",
+    presents: (n) => `✔ Present (${n})`,
+    absents: (n) => `✗ Absent (${n})`,
+    aucun: "None",
+    membre: (n) => `${n} member${n > 1 ? "s" : ""}`,
+    aucunMembre: "No members",
+    compCellules: "Cell comparison",
+    aucuneCellule: "No cell visible",
+    compFamilles: "Family comparison",
+    aucuneFamille: "No family visible",
+    meilleurTaux: "Best rate",
+    moinsBonTaux: "Lowest rate",
+    enProgression: "Progressing ▲",
+    enRegression: "Declining ▼",
+    stable: "→ stable",
+    aucunMembre: "No members",
+    tendanceStable: "→ stable",
+  },
+};
 
 export default function RapportPresencePage() {
   return (
@@ -58,28 +215,21 @@ function tauxPresence(membreId, sessions, presencesParSession) {
 }
 function tauxGroupe(membreIds, sessions, presencesParSession) {
   if (!sessions.length || !membreIds.length) return 0;
-  let presents = 0;
-  let total = 0;
+  let presents = 0, total = 0;
   for (const s of sessions) {
     const pres = presencesParSession[s.id] || [];
     for (const id of membreIds) {
       const p = pres.find(p => p.membre_id === id);
-      if (p) {
-        total++;
-        if (p.statut === "present") presents++;
-      }
+      if (p) { total++; if (p.statut === "present") presents++; }
     }
   }
   return total > 0 ? Math.round((presents / total) * 100) : 0;
 }
-// Calcule taux sur moitié ancienne vs moitié récente pour la tendance
 function tendanceGroupe(membreIds, sessions, presencesParSession) {
   if (sessions.length < 2 || !membreIds.length) return 0;
   const triees = [...sessions].sort((a, b) => a.date.localeCompare(b.date));
   const mid = Math.floor(triees.length / 2);
-  const anciennes = triees.slice(0, mid);
-  const recentes  = triees.slice(mid);
-  return tauxGroupe(membreIds, recentes, presencesParSession) - tauxGroupe(membreIds, anciennes, presencesParSession);
+  return tauxGroupe(membreIds, triees.slice(mid), presencesParSession) - tauxGroupe(membreIds, triees.slice(0, mid), presencesParSession);
 }
 
 const AVATAR_COLORS = [
@@ -131,8 +281,8 @@ function BarreProgression({ pct }) {
     </div>
   );
 }
-function TendancePuce({ delta }) {
-  if (delta === 0) return <span className="text-[11px] text-white/30">→ stable</span>;
+function TendancePuce({ delta, t }) {
+  if (delta === 0) return <span className="text-[11px] text-white/30">{t.tendanceStable}</span>;
   return (
     <span className={`text-[11px] font-semibold ${delta > 0 ? "text-emerald-400" : "text-red-400"}`}>
       {delta > 0 ? "▲" : "▼"} {Math.abs(delta)}%
@@ -141,7 +291,7 @@ function TendancePuce({ delta }) {
 }
 
 // ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
-function BlocKpiGlobaux({ sessions, presencesParSession, allMembres }) {
+function BlocKpiGlobaux({ sessions, presencesParSession, allMembres, t }) {
   const totalSessions = sessions.length;
   const totalMembres  = allMembres.length;
   const tauxMoyen = !totalSessions || !totalMembres ? 0 : Math.round(
@@ -154,26 +304,26 @@ function BlocKpiGlobaux({ sessions, presencesParSession, allMembres }) {
   const enAlerte = allMembres.filter(m => absencesConsecutives(m.id, sessionsTriees, presencesParSession) >= 3).length;
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      <KpiCard label="Sessions" value={totalSessions} sub="sur la période" accent="white" />
-      <KpiCard label="Taux moyen" value={`${tauxMoyen}%`} sub="de présence" accent={tauxMoyen >= 70 ? "green" : tauxMoyen >= 50 ? "amber" : "red"} />
-      <KpiCard label="Membres suivis" value={totalMembres} sub="actifs" accent="white" />
-      <KpiCard label="En alerte" value={enAlerte} sub="≥ 3 abs. consécutives" accent={enAlerte > 0 ? "red" : "green"} />
+      <KpiCard label={t.kpiSessions} value={totalSessions} sub={t.kpiSessionsSub} accent="white" />
+      <KpiCard label={t.kpiTauxMoyen} value={`${tauxMoyen}%`} sub={t.kpiTauxSub} accent={tauxMoyen >= 70 ? "green" : tauxMoyen >= 50 ? "amber" : "red"} />
+      <KpiCard label={t.kpiMembres} value={totalMembres} sub={t.kpiMembresSub} accent="white" />
+      <KpiCard label={t.kpiAlertes} value={enAlerte} sub={t.kpiAlertesSub} accent={enAlerte > 0 ? "red" : "green"} />
     </div>
   );
 }
 
 // ─── BLOC SEGMENTATION ─────────────────────────────────────────
-function BlocSegmentation({ sessions, presencesParSession, allMembres, onVoirSegment }) {
+function BlocSegmentation({ sessions, presencesParSession, allMembres, onVoirSegment, t }) {
   const segments = [
-    { key: "reguliers",   label: "Réguliers",         min: 75, max: 100, badge: "green" },
-    { key: "irreguliers", label: "Irréguliers",        min: 40, max: 74,  badge: "blue"  },
-    { key: "decrocheurs", label: "Décrocheurs",         min: 15, max: 39,  badge: "amber" },
-    { key: "absents",     label: "Absents chroniques", min: 0,  max: 14,  badge: "red"   },
+    { key: "reguliers",   label: t.reguliers,         min: 75, max: 100, badge: "green" },
+    { key: "irreguliers", label: t.irreguliers,        min: 40, max: 74,  badge: "blue"  },
+    { key: "decrocheurs", label: t.decrocheurs,        min: 15, max: 39,  badge: "amber" },
+    { key: "absents",     label: t.absentsChroniques,  min: 0,  max: 14,  badge: "red"   },
   ];
   const mbParSeg = segments.reduce((acc, seg) => {
     acc[seg.key] = allMembres.filter(m => {
-      const t = tauxPresence(m.id, sessions, presencesParSession);
-      return t >= seg.min && t <= seg.max;
+      const tx = tauxPresence(m.id, sessions, presencesParSession);
+      return tx >= seg.min && tx <= seg.max;
     });
     return acc;
   }, {});
@@ -202,8 +352,8 @@ function BlocSegmentation({ sessions, presencesParSession, allMembres, onVoirSeg
   );
 }
 
-// ─── BLOC ALERTES (masqué si vide) ────────────────────────────
-function BlocAlertes({ sessions, presencesParSession, allMembres }) {
+// ─── BLOC ALERTES ─────────────────────────────────────────────
+function BlocAlertes({ sessions, presencesParSession, allMembres, t }) {
   const [showAll, setShowAll] = useState(false);
   const sessionsTriees = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
   const alertes = allMembres
@@ -226,15 +376,15 @@ function BlocAlertes({ sessions, presencesParSession, allMembres }) {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-white truncate">{m.prenom} {m.nom}</p>
             <p className="text-[11px] text-white/40">
-              {m.derniereDate ? `Vu le ${formatDateFr(m.derniereDate)}` : "Jamais présent(e)"}
+              {m.derniereDate ? t.vuLe(formatDateFr(m.derniereDate)) : t.jamaisPresent}
             </p>
           </div>
-          <Badge color={m.consec >= 5 ? "red" : "amber"}>{m.consec} abs.</Badge>
+          <Badge color={m.consec >= 5 ? "red" : "amber"}>{t.absences(m.consec)}</Badge>
         </div>
       ))}
       {alertes.length > 5 && (
         <button onClick={() => setShowAll(v => !v)} className="text-xs text-white/40 hover:text-white/70 text-center py-1 transition">
-          {showAll ? "▲ Réduire" : `▼ Voir ${alertes.length - 5} de plus`}
+          {showAll ? t.reduce : t.showMore(alertes.length - 5)}
         </button>
       )}
     </div>
@@ -242,7 +392,7 @@ function BlocAlertes({ sessions, presencesParSession, allMembres }) {
 }
 
 // ─── BLOC TAUX PAR TYPE ────────────────────────────────────────
-function BlocTauxParType({ sessions, presencesParSession, totalMembres }) {
+function BlocTauxParType({ sessions, presencesParSession, totalMembres, t }) {
   const parType = {};
   sessions.forEach(s => {
     const type = s.typeTemps || "Autre";
@@ -255,7 +405,7 @@ function BlocTauxParType({ sessions, presencesParSession, totalMembres }) {
   const lignes = Object.entries(parType)
     .map(([type, { presents, total, nb }]) => ({ type, nb, taux: total > 0 ? Math.round((presents / total) * 100) : 0 }))
     .sort((a, b) => b.taux - a.taux);
-  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">Aucune donnée</p>;
+  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">{t.noData}</p>;
   return (
     <div className="flex flex-col gap-2">
       {lignes.map(({ type, taux, nb }) => (
@@ -263,7 +413,7 @@ function BlocTauxParType({ sessions, presencesParSession, totalMembres }) {
           <p className="text-sm text-white w-36 flex-shrink-0 truncate">{type}</p>
           <BarreProgression pct={taux} />
           <p className="text-sm font-bold text-white w-10 text-right">{taux}%</p>
-          <p className="text-[11px] text-white/30 w-14 text-right flex-shrink-0">{nb} sess.</p>
+          <p className="text-[11px] text-white/30 w-14 text-right flex-shrink-0">{t.sessions_count(nb)}</p>
         </div>
       ))}
     </div>
@@ -271,7 +421,7 @@ function BlocTauxParType({ sessions, presencesParSession, totalMembres }) {
 }
 
 // ─── BLOC TENDANCE HEBDO ───────────────────────────────────────
-function BlocTendance({ sessions, presencesParSession, totalMembres }) {
+function BlocTendance({ sessions, presencesParSession, totalMembres, t }) {
   const parSemaine = {};
   sessions.forEach(s => {
     const d = new Date(s.date + "T00:00:00");
@@ -289,14 +439,14 @@ function BlocTendance({ sessions, presencesParSession, totalMembres }) {
       sem, taux: total > 0 ? Math.round((presents / total) * 100) : 0,
       label: dates.length > 0 ? formatDateCourt(dates[0]) : sem,
     }));
-  if (semaines.length < 2) return <p className="text-white/30 text-sm text-center py-4">Données insuffisantes (≥ 2 semaines)</p>;
+  if (semaines.length < 2) return <p className="text-white/30 text-sm text-center py-4">{t.insuffisantData}</p>;
   const delta = semaines[semaines.length - 1].taux - semaines[semaines.length - 2].taux;
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-3">
         <span className="text-2xl font-bold text-white">{semaines[semaines.length - 1].taux}%</span>
         <span className={`text-sm font-semibold ${delta >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-          {delta >= 0 ? "▲" : "▼"} {Math.abs(delta)}% vs sem. préc.
+          {t.vsSemPrec(delta, delta >= 0 ? "▲" : "▼")}
         </span>
       </div>
       <div className="flex items-end gap-1 h-16">
@@ -312,15 +462,15 @@ function BlocTendance({ sessions, presencesParSession, totalMembres }) {
   );
 }
 
-// ─── BLOC TOP FIDÈLES (jusqu'à 30, avec ▼ show more) ──────────
-function BlocTopFideles({ sessions, presencesParSession, allMembres }) {
+// ─── BLOC TOP FIDÈLES ──────────────────────────────────────────
+function BlocTopFideles({ sessions, presencesParSession, allMembres, t }) {
   const [showAll, setShowAll] = useState(false);
   const ranked = allMembres
     .map(m => ({ ...m, taux: tauxPresence(m.id, sessions, presencesParSession) }))
     .sort((a, b) => b.taux - a.taux)
     .slice(0, 30);
   const affichees = showAll ? ranked : ranked.slice(0, 5);
-  if (!ranked.length) return <p className="text-white/30 text-sm text-center py-4">Aucune donnée</p>;
+  if (!ranked.length) return <p className="text-white/30 text-sm text-center py-4">{t.topNoData}</p>;
   return (
     <div className="flex flex-col gap-2">
       {affichees.map((m, i) => (
@@ -334,7 +484,7 @@ function BlocTopFideles({ sessions, presencesParSession, allMembres }) {
       ))}
       {ranked.length > 5 && (
         <button onClick={() => setShowAll(v => !v)} className="text-xs text-white/40 hover:text-white/70 text-center py-1 transition">
-          {showAll ? "▲ Réduire" : `▼ Voir ${ranked.length - 5} de plus`}
+          {showAll ? t.reduce : t.showMore(ranked.length - 5)}
         </button>
       )}
     </div>
@@ -342,7 +492,7 @@ function BlocTopFideles({ sessions, presencesParSession, allMembres }) {
 }
 
 // ─── BLOC GENRE ────────────────────────────────────────────────
-function BlocGenre({ sessions, presencesParSession, allMembres }) {
+function BlocGenre({ sessions, presencesParSession, allMembres, t }) {
   const derniereSess = [...sessions].sort((a, b) => b.date.localeCompare(a.date))[0];
   if (!derniereSess) return null;
   const pres       = (presencesParSession[derniereSess.id] || []).filter(p => p.statut === "present");
@@ -356,21 +506,21 @@ function BlocGenre({ sessions, presencesParSession, allMembres }) {
   const pctF = total > 0 ? Math.round((femmes / total) * 100) : 0;
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-[11px] text-white/40">Dernière session · {formatDateFr(derniereSess.date)}</p>
+      <p className="text-[11px] text-white/40">{t.lastSession(formatDateFr(derniereSess.date))}</p>
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-blue-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-xl font-bold text-blue-300">{hommes}</p>
-          <p className="text-[11px] text-blue-400/70">Hommes</p>
+          <p className="text-[11px] text-blue-400/70">{t.hommes}</p>
           <p className="text-[10px] text-blue-500/50">{pctH}%</p>
         </div>
         <div className="bg-pink-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-xl font-bold text-pink-300">{femmes}</p>
-          <p className="text-[11px] text-pink-400/70">Femmes</p>
+          <p className="text-[11px] text-pink-400/70">{t.femmes}</p>
           <p className="text-[10px] text-pink-500/50">{pctF}%</p>
         </div>
         <div className="bg-white/10 rounded-xl px-3 py-3 text-center">
           <p className="text-xl font-bold text-white/40">{inconnus}</p>
-          <p className="text-[11px] text-white/30">Non renseigné</p>
+          <p className="text-[11px] text-white/30">{t.nonRenseigne}</p>
         </div>
       </div>
       {total > 0 && (
@@ -383,8 +533,8 @@ function BlocGenre({ sessions, presencesParSession, allMembres }) {
   );
 }
 
-// ─── CARTE SESSION (onglet "Par session") ─────────────────────
-function CarteSession({ session, presences, allMembres }) {
+// ─── CARTE SESSION ─────────────────────────────────────────────
+function CarteSession({ session, presences, allMembres, t }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab]   = useState("presents");
   const presentIds = new Set(presences.filter(p => p.statut === "present").map(p => p.membre_id));
@@ -415,10 +565,10 @@ function CarteSession({ session, presences, allMembres }) {
         <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
           <div className="flex gap-2">
             <button onClick={() => setTab("presents")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${tab === "presents" ? "bg-emerald-600 text-white" : "bg-white/10 text-white/50 hover:bg-white/15"}`}>
-              ✔ Présents ({presents.length})
+              {t.presents(presents.length)}
             </button>
             <button onClick={() => setTab("absents")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${tab === "absents" ? "bg-red-700 text-white" : "bg-white/10 text-white/50 hover:bg-white/15"}`}>
-              ✗ Absents ({absents.length})
+              {t.absents(absents.length)}
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -434,7 +584,7 @@ function CarteSession({ session, presences, allMembres }) {
               </div>
             ))}
             {(tab === "presents" ? presents : absents).length === 0 && (
-              <p className="text-white/30 text-sm col-span-2 text-center py-2">Aucun</p>
+              <p className="text-white/30 text-sm col-span-2 text-center py-2">{t.aucun}</p>
             )}
           </div>
         </div>
@@ -443,14 +593,13 @@ function CarteSession({ session, presences, allMembres }) {
   );
 }
 
-// ─── CARTE GROUPE (cellule ou famille) ────────────────────────
-function CarteGroupe({ groupe, sessions, presencesParSession, allMembres }) {
+// ─── CARTE GROUPE ─────────────────────────────────────────────
+function CarteGroupe({ groupe, sessions, presencesParSession, allMembres, t }) {
   const [open, setOpen] = useState(false);
   const membres  = allMembres.filter(m => groupe.membreIds.includes(m.id));
   const taux     = tauxGroupe(groupe.membreIds, sessions, presencesParSession);
   const delta    = tendanceGroupe(groupe.membreIds, sessions, presencesParSession);
 
-  // Classement membres par taux
   const membresAvecTaux = membres
     .map(m => ({ ...m, taux: tauxPresence(m.id, sessions, presencesParSession) }))
     .sort((a, b) => b.taux - a.taux);
@@ -461,10 +610,10 @@ function CarteGroupe({ groupe, sessions, presencesParSession, allMembres }) {
         className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
         <div className="flex flex-col gap-0.5 flex-1 min-w-0">
           <span className="font-semibold text-white text-sm truncate">{groupe.icon} {groupe.label}</span>
-          <span className="text-[11px] text-white/40">{membres.length} membre{membres.length > 1 ? "s" : ""}</span>
+          <span className="text-[11px] text-white/40">{t.membre(membres.length)}</span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <TendancePuce delta={delta} />
+          <TendancePuce delta={delta} t={t} />
           <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div className={`h-full rounded-full ${taux >= 70 ? "bg-emerald-400" : taux >= 40 ? "bg-amber-400" : "bg-red-400"}`} style={{ width: `${taux}%` }} />
           </div>
@@ -487,7 +636,7 @@ function CarteGroupe({ groupe, sessions, presencesParSession, allMembres }) {
               <Badge color={m.taux >= 75 ? "green" : m.taux >= 40 ? "amber" : "red"}>{m.taux}%</Badge>
             </div>
           ))}
-          {membresAvecTaux.length === 0 && <p className="text-white/30 text-sm text-center py-2">Aucun membre</p>}
+          {membresAvecTaux.length === 0 && <p className="text-white/30 text-sm text-center py-2">{t.aucunMembre}</p>}
         </div>
       )}
     </div>
@@ -495,7 +644,7 @@ function CarteGroupe({ groupe, sessions, presencesParSession, allMembres }) {
 }
 
 // ─── ONGLET CELLULES ───────────────────────────────────────────
-function OngletCellules({ sessions, presencesParSession, allMembres, cellules }) {
+function OngletCellules({ sessions, presencesParSession, allMembres, cellules, t }) {
   const [tri, setTri] = useState("taux_desc");
 
   const groupes = cellules.map(c => {
@@ -505,6 +654,13 @@ function OngletCellules({ sessions, presencesParSession, allMembres, cellules })
     return { ...c, icon: "🏠", label: c.cellule_full || `${c.ville} – ${c.cellule}`, membreIds, taux, delta };
   }).filter(g => g.membreIds.length > 0);
 
+  const triOptions = [
+    { val: "taux_desc", label: t.meilleurTaux },
+    { val: "taux_asc",  label: t.moinsBonTaux },
+    { val: "progress",  label: t.enProgression },
+    { val: "regress",   label: t.enRegression },
+  ];
+
   const groupesTries = [...groupes].sort((a, b) => {
     if (tri === "taux_desc") return b.taux - a.taux;
     if (tri === "taux_asc")  return a.taux - b.taux;
@@ -513,13 +669,12 @@ function OngletCellules({ sessions, presencesParSession, allMembres, cellules })
     return 0;
   });
 
-  if (!groupes.length) return <p className="text-white/30 text-sm text-center py-8">Aucune cellule visible</p>;
+  if (!groupes.length) return <p className="text-white/30 text-sm text-center py-8">{t.aucuneCellule}</p>;
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Résumé comparatif */}
       <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
-        <p className="text-xs text-white/40 font-semibold uppercase tracking-wider">Comparaison des cellules</p>
+        <p className="text-xs text-white/40 font-semibold uppercase tracking-wider">{t.compCellules}</p>
         <div className="flex flex-col gap-2">
           {[...groupes].sort((a, b) => b.taux - a.taux).map((g, i) => (
             <div key={g.id} className="flex items-center gap-3">
@@ -527,31 +682,22 @@ function OngletCellules({ sessions, presencesParSession, allMembres, cellules })
               <p className="text-xs text-white/80 w-28 flex-shrink-0 truncate">{g.label}</p>
               <BarreProgression pct={g.taux} />
               <span className="text-xs font-bold text-white w-8 text-right">{g.taux}%</span>
-              <TendancePuce delta={g.delta} />
+              <TendancePuce delta={g.delta} t={t} />
             </div>
           ))}
         </div>
       </div>
-
-      {/* Tri */}
       <div className="flex gap-2 flex-wrap">
-        {[
-          { val: "taux_desc", label: "Meilleur taux" },
-          { val: "taux_asc",  label: "Moins bon taux" },
-          { val: "progress",  label: "En progression ▲" },
-          { val: "regress",   label: "En régression ▼" },
-        ].map(t => (
-          <button key={t.val} onClick={() => setTri(t.val)}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition ${tri === t.val ? "bg-[#222580] text-white" : "bg-white/10 text-white/50 hover:bg-white/15"}`}>
-            {t.label}
+        {triOptions.map(opt => (
+          <button key={opt.val} onClick={() => setTri(opt.val)}
+            className={`px-3 py-1 rounded-full text-xs font-semibold transition ${tri === opt.val ? "bg-[#222580] text-white" : "bg-white/10 text-white/50 hover:bg-white/15"}`}>
+            {opt.label}
           </button>
         ))}
       </div>
-
-      {/* Cartes cellules */}
       <div className="flex flex-col gap-3">
         {groupesTries.map(g => (
-          <CarteGroupe key={g.id} groupe={g} sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} />
+          <CarteGroupe key={g.id} groupe={g} sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} t={t} />
         ))}
       </div>
     </div>
@@ -559,7 +705,7 @@ function OngletCellules({ sessions, presencesParSession, allMembres, cellules })
 }
 
 // ─── ONGLET FAMILLES ───────────────────────────────────────────
-function OngletFamilles({ sessions, presencesParSession, allMembres, familles }) {
+function OngletFamilles({ sessions, presencesParSession, allMembres, familles, t }) {
   const [tri, setTri] = useState("taux_desc");
 
   const groupes = familles.map(f => {
@@ -569,6 +715,13 @@ function OngletFamilles({ sessions, presencesParSession, allMembres, familles })
     return { ...f, icon: "👨‍👩‍👦", label: f.famille_full || `${f.ville} – ${f.famille}`, membreIds, taux, delta };
   }).filter(g => g.membreIds.length > 0);
 
+  const triOptions = [
+    { val: "taux_desc", label: t.meilleurTaux },
+    { val: "taux_asc",  label: t.moinsBonTaux },
+    { val: "progress",  label: t.enProgression },
+    { val: "regress",   label: t.enRegression },
+  ];
+
   const groupesTries = [...groupes].sort((a, b) => {
     if (tri === "taux_desc") return b.taux - a.taux;
     if (tri === "taux_asc")  return a.taux - b.taux;
@@ -577,13 +730,12 @@ function OngletFamilles({ sessions, presencesParSession, allMembres, familles })
     return 0;
   });
 
-  if (!groupes.length) return <p className="text-white/30 text-sm text-center py-8">Aucune famille visible</p>;
+  if (!groupes.length) return <p className="text-white/30 text-sm text-center py-8">{t.aucuneFamille}</p>;
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Résumé comparatif */}
       <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
-        <p className="text-xs text-white/40 font-semibold uppercase tracking-wider">Comparaison des familles</p>
+        <p className="text-xs text-white/40 font-semibold uppercase tracking-wider">{t.compFamilles}</p>
         <div className="flex flex-col gap-2">
           {[...groupes].sort((a, b) => b.taux - a.taux).map((g, i) => (
             <div key={g.id} className="flex items-center gap-3">
@@ -591,31 +743,22 @@ function OngletFamilles({ sessions, presencesParSession, allMembres, familles })
               <p className="text-xs text-white/80 w-28 flex-shrink-0 truncate">{g.label}</p>
               <BarreProgression pct={g.taux} />
               <span className="text-xs font-bold text-white w-8 text-right">{g.taux}%</span>
-              <TendancePuce delta={g.delta} />
+              <TendancePuce delta={g.delta} t={t} />
             </div>
           ))}
         </div>
       </div>
-
-      {/* Tri */}
       <div className="flex gap-2 flex-wrap">
-        {[
-          { val: "taux_desc", label: "Meilleur taux" },
-          { val: "taux_asc",  label: "Moins bon taux" },
-          { val: "progress",  label: "En progression ▲" },
-          { val: "regress",   label: "En régression ▼" },
-        ].map(t => (
-          <button key={t.val} onClick={() => setTri(t.val)}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition ${tri === t.val ? "bg-[#222580] text-white" : "bg-white/10 text-white/50 hover:bg-white/15"}`}>
-            {t.label}
+        {triOptions.map(opt => (
+          <button key={opt.val} onClick={() => setTri(opt.val)}
+            className={`px-3 py-1 rounded-full text-xs font-semibold transition ${tri === opt.val ? "bg-[#222580] text-white" : "bg-white/10 text-white/50 hover:bg-white/15"}`}>
+            {opt.label}
           </button>
         ))}
       </div>
-
-      {/* Cartes familles */}
       <div className="flex flex-col gap-3">
         {groupesTries.map(g => (
-          <CarteGroupe key={g.id} groupe={g} sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} />
+          <CarteGroupe key={g.id} groupe={g} sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} t={t} />
         ))}
       </div>
     </div>
@@ -623,7 +766,7 @@ function OngletFamilles({ sessions, presencesParSession, allMembres, familles })
 }
 
 // ─── DRAWER SEGMENT ────────────────────────────────────────────
-function DrawerSegment({ segment, onClose }) {
+function DrawerSegment({ segment, onClose, t }) {
   if (!segment) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
@@ -649,7 +792,7 @@ function DrawerSegment({ segment, onClose }) {
               )}
             </div>
           ))}
-          {segment.membres.length === 0 && <p className="text-white/30 text-sm text-center py-6">Aucun membre</p>}
+          {segment.membres.length === 0 && <p className="text-white/30 text-sm text-center py-6">{t.aucunMembre}</p>}
         </div>
       </div>
     </div>
@@ -658,6 +801,9 @@ function DrawerSegment({ segment, onClose }) {
 
 // ─── PAGE PRINCIPALE ───────────────────────────────────────────
 function RapportPresence() {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [sessions, setSessions]                       = useState([]);
   const [presencesParSession, setPresencesParSession] = useState({});
   const [allMembres, setAllMembres]                   = useState([]);
@@ -689,7 +835,6 @@ function RapportPresence() {
       depuis.setDate(depuis.getDate() - Number(filtrePeriode));
       const depuisStr = depuis.toISOString().split("T")[0];
 
-      // Sessions
       let sessQuery = supabase.from("attendance")
         .select("id, typeTemps, date, heure, numero_culte")
         .eq("eglise_id", profile.eglise_id)
@@ -706,7 +851,6 @@ function RapportPresence() {
         setLoading(false); return;
       }
 
-      // Membres + cellules + familles
       let myIds = null;
       if (!isAdmin) {
         let ids = new Set();
@@ -739,7 +883,6 @@ function RapportPresence() {
         }
       }
 
-      // Membres avec cellule_id et famille_id
       let membresQuery = supabase.from("membres_complets")
         .select("id, prenom, nom, sexe, cellule_id, famille_id")
         .eq("eglise_id", profile.eglise_id)
@@ -748,7 +891,6 @@ function RapportPresence() {
       const { data: membresData } = await membresQuery.order("nom");
       setAllMembres(membresData || []);
 
-      // Cellules et familles visibles
       const [cellulesRes, famillesRes] = await Promise.all([
         isAdmin
           ? supabase.from("cellules").select("id, cellule_full, cellule, ville").eq("eglise_id", profile.eglise_id)
@@ -764,7 +906,6 @@ function RapportPresence() {
       setCellules(cellulesRes.data || []);
       setFamilles(famillesRes.data || []);
 
-      // Présences en 1 requête
       const sessIds = sess.map(s => s.id);
       const { data: presData } = await supabase
         .from("presences").select("attendance_id, membre_id, statut").in("attendance_id", sessIds);
@@ -787,10 +928,10 @@ function RapportPresence() {
   const typesDistincts = [...new Set(sessions.map(s => s.typeTemps).filter(Boolean))];
 
   const onglets = [
-    { key: "kpi",       label: "Vue d'ensemble" },
-    { key: "cellules",  label: "Cellules" },
-    { key: "familles",  label: "Familles" },
-    { key: "sessions",  label: "Par session" },
+    { key: "kpi",      label: t.tabKpi },
+    { key: "cellules", label: t.tabCellules },
+    { key: "familles", label: t.tabFamilles },
+    { key: "sessions", label: t.tabSessions },
   ];
 
   return (
@@ -801,15 +942,15 @@ function RapportPresence() {
 
         {/* En-tête */}
         <div>
-          <h1 className="text-2xl font-bold text-white">Rapport de présences</h1>
-          <p className="text-white/50 text-sm mt-0.5">Suivi pastoral & indicateurs de fidélité</p>
+          <h1 className="text-2xl font-bold text-white">{t.pageTitle}</h1>
+          <p className="text-white/50 text-sm mt-0.5">{t.pageSubtitle}</p>
         </div>
 
         {/* Filtres */}
         <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-white/50 flex-shrink-0">Période :</span>
-            {[{ label: "7 j", val: "7" }, { label: "30 j", val: "30" }, { label: "90 j", val: "90" }, { label: "6 mois", val: "180" }].map(p => (
+            <span className="text-xs text-white/50 flex-shrink-0">{t.periodLabel}</span>
+            {t.periods.map(p => (
               <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
                 className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
                 {p.label}
@@ -818,15 +959,15 @@ function RapportPresence() {
           </div>
           {typesDistincts.length > 1 && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">Type :</span>
+              <span className="text-xs text-white/50 flex-shrink-0">{t.typeLabel}</span>
               <button onClick={() => setFiltreType("")}
                 className={`px-3 py-1 rounded-full text-xs font-semibold transition ${!filtreType ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
-                Tous
+                {t.tous}
               </button>
-              {typesDistincts.map(t => (
-                <button key={t} onClick={() => setFiltreType(t)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtreType === t ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
-                  {t}
+              {typesDistincts.map(type => (
+                <button key={type} onClick={() => setFiltreType(type)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtreType === type ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
+                  {type}
                 </button>
               ))}
             </div>
@@ -849,69 +990,68 @@ function RapportPresence() {
           </div>
         ) : sessions.length === 0 ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center text-white/40 text-sm">
-            Aucune session sur cette période
+            {t.noSession}
           </div>
         ) : onglet === "kpi" ? (
           <div className="flex flex-col gap-7">
             <div>
-              <SectionTitle>Vue d'ensemble</SectionTitle>
-              <BlocKpiGlobaux sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} />
+              <SectionTitle>{t.sectionOverview}</SectionTitle>
+              <BlocKpiGlobaux sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} t={t} />
             </div>
             <div>
-              <SectionTitle>Segmentation fidélité — cliquer pour voir la liste</SectionTitle>
+              <SectionTitle>{t.sectionSegmentation}</SectionTitle>
               <BlocSegmentation sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres}
-                onVoirSegment={(label, membres) => setSegmentOuvert({ label, membres })} />
+                onVoirSegment={(label, membres) => setSegmentOuvert({ label, membres })} t={t} />
             </div>
-            {/* Alertes : bloc absent si vide */}
             {(() => {
               const sessionsTriees = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
               const hasAlertes = allMembres.some(m => absencesConsecutives(m.id, sessionsTriees, presencesParSession) >= 3);
               return hasAlertes ? (
                 <div>
-                  <SectionTitle>Alertes pastorales — à visiter en priorité</SectionTitle>
-                  <BlocAlertes sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} />
+                  <SectionTitle>{t.sectionAlertes}</SectionTitle>
+                  <BlocAlertes sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} t={t} />
                 </div>
               ) : null;
             })()}
             <div>
-              <SectionTitle>Taux de présence par type de temps</SectionTitle>
-              <BlocTauxParType sessions={sessions} presencesParSession={presencesParSession} totalMembres={allMembres.length} />
+              <SectionTitle>{t.sectionTauxType}</SectionTitle>
+              <BlocTauxParType sessions={sessions} presencesParSession={presencesParSession} totalMembres={allMembres.length} t={t} />
             </div>
             <div>
-              <SectionTitle>Tendance hebdomadaire</SectionTitle>
+              <SectionTitle>{t.sectionTendance}</SectionTitle>
               <div className="bg-white/10 rounded-2xl px-4 py-4">
-                <BlocTendance sessions={sessions} presencesParSession={presencesParSession} totalMembres={allMembres.length} />
+                <BlocTendance sessions={sessions} presencesParSession={presencesParSession} totalMembres={allMembres.length} t={t} />
               </div>
             </div>
             <div>
-              <SectionTitle>Top fidèles</SectionTitle>
-              <BlocTopFideles sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} />
+              <SectionTitle>{t.sectionTopFideles}</SectionTitle>
+              <BlocTopFideles sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} t={t} />
             </div>
             <div>
-              <SectionTitle>Répartition par genre</SectionTitle>
+              <SectionTitle>{t.sectionGenre}</SectionTitle>
               <div className="bg-white/10 rounded-2xl px-4 py-4">
-                <BlocGenre sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} />
+                <BlocGenre sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} t={t} />
               </div>
             </div>
           </div>
 
         ) : onglet === "cellules" ? (
-          <OngletCellules sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} cellules={cellules} />
+          <OngletCellules sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} cellules={cellules} t={t} />
 
         ) : onglet === "familles" ? (
-          <OngletFamilles sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} familles={familles} />
+          <OngletFamilles sessions={sessions} presencesParSession={presencesParSession} allMembres={allMembres} familles={familles} t={t} />
 
         ) : (
           <div className="flex flex-col gap-3">
             {sessions.map(s => (
-              <CarteSession key={s.id} session={s} presences={presencesParSession[s.id] || []} allMembres={allMembres} />
+              <CarteSession key={s.id} session={s} presences={presencesParSession[s.id] || []} allMembres={allMembres} t={t} />
             ))}
           </div>
         )}
 
       </div>
 
-      <DrawerSegment segment={segmentOuvert} onClose={() => setSegmentOuvert(null)} />
+      <DrawerSegment segment={segmentOuvert} onClose={() => setSegmentOuvert(null)} t={t} />
       <Footer />
     </div>
   );

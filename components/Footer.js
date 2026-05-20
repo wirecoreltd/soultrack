@@ -11,9 +11,9 @@ export default function Footer() {
         </div>
 
         <div className="flex justify-center gap-4 text-blue-300 underline">
-          <Link href="/terms">Terms of Service</Link>
-          <Link href="/privacy">Privacy Policy</Link>
-          <Link href="/refund">Refund Policy</Link>
+          <Link href="/site/terms">Terms of Service</Link>
+          <Link href="/site/privacy">Privacy Policy</Link>
+          <Link href="/site/refund">Refund Policy</Link>
         </div>
 
       </div>

@@ -280,7 +280,7 @@ function MembresFamilleContent() {
         .from("familles")
         .select("*")
         .eq("eglise_id", profile.eglise_id)
-        .order("familles_full");
+        .order("famille_full");
 
       if (
         profile.roles?.includes("ResponsableFamilles") &&

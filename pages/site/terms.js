@@ -416,13 +416,16 @@ export default function TermsPage() {
       </header>
 
       {/* ───── HERO ───── */}
-      <section style={{ textAlign: "center", padding: "70px 24px 40px", position: "relative", zIndex: 1 }}>       
+      <section style={{ textAlign: "center", padding: "70px 24px 40px", position: "relative", zIndex: 1 }}>
+        <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "14px" }}>
+          {t.heroLabel}
+        </p>
         <h1 style={{ color: "#fff", fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 500, lineHeight: 1.15, maxWidth: "600px", margin: "0 auto 20px" }}>
           {t.heroTitle} <span style={{ color: "#fbbf24" }}>{t.heroHighlight}</span>
         </h1>
         <p style={{ color: "rgba(255,255,255,0.75)", fontSize: "clamp(0.9rem, 1.8vw, 1rem)", maxWidth: "560px", margin: "0 auto", lineHeight: 1.8 }}>
           {t.heroPara}
-        </p>        
+        </p>       
       </section>
 
       {/* ───── CONTENU TERMS ───── */}

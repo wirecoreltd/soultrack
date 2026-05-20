@@ -1167,26 +1167,52 @@ export default function HomePage() {
       </section>
 
       {/* ───── FOOTER ───── */}
-      <footer
-        style={{
-          borderTop: "0.5px solid rgba(255,255,255,0.1)",
-          padding: "20px 24px",
-          boxSizing: "border-box",
-          width: "100%",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1100px",
-            margin: "0 auto",
-            textAlign: "center",
-            color: "rgba(255,255,255,0.35)",
-            fontSize: "14px",
-          }}
-        >
-          © {new Date().getFullYear()} SoulTrack. {t.footer}
-        </div>
-      </footer>
+     <footer
+  style={{
+    borderTop: "0.5px solid rgba(255,255,255,0.1)",
+    padding: "20px 24px",
+    boxSizing: "border-box",
+    width: "100%",
+  }}
+>
+  <div
+    style={{
+      maxWidth: "1100px",
+      margin: "0 auto",
+      textAlign: "center",
+      color: "rgba(255,255,255,0.35)",
+      fontSize: "14px",
+    }}
+  >
+    {/* 1. COPYRIGHT */}
+    <div>
+      © {new Date().getFullYear()} SoulTrack. {t.footer}
+    </div>
+
+    {/* 2. AJOUT ICI (LIENS PADDLE) 👇 */}
+    <div
+      style={{
+        marginTop: "10px",
+        display: "flex",
+        justifyContent: "center",
+        gap: "16px",
+        flexWrap: "wrap",
+      }}
+    >
+      <Link href="/site/terms" style={{ color: "#60a5fa" }}>
+        Terms of Service
+      </Link>
+
+      <Link href="/site/privacy" style={{ color: "#60a5fa" }}>
+        Privacy Policy
+      </Link>
+
+      <Link href="/site/refund" style={{ color: "#60a5fa" }}>
+        Refund Policy
+      </Link>
+    </div>
+  </div>
+</footer>
 
       <style>{`
         html, body {

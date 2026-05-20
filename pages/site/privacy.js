@@ -347,10 +347,7 @@ export default function PrivacyPage() {
         </h1>
         <p style={{ color: "rgba(255,255,255,0.75)", fontSize: "clamp(0.9rem, 1.8vw, 1rem)", maxWidth: "560px", margin: "0 auto", lineHeight: 1.8 }}>
           {t.heroPara}
-        </p>
-        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px", marginTop: "16px", letterSpacing: "0.04em" }}>
-          {t.lastUpdated} : {lang === "fr" ? "1er janvier 2025" : "January 1, 2025"}
-        </p>
+        </p>        
       </section>
 
       {/* ───── CONTENU PRIVACY ───── */}

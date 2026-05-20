@@ -2,52 +2,81 @@
 
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
-import { useLang } from "../../hooks/useLang";
 
-const translations = {
-  fr: {
-    title: "Conditions d'utilisation",
-    intro: "En utilisant SoulTrack, vous acceptez les conditions suivantes.",
-    use: "Utilisation du service",
-    useText: "Vous vous engagez à utiliser la plateforme de manière légale et responsable.",
-    account: "Comptes",
-    accountText: "Vous êtes responsable de la sécurité de votre compte.",
-    contact: "Contact",
-  },
-  en: {
-    title: "Terms of Service",
-    intro: "By using SoulTrack, you agree to the following terms.",
-    use: "Use of Service",
-    useText: "You agree to use the platform legally and responsibly.",
-    account: "Accounts",
-    accountText: "You are responsible for your account security.",
-    contact: "Contact",
-  },
-};
-
-export default function TermsPage() {
-  const { lang } = useLang();
-  const t = translations[lang];
-
+export default function Privacy() {
   return (
-    <div className="min-h-screen bg-[#333699] p-6 text-white">
+    <div className="min-h-screen bg-[#333699] text-white flex flex-col">
+      
+      {/* HEADER */}
       <HeaderPages />
 
-      <div className="max-w-4xl mx-auto mt-10">
-        <h1 className="text-3xl font-bold mb-4 text-blue-300">{t.title}</h1>
+      {/* BODY */}
+      <div
+        style={{
+          maxWidth: 720,
+          margin: "0 auto",
+          padding: "60px 24px",
+          fontFamily: "Arial, sans-serif",
+          lineHeight: 1.7,
+        }}
+      >
+        <h1 style={{ color: "#60a5fa", marginBottom: 8 }}>
+          Privacy Policy
+        </h1>
 
-        <p className="mb-6 text-white/90">{t.intro}</p>
+        <p style={{ color: "#cbd5e1", fontSize: 14, marginBottom: 40 }}>
+          Last updated: May 2026
+        </p>
 
-        <h2 className="text-xl font-semibold text-amber-300">{t.use}</h2>
-        <p className="mb-4">{t.useText}</p>
+        <h2>1. Information We Collect</h2>
+        <p>
+          We collect information you provide directly, including your name, email address, church information, and member data entered into the platform.
+        </p>
 
-        <h2 className="text-xl font-semibold text-amber-300">{t.account}</h2>
-        <p className="mb-4">{t.accountText}</p>
+        <h2>2. How We Use Information</h2>
+        <p>We use your information to:</p>
+        <ul>
+          <li>Provide and improve our services</li>
+          <li>Process payments</li>
+          <li>Send service-related communications</li>
+          <li>Ensure account security</li>
+        </ul>
 
-        <h2 className="text-xl font-semibold text-amber-300">{t.contact}</h2>
-        <p>support@soultrack.com</p>
+        <h2>3. Data Sharing</h2>
+        <p>
+          We do not sell your personal data. We may share data with third-party providers (Paddle, PayPal, Supabase) only to operate the service.
+        </p>
+
+        <h2>4. Data Security</h2>
+        <p>
+          We implement appropriate security measures to protect your data against unauthorized access or misuse.
+        </p>
+
+        <h2>5. Data Retention</h2>
+        <p>
+          We keep your data as long as your account is active. You may request deletion at any time.
+        </p>
+
+        <h2>6. Your Rights</h2>
+        <p>
+          You may access, modify, or delete your data at any time by contacting support@soultrack.app.
+        </p>
+
+        <h2>7. Cookies</h2>
+        <p>
+          We only use essential cookies required for authentication and session management. No tracking cookies are used.
+        </p>
+
+        <h2>8. Contact</h2>
+        <p>
+          For privacy questions:{" "}
+          <a href="mailto:support@soultrack.app" style={{ color: "#60a5fa" }}>
+            support@soultrack.app
+          </a>
+        </p>
       </div>
 
+      {/* FOOTER */}
       <Footer />
     </div>
   );

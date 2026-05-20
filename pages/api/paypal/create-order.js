@@ -1,10 +1,9 @@
-// pages/api/paypal/create-order.js
-// Crée un order PayPal (paiement unique) ou un abonnement récurrent
-export default async function handler(req, res) {
-  console.log("API HIT OK");
+import {
+  createPayPalOrder,
+  createPayPalSubscription,
+  PAYPAL_PLAN_IDS,
+} from "../../../lib/paypal";
 
-  return res.status(200).json({
-    ok: true,
-    body: req.body,
-  });
+export default async function handler(req, res) {
+  return res.status(200).json({ ok: true });
 }

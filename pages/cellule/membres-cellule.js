@@ -293,6 +293,8 @@ function MembresCelluleContent() {
       }
 
       const { data } = await query;
+      console.log("CELLULES DATA =", data);
+
       setCellules(data || []);
     };
 
@@ -355,6 +357,7 @@ function MembresCelluleContent() {
         }
 
         const { data, error } = await query;
+        console.log("MEMBRES DATA =", data);
         if (error) throw error;
         setMembres(data || []);
         if (!data || data.length === 0) setMessage(t.aucunMembre);
@@ -446,11 +449,15 @@ function MembresCelluleContent() {
             <div className="flex justify-center">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
                 {filteredMembres.map((m) => {
+                    console.log("MEMBRE =", m);
+                    console.log("CELLULE ID =", m.cellule_id);
                   const cellule = cellules.find((c) => c.id === m.cellule_id);
+                  console.log("CELLULE TROUVEE =", cellule);
                   const besoins = parseJsonArray(m.besoin).join(", ") || "—";
                   const isOpen = detailsOpen[m.id];
 
                   const nomResponsable = cellule?.profiles
+                    console.log("RESPONSABLE =", nomResponsable);
                     ? `${cellule.profiles.prenom} ${cellule.profiles.nom}`
                     : cellule?.responsable || "—";
 

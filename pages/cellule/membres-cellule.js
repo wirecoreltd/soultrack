@@ -265,10 +265,10 @@ function MembresCelluleContent() {
 
       if (profile.role === "ResponsableCellule") {
         const { data: directesData } = await supabase
-  .from("cellules")
-  .select("*, profiles:responsable_id(prenom, nom)")
-  .eq("eglise_id", profile.eglise_id)
-  .or(`responsable_id.eq.${profile.id},superviseur_id.eq.${profile.id}`);
+        .from("cellules")
+        .select("*")
+        .eq("eglise_id", profile.eglise_id)
+        .or(`responsable_id.eq.${profile.id},superviseur_id.eq.${profile.id}`);
 
 const directIds = (directesData || []).map(c => c.id);
 
@@ -290,7 +290,7 @@ setCellules([
       }
 
       let query = supabase.from("cellules")
-        .select("*, profiles:responsable_id(prenom, nom)")
+        .select("*")
         .eq("eglise_id", profile.eglise_id).order("cellule_full");
 
       if (profile.role === "SuperviseurCellule") {
@@ -536,12 +536,7 @@ setCellules([
 
                       <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
                       <p className="text-center text-sm mt-1">🏠 {m.cellule_full || "—"}</p>
-                      <p className="text-center text-sm mt-1">
-                        👤 {m.responsable_prenom && m.responsable_nom
-                          ? `${m.responsable_prenom} ${m.responsable_nom}`
-                          : nomResponsable || "—"}
-                      </p>
-
+                      <p className="text-center text-sm mt-1">👤 {nomResponsable}</p>
                       <div className="w-full flex justify-end mt-3">
                         <p className="text-[11px] text-gray-400">
                           {t.creLe} {formatDateFr(m.date_venu)}

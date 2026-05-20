@@ -268,27 +268,27 @@ function MembresCelluleContent() {
 
       if (profile.role === "ResponsableCellule") {
         const { data: directesData } = await supabase
-        .from("cellules")
-        .select("*")
-        .eq("eglise_id", profile.eglise_id)
-        .or(`responsable_id.eq.${profile.id},superviseur_id.eq.${profile.id}`);
+          .from("cellules")
+          .select("*")
+          .eq("eglise_id", profile.eglise_id)
+          .or(`responsable_id.eq.${profile.id},superviseur_id.eq.${profile.id}`);
 
-const directIds = (directesData || []).map(c => c.id);
+        const directIds = (directesData || []).map(c => c.id);
 
-const { data: fillesData } = await supabase
-  .from("cellules")
-  .select("*")
-  .in(
-    "cellule_mere_id",
-    directIds.length
-      ? directIds
-      : ["00000000-0000-0000-0000-000000000000"]
-  );
+        const { data: fillesData } = await supabase
+          .from("cellules")
+          .select("*")
+          .in(
+            "cellule_mere_id",
+            directIds.length
+              ? directIds
+              : ["00000000-0000-0000-0000-000000000000"]
+          );
 
-setCellules([
-  ...(directesData || []),
-  ...(fillesData || []),
-]);
+        setCellules([
+          ...(directesData || []),
+          ...(fillesData || []),
+        ]);
         return;
       }
 
@@ -302,7 +302,7 @@ setCellules([
         query = query.eq("id", "00000000-0000-0000-0000-000000000000");
       }
 
-      const { data } = await query;      
+      const { data } = await query;
 
       setCellules(data || []);
     };
@@ -310,7 +310,16 @@ setCellules([
     fetchCellules();
   }, []);
 
-  // ─── Charger infos église ─────────────────────────
+  // ── Charger infos église ──
+  useEffect(() => {
+    const fetchEglise = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles").select("eglise_id").eq("id", user.id).single();
+      if (!profile?.eglise_id) return;
+
       const { data: egliseInfo } = await supabase
         .from("eglises")
         .select("*")
@@ -334,47 +343,10 @@ setCellules([
           }
         }
       }
-
-      const rolesArray = getRoles(profile);
-      if (rolesArray.includes("Conseiller")) {
-        setUserRole("Conseiller");
-      } else {
-        setUserRole(rolesArray[0] || null);
-      }
-
-      if (cellulesActive) {
-        const { data: cellulesData } = await supabase
-          .from("cellules")
-          .select("id, cellule_full")
-          .eq("eglise_id", profile.eglise_id)
-          .order("cellule_full");
-        if (cellulesData) setCellules(cellulesData);
-      }
-
-      if (famillesActive) {
-        const { data: famillesData } = await supabase
-          .from("familles")
-          .select("id, ville, famille_full")
-          .eq("eglise_id", profile.eglise_id)
-          .order("famille_full");
-        if (famillesData) setFamilles(famillesData);
-      }
-
-      if (conseillerActive) {
-        const { data: conseillersData } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom, telephone")
-          .contains("roles", ["Conseiller"])
-          .eq("eglise_id", profile.eglise_id)
-          .order("prenom");
-        if (conseillersData) setConseillers(conseillersData);
-      }
-
-      await fetchAssignments(profile);
     };
 
-    fetchData();
-  }, [fetchAssignments, famillesActive, cellulesActive, conseillerActive]);
+    fetchEglise();
+  }, []);
 
   // ── Fetch membres ──
   useEffect(() => {
@@ -431,12 +403,12 @@ setCellules([
           setMembres([]); setMessage(t.acces); setLoading(false); return;
         }
 
-        const { data, error } = await query;        
+        const { data, error } = await query;
         if (error) throw error;
         setMembres(data || []);
         if (!data || data.length === 0) setMessage(t.aucunMembre);
 
-      } catch (err) {        
+      } catch (err) {
         setMessage(t.erreurChargement);
       } finally {
         setLoading(false);
@@ -521,11 +493,11 @@ setCellules([
           {!message && (
             <div className="flex justify-center">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
-                {filteredMembres.map((m) => {                    
-                  const cellule = cellules.find((c) => c.id === m.cellule_id);                  
+                {filteredMembres.map((m) => {
+                  const cellule = cellules.find((c) => c.id === m.cellule_id);
                   const besoins = parseJsonArray(m.besoin).join(", ") || "—";
                   const isOpen = detailsOpen[m.id];
-                  const nomResponsable = cellule?.responsable || "—";                
+                  const nomResponsable = cellule?.responsable || "—";
 
                   return (
                     <div
@@ -606,25 +578,19 @@ setCellules([
                       <button
                         onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
                         className="text-orange-500 underline mt-2 block mx-auto text-sm">
-                          
-                          {/* Bouton PDF */}
-                          <ExportMembrePDF
-                            membre={m}
-                            logoBase64={logoBase64}
-                            eglise={egliseData}
-                            churchName={egliseData?.nom}
-                            celluleName={
-                              cellules.find(
-                                (c) => String(c.id) === String(m.cellule_id)
-                              )?.cellule_full
-                            }
-                            familleName={
-                              familles.find(
-                                (f) => String(f.id) === String(m.famille_id)
-                              )?.famille_full
-                            }
-                            conseillerName={getConseillersForMember(m.id)}
-                          />                       
+
+                        {/* Bouton PDF */}
+                        <ExportMembrePDF
+                          membre={m}
+                          logoBase64={logoBase64}
+                          eglise={egliseData}
+                          churchName={egliseData?.nom}
+                          celluleName={
+                            cellules.find(
+                              (c) => String(c.id) === String(m.cellule_id)
+                            )?.cellule_full
+                          }
+                        />
 
                         {/* Détails */}
                         {isOpen ? t.fermerDetails : t.details}

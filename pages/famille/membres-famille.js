@@ -621,11 +621,12 @@ function MembresFamilleContent() {
                       {t.ville} {m.ville || ""}
                     </p>
                     <p className="text-center text-sm mt-1">
-                      {t.famille} {famille?.famille_full || "—"}
-                    </p>
-                    <p className="text-center text-sm mt-1">
-                      {t.responsable} {famille?.responsable || "—"}
-                    </p>
+  {t.famille} {m.famille_full || famille?.famille_full || "—"}
+</p>
+
+<p className="text-center text-sm mt-1">
+  {t.responsable} {m.responsable || famille?.responsable || "—"}
+</p>
 
                     <div className="w-full flex flex-col items-end mt-3 gap-2">
                         <p className="text-[11px] text-gray-400">
@@ -637,9 +638,10 @@ function MembresFamilleContent() {
                           logoBase64={logoBase64}
                           eglise={egliseData}
                           churchName={egliseData?.nom}
-                          familleName={
-                            familles.find((c) => String(c.id) === String(m.famille_id))?.cellule_full
-                          }
+                         familleName={
+  m.famille_full ||
+  familles.find((c) => String(c.id) === String(m.famille_id))?.famille_full
+}
                         />
                       </div>
 

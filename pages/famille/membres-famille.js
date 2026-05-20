@@ -295,8 +295,21 @@ function MembresFamilleContent() {
     fetchFamilles();
   }, []);
 
-   const { data: profile } = await supabase
-        .from("profiles").select("eglise_id").eq("id", user.id).single();
+    // ------------------- FETCH EGLISE -------------------
+  useEffect(() => {
+    const fetchEglise = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id")
+        .eq("id", user.id)
+        .single();
+
       if (!profile?.eglise_id) return;
 
       const { data: egliseInfo } = await supabase
@@ -312,10 +325,13 @@ function MembresFamilleContent() {
           try {
             const response = await fetch(egliseInfo.logo_url);
             const blob = await response.blob();
+
             const reader = new FileReader();
+
             reader.onloadend = () => {
               setLogoBase64(reader.result);
             };
+
             reader.readAsDataURL(blob);
           } catch (err) {
             console.error("Erreur logo:", err);

@@ -457,9 +457,10 @@ function MembresCelluleContent() {
                   const isOpen = detailsOpen[m.id];
 
                   const nomResponsable = cellule?.profiles
-                    console.log("RESPONSABLE =", nomResponsable);
-                    ? `${cellule.profiles.prenom} ${cellule.profiles.nom}`
-                    : cellule?.responsable || "—";
+  ? `${cellule.profiles.prenom} ${cellule.profiles.nom}`
+  : cellule?.responsable || "—";
+
+console.log("RESPONSABLE =", nomResponsable);
 
                   return (
                     <div

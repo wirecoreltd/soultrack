@@ -6,6 +6,121 @@ import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { useRouter } from "next/navigation";
+import { useLang } from "../../hooks/useLang";
+
+// ─── TRADUCTIONS ───────────────────────────────────────────────
+const translations = {
+  fr: {
+    title: "Rapport",
+    titleAccent: "Difficultés & Besoins",
+    intro1: "Comprenez",
+    intro2: "les besoins réels de votre assemblée",
+    intro3: ". Identifiez les difficultés",
+    intro4: "exprimées par les membres",
+    intro5: ", observez les tendances et accompagnez chaque personne avec",
+    intro6: "discernement et un suivi adapté",
+    perioderapide: "Période rapide",
+    tranchedates: "Tranche de dates",
+    periode: "Période :",
+    j7: "7 j",
+    j30: "30 j",
+    j90: "90 j",
+    mois6: "6 mois",
+    an1: "1 an",
+    dateDebut: "Date de début",
+    dateFin: "Date de fin",
+    genererRapport: "Générer le rapport",
+    vueEnsemble: "Vue d'ensemble",
+    parBesoin: "Par besoin",
+    besoinsExprimes: "Besoins exprimés",
+    surLaPeriode: "sur la période",
+    enSuivi: "En suivi",
+    aPrendreEnCharge: "à prendre en charge",
+    resolus: "Résolus",
+    casTraites: "cas traités",
+    tauxResolution: "Taux résolution",
+    besoinsResolus: "besoins résolus",
+    categoriesActives: "Catégories actives",
+    typesDeBesoins: "types de besoins",
+    pctMembres: "% membres concernés",
+    sur: "sur",
+    membres: "membres",
+    sectionVueEnsemble: "Vue d'ensemble",
+    sectionRepartitionHF: "Répartition H / F",
+    sectionSuiviResolu: "Suivi vs Résolu",
+    sectionClassement: "Classement par catégorie",
+    hommes: "Hommes",
+    femmes: "Femmes",
+    enSuiviLabel: "En suivi",
+    resoluLabel: "Résolus",
+    hommes_badge: "H:",
+    femmes_badge: "F:",
+    suivi_badge: "Suivi:",
+    resolu_badge: "Résolu:",
+    resolution: "Résolution :",
+    concerneMembres: "Concerne",
+    pctDesMembres: "% des membres",
+    voirMembres: "👥 Voir les membres concernés",
+    chargement: "⏳ Chargement...",
+    selectionnezPeriode: "Sélectionnez une période pour afficher les données.",
+    aucunBesoin: "Aucun besoin enregistré sur cette période.",
+  },
+  en: {
+    title: "Report",
+    titleAccent: "Difficulties & Needs",
+    intro1: "Understand",
+    intro2: "your congregation's real needs",
+    intro3: ". Identify difficulties",
+    intro4: "expressed by members",
+    intro5: ", observe trends and support each person with",
+    intro6: "discernment and tailored follow-up",
+    perioderapide: "Quick period",
+    tranchedates: "Date range",
+    periode: "Period:",
+    j7: "7 d",
+    j30: "30 d",
+    j90: "90 d",
+    mois6: "6 mo",
+    an1: "1 yr",
+    dateDebut: "Start date",
+    dateFin: "End date",
+    genererRapport: "Generate report",
+    vueEnsemble: "Overview",
+    parBesoin: "By need",
+    besoinsExprimes: "Expressed needs",
+    surLaPeriode: "for the period",
+    enSuivi: "In follow-up",
+    aPrendreEnCharge: "to be handled",
+    resolus: "Resolved",
+    casTraites: "cases handled",
+    tauxResolution: "Resolution rate",
+    besoinsResolus: "needs resolved",
+    categoriesActives: "Active categories",
+    typesDeBesoins: "need types",
+    pctMembres: "% members affected",
+    sur: "out of",
+    membres: "members",
+    sectionVueEnsemble: "Overview",
+    sectionRepartitionHF: "M / F distribution",
+    sectionSuiviResolu: "Follow-up vs Resolved",
+    sectionClassement: "Ranking by category",
+    hommes: "Men",
+    femmes: "Women",
+    enSuiviLabel: "In follow-up",
+    resoluLabel: "Resolved",
+    hommes_badge: "M:",
+    femmes_badge: "F:",
+    suivi_badge: "Follow-up:",
+    resolu_badge: "Resolved:",
+    resolution: "Resolution:",
+    concerneMembres: "Affects",
+    pctDesMembres: "% of members",
+    voirMembres: "👥 View affected members",
+    chargement: "⏳ Loading...",
+    selectionnezPeriode: "Select a period to display data.",
+    aucunBesoin: "No needs recorded for this period.",
+  },
+};
 
 export default function RapportBesoinPage() {
   return (
@@ -13,11 +128,6 @@ export default function RapportBesoinPage() {
       <RapportBesoin />
     </ProtectedRoute>
   );
-}
-
-// ─── HELPERS ──────────────────────────────────────────────────
-function getMonthNameFR(monthIndex) {
-  return ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"][monthIndex] || "";
 }
 
 // ─── UI ATOMS ──────────────────────────────────────────────────
@@ -90,7 +200,7 @@ const BESOIN_CONFIG = {
 function getCfg(b) { return BESOIN_CONFIG[b] || BESOIN_CONFIG["Autres"]; }
 
 // ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
-function BlocKpiGlobaux({ besoinsCount, totalMembres }) {
+function BlocKpiGlobaux({ besoinsCount, totalMembres, t }) {
   const lignes = Object.entries(besoinsCount);
   const totalBesoins = lignes.reduce((a, [, v]) => a + v.total, 0);
   const totalResolus = lignes.reduce((a, [, v]) => a + v.resolu, 0);
@@ -101,17 +211,17 @@ function BlocKpiGlobaux({ besoinsCount, totalMembres }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KpiCard label="Besoins exprimés" value={totalBesoins} sub="sur la période" accent="orange" />
-        <KpiCard label="En suivi" value={totalEnSuivi} sub="à prendre en charge" accent="yellow" />
-        <KpiCard label="Résolus" value={totalResolus} sub="cas traités" accent="green" />
-        <KpiCard label="Taux résolution" value={`${tauxResolution}%`} sub="besoins résolus" accent="amber" />
+        <KpiCard label={t.besoinsExprimes} value={totalBesoins} sub={t.surLaPeriode} accent="orange" />
+        <KpiCard label={t.enSuivi} value={totalEnSuivi} sub={t.aPrendreEnCharge} accent="yellow" />
+        <KpiCard label={t.resolus} value={totalResolus} sub={t.casTraites} accent="green" />
+        <KpiCard label={t.tauxResolution} value={`${tauxResolution}%`} sub={t.besoinsResolus} accent="amber" />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <KpiCard label="Catégories actives" value={nbCategories} sub="types de besoins" accent="blue" />
+        <KpiCard label={t.categoriesActives} value={nbCategories} sub={t.typesDeBesoins} accent="blue" />
         <KpiCard
-          label="% membres concernés"
+          label={t.pctMembres}
           value={totalMembres > 0 ? `${((totalBesoins / totalMembres) * 100).toFixed(1)}%` : "—"}
-          sub={`sur ${totalMembres} membres`}
+          sub={`${t.sur} ${totalMembres} ${t.membres}`}
           accent="white"
         />
       </div>
@@ -120,7 +230,7 @@ function BlocKpiGlobaux({ besoinsCount, totalMembres }) {
 }
 
 // ─── BLOC RÉPARTITION H/F ──────────────────────────────────────
-function BlocGenre({ besoinsCount }) {
+function BlocGenre({ besoinsCount, t }) {
   const lignes = Object.values(besoinsCount);
   const totalH = lignes.reduce((a, v) => a + v.hommes, 0);
   const totalF = lignes.reduce((a, v) => a + v.femmes, 0);
@@ -133,12 +243,12 @@ function BlocGenre({ besoinsCount }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-blue-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-2xl font-bold text-blue-300">{totalH}</p>
-          <p className="text-[11px] text-blue-400/70">Hommes</p>
+          <p className="text-[11px] text-blue-400/70">{t.hommes}</p>
           <p className="text-[10px] text-blue-500/50">{pctH}%</p>
         </div>
         <div className="bg-pink-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-2xl font-bold text-pink-300">{totalF}</p>
-          <p className="text-[11px] text-pink-400/70">Femmes</p>
+          <p className="text-[11px] text-pink-400/70">{t.femmes}</p>
           <p className="text-[10px] text-pink-500/50">{pctF}%</p>
         </div>
       </div>
@@ -152,8 +262,8 @@ function BlocGenre({ besoinsCount }) {
   );
 }
 
-// ─── BLOC STATUT (suivi vs résolu) ─────────────────────────────
-function BlocStatut({ besoinsCount }) {
+// ─── BLOC STATUT ───────────────────────────────────────────────
+function BlocStatut({ besoinsCount, t }) {
   const lignes = Object.values(besoinsCount);
   const totalEnSuivi = lignes.reduce((a, v) => a + v.enSuivi, 0);
   const totalResolu = lignes.reduce((a, v) => a + v.resolu, 0);
@@ -166,12 +276,12 @@ function BlocStatut({ besoinsCount }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-yellow-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-2xl font-bold text-yellow-300">{totalEnSuivi}</p>
-          <p className="text-[11px] text-yellow-400/70">En suivi</p>
+          <p className="text-[11px] text-yellow-400/70">{t.enSuiviLabel}</p>
           <p className="text-[10px] text-yellow-500/50">{pctSuivi}%</p>
         </div>
         <div className="bg-emerald-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-2xl font-bold text-emerald-300">{totalResolu}</p>
-          <p className="text-[11px] text-emerald-400/70">Résolus</p>
+          <p className="text-[11px] text-emerald-400/70">{t.resoluLabel}</p>
           <p className="text-[10px] text-emerald-500/50">{pctResolu}%</p>
         </div>
       </div>
@@ -186,11 +296,11 @@ function BlocStatut({ besoinsCount }) {
 }
 
 // ─── BLOC CLASSEMENT BESOINS ───────────────────────────────────
-function BlocClassement({ besoinsCount }) {
+function BlocClassement({ besoinsCount, t }) {
   const lignes = Object.entries(besoinsCount).sort((a, b) => b[1].total - a[1].total);
   const maxTotal = Math.max(...lignes.map(([, v]) => v.total), 1);
 
-  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">Aucune donnée</p>;
+  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">—</p>;
 
   return (
     <div className="flex flex-col gap-2">
@@ -207,10 +317,10 @@ function BlocClassement({ besoinsCount }) {
               <p className="text-sm font-bold text-orange-300 w-8 text-right">{data.total}</p>
             </div>
             <div className="flex gap-2 ml-4">
-              <Badge color="blue">H: {data.hommes}</Badge>
-              <Badge color="pink">F: {data.femmes}</Badge>
-              <Badge color="yellow">Suivi: {data.enSuivi}</Badge>
-              <Badge color="green">Résolu: {data.resolu}</Badge>
+              <Badge color="blue">{t.hommes_badge} {data.hommes}</Badge>
+              <Badge color="pink">{t.femmes_badge} {data.femmes}</Badge>
+              <Badge color="yellow">{t.suivi_badge} {data.enSuivi}</Badge>
+              <Badge color="green">{t.resolu_badge} {data.resolu}</Badge>
             </div>
           </div>
         );
@@ -219,8 +329,8 @@ function BlocClassement({ besoinsCount }) {
   );
 }
 
-// ─── CARTE BESOIN (onglet détail, cliquable) ───────────────────
-function CarteBesoin({ besoin, data, totalMembres, onNavigate }) {
+// ─── CARTE BESOIN ──────────────────────────────────────────────
+function CarteBesoin({ besoin, data, totalMembres, onNavigate, t }) {
   const [open, setOpen] = useState(false);
   const cfg = getCfg(besoin);
   const pctResolu = data.total > 0 ? Math.round((data.resolu / data.total) * 100) : 0;
@@ -248,12 +358,12 @@ function CarteBesoin({ besoin, data, totalMembres, onNavigate }) {
         <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {[
-              { label: "Hommes",      value: data.hommes,  color: "text-blue-300" },
-              { label: "Femmes",      value: data.femmes,  color: "text-pink-300" },
+              { label: t.hommes,      value: data.hommes,  color: "text-blue-300" },
+              { label: t.femmes,      value: data.femmes,  color: "text-pink-300" },
               { label: "Total",       value: data.total,   color: "text-orange-300 font-bold" },
-              { label: "En suivi",    value: data.enSuivi, color: "text-yellow-300" },
-              { label: "Résolus",     value: data.resolu,  color: "text-emerald-300" },
-              { label: "% résolution",value: `${pctResolu}%`, color: "text-amber-300" },
+              { label: t.enSuiviLabel,value: data.enSuivi, color: "text-yellow-300" },
+              { label: t.resoluLabel, value: data.resolu,  color: "text-emerald-300" },
+              { label: t.tauxResolution ?? "% résolution", value: `${pctResolu}%`, color: "text-amber-300" },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-white/5 rounded-xl px-3 py-2">
                 <p className="text-[10px] text-white/40">{label}</p>
@@ -262,18 +372,18 @@ function CarteBesoin({ besoin, data, totalMembres, onNavigate }) {
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-white/40">Résolution :</span>
+            <span className="text-[11px] text-white/40">{t.resolution}</span>
             <BarreProgression pct={pctResolu} />
             <span className="text-[11px] text-white/40">{pctResolu}%</span>
           </div>
           <p className="text-[11px] text-white/30 text-center">
-            Concerne {pctMembres}% des membres
+            {t.concerneMembres} {pctMembres}% {t.pctDesMembres}
           </p>
           <button
             onClick={() => onNavigate(besoin)}
             className="w-full py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-blue-300 text-sm font-semibold transition"
           >
-            👥 Voir les membres concernés
+            {t.voirMembres}
           </button>
         </div>
       )}
@@ -283,6 +393,9 @@ function CarteBesoin({ besoin, data, totalMembres, onNavigate }) {
 
 // ─── PAGE PRINCIPALE ───────────────────────────────────────────
 function RapportBesoin() {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [egliseId, setEgliseId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [besoinsCount, setBesoinsCount] = useState({});
@@ -298,7 +411,6 @@ function RapportBesoin() {
 
   const router = useRouter();
 
-  // Chargement utilisateur
   useEffect(() => {
     const loadUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -312,12 +424,11 @@ function RapportBesoin() {
   const fetchRapport = async (overrideModePerso = null) => {
     if (!egliseId) return;
     setLoading(true);
-    setMessage("⏳ Chargement...");
+    setMessage(t.chargement);
 
     const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
 
     try {
-      // Membres
       const { data: membres, error: errorMembres } = await supabase
         .from("membres_complets")
         .select("id, etat_contact, sexe")
@@ -335,7 +446,6 @@ function RapportBesoin() {
         sexeMap[m.id] = m.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";
       });
 
-      // Suivis
       let query = supabase
         .from("suivis")
         .select("membre_id, besoin, date_action")
@@ -375,7 +485,6 @@ function RapportBesoin() {
         });
       });
 
-      // Tri par total décroissant
       const sorted = Object.fromEntries(
         Object.entries(count).sort((a, b) => b[1].total - a[1].total)
       );
@@ -390,7 +499,6 @@ function RapportBesoin() {
     setLoading(false);
   };
 
-  // Auto-fetch en mode période rapide
   useEffect(() => {
     if (!modePerso && egliseId) fetchRapport(false);
   }, [egliseId, filtrePeriode, modePerso]);
@@ -405,30 +513,35 @@ function RapportBesoin() {
   const hasBesoins = Object.keys(besoinsCount).length > 0;
 
   const onglets = [
-    { key: "kpi", label: "Vue d'ensemble" },
-    { key: "detail", label: "Par besoin" },
+    { key: "kpi", label: t.vueEnsemble },
+    { key: "detail", label: t.parBesoin },
+  ];
+
+  const periodes = [
+    { label: t.j7, val: "7" },
+    { label: t.j30, val: "30" },
+    { label: t.j90, val: "90" },
+    { label: t.mois6, val: "180" },
+    { label: t.an1, val: "365" },
   ];
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-4 sm:p-6"
-      style={{ background: "#333699" }}
-    >
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
 
       <div className="w-full max-w-3xl flex flex-col gap-6">
         {/* ─── EN-TÊTE ─── */}
         <div className="text-center mt-4">
           <h1 className="text-2xl font-bold mb-3 text-white">
-            Rapport <span className="text-emerald-300">Difficultés & Besoins</span>
+            {t.title} <span className="text-emerald-300">{t.titleAccent}</span>
           </h1>
           <p className="italic text-base text-white/90 max-w-2xl mx-auto">
-            Comprenez{" "}
-            <span className="text-blue-300 font-semibold">les besoins réels de votre assemblée</span>.
-            Identifiez les difficultés{" "}
-            <span className="text-blue-300 font-semibold">exprimées par les membres</span>, observez
-            les tendances et accompagnez chaque personne avec{" "}
-            <span className="text-blue-300 font-semibold">discernement et un suivi adapté</span>.
+            {t.intro1}{" "}
+            <span className="text-blue-300 font-semibold">{t.intro2}</span>
+            {t.intro3}{" "}
+            <span className="text-blue-300 font-semibold">{t.intro4}</span>
+            {t.intro5}{" "}
+            <span className="text-blue-300 font-semibold">{t.intro6}</span>.
           </p>
         </div>
 
@@ -437,37 +550,26 @@ function RapportBesoin() {
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button
               onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                !modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"
-              }`}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
             >
-              Période rapide
+              {t.perioderapide}
             </button>
             <button
               onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"
-              }`}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
             >
-              Tranche de dates
+              {t.tranchedates}
             </button>
           </div>
 
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">Période :</span>
-              {[
-                { label: "7 j", val: "7" }, { label: "30 j", val: "30" },
-                { label: "90 j", val: "90" }, { label: "6 mois", val: "180" },
-                { label: "1 an", val: "365" },
-              ].map(p => (
+              <span className="text-xs text-white/50 flex-shrink-0">{t.periode}</span>
+              {periodes.map(p => (
                 <button
-                  key={p.val} onClick={() => setFiltrePeriode(p.val)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-                    filtrePeriode === p.val
-                      ? "bg-white text-[#333699]"
-                      : "bg-white/15 text-white/70 hover:bg-white/20"
-                  }`}
+                  key={p.val}
+                  onClick={() => setFiltrePeriode(p.val)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}
                 >
                   {p.label}
                 </button>
@@ -479,7 +581,7 @@ function RapportBesoin() {
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">Date de début</label>
+                  <label className="text-xs text-white/50">{t.dateDebut}</label>
                   <input
                     type="date" value={dateDebut}
                     onChange={e => setDateDebut(e.target.value)}
@@ -487,7 +589,7 @@ function RapportBesoin() {
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">Date de fin</label>
+                  <label className="text-xs text-white/50">{t.dateFin}</label>
                   <input
                     type="date" value={dateFin}
                     onChange={e => setDateFin(e.target.value)}
@@ -499,7 +601,7 @@ function RapportBesoin() {
                 onClick={() => fetchRapport(true)}
                 className="w-full py-2 rounded-xl bg-amber-500/80 hover:bg-amber-500 text-white text-sm font-semibold transition active:scale-95"
               >
-                Générer le rapport
+                {t.genererRapport}
               </button>
             </div>
           )}
@@ -509,10 +611,9 @@ function RapportBesoin() {
         <div className="flex gap-1 bg-white/10 rounded-xl p-1">
           {onglets.map(o => (
             <button
-              key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition ${
-                onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"
-              }`}
+              key={o.key}
+              onClick={() => setOnglet(o.key)}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
             >
               {o.label}
             </button>
@@ -527,41 +628,37 @@ function RapportBesoin() {
         ) : !hasData ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center">
             <p className="text-white/40 text-sm">
-              {!egliseId ? "⏳ Chargement..." : "Sélectionnez une période pour afficher les données."}
+              {!egliseId ? t.chargement : t.selectionnezPeriode}
             </p>
           </div>
         ) : !hasBesoins ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center">
-            <p className="text-white/40 text-sm">Aucun besoin enregistré sur cette période.</p>
+            <p className="text-white/40 text-sm">{t.aucunBesoin}</p>
           </div>
         ) : onglet === "kpi" ? (
           <div className="flex flex-col gap-7">
             <div>
-              <SectionTitle>Vue d'ensemble</SectionTitle>
-              <BlocKpiGlobaux besoinsCount={besoinsCount} totalMembres={totalMembres} />
+              <SectionTitle>{t.sectionVueEnsemble}</SectionTitle>
+              <BlocKpiGlobaux besoinsCount={besoinsCount} totalMembres={totalMembres} t={t} />
             </div>
-
             <div>
-              <SectionTitle>Répartition H / F</SectionTitle>
+              <SectionTitle>{t.sectionRepartitionHF}</SectionTitle>
               <div className="bg-white/10 rounded-2xl px-4 py-4">
-                <BlocGenre besoinsCount={besoinsCount} />
+                <BlocGenre besoinsCount={besoinsCount} t={t} />
               </div>
             </div>
-
             <div>
-              <SectionTitle>Suivi vs Résolu</SectionTitle>
+              <SectionTitle>{t.sectionSuiviResolu}</SectionTitle>
               <div className="bg-white/10 rounded-2xl px-4 py-4">
-                <BlocStatut besoinsCount={besoinsCount} />
+                <BlocStatut besoinsCount={besoinsCount} t={t} />
               </div>
             </div>
-
             <div>
-              <SectionTitle>Classement par catégorie</SectionTitle>
-              <BlocClassement besoinsCount={besoinsCount} />
+              <SectionTitle>{t.sectionClassement}</SectionTitle>
+              <BlocClassement besoinsCount={besoinsCount} t={t} />
             </div>
           </div>
         ) : (
-          /* ─── PAR BESOIN ─── */
           <div className="flex flex-col gap-3">
             {Object.entries(besoinsCount).map(([besoin, data]) => (
               <CarteBesoin
@@ -570,6 +667,7 @@ function RapportBesoin() {
                 data={data}
                 totalMembres={totalMembres}
                 onNavigate={handleNavigate}
+                t={t}
               />
             ))}
           </div>

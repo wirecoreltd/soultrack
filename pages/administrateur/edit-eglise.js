@@ -6,6 +6,82 @@ import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    // Page
+    loading: "Chargement...",
+    pageTitle: "Modifier les informations de l'",
+    pageTitleHighlight: "Église",
+    pageSubtitle: "Mettez à jour les informations de votre église.",
+    pageSubtitleHighlight: "Ces données apparaissent sur l'ensemble de l'application",
+    pageSubtitleSuffix: "et sont visibles par tous les membres.",
+
+    // Logo
+    noLogo: "Aucun logo",
+    logoAlt: "Logo église",
+    changeLogo: "Changer le logo — PNG, SVG ou WEBP · Carré · Max 500 Ko",
+    cancelLogoChange: "Annuler le changement de logo",
+
+    // Form labels
+    denomination: "Dénomination",
+    churchName: "Nom de l'église",
+    branchName: "Nom de la branche",
+    city: "Ville",
+    country: "Pays",
+
+    // Buttons
+    saving: "Sauvegarde...",
+    save: "💾 Sauvegarder",
+
+    // Messages
+    errorInvalidFormat: "❌ Format invalide. Utilisez PNG, SVG ou WEBP uniquement.",
+    errorTooLarge: "❌ Image trop lourde. Maximum 500 Ko.",
+    errorNotSquare: "❌ Le logo doit être carré (ex: 200x200, 512x512).",
+    savingInProgress: "⏳ Sauvegarde en cours...",
+    uploadingLogo: "⏳ Upload du logo...",
+    errorUploadLogo: "Erreur upload logo",
+    successSaved: "✅ Informations mises à jour avec succès !",
+    errorPrefix: "❌ ",
+  },
+  en: {
+    // Page
+    loading: "Loading...",
+    pageTitle: "Edit ",
+    pageTitleHighlight: "Church Information",
+    pageSubtitle: "Update your church's information.",
+    pageSubtitleHighlight: "This data appears throughout the entire application",
+    pageSubtitleSuffix: "and is visible to all members.",
+
+    // Logo
+    noLogo: "No logo",
+    logoAlt: "Church logo",
+    changeLogo: "Change logo — PNG, SVG or WEBP · Square · Max 500 KB",
+    cancelLogoChange: "Cancel logo change",
+
+    // Form labels
+    denomination: "Denomination",
+    churchName: "Church name",
+    branchName: "Branch name",
+    city: "City",
+    country: "Country",
+
+    // Buttons
+    saving: "Saving...",
+    save: "💾 Save",
+
+    // Messages
+    errorInvalidFormat: "❌ Invalid format. Please use PNG, SVG or WEBP only.",
+    errorTooLarge: "❌ Image too large. Maximum 500 KB.",
+    errorNotSquare: "❌ The logo must be square (e.g. 200x200, 512x512).",
+    savingInProgress: "⏳ Saving...",
+    uploadingLogo: "⏳ Uploading logo...",
+    errorUploadLogo: "Logo upload error",
+    successSaved: "✅ Information updated successfully!",
+    errorPrefix: "❌ ",
+  },
+};
 
 export default function EditEglise() {
   return (
@@ -17,6 +93,9 @@ export default function EditEglise() {
 
 function EditEgliseContent() {
   const router = useRouter();
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -34,7 +113,6 @@ function EditEgliseContent() {
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
 
-  // Chargement des données actuelles
   useEffect(() => {
     const fetchEglise = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -83,14 +161,14 @@ function EditEgliseContent() {
 
     const allowedTypes = ["image/png", "image/svg+xml", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      setMessage("❌ Format invalide. Utilisez PNG, SVG ou WEBP uniquement.");
+      setMessage(t.errorInvalidFormat);
       e.target.value = "";
       return;
     }
 
     const maxSize = 500 * 1024;
     if (file.size > maxSize) {
-      setMessage("❌ Image trop lourde. Maximum 500 Ko.");
+      setMessage(t.errorTooLarge);
       e.target.value = "";
       return;
     }
@@ -99,7 +177,7 @@ function EditEgliseContent() {
     img.src = URL.createObjectURL(file);
     img.onload = () => {
       if (img.width !== img.height) {
-        setMessage("❌ Le logo doit être carré (ex: 200x200, 512x512).");
+        setMessage(t.errorNotSquare);
         e.target.value = "";
         URL.revokeObjectURL(img.src);
         return;
@@ -115,13 +193,13 @@ function EditEgliseContent() {
     if (!egliseId) return;
 
     setSaving(true);
-    setMessage("⏳ Sauvegarde en cours...");
+    setMessage(t.savingInProgress);
 
     try {
       let newLogoUrl = logoUrl;
 
       if (logoFile) {
-        setMessage("⏳ Upload du logo...");
+        setMessage(t.uploadingLogo);
         const fd = new FormData();
         fd.append("file", logoFile);
         const uploadRes = await fetch("/api/upload-logo", {
@@ -129,7 +207,7 @@ function EditEgliseContent() {
           body: fd,
         });
         const uploadData = await uploadRes.json();
-        if (!uploadRes.ok) throw new Error(uploadData.error || "Erreur upload logo");
+        if (!uploadRes.ok) throw new Error(uploadData.error || t.errorUploadLogo);
         newLogoUrl = uploadData.url;
       }
 
@@ -150,35 +228,34 @@ function EditEgliseContent() {
       setLogoUrl(newLogoUrl);
       setLogoFile(null);
       setLogoPreview(newLogoUrl);
-      setMessage("✅ Informations mises à jour avec succès !");
-      // ✅ PAS de setTimeout ni de reload ici
+      setMessage(t.successSaved);
 
     } catch (err) {
-      setMessage("❌ " + err.message);
+      setMessage(t.errorPrefix + err.message);
     } finally {
       setSaving(false);
     }
-  }; 
+  };
 
   if (loading)
-    return <p className="text-center mt-10 text-white">Chargement...</p>;
+    return <p className="text-center mt-10 text-white">{t.loading}</p>;
 
   return (
     <div className="min-h-screen p-6 bg-[#333699]">
       <HeaderPages />
 
       <h1 className="text-2xl font-bold mt-8 mb-2 text-center text-white">
-        Modifier les informations de l'
-        <span className="text-emerald-300">Église</span>
+        {t.pageTitle}
+        <span className="text-emerald-300">{t.pageTitleHighlight}</span>
       </h1>
 
       <div className="max-w-3xl w-full mb-6 text-center mx-auto">
         <p className="italic text-base text-white/90">
-          Mettez à jour les informations de votre église.{" "}
+          {t.pageSubtitle}{" "}
           <span className="text-blue-300 font-semibold">
-            Ces données apparaissent sur l'ensemble de l'application
+            {t.pageSubtitleHighlight}
           </span>{" "}
-          et sont visibles par tous les membres.
+          {t.pageSubtitleSuffix}
         </p>
       </div>
 
@@ -189,20 +266,18 @@ function EditEgliseContent() {
           {logoPreview ? (
             <img
               src={logoPreview}
-              alt="Logo église"
+              alt={t.logoAlt}
               className="w-24 h-24 object-contain"
             />
           ) : (
             <div className="w-24 h-24 rounded-xl bg-white/20 flex items-center justify-center text-white/50 text-sm">
-              Aucun logo
+              {t.noLogo}
             </div>
           )}
 
           <label className="cursor-pointer border border-dashed border-white/40 rounded-xl px-4 py-3 flex flex-col items-center gap-1 hover:bg-white/10 transition w-full">
             <span className="text-2xl">🖼️</span>
-            <span className="text-sm text-white/70">
-              Changer le logo — PNG, SVG ou WEBP · Carré · Max 500 Ko
-            </span>
+            <span className="text-sm text-white/70">{t.changeLogo}</span>
             <input
               type="file"
               accept="image/png,image/svg+xml,image/webp"
@@ -221,7 +296,7 @@ function EditEgliseContent() {
               }}
               className="text-xs text-red-300 hover:text-red-500 underline"
             >
-              Annuler le changement de logo
+              {t.cancelLogoChange}
             </button>
           )}
         </div>
@@ -231,7 +306,7 @@ function EditEgliseContent() {
         {/* Formulaire */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-white/70 text-sm">Dénomination</label>
+            <label className="text-white/70 text-sm">{t.denomination}</label>
             <input
               name="denomination"
               value={formData.denomination}
@@ -242,27 +317,27 @@ function EditEgliseContent() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-white/70 text-sm">Nom de l'église</label>
+            <label className="text-white/70 text-sm">{t.churchName}</label>
             <input
               name="nom"
               value={formData.nom}
               onChange={handleChange}
-              className="input"              
+              className="input"
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-white/70 text-sm">Nom de la branche</label>
+            <label className="text-white/70 text-sm">{t.branchName}</label>
             <input
               name="branche"
               value={formData.branche}
               onChange={handleChange}
               className="input"
-              />
+            />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-white/70 text-sm">Ville</label>
+            <label className="text-white/70 text-sm">{t.city}</label>
             <input
               name="ville"
               value={formData.ville}
@@ -273,7 +348,7 @@ function EditEgliseContent() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-white/70 text-sm">Pays</label>
+            <label className="text-white/70 text-sm">{t.country}</label>
             <input
               name="pays"
               value={formData.pays}
@@ -294,7 +369,7 @@ function EditEgliseContent() {
             disabled={saving}
             className="bg-gradient-to-r from-emerald-400 to-blue-400 hover:from-emerald-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition"
           >
-            {saving ? "Sauvegarde..." : "💾 Sauvegarder"}
+            {saving ? t.saving : t.save}
           </button>
         </form>
       </div>

@@ -5,6 +5,117 @@ import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
+import { useLang } from "../../hooks/useLang";
+
+// ─── TRADUCTIONS ───────────────────────────────────────────────
+const translations = {
+  fr: {
+    title: "Rapport",
+    titleAccent: "Ministère",
+    intro1: "Suivez en un coup d'œil le nombre",
+    intro2: "total de serviteurs",
+    intro3: ", leur",
+    intro4: "répartition par ministère",
+    intro5: "et le",
+    intro6: "niveau d'engagement global",
+    intro7: ". Analysez le poids de chaque ministère et le",
+    intro8: "pourcentage de serviteurs",
+    intro9: "pour renforcer la",
+    intro10: "dynamique du service",
+    perioderapide: "Période rapide",
+    tranchedates: "Tranche de dates",
+    periode: "Période :",
+    tout: "Tout",
+    j30: "30 j",
+    j90: "90 j",
+    mois6: "6 mois",
+    an1: "1 an",
+    dateDebut: "Date de début",
+    dateFin: "Date de fin",
+    genererRapport: "Générer le rapport",
+    vueEnsemble: "Vue d'ensemble",
+    parMinistere: "Par ministère",
+    serviteursActifs: "Serviteurs actifs",
+    surLaPeriode: "sur la période",
+    pctMembres: "% des membres",
+    engagesAuService: "engagés au service",
+    ministeresActifs: "Ministères actifs",
+    representes: "représentés",
+    premierMinistere: "1er ministère",
+    serviteurs_count: "serviteurs",
+    serviteurs: "Serviteurs",
+    nonEngages: "Non engagés",
+    totalMembres: "Total membres",
+    sectionVueEnsemble: "Vue d'ensemble",
+    sectionEngagement: "Engagement des membres",
+    sectionRepartitionTop5: "Répartition par ministère (top 5)",
+    sectionClassement: "Classement des ministères",
+    autres: "Autres",
+    pctMembresEngages: "% membres engagés",
+    sur: "sur",
+    membres: "membres",
+    serviteurLabel: "serviteur",
+    serviteursLabel: "serviteurs",
+    totalServiteurs: "Total serviteurs",
+    chargementUser: "⏳ Chargement des informations utilisateur...",
+    selectionnezPeriode: "Sélectionnez une période pour générer le rapport.",
+    aucunServiteur: "Aucun serviteur enregistré sur cette période.",
+    chargement: "⏳ Chargement...",
+  },
+  en: {
+    title: "Report",
+    titleAccent: "Ministry",
+    intro1: "Track at a glance the number of",
+    intro2: "total servants",
+    intro3: ", their",
+    intro4: "distribution by ministry",
+    intro5: "and the",
+    intro6: "overall engagement level",
+    intro7: ". Analyze each ministry's weight and the",
+    intro8: "percentage of servants",
+    intro9: "to strengthen the",
+    intro10: "service dynamic",
+    perioderapide: "Quick period",
+    tranchedates: "Date range",
+    periode: "Period:",
+    tout: "All",
+    j30: "30 d",
+    j90: "90 d",
+    mois6: "6 mo",
+    an1: "1 yr",
+    dateDebut: "Start date",
+    dateFin: "End date",
+    genererRapport: "Generate report",
+    vueEnsemble: "Overview",
+    parMinistere: "By ministry",
+    serviteursActifs: "Active servants",
+    surLaPeriode: "for the period",
+    pctMembres: "% of members",
+    engagesAuService: "engaged in service",
+    ministeresActifs: "Active ministries",
+    representes: "represented",
+    premierMinistere: "Top ministry",
+    serviteurs_count: "servants",
+    serviteurs: "Servants",
+    nonEngages: "Not engaged",
+    totalMembres: "Total members",
+    sectionVueEnsemble: "Overview",
+    sectionEngagement: "Member engagement",
+    sectionRepartitionTop5: "Distribution by ministry (top 5)",
+    sectionClassement: "Ministry ranking",
+    autres: "Others",
+    pctMembresEngages: "% engaged members",
+    sur: "out of",
+    membres: "members",
+    serviteurLabel: "servant",
+    serviteursLabel: "servants",
+    totalServiteurs: "Total servants",
+    chargementUser: "⏳ Loading user information...",
+    selectionnezPeriode: "Select a period to generate the report.",
+    aucunServiteur: "No servants recorded for this period.",
+    chargement: "⏳ Loading...",
+  },
+};
 
 export default function RapportMinisterePage() {
   return (
@@ -97,7 +208,7 @@ function getConfig(ministere) {
 }
 
 // ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
-function BlocKpiGlobaux({ rapports, totalMembres }) {
+function BlocKpiGlobaux({ rapports, totalMembres, t }) {
   const totalServiteurs = rapports.serviteursCount;
   const totalMinisteres = rapports.lignes.length;
   const pct = totalMembres > 0 ? ((totalServiteurs / totalMembres) * 100).toFixed(1) : 0;
@@ -105,18 +216,18 @@ function BlocKpiGlobaux({ rapports, totalMembres }) {
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      <KpiCard label="Serviteurs actifs" value={totalServiteurs} sub="sur la période" accent="orange" />
-      <KpiCard label="% des membres" value={`${pct}%`} sub="engagés au service" accent="amber" />
-      <KpiCard label="Ministères actifs" value={totalMinisteres} sub="représentés" accent="blue" />
+      <KpiCard label={t.serviteursActifs} value={totalServiteurs} sub={t.surLaPeriode} accent="orange" />
+      <KpiCard label={t.pctMembres} value={`${pct}%`} sub={t.engagesAuService} accent="amber" />
+      <KpiCard label={t.ministeresActifs} value={totalMinisteres} sub={t.representes} accent="blue" />
       {topMinistere && (
-        <KpiCard label="1er ministère" value={topMinistere.ministere} sub={`${topMinistere.total} serviteurs`} accent="green" />
+        <KpiCard label={t.premierMinistere} value={topMinistere.ministere} sub={`${topMinistere.total} ${t.serviteurs_count}`} accent="green" />
       )}
     </div>
   );
 }
 
 // ─── BLOC ENGAGEMENT ──────────────────────────────────────────
-function BlocEngagement({ rapports, totalMembres }) {
+function BlocEngagement({ rapports, totalMembres, t }) {
   const totalServiteurs = rapports.serviteursCount;
   const pct = totalMembres > 0 ? Math.round((totalServiteurs / totalMembres) * 100) : 0;
   const nonServiteurs = Math.max(0, totalMembres - totalServiteurs);
@@ -126,29 +237,23 @@ function BlocEngagement({ rapports, totalMembres }) {
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-orange-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-xl font-bold text-orange-300">{totalServiteurs}</p>
-          <p className="text-[11px] text-orange-400/70">Serviteurs</p>
+          <p className="text-[11px] text-orange-400/70">{t.serviteurs}</p>
           <p className="text-[10px] text-orange-500/50">{pct}%</p>
         </div>
         <div className="bg-white/5 rounded-xl px-3 py-3 text-center">
           <p className="text-xl font-bold text-white/50">{nonServiteurs}</p>
-          <p className="text-[11px] text-white/30">Non engagés</p>
+          <p className="text-[11px] text-white/30">{t.nonEngages}</p>
           <p className="text-[10px] text-white/20">{100 - pct}%</p>
         </div>
         <div className="bg-white/10 rounded-xl px-3 py-3 text-center">
           <p className="text-xl font-bold text-white">{totalMembres}</p>
-          <p className="text-[11px] text-white/50">Total membres</p>
+          <p className="text-[11px] text-white/50">{t.totalMembres}</p>
         </div>
       </div>
       {totalMembres > 0 && (
         <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
-          <div
-            className="bg-orange-400 rounded-l-full transition-all"
-            style={{ width: `${pct}%` }}
-          />
-          <div
-            className="bg-white/10 rounded-r-full transition-all"
-            style={{ width: `${100 - pct}%` }}
-          />
+          <div className="bg-orange-400 rounded-l-full transition-all" style={{ width: `${pct}%` }} />
+          <div className="bg-white/10 rounded-r-full transition-all" style={{ width: `${100 - pct}%` }} />
         </div>
       )}
     </div>
@@ -161,7 +266,7 @@ function BlocClassement({ rapports }) {
   const maxTotal = Math.max(...lignes.map(l => l.total), 1);
 
   if (!lignes.length) return (
-    <p className="text-white/30 text-sm text-center py-4">Aucune donnée</p>
+    <p className="text-white/30 text-sm text-center py-4">—</p>
   );
 
   return (
@@ -189,45 +294,39 @@ function BlocClassement({ rapports }) {
 }
 
 // ─── BLOC RÉPARTITION VISUELLE ─────────────────────────────────
-function BlocRepartition({ rapports }) {
+function BlocRepartition({ rapports, t }) {
   const { lignes } = rapports;
   const total = lignes.reduce((a, l) => a + l.total, 0);
 
   if (!lignes.length || total === 0) return (
-    <p className="text-white/30 text-sm text-center py-4">Aucune donnée</p>
+    <p className="text-white/30 text-sm text-center py-4">—</p>
   );
 
-  // Top 5 + reste
   const top5 = lignes.slice(0, 5);
   const reste = lignes.slice(5).reduce((a, l) => a + l.total, 0);
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Barre empilée */}
       <div className="flex h-3 rounded-full overflow-hidden gap-0.5">
-        {top5.map(({ ministere, total: t }) => {
+        {top5.map(({ ministere, total: t_ }) => {
           const cfg = getConfig(ministere);
           return (
             <div
               key={ministere}
               className={`${cfg.bar} rounded-sm transition-all`}
-              style={{ width: `${(t / total) * 100}%` }}
-              title={`${ministere}: ${t}`}
+              style={{ width: `${(t_ / total) * 100}%` }}
+              title={`${ministere}: ${t_}`}
             />
           );
         })}
         {reste > 0 && (
-          <div
-            className="bg-white/20 rounded-r-full"
-            style={{ width: `${(reste / total) * 100}%` }}
-          />
+          <div className="bg-white/20 rounded-r-full" style={{ width: `${(reste / total) * 100}%` }} />
         )}
       </div>
-      {/* Légende */}
       <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-        {top5.map(({ ministere, total: t }) => {
+        {top5.map(({ ministere, total: t_ }) => {
           const cfg = getConfig(ministere);
-          const pct = Math.round((t / total) * 100);
+          const pct = Math.round((t_ / total) * 100);
           return (
             <div key={ministere} className="flex items-center gap-1.5">
               <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
@@ -239,7 +338,7 @@ function BlocRepartition({ rapports }) {
         {reste > 0 && (
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-white/20" />
-            <span className="text-[11px] text-white/60">Autres</span>
+            <span className="text-[11px] text-white/60">{t.autres}</span>
             <span className="text-[11px] text-white/30">{Math.round((reste / total) * 100)}%</span>
           </div>
         )}
@@ -250,6 +349,9 @@ function BlocRepartition({ rapports }) {
 
 // ─── PAGE PRINCIPALE ───────────────────────────────────────────
 function RapportMinistere() {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [egliseId, setEgliseId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [totalMembres, setTotalMembres] = useState(0);
@@ -257,14 +359,12 @@ function RapportMinistere() {
   const [hasData, setHasData] = useState(false);
   const [message, setMessage] = useState("");
 
-  // Filtres
   const [filtrePeriode, setFiltrePeriode] = useState("tout");
   const [modePerso, setModePerso] = useState(false);
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [onglet, setOnglet] = useState("kpi");
 
-  // Chargement utilisateur
   useEffect(() => {
     const loadUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -278,12 +378,11 @@ function RapportMinistere() {
   const fetchRapport = async (overrideModePerso = null) => {
     if (!egliseId) return;
     setLoading(true);
-    setMessage("⏳ Chargement...");
+    setMessage(t.chargement);
 
     const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
 
     try {
-      // Total membres
       const { data: membresData } = await supabase
         .from("membres_complets")
         .select("id, etat_contact")
@@ -294,7 +393,6 @@ function RapportMinistere() {
       ).length;
       setTotalMembres(totalMembresLocal);
 
-      // Stats ministères
       let query = supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, type, date_action")
@@ -313,7 +411,6 @@ function RapportMinistere() {
       const { data: statsData, error } = await query;
       if (error) throw error;
 
-      // Dédoublonnage : 1 serviteur compte 1 seule fois par ministère
       const serviteursSet = new Set();
       const seen = new Set();
       const counts = {};
@@ -344,79 +441,72 @@ function RapportMinistere() {
     setLoading(false);
   };
 
-  // Auto-fetch en mode période rapide
   useEffect(() => {
     if (!modePerso && egliseId) fetchRapport(false);
   }, [egliseId, filtrePeriode, modePerso]);
 
   const onglets = [
-    { key: "kpi", label: "Vue d'ensemble" },
-    { key: "classement", label: "Par ministère" },
+    { key: "kpi", label: t.vueEnsemble },
+    { key: "classement", label: t.parMinistere },
+  ];
+
+  const periodes = [
+    { label: t.tout, val: "tout" },
+    { label: t.j30, val: "30" },
+    { label: t.j90, val: "90" },
+    { label: t.mois6, val: "180" },
+    { label: t.an1, val: "365" },
   ];
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center p-4 sm:p-6"
-      style={{ background: "#333699" }}
-    >
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
 
-      {/* ─── EN-TÊTE ─── */}
       <div className="w-full max-w-3xl flex flex-col gap-6">
+        {/* ─── EN-TÊTE ─── */}
         <div className="text-center mt-4">
           <h1 className="text-2xl font-bold mb-3 text-white">
-            Rapport <span className="text-emerald-300">Ministère</span>
+            {t.title} <span className="text-emerald-300">{t.titleAccent}</span>
           </h1>
           <p className="italic text-base text-white/90 max-w-2xl mx-auto">
-            Suivez en un coup d'œil le nombre{" "}
-            <span className="text-blue-300 font-semibold">total de serviteurs</span>,
-            leur <span className="text-blue-300 font-semibold">répartition par ministère</span> et
-            le <span className="text-blue-300 font-semibold">niveau d'engagement global</span>.
-            Analysez le poids de chaque ministère et le{" "}
-            <span className="text-blue-300 font-semibold">pourcentage de serviteurs</span> pour
-            renforcer la{" "}
-            <span className="text-blue-300 font-semibold">dynamique du service</span>.
+            {t.intro1}{" "}
+            <span className="text-blue-300 font-semibold">{t.intro2}</span>
+            {t.intro3}{" "}
+            <span className="text-blue-300 font-semibold">{t.intro4}</span>{" "}
+            {t.intro5}{" "}
+            <span className="text-blue-300 font-semibold">{t.intro6}</span>
+            {t.intro7}{" "}
+            <span className="text-blue-300 font-semibold">{t.intro8}</span>{" "}
+            {t.intro9}{" "}
+            <span className="text-blue-300 font-semibold">{t.intro10}</span>.
           </p>
         </div>
 
         {/* ─── FILTRES ─── */}
         <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
-          {/* Toggle mode */}
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button
               onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                !modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"
-              }`}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
             >
-              Période rapide
+              {t.perioderapide}
             </button>
             <button
               onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"
-              }`}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
             >
-              Tranche de dates
+              {t.tranchedates}
             </button>
           </div>
 
-          {/* Période rapide */}
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">Période :</span>
-              {[
-                { label: "Tout", val: "tout" }, { label: "30 j", val: "30" },
-                { label: "90 j", val: "90" }, { label: "6 mois", val: "180" },
-                { label: "1 an", val: "365" },
-              ].map(p => (
+              <span className="text-xs text-white/50 flex-shrink-0">{t.periode}</span>
+              {periodes.map(p => (
                 <button
-                  key={p.val} onClick={() => setFiltrePeriode(p.val)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-                    filtrePeriode === p.val
-                      ? "bg-white text-[#333699]"
-                      : "bg-white/15 text-white/70 hover:bg-white/20"
-                  }`}
+                  key={p.val}
+                  onClick={() => setFiltrePeriode(p.val)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}
                 >
                   {p.label}
                 </button>
@@ -424,12 +514,11 @@ function RapportMinistere() {
             </div>
           )}
 
-          {/* Tranche personnalisée */}
           {modePerso && (
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">Date de début</label>
+                  <label className="text-xs text-white/50">{t.dateDebut}</label>
                   <input
                     type="date" value={dateDebut}
                     onChange={e => setDateDebut(e.target.value)}
@@ -437,7 +526,7 @@ function RapportMinistere() {
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">Date de fin</label>
+                  <label className="text-xs text-white/50">{t.dateFin}</label>
                   <input
                     type="date" value={dateFin}
                     onChange={e => setDateFin(e.target.value)}
@@ -450,7 +539,7 @@ function RapportMinistere() {
                 disabled={!egliseId || loading}
                 className="w-full py-2 rounded-xl bg-amber-500/80 hover:bg-amber-500 text-white text-sm font-semibold transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Générer le rapport
+                {t.genererRapport}
               </button>
             </div>
           )}
@@ -460,10 +549,9 @@ function RapportMinistere() {
         <div className="flex gap-1 bg-white/10 rounded-xl p-1">
           {onglets.map(o => (
             <button
-              key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${
-                onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"
-              }`}
+              key={o.key}
+              onClick={() => setOnglet(o.key)}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
             >
               {o.label}
             </button>
@@ -478,65 +566,55 @@ function RapportMinistere() {
         ) : !hasData ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center">
             <p className="text-white/40 text-sm">
-              {!egliseId ? "⏳ Chargement des informations utilisateur..." : "Sélectionnez une période pour générer le rapport."}
+              {!egliseId ? t.chargementUser : t.selectionnezPeriode}
             </p>
           </div>
         ) : rapports.lignes.length === 0 ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center">
-            <p className="text-white/40 text-sm">Aucun serviteur enregistré sur cette période.</p>
+            <p className="text-white/40 text-sm">{t.aucunServiteur}</p>
           </div>
         ) : onglet === "kpi" ? (
-          /* ─── VUE D'ENSEMBLE ─── */
           <div className="flex flex-col gap-7">
             <div>
-              <SectionTitle>Vue d'ensemble</SectionTitle>
-              <BlocKpiGlobaux rapports={rapports} totalMembres={totalMembres} />
+              <SectionTitle>{t.sectionVueEnsemble}</SectionTitle>
+              <BlocKpiGlobaux rapports={rapports} totalMembres={totalMembres} t={t} />
             </div>
-
             <div>
-              <SectionTitle>Engagement des membres</SectionTitle>
+              <SectionTitle>{t.sectionEngagement}</SectionTitle>
               <div className="bg-white/10 rounded-2xl px-4 py-4">
-                <BlocEngagement rapports={rapports} totalMembres={totalMembres} />
+                <BlocEngagement rapports={rapports} totalMembres={totalMembres} t={t} />
               </div>
             </div>
-
             <div>
-              <SectionTitle>Répartition par ministère (top 5)</SectionTitle>
+              <SectionTitle>{t.sectionRepartitionTop5}</SectionTitle>
               <div className="bg-white/10 rounded-2xl px-4 py-4">
-                <BlocRepartition rapports={rapports} />
+                <BlocRepartition rapports={rapports} t={t} />
               </div>
             </div>
-
             <div>
-              <SectionTitle>Classement des ministères</SectionTitle>
+              <SectionTitle>{t.sectionClassement}</SectionTitle>
               <BlocClassement rapports={rapports} />
             </div>
           </div>
         ) : (
-          /* ─── PAR MINISTÈRE ─── */
           <div className="flex flex-col gap-3">
-            {/* Résumé rapide en haut */}
             <div className="grid grid-cols-2 gap-3">
-              <KpiCard label="Serviteurs" value={rapports.serviteursCount} sub="sur la période" accent="orange" />
+              <KpiCard label={t.serviteurs} value={rapports.serviteursCount} sub={t.surLaPeriode} accent="orange" />
               <KpiCard
-                label="% membres engagés"
+                label={t.pctMembresEngages}
                 value={totalMembres > 0 ? `${((rapports.serviteursCount / totalMembres) * 100).toFixed(1)}%` : "—"}
-                sub={`sur ${totalMembres} membres`}
+                sub={`${t.sur} ${totalMembres} ${t.membres}`}
                 accent="amber"
               />
             </div>
 
-            {/* Lignes par ministère */}
             {rapports.lignes.map(({ ministere, total }, idx) => {
               const cfg = getConfig(ministere);
               const pct = rapports.serviteursCount > 0
                 ? Math.round((total / rapports.serviteursCount) * 100)
                 : 0;
               return (
-                <div
-                  key={ministere}
-                  className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-2"
-                >
+                <div key={ministere} className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-2">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className="text-[11px] text-white/30 w-5">#{idx + 1}</span>
@@ -552,16 +630,15 @@ function RapportMinistere() {
                       color={cfg.bar}
                     />
                     <span className="text-[11px] text-white/30 w-20 text-right flex-shrink-0">
-                      {total} serviteur{total > 1 ? "s" : ""}
+                      {total} {total > 1 ? t.serviteursLabel : t.serviteurLabel}
                     </span>
                   </div>
                 </div>
               );
             })}
 
-            {/* Total global */}
             <div className="bg-white/5 rounded-2xl px-4 py-3 flex items-center justify-between border border-white/10">
-              <span className="text-sm text-white/50 font-semibold uppercase tracking-wide">Total serviteurs</span>
+              <span className="text-sm text-white/50 font-semibold uppercase tracking-wide">{t.totalServiteurs}</span>
               <span className="text-xl font-bold text-orange-300">{rapports.serviteursCount}</span>
             </div>
           </div>

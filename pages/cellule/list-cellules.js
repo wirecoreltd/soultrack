@@ -7,11 +7,105 @@ import EditCelluleModal from "../../components/EditCelluleModal";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    // Page
+    pageTitle: "Liste des",
+    pageTitleAccent: "Cellules",
+    introAccent: "Gérez et consultez facilement vos cellules",
+    intro: ". Recherchez par nom, filtrez rapidement, visualisez les responsables et le nombre de membres, et accédez aux",
+    introAccent2: "détails pour un suivi précis",
+
+    // Recherche / filtre
+    chercher: "Chercher...",
+    toutes: "Toutes",
+    total: "Total :",
+    btnAjouterCellule: "➕ Ajouter une Cellule",
+
+    // Header tableau desktop
+    colVille: "Ville",
+    colCellule: "Cellule",
+    colResponsable: "Responsable",
+    colSuperviseur: "Superviseur",
+    colTelephone: "Téléphone",
+    colCount: "Count",
+    colAction: "Action",
+
+    // Ligne cellule
+    details: "Détails",
+    voirDetails: "Voir détails →",
+    modifier: "✏️ Modifier",
+
+    // Menu téléphone
+    appeler: "📞 Appeler",
+    sms: "✉️ SMS",
+    appelWhatsApp: "📱 Appel WhatsApp",
+    whatsApp: "💬 WhatsApp",
+
+    // Mobile labels
+    ville: "📍 Ville :",
+    responsable: "👤 Responsable :",
+    superviseur: "⚜️ Superviseur :",
+    membreSing: "membre",
+    membrePlur: "membres",
+
+    // États
+    chargement: "Chargement...",
+    aucuneCellule: "Aucune cellule",
+  },
+  en: {
+    // Page
+    pageTitle: "List of",
+    pageTitleAccent: "Cell Groups",
+    introAccent: "Easily manage and view your cell groups",
+    intro: ". Search by name, filter quickly, see leaders and member counts, and access",
+    introAccent2: "details for precise follow-up",
+
+    // Recherche / filtre
+    chercher: "Search...",
+    toutes: "All",
+    total: "Total:",
+    btnAjouterCellule: "➕ Add a Cell Group",
+
+    // Header tableau desktop
+    colVille: "City",
+    colCellule: "Cell group",
+    colResponsable: "Leader",
+    colSuperviseur: "Supervisor",
+    colTelephone: "Phone",
+    colCount: "Count",
+    colAction: "Action",
+
+    // Ligne cellule
+    details: "Details",
+    voirDetails: "View details →",
+    modifier: "✏️ Edit",
+
+    // Menu téléphone
+    appeler: "📞 Call",
+    sms: "✉️ SMS",
+    appelWhatsApp: "📱 WhatsApp call",
+    whatsApp: "💬 WhatsApp",
+
+    // Mobile labels
+    ville: "📍 City:",
+    responsable: "👤 Leader:",
+    superviseur: "⚜️ Supervisor:",
+    membreSing: "member",
+    membrePlur: "members",
+
+    // États
+    chargement: "Loading...",
+    aucuneCellule: "No cell groups found",
+  },
+};
 
 /* =========================
    Ligne Cellule (RESPONSIVE)
 ========================= */
-function CelluleRow({ c, router, canEdit, onEdit }) {
+function CelluleRow({ c, router, canEdit, onEdit, t }) {
   const [openPhoneMenu, setOpenPhoneMenu] = useState(false);
   const phoneMenuRef = useRef(null);
 
@@ -29,7 +123,7 @@ function CelluleRow({ c, router, canEdit, onEdit }) {
 
   return (
     <>
-      {/* ================= DESKTOP ================= */}
+      {/* DESKTOP */}
       <div
         className="hidden sm:flex flex-row items-center px-2 py-2 rounded-lg gap-2 bg-white/15 border-l-4"
         style={{ borderLeftColor: "#F59E0B" }}
@@ -54,10 +148,10 @@ function CelluleRow({ c, router, canEdit, onEdit }) {
               ref={phoneMenuRef}
               className="absolute top-full mt-1 bg-white rounded-lg shadow-lg border z-[9999] w-56"
             >
-              <a href={`tel:${c.telephone}`} className="block px-4 py-2 hover:bg-gray-100">📞 Appeler</a>
-              <a href={`sms:${c.telephone}`} className="block px-4 py-2 hover:bg-gray-100">✉️ SMS</a>
-              <a href={`https://wa.me/${phoneClean}?call`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">📱 Appel WhatsApp</a>
-              <a href={`https://wa.me/${phoneClean}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">💬 WhatsApp</a>
+              <a href={`tel:${c.telephone}`} className="block px-4 py-2 hover:bg-gray-100">{t.appeler}</a>
+              <a href={`sms:${c.telephone}`} className="block px-4 py-2 hover:bg-gray-100">{t.sms}</a>
+              <a href={`https://wa.me/${phoneClean}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100">{t.appelWhatsApp}</a>
+              <a href={`https://wa.me/${phoneClean}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100">{t.whatsApp}</a>
             </div>
           )}
         </div>
@@ -67,11 +161,9 @@ function CelluleRow({ c, router, canEdit, onEdit }) {
         <div className="flex-[1] flex justify-center gap-2">
           <span
             className="text-orange-400 underline cursor-pointer text-sm"
-            onClick={() =>
-              router.push(`${window.location.origin}/cellule/membres-cellule?celluleId=${c.id}`)
-            }
+            onClick={() => router.push(`${window.location.origin}/cellule/membres-cellule?celluleId=${c.id}`)}
           >
-            Détails
+            {t.details}
           </span>
           {canEdit && (
             <span
@@ -84,39 +176,31 @@ function CelluleRow({ c, router, canEdit, onEdit }) {
         </div>
       </div>
 
-      {/* ================= MOBILE ================= */}
+      {/* MOBILE */}
       <div
         className="sm:hidden bg-white/10 backdrop-blur-md rounded-xl p-4 border-l-4 mb-2 relative overflow-visible"
         style={{ borderLeftColor: "#F59E0B" }}
       >
-        {/* Nom */}
         <div className="text-white font-semibold text-lg">{c.cellule_full}</div>
 
-        {/* Ville */}
         <div className="text-white text-sm mb-2 mt-3">
-          📍 Ville : <span className="font-semibold">{c.ville}</span>
+          {t.ville} <span className="font-semibold">{c.ville}</span>
         </div>
 
-        {/* Responsable */}
         <div className="text-white text-sm mb-2">
-          👤 Responsable :{" "}
+          {t.responsable}{" "}
           <span className="text-amber-300 font-semibold">{c.responsable || "—"}</span>
         </div>
 
-        {/* Superviseur */}
         <div className="text-white text-sm mb-2">
-          ⚜️ Superviseur :{" "}
+          {t.superviseur}{" "}
           <span className="text-amber-300 font-semibold">
             {c.superviseur ? `${c.superviseur.prenom} ${c.superviseur.nom}` : "—"}
           </span>
         </div>
 
-        {/* Téléphone */}
         <div className="relative mb-2">
-          <span
-            className="text-sm cursor-pointer"
-            onClick={() => setOpenPhoneMenu(!openPhoneMenu)}
-          >
+          <span className="text-sm cursor-pointer" onClick={() => setOpenPhoneMenu(!openPhoneMenu)}>
             📞{" "}
             <span className="text-orange-400 underline">{c.telephone || "—"}</span>
           </span>
@@ -125,35 +209,29 @@ function CelluleRow({ c, router, canEdit, onEdit }) {
               ref={phoneMenuRef}
               className="absolute z-[9999] mt-2 bg-white rounded-lg shadow-xl border w-56"
             >
-              <a href={`tel:${c.telephone}`} className="block px-4 py-2 hover:bg-gray-100">📞 Appeler</a>
-              <a href={`sms:${c.telephone}`} className="block px-4 py-2 hover:bg-gray-100">✉️ SMS</a>
-              <a href={`https://wa.me/${phoneClean}?call`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">📱 Appel WhatsApp</a>
-              <a href={`https://wa.me/${phoneClean}`} target="_blank" className="block px-4 py-2 hover:bg-gray-100">💬 WhatsApp</a>
+              <a href={`tel:${c.telephone}`} className="block px-4 py-2 hover:bg-gray-100">{t.appeler}</a>
+              <a href={`sms:${c.telephone}`} className="block px-4 py-2 hover:bg-gray-100">{t.sms}</a>
+              <a href={`https://wa.me/${phoneClean}?call`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100">{t.appelWhatsApp}</a>
+              <a href={`https://wa.me/${phoneClean}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 hover:bg-gray-100">{t.whatsApp}</a>
             </div>
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex justify-between items-center mt-3">
           <div className="text-white text-sm">
-            👥 {c.membre_count} membre{c.membre_count > 1 ? "s" : ""}
+            👥 {c.membre_count} {c.membre_count > 1 ? t.membrePlur : t.membreSing}
           </div>
           <div className="flex gap-3 items-center">
             {canEdit && (
-              <button
-                onClick={() => onEdit(c)}
-                className="text-blue-300 underline text-sm"
-              >
-                ✏️ Modifier
+              <button onClick={() => onEdit(c)} className="text-blue-300 underline text-sm">
+                {t.modifier}
               </button>
             )}
             <button
-              onClick={() =>
-                router.push(`${window.location.origin}/cellule/membres-cellule?celluleId=${c.id}`)
-              }
+              onClick={() => router.push(`${window.location.origin}/cellule/membres-cellule?celluleId=${c.id}`)}
               className="text-orange-400 underline text-sm"
             >
-              Voir détails →
+              {t.voirDetails}
             </button>
           </div>
         </div>
@@ -175,20 +253,18 @@ export default function ListCellules() {
 
 function ListCellulesContent() {
   const router = useRouter();
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [cellules, setCellules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
-
-  // ── Modal état ──
   const [selectedCellule, setSelectedCellule] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
-
   const [search, setSearch] = useState("");
   const [filterCellule, setFilterCellule] = useState("");
 
-  useEffect(() => {
-    fetchCellules();
-  }, []);
+  useEffect(() => { fetchCellules(); }, []);
 
   const fetchCellules = async () => {
     setLoading(true);
@@ -197,11 +273,7 @@ function ListCellulesContent() {
     if (!user) return;
 
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, role, eglise_id")
-      .eq("id", user.id)
-      .single();
-
+      .from("profiles").select("id, role, eglise_id").eq("id", user.id).single();
     if (!profile) return;
 
     setUserRole(profile.role);
@@ -213,50 +285,27 @@ function ListCellulesContent() {
       .order("cellule_full");
 
     if (profile.role === "ResponsableCellule") {
+      const { data: directes } = await supabase
+        .from("cellules").select("id")
+        .eq("responsable_id", profile.id).eq("eglise_id", profile.eglise_id);
+      const directIds = (directes || []).map(c => c.id);
 
-  // 1️⃣ Cellules directes
-  const { data: directes } = await supabase
-    .from("cellules")
-    .select("id")
-    .eq("responsable_id", profile.id)
-    .eq("eglise_id", profile.eglise_id);
+      const { data: filles } = await supabase
+        .from("cellules").select("id")
+        .in("cellule_mere_id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
+      const fillesIds = (filles || []).map(c => c.id);
 
-  const directIds = (directes || []).map(c => c.id);
-
-  // 2️⃣ Cellules filles
-  const { data: filles } = await supabase
-    .from("cellules")
-    .select("id")
-    .in(
-      "cellule_mere_id",
-      directIds.length
-        ? directIds
-        : ["00000000-0000-0000-0000-000000000000"]
-    );
-
-  const fillesIds = (filles || []).map(c => c.id);
-
-  // 3️⃣ Union
-  const allIds = [...new Set([...directIds, ...fillesIds])];
-
-  query = query.in(
-    "id",
-    allIds.length
-      ? allIds
-      : ["00000000-0000-0000-0000-000000000000"]
-  );
-}
+      const allIds = [...new Set([...directIds, ...fillesIds])];
+      query = query.in("id", allIds.length ? allIds : ["00000000-0000-0000-0000-000000000000"]);
+    }
 
     const { data: cellsData } = await query;
 
     const withCount = await Promise.all(
       (cellsData || []).map(async (c) => {
         const { count } = await supabase
-          .from("membres_complets")
-          .select("id", { count: "exact", head: true })
-          .eq("cellule_id", c.id)
-          .eq("statut_suivis", 3)
-          .neq("etat_contact", "supprime");
+          .from("membres_complets").select("id", { count: "exact", head: true })
+          .eq("cellule_id", c.id).eq("statut_suivis", 3).neq("etat_contact", "supprime");
         return { ...c, membre_count: count || 0 };
       })
     );
@@ -265,19 +314,9 @@ function ListCellulesContent() {
     setLoading(false);
   };
 
-  // Ouvrir le modal d'édition
-  const handleEdit = (cellule) => {
-    setSelectedCellule(cellule);
-    setShowEditModal(true);
-  };
+  const handleEdit = (cellule) => { setSelectedCellule(cellule); setShowEditModal(true); };
+  const handleCloseModal = () => { setShowEditModal(false); setSelectedCellule(null); };
 
-  // Fermer le modal
-  const handleCloseModal = () => {
-    setShowEditModal(false);
-    setSelectedCellule(null);
-  };
-
-  // Mise à jour locale après save
   const handleUpdated = (updatedCellule) => {
     setCellules((prev) =>
       prev.map((c) =>
@@ -288,7 +327,6 @@ function ListCellulesContent() {
               ville: updatedCellule.ville,
               responsable: updatedCellule.responsable,
               telephone: updatedCellule.telephone,
-              // Recalcul du nom complet si votre DB le fait côté client
               cellule_full: updatedCellule.cellule_full ?? c.cellule_full,
             }
           : c
@@ -296,7 +334,6 @@ function ListCellulesContent() {
     );
   };
 
-  // Qui peut éditer ?
   const canEdit = ["Administrateur", "SuperviseurCellule"].includes(userRole);
 
   const cellulesFiltrees = cellules.filter((c) => {
@@ -306,7 +343,7 @@ function ListCellulesContent() {
   });
 
   if (loading) {
-    return <p className="text-center mt-10 text-white">Chargement...</p>;
+    return <p className="text-center mt-10 text-white">{t.chargement}</p>;
   }
 
   return (
@@ -314,14 +351,14 @@ function ListCellulesContent() {
       <HeaderPages />
 
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
-        Liste des <span className="text-emerald-300">Cellules</span>
+        {t.pageTitle} <span className="text-emerald-300">{t.pageTitleAccent}</span>
       </h1>
 
       <div className="max-w-3xl w-full mb-6 text-center mx-auto">
         <p className="italic text-base text-white/90">
-          <span className="text-blue-300 font-semibold">Gérez et consultez facilement vos cellules</span>.
-          Recherchez par nom, filtrez rapidement, visualisez les responsables et le nombre de membres,
-          et accédez aux <span className="text-blue-300 font-semibold">détails pour un suivi précis</span>.
+          <span className="text-blue-300 font-semibold">{t.introAccent}</span>
+          {t.intro}{" "}
+          <span className="text-blue-300 font-semibold">{t.introAccent2}</span>.
         </p>
       </div>
 
@@ -329,7 +366,7 @@ function ListCellulesContent() {
       <div className="flex justify-center mb-4">
         <input
           type="text"
-          placeholder="Chercher..."
+          placeholder={t.chercher}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full max-w-md px-3 py-2 rounded-md text-black"
@@ -343,16 +380,14 @@ function ListCellulesContent() {
           onChange={(e) => setFilterCellule(e.target.value)}
           className="px-3 py-2 rounded-md text-black"
         >
-          <option value="">Toutes</option>
+          <option value="">{t.toutes}</option>
           {cellules.map((c) => (
-            <option key={c.id} value={c.cellule_full}>
-              {c.cellule_full}
-            </option>
+            <option key={c.id} value={c.cellule_full}>{c.cellule_full}</option>
           ))}
         </select>
 
         <span className="text-white font-semibold">
-          Total : {cellulesFiltrees.length}
+          {t.total} {cellulesFiltrees.length}
         </span>
       </div>
 
@@ -363,7 +398,7 @@ function ListCellulesContent() {
             onClick={() => router.push("/admin/create-cellule")}
             className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
           >
-            ➕ Ajouter une Cellule
+            {t.btnAjouterCellule}
           </button>
         </div>
       )}
@@ -373,17 +408,17 @@ function ListCellulesContent() {
 
         {/* Header Desktop */}
         <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
-          <div className="flex-[2]">Ville</div>
-          <div className="flex-[2]">Cellule</div>
-          <div className="flex-[2]">Responsable</div>
-          <div className="flex-[2]">Superviseur</div>
-          <div className="flex-[2] text-center">Téléphone</div>
-          <div className="flex-[1] text-center">Count</div>
-          <div className="flex-[1] text-center">Action</div>
+          <div className="flex-[2]">{t.colVille}</div>
+          <div className="flex-[2]">{t.colCellule}</div>
+          <div className="flex-[2]">{t.colResponsable}</div>
+          <div className="flex-[2]">{t.colSuperviseur}</div>
+          <div className="flex-[2] text-center">{t.colTelephone}</div>
+          <div className="flex-[1] text-center">{t.colCount}</div>
+          <div className="flex-[1] text-center">{t.colAction}</div>
         </div>
 
         {cellulesFiltrees.length === 0 ? (
-          <p className="text-white text-center mt-6">Aucune cellule</p>
+          <p className="text-white text-center mt-6">{t.aucuneCellule}</p>
         ) : (
           cellulesFiltrees.map((c) => (
             <CelluleRow
@@ -392,12 +427,12 @@ function ListCellulesContent() {
               router={router}
               canEdit={canEdit}
               onEdit={handleEdit}
+              t={t}
             />
           ))
         )}
       </div>
 
-      {/* ── Modal d'édition ── */}
       {showEditModal && selectedCellule && (
         <EditCelluleModal
           cellule={selectedCellule}

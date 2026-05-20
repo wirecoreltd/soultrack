@@ -569,24 +569,20 @@ function MembresCelluleContent() {
                       <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
                       <p className="text-center text-sm mt-1">🏠 {cellule?.cellule_full || cellule?.cellule || "—"}</p>
                       <p className="text-center text-sm mt-1">👤 {nomResponsable}</p>
-                      <div className="w-full flex justify-end mt-3">
+                      <div className="w-full flex justify-end items-center gap-2 mt-3">
                         <p className="text-[11px] text-gray-400">
                           {t.creLe} {formatDateFr(m.date_venu)}
                         </p>
-
-                          {/* Bouton PDF */}
+                      
                         <ExportMembrePDF
                           membre={m}
                           logoBase64={logoBase64}
                           eglise={egliseData}
                           churchName={egliseData?.nom}
                           celluleName={
-                            cellules.find(
-                              (c) => String(c.id) === String(m.cellule_id)
-                            )?.cellule_full
+                            cellules.find((c) => String(c.id) === String(m.cellule_id))?.cellule_full
                           }
                         />
-                          
                       </div>
 
                       <button

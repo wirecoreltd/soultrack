@@ -1199,26 +1199,15 @@ export default function HomePage() {
                 flexWrap: "wrap",
               }}
             >
-              <span
-                style={{ color: "#60a5fa", cursor: "pointer" }}
-                onClick={() => router.push("/site/terms")}
-              >
-                Terms of Service
-              </span>
-    
-              <span
-                style={{ color: "#60a5fa", cursor: "pointer" }}
-                onClick={() => router.push("/site/privacy")}
-              >
-                Privacy Policy
-              </span>
-    
-              <span
-                style={{ color: "#60a5fa", cursor: "pointer" }}
-                onClick={() => router.push("/site/refund")}
-              >
-                Refund Policy
-              </span>
+              <span onClick={() => router.push("/site/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+  Terms
+</span>
+<span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+  Privacy
+</span>
+<span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+  Refund
+</span>
             </div>
           </div>
         </footer>

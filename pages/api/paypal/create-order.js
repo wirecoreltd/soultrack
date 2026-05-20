@@ -1,7 +1,12 @@
 // pages/api/paypal/create-order.js
 // Crée un order PayPal (paiement unique) ou un abonnement récurrent
 
-import { createPayPalOrder, createPayPalSubscription, PAYPAL_PLAN_IDS } from "../../../lib/paypal";
+import {
+  createPayPalOrder,
+  createPayPalSubscription,
+  PAYPAL_PLAN_IDS,
+} from "../../../lib/paypal";
+
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseAdmin = createClient(
@@ -9,60 +14,111 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Plans qui utilisent l'abonnement récurrent PayPal
+// Plans abonnement
 const RECURRING_PLANS = ["starter", "vision", "expansion"];
 
 const PLAN_NOMS = {
-  starter:    "Croissance",
-  vision:     "Vision",
-  expansion:  "Expansion",
+  starter: "Croissance",
+  vision: "Vision",
+  expansion: "Expansion",
   enterprise: "Réseaux",
 };
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-
-  console.log("PAYPAL_ENV:", process.env.PAYPAL_ENV);
-console.log("PAYPAL_CLIENT_ID:", process.env.PAYPAL_CLIENT_ID?.slice(0, 10) + "...");
-console.log("PAYPAL_CLIENT_SECRET:", process.env.PAYPAL_CLIENT_SECRET?.slice(0, 5) + "...");
-
-  const { egliseId, planId } = req.body;
-  if (!egliseId || !planId) return res.status(400).json({ error: "Paramètres manquants" });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
   try {
-    const { data: eglise } = await supabaseAdmin
+    // 🔥 DEBUG SAFE (IMPORTANT)
+    console.log("🔥 PAYPAL CREATE ORDER HIT");
+    console.log("BODY RAW:", req.body);
+
+    const { egliseId, planId } = req.body || {};
+
+    if (!egliseId || !planId) {
+      console.error("❌ Missing params:", { egliseId, planId });
+      return res.status(400).json({
+        error: "Paramètres manquants (egliseId ou planId)",
+      });
+    }
+
+    // 🔥 FETCH Eglise email
+    const { data: eglise, error: egliseError } = await supabaseAdmin
       .from("eglises")
       .select("email")
       .eq("id", egliseId)
       .single();
 
-    const isRecurring = RECURRING_PLANS.includes(planId) && !!PAYPAL_PLAN_IDS[planId];
+    if (egliseError) {
+      console.error("❌ Supabase error:", egliseError);
+      return res.status(500).json({
+        error: "Erreur récupération église",
+      });
+    }
 
+    const isRecurring =
+      RECURRING_PLANS.includes(planId) &&
+      !!PAYPAL_PLAN_IDS?.[planId];
+
+    // =========================
+    // 🔁 SUBSCRIPTION PAYPAL
+    // =========================
     if (isRecurring) {
-      // Abonnement récurrent PayPal
+      console.log("🔁 Creating subscription:", planId);
+
       const subscription = await createPayPalSubscription({
         planId,
         egliseId,
-        email: eglise?.email ?? "",
+        email: eglise?.email || "",
       });
 
-      // L'URL d'approbation est dans les liens
-      const approvalLink = subscription.links?.find((l) => l.rel === "approve")?.href;
-      return res.status(200).json({ type: "subscription", approvalUrl: approvalLink, id: subscription.id });
+      const approvalLink = subscription?.links?.find(
+        (l) => l.rel === "approve"
+      )?.href;
 
-    } else {
-      // Paiement unique
-      const order = await createPayPalOrder({
-        planId,
-        planNom: PLAN_NOMS[planId] ?? planId,
-        egliseId,
+      if (!approvalLink) {
+        console.error("❌ No approval link:", subscription);
+        return res.status(500).json({
+          error: "PayPal subscription approval link missing",
+        });
+      }
+
+      return res.status(200).json({
+        type: "subscription",
+        approvalUrl: approvalLink,
+        id: subscription.id,
       });
-
-      return res.status(200).json({ type: "order", orderId: order.id });
     }
 
+    // =========================
+    // 💳 ORDER PAYPAL (ONE TIME)
+    // =========================
+    console.log("💳 Creating order:", planId);
+
+    const order = await createPayPalOrder({
+      planId,
+      planNom: PLAN_NOMS[planId] ?? planId,
+      egliseId,
+    });
+
+    if (!order || !order.id) {
+      console.error("❌ Invalid order response:", order);
+      return res.status(500).json({
+        error: "Order PayPal invalide",
+      });
+    }
+
+    return res.status(200).json({
+      type: "order",
+      orderId: order.id,
+    });
   } catch (err) {
-    console.error("[paypal/create-order]", err);
-    return res.status(500).json({ error: err.message });
+    // 🔥 IMPORTANT DEBUG
+    console.error("🔥 PAYPAL CREATE ORDER ERROR FULL:", err);
+
+    return res.status(500).json({
+      error: err.message || "Internal server error",
+    });
   }
 }

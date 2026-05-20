@@ -264,21 +264,28 @@ function MembresCelluleContent() {
       setUserRole(profile.role);
 
       if (profile.role === "ResponsableCellule") {
-        const { data: directes } = await supabase
-          .from("cellules").select("id")
-          .eq("responsable_id", profile.id).eq("eglise_id", profile.eglise_id);
-
-        const directIds = (directes || []).map(c => c.id);
-
         const { data: directesData } = await supabase
-          .from("cellules").select("*, profiles:responsable_id(prenom, nom)")
-          .in("id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
+  .from("cellules")
+  .select("*, profiles:responsable_id(prenom, nom)")
+  .eq("eglise_id", profile.eglise_id)
+  .or(`responsable_id.eq.${profile.id},superviseur_id.eq.${profile.id}`);
 
-        const { data: fillesData } = await supabase
-          .from("cellules").select("*, profiles:responsable_id(prenom, nom)")
-          .in("cellule_mere_id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
+const directIds = (directesData || []).map(c => c.id);
 
-        setCellules([...(directesData || []), ...(fillesData || [])]);
+const { data: fillesData } = await supabase
+  .from("cellules")
+  .select("*, profiles:responsable_id(prenom, nom)")
+  .in(
+    "cellule_mere_id",
+    directIds.length
+      ? directIds
+      : ["00000000-0000-0000-0000-000000000000"]
+  );
+
+setCellules([
+  ...(directesData || []),
+  ...(fillesData || []),
+]);
         return;
       }
 

@@ -10,6 +10,7 @@ import EditMemberSuivisPopup from "../../components/EditMemberSuivisPopup";
 import SuiviPopup from "../../components/SuiviPopup";
 import PresenceDot from "../../components/PresenceDot";
 import { useLang } from "../../hooks/useLang";
+import ExportMembrePDF from "../../components/ExportMembrePDF";
 
 const translations = {
   fr: {
@@ -545,8 +546,29 @@ setCellules([
 
                       <button
                         onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
-                        className="text-orange-500 underline mt-2 block mx-auto text-sm"
-                      >
+                        className="text-orange-500 underline mt-2 block mx-auto text-sm">
+                          
+                          {/* Bouton PDF */}
+                          <ExportMembrePDF
+                            membre={m}
+                            logoBase64={logoBase64}
+                            eglise={egliseData}
+                            churchName={egliseData?.nom}
+                            celluleName={
+                              cellules.find(
+                                (c) => String(c.id) === String(m.cellule_id)
+                              )?.cellule_full
+                            }
+                            familleName={
+                              familles.find(
+                                (f) => String(f.id) === String(m.famille_id)
+                              )?.famille_full
+                            }
+                            conseillerName={getConseillersForMember(m.id)}
+                          />
+                        </div>
+
+                        {/* Détails */}
                         {isOpen ? t.fermerDetails : t.details}
                       </button>
 

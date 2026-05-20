@@ -4,8 +4,197 @@ import { useState, useEffect, useRef } from "react";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    // En-tête
+    titre: "Invitations & Liens",
+    titreAccent: "d'Eglises",
+
+    // Intro
+    intro1: "Relier une église vous permet de placer une église sous votre supervision et de voir ses statistiques dans",
+    intro1Accent: "Stats Globales",
+    intro2: "Dans cette",
+    intro2Accent: "interface",
+    intro2Suite: ", vous pouvez :",
+    listeActions: [
+      { icon: "✉️", text: "Envoyer une invitation", color: "text-green-400", desc: " à une église" },
+      { icon: "🔗", text: "Casser le lien", color: "text-gray-400", desc: " avec une église supervisée" },
+      { icon: "🗑️", text: "Supprimer", color: "text-red-500", desc: " une invitation envoyée" },
+      { icon: "🔄", text: "Renvoyer le lien", color: "text-green-400", desc: " si nécessaire" },
+      { icon: "⏳", text: "Envoyer un rappel", color: "text-yellow-300", desc: " pour une invitation en attente" },
+    ],
+    introBas: "Toutes les actions sont suivies ici et visibles dans votre tableau.",
+
+    // Formulaire
+    formTitreRappel: (denom) => `📨 Rappel — ${denom}`,
+    formTitreRenvoyer: (denom) => `🔄 Renvoyer — ${denom}`,
+    formTitreDefaut: "Envoyer à",
+    annuler: "✕ Annuler",
+
+    labelPrenom: "Prénom du responsable",
+    placeholderPrenom: "Prénom *",
+    labelNom: "Nom du responsable",
+    placeholderNom: "Nom *",
+    labelDenomination: "Dénomination",
+    placeholderDenomination: "Dénomination *",
+    labelNomEglise: "Nom de l'église",
+    placeholderNomEglise: "Nom église",
+    labelBranche: "Branche de l'église",
+    placeholderBranche: "Branche église",
+    labelVille: "Ville",
+    placeholderVille: "Ville",
+    labelPays: "Pays",
+    placeholderPays: "Pays *",
+    labelModeEnvoi: "Mode d'envoi",
+    placeholderModeEnvoi: "Choisir un mode d'envoi",
+    modeWhatsapp: "WhatsApp",
+    modeEmail: "Email",
+    champsObligatoires: "* Champs obligatoires",
+    erreurChamp: "Ce champ est obligatoire",
+
+    btnRappel: "📨 Renvoyer un rappel",
+    btnRenvoyer: "🔄 Renvoyer l'invitation",
+    btnEnvoyer: "✉️ Envoyer l'invitation",
+
+    // Tableau
+    tableauTitre: "Liste des églises supervisées",
+    colDenomination: "Dénomination",
+    colNom: "Nom",
+    colBranche: "Branche",
+    colVille: "Ville",
+    colPays: "Pays",
+    colStatut: "Statut",
+    colAction: "Action",
+
+    // Actions tableau
+    actionRappel: "⏳ Rappel",
+    actionSupprimer: "🗑️ Supprimer",
+    actionCasser: "🔗 Casser",
+    actionRenvoyer: "🔄 Renvoyer",
+
+    // Statuts
+    statutAcceptee: "Accepté",
+    statutRefusee: "Refusée",
+    statutLienCasse: "Lien Cassé",
+    statutPending: "En Attente",
+    statutExpired: "Lien Expiré",
+
+    // Modal suppression
+    modalTitre: "🗑️ Confirmer la suppression",
+    modalTexte: "Cette invitation sera définitivement supprimée. Cette action est irréversible.",
+    modalAnnuler: "Annuler",
+    modalSupprimer: "Supprimer",
+
+    // Alert doublon
+    alertDoublon: (statut) => `Une invitation existe déjà pour cette église (statut : ${statut}). Utilisez le bouton correspondant dans le tableau.`,
+
+    // Message d'invitation
+    msgBonjour: (dest) => `Bonjour ${dest},`,
+    msgNouveauInvite: (sup) => `${sup} invite votre église à être sous sa supervision.`,
+    msgRappelInvite: (sup) => `${sup} vous renvoie un rappel pour la supervision de votre église.`,
+    msgLien: "🔗 Cliquez ici pour accepter :",
+    msgSignature: "Que Dieu vous guide puissamment.\nAvec amour en Christ ❤️",
+    msgSujetEmail: "Invitation Spirituelle",
+  },
+  en: {
+    // En-tête
+    titre: "Invitations & Church",
+    titreAccent: "Links",
+
+    // Intro
+    intro1: "Linking a church allows you to place it under your supervision and view its statistics in",
+    intro1Accent: "Global Stats",
+    intro2: "In this",
+    intro2Accent: "interface",
+    intro2Suite: ", you can:",
+    listeActions: [
+      { icon: "✉️", text: "Send an invitation", color: "text-green-400", desc: " to a church" },
+      { icon: "🔗", text: "Break the link", color: "text-gray-400", desc: " with a supervised church" },
+      { icon: "🗑️", text: "Delete", color: "text-red-500", desc: " a sent invitation" },
+      { icon: "🔄", text: "Resend the link", color: "text-green-400", desc: " if needed" },
+      { icon: "⏳", text: "Send a reminder", color: "text-yellow-300", desc: " for a pending invitation" },
+    ],
+    introBas: "All actions are tracked here and visible in your table.",
+
+    // Formulaire
+    formTitreRappel: (denom) => `📨 Reminder — ${denom}`,
+    formTitreRenvoyer: (denom) => `🔄 Resend — ${denom}`,
+    formTitreDefaut: "Send to",
+    annuler: "✕ Cancel",
+
+    labelPrenom: "Leader's first name",
+    placeholderPrenom: "First name *",
+    labelNom: "Leader's last name",
+    placeholderNom: "Last name *",
+    labelDenomination: "Denomination",
+    placeholderDenomination: "Denomination *",
+    labelNomEglise: "Church name",
+    placeholderNomEglise: "Church name",
+    labelBranche: "Church branch",
+    placeholderBranche: "Church branch",
+    labelVille: "City",
+    placeholderVille: "City",
+    labelPays: "Country",
+    placeholderPays: "Country *",
+    labelModeEnvoi: "Sending method",
+    placeholderModeEnvoi: "Choose a sending method",
+    modeWhatsapp: "WhatsApp",
+    modeEmail: "Email",
+    champsObligatoires: "* Required fields",
+    erreurChamp: "This field is required",
+
+    btnRappel: "📨 Resend a reminder",
+    btnRenvoyer: "🔄 Resend invitation",
+    btnEnvoyer: "✉️ Send invitation",
+
+    // Tableau
+    tableauTitre: "List of supervised churches",
+    colDenomination: "Denomination",
+    colNom: "Name",
+    colBranche: "Branch",
+    colVille: "City",
+    colPays: "Country",
+    colStatut: "Status",
+    colAction: "Action",
+
+    // Actions tableau
+    actionRappel: "⏳ Reminder",
+    actionSupprimer: "🗑️ Delete",
+    actionCasser: "🔗 Break",
+    actionRenvoyer: "🔄 Resend",
+
+    // Statuts
+    statutAcceptee: "Accepted",
+    statutRefusee: "Refused",
+    statutLienCasse: "Link Broken",
+    statutPending: "Pending",
+    statutExpired: "Link Expired",
+
+    // Modal suppression
+    modalTitre: "🗑️ Confirm deletion",
+    modalTexte: "This invitation will be permanently deleted. This action is irreversible.",
+    modalAnnuler: "Cancel",
+    modalSupprimer: "Delete",
+
+    // Alert doublon
+    alertDoublon: (statut) => `An invitation already exists for this church (status: ${statut}). Use the corresponding button in the table.`,
+
+    // Message d'invitation
+    msgBonjour: (dest) => `Hello ${dest},`,
+    msgNouveauInvite: (sup) => `${sup} invites your church to come under their supervision.`,
+    msgRappelInvite: (sup) => `${sup} is sending you a reminder about the supervision of your church.`,
+    msgLien: "🔗 Click here to accept:",
+    msgSignature: "May God guide you powerfully.\nWith love in Christ ❤️",
+    msgSujetEmail: "Spiritual Invitation",
+  },
+};
 
 export default function LinkEglise() {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const formRef = useRef(null);
 
   const [superviseur, setSuperviseur] = useState({
@@ -66,11 +255,11 @@ export default function LinkEglise() {
 
   const getStatusLabel = (statut) => {
     switch (statut?.toLowerCase()) {
-      case "acceptee": return "Accepté";
-      case "refusee": return "Refusée";
-      case "lien_casse": return "Lien Cassé";
-      case "pending": return "En Attente";
-      case "expired": return "Lien Expiré";
+      case "acceptee": return t.statutAcceptee;
+      case "refusee": return t.statutRefusee;
+      case "lien_casse": return t.statutLienCasse;
+      case "pending": return t.statutPending;
+      case "expired": return t.statutExpired;
       default: return statut;
     }
   };
@@ -162,126 +351,105 @@ export default function LinkEglise() {
     const destinataire = `${responsable.prenom} ${responsable.nom}`;
     const lien = `https://soultrack-three.vercel.app/accept-invitation?token=${token}`;
 
-    if (mode === "rappel") {
-      return `Bonjour ${destinataire},
+    const salut = t.msgBonjour(destinataire);
+    const corps = mode === "rappel" ? t.msgRappelInvite(superviseurInfo) : t.msgNouveauInvite(superviseurInfo);
 
-${superviseurInfo} vous renvoie un rappel pour la supervision de votre église.
-
-🔗 Cliquez ici pour accepter :
-${lien}
-
-Que Dieu vous guide puissamment.
-Avec amour en Christ ❤️`;
-    }
-
-    return `Bonjour ${destinataire},
-
-${superviseurInfo} invite votre église à être sous sa supervision.
-
-🔗 Cliquez ici pour accepter :
-${lien}
-
-Que Dieu vous guide puissamment.
-Avec amour en Christ ❤️`;
+    return `${salut}\n\n${corps}\n\n${t.msgLien}\n${lien}\n\n${t.msgSignature}`;
   };
 
   const sendMessage = (message) => {
     if (canal === "whatsapp") {
       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
     } else if (canal === "email") {
-      window.location.href = `mailto:?subject=Invitation Spirituelle&body=${encodeURIComponent(message)}`;
+      window.location.href = `mailto:?subject=${encodeURIComponent(t.msgSujetEmail)}&body=${encodeURIComponent(message)}`;
     }
   };
 
   const handleAction = async () => {
-  if (!validate()) return;
+    if (!validate()) return;
 
-  try {
-    const token = crypto.randomUUID();
-    const expireAt = new Date();
-    expireAt.setDate(expireAt.getDate() + 7);
+    try {
+      const token = crypto.randomUUID();
+      const expireAt = new Date();
+      expireAt.setDate(expireAt.getDate() + 7);
 
-    // CAS 1 : Rappel — nouveau token valide 7 jours
-    if (modeAction === "rappel" && selectedInvitation) {
-      await supabase
+      if (modeAction === "rappel" && selectedInvitation) {
+        await supabase
+          .from("eglise_supervisions")
+          .update({
+            invitation_token: token,
+            statut: "pending",
+            expire_at: expireAt.toISOString(),
+          })
+          .eq("id", selectedInvitation.id);
+
+        const message = buildMessage(token, "rappel");
+        sendMessage(message);
+        resetForm();
+        loadInvitations();
+        return;
+      }
+
+      if (modeAction === "renvoyer" && selectedInvitation) {
+        await supabase
+          .from("eglise_supervisions")
+          .update({
+            statut: "pending",
+            invitation_token: token,
+            expire_at: expireAt.toISOString(),
+            responsable_prenom: responsable.prenom,
+            responsable_nom: responsable.nom,
+            eglise_nom: eglise.nom,
+            eglise_denomination: eglise.denomination,
+            eglise_ville: eglise.ville,
+            eglise_pays: eglise.pays,
+            eglise_branche: eglise.branche,
+          })
+          .eq("id", selectedInvitation.id);
+
+        const message = buildMessage(token, "nouveau");
+        sendMessage(message);
+        resetForm();
+        loadInvitations();
+        return;
+      }
+
+      const { data: existing } = await supabase
         .from("eglise_supervisions")
-        .update({
-          invitation_token: token,
-          statut: "pending",
-          expire_at: expireAt.toISOString(),
-        })
-        .eq("id", selectedInvitation.id);
+        .select("id, statut")
+        .eq("superviseur_eglise_id", superviseur.eglise_id)
+        .eq("eglise_denomination", eglise.denomination)
+        .eq("eglise_pays", eglise.pays)
+        .maybeSingle();
 
-      const message = buildMessage(token, "rappel");
-      sendMessage(message);
-      resetForm();
-      loadInvitations();
-      return;
-    }
+      if (existing) {
+        alert(t.alertDoublon(getStatusLabel(existing.statut)));
+        return;
+      }
 
-    // CAS 2 : Renvoyer (refusée ou lien cassé) — nouveau token 7 jours
-    if (modeAction === "renvoyer" && selectedInvitation) {
-      await supabase
-        .from("eglise_supervisions")
-        .update({
-          statut: "pending",
-          invitation_token: token,
-          expire_at: expireAt.toISOString(),
-          responsable_prenom: responsable.prenom,
-          responsable_nom: responsable.nom,
-          eglise_nom: eglise.nom,
-          eglise_denomination: eglise.denomination,
-          eglise_ville: eglise.ville,
-          eglise_pays: eglise.pays,
-          eglise_branche: eglise.branche,
-        })
-        .eq("id", selectedInvitation.id);
+      await supabase.from("eglise_supervisions").insert([{
+        superviseur_eglise_id: superviseur.eglise_id,
+        responsable_prenom: responsable.prenom,
+        responsable_nom: responsable.nom,
+        eglise_nom: eglise.nom,
+        eglise_denomination: eglise.denomination,
+        eglise_ville: eglise.ville,
+        eglise_pays: eglise.pays,
+        eglise_branche: eglise.branche,
+        statut: "pending",
+        invitation_token: token,
+        expire_at: expireAt.toISOString(),
+      }]);
 
       const message = buildMessage(token, "nouveau");
       sendMessage(message);
       resetForm();
       loadInvitations();
-      return;
+
+    } catch (err) {
+      console.error(err);
     }
-
-    // CAS 3 : Nouvelle invitation
-    // On vérifie d'abord si une entrée existe déjà pour éviter le 409
-    const { data: existing } = await supabase
-      .from("eglise_supervisions")
-      .select("id, statut")
-      .eq("superviseur_eglise_id", superviseur.eglise_id)
-      .eq("eglise_denomination", eglise.denomination)
-      .eq("eglise_pays", eglise.pays)
-      .maybeSingle();
-
-    if (existing) {
-      alert(`Une invitation existe déjà pour cette église (statut : ${getStatusLabel(existing.statut)}). Utilisez le bouton correspondant dans le tableau.`);
-      return;
-    }
-
-    await supabase.from("eglise_supervisions").insert([{
-      superviseur_eglise_id: superviseur.eglise_id,
-      responsable_prenom: responsable.prenom,
-      responsable_nom: responsable.nom,
-      eglise_nom: eglise.nom,
-      eglise_denomination: eglise.denomination,
-      eglise_ville: eglise.ville,
-      eglise_pays: eglise.pays,
-      eglise_branche: eglise.branche,
-      statut: "pending",
-      invitation_token: token,
-      expire_at: expireAt.toISOString(),
-    }]);
-
-    const message = buildMessage(token, "nouveau");
-    sendMessage(message);
-    resetForm();
-    loadInvitations();
-
-  } catch (err) {
-    console.error(err);
-  }
-};
+  };
 
   const inputClass = (hasError) =>
     `w-full p-2 text-black rounded ${hasError ? "border-2 border-red-500" : ""}`;
@@ -293,9 +461,15 @@ Avec amour en Christ ❤️`;
   );
 
   const buttonLabel = () => {
-    if (modeAction === "rappel") return "📨 Renvoyer un rappel";
-    if (modeAction === "renvoyer") return "🔄 Renvoyer l'invitation";
-    return "✉️ Envoyer l'invitation";
+    if (modeAction === "rappel") return t.btnRappel;
+    if (modeAction === "renvoyer") return t.btnRenvoyer;
+    return t.btnEnvoyer;
+  };
+
+  const formTitre = () => {
+    if (modeAction === "rappel") return t.formTitreRappel(eglise.denomination || "...");
+    if (modeAction === "renvoyer") return t.formTitreRenvoyer(eglise.denomination || "...");
+    return t.formTitreDefaut;
   };
 
   return (
@@ -305,26 +479,24 @@ Avec amour en Christ ❤️`;
       {/* INTRO */}
       <div className="w-full flex flex-col items-center mb-8">
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-          Invitations & Liens <span className="text-emerald-300">d'Eglises</span>
+          {t.titre} <span className="text-emerald-300">{t.titreAccent}</span>
         </h1>
         <div className="max-w-3xl w-full text-center">
           <p className="italic text-base text-white/90 mb-4">
-            Relier une église vous permet de placer une église sous votre supervision et de voir ses statistiques dans{" "}
-            <span className="text-blue-300 font-semibold">Stats Globales</span>.
+            {t.intro1}{" "}
+            <span className="text-blue-300 font-semibold">{t.intro1Accent}</span>.
           </p>
           <p className="italic text-base text-white/90 mb-4">
-            Dans cette <span className="text-blue-300 font-semibold">interface</span>, vous pouvez :
+            {t.intro2} <span className="text-blue-300 font-semibold">{t.intro2Accent}</span>{t.intro2Suite}
           </p>
           <ul className="list-none space-y-3 text-base">
-            <li className="text-green-400 italic mt-3">✉️ <strong>Envoyer une invitation</strong> à une église</li>
-            <li className="text-gray-400 italic">🔗 <strong>Casser le lien</strong> avec une église supervisée</li>
-            <li className="text-red-500 italic">🗑️ <strong>Supprimer</strong> une invitation envoyée</li>
-            <li className="text-green-400 italic">🔄 <strong>Renvoyer le lien</strong> si nécessaire</li>
-            <li className="text-yellow-300 italic">⏳ <strong>Envoyer un rappel</strong> pour une invitation en attente</li>
+            {t.listeActions.map((item, i) => (
+              <li key={i} className={`${item.color} italic${i === 0 ? " mt-3" : ""}`}>
+                {item.icon} <strong>{item.text}</strong>{item.desc}
+              </li>
+            ))}
           </ul>
-          <p className="mt-3 text-gray-300 text-sm italic">
-            Toutes les actions sont suivies ici et visibles dans votre tableau.
-          </p>
+          <p className="mt-3 text-gray-300 text-sm italic">{t.introBas}</p>
         </div>
       </div>
 
@@ -332,92 +504,86 @@ Avec amour en Christ ❤️`;
       <div ref={formRef} className="w-full max-w-md bg-white/10 p-6 rounded-xl space-y-4">
 
         <div className="flex items-center justify-between border-b border-white/20 pb-2">
-          <h2 className="text-lg font-semibold text-emerald-300">
-            {modeAction === "rappel"
-              ? `📨 Rappel — ${eglise.denomination || "..."}`
-              : modeAction === "renvoyer"
-              ? `🔄 Renvoyer — ${eglise.denomination || "..."}`
-              : "Envoyer à"}
-          </h2>
+          <h2 className="text-lg font-semibold text-emerald-300">{formTitre()}</h2>
           {modeAction && (
             <button onClick={resetForm} className="text-xs text-white/50 hover:text-white underline">
-              ✕ Annuler
+              {t.annuler}
             </button>
           )}
         </div>
 
         <div>
-          <LabelField required>Prénom du responsable</LabelField>
-          <input className={inputClass(errors.prenom)} placeholder="Prénom *"
+          <LabelField required>{t.labelPrenom}</LabelField>
+          <input className={inputClass(errors.prenom)} placeholder={t.placeholderPrenom}
             value={responsable.prenom}
             onChange={(e) => setResponsable({ ...responsable, prenom: e.target.value })}
           />
-          {errors.prenom && <p className="text-red-400 text-xs mt-1">Ce champ est obligatoire</p>}
+          {errors.prenom && <p className="text-red-400 text-xs mt-1">{t.erreurChamp}</p>}
         </div>
 
         <div>
-          <LabelField required>Nom du responsable</LabelField>
-          <input className={inputClass(errors.nom)} placeholder="Nom *"
+          <LabelField required>{t.labelNom}</LabelField>
+          <input className={inputClass(errors.nom)} placeholder={t.placeholderNom}
             value={responsable.nom}
             onChange={(e) => setResponsable({ ...responsable, nom: e.target.value })}
           />
-          {errors.nom && <p className="text-red-400 text-xs mt-1">Ce champ est obligatoire</p>}
+          {errors.nom && <p className="text-red-400 text-xs mt-1">{t.erreurChamp}</p>}
         </div>
 
         <div>
-          <LabelField required>Dénomination</LabelField>
-          <input className={inputClass(errors.denomination)} placeholder="Dénomination *"
+          <LabelField required>{t.labelDenomination}</LabelField>
+          <input className={inputClass(errors.denomination)} placeholder={t.placeholderDenomination}
             value={eglise.denomination}
             onChange={(e) => setEglise({ ...eglise, denomination: e.target.value })}
           />
-          {errors.denomination && <p className="text-red-400 text-xs mt-1">Ce champ est obligatoire</p>}
+          {errors.denomination && <p className="text-red-400 text-xs mt-1">{t.erreurChamp}</p>}
         </div>
 
         <div>
-          <LabelField>Nom de l'église</LabelField>
-          <input className={inputClass(false)} placeholder="Nom église"
+          <LabelField>{t.labelNomEglise}</LabelField>
+          <input className={inputClass(false)} placeholder={t.placeholderNomEglise}
             value={eglise.nom}
             onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
           />
         </div>
 
         <div>
-          <LabelField>Branche de l'église</LabelField>
-          <input className={inputClass(false)} placeholder="Branche église"
+          <LabelField>{t.labelBranche}</LabelField>
+          <input className={inputClass(false)} placeholder={t.placeholderBranche}
             value={eglise.branche}
             onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
           />
         </div>
 
         <div>
-          <LabelField>Ville</LabelField>
-          <input className={inputClass(false)} placeholder="Ville"
+          <LabelField>{t.labelVille}</LabelField>
+          <input className={inputClass(false)} placeholder={t.placeholderVille}
             value={eglise.ville}
             onChange={(e) => setEglise({ ...eglise, ville: e.target.value })}
           />
         </div>
 
         <div>
-          <LabelField required>Pays</LabelField>
-          <input className={inputClass(errors.pays)} placeholder="Pays *"
+          <LabelField required>{t.labelPays}</LabelField>
+          <input className={inputClass(errors.pays)} placeholder={t.placeholderPays}
             value={eglise.pays}
             onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
           />
-          {errors.pays && <p className="text-red-400 text-xs mt-1">Ce champ est obligatoire</p>}
+          {errors.pays && <p className="text-red-400 text-xs mt-1">{t.erreurChamp}</p>}
         </div>
 
         <div>
-          <LabelField>Mode d'envoi</LabelField>
+          <LabelField>{t.labelModeEnvoi}</LabelField>
           <select className="w-full p-2 text-black rounded" value={canal}
             onChange={(e) => setCanal(e.target.value)}
           >
-            <option value="">Choisir un mode d'envoi</option>
-            <option value="whatsapp">WhatsApp</option>
-            <option value="email">Email</option>
+            <option value="">{t.placeholderModeEnvoi}</option>
+            <option value="whatsapp">{t.modeWhatsapp}</option>
+            <option value="email">{t.modeEmail}</option>
           </select>
         </div>
 
-        <p className="text-white/50 text-xs">* Champs obligatoires</p>
+        <p className="text-white/50 text-xs">{t.champsObligatoires}</p>
 
         <button onClick={handleAction}
           className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded font-semibold transition-colors"
@@ -428,18 +594,18 @@ Avec amour en Christ ❤️`;
 
       {/* TABLE */}
       <h3 className="w-full max-w-5xl text-center text-2xl font-bold text-amber-300 mb-6 mt-10">
-        Liste des églises supervisées
+        {t.tableauTitre}
       </h3>
 
       <div className="w-full max-w-5xl overflow-x-auto">
         <div className="hidden md:grid md:grid-cols-[1.3fr_1fr_1fr_1fr_1fr_0.8fr_1fr] text-sm font-semibold uppercase border-b border-white/40 pb-2 gap-x-3 px-4">
-          <div>Dénomination</div>
-          <div>Nom</div>
-          <div>Branche</div>
-          <div>Ville</div>
-          <div>Pays</div>
-          <div>Statut</div>
-          <div className="text-center">Action</div>
+          <div>{t.colDenomination}</div>
+          <div>{t.colNom}</div>
+          <div>{t.colBranche}</div>
+          <div>{t.colVille}</div>
+          <div>{t.colPays}</div>
+          <div>{t.colStatut}</div>
+          <div className="text-center">{t.colAction}</div>
         </div>
 
         {invitations.map((inv) => {
@@ -449,27 +615,27 @@ Avec amour en Christ ❤️`;
               className={`grid grid-cols-1 md:grid-cols-[1.3fr_1fr_1fr_1fr_1fr_0.8fr_1fr] gap-x-3 px-4 py-3 mt-3 items-center border-l-4 ${statusStyle.border} bg-white/5 rounded-lg`}
             >
               <div>
-                <span className="block text-xs text-white/50 uppercase md:hidden">Dénomination</span>
+                <span className="block text-xs text-white/50 uppercase md:hidden">{t.colDenomination}</span>
                 {inv.eglise_denomination}
               </div>
               <div>
-                <span className="block text-xs text-white/50 uppercase md:hidden">Nom</span>
+                <span className="block text-xs text-white/50 uppercase md:hidden">{t.colNom}</span>
                 {inv.eglise_nom}
               </div>
               <div>
-                <span className="block text-xs text-white/50 uppercase md:hidden">Branche</span>
+                <span className="block text-xs text-white/50 uppercase md:hidden">{t.colBranche}</span>
                 {inv.eglise_branche}
               </div>
               <div>
-                <span className="block text-xs text-white/50 uppercase md:hidden">Ville</span>
+                <span className="block text-xs text-white/50 uppercase md:hidden">{t.colVille}</span>
                 {inv.eglise_ville}
               </div>
               <div>
-                <span className="block text-xs text-white/50 uppercase md:hidden">Pays</span>
+                <span className="block text-xs text-white/50 uppercase md:hidden">{t.colPays}</span>
                 {inv.eglise_pays}
               </div>
               <div className={`font-semibold ${statusStyle.text}`}>
-                <span className="block text-xs text-white/50 uppercase md:hidden">Statut</span>
+                <span className="block text-xs text-white/50 uppercase md:hidden">{t.colStatut}</span>
                 {getStatusLabel(inv.statut)}
               </div>
 
@@ -480,13 +646,13 @@ Avec amour en Christ ❤️`;
                       onClick={() => handleSelectInvitation(inv, "rappel")}
                       className="text-yellow-300 hover:underline whitespace-nowrap"
                     >
-                      ⏳ Rappel
+                      {t.actionRappel}
                     </button>
                     <button
                       onClick={() => setConfirmDelete(inv.id)}
                       className="text-red-400 hover:underline whitespace-nowrap"
                     >
-                      🗑️ Supprimer
+                      {t.actionSupprimer}
                     </button>
                   </>
                 )}
@@ -495,7 +661,7 @@ Avec amour en Christ ❤️`;
                     onClick={() => handleCasser(inv)}
                     className="text-gray-300 hover:underline whitespace-nowrap"
                   >
-                    🔗 Casser
+                    {t.actionCasser}
                   </button>
                 )}
                 {(inv.statut === "refusee" || inv.statut === "lien_casse") && (
@@ -503,7 +669,7 @@ Avec amour en Christ ❤️`;
                     onClick={() => handleSelectInvitation(inv, "renvoyer")}
                     className="text-green-300 hover:underline whitespace-nowrap"
                   >
-                    🔄 Renvoyer
+                    {t.actionRenvoyer}
                   </button>
                 )}
               </div>
@@ -516,22 +682,20 @@ Avec amour en Christ ❤️`;
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
           <div className="bg-[#1e2a7a] border border-red-500 rounded-xl p-6 max-w-sm w-full text-center space-y-4">
-            <p className="text-lg font-semibold text-white">🗑️ Confirmer la suppression</p>
-            <p className="text-white/70 text-sm">
-              Cette invitation sera définitivement supprimée. Cette action est irréversible.
-            </p>
+            <p className="text-lg font-semibold text-white">{t.modalTitre}</p>
+            <p className="text-white/70 text-sm">{t.modalTexte}</p>
             <div className="flex gap-3 justify-center mt-2">
               <button
                 onClick={() => setConfirmDelete(null)}
                 className="px-4 py-2 rounded bg-white/10 hover:bg-white/20 text-white text-sm"
               >
-                Annuler
+                {t.modalAnnuler}
               </button>
               <button
                 onClick={() => handleDelete(confirmDelete)}
                 className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white text-sm font-semibold"
               >
-                Supprimer
+                {t.modalSupprimer}
               </button>
             </div>
           </div>

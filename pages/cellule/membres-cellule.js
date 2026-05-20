@@ -201,6 +201,7 @@ function MembresCelluleContent() {
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [logoBase64, setLogoBase64] = useState(null);
+  const [egliseData, setEgliseData] = useState(null);
 
   const memberIdStr =
     typeof memberId === "string"
@@ -308,6 +309,72 @@ setCellules([
 
     fetchCellules();
   }, []);
+
+  // ─── Charger infos église ─────────────────────────
+      const { data: egliseInfo } = await supabase
+        .from("eglises")
+        .select("*")
+        .eq("id", profile.eglise_id)
+        .single();
+
+      if (egliseInfo) {
+        setEgliseData(egliseInfo);
+
+        if (egliseInfo.logo_url) {
+          try {
+            const response = await fetch(egliseInfo.logo_url);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setLogoBase64(reader.result);
+            };
+            reader.readAsDataURL(blob);
+          } catch (err) {
+            console.error("Erreur logo:", err);
+          }
+        }
+      }
+
+      const rolesArray = getRoles(profile);
+      if (rolesArray.includes("Conseiller")) {
+        setUserRole("Conseiller");
+      } else {
+        setUserRole(rolesArray[0] || null);
+      }
+
+      if (cellulesActive) {
+        const { data: cellulesData } = await supabase
+          .from("cellules")
+          .select("id, cellule_full")
+          .eq("eglise_id", profile.eglise_id)
+          .order("cellule_full");
+        if (cellulesData) setCellules(cellulesData);
+      }
+
+      if (famillesActive) {
+        const { data: famillesData } = await supabase
+          .from("familles")
+          .select("id, ville, famille_full")
+          .eq("eglise_id", profile.eglise_id)
+          .order("famille_full");
+        if (famillesData) setFamilles(famillesData);
+      }
+
+      if (conseillerActive) {
+        const { data: conseillersData } = await supabase
+          .from("profiles")
+          .select("id, prenom, nom, telephone")
+          .contains("roles", ["Conseiller"])
+          .eq("eglise_id", profile.eglise_id)
+          .order("prenom");
+        if (conseillersData) setConseillers(conseillersData);
+      }
+
+      await fetchAssignments(profile);
+    };
+
+    fetchData();
+  }, [fetchAssignments, famillesActive, cellulesActive, conseillerActive]);
 
   // ── Fetch membres ──
   useEffect(() => {

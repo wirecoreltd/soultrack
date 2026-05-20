@@ -7,19 +7,133 @@ import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    // Page
+    pageTitle: "Mon",
+    pageTitleHighlight: "Abonnement",
+    pageSubtitle: "Gérez votre plan et suivez votre utilisation",
+    loading: "Chargement...",
+    noActivePlan: "Aucun plan actif trouvé.",
+
+    // Messages retour
+    paymentConfirmed: "Paiement confirmé ! Votre plan a été mis à jour.",
+    paymentCancelled: "Paiement annulé. Aucun changement effectué.",
+
+    // Plan actuel
+    currentPlan: "Plan actuel",
+    renewalDate: "Renouvellement le",
+    membersUsed: "membres utilisés",
+    unlimited: "Illimité",
+    max: "max",
+    approachingLimit: "⚠️ Vous approchez de la limite — pensez à upgrader.",
+
+    // Changer de plan
+    changePlan: "Changer de plan",
+    upgrade: "↑ Upgrade",
+    downgrade: "↓ Downgrade",
+    paymentRequired: "💳 Paiement requis",
+    recommended: "Recommandé",
+    limitExceeded: "⚠️ Limite dépassée",
+
+    // Confirmation
+    switchToPlan: "Passer au plan",
+    downgradeWarning: "⚠️ Vos {count} membres dépassent la limite de {limit} du plan {name}. Certains membres pourraient devenir inaccessibles.",
+    enterpriseNote: "Notre équipe vous contactera pour configurer votre plan sur mesure.",
+    downgradeNote: "Votre plan sera réduit à la fin du cycle actuel.",
+    choosePayment: "Choisissez votre moyen de paiement pour activer ce plan.",
+    contactUs: "📧 Nous contacter",
+    confirmDowngrade: "Confirmer le downgrade",
+    proceedPayment: "💳 Procéder au paiement",
+    cancel: "Annuler",
+
+    // Modal paiement
+    paymentMethod: "Choisissez votre moyen de paiement",
+    creditCard: "Carte bancaire",
+    creditCardSub: "Via Paddle · Visa, Mastercard, Apple Pay",
+    paypalSub: "Compte PayPal ou carte via PayPal",
+    securePayment: "🔒 Paiement sécurisé · Annulable à tout moment",
+    confirmingDowngrade: "Confirmer le downgrade",
+    confirmingDowngradeInProgress: "En cours…",
+    freeDowngradeNote: "Vous allez revenir au plan gratuit (50 membres max).",
+    errorPrefix: "Erreur : ",
+    errorPaddle: "Erreur Paddle : ",
+    errorPaypal: "Erreur PayPal : ",
+    paddleNotLoaded: "Paddle.js non chargé",
+    freeDowngradeSuccess: "Retour au plan Départ effectué.",
+    freePlanActivated: "Plan {name} activé via PayPal !",
+  },
+  en: {
+    // Page
+    pageTitle: "My",
+    pageTitleHighlight: "Subscription",
+    pageSubtitle: "Manage your plan and track your usage",
+    loading: "Loading...",
+    noActivePlan: "No active plan found.",
+
+    // Return messages
+    paymentConfirmed: "Payment confirmed! Your plan has been updated.",
+    paymentCancelled: "Payment cancelled. No changes were made.",
+
+    // Current plan
+    currentPlan: "Current plan",
+    renewalDate: "Renews on",
+    membersUsed: "members used",
+    unlimited: "Unlimited",
+    max: "max",
+    approachingLimit: "⚠️ You are approaching the limit — consider upgrading.",
+
+    // Change plan
+    changePlan: "Change plan",
+    upgrade: "↑ Upgrade",
+    downgrade: "↓ Downgrade",
+    paymentRequired: "💳 Payment required",
+    recommended: "Recommended",
+    limitExceeded: "⚠️ Limit exceeded",
+
+    // Confirmation
+    switchToPlan: "Switch to plan",
+    downgradeWarning: "⚠️ Your {count} members exceed the limit of {limit} for the {name} plan. Some members may become inaccessible.",
+    enterpriseNote: "Our team will contact you to configure your custom plan.",
+    downgradeNote: "Your plan will be reduced at the end of the current billing cycle.",
+    choosePayment: "Choose your payment method to activate this plan.",
+    contactUs: "📧 Contact us",
+    confirmDowngrade: "Confirm downgrade",
+    proceedPayment: "💳 Proceed to payment",
+    cancel: "Cancel",
+
+    // Payment modal
+    paymentMethod: "Choose your payment method",
+    creditCard: "Credit card",
+    creditCardSub: "Via Paddle · Visa, Mastercard, Apple Pay",
+    paypalSub: "PayPal account or card via PayPal",
+    securePayment: "🔒 Secure payment · Cancel anytime",
+    confirmingDowngrade: "Confirm downgrade",
+    confirmingDowngradeInProgress: "Processing…",
+    freeDowngradeNote: "You will return to the free plan (50 members max).",
+    errorPrefix: "Error: ",
+    errorPaddle: "Paddle error: ",
+    errorPaypal: "PayPal error: ",
+    paddleNotLoaded: "Paddle.js not loaded",
+    freeDowngradeSuccess: "Switched back to Starter plan.",
+    freePlanActivated: "{name} plan activated via PayPal!",
+  },
+};
 
 const PLANS = [
-  { id: "free",       nom: "Départ",     prix: "Gratuit",    prixNum: 0,  limite: 50,   emoji: "🌱", color: "#10b981" },
-  { id: "starter",    nom: "Croissance", prix: "$19/mois",   prixNum: 19, limite: 200,  emoji: "📈", color: "#3b82f6" },
-  { id: "vision",     nom: "Vision",     prix: "$39/mois",   prixNum: 39, limite: 500,  emoji: "🔥", color: "#f59e0b" },
-  { id: "expansion",  nom: "Expansion",  prix: "$79/mois",   prixNum: 79, limite: 1500, emoji: "🌍", color: "#8b5cf6" },
-  { id: "enterprise", nom: "Réseaux",    prix: "Sur mesure", prixNum: 99, limite: null, emoji: "🔗", color: "#ec4899" },
+  { id: "free",       nom: { fr: "Départ",     en: "Starter"    }, prix: { fr: "Gratuit",    en: "Free"       }, prixNum: 0,  limite: 50,   emoji: "🌱", color: "#10b981" },
+  { id: "starter",    nom: { fr: "Croissance", en: "Growth"     }, prix: { fr: "$19/mois",   en: "$19/mo"     }, prixNum: 19, limite: 200,  emoji: "📈", color: "#3b82f6" },
+  { id: "vision",     nom: { fr: "Vision",     en: "Vision"     }, prix: { fr: "$39/mois",   en: "$39/mo"     }, prixNum: 39, limite: 500,  emoji: "🔥", color: "#f59e0b" },
+  { id: "expansion",  nom: { fr: "Expansion",  en: "Expansion"  }, prix: { fr: "$79/mois",   en: "$79/mo"     }, prixNum: 79, limite: 1500, emoji: "🌍", color: "#8b5cf6" },
+  { id: "enterprise", nom: { fr: "Réseaux",    en: "Networks"   }, prix: { fr: "Sur mesure", en: "Custom"     }, prixNum: 99, limite: null, emoji: "🔗", color: "#ec4899" },
 ];
 
 // Plans gratuits ou sur mesure → pas de paiement en ligne
-const FREE_PLANS       = ["free", "enterprise"];
+const FREE_PLANS     = ["free", "enterprise"];
 // Plans en mode paiement unique (sinon récurrent)
-const ONE_TIME_PLANS   = [];
+const ONE_TIME_PLANS = [];
 
 function barColor(pct) {
   if (pct < 50) return "#10b981";
@@ -36,7 +150,6 @@ function ProgressBar({ value, max, height = 8 }) {
   );
 }
 
-// ── Spinner ──
 function Spinner() {
   return (
     <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -47,18 +160,17 @@ function Spinner() {
 }
 
 // ── Modal de choix du moyen de paiement ──
-function PaymentModal({ plan, egliseId, onClose, onSuccess }) {
-  const [loading, setLoading] = useState(null); // "paddle" | "paypal" | null
+function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
+  const t = translations[lang];
+  const [loading, setLoading] = useState(null); // "paddle" | "paypal" | "free" | null
   const [error, setError]     = useState(null);
 
-  const isFree       = FREE_PLANS.includes(plan.id);
-  const needsPayment = !isFree;
+  const isFree = FREE_PLANS.includes(plan.id);
 
-  // Downgrade vers free → pas de paiement, simple update
   async function handleFreeDowngrade() {
     setLoading("free");
     try {
-      const now      = new Date();
+      const now       = new Date();
       const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
       const { error: err } = await supabase
         .from("subscriptions")
@@ -73,53 +185,50 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess }) {
         .eq("eglise_id", egliseId);
 
       if (err) throw err;
-      onSuccess("Retour au plan Départ effectué.");
+      onSuccess(t.freeDowngradeSuccess);
     } catch (e) {
-      setError("Erreur : " + e.message);
+      setError(t.errorPrefix + e.message);
     } finally {
       setLoading(null);
     }
   }
 
-  // Checkout Paddle
   async function handlePaddle() {
-  setLoading("paddle");
-  setError(null);
-  try {
-    const res  = await fetch("/api/paddle/create-checkout", {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ egliseId, planId: plan.id }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
+    setLoading("paddle");
+    setError(null);
+    try {
+      const res  = await fetch("/api/paddle/create-checkout", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ egliseId, planId: plan.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
-    // Ouvre le checkout Paddle en overlay (pas de redirect)
-    if (!window.Paddle) throw new Error("Paddle.js non chargé");
+      if (!window.Paddle) throw new Error(t.paddleNotLoaded);
 
-    window.Paddle.Checkout.open({
-      items: [{ priceId: data.priceId, quantity: 1 }],
-      customer: {
-        email: data.email,        
-        ...(data.customerId ? { id: data.customerId } : {}),
-      },
-      customData: { egliseId, planId: plan.id },
-      settings: {
-        successUrl: `${window.location.origin}/subscription?success=true`,
-        displayMode: "redirect",
-        theme: "dark",
-      },
-    });
+      window.Paddle.Checkout.open({
+        items: [{ priceId: data.priceId, quantity: 1 }],
+        customer: {
+          email: data.email,
+          ...(data.customerId ? { id: data.customerId } : {}),
+        },
+        customData: { egliseId, planId: plan.id },
+        settings: {
+          successUrl: `${window.location.origin}/subscription?success=true`,
+          displayMode: "redirect",
+          theme: "dark",
+        },
+      });
 
-    onClose(); // Ferme ton modal SoulTrack
-  } catch (e) {
-    setError("Erreur Paddle : " + e.message);
-  } finally {
-    setLoading(null);
+      onClose();
+    } catch (e) {
+      setError(t.errorPaddle + e.message);
+    } finally {
+      setLoading(null);
+    }
   }
-}
 
-  // Checkout PayPal
   async function handlePayPal() {
     setLoading("paypal");
     setError(null);
@@ -133,10 +242,8 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess }) {
       if (!res.ok) throw new Error(data.error);
 
       if (data.type === "subscription") {
-        // Abonnement récurrent → redirect vers PayPal pour approbation
         window.location.href = data.approvalUrl;
       } else {
-        // Paiement unique → on capture directement
         const captureRes  = await fetch("/api/paypal/capture-order", {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
@@ -144,10 +251,10 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess }) {
         });
         const captureData = await captureRes.json();
         if (!captureRes.ok) throw new Error(captureData.error);
-        onSuccess(`Plan ${plan.nom} activé via PayPal !`);
+        onSuccess(t.freePlanActivated.replace("{name}", plan.nom[lang]));
       }
     } catch (e) {
-      setError("Erreur PayPal : " + e.message);
+      setError(t.errorPaypal + e.message);
       setLoading(null);
     }
   }
@@ -165,9 +272,9 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess }) {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-white font-bold text-lg">
-              {plan.emoji} {plan.nom}
+              {plan.emoji} {plan.nom[lang]}
             </p>
-            <p className="text-white/40 text-sm">{plan.prix}</p>
+            <p className="text-white/40 text-sm">{plan.prix[lang]}</p>
           </div>
           <button
             onClick={onClose}
@@ -184,28 +291,27 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess }) {
         )}
 
         {isFree ? (
-          // Downgrade vers free
           <div className="space-y-3">
-            <p className="text-white/60 text-sm">
-              Vous allez revenir au plan gratuit (50 membres max).
-            </p>
+            <p className="text-white/60 text-sm">{t.freeDowngradeNote}</p>
             <button
               onClick={handleFreeDowngrade}
               disabled={loading === "free"}
               className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-opacity"
               style={{ background: "#10b981", color: "#fff", opacity: loading ? 0.7 : 1 }}
             >
-              {loading === "free" ? <><Spinner /> En cours…</> : "Confirmer le downgrade"}
+              {loading === "free"
+                ? <><Spinner /> {t.confirmingDowngradeInProgress}</>
+                : t.confirmingDowngrade
+              }
             </button>
           </div>
         ) : (
-          // Choix du moyen de paiement
           <div className="space-y-3">
             <p className="text-white/50 text-xs uppercase tracking-widest font-semibold">
-              Choisissez votre moyen de paiement
+              {t.paymentMethod}
             </p>
 
-            {/* Paddle — Recommandé */}
+            {/* Paddle */}
             <button
               onClick={handlePaddle}
               disabled={!!loading}
@@ -226,17 +332,14 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess }) {
               </div>
               <div className="flex-1">
                 <p className="text-white font-semibold text-sm flex items-center gap-2">
-                  Carte bancaire
+                  {t.creditCard}
                   <span className="text-[10px] bg-indigo-400/20 text-indigo-300 px-1.5 py-0.5 rounded-full font-bold">
-                    Recommandé
+                    {t.recommended}
                   </span>
                 </p>
-                <p className="text-white/40 text-xs mt-0.5">Via Paddle · Visa, Mastercard, Apple Pay</p>
+                <p className="text-white/40 text-xs mt-0.5">{t.creditCardSub}</p>
               </div>
-              {loading === "paddle"
-                ? <Spinner />
-                : <span className="text-white/30 text-lg">→</span>
-              }
+              {loading === "paddle" ? <Spinner /> : <span className="text-white/30 text-lg">→</span>}
             </button>
 
             {/* PayPal */}
@@ -252,7 +355,6 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess }) {
             >
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                 style={{ background: "rgba(0,112,240,0.15)" }}>
-                {/* PayPal P logo */}
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                   <path d="M7 20V4h6a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5H9" stroke="#60a5fa" strokeWidth="1.8" strokeLinecap="round"/>
                   <path d="M9 14l-2 6" stroke="#60a5fa" strokeWidth="1.8" strokeLinecap="round"/>
@@ -260,19 +362,14 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess }) {
               </div>
               <div className="flex-1">
                 <p className="text-white font-semibold text-sm">PayPal</p>
-                <p className="text-white/40 text-xs mt-0.5">Compte PayPal ou carte via PayPal</p>
+                <p className="text-white/40 text-xs mt-0.5">{t.paypalSub}</p>
               </div>
-              {loading === "paypal"
-                ? <Spinner />
-                : <span className="text-white/30 text-lg">→</span>
-              }
+              {loading === "paypal" ? <Spinner /> : <span className="text-white/30 text-lg">→</span>}
             </button>
           </div>
         )}
 
-        <p className="text-white/25 text-[11px] text-center">
-          🔒 Paiement sécurisé · Annulable à tout moment
-        </p>
+        <p className="text-white/25 text-[11px] text-center">{t.securePayment}</p>
       </div>
     </div>
   );
@@ -281,26 +378,26 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess }) {
 // ══════════════════════════════════════════════
 function SubscriptionContent() {
   const router = useRouter();
+  const { lang } = useLang();
+  const t = translations[lang];
 
-  const [subscription, setSubscription]     = useState(null);
-  const [nombreMembres, setNombreMembres]   = useState(0);
-  const [egliseId, setEgliseId]             = useState(null);
-  const [loading, setLoading]               = useState(true);
-  const [message, setMessage]               = useState(null);
-  const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [subscription, setSubscription]         = useState(null);
+  const [nombreMembres, setNombreMembres]       = useState(0);
+  const [egliseId, setEgliseId]                 = useState(null);
+  const [loading, setLoading]                   = useState(true);
+  const [message, setMessage]                   = useState(null);
+  const [selectedPlanId, setSelectedPlanId]     = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     loadData();
 
-    // Détecte retour depuis Paddle/PayPal
     const params = new URLSearchParams(window.location.search);
     if (params.get("success") === "true") {
-      setMessage({ type: "success", text: "Paiement confirmé ! Votre plan a été mis à jour." });
-      // Nettoie l'URL
+      setMessage({ type: "success", text: t.paymentConfirmed });
       window.history.replaceState({}, "", window.location.pathname);
     } else if (params.get("cancelled") === "true") {
-      setMessage({ type: "error", text: "Paiement annulé. Aucun changement effectué." });
+      setMessage({ type: "error", text: t.paymentCancelled });
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
@@ -362,7 +459,6 @@ function SubscriptionContent() {
 
   return (
     <>
-      {/* Script Paddle.js (Paddle Billing) */}
       <Script
         src="https://cdn.paddle.com/paddle/v2/paddle.js"
         strategy="afterInteractive"
@@ -373,11 +469,11 @@ function SubscriptionContent() {
         }}
       />
 
-      {/* Modal de paiement */}
       {showPaymentModal && confirmTarget && egliseId && (
         <PaymentModal
           plan={confirmTarget}
           egliseId={egliseId}
+          lang={lang}
           onClose={() => setShowPaymentModal(false)}
           onSuccess={handlePaymentSuccess}
         />
@@ -387,21 +483,20 @@ function SubscriptionContent() {
         <HeaderPages />
 
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
-          Mon <span className="text-emerald-300">Abonnement</span>
+          {t.pageTitle} <span className="text-emerald-300">{t.pageTitleHighlight}</span>
         </h1>
 
         <div className="max-w-3xl w-full mb-6 text-center mx-auto">
           <p className="italic text-base text-white/90">
-            <span className="text-blue-300 font-semibold">Gérez votre plan et suivez votre utilisation</span>.
+            <span className="text-blue-300 font-semibold">{t.pageSubtitle}</span>.
           </p>
         </div>
 
         <div className="max-w-3xl mx-auto space-y-5">
           {loading ? (
-            <p className="text-center text-white/60 py-20">Chargement...</p>
+            <p className="text-center text-white/60 py-20">{t.loading}</p>
           ) : (
             <>
-              {/* Message de retour */}
               {message && (
                 <div
                   className={`rounded-xl px-4 py-3 text-sm font-medium border ${
@@ -428,53 +523,52 @@ function SubscriptionContent() {
                     className="inline-block text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full mb-3"
                     style={{ background: `${planActuel.color}22`, color: planActuel.color }}
                   >
-                    Plan actuel
+                    {t.currentPlan}
                   </span>
 
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <span className="text-3xl">{planActuel.emoji}</span>
                       <div>
-                        <p className="text-white font-semibold text-lg leading-tight">{planActuel.nom}</p>
+                        <p className="text-white font-semibold text-lg leading-tight">{planActuel.nom[lang]}</p>
                         {subscription?.current_period_end && (
                           <p className="text-white/40 text-xs mt-0.5">
-                            Renouvellement le{" "}
-                            {new Date(subscription.current_period_end).toLocaleDateString("fr-FR", {
-                              day: "numeric", month: "long", year: "numeric",
-                            })}
+                            {t.renewalDate}{" "}
+                            {new Date(subscription.current_period_end).toLocaleDateString(
+                              lang === "fr" ? "fr-FR" : "en-US",
+                              { day: "numeric", month: "long", year: "numeric" }
+                            )}
                           </p>
                         )}
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-xl" style={{ color: planActuel.color }}>
-                        {planActuel.prix}
+                        {planActuel.prix[lang]}
                       </p>
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs text-white/50">
-                      <span>{nombreMembres} membres utilisés</span>
-                      <span>{planActuel.limite ? `${planActuel.limite} max` : "Illimité"}</span>
+                      <span>{nombreMembres} {t.membersUsed}</span>
+                      <span>{planActuel.limite ? `${planActuel.limite} ${t.max}` : t.unlimited}</span>
                     </div>
                     <ProgressBar value={nombreMembres} max={planActuel.limite ?? nombreMembres} height={8} />
                     {pctActuel >= 80 && (
-                      <p className="text-xs text-amber-400 mt-1">
-                        ⚠️ Vous approchez de la limite — pensez à upgrader.
-                      </p>
+                      <p className="text-xs text-amber-400 mt-1">{t.approachingLimit}</p>
                     )}
                   </div>
                 </div>
               ) : (
-                <p className="text-white/50 text-center text-sm">Aucun plan actif trouvé.</p>
+                <p className="text-white/50 text-center text-sm">{t.noActivePlan}</p>
               )}
 
               {/* ── 2. CHANGER DE PLAN ── */}
               {autresPlans.length > 0 && (
                 <div>
                   <p className="text-white/40 text-xs uppercase font-semibold tracking-widest mb-3">
-                    Changer de plan
+                    {t.changePlan}
                   </p>
 
                   <div className="space-y-2">
@@ -506,7 +600,7 @@ function SubscriptionContent() {
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                              <p className="text-white font-semibold text-sm">{plan.nom}</p>
+                              <p className="text-white font-semibold text-sm">{plan.nom[lang]}</p>
                               <span
                                 className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full"
                                 style={
@@ -515,21 +609,21 @@ function SubscriptionContent() {
                                     : { background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)" }
                                 }
                               >
-                                {isUpgrade ? "↑ Upgrade" : "↓ Downgrade"}
+                                {isUpgrade ? t.upgrade : t.downgrade}
                               </span>
                               {needsPay && (
                                 <span className="text-[10px] font-bold bg-indigo-400/20 text-indigo-300 px-1.5 py-0.5 rounded-full">
-                                  💳 Paiement requis
+                                  {t.paymentRequired}
                                 </span>
                               )}
                               {pctActuel >= 70 && isUpgrade && (
                                 <span className="text-[10px] font-bold bg-amber-400 text-black px-1.5 py-0.5 rounded-full">
-                                  Recommandé
+                                  {t.recommended}
                                 </span>
                               )}
                               {depasseLimit && (
                                 <span className="text-[10px] font-bold bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">
-                                  ⚠️ Limite dépassée
+                                  {t.limitExceeded}
                                 </span>
                               )}
                             </div>
@@ -543,7 +637,7 @@ function SubscriptionContent() {
                                 />
                               </div>
                               <span className="text-white/30 text-[11px] shrink-0">
-                                {plan.limite ? `${nombreMembres}/${plan.limite}` : "Illimité"}
+                                {plan.limite ? `${nombreMembres}/${plan.limite}` : t.unlimited}
                               </span>
                             </div>
                           </div>
@@ -552,7 +646,7 @@ function SubscriptionContent() {
                             className="text-sm font-semibold shrink-0"
                             style={{ color: isUpgrade ? plan.color : "rgba(255,255,255,0.5)" }}
                           >
-                            {plan.prix}
+                            {plan.prix[lang]}
                           </p>
                         </button>
                       );
@@ -571,30 +665,27 @@ function SubscriptionContent() {
                   }}
                 >
                   <p className="text-white font-semibold">
-                    Passer au plan{" "}
-                    <span style={{ color: confirmTarget.color }}>{confirmTarget.nom}</span>
-                    {" "}— {confirmTarget.prix}
+                    {t.switchToPlan}{" "}
+                    <span style={{ color: confirmTarget.color }}>{confirmTarget.nom[lang]}</span>
+                    {" "}— {confirmTarget.prix[lang]}
                   </p>
 
-                  {/* Avertissement downgrade avec dépassement */}
                   {isDowngrade && confirmTarget.limite && nombreMembres > confirmTarget.limite && (
                     <div className="bg-red-500/15 border border-red-500/30 rounded-xl px-3 py-2.5 text-red-300 text-sm">
-                      ⚠️ Vos {nombreMembres} membres dépassent la limite de {confirmTarget.limite} du plan{" "}
-                      {confirmTarget.nom}. Certains membres pourraient devenir inaccessibles.
+                      {t.downgradeWarning
+                        .replace("{count}", nombreMembres)
+                        .replace("{limit}", confirmTarget.limite)
+                        .replace("{name}", confirmTarget.nom[lang])
+                      }
                     </div>
                   )}
 
                   {FREE_PLANS.includes(confirmTarget.id) ? (
                     <p className="text-white/50 text-sm">
-                      {confirmTarget.id === "enterprise"
-                        ? "Notre équipe vous contactera pour configurer votre plan sur mesure."
-                        : "Votre plan sera réduit à la fin du cycle actuel."
-                      }
+                      {confirmTarget.id === "enterprise" ? t.enterpriseNote : t.downgradeNote}
                     </p>
                   ) : (
-                    <p className="text-white/50 text-sm">
-                      Choisissez votre moyen de paiement pour activer ce plan.
-                    </p>
+                    <p className="text-white/50 text-sm">{t.choosePayment}</p>
                   )}
 
                   <div className="flex gap-3 pt-1">
@@ -605,9 +696,9 @@ function SubscriptionContent() {
                     >
                       {FREE_PLANS.includes(confirmTarget.id)
                         ? confirmTarget.id === "enterprise"
-                          ? "📧 Nous contacter"
-                          : "Confirmer le downgrade"
-                        : "💳 Procéder au paiement"
+                          ? t.contactUs
+                          : t.confirmDowngrade
+                        : t.proceedPayment
                       }
                     </button>
                     <button
@@ -615,7 +706,7 @@ function SubscriptionContent() {
                       className="px-4 py-2.5 rounded-xl text-sm text-white/50 hover:text-white/80 transition"
                       style={{ border: "1px solid rgba(255,255,255,0.15)" }}
                     >
-                      Annuler
+                      {t.cancel}
                     </button>
                   </div>
                 </div>

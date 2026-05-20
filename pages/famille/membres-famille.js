@@ -268,7 +268,7 @@ function MembresFamilleContent() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, role, eglise_id")
+        .select("id, role, roles, eglise_id")
         .eq("id", user.id)
         .single();
 
@@ -359,7 +359,7 @@ function MembresFamilleContent() {
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("id, role, eglise_id")
+          .select("id, role, roles, eglise_id")
           .eq("id", user.id)
           .single();
 
@@ -371,7 +371,7 @@ function MembresFamilleContent() {
           .eq("statut_suivis", 3)
           .eq("eglise_id", profile.eglise_id)
           .not("famille_id", "is", null)
-          .not("etat_contact", "eq", "supprime")
+          .neq("etat_contact", "supprime")
           .order("created_at", { ascending: false });
 
         let mesFamilleIds = [];

@@ -565,8 +565,7 @@ setCellules([
                               )?.famille_full
                             }
                             conseillerName={getConseillersForMember(m.id)}
-                          />
-                        </div>
+                          />                       
 
                         {/* Détails */}
                         {isOpen ? t.fermerDetails : t.details}

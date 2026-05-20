@@ -2,21 +2,64 @@
 
 import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    subtitle: "Modifier la cellule",
+    sectionInfos: "📋 Informations générales",
+    nomCellule: "Nom de la cellule",
+    nomGere: "Le nom est géré automatiquement par le système.",
+    ville: "Ville",
+    villePlaceholder: "Ex : Paris",
+    sectionResponsable: "👤 Responsable",
+    responsable: "Responsable de cellule",
+    responsableDefault: "-- Choisir un responsable --",
+    chargement: "Chargement...",
+    telephone: "Téléphone du responsable",
+    telephonePlaceholder: "+33 6 00 00 00 00",
+    annuler: "Annuler",
+    sauvegarder: "💾 Sauvegarder",
+    enregistrement: "Enregistrement...",
+    erreurVille: "❌ La ville est obligatoire.",
+    erreurSauvegarde: "❌ Une erreur est survenue lors de l'enregistrement.",
+  },
+  en: {
+    subtitle: "Edit cell group",
+    sectionInfos: "📋 General information",
+    nomCellule: "Cell group name",
+    nomGere: "The name is managed automatically by the system.",
+    ville: "City",
+    villePlaceholder: "e.g. London",
+    sectionResponsable: "👤 Leader",
+    responsable: "Cell group leader",
+    responsableDefault: "-- Choose a leader --",
+    chargement: "Loading...",
+    telephone: "Leader's phone number",
+    telephonePlaceholder: "+44 7700 000000",
+    annuler: "Cancel",
+    sauvegarder: "💾 Save",
+    enregistrement: "Saving...",
+    erreurVille: "❌ City is required.",
+    erreurSauvegarde: "❌ An error occurred while saving.",
+  },
+};
 
 export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [ville, setVille] = useState(cellule?.ville || "");
   const [telephone, setTelephone] = useState(cellule?.telephone || "");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // Dropdown responsable
   const [responsables, setResponsables] = useState([]);
   const [selectedResponsableId, setSelectedResponsableId] = useState(cellule?.responsable_id || "");
   const [loadingResponsables, setLoadingResponsables] = useState(true);
 
   const modalRef = useRef(null);
 
-  // ── Charger les responsables depuis profiles ──
   useEffect(() => {
     const fetchResponsables = async () => {
       setLoadingResponsables(true);
@@ -25,24 +68,16 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
         .select("id, prenom, nom, telephone")
         .eq("role", "ResponsableCellule")
         .order("nom");
-
-      if (!error && data) {
-        setResponsables(data);
-      } else {
-        console.error("Erreur chargement responsables:", error);
-      }
+      if (!error && data) setResponsables(data);
+      else console.error("Erreur chargement responsables:", error);
       setLoadingResponsables(false);
     };
-
     fetchResponsables();
   }, []);
 
-  // ── Click outside → fermer ──
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (modalRef.current && !modalRef.current.contains(e.target)) {
-        onClose();
-      }
+      if (modalRef.current && !modalRef.current.contains(e.target)) onClose();
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -50,9 +85,8 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
 
   const handleSave = async () => {
     setMessage("");
-    if (!ville.trim()) return setMessage("❌ La ville est obligatoire.");
+    if (!ville.trim()) return setMessage(t.erreurVille);
 
-    // Retrouver le nom texte du responsable sélectionné
     const responsableObj = responsables.find((r) => r.id === selectedResponsableId);
     const responsableNom = responsableObj
       ? `${responsableObj.prenom} ${responsableObj.nom}`
@@ -78,7 +112,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
       onClose();
     } else {
       console.error("❌ UPDATE ERROR:", error);
-      setMessage("❌ Une erreur est survenue lors de l'enregistrement.");
+      setMessage(t.erreurSauvegarde);
     }
   };
 
@@ -87,22 +121,17 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-50 p-4"
-      style={{
-        background: "rgba(30,35,90,0.35)",
-        backdropFilter: "blur(6px)",
-      }}
+      style={{ background: "rgba(30,35,90,0.35)", backdropFilter: "blur(6px)" }}
     >
       <div
         ref={modalRef}
         className="relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
         style={{ background: "#ffffff", border: "1px solid #e2e8f0" }}
       >
-        {/* ── Header ── */}
+        {/* Header */}
         <div
           className="px-6 pt-6 pb-4"
-          style={{
-            background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
-          }}
+          style={{ background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}
         >
           <button
             onClick={onClose}
@@ -114,47 +143,37 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
           <h2 className="text-xl font-bold text-white pr-10">
             🏠 {cellule.cellule_full || cellule.cellule}
           </h2>
-          <p className="text-blue-100 text-sm mt-1 opacity-80">
-            Modifier la cellule
-          </p>
+          <p className="text-blue-100 text-sm mt-1 opacity-80">{t.subtitle}</p>
         </div>
 
-        {/* ── Body ── */}
-        <div
-          className="overflow-y-auto px-6 py-5 flex flex-col gap-5"
-          style={{ maxHeight: "68vh" }}
-        >
-          <SectionTitle>📋 Informations générales</SectionTitle>
+        {/* Body */}
+        <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
+          <SectionTitle>{t.sectionInfos}</SectionTitle>
 
-          {/* Nom cellule — lecture seule, géré par la DB */}
-          <Field label="Nom de la cellule">
-            <div className="inp-readonly">
-              {cellule.cellule_full || cellule.cellule}
-            </div>
-            <p className="text-xs text-gray-400 mt-1 ml-1">
-              Le nom est géré automatiquement par le système.
-            </p>
+          <Field label={t.nomCellule}>
+            <div className="inp-readonly">{cellule.cellule_full || cellule.cellule}</div>
+            <p className="text-xs text-gray-400 mt-1 ml-1">{t.nomGere}</p>
           </Field>
 
-          <Field label="Ville">
+          <Field label={t.ville}>
             <input
               className="inp"
               value={ville}
               onChange={(e) => setVille(e.target.value)}
-              placeholder="Ex : Paris"
+              placeholder={t.villePlaceholder}
             />
           </Field>
 
-          <SectionTitle>👤 Responsable</SectionTitle>
+          <SectionTitle>{t.sectionResponsable}</SectionTitle>
 
-          <Field label="Responsable de cellule">
+          <Field label={t.responsable}>
             {loadingResponsables ? (
               <div className="inp flex items-center gap-2 text-gray-400 text-sm">
                 <span
                   className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin inline-block"
                   style={{ borderColor: "#2E3192", borderTopColor: "transparent" }}
                 />
-                Chargement...
+                {t.chargement}
               </div>
             ) : (
               <select
@@ -167,34 +186,32 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
                   setTelephone(responsableObj?.telephone || "");
                 }}
               >
-                <option value="">-- Choisir un responsable --</option>
+                <option value="">{t.responsableDefault}</option>
                 {responsables.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.prenom} {r.nom}
-                  </option>
+                  <option key={r.id} value={r.id}>{r.prenom} {r.nom}</option>
                 ))}
               </select>
             )}
           </Field>
 
-          <Field label="Téléphone du responsable">
+          <Field label={t.telephone}>
             <input
               className="inp"
               value={telephone}
               onChange={(e) => setTelephone(e.target.value)}
-              placeholder="+33 6 00 00 00 00"
+              placeholder={t.telephonePlaceholder}
             />
           </Field>
         </div>
 
-        {/* ── Footer ── */}
+        {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row gap-3">
           <button
             type="button"
             onClick={onClose}
             className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all"
           >
-            Annuler
+            {t.annuler}
           </button>
           <button
             type="button"
@@ -208,11 +225,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
                   : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
             }}
           >
-            {loading
-              ? "Enregistrement..."
-              : loadingResponsables
-              ? "Chargement..."
-              : "💾 Sauvegarder"}
+            {loading ? t.enregistrement : loadingResponsables ? t.chargement : t.sauvegarder}
           </button>
         </div>
 
@@ -264,10 +277,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
 function SectionTitle({ children }) {
   return (
     <div className="flex items-center gap-2 pt-2">
-      <span
-        className="text-xs font-bold uppercase tracking-widest"
-        style={{ color: "#2E3192" }}
-      >
+      <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#2E3192" }}>
         {children}
       </span>
       <div className="flex-1 h-px" style={{ background: "#e2e8f0" }} />
@@ -278,10 +288,7 @@ function SectionTitle({ children }) {
 function Field({ label, children }) {
   return (
     <div className="flex flex-col gap-1">
-      <label
-        className="text-xs font-semibold uppercase tracking-wide"
-        style={{ color: "#64748b" }}
-      >
+      <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#64748b" }}>
         {label}
       </label>
       {children}

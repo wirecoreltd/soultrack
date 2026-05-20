@@ -573,13 +573,8 @@ function MembresCelluleContent() {
                         <p className="text-[11px] text-gray-400">
                           {t.creLe} {formatDateFr(m.date_venu)}
                         </p>
-                      </div>
 
-                      <button
-                        onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
-                        className="text-orange-500 underline mt-2 block mx-auto text-sm">
-
-                        {/* Bouton PDF */}
+                          {/* Bouton PDF */}
                         <ExportMembrePDF
                           membre={m}
                           logoBase64={logoBase64}
@@ -591,6 +586,12 @@ function MembresCelluleContent() {
                             )?.cellule_full
                           }
                         />
+                          
+                      </div>
+
+                      <button
+                        onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
+                        className="text-orange-500 underline mt-2 block mx-auto text-sm">                        
 
                         {/* Détails */}
                         {isOpen ? t.fermerDetails : t.details}

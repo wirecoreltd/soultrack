@@ -10,6 +10,7 @@ import EditMemberSuivisPopup from "../../components/EditMemberSuivisPopup";
 import SuiviPopup from "../../components/SuiviPopup";
 import PresenceDot from "../../components/PresenceDot";
 import { useLang } from "../../hooks/useLang";
+import ExportMembrePDF from "../../components/ExportMembrePDF";
 
 const translations = {
   fr: {

@@ -9,6 +9,171 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import DetailsEtatConsEvangePopup from "../../components/DetailsEtatConsEvangePopup";
 import EditMemberCellulePopup from "../../components/EditMemberCellulePopup";
 import DetailsEtatConseillerPopup from "../../components/DetailsEtatConseillerPopup";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    // Page
+    pageTitle: "L'Évolution des Âmes par",
+    pageTitleHighlight: "Cellule",
+    subtitle1: "Outil de vision et de gestion spirituelle.",
+    subtitle2: "Les âmes viennent de",
+    subtitle3: "l'évangélisation ou de l'église",
+    subtitle4: ", puis sont orientées vers les cellules pour grandir.",
+    subtitle5: "Chaque donnée représente une vie précieuse",
+    subtitle6: ", chaque progression témoigne de",
+    subtitle7: "l'œuvre de Dieu",
+    // Filtres
+    quickPeriod: "Période rapide",
+    dateRange: "Tranche de dates",
+    periodLabel: "Période :",
+    periods: [
+      { label: "7 j", val: "7" },
+      { label: "30 j", val: "30" },
+      { label: "90 j", val: "90" },
+      { label: "6 mois", val: "180" },
+      { label: "1 an", val: "365" },
+    ],
+    startDate: "Date de début",
+    endDate: "Date de fin",
+    generateReport: "Générer le rapport",
+    celluleLabel: "Cellule",
+    allCellules: "Toutes les cellules",
+    // Onglets
+    tabOverview: "Vue d'ensemble",
+    tabCellules: "Par cellule",
+    tabMois: "Par mois",
+    // Loading / empty
+    loading: "Chargement...",
+    emptyPerso: "Choisissez une plage de dates et cliquez sur « Générer le rapport »",
+    emptyPeriod: "Aucune donnée sur cette période",
+    // KPI labels
+    kpiEvangelises: "Évangélisés",
+    kpiEvangelisesSub: "contacts évangélisation",
+    kpiVenus: "Venus à l'église",
+    kpiVenusSub: "contacts intégration",
+    kpiIntegres: "Intégrés",
+    kpiBaptemes: "Baptêmes",
+    kpiMinistere: "Ministère",
+    kpiMinistereSub: "début ministère",
+    kpiEncours: "En cours",
+    kpiEncoursSub: "suivi actif",
+    kpiAttente: "En attente",
+    kpiAttenteSub: "à traiter",
+    kpiRefus: "Refus",
+    kpiOfTotal: (pct) => `${pct}% du total`,
+    // Entonnoir
+    funnelTitle: "Entonnoir de progression",
+    funnelTotalAmes: "Total âmes",
+    funnelIntegres: "Intégrés",
+    funnelBaptises: "Baptisés",
+    funnelMinistere: "En ministère",
+    // Section titles
+    sectionOverview: "Vue d'ensemble",
+    sectionPerformance: "Performance par cellule",
+    // BlocParCellule
+    noData: "Aucune donnée",
+    // CarteLigne
+    seeDetails: "Voir les détails",
+    cellule: "Cellule",
+    responsable: "Responsable",
+    assignedOn: "Assigné le",
+    dateEvolution: "Date évolution",
+    bapteme: "Baptême",
+    debutMinistere: "Début ministère",
+    // OngletParMois
+    noDataPeriod: "Aucune donnée sur cette période",
+    persons: (n) => `${n} personne${n > 1 ? "s" : ""}`,
+    // OngletParCelluleDetail
+    noDataCellule: "Aucune donnée",
+    integrated: (pct) => `${pct}% intégrées`,
+    baptises: "Baptisés",
+    ministere: "Ministère",
+    encours: "En cours",
+    refus: "Refus",
+    // Statut labels
+    integre: "Intégré",
+    enAttente: "En attente",
+    refusLabel: "Refus",
+    enCours: "En cours",
+    // Months
+    months: ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"],
+  },
+  en: {
+    pageTitle: "The Evolution of Souls by",
+    pageTitleHighlight: "Cell",
+    subtitle1: "Spiritual vision and management tool.",
+    subtitle2: "Souls come from",
+    subtitle3: "evangelisation or the church",
+    subtitle4: ", then are directed to cells to grow.",
+    subtitle5: "Each data point represents a precious life",
+    subtitle6: ", each progression testifies to",
+    subtitle7: "the work of God",
+    quickPeriod: "Quick period",
+    dateRange: "Date range",
+    periodLabel: "Period:",
+    periods: [
+      { label: "7 d", val: "7" },
+      { label: "30 d", val: "30" },
+      { label: "90 d", val: "90" },
+      { label: "6 mo", val: "180" },
+      { label: "1 yr", val: "365" },
+    ],
+    startDate: "Start date",
+    endDate: "End date",
+    generateReport: "Generate report",
+    celluleLabel: "Cell",
+    allCellules: "All cells",
+    tabOverview: "Overview",
+    tabCellules: "By cell",
+    tabMois: "By month",
+    loading: "Loading...",
+    emptyPerso: "Choose a date range and click \"Generate report\"",
+    emptyPeriod: "No data for this period",
+    kpiEvangelises: "Evangelised",
+    kpiEvangelisesSub: "evangelisation contacts",
+    kpiVenus: "Came to church",
+    kpiVenusSub: "integration contacts",
+    kpiIntegres: "Integrated",
+    kpiBaptemes: "Baptisms",
+    kpiMinistere: "Ministry",
+    kpiMinistereSub: "started ministry",
+    kpiEncours: "In progress",
+    kpiEncoursSub: "active follow-up",
+    kpiAttente: "Pending",
+    kpiAttenteSub: "to process",
+    kpiRefus: "Refused",
+    kpiOfTotal: (pct) => `${pct}% of total`,
+    funnelTitle: "Progression funnel",
+    funnelTotalAmes: "Total souls",
+    funnelIntegres: "Integrated",
+    funnelBaptises: "Baptised",
+    funnelMinistere: "In ministry",
+    sectionOverview: "Overview",
+    sectionPerformance: "Performance by cell",
+    noData: "No data",
+    seeDetails: "See details",
+    cellule: "Cell",
+    responsable: "Leader",
+    assignedOn: "Assigned on",
+    dateEvolution: "Evolution date",
+    bapteme: "Baptism",
+    debutMinistere: "Ministry start",
+    noDataPeriod: "No data for this period",
+    persons: (n) => `${n} person${n > 1 ? "s" : ""}`,
+    noDataCellule: "No data",
+    integrated: (pct) => `${pct}% integrated`,
+    baptises: "Baptised",
+    ministere: "Ministry",
+    encours: "In progress",
+    refus: "Refused",
+    integre: "Integrated",
+    enAttente: "Pending",
+    refusLabel: "Refused",
+    enCours: "In progress",
+    months: ["January","February","March","April","May","June","July","August","September","October","November","December"],
+  },
+};
 
 export default function EtatCellulePage() {
   return (
@@ -23,9 +188,6 @@ function formatDateFR(dateStr) {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-}
-function getMonthNameFR(monthIndex) {
-  return ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"][monthIndex] || "";
 }
 function getStatutNormalise(statut) {
   if (!statut) return "";
@@ -79,46 +241,45 @@ function BarreProgression({ pct, color }) {
 }
 
 // ─── STATUT CONFIG ─────────────────────────────────────────────
-function statutConfig(statutNorm) {
+function statutConfig(statutNorm, t) {
   switch (statutNorm) {
     case "intégré":
-    case "integre": return { border: "border-emerald-500", badge: "green", label: "Intégré" };
-    case "en attente": return { border: "border-white/20", badge: "gray", label: "En attente" };
-    case "refus": return { border: "border-red-500", badge: "red", label: "Refus" };
+    case "integre": return { border: "border-emerald-500", badge: "green", label: t.integre };
+    case "en attente": return { border: "border-white/20", badge: "gray", label: t.enAttente };
+    case "refus": return { border: "border-red-500", badge: "red", label: t.refusLabel };
     case "en cours":
-    case "en suivis": return { border: "border-amber-500", badge: "amber", label: "En cours" };
+    case "en suivis": return { border: "border-amber-500", badge: "amber", label: t.enCours };
     default: return { border: "border-white/20", badge: "gray", label: formatStatut(statutNorm) };
   }
 }
 
 // ─── BLOC KPI ─────────────────────────────────────────────────
-function BlocKpi({ kpis, totalAmes }) {
+function BlocKpi({ kpis, totalAmes, t }) {
   const pct = (n) => totalAmes > 0 ? Math.round((n / totalAmes) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KpiCard label="Évangélisés" value={kpis.totalEvangelises} sub="contacts évangélisation" accent="blue" />
-        <KpiCard label="Venus à l'église" value={kpis.totalVenus} sub="contacts intégration" accent="purple" />
-        <KpiCard label="Intégrés" value={kpis.totalIntegration} sub={`${pct(kpis.totalIntegration)}% du total`} accent="green" />
-        <KpiCard label="Baptêmes" value={kpis.totalBapteme} sub={`${pct(kpis.totalBapteme)}% du total`} accent="indigo" />
+        <KpiCard label={t.kpiEvangelises} value={kpis.totalEvangelises} sub={t.kpiEvangelisesSub} accent="blue" />
+        <KpiCard label={t.kpiVenus} value={kpis.totalVenus} sub={t.kpiVenusSub} accent="purple" />
+        <KpiCard label={t.kpiIntegres} value={kpis.totalIntegration} sub={t.kpiOfTotal(pct(kpis.totalIntegration))} accent="green" />
+        <KpiCard label={t.kpiBaptemes} value={kpis.totalBapteme} sub={t.kpiOfTotal(pct(kpis.totalBapteme))} accent="indigo" />
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KpiCard label="Ministère" value={kpis.totalMinistere} sub="début ministère" accent="teal" />
-        <KpiCard label="En cours" value={kpis.totalEncours} sub="suivi actif" accent="amber" />
-        <KpiCard label="En attente" value={kpis.totalAttente} sub="à traiter" accent="gray" />
-        <KpiCard label="Refus" value={kpis.totalRefus} sub={`${pct(kpis.totalRefus)}% du total`} accent="red" />
+        <KpiCard label={t.kpiMinistere} value={kpis.totalMinistere} sub={t.kpiMinistereSub} accent="teal" />
+        <KpiCard label={t.kpiEncours} value={kpis.totalEncours} sub={t.kpiEncoursSub} accent="amber" />
+        <KpiCard label={t.kpiAttente} value={kpis.totalAttente} sub={t.kpiAttenteSub} accent="gray" />
+        <KpiCard label={t.kpiRefus} value={kpis.totalRefus} sub={t.kpiOfTotal(pct(kpis.totalRefus))} accent="red" />
       </div>
 
-      {/* Entonnoir de progression */}
       {totalAmes > 0 && (
         <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3 mt-1">
-          <SectionTitle>Entonnoir de progression</SectionTitle>
+          <SectionTitle>{t.funnelTitle}</SectionTitle>
           {[
-            { label: "Total âmes", val: totalAmes, color: "bg-blue-400" },
-            { label: "Intégrés", val: kpis.totalIntegration, color: "bg-emerald-400" },
-            { label: "Baptisés", val: kpis.totalBapteme, color: "bg-indigo-400" },
-            { label: "En ministère", val: kpis.totalMinistere, color: "bg-pink-400" },
+            { label: t.funnelTotalAmes, val: totalAmes, color: "bg-blue-400" },
+            { label: t.funnelIntegres, val: kpis.totalIntegration, color: "bg-emerald-400" },
+            { label: t.funnelBaptises, val: kpis.totalBapteme, color: "bg-indigo-400" },
+            { label: t.funnelMinistere, val: kpis.totalMinistere, color: "bg-pink-400" },
           ].map(({ label, val, color }) => (
             <div key={label} className="flex items-center gap-3">
               <p className="text-xs text-white/50 w-28 flex-shrink-0">{label}</p>
@@ -132,8 +293,8 @@ function BlocKpi({ kpis, totalAmes }) {
   );
 }
 
-// ─── BLOC PAR CELLULE (vue synthèse dans l'onglet KPI) ────────
-function BlocParCellule({ displayedReports }) {
+// ─── BLOC PAR CELLULE ─────────────────────────────────────────
+function BlocParCellule({ displayedReports, t }) {
   const parCellule = {};
   displayedReports.forEach(r => {
     const c = r.cellule_full || "Non assignée";
@@ -146,7 +307,7 @@ function BlocParCellule({ displayedReports }) {
   });
   const max = Math.max(...Object.values(parCellule).map(v => v.total), 1);
   const lignes = Object.entries(parCellule).sort((a, b) => b[1].total - a[1].total);
-  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">Aucune donnée</p>;
+  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">{t.noData}</p>;
 
   return (
     <div className="flex flex-col gap-2">
@@ -169,10 +330,10 @@ function BlocParCellule({ displayedReports }) {
 }
 
 // ─── CARTE LIGNE ──────────────────────────────────────────────
-function CarteLigne({ r, onDetails }) {
+function CarteLigne({ r, onDetails, t }) {
   const [open, setOpen] = useState(false);
   const sn = getStatutNormalise(r.statut);
-  const cfg = statutConfig(sn);
+  const cfg = statutConfig(sn, t);
 
   return (
     <div className={`bg-white/10 rounded-xl overflow-hidden border-l-2 ${cfg.border}`}>
@@ -191,12 +352,12 @@ function CarteLigne({ r, onDetails }) {
         <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {[
-              { label: "Cellule", value: r.cellule_full },
-              { label: "Responsable", value: r.responsable },
-              { label: "Assigné le", value: formatDateFR(r.envoyer_au_suivi_le) },
-              { label: "Date évolution", value: formatDateFR(r.date_integration) },
-              { label: "Baptême", value: formatDateFR(r.date_baptise) },
-              { label: "Début ministère", value: formatDateFR(r.debut_ministere) },
+              { label: t.cellule, value: r.cellule_full },
+              { label: t.responsable, value: r.responsable },
+              { label: t.assignedOn, value: formatDateFR(r.envoyer_au_suivi_le) },
+              { label: t.dateEvolution, value: formatDateFR(r.date_integration) },
+              { label: t.bapteme, value: formatDateFR(r.date_baptise) },
+              { label: t.debutMinistere, value: formatDateFR(r.debut_ministere) },
             ].map(({ label, value }) => (
               <div key={label} className="bg-white/5 rounded-xl px-3 py-2">
                 <p className="text-[10px] text-white/40">{label}</p>
@@ -206,7 +367,7 @@ function CarteLigne({ r, onDetails }) {
           </div>
           <button onClick={() => onDetails(r)}
             className="w-full py-2 rounded-xl bg-amber-500/30 hover:bg-amber-500/50 text-amber-300 text-sm font-semibold transition">
-            Voir les détails
+            {t.seeDetails}
           </button>
         </div>
       )}
@@ -215,14 +376,14 @@ function CarteLigne({ r, onDetails }) {
 }
 
 // ─── ONGLET PAR MOIS ──────────────────────────────────────────
-function OngletParMois({ displayedReports, onDetails }) {
+function OngletParMois({ displayedReports, onDetails, t }) {
   const [expandedMonths, setExpandedMonths] = useState({});
 
   const grouped = {};
   displayedReports.forEach(r => {
     const d = new Date(r.date_depart);
     const key = `${d.getFullYear()}-${d.getMonth()}`;
-    if (!grouped[key]) grouped[key] = { label: `${getMonthNameFR(d.getMonth())} ${d.getFullYear()}`, rows: [] };
+    if (!grouped[key]) grouped[key] = { label: `${t.months[d.getMonth()]} ${d.getFullYear()}`, rows: [] };
     grouped[key].rows.push(r);
   });
 
@@ -232,7 +393,7 @@ function OngletParMois({ displayedReports, onDetails }) {
     return new Date(yB, mB) - new Date(yA, mA);
   });
 
-  if (!sorted.length) return <p className="text-white/30 text-sm text-center py-8">Aucune donnée sur cette période</p>;
+  if (!sorted.length) return <p className="text-white/30 text-sm text-center py-8">{t.noDataPeriod}</p>;
 
   return (
     <div className="flex flex-col gap-3">
@@ -245,14 +406,14 @@ function OngletParMois({ displayedReports, onDetails }) {
               className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
               <span className="font-semibold text-white">{label}</span>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <Badge color="gray">{rows.length} personnes</Badge>
+                <Badge color="gray">{t.persons(rows.length)}</Badge>
                 <Badge color="green">✔ {integres}</Badge>
                 <span className="text-white/30 text-xs">{isOpen ? "▲" : "▼"}</span>
               </div>
             </button>
             {isOpen && (
               <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-2">
-                {rows.map((r, i) => <CarteLigne key={i} r={r} onDetails={onDetails} />)}
+                {rows.map((r, i) => <CarteLigne key={i} r={r} onDetails={onDetails} t={t} />)}
               </div>
             )}
           </div>
@@ -263,7 +424,7 @@ function OngletParMois({ displayedReports, onDetails }) {
 }
 
 // ─── ONGLET PAR CELLULE DÉTAIL ────────────────────────────────
-function OngletParCelluleDetail({ displayedReports, onDetails }) {
+function OngletParCelluleDetail({ displayedReports, onDetails, t }) {
   const [expandedCellules, setExpandedCellules] = useState({});
 
   const grouped = {};
@@ -274,7 +435,7 @@ function OngletParCelluleDetail({ displayedReports, onDetails }) {
   });
 
   const sorted = Object.entries(grouped).sort((a, b) => b[1].rows.length - a[1].rows.length);
-  if (!sorted.length) return <p className="text-white/30 text-sm text-center py-8">Aucune donnée</p>;
+  if (!sorted.length) return <p className="text-white/30 text-sm text-center py-8">{t.noDataCellule}</p>;
 
   return (
     <div className="flex flex-col gap-3">
@@ -293,7 +454,9 @@ function OngletParCelluleDetail({ displayedReports, onDetails }) {
               className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
               <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                 <span className="font-semibold text-white truncate">{cellule}</span>
-                <span className="text-[11px] text-white/40">{responsable} · {rows.length} personne{rows.length > 1 ? "s" : ""} · {pctInt}% intégrées</span>
+                <span className="text-[11px] text-white/40">
+                  {responsable} · {t.persons(rows.length)} · {t.integrated(pctInt)}
+                </span>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Badge color="green">✔ {integres}</Badge>
@@ -304,19 +467,17 @@ function OngletParCelluleDetail({ displayedReports, onDetails }) {
             </button>
             {isOpen && (
               <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
-                {/* Barre intégration */}
                 <div className="flex items-center gap-2">
                   <BarreProgression pct={pctInt} color="bg-emerald-400" />
-                  <span className="text-xs text-white/50">{pctInt}% intégrés</span>
+                  <span className="text-xs text-white/50">{t.integrated(pctInt)}</span>
                 </div>
 
-                {/* Chiffres détail cellule */}
                 <div className="grid grid-cols-4 gap-2">
                   {[
-                    { label: "Baptisés", val: baptises, color: "text-indigo-300" },
-                    { label: "Ministère", val: ministeres, color: "text-pink-300" },
-                    { label: "En cours", val: encours, color: "text-amber-300" },
-                    { label: "Refus", val: refus, color: "text-red-300" },
+                    { label: t.baptises, val: baptises, color: "text-indigo-300" },
+                    { label: t.ministere, val: ministeres, color: "text-pink-300" },
+                    { label: t.encours, val: encours, color: "text-amber-300" },
+                    { label: t.refus, val: refus, color: "text-red-300" },
                   ].map(({ label, val, color }) => (
                     <div key={label} className="bg-white/5 rounded-xl px-3 py-2 text-center">
                       <p className={`text-sm font-bold ${color}`}>{val}</p>
@@ -325,8 +486,7 @@ function OngletParCelluleDetail({ displayedReports, onDetails }) {
                   ))}
                 </div>
 
-                {/* Liste des personnes */}
-                {rows.map((r, i) => <CarteLigne key={i} r={r} onDetails={onDetails} />)}
+                {rows.map((r, i) => <CarteLigne key={i} r={r} onDetails={onDetails} t={t} />)}
               </div>
             )}
           </div>
@@ -338,13 +498,15 @@ function OngletParCelluleDetail({ displayedReports, onDetails }) {
 
 // ─── PAGE PRINCIPALE ───────────────────────────────────────────
 function EtatCellule() {
+  const { lang } = useLang();
+  const t = translations[lang];
   const router = useRouter();
+
   const [reports, setReports] = useState([]);
   const [allReports, setAllReports] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Filtres
   const [modePerso, setModePerso] = useState(false);
   const [filtrePeriode, setFiltrePeriode] = useState("30");
   const [filterDebut, setFilterDebut] = useState("");
@@ -352,22 +514,18 @@ function EtatCellule() {
   const [filterCellule, setFilterCellule] = useState("");
   const [availableCellules, setAvailableCellules] = useState([]);
 
-  // Onglets
   const [onglet, setOnglet] = useState("kpi");
 
-  // Popups
   const [selectedMember, setSelectedMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
   const [selectedEvangelise, setSelectedEvangelise] = useState(null);
 
-  // KPIs
   const [kpis, setKpis] = useState({
     totalEvangelises: 0, totalVenus: 0, totalIntegration: 0,
     totalBapteme: 0, totalMinistere: 0, totalRefus: 0,
     totalEncours: 0, totalAttente: 0,
   });
 
-  // ─── Profil ─────────────────────────────────────
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -378,7 +536,6 @@ function EtatCellule() {
     fetchProfile();
   }, []);
 
-  // ─── Fetch ──────────────────────────────────────
   const fetchReports = async (overrideModePerso = null) => {
     if (!userProfile) return;
     setLoading(true);
@@ -389,46 +546,38 @@ function EtatCellule() {
       let query = supabase.from("vue_flow_personnes").select("*")
         .eq("eglise_id", userProfile.eglise_id)
         .order("date_depart", { ascending: false });
-      
+
       if (!isAdmin) {
         const isSuperviseur = userProfile.roles?.includes("SuperviseurCellule");
         const isResponsable = userProfile.roles?.includes("ResponsableCellule");
-      
+
         if (isSuperviseur || isResponsable) {
-          // 1️⃣ Cellules directes
           const colonne = isSuperviseur ? "superviseur_id" : "responsable_id";
           const { data: directes } = await supabase
-            .from("cellules")
-            .select("id")
+            .from("cellules").select("id")
             .eq(colonne, userProfile.id)
             .eq("eglise_id", userProfile.eglise_id);
-      
+
           const directIds = (directes || []).map(c => c.id);
-      
-          // 2️⃣ Cellules filles
+
           const { data: filles } = await supabase
-            .from("cellules")
-            .select("id")
+            .from("cellules").select("id")
             .in("cellule_mere_id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
-      
+
           const fillesIds = (filles || []).map(c => c.id);
-      
-          // 3️⃣ Union
           const tousLesIds = [...new Set([...directIds, ...fillesIds])];
-      
-          if (tousLesIds.length) {           
+
+          if (tousLesIds.length) {
             query = query.in("cellule_id", tousLesIds);
           } else {
-            // Aucune cellule → aucun résultat
             query = query.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
           }
         } else {
-          // Autre rôle non admin → filtre par nom comme avant
           query = query.ilike("responsable", `%${userProfile.prenom}%`);
         }
       }
 
-      const { data, error } = await query;      
+      const { data, error } = await query;
       if (error) throw error;
 
       let filtered = data || [];
@@ -459,12 +608,10 @@ function EtatCellule() {
     if (userProfile && !modePerso) fetchReports(false);
   }, [userProfile, filtrePeriode, modePerso]);
 
-  // ─── Filtre cellule réactif ──────────────────────
   const displayedReports = filterCellule
     ? allReports.filter(r => r.cellule_full === filterCellule)
     : allReports;
 
-  // ─── KPIs ────────────────────────────────────────
   const updateKpis = (filtered) => {
     const normalize = (text) =>
       text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
@@ -487,12 +634,10 @@ function EtatCellule() {
     });
   };
 
-  // Recalcule les KPIs quand le filtre cellule change
   useEffect(() => {
     updateKpis(displayedReports);
   }, [filterCellule, allReports]);
 
-  // ─── Details ─────────────────────────────────────
   const handleDetailsClick = async (row) => {
     setSelectedEvangelise(row);
   };
@@ -501,9 +646,9 @@ function EtatCellule() {
   const totalAmes = kpis.totalEvangelises + kpis.totalVenus;
 
   const onglets = [
-    { key: "kpi", label: "Vue d'ensemble" },
-    { key: "cellules", label: "Par cellule" },
-    { key: "mois", label: "Par mois" },
+    { key: "kpi", label: t.tabOverview },
+    { key: "cellules", label: t.tabCellules },
+    { key: "mois", label: t.tabMois },
   ];
 
   return (
@@ -515,14 +660,14 @@ function EtatCellule() {
         {/* En-tête */}
         <div className="text-center">
           <h1 className="text-2xl font-bold mt-4 mb-2 text-blue-300 text-center text-white">
-            L'Évolution des Âmes par <span className="text-emerald-300">Cellule</span>
+            {t.pageTitle} <span className="text-emerald-300">{t.pageTitleHighlight}</span>
           </h1>
           <p className="italic text-base text-white/90">
-            <span className="text-blue-300 font-semibold">Outil de vision et de gestion spirituelle.</span>{" "}
-            Les âmes viennent de <span className="text-blue-300 font-semibold">l'évangélisation ou de l'église</span>,
-            puis sont orientées vers les cellules pour grandir.{" "}
-            <span className="text-blue-300 font-semibold">Chaque donnée représente une vie précieuse</span>,
-            chaque progression témoigne de <span className="text-blue-300 font-semibold">l'œuvre de Dieu</span>.
+            <span className="text-blue-300 font-semibold">{t.subtitle1}</span>{" "}
+            {t.subtitle2} <span className="text-blue-300 font-semibold">{t.subtitle3}</span>
+            {t.subtitle4}{" "}
+            <span className="text-blue-300 font-semibold">{t.subtitle5}</span>
+            {t.subtitle6} <span className="text-blue-300 font-semibold">{t.subtitle7}</span>.
           </p>
         </div>
 
@@ -532,19 +677,19 @@ function EtatCellule() {
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button onClick={() => setModePerso(false)}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
-              Période rapide
+              {t.quickPeriod}
             </button>
             <button onClick={() => setModePerso(true)}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
-              Tranche de dates
+              {t.dateRange}
             </button>
           </div>
 
           {/* Période rapide */}
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">Période :</span>
-              {[{ label: "7 j", val: "7" }, { label: "30 j", val: "30" }, { label: "90 j", val: "90" }, { label: "6 mois", val: "180" }, { label: "1 an", val: "365" }].map(p => (
+              <span className="text-xs text-white/50 flex-shrink-0">{t.periodLabel}</span>
+              {t.periods.map(p => (
                 <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
                   {p.label}
@@ -558,19 +703,19 @@ function EtatCellule() {
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">Date de début</label>
+                  <label className="text-xs text-white/50">{t.startDate}</label>
                   <input type="date" value={filterDebut} onChange={e => setFilterDebut(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">Date de fin</label>
+                  <label className="text-xs text-white/50">{t.endDate}</label>
                   <input type="date" value={filterFin} onChange={e => setFilterFin(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
               </div>
               <button onClick={() => fetchReports(true)}
                 className="w-full py-2 rounded-xl bg-amber-500/80 hover:bg-amber-500 text-white text-sm font-semibold transition active:scale-95">
-                Générer le rapport
+                {t.generateReport}
               </button>
             </div>
           )}
@@ -578,10 +723,10 @@ function EtatCellule() {
           {/* Filtre cellule */}
           {hasData && availableCellules.length > 1 && (
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-white/50">Cellule</label>
+              <label className="text-xs text-white/50">{t.celluleLabel}</label>
               <select value={filterCellule} onChange={e => setFilterCellule(e.target.value)}
                 className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
-                <option value="" className="bg-[#2a2d80]">Toutes les cellules</option>
+                <option value="" className="bg-[#2a2d80]">{t.allCellules}</option>
                 {availableCellules.map((c, i) => (
                   <option key={i} value={c} className="bg-[#2a2d80]">{c}</option>
                 ))}
@@ -607,25 +752,23 @@ function EtatCellule() {
           </div>
         ) : !hasData ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center text-white/40 text-sm">
-            {modePerso ? "Choisissez une plage de dates et cliquez sur « Générer le rapport »" : "Aucune donnée sur cette période"}
+            {modePerso ? t.emptyPerso : t.emptyPeriod}
           </div>
         ) : onglet === "kpi" ? (
           <div className="flex flex-col gap-7">
             <div>
-              <SectionTitle>Vue d'ensemble</SectionTitle>
-              <BlocKpi kpis={kpis} totalAmes={totalAmes} />
+              <SectionTitle>{t.sectionOverview}</SectionTitle>
+              <BlocKpi kpis={kpis} totalAmes={totalAmes} t={t} />
             </div>
             <div>
-              <SectionTitle>Performance par cellule</SectionTitle>
-              <BlocParCellule displayedReports={displayedReports} />
+              <SectionTitle>{t.sectionPerformance}</SectionTitle>
+              <BlocParCellule displayedReports={displayedReports} t={t} />
             </div>
           </div>
-
         ) : onglet === "cellules" ? (
-          <OngletParCelluleDetail displayedReports={displayedReports} onDetails={handleDetailsClick} />
-
+          <OngletParCelluleDetail displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />
         ) : (
-          <OngletParMois displayedReports={displayedReports} onDetails={handleDetailsClick} />
+          <OngletParMois displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />
         )}
 
       </div>

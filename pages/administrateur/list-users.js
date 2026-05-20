@@ -8,13 +8,119 @@ import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
 import { useFeature } from "../../components/FeaturesContext";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    // En-tête
+    titreGestion: "Gestion des",
+    titreAccent: "utilisateurs",
+
+    // Intro
+    intro: "Visualiser, filtrer et gérer tous les utilisateurs de votre église. Chaque",
+    introAccent1: "rôle a une responsabilité spécifique",
+    introCellules: " : responsables de cellules",
+    introConseiller: ", conseillers",
+    introFamilles: ", responsables de familles",
+    intro2: "et chaque utilisateur contribue à la croissance et au soutien des membres. Utilisez cette interface",
+    introAccent2: "pour accompagner, encadrer et développer une communauté solide et fraternelle",
+
+    // Champs / filtres
+    chercher: "Chercher...",
+    tousRoles: "Tous les rôles",
+    total: "Total :",
+    ajouter: "➕ Ajouter",
+
+    // En-tête tableau
+    nom: "Nom",
+    email: "Email",
+    telephone: "Téléphone",
+    roles: "Rôles",
+    creeLe: "Créé le",
+    actions: "Actions",
+
+    // Mobile
+    mobileCreeLe: "Créer le :",
+
+    // Chargement
+    chargement: "Chargement...",
+
+    // Suppression
+    suppressionTitre: (prenom, nom) => `Supprimer ${prenom} ${nom} ?`,
+    suppressionSub: "Cette action est irréversible.",
+    annuler: "Annuler",
+    supprimer: "Supprimer",
+
+    // Libellés rôles
+    roleLabels: {
+      Administrateur: "Administrateur",
+      ResponsableIntegration: "Responsable Intégration",
+      ResponsableCellule: "Responsable Cellule",
+      ResponsableEvangelisation: "Responsable Évangélisation",
+      SuperviseurCellule: "Superviseur Cellule",
+      Conseiller: "Conseiller",
+      ResponsableFamilles: "Responsable Familles",
+    },
+  },
+  en: {
+    // En-tête
+    titreGestion: "Manage",
+    titreAccent: "users",
+
+    // Intro
+    intro: "View, filter and manage all users in your church. Each",
+    introAccent1: "role has a specific responsibility",
+    introCellules: ": cell group leaders",
+    introConseiller: ", counselors",
+    introFamilles: ", family leaders",
+    intro2: "and each user contributes to the growth and support of members. Use this interface",
+    introAccent2: "to accompany, guide and build a strong, brotherly community",
+
+    // Champs / filtres
+    chercher: "Search...",
+    tousRoles: "All roles",
+    total: "Total:",
+    ajouter: "➕ Add",
+
+    // En-tête tableau
+    nom: "Name",
+    email: "Email",
+    telephone: "Phone",
+    roles: "Roles",
+    creeLe: "Created on",
+    actions: "Actions",
+
+    // Mobile
+    mobileCreeLe: "Created:",
+
+    // Chargement
+    chargement: "Loading...",
+
+    // Suppression
+    suppressionTitre: (prenom, nom) => `Delete ${prenom} ${nom}?`,
+    suppressionSub: "This action is irreversible.",
+    annuler: "Cancel",
+    supprimer: "Delete",
+
+    // Libellés rôles
+    roleLabels: {
+      Administrateur: "Administrator",
+      ResponsableIntegration: "Integration Leader",
+      ResponsableCellule: "Cell Group Leader",
+      ResponsableEvangelisation: "Evangelization Leader",
+      SuperviseurCellule: "Cell Supervisor",
+      Conseiller: "Counselor",
+      ResponsableFamilles: "Family Leader",
+    },
+  },
+};
 
 /* =========================
    Format date
 ========================= */
-const formatDate = (date) => {
+const formatDate = (date, lang) => {
   if (!date) return "";
-  return new Date(date).toLocaleDateString("fr-FR");
+  return new Date(date).toLocaleDateString(lang === "en" ? "en-GB" : "fr-FR");
 };
 
 /* =========================
@@ -29,6 +135,9 @@ export default function ListUsers() {
 }
 
 function ListUsersContent() {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   // ─────────────────────────────────────────────
   // ✅ FEATURES — tous les hooks en premier
   // ─────────────────────────────────────────────
@@ -47,7 +156,7 @@ function ListUsersContent() {
   const [egliseId, setEgliseId] = useState(null);
 
   // ─────────────────────────────────────────────
-  // ✅ hiddenRoles via useMemo — valeur stable et réactive
+  // ✅ hiddenRoles via useMemo
   // ─────────────────────────────────────────────
   const hiddenRoles = useMemo(() => [
     ...(!cellulesActive ? ["ResponsableCellule", "SuperviseurCellule"] : []),
@@ -63,16 +172,6 @@ function ListUsersContent() {
     ...(cellulesActive && { SuperviseurCellule: "#F59E0B" }),
     ...(conseillerActive && { Conseiller: "#14B8A6" }),
     ...(famillesActive && { ResponsableFamilles: "#F97316" }),
-  }), [cellulesActive, conseillerActive, famillesActive]);
-
-  const roleLabels = useMemo(() => ({
-    Administrateur: "Administrateur",
-    ResponsableIntegration: "Responsable Intégration",
-    ...(cellulesActive && { ResponsableCellule: "Responsable Cellule" }),
-    ResponsableEvangelisation: "Responsable Évangélisation",
-    ...(cellulesActive && { SuperviseurCellule: "Superviseur Cellule" }),
-    ...(conseillerActive && { Conseiller: "Conseiller" }),
-    ...(famillesActive && { ResponsableFamilles: "Responsable Familles" }),
   }), [cellulesActive, conseillerActive, famillesActive]);
 
   // ─── Récupérer eglise_id de l'admin connecté ───
@@ -96,12 +195,10 @@ function ListUsersContent() {
   }, []);
 
   // ─── Charger les utilisateurs dès qu'on a eglise_id ───
-  // ✅ hiddenRoles dans les dépendances — la liste des rôles se recalcule
-  //    si les features changent APRÈS le fetch initial
   useEffect(() => {
     if (!egliseId) return;
     fetchUsers();
-  }, [egliseId, hiddenRoles]); // ← hiddenRoles ici
+  }, [egliseId, hiddenRoles]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -114,7 +211,6 @@ function ListUsersContent() {
 
     setUsers(data || []);
 
-    // ✅ Filtrer les rôles des features désactivées dès le fetch
     const allRoles = Array.from(
       new Set((data || []).flatMap((u) => u.roles || []))
     ).filter((r) => !hiddenRoles.includes(r));
@@ -123,7 +219,7 @@ function ListUsersContent() {
     setLoading(false);
   };
 
-  // ✅ Recalculer les rôles affichés si hiddenRoles change (sans re-fetch)
+  // ✅ Recalculer les rôles affichés si hiddenRoles change
   useEffect(() => {
     if (users.length === 0) return;
     const allRoles = Array.from(
@@ -132,35 +228,29 @@ function ListUsersContent() {
     setRoles(allRoles);
   }, [hiddenRoles, users]);
 
-   
   const handleDelete = async () => {
-  if (!deleteUser?.id) return;
+    if (!deleteUser?.id) return;
 
-  try {
-    // 1. Supprimer auth.users (on ignore si déjà supprimé)
-    const { error: authError } = await supabase.functions.invoke("dynamic-worker", {
-      body: { member_id: deleteUser.id },
-    });
-    // On ne throw pas — l'user peut déjà ne plus être dans auth.users
-    if (authError) console.warn("Edge Function (ignoré):", authError);
+    try {
+      const { error: authError } = await supabase.functions.invoke("dynamic-worker", {
+        body: { member_id: deleteUser.id },
+      });
+      if (authError) console.warn("Edge Function (ignoré):", authError);
 
-    // 2. Supprimer profiles — toujours exécuté
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .delete()
-      .eq("id", deleteUser.id);
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", deleteUser.id);
 
-    if (profileError) throw profileError;
+      if (profileError) throw profileError;
 
-    // 3. Mettre à jour l'affichage
-    setUsers(users.filter((u) => u.id !== deleteUser.id));
-    setDeleteUser(null);
-
-  } catch (err) {
-    console.error("Erreur suppression :", err);
-    alert("❌ Erreur : " + (err.message || "inconnue"));
-  }
-};
+      setUsers(users.filter((u) => u.id !== deleteUser.id));
+      setDeleteUser(null);
+    } catch (err) {
+      console.error("Erreur suppression :", err);
+      alert("❌ Erreur : " + (err.message || "inconnue"));
+    }
+  };
 
   const handleUpdated = (updatedUser) => {
     setUsers((prev) =>
@@ -177,55 +267,52 @@ function ListUsersContent() {
     );
 
   if (loading)
-    return <p className="text-center mt-10 text-white">Chargement...</p>;
+    return <p className="text-center mt-10 text-white">{t.chargement}</p>;
 
   return (
     <div className="min-h-screen p-6 bg-[#333699]">
       <HeaderPages />
 
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
-        Gestion des <span className="text-emerald-300">utilisateurs</span>
+        {t.titreGestion} <span className="text-emerald-300">{t.titreAccent}</span>
       </h1>
 
-      {/* ✅ Texte intro conditionné par features */}
+      {/* Texte intro conditionné par features */}
       <div className="max-w-3xl w-full mb-6 text-center mx-auto">
         <p className="italic text-base text-white/90">
-          Visualiser, filtrer et gérer tous les utilisateurs de votre église. Chaque{" "}
-          <span className="text-blue-300 font-semibold">rôle a une responsabilité spécifique</span>
-          {cellulesActive && <> : responsables de cellules</>}
-          {conseillerActive && <>, conseillers</>}
-          {famillesActive && <>, responsables de familles</>}
-          {" "}et chaque utilisateur contribue à la croissance et au soutien des membres. Utilisez cette interface{" "}
-          <span className="text-blue-300 font-semibold">
-            pour accompagner, encadrer et développer une communauté solide et fraternelle
-          </span>.
+          {t.intro}{" "}
+          <span className="text-blue-300 font-semibold">{t.introAccent1}</span>
+          {cellulesActive && t.introCellules}
+          {conseillerActive && t.introConseiller}
+          {famillesActive && t.introFamilles}
+          {" "}{t.intro2}{" "}
+          <span className="text-blue-300 font-semibold">{t.introAccent2}</span>.
         </p>
       </div>
 
       <div className="max-w-6xl w-full mx-auto mb-6 flex flex-col gap-3">
         <input
           type="text"
-          placeholder="Chercher..."
+          placeholder={t.chercher}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full sm:w-1/2 mx-auto px-4 py-2 rounded-md text-black"
         />
 
         <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
-          {/* ✅ Filtre rôles — options conditionnées par features */}
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
             className="px-4 py-2 rounded-md text-black"
           >
-            <option value="">Tous les rôles</option>
+            <option value="">{t.tousRoles}</option>
             {roles.map((r) => (
               <option key={r} value={r}>
-                {roleLabels[r] || r}
+                {t.roleLabels[r] || r}
               </option>
             ))}
           </select>
-          <span className="text-white text-sm">Total : {filteredUsers.length}</span>
+          <span className="text-white text-sm">{t.total} {filteredUsers.length}</span>
         </div>
 
         <div className="flex justify-end">
@@ -233,7 +320,7 @@ function ListUsersContent() {
             onClick={() => router.push("/administrateur/create-internal-user")}
             className="text-white px-4 py-2"
           >
-            ➕ Ajouter
+            {t.ajouter}
           </button>
         </div>
       </div>
@@ -241,12 +328,12 @@ function ListUsersContent() {
       {/* En-tête tableau desktop */}
       <div className="max-w-6xl mx-auto space-y-2">
         <div className="hidden sm:flex text-sm font-semibold text-white border-b pb-2">
-          <div className="flex-[2] ml-2">Nom</div>
-          <div className="flex-[2]">Email</div>
-          <div className="flex-[2]">Téléphone</div>
-          <div className="flex-[2]">Rôles</div>
-          <div className="flex-[2]">Créé le</div>
-          <div className="flex-[1] text-center">Actions</div>
+          <div className="flex-[2] ml-2">{t.nom}</div>
+          <div className="flex-[2]">{t.email}</div>
+          <div className="flex-[2]">{t.telephone}</div>
+          <div className="flex-[2]">{t.roles}</div>
+          <div className="flex-[2]">{t.creeLe}</div>
+          <div className="flex-[1] text-center">{t.actions}</div>
         </div>
 
         {filteredUsers.map((u) => (
@@ -254,10 +341,12 @@ function ListUsersContent() {
             key={u.id}
             u={u}
             roleColors={roleColors}
-            roleLabels={roleLabels}
+            roleLabels={t.roleLabels}
             hiddenRoles={hiddenRoles}
             setSelectedUser={setSelectedUser}
             setDeleteUser={setDeleteUser}
+            lang={lang}
+            t={t}
           />
         ))}
       </div>
@@ -276,23 +365,21 @@ function ListUsersContent() {
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-white p-6 rounded-xl text-center shadow-lg">
             <p className="mb-2 font-semibold text-gray-800">
-              Supprimer {deleteUser.prenom} {deleteUser.nom} ?
+              {t.suppressionTitre(deleteUser.prenom, deleteUser.nom)}
             </p>
-            <p className="text-sm text-gray-500 mb-4">
-              Cette action est irréversible.
-            </p>
+            <p className="text-sm text-gray-500 mb-4">{t.suppressionSub}</p>
             <div className="flex gap-3 justify-center">
               <button
                 onClick={() => setDeleteUser(null)}
                 className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300"
               >
-                Annuler
+                {t.annuler}
               </button>
               <button
                 onClick={handleDelete}
                 className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
               >
-                Supprimer
+                {t.supprimer}
               </button>
             </div>
           </div>
@@ -307,7 +394,7 @@ function ListUsersContent() {
 /* =========================
    Ligne utilisateur
 ========================= */
-function UserRow({ u, roleColors, roleLabels, hiddenRoles, setSelectedUser, setDeleteUser }) {
+function UserRow({ u, roleColors, roleLabels, hiddenRoles, setSelectedUser, setDeleteUser, lang, t }) {
   const roles = (u.roles || []).filter((r) => !hiddenRoles.includes(r));
 
   const rolesDisplay =
@@ -332,7 +419,7 @@ function UserRow({ u, roleColors, roleLabels, hiddenRoles, setSelectedUser, setD
         <div className="flex-[2] text-white">{u.telephone || "-"}</div>
         <div className="flex-[2] text-white">{rolesDisplay}</div>
         <div className="flex-[2] text-amber-300 text-sm">
-          {formatDate(u.created_at)}
+          {formatDate(u.created_at, lang)}
         </div>
         <div className="flex-[1] flex justify-center gap-2">
           <button onClick={() => setSelectedUser(u)} className="text-blue-400 hover:text-blue-600">✏️</button>
@@ -346,7 +433,7 @@ function UserRow({ u, roleColors, roleLabels, hiddenRoles, setSelectedUser, setD
         style={{ borderLeftColor: borderColor }}
       >
         <div className="text-right text-amber-300 text-xs">
-          Créer le : {formatDate(u.created_at)}
+          {t.mobileCreeLe} {formatDate(u.created_at, lang)}
         </div>
         <div className="text-center space-y-1.5">
           <div className="text-white font-semibold">{u.prenom} {u.nom}</div>

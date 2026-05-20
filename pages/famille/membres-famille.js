@@ -199,6 +199,8 @@ function MembresFamilleContent() {
   const [showBesoinLibre, setshowBesoinLibre] = useState(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [logoBase64, setLogoBase64] = useState(null);
+  const [egliseData, setEgliseData] = useState(null);
 
   const memberIdStr =
     typeof memberId === "string"
@@ -291,6 +293,38 @@ function MembresFamilleContent() {
     };
 
     fetchFamilles();
+  }, []);
+
+   const { data: profile } = await supabase
+        .from("profiles").select("eglise_id").eq("id", user.id).single();
+      if (!profile?.eglise_id) return;
+
+      const { data: egliseInfo } = await supabase
+        .from("eglises")
+        .select("*")
+        .eq("id", profile.eglise_id)
+        .single();
+
+      if (egliseInfo) {
+        setEgliseData(egliseInfo);
+
+        if (egliseInfo.logo_url) {
+          try {
+            const response = await fetch(egliseInfo.logo_url);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              setLogoBase64(reader.result);
+            };
+            reader.readAsDataURL(blob);
+          } catch (err) {
+            console.error("Erreur logo:", err);
+          }
+        }
+      }
+    };
+
+    fetchEglise();
   }, []);
 
   // ------------------- FETCH MEMBRES -------------------
@@ -576,11 +610,21 @@ function MembresFamilleContent() {
                       {t.responsable} {famille?.responsable || "—"}
                     </p>
 
-                    <div className="w-full flex justify-end mt-3">
-                      <p className="text-[11px] text-gray-400">
-                        {t.createdOn} {formatDateFr(m.date_venu)}
-                      </p>
-                    </div>
+                    <div className="w-full flex flex-col items-end mt-3 gap-2">
+                        <p className="text-[11px] text-gray-400">
+                          {t.creLe} {formatDateFr(m.date_venu)}
+                        </p>
+                      
+                        <ExportMembrePDF
+                          membre={m}
+                          logoBase64={logoBase64}
+                          eglise={egliseData}
+                          churchName={egliseData?.nom}
+                          celluleName={
+                            cellules.find((c) => String(c.id) === String(m.cellule_id))?.cellule_full
+                          }
+                        />
+                      </div>
 
                     <button
                       onClick={() =>

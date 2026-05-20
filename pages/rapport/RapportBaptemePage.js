@@ -5,6 +5,221 @@ import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { useRouter } from "next/navigation";
+import { useLang } from "../../hooks/useLang";
+
+// ─── TRADUCTIONS ───────────────────────────────────────────────
+const translations = {
+  fr: {
+    // Page
+    pageTitle: "Rapport",
+    pageTitleAccent: "Baptêmes",
+    pageSubtitleCreez: "Créez et suivez",
+    pageSubtitleText1: "les rapports de baptêmes ainsi que le suivi des",
+    pageSubtitleNouveaux: "nouveaux baptisés",
+    pageSubtitleText2: ". Enregistrez les données,",
+    pageSubtitleAnalysez: "analysez",
+    pageSubtitleText3: "les volumes et la répartition hommes/femmes pour mesurer",
+    pageSubtitleImpact: "l'impact et structurer la croissance de l'église",
+
+    // Filtres
+    perioderapide: "Période rapide",
+    tranchedates: "Tranche de dates",
+    periode: "Période :",
+    j30: "30 j",
+    j90: "90 j",
+    mois6: "6 mois",
+    an1: "1 an",
+    an2: "2 ans",
+    dateDebut: "Date de début",
+    dateFin: "Date de fin",
+    genererRapport: "Générer le rapport",
+
+    // Onglets
+    vueEnsemble: "Vue d'ensemble",
+    parSession: "Par session",
+    saisie: "Saisie",
+
+    // Vide
+    aucunRapport: "Aucun rapport sur cette période",
+    ajouterRapport: "➕ Ajouter un rapport",
+
+    // Sections KPI
+    sectionVueEnsemble: "Vue d'ensemble",
+    sectionTendance: "Tendance mensuelle",
+    sectionOfficiant: "Baptêmes par officiant",
+
+    // KPI labels
+    kpiTotalBaptises: "Total baptisés",
+    kpiSub: "sur la période",
+    kpiSessions: "Sessions",
+    kpiCeremonies: "cérémonies",
+    kpiHommes: "Hommes",
+    kpiFemmes: "Femmes",
+    kpiRepartition: "Répartition H / F",
+    kpiHommeLabel: "Hommes",
+    kpiFemmeLabel: "Femmes",
+
+    // Tendance
+    tendanceVs: "vs mois préc.",
+    tendanceInsuffisant: "Données insuffisantes (≥ 2 mois)",
+    legendH: "Hommes",
+    legendF: "Femmes",
+
+    // Par officiant
+    aucuneDonnee: "Aucune donnée",
+    sess: "sess.",
+
+    // Carte session
+    modifier: "✏️ Modifier",
+    hommes: "Hommes",
+    femmes: "Femmes",
+    total: "Total",
+
+    // Formulaire saisie
+    infoMsg: "Cette liste contient les personnes qui",
+    infoMsgBold1: "n'ont pas encore été baptisées",
+    infoMsgEt: "et qui",
+    infoMsgBold2: "souhaitent prendre leur baptême",
+    infoMsgSuite: ". Ces informations sont mises à jour dans la",
+    infoMsgBold3: "Liste des membres",
+    voirListe: "Voir la liste des membres",
+
+    selectionnerBaptises: "Sélectionner les baptisés",
+    toutSelectionner: "Tout sélectionner",
+    toutDeselectionner: "Tout désélectionner",
+    aucunCandidat: "Aucun candidat au baptême",
+    ajouterBaptise: "➕ Ajouter un baptisé (s'il n'apparaît pas dans la liste)",
+    selectionnes: "Sélectionnés :",
+
+    modifierRapport: "✏️ Modifier le rapport",
+    nouveauRapport: "➕ Nouveau rapport",
+    annuler: "Annuler",
+    dateLabel: "Date de la cérémonie",
+    baptisePar: "Baptisé par",
+    officiантPlaceholder: "Nom de l'officiant",
+    mettrAJour: "Mettre à jour",
+    ajouterLeRapport: "Ajouter le rapport",
+    rapportSucces: "✅ Rapport ajouté avec succès !",
+
+    // Alerts
+    alertOfficiant: "Le champ 'Baptisé par' est obligatoire.",
+    alertCandidat: "Veuillez sélectionner au moins un candidat.",
+    erreurEnregistrement: "Erreur enregistrement baptême : ",
+
+    // Bouton bas de page
+    ajouterModifier: "➕ Ajouter / modifier un rapport",
+    nouveauRapportBtn: "➕ Nouveau rapport",
+
+    // Numéro culte
+    er: "er",
+    eme: "ème",
+  },
+  en: {
+    // Page
+    pageTitle: "Report",
+    pageTitleAccent: "Baptisms",
+    pageSubtitleCreez: "Create and track",
+    pageSubtitleText1: "baptism reports and monitor",
+    pageSubtitleNouveaux: "newly baptized members",
+    pageSubtitleText2: ". Record data,",
+    pageSubtitleAnalysez: "analyze",
+    pageSubtitleText3: "volumes and male/female breakdown to measure",
+    pageSubtitleImpact: "impact and structure church growth",
+
+    // Filtres
+    perioderapide: "Quick period",
+    tranchedates: "Date range",
+    periode: "Period:",
+    j30: "30 d",
+    j90: "90 d",
+    mois6: "6 mo",
+    an1: "1 yr",
+    an2: "2 yrs",
+    dateDebut: "Start date",
+    dateFin: "End date",
+    genererRapport: "Generate report",
+
+    // Onglets
+    vueEnsemble: "Overview",
+    parSession: "By session",
+    saisie: "Add data",
+
+    // Vide
+    aucunRapport: "No reports for this period",
+    ajouterRapport: "➕ Add a report",
+
+    // Sections KPI
+    sectionVueEnsemble: "Overview",
+    sectionTendance: "Monthly trend",
+    sectionOfficiant: "Baptisms by officiant",
+
+    // KPI labels
+    kpiTotalBaptises: "Total baptized",
+    kpiSub: "for the period",
+    kpiSessions: "Sessions",
+    kpiCeremonies: "ceremonies",
+    kpiHommes: "Men",
+    kpiFemmes: "Women",
+    kpiRepartition: "M / F breakdown",
+    kpiHommeLabel: "Men",
+    kpiFemmeLabel: "Women",
+
+    // Tendance
+    tendanceVs: "vs prev. month",
+    tendanceInsuffisant: "Insufficient data (≥ 2 months)",
+    legendH: "Men",
+    legendF: "Women",
+
+    // Par officiant
+    aucuneDonnee: "No data",
+    sess: "sess.",
+
+    // Carte session
+    modifier: "✏️ Edit",
+    hommes: "Men",
+    femmes: "Women",
+    total: "Total",
+
+    // Formulaire saisie
+    infoMsg: "This list contains people who",
+    infoMsgBold1: "have not yet been baptized",
+    infoMsgEt: "and who",
+    infoMsgBold2: "wish to be baptized",
+    infoMsgSuite: ". This information is updated in the",
+    infoMsgBold3: "Member list",
+    voirListe: "View member list",
+
+    selectionnerBaptises: "Select the baptized",
+    toutSelectionner: "Select all",
+    toutDeselectionner: "Deselect all",
+    aucunCandidat: "No baptism candidates",
+    ajouterBaptise: "➕ Add a baptized person (if not in the list)",
+    selectionnes: "Selected:",
+
+    modifierRapport: "✏️ Edit report",
+    nouveauRapport: "➕ New report",
+    annuler: "Cancel",
+    dateLabel: "Ceremony date",
+    baptisePar: "Baptized by",
+    officiантPlaceholder: "Officiant name",
+    mettrAJour: "Update",
+    ajouterLeRapport: "Add report",
+    rapportSucces: "✅ Report added successfully!",
+
+    // Alerts
+    alertOfficiant: "The 'Baptized by' field is required.",
+    alertCandidat: "Please select at least one candidate.",
+    erreurEnregistrement: "Baptism save error: ",
+
+    // Bouton bas de page
+    ajouterModifier: "➕ Add / edit a report",
+    nouveauRapportBtn: "➕ New report",
+
+    // Numéro culte
+    er: "st",
+    eme: "th",
+  },
+};
 
 export default function RapportBaptemesPage() {
   return (
@@ -29,6 +244,9 @@ function formatDateCourt(dateStr) {
 }
 function getMonthNameFR(monthIndex) {
   return ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"][monthIndex] || "";
+}
+function getMonthNameEN(monthIndex) {
+  return ["January","February","March","April","May","June","July","August","September","October","November","December"][monthIndex] || "";
 }
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
@@ -79,36 +297,35 @@ function aggregateRapports(rapports) {
 }
 
 // ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
-function BlocKpiGlobaux({ rapports }) {
+function BlocKpiGlobaux({ rapports, t }) {
   const totalH = rapports.reduce((a, r) => a + Number(r.hommes || 0), 0);
   const totalF = rapports.reduce((a, r) => a + Number(r.femmes || 0), 0);
   const total = totalH + totalF;
   const sessions = aggregateRapports(rapports);
   const nbSessions = sessions.length;
-  const moy = nbSessions > 0 ? Math.round(total / nbSessions) : 0;
   const pctH = total > 0 ? Math.round((totalH / total) * 100) : 0;
   const pctF = total > 0 ? 100 - pctH : 0;
 
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KpiCard label="Total baptisés" value={total} sub="sur la période" accent="amber" />
-        <KpiCard label="Sessions" value={nbSessions} sub="cérémonies" accent="white" />
-        <KpiCard label="Hommes" value={totalH} sub={`${pctH}% du total`} accent="blue" />
-        <KpiCard label="Femmes" value={totalF} sub={`${pctF}% du total`} accent="pink" />
+        <KpiCard label={t.kpiTotalBaptises} value={total} sub={t.kpiSub} accent="amber" />
+        <KpiCard label={t.kpiSessions} value={nbSessions} sub={t.kpiCeremonies} accent="white" />
+        <KpiCard label={t.kpiHommes} value={totalH} sub={`${pctH}% du total`} accent="blue" />
+        <KpiCard label={t.kpiFemmes} value={totalF} sub={`${pctF}% du total`} accent="pink" />
       </div>
       {total > 0 && (
         <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
-          <p className="text-xs text-white/50">Répartition H / F</p>
+          <p className="text-xs text-white/50">{t.kpiRepartition}</p>
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-blue-900/40 rounded-xl px-3 py-3 text-center">
               <p className="text-xl font-bold text-blue-300">{totalH}</p>
-              <p className="text-[11px] text-blue-400/70">Hommes</p>
+              <p className="text-[11px] text-blue-400/70">{t.kpiHommeLabel}</p>
               <p className="text-[10px] text-blue-500/50">{pctH}%</p>
             </div>
             <div className="bg-pink-900/40 rounded-xl px-3 py-3 text-center">
               <p className="text-xl font-bold text-pink-300">{totalF}</p>
-              <p className="text-[11px] text-pink-400/70">Femmes</p>
+              <p className="text-[11px] text-pink-400/70">{t.kpiFemmeLabel}</p>
               <p className="text-[10px] text-pink-500/50">{pctF}%</p>
             </div>
           </div>
@@ -123,17 +340,20 @@ function BlocKpiGlobaux({ rapports }) {
 }
 
 // ─── BLOC TENDANCE MENSUELLE ───────────────────────────────────
-function BlocTendance({ rapports }) {
+function BlocTendance({ rapports, t, lang }) {
   const parMois = {};
   rapports.forEach(r => {
     const d = new Date(r.date + "T00:00:00");
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    if (!parMois[key]) parMois[key] = { h: 0, f: 0, label: `${getMonthNameFR(d.getMonth()).slice(0, 3)} ${d.getFullYear()}` };
+    const monthName = lang === "en"
+      ? `${getMonthNameEN(d.getMonth()).slice(0, 3)} ${d.getFullYear()}`
+      : `${getMonthNameFR(d.getMonth()).slice(0, 3)} ${d.getFullYear()}`;
+    if (!parMois[key]) parMois[key] = { h: 0, f: 0, label: monthName };
     parMois[key].h += Number(r.hommes || 0);
     parMois[key].f += Number(r.femmes || 0);
   });
   const mois = Object.entries(parMois).sort(([a], [b]) => a.localeCompare(b)).slice(-8);
-  if (mois.length < 2) return <p className="text-white/30 text-sm text-center py-4">Données insuffisantes (≥ 2 mois)</p>;
+  if (mois.length < 2) return <p className="text-white/30 text-sm text-center py-4">{t.tendanceInsuffisant}</p>;
   const maxVal = Math.max(...mois.map(([, v]) => v.h + v.f), 1);
   const derniere = mois[mois.length - 1];
   const avantDerniere = mois[mois.length - 2];
@@ -144,33 +364,30 @@ function BlocTendance({ rapports }) {
       <div className="flex items-center gap-3">
         <span className="text-2xl font-bold text-white">{derniere[1].h + derniere[1].f}</span>
         <span className={`text-sm font-semibold ${delta >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-          {delta >= 0 ? "▲" : "▼"} {Math.abs(delta)} vs mois préc.
+          {delta >= 0 ? "▲" : "▼"} {Math.abs(delta)} {t.tendanceVs}
         </span>
       </div>
       <div className="flex items-end gap-1.5 h-20">
-        {mois.map(([key, { h, f, label }]) => {
-          const tot = h + f;
-          return (
-            <div key={key} className="flex-1 flex flex-col items-center gap-1">
-              <div className="w-full flex gap-0.5 items-end" style={{ height: "60px" }}>
-                <div className="flex-1 bg-blue-500/70 rounded-t-sm" style={{ height: `${Math.max(3, (h / maxVal) * 60)}px` }} />
-                <div className="flex-1 bg-pink-500/70 rounded-t-sm" style={{ height: `${Math.max(3, (f / maxVal) * 60)}px` }} />
-              </div>
-              <p className="text-[9px] text-white/30 truncate w-full text-center">{label}</p>
+        {mois.map(([key, { h, f, label }]) => (
+          <div key={key} className="flex-1 flex flex-col items-center gap-1">
+            <div className="w-full flex gap-0.5 items-end" style={{ height: "60px" }}>
+              <div className="flex-1 bg-blue-500/70 rounded-t-sm" style={{ height: `${Math.max(3, (h / maxVal) * 60)}px` }} />
+              <div className="flex-1 bg-pink-500/70 rounded-t-sm" style={{ height: `${Math.max(3, (f / maxVal) * 60)}px` }} />
             </div>
-          );
-        })}
+            <p className="text-[9px] text-white/30 truncate w-full text-center">{label}</p>
+          </div>
+        ))}
       </div>
       <div className="flex gap-3 text-[11px] text-white/40">
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500/70 inline-block" /> Hommes</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-pink-500/70 inline-block" /> Femmes</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500/70 inline-block" /> {t.legendH}</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-pink-500/70 inline-block" /> {t.legendF}</span>
       </div>
     </div>
   );
 }
 
 // ─── BLOC PAR OFFICIANT ────────────────────────────────────────
-function BlocParOfficiant({ rapports }) {
+function BlocParOfficiant({ rapports, t }) {
   const parOfficiant = {};
   rapports.forEach(r => {
     const nom = r.baptise_par || "Non renseigné";
@@ -181,7 +398,7 @@ function BlocParOfficiant({ rapports }) {
   });
   const lignes = Object.entries(parOfficiant).sort((a, b) => (b[1].h + b[1].f) - (a[1].h + a[1].f));
   const maxTot = Math.max(...lignes.map(([, v]) => v.h + v.f), 1);
-  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">Aucune donnée</p>;
+  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">{t.aucuneDonnee}</p>;
 
   return (
     <div className="flex flex-col gap-2">
@@ -193,7 +410,7 @@ function BlocParOfficiant({ rapports }) {
               <p className="text-sm text-white w-36 flex-shrink-0 truncate">{nom}</p>
               <BarreProgression pct={(tot / maxTot) * 100} color="bg-amber-400" />
               <p className="text-sm font-bold text-white w-8 text-right">{tot}</p>
-              <p className="text-[11px] text-white/30 w-16 text-right flex-shrink-0">{nb} sess.</p>
+              <p className="text-[11px] text-white/30 w-16 text-right flex-shrink-0">{nb} {t.sess}</p>
             </div>
             <div className="flex gap-2 ml-36">
               <Badge color="blue">H: {h}</Badge>
@@ -207,7 +424,7 @@ function BlocParOfficiant({ rapports }) {
 }
 
 // ─── CARTE SESSION ─────────────────────────────────────────────
-function CarteSession({ r, onEdit }) {
+function CarteSession({ r, onEdit, t }) {
   const [open, setOpen] = useState(false);
   const total = Number(r.hommes || 0) + Number(r.femmes || 0);
   return (
@@ -221,7 +438,7 @@ function CarteSession({ r, onEdit }) {
         <div className="flex items-center gap-2 flex-shrink-0">
           <Badge color="blue">H {r.hommes}</Badge>
           <Badge color="pink">F {r.femmes}</Badge>
-          <Badge color="amber">Total {total}</Badge>
+          <Badge color="amber">{t.total} {total}</Badge>
           <span className="text-white/30 text-xs">{open ? "▲" : "▼"}</span>
         </div>
       </button>
@@ -229,9 +446,9 @@ function CarteSession({ r, onEdit }) {
         <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: "Hommes", value: r.hommes, color: "text-blue-300" },
-              { label: "Femmes", value: r.femmes, color: "text-pink-300" },
-              { label: "Total", value: total, color: "text-amber-300 font-bold" },
+              { label: t.hommes, value: r.hommes, color: "text-blue-300" },
+              { label: t.femmes, value: r.femmes, color: "text-pink-300" },
+              { label: t.total, value: total, color: "text-amber-300 font-bold" },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-white/5 rounded-xl px-3 py-2 flex flex-col">
                 <p className="text-[10px] text-white/40">{label}</p>
@@ -241,7 +458,7 @@ function CarteSession({ r, onEdit }) {
           </div>
           <button onClick={() => onEdit(r)}
             className="w-full py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-blue-300 text-sm font-semibold transition">
-            ✏️ Modifier
+            {t.modifier}
           </button>
         </div>
       )}
@@ -250,31 +467,31 @@ function CarteSession({ r, onEdit }) {
 }
 
 // ─── FORMULAIRE SAISIE ─────────────────────────────────────────
-function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats, setSelectedCandidats, editRapport, onSubmit, onCancelEdit, rapportSuccess, router }) {
+function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats, setSelectedCandidats, editRapport, onSubmit, onCancelEdit, rapportSuccess, router, t }) {
   return (
     <div className="flex flex-col gap-4">
       {/* Info candidats */}
       <div className="bg-blue-900/40 border border-blue-300/20 rounded-2xl px-4 py-4 text-sm text-white/80 text-center">
-        ℹ️ Cette liste contient les personnes qui <strong className="text-white">n'ont pas encore été baptisées</strong> et qui <strong className="text-white">souhaitent prendre leur baptême</strong>. Ces informations sont mises à jour dans la <strong className="text-white">Liste des membres</strong>.{" "}
+        ℹ️ {t.infoMsg} <strong className="text-white">{t.infoMsgBold1}</strong> {t.infoMsgEt} <strong className="text-white">{t.infoMsgBold2}</strong>{t.infoMsgSuite} <strong className="text-white">{t.infoMsgBold3}</strong>.{" "}
         <button onClick={() => router.push("/list-members")} className="underline text-amber-300 hover:text-amber-200 mt-1 inline-block">
-          Voir la liste des membres
+          {t.voirListe}
         </button>
       </div>
 
       {/* Sélection candidats */}
       <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <p className="text-white font-semibold text-sm">Sélectionner les baptisés</p>
+          <p className="text-white font-semibold text-sm">{t.selectionnerBaptises}</p>
           <button
             onClick={() => setSelectedCandidats(selectedCandidats.length === 0 ? candidats.map(c => c.id) : [])}
             className="text-xs text-amber-300 hover:text-amber-200 underline"
           >
-            {selectedCandidats.length === 0 ? "Tout sélectionner" : "Tout désélectionner"}
+            {selectedCandidats.length === 0 ? t.toutSelectionner : t.toutDeselectionner}
           </button>
         </div>
         <div className="flex flex-col gap-1 max-h-52 overflow-y-auto">
           {candidats.length === 0 && (
-            <p className="text-white/30 text-sm text-center py-3">Aucun candidat au baptême</p>
+            <p className="text-white/30 text-sm text-center py-3">{t.aucunCandidat}</p>
           )}
           {candidats.map(c => (
             <label key={c.id} className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer transition">
@@ -294,11 +511,11 @@ function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats,
         </div>
         <button onClick={() => router.push("/AddContactbaptise")}
           className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition">
-          ➕ Ajouter un baptisé (s'il n'apparaît pas dans la liste)
+          {t.ajouterBaptise}
         </button>
         {selectedCandidats.length > 0 && (
           <div className="border-t border-white/10 pt-3">
-            <p className="text-[11px] text-amber-300 font-semibold mb-2">Sélectionnés :</p>
+            <p className="text-[11px] text-amber-300 font-semibold mb-2">{t.selectionnes}</p>
             <div className="flex flex-wrap gap-2">
               {candidats.filter(c => selectedCandidats.includes(c.id)).map(c => (
                 <Badge key={c.id} color="amber">{c.prenom} {c.nom}</Badge>
@@ -311,14 +528,14 @@ function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats,
       {/* Formulaire */}
       <div className="bg-white/10 rounded-2xl p-5 flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <p className="text-white font-semibold">{editRapport ? "✏️ Modifier le rapport" : "➕ Nouveau rapport"}</p>
+          <p className="text-white font-semibold">{editRapport ? t.modifierRapport : t.nouveauRapport}</p>
           {editRapport && (
-            <button onClick={onCancelEdit} className="text-xs text-white/40 hover:text-white/70 transition">Annuler</button>
+            <button onClick={onCancelEdit} className="text-xs text-white/40 hover:text-white/70 transition">{t.annuler}</button>
           )}
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-white/50">Date de la cérémonie</label>
+          <label className="text-xs text-white/50">{t.dateLabel}</label>
           <input type="date" required value={formData.date}
             onChange={e => setFormData(p => ({ ...p, date: e.target.value }))}
             className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40" />
@@ -326,32 +543,32 @@ function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats,
 
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-blue-300/70">Hommes</label>
+            <label className="text-xs text-blue-300/70">{t.hommes}</label>
             <input type="number" value={formData.hommes} disabled
               className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-blue-300 text-sm text-center opacity-70 cursor-not-allowed" />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-pink-300/70">Femmes</label>
+            <label className="text-xs text-pink-300/70">{t.femmes}</label>
             <input type="number" value={formData.femmes} disabled
               className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-pink-300 text-sm text-center opacity-70 cursor-not-allowed" />
           </div>
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-white/50">Baptisé par</label>
+          <label className="text-xs text-white/50">{t.baptisePar}</label>
           <input type="text" required value={formData.baptise_par}
             onChange={e => setFormData(p => ({ ...p, baptise_par: e.target.value }))}
-            placeholder="Nom de l'officiant"
+            placeholder={t.officiантPlaceholder}
             className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40 placeholder:text-white/20" />
         </div>
 
         <button onClick={onSubmit}
           className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm hover:from-blue-600 hover:to-indigo-700 transition-all active:scale-95">
-          {editRapport ? "Mettre à jour" : "Ajouter le rapport"}
+          {editRapport ? t.mettrAJour : t.ajouterLeRapport}
         </button>
 
         {rapportSuccess && (
-          <p className="text-center text-sm font-semibold text-emerald-400 animate-pulse">✅ Rapport ajouté avec succès !</p>
+          <p className="text-center text-sm font-semibold text-emerald-400 animate-pulse">{t.rapportSucces}</p>
         )}
       </div>
     </div>
@@ -360,6 +577,9 @@ function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats,
 
 // ─── PAGE PRINCIPALE ───────────────────────────────────────────
 function RapportBaptemes() {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [formData, setFormData] = useState({ date: "", hommes: 0, femmes: 0, baptise_par: "", eglise_id: null });
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
@@ -427,18 +647,17 @@ function RapportBaptemes() {
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
-    if (!formData.baptise_par.trim()) { alert("Le champ 'Baptisé par' est obligatoire."); return; }
+    if (!formData.baptise_par.trim()) { alert(t.alertOfficiant); return; }
     if (editRapport) {
       await supabase.from("baptemes").update({
         date: formData.date, hommes: formData.hommes, femmes: formData.femmes, baptise_par: formData.baptise_par,
       }).eq("id", editRapport.id);
       setEditRapport(null);
     } else {
-      if (selectedCandidats.length === 0) { alert("Veuillez sélectionner au moins un candidat."); return; }
+      if (selectedCandidats.length === 0) { alert(t.alertCandidat); return; }
       for (const id of selectedCandidats) {
         const membre = candidats.find(c => c.id === id);
         if (!membre) continue;
-        // evangelise_member_id est de type TEXT dans baptemes
         const evangelise_id = membre.evangelise_member_id
           ? String(membre.evangelise_member_id)
           : String(membre.id);
@@ -455,7 +674,7 @@ function RapportBaptemes() {
         const { error: insertError } = await supabase.from("baptemes").insert([payload]);
         if (insertError) {
           console.error("Erreur insert bapteme:", JSON.stringify(insertError));
-          alert("Erreur enregistrement baptême : " + (insertError.message || insertError.details || JSON.stringify(insertError)));
+          alert(t.erreurEnregistrement + (insertError.message || insertError.details || JSON.stringify(insertError)));
           return;
         }
         await supabase.from("membres_complets").update({ bapteme_eau: "Oui", veut_se_faire_baptiser: "Non" }).eq("id", id);
@@ -479,9 +698,17 @@ function RapportBaptemes() {
   const sessions = aggregateRapports(rapports).sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const onglets = [
-    { key: "kpi", label: "Vue d'ensemble" },
-    { key: "sessions", label: "Par session" },
-    { key: "saisie", label: "Saisie" },
+    { key: "kpi", label: t.vueEnsemble },
+    { key: "sessions", label: t.parSession },
+    { key: "saisie", label: t.saisie },
+  ];
+
+  const periodes = [
+    { label: t.j30, val: "30" },
+    { label: t.j90, val: "90" },
+    { label: t.mois6, val: "180" },
+    { label: t.an1, val: "365" },
+    { label: t.an2, val: "730" },
   ];
 
   return (
@@ -490,37 +717,35 @@ function RapportBaptemes() {
 
       {/* En-tête */}
       <h1 className="text-2xl font-bold mt-4 mb-3 text-center text-white">
-        Rapport <span className="text-emerald-300">Baptêmes</span>
+        {t.pageTitle} <span className="text-emerald-300">{t.pageTitleAccent}</span>
       </h1>
       <div className="max-w-3xl w-full mb-6 text-center">
         <p className="italic text-base text-white/90">
-          <span className="text-blue-300 font-semibold">Créez et suivez</span> les rapports de baptêmes ainsi que le suivi des{" "}
-          <span className="text-blue-300 font-semibold">nouveaux baptisés</span>. Enregistrez les données,{" "}
-          <span className="text-blue-300 font-semibold">analysez</span> les volumes et la répartition hommes/femmes pour mesurer{" "}
-          <span className="text-blue-300 font-semibold">l'impact et structurer la croissance de l'église</span>.
+          <span className="text-blue-300 font-semibold">{t.pageSubtitleCreez}</span> {t.pageSubtitleText1}{" "}
+          <span className="text-blue-300 font-semibold">{t.pageSubtitleNouveaux}</span>{t.pageSubtitleText2}{" "}
+          <span className="text-blue-300 font-semibold">{t.pageSubtitleAnalysez}</span> {t.pageSubtitleText3}{" "}
+          <span className="text-blue-300 font-semibold">{t.pageSubtitleImpact}</span>.
         </p>
       </div>
 
       <div className="w-full max-w-2xl flex flex-col gap-4">
         {/* Filtres */}
         <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
-          {/* Toggle mode */}
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button onClick={() => setModePerso(false)}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
-              Période rapide
+              {t.perioderapide}
             </button>
             <button onClick={() => setModePerso(true)}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
-              Tranche de dates
+              {t.tranchedates}
             </button>
           </div>
 
-          {/* Période rapide */}
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">Période :</span>
-              {[{ label: "30 j", val: "30" }, { label: "90 j", val: "90" }, { label: "6 mois", val: "180" }, { label: "1 an", val: "365" }, { label: "2 ans", val: "730" }].map(p => (
+              <span className="text-xs text-white/50 flex-shrink-0">{t.periode}</span>
+              {periodes.map(p => (
                 <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
                   {p.label}
@@ -529,24 +754,23 @@ function RapportBaptemes() {
             </div>
           )}
 
-          {/* Tranche personnalisée */}
           {modePerso && (
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">Date de début</label>
+                  <label className="text-xs text-white/50">{t.dateDebut}</label>
                   <input type="date" value={filterDebut} onChange={e => setFilterDebut(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">Date de fin</label>
+                  <label className="text-xs text-white/50">{t.dateFin}</label>
                   <input type="date" value={filterFin} onChange={e => setFilterFin(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
               </div>
               <button onClick={() => fetchRapports(true)}
                 className="w-full py-2 rounded-xl bg-amber-500/80 hover:bg-amber-500 text-white text-sm font-semibold transition active:scale-95">
-                Générer le rapport
+                {t.genererRapport}
               </button>
             </div>
           )}
@@ -580,50 +804,50 @@ function RapportBaptemes() {
               onCancelEdit={() => { setEditRapport(null); setFormData(p => ({ ...p, date: "", hommes: 0, femmes: 0, baptise_par: "" })); }}
               rapportSuccess={rapportSuccess}
               router={router}
+              t={t}
             />
           </div>
         ) : rapports.length === 0 ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center flex flex-col gap-3">
-            <p className="text-white/40 text-sm">Aucun rapport sur cette période</p>
+            <p className="text-white/40 text-sm">{t.aucunRapport}</p>
             <button onClick={() => setOnglet("saisie")}
               className="mx-auto px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition">
-              ➕ Ajouter un rapport
+              {t.ajouterRapport}
             </button>
           </div>
         ) : onglet === "kpi" ? (
           <div className="flex flex-col gap-7">
             <div>
-              <SectionTitle>Vue d'ensemble</SectionTitle>
-              <BlocKpiGlobaux rapports={rapports} />
+              <SectionTitle>{t.sectionVueEnsemble}</SectionTitle>
+              <BlocKpiGlobaux rapports={rapports} t={t} />
             </div>
             <div>
-              <SectionTitle>Tendance mensuelle</SectionTitle>
+              <SectionTitle>{t.sectionTendance}</SectionTitle>
               <div className="bg-white/10 rounded-2xl px-4 py-4">
-                <BlocTendance rapports={rapports} />
+                <BlocTendance rapports={rapports} t={t} lang={lang} />
               </div>
             </div>
             <div>
-              <SectionTitle>Baptêmes par officiant</SectionTitle>
-              <BlocParOfficiant rapports={rapports} />
+              <SectionTitle>{t.sectionOfficiant}</SectionTitle>
+              <BlocParOfficiant rapports={rapports} t={t} />
             </div>
             <div className="flex justify-center">
               <button onClick={() => setOnglet("saisie")}
                 className="px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition active:scale-95">
-                ➕ Ajouter / modifier un rapport
+                {t.ajouterModifier}
               </button>
             </div>
           </div>
         ) : (
-          /* Sessions */
           <div className="flex flex-col gap-3">
             <div className="flex justify-end">
               <button onClick={() => setOnglet("saisie")}
                 className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition">
-                ➕ Nouveau rapport
+                {t.nouveauRapportBtn}
               </button>
             </div>
             {sessions.map((r, i) => (
-              <CarteSession key={`${r.date}-${r.baptise_par}-${i}`} r={r} onEdit={handleEdit} />
+              <CarteSession key={`${r.date}-${r.baptise_par}-${i}`} r={r} onEdit={handleEdit} t={t} />
             ))}
           </div>
         )}

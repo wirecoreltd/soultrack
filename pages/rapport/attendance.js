@@ -5,6 +5,265 @@ import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
+import { useLang } from "../../hooks/useLang";
+
+// ─── TRADUCTIONS ───────────────────────────────────────────────
+const translations = {
+  fr: {
+    // Page
+    pageTitle: "Rapport de",
+    pageTitleAccent: "Présences & Statistiques",
+    pageSubtitle: "Suivez et gérez facilement les",
+    pageSubtitlePresences: "présences",
+    pageSubtitleDe: "de tous les rassemblements spirituels. Enregistrez l'ensemble des",
+    pageSubtitleParticipants: "participants",
+    pageSubtitleYc: ", y compris les",
+    pageSubtitleNouveaux: "nouveaux venus",
+    pageSubtitleEt: "et les",
+    pageSubtitleConvertis: "convertis",
+    pageSubtitleEt2: ", et générez des",
+    pageSubtitleRapports: "rapports clairs",
+    pageSubtitlePour: "pour mieux accompagner chaque membre.",
+
+    // Filtres
+    perioderapide: "Période rapide",
+    tranchedates: "Tranche de dates",
+    periode: "Période :",
+    j7: "7 j",
+    j30: "30 j",
+    j90: "90 j",
+    mois6: "6 mois",
+    an1: "1 an",
+    dateDebut: "Date de début",
+    dateFin: "Date de fin",
+    genererRapport: "Générer le rapport",
+    type: "Type :",
+    tous: "Tous",
+
+    // Onglets
+    vueEnsemble: "Vue d'ensemble",
+    parSession: "Par session",
+    saisie: "Saisie",
+
+    // Boutons actions
+    ajouterRapport: "➕ Ajouter un rapport",
+    modifierRapport: "✏️ Modifier un rapport",
+
+    // Vide
+    aucunRapport: "Aucun rapport sur cette période",
+
+    // Sections KPI
+    sectionVueEnsemble: "Vue d'ensemble",
+    sectionGenre: "Répartition H / F / J",
+    sectionEvang: "Évangélisation — nouveaux venus & convertis",
+    sectionParType: "Fréquentation par type de temps",
+    sectionTendance: "Tendance hebdomadaire (présents H+F+J)",
+
+    // KPI labels
+    kpiSessions: "Sessions",
+    kpiSessionsSub: "sur la période",
+    kpiMoyPresents: "Moy. présents",
+    kpiMoyPresentsSub: "par session (H+F+J)",
+    kpiNouveauxVenus: "Nouveaux venus",
+    kpiNVSub: "sur la période",
+    kpiConvertis: "Convertis",
+    kpiConvSub: "sur la période",
+    kpiHommes: "Hommes",
+    kpiFemmes: "Femmes",
+    kpiJeunes: "Jeunes",
+    kpiEnfants: "Enfants",
+    kpiConnectes: "Connectés (en ligne)",
+    kpiTotal: "Total global",
+    kpiTotalSub: "H+F+J+Enfants+Connectés",
+    kpiTotal2: "total",
+
+    // Genre bloc
+    hommes: "Hommes",
+    femmes: "Femmes",
+    jeunes: "Jeunes",
+
+    // Tendance
+    tendanceVs: "vs sem. préc.",
+    tendanceInsuffisant: "Données insuffisantes (≥ 2 semaines)",
+
+    // Par type
+    sess: "sess.",
+    aucuneDonnee: "Aucune donnée",
+
+    // Évangélisation
+    nouveauxVenus: "Nouveaux venus",
+    moy: "Moy:",
+    convertis: "Convertis",
+    tauxConv: "Taux conv.",
+    nvConv: "NV → Conv.",
+    legendNV: "Nouveaux venus",
+    legendConv: "Convertis",
+
+    // Carte session
+    nv: "Nv. venus",
+    totalGlobal: "Total global",
+    modifier: "✏️ Modifier",
+    supprimer: "🗑️ Supprimer",
+    confirmSupprimer: "Supprimer ce rapport ?",
+
+    // Formulaire
+    modifierRapportTitre: "✏️ Modifier le rapport",
+    saisieRapport: "Saisie du rapport",
+    annuler: "Annuler",
+    dateLabel: "Date du culte",
+    typeTempsLabel: "Type de temps",
+    selectionnerTemps: "Sélectionner un temps",
+    ajouterTemps: "+ Ajouter un temps",
+    nomTemps: "Nom du temps",
+    nomTempsPlaceholder: "Ex: ADP",
+    enregistrerTemps: "Enregistrer ce temps pour le futur",
+    numeroCulte: "Numéro de culte",
+    selectionner: "--- Sélectionner ---",
+    culte: "Culte",
+    er: "er",
+    eme: "ème",
+    nomTempsRequis: "❌ Nom du temps requis.",
+    enregistrement: "⏳ Enregistrement...",
+    rapportMisAJour: "✅ Rapport mis à jour !",
+    rapportAjoute: "✅ Rapport ajouté !",
+    mettrAJour: "Mettre à jour",
+    ajouterLeRapport: "Ajouter le rapport",
+    fHommes: "Hommes",
+    fFemmes: "Femmes",
+    fJeunes: "Jeunes",
+    fEnfants: "Enfants",
+    fConnectes: "Connectés",
+    fNouveauxVenus: "Nouveaux venus",
+    fNouveauxConvertis: "Nouveaux convertis",
+  },
+  en: {
+    // Page
+    pageTitle: "Report of",
+    pageTitleAccent: "Attendance & Statistics",
+    pageSubtitle: "Easily track and manage",
+    pageSubtitlePresences: "attendance",
+    pageSubtitleDe: "for all spiritual gatherings. Record all",
+    pageSubtitleParticipants: "participants",
+    pageSubtitleYc: ", including",
+    pageSubtitleNouveaux: "newcomers",
+    pageSubtitleEt: "and",
+    pageSubtitleConvertis: "converts",
+    pageSubtitleEt2: ", and generate",
+    pageSubtitleRapports: "clear reports",
+    pageSubtitlePour: "to better support every member.",
+
+    // Filtres
+    perioderapide: "Quick period",
+    tranchedates: "Date range",
+    periode: "Period:",
+    j7: "7 d",
+    j30: "30 d",
+    j90: "90 d",
+    mois6: "6 mo",
+    an1: "1 yr",
+    dateDebut: "Start date",
+    dateFin: "End date",
+    genererRapport: "Generate report",
+    type: "Type:",
+    tous: "All",
+
+    // Onglets
+    vueEnsemble: "Overview",
+    parSession: "By session",
+    saisie: "Add data",
+
+    // Boutons actions
+    ajouterRapport: "➕ Add a report",
+    modifierRapport: "✏️ Edit a report",
+
+    // Vide
+    aucunRapport: "No reports for this period",
+
+    // Sections KPI
+    sectionVueEnsemble: "Overview",
+    sectionGenre: "M / F / Y breakdown",
+    sectionEvang: "Evangelism — newcomers & converts",
+    sectionParType: "Attendance by service type",
+    sectionTendance: "Weekly trend (M+F+Y present)",
+
+    // KPI labels
+    kpiSessions: "Sessions",
+    kpiSessionsSub: "for the period",
+    kpiMoyPresents: "Avg. present",
+    kpiMoyPresentsSub: "per session (M+F+Y)",
+    kpiNouveauxVenus: "Newcomers",
+    kpiNVSub: "for the period",
+    kpiConvertis: "Converts",
+    kpiConvSub: "for the period",
+    kpiHommes: "Men",
+    kpiFemmes: "Women",
+    kpiJeunes: "Youth",
+    kpiEnfants: "Children",
+    kpiConnectes: "Online (connected)",
+    kpiTotal: "Grand total",
+    kpiTotalSub: "M+F+Y+Children+Online",
+    kpiTotal2: "total",
+
+    // Genre bloc
+    hommes: "Men",
+    femmes: "Women",
+    jeunes: "Youth",
+
+    // Tendance
+    tendanceVs: "vs prev. week",
+    tendanceInsuffisant: "Insufficient data (≥ 2 weeks)",
+
+    // Par type
+    sess: "sess.",
+    aucuneDonnee: "No data",
+
+    // Évangélisation
+    nouveauxVenus: "Newcomers",
+    moy: "Avg:",
+    convertis: "Converts",
+    tauxConv: "Conv. rate",
+    nvConv: "New → Conv.",
+    legendNV: "Newcomers",
+    legendConv: "Converts",
+
+    // Carte session
+    nv: "Newcomers",
+    totalGlobal: "Grand total",
+    modifier: "✏️ Edit",
+    supprimer: "🗑️ Delete",
+    confirmSupprimer: "Delete this report?",
+
+    // Formulaire
+    modifierRapportTitre: "✏️ Edit report",
+    saisieRapport: "Enter report",
+    annuler: "Cancel",
+    dateLabel: "Service date",
+    typeTempsLabel: "Service type",
+    selectionnerTemps: "Select a type",
+    ajouterTemps: "+ Add a type",
+    nomTemps: "Type name",
+    nomTempsPlaceholder: "E.g.: Prayer",
+    enregistrerTemps: "Save this type for future use",
+    numeroCulte: "Service number",
+    selectionner: "--- Select ---",
+    culte: "Service",
+    er: "st",
+    eme: "th",
+    nomTempsRequis: "❌ Service type name required.",
+    enregistrement: "⏳ Saving...",
+    rapportMisAJour: "✅ Report updated!",
+    rapportAjoute: "✅ Report added!",
+    mettrAJour: "Update",
+    ajouterLeRapport: "Add report",
+    fHommes: "Men",
+    fFemmes: "Women",
+    fJeunes: "Youth",
+    fEnfants: "Children",
+    fConnectes: "Online",
+    fNouveauxVenus: "Newcomers",
+    fNouveauxConvertis: "Converts",
+  },
+};
 
 export default function AttendancePage() {
   return (
@@ -27,6 +286,9 @@ function formatDateCourt(dateStr) {
 }
 function getMonthNameFR(monthIndex) {
   return ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"][monthIndex] || "";
+}
+function getMonthNameEN(monthIndex) {
+  return ["January","February","March","April","May","June","July","August","September","October","November","December"][monthIndex] || "";
 }
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
@@ -64,7 +326,7 @@ function BarreProgression({ pct, color }) {
 }
 
 // ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
-function BlocKpiGlobaux({ reports }) {
+function BlocKpiGlobaux({ reports, t }) {
   const totalSessions = reports.length;
   const totalHommes = reports.reduce((a, r) => a + Number(r.hommes || 0), 0);
   const totalFemmes = reports.reduce((a, r) => a + Number(r.femmes || 0), 0);
@@ -80,27 +342,27 @@ function BlocKpiGlobaux({ reports }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KpiCard label="Sessions" value={totalSessions} sub="sur la période" accent="white" />
-        <KpiCard label="Moy. présents" value={moyenneParSession} sub="par session (H+F+J)" accent="amber" />
-        <KpiCard label="Nouveaux venus" value={totalNV} sub="sur la période" accent="blue" />
-        <KpiCard label="Convertis" value={totalNC} sub="sur la période" accent="green" />
+        <KpiCard label={t.kpiSessions} value={totalSessions} sub={t.kpiSessionsSub} accent="white" />
+        <KpiCard label={t.kpiMoyPresents} value={moyenneParSession} sub={t.kpiMoyPresentsSub} accent="amber" />
+        <KpiCard label={t.kpiNouveauxVenus} value={totalNV} sub={t.kpiNVSub} accent="blue" />
+        <KpiCard label={t.kpiConvertis} value={totalNC} sub={t.kpiConvSub} accent="green" />
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KpiCard label="Hommes" value={totalHommes} sub="total" accent="blue" />
-        <KpiCard label="Femmes" value={totalFemmes} sub="total" accent="pink" />
-        <KpiCard label="Jeunes" value={totalJeunes} sub="total" accent="amber" />
-        <KpiCard label="Enfants" value={totalEnfants} sub="total" accent="white" />
+        <KpiCard label={t.kpiHommes} value={totalHommes} sub={t.kpiTotal2} accent="blue" />
+        <KpiCard label={t.kpiFemmes} value={totalFemmes} sub={t.kpiTotal2} accent="pink" />
+        <KpiCard label={t.kpiJeunes} value={totalJeunes} sub={t.kpiTotal2} accent="amber" />
+        <KpiCard label={t.kpiEnfants} value={totalEnfants} sub={t.kpiTotal2} accent="white" />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <KpiCard label="Connectés (en ligne)" value={totalConnectes} sub="total" accent="white" />
-        <KpiCard label="Total global" value={totalGlobal} sub="H+F+J+Enfants+Connectés" accent="white" />
+        <KpiCard label={t.kpiConnectes} value={totalConnectes} sub={t.kpiTotal2} accent="white" />
+        <KpiCard label={t.kpiTotal} value={totalGlobal} sub={t.kpiTotalSub} accent="white" />
       </div>
     </div>
   );
 }
 
 // ─── BLOC RÉPARTITION GENRE ────────────────────────────────────
-function BlocGenre({ reports }) {
+function BlocGenre({ reports, t }) {
   const totalHommes = reports.reduce((a, r) => a + Number(r.hommes || 0), 0);
   const totalFemmes = reports.reduce((a, r) => a + Number(r.femmes || 0), 0);
   const totalJeunes = reports.reduce((a, r) => a + Number(r.jeunes || 0), 0);
@@ -114,17 +376,17 @@ function BlocGenre({ reports }) {
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-blue-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-xl font-bold text-blue-300">{totalHommes}</p>
-          <p className="text-[11px] text-blue-400/70">Hommes</p>
+          <p className="text-[11px] text-blue-400/70">{t.hommes}</p>
           <p className="text-[10px] text-blue-500/50">{pctH}%</p>
         </div>
         <div className="bg-pink-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-xl font-bold text-pink-300">{totalFemmes}</p>
-          <p className="text-[11px] text-pink-400/70">Femmes</p>
+          <p className="text-[11px] text-pink-400/70">{t.femmes}</p>
           <p className="text-[10px] text-pink-500/50">{pctF}%</p>
         </div>
         <div className="bg-amber-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-xl font-bold text-amber-300">{totalJeunes}</p>
-          <p className="text-[11px] text-amber-400/70">Jeunes</p>
+          <p className="text-[11px] text-amber-400/70">{t.jeunes}</p>
           <p className="text-[10px] text-amber-500/50">{pctJ}%</p>
         </div>
       </div>
@@ -140,7 +402,7 @@ function BlocGenre({ reports }) {
 }
 
 // ─── BLOC TENDANCE ─────────────────────────────────────────────
-function BlocTendance({ reports }) {
+function BlocTendance({ reports, t }) {
   const parSemaine = {};
   reports.forEach(r => {
     const d = new Date(r.date + "T00:00:00");
@@ -158,7 +420,7 @@ function BlocTendance({ reports }) {
       sem, ...v,
       label: v.dates.length > 0 ? formatDateCourt(v.dates[0]) : sem,
     }));
-  if (semaines.length < 2) return <p className="text-white/30 text-sm text-center py-4">Données insuffisantes (≥ 2 semaines)</p>;
+  if (semaines.length < 2) return <p className="text-white/30 text-sm text-center py-4">{t.tendanceInsuffisant}</p>;
   const maxTotal = Math.max(...semaines.map(s => s.total), 1);
   const derniere = semaines[semaines.length - 1];
   const avantDerniere = semaines[semaines.length - 2];
@@ -169,7 +431,7 @@ function BlocTendance({ reports }) {
       <div className="flex items-center gap-3">
         <span className="text-2xl font-bold text-white">{derniere.total}</span>
         <span className={`text-sm font-semibold ${delta >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-          {delta >= 0 ? "▲" : "▼"} {Math.abs(delta)} vs sem. préc.
+          {delta >= 0 ? "▲" : "▼"} {Math.abs(delta)} {t.tendanceVs}
         </span>
       </div>
       <div className="flex items-end gap-1 h-16">
@@ -186,7 +448,7 @@ function BlocTendance({ reports }) {
 }
 
 // ─── BLOC TAUX PAR TYPE ────────────────────────────────────────
-function BlocParType({ reports }) {
+function BlocParType({ reports, t }) {
   const parType = {};
   reports.forEach(r => {
     const type = r.typeTemps || "Autre";
@@ -198,7 +460,7 @@ function BlocParType({ reports }) {
   });
   const maxTotal = Math.max(...Object.values(parType).map(v => v.total), 1);
   const lignes = Object.entries(parType).sort((a, b) => b[1].total - a[1].total);
-  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">Aucune donnée</p>;
+  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">{t.aucuneDonnee}</p>;
   return (
     <div className="flex flex-col gap-2">
       {lignes.map(([type, { total, nv, nc, nb }]) => (
@@ -207,7 +469,7 @@ function BlocParType({ reports }) {
             <p className="text-sm text-white w-32 flex-shrink-0 truncate">{type}</p>
             <BarreProgression pct={(total / maxTotal) * 100} color="bg-blue-400" />
             <p className="text-sm font-bold text-white w-12 text-right">{total}</p>
-            <p className="text-[11px] text-white/30 w-14 text-right flex-shrink-0">{nb} sess.</p>
+            <p className="text-[11px] text-white/30 w-14 text-right flex-shrink-0">{nb} {t.sess}</p>
           </div>
           <div className="flex gap-3 ml-32">
             <Badge color="blue">NV: {nv}</Badge>
@@ -220,7 +482,7 @@ function BlocParType({ reports }) {
 }
 
 // ─── BLOC NOUVEAUX VENUS & CONVERTIS ──────────────────────────
-function BlocEvangelisation({ reports }) {
+function BlocEvangelisation({ reports, t, lang }) {
   const totalNV = reports.reduce((a, r) => a + Number(r.nouveauxVenus || 0), 0);
   const totalNC = reports.reduce((a, r) => a + Number(r.nouveauxConvertis || 0), 0);
   const totalSess = reports.length;
@@ -232,7 +494,10 @@ function BlocEvangelisation({ reports }) {
   reports.forEach(r => {
     const d = new Date(r.date + "T00:00:00");
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    if (!parMois[key]) parMois[key] = { nv: 0, nc: 0, label: `${getMonthNameFR(d.getMonth()).slice(0,3)} ${d.getFullYear()}` };
+    const monthName = lang === "en"
+      ? `${getMonthNameEN(d.getMonth()).slice(0, 3)} ${d.getFullYear()}`
+      : `${getMonthNameFR(d.getMonth()).slice(0, 3)} ${d.getFullYear()}`;
+    if (!parMois[key]) parMois[key] = { nv: 0, nc: 0, label: monthName };
     parMois[key].nv += Number(r.nouveauxVenus || 0);
     parMois[key].nc += Number(r.nouveauxConvertis || 0);
   });
@@ -244,18 +509,18 @@ function BlocEvangelisation({ reports }) {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-blue-900/40 rounded-2xl px-4 py-4 text-center">
           <p className="text-2xl font-bold text-blue-300">{totalNV}</p>
-          <p className="text-[11px] text-blue-400/70">Nouveaux venus</p>
-          <p className="text-[10px] text-blue-500/50">Moy: {moyNV}/sess.</p>
+          <p className="text-[11px] text-blue-400/70">{t.nouveauxVenus}</p>
+          <p className="text-[10px] text-blue-500/50">{t.moy} {moyNV}/{t.sess}</p>
         </div>
         <div className="bg-emerald-900/40 rounded-2xl px-4 py-4 text-center">
           <p className="text-2xl font-bold text-emerald-300">{totalNC}</p>
-          <p className="text-[11px] text-emerald-400/70">Convertis</p>
-          <p className="text-[10px] text-emerald-500/50">Moy: {moyNC}/sess.</p>
+          <p className="text-[11px] text-emerald-400/70">{t.convertis}</p>
+          <p className="text-[10px] text-emerald-500/50">{t.moy} {moyNC}/{t.sess}</p>
         </div>
         <div className="bg-purple-900/40 rounded-2xl px-4 py-4 text-center">
           <p className="text-2xl font-bold text-purple-300">{tauxConversion}%</p>
-          <p className="text-[11px] text-purple-400/70">Taux conv.</p>
-          <p className="text-[10px] text-purple-500/50">NV → Conv.</p>
+          <p className="text-[11px] text-purple-400/70">{t.tauxConv}</p>
+          <p className="text-[10px] text-purple-500/50">{t.nvConv}</p>
         </div>
       </div>
       {mois.length >= 2 && (
@@ -272,19 +537,19 @@ function BlocEvangelisation({ reports }) {
         </div>
       )}
       <div className="flex gap-3 text-[11px] text-white/40">
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500/70 inline-block" /> Nouveaux venus</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-500/70 inline-block" /> Convertis</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500/70 inline-block" /> {t.legendNV}</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-500/70 inline-block" /> {t.legendConv}</span>
       </div>
     </div>
   );
 }
 
 // ─── CARTE SESSION ─────────────────────────────────────────────
-function CarteSession({ r, onEdit, onDelete }) {
+function CarteSession({ r, onEdit, onDelete, t }) {
   const [open, setOpen] = useState(false);
   const total = Number(r.hommes || 0) + Number(r.femmes || 0) + Number(r.jeunes || 0);
   const totalGlobal = total + Number(r.enfants || 0) + Number(r.connectes || 0);
-  const label = r.typeTemps + (r.numero_culte ? ` — ${r.numero_culte}${r.numero_culte === 1 ? "er" : "ème"} culte` : "");
+  const label = r.typeTemps + (r.numero_culte ? ` — ${r.numero_culte}${r.numero_culte === 1 ? t.er : t.eme} culte` : "");
 
   return (
     <div className="bg-white/10 rounded-2xl overflow-hidden">
@@ -306,14 +571,14 @@ function CarteSession({ r, onEdit, onDelete }) {
         <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
-              { label: "Hommes", value: r.hommes, color: "text-blue-300" },
-              { label: "Femmes", value: r.femmes, color: "text-pink-300" },
-              { label: "Jeunes", value: r.jeunes, color: "text-amber-300" },
-              { label: "Enfants", value: r.enfants, color: "text-white" },
-              { label: "Connectés", value: r.connectes, color: "text-white" },
-              { label: "Nv. venus", value: r.nouveauxVenus, color: "text-blue-300" },
-              { label: "Convertis", value: r.nouveauxConvertis, color: "text-emerald-300" },
-              { label: "Total global", value: totalGlobal, color: "text-white font-bold" },
+              { label: t.hommes, value: r.hommes, color: "text-blue-300" },
+              { label: t.femmes, value: r.femmes, color: "text-pink-300" },
+              { label: t.jeunes, value: r.jeunes, color: "text-amber-300" },
+              { label: t.kpiEnfants, value: r.enfants, color: "text-white" },
+              { label: t.fConnectes, value: r.connectes, color: "text-white" },
+              { label: t.nv, value: r.nouveauxVenus, color: "text-blue-300" },
+              { label: t.convertis, value: r.nouveauxConvertis, color: "text-emerald-300" },
+              { label: t.totalGlobal, value: totalGlobal, color: "text-white font-bold" },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-white/5 rounded-xl px-3 py-2 flex flex-col">
                 <p className="text-[10px] text-white/40">{label}</p>
@@ -322,14 +587,13 @@ function CarteSession({ r, onEdit, onDelete }) {
             ))}
           </div>
           <div className="flex gap-2 pt-1">
-            {/* FIX #6 : onEdit appelé directement, sans wrapper inutile */}
             <button onClick={() => onEdit(r)}
               className="flex-1 py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-blue-300 text-sm font-semibold transition">
-              ✏️ Modifier
+              {t.modifier}
             </button>
             <button onClick={() => onDelete(r.id)}
               className="flex-1 py-2 rounded-xl bg-red-900/40 hover:bg-red-900/60 text-red-300 text-sm font-semibold transition">
-              🗑️ Supprimer
+              {t.supprimer}
             </button>
           </div>
         </div>
@@ -339,7 +603,7 @@ function CarteSession({ r, onEdit, onDelete }) {
 }
 
 // ─── FORMULAIRE ────────────────────────────────────────────────
-function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, editData, onCancelEdit }) {
+function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, editData, onCancelEdit, t }) {
   const [formData, setFormData] = useState({
     date: "", typeTemps: "", nouveauTemps: "", enregistrerTemps: false,
     numero_culte: "", hommes: 0, femmes: 0, jeunes: 0, enfants: 0,
@@ -362,7 +626,6 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
         nouveauxConvertis: editData.nouveauxConvertis || 0, enregistrerTemps: false,
       });
     } else {
-      // Reset form when switching to "add" mode
       setFormData({
         date: "", typeTemps: "", nouveauTemps: "", enregistrerTemps: false,
         numero_culte: "", hommes: 0, femmes: 0, jeunes: 0, enfants: 0,
@@ -387,9 +650,9 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("⏳ Enregistrement...");
+    setMessage(t.enregistrement);
     let typeTempsFinal = formData.typeTemps === "AUTRE" ? formData.nouveauTemps.trim() : formData.typeTemps;
-    if (!typeTempsFinal) { setMessage("❌ Nom du temps requis."); return; }
+    if (!typeTempsFinal) { setMessage(t.nomTempsRequis); return; }
 
     const payload = {
       date: formData.date, typeTemps: typeTempsFinal, eglise_id: egliseId,
@@ -404,14 +667,14 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
       if (editData) {
         const { error } = await supabase.from("attendance").update(payload).eq("id", editData.id);
         if (error) throw error;
-        setMessage("✅ Rapport mis à jour !");
+        setMessage(t.rapportMisAJour);
       } else {
         const { error } = await supabase.from("attendance").insert([payload]);
         if (error) throw error;
         if (formData.enregistrerTemps && formData.typeTemps === "AUTRE" && !tempsOptions.includes(typeTempsFinal)) {
           setTempsOptions(prev => [...prev, typeTempsFinal]);
         }
-        setMessage("✅ Rapport ajouté !");
+        setMessage(t.rapportAjoute);
       }
       setFormData({ date:"", typeTemps:"", nouveauTemps:"", enregistrerTemps:false, numero_culte:"", hommes:0, femmes:0, jeunes:0, enfants:0, connectes:0, nouveauxVenus:0, nouveauxConvertis:0 });
       setTimeout(() => setMessage(""), 3000);
@@ -422,56 +685,54 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
   };
 
   const fields = [
-    { name: "hommes", label: "Hommes", color: "text-blue-300" },
-    { name: "femmes", label: "Femmes", color: "text-pink-300" },
-    { name: "jeunes", label: "Jeunes", color: "text-amber-300" },
-    { name: "enfants", label: "Enfants", color: "text-white/70" },
-    { name: "connectes", label: "Connectés", color: "text-white/70" },
-    { name: "nouveauxVenus", label: "Nouveaux venus", color: "text-blue-300" },
-    { name: "nouveauxConvertis", label: "Nouveaux convertis", color: "text-emerald-300" },
+    { name: "hommes", label: t.fHommes, color: "text-blue-300" },
+    { name: "femmes", label: t.fFemmes, color: "text-pink-300" },
+    { name: "jeunes", label: t.fJeunes, color: "text-amber-300" },
+    { name: "enfants", label: t.fEnfants, color: "text-white/70" },
+    { name: "connectes", label: t.fConnectes, color: "text-white/70" },
+    { name: "nouveauxVenus", label: t.fNouveauxVenus, color: "text-blue-300" },
+    { name: "nouveauxConvertis", label: t.fNouveauxConvertis, color: "text-emerald-300" },
   ];
 
   return (
-    // FIX #7 : mt-6 pour espacer du bloc onglets
     <div className="bg-white/10 rounded-2xl p-5 flex flex-col gap-4 mt-6">
       <div className="flex items-center justify-between">
-        {/* FIX #4 : supprimé "➕ Nouveau rapport" — titre contextuel seulement */}
-        <p className="text-white font-semibold">{editData ? "✏️ Modifier le rapport" : "Saisie du rapport"}</p>
+        <p className="text-white font-semibold">{editData ? t.modifierRapportTitre : t.saisieRapport}</p>
         {editData && (
-          <button onClick={onCancelEdit} className="text-xs text-white/40 hover:text-white/70 transition">Annuler</button>
+          <button onClick={onCancelEdit} className="text-xs text-white/40 hover:text-white/70 transition">{t.annuler}</button>
         )}
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* Date */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-white/50">Date du culte</label>
+          <label className="text-xs text-white/50">{t.dateLabel}</label>
           <input type="date" name="date" value={formData.date} onChange={handleChange} required
             className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40" />
         </div>
 
         {/* Type de temps */}
         <div className="flex flex-col gap-1" ref={selectRef}>
-          <label className="text-xs text-white/50">Type de temps</label>
+          <label className="text-xs text-white/50">{t.typeTempsLabel}</label>
           <div onClick={() => setDropdownOpen(v => !v)}
             className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm flex justify-between items-center cursor-pointer hover:bg-white/15 transition">
             <span className={formData.typeTemps ? "text-white" : "text-white/30"}>
-              {formData.typeTemps || "Sélectionner un temps"}
+              {formData.typeTemps || t.selectionnerTemps}
             </span>
             <span className="text-white/30">{dropdownOpen ? "▲" : "▼"}</span>
           </div>
           {dropdownOpen && (
             <div className="relative z-10">
               <div className="absolute top-1 left-0 w-full bg-[#2a2d80] border border-white/20 rounded-xl shadow-2xl overflow-hidden">
-                {tempsOptions.map(t => (
-                  <div key={t} onClick={() => { setFormData(p => ({ ...p, typeTemps: t })); setDropdownOpen(false); }}
+                {tempsOptions.map(tp => (
+                  <div key={tp} onClick={() => { setFormData(p => ({ ...p, typeTemps: tp })); setDropdownOpen(false); }}
                     className="px-4 py-2.5 text-sm text-white hover:bg-white/10 cursor-pointer transition flex justify-between items-center">
-                    <span>{t}</span>
+                    <span>{tp}</span>
                   </div>
                 ))}
                 <div onClick={() => { setFormData(p => ({ ...p, typeTemps: "AUTRE", nouveauTemps: "" })); setDropdownOpen(false); }}
                   className="px-4 py-2.5 text-sm text-blue-300 hover:bg-white/10 cursor-pointer transition border-t border-white/10">
-                  + Ajouter un temps
+                  {t.ajouterTemps}
                 </div>
               </div>
             </div>
@@ -481,27 +742,31 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
         {formData.typeTemps === "AUTRE" && (
           <div className="flex flex-col gap-2">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-white/50">Nom du temps</label>
+              <label className="text-xs text-white/50">{t.nomTemps}</label>
               <input type="text" name="nouveauTemps" value={formData.nouveauTemps}
                 onChange={e => setFormData(p => ({ ...p, nouveauTemps: e.target.value.slice(0, 30) }))}
-                placeholder="Ex: ADP" maxLength={30}
+                placeholder={t.nomTempsPlaceholder} maxLength={30}
                 className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40 placeholder:text-white/20" />
             </div>
             <label className="flex items-center gap-2 text-xs text-amber-300 cursor-pointer">
               <input type="checkbox" checked={formData.enregistrerTemps}
                 onChange={e => setFormData(p => ({ ...p, enregistrerTemps: e.target.checked }))} />
-              Enregistrer ce temps pour le futur
+              {t.enregistrerTemps}
             </label>
           </div>
         )}
 
         {formData.typeTemps === "Culte" && (
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-white/50">Numéro de culte</label>
+            <label className="text-xs text-white/50">{t.numeroCulte}</label>
             <select name="numero_culte" value={formData.numero_culte} onChange={handleChange}
               className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
-              <option value="" className="bg-[#2a2d80]">--- Sélectionner ---</option>
-              {[1,2,3,4,5,6,7].map(n => <option key={n} value={n} className="bg-[#2a2d80]">{n}{n===1?"er":"ème"} Culte</option>)}
+              <option value="" className="bg-[#2a2d80]">{t.selectionner}</option>
+              {[1,2,3,4,5,6,7].map(n => (
+                <option key={n} value={n} className="bg-[#2a2d80]">
+                  {n}{n === 1 ? t.er : t.eme} {t.culte}
+                </option>
+              ))}
             </select>
           </div>
         )}
@@ -519,7 +784,7 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
 
         <button type="submit"
           className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm hover:from-blue-600 hover:to-indigo-700 transition-all active:scale-95">
-          {editData ? "Mettre à jour" : "Ajouter le rapport"}
+          {editData ? t.mettrAJour : t.ajouterLeRapport}
         </button>
 
         {message && <p className="text-center text-sm font-medium text-white/80">{message}</p>}
@@ -530,6 +795,9 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
 
 // ─── PAGE PRINCIPALE ───────────────────────────────────────────
 function Attendance() {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
   const [egliseId, setEgliseId] = useState(null);
@@ -558,7 +826,7 @@ function Attendance() {
     const loadTemps = async () => {
       const { data } = await supabase.from("attendance").select("typeTemps").eq("eglise_id", egliseId).not("typeTemps", "is", null);
       if (data) {
-        const unique = ["Culte", ...new Set(data.map(t => t.typeTemps?.trim()).filter(t => t && t !== "Culte"))];
+        const unique = ["Culte", ...new Set(data.map(tp => tp.typeTemps?.trim()).filter(tp => tp && tp !== "Culte"))];
         setTempsOptions(unique);
       }
     };
@@ -588,26 +856,23 @@ function Attendance() {
   useEffect(() => { if (!modePerso) fetchReports(false); }, [egliseId, filtrePeriode, filtreType, modePerso]);
 
   const handleDelete = async (id) => {
-    if (!confirm("Supprimer ce rapport ?")) return;
+    if (!confirm(t.confirmSupprimer)) return;
     await supabase.from("attendance").delete().eq("id", id);
     fetchReports();
   };
 
-  // FIX #6 : handleEdit redirige vers l'onglet "saisie" et charge les données
   const handleEdit = (r) => {
     setEditData(r);
     setOnglet("saisie");
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
   };
 
-  // FIX #3 : handleAjouter redirige vers saisie sans editData
   const handleAjouter = () => {
     setEditData(null);
     setOnglet("saisie");
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
   };
 
-  // FIX #5 : handleModifier redirige vers sessions
   const handleModifier = () => {
     setEditData(null);
     setOnglet("sessions");
@@ -616,9 +881,17 @@ function Attendance() {
   const typesDistincts = [...new Set(reports.map(s => s.typeTemps).filter(Boolean))];
 
   const onglets = [
-    { key: "kpi", label: "Vue d'ensemble" },
-    { key: "sessions", label: "Par session" },
-    { key: "saisie", label: "Saisie" },
+    { key: "kpi", label: t.vueEnsemble },
+    { key: "sessions", label: t.parSession },
+    { key: "saisie", label: t.saisie },
+  ];
+
+  const periodes = [
+    { label: t.j7, val: "7" },
+    { label: t.j30, val: "30" },
+    { label: t.j90, val: "90" },
+    { label: t.mois6, val: "180" },
+    { label: t.an1, val: "365" },
   ];
 
   return (
@@ -628,16 +901,16 @@ function Attendance() {
       <div>
         {/* En-tête */}
         <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
-          Rapport de <span className="text-emerald-300">Présences & Statistiques</span>
+          {t.pageTitle} <span className="text-emerald-300">{t.pageTitleAccent}</span>
         </h1>
         <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-white/90">
-            Suivez et gérez facilement les <span className="text-blue-300 font-semibold">présences </span>
-            de tous les rassemblements spirituels.
-            Enregistrez l'ensemble des <span className="text-blue-300 font-semibold">participants</span>, y compris les
-            <span className="text-blue-300 font-semibold"> nouveaux venus</span> et les
-            <span className="text-blue-300 font-semibold"> convertis</span>, et générez des
-            <span className="text-blue-300 font-semibold"> rapports clairs</span> pour mieux accompagner chaque membre.
+            {t.pageSubtitle} <span className="text-blue-300 font-semibold">{t.pageSubtitlePresences} </span>
+            {t.pageSubtitleDe} <span className="text-blue-300 font-semibold">{t.pageSubtitleParticipants}</span>
+            {t.pageSubtitleYc} <span className="text-blue-300 font-semibold">{t.pageSubtitleNouveaux}</span>{" "}
+            {t.pageSubtitleEt} <span className="text-blue-300 font-semibold">{t.pageSubtitleConvertis}</span>
+            {t.pageSubtitleEt2} <span className="text-blue-300 font-semibold">{t.pageSubtitleRapports}</span>{" "}
+            {t.pageSubtitlePour}
           </p>
         </div>
 
@@ -646,18 +919,18 @@ function Attendance() {
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button onClick={() => setModePerso(false)}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
-              Période rapide
+              {t.perioderapide}
             </button>
             <button onClick={() => setModePerso(true)}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
-              Tranche de dates
+              {t.tranchedates}
             </button>
           </div>
 
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">Période :</span>
-              {[{ label: "7 j", val: "7" }, { label: "30 j", val: "30" }, { label: "90 j", val: "90" }, { label: "6 mois", val: "180" }, { label: "1 an", val: "365" }].map(p => (
+              <span className="text-xs text-white/50 flex-shrink-0">{t.periode}</span>
+              {periodes.map(p => (
                 <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
                   {p.label}
@@ -670,34 +943,34 @@ function Attendance() {
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">Date de début</label>
+                  <label className="text-xs text-white/50">{t.dateDebut}</label>
                   <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">Date de fin</label>
+                  <label className="text-xs text-white/50">{t.dateFin}</label>
                   <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
               </div>
               <button onClick={() => fetchReports(true)}
                 className="w-full py-2 rounded-xl bg-amber-500/80 hover:bg-amber-500 text-white text-sm font-semibold transition active:scale-95">
-                Générer le rapport
+                {t.genererRapport}
               </button>
             </div>
           )}
 
           {typesDistincts.length > 1 && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">Type :</span>
+              <span className="text-xs text-white/50 flex-shrink-0">{t.type}</span>
               <button onClick={() => setFiltreType("")}
                 className={`px-3 py-1 rounded-full text-xs font-semibold transition ${!filtreType ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
-                Tous
+                {t.tous}
               </button>
-              {typesDistincts.map(t => (
-                <button key={t} onClick={() => setFiltreType(t)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtreType === t ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
-                  {t}
+              {typesDistincts.map(tp => (
+                <button key={tp} onClick={() => setFiltreType(tp)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtreType === tp ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
+                  {tp}
                 </button>
               ))}
             </div>
@@ -714,15 +987,15 @@ function Attendance() {
           ))}
         </div>
 
-        {/* FIX #2 : 2 boutons sous les onglets */}
+        {/* Boutons actions */}
         <div className="flex gap-2 mt-3">
           <button onClick={handleAjouter}
             className="flex-1 py-2 rounded-xl bg-emerald-600/40 hover:bg-emerald-600/60 text-emerald-300 text-sm font-semibold transition active:scale-95">
-            ➕ Ajouter un rapport
+            {t.ajouterRapport}
           </button>
           <button onClick={handleModifier}
             className="flex-1 py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-blue-300 text-sm font-semibold transition active:scale-95">
-            ✏️ Modifier un rapport
+            {t.modifierRapport}
           </button>
         </div>
 
@@ -737,54 +1010,53 @@ function Attendance() {
               egliseId={egliseId}
               tempsOptions={tempsOptions}
               setTempsOptions={setTempsOptions}
-              onSaved={() => {fetchReports();setEditData(null);setOnglet("kpi");}}
+              onSaved={() => { fetchReports(); setEditData(null); setOnglet("kpi"); }}
               editData={editData}
               onCancelEdit={() => setEditData(null)}
+              t={t}
             />
           </div>
         ) : reports.length === 0 ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center flex flex-col gap-3 mt-4">
-            <p className="text-white/40 text-sm">Aucun rapport sur cette période</p>
+            <p className="text-white/40 text-sm">{t.aucunRapport}</p>
             <button onClick={handleAjouter}
               className="mx-auto px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition">
-              ➕ Ajouter un rapport
+              {t.ajouterRapport}
             </button>
           </div>
         ) : onglet === "kpi" ? (
-          // FIX #1 : bouton "Ajouter / modifier" supprimé du bas de la vue d'ensemble
           <div className="flex flex-col gap-7 mt-4">
             <div>
-              <SectionTitle>Vue d'ensemble</SectionTitle>
-              <BlocKpiGlobaux reports={reports} />
+              <SectionTitle>{t.sectionVueEnsemble}</SectionTitle>
+              <BlocKpiGlobaux reports={reports} t={t} />
             </div>
             <div>
-              <SectionTitle>Répartition H / F / J</SectionTitle>
+              <SectionTitle>{t.sectionGenre}</SectionTitle>
               <div className="bg-white/10 rounded-2xl px-4 py-4">
-                <BlocGenre reports={reports} />
+                <BlocGenre reports={reports} t={t} />
               </div>
             </div>
             <div>
-              <SectionTitle>Évangélisation — nouveaux venus & convertis</SectionTitle>
+              <SectionTitle>{t.sectionEvang}</SectionTitle>
               <div className="bg-white/10 rounded-2xl px-4 py-4">
-                <BlocEvangelisation reports={reports} />
+                <BlocEvangelisation reports={reports} t={t} lang={lang} />
               </div>
             </div>
             <div>
-              <SectionTitle>Fréquentation par type de temps</SectionTitle>
-              <BlocParType reports={reports} />
+              <SectionTitle>{t.sectionParType}</SectionTitle>
+              <BlocParType reports={reports} t={t} />
             </div>
             <div>
-              <SectionTitle>Tendance hebdomadaire (présents H+F+J)</SectionTitle>
+              <SectionTitle>{t.sectionTendance}</SectionTitle>
               <div className="bg-white/10 rounded-2xl px-4 py-4">
-                <BlocTendance reports={reports} />
+                <BlocTendance reports={reports} t={t} />
               </div>
             </div>
           </div>
         ) : (
-          /* Sessions — FIX #5 : bouton "Nouveau rapport" retiré du haut */
           <div className="flex flex-col gap-3 mt-4">
             {reports.map(r => (
-              <CarteSession key={r.id} r={r} onEdit={handleEdit} onDelete={handleDelete} />
+              <CarteSession key={r.id} r={r} onEdit={handleEdit} onDelete={handleDelete} t={t} />
             ))}
           </div>
         )}

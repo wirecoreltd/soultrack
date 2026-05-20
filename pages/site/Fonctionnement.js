@@ -1753,62 +1753,17 @@ export default function HomePage() {
         </button>
       </section>
 
-      {/* ───── FOOTER ───── */}
-        <footer
-          style={{
-            borderTop: "0.5px solid rgba(255,255,255,0.1)",
-            padding: "20px 24px",
-            boxSizing: "border-box",
-            width: "100%",
-          }}
-        >
-          <div
-            style={{
-              maxWidth: "1100px",
-              margin: "0 auto",
-              textAlign: "center",
-              color: "rgba(255,255,255,0.35)",
-              fontSize: "14px",
-            }}
-          >
-            {/* COPYRIGHT */}
-            <div>
-              © {new Date().getFullYear()} SoulTrack. {t.footer}
-            </div>
-    
-            {/* LINKS PADDLE */}
-            <div
-              style={{
-                marginTop: "10px",
-                display: "flex",
-                justifyContent: "center",
-                gap: "16px",
-                flexWrap: "wrap",
-              }}
-            >
-              <span
-                style={{ color: "#60a5fa", cursor: "pointer" }}
-                onClick={() => router.push("/site/terms")}
-              >
-                Terms of Service
-              </span>
-    
-              <span
-                style={{ color: "#60a5fa", cursor: "pointer" }}
-                onClick={() => router.push("/site/privacy")}
-              >
-                Privacy Policy
-              </span>
-    
-              <span
-                style={{ color: "#60a5fa", cursor: "pointer" }}
-                onClick={() => router.push("/site/refund")}
-              >
-                Refund Policy
-              </span>
-            </div>
+       {/* ───── FOOTER ───── */}
+      <footer style={{ borderTop: "0.5px solid rgba(255,255,255,0.1)", padding: "20px 24px" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "14px" }}>
+          <div>© {new Date().getFullYear()} SoulTrack. {t.footer}</div>
+          <div style={{ marginTop: "10px", display: "flex", justifyContent: "center", gap: "18px", fontSize: "13px" }}>
+            <span onClick={() => router.push("/site/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>Terms</span>
+            <span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>Privacy</span>
+            <span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>Refund</span>
           </div>
-        </footer>
+        </div>
+      </footer>
 
       <style>{`
         html, body {

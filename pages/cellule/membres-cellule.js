@@ -200,6 +200,7 @@ function MembresCelluleContent() {
   const highlightRef = useRef({});
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [logoBase64, setLogoBase64] = useState(null);
 
   const memberIdStr =
     typeof memberId === "string"
@@ -300,8 +301,7 @@ setCellules([
         query = query.eq("id", "00000000-0000-0000-0000-000000000000");
       }
 
-      const { data } = await query;
-      console.log("CELLULES DATA =", data);
+      const { data } = await query;      
 
       setCellules(data || []);
     };
@@ -364,14 +364,12 @@ setCellules([
           setMembres([]); setMessage(t.acces); setLoading(false); return;
         }
 
-        const { data, error } = await query;
-        console.log("MEMBRES DATA =", data);
+        const { data, error } = await query;        
         if (error) throw error;
         setMembres(data || []);
         if (!data || data.length === 0) setMessage(t.aucunMembre);
 
-      } catch (err) {
-        console.error(err);
+      } catch (err) {        
         setMessage(t.erreurChargement);
       } finally {
         setLoading(false);
@@ -456,17 +454,11 @@ setCellules([
           {!message && (
             <div className="flex justify-center">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
-                {filteredMembres.map((m) => {
-                    console.log("MEMBRE =", m);
-                    console.log("CELLULE ID =", m.cellule_id);
-                  const cellule = cellules.find((c) => c.id === m.cellule_id);
-                  console.log("CELLULE TROUVEE =", cellule);
+                {filteredMembres.map((m) => {                    
+                  const cellule = cellules.find((c) => c.id === m.cellule_id);                  
                   const besoins = parseJsonArray(m.besoin).join(", ") || "—";
                   const isOpen = detailsOpen[m.id];
-
-                  const nomResponsable = cellule?.responsable || "—";
-
-                console.log("RESPONSABLE =", nomResponsable);
+                  const nomResponsable = cellule?.responsable || "—";                
 
                   return (
                     <div

@@ -1,83 +1,230 @@
 "use client";
 
-import HeaderPages from "../../components/HeaderPages";
-import Footer from "../../components/Footer";
+import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
+import supabase from "../../lib/supabaseClient";
+import { useLang } from "../../hooks/useLang";
 
-export default function Privacy() {
+import { Great_Vibes } from "next/font/google";
+const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
+
+/* =========================
+   HEADER
+========================= */
+function Header({ t }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { lang, changeLang } = useLang();
+
+  const [openMenu, setOpenMenu] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const langBtnStyle = (active) => ({
+    background: active ? "rgba(255,255,255,0.15)" : "none",
+    border: active ? "0.5px solid rgba(255,255,255,0.3)" : "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    padding: "3px 5px",
+    opacity: active ? 1 : 0.45,
+  });
+
   return (
-    <div className="min-h-screen bg-[#333699] text-white flex flex-col">
-      
-      {/* HEADER */}
-      <HeaderPages />
-
-      {/* BODY */}
+    <header
+      style={{
+        background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
+        borderBottom: scrolled
+          ? "0.5px solid rgba(255,255,255,0.15)"
+          : "0.5px solid transparent",
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+        backdropFilter: scrolled ? "blur(16px)" : "none",
+      }}
+    >
       <div
         style={{
-          maxWidth: 720,
+          maxWidth: "1100px",
           margin: "0 auto",
-          padding: "60px 24px",
-          fontFamily: "Arial, sans-serif",
-          lineHeight: 1.7,
+          padding: "22px 24px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
-        <h1 style={{ color: "#60a5fa", marginBottom: 8 }}>
-          Privacy Policy
-        </h1>
+        {/* LOGO */}
+        <div
+          onClick={() => router.push("/site/HomePage")}
+          style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
+        >
+          <Image src="/logo.png" width={50} height={50} alt="logo" />
+          <span style={{ color: "#fff", fontSize: "22px", fontFamily: "'Great Vibes', cursive" }}>
+            SoulTrack
+          </span>
+        </div>
 
-        <p style={{ color: "#cbd5e1", fontSize: 14, marginBottom: 40 }}>
-          Last updated: May 2026
-        </p>
+        {/* NAV */}
+        <nav style={{ display: "flex", gap: "28px" }} className="nav-hide">
+          {t.nav.map((item) => (
+            <span
+              key={item.path}
+              onClick={() => router.push(item.path)}
+              style={{
+                color: pathname === item.path ? "#fbbf24" : "#fff",
+                cursor: "pointer",
+                fontSize: "14px",
+                fontWeight: 600,
+              }}
+            >
+              {item.label}
+            </span>
+          ))}
+        </nav>
 
-        <h2>1. Information We Collect</h2>
-        <p>
-          We collect information you provide directly, including your name, email address, church information, and member data entered into the platform.
-        </p>
+        {/* ACTIONS */}
+        <div style={{ display: "flex", gap: "10px" }} className="nav-hide">
+          <button
+            onClick={() => router.push("/login")}
+            style={{
+              background: "transparent",
+              color: "#fbbf24",
+              border: "0.5px solid rgba(255,255,255,0.35)",
+              padding: "7px 18px",
+              borderRadius: "8px",
+            }}
+          >
+            {t.login}
+          </button>
 
-        <h2>2. How We Use Information</h2>
-        <p>We use your information to:</p>
-        <ul>
-          <li>Provide and improve our services</li>
-          <li>Process payments</li>
-          <li>Send service-related communications</li>
-          <li>Ensure account security</li>
-        </ul>
+          <button
+            onClick={() => router.push("/site/pricing")}
+            style={{
+              background: "#fff",
+              color: "#333699",
+              border: "none",
+              padding: "7px 18px",
+              borderRadius: "8px",
+              fontWeight: 600,
+            }}
+          >
+            {t.signup}
+          </button>
+        </div>
 
-        <h2>3. Data Sharing</h2>
-        <p>
-          We do not sell your personal data. We may share data with third-party providers (Paddle, PayPal, Supabase) only to operate the service.
-        </p>
+        {/* LANG */}
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button onClick={() => changeLang("fr")} style={langBtnStyle(lang === "fr")}>🇫🇷</button>
+          <button onClick={() => changeLang("en")} style={langBtnStyle(lang === "en")}>🇬🇧</button>
+        </div>
 
-        <h2>4. Data Security</h2>
-        <p>
-          We implement appropriate security measures to protect your data against unauthorized access or misuse.
-        </p>
-
-        <h2>5. Data Retention</h2>
-        <p>
-          We keep your data as long as your account is active. You may request deletion at any time.
-        </p>
-
-        <h2>6. Your Rights</h2>
-        <p>
-          You may access, modify, or delete your data at any time by contacting support@soultrack.app.
-        </p>
-
-        <h2>7. Cookies</h2>
-        <p>
-          We only use essential cookies required for authentication and session management. No tracking cookies are used.
-        </p>
-
-        <h2>8. Contact</h2>
-        <p>
-          For privacy questions:{" "}
-          <a href="mailto:support@soultrack.app" style={{ color: "#60a5fa" }}>
-            support@soultrack.app
-          </a>
-        </p>
+        {/* MOBILE */}
+        <button onClick={() => setOpenMenu(!openMenu)} className="nav-show">
+          ☰
+        </button>
       </div>
 
+      {openMenu && (
+        <div style={{ background: "#333699", padding: 20 }}>
+          {t.nav.map((item) => (
+            <div
+              key={item.path}
+              onClick={() => {
+                router.push(item.path);
+                setOpenMenu(false);
+              }}
+              style={{ color: "#fff", padding: "10px 0", cursor: "pointer" }}
+            >
+              {item.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </header>
+  );
+}
+
+/* =========================
+   FOOTER
+========================= */
+function Footer({ t }) {
+  const router = useRouter();
+
+  return (
+    <footer
+      style={{
+        borderTop: "0.5px solid rgba(255,255,255,0.1)",
+        padding: "20px 24px",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1100px",
+          margin: "0 auto",
+          textAlign: "center",
+          color: "rgba(255,255,255,0.35)",
+          fontSize: "14px",
+        }}
+      >
+        <div>© {new Date().getFullYear()} SoulTrack. {t.footer}</div>
+
+        <div
+          style={{
+            marginTop: "10px",
+            display: "flex",
+            justifyContent: "center",
+            gap: "18px",
+            fontSize: "13px",
+          }}
+        >
+          <span onClick={() => router.push("/site/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+            Terms
+          </span>
+
+          <span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+            Privacy
+          </span>
+
+          <span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+            Refund
+          </span>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+/* =========================
+   PAGE
+========================= */
+export default function ContactPage() {
+  const { lang } = useLang();
+
+  const t = {
+    fr: { footer: "Tous droits réservés.", nav: [] },
+    en: { footer: "All rights reserved.", nav: [] },
+  }[lang];
+
+  return (
+    <div style={{ background: "#333699", minHeight: "100vh" }}>
+
+      {/* HEADER */}
+      <Header t={t} />
+
+      {/* BODY */}
+      <main style={{ padding: "60px 24px", color: "#fff", textAlign: "center" }}>
+        <h1>Contact Page</h1>
+        <p>Ton contenu ici (formulaire, hero, etc.)</p>
+      </main>
+
       {/* FOOTER */}
-      <Footer />
+      <Footer t={t} />
+
     </div>
   );
 }

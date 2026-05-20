@@ -9,6 +9,166 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import EditMemberSuivisPopup from "../../components/EditMemberSuivisPopup";
 import SuiviPopup from "../../components/SuiviPopup";
 import PresenceDot from "../../components/PresenceDot";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    // Titre
+    titrePrefix: "Membres de m",
+    titreSingulierA: "a ",
+    titrePlurielsA: "es ",
+    titreCelluleSing: "cellule",
+    titreCellulePlur: "cellules",
+
+    // Intro
+    intro: "Consultez et gérez facilement les membres de vos cellules.",
+    introAccent1: "Recherchez",
+    intro2: ", filtrez par cellule,",
+    introAccent2: "accédez aux détails complets",
+    intro3: "et mettez à jour les informations pour un",
+    introAccent3: "suivi précis et personnalisé",
+
+    // Boutons
+    btnAjouter: "➕ Ajouter un membre",
+    btnImporter: "📥 Importer une Liste",
+
+    // États
+    chargement: "Chargement...",
+    aucunMembre: "Aucun membre trouvé",
+    erreurChargement: "Erreur de chargement",
+    acces: "Accès non autorisé",
+
+    // Carte membre
+    creLe: "Créé le",
+    details: "Détails",
+    fermerDetails: "Fermer détails",
+    appeler: "📞 Appeler",
+    sms: "✉️ SMS",
+    appelWhatsApp: "📱 Appel WhatsApp",
+    msgWhatsApp: "💬 Message WhatsApp",
+
+    // Sections détail
+    identiteLabel: "👤 Identité",
+    civilite: "🎗️ Civilité",
+    age: "⏳ Tranche d'age",
+    whatsapp: "💬 WhatsApp",
+    oui: "Oui",
+    non: "Non",
+
+    suiviLabel: "📊 Suivi",
+    envoiSuivi: "📆 Envoyé en suivi",
+    statutSuivi: "💡 Statut Suivi",
+
+    spirituelLabel: "🕊 Vie spirituelle",
+    baptemeEau: "💧 Baptême d'Eau",
+    veutBaptise: "💦 Veut se faire baptiser",
+    baptemeFeu: "🔥 Baptême de Feu",
+    priereSalut: "🙏 Prière du salut",
+    typeConversion: "☀️ Type de conversion",
+    formation: "✒️ Formation",
+    ministere: "💢 Ministère",
+
+    parcoursLabel: "🌱 Parcours",
+    commentVenu: "🧩 Comment est-il venu",
+    raisonVenue: "✨ Raison de la venue",
+    infos: "📝 Infos",
+    commentaireSuivis: "📝 Commentaire Suivis",
+
+    pastoralLabel: "❤️‍🩹 Soin pastoral",
+    besoinsDiff: "❓ Difficultés / Besoins",
+    btnSuivis: "💡 Ajouter / Voir suivis",
+    btnModifier: "✏️ Modifier le contact",
+
+    // Statuts suivi
+    statutLabels: {
+      1: "En attente",
+      2: "En Suivis",
+      3: "Intégré",
+      4: "Refus",
+    },
+
+    // Mois abrégés
+    mois: ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"],
+  },
+  en: {
+    // Titre
+    titrePrefix: "Members of m",
+    titreSingulierA: "y ",
+    titrePlurielsA: "y ",
+    titreCelluleSing: "cell group",
+    titreCellulePlur: "cell groups",
+
+    // Intro
+    intro: "Easily view and manage the members of your cell groups.",
+    introAccent1: "Search",
+    intro2: ", filter by cell,",
+    introAccent2: "access full details",
+    intro3: "and update information for",
+    introAccent3: "precise, personalized follow-up",
+
+    // Boutons
+    btnAjouter: "➕ Add a member",
+    btnImporter: "📥 Import a list",
+
+    // États
+    chargement: "Loading...",
+    aucunMembre: "No members found",
+    erreurChargement: "Loading error",
+    acces: "Access denied",
+
+    // Carte membre
+    creLe: "Created on",
+    details: "Details",
+    fermerDetails: "Close details",
+    appeler: "📞 Call",
+    sms: "✉️ SMS",
+    appelWhatsApp: "📱 WhatsApp call",
+    msgWhatsApp: "💬 WhatsApp message",
+
+    // Sections détail
+    identiteLabel: "👤 Identity",
+    civilite: "🎗️ Title",
+    age: "⏳ Age range",
+    whatsapp: "💬 WhatsApp",
+    oui: "Yes",
+    non: "No",
+
+    suiviLabel: "📊 Follow-up",
+    envoiSuivi: "📆 Sent to follow-up",
+    statutSuivi: "💡 Follow-up status",
+
+    spirituelLabel: "🕊 Spiritual life",
+    baptemeEau: "💧 Water baptism",
+    veutBaptise: "💦 Wants to be baptized",
+    baptemeFeu: "🔥 Spirit baptism",
+    priereSalut: "🙏 Salvation prayer",
+    typeConversion: "☀️ Conversion type",
+    formation: "✒️ Training",
+    ministere: "💢 Ministry",
+
+    parcoursLabel: "🌱 Journey",
+    commentVenu: "🧩 How they came",
+    raisonVenue: "✨ Reason for coming",
+    infos: "📝 Info",
+    commentaireSuivis: "📝 Follow-up comment",
+
+    pastoralLabel: "❤️‍🩹 Pastoral care",
+    besoinsDiff: "❓ Difficulties / Needs",
+    btnSuivis: "💡 Add / View follow-ups",
+    btnModifier: "✏️ Edit contact",
+
+    // Statuts suivi
+    statutLabels: {
+      1: "Pending",
+      2: "In follow-up",
+      3: "Integrated",
+      4: "Refused",
+    },
+
+    // Mois abrégés
+    mois: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+  },
+};
 
 export default function MembresCellule() {
   return (
@@ -20,6 +180,9 @@ export default function MembresCellule() {
 
 function MembresCelluleContent() {
   const router = useRouter();
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const { memberId, celluleId, highlight } = router.query;
 
   const [membres, setMembres] = useState([]);
@@ -34,7 +197,6 @@ function MembresCelluleContent() {
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
   const highlightRef = useRef({});
-  const [showBesoinLibre, setshowBesoinLibre] = useState(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
   const [userRole, setUserRole] = useState(null);
 
@@ -45,7 +207,7 @@ function MembresCelluleContent() {
       ? memberId[0]
       : null;
 
-  // ------------------- Helpers -------------------
+  // ── Helpers ──
   const parseJsonArray = (value) => {
     if (!value) return [];
     try {
@@ -66,15 +228,7 @@ function MembresCelluleContent() {
     if (!dateString) return "—";
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
-    const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
-    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
-  };
-
-  const statutSuiviLabels = {
-    1: "En attente",
-    2: "En Suivis",
-    3: "Intégré",
-    4: "Refus",
+    return `${day} ${t.mois[d.getMonth()]} ${d.getFullYear()}`;
   };
 
   const getBorderColor = (member) => {
@@ -90,60 +244,47 @@ function MembresCelluleContent() {
     setMembres((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
   };
 
-  // ------------------- Scroll automatique vers le membre surligné -------------------
+  // ── Scroll vers membre surligné ──
   useEffect(() => {
     if (!highlight || loading) return;
     const el = highlightRef.current[highlight];
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [highlight, loading]);
 
-  // ------------------- FETCH USER + CELLULES -------------------
+  // ── Fetch user + cellules ──
   useEffect(() => {
     const fetchCellules = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, role, eglise_id")
-        .eq("id", user.id)
-        .single();
-
+        .from("profiles").select("id, role, eglise_id").eq("id", user.id).single();
       if (!profile) return;
 
       setUserRole(profile.role);
 
-      // ✅ RESPONSABLE — cellules directes + cellules filles
       if (profile.role === "ResponsableCellule") {
         const { data: directes } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("responsable_id", profile.id)
-          .eq("eglise_id", profile.eglise_id);
+          .from("cellules").select("id")
+          .eq("responsable_id", profile.id).eq("eglise_id", profile.eglise_id);
 
         const directIds = (directes || []).map(c => c.id);
 
         const { data: directesData } = await supabase
-          .from("cellules")
-          .select("*, profiles:responsable_id(prenom, nom)")
+          .from("cellules").select("*, profiles:responsable_id(prenom, nom)")
           .in("id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
 
         const { data: fillesData } = await supabase
-          .from("cellules")
-          .select("*, profiles:responsable_id(prenom, nom)")
+          .from("cellules").select("*, profiles:responsable_id(prenom, nom)")
           .in("cellule_mere_id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
 
         setCellules([...(directesData || []), ...(fillesData || [])]);
         return;
       }
 
-      let query = supabase
-        .from("cellules")
+      let query = supabase.from("cellules")
         .select("*, profiles:responsable_id(prenom, nom)")
-        .eq("eglise_id", profile.eglise_id)
-        .order("cellule_full");
+        .eq("eglise_id", profile.eglise_id).order("cellule_full");
 
       if (profile.role === "SuperviseurCellule") {
         query = query.eq("superviseur_id", profile.id);
@@ -158,122 +299,69 @@ function MembresCelluleContent() {
     fetchCellules();
   }, []);
 
-  // ------------------- FETCH MEMBRES -------------------
+  // ── Fetch membres ──
   useEffect(() => {
     if (memberIdStr) return;
 
     const fetchAllMembers = async () => {
       setLoading(true);
-
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
         const { data: profile } = await supabase
-          .from("profiles")
-          .select("id, role, eglise_id")
-          .eq("id", user.id)
-          .single();
-
+          .from("profiles").select("id, role, eglise_id").eq("id", user.id).single();
         if (!profile) return;
 
-        let query = supabase
-          .from("membres_complets")
-          .select("*")
-          .eq("statut_suivis", 3)
-          .eq("eglise_id", profile.eglise_id)
-          .not("cellule_id", "is", null)
-          .neq("etat_contact", "supprime")
+        let query = supabase.from("membres_complets").select("*")
+          .eq("statut_suivis", 3).eq("eglise_id", profile.eglise_id)
+          .not("cellule_id", "is", null).neq("etat_contact", "supprime")
           .order("created_at", { ascending: false });
 
         let mesCelluleIds = [];
 
-        // ---------------- ADMIN ----------------
         if (profile.role === "Administrateur") {
-          if (celluleId) {
-            query = query.eq("cellule_id", celluleId);
-          }
-        }
-
-        // ---------------- RESPONSABLE ----------------
-        else if (profile.role === "ResponsableCellule") {
-          // 1️⃣ Ses cellules directes
-          const { data: cellulesDirect } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("responsable_id", profile.id)
-            .eq("eglise_id", profile.eglise_id);
-
+          if (celluleId) query = query.eq("cellule_id", celluleId);
+        } else if (profile.role === "ResponsableCellule") {
+          const { data: cellulesDirect } = await supabase.from("cellules").select("id")
+            .eq("responsable_id", profile.id).eq("eglise_id", profile.eglise_id);
           const directIds = (cellulesDirect || []).map(c => c.id);
 
-          // 2️⃣ Ses cellules filles (via cellule_mere_id)
-          const { data: cellulesFillesData } = await supabase
-            .from("cellules")
-            .select("id")
+          const { data: cellulesFillesData } = await supabase.from("cellules").select("id")
             .in("cellule_mere_id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
-
           const fillesIds = (cellulesFillesData || []).map(c => c.id);
 
-          // 3️⃣ Union des deux
           mesCelluleIds = [...new Set([...directIds, ...fillesIds])];
 
           if (!mesCelluleIds.length) {
-            setMembres([]);
-            setMessage("Aucun membre trouvé");
-            setLoading(false);
-            return;
+            setMembres([]); setMessage(t.aucunMembre); setLoading(false); return;
           }
-
           query = query.in("cellule_id", mesCelluleIds);
+          if (celluleId && mesCelluleIds.includes(celluleId)) query = query.eq("cellule_id", celluleId);
 
-          if (celluleId && mesCelluleIds.includes(celluleId)) {
-            query = query.eq("cellule_id", celluleId);
-          }
-        }
-
-        // ---------------- SUPERVISEUR ----------------
-        else if (profile.role === "SuperviseurCellule") {
-          const { data: mesCellules } = await supabase
-            .from("cellules")
-            .select("id")
-            .eq("superviseur_id", profile.id)
-            .eq("eglise_id", profile.eglise_id);
-
+        } else if (profile.role === "SuperviseurCellule") {
+          const { data: mesCellules } = await supabase.from("cellules").select("id")
+            .eq("superviseur_id", profile.id).eq("eglise_id", profile.eglise_id);
           mesCelluleIds = (mesCellules || []).map(c => c.id);
 
           if (!mesCelluleIds.length) {
-            setMembres([]);
-            setMessage("Aucun membre trouvé");
-            setLoading(false);
-            return;
+            setMembres([]); setMessage(t.aucunMembre); setLoading(false); return;
           }
-
           query = query.in("cellule_id", mesCelluleIds);
+          if (celluleId && mesCelluleIds.includes(celluleId)) query = query.eq("cellule_id", celluleId);
 
-          if (celluleId && mesCelluleIds.includes(celluleId)) {
-            query = query.eq("cellule_id", celluleId);
-          }
-        }
-
-        // ---------------- AUTRE ROLE ----------------
-        else {
-          setMembres([]);
-          setMessage("Accès non autorisé");
-          setLoading(false);
-          return;
+        } else {
+          setMembres([]); setMessage(t.acces); setLoading(false); return;
         }
 
         const { data, error } = await query;
         if (error) throw error;
-
         setMembres(data || []);
-        if (!data || data.length === 0) {
-          setMessage("Aucun membre trouvé");
-        }
+        if (!data || data.length === 0) setMessage(t.aucunMembre);
 
       } catch (err) {
         console.error(err);
-        setMessage("Erreur de chargement");
+        setMessage(t.erreurChargement);
       } finally {
         setLoading(false);
       }
@@ -282,11 +370,9 @@ function MembresCelluleContent() {
     fetchAllMembers();
   }, [memberIdStr, celluleId]);
 
-  // ------------------- CLICK OUTSIDE -------------------
+  // ── Click outside ──
   const handleClickOutside = useCallback((e) => {
-    if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
-      setOpenPhoneId(null);
-    }
+    if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) setOpenPhoneId(null);
   }, []);
 
   useEffect(() => {
@@ -298,7 +384,7 @@ function MembresCelluleContent() {
     if (celluleId) setFilterCellule(celluleId);
   }, [celluleId]);
 
-  // ------------------- FILTER -------------------
+  // ── Filtre ──
   const filteredMembres = membres.filter(
     (m) =>
       (!filterCellule || m.cellule_id === filterCellule) &&
@@ -308,33 +394,33 @@ function MembresCelluleContent() {
         (m.telephone && m.telephone.includes(search)))
   );
 
-  // ------------------- RENDER -------------------
+  // ── Render ──
   return (
     <div className="min-h-screen p-6" style={{ backgroundColor: "#333699" }}>
       <HeaderPages />
 
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
         <span className="text-white">
-          {cellules.length > 1 ? "Membres de mes " : "Membres de ma "}
+          {t.titrePrefix}{cellules.length > 1 ? t.titrePlurielsA : t.titreSingulierA}
         </span>
         <span className="text-emerald-300">
-          {cellules.length > 1 ? "cellules" : "cellule"}
+          {cellules.length > 1 ? t.titreCellulePlur : t.titreCelluleSing}
         </span>
       </h1>
 
       <div className="max-w-3xl w-full mb-6 text-center mx-auto">
         <p className="italic text-base text-white/90">
-          Consultez et gérez facilement les membres de vos cellules.
-          <span className="text-blue-300 font-semibold"> Recherchez</span>, filtrez par cellule,{" "}
-          <span className="text-blue-300 font-semibold">accédez aux détails complets </span>
-          et mettez à jour les informations pour un{" "}
-          <span className="text-blue-300 font-semibold">suivi précis et personnalisé</span>.
+          {t.intro}
+          <span className="text-blue-300 font-semibold"> {t.introAccent1}</span>
+          {t.intro2}{" "}
+          <span className="text-blue-300 font-semibold">{t.introAccent2} </span>
+          {t.intro3}{" "}
+          <span className="text-blue-300 font-semibold">{t.introAccent3}</span>.
         </p>
       </div>
 
-      {loading && <div className="text-white text-center mt-10">Chargement...</div>}
+      {loading && <div className="text-white text-center mt-10">{t.chargement}</div>}
 
-      {/* ✅ Boutons toujours visibles pour ResponsableCellule même si liste vide */}
       {!loading && (
         <>
           {userRole === "ResponsableCellule" && (
@@ -343,14 +429,13 @@ function MembresCelluleContent() {
                 onClick={() => router.push("/cellule/ajouter-membre-cellule")}
                 className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
               >
-                ➕ Ajouter un membre
+                {t.btnAjouter}
               </button>
-
               <button
                 onClick={() => router.push("/admin/import")}
                 className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
               >
-                📥 Importer une Liste
+                {t.btnImporter}
               </button>
             </div>
           )}
@@ -365,7 +450,6 @@ function MembresCelluleContent() {
                   const besoins = parseJsonArray(m.besoin).join(", ") || "—";
                   const isOpen = detailsOpen[m.id];
 
-                  // ✅ Nom du responsable depuis la jointure profiles
                   const nomResponsable = cellule?.profiles
                     ? `${cellule.profiles.prenom} ${cellule.profiles.nom}`
                     : cellule?.responsable || "—";
@@ -385,21 +469,12 @@ function MembresCelluleContent() {
                       }}
                     >
                       <h2 className="relative w-full text-center font-bold text-lg flex items-center justify-center gap-1">
-                        <span>
-                          {m.prenom} {m.nom}
-                        </span>
-
-                        {m.star === true &&
-                          m.etat_contact?.trim().toLowerCase() === "existant" && (
-                            <span className="text-yellow-400">⭐</span>
-                          )}
-
+                        <span>{m.prenom} {m.nom}</span>
+                        {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
+                          <span className="text-yellow-400">⭐</span>
+                        )}
                         <div className="absolute right-2">
-                          <PresenceDot
-                            memberId={m.id}
-                            egliseId={m.eglise_id}
-                            dateVenu={m.date_venu}
-                          />
+                          <PresenceDot memberId={m.id} egliseId={m.eglise_id} dateVenu={m.date_venu} />
                         </div>
                       </h2>
 
@@ -416,30 +491,27 @@ function MembresCelluleContent() {
                             >
                               {m.telephone}
                             </p>
-
                             {openPhoneId === m.id && (
                               <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56">
                                 <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">
-                                  📞 Appeler
+                                  {t.appeler}
                                 </a>
                                 <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">
-                                  ✉️ SMS
+                                  {t.sms}
                                 </a>
                                 <a
                                   href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                  target="_blank" rel="noopener noreferrer"
                                   className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
                                 >
-                                  📱 Appel WhatsApp
+                                  {t.appelWhatsApp}
                                 </a>
                                 <a
                                   href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                  target="_blank" rel="noopener noreferrer"
                                   className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
                                 >
-                                  💬 Message WhatsApp
+                                  {t.msgWhatsApp}
                                 </a>
                               </div>
                             )}
@@ -450,18 +522,16 @@ function MembresCelluleContent() {
                       </div>
 
                       <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
+                      <p className="text-center text-sm mt-1">🏠 {m.cellule_full || "—"}</p>
                       <p className="text-center text-sm mt-1">
-  🏠 {m.cellule_full || "—"}
-</p>
-<p className="text-center text-sm mt-1">
-  👤 {m.responsable_prenom && m.responsable_nom
-        ? `${m.responsable_prenom} ${m.responsable_nom}`
-        : nomResponsable || "—"}
-</p>
+                        👤 {m.responsable_prenom && m.responsable_nom
+                          ? `${m.responsable_prenom} ${m.responsable_nom}`
+                          : nomResponsable || "—"}
+                      </p>
 
                       <div className="w-full flex justify-end mt-3">
                         <p className="text-[11px] text-gray-400">
-                          Créé le {formatDateFr(m.date_venu)}
+                          {t.creLe} {formatDateFr(m.date_venu)}
                         </p>
                       </div>
 
@@ -469,70 +539,67 @@ function MembresCelluleContent() {
                         onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
                         className="text-orange-500 underline mt-2 block mx-auto text-sm"
                       >
-                        {isOpen ? "Fermer détails" : "Détails"}
+                        {isOpen ? t.fermerDetails : t.details}
                       </button>
 
                       {isOpen && (
                         <div className="text-black text-sm space-y-2 w-full">
                           <div>
-                            <p className="font-bold text-[#2E3192] mb-1">👤 Identité</p>
-                            <p>🎗️ Civilité : {m.sexe || ""}</p>
-                            <p>⏳ Tranche d'age : {m.age || ""}</p>
-                            <p>💬 WhatsApp : {m.is_whatsapp ? "Oui" : "Non"}</p>
+                            <p className="font-bold text-[#2E3192] mb-1">{t.identiteLabel}</p>
+                            <p>{t.civilite} : {m.sexe || ""}</p>
+                            <p>{t.age} : {m.age || ""}</p>
+                            <p>{t.whatsapp} : {m.is_whatsapp ? t.oui : t.non}</p>
                           </div>
                           <hr />
 
                           <div>
-                            <p className="font-bold text-[#2E3192] mb-1">📊 Suivi</p>
-                            <p>📆 Envoyé en suivi : {formatDateFr(m.date_envoi_suivi)}</p>
+                            <p className="font-bold text-[#2E3192] mb-1">{t.suiviLabel}</p>
+                            <p>{t.envoiSuivi} : {formatDateFr(m.date_envoi_suivi)}</p>
                             <p>
-                              💡 Statut Suivi :{" "}
-                              {statutSuiviLabels[m.statut_suivis] || m.suivi_statut || ""}
+                              {t.statutSuivi} :{" "}
+                              {t.statutLabels[m.statut_suivis] || m.suivi_statut || ""}
                             </p>
                           </div>
                           <hr />
 
                           <div>
-                            <p className="font-bold text-[#2E3192] mb-1">🕊 Vie spirituelle</p>
-                            <p>💧 Baptême d'Eau : {m.bapteme_eau || "—"}</p>
+                            <p className="font-bold text-[#2E3192] mb-1">{t.spirituelLabel}</p>
+                            <p>{t.baptemeEau} : {m.bapteme_eau || "—"}</p>
                             {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
-                              <p className="ml-6">💦 Veut se faire baptiser</p>
+                              <p className="ml-6">{t.veutBaptise}</p>
                             )}
-                            <p>🔥 Baptême de Feu : {m.bapteme_esprit || "—"}</p>
-                            <p>🙏 Prière du salut : {m.priere_salut || "—"}</p>
-                            <p>☀️ Type de conversion : {m.type_conversion || "—"}</p>
-                            <p>✒️ Formation : {m.Formation || ""}</p>
-                            <p>💢 Ministère : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
+                            <p>{t.baptemeFeu} : {m.bapteme_esprit || "—"}</p>
+                            <p>{t.priereSalut} : {m.priere_salut || "—"}</p>
+                            <p>{t.typeConversion} : {m.type_conversion || "—"}</p>
+                            <p>{t.formation} : {m.Formation || ""}</p>
+                            <p>{t.ministere} : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
                           </div>
                           <hr />
 
                           <div>
-                            <p className="font-bold text-[#2E3192] mb-1">🌱 Parcours</p>
-                            <p>🧩 Comment est-il venu : {m.venu || ""}</p>
-                            <p>✨ Raison de la venue : {m.statut_initial ?? m.statut ?? "—"}</p>
-                            <p>📝 Infos : {m.infos_supplementaires || "—"}</p>
-                            <p>📝 Commentaire Suivis : {m.commentaire_suivis || ""}</p>
+                            <p className="font-bold text-[#2E3192] mb-1">{t.parcoursLabel}</p>
+                            <p>{t.commentVenu} : {m.venu || ""}</p>
+                            <p>{t.raisonVenue} : {m.statut_initial ?? m.statut ?? "—"}</p>
+                            <p>{t.infos} : {m.infos_supplementaires || "—"}</p>
+                            <p>{t.commentaireSuivis} : {m.commentaire_suivis || ""}</p>
                           </div>
                           <hr />
 
                           <div>
-                            <p className="font-bold text-[#2E3192] mb-1">❤️‍🩹 Soin pastoral</p>
-                            <p>❓ Difficultés / Besoins : {besoins}</p>
+                            <p className="font-bold text-[#2E3192] mb-1">{t.pastoralLabel}</p>
+                            <p>{t.besoinsDiff} : {besoins}</p>
 
                             <div className="flex justify-center">
                               <button
                                 onClick={() => setOpenSuiviMemberId(m.id)}
                                 className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
                               >
-                                💡 Ajouter / Voir suivis
+                                {t.btnSuivis}
                               </button>
                             </div>
 
                             {openSuiviMemberId === m.id && (
-                              <SuiviPopup
-                                member={m}
-                                onClose={() => setOpenSuiviMemberId(null)}
-                              />
+                              <SuiviPopup member={m} onClose={() => setOpenSuiviMemberId(null)} />
                             )}
                           </div>
 
@@ -541,7 +608,7 @@ function MembresCelluleContent() {
                               onClick={() => setEditMember(m)}
                               className="text-blue-600 text-sm mt-2 block mx-auto underline"
                             >
-                              ✏️ Modifier le contact
+                              {t.btnModifier}
                             </button>
                           </div>
                         </div>

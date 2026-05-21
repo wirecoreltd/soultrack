@@ -71,13 +71,22 @@ export default function LoginPage() {
         return;
       }
 
-      const roles = profile.roles || [];
+     const roles = profile.roles || [];
       localStorage.setItem("userRole", JSON.stringify(roles));
       localStorage.setItem("profile", JSON.stringify(profile));
       localStorage.setItem("userEmail", email);
       localStorage.setItem("userId", user.id);
-
-      if (roles.length > 1) { router.replace("/index"); return; }
+      
+      // ← AJOUT
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect");
+      if (redirect) {
+        router.replace(redirect);
+        return;
+      }
+      // ← FIN AJOUT
+      
+      if (roles.length > 1) { router.replace("/index"); return; }            
 
       if (roles.includes("ResponsableCellule") || roles.includes("SuperviseurCellule")) {
         router.replace("/cellule/cellules-hub");

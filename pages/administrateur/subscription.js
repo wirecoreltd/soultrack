@@ -375,6 +375,195 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
   );
 }
 
+//______________________________________
+function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
+  const t = translations[lang];
+  const [loading, setLoading] = useState(null);
+  const [error, setError]     = useState(null);
+
+  const isFree = FREE_PLANS.includes(plan.id);
+
+  async function handleFreeDowngrade() {
+    setLoading("free");
+    try {
+      const now       = new Date();
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+      const { error: err } = await supabase
+        .from("subscriptions")
+        .update({
+          plan_id:              "free",
+          statut:               "active",
+          current_period_start: now.toISOString(),
+          current_period_end:   nextMonth.toISOString(),
+          updated_at:           now.toISOString(),
+          started_at:           now.toISOString(),
+        })
+        .eq("eglise_id", egliseId);
+      if (err) throw err;
+      onSuccess(t.freeDowngradeSuccess);
+    } catch (e) {
+      setError(t.errorPrefix + e.message);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handlePaddle() {
+    setLoading("paddle");
+    setError(null);
+    try {
+      const res  = await fetch("/api/paddle/create-checkout", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ egliseId, planId: plan.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      if (!window.Paddle) throw new Error(t.paddleNotLoaded);
+      window.Paddle.Checkout.open({
+        items: [{ priceId: data.priceId, quantity: 1 }],
+        customer: {
+          email: data.email,
+          ...(data.customerId ? { id: data.customerId } : {}),
+        },
+        customData: { egliseId, planId: plan.id },
+        settings: {
+          successUrl:  `${window.location.origin}/administrateur/subscription?success=true`,
+          displayMode: "redirect",
+          theme:       "dark",
+        },
+      });
+      onClose();
+    } catch (e) {
+      setError(t.errorPaddle + e.message);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handlePayPal() {
+    setLoading("paypal");
+    setError(null);
+    try {
+      const res  = await fetch("/api/paypal/create-order", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ egliseId, planId: plan.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      if (data.type === "subscription") {
+        window.location.href = data.approvalUrl;
+      } else {
+        window.location.href = `https://www.sandbox.paypal.com/checkoutnow?token=${data.orderId}`;
+      }
+    } catch (e) {
+      setError(t.errorPaypal + e.message);
+      setLoading(null);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl p-6 space-y-5"
+        style={{ background: "#1a1a3e", border: "1.5px solid rgba(255,255,255,0.15)" }}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-white font-bold text-lg">{plan.emoji} {plan.nom[lang]}</p>
+            <p className="text-white/40 text-sm">{plan.prix[lang]}</p>
+          </div>
+          <button onClick={onClose} className="text-white/30 hover:text-white/70 transition text-xl font-bold">×</button>
+        </div>
+
+        {error && (
+          <div className="bg-red-500/15 border border-red-500/30 rounded-xl px-3 py-2 text-red-300 text-sm">
+            {error}
+          </div>
+        )}
+
+        {isFree ? (
+          <div className="space-y-3">
+            <p className="text-white/60 text-sm">{t.freeDowngradeNote}</p>
+            <button
+              onClick={handleFreeDowngrade}
+              disabled={loading === "free"}
+              className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+              style={{ background: "#10b981", color: "#fff", opacity: loading ? 0.7 : 1 }}
+            >
+              {loading === "free" ? <><Spinner /> {t.confirmingDowngradeInProgress}</> : t.confirmingDowngrade}
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-white/50 text-xs uppercase tracking-widest font-semibold">{t.paymentMethod}</p>
+
+            {/* Paddle */}
+            <button
+              onClick={handlePaddle}
+              disabled={!!loading}
+              className="w-full rounded-xl p-4 flex items-center gap-4 text-left transition-all"
+              style={{
+                background: loading === "paddle" ? "rgba(99,102,241,0.25)" : "rgba(99,102,241,0.12)",
+                border:     "1.5px solid rgba(99,102,241,0.5)",
+                opacity:    loading && loading !== "paddle" ? 0.5 : 1,
+              }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "rgba(99,102,241,0.2)" }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <rect x="2" y="6" width="20" height="14" rx="3" stroke="#818cf8" strokeWidth="1.8"/>
+                  <path d="M2 10h20" stroke="#818cf8" strokeWidth="1.8"/>
+                  <rect x="5" y="14" width="4" height="2" rx="1" fill="#818cf8"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-white font-semibold text-sm flex items-center gap-2">
+                  {t.creditCard}
+                  <span className="text-[10px] bg-indigo-400/20 text-indigo-300 px-1.5 py-0.5 rounded-full font-bold">{t.recommended}</span>
+                </p>
+                <p className="text-white/40 text-xs mt-0.5">{t.creditCardSub}</p>
+              </div>
+              {loading === "paddle" ? <Spinner /> : <span className="text-white/30 text-lg">→</span>}
+            </button>
+
+            {/* PayPal */}
+            <button
+              onClick={handlePayPal}
+              disabled={!!loading}
+              className="w-full rounded-xl p-4 flex items-center gap-4 text-left transition-all"
+              style={{
+                background: loading === "paypal" ? "rgba(0,112,240,0.2)" : "rgba(0,112,240,0.08)",
+                border:     "1.5px solid rgba(0,112,240,0.35)",
+                opacity:    loading && loading !== "paypal" ? 0.5 : 1,
+              }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "rgba(0,112,240,0.15)" }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M7 20V4h6a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5H9" stroke="#60a5fa" strokeWidth="1.8" strokeLinecap="round"/>
+                  <path d="M9 14l-2 6" stroke="#60a5fa" strokeWidth="1.8" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-white font-semibold text-sm">PayPal</p>
+                <p className="text-white/40 text-xs mt-0.5">{t.paypalSub}</p>
+              </div>
+              {loading === "paypal" ? <Spinner /> : <span className="text-white/30 text-lg">→</span>}
+            </button>
+          </div>
+        )}
+
+        <p className="text-white/25 text-[11px] text-center">{t.securePayment}</p>
+      </div>
+    </div>
+  );
+}
 // ══════════════════════════════════════════════
 function SubscriptionContent() {
   const router = useRouter();

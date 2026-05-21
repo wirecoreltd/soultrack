@@ -73,7 +73,7 @@ const translations = {
     title: "Add a new member",
     subtitle: "\"Go and make disciples of all nations\" – Matthew 28:19",
     close: "Close",
-    dateVenue: "Date of visit",
+    dateVenue: "Date of arrival",
     civility: "Title",
     choose: "-- Choose --",
     homme: "Male",
@@ -354,8 +354,8 @@ export default function AddMember() {
               src={egliseInfo.logo_url}
               alt={egliseInfo.nom || "Logo église"}
               style={{
-                width: 70,
-                height: 70,
+                width: 50,
+                height: 50,
                 objectFit: "contain",                
               }}
             />
@@ -363,11 +363,11 @@ export default function AddMember() {
 
           {egliseInfo && (
             <div className="text-center leading-snug mt-1">
-              <p className="font-bold text-lg text-[#333699]">{egliseInfo.nom}</p>
+              <p className="font-bold text-lg text-[#c31850]">{egliseInfo.nom}</p>
               {egliseInfo.branche && (
-                <p className="text-sm text-[#333699]">{egliseInfo.branche}</p>
+                <p className="text-sm text-[#c31850]">{egliseInfo.branche}</p>
               )}
-              <p className="text-sm text-[#333699]">
+              <p className="text-sm text-[#c31850]">
                 {[egliseInfo.ville, egliseInfo.pays].filter(Boolean).join(", ")}
               </p>
             </div>

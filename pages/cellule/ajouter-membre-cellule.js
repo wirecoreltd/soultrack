@@ -371,38 +371,33 @@ function AjouterMembreCelluleContent() {
           {t.back}
         </button>
 
-        {/* ─── Logo + infos église ─── */}
-<div className="flex flex-col items-center mb-4 sm:mb-6 gap-2">
+       {/* ─── Logo + infos de l'église ─── */}
+        <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
+          {egliseInfo?.logo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={egliseInfo.logo_url}
+              alt={egliseInfo.nom || "Logo église"}
+              style={{
+                width: 50,
+                height: 50,
+                objectFit: "contain",                
+              }}
+            />
+          )}
 
-  {egliseInfo?.logo_url && (
-    <img
-      src={egliseInfo.logo_url}
-      alt={egliseInfo.nom || "Logo église"}
-      className="w-[90px] h-[90px] object-contain"
-    />
-  )}
-
-  {egliseInfo && (
-    <div className="text-center leading-snug mt-1">
-      <p className="font-bold text-lg text-gray-800">
-        {egliseInfo.nom}
-      </p>
-
-      {egliseInfo.branche && (
-        <p className="text-sm text-gray-500">
-          {egliseInfo.branche}
-        </p>
-      )}
-
-      <p className="text-sm text-gray-500">
-        {[egliseInfo.ville, egliseInfo.pays]
-          .filter(Boolean)
-          .join(", ")}
-      </p>
-    </div>
-  )}
-
-</div>
+          {egliseInfo && (
+            <div className="text-center leading-snug mt-1">
+              <p className="font-bold text-lg text-[#c31850]">{egliseInfo.nom}</p>
+              {egliseInfo.branche && (
+                <p className="text-sm text-[#c31850]">{egliseInfo.branche}</p>
+              )}
+              <p className="text-sm text-[#c31850]">
+                {[egliseInfo.ville, egliseInfo.pays].filter(Boolean).join(", ")}
+              </p>
+            </div>
+          )}
+        </div>
 
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">
           {t.pageTitle}<br />à ma <span className="text-[#333699]">{t.pageTitleHighlight}</span>

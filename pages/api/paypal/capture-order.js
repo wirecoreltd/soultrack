@@ -7,6 +7,8 @@ import { updateSubscription } from "../../../lib/updateSubscription";
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
+  console.log("CAPTURE BODY:", JSON.stringify(req.body));
+
   const { orderId } = req.body;
   if (!orderId) return res.status(400).json({ error: "orderId manquant" });
 

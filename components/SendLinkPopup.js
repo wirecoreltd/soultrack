@@ -2,8 +2,65 @@
 
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    send: "Envoyer",
+    cancel: "Annuler",
+    clickSend: "Cliquez sur",
+    bold_send: "Envoyer",
+    ifContact: "si le contact figure déjà dans WhatsApp, ou saisissez un numéro manuellement.",
+    chooseCellule: "-- Choisir une cellule --",
+    chooseFamille: "-- Choisir une famille --",
+    selectCellule: "Veuillez sélectionner une cellule.",
+    selectFamille: "Veuillez sélectionner une famille.",
+    phonePlaceholder: "Numéro (ex: +2305xxxxxxx)",
+    // WhatsApp messages
+    msgEvangeliseCellule: (groupeName, link) =>
+      `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nCellule : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
+    msgMembreCellule: (groupeName, link) =>
+      `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la cellule.\n\nCellule : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
+    msgEvangeliseFamille: (groupeName, link) =>
+      `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nFamille : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
+    msgMembreFamille: (groupeName, link) =>
+      `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la famille.\n\nFamille : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
+    msgMembre: (churchName, link) =>
+      `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
+    msgEvangelise: (churchName, link) =>
+      `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
+  },
+  en: {
+    send: "Send",
+    cancel: "Cancel",
+    clickSend: "Click",
+    bold_send: "Send",
+    ifContact: "if the contact is already in WhatsApp, or enter a number manually.",
+    chooseCellule: "-- Choose a cell group --",
+    chooseFamille: "-- Choose a family --",
+    selectCellule: "Please select a cell group.",
+    selectFamille: "Please select a family.",
+    phonePlaceholder: "Number (e.g. +2305xxxxxxx)",
+    // WhatsApp messages
+    msgEvangeliseCellule: (groupeName, link) =>
+      `Hello 👋\n\nHere is the link to register a person met during outreach.\n\nCell group: ${groupeName}\n\nClick here:\n${link}\n\nThank you 🙏`,
+    msgMembreCellule: (groupeName, link) =>
+      `Hello 👋\n\nHere is the link to add a new member to the cell group.\n\nCell group: ${groupeName}\n\nClick here:\n${link}\n\nThank you 🙏`,
+    msgEvangeliseFamille: (groupeName, link) =>
+      `Hello 👋\n\nHere is the link to register a person met during outreach.\n\nFamily: ${groupeName}\n\nClick here:\n${link}\n\nThank you 🙏`,
+    msgMembreFamille: (groupeName, link) =>
+      `Hello 👋\n\nHere is the link to add a new member to the family.\n\nFamily: ${groupeName}\n\nClick here:\n${link}\n\nThank you 🙏`,
+    msgMembre: (churchName, link) =>
+      `Hello 👋\n\nHere is the link to add a new member.\n\nChurch: ${churchName}\n\nClick here:\n${link}\n\nThank you 🙏`,
+    msgEvangelise: (churchName, link) =>
+      `Hello 👋\n\nHere is the link to register a person met during outreach.\n\nChurch: ${churchName}\n\nClick here:\n${link}\n\nThank you 🙏`,
+  },
+};
 
 export default function SendLinkPopup({ label, type, buttonColor, celluleId = null }) {
+  const { lang } = useLang();
+  const t = translations[lang] || translations.fr;
+
   const [showPopup, setShowPopup] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [churchName, setChurchName] = useState("");
@@ -85,22 +142,22 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     const base = window.location.origin;
 
     if (type === "ajouter_membre") {
-      return `${base}/add-member?eglise_id=${egliseId}`;
+      return `${base}/add-member?eglise_id=${egliseId}&lang=${lang}`;
     }
     if (type === "ajouter_membre_cellule") {
-      return `${base}/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}`;
+      return `${base}/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;
     }
     if (type === "ajouter_membre_famille") {
-      return `${base}/famille/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}`;
+      return `${base}/famille/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
     }
     if (type === "ajouter_evangelise") {
-      return `${base}/add-evangelise?eglise_id=${egliseId}`;
+      return `${base}/add-evangelise?eglise_id=${egliseId}&lang=${lang}`;
     }
     if (type === "ajouter_evangelise_cellule") {
-      return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}`;
+      return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;
     }
     if (type === "ajouter_evangelise_famille") {
-      return `${base}/add-evangelise?eglise_id=${egliseId}&famille_id=${cid}`;
+      return `${base}/add-evangelise?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
     }
 
     return base;
@@ -113,25 +170,27 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     const cid = celluleId || selectedGroupeId || (groupes.length === 1 ? groupes[0].id : "");
 
     if (needsGroupe && !cid) {
-      alert(`Veuillez sélectionner ${isFamille ? "une famille" : "une cellule"}.`);
+      alert(isFamille ? t.selectFamille : t.selectCellule);
       return;
     }
 
     const link = getLink(cid);
     const groupeName = selectedGroupeName || groupes[0]?.label || "";
 
-    const message =
-      type === "ajouter_evangelise_cellule"
-        ? `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nCellule : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
-        : type === "ajouter_membre_cellule"
-        ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la cellule.\n\nCellule : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
-        : type === "ajouter_evangelise_famille"
-        ? `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nFamille : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
-        : type === "ajouter_membre_famille"
-        ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la famille.\n\nFamille : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
-        : type === "ajouter_membre"
-        ? `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`
-        : `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`;
+    let message = "";
+    if (type === "ajouter_evangelise_cellule") {
+      message = t.msgEvangeliseCellule(groupeName, link);
+    } else if (type === "ajouter_membre_cellule") {
+      message = t.msgMembreCellule(groupeName, link);
+    } else if (type === "ajouter_evangelise_famille") {
+      message = t.msgEvangeliseFamille(groupeName, link);
+    } else if (type === "ajouter_membre_famille") {
+      message = t.msgMembreFamille(groupeName, link);
+    } else if (type === "ajouter_membre") {
+      message = t.msgMembre(churchName, link);
+    } else {
+      message = t.msgEvangelise(churchName, link);
+    }
 
     const whatsappLink = phoneNumber
       ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
@@ -143,7 +202,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
   };
 
   const needsGroupe = isCellule || isFamille;
-  const selectLabel = isFamille ? "-- Choisir une famille --" : "-- Choisir une cellule --";
+  const selectLabel = isFamille ? t.chooseFamille : t.chooseCellule;
 
   return (
     <>
@@ -159,8 +218,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
             <h2 className="text-xl font-bold mb-3">{label}</h2>
             <p className="text-gray-700 mb-4">
-              Cliquez sur <b>Envoyer</b> si le contact figure déjà dans WhatsApp,
-              ou saisissez un numéro manuellement.
+              {t.clickSend} <b>{t.bold_send}</b> {t.ifContact}
             </p>
 
             {needsGroupe && !celluleId && groupes.length > 1 && (
@@ -185,7 +243,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
 
             <input
               type="text"
-              placeholder="Numéro (ex: +2305xxxxxxx)"
+              placeholder={t.phonePlaceholder}
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-orange-400"
@@ -196,13 +254,13 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
                 onClick={() => { setShowPopup(false); setPhoneNumber(""); }}
                 className="flex-1 py-3 bg-gray-300 hover:bg-gray-400 rounded-2xl font-semibold"
               >
-                Annuler
+                {t.cancel}
               </button>
               <button
                 onClick={handleSend}
                 className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-semibold"
               >
-                Envoyer
+                {t.send}
               </button>
             </div>
           </div>

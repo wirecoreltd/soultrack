@@ -886,7 +886,8 @@ export default function HomePage() {
       </section>
 
       {/* ───── TÉMOIGNAGES ───── */}
-      <section
+{testimonials.length > 0 && (      
+<section
         style={{
           padding: "40px 0 80px",
           position: "relative",
@@ -1114,6 +1115,8 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+)}
+
 
       {/* ───── CTA ───── */}
       <section

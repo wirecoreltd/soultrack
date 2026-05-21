@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { useLang } from "../../hooks/useLang";
+import supabase from "../../lib/supabaseClient";
 
 import { Great_Vibes } from "next/font/google";
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
@@ -76,13 +77,20 @@ export default function PricingPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  function handleChoosePlan(planId) {
-    if (planId === "enterprise") {
-      router.push("/site/contact");
-    } else {
-      router.push(`/SignupEglise?plan=${planId}`);
-    }
+  async function handleChoosePlan(planId) {
+  if (planId === "enterprise") {
+    router.push("/site/contact");
+    return;
   }
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    router.push(`/administrateur/subscription?plan=${planId}`);
+  } else {
+    router.push(`/SignupEglise?plan=${planId}`);
+  }
+}
 
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}>

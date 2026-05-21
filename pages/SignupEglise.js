@@ -145,10 +145,17 @@ export default function SignupEglise() {
         body: JSON.stringify({ ...formData, logoUrl, planId }),
       });
       const data = await res.json().catch(() => null);
+      
       if (res.ok) {
         setMessage(t.msgSuccess);
-        router.push("/login");
-      } else {
+        if (planId !== "free") {
+          router.push(`/login?redirect=/administrateur/subscription?plan=${planId}`);
+        } else {
+          router.push("/login");
+        }
+      }
+        
+      else {
         setMessage(`❌ Erreur: ${data?.error || t.errorServer}`);
       }
     } catch (err) {

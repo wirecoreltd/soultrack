@@ -161,6 +161,7 @@ export default function AddMember() {
     famille_id: urlFamilleId || null,
   });
 
+  const [egliseInfo, setEgliseInfo] = useState(null);
   const [noPhone, setNoPhone] = useState(false);
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -215,6 +216,23 @@ export default function AddMember() {
 
     verifyToken();
   }, [token]);
+
+  // ─── Charger les infos de l'église une fois eglise_id connu ───
+  useEffect(() => {
+    if (!formData.eglise_id) return;
+
+    const fetchEglise = async () => {
+      const { data, error } = await supabase
+        .from("eglises")
+        .select("nom, branche, ville, pays, logo_url")
+        .eq("id", formData.eglise_id)
+        .single();
+
+      if (!error && data) setEgliseInfo(data);
+    };
+
+    fetchEglise();
+  }, [formData.eglise_id]);
 
   useEffect(() => {
     if (urlFamilleId) {
@@ -330,8 +348,31 @@ export default function AddMember() {
           ✕
         </button>
 
-        <div className="flex justify-center mb-4 sm:mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={70} height={70} />
+        {/* ─── Logo + infos de l'église ─── */}
+        <div className="flex flex-col items-center mb-4 sm:mb-6 gap-2">
+          {egliseInfo?.logo_url ? (
+            <Image
+              src={egliseInfo.logo_url}
+              alt={egliseInfo.nom || "Logo église"}
+              width={80}
+              height={80}
+              className="rounded-full object-contain"
+            />
+          ) : (
+            <Image src="/logo.png" alt="SoulTrack Logo" width={70} height={70} />
+          )}
+
+          {egliseInfo && (
+            <div className="text-center leading-snug mt-1">
+              <p className="font-bold text-lg text-gray-800">{egliseInfo.nom}</p>
+              {egliseInfo.branche && (
+                <p className="text-sm text-gray-500">{egliseInfo.branche}</p>
+              )}
+              <p className="text-sm text-gray-500">
+                {[egliseInfo.ville, egliseInfo.pays].filter(Boolean).join(", ")}
+              </p>
+            </div>
+          )}
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">{t.title}</h1>

@@ -155,6 +155,7 @@ export default function HomePage() {
   const { lang, changeLang } = useLang();
   const [testimonials, setTestimonials] = useState([]);
   const [testimonialsLoaded, setTestimonialsLoaded] = useState(false); 
+  const SHOW_TESTIMONIALS = false;
 
   const t = translations[lang];
 
@@ -889,7 +890,7 @@ export default function HomePage() {
       </section>
 
       {/* ───── TÉMOIGNAGES ───── */}
-{testimonialsLoaded && testimonials.length > 0 && (  
+{SHOW_TESTIMONIALS && testimonialsLoaded && testimonials.length > 0 && (
 <section
         style={{
           padding: "40px 0 80px",

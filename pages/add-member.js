@@ -241,6 +241,19 @@ export default function AddMember() {
             required
           />
 
+               {/* Civilité */}
+          <label className="text-sm sm:text-base font-semibold">Civilité</label>
+          <select
+            value={formData.sexe}
+            onChange={e => setFormData({ ...formData, sexe: e.target.value })}
+            className="input"
+            required
+          >
+            <option value="">-- Choisir --</option>
+            <option value="Homme">Homme</option>
+            <option value="Femme">Femme</option>
+          </select>
+
           {/* Prénom / Nom */}
           <label className="text-sm sm:text-base font-semibold">Prénom</label>
           <input
@@ -305,20 +318,7 @@ export default function AddMember() {
             value={formData.ville}
             onChange={e => setFormData({ ...formData, ville: e.target.value })}
             className="input"
-          />
-
-          {/* Civilité */}
-          <label className="text-sm sm:text-base font-semibold">Civilité</label>
-          <select
-            value={formData.sexe}
-            onChange={e => setFormData({ ...formData, sexe: e.target.value })}
-            className="input"
-            required
-          >
-            <option value="">-- Choisir --</option>
-            <option value="Homme">Homme</option>
-            <option value="Femme">Femme</option>
-          </select>
+          />        
 
           {/* Âge */}
           <label className="text-sm sm:text-base font-semibold">Âge</label>

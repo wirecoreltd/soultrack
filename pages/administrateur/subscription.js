@@ -334,40 +334,43 @@ function SubscriptionContent() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
-    loadData();
+  const params    = new URLSearchParams(window.location.search);
+  const token     = params.get("token");
+  const success   = params.get("success");
+  const cancelled = params.get("cancelled");
 
-    const params    = new URLSearchParams(window.location.search);
-    const token     = params.get("token");
-    const success   = params.get("success");
-    const cancelled = params.get("cancelled");
-
-    if (token && success !== "true") {
-      fetch("/api/paypal/capture-order", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ orderId: token }),
+  if (token) {
+    // Capture PayPal d'abord, puis loadData
+    fetch("/api/paypal/capture-order", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ orderId: token }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        window.history.replaceState({}, "", window.location.pathname);
+        if (d.success) {
+          setMessage({ type: "success", text: t.paymentConfirmed });
+        } else {
+          setMessage({ type: "error", text: d.error || "Erreur capture" });
+        }
+        loadData();
       })
-        .then(r => r.json())
-        .then(d => {
-          if (d.success) {
-            setMessage({ type: "success", text: t.paymentConfirmed });
-          } else {
-            setMessage({ type: "error", text: d.error || "Erreur capture" });
-          }
-          window.history.replaceState({}, "", window.location.pathname);
-          loadData();
-        })
-        .catch(() => {
-          setMessage({ type: "error", text: t.paymentCancelled });
-        });
-    } else if (success === "true") {
+      .catch(() => {
+        setMessage({ type: "error", text: t.paymentCancelled });
+        loadData();
+      });
+  } else {
+    if (success === "true") {
       setMessage({ type: "success", text: t.paymentConfirmed });
       window.history.replaceState({}, "", window.location.pathname);
     } else if (cancelled === "true") {
       setMessage({ type: "error", text: t.paymentCancelled });
       window.history.replaceState({}, "", window.location.pathname);
     }
-  }, []);
+    loadData();
+  }
+}, []);
 
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser();

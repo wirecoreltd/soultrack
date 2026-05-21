@@ -83,6 +83,35 @@ const translations = {
   },
 };
 
+// Ajoute cette constante EN HAUT du fichier, avant le composant :
+const PAYS = {
+  "Afghanistan": "af", "Afrique du Sud": "za", "Albanie": "al", "Algérie": "dz",
+  "Allemagne": "de", "Angola": "ao", "Arabie Saoudite": "sa", "Argentine": "ar",
+  "Australie": "au", "Autriche": "at", "Belgique": "be", "Bénin": "bj",
+  "Birmanie": "mm", "Bolivie": "bo", "Brésil": "br", "Burkina Faso": "bf",
+  "Burundi": "bi", "Cameroun": "cm", "Canada": "ca", "Chili": "cl",
+  "Chine": "cn", "Colombie": "co", "Congo": "cg", "Corée du Sud": "kr",
+  "Côte d'Ivoire": "ci", "Cuba": "cu", "Danemark": "dk", "Egypte": "eg",
+  "Espagne": "es", "États-Unis": "us", "Ethiopie": "et", "Finlande": "fi",
+  "France": "fr", "Gabon": "ga", "Ghana": "gh", "Grèce": "gr",
+  "Guinée": "gn", "Haïti": "ht", "Hongrie": "hu", "Inde": "in",
+  "Indonésie": "id", "Iran": "ir", "Irlande": "ie", "Israël": "il",
+  "Italie": "it", "Jamaïque": "jm", "Japon": "jp", "Kenya": "ke",
+  "Liban": "lb", "Luxembourg": "lu", "Madagascar": "mg", "Mali": "ml",
+  "Maroc": "ma", "Martinique": "mq", "Maurice": "mu", "Mauritanie": "mr",
+  "Mexique": "mx", "Mozambique": "mz", "Namibie": "na", "Niger": "ne",
+  "Nigeria": "ng", "Norvège": "no", "Nouvelle-Zélande": "nz", "Ouganda": "ug",
+  "Pakistan": "pk", "Pays-Bas": "nl", "Pérou": "pe", "Philippines": "ph",
+  "Pologne": "pl", "Portugal": "pt", "RDC": "cd", "République Dominicaine": "do",
+  "Rodrigues": "mu", "Roumanie": "ro", "Royaume-Uni": "gb", "Rwanda": "rw",
+  "Sénégal": "sn", "Sierra Leone": "sl", "Singapour": "sg", "Somalie": "so",
+  "Soudan": "sd", "Suède": "se", "Suisse": "ch", "Tanzanie": "tz",
+  "Tchad": "td", "Togo": "tg", "Tunisie": "tn", "Turquie": "tr",
+  "Ukraine": "ua", "Uruguay": "uy", "Venezuela": "ve", "Vietnam": "vn",
+  "Zimbabwe": "zw",
+};
+
+
 export default function SignupEglise() {
   const router = useRouter();
   const { lang, changeLang } = useLang();
@@ -218,6 +247,39 @@ export default function SignupEglise() {
               className="input" required={required} />
           ))}
 
+          {/* ← MENU DÉROULANT PAYS */}
+            <div style={{ position: "relative" }}>
+              <select
+                name="localisation"
+                value={formData.localisation}
+                onChange={handleChange}
+                required
+                className="input"
+                style={{ appearance: "none", paddingRight: "36px", color: formData.localisation ? "black" : "#9ca3af" }}
+              >
+                <option value="">{t.fields.localisation}</option>
+                {Object.entries(PAYS).sort(([a], [b]) => a.localeCompare(b)).map(([nom, code]) => (
+                  <option key={`${nom}-${code}`} value={nom}>
+                    {nom}
+                  </option>
+                ))}
+              </select>
+              {/* Drapeau du pays sélectionné */}
+              {formData.localisation && PAYS[formData.localisation] && (
+                <img
+                  src={`https://flagcdn.com/w40/${PAYS[formData.localisation]}.png`}
+                  alt={formData.localisation}
+                  style={{
+                    position: "absolute", right: "10px", top: "50%",
+                    transform: "translateY(-50%)",
+                    width: "24px", height: "16px",
+                    borderRadius: "2px", pointerEvents: "none",
+                  }}
+                />
+              )}
+            </div>
+            
+              
           <hr className="my-2 border-gray-300" />
           <p className="text-sm text-gray-500 font-semibold -mb-1">{t.adminSection}</p>
 

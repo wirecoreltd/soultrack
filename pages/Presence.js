@@ -14,8 +14,9 @@ const translations = {
     titleConsultation: "Présences — Consultation",
     titleJour: "Présences du",
     titleJourHighlight: "jour",
-    todaySessions: "📋 Sessions du jour",
-    todaySessionsSub: "Ces sessions ont déjà été créées. Cliquez pour rejoindre.",
+    todaySessions: "Session en cours",
+    todaySessionsBadge: "EN COURS",
+    todaySessionsSub: "Une session a déjà été démarrée aujourd'hui. Rejoignez-la ou créez-en une nouvelle.",
     rejoinBtn: "Rejoindre →",
     newSession: "➕ Créer une nouvelle session",
     newSessionTitle: "📋 Nouvelle Session",
@@ -85,8 +86,9 @@ const translations = {
     titleConsultation: "Attendance — Consultation",
     titleJour: "Attendance for",
     titleJourHighlight: "today",
-    todaySessions: "📋 Today's sessions",
-    todaySessionsSub: "These sessions have already been created. Click to join.",
+    todaySessions: "Session in progress",
+    todaySessionsBadge: "IN PROGRESS",
+    todaySessionsSub: "A session was already started today. Join it or create a new one.",
     rejoinBtn: "Join →",
     newSession: "➕ Create a new session",
     newSessionTitle: "📋 New Session",
@@ -987,29 +989,42 @@ function Presence() {
 
         <div className="w-full max-w-lg mt-2 flex flex-col gap-4">
 
+          {/* ── Sessions du jour en cours ── */}
           {todaySessions.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col gap-3">
-              <h2 className="text-base font-bold text-gray-800 mb-1">{t.todaySessions}</h2>
-              <p className="text-sm text-gray-500 mb-2">{t.todaySessionsSub}</p>
-              {todaySessions.map(s => (
-                <button key={s.id} onClick={() => rejoindreSession(s)}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-[#333699] hover:bg-[#333699] hover:text-white text-[#333699] font-semibold transition group">
-                  <span className="text-left text-sm">{formatSessionLabel(s, lang)}</span>
-                  <span className="text-xs bg-emerald-100 text-emerald-700 group-hover:bg-white/20 group-hover:text-white px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
-                    {t.rejoinBtn}
-                  </span>
-                </button>
-              ))}
-              <div className="border-t border-gray-100 pt-3 mt-1">
-                <button onClick={() => setEtape("form")}
-                  className="w-full py-2 rounded-xl border border-dashed border-gray-300 text-gray-500 text-sm hover:border-[#333699] hover:text-[#333699] transition">
-                  {t.newSession}
-                </button>
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              {/* En-tête avec badge "EN COURS" animé */}
+              <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                <h2 className="text-base font-bold text-gray-800">{t.todaySessions}</h2>
+                <span className="flex items-center gap-1.5 bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
+                  {t.todaySessionsBadge}
+                </span>
+              </div>
+              <p className="text-sm text-gray-400 px-5 pb-3">{t.todaySessionsSub}</p>
+
+              <div className="flex flex-col gap-2 px-5 pb-4">
+                {todaySessions.map(s => (
+                  <button key={s.id} onClick={() => rejoindreSession(s)}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 border-[#333699] hover:bg-[#333699] hover:text-white text-[#333699] font-semibold transition group">
+                    <span className="text-left text-sm">{formatSessionLabel(s, lang)}</span>
+                    <span className="text-xs bg-emerald-100 text-emerald-700 group-hover:bg-white/20 group-hover:text-white px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
+                      {t.rejoinBtn}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
           )}
 
-          {todaySessions.length === 0 && (
+          {/* ── Créer une nouvelle session — toujours affiché ── */}
+          {todaySessions.length > 0 ? (
+            <button
+              onClick={() => setEtape("form")}
+              className="w-full py-3 rounded-2xl border-2 border-dashed border-white/40 text-white/80 text-sm font-semibold hover:border-white hover:text-white hover:bg-white/10 transition"
+            >
+              {t.newSession}
+            </button>
+          ) : (
             <FormulaireSession
               isEdit={false}
               selectedDate={selectedDate} setSelectedDate={setSelectedDate}
@@ -1024,7 +1039,10 @@ function Presence() {
             />
           )}
 
-          {oldSessions.length > 0 && <OldSessionsBlock sessions={oldSessions} onConsulter={consulterAncienne} t={t} lang={lang} />}
+          {/* ── Sessions récentes (autres jours) ── */}
+          {oldSessions.length > 0 && (
+            <OldSessionsBlock sessions={oldSessions} onConsulter={consulterAncienne} t={t} lang={lang} />
+          )}
         </div>
         <Footer />
       </div>

@@ -154,6 +154,7 @@ export default function HomePage() {
   const pathname = usePathname();
   const { lang, changeLang } = useLang();
   const [testimonials, setTestimonials] = useState([]);
+  const [testimonialsLoaded, setTestimonialsLoaded] = useState(false); 
 
   const t = translations[lang];
 
@@ -215,6 +216,7 @@ export default function HomePage() {
 
       if (error) {
         console.error("Erreur témoignages:", error);
+        setTestimonialsLoaded(true);
         return;
       }
 
@@ -228,6 +230,7 @@ export default function HomePage() {
       }));
 
       setTestimonials(formatted);
+      setTestimonialsLoaded(true);
     };
 
     fetchTestimonials();
@@ -886,7 +889,7 @@ export default function HomePage() {
       </section>
 
       {/* ───── TÉMOIGNAGES ───── */}
-{testimonials.length > 0 && (      
+{testimonialsLoaded && testimonials.length > 0 && (  
 <section
         style={{
           padding: "40px 0 80px",

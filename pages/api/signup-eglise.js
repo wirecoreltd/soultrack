@@ -90,14 +90,14 @@ export default async function handler(req, res) {
 
     // 5️⃣ Créer la souscription
     const { error: subError } = await supabaseAdmin
-      .from("subscriptions")
-      .insert([{
-        eglise_id: egliseId,
-        plan_id: planId,
-        statut: "active",
-        current_period_start: new Date().toISOString(),
-        current_period_end: addOneMonth(),
-      }]);
+  .from("subscriptions")
+  .insert([{
+    eglise_id: egliseId,
+    plan_id: "free",  // ← toujours free, le paiement se fait après
+    statut: "active",
+    current_period_start: new Date().toISOString(),
+    current_period_end: addOneMonth(),
+  }]);
 
     if (subError) return res.status(400).json({ error: subError.message });
 

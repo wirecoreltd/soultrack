@@ -354,8 +354,8 @@ export default function AddMember() {
               src={egliseInfo.logo_url}
               alt={egliseInfo.nom || "Logo église"}
               style={{
-                width: 90,
-                height: 90,
+                width: 70,
+                height: 70,
                 objectFit: "contain",                
               }}
             />
@@ -363,11 +363,11 @@ export default function AddMember() {
 
           {egliseInfo && (
             <div className="text-center leading-snug mt-1">
-              <p className="font-bold text-lg text-gray-800">{egliseInfo.nom}</p>
+              <p className="font-bold text-lg text-[#333699]">{egliseInfo.nom}</p>
               {egliseInfo.branche && (
-                <p className="text-sm text-gray-500">{egliseInfo.branche}</p>
+                <p className="text-sm text-[#333699]">{egliseInfo.branche}</p>
               )}
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[#333699]">
                 {[egliseInfo.ville, egliseInfo.pays].filter(Boolean).join(", ")}
               </p>
             </div>

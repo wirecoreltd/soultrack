@@ -4,16 +4,122 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
+import { useLang } from "../hooks/useLang";
+
+const translations = {
+  fr: {
+    loading: "Chargement...",
+    noEglise: "Votre compte n'est pas rattaché à une église.",
+    title: "Ajouter une personne évangélisée",
+    typeEvang: "Type d'Évangélisation",
+    typeEvangOptions: [
+      { value: "Individuel", label: "Individuel" },
+      { value: "Sortie de groupe", label: "Sortie de groupe" },
+      { value: "Campagne d'évangélisation", label: "Campagne d'évangélisation" },
+      { value: "Évangélisation de rue", label: "Évangélisation de rue" },
+      { value: "Évangélisation maison", label: "Évangélisation maison" },
+      { value: "Évangélisation stade", label: "Évangélisation stade" },
+    ],
+    civility: "Civilité",
+    homme: "Homme",
+    femme: "Femme",
+    prenom: "Prénom",
+    nom: "Nom",
+    age: "-- Tranche d'âge --",
+    ageOptions: [
+      "12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans",
+      "41-55 ans", "56-69 ans", "70 ans et plus",
+    ],
+    telephone: "Téléphone",
+    ville: "Ville",
+    whatsapp: "WhatsApp",
+    prayerSalvation: "-- Prière du salut ? --",
+    oui: "Oui",
+    non: "Non",
+    typeConversion: "Type",
+    conversionOptions: [
+      { value: "Nouveau converti", label: "Nouveau converti" },
+      { value: "Réconciliation", label: "Réconciliation" },
+    ],
+    needs: "Difficultés / Besoins :",
+    needsOptions: [
+      "Finances", "Santé", "Travail / Études", "Famille / Enfants",
+      "Relations / Conflits", "Miracle", "Délivrance",
+      "Addictions / Dépendances", "Guidance spirituelle", "Logement / Sécurité",
+      "Communauté / Isolement", "Dépression / Santé mentale",
+    ],
+    other: "Autre",
+    specifyNeed: "Précisez le besoin...",
+    additionalInfo: "Informations supplémentaires...",
+    cancel: "Annuler",
+    saving: "Enregistrement...",
+    add: "Ajouter",
+    success: "✅ Personne évangélisée ajoutée avec succès !",
+  },
+  en: {
+    loading: "Loading...",
+    noEglise: "Your account is not linked to a church.",
+    title: "Add an evangelized person",
+    typeEvang: "Type of Outreach",
+    typeEvangOptions: [
+      { value: "Individuel", label: "Individual" },
+      { value: "Sortie de groupe", label: "Group outing" },
+      { value: "Campagne d'évangélisation", label: "Evangelism campaign" },
+      { value: "Évangélisation de rue", label: "Street evangelism" },
+      { value: "Évangélisation maison", label: "House evangelism" },
+      { value: "Évangélisation stade", label: "Stadium evangelism" },
+    ],
+    civility: "Title",
+    homme: "Male",
+    femme: "Female",
+    prenom: "First name",
+    nom: "Last name",
+    age: "-- Age range --",
+    ageOptions: [
+      "12-17 yrs", "18-25 yrs", "26-30 yrs", "31-40 yrs",
+      "41-55 yrs", "56-69 yrs", "70 yrs and over",
+    ],
+    telephone: "Phone",
+    ville: "City",
+    whatsapp: "WhatsApp",
+    prayerSalvation: "-- Salvation prayer? --",
+    oui: "Yes",
+    non: "No",
+    typeConversion: "Type",
+    conversionOptions: [
+      { value: "Nouveau converti", label: "New convert" },
+      { value: "Réconciliation", label: "Reconciliation" },
+    ],
+    needs: "Difficulties / Needs:",
+    needsOptions: [
+      "Finances", "Health", "Work / Studies", "Family / Children",
+      "Relationships / Conflicts", "Miracle", "Deliverance",
+      "Addictions / Dependencies", "Spiritual guidance", "Housing / Safety",
+      "Community / Isolation", "Depression / Mental health",
+    ],
+    other: "Other",
+    specifyNeed: "Please specify the need...",
+    additionalInfo: "Additional information...",
+    cancel: "Cancel",
+    saving: "Saving...",
+    add: "Add",
+    success: "✅ Evangelized person added successfully!",
+  },
+};
 
 export default function AddEvangelise({ onNewEvangelise }) {
   const router = useRouter();
 
-  // ✅ Lire eglise_id, cellule_id et famille_id depuis l'URL
   const urlEgliseId = router.query.eglise_id || null;
   const urlCelluleId = router.query.cellule_id || null;
   const urlFamilleId = router.query.famille_id || null;
-  //const isFromLink = !!urlEgliseId && (!!urlCelluleId || !!urlFamilleId);
   const isFromLink = !!urlEgliseId;
+
+  // ✅ Langue : priorité au paramètre URL ?lang=, sinon useLang()
+  const { lang: hookLang } = useLang();
+  const urlLang = router.query.lang;
+  const lang = (urlLang === "en" || urlLang === "fr") ? urlLang : hookLang;
+  const t = translations[lang] || translations.fr;
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -38,24 +144,12 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const besoinsList = [
-    "Finances", "Santé", "Travail / Études", "Famille / Enfants",
-    "Relations / Conflits", "Miracle", "Délivrance",
-    "Addictions / Dépendances", "Guidance spirituelle", "Logement / Sécurité",
-    "Communauté / Isolement", "Dépression / Santé mentale"
-  ];
+  useEffect(() => {
+    if (urlEgliseId) {
+      setFormData(prev => ({ ...prev, eglise_id: urlEgliseId }));
+    }
+  }, [urlEgliseId]);
 
-  //------------------------
-      useEffect(() => {
-      if (urlEgliseId) {
-        setFormData(prev => ({
-          ...prev,
-          eglise_id: urlEgliseId,
-        }));
-      }
-    }, [urlEgliseId]);
-  
-  // ✅ Si pas de params URL → récupérer eglise_id depuis le profil connecté
   useEffect(() => {
     if (isFromLink) return;
 
@@ -116,14 +210,13 @@ export default function AddEvangelise({ onNewEvangelise }) {
     e.preventDefault();
 
     if (!formData.eglise_id) {
-      alert("Votre compte n'est pas rattaché à une église.");
+      alert(t.noEglise);
       return;
     }
 
     const finalBesoins = [...formData.besoin];
     if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
 
-    // ✅ status_suivi selon le contexte
     let statusSuivi = "Non envoyé";
     if (urlCelluleId) statusSuivi = "evangelisation_cellule";
     else if (urlFamilleId) statusSuivi = "evangelisation_famille";
@@ -150,7 +243,6 @@ export default function AddEvangelise({ onNewEvangelise }) {
     try {
       setLoading(true);
 
-      // 1. Insérer dans evangelises
       const { data: evangelise, error } = await supabase
         .from("evangelises")
         .insert([finalData])
@@ -159,7 +251,6 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
       if (error) throw error;
 
-      // ✅ 2. Si venu depuis un lien cellule → insérer dans suivis_des_evangelises avec cellule_id
       if (urlCelluleId) {
         const suiviData = {
           prenom: evangelise.prenom,
@@ -188,12 +279,9 @@ export default function AddEvangelise({ onNewEvangelise }) {
           .from("suivis_des_evangelises")
           .insert([suiviData]);
 
-        if (suiviError) {
-          console.error("Erreur insertion suivis_des_evangelises (cellule) :", suiviError);
-        }
+        if (suiviError) console.error("Erreur insertion suivis_des_evangelises (cellule) :", suiviError);
       }
 
-      // ✅ 3. Si venu depuis un lien famille → insérer dans suivis_des_evangelises avec famille_id
       if (urlFamilleId) {
         const suiviData = {
           prenom: evangelise.prenom,
@@ -222,9 +310,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
           .from("suivis_des_evangelises")
           .insert([suiviData]);
 
-        if (suiviError) {
-          console.error("Erreur insertion suivis_des_evangelises (famille) :", suiviError);
-        }
+        if (suiviError) console.error("Erreur insertion suivis_des_evangelises (famille) :", suiviError);
       }
 
       setSuccess(true);
@@ -240,8 +326,6 @@ export default function AddEvangelise({ onNewEvangelise }) {
     }
   };
 
-  const handleCancel = () => resetForm();
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg">
@@ -249,11 +333,11 @@ export default function AddEvangelise({ onNewEvangelise }) {
           <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
         </div>
 
-        <h1 className="text-3xl font-bold text-center mb-2">Ajouter une personne évangélisée</h1>
+        <h1 className="text-3xl font-bold text-center mb-2">{t.title}</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 justify-center">
 
-          {/* Date Evangelisation */}
+          {/* Date */}
           <div className="flex justify-center w-full">
             <input
               type="date"
@@ -263,20 +347,17 @@ export default function AddEvangelise({ onNewEvangelise }) {
             />
           </div>
 
-          {/* Type Evangelisation */}
+          {/* Type Évangélisation */}
           <select
             className="input text-center"
             value={formData.type_evangelisation}
             onChange={e => setFormData({ ...formData, type_evangelisation: e.target.value })}
             required
           >
-            <option value="">Type d'Evangélisation</option>
-            <option value="Individuel">Individuel</option>
-            <option value="Sortie de groupe">Sortie de groupe</option>
-            <option value="Campagne d'évangélisation">Campagne d'évangélisation</option>
-            <option value="Évangélisation de rue">Évangélisation de rue</option>
-            <option value="Évangélisation maison">Évangélisation maison</option>
-            <option value="Évangélisation stade">Évangélisation stade</option>
+            <option value="">{t.typeEvang}</option>
+            {t.typeEvangOptions.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
           </select>
 
           {/* Civilité */}
@@ -286,33 +367,29 @@ export default function AddEvangelise({ onNewEvangelise }) {
             onChange={e => setFormData({ ...formData, sexe: e.target.value })}
             required
           >
-            <option value="">Civilité</option>
-            <option value="Homme">Homme</option>
-            <option value="Femme">Femme</option>
+            <option value="">{t.civility}</option>
+            <option value="Homme">{t.homme}</option>
+            <option value="Femme">{t.femme}</option>
           </select>
 
           {/* Prénom / Nom */}
-          <input className="input" type="text" placeholder="Prénom" value={formData.prenom}
+          <input className="input" type="text" placeholder={t.prenom} value={formData.prenom}
             onChange={e => setFormData({ ...formData, prenom: e.target.value })} required />
-          <input className="input" type="text" placeholder="Nom" value={formData.nom}
+          <input className="input" type="text" placeholder={t.nom} value={formData.nom}
             onChange={e => setFormData({ ...formData, nom: e.target.value })} required />
 
-          {/* Age */}
+          {/* Âge */}
           <select value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} className="input">
-            <option value="">-- Tranche d'age --</option>
-            <option value="12-17 ans">12-17 ans</option>
-            <option value="18-25 ans">18-25 ans</option>
-            <option value="26-30 ans">26-30 ans</option>
-            <option value="31-40 ans">31-40 ans</option>
-            <option value="41-55 ans">41-55 ans</option>
-            <option value="56-69 ans">56-69 ans</option>
-            <option value="70 ans et plus">70 ans et plus</option>
+            <option value="">{t.age}</option>
+            {t.ageOptions.map(v => (
+              <option key={v} value={v}>{v}</option>
+            ))}
           </select>
 
           {/* Téléphone / Ville */}
-          <input className="input" type="text" placeholder="Téléphone" value={formData.telephone}
+          <input className="input" type="text" placeholder={t.telephone} value={formData.telephone}
             onChange={e => setFormData({ ...formData, telephone: e.target.value })} />
-          <input className="input" type="text" placeholder="Ville" value={formData.ville}
+          <input className="input" type="text" placeholder={t.ville} value={formData.ville}
             onChange={e => setFormData({ ...formData, ville: e.target.value })} />
 
           {/* WhatsApp */}
@@ -320,38 +397,43 @@ export default function AddEvangelise({ onNewEvangelise }) {
             <input type="checkbox" checked={formData.is_whatsapp}
               onChange={e => setFormData({ ...formData, is_whatsapp: e.target.checked })}
               className="w-5 h-5 accent-indigo-600 cursor-pointer" />
-            WhatsApp
+            {t.whatsapp}
           </label>
 
-          {/* Prière */}
+          {/* Prière du salut */}
           <select className="input" value={formData.priere_salut} required
             onChange={e => setFormData({
               ...formData,
               priere_salut: e.target.value,
-              type_conversion: e.target.value === "Oui" ? formData.type_conversion : ""
+              type_conversion: e.target.value === "Oui" ? formData.type_conversion : "",
             })}>
-            <option value="">-- Prière du salut ? --</option>
-            <option value="Oui">Oui</option>
-            <option value="Non">Non</option>
+            <option value="">{t.prayerSalvation}</option>
+            <option value="Oui">{t.oui}</option>
+            <option value="Non">{t.non}</option>
           </select>
 
           {formData.priere_salut === "Oui" && (
             <select className="input" value={formData.type_conversion}
               onChange={e => setFormData({ ...formData, type_conversion: e.target.value })} required>
-              <option value="">Type</option>
-              <option value="Nouveau converti">Nouveau converti</option>
-              <option value="Réconciliation">Réconciliation</option>
+              <option value="">{t.typeConversion}</option>
+              {t.conversionOptions.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
             </select>
           )}
 
           {/* Besoins */}
           <div className="mt-4">
-            <p className="font-semibold mb-2">Difficultés / Besoins :</p>
-            {besoinsList.map(b => (
+            <p className="font-semibold mb-2">{t.needs}</p>
+            {t.needsOptions.map((b, i) => (
               <label key={b} className="flex items-center gap-3 mb-2">
-                <input type="checkbox" value={b} checked={formData.besoin.includes(b)}
+                <input
+                  type="checkbox"
+                  value={b}
+                  checked={formData.besoin.includes(b)}
                   onChange={() => handleBesoinChange(b)}
-                  className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600" />
+                  className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600"
+                />
                 <span>{b}</span>
               </label>
             ))}
@@ -359,34 +441,34 @@ export default function AddEvangelise({ onNewEvangelise }) {
               <input type="checkbox" checked={showOtherField}
                 onChange={() => setShowOtherField(!showOtherField)}
                 className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600" />
-              Autre
+              {t.other}
             </label>
             {showOtherField && (
-              <input type="text" placeholder="Précisez le besoin..." value={otherBesoin}
+              <input type="text" placeholder={t.specifyNeed} value={otherBesoin}
                 onChange={e => setOtherBesoin(e.target.value)} className="input mt-1" />
             )}
           </div>
 
-          <textarea placeholder="Informations supplémentaires..." rows={3}
+          <textarea placeholder={t.additionalInfo} rows={3}
             value={formData.infos_supplementaires}
             onChange={e => setFormData({ ...formData, infos_supplementaires: e.target.value })}
             className="input" />
 
           <div className="flex gap-4">
-            <button type="button" onClick={handleCancel}
+            <button type="button" onClick={resetForm}
               className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
-              Annuler
+              {t.cancel}
             </button>
             <button type="submit" disabled={loading}
               className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
-              {loading ? "Enregistrement..." : "Ajouter"}
+              {loading ? t.saving : t.add}
             </button>
           </div>
         </form>
 
         {success && (
           <p ref={successRef} className="text-green-600 font-semibold text-center mt-3">
-            ✅ Personne évangélisée ajoutée avec succès !
+            {t.success}
           </p>
         )}
 

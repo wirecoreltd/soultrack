@@ -83,7 +83,6 @@ const PAYS_DATA = [
   { code: "pt", fr: "Portugal",                   en: "Portugal"                 },
   { code: "cd", fr: "RDC",                        en: "DR Congo"                 },
   { code: "do", fr: "République Dominicaine",     en: "Dominican Republic"       },
-  { code: "mu", fr: "Rodrigues",                  en: "Rodrigues"                },
   { code: "ro", fr: "Roumanie",                   en: "Romania"                  },
   { code: "gb", fr: "Royaume-Uni",                en: "United Kingdom"           },
   { code: "rw", fr: "Rwanda",                     en: "Rwanda"                   },
@@ -105,7 +104,6 @@ const PAYS_DATA = [
   { code: "vn", fr: "Vietnam",                    en: "Vietnam"                  },
   { code: "zw", fr: "Zimbabwe",                   en: "Zimbabwe"                 },
 ];
-
 
 const translations = {
   fr: {
@@ -185,6 +183,8 @@ function EditEgliseContent() {
   const [egliseId, setEgliseId] = useState(null);
 
   // Dropdown pays
+  // formData.pays stocke le CODE ISO (ex: "mu") en interne
+  // mais on sauvegarde le NOM FR en base (ex: "Maurice") — identique à signup
   const [paysOpen, setPaysOpen]     = useState(false);
   const [paysSearch, setPaysSearch] = useState("");
 
@@ -193,12 +193,25 @@ function EditEgliseContent() {
     nom: "",
     branche: "",
     ville: "",
-    pays: "",
+    pays: "", // code ISO en interne (ex: "mu")
   });
 
   const [logoUrl, setLogoUrl]         = useState(null);
   const [logoFile, setLogoFile]       = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
+
+  // Pays trié selon la langue active
+  const paysTries = [...PAYS_DATA].sort((a, b) => a[lang].localeCompare(b[lang]));
+
+  // Filtre recherche dans fr ET en
+  const paysFiltres = paysTries.filter((p) =>
+    p[lang].toLowerCase().includes(paysSearch.toLowerCase()) ||
+    p.fr.toLowerCase().includes(paysSearch.toLowerCase()) ||
+    p.en.toLowerCase().includes(paysSearch.toLowerCase())
+  );
+
+  // Objet pays actuellement sélectionné
+  const paysSelectionne = PAYS_DATA.find((p) => p.code === formData.pays) || null;
 
   useEffect(() => {
     const fetchEglise = async () => {
@@ -222,12 +235,15 @@ function EditEgliseContent() {
         .single();
 
       if (eglise) {
+        // La BDD stocke le nom FR (ex: "Maurice") → on cherche le code ISO correspondant
+        const codeISO = PAYS_DATA.find((p) => p.fr === eglise.pays)?.code || "";
+
         setFormData({
           denomination: eglise.denomination || "",
           nom:          eglise.nom          || "",
           branche:      eglise.branche      || "",
           ville:        eglise.ville        || "",
-          pays:         eglise.pays         || "",
+          pays:         codeISO,            // code ISO pour le dropdown
         });
         setLogoUrl(eglise.logo_url || null);
         setLogoPreview(eglise.logo_url || null);
@@ -294,6 +310,10 @@ function EditEgliseContent() {
         newLogoUrl = uploadData.url;
       }
 
+      // On convertit le code ISO → nom FR avant de sauvegarder en base
+      // (cohérent avec signup qui stocke toujours le nom FR)
+      const nomFRpays = PAYS_DATA.find((p) => p.code === formData.pays)?.fr || formData.pays;
+
       const { error } = await supabase
         .from("eglises")
         .update({
@@ -301,7 +321,7 @@ function EditEgliseContent() {
           nom:          formData.nom,
           branche:      formData.branche,
           ville:        formData.ville,
-          pays:         formData.pays,
+          pays:         nomFRpays,   // ✅ stocké en nom FR, comme signup
           logo_url:     newLogoUrl,
         })
         .eq("id", egliseId);
@@ -312,6 +332,22 @@ function EditEgliseContent() {
       setLogoFile(null);
       setLogoPreview(newLogoUrl);
       setMessage(t.successSaved);
+
+      // ✅ Notifie le HeaderPages de se rafraîchir immédiatement sans reload
+      window.dispatchEvent(new CustomEvent("eglise-updated", {
+        detail: {
+          denomination: formData.denomination,
+          nom:          formData.nom,
+          branche:      formData.branche,
+          ville:        formData.ville,
+          pays:         nomFRpays,
+          logo_url:     newLogoUrl,
+          // On passe aussi le code ISO et le drapeau pour que le header
+          // puisse afficher le pavillon directement sans re-fetch
+          pays_code:    formData.pays,
+          pays_flag:    `https://flagcdn.com/w40/${formData.pays}.png`,
+        },
+      }));
 
     } catch (err) {
       setMessage(t.errorPrefix + err.message);
@@ -400,153 +436,129 @@ function EditEgliseContent() {
           </div>
 
           {/* ── DROPDOWN PAYS CUSTOM ── */}
-<div className="flex flex-col gap-1">
-  <label className="text-white/70 text-sm">{t.country}</label>
+          <div className="flex flex-col gap-1">
+            <label className="text-white/70 text-sm">{t.country}</label>
 
-  <div style={{ position: "relative" }}>
+            <div style={{ position: "relative" }}>
 
-    {/* Trigger */}
-    <div
-      onClick={() => {
-        setPaysOpen(!paysOpen);
-        setPaysSearch("");
-      }}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        border: "1px solid rgba(255,255,255,0.2)",
-        borderRadius: "12px",
-        padding: "12px",
-        cursor: "pointer",
-        background: "rgba(255,255,255,0.1)",
-        color: formData.pays ? "white" : "rgba(255,255,255,0.4)",
-      }}
-    >
-      {formData.pays && (
-        <img
-          src={`https://flagcdn.com/w40/${formData.pays}.png`}
-          alt={formData.pays}
-          style={{
-            width: "24px",
-            height: "16px",
-            borderRadius: "2px",
-            flexShrink: 0,
-          }}
-        />
-      )}
-
-      <span style={{ flex: 1, fontSize: "14px" }}>
-        {formData.pays
-          ? PAYS_DATA.find((p) => p.code === formData.pays)?.[lang]
-          : t.country}
-      </span>
-
-      <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
-        {paysOpen ? "▲" : "▼"}
-      </span>
-    </div>
-
-    {/* Dropdown */}
-    {paysOpen && (
-      <div
-        style={{
-          position: "absolute",
-          top: "calc(100% + 4px)",
-          left: 0,
-          right: 0,
-          background: "#fff",
-          border: "1px solid #e5e7eb",
-          borderRadius: "12px",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-          zIndex: 50,
-          maxHeight: "220px",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <div style={{ padding: "8px" }}>
-          <input
-            autoFocus
-            placeholder={t.searchCountry}
-            value={paysSearch}
-            onChange={(e) => setPaysSearch(e.target.value)}
-            style={{
-              width: "100%",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              padding: "7px 10px",
-              fontSize: "13px",
-              outline: "none",
-              color: "black",
-            }}
-          />
-        </div>
-
-        <div style={{ overflowY: "auto", flex: 1 }}>
-          {PAYS_DATA.filter((pays) =>
-            pays[lang]
-              .toLowerCase()
-              .includes(paysSearch.toLowerCase())
-          ).map((pays) => (
-            <div
-              key={`${pays.code}-${pays.fr}`}
-              onClick={() => {
-                setFormData({
-                  ...formData,
-                  pays: pays.code,
-                });
-
-                setPaysOpen(false);
-                setPaysSearch("");
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "9px 12px",
-                cursor: "pointer",
-                color: "black",
-                background:
-                  formData.pays === pays.code
-                    ? "#eff6ff"
-                    : "transparent",
-                fontSize: "14px",
-              }}
-            >
-              <img
-                src={`https://flagcdn.com/w40/${pays.code}.png`}
-                alt={pays[lang]}
+              {/* Trigger */}
+              <div
+                onClick={() => { setPaysOpen(!paysOpen); setPaysSearch(""); }}
                 style={{
-                  width: "24px",
-                  height: "16px",
-                  borderRadius: "2px",
-                  flexShrink: 0,
-                }}
-              />
-
-              <span style={{ flex: 1 }}>{pays[lang]}</span>
-
-              <span
-                style={{
-                  fontSize: "11px",
-                  color: "#9ca3af",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: "12px",
+                  padding: "12px",
+                  cursor: "pointer",
+                  background: "rgba(255,255,255,0.1)",
+                  color: paysSelectionne ? "white" : "rgba(255,255,255,0.4)",
                 }}
               >
-                {lang === "fr" ? pays.en : pays.fr}
-              </span>
+                {/* ✅ Drapeau affiché via le code ISO de paysSelectionne */}
+                {paysSelectionne && (
+                  <img
+                    src={`https://flagcdn.com/w40/${paysSelectionne.code}.png`}
+                    alt={paysSelectionne[lang]}
+                    style={{ width: "24px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
+                  />
+                )}
+
+                <span style={{ flex: 1, fontSize: "14px" }}>
+                  {paysSelectionne ? paysSelectionne[lang] : t.country}
+                </span>
+
+                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
+                  {paysOpen ? "▲" : "▼"}
+                </span>
+              </div>
+
+              {/* Dropdown liste */}
+              {paysOpen && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 4px)",
+                    left: 0,
+                    right: 0,
+                    background: "#fff",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "12px",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                    zIndex: 50,
+                    maxHeight: "220px",
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <div style={{ padding: "8px" }}>
+                    <input
+                      autoFocus
+                      placeholder={t.searchCountry}
+                      value={paysSearch}
+                      onChange={(e) => setPaysSearch(e.target.value)}
+                      style={{
+                        width: "100%",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: "8px",
+                        padding: "7px 10px",
+                        fontSize: "13px",
+                        outline: "none",
+                        color: "black",
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ overflowY: "auto", flex: 1 }}>
+                    {paysFiltres.map((pays) => (
+                      <div
+                        key={`${pays.code}-${pays.fr}`}
+                        onClick={() => {
+                          // ✅ On stocke le code ISO en interne
+                          setFormData({ ...formData, pays: pays.code });
+                          setPaysOpen(false);
+                          setPaysSearch("");
+                        }}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          padding: "9px 12px",
+                          cursor: "pointer",
+                          color: "black",
+                          background: formData.pays === pays.code ? "#eff6ff" : "transparent",
+                          fontSize: "14px",
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = "#f9fafb"}
+                        onMouseLeave={(e) => e.currentTarget.style.background = formData.pays === pays.code ? "#eff6ff" : "transparent"}
+                      >
+                        <img
+                          src={`https://flagcdn.com/w40/${pays.code}.png`}
+                          alt={pays[lang]}
+                          style={{ width: "24px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
+                        />
+                        <span style={{ flex: 1 }}>{pays[lang]}</span>
+                        {/* Nom dans l'autre langue en gris */}
+                        <span style={{ fontSize: "11px", color: "#9ca3af" }}>
+                          {lang === "fr" ? pays.en : pays.fr}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      </div>
-    )}
-  </div>
-</div>
+          </div>
           {/* ── FIN DROPDOWN PAYS ── */}
 
           {message && (
-            <p className={`text-center text-sm ${message.startsWith("✅") ? "text-emerald-300" : "text-red-400"}`}>
+            <p className={`text-center text-sm font-medium ${
+              message.startsWith("✅") ? "text-emerald-300" :
+              message.startsWith("⏳") ? "text-blue-300" :
+              "text-red-400"
+            }`}>
               {message}
             </p>
           )}
@@ -554,7 +566,7 @@ function EditEgliseContent() {
           <button
             type="submit"
             disabled={saving}
-            className="bg-gradient-to-r from-emerald-400 to-blue-400 hover:from-emerald-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md transition"
+            className="bg-gradient-to-r from-emerald-400 to-blue-400 hover:from-emerald-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md disabled:opacity-60 transition"
           >
             {saving ? t.saving : t.save}
           </button>
@@ -572,6 +584,10 @@ function EditEgliseContent() {
         }
         .input::placeholder {
           color: rgba(255,255,255,0.4);
+        }
+        .input:focus {
+          outline: none;
+          border-color: rgba(255,255,255,0.5);
         }
       `}</style>
 

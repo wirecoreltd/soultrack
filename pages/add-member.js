@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 import { checkLimiteAtteinte } from "../lib/checkLimite";
-import { useLang } from "../../hooks/useLang";
+import { useLang } from "../hooks/useLang";
 
 const translations = {
   fr: {

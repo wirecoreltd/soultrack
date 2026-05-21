@@ -5,6 +5,34 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useLang } from "../hooks/useLang";
 
+// ─── PAYS ─────────────────────────────────────────────────────────────────────
+const PAYS = {
+  "Afghanistan": "af", "Afrique du Sud": "za", "Albanie": "al", "Algérie": "dz",
+  "Allemagne": "de", "Angola": "ao", "Arabie Saoudite": "sa", "Argentine": "ar",
+  "Australie": "au", "Autriche": "at", "Belgique": "be", "Bénin": "bj",
+  "Birmanie": "mm", "Bolivie": "bo", "Brésil": "br", "Burkina Faso": "bf",
+  "Burundi": "bi", "Cameroun": "cm", "Canada": "ca", "Chili": "cl",
+  "Chine": "cn", "Colombie": "co", "Congo": "cg", "Corée du Sud": "kr",
+  "Côte d'Ivoire": "ci", "Cuba": "cu", "Danemark": "dk", "Egypte": "eg",
+  "Espagne": "es", "États-Unis": "us", "Ethiopie": "et", "Finlande": "fi",
+  "France": "fr", "Gabon": "ga", "Ghana": "gh", "Grèce": "gr",
+  "Guinée": "gn", "Haïti": "ht", "Hongrie": "hu", "Inde": "in",
+  "Indonésie": "id", "Iran": "ir", "Irlande": "ie", "Israël": "il",
+  "Italie": "it", "Jamaïque": "jm", "Japon": "jp", "Kenya": "ke",
+  "Liban": "lb", "Luxembourg": "lu", "Madagascar": "mg", "Mali": "ml",
+  "Maroc": "ma", "Martinique": "mq", "Maurice": "mu", "Mauritanie": "mr",
+  "Mexique": "mx", "Mozambique": "mz", "Namibie": "na", "Niger": "ne",
+  "Nigeria": "ng", "Norvège": "no", "Nouvelle-Zélande": "nz", "Ouganda": "ug",
+  "Pakistan": "pk", "Pays-Bas": "nl", "Pérou": "pe", "Philippines": "ph",
+  "Pologne": "pl", "Portugal": "pt", "RDC": "cd", "République Dominicaine": "do",
+  "Rodrigues": "mu", "Roumanie": "ro", "Royaume-Uni": "gb", "Rwanda": "rw",
+  "Sénégal": "sn", "Sierra Leone": "sl", "Singapour": "sg", "Somalie": "so",
+  "Soudan": "sd", "Suède": "se", "Suisse": "ch", "Tanzanie": "tz",
+  "Tchad": "td", "Togo": "tg", "Tunisie": "tn", "Turquie": "tr",
+  "Ukraine": "ua", "Uruguay": "uy", "Venezuela": "ve", "Vietnam": "vn",
+  "Zimbabwe": "zw",
+};
+
 // ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
 const translations = {
   fr: {
@@ -24,12 +52,13 @@ const translations = {
     msgCreatingAccount: "⏳ Création du compte...",
     msgCreating: "⏳ Création en cours...",
     msgSuccess: "✅ Église et admin créés avec succès !",
+    searchCountry: "Rechercher un pays...",
     fields: {
       denomination: "Dénomination (ex: Église de Christ)",
       nomEglise: "Nom (ex: Centre Missionnaire...)",
       branche: "Branche (ex: Paris Ouest...)",
       ville: "Ville (ex: Paris...)",
-      localisation: "Pays (ex: France)",
+      localisation: "Pays",
       adminPrenom: "Prénom de l'Admin",
       adminNom: "Nom de l'Admin",
       adminEmail: "Email de l'Admin",
@@ -61,12 +90,13 @@ const translations = {
     msgCreatingAccount: "⏳ Creating account...",
     msgCreating: "⏳ Creating...",
     msgSuccess: "✅ Church and admin created successfully!",
+    searchCountry: "Search a country...",
     fields: {
       denomination: "Denomination (e.g. Church of Christ)",
       nomEglise: "Name (e.g. Missionary Centre...)",
       branche: "Branch (e.g. West Paris...)",
       ville: "City (e.g. Paris...)",
-      localisation: "Country (e.g. France)",
+      localisation: "Country",
       adminPrenom: "Admin first name",
       adminNom: "Admin last name",
       adminEmail: "Admin email",
@@ -83,41 +113,14 @@ const translations = {
   },
 };
 
-// Ajoute cette constante EN HAUT du fichier, avant le composant :
-const PAYS = {
-  "Afghanistan": "af", "Afrique du Sud": "za", "Albanie": "al", "Algérie": "dz",
-  "Allemagne": "de", "Angola": "ao", "Arabie Saoudite": "sa", "Argentine": "ar",
-  "Australie": "au", "Autriche": "at", "Belgique": "be", "Bénin": "bj",
-  "Birmanie": "mm", "Bolivie": "bo", "Brésil": "br", "Burkina Faso": "bf",
-  "Burundi": "bi", "Cameroun": "cm", "Canada": "ca", "Chili": "cl",
-  "Chine": "cn", "Colombie": "co", "Congo": "cg", "Corée du Sud": "kr",
-  "Côte d'Ivoire": "ci", "Cuba": "cu", "Danemark": "dk", "Egypte": "eg",
-  "Espagne": "es", "États-Unis": "us", "Ethiopie": "et", "Finlande": "fi",
-  "France": "fr", "Gabon": "ga", "Ghana": "gh", "Grèce": "gr",
-  "Guinée": "gn", "Haïti": "ht", "Hongrie": "hu", "Inde": "in",
-  "Indonésie": "id", "Iran": "ir", "Irlande": "ie", "Israël": "il",
-  "Italie": "it", "Jamaïque": "jm", "Japon": "jp", "Kenya": "ke",
-  "Liban": "lb", "Luxembourg": "lu", "Madagascar": "mg", "Mali": "ml",
-  "Maroc": "ma", "Martinique": "mq", "Maurice": "mu", "Mauritanie": "mr",
-  "Mexique": "mx", "Mozambique": "mz", "Namibie": "na", "Niger": "ne",
-  "Nigeria": "ng", "Norvège": "no", "Nouvelle-Zélande": "nz", "Ouganda": "ug",
-  "Pakistan": "pk", "Pays-Bas": "nl", "Pérou": "pe", "Philippines": "ph",
-  "Pologne": "pl", "Portugal": "pt", "RDC": "cd", "République Dominicaine": "do",
-  "Rodrigues": "mu", "Roumanie": "ro", "Royaume-Uni": "gb", "Rwanda": "rw",
-  "Sénégal": "sn", "Sierra Leone": "sl", "Singapour": "sg", "Somalie": "so",
-  "Soudan": "sd", "Suède": "se", "Suisse": "ch", "Tanzanie": "tz",
-  "Tchad": "td", "Togo": "tg", "Tunisie": "tn", "Turquie": "tr",
-  "Ukraine": "ua", "Uruguay": "uy", "Venezuela": "ve", "Vietnam": "vn",
-  "Zimbabwe": "zw",
-};
-
-
 export default function SignupEglise() {
   const router = useRouter();
   const { lang, changeLang } = useLang();
   const t = translations[lang];
 
   const [planId, setPlanId] = useState("free");
+  const [paysOpen, setPaysOpen] = useState(false);
+  const [paysSearch, setPaysSearch] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -174,17 +177,15 @@ export default function SignupEglise() {
         body: JSON.stringify({ ...formData, logoUrl, planId }),
       });
       const data = await res.json().catch(() => null);
-      
       if (res.ok) {
         setMessage(t.msgSuccess);
+        // ← Redirection selon le plan choisi
         if (planId !== "free") {
           router.push(`/login?redirect=/administrateur/subscription?plan=${planId}`);
         } else {
           router.push("/login");
         }
-      }
-        
-      else {
+      } else {
         setMessage(`❌ Erreur: ${data?.error || t.errorServer}`);
       }
     } catch (err) {
@@ -235,51 +236,104 @@ export default function SignupEglise() {
 
         {/* FORMULAIRE */}
         <form onSubmit={handleSubmit} className="flex flex-col w-full gap-4">
+
+          {/* Champs église */}
           {[
             { name: "denomination", required: true },
             { name: "nomEglise" },
             { name: "branche" },
             { name: "ville", required: true },
-            { name: "localisation", required: true },
           ].map(({ name, required }) => (
             <input key={name} name={name} placeholder={t.fields[name]}
               value={formData[name]} onChange={handleChange}
               className="input" required={required} />
           ))}
 
-          {/* ← MENU DÉROULANT PAYS */}
-            <div style={{ position: "relative" }}>
-              <select
-                name="localisation"
-                value={formData.localisation}
-                onChange={handleChange}
-                required
-                className="input"
-                style={{ appearance: "none", paddingRight: "36px", color: formData.localisation ? "black" : "#9ca3af" }}
-              >
-                <option value="">{t.fields.localisation}</option>
-                {Object.entries(PAYS).sort(([a], [b]) => a.localeCompare(b)).map(([nom, code]) => (
-                  <option key={`${nom}-${code}`} value={nom}>
-                    {nom}
-                  </option>
-                ))}
-              </select>
-              {/* Drapeau du pays sélectionné */}
+          {/* ── DROPDOWN PAYS CUSTOM ── */}
+          <div style={{ position: "relative" }}>
+            {/* Bouton trigger */}
+            <div
+              onClick={() => { setPaysOpen(!paysOpen); setPaysSearch(""); }}
+              style={{
+                display: "flex", alignItems: "center", gap: "8px",
+                border: "1px solid #ccc", borderRadius: "12px", padding: "12px",
+                cursor: "pointer", background: "#fff",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                color: formData.localisation ? "black" : "#9ca3af",
+              }}
+            >
               {formData.localisation && PAYS[formData.localisation] && (
                 <img
                   src={`https://flagcdn.com/w40/${PAYS[formData.localisation]}.png`}
                   alt={formData.localisation}
-                  style={{
-                    position: "absolute", right: "10px", top: "50%",
-                    transform: "translateY(-50%)",
-                    width: "24px", height: "16px",
-                    borderRadius: "2px", pointerEvents: "none",
-                  }}
+                  style={{ width: "24px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
                 />
               )}
+              <span style={{ flex: 1, fontSize: "14px" }}>
+                {formData.localisation || t.fields.localisation}
+              </span>
+              <span style={{ color: "#9ca3af", fontSize: "12px" }}>{paysOpen ? "▲" : "▼"}</span>
             </div>
-            
-              
+
+            {/* Dropdown */}
+            {paysOpen && (
+              <div style={{
+                position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0,
+                background: "#fff", border: "1px solid #e5e7eb", borderRadius: "12px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 50,
+                maxHeight: "220px", overflow: "hidden",
+                display: "flex", flexDirection: "column",
+              }}>
+                {/* Recherche */}
+                <div style={{ padding: "8px" }}>
+                  <input
+                    autoFocus
+                    placeholder={t.searchCountry}
+                    value={paysSearch}
+                    onChange={(e) => setPaysSearch(e.target.value)}
+                    style={{
+                      width: "100%", border: "1px solid #e5e7eb", borderRadius: "8px",
+                      padding: "7px 10px", fontSize: "13px", outline: "none", color: "black",
+                    }}
+                  />
+                </div>
+
+                {/* Liste */}
+                <div style={{ overflowY: "auto", flex: 1 }}>
+                  {Object.entries(PAYS)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .filter(([nom]) => nom.toLowerCase().includes(paysSearch.toLowerCase()))
+                    .map(([nom, code]) => (
+                      <div
+                        key={`${nom}-${code}`}
+                        onClick={() => {
+                          setFormData({ ...formData, localisation: nom });
+                          setPaysOpen(false);
+                          setPaysSearch("");
+                        }}
+                        style={{
+                          display: "flex", alignItems: "center", gap: "10px",
+                          padding: "9px 12px", cursor: "pointer", color: "black",
+                          background: formData.localisation === nom ? "#eff6ff" : "transparent",
+                          fontSize: "14px",
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = "#f9fafb"}
+                        onMouseLeave={(e) => e.currentTarget.style.background = formData.localisation === nom ? "#eff6ff" : "transparent"}
+                      >
+                        <img
+                          src={`https://flagcdn.com/w40/${code}.png`}
+                          alt={nom}
+                          style={{ width: "24px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
+                        />
+                        {nom}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+          {/* ── FIN DROPDOWN PAYS ── */}
+
           <hr className="my-2 border-gray-300" />
           <p className="text-sm text-gray-500 font-semibold -mb-1">{t.adminSection}</p>
 

@@ -10,6 +10,118 @@ import { useMembers } from "../../context/MembersContext";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
 import { checkLimiteAtteinte } from "../../lib/checkLimite";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    pageTitle: "Ajouter un membre",
+    pageTitleHighlight: "Cellule",
+    pageSubtitle1: "Ajoutez",
+    pageSubtitle2: "facilement un membre à",
+    pageSubtitle3: "votre cellule",
+    pageSubtitle4: ". Renseignez ses informations, ses",
+    pageSubtitle5: "besoins et son parcours spirituel",
+    pageSubtitle6: ", puis associez-le à une cellule pour assurer",
+    pageSubtitle7: "un suivi structuré et personnalisé",
+    back: "← Retour",
+    chooseCellule: "-- Choisir une cellule --",
+    prenom: "Prénom",
+    nom: "Nom",
+    civilite: "-- Civilité --",
+    homme: "Homme",
+    femme: "Femme",
+    trancheAge: "-- Tranche d'âge --",
+    telephone: "Téléphone",
+    whatsapp: "WhatsApp",
+    ville: "Ville",
+    commentVenu: "-- Comment est-il venu ? --",
+    invite: "Invité",
+    reseaux: "Réseaux",
+    evangelisation: "Evangélisation",
+    autre: "Autre",
+    priereSalut: "-- Prière du salut ? --",
+    oui: "Oui",
+    non: "Non",
+    typeConversion: "Type",
+    nouveauConverti: "Nouveau converti",
+    reconciliation: "Réconciliation",
+    besoinsLabel: "Difficultés / Besoins",
+    besoinFinances: "Finances",
+    besoinSante: "Santé",
+    besoinTravail: "Travail / Études",
+    besoinFamille: "Famille / Enfants",
+    besoinRelations: "Relations / Conflits",
+    besoinAddictions: "Addictions / Dépendances",
+    besoinGuidance: "Guidance spirituelle",
+    besoinLogement: "Logement / Sécurité",
+    besoinCommunaute: "Communauté / Isolement",
+    besoinDepression: "Dépression / Santé mentale",
+    besoinAutre: "Autre",
+    besoinPrecisez: "Précisez...",
+    infosSupp: "Informations supplémentaires...",
+    annuler: "Annuler",
+    ajouter: "Ajouter",
+    successMsg: "✅ Membre ajouté avec succès",
+    errEglise: "❌ Église non identifiée.",
+    errLimite: "❌ Limite atteinte : {count}/{limite} membres. Upgradez votre plan.",
+    errAjout: "❌ Impossible d'ajouter le membre : ",
+    errCellule: "⚠️ Aucune cellule trouvée pour votre église.",
+  },
+  en: {
+    pageTitle: "Add a member to my",
+    pageTitleHighlight: "Cell",
+    pageSubtitle1: "Easily add",
+    pageSubtitle2: "a member to",
+    pageSubtitle3: "your cell",
+    pageSubtitle4: ". Fill in their information, their",
+    pageSubtitle5: "needs and spiritual journey",
+    pageSubtitle6: ", then assign them to a cell to ensure",
+    pageSubtitle7: "structured and personalized follow-up",
+    back: "← Back",
+    chooseCellule: "-- Choose a cell --",
+    prenom: "First name",
+    nom: "Last name",
+    civilite: "-- Title --",
+    homme: "Male",
+    femme: "Female",
+    trancheAge: "-- Age range --",
+    telephone: "Phone",
+    whatsapp: "WhatsApp",
+    ville: "City",
+    commentVenu: "-- How did they come? --",
+    invite: "Invited",
+    reseaux: "Social media",
+    evangelisation: "Evangelism",
+    autre: "Other",
+    priereSalut: "-- Salvation prayer? --",
+    oui: "Yes",
+    non: "No",
+    typeConversion: "Type",
+    nouveauConverti: "New convert",
+    reconciliation: "Reconciliation",
+    besoinsLabel: "Difficulties / Needs",
+    besoinFinances: "Finances",
+    besoinSante: "Health",
+    besoinTravail: "Work / Studies",
+    besoinFamille: "Family / Children",
+    besoinRelations: "Relationships / Conflicts",
+    besoinAddictions: "Addictions / Dependencies",
+    besoinGuidance: "Spiritual guidance",
+    besoinLogement: "Housing / Safety",
+    besoinCommunaute: "Community / Isolation",
+    besoinDepression: "Depression / Mental health",
+    besoinAutre: "Other",
+    besoinPrecisez: "Specify...",
+    infosSupp: "Additional information...",
+    annuler: "Cancel",
+    ajouter: "Add",
+    successMsg: "✅ Member added successfully",
+    errEglise: "❌ Church not identified.",
+    errLimite: "❌ Limit reached: {count}/{limite} members. Please upgrade your plan.",
+    errAjout: "❌ Unable to add member: ",
+    errCellule: "⚠️ No cell found for your church.",
+  },
+};
 
 export default function AjouterMembreCellule() {
   return (
@@ -23,6 +135,8 @@ function AjouterMembreCelluleContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setAllMembers } = useMembers();
+  const { lang } = useLang();
+  const t = translations[lang];
 
   const urlEgliseId = searchParams.get("eglise_id");
   const urlCelluleId = searchParams.get("cellule_id");
@@ -49,9 +163,16 @@ function AjouterMembreCelluleContent() {
   });
 
   const besoinsOptions = [
-    "Finances", "Santé", "Travail / Études", "Famille / Enfants",
-    "Relations / Conflits", "Addictions / Dépendances", "Guidance spirituelle",
-    "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale"
+    { key: "besoinFinances",    value: "Finances" },
+    { key: "besoinSante",       value: "Santé" },
+    { key: "besoinTravail",     value: "Travail / Études" },
+    { key: "besoinFamille",     value: "Famille / Enfants" },
+    { key: "besoinRelations",   value: "Relations / Conflits" },
+    { key: "besoinAddictions",  value: "Addictions / Dépendances" },
+    { key: "besoinGuidance",    value: "Guidance spirituelle" },
+    { key: "besoinLogement",    value: "Logement / Sécurité" },
+    { key: "besoinCommunaute",  value: "Communauté / Isolement" },
+    { key: "besoinDepression",  value: "Dépression / Santé mentale" },
   ];
 
   const [success, setSuccess] = useState(false);
@@ -96,7 +217,7 @@ function AjouterMembreCelluleContent() {
         .eq("eglise_id", userScope.eglise_id);
 
       if (error || !data || data.length === 0) {
-        alert("⚠️ Aucune cellule trouvée pour votre église.");
+        alert(t.errCellule);
         return;
       }
 
@@ -136,14 +257,14 @@ function AjouterMembreCelluleContent() {
     e.preventDefault();
 
     if (!userScope.eglise_id) {
-      alert("❌ Église non identifiée.");
+      alert(t.errEglise);
       return;
     }
 
     try {
       const { atteinte, count, limite } = await checkLimiteAtteinte(userScope.eglise_id);
       if (atteinte) {
-        alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+        alert(t.errLimite.replace("{count}", count).replace("{limite}", limite));
         return;
       }
 
@@ -196,7 +317,7 @@ function AjouterMembreCelluleContent() {
       });
 
     } catch (err) {
-      alert("❌ Impossible d'ajouter le membre : " + err.message);
+      alert(t.errAjout + err.message);
     }
   };
 
@@ -228,7 +349,7 @@ function AjouterMembreCelluleContent() {
           onClick={() => router.back()}
           className="absolute top-4 left-4 font-semibold"
         >
-          ← Retour
+          {t.back}
         </button>
 
         <div className="flex justify-center mb-6">
@@ -241,16 +362,15 @@ function AjouterMembreCelluleContent() {
         </div>
 
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">
-          Ajouter un membre<br />à ma <span className="text-[#333699]">Cellule</span>
+          {t.pageTitle}<br />à ma <span className="text-[#333699]">{t.pageTitleHighlight}</span>
         </h1>
 
         <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-black/90">
-            <span className="text-[#FFB07C] font-semibold">Ajoutez</span> facilement un membre à{" "}
-            <span className="text-[#FFB07C] font-semibold">votre cellule</span>. Renseignez ses informations, ses
-            <span className="text-[#FFB07C] font-semibold"> besoins et son parcours spirituel</span>, puis associez-le à une cellule
-            pour assurer{" "}
-            <span className="text-[#FFB07C] font-semibold">un suivi structuré et personnalisé</span>.
+            <span className="text-[#FFB07C] font-semibold">{t.pageSubtitle1}</span> {t.pageSubtitle2}{" "}
+            <span className="text-[#FFB07C] font-semibold">{t.pageSubtitle3}</span>{t.pageSubtitle4}
+            <span className="text-[#FFB07C] font-semibold"> {t.pageSubtitle5}</span>{t.pageSubtitle6}{" "}
+            <span className="text-[#FFB07C] font-semibold">{t.pageSubtitle7}</span>.
           </p>
         </div>
 
@@ -264,7 +384,7 @@ function AjouterMembreCelluleContent() {
               className="input"
               required
             >
-              <option value="">-- Choisir une cellule --</option>
+              <option value="">{t.chooseCellule}</option>
               {cellules.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.ville} - {c.cellule}
@@ -281,13 +401,13 @@ function AjouterMembreCelluleContent() {
             required
           />
 
-          <input name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange} className="input" required />
-          <input name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange} className="input" required />
+          <input name="prenom" placeholder={t.prenom} value={formData.prenom} onChange={handleChange} className="input" required />
+          <input name="nom" placeholder={t.nom} value={formData.nom} onChange={handleChange} className="input" required />
 
           <select className="input" value={formData.sexe} onChange={(e) => setFormData({ ...formData, sexe: e.target.value })} required>
-            <option value="">-- Civilité --</option>
-            <option value="Homme">Homme</option>
-            <option value="Femme">Femme</option>
+            <option value="">{t.civilite}</option>
+            <option value="Homme">{t.homme}</option>
+            <option value="Femme">{t.femme}</option>
           </select>
 
           <select
@@ -296,26 +416,26 @@ function AjouterMembreCelluleContent() {
             className="input"
             required
           >
-            <option value="">-- Tranche d'âge --</option>
+            <option value="">{t.trancheAge}</option>
             {["12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans", "41-55 ans", "56-69 ans", "70 ans et plus"].map(v => (
               <option key={v} value={v}>{v}</option>
             ))}
           </select>
 
-          <input name="telephone" placeholder="Téléphone" value={formData.telephone} onChange={handleChange} className="input" />
+          <input name="telephone" placeholder={t.telephone} value={formData.telephone} onChange={handleChange} className="input" />
           <label className="flex items-center gap-2">
             <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} />
-            WhatsApp
+            {t.whatsapp}
           </label>
 
-          <input name="ville" placeholder="Ville" value={formData.ville} onChange={handleChange} className="input" />
+          <input name="ville" placeholder={t.ville} value={formData.ville} onChange={handleChange} className="input" />
 
           <select name="venu" value={formData.venu} onChange={handleChange} className="input">
-            <option value="">-- Comment est-il venu ? --</option>
-            <option value="invité">Invité</option>
-            <option value="réseaux">Réseaux</option>
-            <option value="evangélisation">Evangélisation</option>
-            <option value="autre">Autre</option>
+            <option value="">{t.commentVenu}</option>
+            <option value="invité">{t.invite}</option>
+            <option value="réseaux">{t.reseaux}</option>
+            <option value="evangélisation">{t.evangelisation}</option>
+            <option value="autre">{t.autre}</option>
           </select>
 
           <select
@@ -331,9 +451,9 @@ function AjouterMembreCelluleContent() {
               });
             }}
           >
-            <option value="">-- Prière du salut ? --</option>
-            <option value="Oui">Oui</option>
-            <option value="Non">Non</option>
+            <option value="">{t.priereSalut}</option>
+            <option value="Oui">{t.oui}</option>
+            <option value="Non">{t.non}</option>
           </select>
 
           {formData.priere_salut === "Oui" && (
@@ -343,24 +463,24 @@ function AjouterMembreCelluleContent() {
               onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })}
               required
             >
-              <option value="">Type</option>
-              <option value="Nouveau converti">Nouveau converti</option>
-              <option value="Réconciliation">Réconciliation</option>
+              <option value="">{t.typeConversion}</option>
+              <option value="Nouveau converti">{t.nouveauConverti}</option>
+              <option value="Réconciliation">{t.reconciliation}</option>
             </select>
           )}
 
-          <label className="text-sm sm:text-base font-bold mb-1">Difficultés / Besoins</label>
+          <label className="text-sm sm:text-base font-bold mb-1">{t.besoinsLabel}</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {besoinsOptions.map((item) => (
-              <label key={item} className="flex items-center gap-1 text-sm">
+              <label key={item.value} className="flex items-center gap-1 text-sm">
                 <input
                   type="checkbox"
-                  value={item}
-                  checked={formData.besoin.includes(item)}
+                  value={item.value}
+                  checked={formData.besoin.includes(item.value)}
                   onChange={handleBesoinChange}
                   className="w-4 h-4 sm:w-5 sm:h-5"
                 />
-                {item}
+                {t[item.key]}
               </label>
             ))}
             <label className="flex items-center gap-1 text-sm">
@@ -371,14 +491,14 @@ function AjouterMembreCelluleContent() {
                 onChange={handleBesoinChange}
                 className="w-4 h-4 sm:w-5 sm:h-5"
               />
-              Autre
+              {t.besoinAutre}
             </label>
           </div>
 
           {showBesoinLibre && (
             <input
               type="text"
-              placeholder="Précisez..."
+              placeholder={t.besoinPrecisez}
               value={formData.besoinLibre}
               onChange={(e) => setFormData({ ...formData, besoinLibre: e.target.value })}
               className="input mb-2"
@@ -387,7 +507,7 @@ function AjouterMembreCelluleContent() {
 
           <textarea
             name="infos_supplementaires"
-            placeholder="Informations supplémentaires..."
+            placeholder={t.infosSupp}
             value={formData.infos_supplementaires}
             onChange={handleChange}
             className="input"
@@ -395,17 +515,17 @@ function AjouterMembreCelluleContent() {
 
           <div className="flex gap-4 mt-4">
             <button type="button" onClick={handleCancel} className="flex-1 bg-gray-400 text-white py-3 rounded-xl">
-              Annuler
+              {t.annuler}
             </button>
             <button type="submit" className="flex-1 bg-blue-500 text-white py-3 rounded-xl">
-              Ajouter
+              {t.ajouter}
             </button>
           </div>
         </form>
 
         {success && (
           <p className="mt-4 text-center text-green-600 font-semibold">
-            ✅ Membre ajouté avec succès
+            {t.successMsg}
           </p>
         )}
 

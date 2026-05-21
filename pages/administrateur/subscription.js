@@ -159,7 +159,6 @@ function Spinner() {
   );
 }
 
-// ── Modal de choix du moyen de paiement ──
 function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
   const t = translations[lang];
   const [loading, setLoading] = useState(null); // "paddle" | "paypal" | "free" | null
@@ -375,7 +374,6 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
   );
 }
 
-//______________________________________
 function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
   const t = translations[lang];
   const [loading, setLoading] = useState(null);

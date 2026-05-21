@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import supabase from "../../lib/supabaseClient";
@@ -11,34 +11,25 @@ import { useLang } from "../../hooks/useLang";
 
 const translations = {
   fr: {
-    // Page
     pageTitle: "Mon",
     pageTitleHighlight: "Abonnement",
     pageSubtitle: "Gérez votre plan et suivez votre utilisation",
     loading: "Chargement...",
     noActivePlan: "Aucun plan actif trouvé.",
-
-    // Messages retour
     paymentConfirmed: "Paiement confirmé ! Votre plan a été mis à jour.",
     paymentCancelled: "Paiement annulé. Aucun changement effectué.",
-
-    // Plan actuel
     currentPlan: "Plan actuel",
     renewalDate: "Renouvellement le",
     membersUsed: "membres utilisés",
     unlimited: "Illimité",
     max: "max",
     approachingLimit: "⚠️ Vous approchez de la limite — pensez à upgrader.",
-
-    // Changer de plan
     changePlan: "Changer de plan",
     upgrade: "↑ Upgrade",
     downgrade: "↓ Downgrade",
     paymentRequired: "💳 Paiement requis",
     recommended: "Recommandé",
     limitExceeded: "⚠️ Limite dépassée",
-
-    // Confirmation
     switchToPlan: "Passer au plan",
     downgradeWarning: "⚠️ Vos {count} membres dépassent la limite de {limit} du plan {name}. Certains membres pourraient devenir inaccessibles.",
     enterpriseNote: "Notre équipe vous contactera pour configurer votre plan sur mesure.",
@@ -48,8 +39,6 @@ const translations = {
     confirmDowngrade: "Confirmer le downgrade",
     proceedPayment: "💳 Procéder au paiement",
     cancel: "Annuler",
-
-    // Modal paiement
     paymentMethod: "Choisissez votre moyen de paiement",
     creditCard: "Carte bancaire",
     creditCardSub: "Via Paddle · Visa, Mastercard, Apple Pay",
@@ -66,34 +55,25 @@ const translations = {
     freePlanActivated: "Plan {name} activé via PayPal !",
   },
   en: {
-    // Page
     pageTitle: "My",
     pageTitleHighlight: "Subscription",
     pageSubtitle: "Manage your plan and track your usage",
     loading: "Loading...",
     noActivePlan: "No active plan found.",
-
-    // Return messages
     paymentConfirmed: "Payment confirmed! Your plan has been updated.",
     paymentCancelled: "Payment cancelled. No changes were made.",
-
-    // Current plan
     currentPlan: "Current plan",
     renewalDate: "Renews on",
     membersUsed: "members used",
     unlimited: "Unlimited",
     max: "max",
     approachingLimit: "⚠️ You are approaching the limit — consider upgrading.",
-
-    // Change plan
     changePlan: "Change plan",
     upgrade: "↑ Upgrade",
     downgrade: "↓ Downgrade",
     paymentRequired: "💳 Payment required",
     recommended: "Recommended",
     limitExceeded: "⚠️ Limit exceeded",
-
-    // Confirmation
     switchToPlan: "Switch to plan",
     downgradeWarning: "⚠️ Your {count} members exceed the limit of {limit} for the {name} plan. Some members may become inaccessible.",
     enterpriseNote: "Our team will contact you to configure your custom plan.",
@@ -103,8 +83,6 @@ const translations = {
     confirmDowngrade: "Confirm downgrade",
     proceedPayment: "💳 Proceed to payment",
     cancel: "Cancel",
-
-    // Payment modal
     paymentMethod: "Choose your payment method",
     creditCard: "Credit card",
     creditCardSub: "Via Paddle · Visa, Mastercard, Apple Pay",
@@ -123,17 +101,14 @@ const translations = {
 };
 
 const PLANS = [
-  { id: "free",       nom: { fr: "Départ",     en: "Starter"    }, prix: { fr: "Gratuit",    en: "Free"       }, prixNum: 0,  limite: 50,   emoji: "🌱", color: "#10b981" },
-  { id: "starter",    nom: { fr: "Croissance", en: "Growth"     }, prix: { fr: "$19/mois",   en: "$19/mo"     }, prixNum: 19, limite: 200,  emoji: "📈", color: "#3b82f6" },
-  { id: "vision",     nom: { fr: "Vision",     en: "Vision"     }, prix: { fr: "$39/mois",   en: "$39/mo"     }, prixNum: 39, limite: 500,  emoji: "🔥", color: "#f59e0b" },
-  { id: "expansion",  nom: { fr: "Expansion",  en: "Expansion"  }, prix: { fr: "$79/mois",   en: "$79/mo"     }, prixNum: 79, limite: 1500, emoji: "🌍", color: "#8b5cf6" },
-  { id: "enterprise", nom: { fr: "Réseaux",    en: "Networks"   }, prix: { fr: "Sur mesure", en: "Custom"     }, prixNum: 99, limite: null, emoji: "🔗", color: "#ec4899" },
+  { id: "free",       nom: { fr: "Départ",     en: "Starter"   }, prix: { fr: "Gratuit",    en: "Free"    }, prixNum: 0,  limite: 50,   emoji: "🌱", color: "#10b981" },
+  { id: "starter",    nom: { fr: "Croissance", en: "Growth"    }, prix: { fr: "$19/mois",   en: "$19/mo"  }, prixNum: 19, limite: 200,  emoji: "📈", color: "#3b82f6" },
+  { id: "vision",     nom: { fr: "Vision",     en: "Vision"    }, prix: { fr: "$39/mois",   en: "$39/mo"  }, prixNum: 39, limite: 500,  emoji: "🔥", color: "#f59e0b" },
+  { id: "expansion",  nom: { fr: "Expansion",  en: "Expansion" }, prix: { fr: "$79/mois",   en: "$79/mo"  }, prixNum: 79, limite: 1500, emoji: "🌍", color: "#8b5cf6" },
+  { id: "enterprise", nom: { fr: "Réseaux",    en: "Networks"  }, prix: { fr: "Sur mesure", en: "Custom"  }, prixNum: 99, limite: null, emoji: "🔗", color: "#ec4899" },
 ];
 
-// Plans gratuits ou sur mesure → pas de paiement en ligne
-const FREE_PLANS     = ["free", "enterprise"];
-// Plans en mode paiement unique (sinon récurrent)
-const ONE_TIME_PLANS = [];
+const FREE_PLANS = ["free", "enterprise"];
 
 function barColor(pct) {
   if (pct < 50) return "#10b981";
@@ -156,221 +131,6 @@ function Spinner() {
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
       <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
     </svg>
-  );
-}
-
-function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
-  const t = translations[lang];
-  const [loading, setLoading] = useState(null); // "paddle" | "paypal" | "free" | null
-  const [error, setError]     = useState(null);
-
-  const isFree = FREE_PLANS.includes(plan.id);
-
-  async function handleFreeDowngrade() {
-    setLoading("free");
-    try {
-      const now       = new Date();
-      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
-      const { error: err } = await supabase
-        .from("subscriptions")
-        .update({
-          plan_id:              "free",
-          statut:               "active",
-          current_period_start: now.toISOString(),
-          current_period_end:   nextMonth.toISOString(),
-          updated_at:           now.toISOString(),
-          started_at:           now.toISOString(),
-        })
-        .eq("eglise_id", egliseId);
-
-      if (err) throw err;
-      onSuccess(t.freeDowngradeSuccess);
-    } catch (e) {
-      setError(t.errorPrefix + e.message);
-    } finally {
-      setLoading(null);
-    }
-  }
-
-  async function handlePaddle() {
-    setLoading("paddle");
-    setError(null);
-    try {
-      const res  = await fetch("/api/paddle/create-checkout", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ egliseId, planId: plan.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-
-      if (!window.Paddle) throw new Error(t.paddleNotLoaded);
-
-      window.Paddle.Checkout.open({
-        items: [{ priceId: data.priceId, quantity: 1 }],
-        customer: {
-          email: data.email,
-          ...(data.customerId ? { id: data.customerId } : {}),
-        },
-        customData: { egliseId, planId: plan.id },
-        settings: {
-          successUrl: `${window.location.origin}/subscription?success=true`,
-          displayMode: "redirect",
-          theme: "dark",
-        },
-      });
-
-      onClose();
-    } catch (e) {
-      setError(t.errorPaddle + e.message);
-    } finally {
-      setLoading(null);
-    }
-  }
-
-  async function handlePayPal() {
-    setLoading("paypal");
-    setError(null);
-    try {
-      const res  = await fetch("/api/paypal/create-order", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ egliseId, planId: plan.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-
-      if (data.type === "subscription") {
-        window.location.href = data.approvalUrl;
-      } else {
-        const captureRes  = await fetch("/api/paypal/capture-order", {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({ orderId: data.orderId }),
-        });
-        const captureData = await captureRes.json();
-        if (!captureRes.ok) throw new Error(captureData.error);
-        onSuccess(t.freePlanActivated.replace("{name}", plan.nom[lang]));
-      }
-    } catch (e) {
-      setError(t.errorPaypal + e.message);
-      setLoading(null);
-    }
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}
-    >
-      <div
-        className="w-full max-w-sm rounded-2xl p-6 space-y-5"
-        style={{ background: "#1a1a3e", border: "1.5px solid rgba(255,255,255,0.15)" }}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-white font-bold text-lg">
-              {plan.emoji} {plan.nom[lang]}
-            </p>
-            <p className="text-white/40 text-sm">{plan.prix[lang]}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-white/30 hover:text-white/70 transition text-xl font-bold"
-          >
-            ×
-          </button>
-        </div>
-
-        {error && (
-          <div className="bg-red-500/15 border border-red-500/30 rounded-xl px-3 py-2 text-red-300 text-sm">
-            {error}
-          </div>
-        )}
-
-        {isFree ? (
-          <div className="space-y-3">
-            <p className="text-white/60 text-sm">{t.freeDowngradeNote}</p>
-            <button
-              onClick={handleFreeDowngrade}
-              disabled={loading === "free"}
-              className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-opacity"
-              style={{ background: "#10b981", color: "#fff", opacity: loading ? 0.7 : 1 }}
-            >
-              {loading === "free"
-                ? <><Spinner /> {t.confirmingDowngradeInProgress}</>
-                : t.confirmingDowngrade
-              }
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-white/50 text-xs uppercase tracking-widest font-semibold">
-              {t.paymentMethod}
-            </p>
-
-            {/* Paddle */}
-            <button
-              onClick={handlePaddle}
-              disabled={!!loading}
-              className="w-full rounded-xl p-4 flex items-center gap-4 text-left transition-all"
-              style={{
-                background: loading === "paddle" ? "rgba(99,102,241,0.25)" : "rgba(99,102,241,0.12)",
-                border:     "1.5px solid rgba(99,102,241,0.5)",
-                opacity:    loading && loading !== "paddle" ? 0.5 : 1,
-              }}
-            >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "rgba(99,102,241,0.2)" }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <rect x="2" y="6" width="20" height="14" rx="3" stroke="#818cf8" strokeWidth="1.8"/>
-                  <path d="M2 10h20" stroke="#818cf8" strokeWidth="1.8"/>
-                  <rect x="5" y="14" width="4" height="2" rx="1" fill="#818cf8"/>
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-white font-semibold text-sm flex items-center gap-2">
-                  {t.creditCard}
-                  <span className="text-[10px] bg-indigo-400/20 text-indigo-300 px-1.5 py-0.5 rounded-full font-bold">
-                    {t.recommended}
-                  </span>
-                </p>
-                <p className="text-white/40 text-xs mt-0.5">{t.creditCardSub}</p>
-              </div>
-              {loading === "paddle" ? <Spinner /> : <span className="text-white/30 text-lg">→</span>}
-            </button>
-
-            {/* PayPal */}
-            <button
-              onClick={handlePayPal}
-              disabled={!!loading}
-              className="w-full rounded-xl p-4 flex items-center gap-4 text-left transition-all"
-              style={{
-                background: loading === "paypal" ? "rgba(0,112,240,0.2)" : "rgba(0,112,240,0.08)",
-                border:     "1.5px solid rgba(0,112,240,0.35)",
-                opacity:    loading && loading !== "paypal" ? 0.5 : 1,
-              }}
-            >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "rgba(0,112,240,0.15)" }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <path d="M7 20V4h6a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5H9" stroke="#60a5fa" strokeWidth="1.8" strokeLinecap="round"/>
-                  <path d="M9 14l-2 6" stroke="#60a5fa" strokeWidth="1.8" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-white font-semibold text-sm">PayPal</p>
-                <p className="text-white/40 text-xs mt-0.5">{t.paypalSub}</p>
-              </div>
-              {loading === "paypal" ? <Spinner /> : <span className="text-white/30 text-lg">→</span>}
-            </button>
-          </div>
-        )}
-
-        <p className="text-white/25 text-[11px] text-center">{t.securePayment}</p>
-      </div>
-    </div>
   );
 }
 
@@ -454,6 +214,7 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
       if (data.type === "subscription") {
         window.location.href = data.approvalUrl;
       } else {
+        // Redirige vers PayPal pour approbation
         window.location.href = `https://www.sandbox.paypal.com/checkoutnow?token=${data.orderId}`;
       }
     } catch (e) {
@@ -501,7 +262,6 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
           <div className="space-y-3">
             <p className="text-white/50 text-xs uppercase tracking-widest font-semibold">{t.paymentMethod}</p>
 
-            {/* Paddle */}
             <button
               onClick={handlePaddle}
               disabled={!!loading}
@@ -512,8 +272,7 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
                 opacity:    loading && loading !== "paddle" ? 0.5 : 1,
               }}
             >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "rgba(99,102,241,0.2)" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(99,102,241,0.2)" }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                   <rect x="2" y="6" width="20" height="14" rx="3" stroke="#818cf8" strokeWidth="1.8"/>
                   <path d="M2 10h20" stroke="#818cf8" strokeWidth="1.8"/>
@@ -530,7 +289,6 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
               {loading === "paddle" ? <Spinner /> : <span className="text-white/30 text-lg">→</span>}
             </button>
 
-            {/* PayPal */}
             <button
               onClick={handlePayPal}
               disabled={!!loading}
@@ -541,8 +299,7 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
                 opacity:    loading && loading !== "paypal" ? 0.5 : 1,
               }}
             >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "rgba(0,112,240,0.15)" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(0,112,240,0.15)" }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                   <path d="M7 20V4h6a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5H9" stroke="#60a5fa" strokeWidth="1.8" strokeLinecap="round"/>
                   <path d="M9 14l-2 6" stroke="#60a5fa" strokeWidth="1.8" strokeLinecap="round"/>
@@ -562,7 +319,7 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
     </div>
   );
 }
-// ══════════════════════════════════════════════
+
 function SubscriptionContent() {
   const router = useRouter();
   const { lang } = useLang();
@@ -577,41 +334,40 @@ function SubscriptionContent() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
-  loadData();
+    loadData();
 
-  const params = new URLSearchParams(window.location.search);
-  const token     = params.get("token");     // PayPal renvoie le token ici
-  const success   = params.get("success");
-  const cancelled = params.get("cancelled");
+    const params    = new URLSearchParams(window.location.search);
+    const token     = params.get("token");
+    const success   = params.get("success");
+    const cancelled = params.get("cancelled");
 
-  if (token && success !== "true") {
-    // Retour depuis PayPal → capture
-    fetch("/api/paypal/capture-order", {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ orderId: token }),
-    })
-      .then(r => r.json())
-      .then(d => {
-        if (d.success) {
-          setMessage({ type: "success", text: t.paymentConfirmed });
-        } else {
-          setMessage({ type: "error", text: d.error || "Erreur capture" });
-        }
-        window.history.replaceState({}, "", window.location.pathname);
-        loadData();
+    if (token && success !== "true") {
+      fetch("/api/paypal/capture-order", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ orderId: token }),
       })
-      .catch(() => {
-        setMessage({ type: "error", text: t.paymentCancelled });
-      });
-  } else if (success === "true") {
-    setMessage({ type: "success", text: t.paymentConfirmed });
-    window.history.replaceState({}, "", window.location.pathname);
-  } else if (cancelled === "true") {
-    setMessage({ type: "error", text: t.paymentCancelled });
-    window.history.replaceState({}, "", window.location.pathname);
-  }
-}, []);
+        .then(r => r.json())
+        .then(d => {
+          if (d.success) {
+            setMessage({ type: "success", text: t.paymentConfirmed });
+          } else {
+            setMessage({ type: "error", text: d.error || "Erreur capture" });
+          }
+          window.history.replaceState({}, "", window.location.pathname);
+          loadData();
+        })
+        .catch(() => {
+          setMessage({ type: "error", text: t.paymentCancelled });
+        });
+    } else if (success === "true") {
+      setMessage({ type: "success", text: t.paymentConfirmed });
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (cancelled === "true") {
+      setMessage({ type: "error", text: t.paymentCancelled });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -709,18 +465,15 @@ function SubscriptionContent() {
           ) : (
             <>
               {message && (
-                <div
-                  className={`rounded-xl px-4 py-3 text-sm font-medium border ${
-                    message.type === "error"
-                      ? "bg-red-500/15 border-red-500/40 text-red-300"
-                      : "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
-                  }`}
-                >
+                <div className={`rounded-xl px-4 py-3 text-sm font-medium border ${
+                  message.type === "error"
+                    ? "bg-red-500/15 border-red-500/40 text-red-300"
+                    : "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
+                }`}>
                   {message.text}
                 </div>
               )}
 
-              {/* ── 1. PLAN ACTUEL ── */}
               {planActuel ? (
                 <div
                   className="rounded-2xl p-5"
@@ -775,13 +528,11 @@ function SubscriptionContent() {
                 <p className="text-white/50 text-center text-sm">{t.noActivePlan}</p>
               )}
 
-              {/* ── 2. CHANGER DE PLAN ── */}
               {autresPlans.length > 0 && (
                 <div>
                   <p className="text-white/40 text-xs uppercase font-semibold tracking-widest mb-3">
                     {t.changePlan}
                   </p>
-
                   <div className="space-y-2">
                     {autresPlans.map((plan) => {
                       const isUpgrade    = planActuel ? plan.prixNum > planActuel.prixNum : false;
@@ -799,16 +550,11 @@ function SubscriptionContent() {
                               ? isUpgrade ? `${plan.color}22` : "rgba(255,255,255,0.12)"
                               : isUpgrade ? `${plan.color}11` : "rgba(255,255,255,0.05)",
                             border: isSelected
-                              ? isUpgrade
-                                ? `1.5px solid ${plan.color}99`
-                                : "1.5px solid rgba(255,255,255,0.35)"
-                              : isUpgrade
-                                ? `1px solid ${plan.color}33`
-                                : "1px solid rgba(255,255,255,0.10)",
+                              ? isUpgrade ? `1.5px solid ${plan.color}99` : "1.5px solid rgba(255,255,255,0.35)"
+                              : isUpgrade ? `1px solid ${plan.color}33`   : "1px solid rgba(255,255,255,0.10)",
                           }}
                         >
                           <span className="text-2xl shrink-0">{plan.emoji}</span>
-
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                               <p className="text-white font-semibold text-sm">{plan.nom[lang]}</p>
@@ -838,25 +584,16 @@ function SubscriptionContent() {
                                 </span>
                               )}
                             </div>
-
                             <div className="flex items-center gap-2 mt-1.5">
                               <div className="flex-1">
-                                <ProgressBar
-                                  value={nombreMembres}
-                                  max={plan.limite ?? nombreMembres}
-                                  height={4}
-                                />
+                                <ProgressBar value={nombreMembres} max={plan.limite ?? nombreMembres} height={4} />
                               </div>
                               <span className="text-white/30 text-[11px] shrink-0">
                                 {plan.limite ? `${nombreMembres}/${plan.limite}` : t.unlimited}
                               </span>
                             </div>
                           </div>
-
-                          <p
-                            className="text-sm font-semibold shrink-0"
-                            style={{ color: isUpgrade ? plan.color : "rgba(255,255,255,0.5)" }}
-                          >
+                          <p className="text-sm font-semibold shrink-0" style={{ color: isUpgrade ? plan.color : "rgba(255,255,255,0.5)" }}>
                             {plan.prix[lang]}
                           </p>
                         </button>
@@ -866,14 +603,10 @@ function SubscriptionContent() {
                 </div>
               )}
 
-              {/* ── 3. CONFIRMATION / PAIEMENT ── */}
               {selectedPlanId && confirmTarget && (
                 <div
                   className="rounded-2xl p-5 space-y-3"
-                  style={{
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.15)",
-                  }}
+                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)" }}
                 >
                   <p className="text-white font-semibold">
                     {t.switchToPlan}{" "}
@@ -906,9 +639,7 @@ function SubscriptionContent() {
                       style={{ background: confirmTarget.color, color: "#fff" }}
                     >
                       {FREE_PLANS.includes(confirmTarget.id)
-                        ? confirmTarget.id === "enterprise"
-                          ? t.contactUs
-                          : t.confirmDowngrade
+                        ? confirmTarget.id === "enterprise" ? t.contactUs : t.confirmDowngrade
                         : t.proceedPayment
                       }
                     </button>

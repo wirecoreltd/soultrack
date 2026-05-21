@@ -215,7 +215,10 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
         window.location.href = data.approvalUrl;
       } else {
         // Redirige vers PayPal pour approbation
-        window.location.href = `https://www.sandbox.paypal.com/checkoutnow?token=${data.orderId}`;
+        const paypalBase = process.env.NEXT_PUBLIC_PAYPAL_MODE === "live"
+  ? "https://www.paypal.com"
+  : "https://www.sandbox.paypal.com";
+window.location.href = `${paypalBase}/checkoutnow?token=${data.orderId}`;
       }
     } catch (e) {
       setError(t.errorPaypal + e.message);

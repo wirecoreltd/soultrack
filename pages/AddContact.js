@@ -138,6 +138,7 @@ export default function AddContact() {
   });
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [egliseInfo, setEgliseInfo] = useState(null);
 
   const besoinsOptions = [
     "Finances", "Santé", "Travail / Études", "Famille / Enfants",
@@ -165,6 +166,24 @@ export default function AddContact() {
     fetchUserEglise();
   }, []);
 
+  useEffect(() => {
+  if (!formData.eglise_id) return;
+
+  const fetchEglise = async () => {
+    const { data, error } = await supabase
+      .from("eglises")
+      .select("nom, branche, ville, pays, logo_url")
+      .eq("id", formData.eglise_id)
+      .single();
+
+    if (!error && data) {
+      setEgliseInfo(data);
+    }
+  };
+
+  fetchEglise();
+}, [formData.eglise_id]);
+  
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
     if (value === "Autre") {
@@ -241,13 +260,32 @@ export default function AddContact() {
           {t.retour}
         </button>
 
-        <div className="flex justify-center mb-4 sm:mb-6">
-          <img
-            src="/logo.png"
-            alt="Logo SoulTrack"
-            className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
-            onClick={() => router.push("/index")}
-          />
+         {/* ─── Logo + infos de l'église ─── */}
+        <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
+          {egliseInfo?.logo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={egliseInfo.logo_url}
+              alt={egliseInfo.nom || "Logo église"}
+              style={{
+                width: 50,
+                height: 50,
+                objectFit: "contain",                
+              }}
+            />
+          )}
+
+          {egliseInfo && (
+            <div className="text-center leading-snug mt-1">
+              <p className="font-bold text-lg text-[#c31850]">{egliseInfo.nom}</p>
+              {egliseInfo.branche && (
+                <p className="text-sm text-[#c31850]">{egliseInfo.branche}</p>
+              )}
+              <p className="text-sm text-[#c31850]">
+                {[egliseInfo.ville, egliseInfo.pays].filter(Boolean).join(", ")}
+              </p>
+            </div>
+          )}
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">{t.pageTitle}</h1>

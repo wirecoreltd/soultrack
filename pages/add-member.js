@@ -347,7 +347,7 @@ export default function AddMember() {
         </button>
 
         {/* ─── Logo + infos de l'église ─── */}
-        <div className="flex flex-col items-center mb-4 sm:mb-6 gap-2">
+        <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
           {egliseInfo?.logo_url && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -374,7 +374,7 @@ export default function AddMember() {
           )}
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">{t.title}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2 mt-4">{t.title}</h1>
         <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">
           {t.subtitle}
         </p>

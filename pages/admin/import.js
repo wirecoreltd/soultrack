@@ -8,6 +8,76 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import ImportMembresCSV from "../../components/ImportMembresCSV";
 import ImportMembresCelluleCSV from "../../components/ImportMembresCelluleCSV";
 import ImportMembresFamilleCSV from "../../components/ImportMembresFamilleCSV";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    loading: "Chargement...",
+    nonAuthentifie: "Utilisateur non authentifié",
+    titre1: "Importer des ",
+    titre2: "membres",
+    retour: "← Retour",
+    subtitleCellule: (
+      <>
+        Importez facilement les membres de votre{" "}
+        <span className="text-blue-300 font-semibold">cellule</span> via un fichier CSV.{" "}
+        <span className="text-blue-300 font-semibold">Téléchargez le template</span>,
+        remplissez-le et importez-le en quelques clics pour un{" "}
+        <span className="text-blue-300 font-semibold">ajout rapide et fiable</span>.
+      </>
+    ),
+    subtitleFamille: (
+      <>
+        Importez facilement les membres de votre{" "}
+        <span className="text-blue-300 font-semibold">famille</span> via un fichier CSV.{" "}
+        <span className="text-blue-300 font-semibold">Téléchargez le template</span>,
+        remplissez-le et importez-le en quelques clics pour un{" "}
+        <span className="text-blue-300 font-semibold">ajout rapide et fiable</span>.
+      </>
+    ),
+    subtitleDefault: (
+      <>
+        Importez facilement vos membres via un fichier CSV.{" "}
+        <span className="text-blue-300 font-semibold">Téléchargez le template</span>,
+        remplissez-le et importez-le en quelques clics pour un{" "}
+        <span className="text-blue-300 font-semibold">ajout rapide et fiable</span>.
+      </>
+    ),
+  },
+  en: {
+    loading: "Loading...",
+    nonAuthentifie: "User not authenticated",
+    titre1: "Import ",
+    titre2: "members",
+    retour: "← Back",
+    subtitleCellule: (
+      <>
+        Easily import members of your{" "}
+        <span className="text-blue-300 font-semibold">cell group</span> via a CSV file.{" "}
+        <span className="text-blue-300 font-semibold">Download the template</span>,
+        fill it in and import it in a few clicks for a{" "}
+        <span className="text-blue-300 font-semibold">fast and reliable import</span>.
+      </>
+    ),
+    subtitleFamille: (
+      <>
+        Easily import members of your{" "}
+        <span className="text-blue-300 font-semibold">family group</span> via a CSV file.{" "}
+        <span className="text-blue-300 font-semibold">Download the template</span>,
+        fill it in and import it in a few clicks for a{" "}
+        <span className="text-blue-300 font-semibold">fast and reliable import</span>.
+      </>
+    ),
+    subtitleDefault: (
+      <>
+        Easily import your members via a CSV file.{" "}
+        <span className="text-blue-300 font-semibold">Download the template</span>,
+        fill it in and import it in a few clicks for a{" "}
+        <span className="text-blue-300 font-semibold">fast and reliable import</span>.
+      </>
+    ),
+  },
+};
 
 export default function ImportPage() {
   return (
@@ -19,6 +89,9 @@ export default function ImportPage() {
 
 function ImportPageContent() {
   const router = useRouter();
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -46,7 +119,7 @@ function ImportPageContent() {
         cellule_id = cellules?.[0]?.id || null;
       }
 
-      if (profile.role === "ResponsableFamilles") { // ✅ avec S
+      if (profile.role === "ResponsableFamilles") {
         const { data: familles } = await supabase
           .from("familles")
           .select("id")
@@ -70,7 +143,7 @@ function ImportPageContent() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#333699" }}>
-        <div className="text-white text-center">Chargement...</div>
+        <div className="text-white text-center">{t.loading}</div>
       </div>
     );
   }
@@ -78,7 +151,7 @@ function ImportPageContent() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#333699" }}>
-        <div className="text-red-300 text-center">Utilisateur non authentifie</div>
+        <div className="text-red-300 text-center">{t.nonAuthentifie}</div>
       </div>
     );
   }
@@ -87,7 +160,7 @@ function ImportPageContent() {
     switch (user.role) {
       case "ResponsableCellule":
         return <ImportMembresCelluleCSV user={user} />;
-      case "ResponsableFamilles": // ✅ avec S
+      case "ResponsableFamilles":
         return <ImportMembresFamilleCSV user={user} />;
       default:
         return <ImportMembresCSV user={user} />;
@@ -96,35 +169,12 @@ function ImportPageContent() {
 
   const getSubtitle = () => {
     if (user.role === "ResponsableCellule") {
-      return (
-        <p className="italic text-base text-white/90">
-          Importez facilement les membres de votre{" "}
-          <span className="text-blue-300 font-semibold">cellule</span> via un fichier CSV.{" "}
-          <span className="text-blue-300 font-semibold">Telechargez le template</span>,
-          remplissez-le et importez-le en quelques clics pour un{" "}
-          <span className="text-blue-300 font-semibold">ajout rapide et fiable</span>.
-        </p>
-      );
+      return <p className="italic text-base text-white/90">{t.subtitleCellule}</p>;
     }
     if (user.role === "ResponsableFamilles") {
-      return (
-        <p className="italic text-base text-white/90">
-          Importez facilement les membres de votre{" "}
-          <span className="text-blue-300 font-semibold">famille</span> via un fichier CSV.{" "}
-          <span className="text-blue-300 font-semibold">Telechargez le template</span>,
-          remplissez-le et importez-le en quelques clics pour un{" "}
-          <span className="text-blue-300 font-semibold">ajout rapide et fiable</span>.
-        </p>
-      );
+      return <p className="italic text-base text-white/90">{t.subtitleFamille}</p>;
     }
-    return (
-      <p className="italic text-base text-white/90">
-        Importez facilement vos membres via un fichier CSV.{" "}
-        <span className="text-blue-300 font-semibold">Telechargez le template</span>,
-        remplissez-le et importez-le en quelques clics pour un{" "}
-        <span className="text-blue-300 font-semibold">ajout rapide et fiable</span>.
-      </p>
-    );
+    return <p className="italic text-base text-white/90">{t.subtitleDefault}</p>;
   };
 
   return (
@@ -132,8 +182,8 @@ function ImportPageContent() {
       <HeaderPages />
 
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
-        <span className="text-white">Importer des </span>
-        <span className="text-emerald-300">membres</span>
+        <span className="text-white">{t.titre1}</span>
+        <span className="text-emerald-300">{t.titre2}</span>
       </h1>
 
       <div className="max-w-3xl w-full mb-6 text-center mx-auto">
@@ -145,7 +195,7 @@ function ImportPageContent() {
           onClick={() => router.back()}
           className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
         >
-          ← Retour
+          {t.retour}
         </button>
       </div>
 

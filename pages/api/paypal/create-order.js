@@ -12,7 +12,7 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const RECURRING_PLANS = ["starter", "vision", "expansion"];
+const RECURRING_PLANS = [];
 
 const PLAN_NOMS = {
   starter:    "Croissance",

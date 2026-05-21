@@ -5,13 +5,141 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 import { checkLimiteAtteinte } from "../lib/checkLimite";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    loading: "Vérification du lien...",
+    invalidLink: "Lien invalide ou expiré.",
+    title: "Ajouter un nouveau membre",
+    subtitle: "« Allez, faites de toutes les nations des disciples » – Matthieu 28:19",
+    close: "Fermer",
+    dateVenue: "Date de venue",
+    civility: "Civilité",
+    choose: "-- Choisir --",
+    homme: "Homme",
+    femme: "Femme",
+    prenom: "Prénom",
+    nom: "Nom",
+    telephone: "Téléphone",
+    telPlaceholder: "Ex: 5 1234 5678",
+    noPhone: "La personne n'a pas de téléphone",
+    whatsapp: "Numéro WhatsApp",
+    ville: "Ville",
+    age: "Âge",
+    ageOptions: ["12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans", "41-55 ans", "56-69 ans", "70 ans et plus"],
+    statut: "Statut",
+    statutOptions: [
+      { value: "veut rejoindre l'église", label: "Veut rejoindre l'église" },
+      { value: "a déjà son église", label: "A déjà son église" },
+      { value: "nouveau", label: "Nouveau" },
+      { value: "visiteur", label: "Visiteur" },
+    ],
+    howCame: "Comment est-il venu ?",
+    howCameOptions: [
+      { value: "invité", label: "Invité" },
+      { value: "réseaux", label: "Réseaux" },
+      { value: "evangélisation", label: "Évangélisation" },
+      { value: "autre", label: "Autre" },
+    ],
+    prayerSalvation: "Prière du salut",
+    oui: "Oui",
+    non: "Non",
+    typeConversion: "Type de conversion",
+    conversionOptions: [
+      { value: "Nouveau converti", label: "Nouveau converti" },
+      { value: "Réconciliation", label: "Réconciliation" },
+    ],
+    needs: "Difficultés / Besoins",
+    needsOptions: [
+      "Finances", "Santé", "Travail / Études", "Famille / Enfants", "Miracle", "Délivrance",
+      "Relations / Conflits", "Addictions / Dépendances", "Guidance spirituelle",
+      "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
+    ],
+    other: "Autre",
+    specify: "Précisez...",
+    additionalInfo: "Informations supplémentaires",
+    cancel: "Annuler",
+    add: "Ajouter",
+    success: "✅ Membre ajouté avec succès !",
+    errNoPhone: "Le téléphone est requis ou cochez 'Pas de téléphone'",
+    errNoEglise: "Église non identifiée. Veuillez réessayer.",
+    errLimite: (count, limite) => `❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`,
+    errPhoneExists: "Ce numéro de téléphone existe déjà.",
+    errGeneric: "Erreur lors de l'ajout du membre.",
+  },
+  en: {
+    loading: "Verifying link...",
+    invalidLink: "Invalid or expired link.",
+    title: "Add a new member",
+    subtitle: "\"Go and make disciples of all nations\" – Matthew 28:19",
+    close: "Close",
+    dateVenue: "Date of visit",
+    civility: "Title",
+    choose: "-- Choose --",
+    homme: "Male",
+    femme: "Female",
+    prenom: "First name",
+    nom: "Last name",
+    telephone: "Phone",
+    telPlaceholder: "e.g. 5 1234 5678",
+    noPhone: "This person has no phone",
+    whatsapp: "WhatsApp number",
+    ville: "City",
+    age: "Age",
+    ageOptions: ["12-17 yrs", "18-25 yrs", "26-30 yrs", "31-40 yrs", "41-55 yrs", "56-69 yrs", "70 yrs and over"],
+    statut: "Status",
+    statutOptions: [
+      { value: "veut rejoindre l'église", label: "Wants to join the church" },
+      { value: "a déjà son église", label: "Already has a church" },
+      { value: "nouveau", label: "New" },
+      { value: "visiteur", label: "Visitor" },
+    ],
+    howCame: "How did they come?",
+    howCameOptions: [
+      { value: "invité", label: "Invited" },
+      { value: "réseaux", label: "Social media" },
+      { value: "evangélisation", label: "Outreach" },
+      { value: "autre", label: "Other" },
+    ],
+    prayerSalvation: "Salvation prayer",
+    oui: "Yes",
+    non: "No",
+    typeConversion: "Type of conversion",
+    conversionOptions: [
+      { value: "Nouveau converti", label: "New convert" },
+      { value: "Réconciliation", label: "Reconciliation" },
+    ],
+    needs: "Difficulties / Needs",
+    needsOptions: [
+      "Finances", "Health", "Work / Studies", "Family / Children", "Miracle", "Deliverance",
+      "Relationships / Conflicts", "Addictions / Dependencies", "Spiritual guidance",
+      "Housing / Safety", "Community / Isolation", "Depression / Mental health",
+    ],
+    other: "Other",
+    specify: "Please specify...",
+    additionalInfo: "Additional information",
+    cancel: "Cancel",
+    add: "Add",
+    success: "✅ Member added successfully!",
+    errNoPhone: "Phone is required or check 'No phone'",
+    errNoEglise: "Church not identified. Please try again.",
+    errLimite: (count, limite) => `❌ Limit reached: ${count}/${limite} members. Please upgrade your plan.`,
+    errPhoneExists: "This phone number already exists.",
+    errGeneric: "Error while adding member.",
+  },
+};
 
 export default function AddMember() {
   const router = useRouter();
   const { token } = router.query;
-
-  // ✅ Lire famille_id depuis l'URL
   const urlFamilleId = router.query.famille_id || null;
+
+  // ✅ Lire la langue depuis l'URL (?lang=en) en priorité, sinon useLang
+  const { lang: hookLang } = useLang();
+  const urlLang = router.query.lang;
+  const lang = (urlLang === "en" || urlLang === "fr") ? urlLang : hookLang;
+  const t = translations[lang] || translations.fr;
 
   const [formData, setFormData] = useState({
     sexe: "",
@@ -30,7 +158,7 @@ export default function AddMember() {
     priere_salut: "",
     type_conversion: "",
     eglise_id: "",
-    famille_id: urlFamilleId || null, // ✅ famille_id dans le state
+    famille_id: urlFamilleId || null,
   });
 
   const [noPhone, setNoPhone] = useState(false);
@@ -38,12 +166,6 @@ export default function AddMember() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
-
-  const besoinsOptions = [
-    "Finances", "Santé", "Travail / Études", "Famille / Enfants", "Miracle", "Délivrance",
-    "Relations / Conflits", "Addictions / Dépendances", "Guidance spirituelle",
-    "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
-  ];
 
   // ─── Cas 1 : utilisateur connecté → récupérer eglise_id ───
   useEffect(() => {
@@ -60,10 +182,7 @@ export default function AddMember() {
         .single();
 
       if (!error && profile) {
-        setFormData(prev => ({
-          ...prev,
-          eglise_id: profile.eglise_id,
-        }));
+        setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id }));
       }
       setLoading(false);
     };
@@ -86,12 +205,9 @@ export default function AddMember() {
         .single();
 
       if (error || !data) {
-        setErrorMsg("Lien invalide ou expiré.");
+        setErrorMsg(t.invalidLink);
       } else {
-        setFormData(prev => ({
-          ...prev,
-          eglise_id: data.church_id,
-        }));
+        setFormData(prev => ({ ...prev, eglise_id: data.church_id }));
       }
 
       setLoading(false);
@@ -100,7 +216,6 @@ export default function AddMember() {
     verifyToken();
   }, [token]);
 
-  // ✅ Mettre à jour famille_id si l'URL change après le premier rendu
   useEffect(() => {
     if (urlFamilleId) {
       setFormData(prev => ({ ...prev, famille_id: urlFamilleId }));
@@ -110,7 +225,7 @@ export default function AddMember() {
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
 
-    if (value === "Autre") {
+    if (value === t.other) {
       setShowBesoinLibre(checked);
       if (!checked) setFormData(prev => ({ ...prev, besoinLibre: "" }));
     }
@@ -141,69 +256,66 @@ export default function AddMember() {
       infos_supplementaires: "",
       priere_salut: "",
       type_conversion: "",
-      // ✅ eglise_id et famille_id conservés
     }));
     setNoPhone(false);
     setShowBesoinLibre(false);
     setErrorMsg("");
   };
 
-     const handleSubmit = async (e) => {
-  e.preventDefault();
-  setErrorMsg("");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMsg("");
 
-  try {
-    if (!noPhone && !formData.telephone) {
-      throw new Error("Le téléphone est requis ou cochez 'Pas de téléphone'");
+    try {
+      if (!noPhone && !formData.telephone) {
+        throw new Error(t.errNoPhone);
+      }
+
+      if (!formData.eglise_id) {
+        throw new Error(t.errNoEglise);
+      }
+
+      const finalBesoin = showBesoinLibre && formData.besoinLibre
+        ? [...formData.besoin.filter(b => b !== t.other), formData.besoinLibre]
+        : formData.besoin;
+
+      const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
+      if (atteinte) {
+        setErrorMsg(t.errLimite(count, limite));
+        return;
+      }
+
+      const { besoinLibre, ...rest } = formData;
+      const dataToSend = {
+        ...rest,
+        besoin: finalBesoin,
+        etat_contact: "nouveau",
+        famille_id: formData.famille_id || null,
+      };
+
+      if (!noPhone) {
+        const { data: existing } = await supabase
+          .from("membres_complets")
+          .select("id")
+          .eq("telephone", formData.telephone)
+          .maybeSingle();
+
+        if (existing) throw new Error(t.errPhoneExists);
+      }
+
+      const { error } = await supabase.from("membres_complets").insert([dataToSend]);
+      if (error) throw error;
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+      resetForm();
+
+    } catch (err) {
+      setErrorMsg(err.message || t.errGeneric);
     }
+  };
 
-    // ✅ Vérifier que eglise_id est bien chargé
-    if (!formData.eglise_id) {
-      throw new Error("Église non identifiée. Veuillez réessayer.");
-    }
-
-    const finalBesoin = showBesoinLibre && formData.besoinLibre
-      ? [...formData.besoin.filter(b => b !== "Autre"), formData.besoinLibre]
-      : formData.besoin;
-
-    // ✅ Vérifier la limite
-    const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
-    if (atteinte) {
-      setErrorMsg(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
-      return;
-    }
-
-    const { besoinLibre, ...rest } = formData;
-    const dataToSend = {
-      ...rest,
-      besoin: finalBesoin,
-      etat_contact: "nouveau",
-      famille_id: formData.famille_id || null,
-    };
-
-    if (!noPhone) {
-      const { data: existing } = await supabase
-        .from("membres_complets")
-        .select("id")
-        .eq("telephone", formData.telephone)
-        .maybeSingle();
-
-      if (existing) throw new Error("Ce numéro de téléphone existe déjà.");
-    }
-
-    const { error } = await supabase.from("membres_complets").insert([dataToSend]);
-    if (error) throw error;
-
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
-    resetForm();
-
-  } catch (err) {
-    setErrorMsg(err.message || "Erreur lors de l'ajout du membre.");
-  }
-};
-
-  if (loading) return <p className="text-center mt-10">Vérification du lien...</p>;
+  if (loading) return <p className="text-center mt-10">{t.loading}</p>;
   if (errorMsg && !formData.eglise_id) return <p className="text-center mt-10 text-red-600">{errorMsg}</p>;
 
   return (
@@ -213,7 +325,7 @@ export default function AddMember() {
         <button
           onClick={() => window.close()}
           className="absolute top-3 right-3 sm:top-4 sm:right-4 text-black font-bold hover:text-gray-800 transition-colors text-xl"
-          aria-label="Fermer"
+          aria-label={t.close}
         >
           ✕
         </button>
@@ -222,17 +334,15 @@ export default function AddMember() {
           <Image src="/logo.png" alt="SoulTrack Logo" width={70} height={70} />
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">
-          Ajouter un nouveau membre
-        </h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">{t.title}</h1>
         <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">
-          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
+          {t.subtitle}
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
 
           {/* Date de venue */}
-          <label className="text-sm sm:text-base font-semibold">Date de venue</label>
+          <label className="text-sm sm:text-base font-semibold">{t.dateVenue}</label>
           <input
             type="date"
             value={formData.date_venu}
@@ -241,21 +351,21 @@ export default function AddMember() {
             required
           />
 
-               {/* Civilité */}
-          <label className="text-sm sm:text-base font-semibold">Civilité</label>
+          {/* Civilité */}
+          <label className="text-sm sm:text-base font-semibold">{t.civility}</label>
           <select
             value={formData.sexe}
             onChange={e => setFormData({ ...formData, sexe: e.target.value })}
             className="input"
             required
           >
-            <option value="">-- Choisir --</option>
-            <option value="Homme">Homme</option>
-            <option value="Femme">Femme</option>
+            <option value="">{t.choose}</option>
+            <option value="Homme">{t.homme}</option>
+            <option value="Femme">{t.femme}</option>
           </select>
 
           {/* Prénom / Nom */}
-          <label className="text-sm sm:text-base font-semibold">Prénom</label>
+          <label className="text-sm sm:text-base font-semibold">{t.prenom}</label>
           <input
             type="text"
             value={formData.prenom}
@@ -264,7 +374,7 @@ export default function AddMember() {
             required
           />
 
-          <label className="text-sm sm:text-base font-semibold">Nom</label>
+          <label className="text-sm sm:text-base font-semibold">{t.nom}</label>
           <input
             type="text"
             value={formData.nom}
@@ -275,15 +385,15 @@ export default function AddMember() {
 
           {/* Téléphone */}
           <div className="mb-2">
-            <label className="block font-medium mb-1">Téléphone</label>
+            <label className="block font-medium mb-1">{t.telephone}</label>
             <input
               type="tel"
-              value={noPhone ? "Pas de téléphone" : formData.telephone}
+              value={noPhone ? t.noPhone : formData.telephone}
               onChange={e => setFormData({ ...formData, telephone: e.target.value })}
               disabled={noPhone}
               required={!noPhone}
               className="w-full border rounded-lg px-3 py-2"
-              placeholder="Ex: 5 1234 5678"
+              placeholder={t.telPlaceholder}
             />
             <label className="flex items-center mt-2 space-x-2 text-sm">
               <input
@@ -297,7 +407,7 @@ export default function AddMember() {
                   }));
                 }}
               />
-              <span>La personne n'a pas de téléphone</span>
+              <span>{t.noPhone}</span>
             </label>
           </div>
 
@@ -308,64 +418,62 @@ export default function AddMember() {
               checked={formData.is_whatsapp}
               onChange={e => setFormData({ ...formData, is_whatsapp: e.target.checked })}
             />
-            Numéro WhatsApp
+            {t.whatsapp}
           </label>
 
           {/* Ville */}
-          <label className="text-sm sm:text-base font-semibold">Ville</label>
+          <label className="text-sm sm:text-base font-semibold">{t.ville}</label>
           <input
             type="text"
             value={formData.ville}
             onChange={e => setFormData({ ...formData, ville: e.target.value })}
             className="input"
-          />        
+          />
 
           {/* Âge */}
-          <label className="text-sm sm:text-base font-semibold">Âge</label>
+          <label className="text-sm sm:text-base font-semibold">{t.age}</label>
           <select
             value={formData.age}
             onChange={e => setFormData({ ...formData, age: e.target.value })}
             className="input"
             required
           >
-            <option value="">-- Choisir --</option>
-            {["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"].map(v => (
+            <option value="">{t.choose}</option>
+            {t.ageOptions.map(v => (
               <option key={v} value={v}>{v}</option>
             ))}
           </select>
 
           {/* Statut */}
-          <label className="text-sm sm:text-base font-semibold">Statut</label>
+          <label className="text-sm sm:text-base font-semibold">{t.statut}</label>
           <select
             value={formData.statut}
             onChange={e => setFormData({ ...formData, statut: e.target.value })}
             className="input"
             required
           >
-            <option value="">-- Choisir --</option>
-            <option value="veut rejoindre l'église">Veut rejoindre l'église</option>
-            <option value="a déjà son église">A déjà son église</option>
-            <option value="nouveau">Nouveau</option>
-            <option value="visiteur">Visiteur</option>
+            <option value="">{t.choose}</option>
+            {t.statutOptions.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
           </select>
 
           {/* Comment venu */}
-          <label className="text-sm sm:text-base font-semibold">Comment est-il venu ?</label>
+          <label className="text-sm sm:text-base font-semibold">{t.howCame}</label>
           <select
             value={formData.venu}
             onChange={e => setFormData({ ...formData, venu: e.target.value })}
             className="input"
             required
           >
-            <option value="">-- Choisir --</option>
-            <option value="invité">Invité</option>
-            <option value="réseaux">Réseaux</option>
-            <option value="evangélisation">Évangélisation</option>
-            <option value="autre">Autre</option>
+            <option value="">{t.choose}</option>
+            {t.howCameOptions.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
           </select>
 
           {/* Prière du salut */}
-          <label className="text-sm sm:text-base font-semibold">Prière du salut</label>
+          <label className="text-sm sm:text-base font-semibold">{t.prayerSalvation}</label>
           <select
             className="input"
             value={formData.priere_salut}
@@ -376,31 +484,32 @@ export default function AddMember() {
               type_conversion: e.target.value === "Oui" ? formData.type_conversion : "",
             })}
           >
-            <option value="">-- Choisir --</option>
-            <option value="Oui">Oui</option>
-            <option value="Non">Non</option>
+            <option value="">{t.choose}</option>
+            <option value="Oui">{t.oui}</option>
+            <option value="Non">{t.non}</option>
           </select>
 
           {formData.priere_salut === "Oui" && (
             <>
-              <label className="text-sm sm:text-base font-semibold">Type de conversion</label>
+              <label className="text-sm sm:text-base font-semibold">{t.typeConversion}</label>
               <select
                 className="input"
                 value={formData.type_conversion}
                 onChange={e => setFormData({ ...formData, type_conversion: e.target.value })}
                 required
               >
-                <option value="">-- Choisir --</option>
-                <option value="Nouveau converti">Nouveau converti</option>
-                <option value="Réconciliation">Réconciliation</option>
+                <option value="">{t.choose}</option>
+                {t.conversionOptions.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
               </select>
             </>
           )}
 
           {/* Besoins */}
-          <label className="text-sm sm:text-base font-bold mb-1">Difficultés / Besoins</label>
+          <label className="text-sm sm:text-base font-bold mb-1">{t.needs}</label>
           <div className="flex flex-wrap gap-2 mb-2">
-            {besoinsOptions.map(item => (
+            {t.needsOptions.map(item => (
               <label key={item} className="flex items-center gap-1 text-sm">
                 <input
                   type="checkbox"
@@ -415,19 +524,19 @@ export default function AddMember() {
             <label className="flex items-center gap-1 text-sm">
               <input
                 type="checkbox"
-                value="Autre"
+                value={t.other}
                 checked={showBesoinLibre}
                 onChange={handleBesoinChange}
                 className="w-4 h-4 sm:w-5 sm:h-5"
               />
-              Autre
+              {t.other}
             </label>
           </div>
 
           {showBesoinLibre && (
             <input
               type="text"
-              placeholder="Précisez..."
+              placeholder={t.specify}
               value={formData.besoinLibre}
               onChange={e => setFormData({ ...formData, besoinLibre: e.target.value })}
               className="input mb-2"
@@ -435,7 +544,7 @@ export default function AddMember() {
           )}
 
           {/* Infos supplémentaires */}
-          <label className="text-sm sm:text-base font-semibold">Informations supplémentaires</label>
+          <label className="text-sm sm:text-base font-semibold">{t.additionalInfo}</label>
           <textarea
             placeholder="..."
             rows={2}
@@ -454,20 +563,20 @@ export default function AddMember() {
               onClick={resetForm}
               className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
             >
-              Annuler
+              {t.cancel}
             </button>
             <button
               type="submit"
               className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
             >
-              Ajouter
+              {t.add}
             </button>
           </div>
         </form>
 
         {success && (
           <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
-            ✅ Membre ajouté avec succès !
+            {t.success}
           </p>
         )}
 

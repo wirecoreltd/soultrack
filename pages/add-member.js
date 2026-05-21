@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 import { checkLimiteAtteinte } from "../lib/checkLimite";
 import { useLang } from "../hooks/useLang";
@@ -135,7 +134,6 @@ export default function AddMember() {
   const { token } = router.query;
   const urlFamilleId = router.query.famille_id || null;
 
-  // ✅ Lire la langue depuis l'URL (?lang=en) en priorité, sinon useLang
   const { lang: hookLang } = useLang();
   const urlLang = router.query.lang;
   const lang = (urlLang === "en" || urlLang === "fr") ? urlLang : hookLang;
@@ -350,16 +348,18 @@ export default function AddMember() {
 
         {/* ─── Logo + infos de l'église ─── */}
         <div className="flex flex-col items-center mb-4 sm:mb-6 gap-2">
-          {egliseInfo?.logo_url ? (
-            <Image
+          {egliseInfo?.logo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
               src={egliseInfo.logo_url}
               alt={egliseInfo.nom || "Logo église"}
-              width={80}
-              height={80}
-              className="rounded-full object-contain"
+              style={{
+                width: 90,
+                height: 90,
+                objectFit: "contain",
+                borderRadius: "50%",
+              }}
             />
-          ) : (
-            <Image src="/logo.png" alt="SoulTrack Logo" width={70} height={70} />
           )}
 
           {egliseInfo && (

@@ -9,7 +9,7 @@ import { useLang } from "../hooks/useLang";
 const PAYS = {
   "Afghanistan": "af", "Afrique du Sud": "za", "Albanie": "al", "Algérie": "dz",
   "Allemagne": "de", "Angola": "ao", "Arabie Saoudite": "sa", "Argentine": "ar",
-  "Australie": "au", "Autriche": "at", "Belgique": "be", "Bénin": "bj",
+  "Émirats arabes unis": "ae", "Australie": "au", "Autriche": "at", "Belgique": "be", "Bénin": "bj",
   "Birmanie": "mm", "Bolivie": "bo", "Brésil": "br", "Burkina Faso": "bf",
   "Burundi": "bi", "Cameroun": "cm", "Canada": "ca", "Chili": "cl",
   "Chine": "cn", "Colombie": "co", "Congo": "cg", "Corée du Sud": "kr",

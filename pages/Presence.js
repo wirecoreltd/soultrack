@@ -521,10 +521,9 @@ function Presence() {
     if (profileRef.current) return;
     const { data: { user } } = await supabase.auth.getUser();
     const { data: profile } = await supabase
-      .from("profiles").select("eglise_id, role, roles, liste_presence_visible").eq("id", user.id).single();
+      .from("profiles").select("eglise_id, role, roles").eq("id", user.id).single();
 
     profileRef.current = { ...profile, uid: user.id };
-    setListeVisible(!!profile.liste_presence_visible);
 
     const isAdmin = profile.roles?.includes("Administrateur") || profile.roles?.includes("ResponsableIntegration");
     isAdminRef.current = isAdmin;
@@ -576,7 +575,7 @@ function Presence() {
     setTempsOptions(sortTempsOptions(fromDb));
 
     const last5 = getLast5Days();
-    const { data } = await supabase.from("attendance").select("id, typeTemps, date, heure, numero_culte")
+    const { data } = await supabase.from("attendance").select("id, typeTemps, date, heure, numero_culte, liste_presence_visible")
       .eq("eglise_id", profile.eglise_id).in("date", last5)
       .order("date", { ascending: false }).order("created_at", { ascending: false });
 
@@ -590,7 +589,7 @@ function Presence() {
     if (!profile) return;
 
     const last5 = getLast5Days();
-    const { data } = await supabase.from("attendance").select("id, typeTemps, date, heure, numero_culte")
+    const { data } = await supabase.from("attendance").select("id, typeTemps, date, heure, numero_culte, liste_presence_visible")
       .eq("eglise_id", profile.eglise_id).in("date", last5)
       .order("date", { ascending: false }).order("created_at", { ascending: false });
 
@@ -609,6 +608,7 @@ function Presence() {
     setTypeTemps(session.typeTemps || "");
     setNumeroCulte(session.numero_culte?.toString() || "");
     setSessionCourante(session);
+    setListeVisible(!!session.liste_presence_visible);
     setReadOnly(false);
     pendingSessionIdRef.current = session.id;
     setEtape("ready");
@@ -623,6 +623,7 @@ function Presence() {
     setTypeTemps(session.typeTemps || "");
     setNumeroCulte(session.numero_culte?.toString() || "");
     setSessionCourante(session);
+    setListeVisible(!!session.liste_presence_visible);
     setReadOnly(false);
     pendingSessionIdRef.current = session.id;
     setEtape("ready");
@@ -708,14 +709,23 @@ function Presence() {
       const membres = tousMembres || [];
 
       const { data: responsablesVisibles } = await supabase.from("profiles")
-        .select("id, prenom, nom, roles, liste_presence_visible")
-        .eq("eglise_id", profile.eglise_id).eq("liste_presence_visible", true);
+        .select("id, prenom, nom, roles")
+        .eq("eglise_id", profile.eglise_id);
+
+      const sessionVisible = await supabase.from("attendance")
+        .select("id, liste_presence_visible")
+        .eq("id", aId)
+        .single();
+
+      const sessionEstVisible = sessionVisible?.data?.liste_presence_visible === true;
 
       const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full, ville, cellule, responsable_id").eq("eglise_id", profile.eglise_id);
       const { data: famillesData } = await supabase.from("familles").select("id, famille_full, famille, ville, responsable_id").eq("eglise_id", profile.eglise_id);
       const { data: assignmentsData } = await supabase.from("suivi_assignments").select("membre_id, conseiller_id, profiles(prenom, nom)").eq("statut", "actif");
 
-      const visiblesIds = new Set((responsablesVisibles || []).map(r => r.id));
+      const visiblesIds = sessionEstVisible
+        ? new Set((responsablesVisibles || []).map(r => r.id))
+        : new Set();
       const assignmentsByConseiller = {};
       (assignmentsData || []).forEach(a => {
         if (!assignmentsByConseiller[a.conseiller_id]) assignmentsByConseiller[a.conseiller_id] = { ids: [], profile: a.profiles };
@@ -794,9 +804,7 @@ function Presence() {
   const toggleVisibilite = async () => {
     const newVal = !listeVisible;
     setSavingVisible(true);
-    const { uid } = profileRef.current;
-    await supabase.from("profiles").update({ liste_presence_visible: newVal }).eq("id", uid);
-    profileRef.current.liste_presence_visible = newVal;
+    await supabase.from("attendance").update({ liste_presence_visible: newVal }).eq("id", attendanceIdRef.current);
     setListeVisible(newVal);
     setSavingVisible(false);
     await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
@@ -828,9 +836,10 @@ function Presence() {
       attendanceIdRef.current = newAttendanceId;
       await insererAbsentsEnMasse(newAttendanceId, selectedDate, profile);
 
-      const newSession = { id: newAttendanceId, typeTemps: typeFinal, date: selectedDate, heure: selectedTime, numero_culte: numeroCulte ? Number(numeroCulte) : null };
+      const newSession = { id: newAttendanceId, typeTemps: typeFinal, date: selectedDate, heure: selectedTime, numero_culte: numeroCulte ? Number(numeroCulte) : null, liste_presence_visible: false };
       setAttendanceId(newAttendanceId);
       setSessionCourante(newSession);
+      setListeVisible(false);
       selectedDateRef.current = selectedDate;
       pendingSessionIdRef.current = newAttendanceId;
       setReadOnly(false);

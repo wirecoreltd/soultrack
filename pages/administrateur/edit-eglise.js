@@ -8,33 +8,104 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
 import { useLang } from "../../hooks/useLang";
 
-// ─── PAYS ─────────────────────────────────────────────────────────────────────
-const PAYS = {
-  "Afghanistan": "af", "Afrique du Sud": "za", "Albanie": "al", "Algérie": "dz",
-  "Allemagne": "de", "Angola": "ao", "Arabie Saoudite": "sa", "Argentine": "ar",
-  "Australie": "au", "Autriche": "at", "Belgique": "be", "Bénin": "bj",
-  "Birmanie": "mm", "Bolivie": "bo", "Brésil": "br", "Burkina Faso": "bf",
-  "Burundi": "bi", "Cameroun": "cm", "Canada": "ca", "Chili": "cl",
-  "Chine": "cn", "Colombie": "co", "Congo": "cg", "Corée du Sud": "kr",
-  "Côte d'Ivoire": "ci", "Cuba": "cu", "Danemark": "dk", "Egypte": "eg",
-  "Espagne": "es", "États-Unis": "us", "Ethiopie": "et", "Finlande": "fi",
-  "France": "fr", "Gabon": "ga", "Ghana": "gh", "Grèce": "gr",
-  "Guinée": "gn", "Haïti": "ht", "Hongrie": "hu", "Inde": "in",
-  "Indonésie": "id", "Iran": "ir", "Irlande": "ie", "Israël": "il",
-  "Italie": "it", "Jamaïque": "jm", "Japon": "jp", "Kenya": "ke",
-  "Liban": "lb", "Luxembourg": "lu", "Madagascar": "mg", "Mali": "ml",
-  "Maroc": "ma", "Martinique": "mq", "Maurice": "mu", "Mauritanie": "mr",
-  "Mexique": "mx", "Mozambique": "mz", "Namibie": "na", "Niger": "ne",
-  "Nigeria": "ng", "Norvège": "no", "Nouvelle-Zélande": "nz", "Ouganda": "ug",
-  "Pakistan": "pk", "Pays-Bas": "nl", "Pérou": "pe", "Philippines": "ph",
-  "Pologne": "pl", "Portugal": "pt", "RDC": "cd", "République Dominicaine": "do",
-  "Rodrigues": "mu", "Roumanie": "ro", "Royaume-Uni": "gb", "Rwanda": "rw",
-  "Sénégal": "sn", "Sierra Leone": "sl", "Singapour": "sg", "Somalie": "so",
-  "Soudan": "sd", "Suède": "se", "Suisse": "ch", "Tanzanie": "tz",
-  "Tchad": "td", "Togo": "tg", "Tunisie": "tn", "Turquie": "tr",
-  "Ukraine": "ua", "Uruguay": "uy", "Venezuela": "ve", "Vietnam": "vn",
-  "Zimbabwe": "zw",
-};
+// ─── PAYS (code ISO → { fr, en }) ────────────────────────────────────────────
+const PAYS_DATA = [
+  { code: "af", fr: "Afghanistan",                en: "Afghanistan"              },
+  { code: "za", fr: "Afrique du Sud",             en: "South Africa"             },
+  { code: "al", fr: "Albanie",                    en: "Albania"                  },
+  { code: "dz", fr: "Algérie",                    en: "Algeria"                  },
+  { code: "de", fr: "Allemagne",                  en: "Germany"                  },
+  { code: "ao", fr: "Angola",                     en: "Angola"                   },
+  { code: "sa", fr: "Arabie Saoudite",            en: "Saudi Arabia"             },
+  { code: "ae", fr: "Émirats Arabes Unis",        en: "United Arab Emirates"     },
+  { code: "ar", fr: "Argentine",                  en: "Argentina"                },
+  { code: "au", fr: "Australie",                  en: "Australia"                },
+  { code: "at", fr: "Autriche",                   en: "Austria"                  },
+  { code: "be", fr: "Belgique",                   en: "Belgium"                  },
+  { code: "bj", fr: "Bénin",                      en: "Benin"                    },
+  { code: "mm", fr: "Birmanie",                   en: "Myanmar"                  },
+  { code: "bo", fr: "Bolivie",                    en: "Bolivia"                  },
+  { code: "br", fr: "Brésil",                     en: "Brazil"                   },
+  { code: "bf", fr: "Burkina Faso",               en: "Burkina Faso"             },
+  { code: "bi", fr: "Burundi",                    en: "Burundi"                  },
+  { code: "cm", fr: "Cameroun",                   en: "Cameroon"                 },
+  { code: "ca", fr: "Canada",                     en: "Canada"                   },
+  { code: "cl", fr: "Chili",                      en: "Chile"                    },
+  { code: "cn", fr: "Chine",                      en: "China"                    },
+  { code: "co", fr: "Colombie",                   en: "Colombia"                 },
+  { code: "cg", fr: "Congo",                      en: "Congo"                    },
+  { code: "kr", fr: "Corée du Sud",               en: "South Korea"              },
+  { code: "ci", fr: "Côte d'Ivoire",              en: "Ivory Coast"              },
+  { code: "cu", fr: "Cuba",                       en: "Cuba"                     },
+  { code: "dk", fr: "Danemark",                   en: "Denmark"                  },
+  { code: "eg", fr: "Egypte",                     en: "Egypt"                    },
+  { code: "es", fr: "Espagne",                    en: "Spain"                    },
+  { code: "us", fr: "États-Unis",                 en: "United States"            },
+  { code: "et", fr: "Ethiopie",                   en: "Ethiopia"                 },
+  { code: "fi", fr: "Finlande",                   en: "Finland"                  },
+  { code: "fr", fr: "France",                     en: "France"                   },
+  { code: "ga", fr: "Gabon",                      en: "Gabon"                    },
+  { code: "gh", fr: "Ghana",                      en: "Ghana"                    },
+  { code: "gr", fr: "Grèce",                      en: "Greece"                   },
+  { code: "gn", fr: "Guinée",                     en: "Guinea"                   },
+  { code: "ht", fr: "Haïti",                      en: "Haiti"                    },
+  { code: "hu", fr: "Hongrie",                    en: "Hungary"                  },
+  { code: "in", fr: "Inde",                       en: "India"                    },
+  { code: "id", fr: "Indonésie",                  en: "Indonesia"                },
+  { code: "ir", fr: "Iran",                       en: "Iran"                     },
+  { code: "ie", fr: "Irlande",                    en: "Ireland"                  },
+  { code: "il", fr: "Israël",                     en: "Israel"                   },
+  { code: "it", fr: "Italie",                     en: "Italy"                    },
+  { code: "jm", fr: "Jamaïque",                   en: "Jamaica"                  },
+  { code: "jp", fr: "Japon",                      en: "Japan"                    },
+  { code: "ke", fr: "Kenya",                      en: "Kenya"                    },
+  { code: "lb", fr: "Liban",                      en: "Lebanon"                  },
+  { code: "lu", fr: "Luxembourg",                 en: "Luxembourg"               },
+  { code: "mg", fr: "Madagascar",                 en: "Madagascar"               },
+  { code: "ml", fr: "Mali",                       en: "Mali"                     },
+  { code: "ma", fr: "Maroc",                      en: "Morocco"                  },
+  { code: "mq", fr: "Martinique",                 en: "Martinique"               },
+  { code: "mu", fr: "Maurice",                    en: "Mauritius"                },
+  { code: "mr", fr: "Mauritanie",                 en: "Mauritania"               },
+  { code: "mx", fr: "Mexique",                    en: "Mexico"                   },
+  { code: "mz", fr: "Mozambique",                 en: "Mozambique"               },
+  { code: "na", fr: "Namibie",                    en: "Namibia"                  },
+  { code: "ne", fr: "Niger",                      en: "Niger"                    },
+  { code: "ng", fr: "Nigeria",                    en: "Nigeria"                  },
+  { code: "no", fr: "Norvège",                    en: "Norway"                   },
+  { code: "nz", fr: "Nouvelle-Zélande",           en: "New Zealand"              },
+  { code: "ug", fr: "Ouganda",                    en: "Uganda"                   },
+  { code: "pk", fr: "Pakistan",                   en: "Pakistan"                 },
+  { code: "nl", fr: "Pays-Bas",                   en: "Netherlands"              },
+  { code: "pe", fr: "Pérou",                      en: "Peru"                     },
+  { code: "ph", fr: "Philippines",                en: "Philippines"              },
+  { code: "pl", fr: "Pologne",                    en: "Poland"                   },
+  { code: "pt", fr: "Portugal",                   en: "Portugal"                 },
+  { code: "cd", fr: "RDC",                        en: "DR Congo"                 },
+  { code: "do", fr: "République Dominicaine",     en: "Dominican Republic"       },
+  { code: "mu", fr: "Rodrigues",                  en: "Rodrigues"                },
+  { code: "ro", fr: "Roumanie",                   en: "Romania"                  },
+  { code: "gb", fr: "Royaume-Uni",                en: "United Kingdom"           },
+  { code: "rw", fr: "Rwanda",                     en: "Rwanda"                   },
+  { code: "sn", fr: "Sénégal",                    en: "Senegal"                  },
+  { code: "sl", fr: "Sierra Leone",               en: "Sierra Leone"             },
+  { code: "sg", fr: "Singapour",                  en: "Singapore"                },
+  { code: "so", fr: "Somalie",                    en: "Somalia"                  },
+  { code: "sd", fr: "Soudan",                     en: "Sudan"                    },
+  { code: "se", fr: "Suède",                      en: "Sweden"                   },
+  { code: "ch", fr: "Suisse",                     en: "Switzerland"              },
+  { code: "tz", fr: "Tanzanie",                   en: "Tanzania"                 },
+  { code: "td", fr: "Tchad",                      en: "Chad"                     },
+  { code: "tg", fr: "Togo",                       en: "Togo"                     },
+  { code: "tn", fr: "Tunisie",                    en: "Tunisia"                  },
+  { code: "tr", fr: "Turquie",                    en: "Turkey"                   },
+  { code: "ua", fr: "Ukraine",                    en: "Ukraine"                  },
+  { code: "uy", fr: "Uruguay",                    en: "Uruguay"                  },
+  { code: "ve", fr: "Venezuela",                  en: "Venezuela"                },
+  { code: "vn", fr: "Vietnam",                    en: "Vietnam"                  },
+  { code: "zw", fr: "Zimbabwe",                   en: "Zimbabwe"                 },
+];
+
 
 const translations = {
   fr: {
@@ -359,67 +430,85 @@ function EditEgliseContent() {
                 </span>
               </div>
 
-              {/* Dropdown */}
-              {paysOpen && (
-                <div style={{
-                  position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0,
-                  background: "#1e2a6e", border: "1px solid rgba(255,255,255,0.15)",
-                  borderRadius: "12px", boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
-                  zIndex: 50, maxHeight: "220px", overflow: "hidden",
-                  display: "flex", flexDirection: "column",
-                }}>
-                  {/* Recherche */}
-                  <div style={{ padding: "8px" }}>
-                    <input
-                      autoFocus
-                      placeholder={t.searchCountry}
-                      value={paysSearch}
-                      onChange={(e) => setPaysSearch(e.target.value)}
-                      style={{
-                        width: "100%", border: "1px solid rgba(255,255,255,0.2)",
-                        borderRadius: "8px", padding: "7px 10px", fontSize: "13px",
-                        outline: "none", color: "white",
-                        background: "rgba(255,255,255,0.1)",
-                      }}
-                    />
-                  </div>
-
-                  {/* Liste */}
-                  <div style={{ overflowY: "auto", flex: 1 }}>
-                    {Object.entries(PAYS)
-                      .sort(([a], [b]) => a.localeCompare(b))
-                      .filter(([nom]) => nom.toLowerCase().includes(paysSearch.toLowerCase()))
-                      .map(([nom, code]) => (
-                        <div
-                          key={`${nom}-${code}`}
-                          onClick={() => {
-                            setFormData({ ...formData, pays: nom });
-                            setPaysOpen(false);
-                            setPaysSearch("");
-                          }}
-                          style={{
-                            display: "flex", alignItems: "center", gap: "10px",
-                            padding: "9px 12px", cursor: "pointer",
-                            color: "white", fontSize: "14px",
-                            background: formData.pays === nom
-                              ? "rgba(255,255,255,0.15)"
-                              : "transparent",
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
-                          onMouseLeave={(e) => e.currentTarget.style.background = formData.pays === nom ? "rgba(255,255,255,0.15)" : "transparent"}
-                        >
-                          <img
-                            src={`https://flagcdn.com/w40/${code}.png`}
-                            alt={nom}
-                            style={{ width: "24px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
-                          />
-                          {nom}
-                        </div>
-                      ))}
-                  </div>
-                </div>
+               {/* ── DROPDOWN PAYS CUSTOM ── */}
+          <div style={{ position: "relative" }}>
+            <div
+              onClick={() => { setPaysOpen(!paysOpen); setPaysSearch(""); }}
+              style={{
+                display: "flex", alignItems: "center", gap: "8px",
+                border: "1px solid #ccc", borderRadius: "12px", padding: "12px",
+                cursor: "pointer", background: "#fff",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                color: paysSelectionne ? "black" : "#9ca3af",
+              }}
+            >
+              {paysSelectionne && (
+                <img
+                  src={`https://flagcdn.com/w40/${paysSelectionne.code}.png`}
+                  alt={paysSelectionne[lang]}
+                  style={{ width: "24px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
+                />
               )}
+              <span style={{ flex: 1, fontSize: "14px" }}>
+                {paysSelectionne ? paysSelectionne[lang] : t.fields.localisation}
+              </span>
+              <span style={{ color: "#9ca3af", fontSize: "12px" }}>{paysOpen ? "▲" : "▼"}</span>
             </div>
+
+            {paysOpen && (
+              <div style={{
+                position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0,
+                background: "#fff", border: "1px solid #e5e7eb", borderRadius: "12px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 50,
+                maxHeight: "220px", overflow: "hidden",
+                display: "flex", flexDirection: "column",
+              }}>
+                <div style={{ padding: "8px" }}>
+                  <input
+                    autoFocus
+                    placeholder={t.searchCountry}
+                    value={paysSearch}
+                    onChange={(e) => setPaysSearch(e.target.value)}
+                    style={{
+                      width: "100%", border: "1px solid #e5e7eb", borderRadius: "8px",
+                      padding: "7px 10px", fontSize: "13px", outline: "none", color: "black",
+                    }}
+                  />
+                </div>
+
+                <div style={{ overflowY: "auto", flex: 1 }}>
+                  {paysFiltres.map((pays) => (
+                    <div
+                      key={`${pays.fr}-${pays.code}`}
+                      onClick={() => {
+                        setFormData({ ...formData, localisation: pays.fr }); // toujours stocké en FR en base
+                        setPaysOpen(false);
+                        setPaysSearch("");
+                      }}
+                      style={{
+                        display: "flex", alignItems: "center", gap: "10px",
+                        padding: "9px 12px", cursor: "pointer", color: "black",
+                        background: paysSelectionne?.fr === pays.fr ? "#eff6ff" : "transparent",
+                        fontSize: "14px",
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "#f9fafb"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = paysSelectionne?.fr === pays.fr ? "#eff6ff" : "transparent"}
+                    >
+                      <img
+                        src={`https://flagcdn.com/w40/${pays.code}.png`}
+                        alt={pays[lang]}
+                        style={{ width: "24px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
+                      />
+                      <span style={{ flex: 1 }}>{pays[lang]}</span>
+                      {/* Nom dans l'autre langue en gris */}
+                      <span style={{ fontSize: "11px", color: "#9ca3af" }}>
+                        {lang === "fr" ? pays.en : pays.fr}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           {/* ── FIN DROPDOWN PAYS ── */}
 

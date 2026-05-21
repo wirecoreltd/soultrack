@@ -400,116 +400,149 @@ function EditEgliseContent() {
           </div>
 
           {/* ── DROPDOWN PAYS CUSTOM ── */}
-          <div className="flex flex-col gap-1">
-            <label className="text-white/70 text-sm">{t.country}</label>
-            <div style={{ position: "relative" }}>
+<div className="flex flex-col gap-1">
+  <label className="text-white/70 text-sm">{t.country}</label>
 
-              {/* Bouton trigger */}
-              <div
-                onClick={() => { setPaysOpen(!paysOpen); setPaysSearch(""); }}
-                style={{
-                  display: "flex", alignItems: "center", gap: "8px",
-                  border: "1px solid rgba(255,255,255,0.2)", borderRadius: "12px",
-                  padding: "12px", cursor: "pointer",
-                  background: "rgba(255,255,255,0.1)",
-                  color: formData.pays ? "white" : "rgba(255,255,255,0.4)",
-                }}
-              >
-                {formData.pays && PAYS[formData.pays] && (
-                  <img
-                    src={`https://flagcdn.com/w40/${PAYS[formData.pays]}.png`}
-                    alt={formData.pays}
-                    style={{ width: "24px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
-                  />
-                )}
-                <span style={{ flex: 1, fontSize: "14px" }}>
-                  {formData.pays || t.country}
-                </span>
-                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
-                  {paysOpen ? "▲" : "▼"}
-                </span>
-              </div>
+  <div style={{ position: "relative" }}>
 
-               {/* ── DROPDOWN PAYS CUSTOM ── */}
-          <div style={{ position: "relative" }}>
+    {/* Trigger */}
+    <div
+      onClick={() => {
+        setPaysOpen(!paysOpen);
+        setPaysSearch("");
+      }}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        border: "1px solid rgba(255,255,255,0.2)",
+        borderRadius: "12px",
+        padding: "12px",
+        cursor: "pointer",
+        background: "rgba(255,255,255,0.1)",
+        color: formData.pays ? "white" : "rgba(255,255,255,0.4)",
+      }}
+    >
+      {formData.pays && (
+        <img
+          src={`https://flagcdn.com/w40/${formData.pays}.png`}
+          alt={formData.pays}
+          style={{
+            width: "24px",
+            height: "16px",
+            borderRadius: "2px",
+            flexShrink: 0,
+          }}
+        />
+      )}
+
+      <span style={{ flex: 1, fontSize: "14px" }}>
+        {formData.pays
+          ? PAYS_DATA.find((p) => p.code === formData.pays)?.[lang]
+          : t.country}
+      </span>
+
+      <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>
+        {paysOpen ? "▲" : "▼"}
+      </span>
+    </div>
+
+    {/* Dropdown */}
+    {paysOpen && (
+      <div
+        style={{
+          position: "absolute",
+          top: "calc(100% + 4px)",
+          left: 0,
+          right: 0,
+          background: "#fff",
+          border: "1px solid #e5e7eb",
+          borderRadius: "12px",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+          zIndex: 50,
+          maxHeight: "220px",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div style={{ padding: "8px" }}>
+          <input
+            autoFocus
+            placeholder={t.searchCountry}
+            value={paysSearch}
+            onChange={(e) => setPaysSearch(e.target.value)}
+            style={{
+              width: "100%",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              padding: "7px 10px",
+              fontSize: "13px",
+              outline: "none",
+              color: "black",
+            }}
+          />
+        </div>
+
+        <div style={{ overflowY: "auto", flex: 1 }}>
+          {PAYS_DATA.filter((pays) =>
+            pays[lang]
+              .toLowerCase()
+              .includes(paysSearch.toLowerCase())
+          ).map((pays) => (
             <div
-              onClick={() => { setPaysOpen(!paysOpen); setPaysSearch(""); }}
+              key={`${pays.code}-${pays.fr}`}
+              onClick={() => {
+                setFormData({
+                  ...formData,
+                  pays: pays.code,
+                });
+
+                setPaysOpen(false);
+                setPaysSearch("");
+              }}
               style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                border: "1px solid #ccc", borderRadius: "12px", padding: "12px",
-                cursor: "pointer", background: "#fff",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                color: paysSelectionne ? "black" : "#9ca3af",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "9px 12px",
+                cursor: "pointer",
+                color: "black",
+                background:
+                  formData.pays === pays.code
+                    ? "#eff6ff"
+                    : "transparent",
+                fontSize: "14px",
               }}
             >
-              {paysSelectionne && (
-                <img
-                  src={`https://flagcdn.com/w40/${paysSelectionne.code}.png`}
-                  alt={paysSelectionne[lang]}
-                  style={{ width: "24px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
-                />
-              )}
-              <span style={{ flex: 1, fontSize: "14px" }}>
-                {paysSelectionne ? paysSelectionne[lang] : t.fields.localisation}
+              <img
+                src={`https://flagcdn.com/w40/${pays.code}.png`}
+                alt={pays[lang]}
+                style={{
+                  width: "24px",
+                  height: "16px",
+                  borderRadius: "2px",
+                  flexShrink: 0,
+                }}
+              />
+
+              <span style={{ flex: 1 }}>{pays[lang]}</span>
+
+              <span
+                style={{
+                  fontSize: "11px",
+                  color: "#9ca3af",
+                }}
+              >
+                {lang === "fr" ? pays.en : pays.fr}
               </span>
-              <span style={{ color: "#9ca3af", fontSize: "12px" }}>{paysOpen ? "▲" : "▼"}</span>
             </div>
-
-            {paysOpen && (
-              <div style={{
-                position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0,
-                background: "#fff", border: "1px solid #e5e7eb", borderRadius: "12px",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 50,
-                maxHeight: "220px", overflow: "hidden",
-                display: "flex", flexDirection: "column",
-              }}>
-                <div style={{ padding: "8px" }}>
-                  <input
-                    autoFocus
-                    placeholder={t.searchCountry}
-                    value={paysSearch}
-                    onChange={(e) => setPaysSearch(e.target.value)}
-                    style={{
-                      width: "100%", border: "1px solid #e5e7eb", borderRadius: "8px",
-                      padding: "7px 10px", fontSize: "13px", outline: "none", color: "black",
-                    }}
-                  />
-                </div>
-
-                <div style={{ overflowY: "auto", flex: 1 }}>
-                  {paysFiltres.map((pays) => (
-                    <div
-                      key={`${pays.fr}-${pays.code}`}
-                      onClick={() => {
-                        setFormData({ ...formData, localisation: pays.fr }); // toujours stocké en FR en base
-                        setPaysOpen(false);
-                        setPaysSearch("");
-                      }}
-                      style={{
-                        display: "flex", alignItems: "center", gap: "10px",
-                        padding: "9px 12px", cursor: "pointer", color: "black",
-                        background: paysSelectionne?.fr === pays.fr ? "#eff6ff" : "transparent",
-                        fontSize: "14px",
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = "#f9fafb"}
-                      onMouseLeave={(e) => e.currentTarget.style.background = paysSelectionne?.fr === pays.fr ? "#eff6ff" : "transparent"}
-                    >
-                      <img
-                        src={`https://flagcdn.com/w40/${pays.code}.png`}
-                        alt={pays[lang]}
-                        style={{ width: "24px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
-                      />
-                      <span style={{ flex: 1 }}>{pays[lang]}</span>
-                      {/* Nom dans l'autre langue en gris */}
-                      <span style={{ fontSize: "11px", color: "#9ca3af" }}>
-                        {lang === "fr" ? pays.en : pays.fr}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+</div>
           {/* ── FIN DROPDOWN PAYS ── */}
 
           {message && (

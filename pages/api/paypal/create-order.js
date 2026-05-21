@@ -1,9 +1,10 @@
+// pages/api/paypal/create-order.js
+
 import {
   createPayPalOrder,
   createPayPalSubscription,
   PAYPAL_PLAN_IDS,
 } from "../../../lib/paypal";
-
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseAdmin = createClient(
@@ -14,9 +15,9 @@ const supabaseAdmin = createClient(
 const RECURRING_PLANS = ["starter", "vision", "expansion"];
 
 const PLAN_NOMS = {
-  starter: "Croissance",
-  vision: "Vision",
-  expansion: "Expansion",
+  starter:    "Croissance",
+  vision:     "Vision",
+  expansion:  "Expansion",
   enterprise: "Réseaux",
 };
 
@@ -27,13 +28,13 @@ export default async function handler(req, res) {
 
   try {
     const { egliseId, planId } = req.body;
-
     console.log("🔥 PAYPAL CREATE ORDER:", { egliseId, planId });
 
     if (!egliseId || !planId) {
       return res.status(400).json({ error: "Paramètres manquants" });
     }
 
+    // Récupère l'email de l'église
     const { data: eglise, error } = await supabaseAdmin
       .from("eglises")
       .select("email")
@@ -45,13 +46,11 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "DB error" });
     }
 
+    // Un plan est récurrent si : il est dans RECURRING_PLANS ET a un PAYPAL_PLAN_ID configuré
     const isRecurring =
-      RECURRING_PLANS.includes(planId) &&
-      !!PAYPAL_PLAN_IDS?.[planId];
+      RECURRING_PLANS.includes(planId) && !!PAYPAL_PLAN_IDS?.[planId];
 
-    // ==========================
-    // SUBSCRIPTION
-    // ==========================
+    // ── SUBSCRIPTION RÉCURRENTE ────────────────────────────────────────────────
     if (isRecurring) {
       const subscription = await createPayPalSubscription({
         planId,
@@ -63,6 +62,10 @@ export default async function handler(req, res) {
         (l) => l.rel === "approve"
       )?.href;
 
+      if (!approvalUrl) {
+        throw new Error("Aucune URL d'approbation PayPal reçue");
+      }
+
       return res.status(200).json({
         type: "subscription",
         approvalUrl,
@@ -70,9 +73,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // ==========================
-    // ONE TIME ORDER
-    // ==========================
+    // ── PAIEMENT UNIQUE ────────────────────────────────────────────────────────
     const order = await createPayPalOrder({
       planId,
       planNom: PLAN_NOMS[planId] || planId,
@@ -86,7 +87,6 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error("🔥 PAYPAL ERROR:", err);
-
     return res.status(500).json({
       error: err.message || "Internal error",
     });

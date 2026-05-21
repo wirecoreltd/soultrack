@@ -21,6 +21,7 @@ export default function PaypalCallback() {
     })
       .then(r => r.json())
       .then(d => {
+        console.log("CAPTURE RESPONSE:", JSON.stringify(d)); 
         if (d.success) {
           router.push("/administrateur/subscription?success=true");
         } else {

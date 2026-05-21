@@ -139,6 +139,7 @@ function AjouterMembreCelluleContent() {
   const t = translations[lang];
 
   const urlEgliseId = searchParams.get("eglise_id");
+  const [egliseInfo, setEgliseInfo] = useState(null);
   const urlCelluleId = searchParams.get("cellule_id");
   const isFromLink = !!urlEgliseId && !!urlCelluleId;
 
@@ -202,6 +203,24 @@ function AjouterMembreCelluleContent() {
 
     fetchUserScope();
   }, [isFromLink]);
+
+  useEffect(() => {
+  if (!userScope.eglise_id) return;
+
+  const fetchEglise = async () => {
+    const { data, error } = await supabase
+      .from("eglises")
+      .select("nom, branche, ville, pays, logo_url")
+      .eq("id", userScope.eglise_id)
+      .single();
+
+    if (!error && data) {
+      setEgliseInfo(data);
+    }
+  };
+
+  fetchEglise();
+}, [userScope.eglise_id]);
 
   useEffect(() => {
     if (!userScope.eglise_id) return;
@@ -352,14 +371,38 @@ function AjouterMembreCelluleContent() {
           {t.back}
         </button>
 
-        <div className="flex justify-center mb-6">
-          <img
-            src="/logo.png"
-            alt="Logo SoulTrack"
-            className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
-            onClick={() => router.push("/index")}
-          />
-        </div>
+        {/* ─── Logo + infos église ─── */}
+<div className="flex flex-col items-center mb-4 sm:mb-6 gap-2">
+
+  {egliseInfo?.logo_url && (
+    <img
+      src={egliseInfo.logo_url}
+      alt={egliseInfo.nom || "Logo église"}
+      className="w-[90px] h-[90px] object-contain"
+    />
+  )}
+
+  {egliseInfo && (
+    <div className="text-center leading-snug mt-1">
+      <p className="font-bold text-lg text-gray-800">
+        {egliseInfo.nom}
+      </p>
+
+      {egliseInfo.branche && (
+        <p className="text-sm text-gray-500">
+          {egliseInfo.branche}
+        </p>
+      )}
+
+      <p className="text-sm text-gray-500">
+        {[egliseInfo.ville, egliseInfo.pays]
+          .filter(Boolean)
+          .join(", ")}
+      </p>
+    </div>
+  )}
+
+</div>
 
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">
           {t.pageTitle}<br />à ma <span className="text-[#333699]">{t.pageTitleHighlight}</span>

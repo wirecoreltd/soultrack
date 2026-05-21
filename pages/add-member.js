@@ -356,8 +356,7 @@ export default function AddMember() {
               style={{
                 width: 90,
                 height: 90,
-                objectFit: "contain",
-                borderRadius: "50%",
+                objectFit: "contain",                
               }}
             />
           )}

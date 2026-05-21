@@ -4,9 +4,118 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 import { checkLimiteAtteinte } from "../lib/checkLimite";
+import { useLang } from "../../hooks/useLang";
+
+const translations = {
+  fr: {
+    pageTitle: "Ajouter un nouveau membre",
+    subtitle: "« Allez, faites de toutes les nations des disciples » – Matthieu 28:19",
+    retour: "← Retour",
+    dateVenue: "Date de venue",
+    etatContact: "État du contact",
+    etatNouveau: "Nouveau",
+    etatExistant: "Existant",
+    prenom: "Prénom",
+    nom: "Nom",
+    telephone: "Téléphone",
+    isWhatsapp: "Numéro WhatsApp",
+    ville: "Ville",
+    civilite: "Civilité",
+    choisir: "-- Choisir --",
+    homme: "Homme",
+    femme: "Femme",
+    age: "Âge",
+    age1: "12-17 ans",
+    age2: "18-25 ans",
+    age3: "26-30 ans",
+    age4: "31-40 ans",
+    age5: "41-55 ans",
+    age6: "56-69 ans",
+    age7: "70 ans et plus",
+    raisonVenue: "Raison de la venue",
+    statut1: "Veut rejoindre l'église",
+    statut2: "A déjà son église",
+    statut3: "Nouveau",
+    statut4: "Visiteur",
+    commentVenu: "Comment est-il venu ?",
+    venu1: "Invité",
+    venu2: "Réseaux",
+    venu3: "Évangélisation",
+    venu4: "Autre",
+    priereSalut: "Prière du salut",
+    oui: "Oui",
+    non: "Non",
+    typeConversion: "Type de conversion",
+    convNouveau: "Nouveau converti",
+    convReconciliation: "Réconciliation",
+    besoins: "Difficultés / Besoins",
+    besoinAutre: "Autre",
+    besoinPrecisez: "Précisez...",
+    infosSupp: "Informations supplémentaires",
+    annuler: "Annuler",
+    ajouter: "Ajouter",
+    successMsg: "✅ Contact ajouté avec succès !",
+    errEglise: "❌ Erreur : église non identifiée.",
+    errLimite: (count, limite) => `❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`,
+  },
+  en: {
+    pageTitle: "Add a new member",
+    subtitle: "\"Go and make disciples of all nations\" – Matthew 28:19",
+    retour: "← Back",
+    dateVenue: "Visit date",
+    etatContact: "Contact status",
+    etatNouveau: "New",
+    etatExistant: "Existing",
+    prenom: "First name",
+    nom: "Last name",
+    telephone: "Phone",
+    isWhatsapp: "WhatsApp number",
+    ville: "City",
+    civilite: "Gender",
+    choisir: "-- Choose --",
+    homme: "Male",
+    femme: "Female",
+    age: "Age",
+    age1: "12-17 years",
+    age2: "18-25 years",
+    age3: "26-30 years",
+    age4: "31-40 years",
+    age5: "41-55 years",
+    age6: "56-69 years",
+    age7: "70 years and over",
+    raisonVenue: "Reason for visit",
+    statut1: "Wants to join the church",
+    statut2: "Already has a church",
+    statut3: "New",
+    statut4: "Visitor",
+    commentVenu: "How did they come?",
+    venu1: "Invited",
+    venu2: "Social media",
+    venu3: "Evangelism",
+    venu4: "Other",
+    priereSalut: "Salvation prayer",
+    oui: "Yes",
+    non: "No",
+    typeConversion: "Conversion type",
+    convNouveau: "New convert",
+    convReconciliation: "Reconciliation",
+    besoins: "Difficulties / Needs",
+    besoinAutre: "Other",
+    besoinPrecisez: "Please specify...",
+    infosSupp: "Additional information",
+    annuler: "Cancel",
+    ajouter: "Add",
+    successMsg: "✅ Contact added successfully!",
+    errEglise: "❌ Error: church not identified.",
+    errLimite: (count, limite) => `❌ Limit reached: ${count}/${limite} members. Please upgrade your plan.`,
+  },
+};
 
 export default function AddContact() {
   const router = useRouter();
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [errorMsg, setErrorMsg] = useState("");
   const [etatContact, setEtatContact] = useState("nouveau");
   const [formData, setFormData] = useState({
@@ -25,15 +134,18 @@ export default function AddContact() {
     besoin: [],
     besoinLibre: "",
     infos_supplementaires: "",
-    eglise_id: "", // ✅ branche_id retiré
+    eglise_id: "",
   });
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const besoinsOptions = ["Finances","Santé","Travail / Études","Famille / Enfants","Relations / Conflits","Addictions / Dépendances", "Miracle", "Délivrance",
-  "Guidance spirituelle","Logement / Sécurité","Communauté / Isolement", "Dépression / Santé mentale"];
+  const besoinsOptions = [
+    "Finances", "Santé", "Travail / Études", "Famille / Enfants",
+    "Relations / Conflits", "Addictions / Dépendances", "Miracle", "Délivrance",
+    "Guidance spirituelle", "Logement / Sécurité", "Communauté / Isolement",
+    "Dépression / Santé mentale",
+  ];
 
-  // ➤ Récupérer eglise_id de l'utilisateur connecté
   useEffect(() => {
     const fetchUserEglise = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -41,15 +153,12 @@ export default function AddContact() {
 
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("eglise_id") // ✅ branche_id retiré du select
+        .select("eglise_id")
         .eq("id", session.session.user.id)
         .single();
 
       if (!error && profile) {
-        setFormData(prev => ({
-          ...prev,
-          eglise_id: profile.eglise_id, // ✅ branche_id retiré
-        }));
+        setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id }));
       }
     };
 
@@ -73,59 +182,55 @@ export default function AddContact() {
   const handleCancel = () => router.back();
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setErrorMsg("");
+    e.preventDefault();
+    setErrorMsg("");
 
-    console.log("eglise_id au submit:", formData.eglise_id); 
-    
-  // Vérifier que eglise_id est bien chargé
-  if (!formData.eglise_id) {
-    setErrorMsg("❌ Erreur : église non identifiée.");
-    return;
-  }
+    console.log("eglise_id au submit:", formData.eglise_id);
 
-  try {
-    // 1. Vérifier la limite AVANT tout
-    const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
-    if (atteinte) {
-      setErrorMsg(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
+    if (!formData.eglise_id) {
+      setErrorMsg(t.errEglise);
       return;
     }
 
-    // 2. Préparer les données
-    const finalBesoin = showBesoinLibre && formData.besoinLibre
-      ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
-      : formData.besoin;
+    try {
+      const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
+      if (atteinte) {
+        setErrorMsg(t.errLimite(count, limite));
+        return;
+      }
 
-    const dataToSend = {
-      ...formData,
-      etat_contact: etatContact,
-      besoin: finalBesoin,
-    };
-    delete dataToSend.besoinLibre;
+      const finalBesoin = showBesoinLibre && formData.besoinLibre
+        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
+        : formData.besoin;
 
-    // 3. Insérer
-    const { error } = await supabase.from("membres_complets").insert([dataToSend]);
-    if (error) throw error;
+      const dataToSend = {
+        ...formData,
+        etat_contact: etatContact,
+        besoin: finalBesoin,
+      };
+      delete dataToSend.besoinLibre;
 
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
+      const { error } = await supabase.from("membres_complets").insert([dataToSend]);
+      if (error) throw error;
 
-    setFormData({
-      prenom: "", nom: "", telephone: "", is_whatsapp: false,
-      ville: "", sexe: "", age: "", statut: "",
-      date_venu: new Date().toISOString().slice(0, 10),
-      venu: "", priere_salut: "", type_conversion: "",
-      besoin: [], besoinLibre: "", infos_supplementaires: "",
-      eglise_id: formData.eglise_id,
-    });
-    setShowBesoinLibre(false);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
 
-  } catch (err) {
-    setErrorMsg("❌ " + err.message);
-  }
-};
-  
+      setFormData({
+        prenom: "", nom: "", telephone: "", is_whatsapp: false,
+        ville: "", sexe: "", age: "", statut: "",
+        date_venu: new Date().toISOString().slice(0, 10),
+        venu: "", priere_salut: "", type_conversion: "",
+        besoin: [], besoinLibre: "", infos_supplementaires: "",
+        eglise_id: formData.eglise_id,
+      });
+      setShowBesoinLibre(false);
+
+    } catch (err) {
+      setErrorMsg("❌ " + err.message);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-4 sm:p-6">
       <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-3xl shadow-lg relative">
@@ -133,48 +238,48 @@ export default function AddContact() {
           onClick={() => router.back()}
           className="absolute top-3 left-3 sm:top-4 sm:left-4 flex items-center text-black font-semibold hover:text-gray-800 transition-colors"
         >
-          ← Retour
+          {t.retour}
         </button>
 
         <div className="flex justify-center mb-4 sm:mb-6">
           <img
-          src="/logo.png"
-          alt="Logo SoulTrack"
-          className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
-          onClick={() => router.push("/index")}
-        />
+            src="/logo.png"
+            alt="Logo SoulTrack"
+            className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
+            onClick={() => router.push("/index")}
+          />
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">Ajouter un nouveau membre</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">{t.pageTitle}</h1>
         <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">
-          « Allez, faites de toutes les nations des disciples » – Matthieu 28:19
+          {t.subtitle}
         </p>
 
         {/* Date de venue */}
-        <label className="text-sm sm:text-base font-semibold mb-1">Date de venue</label>
+        <label className="text-sm sm:text-base font-semibold mb-1">{t.dateVenue}</label>
         <input
           type="date"
           value={formData.date_venu}
-          onChange={e => setFormData({...formData, date_venu: e.target.value})}
+          onChange={e => setFormData({ ...formData, date_venu: e.target.value })}
           className="input"
           required
         />
 
         {/* État du contact */}
-        <label className="text-sm sm:text-base font-semibold mb-1">État du contact</label>
+        <label className="text-sm sm:text-base font-semibold mb-1">{t.etatContact}</label>
         <select
           value={etatContact}
           onChange={(e) => setEtatContact(e.target.value)}
           className="input mb-3"
         >
-          <option value="nouveau">Nouveau</option>
-          <option value="existant">Existant</option>
+          <option value="nouveau">{t.etatNouveau}</option>
+          <option value="existant">{t.etatExistant}</option>
         </select>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
           {/* Prénom */}
           <div className="flex flex-col">
-            <label className="text-sm sm:text-base font-bold mb-1">Prénom</label>
+            <label className="text-sm sm:text-base font-bold mb-1">{t.prenom}</label>
             <input
               type="text"
               value={formData.prenom}
@@ -186,7 +291,7 @@ export default function AddContact() {
 
           {/* Nom */}
           <div className="flex flex-col">
-            <label className="text-sm sm:text-base font-bold mb-1">Nom</label>
+            <label className="text-sm sm:text-base font-bold mb-1">{t.nom}</label>
             <input
               type="text"
               value={formData.nom}
@@ -198,7 +303,7 @@ export default function AddContact() {
 
           {/* Téléphone */}
           <div className="flex flex-col">
-            <label className="text-sm sm:text-base font-bold mb-1">Téléphone</label>
+            <label className="text-sm sm:text-base font-bold mb-1">{t.telephone}</label>
             <input
               type="text"
               value={formData.telephone}
@@ -212,17 +317,15 @@ export default function AddContact() {
             <input
               type="checkbox"
               checked={formData.is_whatsapp}
-              onChange={(e) =>
-                setFormData({ ...formData, is_whatsapp: e.target.checked })
-              }
+              onChange={(e) => setFormData({ ...formData, is_whatsapp: e.target.checked })}
               className="w-4 h-4 sm:w-5 sm:h-5"
             />
-            Numéro WhatsApp
+            {t.isWhatsapp}
           </label>
 
           {/* Ville */}
           <div className="flex flex-col">
-            <label className="text-sm sm:text-base font-bold mb-1">Ville</label>
+            <label className="text-sm sm:text-base font-bold mb-1">{t.ville}</label>
             <input
               type="text"
               value={formData.ville}
@@ -233,80 +336,74 @@ export default function AddContact() {
 
           {/* Sexe */}
           <div className="flex flex-col">
-            <label className="text-sm sm:text-base font-bold mb-1">Civilité</label>
+            <label className="text-sm sm:text-base font-bold mb-1">{t.civilite}</label>
             <select
               value={formData.sexe}
               onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}
               className="input"
               required
             >
-              <option value="">-- Choisir --</option>
-              <option value="Homme">Homme</option>
-              <option value="Femme">Femme</option>
+              <option value="">{t.choisir}</option>
+              <option value="Homme">{t.homme}</option>
+              <option value="Femme">{t.femme}</option>
             </select>
           </div>
 
-          {/* Age */}
-          <label className="text-sm sm:text-base font-semibold">Âge</label>
+          {/* Âge */}
+          <label className="text-sm sm:text-base font-semibold">{t.age}</label>
           <select
             value={formData.age}
-            onChange={e => setFormData({...formData, age: e.target.value})}
+            onChange={e => setFormData({ ...formData, age: e.target.value })}
             className="input"
             required
           >
-            <option value="">-- Choisir --</option>
-            <option value="12-17 ans">12-17 ans</option>
-            <option value="18-25 ans">18-25 ans</option>
-            <option value="26-30 ans">26-30 ans</option>
-            <option value="31-40 ans">31-40 ans</option>
-            <option value="41-55 ans">41-55 ans</option>
-            <option value="56-69 ans">56-69 ans</option>
-            <option value="70 ans et plus">70 ans et plus</option>
+            <option value="">{t.choisir}</option>
+            <option value="12-17 ans">{t.age1}</option>
+            <option value="18-25 ans">{t.age2}</option>
+            <option value="26-30 ans">{t.age3}</option>
+            <option value="31-40 ans">{t.age4}</option>
+            <option value="41-55 ans">{t.age5}</option>
+            <option value="56-69 ans">{t.age6}</option>
+            <option value="70 ans et plus">{t.age7}</option>
           </select>
 
           {/* Raison de la venue */}
           <div className="flex flex-col">
-            <label className="text-sm sm:text-base font-bold mb-1">
-              Raison de la venue
-            </label>
+            <label className="text-sm sm:text-base font-bold mb-1">{t.raisonVenue}</label>
             <select
               value={formData.statut}
               onChange={(e) => setFormData({ ...formData, statut: e.target.value })}
               className="input"
               required
             >
-              <option value="">-- Choisir --</option>
-              <option value="veut rejoindre l'église">Veut rejoindre l'église</option>
-              <option value="a déjà son église">A déjà son église</option>
-              <option value="nouveau">Nouveau</option>
-              <option value="visiteur">Visiteur</option>
+              <option value="">{t.choisir}</option>
+              <option value="veut rejoindre l'église">{t.statut1}</option>
+              <option value="a déjà son église">{t.statut2}</option>
+              <option value="nouveau">{t.statut3}</option>
+              <option value="visiteur">{t.statut4}</option>
             </select>
           </div>
 
           {/* Comment est-il venu */}
           <div className="flex flex-col">
-            <label className="text-sm sm:text-base font-bold mb-1">
-              Comment est-il venu ?
-            </label>
+            <label className="text-sm sm:text-base font-bold mb-1">{t.commentVenu}</label>
             <select
               value={formData.venu}
               onChange={(e) => setFormData({ ...formData, venu: e.target.value })}
               className="input"
               required
             >
-              <option value="">-- Choisir --</option>
-              <option value="invité">Invité</option>
-              <option value="réseaux">Réseaux</option>
-              <option value="evangélisation">Évangélisation</option>
-              <option value="autre">Autre</option>
+              <option value="">{t.choisir}</option>
+              <option value="invité">{t.venu1}</option>
+              <option value="réseaux">{t.venu2}</option>
+              <option value="evangélisation">{t.venu3}</option>
+              <option value="autre">{t.venu4}</option>
             </select>
           </div>
 
           {/* Prière du salut */}
           <div className="flex flex-col">
-            <label className="text-sm sm:text-base font-bold mb-1">
-              Prière du salut
-            </label>
+            <label className="text-sm sm:text-base font-bold mb-1">{t.priereSalut}</label>
             <select
               value={formData.priere_salut}
               onChange={(e) => {
@@ -320,35 +417,31 @@ export default function AddContact() {
               className="input"
               required
             >
-              <option value="">-- Choisir --</option>
-              <option value="Oui">Oui</option>
-              <option value="Non">Non</option>
+              <option value="">{t.choisir}</option>
+              <option value="Oui">{t.oui}</option>
+              <option value="Non">{t.non}</option>
             </select>
           </div>
 
           {/* Type de conversion */}
           {formData.priere_salut === "Oui" && (
             <div className="flex flex-col">
-              <label className="text-sm sm:text-base font-bold mb-1">
-                Type de conversion
-              </label>
+              <label className="text-sm sm:text-base font-bold mb-1">{t.typeConversion}</label>
               <select
                 value={formData.type_conversion}
-                onChange={(e) =>
-                  setFormData({ ...formData, type_conversion: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })}
                 className="input"
                 required
               >
-                <option value="">-- Choisir --</option>
-                <option value="Nouveau converti">Nouveau converti</option>
-                <option value="Réconciliation">Réconciliation</option>
+                <option value="">{t.choisir}</option>
+                <option value="Nouveau converti">{t.convNouveau}</option>
+                <option value="Réconciliation">{t.convReconciliation}</option>
               </select>
             </div>
           )}
 
           {/* Besoins */}
-          <label className="text-sm sm:text-base font-bold mb-1">Difficultés / Besoins</label>
+          <label className="text-sm sm:text-base font-bold mb-1">{t.besoins}</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {besoinsOptions.map((item) => (
               <label key={item} className="flex items-center gap-1 text-sm">
@@ -370,55 +463,55 @@ export default function AddContact() {
                 onChange={handleBesoinChange}
                 className="w-4 h-4 sm:w-5 sm:h-5"
               />
-              Autre
+              {t.besoinAutre}
             </label>
           </div>
 
           {showBesoinLibre && (
             <input
               type="text"
-              placeholder="Précisez..."
+              placeholder={t.besoinPrecisez}
               value={formData.besoinLibre}
-              onChange={(e) =>
-                setFormData({ ...formData, besoinLibre: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, besoinLibre: e.target.value })}
               className="input mb-2"
             />
           )}
 
           {/* Informations supplémentaires */}
           <div className="flex flex-col">
-            <label className="text-sm sm:text-base font-bold mb-1">
-              Informations supplémentaires
-            </label>
+            <label className="text-sm sm:text-base font-bold mb-1">{t.infosSupp}</label>
             <textarea
               rows={2}
               value={formData.infos_supplementaires}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  infos_supplementaires: e.target.value,
-                })
-              }
+              onChange={(e) => setFormData({ ...formData, infos_supplementaires: e.target.value })}
               className="input"
             />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
-                
-              {errorMsg && (
-                  <p className="text-red-600 text-sm font-semibold text-center">{errorMsg}</p>
-                )}    
-                  
-            <button type="button" onClick={handleCancel} className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
-              Annuler
+            {errorMsg && (
+              <p className="text-red-600 text-sm font-semibold text-center">{errorMsg}</p>
+            )}
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
+              {t.annuler}
             </button>
-            <button type="submit" className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
-              Ajouter
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
+              {t.ajouter}
             </button>
           </div>
 
-          {success && <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">✅ Contact ajouté avec succès !</p>}
+          {success && (
+            <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
+              {t.successMsg}
+            </p>
+          )}
         </form>
 
         <style jsx>{`

@@ -12,6 +12,8 @@ export default async function handler(req, res) {
 
   try {
     const capture = await capturePayPalOrder(orderId);
+    console.log("CAPTURE RESULT:", JSON.stringify(capture, null, 2));
+    console.log("CUSTOM_ID:", capture.purchase_units?.[0]?.custom_id);
 
     if (capture.status !== "COMPLETED") {
       return res.status(400).json({ error: "Paiement non complété", status: capture.status });

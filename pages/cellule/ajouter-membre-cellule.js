@@ -270,6 +270,8 @@ function AjouterMembreCelluleContent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+     const celluleIdFinal = urlCelluleId || formData.cellule_id;
 
     if (!userScope.eglise_id) {
       alert(t.errEglise);
@@ -290,6 +292,7 @@ function AjouterMembreCelluleContent() {
         ville: formData.ville,
         venu: formData.venu,
         cellule_id: formData.cellule_id,
+        cellule_id: celluleIdFinal,
         eglise_id: userScope.eglise_id,
         statut_suivis: 3,
         etat_contact: "existant",
@@ -323,10 +326,10 @@ function AjouterMembreCelluleContent() {
       setFormData({
         nom: "", prenom: "", sexe: "", age: "",
         telephone: "", ville: "", venu: "",
-        priere_salut: "", type_conversion: "",
+        priere_salut: "", type_conversion: "",        
         date_venu: new Date().toISOString().slice(0, 10),
         besoin: [], autreBesoin: "",
-        cellule_id: urlCelluleId || (cellules.length === 1 ? cellules[0].id : ""),
+        cellule_id: urlCelluleId || (cellules.length === 1 ? cellules[0].id : ""),        
         infos_supplementaires: "",
         is_whatsapp: false,
       });

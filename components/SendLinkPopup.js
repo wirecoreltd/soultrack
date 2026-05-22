@@ -11,20 +11,20 @@ const translations = {
     clickSend: "Cliquez sur",
     bold_send: "Envoyer",
     ifContact: "si le contact figure déjà dans WhatsApp, ou saisissez un numéro manuellement.",
-    chooseCellule: "-- Choisir une cellule --",
-    chooseFamille: "-- Choisir une famille --",
-    selectCellule: "Veuillez sélectionner une cellule.",
-    selectFamille: "Veuillez sélectionner une famille.",
     phonePlaceholder: "Numéro (ex: +2305xxxxxxx)",
+    noteCelluleMembre: "📌 Ce lien sert à ajouter une personne dans ta cellule et dans la liste globale de l'église.",
+    noteCelluleEvang: "📌 Ce lien sert à ajouter une personne évangélisée qui sera placée sous ta responsabilité.",
+    noteFamilleMembre: "📌 Ce lien sert à ajouter une personne dans ta famille et dans la liste globale de l'église.",
+    noteFamilleEvang: "📌 Ce lien sert à ajouter une personne évangélisée qui sera placée sous ta responsabilité.",
     // WhatsApp messages
     msgEvangeliseCellule: (groupeName, link) =>
-      `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nCellule : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
+      `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\n📌 Ce lien sert à ajouter une personne évangélisée qui sera placée sous ta responsabilité.\n\nCellule : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
     msgMembreCellule: (groupeName, link) =>
-      `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la cellule.\n\nCellule : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
+      `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la cellule.\n\n📌 Ce lien sert à ajouter une personne dans ta cellule et dans la liste globale de l'église.\n\nCellule : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
     msgEvangeliseFamille: (groupeName, link) =>
-      `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\nFamille : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
+      `Bonjour 👋\n\nVoici le lien pour enregistrer une personne rencontrée lors de l'évangélisation.\n\n📌 Ce lien sert à ajouter une personne évangélisée qui sera placée sous ta responsabilité.\n\nFamille : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
     msgMembreFamille: (groupeName, link) =>
-      `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la famille.\n\nFamille : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
+      `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre à la famille.\n\n📌 Ce lien sert à ajouter une personne dans ta famille et dans la liste globale de l'église.\n\nFamille : ${groupeName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
     msgMembre: (churchName, link) =>
       `Bonjour 👋\n\nVoici le lien pour ajouter un nouveau membre.\n\nÉglise : ${churchName}\n\nCliquez ici :\n${link}\n\nMerci 🙏`,
     msgEvangelise: (churchName, link) =>
@@ -36,20 +36,20 @@ const translations = {
     clickSend: "Click",
     bold_send: "Send",
     ifContact: "if the contact is already in WhatsApp, or enter a number manually.",
-    chooseCellule: "-- Choose a cell group --",
-    chooseFamille: "-- Choose a family --",
-    selectCellule: "Please select a cell group.",
-    selectFamille: "Please select a family.",
     phonePlaceholder: "Number (e.g. +2305xxxxxxx)",
+    noteCelluleMembre: "📌 This link is used to add a person to your cell group and to the church's global list.",
+    noteCelluleEvang: "📌 This link is used to add an evangelised person who will be placed under your responsibility.",
+    noteFamilleMembre: "📌 This link is used to add a person to your family group and to the church's global list.",
+    noteFamilleEvang: "📌 This link is used to add an evangelised person who will be placed under your responsibility.",
     // WhatsApp messages
     msgEvangeliseCellule: (groupeName, link) =>
-      `Hello 👋\n\nHere is the link to register a person met during outreach.\n\nCell group: ${groupeName}\n\nClick here:\n${link}\n\nThank you 🙏`,
+      `Hello 👋\n\nHere is the link to register a person met during outreach.\n\n📌 This link is used to add an evangelised person who will be placed under your responsibility.\n\nCell group: ${groupeName}\n\nClick here:\n${link}\n\nThank you 🙏`,
     msgMembreCellule: (groupeName, link) =>
-      `Hello 👋\n\nHere is the link to add a new member to the cell group.\n\nCell group: ${groupeName}\n\nClick here:\n${link}\n\nThank you 🙏`,
+      `Hello 👋\n\nHere is the link to add a new member to the cell group.\n\n📌 This link is used to add a person to your cell group and to the church's global list.\n\nCell group: ${groupeName}\n\nClick here:\n${link}\n\nThank you 🙏`,
     msgEvangeliseFamille: (groupeName, link) =>
-      `Hello 👋\n\nHere is the link to register a person met during outreach.\n\nFamily: ${groupeName}\n\nClick here:\n${link}\n\nThank you 🙏`,
+      `Hello 👋\n\nHere is the link to register a person met during outreach.\n\n📌 This link is used to add an evangelised person who will be placed under your responsibility.\n\nFamily: ${groupeName}\n\nClick here:\n${link}\n\nThank you 🙏`,
     msgMembreFamille: (groupeName, link) =>
-      `Hello 👋\n\nHere is the link to add a new member to the family.\n\nFamily: ${groupeName}\n\nClick here:\n${link}\n\nThank you 🙏`,
+      `Hello 👋\n\nHere is the link to add a new member to the family group.\n\n📌 This link is used to add a person to your family group and to the church's global list.\n\nFamily: ${groupeName}\n\nClick here:\n${link}\n\nThank you 🙏`,
     msgMembre: (churchName, link) =>
       `Hello 👋\n\nHere is the link to add a new member.\n\nChurch: ${churchName}\n\nClick here:\n${link}\n\nThank you 🙏`,
     msgEvangelise: (churchName, link) =>
@@ -66,9 +66,9 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
   const [churchName, setChurchName] = useState("");
   const [egliseId, setEgliseId] = useState(null);
 
-  const [groupes, setGroupes] = useState([]);
-  const [selectedGroupeId, setSelectedGroupeId] = useState(celluleId || "");
-  const [selectedGroupeName, setSelectedGroupeName] = useState("");
+  // ID et nom du groupe (cellule ou famille) résolu automatiquement
+  const [resolvedGroupeId, setResolvedGroupeId] = useState(celluleId || null);
+  const [resolvedGroupeName, setResolvedGroupeName] = useState("");
 
   const isFamille = type.includes("famille");
   const isCellule = type.includes("cellule");
@@ -98,26 +98,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
           .single();
         if (churchData) setChurchName(churchData.nom);
 
-        if ((isCellule || isFamille) && !celluleId) {
-          const { data: groupesData } = await supabase
-            .from(table)
-            .select(`id, ville, ${nameField}`)
-            .eq("responsable_id", user.id)
-            .eq("eglise_id", profile.eglise_id);
-
-          if (groupesData && groupesData.length > 0) {
-            const mapped = groupesData.map((d) => ({
-              id: d.id,
-              label: `${d.ville} - ${d[nameField]}`,
-            }));
-            setGroupes(mapped);
-            if (groupesData.length === 1) {
-              setSelectedGroupeId(groupesData[0].id);
-              setSelectedGroupeName(`${groupesData[0].ville} - ${groupesData[0][nameField]}`);
-            }
-          }
-        }
-
+        // Si un celluleId est passé en prop, on résout juste son nom
         if (celluleId) {
           const { data: groupeData } = await supabase
             .from(table)
@@ -126,7 +107,24 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
             .single();
 
           if (groupeData) {
-            setSelectedGroupeName(`${groupeData.ville} - ${groupeData[nameField]}`);
+            setResolvedGroupeId(celluleId);
+            setResolvedGroupeName(`${groupeData.ville} - ${groupeData[nameField]}`);
+          }
+          return;
+        }
+
+        // Sinon : on cherche LA cellule/famille dont le responsable est l'user connecté
+        if (isCellule || isFamille) {
+          const { data: groupeData } = await supabase
+            .from(table)
+            .select(`id, ville, ${nameField}`)
+            .eq("responsable_id", user.id)
+            .eq("eglise_id", profile.eglise_id)
+            .single(); // on prend uniquement celle liée au responsable connecté
+
+          if (groupeData) {
+            setResolvedGroupeId(groupeData.id);
+            setResolvedGroupeName(`${groupeData.ville} - ${groupeData[nameField]}`);
           }
         }
       } catch (err) {
@@ -137,37 +135,30 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     fetchUserData();
   }, [type, celluleId]);
 
-  // ✅ cid passé en paramètre — ne dépend plus du state React
   const getLink = (cid) => {
     const base = window.location.origin;
 
-    if (type === "ajouter_membre") {
-      return `${base}/add-member?eglise_id=${egliseId}&lang=${lang}`;
-    }
-    if (type === "ajouter_membre_cellule") {
-      return `${base}/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;
-    }
-    if (type === "ajouter_membre_famille") {
-      return `${base}/famille/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
-    }
-    if (type === "ajouter_evangelise") {
-      return `${base}/add-evangelise?eglise_id=${egliseId}&lang=${lang}`;
-    }
-    if (type === "ajouter_evangelise_cellule") {
-      return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;
-    }
-    if (type === "ajouter_evangelise_famille") {
-      return `${base}/add-evangelise?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
-    }
-
+    if (type === "ajouter_membre") return `${base}/add-member?eglise_id=${egliseId}&lang=${lang}`;
+    if (type === "ajouter_membre_cellule") return `${base}/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;
+    if (type === "ajouter_membre_famille") return `${base}/famille/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
+    if (type === "ajouter_evangelise") return `${base}/add-evangelise?eglise_id=${egliseId}&lang=${lang}`;
+    if (type === "ajouter_evangelise_cellule") return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;
+    if (type === "ajouter_evangelise_famille") return `${base}/add-evangelise?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
     return base;
   };
 
-  const handleSend = () => {
-    const needsGroupe = isCellule || isFamille;
+  // Note contextuelle affichée dans le popup
+  const getNote = () => {
+    if (type === "ajouter_membre_cellule") return t.noteCelluleMembre;
+    if (type === "ajouter_evangelise_cellule") return t.noteCelluleEvang;
+    if (type === "ajouter_membre_famille") return t.noteFamilleMembre;
+    if (type === "ajouter_evangelise_famille") return t.noteFamilleEvang;
+    return null;
+  };
 
-    // ✅ cid calculé une seule fois ici et passé directement à getLink
-    const cid = celluleId || selectedGroupeId || (groupes.length === 1 ? groupes[0].id : "");
+  const handleSend = () => {
+    const cid = resolvedGroupeId;
+    const needsGroupe = isCellule || isFamille;
 
     if (needsGroupe && !cid) {
       alert(isFamille ? t.selectFamille : t.selectCellule);
@@ -175,22 +166,15 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     }
 
     const link = getLink(cid);
-    const groupeName = selectedGroupeName || groupes[0]?.label || "";
+    const groupeName = resolvedGroupeName;
 
     let message = "";
-    if (type === "ajouter_evangelise_cellule") {
-      message = t.msgEvangeliseCellule(groupeName, link);
-    } else if (type === "ajouter_membre_cellule") {
-      message = t.msgMembreCellule(groupeName, link);
-    } else if (type === "ajouter_evangelise_famille") {
-      message = t.msgEvangeliseFamille(groupeName, link);
-    } else if (type === "ajouter_membre_famille") {
-      message = t.msgMembreFamille(groupeName, link);
-    } else if (type === "ajouter_membre") {
-      message = t.msgMembre(churchName, link);
-    } else {
-      message = t.msgEvangelise(churchName, link);
-    }
+    if (type === "ajouter_evangelise_cellule")  message = t.msgEvangeliseCellule(groupeName, link);
+    else if (type === "ajouter_membre_cellule")  message = t.msgMembreCellule(groupeName, link);
+    else if (type === "ajouter_evangelise_famille") message = t.msgEvangeliseFamille(groupeName, link);
+    else if (type === "ajouter_membre_famille")  message = t.msgMembreFamille(groupeName, link);
+    else if (type === "ajouter_membre")          message = t.msgMembre(churchName, link);
+    else                                          message = t.msgEvangelise(churchName, link);
 
     const whatsappLink = phoneNumber
       ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
@@ -201,8 +185,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     setPhoneNumber("");
   };
 
-  const needsGroupe = isCellule || isFamille;
-  const selectLabel = isFamille ? t.chooseFamille : t.chooseCellule;
+  const note = getNote();
 
   return (
     <>
@@ -217,28 +200,16 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
             <h2 className="text-xl font-bold mb-3">{label}</h2>
+
             <p className="text-gray-700 mb-4">
               {t.clickSend} <b>{t.bold_send}</b> {t.ifContact}
             </p>
 
-            {needsGroupe && !celluleId && groupes.length > 1 && (
-              <select
-                value={selectedGroupeId}
-                onChange={(e) => {
-                  setSelectedGroupeId(e.target.value);
-                  const found = groupes.find((g) => g.id === e.target.value);
-                  setSelectedGroupeName(found?.label || "");
-                }}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-orange-400"
-                required
-              >
-                <option value="">{selectLabel}</option>
-                {groupes.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.label}
-                  </option>
-                ))}
-              </select>
+            {/* Note contextuelle */}
+            {note && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 text-sm text-blue-700">
+                {note}
+              </div>
             )}
 
             <input

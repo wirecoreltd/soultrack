@@ -337,8 +337,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start px-4 py-6 bg-gray-50">
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-xl p-6 sm:p-10">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-4 sm:p-6">
+      <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-3xl shadow-lg relative">
 
         {/* ─── Logo + infos de l'église ─── */}
         <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">

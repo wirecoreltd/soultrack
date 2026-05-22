@@ -328,8 +328,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
-      {/* ─── Logo + infos de l'église ─── */}
+     {/* ─── Logo + infos de l'église ─── */}
         <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
           {egliseInfo?.logo_url && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -355,10 +354,9 @@ export default function AddEvangelise({ onNewEvangelise }) {
               </p>
             </div>
           )}
-        </div>  
-          </div> 
+        </div>
 
-        <h1 className="text-3xl font-bold text-center mb-2">{t.title}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2 mt-4">{t.title}</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 justify-center">
 

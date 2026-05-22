@@ -173,8 +173,7 @@ function AjouterMembreCelluleContent() {
 
   const [success, setSuccess] = useState(false);
 
-  const [userScope, setUserScope] = useState({ eglise_id: null });
-  });
+  const [userScope, setUserScope] = useState({ eglise_id: null });  
 
   useEffect(() => {
   if (urlEgliseId) {

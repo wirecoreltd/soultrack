@@ -6,7 +6,7 @@ import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
-import SendLinkFamillePopup from "../../components/SendLinkFamillePopup";
+import SendLinkPopup from "../../components/SendLinkPopup";
 import { useLang } from "../../hooks/useLang";
 
 // ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
@@ -181,17 +181,18 @@ function FamillesHubContent() {
 
       </div>
 
+      {/* ✅ SendLinkPopup au lieu de SendLinkFamillePopup — même logique que cellules */}
       {isResponsableFamilles && (
         <>
           <div className="w-full max-w-md mb-3">
-            <SendLinkFamillePopup
+            <SendLinkPopup
               label={t.sendLinkMembre}
               type="ajouter_membre_famille"
               buttonColor="from-[#f7971e] to-[#ffd200]"
             />
           </div>
           <div className="w-full max-w-md mb-6">
-            <SendLinkFamillePopup
+            <SendLinkPopup
               label={t.sendLinkEvang}
               type="ajouter_evangelise_famille"
               buttonColor="from-[#11998e] to-[#38ef7d]"

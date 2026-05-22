@@ -95,6 +95,17 @@ jobs:
           sed -i '' 's/assertDeploymentTarget(installer)//' Podfile
           sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 14.0/g' App.xcodeproj/project.pbxproj
 
+        - name: Diagnostic
+        run: |
+          echo "=== Capacitor iOS version ==="
+          cat node_modules/@capacitor/ios/package.json | grep '"version"'
+          echo "=== Podfile content ==="
+          cat ios/App/Podfile
+          echo "=== Podfile.lock si existe ==="
+          cat ios/App/Podfile.lock 2>/dev/null || echo "Pas de Podfile.lock"
+          echo "=== pods_helpers.rb ==="
+          cat node_modules/@capacitor/ios/scripts/pods_helpers.rb 2>/dev/null || echo "Pas de pods_helpers"
+          
       - name: Install CocoaPods
         run: |
           cd ios/App

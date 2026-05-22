@@ -1,10 +1,98 @@
 "use client";
+
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import { checkLimiteAtteinte } from "../lib/checkLimite";
 import Papa from "papaparse";
+import { useLang } from "../hooks/useLang";
+
+const translations = {
+  fr: {
+    beforeImport: "Avant d'importer",
+    step1: "1. Telecharge le template et remplis-le avec tes donnees.",
+    step2: "2. Efface toutes les lignes commencant par # avant d'importer.",
+    downloadTemplate: "Telecharger le template CSV",
+    importFile: "Importer un fichier CSV",
+    checkingDuplicates: "Verification des doublons en cours...",
+    resumeFile: "Resume du fichier",
+    readyToImport: "pret(s) a importer",
+    duplicatesDetected: "doublon(s) detecte(s)",
+    errors: "erreur(s)",
+    errorsDetected: "erreur(s) detectee(s) :",
+    andMore: "...et",
+    otherErrors: "autres erreurs",
+    duplicatesByPhone: "doublon(s) detecte(s) par telephone :",
+    chooseAction: "Choisis l'action a effectuer pour chaque doublon.",
+    alreadyInBase: "Deja dans la base :",
+    update: "Mettre a jour",
+    addAnyway: "Ajouter quand meme",
+    updateInfo: "Les donnees existantes seront ecrasees par celles du CSV.",
+    addInfo: "Une nouvelle entree sera creee meme si le numero existe deja.",
+    uncheckAll: "Tout decocher (MAJ)",
+    updateAll: "Tout mettre a jour",
+    uncheckAllAdd: "Tout decocher (Ajout)",
+    addAllAnyway: "Tout ajouter quand meme",
+    previewTitle: "Apercu des lignes a importer",
+    andOthers: "autres",
+    importing: "Import en cours...",
+    importBtn: "Importer",
+    member: "membre(s)",
+    successTitle: "Import reussi !",
+    successMsg: "membre(s) ajoute(s) ou mis a jour avec succes.",
+    upgradeplan: "Upgradez votre plan.",
+    limitReached: "Limite atteinte",
+    limitExceeded: "Cet import dépasserait la limite : vous avez",
+    membersAndWant: "membres et voulez en importer",
+    errorInsert: "Erreur insert: ",
+    errorInsertDup: "Erreur insert doublon: ",
+    errorUpdate: "Erreur update",
+  },
+  en: {
+    beforeImport: "Before importing",
+    step1: "1. Download the template and fill it with your data.",
+    step2: "2. Delete all lines starting with # before importing.",
+    downloadTemplate: "Download CSV template",
+    importFile: "Import a CSV file",
+    checkingDuplicates: "Checking for duplicates...",
+    resumeFile: "File summary",
+    readyToImport: "ready to import",
+    duplicatesDetected: "duplicate(s) detected",
+    errors: "error(s)",
+    errorsDetected: "error(s) detected:",
+    andMore: "...and",
+    otherErrors: "more errors",
+    duplicatesByPhone: "duplicate(s) detected by phone number:",
+    chooseAction: "Choose what to do for each duplicate.",
+    alreadyInBase: "Already in database:",
+    update: "Update",
+    addAnyway: "Add anyway",
+    updateInfo: "Existing data will be overwritten with CSV data.",
+    addInfo: "A new entry will be created even if the number already exists.",
+    uncheckAll: "Uncheck all (Update)",
+    updateAll: "Update all",
+    uncheckAllAdd: "Uncheck all (Add)",
+    addAllAnyway: "Add all anyway",
+    previewTitle: "Preview of rows to import",
+    andOthers: "others",
+    importing: "Importing...",
+    importBtn: "Import",
+    member: "member(s)",
+    successTitle: "Import successful!",
+    successMsg: "member(s) added or updated successfully.",
+    upgradeplan: "Upgrade your plan.",
+    limitReached: "Limit reached",
+    limitExceeded: "This import would exceed the limit: you have",
+    membersAndWant: "members and want to import",
+    errorInsert: "Insert error: ",
+    errorInsertDup: "Duplicate insert error: ",
+    errorUpdate: "Update error",
+  },
+};
 
 export default function ImportMembresFamilleCSV({ user }) {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [data, setData] = useState([]);
   const [errors, setErrors] = useState([]);
   const [duplicates, setDuplicates] = useState([]);
@@ -153,7 +241,6 @@ export default function ImportMembresFamilleCSV({ user }) {
               bapteme_esprit: normalized.bapteme_esprit || null,
               star: normalized.serviteur === "Oui",
               infos_supplementaires: normalized.infos_supplementaires || null,
-              // ✅ Les deux IDs famille
               eglise_id: user.eglise_id,
               famille_id: user.famille_id,
               statut_suivis: 3,
@@ -173,7 +260,6 @@ export default function ImportMembresFamilleCSV({ user }) {
 
         setChecking(true);
 
-        // ✅ Doublons filtrés par famille_id
         const phones = validData.map((r) => r.telephone).filter(Boolean);
         let existingByPhone = {};
 
@@ -222,22 +308,21 @@ export default function ImportMembresFamilleCSV({ user }) {
     setLoading(true);
 
     const { atteinte, count, limite } = await checkLimiteAtteinte(user.eglise_id);
-      if (atteinte) {
-        alert(`❌ Limite atteinte : ${count}/${limite} membres. Upgradez votre plan.`);
-        setLoading(false);
-        return;
-      }
-    
-      // ✅ Vérifier si l'import dépasserait la limite
-      if (limite !== null && count + totalToImport > limite) {
-        alert(`❌ Cet import dépasserait la limite : vous avez ${count}/${limite} membres et voulez en importer ${totalToImport}.`);
-        setLoading(false);
-        return;
-      }
+    if (atteinte) {
+      alert(`❌ ${t.limitReached} : ${count}/${limite} ${t.member}. ${t.upgradeplan}`);
+      setLoading(false);
+      return;
+    }
+
+    if (limite !== null && count + totalToImport > limite) {
+      alert(`❌ ${t.limitExceeded} ${count}/${limite} ${t.membersAndWant} ${totalToImport}.`);
+      setLoading(false);
+      return;
+    }
 
     if (data.length > 0) {
       const { error } = await supabase.from("membres_complets").insert(data);
-      if (error) { alert("Erreur insert: " + error.message); setLoading(false); return; }
+      if (error) { alert(t.errorInsert + error.message); setLoading(false); return; }
     }
 
     const dupsToInsert = duplicates.filter((d) => depsToAdd[d.telephone]);
@@ -245,7 +330,7 @@ export default function ImportMembresFamilleCSV({ user }) {
       const { error } = await supabase
         .from("membres_complets")
         .insert(dupsToInsert.map((d) => d.rowData));
-      if (error) { alert("Erreur insert doublon: " + error.message); setLoading(false); return; }
+      if (error) { alert(t.errorInsertDup + error.message); setLoading(false); return; }
     }
 
     const dupsToUpdate = duplicates.filter((d) => depsToUpdate[d.telephone]);
@@ -267,7 +352,7 @@ export default function ImportMembresFamilleCSV({ user }) {
           infos_supplementaires: rowData.infos_supplementaires,
         })
         .eq("id", existingId);
-      if (error) { alert(`Erreur update ${dup.csv}: ` + error.message); setLoading(false); return; }
+      if (error) { alert(`${t.errorUpdate} ${dup.csv}: ` + error.message); setLoading(false); return; }
     }
 
     setLoading(false);
@@ -290,45 +375,45 @@ export default function ImportMembresFamilleCSV({ user }) {
 
       {/* Template */}
       <div className="bg-white/10 border border-blue-300/40 rounded-xl p-4">
-        <p className="font-semibold text-white">Avant d'importer</p>
-        <p className="text-sm text-white mb-1">1. Telecharge le template et remplis-le avec tes donnees.</p>
-        <p className="text-sm text-orange-400 font-semibold mb-3">2. Efface toutes les lignes commencant par # avant d'importer.</p>
+        <p className="font-semibold text-white">{t.beforeImport}</p>
+        <p className="text-sm text-white mb-1">{t.step1}</p>
+        <p className="text-sm text-orange-400 font-semibold mb-3">{t.step2}</p>
         <button
           onClick={handleDownloadTemplate}
           className="bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition"
         >
-          Telecharger le template CSV
+          {t.downloadTemplate}
         </button>
       </div>
 
       {/* Upload */}
       <div className="bg-white/10 border border-white/20 rounded-xl p-4">
-        <p className="font-semibold text-white mb-2">Importer un fichier CSV</p>
+        <p className="font-semibold text-white mb-2">{t.importFile}</p>
         <input
           type="file"
           accept=".csv"
           onChange={handleFileChange}
           className="text-white/80 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white/20 file:text-white hover:file:bg-white/30"
         />
-        {checking && <p className="text-blue-300 text-sm mt-2 animate-pulse">Verification des doublons en cours...</p>}
+        {checking && <p className="text-blue-300 text-sm mt-2 animate-pulse">{t.checkingDuplicates}</p>}
       </div>
 
       {/* Resume */}
       {(data.length > 0 || duplicates.length > 0 || errors.length > 0) && (
         <div className="bg-white/10 border border-white/20 rounded-xl p-4 space-y-2">
-          <p className="font-semibold text-white mb-1">Resume du fichier</p>
+          <p className="font-semibold text-white mb-1">{t.resumeFile}</p>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="bg-emerald-500/20 border border-emerald-400/30 rounded-lg py-3">
               <p className="text-2xl font-bold text-emerald-300">{data.length}</p>
-              <p className="text-xs text-white/70 mt-1">pret(s) a importer</p>
+              <p className="text-xs text-white/70 mt-1">{t.readyToImport}</p>
             </div>
             <div className="bg-orange-500/20 border border-orange-400/30 rounded-lg py-3">
               <p className="text-2xl font-bold text-orange-300">{duplicates.length}</p>
-              <p className="text-xs text-white/70 mt-1">doublon(s) detecte(s)</p>
+              <p className="text-xs text-white/70 mt-1">{t.duplicatesDetected}</p>
             </div>
             <div className="bg-red-500/20 border border-red-400/30 rounded-lg py-3">
               <p className="text-2xl font-bold text-red-300">{errors.length}</p>
-              <p className="text-xs text-white/70 mt-1">erreur(s)</p>
+              <p className="text-xs text-white/70 mt-1">{t.errors}</p>
             </div>
           </div>
         </div>
@@ -337,49 +422,49 @@ export default function ImportMembresFamilleCSV({ user }) {
       {/* Erreurs */}
       {errors.length > 0 && (
         <div className="bg-red-500/20 border border-red-400/40 text-red-200 p-4 rounded-xl">
-          <p className="font-semibold mb-1">{errors.length} erreur(s) detectee(s) :</p>
+          <p className="font-semibold mb-1">{errors.length} {t.errorsDetected}</p>
           {errors.slice(0, 10).map((err, i) => <p key={i} className="text-sm">{err}</p>)}
-          {errors.length > 10 && <p className="text-sm mt-1 italic">...et {errors.length - 10} autres erreurs</p>}
+          {errors.length > 10 && <p className="text-sm mt-1 italic">{t.andMore} {errors.length - 10} {t.otherErrors}</p>}
         </div>
       )}
 
       {/* Doublons */}
       {duplicates.length > 0 && (
         <div className="bg-orange-500/20 border border-orange-400/40 p-4 rounded-xl space-y-3">
-          <p className="font-semibold text-orange-200">{duplicates.length} doublon(s) detecte(s) par telephone :</p>
-          <p className="text-xs text-white/50 italic">Choisis l'action a effectuer pour chaque doublon.</p>
+          <p className="font-semibold text-orange-200">{duplicates.length} {t.duplicatesByPhone}</p>
+          <p className="text-xs text-white/50 italic">{t.chooseAction}</p>
 
           {duplicates.map((d, i) => (
             <div key={i} className="bg-white/5 border border-white/10 rounded-lg p-3 space-y-2">
               <div>
                 <p className="text-white font-semibold text-sm">{d.csv}<span className="text-white/50 font-normal"> · {d.telephone}</span></p>
-                <p className="text-orange-200/80 text-xs mt-0.5">Deja dans la base : <span className="text-white font-semibold">{d.existing}</span></p>
+                <p className="text-orange-200/80 text-xs mt-0.5">{t.alreadyInBase} <span className="text-white font-semibold">{d.existing}</span></p>
               </div>
               <div className="flex gap-3 flex-wrap">
                 <label className={`flex items-center gap-2 cursor-pointer text-sm px-3 py-1.5 rounded-lg border transition ${depsToUpdate[d.telephone] ? "bg-blue-400/20 border-blue-300/50 text-blue-200" : "bg-white/5 border-white/10 text-white/60"}`}>
                   <input type="checkbox" checked={!!depsToUpdate[d.telephone]}
                     onChange={(e) => { setDepsToUpdate((prev) => ({ ...prev, [d.telephone]: e.target.checked })); if (e.target.checked) setDepsToAdd((prev) => ({ ...prev, [d.telephone]: false })); }}
                     className="accent-blue-400 w-4 h-4" />
-                  Mettre a jour
+                  {t.update}
                 </label>
                 <label className={`flex items-center gap-2 cursor-pointer text-sm px-3 py-1.5 rounded-lg border transition ${depsToAdd[d.telephone] ? "bg-emerald-400/20 border-emerald-300/50 text-emerald-200" : "bg-white/5 border-white/10 text-white/60"}`}>
                   <input type="checkbox" checked={!!depsToAdd[d.telephone]}
                     onChange={(e) => { setDepsToAdd((prev) => ({ ...prev, [d.telephone]: e.target.checked })); if (e.target.checked) setDepsToUpdate((prev) => ({ ...prev, [d.telephone]: false })); }}
                     className="accent-emerald-400 w-4 h-4" />
-                  Ajouter quand meme
+                  {t.addAnyway}
                 </label>
               </div>
-              {depsToUpdate[d.telephone] && <p className="text-blue-300 text-xs">Les donnees existantes seront ecrasees par celles du CSV.</p>}
-              {depsToAdd[d.telephone] && <p className="text-emerald-300 text-xs">Une nouvelle entree sera creee meme si le numero existe deja.</p>}
+              {depsToUpdate[d.telephone] && <p className="text-blue-300 text-xs">{t.updateInfo}</p>}
+              {depsToAdd[d.telephone] && <p className="text-emerald-300 text-xs">{t.addInfo}</p>}
             </div>
           ))}
 
           <div className="flex gap-4 pt-1 flex-wrap">
             <button onClick={() => { const allChecked = duplicates.every((d) => depsToUpdate[d.telephone]); const next = {}; if (!allChecked) duplicates.forEach((d) => (next[d.telephone] = true)); setDepsToUpdate(next); setDepsToAdd({}); }} className="text-xs text-blue-300 underline">
-              {duplicates.every((d) => depsToUpdate[d.telephone]) ? "Tout decocher (MAJ)" : "Tout mettre a jour"}
+              {duplicates.every((d) => depsToUpdate[d.telephone]) ? t.uncheckAll : t.updateAll}
             </button>
             <button onClick={() => { const allChecked = duplicates.every((d) => depsToAdd[d.telephone]); const next = {}; if (!allChecked) duplicates.forEach((d) => (next[d.telephone] = true)); setDepsToAdd(next); setDepsToUpdate({}); }} className="text-xs text-emerald-300 underline">
-              {duplicates.every((d) => depsToAdd[d.telephone]) ? "Tout decocher (Ajout)" : "Tout ajouter quand meme"}
+              {duplicates.every((d) => depsToAdd[d.telephone]) ? t.uncheckAllAdd : t.addAllAnyway}
             </button>
           </div>
         </div>
@@ -388,14 +473,14 @@ export default function ImportMembresFamilleCSV({ user }) {
       {/* Apercu */}
       {data.length > 0 && (
         <div className="bg-white/10 border border-white/20 rounded-xl p-4">
-          <p className="font-semibold text-emerald-300 mb-2">Apercu des lignes a importer</p>
+          <p className="font-semibold text-emerald-300 mb-2">{t.previewTitle}</p>
           <div className="max-h-40 overflow-auto space-y-1">
             {data.slice(0, 5).map((row, i) => (
               <div key={i} className="text-white/80 text-sm bg-white/5 rounded px-3 py-1">
                 {row.prenom} {row.nom} — {row.age} — {row.date_venu}{row.star ? " ★" : ""}
               </div>
             ))}
-            {data.length > 5 && <p className="text-white/40 italic text-sm">...et {data.length - 5} autres</p>}
+            {data.length > 5 && <p className="text-white/40 italic text-sm">...{t.andMore} {data.length - 5} {t.andOthers}</p>}
           </div>
         </div>
       )}
@@ -406,14 +491,14 @@ export default function ImportMembresFamilleCSV({ user }) {
         disabled={totalToImport === 0 || loading}
         className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-white font-bold py-3 rounded-xl shadow transition"
       >
-        {loading ? "Import en cours..." : `Importer ${totalToImport > 0 ? totalToImport + " membre(s)" : ""}`}
+        {loading ? t.importing : `${t.importBtn}${totalToImport > 0 ? ` ${totalToImport} ${t.member}` : ""}`}
       </button>
 
       {/* Succes */}
       {success && (
         <div className="bg-emerald-500/20 border border-emerald-400/40 rounded-xl p-4 text-center">
-          <p className="text-emerald-300 font-bold text-lg">Import reussi !</p>
-          <p className="text-white/70 text-sm mt-1">{importCount} membre(s) ajoute(s) ou mis a jour avec succes.</p>
+          <p className="text-emerald-300 font-bold text-lg">{t.successTitle}</p>
+          <p className="text-white/70 text-sm mt-1">{importCount} {t.successMsg}</p>
         </div>
       )}
     </div>

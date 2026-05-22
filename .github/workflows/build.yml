@@ -86,10 +86,15 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync ios
 
+      - name: Set iOS deployment target
+        run: |
+          cd ios/App
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 14.0/g' App.xcodeproj/project.pbxproj
+
       - name: Install CocoaPods
         run: |
           cd ios/App
-          pod install
+          pod install --repo-update
 
       - name: Build iOS
         run: |

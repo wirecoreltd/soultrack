@@ -1,6 +1,4 @@
-import { CapacitorConfig } from '@capacitor/cli';
-
-const config: CapacitorConfig = {
+module.exports = {
   appId: 'org.soultrack.app',
   appName: 'SoulTrack',
   server: {
@@ -13,5 +11,3 @@ const config: CapacitorConfig = {
     },
   },
 };
-
-export default config;

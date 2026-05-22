@@ -34,6 +34,9 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Inject google-services.json
+        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+
       - name: Sync Capacitor
         run: npx cap sync android
 
@@ -50,7 +53,7 @@ jobs:
 
   build-ios:
     name: Build iOS
-    runs-on: macos-latest  # Apple oblige GitHub à utiliser un Mac dans le cloud
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -71,8 +74,16 @@ jobs:
       - name: Add iOS platform
         run: npx cap add ios
 
+      - name: Inject GoogleService-Info.plist
+        run: echo '${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}' > ios/App/App/GoogleService-Info.plist
+
       - name: Sync Capacitor
         run: npx cap sync ios
+
+      - name: Install CocoaPods
+        run: |
+          cd ios/App
+          pod install
 
       - name: Build iOS
         run: |

@@ -46,6 +46,40 @@ const translations = {
     errorInsert: "Erreur insert: ",
     errorInsertDup: "Erreur insert doublon: ",
     errorUpdate: "Erreur update",
+    templateHeaders: [
+      "nom *", "prenom *", "sexe *", "age *", "date_venu *", "serviteur *",
+      "statut *", "venu *", "priere_salut *", "type_conversion *",
+      "telephone", "ville", "is_whatsapp",
+      "bapteme_eau", "bapteme_esprit",
+      "besoin",
+      "infos_supplementaires",
+    ],
+    templateExample: [
+      "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15", "Oui",
+      "nouveau", "invité", "Oui", "Nouveau converti",
+      "59700000", "Curepipe", "Oui",
+      "Oui", "Non",
+      "Finances;Santé",
+      "Info supplementaire ici",
+    ],
+    templateNotes: [
+      "IMPORTANT: Effacez toutes les lignes commencant par # avant d'importer le fichier.",
+      "Les colonnes avec * sont obligatoires.",
+      "sexe: Homme | Femme",
+      "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
+      "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
+      "serviteur: Oui | Non",
+      "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur",
+      "venu: invité | réseaux | evangélisation | autre",
+      "priere_salut: Oui | Non",
+      "is_whatsapp: Oui | Non (ou vide)",
+      "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
+      "besoin: valeurs separees par ; ex: Finances;Santé;Travail / Études",
+      "  valeurs possibles: Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance",
+      "  Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité",
+      "  Communauté / Isolement | Dépression / Santé mentale",
+      "type_conversion: Nouveau converti | Réconciliation (optionnel, uniquement si priere_salut = Oui)",
+    ],
   },
   en: {
     beforeImport: "Before importing",
@@ -86,6 +120,40 @@ const translations = {
     errorInsert: "Insert error: ",
     errorInsertDup: "Duplicate insert error: ",
     errorUpdate: "Update error",
+    templateHeaders: [
+      "nom *", "prenom *", "sexe *", "age *", "date_venu *", "serviteur *",
+      "statut *", "venu *", "priere_salut *", "type_conversion *",
+      "telephone", "ville", "is_whatsapp",
+      "bapteme_eau", "bapteme_esprit",
+      "besoin",
+      "infos_supplementaires",
+    ],
+    templateExample: [
+      "Dupont", "Mary", "Femme", "18-25 ans", "2026-01-15", "Oui",
+      "nouveau", "invité", "Oui", "Nouveau converti",
+      "59700000", "Curepipe", "Oui",
+      "Oui", "Non",
+      "Finances;Health",
+      "Additional info here",
+    ],
+    templateNotes: [
+      "IMPORTANT: Delete all lines starting with # before importing the file.",
+      "Columns with * are required.",
+      "sexe: Homme | Femme",
+      "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
+      "date_venu: format YYYY-MM-DD or DD-MM-YY or DD-MM-YYYY",
+      "serviteur: Oui | Non",
+      "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur",
+      "venu: invité | réseaux | evangélisation | autre",
+      "priere_salut: Oui | Non",
+      "is_whatsapp: Oui | Non (or empty)",
+      "bapteme_eau / bapteme_esprit: Oui | Non (or empty)",
+      "besoin: values separated by ; e.g.: Finances;Health;Work / Studies",
+      "  possible values: Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance",
+      "  Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité",
+      "  Communauté / Isolement | Dépression / Santé mentale",
+      "type_conversion: Nouveau converti | Réconciliation (optional, only if priere_salut = Oui)",
+    ],
   },
 };
 
@@ -105,7 +173,7 @@ export default function ImportMembresCSV({ user }) {
 
   const requiredFields = [
     "nom", "prenom", "sexe", "age", "date_venu", "serviteur",
-    "statut", "venu", "priere_salut","type_conversion",
+    "statut", "venu", "priere_salut", "type_conversion",
   ];
 
   const capitalize = (str) =>
@@ -132,47 +200,15 @@ export default function ImportMembresCSV({ user }) {
     return null;
   };
 
+  // ✅ CORRIGÉ : utilise t.templateHeaders, t.templateExample, t.templateNotes
   const handleDownloadTemplate = () => {
-    const headers = [
-      "nom *", "prenom *", "sexe *", "age *", "date_venu *", "serviteur *",
-      "statut *", "venu *", "priere_salut *", "type_conversion *",
-      "telephone", "ville", "is_whatsapp",
-      "bapteme_eau", "bapteme_esprit",
-      "besoin",
-      "infos_supplementaires",
-    ];
-    const example = [
-      "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15", "Oui",
-      "nouveau", "invité", "Oui","Nouveau converti",
-      "59700000", "Curepipe", "Oui",
-      "Oui", "Non",
-      "Finances;Santé", 
-      "Info supplementaire ici",
-    ];
-    const notes = [
-      "IMPORTANT: Effacez toutes les lignes commencant par # avant d'importer le fichier.",
-      "Les colonnes avec * sont obligatoires.",
-      "sexe: Homme | Femme",
-      "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
-      "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
-      "serviteur: Oui | Non",
-      "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur",
-      "venu: invité | réseaux | evangélisation | autre",
-      "priere_salut: Oui | Non",
-      "is_whatsapp: Oui | Non (ou vide)",
-      "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
-      "besoin: valeurs separees par ; ex: Finances;Santé;Travail / Études",
-      "  valeurs possibles: Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance",
-      "  Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité",
-      "  Communauté / Isolement | Dépression / Santé mentale",
-      "type_conversion: Nouveau converti | Réconciliation (optionnel, uniquement si priere_salut = Oui)",
-    ];
     const csvContent = [
-      headers.join(","),
-      example.join(","),
+      t.templateHeaders.join(","),
+      t.templateExample.join(","),
       "",
-      ...notes.map((n) => `# ${n}`),
+      ...t.templateNotes.map((n) => `# ${n}`),
     ].join("\n");
+
     const BOM = "\uFEFF";
     const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -262,7 +298,6 @@ export default function ImportMembresCSV({ user }) {
             rowErrors.push(`Ligne ${index + 1}: type_conversion invalide (Nouveau converti | Réconciliation)`);
 
           if (rowErrors.length === 0) {
-            // Parser besoin (séparé par ;)
             const besoin = normalized.besoin
               ? normalized.besoin.split(";").map((b) => b.trim()).filter(Boolean)
               : [];

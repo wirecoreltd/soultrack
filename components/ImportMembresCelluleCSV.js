@@ -103,7 +103,7 @@ export default function ImportMembresCelluleCSV({ user }) {
   const [success, setSuccess] = useState(false);
   const [importCount, setImportCount] = useState(0);
 
-  const requiredFields = ["nom", "prenom", "civilite", "age", "date_venu"];
+  const requiredFields = ["nom", "prenom", "civilite", "age", "date_venu", "venu", "priere_salut"];
 
   const capitalize = (str) =>
     str ? str.trim().replace(/\b\w/g, (c) => c.toUpperCase()) : "";
@@ -132,14 +132,24 @@ export default function ImportMembresCelluleCSV({ user }) {
   const handleDownloadTemplate = () => {
     const headers = [
       "nom *", "prenom *", "civilite *", "age *", "date_venu *",
-      "telephone", "ville",
+      "venu *", "priere_salut *",
+      "telephone", "ville", "is_whatsapp",
       "bapteme_eau", "bapteme_esprit",
       "serviteur",
+      "statut",
+      "type_conversion",
+      "besoin",
       "infos_supplementaires",
     ];
     const example = [
       "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15",
-      "59700000", "Curepipe", "Oui", "Non", "Oui",
+      "invité", "Oui",
+      "59700000", "Curepipe", "Oui",
+      "Oui", "Non",
+      "Oui",
+      "nouveau",
+      "",
+      "Finances;Santé",
       "Info supplementaire ici",
     ];
     const notes = [
@@ -148,8 +158,17 @@ export default function ImportMembresCelluleCSV({ user }) {
       "civilite: Homme | Femme",
       "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
       "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
+      "venu: invité | réseaux | evangélisation | autre",
+      "priere_salut: Oui | Non",
+      "is_whatsapp: Oui | Non (ou vide)",
       "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
       "serviteur: Oui | Non",
+      "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur (optionnel)",
+      "type_conversion: Nouveau converti | Réconciliation (optionnel, uniquement si priere_salut = Oui)",
+      "besoin: valeurs separees par ; ex: Finances;Santé;Travail / Études",
+      "  valeurs possibles: Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance",
+      "  Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité",
+      "  Communauté / Isolement | Dépression / Santé mentale",
     ];
     const csvContent = [
       headers.join(","),
@@ -219,6 +238,16 @@ export default function ImportMembresCelluleCSV({ user }) {
           if (normalized.date_venu && !dateVenu)
             rowErrors.push(`Ligne ${index + 1}: date_venu invalide`);
 
+          const validVenu = ["invité", "réseaux", "evangélisation", "autre"];
+          if (normalized.venu && !validVenu.includes(normalized.venu))
+            rowErrors.push(`Ligne ${index + 1}: venu invalide (invité | réseaux | evangélisation | autre)`);
+
+          if (normalized.priere_salut && !["Oui", "Non"].includes(normalized.priere_salut))
+            rowErrors.push(`Ligne ${index + 1}: priere_salut invalide (Oui ou Non)`);
+
+          if (normalized.is_whatsapp && !["Oui", "Non"].includes(normalized.is_whatsapp))
+            rowErrors.push(`Ligne ${index + 1}: is_whatsapp invalide (Oui ou Non)`);
+
           if (normalized.bapteme_eau && !["Oui", "Non"].includes(normalized.bapteme_eau))
             rowErrors.push(`Ligne ${index + 1}: bapteme_eau invalide (Oui ou Non)`);
 
@@ -228,18 +257,36 @@ export default function ImportMembresCelluleCSV({ user }) {
           if (normalized.serviteur && !["Oui", "Non"].includes(normalized.serviteur))
             rowErrors.push(`Ligne ${index + 1}: serviteur invalide (Oui ou Non)`);
 
+          const validStatuts = ["veut rejoindre l'église", "a déjà son église", "nouveau", "visiteur"];
+          if (normalized.statut && !validStatuts.includes(normalized.statut))
+            rowErrors.push(`Ligne ${index + 1}: statut invalide`);
+
+          const validConversions = ["Nouveau converti", "Réconciliation"];
+          if (normalized.type_conversion && !validConversions.includes(normalized.type_conversion))
+            rowErrors.push(`Ligne ${index + 1}: type_conversion invalide (Nouveau converti | Réconciliation)`);
+
           if (rowErrors.length === 0) {
+            const besoin = normalized.besoin
+              ? normalized.besoin.split(";").map((b) => b.trim()).filter(Boolean)
+              : [];
+
             validData.push({
               nom: capitalize(normalized.nom),
               prenom: capitalize(normalized.prenom),
               sexe: normalized.sexe,
               age: normalized.age,
               date_venu: dateVenu,
+              venu: normalized.venu,
+              priere_salut: normalized.priere_salut,
               telephone: cleanPhone(normalized.telephone) || null,
               ville: capitalize(normalized.ville) || null,
+              is_whatsapp: normalized.is_whatsapp === "Oui",
               bapteme_eau: normalized.bapteme_eau || null,
               bapteme_esprit: normalized.bapteme_esprit || null,
               star: normalized.serviteur === "Oui",
+              statut: normalized.statut || null,
+              type_conversion: normalized.type_conversion || null,
+              besoin: besoin.length > 0 ? besoin : null,
               infos_supplementaires: normalized.infos_supplementaires || null,
               eglise_id: user.eglise_id,
               cellule_id: user.cellule_id,
@@ -344,11 +391,17 @@ export default function ImportMembresCelluleCSV({ user }) {
           sexe: rowData.sexe,
           age: rowData.age,
           date_venu: rowData.date_venu,
+          venu: rowData.venu,
+          priere_salut: rowData.priere_salut,
           telephone: rowData.telephone,
           ville: rowData.ville,
+          is_whatsapp: rowData.is_whatsapp,
           bapteme_eau: rowData.bapteme_eau,
           bapteme_esprit: rowData.bapteme_esprit,
           star: rowData.star,
+          statut: rowData.statut,
+          type_conversion: rowData.type_conversion,
+          besoin: rowData.besoin,
           infos_supplementaires: rowData.infos_supplementaires,
         })
         .eq("id", existingId);

@@ -86,16 +86,7 @@ jobs:
       - name: Inject GoogleService-Info.plist
         run: echo '${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}' > ios/App/App/GoogleService-Info.plist
 
-      - name: Show Podfile
-        run: cat ios/App/Podfile
-
-      - name: Set iOS deployment target
-        run: |
-          cd ios/App
-          sed -i '' 's/assertDeploymentTarget(installer)//' Podfile
-          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 14.0/g' App.xcodeproj/project.pbxproj
-
-        - name: Diagnostic
+      - name: Diagnostic
         run: |
           echo "=== Capacitor iOS version ==="
           cat node_modules/@capacitor/ios/package.json | grep '"version"'
@@ -105,7 +96,13 @@ jobs:
           cat ios/App/Podfile.lock 2>/dev/null || echo "Pas de Podfile.lock"
           echo "=== pods_helpers.rb ==="
           cat node_modules/@capacitor/ios/scripts/pods_helpers.rb 2>/dev/null || echo "Pas de pods_helpers"
-          
+
+      - name: Set iOS deployment target
+        run: |
+          cd ios/App
+          sed -i '' 's/assertDeploymentTarget(installer)//' Podfile
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 14.0/g' App.xcodeproj/project.pbxproj
+
       - name: Install CocoaPods
         run: |
           cd ios/App

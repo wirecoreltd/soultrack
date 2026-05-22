@@ -173,12 +173,14 @@ function AjouterMembreCelluleContent() {
 
   const [success, setSuccess] = useState(false);
 
-  const [userScope, setUserScope] = useState({
-    eglise_id: urlEgliseId || null,
+  const [userScope, setUserScope] = useState({ eglise_id: null });
   });
 
   useEffect(() => {
-    if (isFromLink) return;
+  if (urlEgliseId) {
+    setUserScope({ eglise_id: urlEgliseId });
+    return;
+  }
 
     const fetchUserScope = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -197,7 +199,7 @@ function AjouterMembreCelluleContent() {
     };
 
     fetchUserScope();
-  }, [isFromLink]);
+  }, [urlEgliseId]);
 
   useEffect(() => {
     if (!userScope.eglise_id) return;

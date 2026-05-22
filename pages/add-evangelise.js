@@ -355,7 +355,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
               </p>
             </div>
           )}
-        </div>        
+        </div>  
+          </div> 
 
         <h1 className="text-3xl font-bold text-center mb-2">{t.title}</h1>
 

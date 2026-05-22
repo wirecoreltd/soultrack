@@ -30,7 +30,7 @@ const translations = {
     tousRoles: "Tous les rôles",
     total: "Total :",
     ajouter: "➕ Ajouter",
-    importerBtn: "⬆️ Importer",
+    importerBtn: "📥 Importer une liste",
 
     // En-tête tableau
     nom: "Nom",
@@ -82,7 +82,7 @@ const translations = {
     tousRoles: "All roles",
     total: "Total:",
     ajouter: "➕ Add",
-    importerBtn: "⬆️ Import",
+    importerBtn: "📥 Import a list",
 
     // En-tête tableau
     nom: "Name",
@@ -319,7 +319,7 @@ function ListUsersContent() {
 
         <div className="flex justify-end gap-2">
           <button
-            onClick={() => router.push("/admin/import")}
+            onClick={() => router.push("/admin/import-user")}
             className="text-white px-4 py-2"
           >
             {t.importerBtn}

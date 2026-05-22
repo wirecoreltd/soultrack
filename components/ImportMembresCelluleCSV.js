@@ -103,7 +103,8 @@ export default function ImportMembresCelluleCSV({ user }) {
   const [success, setSuccess] = useState(false);
   const [importCount, setImportCount] = useState(0);
 
-  const requiredFields = ["nom", "prenom", "civilite", "age", "date_venu", "venu", "priere_salut","type_conversion"];
+  // type_conversion est optionnel (seulement pertinent si priere_salut = Oui)
+  const requiredFields = ["nom", "prenom", "civilite", "age", "date_venu", "venu", "priere_salut"];
 
   const capitalize = (str) =>
     str ? str.trim().replace(/\b\w/g, (c) => c.toUpperCase()) : "";
@@ -132,17 +133,18 @@ export default function ImportMembresCelluleCSV({ user }) {
   const handleDownloadTemplate = () => {
     const headers = [
       "nom *", "prenom *", "civilite *", "age *", "date_venu *",
-      "venu *", "priere_salut *","type_conversion",
+      "venu *", "priere_salut *",
       "telephone", "ville", "is_whatsapp",
       "bapteme_eau", "bapteme_esprit",
       "serviteur",
-      "statut",      
+      "statut",
+      "type_conversion",
       "besoin",
       "infos_supplementaires",
     ];
     const example = [
       "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15",
-      "invité", "Oui","Nouveau converti",
+      "invité", "Oui",
       "59700000", "Curepipe", "Oui",
       "Oui", "Non",
       "Oui",

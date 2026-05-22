@@ -135,10 +135,10 @@ export default function ImportMembresCSV({ user }) {
   const handleDownloadTemplate = () => {
     const headers = [
       "nom *", "prenom *", "sexe *", "age *", "date_venu *", "serviteur *",
-      "statut *", "venu *", "priere_salut *",
+      "statut *", "venu *", "priere_salut *", "type_conversion",
       "telephone", "ville", "is_whatsapp",
       "bapteme_eau", "bapteme_esprit",
-      "besoin", "type_conversion",
+      "besoin",
       "infos_supplementaires",
     ];
     const example = [

@@ -92,16 +92,18 @@ jobs:
           cat node_modules/@capacitor/ios/package.json | grep '"version"'
           echo "=== Podfile content ==="
           cat ios/App/Podfile
-          echo "=== Podfile.lock si existe ==="
-          cat ios/App/Podfile.lock 2>/dev/null || echo "Pas de Podfile.lock"
           echo "=== pods_helpers.rb ==="
-          cat node_modules/@capacitor/ios/scripts/pods_helpers.rb 2>/dev/null || echo "Pas de pods_helpers"
+          cat node_modules/@capacitor/ios/scripts/pods_helpers.rb || echo "Pas de pods_helpers"
 
       - name: Set iOS deployment target
         run: |
-          cd ios/App
-          sed -i '' 's/assertDeploymentTarget(installer)//' Podfile
-          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 14.0/g' App.xcodeproj/project.pbxproj
+          PODFILE="ios/App/Podfile"
+          PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
+          sed -i '' 's/assertDeploymentTarget(installer)//' "$PODFILE"
+          sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" "$PODFILE"
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 16.0/g' "$PBXPROJ"
+          echo "=== Podfile après modification ==="
+          cat "$PODFILE"
 
       - name: Install CocoaPods
         run: |

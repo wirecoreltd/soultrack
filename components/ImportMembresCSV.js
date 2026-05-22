@@ -143,10 +143,10 @@ export default function ImportMembresCSV({ user }) {
     ];
     const example = [
       "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15", "Oui",
-      "nouveau", "invité", "Oui",
+      "nouveau", "invité", "Oui","Nouveau converti",
       "59700000", "Curepipe", "Oui",
       "Oui", "Non",
-      "Finances;Santé", "Nouveau converti",
+      "Finances;Santé", 
       "Info supplementaire ici",
     ];
     const notes = [

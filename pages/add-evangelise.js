@@ -332,10 +332,9 @@ export default function AddEvangelise({ onNewEvangelise }) {
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg">
 
     {eglise && ( <div className="flex flex-col items-center justify-center mb-6 text-center"> 
-    {eglise.logo_url && ( 
+   {eglise.logo_url && ( <div className="relative w-24 h-24 mb-3 rounded-full overflow-hidden border-4 border-white shadow-lg"> 
     <Image src={eglise.logo_url} 
-     alt={eglise.nom} width={90} height={90} 
-       className="rounded-full object-cover mb-3" /> )} 
+alt={eglise.nom} fill className="object-cover" unoptimized /> </div> )}
          <h2 className="text-2xl font-bold text-black"> {eglise.nom} </h2> 
        {eglise.denomination && ( <p className="text-sm text-gray-600"> {eglise.denomination} </p> )} {eglise.branche && ( 
          <p className="text-sm text-gray-500"> {eglise.branche} </p> )} 

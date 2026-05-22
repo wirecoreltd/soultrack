@@ -8,7 +8,6 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import ImportMembresCSV from "../../components/ImportMembresCSV";
 import ImportMembresCelluleCSV from "../../components/ImportMembresCelluleCSV";
 import ImportMembresFamilleCSV from "../../components/ImportMembresFamilleCSV";
-import ImportUsersCSV from "../../components/Importuserscsv";
 import { useLang } from "../../hooks/useLang";
 
 const translations = {
@@ -17,7 +16,6 @@ const translations = {
     nonAuthentifie: "Utilisateur non authentifié",
     titre1: "Importer des ",
     titre2: "membres",
-    titre2Admin: "utilisateurs",
     retour: "← Retour",
     subtitleCellule: (
       <>
@@ -45,22 +43,12 @@ const translations = {
         <span className="text-blue-300 font-semibold">ajout rapide et fiable</span>.
       </>
     ),
-    subtitleAdmin: (
-      <>
-        Créez plusieurs{" "}
-        <span className="text-blue-300 font-semibold">utilisateurs</span> en une seule fois via un fichier CSV.{" "}
-        <span className="text-blue-300 font-semibold">Téléchargez le template</span>,
-        remplissez-le avec les infos, rôles et ministères, puis importez pour un{" "}
-        <span className="text-blue-300 font-semibold">onboarding rapide</span>.
-      </>
-    ),
   },
   en: {
     loading: "Loading...",
     nonAuthentifie: "User not authenticated",
     titre1: "Import ",
     titre2: "members",
-    titre2Admin: "users",
     retour: "← Back",
     subtitleCellule: (
       <>
@@ -86,15 +74,6 @@ const translations = {
         <span className="text-blue-300 font-semibold">Download the template</span>,
         fill it in and import it in a few clicks for a{" "}
         <span className="text-blue-300 font-semibold">fast and reliable import</span>.
-      </>
-    ),
-    subtitleAdmin: (
-      <>
-        Create multiple{" "}
-        <span className="text-blue-300 font-semibold">users</span> at once via a CSV file.{" "}
-        <span className="text-blue-300 font-semibold">Download the template</span>,
-        fill it in with info, roles and ministries, then import for a{" "}
-        <span className="text-blue-300 font-semibold">fast onboarding</span>.
       </>
     ),
   },
@@ -177,13 +156,8 @@ function ImportPageContent() {
     );
   }
 
-  const isAdmin = user.role === "Administrateur";
-
   const renderImport = () => {
     switch (user.role) {
-      case "Administrateur":
-        // ✅ Administrateur → import d'utilisateurs complets
-        return <ImportUsersCSV />;
       case "ResponsableCellule":
         return <ImportMembresCelluleCSV user={user} />;
       case "ResponsableFamilles":
@@ -194,12 +168,12 @@ function ImportPageContent() {
   };
 
   const getSubtitle = () => {
-    if (isAdmin)
-      return <p className="italic text-base text-white/90">{t.subtitleAdmin}</p>;
-    if (user.role === "ResponsableCellule")
+    if (user.role === "ResponsableCellule") {
       return <p className="italic text-base text-white/90">{t.subtitleCellule}</p>;
-    if (user.role === "ResponsableFamilles")
+    }
+    if (user.role === "ResponsableFamilles") {
       return <p className="italic text-base text-white/90">{t.subtitleFamille}</p>;
+    }
     return <p className="italic text-base text-white/90">{t.subtitleDefault}</p>;
   };
 
@@ -209,9 +183,7 @@ function ImportPageContent() {
 
       <h1 className="text-2xl font-bold mt-4 mb-6 text-center">
         <span className="text-white">{t.titre1}</span>
-        <span className="text-emerald-300">
-          {isAdmin ? t.titre2Admin : t.titre2}
-        </span>
+        <span className="text-emerald-300">{t.titre2}</span>
       </h1>
 
       <div className="max-w-3xl w-full mb-6 text-center mx-auto">

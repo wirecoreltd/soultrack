@@ -319,7 +319,7 @@ function ListUsersContent() {
 
         <div className="flex justify-end gap-2">
           <button
-            onClick={() => router.push("/administrateur/import")}
+            onClick={() => router.push("/admin/import")}
             className="text-white px-4 py-2"
           >
             {t.importerBtn}

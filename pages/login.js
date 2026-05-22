@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import { useLang } from "../hooks/useLang";
+import { initPushNotifications } from "../lib/pushNotifications";
 
 // ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
 const translations = {
@@ -76,8 +77,9 @@ export default function LoginPage() {
       localStorage.setItem("profile", JSON.stringify(profile));
       localStorage.setItem("userEmail", email);
       localStorage.setItem("userId", user.id);
+
+      await initPushNotifications(user.id);      
       
-      // ← AJOUT
       const params = new URLSearchParams(window.location.search);
       const redirect = params.get("redirect");
       if (redirect) {

@@ -8,7 +8,7 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import ImportMembresCSV from "../../components/ImportMembresCSV";
 import ImportMembresCelluleCSV from "../../components/ImportMembresCelluleCSV";
 import ImportMembresFamilleCSV from "../../components/ImportMembresFamilleCSV";
-import ImportUsersCSV from "../../components/ImportUsersCSV";
+import ImportUsersCSV from "../../components/Importuserscsv";
 import { useLang } from "../../hooks/useLang";
 
 const translations = {

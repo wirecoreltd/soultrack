@@ -143,12 +143,16 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const [otherBesoin, setOtherBesoin] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [eglise, setEglise] = useState(null);
 
-  useEffect(() => {
-    if (urlEgliseId) {
-      setFormData(prev => ({ ...prev, eglise_id: urlEgliseId }));
-    }
-  }, [urlEgliseId]);
+  useEffect(() => { 
+    const fetchEglise = async () => { 
+      if (!urlEgliseId) return; setFormData(prev => ({ ...prev, eglise_id: urlEgliseId })); 
+      const { data, error } = await supabase 
+        .from("eglises") .select(` id, nom, denomination, ville, pays, branche, logo_url `) 
+        .eq("id", urlEgliseId) 
+        .single(); 
+      if (!error && data) { setEglise(data); } }; fetchEglise(); }, [urlEgliseId]);
 
   useEffect(() => {
     if (isFromLink) return;
@@ -157,15 +161,12 @@ export default function AddEvangelise({ onNewEvangelise }) {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user) return;
 
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("eglise_id")
-        .eq("id", session.session.user.id)
-        .single();
-
-      if (!error && profile) {
-        setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id }));
-      }
+      const { data: profile, error } = await supabase 
+        .from("profiles") 
+        .select(` eglise_id, eglises ( id, nom, denomination, ville, pays, branche, logo_url ) `) 
+        .eq("id", session.session.user.id) 
+        .single(); 
+      if (!error && profile) { setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id })); setEglise(profile.eglises); }
     };
     fetchUserEglise();
   }, [isFromLink]);
@@ -329,9 +330,16 @@ export default function AddEvangelise({ onNewEvangelise }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg">
-        <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="SoulTrack Logo" width={80} height={80} />
-        </div>
+
+    {eglise && ( <div className="flex flex-col items-center justify-center mb-6 text-center"> 
+    {eglise.logo_url && ( 
+    <Image src={eglise.logo_url} 
+     alt={eglise.nom} width={90} height={90} 
+       className="rounded-full object-cover mb-3" /> )} 
+         <h2 className="text-2xl font-bold text-black"> {eglise.nom} </h2> 
+       {eglise.denomination && ( <p className="text-sm text-gray-600"> {eglise.denomination} </p> )} {eglise.branche && ( 
+         <p className="text-sm text-gray-500"> {eglise.branche} </p> )} 
+         <p className="text-sm text-gray-500"> {[eglise.ville, eglise.pays].filter(Boolean).join(", ")} </p> </div> )}         
 
         <h1 className="text-3xl font-bold text-center mb-2">{t.title}</h1>
 

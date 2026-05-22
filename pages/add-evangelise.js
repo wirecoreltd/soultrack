@@ -329,16 +329,33 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
-      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg">
+      {/* ─── Logo + infos de l'église ─── */}
+        <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
+          {egliseInfo?.logo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={egliseInfo.logo_url}
+              alt={egliseInfo.nom || "Logo église"}
+              style={{
+                width: 50,
+                height: 50,
+                objectFit: "contain",                
+              }}
+            />
+          )}
 
-    {eglise && ( <div className="flex flex-col items-center justify-center mb-6 text-center"> 
-   {eglise.logo_url && ( <div className="relative w-24 h-24 mb-3 rounded-full overflow-hidden border-4 border-white shadow-lg"> 
-    <Image src={eglise.logo_url} 
-alt={eglise.nom} fill className="object-cover" unoptimized /> </div> )}
-         <h2 className="text-2xl font-bold text-black"> {eglise.nom} </h2> 
-       {eglise.denomination && ( <p className="text-sm text-gray-600"> {eglise.denomination} </p> )} {eglise.branche && ( 
-         <p className="text-sm text-gray-500"> {eglise.branche} </p> )} 
-         <p className="text-sm text-gray-500"> {[eglise.ville, eglise.pays].filter(Boolean).join(", ")} </p> </div> )}         
+          {egliseInfo && (
+            <div className="text-center leading-snug mt-1">
+              <p className="font-bold text-lg text-[#c31850]">{egliseInfo.nom}</p>
+              {egliseInfo.branche && (
+                <p className="text-sm text-[#c31850]">{egliseInfo.branche}</p>
+              )}
+              <p className="text-sm text-[#c31850]">
+                {[egliseInfo.ville, egliseInfo.pays].filter(Boolean).join(", ")}
+              </p>
+            </div>
+          )}
+        </div>        
 
         <h1 className="text-3xl font-bold text-center mb-2">{t.title}</h1>
 

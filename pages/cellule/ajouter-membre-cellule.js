@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
 import { useMembers } from "../../context/MembersContext";
-import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
 import { checkLimiteAtteinte } from "../../lib/checkLimite";
 import { useLang } from "../../hooks/useLang";
@@ -124,11 +123,7 @@ const translations = {
 };
 
 export default function AjouterMembreCellule() {
-  return (
-    <ProtectedRoute allowedRoles={["Superadmin", "ResponsableCellule"]}>
-      <AjouterMembreCelluleContent />
-    </ProtectedRoute>
-  );
+  return <AjouterMembreCelluleContent />;
 }
 
 function AjouterMembreCelluleContent() {
@@ -164,16 +159,16 @@ function AjouterMembreCelluleContent() {
   });
 
   const besoinsOptions = [
-    { key: "besoinFinances",    value: "Finances" },
-    { key: "besoinSante",       value: "Santé" },
-    { key: "besoinTravail",     value: "Travail / Études" },
-    { key: "besoinFamille",     value: "Famille / Enfants" },
-    { key: "besoinRelations",   value: "Relations / Conflits" },
-    { key: "besoinAddictions",  value: "Addictions / Dépendances" },
-    { key: "besoinGuidance",    value: "Guidance spirituelle" },
-    { key: "besoinLogement",    value: "Logement / Sécurité" },
-    { key: "besoinCommunaute",  value: "Communauté / Isolement" },
-    { key: "besoinDepression",  value: "Dépression / Santé mentale" },
+    { key: "besoinFinances",   value: "Finances" },
+    { key: "besoinSante",      value: "Santé" },
+    { key: "besoinTravail",    value: "Travail / Études" },
+    { key: "besoinFamille",    value: "Famille / Enfants" },
+    { key: "besoinRelations",  value: "Relations / Conflits" },
+    { key: "besoinAddictions", value: "Addictions / Dépendances" },
+    { key: "besoinGuidance",   value: "Guidance spirituelle" },
+    { key: "besoinLogement",   value: "Logement / Sécurité" },
+    { key: "besoinCommunaute", value: "Communauté / Isolement" },
+    { key: "besoinDepression", value: "Dépression / Santé mentale" },
   ];
 
   const [success, setSuccess] = useState(false);
@@ -205,22 +200,22 @@ function AjouterMembreCelluleContent() {
   }, [isFromLink]);
 
   useEffect(() => {
-  if (!userScope.eglise_id) return;
+    if (!userScope.eglise_id) return;
 
-  const fetchEglise = async () => {
-    const { data, error } = await supabase
-      .from("eglises")
-      .select("nom, branche, ville, pays, logo_url")
-      .eq("id", userScope.eglise_id)
-      .single();
+    const fetchEglise = async () => {
+      const { data, error } = await supabase
+        .from("eglises")
+        .select("nom, branche, ville, pays, logo_url")
+        .eq("id", userScope.eglise_id)
+        .single();
 
-    if (!error && data) {
-      setEgliseInfo(data);
-    }
-  };
+      if (!error && data) {
+        setEgliseInfo(data);
+      }
+    };
 
-  fetchEglise();
-}, [userScope.eglise_id]);
+    fetchEglise();
+  }, [userScope.eglise_id]);
 
   useEffect(() => {
     if (!userScope.eglise_id) return;
@@ -297,7 +292,7 @@ function AjouterMembreCelluleContent() {
         eglise_id: userScope.eglise_id,
         statut_suivis: 3,
         etat_contact: "existant",
-        is_new_in_cellule: "true", // ✅ AJOUT : déclenche les notifications Admin + SuperviseurCellule
+        is_new_in_cellule: "true",
         is_whatsapp: formData.is_whatsapp,
         infos_supplementaires: formData.infos_supplementaires,
         besoin: formData.besoin.join(", "),
@@ -371,18 +366,14 @@ function AjouterMembreCelluleContent() {
           {t.back}
         </button>
 
-       {/* ─── Logo + infos de l'église ─── */}
+        {/* ─── Logo + infos de l'église ─── */}
         <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
           {egliseInfo?.logo_url && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={egliseInfo.logo_url}
               alt={egliseInfo.nom || "Logo église"}
-              style={{
-                width: 50,
-                height: 50,
-                objectFit: "contain",                
-              }}
+              style={{ width: 50, height: 50, objectFit: "contain" }}
             />
           )}
 

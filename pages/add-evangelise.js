@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
-import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 import { useLang } from "../hooks/useLang";
 
@@ -115,7 +114,6 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const urlFamilleId = router.query.famille_id || null;
   const isFromLink = !!urlEgliseId;
 
-  // ✅ Langue : priorité au paramètre URL ?lang=, sinon useLang()
   const { lang: hookLang } = useLang();
   const urlLang = router.query.lang;
   const lang = (urlLang === "en" || urlLang === "fr") ? urlLang : hookLang;
@@ -145,14 +143,21 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const [loading, setLoading] = useState(false);
   const [eglise, setEglise] = useState(null);
 
-  useEffect(() => { 
-    const fetchEglise = async () => { 
-      if (!urlEgliseId) return; setFormData(prev => ({ ...prev, eglise_id: urlEgliseId })); 
-      const { data, error } = await supabase 
-        .from("eglises") .select(` id, nom, denomination, ville, pays, branche, logo_url `) 
-        .eq("id", urlEgliseId) 
-        .single(); 
-      if (!error && data) { setEglise(data); } }; fetchEglise(); }, [urlEgliseId]);
+  useEffect(() => {
+    const fetchEglise = async () => {
+      if (!urlEgliseId) return;
+      setFormData(prev => ({ ...prev, eglise_id: urlEgliseId }));
+      const { data, error } = await supabase
+        .from("eglises")
+        .select(`id, nom, denomination, ville, pays, branche, logo_url`)
+        .eq("id", urlEgliseId)
+        .single();
+      if (!error && data) {
+        setEglise(data);
+      }
+    };
+    fetchEglise();
+  }, [urlEgliseId]);
 
   useEffect(() => {
     if (isFromLink) return;
@@ -161,12 +166,16 @@ export default function AddEvangelise({ onNewEvangelise }) {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user) return;
 
-      const { data: profile, error } = await supabase 
-        .from("profiles") 
-        .select(` eglise_id, eglises ( id, nom, denomination, ville, pays, branche, logo_url ) `) 
-        .eq("id", session.session.user.id) 
-        .single(); 
-      if (!error && profile) { setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id })); setEglise(profile.eglises); }
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select(`eglise_id, eglises ( id, nom, denomination, ville, pays, branche, logo_url )`)
+        .eq("id", session.session.user.id)
+        .single();
+
+      if (!error && profile) {
+        setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id }));
+        setEglise(profile.eglises);
+      }
     };
     fetchUserEglise();
   }, [isFromLink]);
@@ -328,29 +337,32 @@ export default function AddEvangelise({ onNewEvangelise }) {
   };
 
   return (
-     {/* ─── Logo + infos de l'église ─── */}
+    <div className="min-h-screen flex flex-col items-center justify-start px-4 py-6 bg-gray-50">
+      <div className="w-full max-w-lg bg-white rounded-3xl shadow-xl p-6 sm:p-10">
+
+        {/* ─── Logo + infos de l'église ─── */}
         <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
-          {egliseInfo?.logo_url && (
+          {eglise?.logo_url && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={egliseInfo.logo_url}
-              alt={egliseInfo.nom || "Logo église"}
+              src={eglise.logo_url}
+              alt={eglise.nom || "Logo église"}
               style={{
                 width: 50,
                 height: 50,
-                objectFit: "contain",                
+                objectFit: "contain",
               }}
             />
           )}
 
-          {egliseInfo && (
+          {eglise && (
             <div className="text-center leading-snug mt-1">
-              <p className="font-bold text-lg text-[#c31850]">{egliseInfo.nom}</p>
-              {egliseInfo.branche && (
-                <p className="text-sm text-[#c31850]">{egliseInfo.branche}</p>
+              <p className="font-bold text-lg text-[#c31850]">{eglise.nom}</p>
+              {eglise.branche && (
+                <p className="text-sm text-[#c31850]">{eglise.branche}</p>
               )}
               <p className="text-sm text-[#c31850]">
-                {[egliseInfo.ville, egliseInfo.pays].filter(Boolean).join(", ")}
+                {[eglise.ville, eglise.pays].filter(Boolean).join(", ")}
               </p>
             </div>
           )}
@@ -396,13 +408,29 @@ export default function AddEvangelise({ onNewEvangelise }) {
           </select>
 
           {/* Prénom / Nom */}
-          <input className="input" type="text" placeholder={t.prenom} value={formData.prenom}
-            onChange={e => setFormData({ ...formData, prenom: e.target.value })} required />
-          <input className="input" type="text" placeholder={t.nom} value={formData.nom}
-            onChange={e => setFormData({ ...formData, nom: e.target.value })} required />
+          <input
+            className="input"
+            type="text"
+            placeholder={t.prenom}
+            value={formData.prenom}
+            onChange={e => setFormData({ ...formData, prenom: e.target.value })}
+            required
+          />
+          <input
+            className="input"
+            type="text"
+            placeholder={t.nom}
+            value={formData.nom}
+            onChange={e => setFormData({ ...formData, nom: e.target.value })}
+            required
+          />
 
           {/* Âge */}
-          <select value={formData.age} onChange={e => setFormData({ ...formData, age: e.target.value })} className="input">
+          <select
+            value={formData.age}
+            onChange={e => setFormData({ ...formData, age: e.target.value })}
+            className="input"
+          >
             <option value="">{t.age}</option>
             {t.ageOptions.map(v => (
               <option key={v} value={v}>{v}</option>
@@ -410,34 +438,55 @@ export default function AddEvangelise({ onNewEvangelise }) {
           </select>
 
           {/* Téléphone / Ville */}
-          <input className="input" type="text" placeholder={t.telephone} value={formData.telephone}
-            onChange={e => setFormData({ ...formData, telephone: e.target.value })} />
-          <input className="input" type="text" placeholder={t.ville} value={formData.ville}
-            onChange={e => setFormData({ ...formData, ville: e.target.value })} />
+          <input
+            className="input"
+            type="text"
+            placeholder={t.telephone}
+            value={formData.telephone}
+            onChange={e => setFormData({ ...formData, telephone: e.target.value })}
+          />
+          <input
+            className="input"
+            type="text"
+            placeholder={t.ville}
+            value={formData.ville}
+            onChange={e => setFormData({ ...formData, ville: e.target.value })}
+          />
 
           {/* WhatsApp */}
           <label className="flex items-center gap-2 text-gray-700">
-            <input type="checkbox" checked={formData.is_whatsapp}
+            <input
+              type="checkbox"
+              checked={formData.is_whatsapp}
               onChange={e => setFormData({ ...formData, is_whatsapp: e.target.checked })}
-              className="w-5 h-5 accent-indigo-600 cursor-pointer" />
+              className="w-5 h-5 accent-indigo-600 cursor-pointer"
+            />
             {t.whatsapp}
           </label>
 
           {/* Prière du salut */}
-          <select className="input" value={formData.priere_salut} required
+          <select
+            className="input"
+            value={formData.priere_salut}
+            required
             onChange={e => setFormData({
               ...formData,
               priere_salut: e.target.value,
               type_conversion: e.target.value === "Oui" ? formData.type_conversion : "",
-            })}>
+            })}
+          >
             <option value="">{t.prayerSalvation}</option>
             <option value="Oui">{t.oui}</option>
             <option value="Non">{t.non}</option>
           </select>
 
           {formData.priere_salut === "Oui" && (
-            <select className="input" value={formData.type_conversion}
-              onChange={e => setFormData({ ...formData, type_conversion: e.target.value })} required>
+            <select
+              className="input"
+              value={formData.type_conversion}
+              onChange={e => setFormData({ ...formData, type_conversion: e.target.value })}
+              required
+            >
               <option value="">{t.typeConversion}</option>
               {t.conversionOptions.map(o => (
                 <option key={o.value} value={o.value}>{o.label}</option>
@@ -448,7 +497,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
           {/* Besoins */}
           <div className="mt-4">
             <p className="font-semibold mb-2">{t.needs}</p>
-            {t.needsOptions.map((b, i) => (
+            {t.needsOptions.map(b => (
               <label key={b} className="flex items-center gap-3 mb-2">
                 <input
                   type="checkbox"
@@ -461,29 +510,46 @@ export default function AddEvangelise({ onNewEvangelise }) {
               </label>
             ))}
             <label className="flex items-center gap-3 mb-2">
-              <input type="checkbox" checked={showOtherField}
+              <input
+                type="checkbox"
+                checked={showOtherField}
                 onChange={() => setShowOtherField(!showOtherField)}
-                className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600" />
+                className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600"
+              />
               {t.other}
             </label>
             {showOtherField && (
-              <input type="text" placeholder={t.specifyNeed} value={otherBesoin}
-                onChange={e => setOtherBesoin(e.target.value)} className="input mt-1" />
+              <input
+                type="text"
+                placeholder={t.specifyNeed}
+                value={otherBesoin}
+                onChange={e => setOtherBesoin(e.target.value)}
+                className="input mt-1"
+              />
             )}
           </div>
 
-          <textarea placeholder={t.additionalInfo} rows={3}
+          <textarea
+            placeholder={t.additionalInfo}
+            rows={3}
             value={formData.infos_supplementaires}
             onChange={e => setFormData({ ...formData, infos_supplementaires: e.target.value })}
-            className="input" />
+            className="input"
+          />
 
           <div className="flex gap-4">
-            <button type="button" onClick={resetForm}
-              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
+            <button
+              type="button"
+              onClick={resetForm}
+              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
               {t.cancel}
             </button>
-            <button type="submit" disabled={loading}
-              className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
+            >
               {loading ? t.saving : t.add}
             </button>
           </div>

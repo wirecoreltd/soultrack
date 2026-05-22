@@ -86,9 +86,6 @@ jobs:
       - name: Inject GoogleService-Info.plist
         run: echo '${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}' > ios/App/App/GoogleService-Info.plist
 
-      - name: Sync Capacitor
-        run: npx cap sync ios
-
       - name: Set iOS deployment target
         run: |
           cd ios/App
@@ -98,6 +95,9 @@ jobs:
         run: |
           cd ios/App
           pod install --repo-update
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
 
       - name: Build iOS
         run: |

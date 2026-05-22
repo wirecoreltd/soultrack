@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
 import { useMembers } from "../../context/MembersContext";
-import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
 import { checkLimiteAtteinte } from "../../lib/checkLimite";
 import { useLang } from "../../hooks/useLang";
@@ -66,6 +65,7 @@ const translations = {
     errLimite: "❌ Limite atteinte : {count}/{limite} membres. Upgradez votre plan.",
     errAjout: "❌ Impossible d'ajouter le membre : ",
     errFamille: "⚠️ Aucune Famille trouvée pour votre église.",
+    errFamilleSelect: "❌ Aucune famille sélectionnée.",
     errUser: "⚠️ Utilisateur non connecté.",
   },
   en: {
@@ -121,16 +121,14 @@ const translations = {
     errLimite: "❌ Limit reached: {count}/{limite} members. Please upgrade your plan.",
     errAjout: "❌ Unable to add member: ",
     errFamille: "⚠️ No Family found for your church.",
+    errFamilleSelect: "❌ No family selected.",
     errUser: "⚠️ User not logged in.",
   },
 };
 
+// ✅ Plus de ProtectedRoute — la page est accessible via lien public
 export default function AjouterMembreFamille() {
-  return (
-    <ProtectedRoute allowedRoles={["ResponsableFamilles"]}>
-      <AjouterMembreFamilleContent />
-    </ProtectedRoute>
-  );
+  return <AjouterMembreFamilleContent />;
 }
 
 function AjouterMembreFamilleContent() {
@@ -144,8 +142,11 @@ function AjouterMembreFamilleContent() {
   const urlFamilleId = searchParams.get("famille_id");
   const isFromLink = !!urlEgliseId && !!urlFamilleId;
 
+  const [egliseInfo, setEgliseInfo] = useState(null);
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [Familles, setFamilles] = useState([]);
+  const [success, setSuccess] = useState(false);
+
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
@@ -158,7 +159,7 @@ function AjouterMembreFamilleContent() {
     type_conversion: "",
     besoin: [],
     autreBesoin: "",
-    Famille_id: urlFamilleId || "",
+    famille_id: "",
     infos_supplementaires: "",
     date_venu: new Date().toISOString().slice(0, 10),
     is_whatsapp: false,
@@ -177,14 +178,18 @@ function AjouterMembreFamilleContent() {
     { key: "besoinDepression", value: "Dépression / Santé mentale" },
   ];
 
-  const [success, setSuccess] = useState(false);
+  // ✅ FIX 1 — userScope initialisé à null, mis à jour par useEffect
+  const [userScope, setUserScope] = useState({ eglise_id: null });
 
-  const [userScope, setUserScope] = useState({
-    eglise_id: urlEgliseId || null,
-  });
-
+  // ✅ FIX 2 — Un seul useEffect qui gère les deux cas :
+  //   - Lien public  → eglise_id vient de l'URL directement
+  //   - Connecté     → eglise_id vient du profil Supabase
+  //   Se re-déclenche quand useSearchParams finit de s'hydrater
   useEffect(() => {
-    if (isFromLink) return;
+    if (urlEgliseId) {
+      setUserScope({ eglise_id: urlEgliseId });
+      return;
+    }
 
     const fetchUserScope = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -203,8 +208,26 @@ function AjouterMembreFamilleContent() {
     };
 
     fetchUserScope();
-  }, [isFromLink]);
+  }, [urlEgliseId]);
 
+  // ✅ FIX 3 — Fetch logo + infos église dès que eglise_id est connu
+  useEffect(() => {
+    if (!userScope.eglise_id) return;
+
+    const fetchEglise = async () => {
+      const { data, error } = await supabase
+        .from("eglises")
+        .select("nom, branche, ville, pays, logo_url")
+        .eq("id", userScope.eglise_id)
+        .single();
+
+      if (!error && data) setEgliseInfo(data);
+    };
+
+    fetchEglise();
+  }, [userScope.eglise_id]);
+
+  // Fetch familles (uniquement si utilisateur connecté, pas via lien public)
   useEffect(() => {
     if (!userScope.eglise_id) return;
     if (isFromLink) return;
@@ -263,8 +286,16 @@ function AjouterMembreFamilleContent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // ✅ FIX 4 — Priorité à urlFamilleId (lien public) pour éviter UUID vide
+    const familleIdFinal = urlFamilleId || formData.famille_id;
+
     if (!userScope.eglise_id) {
       alert(t.errEglise);
+      return;
+    }
+
+    if (!familleIdFinal) {
+      alert(t.errFamilleSelect);
       return;
     }
 
@@ -281,11 +312,11 @@ function AjouterMembreFamilleContent() {
         telephone: formData.telephone,
         ville: formData.ville,
         venu: formData.venu,
-        famille_id: formData.famille_id,
+        famille_id: familleIdFinal, // ✅ UUID garanti non vide
         eglise_id: userScope.eglise_id,
         statut_suivis: 3,
         etat_contact: "existant",
-        is_new_in_cellule: "true", // ✅ AJOUT : déclenche les notifications Admin + SuperviseurCellule
+        is_new_in_cellule: "true",
         is_whatsapp: formData.is_whatsapp,
         infos_supplementaires: formData.infos_supplementaires,
         besoin: formData.besoin.join(", "),
@@ -366,13 +397,27 @@ function AjouterMembreFamilleContent() {
           {t.back}
         </button>
 
-        <div className="flex justify-center mb-6">
-          <img
-            src="/logo.png"
-            alt="Logo SoulTrack"
-            className="w-20 h-auto cursor-pointer hover:opacity-80 transition"
-            onClick={() => router.push("/index")}
-          />
+        {/* ✅ Logo + infos église dynamiques (comme ajouter-membre-cellule) */}
+        <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
+          {egliseInfo?.logo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={egliseInfo.logo_url}
+              alt={egliseInfo.nom || "Logo église"}
+              style={{ width: 50, height: 50, objectFit: "contain" }}
+            />
+          )}
+          {egliseInfo && (
+            <div className="text-center leading-snug mt-1">
+              <p className="font-bold text-lg text-[#c31850]">{egliseInfo.nom}</p>
+              {egliseInfo.branche && (
+                <p className="text-sm text-[#c31850]">{egliseInfo.branche}</p>
+              )}
+              <p className="text-sm text-[#c31850]">
+                {[egliseInfo.ville, egliseInfo.pays].filter(Boolean).join(", ")}
+              </p>
+            </div>
+          )}
         </div>
 
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">

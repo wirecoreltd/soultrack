@@ -132,6 +132,9 @@ const translations = {
 export default function AddMember() {
   const router = useRouter();
   const { token } = router.query;
+
+  // ✅ Récupération de tous les query params utiles
+  const urlEgliseId = router.query.eglise_id || null;
   const urlFamilleId = router.query.famille_id || null;
 
   const { lang: hookLang } = useLang();
@@ -156,7 +159,7 @@ export default function AddMember() {
     priere_salut: "",
     type_conversion: "",
     eglise_id: "",
-    famille_id: urlFamilleId || null,
+    famille_id: "",
   });
 
   const [egliseInfo, setEgliseInfo] = useState(null);
@@ -166,30 +169,15 @@ export default function AddMember() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // ─── Cas 1 : utilisateur connecté → récupérer eglise_id ───
+  // ✅ CAS 1 — Lien public avec eglise_id directement dans l'URL
+  // (même logique que ajouter-membre-cellule / ajouter-membre-famille)
   useEffect(() => {
-    if (token) return;
+    if (!urlEgliseId) return;
+    setFormData(prev => ({ ...prev, eglise_id: urlEgliseId }));
+    setLoading(false);
+  }, [urlEgliseId]);
 
-    const fetchUserEglise = async () => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) { setLoading(false); return; }
-
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("eglise_id")
-        .eq("id", session.session.user.id)
-        .single();
-
-      if (!error && profile) {
-        setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id }));
-      }
-      setLoading(false);
-    };
-
-    fetchUserEglise();
-  }, [token]);
-
-  // ─── Cas 2 : lien externe avec token ───
+  // ✅ CAS 2 — Lien avec token (table access_tokens)
   useEffect(() => {
     if (!token) return;
 
@@ -215,7 +203,40 @@ export default function AddMember() {
     verifyToken();
   }, [token]);
 
-  // ─── Charger les infos de l'église une fois eglise_id connu ───
+  // ✅ CAS 3 — Utilisateur connecté (pas de token, pas d'eglise_id dans l'URL)
+  useEffect(() => {
+    if (token) return;
+    if (urlEgliseId) return; // ← déjà géré par CAS 1
+
+    const fetchUserEglise = async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) {
+        setLoading(false);
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("eglise_id")
+        .eq("id", session.session.user.id)
+        .single();
+
+      if (!error && profile) {
+        setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id }));
+      }
+      setLoading(false);
+    };
+
+    fetchUserEglise();
+  }, [token, urlEgliseId]);
+
+  // ✅ Sync famille_id depuis l'URL
+  useEffect(() => {
+    if (!urlFamilleId) return;
+    setFormData(prev => ({ ...prev, famille_id: urlFamilleId }));
+  }, [urlFamilleId]);
+
+  // ✅ Fetch logo + infos église dès que eglise_id est connu
   useEffect(() => {
     if (!formData.eglise_id) return;
 
@@ -231,12 +252,6 @@ export default function AddMember() {
 
     fetchEglise();
   }, [formData.eglise_id]);
-
-  useEffect(() => {
-    if (urlFamilleId) {
-      setFormData(prev => ({ ...prev, famille_id: urlFamilleId }));
-    }
-  }, [urlFamilleId]);
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
@@ -346,21 +361,16 @@ export default function AddMember() {
           ✕
         </button>
 
-        {/* ─── Logo + infos de l'église ─── */}
+        {/* ✅ Logo + infos église dynamiques */}
         <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
           {egliseInfo?.logo_url && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={egliseInfo.logo_url}
               alt={egliseInfo.nom || "Logo église"}
-              style={{
-                width: 50,
-                height: 50,
-                objectFit: "contain",                
-              }}
+              style={{ width: 50, height: 50, objectFit: "contain" }}
             />
           )}
-
           {egliseInfo && (
             <div className="text-center leading-snug mt-1">
               <p className="font-bold text-lg text-[#c31850]">{egliseInfo.nom}</p>
@@ -381,7 +391,6 @@ export default function AddMember() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
 
-          {/* Date de venue */}
           <label className="text-sm sm:text-base font-semibold">{t.dateVenue}</label>
           <input
             type="date"
@@ -391,7 +400,6 @@ export default function AddMember() {
             required
           />
 
-          {/* Civilité */}
           <label className="text-sm sm:text-base font-semibold">{t.civility}</label>
           <select
             value={formData.sexe}
@@ -404,7 +412,6 @@ export default function AddMember() {
             <option value="Femme">{t.femme}</option>
           </select>
 
-          {/* Prénom / Nom */}
           <label className="text-sm sm:text-base font-semibold">{t.prenom}</label>
           <input
             type="text"
@@ -423,7 +430,6 @@ export default function AddMember() {
             required
           />
 
-          {/* Téléphone */}
           <div className="mb-2">
             <label className="block font-medium mb-1">{t.telephone}</label>
             <input
@@ -451,7 +457,6 @@ export default function AddMember() {
             </label>
           </div>
 
-          {/* WhatsApp */}
           <label className="flex items-center gap-2 text-sm sm:text-base">
             <input
               type="checkbox"
@@ -461,7 +466,6 @@ export default function AddMember() {
             {t.whatsapp}
           </label>
 
-          {/* Ville */}
           <label className="text-sm sm:text-base font-semibold">{t.ville}</label>
           <input
             type="text"
@@ -470,7 +474,6 @@ export default function AddMember() {
             className="input"
           />
 
-          {/* Âge */}
           <label className="text-sm sm:text-base font-semibold">{t.age}</label>
           <select
             value={formData.age}
@@ -484,7 +487,6 @@ export default function AddMember() {
             ))}
           </select>
 
-          {/* Statut */}
           <label className="text-sm sm:text-base font-semibold">{t.statut}</label>
           <select
             value={formData.statut}
@@ -498,7 +500,6 @@ export default function AddMember() {
             ))}
           </select>
 
-          {/* Comment venu */}
           <label className="text-sm sm:text-base font-semibold">{t.howCame}</label>
           <select
             value={formData.venu}
@@ -512,7 +513,6 @@ export default function AddMember() {
             ))}
           </select>
 
-          {/* Prière du salut */}
           <label className="text-sm sm:text-base font-semibold">{t.prayerSalvation}</label>
           <select
             className="input"
@@ -546,7 +546,6 @@ export default function AddMember() {
             </>
           )}
 
-          {/* Besoins */}
           <label className="text-sm sm:text-base font-bold mb-1">{t.needs}</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {t.needsOptions.map(item => (
@@ -583,7 +582,6 @@ export default function AddMember() {
             />
           )}
 
-          {/* Infos supplémentaires */}
           <label className="text-sm sm:text-base font-semibold">{t.additionalInfo}</label>
           <textarea
             placeholder="..."

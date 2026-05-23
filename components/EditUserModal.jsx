@@ -22,6 +22,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   const [success, setSuccess] = useState(false);
   const [cellules, setCellules] = useState([]);
   const [selectedCelluleIds, setSelectedCelluleIds] = useState([]);
+  const [selectedSuperviseurCelluleIds, setSelectedSuperviseurCelluleIds] = useState([]);
 
   // ✅ allRoles conditionné par features — seuls les rôles actifs sont proposés
   const allRoles = useMemo(() => [
@@ -59,16 +60,23 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     const fetchCellules = async () => {
       const { data } = await supabase
         .from("cellules")
-        .select("id, cellule_full, ville, cellule, responsable_id")
+        .select("id, cellule_full, ville, cellule, responsable_id, superviseur_id")
         .eq("eglise_id", user.eglise_id)
         .order("cellule_full");
 
       setCellules(data || []);
 
-      const dejassignees = (data || [])
+      // Cellules dont l'utilisateur est responsable
+      const dejaResponsable = (data || [])
         .filter((c) => c.responsable_id === user.id)
         .map((c) => c.id);
-      setSelectedCelluleIds(dejassignees);
+      setSelectedCelluleIds(dejaResponsable);
+
+      // Cellules dont l'utilisateur est superviseur
+      const dejaSuperviseur = (data || [])
+        .filter((c) => c.superviseur_id === user.id)
+        .map((c) => c.id);
+      setSelectedSuperviseurCelluleIds(dejaSuperviseur);
     };
 
     fetchCellules();
@@ -99,6 +107,14 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     );
   };
 
+  const handleSuperviseurCelluleChange = (celluleId) => {
+    setSelectedSuperviseurCelluleIds((prev) =>
+      prev.includes(celluleId)
+        ? prev.filter((id) => id !== celluleId)
+        : [...prev, celluleId]
+    );
+  };
+
   const handleSave = async () => {
     if (!user?.id) return;
     setSaving(true);
@@ -122,7 +138,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
       return;
     }
 
-    // ✅ Gestion cellules — seulement si la feature est active
+    // ✅ Gestion cellules responsable — seulement si la feature est active
     if (cellulesActive) {
       if (form.roles.includes("ResponsableCellule")) {
         const cellulesARetirer = cellules
@@ -146,10 +162,38 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             .in("id", selectedCelluleIds);
         }
       } else {
+        // Si le rôle ResponsableCellule est retiré, on libère ses cellules
         await supabase
           .from("cellules")
           .update({ responsable_id: null })
           .eq("responsable_id", user.id);
+      }
+
+      // ✅ Gestion cellules superviseur
+      if (form.roles.includes("SuperviseurCellule")) {
+        const cellulesSuperviseesARetirer = cellules
+          .filter((c) => c.superviseur_id === user.id && !selectedSuperviseurCelluleIds.includes(c.id))
+          .map((c) => c.id);
+
+        if (cellulesSuperviseesARetirer.length > 0) {
+          await supabase
+            .from("cellules")
+            .update({ superviseur_id: null })
+            .in("id", cellulesSuperviseesARetirer);
+        }
+
+        if (selectedSuperviseurCelluleIds.length > 0) {
+          await supabase
+            .from("cellules")
+            .update({ superviseur_id: user.id })
+            .in("id", selectedSuperviseurCelluleIds);
+        }
+      } else {
+        // Si le rôle SuperviseurCellule est retiré, on libère ses cellules supervisées
+        await supabase
+          .from("cellules")
+          .update({ superviseur_id: null })
+          .eq("superviseur_id", user.id);
       }
     }
 
@@ -167,6 +211,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   };
 
   const showCellules = cellulesActive && form.roles.includes("ResponsableCellule");
+  const showSuperviseurCellules = cellulesActive && form.roles.includes("SuperviseurCellule");
 
   return (
     <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 p-4">
@@ -199,11 +244,11 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             ))}
           </div>
 
-          {/* ✅ Sélecteur cellules — visible seulement si feature active ET rôle coché */}
+          {/* ✅ Sélecteur cellules responsable */}
           {showCellules && (
             <div className="flex flex-col gap-2 mt-2 p-4 bg-green-50 rounded-2xl border border-green-200">
               <label className="font-semibold text-green-800">
-                🏠 Cellules assignées :
+                🏠 Cellules assignées (Responsable) :
               </label>
               {cellules.length === 0 ? (
                 <p className="text-sm text-gray-500">Aucune cellule trouvée pour cette église.</p>
@@ -219,6 +264,33 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
                     <span>{c.cellule_full || `${c.ville} - ${c.cellule}`}</span>
                     {c.responsable_id && c.responsable_id !== user.id && (
                       <span className="text-xs text-orange-500">(déjà assignée)</span>
+                    )}
+                  </label>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* ✅ Sélecteur cellules superviseur */}
+          {showSuperviseurCellules && (
+            <div className="flex flex-col gap-2 mt-2 p-4 bg-amber-50 rounded-2xl border border-amber-200">
+              <label className="font-semibold text-amber-800">
+                👁️ Cellules supervisées :
+              </label>
+              {cellules.length === 0 ? (
+                <p className="text-sm text-gray-500">Aucune cellule trouvée pour cette église.</p>
+              ) : (
+                cellules.map((c) => (
+                  <label key={c.id} className="inline-flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={selectedSuperviseurCelluleIds.includes(c.id)}
+                      onChange={() => handleSuperviseurCelluleChange(c.id)}
+                      className="w-4 h-4"
+                    />
+                    <span>{c.cellule_full || `${c.ville} - ${c.cellule}`}</span>
+                    {c.superviseur_id && c.superviseur_id !== user.id && (
+                      <span className="text-xs text-orange-500">(déjà supervisée)</span>
                     )}
                   </label>
                 ))

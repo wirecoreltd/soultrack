@@ -14,32 +14,23 @@ import ExportMembrePDF from "../../components/ExportMembrePDF";
 
 const translations = {
   fr: {
-    // Titre
     titrePrefix: "Membres de m",
     titreSingulierA: "a ",
     titrePlurielsA: "es ",
     titreCelluleSing: "cellule",
     titreCellulePlur: "cellules",
-
-    // Intro
     intro: "Consultez et gérez facilement les membres de vos cellules.",
     introAccent1: "Recherchez",
     intro2: ", filtrez par cellule,",
     introAccent2: "accédez aux détails complets",
     intro3: "et mettez à jour les informations pour un",
     introAccent3: "suivi précis et personnalisé",
-
-    // Boutons
     btnAjouter: "➕ Ajouter un membre",
     btnImporter: "📥 Importer une Liste",
-
-    // États
     chargement: "Chargement...",
     aucunMembre: "Aucun membre trouvé",
     erreurChargement: "Erreur de chargement",
     acces: "Accès non autorisé",
-
-    // Carte membre
     creLe: "Créé le",
     details: "Détails",
     fermerDetails: "Fermer détails",
@@ -47,19 +38,15 @@ const translations = {
     sms: "✉️ SMS",
     appelWhatsApp: "📱 Appel WhatsApp",
     msgWhatsApp: "💬 Message WhatsApp",
-
-    // Sections détail
     identiteLabel: "👤 Identité",
     civilite: "🎗️ Civilité",
     age: "⏳ Tranche d'age",
     whatsapp: "💬 WhatsApp",
     oui: "Oui",
     non: "Non",
-
     suiviLabel: "📊 Suivi",
     envoiSuivi: "📆 Envoyé en suivi",
     statutSuivi: "💡 Statut Suivi",
-
     spirituelLabel: "🕊 Vie spirituelle",
     baptemeEau: "💧 Baptême d'Eau",
     veutBaptise: "💦 Veut se faire baptiser",
@@ -68,56 +55,41 @@ const translations = {
     typeConversion: "☀️ Type de conversion",
     formation: "✒️ Formation",
     ministere: "💢 Ministère",
-
     parcoursLabel: "🌱 Parcours",
     commentVenu: "🧩 Comment est-il venu",
     raisonVenue: "✨ Raison de la venue",
     infos: "📝 Infos",
     commentaireSuivis: "📝 Commentaire Suivis",
-
     pastoralLabel: "❤️‍🩹 Soin pastoral",
     besoinsDiff: "❓ Difficultés / Besoins",
     btnSuivis: "💡 Ajouter / Voir suivis",
     btnModifier: "✏️ Modifier le contact",
-
-    // Statuts suivi
     statutLabels: {
       1: "En attente",
       2: "En Suivis",
       3: "Intégré",
       4: "Refus",
     },
-
-    // Mois abrégés
     mois: ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"],
   },
   en: {
-    // Titre
     titrePrefix: "Members of m",
     titreSingulierA: "y ",
     titrePlurielsA: "y ",
     titreCelluleSing: "cell group",
     titreCellulePlur: "cell groups",
-
-    // Intro
     intro: "Easily view and manage the members of your cell groups.",
     introAccent1: "Search",
     intro2: ", filter by cell,",
     introAccent2: "access full details",
     intro3: "and update information for",
     introAccent3: "precise, personalized follow-up",
-
-    // Boutons
     btnAjouter: "➕ Add a member",
     btnImporter: "📥 Import a list",
-
-    // États
     chargement: "Loading...",
     aucunMembre: "No members found",
     erreurChargement: "Loading error",
     acces: "Access denied",
-
-    // Carte membre
     creLe: "Created on",
     details: "Details",
     fermerDetails: "Close details",
@@ -125,19 +97,15 @@ const translations = {
     sms: "✉️ SMS",
     appelWhatsApp: "📱 WhatsApp call",
     msgWhatsApp: "💬 WhatsApp message",
-
-    // Sections détail
     identiteLabel: "👤 Identity",
     civilite: "🎗️ Title",
     age: "⏳ Age range",
     whatsapp: "💬 WhatsApp",
     oui: "Yes",
     non: "No",
-
     suiviLabel: "📊 Follow-up",
     envoiSuivi: "📆 Sent to follow-up",
     statutSuivi: "💡 Follow-up status",
-
     spirituelLabel: "🕊 Spiritual life",
     baptemeEau: "💧 Water baptism",
     veutBaptise: "💦 Wants to be baptized",
@@ -146,27 +114,21 @@ const translations = {
     typeConversion: "☀️ Conversion type",
     formation: "✒️ Training",
     ministere: "💢 Ministry",
-
     parcoursLabel: "🌱 Journey",
     commentVenu: "🧩 How they came",
     raisonVenue: "✨ Reason for coming",
     infos: "📝 Info",
     commentaireSuivis: "📝 Follow-up comment",
-
     pastoralLabel: "❤️‍🩹 Pastoral care",
     besoinsDiff: "❓ Difficulties / Needs",
     btnSuivis: "💡 Add / View follow-ups",
     btnModifier: "✏️ Edit contact",
-
-    // Statuts suivi
     statutLabels: {
       1: "Pending",
       2: "In follow-up",
       3: "Integrated",
       4: "Refused",
     },
-
-    // Mois abrégés
     mois: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
   },
 };
@@ -192,12 +154,12 @@ function MembresCelluleContent() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-  const [view, setView] = useState("card");
   const [editMember, setEditMember] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState({});
   const [openPhoneId, setOpenPhoneId] = useState(null);
   const phoneMenuRef = useRef(null);
   const highlightRef = useRef({});
+  const highlightDoneRef = useRef(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [logoBase64, setLogoBase64] = useState(null);
@@ -236,10 +198,10 @@ function MembresCelluleContent() {
 
   const getBorderColor = (member) => {
     switch ((member?.etat_contact || "").toLowerCase().trim()) {
-      case "nouveau": return "#fb923c";
+      case "nouveau":  return "#fb923c";
       case "existant": return "#4ade80";
-      case "inactif": return "#9ca3af";
-      default: return "#9ca3af";
+      case "inactif":  return "#9ca3af";
+      default:         return "#9ca3af";
     }
   };
 
@@ -247,11 +209,38 @@ function MembresCelluleContent() {
     setMembres((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
   };
 
-  // ── Scroll vers membre surligné ──
+  // ── Highlight animé (même pattern que ListMembers) ──
   useEffect(() => {
-    if (!highlight || loading) return;
-    const el = highlightRef.current[highlight];
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (!highlight || loading || highlightDoneRef.current) return;
+
+    let attempts = 0;
+    const tryHighlight = () => {
+      const el = highlightRef.current[highlight];
+      if (!el) {
+        attempts++;
+        if (attempts < 20) setTimeout(tryHighlight, 150);
+        return;
+      }
+      highlightDoneRef.current = true;
+
+      const url = new URL(window.location.href);
+      url.searchParams.delete("highlight");
+      window.history.replaceState({}, "", url.toString());
+
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
+      el.style.boxShadow = "0 0 0 4px #f59e0b, 0 0 24px 8px rgba(245,158,11,0.4)";
+      el.style.transform = "scale(1.02)";
+
+      setTimeout(() => {
+        el.style.transition = "box-shadow 1s ease, transform 1s ease";
+        el.style.boxShadow = "";
+        el.style.transform = "";
+      }, 5000);
+    };
+
+    const timer = setTimeout(tryHighlight, 300);
+    return () => clearTimeout(timer);
   }, [highlight, loading]);
 
   // ── Fetch user + cellules ──
@@ -273,28 +262,25 @@ function MembresCelluleContent() {
           .eq("eglise_id", profile.eglise_id)
           .or(`responsable_id.eq.${profile.id},superviseur_id.eq.${profile.id}`);
 
-        const directIds = (directesData || []).map(c => c.id);
+        const directIds = (directesData || []).map((c) => c.id);
 
         const { data: fillesData } = await supabase
           .from("cellules")
           .select("*")
           .in(
             "cellule_mere_id",
-            directIds.length
-              ? directIds
-              : ["00000000-0000-0000-0000-000000000000"]
+            directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]
           );
 
-        setCellules([
-          ...(directesData || []),
-          ...(fillesData || []),
-        ]);
+        setCellules([...(directesData || []), ...(fillesData || [])]);
         return;
       }
 
-      let query = supabase.from("cellules")
+      let query = supabase
+        .from("cellules")
         .select("*")
-        .eq("eglise_id", profile.eglise_id).order("cellule_full");
+        .eq("eglise_id", profile.eglise_id)
+        .order("cellule_full");
 
       if (profile.role === "SuperviseurCellule") {
         query = query.eq("superviseur_id", profile.id);
@@ -303,7 +289,6 @@ function MembresCelluleContent() {
       }
 
       const { data } = await query;
-
       setCellules(data || []);
     };
 
@@ -334,9 +319,7 @@ function MembresCelluleContent() {
             const response = await fetch(egliseInfo.logo_url);
             const blob = await response.blob();
             const reader = new FileReader();
-            reader.onloadend = () => {
-              setLogoBase64(reader.result);
-            };
+            reader.onloadend = () => setLogoBase64(reader.result);
             reader.readAsDataURL(blob);
           } catch (err) {
             console.error("Erreur logo:", err);
@@ -362,45 +345,66 @@ function MembresCelluleContent() {
           .from("profiles").select("id, role, eglise_id").eq("id", user.id).single();
         if (!profile) return;
 
-        let query = supabase.from("membres_complets").select("*")
-          .eq("statut_suivis", 3).eq("eglise_id", profile.eglise_id)
-          .not("cellule_id", "is", null).neq("etat_contact", "supprime")
+        let query = supabase
+          .from("membres_complets")
+          .select("*")
+          .eq("statut_suivis", 3)
+          .eq("eglise_id", profile.eglise_id)
+          .not("cellule_id", "is", null)
+          .neq("etat_contact", "supprime")
           .order("created_at", { ascending: false });
 
         let mesCelluleIds = [];
 
         if (profile.role === "Administrateur") {
           if (celluleId) query = query.eq("cellule_id", celluleId);
-        } else if (profile.role === "ResponsableCellule") {
-          const { data: cellulesDirect } = await supabase.from("cellules").select("id")
-            .eq("responsable_id", profile.id).eq("eglise_id", profile.eglise_id);
-          const directIds = (cellulesDirect || []).map(c => c.id);
 
-          const { data: cellulesFillesData } = await supabase.from("cellules").select("id")
+        } else if (profile.role === "ResponsableCellule") {
+          const { data: cellulesDirect } = await supabase
+            .from("cellules").select("id")
+            .eq("responsable_id", profile.id)
+            .eq("eglise_id", profile.eglise_id);
+          const directIds = (cellulesDirect || []).map((c) => c.id);
+
+          const { data: cellulesFillesData } = await supabase
+            .from("cellules").select("id")
             .in("cellule_mere_id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
-          const fillesIds = (cellulesFillesData || []).map(c => c.id);
+          const fillesIds = (cellulesFillesData || []).map((c) => c.id);
 
           mesCelluleIds = [...new Set([...directIds, ...fillesIds])];
 
           if (!mesCelluleIds.length) {
-            setMembres([]); setMessage(t.aucunMembre); setLoading(false); return;
+            setMembres([]);
+            setMessage(t.aucunMembre);
+            setLoading(false);
+            return;
           }
           query = query.in("cellule_id", mesCelluleIds);
-          if (celluleId && mesCelluleIds.includes(celluleId)) query = query.eq("cellule_id", celluleId);
+          if (celluleId && mesCelluleIds.includes(celluleId))
+            query = query.eq("cellule_id", celluleId);
 
         } else if (profile.role === "SuperviseurCellule") {
-          const { data: mesCellules } = await supabase.from("cellules").select("id")
-            .eq("superviseur_id", profile.id).eq("eglise_id", profile.eglise_id);
-          mesCelluleIds = (mesCellules || []).map(c => c.id);
+          const { data: mesCellules } = await supabase
+            .from("cellules").select("id")
+            .eq("superviseur_id", profile.id)
+            .eq("eglise_id", profile.eglise_id);
+          mesCelluleIds = (mesCellules || []).map((c) => c.id);
 
           if (!mesCelluleIds.length) {
-            setMembres([]); setMessage(t.aucunMembre); setLoading(false); return;
+            setMembres([]);
+            setMessage(t.aucunMembre);
+            setLoading(false);
+            return;
           }
           query = query.in("cellule_id", mesCelluleIds);
-          if (celluleId && mesCelluleIds.includes(celluleId)) query = query.eq("cellule_id", celluleId);
+          if (celluleId && mesCelluleIds.includes(celluleId))
+            query = query.eq("cellule_id", celluleId);
 
         } else {
-          setMembres([]); setMessage(t.acces); setLoading(false); return;
+          setMembres([]);
+          setMessage(t.acces);
+          setLoading(false);
+          return;
         }
 
         const { data, error } = await query;
@@ -420,7 +424,8 @@ function MembresCelluleContent() {
 
   // ── Click outside ──
   const handleClickOutside = useCallback((e) => {
-    if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) setOpenPhoneId(null);
+    if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target))
+      setOpenPhoneId(null);
   }, []);
 
   useEffect(() => {
@@ -467,7 +472,9 @@ function MembresCelluleContent() {
         </p>
       </div>
 
-      {loading && <div className="text-white text-center mt-10">{t.chargement}</div>}
+      {loading && (
+        <div className="text-white text-center mt-10">{t.chargement}</div>
+      )}
 
       {!loading && (
         <>
@@ -488,7 +495,9 @@ function MembresCelluleContent() {
             </div>
           )}
 
-          {message && <div className="text-white text-center mt-10">{message}</div>}
+          {message && (
+            <div className="text-white text-center mt-10">{message}</div>
+          )}
 
           {!message && (
             <div className="flex justify-center">
@@ -504,22 +513,20 @@ function MembresCelluleContent() {
                       key={m.id}
                       ref={(el) => (highlightRef.current[m.id] = el)}
                       className="bg-white p-4 rounded-2xl shadow-xl border-l-4"
-                      style={{
-                        borderLeftColor: getBorderColor(m),
-                        outline: highlight === m.id ? "3px solid #f59e0b" : "none",
-                        boxShadow: highlight === m.id
-                          ? "0 0 0 4px #fef3c7, 0 4px 24px rgba(245,158,11,0.3)"
-                          : "0 4px 6px rgba(0,0,0,0.1)",
-                        transition: "box-shadow 0.3s ease",
-                      }}
+                      style={{ borderLeftColor: getBorderColor(m) }}
                     >
                       <h2 className="relative w-full text-center font-bold text-lg flex items-center justify-center gap-1">
                         <span>{m.prenom} {m.nom}</span>
-                        {m.star === true && m.etat_contact?.trim().toLowerCase() === "existant" && (
-                          <span className="text-yellow-400">⭐</span>
-                        )}
+                        {m.star === true &&
+                          m.etat_contact?.trim().toLowerCase() === "existant" && (
+                            <span className="text-yellow-400">⭐</span>
+                          )}
                         <div className="absolute right-2">
-                          <PresenceDot memberId={m.id} egliseId={m.eglise_id} dateVenu={m.date_venu} />
+                          <PresenceDot
+                            memberId={m.id}
+                            egliseId={m.eglise_id}
+                            dateVonu={m.date_venu}
+                          />
                         </div>
                       </h2>
 
@@ -531,29 +538,39 @@ function MembresCelluleContent() {
                               className="text-orange-500 underline cursor-pointer font-semibold"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setOpenPhoneId(openPhoneId === m.id ? null : m.id);
+                                setOpenPhoneId(
+                                  openPhoneId === m.id ? null : m.id
+                                );
                               }}
                             >
                               {m.telephone}
                             </p>
                             {openPhoneId === m.id && (
                               <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56">
-                                <a href={`tel:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">
+                                <a
+                                  href={`tel:${m.telephone}`}
+                                  className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                                >
                                   {t.appeler}
                                 </a>
-                                <a href={`sms:${m.telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">
+                                <a
+                                  href={`sms:${m.telephone}`}
+                                  className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
+                                >
                                   {t.sms}
                                 </a>
                                 <a
                                   href={`https://wa.me/${m.telephone.replace(/\D/g, "")}?call`}
-                                  target="_blank" rel="noopener noreferrer"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
                                   className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
                                 >
                                   {t.appelWhatsApp}
                                 </a>
                                 <a
                                   href={`https://wa.me/${m.telephone.replace(/\D/g, "")}`}
-                                  target="_blank" rel="noopener noreferrer"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
                                   className="block px-4 py-2 text-sm text-black hover:bg-gray-100"
                                 >
                                   {t.msgWhatsApp}
@@ -567,77 +584,119 @@ function MembresCelluleContent() {
                       </div>
 
                       <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
-                      <p className="text-center text-sm mt-1">🏠 {cellule?.cellule_full || cellule?.cellule || "—"}</p>
+                      <p className="text-center text-sm mt-1">
+                        🏠 {cellule?.cellule_full || cellule?.cellule || "—"}
+                      </p>
                       <p className="text-center text-sm mt-1">👤 {nomResponsable}</p>
+
                       <div className="w-full flex flex-col items-end mt-3 gap-2">
                         <p className="text-[11px] text-gray-400">
                           {t.creLe} {formatDateFr(m.date_venu)}
                         </p>
-                      
                         <ExportMembrePDF
                           membre={m}
                           logoBase64={logoBase64}
                           eglise={egliseData}
                           churchName={egliseData?.nom}
                           celluleName={
-                            cellules.find((c) => String(c.id) === String(m.cellule_id))?.cellule_full
+                            cellules.find(
+                              (c) => String(c.id) === String(m.cellule_id)
+                            )?.cellule_full
                           }
                         />
                       </div>
 
                       <button
-                        onClick={() => setDetailsOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
-                        className="text-orange-500 underline mt-2 block mx-auto text-sm">                        
-
-                        {/* Détails */}
+                        onClick={() =>
+                          setDetailsOpen((prev) => ({
+                            ...prev,
+                            [m.id]: !prev[m.id],
+                          }))
+                        }
+                        className="text-orange-500 underline mt-2 block mx-auto text-sm"
+                      >
                         {isOpen ? t.fermerDetails : t.details}
                       </button>
 
                       {isOpen && (
                         <div className="text-black text-sm space-y-2 w-full">
                           <div>
-                            <p className="font-bold text-[#2E3192] mb-1">{t.identiteLabel}</p>
+                            <p className="font-bold text-[#2E3192] mb-1">
+                              {t.identiteLabel}
+                            </p>
                             <p>{t.civilite} : {m.sexe || ""}</p>
                             <p>{t.age} : {m.age || ""}</p>
-                            <p>{t.whatsapp} : {m.is_whatsapp ? t.oui : t.non}</p>
-                          </div>
-                          <hr />
-
-                          <div>
-                            <p className="font-bold text-[#2E3192] mb-1">{t.suiviLabel}</p>
-                            <p>{t.envoiSuivi} : {formatDateFr(m.date_envoi_suivi)}</p>
                             <p>
-                              {t.statutSuivi} :{" "}
-                              {t.statutLabels[m.statut_suivis] || m.suivi_statut || ""}
+                              {t.whatsapp} :{" "}
+                              {m.is_whatsapp ? t.oui : t.non}
                             </p>
                           </div>
                           <hr />
 
                           <div>
-                            <p className="font-bold text-[#2E3192] mb-1">{t.spirituelLabel}</p>
+                            <p className="font-bold text-[#2E3192] mb-1">
+                              {t.suiviLabel}
+                            </p>
+                            <p>
+                              {t.envoiSuivi} :{" "}
+                              {formatDateFr(m.date_envoi_suivi)}
+                            </p>
+                            <p>
+                              {t.statutSuivi} :{" "}
+                              {t.statutLabels[m.statut_suivis] ||
+                                m.suivi_statut ||
+                                ""}
+                            </p>
+                          </div>
+                          <hr />
+
+                          <div>
+                            <p className="font-bold text-[#2E3192] mb-1">
+                              {t.spirituelLabel}
+                            </p>
                             <p>{t.baptemeEau} : {m.bapteme_eau || "—"}</p>
-                            {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
-                              <p className="ml-6">{t.veutBaptise}</p>
-                            )}
+                            {m.bapteme_eau === "Non" &&
+                              m.veut_se_faire_baptiser === "Oui" && (
+                                <p className="ml-6">{t.veutBaptise}</p>
+                              )}
                             <p>{t.baptemeFeu} : {m.bapteme_esprit || "—"}</p>
                             <p>{t.priereSalut} : {m.priere_salut || "—"}</p>
-                            <p>{t.typeConversion} : {m.type_conversion || "—"}</p>
+                            <p>
+                              {t.typeConversion} :{" "}
+                              {m.type_conversion || "—"}
+                            </p>
                             <p>{t.formation} : {m.Formation || ""}</p>
-                            <p>{t.ministere} : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
+                            <p>
+                              {t.ministere} :{" "}
+                              {formatMinistere(m.Ministere, m.Autre_Ministere)}
+                            </p>
                           </div>
                           <hr />
 
                           <div>
-                            <p className="font-bold text-[#2E3192] mb-1">{t.parcoursLabel}</p>
+                            <p className="font-bold text-[#2E3192] mb-1">
+                              {t.parcoursLabel}
+                            </p>
                             <p>{t.commentVenu} : {m.venu || ""}</p>
-                            <p>{t.raisonVenue} : {m.statut_initial ?? m.statut ?? "—"}</p>
-                            <p>{t.infos} : {m.infos_supplementaires || "—"}</p>
-                            <p>{t.commentaireSuivis} : {m.commentaire_suivis || ""}</p>
+                            <p>
+                              {t.raisonVenue} :{" "}
+                              {m.statut_initial ?? m.statut ?? "—"}
+                            </p>
+                            <p>
+                              {t.infos} :{" "}
+                              {m.infos_supplementaires || "—"}
+                            </p>
+                            <p>
+                              {t.commentaireSuivis} :{" "}
+                              {m.commentaire_suivis || ""}
+                            </p>
                           </div>
                           <hr />
 
                           <div>
-                            <p className="font-bold text-[#2E3192] mb-1">{t.pastoralLabel}</p>
+                            <p className="font-bold text-[#2E3192] mb-1">
+                              {t.pastoralLabel}
+                            </p>
                             <p>{t.besoinsDiff} : {besoins}</p>
 
                             <div className="flex justify-center">
@@ -650,7 +709,10 @@ function MembresCelluleContent() {
                             </div>
 
                             {openSuiviMemberId === m.id && (
-                              <SuiviPopup member={m} onClose={() => setOpenSuiviMemberId(null)} />
+                              <SuiviPopup
+                                member={m}
+                                onClose={() => setOpenSuiviMemberId(null)}
+                              />
                             )}
                           </div>
 

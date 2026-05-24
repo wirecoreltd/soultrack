@@ -18,6 +18,9 @@ const translations = {
     chargement: "Chargement...",
     telephone: "Téléphone du responsable",
     telephonePlaceholder: "+33 6 00 00 00 00",
+    sectionCelluleMere: "🌿 Cellule mère",
+    celluleMere: "Cellule mère",
+    celluleMereDefault: "-- Aucune (cellule racine) --",
     annuler: "Annuler",
     sauvegarder: "💾 Sauvegarder",
     enregistrement: "Enregistrement...",
@@ -37,6 +40,9 @@ const translations = {
     chargement: "Loading...",
     telephone: "Leader's phone number",
     telephonePlaceholder: "+44 7700 000000",
+    sectionCelluleMere: "🌿 Parent cell",
+    celluleMere: "Parent cell",
+    celluleMereDefault: "-- None (root cell) --",
     annuler: "Cancel",
     sauvegarder: "💾 Save",
     enregistrement: "Saving...",
@@ -58,8 +64,13 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
   const [selectedResponsableId, setSelectedResponsableId] = useState(cellule?.responsable_id || "");
   const [loadingResponsables, setLoadingResponsables] = useState(true);
 
+  const [cellulesMere, setCellulesMere] = useState([]);
+  const [selectedCelluleMereId, setSelectedCelluleMereId] = useState(cellule?.cellule_mere_id || "");
+  const [loadingCellulesMere, setLoadingCellulesMere] = useState(true);
+
   const modalRef = useRef(null);
 
+  // Chargement des responsables
   useEffect(() => {
     const fetchResponsables = async () => {
       setLoadingResponsables(true);
@@ -75,6 +86,25 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
     fetchResponsables();
   }, []);
 
+  // Chargement des cellules mères (toutes les cellules de la même église sauf elle-même)
+  useEffect(() => {
+    if (!cellule?.eglise_id) return;
+    const fetchCellulesMere = async () => {
+      setLoadingCellulesMere(true);
+      const { data, error } = await supabase
+        .from("cellules")
+        .select("id, cellule_full, ville, cellule")
+        .eq("eglise_id", cellule.eglise_id)
+        .neq("id", cellule.id)
+        .order("cellule_full");
+      if (!error && data) setCellulesMere(data);
+      else console.error("Erreur chargement cellules mères:", error);
+      setLoadingCellulesMere(false);
+    };
+    fetchCellulesMere();
+  }, [cellule]);
+
+  // Fermer en cliquant dehors
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) onClose();
@@ -100,6 +130,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
         telephone,
         responsable_id: selectedResponsableId || null,
         responsable: responsableNom,
+        cellule_mere_id: selectedCelluleMereId || null,
       })
       .eq("id", cellule.id)
       .select("*, superviseur:superviseur_id(nom, prenom)")
@@ -117,6 +148,8 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
   };
 
   if (!cellule) return null;
+
+  const isLoading = loading || loadingResponsables || loadingCellulesMere;
 
   return (
     <div
@@ -148,6 +181,8 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
 
         {/* Body */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
+
+          {/* Section infos */}
           <SectionTitle>{t.sectionInfos}</SectionTitle>
 
           <Field label={t.nomCellule}>
@@ -164,15 +199,13 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
             />
           </Field>
 
+          {/* Section responsable */}
           <SectionTitle>{t.sectionResponsable}</SectionTitle>
 
           <Field label={t.responsable}>
             {loadingResponsables ? (
               <div className="inp flex items-center gap-2 text-gray-400 text-sm">
-                <span
-                  className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                  style={{ borderColor: "#2E3192", borderTopColor: "transparent" }}
-                />
+                <Spinner />
                 {t.chargement}
               </div>
             ) : (
@@ -202,6 +235,32 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
               placeholder={t.telephonePlaceholder}
             />
           </Field>
+
+          {/* Section cellule mère */}
+          <SectionTitle>{t.sectionCelluleMere}</SectionTitle>
+
+          <Field label={t.celluleMere}>
+            {loadingCellulesMere ? (
+              <div className="inp flex items-center gap-2 text-gray-400 text-sm">
+                <Spinner />
+                {t.chargement}
+              </div>
+            ) : (
+              <select
+                className="inp"
+                value={selectedCelluleMereId}
+                onChange={(e) => setSelectedCelluleMereId(e.target.value)}
+              >
+                <option value="">{t.celluleMereDefault}</option>
+                {cellulesMere.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.cellule_full || `${c.ville} - ${c.cellule}`}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
+
         </div>
 
         {/* Footer */}
@@ -216,16 +275,15 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
           <button
             type="button"
             onClick={handleSave}
-            disabled={loading || loadingResponsables}
+            disabled={isLoading}
             className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
             style={{
-              background:
-                loading || loadingResponsables
-                  ? "#a0a0c0"
-                  : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
+              background: isLoading
+                ? "#a0a0c0"
+                : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
             }}
           >
-            {loading ? t.enregistrement : loadingResponsables ? t.chargement : t.sauvegarder}
+            {loading ? t.enregistrement : isLoading ? t.chargement : t.sauvegarder}
           </button>
         </div>
 
@@ -271,6 +329,15 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
         `}</style>
       </div>
     </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <span
+      className="w-4 h-4 rounded-full border-2 animate-spin inline-block"
+      style={{ borderColor: "#2E3192", borderTopColor: "transparent" }}
+    />
   );
 }
 

@@ -14,7 +14,6 @@ import { useLang } from "../../hooks/useLang";
 
 const translations = {
   fr: {
-    // Page header
     titre1: "Gestion des contacts",
     titre2: " Evangélisés",
     description: "Cette page",
@@ -24,8 +23,6 @@ const translations = {
     descMid2: "Vous pouvez transmettre chaque contact à un conseiller ou à une cellule, et envoyer les informations directement via WhatsApp. Chaque contact peut être consulté en détail, modifié ou supprimé,",
     descAccent3: " garantissant un suivi précis et organisé de l'évangélisation au sein de votre église",
     descEnd: ".",
-
-    // Send selectors
     envoyerA: "-- Envoyer à --",
     uneCellule: "Une Cellule",
     uneFamille: "Une Famille",
@@ -33,21 +30,15 @@ const translations = {
     choisir: "-- Choisir --",
     envoiBtn: "📤 Envoyer WhatsApp",
     envoiLoading: "Envoi...",
-
-    // Card
     ville: "🏙️ Ville :",
     selectionner: "Sélectionner",
     evangeliseLe: "Evangélisé le",
     details: "Détails",
     fermerDetails: "Fermer détails",
-
-    // Phone menu
     appeler: "📞 Appeler",
     sms: "✉️ SMS",
     appelWhatsApp: "📱 Appel WhatsApp",
     messageWhatsApp: "💬 Message WhatsApp",
-
-    // Details sections
     typeEvang: "📣 Type d'Evangélisation :",
     identite: "👤 Identité",
     civilite: "🎗️ Civilité :",
@@ -64,23 +55,17 @@ const translations = {
     modifierContact: "✏️ Modifier le contact",
     supprimerContact: "🗑️ Supprimer le contact",
     confirmSuppression: "⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?",
-
-    // Doublon popup
     doublonsDetectes: "⚠️ Doublons détectés",
     doublonsInfo: "Ces contacts sont déjà enregistrés dans les suivis.",
     envoyer: "Envoyer",
     annuler: "Annuler",
     fermer: "Fermer",
-
-    // WhatsApp popup
     whatsappInfo: "Vérifiez les informations du responsable avant d'envoyer. Si le numéro est effacé, WhatsApp s'ouvrira sur vos contacts.",
     nomResponsable: "👤 Nom du responsable",
     nomResponsablePl: "Nom du responsable",
     numeroWhatsApp: "📞 Numéro WhatsApp",
     numeroWhatsAppPl: "+3363xxx... — laisser vide pour choisir dans vos contacts",
     envoyerBtn: "Envoyer",
-
-    // WhatsApp message
     msgBonjour: "👋 Bonjour",
     msgIntroPlural: "Nous te confions avec joie les personnes suivantes rencontrées lors de l'évangélisation.\n\n",
     msgIntroSingular: "Nous te confions avec joie la personne suivante rencontrée lors de l'évangélisation.\n\n",
@@ -98,20 +83,15 @@ const translations = {
     msgBesoins: "❓ Difficultés / Besoins :",
     msgInfos: "📝 Infos :",
     msgMerci: "Merci pour ton engagement ✨",
-
-    // Alerts
     alertCible: "⚠️ Veuillez sélectionner une cible",
     alertAucunContact: "⚠️ Aucun contact sélectionné",
     alertCibleIntrouvable: "⚠️ Cible introuvable",
     alertSucces: "✅ Contacts envoyés et enregistrés",
     alertErreurSuppression: "❌ Erreur lors de la suppression",
     alertErreurEnvoi: "❌ Erreur lors de l'envoi : ",
-
-    // Months
     months: ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"],
   },
   en: {
-    // Page header
     titre1: "Evangelism Contact",
     titre2: " Management",
     description: "This page",
@@ -121,8 +101,6 @@ const translations = {
     descMid2: "You can assign each contact to a counsellor or a cell group, and send information directly via WhatsApp. Each contact can be viewed in detail, edited or deleted,",
     descAccent3: " ensuring accurate and organised evangelism follow-up within your church",
     descEnd: ".",
-
-    // Send selectors
     envoyerA: "-- Send to --",
     uneCellule: "A Cell group",
     uneFamille: "A Family",
@@ -130,21 +108,15 @@ const translations = {
     choisir: "-- Choose --",
     envoiBtn: "📤 Send via WhatsApp",
     envoiLoading: "Sending...",
-
-    // Card
     ville: "🏙️ City:",
     selectionner: "Select",
     evangeliseLe: "Evangelised on",
     details: "Details",
     fermerDetails: "Close details",
-
-    // Phone menu
     appeler: "📞 Call",
     sms: "✉️ SMS",
     appelWhatsApp: "📱 WhatsApp Call",
     messageWhatsApp: "💬 WhatsApp Message",
-
-    // Details sections
     typeEvang: "📣 Evangelism type:",
     identite: "👤 Identity",
     civilite: "🎗️ Gender:",
@@ -161,23 +133,17 @@ const translations = {
     modifierContact: "✏️ Edit contact",
     supprimerContact: "🗑️ Delete contact",
     confirmSuppression: "⚠️ Permanent deletion\n\nAre you sure you want to delete this contact?",
-
-    // Doublon popup
     doublonsDetectes: "⚠️ Duplicates detected",
     doublonsInfo: "These contacts are already registered in the follow-ups.",
     envoyer: "Send",
     annuler: "Cancel",
     fermer: "Close",
-
-    // WhatsApp popup
     whatsappInfo: "Check the leader's information before sending. If the number is cleared, WhatsApp will open on your contacts.",
     nomResponsable: "👤 Leader's name",
     nomResponsablePl: "Leader's name",
     numeroWhatsApp: "📞 WhatsApp number",
     numeroWhatsAppPl: "+3363xxx... — leave blank to choose from your contacts",
     envoyerBtn: "Send",
-
-    // WhatsApp message (stays professional in English)
     msgBonjour: "👋 Hello",
     msgIntroPlural: "We are entrusting you with the following people met during evangelism.\n\n",
     msgIntroSingular: "We are entrusting you with the following person met during evangelism.\n\n",
@@ -195,16 +161,12 @@ const translations = {
     msgBesoins: "❓ Difficulties / Needs:",
     msgInfos: "📝 Notes:",
     msgMerci: "Thank you for your commitment ✨",
-
-    // Alerts
     alertCible: "⚠️ Please select a target",
     alertAucunContact: "⚠️ No contact selected",
     alertCibleIntrouvable: "⚠️ Target not found",
     alertSucces: "✅ Contacts sent and recorded",
     alertErreurSuppression: "❌ Error while deleting",
     alertErreurEnvoi: "❌ Error while sending: ",
-
-    // Months
     months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
   },
 };
@@ -255,14 +217,13 @@ function EvangelisationContent() {
   const { triggerRefresh } = useNotificationsContext();
 
   const [view, setView] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("members_view") || "card";
-    }
+    if (typeof window !== "undefined") return localStorage.getItem("members_view") || "card";
     return "card";
   });
 
   useEffect(() => { localStorage.setItem("members_view", view); }, [view]);
 
+  // ✅ Highlight harmonisé avec ListMembers — couleur ambrée
   const highlightDoneRef = useRef(false);
 
   useEffect(() => {
@@ -284,10 +245,10 @@ function EvangelisationContent() {
 
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
-      el.style.boxShadow = "0 0 0 3px rgba(167,139,250,0.7), 0 0 32px 10px rgba(167,139,250,0.25)";
+      el.style.boxShadow = "0 0 0 4px #f59e0b, 0 0 24px 8px rgba(245,158,11,0.4)";
       el.style.transform = "scale(1.02)";
       setTimeout(() => {
-        el.style.transition = "box-shadow 1.5s ease, transform 1.5s ease";
+        el.style.transition = "box-shadow 1s ease, transform 1s ease";
         el.style.boxShadow = "";
         el.style.transform = "";
       }, 5000);
@@ -419,11 +380,7 @@ function EvangelisationContent() {
         .from("evangelises")
         .update({ status_suivi: "supprime" })
         .eq("id", id);
-      if (error) {
-        console.error("Erreur suppression :", error);
-        alert(t.alertErreurSuppression);
-        return;
-      }
+      if (error) { console.error("Erreur suppression :", error); alert(t.alertErreurSuppression); return; }
       setContacts((prev) => prev.filter((m) => m.id !== id));
     } catch (err) {
       console.error(err);
@@ -438,9 +395,7 @@ function EvangelisationContent() {
     selectedTargetRef.current = selectedTarget;
     contactsToSendRef.current = selectedContacts;
 
-    const { data: existingSuivis } = await supabase
-      .from("suivis_des_evangelises")
-      .select("telephone");
+    const { data: existingSuivis } = await supabase.from("suivis_des_evangelises").select("telephone");
 
     const detected = selectedContacts.filter((c) =>
       (existingSuivis || []).some((s) => s.telephone === c.telephone)
@@ -474,11 +429,7 @@ function EvangelisationContent() {
       assigned_by: profile?.id || null,
     }));
 
-    const { error } = await supabase
-      .from("suivi_assignments_evangelises")
-      .insert(assignmentRows)
-      .select();
-
+    const { error } = await supabase.from("suivi_assignments_evangelises").insert(assignmentRows).select();
     if (error) console.error("Erreur écriture suivi_assignments_evangelises :", error);
   };
 
@@ -518,19 +469,13 @@ function EvangelisationContent() {
       }));
 
       const { data: insertedSuivis, error: insertError } = await supabase
-        .from("suivis_des_evangelises")
-        .insert(inserts)
-        .select("id, conseiller_id");
-
+        .from("suivis_des_evangelises").insert(inserts).select("id, conseiller_id");
       if (insertError) throw insertError;
 
       await writeAssignments(insertedSuivis, targetType, targetId);
 
       const ids = contactsToSend.map((c) => c.id);
-      const { error: updateError } = await supabase
-        .from("evangelises")
-        .update({ status_suivi: "Envoyé" })
-        .in("id", ids);
+      const { error: updateError } = await supabase.from("evangelises").update({ status_suivi: "Envoyé" }).in("id", ids);
       if (updateError) throw updateError;
 
       setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
@@ -570,7 +515,6 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
       window.open(whatsappLink, "_blank");
       setPhoneNumber("");
       setTargetName("");
-
       window.dispatchEvent(new CustomEvent("refresh-notif-count"));
       alert(t.alertSucces);
 
@@ -629,11 +573,7 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
         )}
 
         {hasSelectedContacts && selectedTarget && (
-          <button
-            onClick={checkDoublons}
-            disabled={loadingSend}
-            className="w-full bg-green-500 text-white font-bold px-4 py-2 rounded"
-          >
+          <button onClick={checkDoublons} disabled={loadingSend} className="w-full bg-green-500 text-white font-bold px-4 py-2 rounded">
             {loadingSend ? t.envoiLoading : t.envoiBtn}
           </button>
         )}
@@ -647,7 +587,7 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
               <div
                 key={member.id}
                 ref={(el) => (highlightRef.current[member.id] = el)}
-                className={`bg-white rounded-2xl shadow-xl p-4 border-l-4 relative ${highlight === String(member.id) ? "highlight-pulse" : ""}`}
+                className="bg-white rounded-2xl shadow-xl p-4 border-l-4 relative"
                 style={{ borderLeftColor: getBorderColor(member) }}
               >
                 <h2 className="font-bold text-center">{member.prenom} {member.nom}</h2>
@@ -717,11 +657,7 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
                           {t.modifierContact}
                         </button>
                         <button
-                          onClick={() => {
-                            if (window.confirm(t.confirmSuppression)) {
-                              handleSupprimerMembre(member.id);
-                            }
-                          }}
+                          onClick={() => { if (window.confirm(t.confirmSuppression)) handleSupprimerMembre(member.id); }}
                           className="w-full py-2 rounded-lg text-red-600 text-xs"
                         >
                           {t.supprimerContact}

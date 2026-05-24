@@ -157,14 +157,10 @@ function SuivisEvangelisationContent() {
   const { lang } = useLang();
   const t = translations[lang];
 
-  // ─────────────────────────────────────────────
-  // ✅ FEATURES — tous les hooks en premier
-  // ─────────────────────────────────────────────
   const famillesActive = useFeature("familles");
   const cellulesActive = useFeature("cellules");
   const conseillerActive = useFeature("conseiller");
 
-  // ✅ Highlight
   const router = useRouter();
   const { highlight } = router.query;
   const highlightRef = useRef({});
@@ -227,10 +223,11 @@ function SuivisEvangelisationContent() {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
       el.style.boxShadow =
-        "0 0 0 3px rgba(167,139,250,0.7), 0 0 32px 10px rgba(167,139,250,0.25)";
+        "0 0 0 4px #f59e0b, 0 0 24px 8px rgba(245,158,11,0.4)";
       el.style.transform = "scale(1.02)";
+
       setTimeout(() => {
-        el.style.transition = "box-shadow 1.5s ease, transform 1.5s ease";
+        el.style.transition = "box-shadow 1s ease, transform 1s ease";
         el.style.boxShadow = "";
         el.style.transform = "";
       }, 5000);
@@ -680,9 +677,7 @@ function SuivisEvangelisationContent() {
             <div
               key={m.id}
               ref={(el) => (highlightRef.current[m.id] = el)}
-              className={`bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4 ${
-                highlight === String(m.id) ? "highlight-pulse" : ""
-              }`}
+              className="bg-white rounded-2xl shadow-lg w-full transition-all duration-300 hover:shadow-2xl p-4 border-l-4"
               style={{ borderLeftColor: getBorderColor(m) }}
             >
               <div className="flex flex-col items-center">
@@ -755,7 +750,7 @@ function SuivisEvangelisationContent() {
                   )}
                 </div>
 
-                {/* ✅ Infos conditionnées par feature */}
+                {/* Infos conditionnées par feature */}
                 <div className="flex flex-col items-center space-y-1 mb-1">
                   {cellulesActive && (
                     <p className="text-sm text-black">
@@ -819,7 +814,6 @@ function SuivisEvangelisationContent() {
                         : "bg-white"
                     }`}
                   >
-                    {/* Status values stored as "En cours"/"Intégré"/"Refus" in DB */}
                     <option value="">{t.statusDefault}</option>
                     <option value="En cours">{t.statusEnCours}</option>
                     <option value="Intégré">{t.statusIntegre}</option>
@@ -944,7 +938,6 @@ function SuivisEvangelisationContent() {
         })}
       </div>
 
-      {/* ✅ EditEvangeliseSuiviPopup — props filtrées par feature */}
       {editingContact && (
         <EditEvangeliseSuiviPopup
           member={editingContact}

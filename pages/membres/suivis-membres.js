@@ -13,7 +13,6 @@ import { useLang } from "../../hooks/useLang";
 
 const translations = {
   fr: {
-    // Page header
     titre1: "Suivis des",
     titre2: "Membres",
     description: "Ici, vous pouvez voir,",
@@ -25,57 +24,41 @@ const translations = {
     descriptionMid3: "chaque membre de la famille, et de cultiver la croissance de chaque membre avec",
     descriptionAccent4: " amour et discipline",
     descriptionEnd: ".",
-
-    // Toggle
     voirRefus: "Voir les refus",
     voirTous: "Voir tous les suivis",
-
-    // Messages
     aucunMembre: "Aucun membre à afficher.",
     erreurFetch: "Erreur lors de la récupération des membres.",
     utilisateurNonConnecte: "Utilisateur non connecté",
-
-    // Card fields
     cellule: "🏠 Cellule :",
     famille: "👨‍👩‍👦 Famille :",
     conseiller: "👤 Conseiller(s) :",
     creeeLe: "Créé le",
     commentaireSuivis: "Commentaire Suivis",
     statutIntegration: "Statut Intégration",
-
-    // Status options
     selectionnerStatut: "-- Sélectionner un statut --",
     enSuivis: "En Suivis",
     integrer: "Intégrer",
     refus: "Refus",
-
-    // Buttons
     reactiver: "Réactiver",
     reactivation: "Réactivation...",
     sauvegarder: "Sauvegarder",
     enregistrement: "Enregistrement...",
     details: "Détails",
     fermerDetails: "Fermer détails",
-
-    // Phone menu
     appeler: "📞 Appeler",
     sms: "✉️ SMS",
     appelWhatsApp: "📱 Appel WhatsApp",
     messageWhatsApp: "💬 Message WhatsApp",
-
-    // Details popup sections
     identite: "👤 Identité",
     civilite: "🎗️ Civilité :",
     age: "⏳ Âge :",
     whatsapp: "💬 WhatsApp :",
     oui: "Oui",
     non: "Non",
-
     suivi: "📊 Suivi",
     arriveLe: "Arrivé le :",
     arrivedLe: "Arrivée le :",
     conseillersLabel: "👤 Conseiller(s) :",
-
     vieSpirituelle: "🕊 Vie spirituelle",
     baptemeEau: "💧 Baptême d'Eau :",
     baptemeFeu: "🔥 Baptême de Feu :",
@@ -83,22 +66,17 @@ const translations = {
     typeConversion: "☀️ Type de conversion :",
     formation: "✒️ Formation :",
     ministere: "💢 Ministère :",
-
     parcours: "🌱 Parcours",
     commentEstVenu: "🧩 Comment est-il venu :",
     raisonVenue: "✨ Raison de la venue :",
     infos: "📝 Infos :",
-
     soinPastoral: "❤️‍🩹 Soin pastoral",
     besoins: "❓ Difficultés / Besoins :",
     ajouterVoirSuivis: "💡 Ajouter / Voir suivis",
     modifierContact: "✏️ Modifier le contact",
-
-    // Months
     months: ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"],
   },
   en: {
-    // Page header
     titre1: "Member",
     titre2: "Follow-ups",
     description: "Here you can view,",
@@ -110,57 +88,41 @@ const translations = {
     descriptionMid3: "every family member, and nurture each member's growth with",
     descriptionAccent4: " love and discipline",
     descriptionEnd: ".",
-
-    // Toggle
     voirRefus: "View declined",
     voirTous: "View all follow-ups",
-
-    // Messages
     aucunMembre: "No members to display.",
     erreurFetch: "Error fetching members.",
     utilisateurNonConnecte: "User not logged in",
-
-    // Card fields
     cellule: "🏠 Cell:",
     famille: "👨‍👩‍👦 Family:",
     conseiller: "👤 Counsellor(s):",
     creeeLe: "Created on",
     commentaireSuivis: "Follow-up Comment",
     statutIntegration: "Integration Status",
-
-    // Status options
     selectionnerStatut: "-- Select a status --",
     enSuivis: "In Follow-up",
     integrer: "Integrated",
     refus: "Declined",
-
-    // Buttons
     reactiver: "Reactivate",
     reactivation: "Reactivating...",
     sauvegarder: "Save",
     enregistrement: "Saving...",
     details: "Details",
     fermerDetails: "Close details",
-
-    // Phone menu
     appeler: "📞 Call",
     sms: "✉️ SMS",
     appelWhatsApp: "📱 WhatsApp Call",
     messageWhatsApp: "💬 WhatsApp Message",
-
-    // Details popup sections
     identite: "👤 Identity",
     civilite: "🎗️ Gender:",
     age: "⏳ Age:",
     whatsapp: "💬 WhatsApp:",
     oui: "Yes",
     non: "No",
-
     suivi: "📊 Follow-up",
     arriveLe: "Arrived on:",
     arrivedLe: "Arrived on:",
     conseillersLabel: "👤 Counsellor(s):",
-
     vieSpirituelle: "🕊 Spiritual life",
     baptemeEau: "💧 Water Baptism:",
     baptemeFeu: "🔥 Spirit Baptism:",
@@ -168,18 +130,14 @@ const translations = {
     typeConversion: "☀️ Conversion type:",
     formation: "✒️ Training:",
     ministere: "💢 Ministry:",
-
     parcours: "🌱 Journey",
     commentEstVenu: "🧩 How they came:",
     raisonVenue: "✨ Reason for coming:",
     infos: "📝 Notes:",
-
     soinPastoral: "❤️‍🩹 Pastoral care",
     besoins: "❓ Difficulties / Needs:",
     ajouterVoirSuivis: "💡 Add / View follow-ups",
     modifierContact: "✏️ Edit contact",
-
-    // Months
     months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
   },
 };
@@ -188,17 +146,8 @@ const translations = {
 // DetailsPopup extrait HORS du composant parent
 // ─────────────────────────────────────────────────────────────
 const DetailsPopup = React.memo(function DetailsPopup({
-  m,
-  user,
-  showRefus,
-  openSuiviMemberId,
-  setOpenSuiviMemberId,
-  setEditMember,
-  cellules,
-  familles,
-  conseillers,
-  assignmentsMap,
-  t,
+  m, user, showRefus, openSuiviMemberId, setOpenSuiviMemberId,
+  setEditMember, cellules, familles, conseillers, assignmentsMap, t,
 }) {
   const formatMinistere = (ministere) => {
     if (!ministere) return "—";
@@ -246,7 +195,6 @@ const DetailsPopup = React.memo(function DetailsPopup({
         <p>{t.whatsapp} {m.is_whatsapp ? t.oui : t.non}</p>
       </div>
       <hr />
-
       <div>
         <p className="font-bold text-[#2E3192] mb-1">{t.suivi}</p>
         <p>📅 {m.sexe === "Femme" ? t.arrivedLe : t.arriveLe} {formatDate(m.date_venu)}</p>
@@ -256,7 +204,6 @@ const DetailsPopup = React.memo(function DetailsPopup({
         </div>
       </div>
       <hr />
-
       <div>
         <p className="font-bold text-[#2E3192] mb-1">{t.vieSpirituelle}</p>
         <p>{t.baptemeEau} {m.bapteme_eau || "—"}</p>
@@ -267,7 +214,6 @@ const DetailsPopup = React.memo(function DetailsPopup({
         <p>{t.ministere} {formatMinistere(m.Ministere) || "—"}</p>
       </div>
       <hr />
-
       <div>
         <p className="font-bold text-[#2E3192] mb-1">{t.parcours}</p>
         <p>{t.commentEstVenu} {m.venu || "—"}</p>
@@ -275,7 +221,6 @@ const DetailsPopup = React.memo(function DetailsPopup({
         <p>{t.infos} {m.infos_supplementaires || "—"}</p>
       </div>
       <hr />
-
       <div>
         <p className="font-bold text-[#2E3192] mb-1">{t.soinPastoral}</p>
         <p>{t.besoins} {formatArrayField(m.besoin)}</p>
@@ -287,16 +232,10 @@ const DetailsPopup = React.memo(function DetailsPopup({
             {t.ajouterVoirSuivis}
           </button>
         </div>
-
         {openSuiviMemberId === m.id && (
-          <SuiviPopup
-            member={m}
-            onClose={() => setOpenSuiviMemberId(null)}
-            user={user}
-          />
+          <SuiviPopup member={m} onClose={() => setOpenSuiviMemberId(null)} user={user} />
         )}
       </div>
-
       {!showRefus && (
         <div className="mt-4 rounded-xl w-full shadow-md p-4 bg-white">
           <button
@@ -347,14 +286,11 @@ function SuivisMembresContent() {
   const [assignmentsMap, setAssignmentsMap] = useState({});
 
   const [view, setView] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("members_view") || "card";
-    }
+    if (typeof window !== "undefined") return localStorage.getItem("members_view") || "card";
     return "card";
   });
 
-  const toggleDetails = (id) =>
-    setDetailsOpen((prev) => (prev === id ? null : id));
+  const toggleDetails = (id) => setDetailsOpen((prev) => (prev === id ? null : id));
 
   useEffect(() => { localStorage.setItem("members_view", view); }, [view]);
 
@@ -375,17 +311,11 @@ function SuivisMembresContent() {
       .select("membre_id, conseiller_id, role");
 
     if (error) { console.error("fetchAssignments error:", error); return; }
-    if (!assignments || assignments.length === 0) {
-      setAssignmentsMap({});
-      return;
-    }
+    if (!assignments || assignments.length === 0) { setAssignmentsMap({}); return; }
 
     const conseillerIds = [...new Set(assignments.map(a => a.conseiller_id).filter(Boolean))];
-
     const { data: profilesData, error: profilesError } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom")
-      .in("id", conseillerIds);
+      .from("profiles").select("id, prenom, nom").in("id", conseillerIds);
 
     if (profilesError) { console.error("fetchAssignments profiles error:", profilesError); return; }
 
@@ -397,9 +327,7 @@ function SuivisMembresContent() {
       const profile = profileMap[row.conseiller_id];
       if (!profile) return;
       if (!map[row.membre_id]) map[row.membre_id] = [];
-      if (!map[row.membre_id].some(c => c.id === profile.id)) {
-        map[row.membre_id].push(profile);
-      }
+      if (!map[row.membre_id].some(c => c.id === profile.id)) map[row.membre_id].push(profile);
     });
 
     setAssignmentsMap(map);
@@ -407,9 +335,7 @@ function SuivisMembresContent() {
 
   const getConseillersForMember = (memberId) => {
     const assigned = assignmentsMap[memberId];
-    if (assigned && assigned.length > 0) {
-      return assigned.map((c) => `${c.prenom} ${c.nom}`).join(", ");
-    }
+    if (assigned && assigned.length > 0) return assigned.map((c) => `${c.prenom} ${c.nom}`).join(", ");
     return "—";
   };
 
@@ -421,7 +347,6 @@ function SuivisMembresContent() {
         fetchAssignments();
       })
       .subscribe();
-
     return () => { channel.unsubscribe(); };
   }, [fetchAssignments]);
 
@@ -433,48 +358,33 @@ function SuivisMembresContent() {
         if (userError || !user) throw new Error(t.utilisateurNonConnecte);
 
         const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom, role, roles, eglise_id")
-          .eq("id", user.id)
-          .single();
+          .from("profiles").select("id, prenom, nom, role, roles, eglise_id").eq("id", user.id).single();
         if (profileError || !profileData) throw profileError;
 
         setPrenom(profileData.prenom || "");
         setUserProfile(profileData);
 
         const { data: cellulesData } = await supabase
-          .from("cellules")
-          .select("id, cellule_full, responsable_id")
-          .eq("eglise_id", profileData.eglise_id);
+          .from("cellules").select("id, cellule_full, responsable_id").eq("eglise_id", profileData.eglise_id);
         setCellules(cellulesData || []);
 
         const { data: famillesData } = await supabase
-          .from("familles")
-          .select("id, famille_full, responsable_id")
-          .eq("eglise_id", profileData.eglise_id);
+          .from("familles").select("id, famille_full, responsable_id").eq("eglise_id", profileData.eglise_id);
         setFamilles(famillesData || []);
 
         const { data: conseillersData } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom")
-          .eq("role", "Conseiller")
-          .eq("eglise_id", profileData.eglise_id);
+          .from("profiles").select("id, prenom, nom").eq("role", "Conseiller").eq("eglise_id", profileData.eglise_id);
         setConseillers(conseillersData || []);
 
         let query = supabase
-          .from("membres_complets")
-          .select("*")
+          .from("membres_complets").select("*")
           .eq("eglise_id", profileData.eglise_id)
           .order("created_at", { ascending: false });
 
         if (profileData.role === "Conseiller") {
           const { data: assignments } = await supabase
-            .from("suivi_assignments")
-            .select("membre_id")
-            .eq("conseiller_id", profileData.id);
-
+            .from("suivi_assignments").select("membre_id").eq("conseiller_id", profileData.id);
           const assignedIds = (assignments || []).map(a => a.membre_id).filter(Boolean);
-
           if (assignedIds.length > 0) query = query.in("id", assignedIds);
           else query = query.eq("id", -1);
         } else if (profileData.role === "ResponsableCellule") {
@@ -494,7 +404,6 @@ function SuivisMembresContent() {
         if (!data || data.length === 0) setMessage(t.aucunMembre);
 
         await fetchAssignments();
-
       } catch (err) {
         console.error("❌ Erreur fetchMembresComplets:", err);
         setMessage(t.erreurFetch);
@@ -506,7 +415,7 @@ function SuivisMembresContent() {
     fetchMembresComplets();
   }, [setAllMembers, fetchAssignments]);
 
-  // ✅ Highlight depuis ?highlight=id
+  // ✅ Highlight harmonisé avec ListMembers — couleur ambrée
   const highlightDoneRef = useRef(false);
 
   useEffect(() => {
@@ -526,10 +435,10 @@ function SuivisMembresContent() {
       highlightDoneRef.current = true;
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
-      el.style.boxShadow = "0 0 0 3px rgba(59,130,246,0.6), 0 0 32px 10px rgba(59,130,246,0.25)";
+      el.style.boxShadow = "0 0 0 4px #f59e0b, 0 0 24px 8px rgba(245,158,11,0.4)";
       el.style.transform = "scale(1.02)";
       setTimeout(() => {
-        el.style.transition = "box-shadow 1.5s ease, transform 1.5s ease";
+        el.style.transition = "box-shadow 1s ease, transform 1s ease";
         el.style.boxShadow = "";
         el.style.transform = "";
       }, 5000);
@@ -578,11 +487,7 @@ function SuivisMembresContent() {
       if ([2, 3, 4].includes(statusNum)) payload.date_statut_Def = new Date().toISOString().split("T")[0];
 
       const { data: updatedMember, error } = await supabase
-        .from("membres_complets")
-        .update(payload)
-        .eq("id", id)
-        .select("*")
-        .single();
+        .from("membres_complets").update(payload).eq("id", id).select("*").single();
       if (error) throw error;
 
       setAllMembers(prev => prev.map(m => (m.id === id ? updatedMember : m)));
@@ -597,11 +502,8 @@ function SuivisMembresContent() {
     setUpdating(prev => ({ ...prev, [id]: true }));
     try {
       const { data: updatedMember, error } = await supabase
-        .from("membres_complets")
-        .update({ statut_suivis: 2, updated_at: new Date() })
-        .eq("id", id)
-        .select("*")
-        .single();
+        .from("membres_complets").update({ statut_suivis: 2, updated_at: new Date() })
+        .eq("id", id).select("*").single();
       if (error) throw error;
       setAllMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
     } catch (err) {
@@ -622,7 +524,6 @@ function SuivisMembresContent() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6" style={{ background: "#333699" }}>
-
       <HeaderPages />
 
       <div className="text-center mb-6">
@@ -697,11 +598,9 @@ function SuivisMembresContent() {
                 <p className="text-sm text-black-700 mb-1">
                   {t.cellule} {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}
                 </p>
-
                 <p className="text-sm text-black-700 mb-1">
                   {t.famille} {m.famille_id ? (familles.find(f => f.id === m.famille_id)?.famille_full || "—") : "—"}
                 </p>
-
                 <p className="text-sm text-black-700 mb-1">
                   {t.conseiller} {getConseillersForMember(m.id)}
                 </p>

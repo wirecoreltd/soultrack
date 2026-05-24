@@ -48,7 +48,6 @@ const translations = {
   },
 };
 
-
 function getRoles(profile) {
   if (!profile) return [];
   if (Array.isArray(profile.roles)) return profile.roles;
@@ -91,7 +90,6 @@ function TypeBadge({ type, lang = "fr" }) {
     invitation:           { bg: "#eef2ff", text: "#4338ca", dot: "#818cf8", label: labels.invitation },
   };
   const c = config[type] || config.existant;
-  
   return (
     <span style={{ background: c.bg, color: c.text, fontSize: "11px", fontWeight: "700", borderRadius: "999px", padding: "2px 10px", display: "inline-flex", alignItems: "center", gap: "5px" }}>
       <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: c.dot, display: "inline-block" }} />
@@ -353,13 +351,17 @@ function NotificationsContent() {
       return;
     }
 
-    // ✅ FIX 3 — bloc "nouveau" sorti du bloc "membre_assigne" + markAsSeen appelé
     if (n._type === "nouveau") {
       markAsSeen(n.id);
       setNotifications((prev) =>
         prev.filter((notif) => !(notif._type === "nouveau" && notif.id === n.id))
       );
-      router.push(`/membres/list-members?highlight=${n.id}`);
+      // ── Si le membre a une cellule → membres-cellule, sinon → list-members ──
+      if (n.cellule_id) {
+        router.push(`/cellule/membres-cellule?highlight=${n.id}&celluleId=${n.cellule_id}`);
+      } else {
+        router.push(`/membres/list-members?highlight=${n.id}`);
+      }
       return;
     }
 
@@ -368,7 +370,6 @@ function NotificationsContent() {
       setNotifications((prev) =>
         prev.filter((notif) => !(notif._type === "membre_assigne" && notif.id === n.id))
       );
-      // ✅ Tous les cas → suivis-membres (contact en statut_suivis 1 ou 2, pas encore intégré)
       router.push(`/membres/suivis-membres?highlight=${n.id}`);
       return;
     }
@@ -382,13 +383,11 @@ function NotificationsContent() {
       return;
     }
 
-      if (n._type === "evangelise") {
-      // ✅ Marquer comme vu en base pour sortir du count
+    if (n._type === "evangelise") {
       await supabase
         .from("evangelises")
         .update({ status_suivi: "vu" })
         .eq("id", n.id);
-    
       setNotifications((prev) =>
         prev.filter((notif) => !(notif._type === "evangelise" && notif.id === n.id))
       );
@@ -436,13 +435,13 @@ function NotificationsContent() {
       <div className="w-full max-w-3xl mt-4 mb-6">
         <div className="flex items-center justify-between mb-1">
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">🔔 <span>{t.title}</span></h1>
-            <span style={{ background: "#ef4444", color: "#fff", fontSize: "12px", fontWeight: "700", borderRadius: "999px", padding: "2px 12px" }}>
-              {t.newLabel(filtered.length)}
-            </span>
+          <span style={{ background: "#ef4444", color: "#fff", fontSize: "12px", fontWeight: "700", borderRadius: "999px", padding: "2px 12px" }}>
+            {t.newLabel(filtered.length)}
+          </span>
         </div>
-        <p className="text-white/60 text-sm mb-4">{t.subtitle}</p>        
-          <input
-        type="text" placeholder={t.searchPlaceholder} value={search}
+        <p className="text-white/60 text-sm mb-4">{t.subtitle}</p>
+        <input
+          type="text" placeholder={t.searchPlaceholder} value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full px-4 py-2 rounded-lg border-0 text-black text-sm mb-4"
           style={{ outline: "none" }}
@@ -475,9 +474,9 @@ function NotificationsContent() {
                     <p style={{ fontWeight: "700", fontSize: "14px", color: "#111827", margin: 0 }}>{n.prenom} {n.nom}</p>
                     <TypeBadge type={n._type} lang={lang} />
                   </div>
-                 {n._type === "invitation" && <p style={{ fontSize: "12px", color: "#4338ca", margin: "2px 0 0" }}>{t.clickInvitation}</p>}
+                  {n._type === "invitation" && <p style={{ fontSize: "12px", color: "#4338ca", margin: "2px 0 0" }}>{t.clickInvitation}</p>}
                   {n._type === "membre_assigne" && n.suivi_cellule_nom && <p style={{ fontSize: "12px", color: "#6b7280", margin: "2px 0 0" }}>🏠 {n.suivi_cellule_nom}</p>}
-                 {n._type === "membre_assigne_evang" && <p style={{ fontSize: "12px", color: "#059669", margin: "2px 0 0" }}>{t.fromEvang}</p>}
+                  {n._type === "membre_assigne_evang" && <p style={{ fontSize: "12px", color: "#059669", margin: "2px 0 0" }}>{t.fromEvang}</p>}
                   {n.ville && !["membre_assigne", "membre_assigne_evang", "invitation"].includes(n._type) && <p style={{ fontSize: "12px", color: "#6b7280", margin: "2px 0 0" }}>🏙️ {n.ville}</p>}
                   {n._type === "invitation" && n.ville && <p style={{ fontSize: "12px", color: "#6b7280", margin: "2px 0 0" }}>🏙️ {n.ville}</p>}
                   <p style={{ fontSize: "11px", color: "#9ca3af", margin: "2px 0 0" }}>📅 {formatDateFr(n._date)}</p>

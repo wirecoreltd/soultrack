@@ -209,7 +209,7 @@ function MembresCelluleContent() {
     setMembres((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
   };
 
-  // ── Highlight animé (même pattern que ListMembers) ──
+  // ── Highlight animé ──
   useEffect(() => {
     if (!highlight || loading || highlightDoneRef.current) return;
 
@@ -256,6 +256,7 @@ function MembresCelluleContent() {
       setUserRole(profile.role);
 
       if (profile.role === "ResponsableCellule") {
+        // 1. Cellules directes (responsable ou superviseur)
         const { data: directesData } = await supabase
           .from("cellules")
           .select("*")
@@ -264,6 +265,7 @@ function MembresCelluleContent() {
 
         const directIds = (directesData || []).map((c) => c.id);
 
+        // 2. Cellules enfants (cellule_mere_id pointe vers ses cellules)
         const { data: fillesData } = await supabase
           .from("cellules")
           .select("*")
@@ -272,7 +274,10 @@ function MembresCelluleContent() {
             directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]
           );
 
-        setCellules([...(directesData || []), ...(fillesData || [])]);
+        // Fusionner sans doublons
+        const toutes = [...(directesData || []), ...(fillesData || [])];
+        const unique = Array.from(new Map(toutes.map((c) => [c.id, c])).values());
+        setCellules(unique);
         return;
       }
 
@@ -360,18 +365,30 @@ function MembresCelluleContent() {
           if (celluleId) query = query.eq("cellule_id", celluleId);
 
         } else if (profile.role === "ResponsableCellule") {
+          // 1. Cellules directes (responsable_id)
           const { data: cellulesDirect } = await supabase
             .from("cellules").select("id")
             .eq("responsable_id", profile.id)
             .eq("eglise_id", profile.eglise_id);
           const directIds = (cellulesDirect || []).map((c) => c.id);
 
+          // 2. Cellules enfants (cellule_mere_id)
           const { data: cellulesFillesData } = await supabase
             .from("cellules").select("id")
-            .in("cellule_mere_id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
+            .in(
+              "cellule_mere_id",
+              directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]
+            );
           const fillesIds = (cellulesFillesData || []).map((c) => c.id);
 
-          mesCelluleIds = [...new Set([...directIds, ...fillesIds])];
+          // 3. Cellules dont il est superviseur
+          const { data: cellulesSuperviseesData } = await supabase
+            .from("cellules").select("id")
+            .eq("superviseur_id", profile.id)
+            .eq("eglise_id", profile.eglise_id);
+          const superviseesIds = (cellulesSuperviseesData || []).map((c) => c.id);
+
+          mesCelluleIds = [...new Set([...directIds, ...fillesIds, ...superviseesIds])];
 
           if (!mesCelluleIds.length) {
             setMembres([]);
@@ -379,6 +396,7 @@ function MembresCelluleContent() {
             setLoading(false);
             return;
           }
+
           query = query.in("cellule_id", mesCelluleIds);
           if (celluleId && mesCelluleIds.includes(celluleId))
             query = query.eq("cellule_id", celluleId);

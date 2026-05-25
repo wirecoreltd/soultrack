@@ -169,7 +169,7 @@ const getTemplateConfig = (lang, rolesValides) => ({
     ],
     example: [
       "Jean", "Dupont", "Homme", "26-30 ans", "2026-01-15",
-      "59700000", "Oui", "Curepipe",
+      "+33698765412", "Oui", "Paris",
       "veut rejoindre l'église", "invité", "Oui", "Nouveau converti",
       "jean.dupont@email.com", "MotDePasse123",
       rolesValides.includes("ResponsableCellule") ? "ResponsableCellule" : rolesValides[0] ?? "Administrateur",
@@ -205,7 +205,7 @@ const getTemplateConfig = (lang, rolesValides) => ({
     ],
     example: [
       "John", "Smith", "Male", "26-30 yrs", "2026-01-15",
-      "59700000", "Yes", "New York",
+      "+12025550101", "Yes", "New York",
       "wants to join the church", "invited", "Yes", "New convert",
       "john.smith@email.com", "Password123",
       rolesValides.includes("ResponsableCellule") ? "ResponsableCellule" : rolesValides[0] ?? "Administrateur",

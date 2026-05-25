@@ -115,7 +115,7 @@ const translations = {
     ],
     selectMembre: "-- Choose an existing member --",
     ajouterServiteur: "➕ Add a Servant",
-    dateVenu: "Date of visit",
+    dateVenu: "Arrival Date",
     civilite: "Title",
     civiliteOptions: [
       { value: "Homme", label: "Male" },

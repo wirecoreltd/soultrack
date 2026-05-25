@@ -23,7 +23,7 @@ const translations = {
     colVille: "Ville",
     colCellule: "Cellule",
     colResponsable: "Responsable",
-    colSuperviseur: "Superviseur",
+    colParent: "Parent",
     colTelephone: "Téléphone",
     colCount: "Count",
     colAction: "Action",
@@ -36,7 +36,7 @@ const translations = {
     whatsApp: "💬 WhatsApp",
     ville: "📍 Ville :",
     responsable: "👤 Responsable :",
-    superviseur: "⚜️ Superviseur :",
+    parent: "👤 Parent :",
     membreSing: "membre",
     membrePlur: "membres",
     chargement: "Chargement...",
@@ -55,7 +55,7 @@ const translations = {
     colVille: "City",
     colCellule: "Cell group",
     colResponsable: "Leader",
-    colSuperviseur: "Supervisor",
+    colParent: "Parent",
     colTelephone: "Phone",
     colCount: "Count",
     colAction: "Action",
@@ -68,7 +68,7 @@ const translations = {
     whatsApp: "💬 WhatsApp",
     ville: "📍 City:",
     responsable: "👤 Leader:",
-    superviseur: "⚜️ Supervisor:",
+    parent: "👤 Parent:",
     membreSing: "member",
     membrePlur: "members",
     chargement: "Loading...",
@@ -167,7 +167,7 @@ function CelluleRow({ c, router, canEdit, onEdit, t }) {
         </div>
 
         <div className="text-white text-sm mb-2">
-          {t.superviseur}{" "}
+          {t.parent}{" "}
           <span className="text-amber-300 font-semibold">
             {c.superviseur ? `${c.superviseur.prenom} ${c.superviseur.nom}` : "—"}
           </span>
@@ -291,7 +291,6 @@ function ListCellulesContent() {
     setLoading(false);
   };
 
-  // ✅ useCallback pour stabiliser les références — évite les re-montages du modal
   const handleEdit = useCallback((cellule) => {
     setSelectedCellule(cellule);
     setShowEditModal(true);
@@ -404,7 +403,7 @@ function ListCellulesContent() {
           <div className="flex-[2]">{t.colVille}</div>
           <div className="flex-[2]">{t.colCellule}</div>
           <div className="flex-[2]">{t.colResponsable}</div>
-          <div className="flex-[2]">{t.colSuperviseur}</div>
+          <div className="flex-[2]">{t.colParent}</div>
           <div className="flex-[2] text-center">{t.colTelephone}</div>
           <div className="flex-[1] text-center">{t.colCount}</div>
           <div className="flex-[1] text-center">{t.colAction}</div>
@@ -426,7 +425,6 @@ function ListCellulesContent() {
         )}
       </div>
 
-      {/* ✅ key={selectedCellule.id} garantit un seul montage par cellule sélectionnée */}
       {showEditModal && selectedCellule && (
         <EditCelluleModal
           key={selectedCellule.id}

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Papa from "papaparse";
 import supabase from "../lib/supabaseClient";
 import { useLang } from "../hooks/useLang";
+import { useFeature } from "../components/FeaturesContext";
 
 const translations = {
   fr: {
@@ -59,15 +60,16 @@ const translations = {
 };
 
 // ─── Roles & ministères (valeurs DB = toujours en français) ───
-const ROLES_VALIDES = [
-  "Administrateur",
-  "ResponsableIntegration",
-  "ResponsableEvangelisation",
-  "ResponsableCellule",
-  "SuperviseurCellule",
-  "ResponsableFamilles",
-  "SuperviseurFamilles",
-  "Conseiller",
+// feature: null = toujours disponible
+const ALL_ROLES = [
+  { key: "Administrateur",            feature: null },
+  { key: "ResponsableIntegration",    feature: null },
+  { key: "ResponsableEvangelisation", feature: null },
+  { key: "ResponsableCellule",        feature: "cellules" },
+  { key: "SuperviseurCellule",        feature: "cellules" },
+  { key: "ResponsableFamilles",       feature: "familles" },
+  { key: "SuperviseurFamilles",       feature: "familles" },
+  { key: "Conseiller",                feature: "conseiller" },
 ];
 
 const MINISTERES_VALIDES = [
@@ -154,8 +156,8 @@ const normalizeValue = (value, enToFrMap, validFrValues) => {
   return enToFrMap[trimmed] ?? trimmed; // retourne tel quel si inconnu (sera rejeté par validation)
 };
 
-// ─── Config template par langue ───
-const TEMPLATE_CONFIG = {
+// ─── Config template par langue (fonction pour injecter les rôles filtrés) ───
+const getTemplateConfig = (lang, rolesValides) => ({
   fr: {
     filename: "template_import_utilisateurs.csv",
     headers: [
@@ -170,8 +172,10 @@ const TEMPLATE_CONFIG = {
       "59700000", "Oui", "Curepipe",
       "veut rejoindre l'église", "invité", "Oui", "Nouveau converti",
       "jean.dupont@email.com", "MotDePasse123",
-      "ResponsableCellule", "Louange|Intercession",
-      "Ma Cellule", "Rose-Hill",
+      rolesValides.includes("ResponsableCellule") ? "ResponsableCellule" : rolesValides[0] ?? "Administrateur",
+      "Louange|Intercession",
+      rolesValides.includes("ResponsableCellule") ? "Ma Cellule" : "",
+      rolesValides.includes("ResponsableCellule") ? "Rose-Hill" : "",
     ],
     notes: [
       "IMPORTANT: Effacez toutes les lignes commençant par # avant d'importer.",
@@ -184,9 +188,9 @@ const TEMPLATE_CONFIG = {
       "venu: invité | réseaux | evangélisation | autre",
       "priere_salut: Oui | Non",
       "type_conversion: Nouveau converti | Réconciliation (requis si priere_salut = Oui)",
-      `roles: ${ROLES_VALIDES.join(" | ")} — séparer plusieurs rôles par |`,
+      `roles: ${rolesValides.join(" | ")} — séparer plusieurs rôles par |`,
       `ministeres: ${MINISTERES_VALIDES.join(" | ")} — séparer par |`,
-      "cellule_nom / cellule_zone: obligatoires si role = ResponsableCellule",
+      ...(rolesValides.includes("ResponsableCellule") ? ["cellule_nom / cellule_zone: obligatoires si role = ResponsableCellule"] : []),
       "cellule_mere_id: UUID de la cellule mère (optionnel)",
     ],
   },
@@ -204,8 +208,10 @@ const TEMPLATE_CONFIG = {
       "59700000", "Yes", "New York",
       "wants to join the church", "invited", "Yes", "New convert",
       "john.smith@email.com", "Password123",
-      "ResponsableCellule", "Praise|Intercession",
-      "My Cell", "Brooklyn",
+      rolesValides.includes("ResponsableCellule") ? "ResponsableCellule" : rolesValides[0] ?? "Administrateur",
+      "Praise|Intercession",
+      rolesValides.includes("ResponsableCellule") ? "My Cell" : "",
+      rolesValides.includes("ResponsableCellule") ? "Brooklyn" : "",
     ],
     notes: [
       "IMPORTANT: Delete all lines starting with # before importing.",
@@ -218,13 +224,13 @@ const TEMPLATE_CONFIG = {
       "how_came: invited | social media | evangelization | other",
       "salvation_prayer: Yes | No",
       "conversion_type: New convert | Reconciliation (required if salvation_prayer = Yes)",
-      `roles: ${ROLES_VALIDES.join(" | ")} — separate multiple roles with |`,
+      `roles: ${rolesValides.join(" | ")} — separate multiple roles with |`,
       `ministries: Intercession | Praise | Technical | Communication | Children | Teens | Youth | Finance | Cleaning | Counselor | Compassion | Visitation | Shepherd | Moderation — separate with |`,
-      "cell_name / cell_area: required if role = ResponsableCellule",
+      ...(rolesValides.includes("ResponsableCellule") ? ["cell_name / cell_area: required if role = ResponsableCellule"] : []),
       "cellule_mere_id: UUID of the parent cell group (optional)",
     ],
   },
-};
+})[lang] ?? getTemplateConfig("fr", rolesValides);
 
 // Mapping des headers EN → clés internes FR
 const EN_HEADER_MAP = {
@@ -268,6 +274,18 @@ export default function ImportUsersCSV() {
   const { lang } = useLang();
   const t = translations[lang];
 
+  const cellulesActive   = useFeature("cellules");
+  const famillesActive   = useFeature("familles");
+  const conseillerActive = useFeature("conseiller");
+
+  // Rôles filtrés selon les features actives de l'église
+  const ROLES_VALIDES = useMemo(() => {
+    const featureMap = { cellules: cellulesActive, familles: famillesActive, conseiller: conseillerActive };
+    return ALL_ROLES
+      .filter(r => !r.feature || featureMap[r.feature])
+      .map(r => r.key);
+  }, [cellulesActive, famillesActive, conseillerActive]);
+
   const [data, setData]                 = useState([]);
   const [errors, setErrors]             = useState([]);
   const [loading, setLoading]           = useState(false);
@@ -278,7 +296,7 @@ export default function ImportUsersCSV() {
 
   // ── Téléchargement du template selon la langue ──
   const handleDownloadTemplate = () => {
-    const cfg = TEMPLATE_CONFIG[lang] || TEMPLATE_CONFIG.fr;
+    const cfg = getTemplateConfig(lang, ROLES_VALIDES);
 
     const csvContent = [
       cfg.headers.join(","),

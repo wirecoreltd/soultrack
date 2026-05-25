@@ -27,7 +27,6 @@ const translations = {
     ],
     selectMembre: "-- Choisir un membre existant --",
     ajouterServiteur: "➕ Ajouter un Serviteur",
-    // Champs membres
     dateVenu: "Date de venue",
     civilite: "Civilité",
     civiliteOptions: [
@@ -63,11 +62,9 @@ const translations = {
       { value: "Nouveau converti", label: "Nouveau converti" },
       { value: "Réconciliation",   label: "Réconciliation" },
     ],
-    // Compte
     email: "Email",
     motDePasse: "Mot de passe",
     confirmerMotDePasse: "Confirmer mot de passe",
-    // Ministères
     titreMinisteres: "Ministères :",
     ministereOptions: [
       "Intercession","Louange","Technique","Communication",
@@ -76,7 +73,6 @@ const translations = {
       "Berger","Modération",
     ],
     titreRoles: "Rôles :",
-    // Cellule
     titreCellule: "📍 Informations de la cellule",
     nomCellule: "Nom de la cellule *",
     zoneCellule: "Zone / Ville *",
@@ -84,11 +80,9 @@ const translations = {
     celluleMereOptional: "(optionnel)",
     celluleMereInfo: "Le responsable de la cellule mère deviendra automatiquement superviseur de cette cellule.",
     aucuneCelluleMere: "-- Aucune cellule mère --",
-    // Boutons
     annuler: "Annuler",
     creer: "Créer",
     creation: "Création en cours...",
-    // Messages
     erreurMotDePasse: "❌ Les mots de passe ne correspondent pas.",
     erreurRole: "❌ Sélectionnez au moins un rôle !",
     erreurNomCellule: "❌ Le nom de la cellule est obligatoire.",
@@ -121,7 +115,6 @@ const translations = {
     ],
     selectMembre: "-- Choose an existing member --",
     ajouterServiteur: "➕ Add a Servant",
-    // Member fields
     dateVenu: "Date of visit",
     civilite: "Title",
     civiliteOptions: [
@@ -157,11 +150,9 @@ const translations = {
       { value: "Nouveau converti", label: "New convert" },
       { value: "Réconciliation",   label: "Reconciliation" },
     ],
-    // Account
     email: "Email",
     motDePasse: "Password",
     confirmerMotDePasse: "Confirm password",
-    // Ministries
     titreMinisteres: "Ministries:",
     ministereOptions: [
       "Intercession","Praise","Technical","Communication",
@@ -170,7 +161,6 @@ const translations = {
       "Shepherd","Moderation",
     ],
     titreRoles: "Roles:",
-    // Cell
     titreCellule: "📍 Cell group information",
     nomCellule: "Cell group name *",
     zoneCellule: "Area / City *",
@@ -178,11 +168,9 @@ const translations = {
     celluleMereOptional: "(optional)",
     celluleMereInfo: "The leader of the parent cell group will automatically become the supervisor of this cell group.",
     aucuneCelluleMere: "-- No parent cell group --",
-    // Buttons
     annuler: "Cancel",
     creer: "Create",
     creation: "Creating...",
-    // Messages
     erreurMotDePasse: "❌ Passwords do not match.",
     erreurRole: "❌ Please select at least one role!",
     erreurNomCellule: "❌ Cell group name is required.",
@@ -201,7 +189,6 @@ const translations = {
 
 // ─── Helper: valeur initiale du formulaire ───
 const initialFormData = () => ({
-  // Infos membre
   date_venu: new Date().toISOString().slice(0, 10),
   sexe: "",
   prenom: "",
@@ -214,11 +201,9 @@ const initialFormData = () => ({
   venu: "",
   priere_salut: "",
   type_conversion: "",
-  // Compte
   email: "",
   password: "",
   confirmPassword: "",
-  // Rôles / ministères / cellule
   roles: [],
   ministere: [],
   cellule_nom: "",
@@ -297,9 +282,10 @@ function CreateInternalUserContent() {
 
         setCellules(cellulesData || []);
 
+        // ✅ CORRECTION : on fetch aussi is_whatsapp et ville
         const { data: membersData } = await supabase
           .from("membres_complets")
-          .select("id, prenom, nom, sexe, telephone, etat_contact")
+          .select("id, prenom, nom, sexe, telephone, is_whatsapp, ville, etat_contact")
           .eq("star", true)
           .eq("eglise_id", profile.eglise_id)
           .in("etat_contact", ["existant"]);
@@ -327,12 +313,19 @@ function CreateInternalUserContent() {
 
     const member = members.find(m => m.id === selectedMemberId);
     if (member) {
+      // ✅ CORRECTION : pré-remplissage complet avec tous les champs disponibles
       setFormData(prev => ({
         ...prev,
-        prenom: member.prenom || "",
-        nom: member.nom || "",
-        sexe: member.sexe || "",
-        telephone: member.telephone || "",
+        prenom:      member.prenom      || "",
+        nom:         member.nom         || "",
+        sexe:        member.sexe        || "",
+        telephone:   member.telephone   || "",
+        is_whatsapp: member.is_whatsapp ?? false,
+        ville:       member.ville       || "",
+        // email / password restent vides, à saisir manuellement
+        email:           "",
+        password:        "",
+        confirmPassword: "",
         roles: [],
       }));
 
@@ -472,8 +465,11 @@ function CreateInternalUserContent() {
 
   const handleCancel = () => router.back();
 
+  // ─── Flags d'affichage ───
+  const isExistingMember  = !!selectedMemberId && selectedMemberId !== "add-serviteur";
+  const isNewServant      = selectedMemberId === "add-serviteur";
+  const showMemberFields  = isExistingMember || isNewServant;
   const showCelluleFields = !!cellulesActive && formData.roles.includes("ResponsableCellule");
-  const showMemberFields  = selectedMemberId === "add-serviteur" || !!selectedMemberId;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
@@ -531,20 +527,11 @@ function CreateInternalUserContent() {
             <option value="add-serviteur">{t.ajouterServiteur}</option>
           </select>
 
-          {/* ── Champs membre (partagés avec AddMember) ── */}
+          {/* ══════════════════════════════════════════
+              CHAMPS COMMUNS (membre existant + nouveau serviteur)
+          ══════════════════════════════════════════ */}
           {showMemberFields && (
             <>
-              {/* Date de venue */}
-              <label className="text-sm font-semibold">{t.dateVenu}</label>
-              <input
-                type="date"
-                name="date_venu"
-                value={formData.date_venu}
-                onChange={handleChange}
-                className="input"
-                required
-              />
-
               {/* Civilité */}
               <label className="text-sm font-semibold">{t.civilite}</label>
               <select
@@ -603,7 +590,7 @@ function CreateInternalUserContent() {
                 {t.whatsapp}
               </label>
 
-              {/* Ville (optionnel) */}
+              {/* Ville */}
               <label className="text-sm font-semibold">{t.ville}</label>
               <input
                 name="ville"
@@ -611,6 +598,24 @@ function CreateInternalUserContent() {
                 value={formData.ville}
                 onChange={handleChange}
                 className="input"
+              />
+            </>
+          )}
+
+          {/* ══════════════════════════════════════════
+              CHAMPS NOUVEAU SERVITEUR UNIQUEMENT
+          ══════════════════════════════════════════ */}
+          {isNewServant && (
+            <>
+              {/* Date de venue */}
+              <label className="text-sm font-semibold">{t.dateVenu}</label>
+              <input
+                type="date"
+                name="date_venu"
+                value={formData.date_venu}
+                onChange={handleChange}
+                className="input"
+                required
               />
 
               {/* Âge */}
@@ -694,29 +699,30 @@ function CreateInternalUserContent() {
                   </select>
                 </>
               )}
+
+              {/* Ministères */}
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold">{t.titreMinisteres}</label>
+                {t.ministereOptions.map(m => (
+                  <label key={m} className="inline-flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.ministere.includes(m)}
+                      onChange={() => handleMinistereChange(m)}
+                    />
+                    {m}
+                  </label>
+                ))}
+              </div>
             </>
           )}
 
-          {/* ── Ministères (nouveau serviteur seulement) ── */}
-          {selectedMemberId === "add-serviteur" && (
-            <div className="flex flex-col gap-2">
-              <label className="font-semibold">{t.titreMinisteres}</label>
-              {t.ministereOptions.map(m => (
-                <label key={m} className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.ministere.includes(m)}
-                    onChange={() => handleMinistereChange(m)}
-                  />
-                  {m}
-                </label>
-              ))}
-            </div>
-          )}
-
-          {/* ── Compte (email + mot de passe) ── */}
+          {/* ══════════════════════════════════════════
+              COMPTE + RÔLES (commun aux deux modes)
+          ══════════════════════════════════════════ */}
           {showMemberFields && (
             <>
+              {/* Email */}
               <label className="text-sm font-semibold">{t.email}</label>
               <input
                 name="email"
@@ -727,6 +733,7 @@ function CreateInternalUserContent() {
                 required
               />
 
+              {/* Mot de passe */}
               <label className="text-sm font-semibold">{t.motDePasse}</label>
               <input
                 name="password"
@@ -738,6 +745,7 @@ function CreateInternalUserContent() {
                 required
               />
 
+              {/* Confirmer mot de passe */}
               <label className="text-sm font-semibold">{t.confirmerMotDePasse}</label>
               <input
                 name="confirmPassword"
@@ -748,31 +756,29 @@ function CreateInternalUserContent() {
                 className="input"
                 required
               />
-            </>
-          )}
 
-          {/* ── Rôles ── */}
-          {showMemberFields && (
-            <div className="flex flex-col gap-2">
-              <label className="font-semibold">{t.titreRoles}</label>
-              {allRoles
-                .filter(role =>
-                  role.key === "ResponsableCellule"
-                    ? true
-                    : !rolesToHide.includes(role.key)
-                )
-                .map(role => (
-                  <label key={role.key} className="inline-flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={formData.roles.includes(role.key)}
-                      onChange={() => handleRoleChange(role.key)}
-                    />
-                    {role.label}
-                  </label>
-                ))
-              }
-            </div>
+              {/* Rôles */}
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold">{t.titreRoles}</label>
+                {allRoles
+                  .filter(role =>
+                    role.key === "ResponsableCellule"
+                      ? true
+                      : !rolesToHide.includes(role.key)
+                  )
+                  .map(role => (
+                    <label key={role.key} className="inline-flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.roles.includes(role.key)}
+                        onChange={() => handleRoleChange(role.key)}
+                      />
+                      {role.label}
+                    </label>
+                  ))
+                }
+              </div>
+            </>
           )}
 
           {/* ── Infos cellule (ResponsableCellule seulement) ── */}

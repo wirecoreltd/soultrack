@@ -70,28 +70,46 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
 
   const modalRef = useRef(null);
 
-  // Chargement des responsables
+  // ✅ CORRECTION : fetch responsables filtrés par eglise_id
+  // On cherche dans les deux colonnes : "role" (string) ET "roles" (array)
   useEffect(() => {
+    if (!cellule?.eglise_id) return;
+
     const fetchResponsables = async () => {
       setLoadingResponsables(true);
+
+      // On récupère tous les profils de la même église
+      // qui ont ResponsableCellule dans role OU dans roles (array)
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, prenom, nom, telephone")
-        .eq("role", "ResponsableCellule")
+        .select("id, prenom, nom, telephone, role, roles")
+        .eq("eglise_id", cellule.eglise_id)
         .order("nom");
-      if (!error && data) setResponsables(data);
-      else console.error("Erreur chargement responsables:", error);
+
+      if (!error && data) {
+        // Filtre côté client pour couvrir les deux colonnes
+        const filtered = data.filter(
+          (p) =>
+            p.role === "ResponsableCellule" ||
+            (Array.isArray(p.roles) && p.roles.includes("ResponsableCellule"))
+        );
+        setResponsables(filtered);
+      } else {
+        console.error("Erreur chargement responsables:", error);
+      }
+
       setLoadingResponsables(false);
     };
-    fetchResponsables();
-  }, []);
 
-  // Chargement des cellules mères (toutes les cellules de la même église sauf elle-même)
+    fetchResponsables();
+  }, [cellule?.eglise_id]);
+
+  // Chargement des cellules mères
   useEffect(() => {
     if (!cellule?.eglise_id) return;
     const fetchCellulesMere = async () => {
       setLoadingCellulesMere(true);
-      
+
       const { data, error } = await supabase
         .from("cellules")
         .select(`
@@ -109,7 +127,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
         .eq("eglise_id", cellule.eglise_id)
         .neq("id", cellule.id)
         .order("cellule_full");
-      
+
       if (!error && data) setCellulesMere(data);
       else console.error("Erreur chargement cellules mères:", error);
       setLoadingCellulesMere(false);
@@ -234,7 +252,9 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
               >
                 <option value="">{t.responsableDefault}</option>
                 {responsables.map((r) => (
-                  <option key={r.id} value={r.id}>{r.prenom} {r.nom}</option>
+                  <option key={r.id} value={r.id}>
+                    {r.prenom} {r.nom}
+                  </option>
                 ))}
               </select>
             )}

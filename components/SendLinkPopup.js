@@ -12,6 +12,10 @@ const translations = {
     bold_send: "Envoyer",
     ifContact: "si le contact figure déjà dans WhatsApp, ou saisissez un numéro manuellement.",
     phonePlaceholder: "Numéro (ex: +2305xxxxxxx)",
+    selectCellule: "Sélectionnez une cellule",
+    selectFamille: "Sélectionnez une famille",
+    selectCelluleAlert: "Veuillez sélectionner une cellule.",
+    selectFamilleAlert: "Veuillez sélectionner une famille.",
     noteCelluleMembre: "📌 Ce lien sert à ajouter une personne dans ta cellule et dans la liste globale de l'église.",
     noteCelluleEvang: "📌 Ce lien sert à ajouter une personne évangélisée qui sera placée sous ta responsabilité.",
     noteFamilleMembre: "📌 Ce lien sert à ajouter une personne dans ta famille et dans la liste globale de l'église.",
@@ -36,6 +40,10 @@ const translations = {
     bold_send: "Send",
     ifContact: "if the contact is already in WhatsApp, or enter a number manually.",
     phonePlaceholder: "Number (e.g. +2305xxxxxxx)",
+    selectCellule: "Select a cell group",
+    selectFamille: "Select a family group",
+    selectCelluleAlert: "Please select a cell group.",
+    selectFamilleAlert: "Please select a family group.",
     noteCelluleMembre: "📌 This link is used to add a person to your cell group and to the church's global list.",
     noteCelluleEvang: "📌 This link is used to add an evangelised person who will be placed under your responsibility.",
     noteFamilleMembre: "📌 This link is used to add a person to your family group and to the church's global list.",
@@ -63,11 +71,16 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
   const [phoneNumber, setPhoneNumber] = useState("");
   const [churchName, setChurchName] = useState("");
   const [egliseId, setEgliseId] = useState(null);
-  const [resolvedGroupeId, setResolvedGroupeId] = useState(celluleId || null);
-  const [resolvedGroupeName, setResolvedGroupeName] = useState("");
+
+  // Liste de tous les groupes disponibles (cellules ou familles)
+  const [groupesList, setGroupesList] = useState([]);
+  // ID et nom du groupe actuellement sélectionné dans le <select>
+  const [selectedGroupeId, setSelectedGroupeId] = useState(null);
+  const [selectedGroupeName, setSelectedGroupeName] = useState("");
 
   const isFamille = type.includes("famille");
   const isCellule = type.includes("cellule");
+  const needsGroupe = isCellule || isFamille;
   const table = isFamille ? "familles" : "cellules";
   const nameField = isFamille ? "famille" : "cellule";
 
@@ -84,7 +97,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
           .single();
 
         if (profileError || !profile) return;
-
         setEgliseId(profile.eglise_id);
 
         const { data: churchData } = await supabase
@@ -94,7 +106,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
           .single();
         if (churchData) setChurchName(churchData.nom);
 
-        // Si celluleId passé en prop → on résout juste le nom
+        // Si celluleId est passé en prop → un seul groupe fixe, pas de sélection
         if (celluleId) {
           const { data: groupeData } = await supabase
             .from(table)
@@ -102,26 +114,31 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
             .eq("id", celluleId)
             .single();
           if (groupeData) {
-            setResolvedGroupeId(celluleId);
-            setResolvedGroupeName(`${groupeData.ville} - ${groupeData[nameField]}`);
+            const name = `${groupeData.ville} - ${groupeData[nameField]}`;
+            setGroupesList([{ id: celluleId, label: name }]);
+            setSelectedGroupeId(celluleId);
+            setSelectedGroupeName(name);
           }
           return;
         }
 
-        // Sinon : on prend la PREMIÈRE cellule/famille du responsable connecté
-        // (limit 1 pour éviter l'erreur 406 de .single() quand il y en a plusieurs)
-        if (isCellule || isFamille) {
+        // Sinon : charger TOUS les groupes du responsable connecté
+        if (needsGroupe) {
           const { data: groupesData } = await supabase
             .from(table)
             .select(`id, ville, ${nameField}`)
             .eq("responsable_id", user.id)
-            .eq("eglise_id", profile.eglise_id)
-            .limit(1);
+            .eq("eglise_id", profile.eglise_id);
 
           if (groupesData && groupesData.length > 0) {
-            const g = groupesData[0];
-            setResolvedGroupeId(g.id);
-            setResolvedGroupeName(`${g.ville} - ${g[nameField]}`);
+            const list = groupesData.map((g) => ({
+              id: g.id,
+              label: `${g.ville} - ${g[nameField]}`,
+            }));
+            setGroupesList(list);
+            // Pré-sélectionner le premier par défaut
+            setSelectedGroupeId(list[0].id);
+            setSelectedGroupeName(list[0].label);
           }
         }
       } catch (err) {
@@ -132,43 +149,48 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     fetchUserData();
   }, [type, celluleId]);
 
+  // Met à jour le nom quand l'utilisateur change la sélection
+  const handleGroupeChange = (e) => {
+    const id = e.target.value;
+    const found = groupesList.find((g) => g.id === id);
+    setSelectedGroupeId(id);
+    setSelectedGroupeName(found ? found.label : "");
+  };
+
   const getLink = (cid) => {
     const base = window.location.origin;
-    if (type === "ajouter_membre")               return `${base}/add-member?eglise_id=${egliseId}&lang=${lang}`;
-    if (type === "ajouter_membre_cellule")        return `${base}/cellule/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;
-    if (type === "ajouter_membre_famille")        return `${base}/famille/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
-    if (type === "ajouter_evangelise")            return `${base}/add-evangelise?eglise_id=${egliseId}&lang=${lang}`;
-    if (type === "ajouter_evangelise_cellule")    return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;
-    if (type === "ajouter_evangelise_famille")    return `${base}/add-evangelise?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
+    if (type === "ajouter_membre")             return `${base}/add-member?eglise_id=${egliseId}&lang=${lang}`;
+    if (type === "ajouter_membre_cellule")      return `${base}/cellule/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;
+    if (type === "ajouter_membre_famille")      return `${base}/famille/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
+    if (type === "ajouter_evangelise")          return `${base}/add-evangelise?eglise_id=${egliseId}&lang=${lang}`;
+    if (type === "ajouter_evangelise_cellule")  return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;
+    if (type === "ajouter_evangelise_famille")  return `${base}/add-evangelise?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
     return base;
   };
 
   const getNote = () => {
-    if (type === "ajouter_membre_cellule")        return t.noteCelluleMembre;
-    if (type === "ajouter_evangelise_cellule")    return t.noteCelluleEvang;
-    if (type === "ajouter_membre_famille")        return t.noteFamilleMembre;
-    if (type === "ajouter_evangelise_famille")    return t.noteFamilleEvang;
+    if (type === "ajouter_membre_cellule")       return t.noteCelluleMembre;
+    if (type === "ajouter_evangelise_cellule")   return t.noteCelluleEvang;
+    if (type === "ajouter_membre_famille")       return t.noteFamilleMembre;
+    if (type === "ajouter_evangelise_famille")   return t.noteFamilleEvang;
     return null;
   };
 
   const handleSend = () => {
-    const cid = resolvedGroupeId;
-    const needsGroupe = isCellule || isFamille;
-
-    if (needsGroupe && !cid) {
-      alert(isFamille ? t.selectFamille : t.selectCellule);
+    if (needsGroupe && !selectedGroupeId) {
+      alert(isFamille ? t.selectFamilleAlert : t.selectCelluleAlert);
       return;
     }
 
-    const link = getLink(cid);
+    const link = getLink(selectedGroupeId);
 
     let message = "";
-    if (type === "ajouter_evangelise_cellule")    message = t.msgEvangeliseCellule(resolvedGroupeName, link);
-    else if (type === "ajouter_membre_cellule")   message = t.msgMembreCellule(resolvedGroupeName, link);
-    else if (type === "ajouter_evangelise_famille") message = t.msgEvangeliseFamille(resolvedGroupeName, link);
-    else if (type === "ajouter_membre_famille")   message = t.msgMembreFamille(resolvedGroupeName, link);
-    else if (type === "ajouter_membre")           message = t.msgMembre(churchName, link);
-    else                                           message = t.msgEvangelise(churchName, link);
+    if (type === "ajouter_evangelise_cellule")     message = t.msgEvangeliseCellule(selectedGroupeName, link);
+    else if (type === "ajouter_membre_cellule")    message = t.msgMembreCellule(selectedGroupeName, link);
+    else if (type === "ajouter_evangelise_famille") message = t.msgEvangeliseFamille(selectedGroupeName, link);
+    else if (type === "ajouter_membre_famille")    message = t.msgMembreFamille(selectedGroupeName, link);
+    else if (type === "ajouter_membre")            message = t.msgMembre(churchName, link);
+    else                                            message = t.msgEvangelise(churchName, link);
 
     const whatsappLink = phoneNumber
       ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
@@ -203,6 +225,24 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
               <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 text-sm text-blue-700">
                 {note}
               </div>
+            )}
+
+            {/* Sélecteur de groupe — affiché uniquement si plusieurs groupes disponibles */}
+            {needsGroupe && groupesList.length > 1 && (
+              <select
+                value={selectedGroupeId || ""}
+                onChange={handleGroupeChange}
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+              >
+                <option value="" disabled>
+                  {isFamille ? t.selectFamille : t.selectCellule}
+                </option>
+                {groupesList.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.label}
+                  </option>
+                ))}
+              </select>
             )}
 
             <input

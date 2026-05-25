@@ -61,7 +61,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
   const [message, setMessage] = useState("");
 
   const [responsables, setResponsables] = useState([]);
-  const [selectedResponsableId, setSelectedResponsableId] = useState(cellule?.responsable_id || "");
+  const [selectedResponsableId, setSelectedResponsableId] = useState("");
   const [loadingResponsables, setLoadingResponsables] = useState(true);
 
   const [cellulesMere, setCellulesMere] = useState([]);
@@ -70,56 +70,55 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
 
   const modalRef = useRef(null);
 
-  // ✅ CORRECTION : fetch responsables filtrés par eglise_id
-  // On cherche dans les deux colonnes : "role" (string) ET "roles" (array)
-  useEffect(() => {
-  if (!cellule?.eglise_id) return;
-
-  const fetchResponsables = async () => {
-    setLoadingResponsables(true);
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom, telephone, role, roles")
-      .eq("eglise_id", cellule.eglise_id)
-      .order("nom");
-
-    console.log("profiles raw:", data);
-    console.log("profiles error:", error);
-
-   if (!error && data) {
-  const filtered = data.filter((p) => {
-    const roleStr = (p.role || "").trim();
-    const rolesArr = Array.isArray(p.roles) ? p.roles : [];
-    return (
-      roleStr === "ResponsableCellule" ||
-      rolesArr.some(r => r.trim() === "ResponsableCellule")
-    );
-  });
-
-  const excluded = data.filter(p => !filtered.includes(p));
-  console.log("exclus du filtre:", excluded.map(p => ({
-    nom: p.nom,
-    role: p.role,
-    roleCharCodes: [...(p.role || "")].map(c => c.charCodeAt(0)),
-    roles: p.roles
-  })));
-
-  console.log("filtered:", filtered);
-  setResponsables(filtered);
-
-  console.log("responsable_id attendu:", cellule?.responsable_id);
-  console.log("dans la liste?", filtered.find(r => r.id === cellule?.responsable_id));
-}
-setLoadingResponsables(false);
-  };
-
-  fetchResponsables();
-}, [cellule?.eglise_id]);
-
-  // Chargement des cellules mères
+  // ─── Fetch responsables ───
   useEffect(() => {
     if (!cellule?.eglise_id) return;
+
+    const fetchResponsables = async () => {
+      setLoadingResponsables(true);
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, telephone, role, roles")
+        .eq("eglise_id", cellule.eglise_id)
+        .order("nom");
+
+      if (!error && data) {
+        const filtered = data.filter((p) => {
+          const roleStr = (p.role || "").trim();
+          const rolesArr = Array.isArray(p.roles) ? p.roles : [];
+          return (
+            roleStr === "ResponsableCellule" ||
+            rolesArr.some((r) => r.trim() === "ResponsableCellule")
+          );
+        });
+
+        setResponsables(filtered);
+
+        // ✅ FIX TIMING : initialiser selectedResponsableId après le fetch
+        // (pas au montage) pour que le select soit correctement pré-sélectionné
+        const matchId = cellule?.responsable_id || "";
+        const exists = filtered.find((r) => r.id === matchId);
+        setSelectedResponsableId(exists ? matchId : "");
+
+        // Pré-remplir le téléphone depuis le responsable trouvé
+        if (exists && exists.telephone) {
+          setTelephone(exists.telephone);
+        }
+      } else {
+        console.error("Erreur chargement responsables:", error);
+      }
+
+      setLoadingResponsables(false);
+    };
+
+    fetchResponsables();
+  }, [cellule?.eglise_id, cellule?.responsable_id]);
+
+  // ─── Fetch cellules mères ───
+  useEffect(() => {
+    if (!cellule?.eglise_id) return;
+
     const fetchCellulesMere = async () => {
       setLoadingCellulesMere(true);
 
@@ -145,10 +144,11 @@ setLoadingResponsables(false);
       else console.error("Erreur chargement cellules mères:", error);
       setLoadingCellulesMere(false);
     };
+
     fetchCellulesMere();
   }, [cellule]);
 
-  // Fermer en cliquant dehors
+  // ─── Fermer en cliquant dehors ───
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) onClose();
@@ -226,7 +226,6 @@ setLoadingResponsables(false);
         {/* Body */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
 
-          {/* Section infos */}
           <SectionTitle>{t.sectionInfos}</SectionTitle>
 
           <Field label={t.nomCellule}>
@@ -243,7 +242,6 @@ setLoadingResponsables(false);
             />
           </Field>
 
-          {/* Section responsable */}
           <SectionTitle>{t.sectionResponsable}</SectionTitle>
 
           <Field label={t.responsable}>
@@ -282,7 +280,6 @@ setLoadingResponsables(false);
             />
           </Field>
 
-          {/* Section cellule mère */}
           <SectionTitle>{t.sectionCelluleMere}</SectionTitle>
 
           <Field label={t.celluleMere}>

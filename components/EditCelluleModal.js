@@ -54,53 +54,32 @@ const translations = {
 export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
   const { lang } = useLang();
   const t = translations[lang];
-  console.log("🟡 cellule reçue:", JSON.stringify({
-  id: cellule?.id,
-  responsable: cellule?.responsable,
-  responsable_id: cellule?.responsable_id,
-  eglise_id: cellule?.eglise_id,
-  telephone: cellule?.telephone,
-}));
 
-  const egliseId  = cellule?.eglise_id   || "";
-  const celluleId = cellule?.id          || "";
+  const egliseId  = cellule?.eglise_id || "";
+  const celluleId = cellule?.id        || "";
 
   const [ville, setVille]         = useState(cellule?.ville     || "");
   const [telephone, setTelephone] = useState(cellule?.telephone || "");
   const [loading, setLoading]     = useState(false);
   const [message, setMessage]     = useState("");
 
-  // ✅ On part de l'ID déjà stocké dans la table cellules
   const [selectedResponsableId, setSelectedResponsableId] = useState(
     cellule?.responsable_id || ""
   );
 
-  // ✅ Liste initialisée avec le responsable actuel si on a déjà l'info
-  // → le select s'affiche correctement AVANT même que le fetch soit fini
-  const buildInitialResponsables = () => {
-    if (cellule?.responsable_id && cellule?.responsable) {
-      const [prenom, ...rest] = cellule.responsable.split(" ");
-      return [{
-        id:        cellule.responsable_id,
-        prenom:    prenom || "",
-        nom:       rest.join(" "),
-        telephone: cellule.telephone || "",
-      }];
-    }
-    return [];
-  };
-  const [responsables, setResponsables]             = useState(buildInitialResponsables);
+  // Liste vide au départ — on attend le fetch pour avoir TOUS les responsables
+  const [responsables, setResponsables]               = useState([]);
   const [loadingResponsables, setLoadingResponsables] = useState(true);
 
-  const [cellulesMere, setCellulesMere]               = useState([]);
-  const [selectedCelluleMereId, setSelectedCelluleMereId] = useState(
+  const [cellulesMere, setCellulesMere]                     = useState([]);
+  const [selectedCelluleMereId, setSelectedCelluleMereId]   = useState(
     cellule?.cellule_mere_id || ""
   );
   const [loadingCellulesMere, setLoadingCellulesMere] = useState(true);
 
   const modalRef = useRef(null);
 
-  // ─── Fetch responsables (enrichit la liste, ne réinitialise pas la sélection) ───
+  // ─── Fetch tous les responsables de l'église ───
   useEffect(() => {
     if (!egliseId) { setLoadingResponsables(false); return; }
 
@@ -123,7 +102,10 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
             );
           });
           setResponsables(filtered);
-          // ✅ On ne touche PAS à selectedResponsableId ici — il est déjà bon
+          // La sélection courante (selectedResponsableId) est déjà bonne,
+          // on ne la touche pas — le select va automatiquement afficher
+          // le bon nom car value={selectedResponsableId} correspond à
+          // l'une des options de la liste chargée
         }
         setLoadingResponsables(false);
       });
@@ -203,7 +185,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
 
   if (!cellule) return null;
 
-  const isLoading = loading || loadingResponsables || loadingCellulesMere;
+  const isLoading = loading || loadingCellulesMere;
 
   return (
     <div
@@ -255,29 +237,30 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
           <SectionTitle>{t.sectionResponsable}</SectionTitle>
 
           <Field label={t.responsable}>
-            {/* ✅ On affiche toujours le select — même pendant le chargement
-                grâce à la liste initiale pré-remplie avec le responsable actuel */}
-            <select
-              className="inp"
-              value={selectedResponsableId}
-              onChange={(e) => {
-                const id  = e.target.value;
-                setSelectedResponsableId(id);
-                const obj = responsables.find((r) => r.id === id);
-                setTelephone(obj?.telephone || "");
-              }}
-            >
-              <option value="">{t.responsableDefault}</option>
-              {responsables.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.prenom} {r.nom}
-                </option>
-              ))}
-            </select>
-            {loadingResponsables && (
-              <p className="text-xs text-gray-400 mt-1 ml-1 flex items-center gap-1">
-                <Spinner /> {t.chargement}
-              </p>
+            {loadingResponsables ? (
+              // Pendant le chargement : on affiche quand même le nom actuel
+              // en lecture seule pour que l'utilisateur ne voie pas de vide
+              <div className="inp-readonly">
+                {cellule.responsable || <span className="text-gray-400">{t.chargement}</span>}
+              </div>
+            ) : (
+              <select
+                className="inp"
+                value={selectedResponsableId}
+                onChange={(e) => {
+                  const id  = e.target.value;
+                  setSelectedResponsableId(id);
+                  const obj = responsables.find((r) => r.id === id);
+                  setTelephone(obj?.telephone || "");
+                }}
+              >
+                <option value="">{t.responsableDefault}</option>
+                {responsables.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.prenom} {r.nom}
+                  </option>
+                ))}
+              </select>
             )}
           </Field>
 

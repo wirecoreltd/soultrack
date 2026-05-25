@@ -87,20 +87,31 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
     console.log("profiles raw:", data);
     console.log("profiles error:", error);
 
-    if (!error && data) {
-      const filtered = data.filter(
-        (p) =>
-          p.role === "ResponsableCellule" ||
-          (Array.isArray(p.roles) && p.roles.includes("ResponsableCellule"))
-      );
-      console.log("filtered:", filtered);
-      setResponsables(filtered);
-      
-      console.log("responsable_id attendu:", cellule?.responsable_id);
-console.log("dans la liste?", responsables.find(r => r.id === cellule?.responsable_id));
-    }
+   if (!error && data) {
+  const filtered = data.filter((p) => {
+    const roleStr = (p.role || "").trim();
+    const rolesArr = Array.isArray(p.roles) ? p.roles : [];
+    return (
+      roleStr === "ResponsableCellule" ||
+      rolesArr.some(r => r.trim() === "ResponsableCellule")
+    );
+  });
 
-    setLoadingResponsables(false);
+  const excluded = data.filter(p => !filtered.includes(p));
+  console.log("exclus du filtre:", excluded.map(p => ({
+    nom: p.nom,
+    role: p.role,
+    roleCharCodes: [...(p.role || "")].map(c => c.charCodeAt(0)),
+    roles: p.roles
+  })));
+
+  console.log("filtered:", filtered);
+  setResponsables(filtered);
+
+  console.log("responsable_id attendu:", cellule?.responsable_id);
+  console.log("dans la liste?", filtered.find(r => r.id === cellule?.responsable_id));
+}
+setLoadingResponsables(false);
   };
 
   fetchResponsables();

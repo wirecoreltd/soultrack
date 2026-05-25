@@ -89,22 +89,176 @@ const translations = {
   },
 };
 
+// ─── Valeurs DB (toujours en français) ───
+const AGE_OPTIONS_FR = [
+  "12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans",
+  "41-55 ans", "56-69 ans", "70 ans et plus",
+];
+
+const VENU_FR    = ["invité", "réseaux", "evangélisation", "autre"];
+const STATUT_FR  = ["veut rejoindre l'église", "a déjà son église", "nouveau", "visiteur"];
+const CONV_FR    = ["Nouveau converti", "Réconciliation"];
+const BESOIN_FR  = [
+  "Finances", "Santé", "Travail / Études", "Famille / Enfants",
+  "Miracle", "Délivrance", "Relations / Conflits",
+  "Addictions / Dépendances", "Guidance spirituelle",
+  "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
+];
+
+// ─── Mappings EN → FR ───
+const SEXE_EN_TO_FR = { "Male": "Homme", "Female": "Femme" };
+const BOOL_EN_TO_FR = { "Yes": "Oui", "No": "Non" };
+const AGE_EN_TO_FR = {
+  "12-17 yrs": "12-17 ans", "18-25 yrs": "18-25 ans",
+  "26-30 yrs": "26-30 ans", "31-40 yrs": "31-40 ans",
+  "41-55 yrs": "41-55 ans", "56-69 yrs": "56-69 ans",
+  "70 yrs and over": "70 ans et plus",
+};
+const VENU_EN_TO_FR = {
+  "invited": "invité", "social media": "réseaux",
+  "evangelization": "evangélisation", "other": "autre",
+};
+const STATUT_EN_TO_FR = {
+  "wants to join the church": "veut rejoindre l'église",
+  "already has a church": "a déjà son église",
+  "new": "nouveau", "visitor": "visiteur",
+};
+const CONV_EN_TO_FR = {
+  "New convert": "Nouveau converti", "Reconciliation": "Réconciliation",
+};
+const BESOIN_EN_TO_FR = {
+  "Finances": "Finances", "Health": "Santé",
+  "Work / Studies": "Travail / Études", "Family / Children": "Famille / Enfants",
+  "Miracle": "Miracle", "Deliverance": "Délivrance",
+  "Relationships / Conflicts": "Relations / Conflits",
+  "Addictions / Dependencies": "Addictions / Dépendances",
+  "Spiritual guidance": "Guidance spirituelle",
+  "Housing / Safety": "Logement / Sécurité",
+  "Community / Isolation": "Communauté / Isolement",
+  "Depression / Mental health": "Dépression / Santé mentale",
+};
+
+// Mapping headers EN → clés internes
+const EN_HEADER_MAP = {
+  "last_name":        "nom",
+  "first_name":       "prenom",
+  "gender":           "sexe",        // sera traité comme civilite → sexe
+  "date_joined":      "date_venu",
+  "how_came":         "venu",
+  "salvation_prayer": "priere_salut",
+  "phone":            "telephone",
+  "city":             "ville",
+  "water_baptism":    "bapteme_eau",
+  "spirit_baptism":   "bapteme_esprit",
+  "servant":          "serviteur",
+  "conversion_type":  "type_conversion",
+  "needs":            "besoin",
+  "additional_info":  "infos_supplementaires",
+};
+
+// Normalise une valeur : accepte FR ou EN, retourne toujours FR
+const norm = (value, enToFrMap, validFrValues) => {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (validFrValues.includes(trimmed)) return trimmed;
+  return enToFrMap[trimmed] ?? trimmed;
+};
+
+// ─── Config template par langue ───
+const TEMPLATE_CONFIG = {
+  fr: {
+    filename: "template_import_membres_cellule.csv",
+    headers: [
+      "nom *", "prenom *", "civilite *", "age *", "date_venu *",
+      "venu *", "priere_salut *",
+      "telephone", "ville", "is_whatsapp",
+      "bapteme_eau", "bapteme_esprit",
+      "serviteur", "statut", "type_conversion",
+      "besoin", "infos_supplementaires",
+    ],
+    example: [
+      "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15",
+      "invité", "Oui",
+      "59700000", "Curepipe", "Oui",
+      "Oui", "Non",
+      "Oui", "nouveau", "",
+      "Finances;Santé",
+      "Info supplementaire ici",
+    ],
+    notes: [
+      "IMPORTANT: Effacez toutes les lignes commencant par # avant d'importer le fichier.",
+      "Les colonnes avec * sont obligatoires.",
+      "civilite: Homme | Femme",
+      "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
+      "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
+      "venu: invité | réseaux | evangélisation | autre",
+      "priere_salut: Oui | Non",
+      "is_whatsapp: Oui | Non (ou vide)",
+      "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
+      "serviteur: Oui | Non",
+      "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur (optionnel)",
+      "type_conversion: Nouveau converti | Réconciliation (optionnel, uniquement si priere_salut = Oui)",
+      "besoin: valeurs separees par ; ex: Finances;Santé;Travail / Études",
+      "  valeurs possibles: Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance",
+      "  Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité",
+      "  Communauté / Isolement | Dépression / Santé mentale",
+    ],
+  },
+  en: {
+    filename: "template_import_cell_members.csv",
+    headers: [
+      "last_name *", "first_name *", "gender *", "age *", "date_joined *",
+      "how_came *", "salvation_prayer *",
+      "phone", "city", "is_whatsapp",
+      "water_baptism", "spirit_baptism",
+      "servant", "status", "conversion_type",
+      "needs", "additional_info",
+    ],
+    example: [
+      "Smith", "Mary", "Female", "18-25 yrs", "2026-01-15",
+      "invited", "Yes",
+      "59700000", "New York", "Yes",
+      "Yes", "No",
+      "Yes", "new", "",
+      "Finances;Health",
+      "Additional info here",
+    ],
+    notes: [
+      "IMPORTANT: Delete all lines starting with # before importing.",
+      "Columns with * are required.",
+      "gender: Male | Female",
+      "age: 12-17 yrs | 18-25 yrs | 26-30 yrs | 31-40 yrs | 41-55 yrs | 56-69 yrs | 70 yrs and over",
+      "date_joined: format YYYY-MM-DD or DD-MM-YY or DD-MM-YYYY",
+      "how_came: invited | social media | evangelization | other",
+      "salvation_prayer: Yes | No",
+      "is_whatsapp: Yes | No (or empty)",
+      "water_baptism / spirit_baptism: Yes | No (or empty)",
+      "servant: Yes | No",
+      "status: wants to join the church | already has a church | new | visitor (optional)",
+      "conversion_type: New convert | Reconciliation (optional, only if salvation_prayer = Yes)",
+      "needs: values separated by ; e.g.: Finances;Health;Work / Studies",
+      "  possible values: Finances | Health | Work / Studies | Family / Children | Miracle | Deliverance",
+      "  Relationships / Conflicts | Addictions / Dependencies | Spiritual guidance | Housing / Safety",
+      "  Community / Isolation | Depression / Mental health",
+    ],
+  },
+};
+
 export default function ImportMembresCelluleCSV({ user }) {
   const { lang } = useLang();
   const t = translations[lang];
 
-  const [data, setData] = useState([]);
-  const [errors, setErrors] = useState([]);
-  const [duplicates, setDuplicates] = useState([]);
+  const [data, setData]                 = useState([]);
+  const [errors, setErrors]             = useState([]);
+  const [duplicates, setDuplicates]     = useState([]);
   const [depsToUpdate, setDepsToUpdate] = useState({});
-  const [depsToAdd, setDepsToAdd] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [checking, setChecking] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [importCount, setImportCount] = useState(0);
+  const [depsToAdd, setDepsToAdd]       = useState({});
+  const [loading, setLoading]           = useState(false);
+  const [checking, setChecking]         = useState(false);
+  const [success, setSuccess]           = useState(false);
+  const [importCount, setImportCount]   = useState(0);
 
-  // type_conversion est optionnel (seulement pertinent si priere_salut = Oui)
-  const requiredFields = ["nom", "prenom", "civilite", "age", "date_venu", "venu", "priere_salut"];
+  const requiredFields = ["nom", "prenom", "sexe", "age", "date_venu", "venu", "priere_salut"];
 
   const capitalize = (str) =>
     str ? str.trim().replace(/\b\w/g, (c) => c.toUpperCase()) : "";
@@ -130,63 +284,26 @@ export default function ImportMembresCelluleCSV({ user }) {
     return null;
   };
 
+  // ── Téléchargement du template selon la langue ──
   const handleDownloadTemplate = () => {
-    const headers = [
-      "nom *", "prenom *", "civilite *", "age *", "date_venu *",
-      "venu *", "priere_salut *",
-      "telephone", "ville", "is_whatsapp",
-      "bapteme_eau", "bapteme_esprit",
-      "serviteur",
-      "statut",
-      "type_conversion",
-      "besoin",
-      "infos_supplementaires",
-    ];
-    const example = [
-      "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15",
-      "invité", "Oui",
-      "59700000", "Curepipe", "Oui",
-      "Oui", "Non",
-      "Oui",
-      "nouveau",
-      "",
-      "Finances;Santé",
-      "Info supplementaire ici",
-    ];
-    const notes = [
-      "IMPORTANT: Effacez toutes les lignes commencant par # avant d'importer le fichier.",
-      "Les colonnes avec * sont obligatoires.",
-      "civilite: Homme | Femme",
-      "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
-      "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
-      "venu: invité | réseaux | evangélisation | autre",
-      "priere_salut: Oui | Non",
-      "is_whatsapp: Oui | Non (ou vide)",
-      "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
-      "serviteur: Oui | Non",
-      "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur (optionnel)",
-      "type_conversion: Nouveau converti | Réconciliation (optionnel, uniquement si priere_salut = Oui)",
-      "besoin: valeurs separees par ; ex: Finances;Santé;Travail / Études",
-      "  valeurs possibles: Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance",
-      "  Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité",
-      "  Communauté / Isolement | Dépression / Santé mentale",
-    ];
+    const cfg = TEMPLATE_CONFIG[lang] || TEMPLATE_CONFIG.fr;
     const csvContent = [
-      headers.join(","),
-      example.join(","),
+      cfg.headers.join(","),
+      cfg.example.join(","),
       "",
-      ...notes.map((n) => `# ${n}`),
+      ...cfg.notes.map((n) => `# ${n}`),
     ].join("\n");
     const BOM = "\uFEFF";
     const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "template_import_membres_cellule.csv";
+    link.download = cfg.filename;
     link.click();
     URL.revokeObjectURL(url);
   };
 
+  // ── Parse + validation (accepte FR et EN) ──
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -209,94 +326,114 @@ export default function ImportMembresCelluleCSV({ user }) {
         rows.forEach((row, index) => {
           if (Object.values(row)[0]?.toString().trim().startsWith("#")) return;
 
-          const normalized = {};
+          // ── Normaliser les clés : enlever " *", mapper EN → FR ──
+          const r = {};
           Object.keys(row).forEach((key) => {
             const cleanKey = key.replace(" *", "").trim();
-            const value = row[key]?.toString().trim();
-            if (cleanKey === "civilite") normalized["sexe"] = value;
-            else normalized[cleanKey] = value;
+            // civilite et gender → sexe
+            if (cleanKey === "civilite" || cleanKey === "gender") {
+              r["sexe"] = row[key]?.toString().trim() || "";
+            } else if (cleanKey === "status") {
+              r["statut"] = row[key]?.toString().trim() || "";
+            } else {
+              const mappedKey = EN_HEADER_MAP[cleanKey] ?? cleanKey;
+              r[mappedKey] = row[key]?.toString().trim() || "";
+            }
           });
 
-          let rowErrors = [];
+          const lineNum = index + 2;
+          const errs = [];
 
+          // ── Champs obligatoires ──
           requiredFields.forEach((field) => {
-            const checkField = field === "civilite" ? "sexe" : field;
-            if (!normalized[checkField])
-              rowErrors.push(`Ligne ${index + 1}: ${field} manquant`);
+            if (!r[field]) errs.push(`${field} missing`);
           });
 
-          if (normalized.sexe && !["Homme", "Femme"].includes(normalized.sexe))
-            rowErrors.push(`Ligne ${index + 1}: civilite invalide (Homme ou Femme)`);
+          // ── Normaliser les valeurs EN → FR ──
+          const sexeNorm       = norm(r.sexe,         SEXE_EN_TO_FR,  ["Homme", "Femme"]);
+          const ageNorm        = norm(r.age,           AGE_EN_TO_FR,   AGE_OPTIONS_FR);
+          const isWaNorm       = norm(r.is_whatsapp,   BOOL_EN_TO_FR,  ["Oui", "Non"]);
+          const priereNorm     = norm(r.priere_salut,  BOOL_EN_TO_FR,  ["Oui", "Non"]);
+          const bEauNorm       = norm(r.bapteme_eau,   BOOL_EN_TO_FR,  ["Oui", "Non"]);
+          const bEspritNorm    = norm(r.bapteme_esprit,BOOL_EN_TO_FR,  ["Oui", "Non"]);
+          const serviteurNorm  = norm(r.serviteur,     BOOL_EN_TO_FR,  ["Oui", "Non"]);
+          const venuNorm       = norm(r.venu,          VENU_EN_TO_FR,  VENU_FR);
+          const statutNorm     = norm(r.statut,        STATUT_EN_TO_FR,STATUT_FR);
+          const convNorm       = norm(r.type_conversion,CONV_EN_TO_FR, CONV_FR);
 
-          const validAges = [
-            "12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans",
-            "41-55 ans", "56-69 ans", "70 ans et plus",
-          ];
-          if (normalized.age && !validAges.includes(normalized.age))
-            rowErrors.push(`Ligne ${index + 1}: age invalide`);
+          // ── Validations ──
+          if (r.sexe && !["Homme", "Femme"].includes(sexeNorm))
+            errs.push(`gender invalid (Male or Female / Homme ou Femme)`);
 
-          const dateVenu = parseDate(normalized.date_venu);
-          if (normalized.date_venu && !dateVenu)
-            rowErrors.push(`Ligne ${index + 1}: date_venu invalide`);
+          if (r.age && !AGE_OPTIONS_FR.includes(ageNorm))
+            errs.push("age invalid");
 
-          const validVenu = ["invité", "réseaux", "evangélisation", "autre"];
-          if (normalized.venu && !validVenu.includes(normalized.venu))
-            rowErrors.push(`Ligne ${index + 1}: venu invalide (invité | réseaux | evangélisation | autre)`);
+          const dateVenu = parseDate(r.date_venu);
+          if (r.date_venu && !dateVenu)
+            errs.push("date invalid");
 
-          if (normalized.priere_salut && !["Oui", "Non"].includes(normalized.priere_salut))
-            rowErrors.push(`Ligne ${index + 1}: priere_salut invalide (Oui ou Non)`);
+          if (r.venu && !VENU_FR.includes(venuNorm))
+            errs.push("how_came / venu invalid");
 
-          if (normalized.is_whatsapp && !["Oui", "Non"].includes(normalized.is_whatsapp))
-            rowErrors.push(`Ligne ${index + 1}: is_whatsapp invalide (Oui ou Non)`);
+          if (r.priere_salut && !["Oui", "Non"].includes(priereNorm))
+            errs.push("salvation_prayer / priere_salut invalid (Yes/No | Oui/Non)");
 
-          if (normalized.bapteme_eau && !["Oui", "Non"].includes(normalized.bapteme_eau))
-            rowErrors.push(`Ligne ${index + 1}: bapteme_eau invalide (Oui ou Non)`);
+          if (r.is_whatsapp && !["Oui", "Non", ""].includes(isWaNorm))
+            errs.push("is_whatsapp invalid (Yes/No | Oui/Non)");
 
-          if (normalized.bapteme_esprit && !["Oui", "Non"].includes(normalized.bapteme_esprit))
-            rowErrors.push(`Ligne ${index + 1}: bapteme_esprit invalide (Oui ou Non)`);
+          if (r.bapteme_eau && !["Oui", "Non", ""].includes(bEauNorm))
+            errs.push("water_baptism / bapteme_eau invalid");
 
-          if (normalized.serviteur && !["Oui", "Non"].includes(normalized.serviteur))
-            rowErrors.push(`Ligne ${index + 1}: serviteur invalide (Oui ou Non)`);
+          if (r.bapteme_esprit && !["Oui", "Non", ""].includes(bEspritNorm))
+            errs.push("spirit_baptism / bapteme_esprit invalid");
 
-          const validStatuts = ["veut rejoindre l'église", "a déjà son église", "nouveau", "visiteur"];
-          if (normalized.statut && !validStatuts.includes(normalized.statut))
-            rowErrors.push(`Ligne ${index + 1}: statut invalide`);
+          if (r.serviteur && !["Oui", "Non", ""].includes(serviteurNorm))
+            errs.push("servant / serviteur invalid");
 
-          const validConversions = ["Nouveau converti", "Réconciliation"];
-          if (normalized.type_conversion && !validConversions.includes(normalized.type_conversion))
-            rowErrors.push(`Ligne ${index + 1}: type_conversion invalide (Nouveau converti | Réconciliation)`);
+          if (r.statut && !STATUT_FR.includes(statutNorm))
+            errs.push("status / statut invalid");
 
-          if (rowErrors.length === 0) {
-            const besoin = normalized.besoin
-              ? normalized.besoin.split(";").map((b) => b.trim()).filter(Boolean)
-              : [];
+          if (r.type_conversion && !CONV_FR.includes(convNorm))
+            errs.push("conversion_type invalid");
 
-            validData.push({
-              nom: capitalize(normalized.nom),
-              prenom: capitalize(normalized.prenom),
-              sexe: normalized.sexe,
-              age: normalized.age,
-              date_venu: dateVenu,
-              venu: normalized.venu,
-              priere_salut: normalized.priere_salut,
-              telephone: cleanPhone(normalized.telephone) || null,
-              ville: capitalize(normalized.ville) || null,
-              is_whatsapp: normalized.is_whatsapp === "Oui",
-              bapteme_eau: normalized.bapteme_eau || null,
-              bapteme_esprit: normalized.bapteme_esprit || null,
-              star: normalized.serviteur === "Oui",
-              statut: normalized.statut || null,
-              type_conversion: normalized.type_conversion || null,
-              besoin: besoin.length > 0 ? besoin : null,
-              infos_supplementaires: normalized.infos_supplementaires || null,
-              eglise_id: user.eglise_id,
-              cellule_id: user.cellule_id,
-              statut_suivis: 3,
-              etat_contact: "existant",
-            });
-          } else {
-            errorList.push(...rowErrors);
+          // Besoins — normaliser EN → FR si nécessaire
+          const besoinRaw = r.besoin
+            ? r.besoin.split(";").map((b) => b.trim()).filter(Boolean)
+            : [];
+          const besoin = besoinRaw.map((b) => BESOIN_EN_TO_FR[b] ?? b);
+          const invalidBesoin = besoin.filter((b) => !BESOIN_FR.includes(b));
+          if (invalidBesoin.length > 0)
+            errs.push(`needs / besoin invalid: ${invalidBesoin.join(", ")}`);
+
+          if (errs.length > 0) {
+            errs.forEach((err) => errorList.push(`Row/Ligne ${lineNum}: ${err}`));
+            return;
           }
+
+          // ── Ligne valide — toutes les valeurs sont en FR (DB) ──
+          validData.push({
+            nom:                   capitalize(r.nom),
+            prenom:                capitalize(r.prenom),
+            sexe:                  sexeNorm,
+            age:                   ageNorm,
+            date_venu:             dateVenu,
+            venu:                  venuNorm,
+            priere_salut:          priereNorm,
+            telephone:             cleanPhone(r.telephone) || null,
+            ville:                 capitalize(r.ville) || null,
+            is_whatsapp:           isWaNorm === "Oui",
+            bapteme_eau:           bEauNorm || null,
+            bapteme_esprit:        bEspritNorm || null,
+            star:                  serviteurNorm === "Oui",
+            statut:                statutNorm || null,
+            type_conversion:       convNorm || null,
+            besoin:                besoin.length > 0 ? besoin : null,
+            infos_supplementaires: r.infos_supplementaires || null,
+            eglise_id:             user.eglise_id,
+            cellule_id:            user.cellule_id,
+            statut_suivis:         3,
+            etat_contact:          "existant",
+          });
         });
 
         setErrors(errorList);
@@ -387,22 +524,13 @@ export default function ImportMembresCelluleCSV({ user }) {
       const { error } = await supabase
         .from("membres_complets")
         .update({
-          nom: rowData.nom,
-          prenom: rowData.prenom,
-          sexe: rowData.sexe,
-          age: rowData.age,
-          date_venu: rowData.date_venu,
-          venu: rowData.venu,
-          priere_salut: rowData.priere_salut,
-          telephone: rowData.telephone,
-          ville: rowData.ville,
-          is_whatsapp: rowData.is_whatsapp,
-          bapteme_eau: rowData.bapteme_eau,
-          bapteme_esprit: rowData.bapteme_esprit,
-          star: rowData.star,
-          statut: rowData.statut,
-          type_conversion: rowData.type_conversion,
-          besoin: rowData.besoin,
+          nom: rowData.nom, prenom: rowData.prenom, sexe: rowData.sexe,
+          age: rowData.age, date_venu: rowData.date_venu, venu: rowData.venu,
+          priere_salut: rowData.priere_salut, telephone: rowData.telephone,
+          ville: rowData.ville, is_whatsapp: rowData.is_whatsapp,
+          bapteme_eau: rowData.bapteme_eau, bapteme_esprit: rowData.bapteme_esprit,
+          star: rowData.star, statut: rowData.statut,
+          type_conversion: rowData.type_conversion, besoin: rowData.besoin,
           infos_supplementaires: rowData.infos_supplementaires,
         })
         .eq("id", existingId);

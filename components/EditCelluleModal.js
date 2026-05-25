@@ -91,6 +91,9 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
       if (!error && data) {
         // Filtre côté client pour couvrir les deux colonnes
         const filtered = data.filter(
+          console.log("profiles raw:", data);
+console.log("profiles error:", error);
+console.log("filtered:", data?.filter(
           (p) =>
             p.role === "ResponsableCellule" ||
             (Array.isArray(p.roles) && p.roles.includes("ResponsableCellule"))

@@ -95,6 +95,9 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
       );
       console.log("filtered:", filtered);
       setResponsables(filtered);
+      
+      console.log("responsable_id attendu:", cellule?.responsable_id);
+console.log("dans la liste?", responsables.find(r => r.id === cellule?.responsable_id));
     }
 
     setLoadingResponsables(false);

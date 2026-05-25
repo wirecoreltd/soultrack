@@ -19,8 +19,8 @@ const translations = {
     telephone: "Téléphone du responsable",
     telephonePlaceholder: "+33 6 00 00 00 00",
     sectionCelluleMere: "🌿 Cellule mère",
-    celluleMere: "Cellule mère",
-    celluleMereDefault: "-- Aucune (cellule racine) --",
+    celluleMere: "Responsable supérieur",
+    celluleMereDefault: "-- Aucun (cellule racine) --",
     annuler: "Annuler",
     sauvegarder: "💾 Sauvegarder",
     enregistrement: "Enregistrement...",
@@ -41,7 +41,7 @@ const translations = {
     telephone: "Leader's phone number",
     telephonePlaceholder: "+44 7700 000000",
     sectionCelluleMere: "🌿 Parent cell",
-    celluleMere: "Parent cell",
+    celluleMere: "Parent leader",
     celluleMereDefault: "-- None (root cell) --",
     annuler: "Cancel",
     sauvegarder: "💾 Save",
@@ -66,22 +66,27 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
   const [selectedResponsableId, setSelectedResponsableId] = useState(
     cellule?.responsable_id || ""
   );
-
-  // Liste vide au départ — on attend le fetch pour avoir TOUS les responsables
   const [responsables, setResponsables]               = useState([]);
   const [loadingResponsables, setLoadingResponsables] = useState(true);
 
-  const [cellulesMere, setCellulesMere]                     = useState([]);
-  const [selectedCelluleMereId, setSelectedCelluleMereId]   = useState(
+  // cellule_mere_id pointe vers une autre cellule,
+  // mais on veut afficher/choisir par responsable
+  // On stocke l'id du responsable supérieur séparément
+  const [selectedParentResponsableId, setSelectedParentResponsableId] = useState(
     cellule?.cellule_mere_id || ""
   );
-  const [loadingCellulesMere, setLoadingCellulesMere] = useState(true);
+  const [parentResponsables, setParentResponsables]               = useState([]);
+  const [loadingParentResponsables, setLoadingParentResponsables] = useState(true);
 
   const modalRef = useRef(null);
 
-  // ─── Fetch tous les responsables de l'église ───
+  // ─── Fetch tous les responsables (pour les deux selects) ───
   useEffect(() => {
-    if (!egliseId) { setLoadingResponsables(false); return; }
+    if (!egliseId) {
+      setLoadingResponsables(false);
+      setLoadingParentResponsables(false);
+      return;
+    }
 
     let cancelled = false;
 
@@ -101,38 +106,16 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
               rolesArr.some((r) => r.trim() === "ResponsableCellule")
             );
           });
+
           setResponsables(filtered);
-          // La sélection courante (selectedResponsableId) est déjà bonne,
-          // on ne la touche pas — le select va automatiquement afficher
-          // le bon nom car value={selectedResponsableId} correspond à
-          // l'une des options de la liste chargée
+
+          // Pour "Parent cell" : tous les responsables sauf le responsable actuel de cette cellule
+          setParentResponsables(
+            filtered.filter((p) => p.id !== (cellule?.responsable_id || ""))
+          );
         }
         setLoadingResponsables(false);
-      });
-
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ─── Fetch cellules mères ───
-  useEffect(() => {
-    if (!egliseId) { setLoadingCellulesMere(false); return; }
-
-    let cancelled = false;
-
-    supabase
-      .from("cellules")
-      .select(`
-        id, cellule_full, ville, cellule, responsable, responsable_id,
-        profiles:responsable_id ( prenom, nom )
-      `)
-      .eq("eglise_id", egliseId)
-      .neq("id", celluleId)
-      .order("cellule_full")
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (!error && data) setCellulesMere(data);
-        setLoadingCellulesMere(false);
+        setLoadingParentResponsables(false);
       });
 
     return () => { cancelled = true; };
@@ -166,7 +149,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
         telephone,
         responsable_id:  selectedResponsableId || null,
         responsable:     responsableNom,
-        cellule_mere_id: selectedCelluleMereId || null,
+        cellule_mere_id: selectedParentResponsableId || null,
       })
       .eq("id", cellule.id)
       .select("*, superviseur:superviseur_id(nom, prenom)")
@@ -185,7 +168,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
 
   if (!cellule) return null;
 
-  const isLoading = loading || loadingCellulesMere;
+  const isLoading = loading || loadingResponsables || loadingParentResponsables;
 
   return (
     <div
@@ -238,8 +221,6 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
 
           <Field label={t.responsable}>
             {loadingResponsables ? (
-              // Pendant le chargement : on affiche quand même le nom actuel
-              // en lecture seule pour que l'utilisateur ne voie pas de vide
               <div className="inp-readonly">
                 {cellule.responsable || <span className="text-gray-400">{t.chargement}</span>}
               </div>
@@ -252,6 +233,14 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
                   setSelectedResponsableId(id);
                   const obj = responsables.find((r) => r.id === id);
                   setTelephone(obj?.telephone || "");
+                  // Retirer ce responsable de la liste parent si sélectionné
+                  setParentResponsables(
+                    responsables.filter((r) => r.id !== id)
+                  );
+                  // Reset parent si c'était ce responsable
+                  if (selectedParentResponsableId === id) {
+                    setSelectedParentResponsableId("");
+                  }
                 }}
               >
                 <option value="">{t.responsableDefault}</option>
@@ -276,7 +265,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
           <SectionTitle>{t.sectionCelluleMere}</SectionTitle>
 
           <Field label={t.celluleMere}>
-            {loadingCellulesMere ? (
+            {loadingParentResponsables ? (
               <div className="inp flex items-center gap-2 text-gray-400 text-sm">
                 <Spinner />
                 {t.chargement}
@@ -284,15 +273,13 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
             ) : (
               <select
                 className="inp"
-                value={selectedCelluleMereId}
-                onChange={(e) => setSelectedCelluleMereId(e.target.value)}
+                value={selectedParentResponsableId}
+                onChange={(e) => setSelectedParentResponsableId(e.target.value)}
               >
                 <option value="">{t.celluleMereDefault}</option>
-                {cellulesMere.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.profiles
-                      ? `${c.profiles.prenom} ${c.profiles.nom}`
-                      : c.responsable || "—"}
+                {parentResponsables.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.prenom} {r.nom}
                   </option>
                 ))}
               </select>

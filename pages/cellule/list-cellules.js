@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
 import EditCelluleModal from "../../components/EditCelluleModal";
@@ -248,7 +248,6 @@ function ListCellulesContent() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      // ✅ On s'assure de récupérer eglise_id dans le profil
       .select("id, role, roles, eglise_id")
       .eq("id", user.id)
       .single();
@@ -256,7 +255,6 @@ function ListCellulesContent() {
 
     setUserRole(profile.role);
 
-    // ✅ On s'assure de récupérer eglise_id dans chaque cellule via *
     let query = supabase
       .from("cellules")
       .select(`*, superviseur:superviseur_id ( nom, prenom )`)
@@ -293,25 +291,23 @@ function ListCellulesContent() {
     setLoading(false);
   };
 
-  // ✅ On passe la cellule complète (avec eglise_id) au modal
-  const handleEdit = (cellule) => {
+  // ✅ useCallback pour stabiliser les références — évite les re-montages du modal
+  const handleEdit = useCallback((cellule) => {
     setSelectedCellule(cellule);
     setShowEditModal(true);
-  };
+  }, []);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setShowEditModal(false);
     setSelectedCellule(null);
-  };
+  }, []);
 
-  // ✅ CORRECTION : on fusionne l'objet complet existant avec les champs mis à jour
-  // pour ne jamais perdre eglise_id, membre_count, superviseur, etc.
-  const handleUpdated = (updatedCellule) => {
+  const handleUpdated = useCallback((updatedCellule) => {
     setCellules((prev) =>
       prev.map((c) =>
         c.id === updatedCellule.id
           ? {
-              ...c,                                              // garde tout : eglise_id, membre_count, superviseur…
+              ...c,
               cellule:          updatedCellule.cellule          ?? c.cellule,
               ville:            updatedCellule.ville            ?? c.ville,
               responsable:      updatedCellule.responsable      ?? c.responsable,
@@ -324,14 +320,12 @@ function ListCellulesContent() {
       )
     );
 
-    // ✅ On met aussi à jour selectedCellule pour que le modal ait les données
-    // fraîches si l'utilisateur rouvre l'édition juste après
     setSelectedCellule((prev) =>
       prev?.id === updatedCellule.id
         ? { ...prev, ...updatedCellule }
         : prev
     );
-  };
+  }, []);
 
   const canEdit = ["Administrateur", "SuperviseurCellule"].includes(userRole);
 
@@ -432,9 +426,10 @@ function ListCellulesContent() {
         )}
       </div>
 
-      {/* ✅ Le modal reçoit toujours la cellule complète avec eglise_id */}
+      {/* ✅ key={selectedCellule.id} garantit un seul montage par cellule sélectionnée */}
       {showEditModal && selectedCellule && (
         <EditCelluleModal
+          key={selectedCellule.id}
           cellule={selectedCellule}
           onClose={handleCloseModal}
           onUpdated={handleUpdated}

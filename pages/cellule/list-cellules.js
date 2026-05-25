@@ -106,7 +106,7 @@ function CelluleRow({ c, router, canEdit, onEdit, t }) {
         <div className="flex-[2] text-white font-semibold text-sm">{c.cellule_full}</div>
         <div className="flex-[2] text-white text-sm">{c.responsable}</div>
         <div className="flex-[2] text-white text-sm">
-          {c.superviseur ? `${c.superviseur.prenom} ${c.superviseur.nom}` : "—"}
+          {c.cellule_mere ? c.cellule_mere.cellule_full : "—"}
         </div>
 
         {/* Téléphone */}
@@ -256,10 +256,10 @@ function ListCellulesContent() {
     setUserRole(profile.role);
 
     let query = supabase
-      .from("cellules")
-      .select(`*, superviseur:superviseur_id ( nom, prenom )`)
-      .eq("eglise_id", profile.eglise_id)
-      .order("cellule_full");
+  .from("cellules")
+  .select(`*, superviseur:superviseur_id ( nom, prenom ), cellule_mere:cellule_mere_id ( cellule_full )`)
+  .eq("eglise_id", profile.eglise_id)
+  .order("cellule_full");
 
     if (profile.role === "ResponsableCellule") {
       const { data: directes } = await supabase

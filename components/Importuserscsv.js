@@ -58,6 +58,7 @@ const translations = {
   },
 };
 
+// ─── Roles & ministères (valeurs DB = toujours en français) ───
 const ROLES_VALIDES = [
   "Administrateur",
   "ResponsableIntegration",
@@ -76,10 +77,171 @@ const MINISTERES_VALIDES = [
   "Berger", "Modération",
 ];
 
-const AGE_OPTIONS = [
+const AGE_OPTIONS_FR = [
   "12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans",
   "41-55 ans", "56-69 ans", "70 ans et plus",
 ];
+
+const AGE_OPTIONS_EN = [
+  "12-17 yrs", "18-25 yrs", "26-30 yrs", "31-40 yrs",
+  "41-55 yrs", "56-69 yrs", "70 yrs and over",
+];
+
+// ─── Mappings EN → FR pour les valeurs stockées en DB ───
+const AGE_EN_TO_FR = {
+  "12-17 yrs":       "12-17 ans",
+  "18-25 yrs":       "18-25 ans",
+  "26-30 yrs":       "26-30 ans",
+  "31-40 yrs":       "31-40 ans",
+  "41-55 yrs":       "41-55 ans",
+  "56-69 yrs":       "56-69 ans",
+  "70 yrs and over": "70 ans et plus",
+};
+
+const SEXE_EN_TO_FR = {
+  "Male":   "Homme",
+  "Female": "Femme",
+};
+
+const BOOL_EN_TO_FR = {
+  "Yes": "Oui",
+  "No":  "Non",
+};
+
+const STATUT_EN_TO_FR = {
+  "wants to join the church": "veut rejoindre l'église",
+  "already has a church":     "a déjà son église",
+  "new":                      "nouveau",
+  "visitor":                  "visiteur",
+};
+
+const VENU_EN_TO_FR = {
+  "invited":        "invité",
+  "social media":   "réseaux",
+  "evangelization": "evangélisation",
+  "other":          "autre",
+};
+
+const CONVERSION_EN_TO_FR = {
+  "New convert":    "Nouveau converti",
+  "Reconciliation": "Réconciliation",
+};
+
+const MINISTERES_EN_TO_FR = {
+  "Intercession": "Intercession",
+  "Praise":       "Louange",
+  "Technical":    "Technique",
+  "Communication":"Communication",
+  "Children":     "Les Enfants",
+  "Teens":        "Les ados",
+  "Youth":        "Les jeunes",
+  "Finance":      "Finance",
+  "Cleaning":     "Nettoyage",
+  "Counselor":    "Conseiller",
+  "Compassion":   "Compassion",
+  "Visitation":   "Visite",
+  "Shepherd":     "Berger",
+  "Moderation":   "Modération",
+};
+
+// Normalise une valeur : accepte FR ou EN, retourne toujours la valeur FR (DB)
+const normalizeValue = (value, enToFrMap, validFrValues) => {
+  if (!value) return "";
+  const trimmed = value.trim();
+  // Déjà en FR ?
+  if (validFrValues.includes(trimmed)) return trimmed;
+  // Traduction EN → FR ?
+  return enToFrMap[trimmed] ?? trimmed; // retourne tel quel si inconnu (sera rejeté par validation)
+};
+
+// ─── Config template par langue ───
+const TEMPLATE_CONFIG = {
+  fr: {
+    filename: "template_import_utilisateurs.csv",
+    headers: [
+      "prenom *", "nom *", "sexe *", "age *", "date_venu *",
+      "telephone", "is_whatsapp", "ville",
+      "statut", "venu", "priere_salut", "type_conversion",
+      "email *", "password *", "roles *", "ministeres",
+      "cellule_nom", "cellule_zone",
+    ],
+    example: [
+      "Jean", "Dupont", "Homme", "26-30 ans", "2026-01-15",
+      "59700000", "Oui", "Curepipe",
+      "veut rejoindre l'église", "invité", "Oui", "Nouveau converti",
+      "jean.dupont@email.com", "MotDePasse123",
+      "ResponsableCellule", "Louange|Intercession",
+      "Ma Cellule", "Rose-Hill",
+    ],
+    notes: [
+      "IMPORTANT: Effacez toutes les lignes commençant par # avant d'importer.",
+      "Les colonnes avec * sont obligatoires.",
+      "sexe: Homme | Femme",
+      "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
+      "date_venu: format YYYY-MM-DD ou JJ-MM-AAAA",
+      "is_whatsapp: Oui | Non (ou vide = Non)",
+      "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur",
+      "venu: invité | réseaux | evangélisation | autre",
+      "priere_salut: Oui | Non",
+      "type_conversion: Nouveau converti | Réconciliation (requis si priere_salut = Oui)",
+      `roles: ${ROLES_VALIDES.join(" | ")} — séparer plusieurs rôles par |`,
+      `ministeres: ${MINISTERES_VALIDES.join(" | ")} — séparer par |`,
+      "cellule_nom / cellule_zone: obligatoires si role = ResponsableCellule",
+      "cellule_mere_id: UUID de la cellule mère (optionnel)",
+    ],
+  },
+  en: {
+    filename: "template_import_users.csv",
+    headers: [
+      "first_name *", "last_name *", "gender *", "age *", "date_joined *",
+      "phone", "is_whatsapp", "city",
+      "status", "how_came", "salvation_prayer", "conversion_type",
+      "email *", "password *", "roles *", "ministries",
+      "cell_name", "cell_area",
+    ],
+    example: [
+      "John", "Smith", "Male", "26-30 yrs", "2026-01-15",
+      "59700000", "Yes", "New York",
+      "wants to join the church", "invited", "Yes", "New convert",
+      "john.smith@email.com", "Password123",
+      "ResponsableCellule", "Praise|Intercession",
+      "My Cell", "Brooklyn",
+    ],
+    notes: [
+      "IMPORTANT: Delete all lines starting with # before importing.",
+      "Columns with * are required.",
+      "gender: Male | Female",
+      "age: 12-17 yrs | 18-25 yrs | 26-30 yrs | 31-40 yrs | 41-55 yrs | 56-69 yrs | 70 yrs and over",
+      "date_joined: format YYYY-MM-DD or DD-MM-YYYY",
+      "is_whatsapp: Yes | No (or empty = No)",
+      "status: wants to join the church | already has a church | new | visitor",
+      "how_came: invited | social media | evangelization | other",
+      "salvation_prayer: Yes | No",
+      "conversion_type: New convert | Reconciliation (required if salvation_prayer = Yes)",
+      `roles: ${ROLES_VALIDES.join(" | ")} — separate multiple roles with |`,
+      `ministries: Intercession | Praise | Technical | Communication | Children | Teens | Youth | Finance | Cleaning | Counselor | Compassion | Visitation | Shepherd | Moderation — separate with |`,
+      "cell_name / cell_area: required if role = ResponsableCellule",
+      "cellule_mere_id: UUID of the parent cell group (optional)",
+    ],
+  },
+};
+
+// Mapping des headers EN → clés internes FR
+const EN_HEADER_MAP = {
+  "first_name": "prenom",
+  "last_name":  "nom",
+  "gender":     "sexe",
+  "date_joined":"date_venu",
+  "phone":      "telephone",
+  "city":       "ville",
+  "status":     "statut",
+  "how_came":   "venu",
+  "salvation_prayer": "priere_salut",
+  "conversion_type":  "type_conversion",
+  "ministries": "ministeres",
+  "cell_name":  "cellule_nom",
+  "cell_area":  "cellule_zone",
+};
 
 const capitalize = (str) =>
   str ? str.trim().replace(/\b\w/g, (c) => c.toUpperCase()) : "";
@@ -106,62 +268,23 @@ export default function ImportUsersCSV() {
   const { lang } = useLang();
   const t = translations[lang];
 
-  const [data, setData]           = useState([]);
-  const [errors, setErrors]       = useState([]);
-  const [loading, setLoading]     = useState(false);
-  const [progress, setProgress]   = useState("");
-  const [success, setSuccess]     = useState(false);
-  const [importCount, setImportCount] = useState(0);
+  const [data, setData]                 = useState([]);
+  const [errors, setErrors]             = useState([]);
+  const [loading, setLoading]           = useState(false);
+  const [progress, setProgress]         = useState("");
+  const [success, setSuccess]           = useState(false);
+  const [importCount, setImportCount]   = useState(0);
   const [importErrors, setImportErrors] = useState([]);
 
-  // ── Template CSV ──
+  // ── Téléchargement du template selon la langue ──
   const handleDownloadTemplate = () => {
-    const headers = [
-      // Infos membre
-      "prenom *", "nom *", "sexe *", "age *", "date_venu *",
-      "telephone", "is_whatsapp", "ville",
-      "statut", "venu", "priere_salut", "type_conversion",
-      // Compte
-      "email *", "password *",
-      // Rôles (séparés par |)
-      "roles *",
-      // Ministères (séparés par |)
-      "ministeres",
-      // Cellule (si ResponsableCellule)
-      "cellule_nom", "cellule_zone",
-    ];
-
-    const example = [
-      "Jean", "Dupont", "Homme", "26-30 ans", "2026-01-15",
-      "59700000", "Oui", "Curepipe",
-      "veut rejoindre l'église", "invité", "Oui", "Nouveau converti",
-      "jean.dupont@email.com", "MotDePasse123",
-      "ResponsableCellule",
-      "Louange|Intercession",
-      "Ma Cellule", "Rose-Hill", "",
-    ];
-
-    const notes = [
-      "IMPORTANT: Effacez toutes les lignes commençant par # avant d'importer.",
-      "Les colonnes avec * sont obligatoires.",
-      "sexe: Homme | Femme",
-      "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
-      "date_venu: format YYYY-MM-DD ou JJ-MM-AAAA",
-      "is_whatsapp: Oui | Non (ou vide = Non)",
-      "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur",
-      "venu: invité | réseaux | evangélisation | autre",
-      "priere_salut: Oui | Non",
-      "type_conversion: Nouveau converti | Réconciliation (requis si priere_salut = Oui)",
-      `roles: ${ROLES_VALIDES.join(" | ")} — séparer plusieurs rôles par |`,
-      `ministeres: ${MINISTERES_VALIDES.join(" | ")} — séparer par |`,
-      "cellule_nom / cellule_zone: obligatoires si role = ResponsableCellule",      
-    ];
+    const cfg = TEMPLATE_CONFIG[lang] || TEMPLATE_CONFIG.fr;
 
     const csvContent = [
-      headers.join(","),
-      example.join(","),
+      cfg.headers.join(","),
+      cfg.example.join(","),
       "",
-      ...notes.map((n) => `# ${n}`),
+      ...cfg.notes.map((n) => `# ${n}`),
     ].join("\n");
 
     const BOM = "\uFEFF";
@@ -169,12 +292,12 @@ export default function ImportUsersCSV() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "template_import_utilisateurs.csv";
+    link.download = cfg.filename;
     link.click();
     URL.revokeObjectURL(url);
   };
 
-  // ── Parse + validation ──
+  // ── Parse + validation (accepte FR et EN) ──
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -194,90 +317,109 @@ export default function ImportUsersCSV() {
         const errorList = [];
 
         rows.forEach((row, index) => {
-          const lineNum = index + 2; // +2 car ligne 1 = headers
+          const lineNum = index + 2;
 
           // Skip lignes commentaires
           if (Object.values(row)[0]?.toString().trim().startsWith("#")) return;
 
-          // Normaliser les clés (enlever " *")
+          // ── Normaliser les clés ──
+          // 1) Enlever " *"
+          // 2) Mapper les headers EN → FR si nécessaire
           const r = {};
           Object.keys(row).forEach((key) => {
-            r[key.replace(" *", "").trim()] = row[key]?.toString().trim() || "";
+            const cleanKey = key.replace(" *", "").trim();
+            const mappedKey = EN_HEADER_MAP[cleanKey] ?? cleanKey;
+            r[mappedKey] = row[key]?.toString().trim() || "";
           });
 
           const errs = [];
 
           // ── Champs obligatoires ──
           ["prenom", "nom", "sexe", "age", "date_venu", "email", "password", "roles"].forEach((f) => {
-            if (!r[f]) errs.push(`${f} manquant`);
+            if (!r[f]) errs.push(`${f} missing`);
           });
 
-          // ── Validations ──
-          if (r.sexe && !["Homme", "Femme"].includes(r.sexe))
-            errs.push("sexe invalide (Homme ou Femme)");
+          // ── Normaliser les valeurs EN → FR ──
+          const sexeNorm = normalizeValue(r.sexe, SEXE_EN_TO_FR, ["Homme", "Femme"]);
+          const ageNorm  = normalizeValue(r.age,  AGE_EN_TO_FR,  AGE_OPTIONS_FR);
+          const isWhatsappRaw = normalizeValue(r.is_whatsapp, BOOL_EN_TO_FR, ["Oui", "Non"]);
+          const priereSalutNorm = normalizeValue(r.priere_salut, BOOL_EN_TO_FR, ["Oui", "Non"]);
+          const statutNorm = normalizeValue(r.statut, STATUT_EN_TO_FR,
+            ["veut rejoindre l'église", "a déjà son église", "nouveau", "visiteur"]);
+          const venuNorm = normalizeValue(r.venu, VENU_EN_TO_FR,
+            ["invité", "réseaux", "evangélisation", "autre"]);
+          const conversionNorm = normalizeValue(r.type_conversion, CONVERSION_EN_TO_FR,
+            ["Nouveau converti", "Réconciliation"]);
 
-          if (r.age && !AGE_OPTIONS.includes(r.age))
-            errs.push("age invalide");
+          // ── Validations ──
+          if (r.sexe && !["Homme", "Femme"].includes(sexeNorm))
+            errs.push(`gender invalid (${lang === "en" ? "Male or Female" : "Homme ou Femme"})`);
+
+          if (r.age && !AGE_OPTIONS_FR.includes(ageNorm))
+            errs.push("age invalid");
 
           const dateVenu = parseDate(r.date_venu);
           if (r.date_venu && !dateVenu)
-            errs.push("date_venu invalide");
+            errs.push("date invalid");
 
-          // Rôles
+          // Rôles (identiques FR/EN)
           const roles = r.roles
             ? r.roles.split("|").map((x) => x.trim()).filter(Boolean)
             : [];
           const invalidRoles = roles.filter((ro) => !ROLES_VALIDES.includes(ro));
           if (invalidRoles.length > 0)
-            errs.push(`rôle(s) invalide(s) : ${invalidRoles.join(", ")}`);
+            errs.push(`invalid role(s): ${invalidRoles.join(", ")}`);
           if (roles.length === 0)
-            errs.push("au moins un rôle est requis");
+            errs.push("at least one role is required");
 
           // Cellule obligatoire si ResponsableCellule
           if (roles.includes("ResponsableCellule")) {
-            if (!r.cellule_nom?.trim()) errs.push("cellule_nom obligatoire pour ResponsableCellule");
-            if (!r.cellule_zone?.trim()) errs.push("cellule_zone obligatoire pour ResponsableCellule");
+            if (!r.cellule_nom?.trim()) errs.push("cell name required for ResponsableCellule");
+            if (!r.cellule_zone?.trim()) errs.push("cell area required for ResponsableCellule");
           }
 
-          // Ministères (optionnel, juste valider si présents)
-          const ministeres = r.ministeres
+          // Ministères — normaliser EN → FR si besoin
+          const ministeresRaw = r.ministeres
             ? r.ministeres.split("|").map((x) => x.trim()).filter(Boolean)
             : [];
+          const ministeres = ministeresRaw.map((m) =>
+            MINISTERES_EN_TO_FR[m] ?? m  // traduit si EN, sinon conserve (sera validé après)
+          );
           const invalidMin = ministeres.filter((m) => !MINISTERES_VALIDES.includes(m));
           if (invalidMin.length > 0)
-            errs.push(`ministère(s) invalide(s) : ${invalidMin.join(", ")}`);
+            errs.push(`invalid ministr(ies): ${invalidMin.join(", ")}`);
 
-          if (r.priere_salut && !["Oui", "Non"].includes(r.priere_salut))
-            errs.push("priere_salut invalide (Oui ou Non)");
+          if (r.priere_salut && !["Oui", "Non"].includes(priereSalutNorm))
+            errs.push(`salvation_prayer invalid (${lang === "en" ? "Yes or No" : "Oui ou Non"})`);
 
-          if (r.priere_salut === "Oui" && !r.type_conversion)
-            errs.push("type_conversion requis si priere_salut = Oui");
+          if (priereSalutNorm === "Oui" && !conversionNorm)
+            errs.push("conversion_type required when salvation_prayer = Yes");
 
           if (errs.length > 0) {
             errs.forEach((err) => errorList.push(t.errorRow(lineNum, err)));
             return;
           }
 
-          // ── Ligne valide ──
+          // ── Ligne valide — toutes les valeurs sont désormais en FR (DB) ──
           validData.push({
-            prenom: capitalize(r.prenom),
-            nom: capitalize(r.nom),
-            sexe: r.sexe,
-            age: r.age,
-            date_venu: dateVenu,
-            telephone: r.telephone || null,
-            is_whatsapp: r.is_whatsapp === "Oui",
-            ville: capitalize(r.ville) || null,
-            statut: r.statut || null,
-            venu: r.venu || null,
-            priere_salut: r.priere_salut || null,
-            type_conversion: r.type_conversion || null,
-            email: r.email.toLowerCase().trim(),
-            password: r.password,
+            prenom:          capitalize(r.prenom),
+            nom:             capitalize(r.nom),
+            sexe:            sexeNorm,
+            age:             ageNorm,
+            date_venu:       dateVenu,
+            telephone:       r.telephone || null,
+            is_whatsapp:     isWhatsappRaw === "Oui",
+            ville:           capitalize(r.ville) || null,
+            statut:          statutNorm || null,
+            venu:            venuNorm || null,
+            priere_salut:    priereSalutNorm || null,
+            type_conversion: conversionNorm || null,
+            email:           r.email.toLowerCase().trim(),
+            password:        r.password,
             roles,
             ministeresSelected: ministeres,
-            cellule_nom: r.cellule_nom?.trim() || "",
-            cellule_zone: r.cellule_zone?.trim() || "",            
+            cellule_nom:     r.cellule_nom?.trim() || "",
+            cellule_zone:    r.cellule_zone?.trim() || "",
           });
         });
 
@@ -318,14 +460,14 @@ export default function ImportUsersCSV() {
           },
           body: JSON.stringify({
             ...row,
-            member_id: "add-serviteur", // toujours nouveau serviteur via import
+            member_id: "add-serviteur",
           }),
         });
 
         const result = await res.json();
 
         if (!res.ok) {
-          rowErrors.push(t.errorRow(i + 2, result?.error ?? "Erreur inconnue"));
+          rowErrors.push(t.errorRow(i + 2, result?.error ?? "Unknown error"));
         } else {
           successCount++;
         }

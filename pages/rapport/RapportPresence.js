@@ -8,10 +8,8 @@ import { useLang } from "../../hooks/useLang";
 
 const translations = {
   fr: {
-    // Page header
     pageTitle: "Rapport de présences",
     pageSubtitle: "Suivi pastoral & indicateurs de fidélité",
-    // Filters
     periodLabel: "Période :",
     typeLabel: "Type :",
     tous: "Tous",
@@ -21,14 +19,11 @@ const translations = {
       { label: "90 j", val: "90" },
       { label: "6 mois", val: "180" },
     ],
-    // Tabs
     tabKpi: "Vue d'ensemble",
     tabCellules: "Cellules",
     tabFamilles: "Familles",
     tabSessions: "Par session",
-    // Empty / Loading
     noSession: "Aucune session sur cette période",
-    // KPI labels
     kpiSessions: "Sessions",
     kpiSessionsSub: "sur la période",
     kpiTauxMoyen: "Taux moyen",
@@ -37,7 +32,6 @@ const translations = {
     kpiMembresSub: "actifs",
     kpiAlertes: "En alerte",
     kpiAlertesSub: "≥ 3 abs. consécutives",
-    // Section titles
     sectionOverview: "Vue d'ensemble",
     sectionSegmentation: "Segmentation fidélité — cliquer pour voir la liste",
     sectionAlertes: "Alertes pastorales — à visiter en priorité",
@@ -45,52 +39,38 @@ const translations = {
     sectionTendance: "Tendance hebdomadaire",
     sectionTopFideles: "Top fidèles",
     sectionGenre: "Répartition par genre",
-    // Segmentation
     reguliers: "Réguliers",
     irreguliers: "Irréguliers",
     decrocheurs: "Décrocheurs",
     absentsChroniques: "Absents chroniques",
-    // Alertes
     vuLe: (date) => `Vu le ${date}`,
     jamaisPresent: "Jamais présent(e)",
     showMore: (n) => `▼ Voir ${n} de plus`,
     reduce: "▲ Réduire",
     absences: (n) => `${n} abs.`,
-    // Tendance
     vsSemPrec: (delta, sign) => `${sign} ${Math.abs(delta)}% vs sem. préc.`,
     insuffisantData: "Données insuffisantes (≥ 2 semaines)",
-    // Taux par type
     noData: "Aucune donnée",
     sessions_count: (n) => `${n} sess.`,
-    // Top fidèles
     topNoData: "Aucune donnée",
-    // Genre
     lastSession: (date) => `Dernière session · ${date}`,
     hommes: "Hommes",
     femmes: "Femmes",
     nonRenseigne: "Non renseigné",
-    // Carte session
     presents: (n) => `✔ Présents (${n})`,
     absents: (n) => `✗ Absents (${n})`,
     aucun: "Aucun",
-    // Carte groupe
     membre: (n) => `${n} membre${n > 1 ? "s" : ""}`,
     aucunMembre: "Aucun membre",
-    // Onglet cellules
     compCellules: "Comparaison des cellules",
     aucuneCellule: "Aucune cellule visible",
-    // Onglet familles
     compFamilles: "Comparaison des familles",
     aucuneFamille: "Aucune famille visible",
-    // Tri
     meilleurTaux: "Meilleur taux",
     moinsBonTaux: "Moins bon taux",
     enProgression: "En progression ▲",
     enRegression: "En régression ▼",
     stable: "→ stable",
-    // Drawer
-    aucunMembre: "Aucun membre",
-    // Tendance puce
     tendanceStable: "→ stable",
   },
   en: {
@@ -157,7 +137,6 @@ const translations = {
     enProgression: "Progressing ▲",
     enRegression: "Declining ▼",
     stable: "→ stable",
-    aucunMembre: "No members",
     tendanceStable: "→ stable",
   },
 };
@@ -315,10 +294,10 @@ function BlocKpiGlobaux({ sessions, presencesParSession, allMembres, t }) {
 // ─── BLOC SEGMENTATION ─────────────────────────────────────────
 function BlocSegmentation({ sessions, presencesParSession, allMembres, onVoirSegment, t }) {
   const segments = [
-    { key: "reguliers",   label: t.reguliers,         min: 75, max: 100, badge: "green" },
-    { key: "irreguliers", label: t.irreguliers,        min: 40, max: 74,  badge: "blue"  },
-    { key: "decrocheurs", label: t.decrocheurs,        min: 15, max: 39,  badge: "amber" },
-    { key: "absents",     label: t.absentsChroniques,  min: 0,  max: 14,  badge: "red"   },
+    { key: "reguliers",   label: t.reguliers,        min: 75, max: 100, badge: "green" },
+    { key: "irreguliers", label: t.irreguliers,       min: 40, max: 74,  badge: "blue"  },
+    { key: "decrocheurs", label: t.decrocheurs,       min: 15, max: 39,  badge: "amber" },
+    { key: "absents",     label: t.absentsChroniques, min: 0,  max: 14,  badge: "red"   },
   ];
   const mbParSeg = segments.reduce((acc, seg) => {
     acc[seg.key] = allMembres.filter(m => {
@@ -835,6 +814,7 @@ function RapportPresence() {
       depuis.setDate(depuis.getDate() - Number(filtrePeriode));
       const depuisStr = depuis.toISOString().split("T")[0];
 
+      // ── Sessions ──────────────────────────────────────────────
       let sessQuery = supabase.from("attendance")
         .select("id, typeTemps, date, heure, numero_culte")
         .eq("eglise_id", profile.eglise_id)
@@ -851,31 +831,71 @@ function RapportPresence() {
         setLoading(false); return;
       }
 
+      // ── Calcul des IDs membres visibles (non-admin) ───────────
       let myIds = null;
       if (!isAdmin) {
         let ids = new Set();
-        const [asgn, cell, fam] = await Promise.all([
-          profile.roles?.includes("Conseiller")
-            ? supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", profile.uid).eq("statut", "actif")
-            : Promise.resolve({ data: [] }),
-          profile.roles?.includes("ResponsableCellule")
-            ? supabase.from("cellules").select("id").eq("responsable_id", profile.uid)
-            : Promise.resolve({ data: [] }),
-          profile.roles?.includes("ResponsableFamilles")
-            ? supabase.from("familles").select("id").eq("responsable_id", profile.uid)
-            : Promise.resolve({ data: [] }),
-        ]);
+
+        // 1. Membres assignés en tant que Conseiller
+        const asgnProm = profile.roles?.includes("Conseiller")
+          ? supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", profile.uid).eq("statut", "actif")
+          : Promise.resolve({ data: [] });
+
+        // 2. Toutes les cellules de l'église pour résoudre la hiérarchie parent→enfant
+        //    On récupère responsable_id et cellule_mere_id en une seule requête (pas de self-join)
+        const cellProm = profile.roles?.includes("ResponsableCellule")
+          ? supabase.from("cellules")
+              .select("id, responsable_id, cellule_mere_id")
+              .eq("eglise_id", profile.eglise_id)
+          : Promise.resolve({ data: [] });
+
+        // 3. Familles dont je suis responsable
+        const famProm = profile.roles?.includes("ResponsableFamilles")
+          ? supabase.from("familles").select("id").eq("responsable_id", profile.uid)
+          : Promise.resolve({ data: [] });
+
+        const [asgn, allCellulesEglise, fam] = await Promise.all([asgnProm, cellProm, famProm]);
+
+        // Membres Conseiller
         asgn.data?.forEach(a => ids.add(a.membre_id));
-        if (cell.data?.length) {
-          const { data: cm } = await supabase.from("membres_complets").select("id")
-            .in("cellule_id", cell.data.map(c => c.id)).in("etat_contact", ["existant", "nouveau"]);
-          cm?.forEach(m => ids.add(m.id));
+
+        // Membres cellules : directes + enfants (cellule_mere_id → mes cellules)
+        if (allCellulesEglise.data?.length) {
+          const toutesLesCellules = allCellulesEglise.data;
+
+          // Mes cellules directes (dont je suis responsable_id)
+          const mesCellulesIds = new Set(
+            toutesLesCellules
+              .filter(c => c.responsable_id === profile.uid)
+              .map(c => c.id)
+          );
+
+          // Cellules enfants : celles dont cellule_mere_id est dans mes cellules
+          const cellulesVisibles = new Set(mesCellulesIds);
+          toutesLesCellules.forEach(c => {
+            if (c.cellule_mere_id && mesCellulesIds.has(c.cellule_mere_id)) {
+              cellulesVisibles.add(c.id);
+            }
+          });
+
+          if (cellulesVisibles.size > 0) {
+            const { data: cm } = await supabase.from("membres_complets")
+              .select("id")
+              .in("cellule_id", [...cellulesVisibles])
+              .in("etat_contact", ["existant", "nouveau"]);
+            cm?.forEach(m => ids.add(m.id));
+          }
         }
+
+        // Membres familles
         if (fam.data?.length) {
-          const { data: fm } = await supabase.from("membres_complets").select("id")
-            .in("famille_id", fam.data.map(f => f.id)).in("etat_contact", ["existant", "nouveau"]);
+          const { data: fm } = await supabase.from("membres_complets")
+            .select("id")
+            .in("famille_id", fam.data.map(f => f.id))
+            .in("etat_contact", ["existant", "nouveau"]);
           fm?.forEach(m => ids.add(m.id));
         }
+
         myIds = [...ids];
         if (!myIds.length) {
           setAllMembres([]); setPresencesParSession({}); setCellules([]); setFamilles([]);
@@ -883,6 +903,7 @@ function RapportPresence() {
         }
       }
 
+      // ── Membres ───────────────────────────────────────────────
       let membresQuery = supabase.from("membres_complets")
         .select("id, prenom, nom, sexe, cellule_id, famille_id")
         .eq("eglise_id", profile.eglise_id)
@@ -891,21 +912,46 @@ function RapportPresence() {
       const { data: membresData } = await membresQuery.order("nom");
       setAllMembres(membresData || []);
 
-      const [cellulesRes, famillesRes] = await Promise.all([
-        isAdmin
-          ? supabase.from("cellules").select("id, cellule_full, cellule, ville").eq("eglise_id", profile.eglise_id)
-          : profile.roles?.includes("ResponsableCellule")
-            ? supabase.from("cellules").select("id, cellule_full, cellule, ville").eq("responsable_id", profile.uid)
-            : Promise.resolve({ data: [] }),
-        isAdmin
-          ? supabase.from("familles").select("id, famille_full, famille, ville").eq("eglise_id", profile.eglise_id)
-          : profile.roles?.includes("ResponsableFamilles")
-            ? supabase.from("familles").select("id, famille_full, famille, ville").eq("responsable_id", profile.uid)
-            : Promise.resolve({ data: [] }),
-      ]);
+      // ── Cellules et familles visibles (pour les onglets) ──────
+      // Pour un ResponsableCellule : ses cellules directes + enfants (même logique)
+      let cellulesRes, famillesRes;
+
+      if (isAdmin) {
+        [cellulesRes, famillesRes] = await Promise.all([
+          supabase.from("cellules").select("id, cellule_full, cellule, ville").eq("eglise_id", profile.eglise_id),
+          supabase.from("familles").select("id, famille_full, famille, ville").eq("eglise_id", profile.eglise_id),
+        ]);
+      } else {
+        // Cellules : on réutilise la même logique parent→enfant
+        if (profile.roles?.includes("ResponsableCellule")) {
+          const { data: toutesLesCellules } = await supabase.from("cellules")
+            .select("id, cellule_full, cellule, ville, responsable_id, cellule_mere_id")
+            .eq("eglise_id", profile.eglise_id);
+
+          const all = toutesLesCellules || [];
+          const mesCellulesIds = new Set(
+            all.filter(c => c.responsable_id === profile.uid).map(c => c.id)
+          );
+          const cellulesVisiblesIds = new Set(mesCellulesIds);
+          all.forEach(c => {
+            if (c.cellule_mere_id && mesCellulesIds.has(c.cellule_mere_id)) {
+              cellulesVisiblesIds.add(c.id);
+            }
+          });
+          cellulesRes = { data: all.filter(c => cellulesVisiblesIds.has(c.id)) };
+        } else {
+          cellulesRes = { data: [] };
+        }
+
+        famillesRes = profile.roles?.includes("ResponsableFamilles")
+          ? await supabase.from("familles").select("id, famille_full, famille, ville").eq("responsable_id", profile.uid)
+          : { data: [] };
+      }
+
       setCellules(cellulesRes.data || []);
       setFamilles(famillesRes.data || []);
 
+      // ── Présences ─────────────────────────────────────────────
       const sessIds = sess.map(s => s.id);
       const { data: presData } = await supabase
         .from("presences").select("attendance_id, membre_id, statut").in("attendance_id", sessIds);

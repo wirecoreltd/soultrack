@@ -63,7 +63,11 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
   const [message, setMessage] = useState("");
 
   const [responsables, setResponsables] = useState([]);
-  const [selectedResponsableId, setSelectedResponsableId] = useState("");
+  // ✅ FIX 1 : initialiser directement depuis la prop cellule
+  // pour éviter que le select soit vide au premier rendu
+  const [selectedResponsableId, setSelectedResponsableId] = useState(
+    cellule?.responsable_id || ""
+  );
   const [loadingResponsables, setLoadingResponsables] = useState(true);
 
   const [cellulesMere, setCellulesMere] = useState([]);
@@ -77,6 +81,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
     console.log("🔵 useEffect responsables - eglise_id:", cellule?.eglise_id);
     if (!cellule?.eglise_id) {
       console.log("❌ pas d eglise_id, on sort");
+      setLoadingResponsables(false);
       return;
     }
 
@@ -104,12 +109,20 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
         console.log("🟢 filtered responsables:", filtered.length);
         setResponsables(filtered);
 
-        const matchId = cellule?.responsable_id || "";
-        const exists = filtered.find((r) => r.id === matchId);
-        console.log("🟢 responsable_id:", matchId, "exists:", !!exists);
-        setSelectedResponsableId(exists ? matchId : "");
+        // ✅ FIX 2 : toujours restaurer l'ID depuis la prop cellule,
+        // ne jamais le remettre à "" si le profil est absent de la liste filtrée
+        const targetId = cellule?.responsable_id || "";
+        const exists = filtered.find((r) => r.id === targetId);
 
-        if (exists && exists.telephone) {
+        if (targetId && !exists) {
+          console.warn("⚠️ responsable_id introuvable dans la liste filtrée:", targetId);
+        }
+
+        // On restaure toujours l'ID — le <select> affichera la bonne option
+        setSelectedResponsableId(targetId);
+
+        // Sync du téléphone depuis le profil trouvé
+        if (exists?.telephone) {
           setTelephone(exists.telephone);
         }
       } else {

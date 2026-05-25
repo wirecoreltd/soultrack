@@ -128,7 +128,7 @@ export default function ImportUsersCSV() {
       // Ministères (séparés par |)
       "ministeres",
       // Cellule (si ResponsableCellule)
-      "cellule_nom", "cellule_zone", "cellule_mere_id",
+      "cellule_nom", "cellule_zone",
     ];
 
     const example = [
@@ -154,8 +154,7 @@ export default function ImportUsersCSV() {
       "type_conversion: Nouveau converti | Réconciliation (requis si priere_salut = Oui)",
       `roles: ${ROLES_VALIDES.join(" | ")} — séparer plusieurs rôles par |`,
       `ministeres: ${MINISTERES_VALIDES.join(" | ")} — séparer par |`,
-      "cellule_nom / cellule_zone: obligatoires si role = ResponsableCellule",
-      "cellule_mere_id: UUID de la cellule mère (optionnel)",
+      "cellule_nom / cellule_zone: obligatoires si role = ResponsableCellule",      
     ];
 
     const csvContent = [
@@ -278,8 +277,7 @@ export default function ImportUsersCSV() {
             roles,
             ministeresSelected: ministeres,
             cellule_nom: r.cellule_nom?.trim() || "",
-            cellule_zone: r.cellule_zone?.trim() || "",
-            cellule_mere_id: r.cellule_mere_id?.trim() || "",
+            cellule_zone: r.cellule_zone?.trim() || "",            
           });
         });
 

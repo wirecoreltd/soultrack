@@ -54,6 +54,13 @@ const translations = {
 export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
   const { lang } = useLang();
   const t = translations[lang];
+  console.log("🟡 cellule reçue:", JSON.stringify({
+  id: cellule?.id,
+  responsable: cellule?.responsable,
+  responsable_id: cellule?.responsable_id,
+  eglise_id: cellule?.eglise_id,
+  telephone: cellule?.telephone,
+}));
 
   const egliseId  = cellule?.eglise_id   || "";
   const celluleId = cellule?.id          || "";

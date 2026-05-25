@@ -52,10 +52,13 @@ const translations = {
 };
 
 export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
-  console.log("🔴 EditCelluleModal MOUNTED", cellule?.id, "eglise_id:", cellule?.eglise_id);
-
   const { lang } = useLang();
   const t = translations[lang];
+
+  // ✅ On snapshots les valeurs initiales avec useRef
+  // pour éviter que les re-renders du parent ne réinitialisent les états
+  const initializedRef = useRef(false);
+  const celluleIdRef = useRef(cellule?.id);
 
   const [ville, setVille] = useState(cellule?.ville || "");
   const [telephone, setTelephone] = useState(cellule?.telephone || "");
@@ -63,27 +66,33 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
   const [message, setMessage] = useState("");
 
   const [responsables, setResponsables] = useState([]);
-  // ✅ FIX 1 : initialiser directement depuis la prop cellule
-  // pour éviter que le select soit vide au premier rendu
+  // ✅ Initialisé directement depuis la prop — ne dépend pas du fetch
   const [selectedResponsableId, setSelectedResponsableId] = useState(
     cellule?.responsable_id || ""
   );
   const [loadingResponsables, setLoadingResponsables] = useState(true);
 
   const [cellulesMere, setCellulesMere] = useState([]);
-  const [selectedCelluleMereId, setSelectedCelluleMereId] = useState(cellule?.cellule_mere_id || "");
+  const [selectedCelluleMereId, setSelectedCelluleMereId] = useState(
+    cellule?.cellule_mere_id || ""
+  );
   const [loadingCellulesMere, setLoadingCellulesMere] = useState(true);
 
   const modalRef = useRef(null);
 
   // ─── Fetch responsables ───
+  // ✅ On utilise cellule.eglise_id capturé une seule fois via ref
+  // pour éviter que le useEffect se relance à chaque re-render du parent
+  const egliseId = useRef(cellule?.eglise_id).current;
+  const responsableId = useRef(cellule?.responsable_id).current;
+
   useEffect(() => {
-    console.log("🔵 useEffect responsables - eglise_id:", cellule?.eglise_id);
-    if (!cellule?.eglise_id) {
-      console.log("❌ pas d eglise_id, on sort");
+    if (!egliseId) {
       setLoadingResponsables(false);
       return;
     }
+
+    let cancelled = false;
 
     const fetchResponsables = async () => {
       setLoadingResponsables(true);
@@ -91,10 +100,10 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
       const { data, error } = await supabase
         .from("profiles")
         .select("id, prenom, nom, telephone, role, roles")
-        .eq("eglise_id", cellule.eglise_id)
+        .eq("eglise_id", egliseId)
         .order("nom");
 
-      console.log("🟢 profiles fetched:", data?.length, "error:", error);
+      if (cancelled) return;
 
       if (!error && data) {
         const filtered = data.filter((p) => {
@@ -106,24 +115,21 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
           );
         });
 
-        console.log("🟢 filtered responsables:", filtered.length);
         setResponsables(filtered);
 
-        // ✅ FIX 2 : toujours restaurer l'ID depuis la prop cellule,
-        // ne jamais le remettre à "" si le profil est absent de la liste filtrée
-        const targetId = cellule?.responsable_id || "";
+        // ✅ On restaure toujours l'ID initial — jamais de reset à ""
+        const targetId = responsableId || "";
         const exists = filtered.find((r) => r.id === targetId);
 
         if (targetId && !exists) {
           console.warn("⚠️ responsable_id introuvable dans la liste filtrée:", targetId);
         }
 
-        // On restaure toujours l'ID — le <select> affichera la bonne option
         setSelectedResponsableId(targetId);
 
-        // Sync du téléphone depuis le profil trouvé
+        // Sync téléphone si le profil est trouvé et que le champ est vide
         if (exists?.telephone) {
-          setTelephone(exists.telephone);
+          setTelephone((prev) => prev || exists.telephone);
         }
       } else {
         console.error("❌ Erreur chargement responsables:", error);
@@ -133,11 +139,19 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
     };
 
     fetchResponsables();
-  }, [cellule?.eglise_id, cellule?.responsable_id]);
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // ✅ dépendances vides — on utilise les refs capturés au montage
 
   // ─── Fetch cellules mères ───
   useEffect(() => {
-    if (!cellule?.eglise_id) return;
+    if (!egliseId) {
+      setLoadingCellulesMere(false);
+      return;
+    }
+
+    let cancelled = false;
 
     const fetchCellulesMere = async () => {
       setLoadingCellulesMere(true);
@@ -156,17 +170,23 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
             nom
           )
         `)
-        .eq("eglise_id", cellule.eglise_id)
-        .neq("id", cellule.id)
+        .eq("eglise_id", egliseId)
+        .neq("id", celluleIdRef.current)
         .order("cellule_full");
+
+      if (cancelled) return;
 
       if (!error && data) setCellulesMere(data);
       else console.error("Erreur chargement cellules mères:", error);
+
       setLoadingCellulesMere(false);
     };
 
     fetchCellulesMere();
-  }, [cellule]);
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // ✅ dépendances vides — refs stables
 
   // ─── Fermer en cliquant dehors ───
   useEffect(() => {

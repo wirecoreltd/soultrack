@@ -11,20 +11,15 @@ import { useLang } from "../../hooks/useLang";
 
 const translations = {
   fr: {
-    // Page
     pageTitle: "Liste des",
     pageTitleAccent: "Cellules",
     introAccent: "Gérez et consultez facilement vos cellules",
     intro: ". Recherchez par nom, filtrez rapidement, visualisez les responsables et le nombre de membres, et accédez aux",
     introAccent2: "détails pour un suivi précis",
-
-    // Recherche / filtre
     chercher: "Chercher...",
     toutes: "Toutes",
     total: "Total :",
     btnAjouterCellule: "➕ Ajouter une Cellule",
-
-    // Header tableau desktop
     colVille: "Ville",
     colCellule: "Cellule",
     colResponsable: "Responsable",
@@ -32,44 +27,31 @@ const translations = {
     colTelephone: "Téléphone",
     colCount: "Count",
     colAction: "Action",
-
-    // Ligne cellule
     details: "Détails",
     voirDetails: "Voir détails →",
     modifier: "✏️ Modifier",
-
-    // Menu téléphone
     appeler: "📞 Appeler",
     sms: "✉️ SMS",
     appelWhatsApp: "📱 Appel WhatsApp",
     whatsApp: "💬 WhatsApp",
-
-    // Mobile labels
     ville: "📍 Ville :",
     responsable: "👤 Responsable :",
     superviseur: "⚜️ Superviseur :",
     membreSing: "membre",
     membrePlur: "membres",
-
-    // États
     chargement: "Chargement...",
     aucuneCellule: "Aucune cellule",
   },
   en: {
-    // Page
     pageTitle: "List of",
     pageTitleAccent: "Cell Groups",
     introAccent: "Easily manage and view your cell groups",
     intro: ". Search by name, filter quickly, see leaders and member counts, and access",
     introAccent2: "details for precise follow-up",
-
-    // Recherche / filtre
     chercher: "Search...",
     toutes: "All",
     total: "Total:",
     btnAjouterCellule: "➕ Add a Cell Group",
-
-    // Header tableau desktop
     colVille: "City",
     colCellule: "Cell group",
     colResponsable: "Leader",
@@ -77,26 +59,18 @@ const translations = {
     colTelephone: "Phone",
     colCount: "Count",
     colAction: "Action",
-
-    // Ligne cellule
     details: "Details",
     voirDetails: "View details →",
     modifier: "✏️ Edit",
-
-    // Menu téléphone
     appeler: "📞 Call",
     sms: "✉️ SMS",
     appelWhatsApp: "📱 WhatsApp call",
     whatsApp: "💬 WhatsApp",
-
-    // Mobile labels
     ville: "📍 City:",
     responsable: "👤 Leader:",
     superviseur: "⚜️ Supervisor:",
     membreSing: "member",
     membrePlur: "members",
-
-    // États
     chargement: "Loading...",
     aucuneCellule: "No cell groups found",
   },
@@ -273,11 +247,16 @@ function ListCellulesContent() {
     if (!user) return;
 
     const { data: profile } = await supabase
-      .from("profiles").select("id, role, eglise_id").eq("id", user.id).single();
+      .from("profiles")
+      // ✅ On s'assure de récupérer eglise_id dans le profil
+      .select("id, role, roles, eglise_id")
+      .eq("id", user.id)
+      .single();
     if (!profile) return;
 
     setUserRole(profile.role);
 
+    // ✅ On s'assure de récupérer eglise_id dans chaque cellule via *
     let query = supabase
       .from("cellules")
       .select(`*, superviseur:superviseur_id ( nom, prenom )`)
@@ -314,23 +293,43 @@ function ListCellulesContent() {
     setLoading(false);
   };
 
-  const handleEdit = (cellule) => { setSelectedCellule(cellule); setShowEditModal(true); };
-  const handleCloseModal = () => { setShowEditModal(false); setSelectedCellule(null); };
+  // ✅ On passe la cellule complète (avec eglise_id) au modal
+  const handleEdit = (cellule) => {
+    setSelectedCellule(cellule);
+    setShowEditModal(true);
+  };
 
+  const handleCloseModal = () => {
+    setShowEditModal(false);
+    setSelectedCellule(null);
+  };
+
+  // ✅ CORRECTION : on fusionne l'objet complet existant avec les champs mis à jour
+  // pour ne jamais perdre eglise_id, membre_count, superviseur, etc.
   const handleUpdated = (updatedCellule) => {
     setCellules((prev) =>
       prev.map((c) =>
         c.id === updatedCellule.id
           ? {
-              ...c,
-              cellule: updatedCellule.cellule,
-              ville: updatedCellule.ville,
-              responsable: updatedCellule.responsable,
-              telephone: updatedCellule.telephone,
-              cellule_full: updatedCellule.cellule_full ?? c.cellule_full,
+              ...c,                                              // garde tout : eglise_id, membre_count, superviseur…
+              cellule:          updatedCellule.cellule          ?? c.cellule,
+              ville:            updatedCellule.ville            ?? c.ville,
+              responsable:      updatedCellule.responsable      ?? c.responsable,
+              responsable_id:   updatedCellule.responsable_id   ?? c.responsable_id,
+              telephone:        updatedCellule.telephone        ?? c.telephone,
+              cellule_full:     updatedCellule.cellule_full     ?? c.cellule_full,
+              cellule_mere_id:  updatedCellule.cellule_mere_id  ?? c.cellule_mere_id,
             }
           : c
       )
+    );
+
+    // ✅ On met aussi à jour selectedCellule pour que le modal ait les données
+    // fraîches si l'utilisateur rouvre l'édition juste après
+    setSelectedCellule((prev) =>
+      prev?.id === updatedCellule.id
+        ? { ...prev, ...updatedCellule }
+        : prev
     );
   };
 
@@ -433,6 +432,7 @@ function ListCellulesContent() {
         )}
       </div>
 
+      {/* ✅ Le modal reçoit toujours la cellule complète avec eglise_id */}
       {showEditModal && selectedCellule && (
         <EditCelluleModal
           cellule={selectedCellule}

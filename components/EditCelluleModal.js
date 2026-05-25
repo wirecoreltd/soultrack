@@ -73,41 +73,35 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
   // ✅ CORRECTION : fetch responsables filtrés par eglise_id
   // On cherche dans les deux colonnes : "role" (string) ET "roles" (array)
   useEffect(() => {
-      console.log("cellule reçue dans modal:", cellule);
-  console.log("eglise_id:", cellule?.eglise_id);
-    if (!cellule?.eglise_id) return;
+  if (!cellule?.eglise_id) return;
 
-    const fetchResponsables = async () => {
-      setLoadingResponsables(true);
+  const fetchResponsables = async () => {
+    setLoadingResponsables(true);
 
-      // On récupère tous les profils de la même église
-      // qui ont ResponsableCellule dans role OU dans roles (array)
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, telephone, role, roles")
-        .eq("eglise_id", cellule.eglise_id)
-        .order("nom");
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom, telephone, role, roles")
+      .eq("eglise_id", cellule.eglise_id)
+      .order("nom");
 
-      if (!error && data) {
-        // Filtre côté client pour couvrir les deux colonnes
-        const filtered = data.filter(
-          console.log("profiles raw:", data);
-console.log("profiles error:", error);
-console.log("filtered:", data?.filter(
-          (p) =>
-            p.role === "ResponsableCellule" ||
-            (Array.isArray(p.roles) && p.roles.includes("ResponsableCellule"))
-        );
-        setResponsables(filtered);
-      } else {
-        console.error("Erreur chargement responsables:", error);
-      }
+    console.log("profiles raw:", data);
+    console.log("profiles error:", error);
 
-      setLoadingResponsables(false);
-    };
+    if (!error && data) {
+      const filtered = data.filter(
+        (p) =>
+          p.role === "ResponsableCellule" ||
+          (Array.isArray(p.roles) && p.roles.includes("ResponsableCellule"))
+      );
+      console.log("filtered:", filtered);
+      setResponsables(filtered);
+    }
 
-    fetchResponsables();
-  }, [cellule?.eglise_id]);
+    setLoadingResponsables(false);
+  };
+
+  fetchResponsables();
+}, [cellule?.eglise_id]);
 
   // Chargement des cellules mères
   useEffect(() => {

@@ -73,6 +73,8 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
   // ✅ CORRECTION : fetch responsables filtrés par eglise_id
   // On cherche dans les deux colonnes : "role" (string) ET "roles" (array)
   useEffect(() => {
+      console.log("cellule reçue dans modal:", cellule);
+  console.log("eglise_id:", cellule?.eglise_id);
     if (!cellule?.eglise_id) return;
 
     const fetchResponsables = async () => {

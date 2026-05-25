@@ -105,8 +105,10 @@ function CelluleRow({ c, router, canEdit, onEdit, t }) {
         <div className="flex-[2] text-white text-sm">{c.ville}</div>
         <div className="flex-[2] text-white font-semibold text-sm">{c.cellule_full}</div>
         <div className="flex-[2] text-white text-sm">{c.responsable}</div>
+
+        {/* Parent = cellule mère */}
         <div className="flex-[2] text-white text-sm">
-          {c.cellule_mere ? c.cellule_mere.cellule_full : "—"}
+          {c.cellule_mere_nom || "—"}
         </div>
 
         {/* Téléphone */}
@@ -166,10 +168,11 @@ function CelluleRow({ c, router, canEdit, onEdit, t }) {
           <span className="text-amber-300 font-semibold">{c.responsable || "—"}</span>
         </div>
 
+        {/* Parent = cellule mère */}
         <div className="text-white text-sm mb-2">
           {t.parent}{" "}
           <span className="text-amber-300 font-semibold">
-            {c.superviseur ? `${c.superviseur.prenom} ${c.superviseur.nom}` : "—"}
+            {c.cellule_mere_nom || "—"}
           </span>
         </div>
 
@@ -255,25 +258,54 @@ function ListCellulesContent() {
 
     setUserRole(profile.role);
 
+    // Récupérer toutes les cellules de l'église pour construire la map des noms parents
+    const { data: toutesLesCellules } = await supabase
+      .from("cellules")
+      .select("id, cellule_full")
+      .eq("eglise_id", profile.eglise_id);
+
+    const celluleMap = Object.fromEntries(
+      (toutesLesCellules || []).map((c) => [c.id, c.cellule_full])
+    );
+
     let query = supabase
-  .from("cellules")
-  .select(`*, superviseur:superviseur_id ( nom, prenom ), cellule_mere:cellule_mere_id ( cellule_full )`)
-  .eq("eglise_id", profile.eglise_id)
-  .order("cellule_full");
+      .from("cellules")
+      .select("*")
+      .eq("eglise_id", profile.eglise_id)
+      .order("cellule_full");
 
     if (profile.role === "ResponsableCellule") {
+      // 1. Cellules dont il est directement responsable
       const { data: directes } = await supabase
-        .from("cellules").select("id")
-        .eq("responsable_id", profile.id).eq("eglise_id", profile.eglise_id);
-      const directIds = (directes || []).map(c => c.id);
+        .from("cellules")
+        .select("id")
+        .eq("responsable_id", profile.id)
+        .eq("eglise_id", profile.eglise_id);
+      const directIds = (directes || []).map((c) => c.id);
 
+      // 2. Cellules enfants (cellule_mere_id pointe vers une de ses cellules)
       const { data: filles } = await supabase
-        .from("cellules").select("id")
-        .in("cellule_mere_id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
-      const fillesIds = (filles || []).map(c => c.id);
+        .from("cellules")
+        .select("id")
+        .in(
+          "cellule_mere_id",
+          directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]
+        );
+      const fillesIds = (filles || []).map((c) => c.id);
 
-      const allIds = [...new Set([...directIds, ...fillesIds])];
-      query = query.in("id", allIds.length ? allIds : ["00000000-0000-0000-0000-000000000000"]);
+      // 3. Cellules dont il est superviseur (superviseur_id = profile.id)
+      const { data: supervisees } = await supabase
+        .from("cellules")
+        .select("id")
+        .eq("superviseur_id", profile.id)
+        .eq("eglise_id", profile.eglise_id);
+      const superviseesIds = (supervisees || []).map((c) => c.id);
+
+      const allIds = [...new Set([...directIds, ...fillesIds, ...superviseesIds])];
+      query = query.in(
+        "id",
+        allIds.length ? allIds : ["00000000-0000-0000-0000-000000000000"]
+      );
     }
 
     const { data: cellsData } = await query;
@@ -281,9 +313,19 @@ function ListCellulesContent() {
     const withCount = await Promise.all(
       (cellsData || []).map(async (c) => {
         const { count } = await supabase
-          .from("membres_complets").select("id", { count: "exact", head: true })
-          .eq("cellule_id", c.id).eq("statut_suivis", 3).neq("etat_contact", "supprime");
-        return { ...c, membre_count: count || 0 };
+          .from("membres_complets")
+          .select("id", { count: "exact", head: true })
+          .eq("cellule_id", c.id)
+          .eq("statut_suivis", 3)
+          .neq("etat_contact", "supprime");
+        return {
+          ...c,
+          membre_count: count || 0,
+          // Résolution du nom de la cellule mère via la map locale
+          cellule_mere_nom: c.cellule_mere_id
+            ? celluleMap[c.cellule_mere_id] || "—"
+            : "—",
+        };
       })
     );
 

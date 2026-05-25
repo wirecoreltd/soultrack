@@ -292,7 +292,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
                   <option key={c.id} value={c.id}>
                     {c.profiles
                       ? `${c.profiles.prenom} ${c.profiles.nom}`
-                      : c.responsable || "Sans responsable"}
+                      : c.responsable || "—"}
                   </option>
                 ))}
               </select>

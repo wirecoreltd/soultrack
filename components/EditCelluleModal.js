@@ -91,12 +91,25 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
     if (!cellule?.eglise_id) return;
     const fetchCellulesMere = async () => {
       setLoadingCellulesMere(true);
+      
       const { data, error } = await supabase
         .from("cellules")
-        .select("id, cellule_full, ville, cellule")
+        .select(`
+          id,
+          cellule_full,
+          ville,
+          cellule,
+          responsable,
+          responsable_id,
+          profiles:responsable_id (
+            prenom,
+            nom
+          )
+        `)
         .eq("eglise_id", cellule.eglise_id)
         .neq("id", cellule.id)
         .order("cellule_full");
+      
       if (!error && data) setCellulesMere(data);
       else console.error("Erreur chargement cellules mères:", error);
       setLoadingCellulesMere(false);
@@ -254,7 +267,9 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
                 <option value="">{t.celluleMereDefault}</option>
                 {cellulesMere.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.cellule_full || `${c.ville} - ${c.cellule}`}
+                    {c.profiles
+                      ? `${c.profiles.prenom} ${c.profiles.nom}`
+                      : c.responsable || "Sans responsable"}
                   </option>
                 ))}
               </select>

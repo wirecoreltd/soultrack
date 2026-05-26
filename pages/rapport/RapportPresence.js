@@ -804,154 +804,160 @@ function RapportPresence() {
   }, []);
 
   const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      await initProfile();
-      const profile = profileRef.current;
-      const isAdmin = profile.roles?.includes("Administrateur") || profile.roles?.includes("ResponsableIntegration");
+  setLoading(true);
+  try {
+    await initProfile();
+    const profile = profileRef.current;
+    const isAdmin = profile.roles?.includes("Administrateur") || profile.roles?.includes("ResponsableIntegration");
 
-      const depuis = new Date();
-      depuis.setDate(depuis.getDate() - Number(filtrePeriode));
-      const depuisStr = depuis.toISOString().split("T")[0];
+    const depuis = new Date();
+    depuis.setDate(depuis.getDate() - Number(filtrePeriode));
+    const depuisStr = depuis.toISOString().split("T")[0];
 
-      // ── Sessions ──────────────────────────────────────────────
-      let sessQuery = supabase.from("attendance")
-        .select("id, typeTemps, date, heure, numero_culte")
-        .eq("eglise_id", profile.eglise_id)
-        .gte("date", depuisStr)
-        .order("date", { ascending: false })
-        .order("created_at", { ascending: false });
-      if (filtreType) sessQuery = sessQuery.eq("typeTemps", filtreType);
-      const { data: sessionsData } = await sessQuery;
-      const sess = sessionsData || [];
-      setSessions(sess);
+    // ── Sessions ──────────────────────────────────────────────
+    let sessQuery = supabase.from("attendance")
+      .select("id, typeTemps, date, heure, numero_culte")
+      .eq("eglise_id", profile.eglise_id)
+      .gte("date", depuisStr)
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false });
+    if (filtreType) sessQuery = sessQuery.eq("typeTemps", filtreType);
+    const { data: sessionsData } = await sessQuery;
+    const sess = sessionsData || [];
+    setSessions(sess);
 
-      if (!sess.length) {
+    if (!sess.length) {
+      setAllMembres([]); setPresencesParSession({}); setCellules([]); setFamilles([]);
+      setLoading(false); return;
+    }
+
+    // ── Calcul des IDs membres visibles (non-admin) ───────────
+    let myIds = null;
+    if (!isAdmin) {
+      let ids = new Set();
+
+      const asgnProm = profile.roles?.includes("Conseiller")
+        ? supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", profile.uid).eq("statut", "actif")
+        : Promise.resolve({ data: [] });
+
+      const cellProm = profile.roles?.includes("ResponsableCellule")
+        ? supabase.from("cellules")
+            .select("id, responsable_id, cellule_mere_id")
+            .eq("eglise_id", profile.eglise_id)
+        : Promise.resolve({ data: [] });
+
+      const famProm = profile.roles?.includes("ResponsableFamilles")
+        ? supabase.from("familles").select("id").eq("responsable_id", profile.uid)
+        : Promise.resolve({ data: [] });
+
+      const [asgn, allCellulesEglise, fam] = await Promise.all([asgnProm, cellProm, famProm]);
+
+      // Membres Conseiller
+      asgn.data?.forEach(a => ids.add(a.membre_id));
+
+      // Membres cellules directes + enfants
+      if (allCellulesEglise.data?.length) {
+        const toutesLesCellules = allCellulesEglise.data;
+
+        const mesCellulesIds = new Set(
+          toutesLesCellules.filter(c => c.responsable_id === profile.uid).map(c => c.id)
+        );
+
+        const cellulesVisibles = new Set(mesCellulesIds);
+        toutesLesCellules.forEach(c => {
+          if (c.cellule_mere_id === profile.uid) {
+            cellulesVisibles.add(c.id);
+          }
+        });
+
+        if (cellulesVisibles.size > 0) {
+          const { data: cm } = await supabase.from("membres_complets")
+            .select("id")
+            .in("cellule_id", [...cellulesVisibles])
+            .in("etat_contact", ["existant", "nouveau"]);
+          cm?.forEach(m => ids.add(m.id));
+        }
+      }
+
+      // Membres familles
+      if (fam.data?.length) {
+        const { data: fm } = await supabase.from("membres_complets")
+          .select("id")
+          .in("famille_id", fam.data.map(f => f.id))
+          .in("etat_contact", ["existant", "nouveau"]);
+        fm?.forEach(m => ids.add(m.id));
+      }
+
+      myIds = [...ids];
+      if (!myIds.length) {
         setAllMembres([]); setPresencesParSession({}); setCellules([]); setFamilles([]);
         setLoading(false); return;
       }
-
-      // ── Calcul des IDs membres visibles (non-admin) ───────────
-      let myIds = null;
-      if (!isAdmin) {
-        let ids = new Set();
-
-        // 1. Membres assignés en tant que Conseiller
-        const asgnProm = profile.roles?.includes("Conseiller")
-          ? supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", profile.uid).eq("statut", "actif")
-          : Promise.resolve({ data: [] });
-
-        // 2. Toutes les cellules de l'église pour résoudre la hiérarchie parent→enfant
-        //    On récupère responsable_id et cellule_mere_id en une seule requête (pas de self-join)
-        const cellProm = profile.roles?.includes("ResponsableCellule")
-          ? supabase.from("cellules")
-              .select("id, responsable_id, cellule_mere_id")
-              .eq("eglise_id", profile.eglise_id)
-          : Promise.resolve({ data: [] });
-
-        // 3. Familles dont je suis responsable
-        const famProm = profile.roles?.includes("ResponsableFamilles")
-          ? supabase.from("familles").select("id").eq("responsable_id", profile.uid)
-          : Promise.resolve({ data: [] });
-
-        const [asgn, allCellulesEglise, fam] = await Promise.all([asgnProm, cellProm, famProm]);
-
-          asgn.data?.forEach(a => ids.add(a.membre_id));
-          
-          if (allCellulesEglise.data?.length) {
-            const toutesLesCellules = allCellulesEglise.data;
-          
-            if (allCellulesEglise.data?.length) {
-  const toutesLesCellules = allCellulesEglise.data;
-
-  const mesCellulesIds = new Set(
-    toutesLesCellules.filter(c => c.responsable_id === profile.uid).map(c => c.id)
-  );
-
-  const cellulesVisibles = new Set(mesCellulesIds);
-  toutesLesCellules.forEach(c => {
-    if (c.cellule_mere_id === profile.uid) {
-      cellulesVisibles.add(c.id);
     }
-  });
 
-  if (cellulesVisibles.size > 0) {
-    const { data: cm } = await supabase.from("membres_complets")
-      .select("id")
-      .in("cellule_id", [...cellulesVisibles])
+    // ── Membres ───────────────────────────────────────────────
+    let membresQuery = supabase.from("membres_complets")
+      .select("id, prenom, nom, sexe, cellule_id, famille_id")
+      .eq("eglise_id", profile.eglise_id)
       .in("etat_contact", ["existant", "nouveau"]);
-    cm?.forEach(m => ids.add(m.id));
-  }
-}
-// PAS de second bloc if (cellulesVisibles.size > 0) — c'est le bug
+    if (myIds) membresQuery = membresQuery.in("id", myIds);
+    const { data: membresData } = await membresQuery.order("nom");
+    setAllMembres(membresData || []);
 
-      // ── Membres ───────────────────────────────────────────────
-      let membresQuery = supabase.from("membres_complets")
-        .select("id, prenom, nom, sexe, cellule_id, famille_id")
-        .eq("eglise_id", profile.eglise_id)
-        .in("etat_contact", ["existant", "nouveau"]);
-      if (myIds) membresQuery = membresQuery.in("id", myIds);
-      const { data: membresData } = await membresQuery.order("nom");
-      setAllMembres(membresData || []);
+    // ── Cellules et familles visibles ──────────────────────────
+    let cellulesRes, famillesRes;
 
-      // ── Cellules et familles visibles (pour les onglets) ──────
-      // Pour un ResponsableCellule : ses cellules directes + enfants (même logique)
-      let cellulesRes, famillesRes;
+    if (isAdmin) {
+      [cellulesRes, famillesRes] = await Promise.all([
+        supabase.from("cellules").select("id, cellule_full, cellule, ville").eq("eglise_id", profile.eglise_id),
+        supabase.from("familles").select("id, famille_full, famille, ville").eq("eglise_id", profile.eglise_id),
+      ]);
+    } else {
+      if (profile.roles?.includes("ResponsableCellule")) {
+        const { data: toutesLesCellules } = await supabase.from("cellules")
+          .select("id, cellule_full, cellule, ville, responsable_id, cellule_mere_id")
+          .eq("eglise_id", profile.eglise_id);
 
-      if (isAdmin) {
-        [cellulesRes, famillesRes] = await Promise.all([
-          supabase.from("cellules").select("id, cellule_full, cellule, ville").eq("eglise_id", profile.eglise_id),
-          supabase.from("familles").select("id, famille_full, famille, ville").eq("eglise_id", profile.eglise_id),
-        ]);
+        const all = toutesLesCellules || [];
+        const mesCellulesIds = new Set(
+          all.filter(c => c.responsable_id === profile.uid).map(c => c.id)
+        );
+        const cellulesVisiblesIds = new Set(mesCellulesIds);
+        all.forEach(c => {
+          if (c.cellule_mere_id === profile.uid) {
+            cellulesVisiblesIds.add(c.id);
+          }
+        });
+        cellulesRes = { data: all.filter(c => cellulesVisiblesIds.has(c.id)) };
       } else {
-        // Cellules : on réutilise la même logique parent→enfant
-        if (profile.roles?.includes("ResponsableCellule")) {
-  const { data: toutesLesCellules } = await supabase.from("cellules")
-    .select("id, cellule_full, cellule, ville, responsable_id, cellule_mere_id")
-    .eq("eglise_id", profile.eglise_id);
-
-  const all = toutesLesCellules || [];
-  const mesCellulesIds = new Set(
-    all.filter(c => c.responsable_id === profile.uid).map(c => c.id)
-  );
-  const cellulesVisiblesIds = new Set(mesCellulesIds);
-  all.forEach(c => {
-    if (c.cellule_mere_id === profile.uid) {
-      cellulesVisiblesIds.add(c.id);
-    }
-  });
-  cellulesRes = { data: all.filter(c => cellulesVisiblesIds.has(c.id)) };
-}
-        
-        else {
-          cellulesRes = { data: [] };
-        }
-
-        famillesRes = profile.roles?.includes("ResponsableFamilles")
-          ? await supabase.from("familles").select("id, famille_full, famille, ville").eq("responsable_id", profile.uid)
-          : { data: [] };
+        cellulesRes = { data: [] };
       }
 
-      setCellules(cellulesRes.data || []);
-      setFamilles(famillesRes.data || []);
-
-      // ── Présences ─────────────────────────────────────────────
-      const sessIds = sess.map(s => s.id);
-      const { data: presData } = await supabase
-        .from("presences").select("attendance_id, membre_id, statut").in("attendance_id", sessIds);
-      const grouped = {};
-      (presData || []).forEach(p => {
-        if (!grouped[p.attendance_id]) grouped[p.attendance_id] = [];
-        grouped[p.attendance_id].push(p);
-      });
-      setPresencesParSession(grouped);
-
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+      famillesRes = profile.roles?.includes("ResponsableFamilles")
+        ? await supabase.from("familles").select("id, famille_full, famille, ville").eq("responsable_id", profile.uid)
+        : { data: [] };
     }
-  }, [initProfile, filtrePeriode, filtreType]);
+
+    setCellules(cellulesRes.data || []);
+    setFamilles(famillesRes.data || []);
+
+    // ── Présences ─────────────────────────────────────────────
+    const sessIds = sess.map(s => s.id);
+    const { data: presData } = await supabase
+      .from("presences").select("attendance_id, membre_id, statut").in("attendance_id", sessIds);
+    const grouped = {};
+    (presData || []).forEach(p => {
+      if (!grouped[p.attendance_id]) grouped[p.attendance_id] = [];
+      grouped[p.attendance_id].push(p);
+    });
+    setPresencesParSession(grouped);
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}, [initProfile, filtrePeriode, filtreType]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

@@ -50,6 +50,10 @@ const translations = {
     hommes: "👨 Hommes",
     femmes: "👩 Femmes",
     nonRenseigne: "❓ Non renseigné",
+    voirFillesOn: "🏠 Cellules filles incluses",
+    voirFillesSub: "Vous voyez aussi les membres des cellules rattachées à la vôtre",
+    voirFillesOff: "🏠 Cellules filles masquées",
+    voirFillesOffSub: "Afficher uniquement vos membres directs",
     form: {
       date: "📅 Date",
       heure: "🕐 Heure",
@@ -122,6 +126,10 @@ const translations = {
     hommes: "👨 Men",
     femmes: "👩 Women",
     nonRenseigne: "❓ Not specified",
+    voirFillesOn: "🏠 Child cells included",
+    voirFillesSub: "You also see members from cells linked to yours",
+    voirFillesOff: "🏠 Child cells hidden",
+    voirFillesOffSub: "Show only your direct members",
     form: {
       date: "📅 Date",
       heure: "🕐 Time",
@@ -310,6 +318,26 @@ function ToggleVisibilite({ visible, onToggle, saving, t }) {
       <button onClick={onToggle} disabled={saving}
         className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${visible ? "bg-emerald-500" : "bg-gray-400"} ${saving ? "opacity-50" : ""}`}>
         <span className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] bg-white rounded-full shadow transition-transform ${visible ? "translate-x-[22px]" : "translate-x-0"}`} />
+      </button>
+    </div>
+  );
+}
+
+// ─── TOGGLE CELLULES FILLES ── NOUVEAU ─────────────────────────
+function ToggleCellulesFilles({ active, onToggle, saving, t }) {
+  return (
+    <div className={`w-full max-w-lg mx-auto mb-4 rounded-xl px-4 py-3 flex items-center justify-between gap-3 border-2 transition ${active ? "bg-blue-50 border-blue-400" : "bg-white/10 border-white/20"}`}>
+      <div className="flex flex-col">
+        <span className={`text-sm font-semibold ${active ? "text-blue-800" : "text-white"}`}>
+          {active ? t.voirFillesOn : t.voirFillesOff}
+        </span>
+        <span className={`text-xs mt-0.5 ${active ? "text-blue-600" : "text-white/60"}`}>
+          {active ? t.voirFillesSub : t.voirFillesOffSub}
+        </span>
+      </div>
+      <button onClick={onToggle} disabled={saving}
+        className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${active ? "bg-blue-500" : "bg-gray-400"} ${saving ? "opacity-50" : ""}`}>
+        <span className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] bg-white rounded-full shadow transition-transform ${active ? "translate-x-[22px]" : "translate-x-0"}`} />
       </button>
     </div>
   );
@@ -504,6 +532,11 @@ function Presence() {
   const [savingVisible, setSavingVisible] = useState(false);
   const [sessionCourante, setSessionCourante] = useState(null);
 
+  // ── NOUVEAU : état cellules filles ──
+  const [voirCellulesFilles, setVoirCellulesFilles] = useState(false);
+  const [savingFilles, setSavingFilles] = useState(false);
+  const [isResponsableCellule, setIsResponsableCellule] = useState(false);
+
   const profileRef          = useRef(null);
   const myIdsRef            = useRef(null);
   const isAdminRef          = useRef(false);
@@ -513,15 +546,20 @@ function Presence() {
   const selectedDateRef     = useRef(selectedDate);
   const attendanceIdRef     = useRef(attendanceId);
   const pendingSessionIdRef = useRef(null);
+  const voirCellulesFillesRef = useRef(voirCellulesFilles); // ← NOUVEAU ref
 
   useEffect(() => { selectedDateRef.current = selectedDate; }, [selectedDate]);
   useEffect(() => { attendanceIdRef.current = attendanceId; }, [attendanceId]);
+  useEffect(() => { voirCellulesFillesRef.current = voirCellulesFilles; }, [voirCellulesFilles]);
 
   const initProfile = useCallback(async () => {
     if (profileRef.current) return;
     const { data: { user } } = await supabase.auth.getUser();
     const { data: profile } = await supabase
-      .from("profiles").select("eglise_id, role, roles").eq("id", user.id).single();
+      .from("profiles")
+      .select("eglise_id, role, roles, voir_cellules_filles") // ← NOUVEAU champ
+      .eq("id", user.id)
+      .single();
 
     profileRef.current = { ...profile, uid: user.id };
 
@@ -531,44 +569,47 @@ function Presence() {
     const isRespGroupe = profile.roles?.includes("ResponsableCellule") || profile.roles?.includes("ResponsableFamilles");
     useGroupedViewRef.current = isAdmin || isRespGroupe;
 
+    // ── NOUVEAU : init état cellules filles depuis profiles ──
+    const respCellule = profile.roles?.includes("ResponsableCellule");
+    setIsResponsableCellule(!!respCellule);
+    const fillesVal = !!profile.voir_cellules_filles;
+    setVoirCellulesFilles(fillesVal);
+    voirCellulesFillesRef.current = fillesVal;
+
     if (isAdmin) { myIdsRef.current = null; return; }
 
     let ids = new Set();
-   
-const [assignmentsResult, cellulesDirectResult, famillesResult] = await Promise.all([
-  profile.roles?.includes("Conseiller")
-    ? supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", user.id).eq("statut", "actif")
-    : Promise.resolve({ data: [] }),
-  profile.roles?.includes("ResponsableCellule")
-    ? supabase.from("cellules").select("id").eq("responsable_id", user.id).eq("eglise_id", profile.eglise_id)
-    : Promise.resolve({ data: [] }),
-  profile.roles?.includes("ResponsableFamilles")
-    ? supabase.from("familles").select("id").eq("responsable_id", user.id)
-    : Promise.resolve({ data: [] }),
-]);
 
-// Cellules enfants via profile_id
-let cellulesResult = cellulesDirectResult;
-if (profile.roles?.includes("ResponsableCellule") && cellulesDirectResult.data?.length >= 0) {
-  const { data: fillesData } = await supabase
-    .from("cellules")
-    .select("id")
-    .eq("cellule_mere_id", user.id)
-    .eq("eglise_id", profile.eglise_id);
-
-  cellulesResult = {
-    data: [
-      ...(cellulesDirectResult.data || []),
-      ...(fillesData || []),
-    ]
-  };
-}
+    const [assignmentsResult, cellulesDirectResult, famillesResult] = await Promise.all([
+      profile.roles?.includes("Conseiller")
+        ? supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", user.id).eq("statut", "actif")
+        : Promise.resolve({ data: [] }),
+      profile.roles?.includes("ResponsableCellule")
+        ? supabase.from("cellules").select("id").eq("responsable_id", user.id).eq("eglise_id", profile.eglise_id)
+        : Promise.resolve({ data: [] }),
+      profile.roles?.includes("ResponsableFamilles")
+        ? supabase.from("familles").select("id").eq("responsable_id", user.id)
+        : Promise.resolve({ data: [] }),
+    ]);
 
     assignmentsResult.data?.forEach(a => ids.add(a.membre_id));
 
-    if (cellulesResult.data?.length > 0) {
-      const celluleIds = cellulesResult.data.map(c => c.id);
-      const { data: cm } = await supabase.from("membres_complets").select("id").in("cellule_id", celluleIds).in("etat_contact", ["existant", "nouveau"]);
+    // ── NOUVEAU : cellules filles seulement si voir_cellules_filles = true ──
+    let cellulesIds = (cellulesDirectResult.data || []).map(c => c.id);
+
+    if (respCellule && fillesVal && cellulesDirectResult.data?.length > 0) {
+      for (const cellule of cellulesDirectResult.data) {
+        const { data: fillesData } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("cellule_mere_id", cellule.id) // ← correction : cellule.id pas user.id
+          .eq("eglise_id", profile.eglise_id);
+        (fillesData || []).forEach(f => cellulesIds.push(f.id));
+      }
+    }
+
+    if (cellulesIds.length > 0) {
+      const { data: cm } = await supabase.from("membres_complets").select("id").in("cellule_id", cellulesIds).in("etat_contact", ["existant", "nouveau"]);
       cm?.forEach(m => ids.add(m.id));
     }
 
@@ -580,6 +621,22 @@ if (profile.roles?.includes("ResponsableCellule") && cellulesDirectResult.data?.
 
     myIdsRef.current = [...ids];
   }, []);
+
+  // ── NOUVEAU : toggle cellules filles ──
+  const toggleCellulesFilles = async () => {
+    const newVal = !voirCellulesFilles;
+    setSavingFilles(true);
+    await supabase
+      .from("profiles")
+      .update({ voir_cellules_filles: newVal })
+      .eq("id", profileRef.current.uid);
+    setVoirCellulesFilles(newVal);
+    voirCellulesFillesRef.current = newVal;
+    profileRef.current = null; // force re-init pour recalculer myIds
+    await initProfile();
+    await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
+    setSavingFilles(false);
+  };
 
   const initAll = useCallback(async () => {
     await initProfile();
@@ -668,10 +725,10 @@ if (profile.roles?.includes("ResponsableCellule") && cellulesDirectResult.data?.
         if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); setGroupes([]); return; }
 
         const roles = profile?.roles || [];
-        const isResponsableCellule  = roles.includes("ResponsableCellule");
+        const isResponsableCelluleLocal  = roles.includes("ResponsableCellule");
         const isResponsableFamilles = roles.includes("ResponsableFamilles");
 
-        if (isResponsableCellule || isResponsableFamilles) {
+        if (isResponsableCelluleLocal || isResponsableFamilles) {
           const { data: membresData } = await supabase.from("membres_complets")
             .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
             .eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]).in("id", myIds);
@@ -680,20 +737,25 @@ if (profile.roles?.includes("ResponsableCellule") && cellulesDirectResult.data?.
           const groupesResult = [];
           const membresCouvertsParGroupe = new Set();
 
-          if (isResponsableCellule) {
+          if (isResponsableCelluleLocal) {
+            // ── NOUVEAU : fetch cellules directes seulement, filles si activé ──
+            const { data: cellulesDirectes } = await supabase.from("cellules")
+              .select("id, cellule_full, ville, cellule")
+              .eq("responsable_id", profile.uid);
 
-              const { data: cellulesDirectes } = await supabase.from("cellules")
-  .select("id, cellule_full, ville, cellule")
-  .eq("responsable_id", profile.uid);
+            let toutesLesCellules = [...(cellulesDirectes || [])];
 
-const { data: cellulesFillesData } = await supabase.from("cellules")
-  .select("id, cellule_full, ville, cellule")
-  .eq("cellule_mere_id", profile.uid)
-  .eq("eglise_id", profile.eglise_id);
+            if (voirCellulesFillesRef.current && cellulesDirectes?.length > 0) {
+              for (const cellule of cellulesDirectes) {
+                const { data: cellulesFillesData } = await supabase.from("cellules")
+                  .select("id, cellule_full, ville, cellule")
+                  .eq("cellule_mere_id", cellule.id) // ← correction : cellule.id
+                  .eq("eglise_id", profile.eglise_id);
+                toutesLesCellules = [...toutesLesCellules, ...(cellulesFillesData || [])];
+              }
+            }
 
-const cellulesData = [...(cellulesDirectes || []), ...(cellulesFillesData || [])];
-            
-            (cellulesData || []).forEach(c => {
+            toutesLesCellules.forEach(c => {
               const cm = membres.filter(m => m.cellule_id === c.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
               cm.forEach(m => membresCouvertsParGroupe.add(m.id));
               if (cm.length > 0) groupesResult.push({ id: `c-${c.id}`, label: c.cellule_full || `${c.ville} - ${c.cellule}`, icon: "🏠", color: "green", membres: cm });
@@ -1025,11 +1087,8 @@ const cellulesData = [...(cellulesDirectes || []), ...(cellulesFillesData || [])
         </p>
 
         <div className="w-full max-w-lg mt-2 flex flex-col gap-4">
-
-          {/* ── Sessions du jour en cours ── */}
           {todaySessions.length > 0 && (
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-              {/* En-tête avec badge "EN COURS" animé */}
               <div className="flex items-center justify-between px-5 pt-5 pb-3">
                 <h2 className="text-base font-bold text-gray-800">{t.todaySessions}</h2>
                 <span className="flex items-center gap-1.5 bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full">
@@ -1038,7 +1097,6 @@ const cellulesData = [...(cellulesDirectes || []), ...(cellulesFillesData || [])
                 </span>
               </div>
               <p className="text-sm text-gray-400 px-5 pb-3">{t.todaySessionsSub}</p>
-
               <div className="flex flex-col gap-2 px-5 pb-4">
                 {todaySessions.map(s => (
                   <button key={s.id} onClick={() => rejoindreSession(s)}
@@ -1053,12 +1111,9 @@ const cellulesData = [...(cellulesDirectes || []), ...(cellulesFillesData || [])
             </div>
           )}
 
-          {/* ── Créer une nouvelle session — toujours affiché ── */}
           {todaySessions.length > 0 ? (
-            <button
-              onClick={() => setEtape("form")}
-              className="w-full py-3 rounded-2xl border-2 border-dashed border-white/40 text-white/80 text-sm font-semibold hover:border-white hover:text-white hover:bg-white/10 transition"
-            >
+            <button onClick={() => setEtape("form")}
+              className="w-full py-3 rounded-2xl border-2 border-dashed border-white/40 text-white/80 text-sm font-semibold hover:border-white hover:text-white hover:bg-white/10 transition">
               {t.newSession}
             </button>
           ) : (
@@ -1076,7 +1131,6 @@ const cellulesData = [...(cellulesDirectes || []), ...(cellulesFillesData || [])
             />
           )}
 
-          {/* ── Sessions récentes (autres jours) ── */}
           {oldSessions.length > 0 && (
             <OldSessionsBlock sessions={oldSessions} onConsulter={consulterAncienne} t={t} lang={lang} />
           )}
@@ -1152,6 +1206,11 @@ const cellulesData = [...(cellulesDirectes || []), ...(cellulesFillesData || [])
 
       {!isAdminRef.current && !readOnly && (
         <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} t={t} />
+      )}
+
+      {/* ── NOUVEAU : toggle cellules filles (ResponsableCellule seulement) ── */}
+      {isResponsableCellule && !readOnly && (
+        <ToggleCellulesFilles active={voirCellulesFilles} onToggle={toggleCellulesFilles} saving={savingFilles} t={t} />
       )}
 
       {editingSession && !readOnly && (

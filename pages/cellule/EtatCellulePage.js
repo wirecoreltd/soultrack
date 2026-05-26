@@ -537,72 +537,101 @@ function EtatCellule() {
   }, []);
 
   const fetchReports = async (overrideModePerso = null) => {
-    if (!userProfile) return;
-    setLoading(true);
-    const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
-    const isAdmin = userProfile.roles?.includes("Administrateur");
+  if (!userProfile) return;
+  setLoading(true);
+  const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
 
-    try {
-      let query = supabase.from("vue_flow_personnes").select("*")
-        .eq("eglise_id", userProfile.eglise_id)
-        .order("date_depart", { ascending: false });
+  const isAdmin        = userProfile.roles?.includes("Administrateur") || userProfile.roles?.includes("Superadmin");
+  const isSuperviseur  = userProfile.roles?.includes("SuperviseurCellule");
+  const isResponsable  = userProfile.roles?.includes("ResponsableCellule");
 
-      if (!isAdmin) {
-        const isSuperviseur = userProfile.roles?.includes("SuperviseurCellule");
-        const isResponsable = userProfile.roles?.includes("ResponsableCellule");
+  try {
+    let query = supabase
+      .from("vue_flow_personnes")
+      .select("*")
+      .eq("eglise_id", userProfile.eglise_id)
+      .order("date_depart", { ascending: false });
 
-        if (isSuperviseur || isResponsable) {
-          const colonne = isSuperviseur ? "superviseur_id" : "responsable_id";
-          const { data: directes } = await supabase
-            .from("cellules").select("id")
-            .eq(colonne, userProfile.id)
-            .eq("eglise_id", userProfile.eglise_id);
+    // ── Administrateur / Superadmin → tout voir ──
+    if (isAdmin) {
+      // pas de filtre supplémentaire
+    }
 
-          const directIds = (directes || []).map(c => c.id);
+    // ── SuperviseurCellule → tout voir dans son église ──
+    else if (isSuperviseur) {
+      // pas de filtre supplémentaire, eglise_id suffit
+    }
 
-          const { data: filles } = await supabase
-            .from("cellules").select("id")
-            .in("cellule_mere_id", directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]);
+    // ── ResponsableCellule → sa cellule + ses enfants ──
+    else if (isResponsable) {
+      // 1. Récupérer sa cellule directe
+      const { data: mesCellules } = await supabase
+        .from("cellules")
+        .select("id")
+        .eq("responsable_id", userProfile.id)
+        .eq("eglise_id", userProfile.eglise_id);
 
-          const fillesIds = (filles || []).map(c => c.id);
-          const tousLesIds = [...new Set([...directIds, ...fillesIds])];
+      const mesIds = (mesCellules || []).map(c => c.id);
 
-          if (tousLesIds.length) {
-            query = query.in("cellule_id", tousLesIds);
-          } else {
-            query = query.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
-          }
-        } else {
-          query = query.ilike("responsable", `%${userProfile.prenom}%`);
-        }
+      // 2. Récupérer les cellules enfants (cellule_mere_id dans mes cellules)
+      let fillesIds = [];
+      if (mesIds.length > 0) {
+        const { data: filles } = await supabase
+          .from("cellules")
+          .select("id")
+          .in("cellule_mere_id", mesIds)
+          .eq("eglise_id", userProfile.eglise_id);
+
+        fillesIds = (filles || []).map(c => c.id);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      const tousLesIds = [...new Set([...mesIds, ...fillesIds])];
 
-      let filtered = data || [];
-
-      if (isPerso) {
-        if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
-        if (filterFin) filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
+      if (tousLesIds.length > 0) {
+        query = query.in("cellule_id", tousLesIds);
       } else {
-        const depuis = new Date();
-        depuis.setDate(depuis.getDate() - Number(filtrePeriode));
-        filtered = filtered.filter(r => new Date(r.date_depart) >= depuis);
+        // Aucune cellule trouvée → rien à afficher
+        query = query.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
       }
+    }
 
-      setAllReports(filtered);
-      setReports(filtered);
-      setAvailableCellules([...new Set(filtered.map(r => r.cellule_full).filter(Boolean))].sort());
-      setFilterCellule("");
-      updateKpis(filtered);
-    } catch (err) {
-      console.error("Erreur fetch:", err);
+    // ── Autres rôles → rien ──
+    else {
       setReports([]);
       setAllReports([]);
+      setLoading(false);
+      return;
     }
-    setLoading(false);
-  };
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    let filtered = data || [];
+
+    // ── Filtre dates ──
+    if (isPerso) {
+      if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
+      if (filterFin)   filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
+    } else {
+      const depuis = new Date();
+      depuis.setDate(depuis.getDate() - Number(filtrePeriode));
+      filtered = filtered.filter(r => new Date(r.date_depart) >= depuis);
+    }
+
+    setAllReports(filtered);
+    setReports(filtered);
+    setAvailableCellules([...new Set(filtered.map(r => r.cellule_full).filter(Boolean))].sort());
+    setFilterCellule("");
+    updateKpis(filtered);
+
+  } catch (err) {
+    console.error("Erreur fetch:", err);
+    setReports([]);
+    setAllReports([]);
+  }
+
+  setLoading(false);
+};
 
   useEffect(() => {
     if (userProfile && !modePerso) fetchReports(false);

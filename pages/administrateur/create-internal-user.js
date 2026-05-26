@@ -80,6 +80,11 @@ const translations = {
     celluleMereOptional: "(optionnel)",
     celluleMereInfo: "Le responsable de la cellule mère deviendra automatiquement superviseur de cette cellule.",
     aucuneCelluleMere: "-- Aucune cellule mère --",
+    titreFamille: "👨‍👩‍👧 Informations de la famille",
+    nomFamille: "Nom de la famille *",
+    secteurFamille: "Secteur *",
+    erreurNomFamille: "❌ Le nom de la famille est obligatoire.",
+    erreurSecteurFamille: "❌ Le secteur est obligatoire.",
     annuler: "Annuler",
     creer: "Créer",
     creation: "Création en cours...",
@@ -168,6 +173,11 @@ const translations = {
     celluleMereOptional: "(optional)",
     celluleMereInfo: "The leader of the parent cell group will automatically become the supervisor of this cell group.",
     aucuneCelluleMere: "-- No parent cell group --",
+    titreFamille: "👨‍👩‍👧 Family information",
+    nomFamille: "Family name *",
+    secteurFamille: "Sector *",
+    erreurNomFamille: "❌ Family name is required.",
+    erreurSecteurFamille: "❌ Sector is required.",
     annuler: "Cancel",
     creer: "Create",
     creation: "Creating...",
@@ -209,6 +219,8 @@ const initialFormData = () => ({
   cellule_nom: "",
   cellule_zone: "",
   cellule_mere_id: "",
+  famille_nom: "",       // ← NOUVEAU
+  famille_secteur: "",   // ← NOUVEAU
 });
 
 export default function CreateInternalUserPage() {
@@ -282,7 +294,6 @@ function CreateInternalUserContent() {
 
         setCellules(cellulesData || []);
 
-        // ✅ CORRECTION : on fetch aussi is_whatsapp et ville
         const { data: membersData } = await supabase
           .from("membres_complets")
           .select("id, prenom, nom, sexe, telephone, is_whatsapp, ville, etat_contact")
@@ -313,7 +324,6 @@ function CreateInternalUserContent() {
 
     const member = members.find(m => m.id === selectedMemberId);
     if (member) {
-      // ✅ CORRECTION : pré-remplissage complet avec tous les champs disponibles
       setFormData(prev => ({
         ...prev,
         prenom:      member.prenom      || "",
@@ -322,11 +332,12 @@ function CreateInternalUserContent() {
         telephone:   member.telephone   || "",
         is_whatsapp: member.is_whatsapp ?? false,
         ville:       member.ville       || "",
-        // email / password restent vides, à saisir manuellement
         email:           "",
         password:        "",
         confirmPassword: "",
         roles: [],
+        famille_nom:     "",
+        famille_secteur: "",
       }));
 
       const checkExistingRoles = async () => {
@@ -358,6 +369,10 @@ function CreateInternalUserContent() {
       ...(role === "ResponsableCellule" && prev.roles.includes(role)
         ? { cellule_nom: "", cellule_zone: "", cellule_mere_id: "" }
         : {}),
+      // ← NOUVEAU : reset champs famille si on décoche ResponsableFamilles
+      ...(role === "ResponsableFamilles" && prev.roles.includes(role)
+        ? { famille_nom: "", famille_secteur: "" }
+        : {}),
     }));
   };
 
@@ -383,6 +398,11 @@ function CreateInternalUserContent() {
     if (formData.roles.includes("ResponsableCellule")) {
       if (!formData.cellule_nom?.trim()) { setMessage(t.erreurNomCellule); return; }
       if (!formData.cellule_zone?.trim()) { setMessage(t.erreurZoneCellule); return; }
+    }
+    // ← NOUVEAU : validation champs famille
+    if (formData.roles.includes("ResponsableFamilles")) {
+      if (!formData.famille_nom?.trim()) { setMessage(t.erreurNomFamille); return; }
+      if (!formData.famille_secteur?.trim()) { setMessage(t.erreurSecteurFamille); return; }
     }
 
     setLoading(true);
@@ -434,6 +454,8 @@ function CreateInternalUserContent() {
           ...formData,
           member_id: selectedMemberId,
           ministeresSelected: formData.ministere,
+          famille_nom: formData.famille_nom,           // ← NOUVEAU
+          famille_secteur: formData.famille_secteur,   // ← NOUVEAU
         }),
       });
 
@@ -470,6 +492,7 @@ function CreateInternalUserContent() {
   const isNewServant      = selectedMemberId === "add-serviteur";
   const showMemberFields  = isExistingMember || isNewServant;
   const showCelluleFields = !!cellulesActive && formData.roles.includes("ResponsableCellule");
+  const showFamilleFields = !!famillesActive && formData.roles.includes("ResponsableFamilles"); // ← NOUVEAU
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
@@ -821,6 +844,28 @@ function CreateInternalUserContent() {
                   ))}
                 </select>
               </div>
+            </div>
+          )}
+
+          {/* ── Infos famille (ResponsableFamilles seulement) ── */}
+          {/* ← NOUVEAU BLOC */}
+          {showFamilleFields && (
+            <div className="flex flex-col gap-3 p-4 bg-green-50 rounded-2xl border border-green-200">
+              <p className="font-semibold text-green-700">{t.titreFamille}</p>
+              <input
+                name="famille_nom"
+                placeholder={t.nomFamille}
+                value={formData.famille_nom}
+                onChange={handleChange}
+                className="input"
+              />
+              <input
+                name="famille_secteur"
+                placeholder={t.secteurFamille}
+                value={formData.famille_secteur}
+                onChange={handleChange}
+                className="input"
+              />
             </div>
           )}
 

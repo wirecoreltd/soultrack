@@ -563,34 +563,26 @@ function EtatCellule() {
     }
 
     // ── ResponsableCellule → sa cellule + ses enfants ──
-    else if (isResponsable) {
+   else if (isResponsable) {
+  // 1. Ma cellule directe
+  const { data: mesCellules } = await supabase
+    .from("cellules")
+    .select("id")
+    .eq("responsable_id", userProfile.id)
+    .eq("eglise_id", userProfile.eglise_id);
 
-    console.log("userProfile.id:", userProfile.id);
-  console.log("userProfile.eglise_id:", userProfile.eglise_id);
-      // 1. Récupérer sa cellule directe
-      const { data: mesCellules } = await supabase
-        .from("cellules")
-        .select("id")
-        .eq("responsable_id", userProfile.id)
-        .eq("eglise_id", userProfile.eglise_id);
+  const mesIds = (mesCellules || []).map(c => c.id);
 
-        console.log("mesCellules:", mesCellules);
+  // 2. Cellules enfants — celles dont cellule_mere_id = mon profile_id
+  const { data: filles } = await supabase
+    .from("cellules")
+    .select("id")
+    .eq("cellule_mere_id", userProfile.id)
+    .eq("eglise_id", userProfile.eglise_id);
 
-      const mesIds = (mesCellules || []).map(c => c.id);
+  const fillesIds = (filles || []).map(c => c.id);
 
-      // 2. Récupérer les cellules enfants (cellule_mere_id dans mes cellules)
-      let fillesIds = [];
-      if (mesIds.length > 0) {
-        const { data: filles } = await supabase
-          .from("cellules")
-          .select("id")
-          .in("cellule_mere_id", mesIds)
-          .eq("eglise_id", userProfile.eglise_id);
-
-        fillesIds = (filles || []).map(c => c.id);
-      }
-
-      const tousLesIds = [...new Set([...mesIds, ...fillesIds])];
+  const tousLesIds = [...new Set([...mesIds, ...fillesIds])];
 
       if (tousLesIds.length > 0) {
         query = query.in("cellule_id", tousLesIds);

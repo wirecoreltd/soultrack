@@ -534,17 +534,35 @@ function Presence() {
     if (isAdmin) { myIdsRef.current = null; return; }
 
     let ids = new Set();
-    const [assignmentsResult, cellulesResult, famillesResult] = await Promise.all([
-      profile.roles?.includes("Conseiller")
-        ? supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", user.id).eq("statut", "actif")
-        : Promise.resolve({ data: [] }),
-      profile.roles?.includes("ResponsableCellule")
-        ? supabase.from("cellules").select("id").eq("responsable_id", user.id)
-        : Promise.resolve({ data: [] }),
-      profile.roles?.includes("ResponsableFamilles")
-        ? supabase.from("familles").select("id").eq("responsable_id", user.id)
-        : Promise.resolve({ data: [] }),
-    ]);
+   
+const [assignmentsResult, cellulesDirectResult, famillesResult] = await Promise.all([
+  profile.roles?.includes("Conseiller")
+    ? supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", user.id).eq("statut", "actif")
+    : Promise.resolve({ data: [] }),
+  profile.roles?.includes("ResponsableCellule")
+    ? supabase.from("cellules").select("id").eq("responsable_id", user.id).eq("eglise_id", profile.eglise_id)
+    : Promise.resolve({ data: [] }),
+  profile.roles?.includes("ResponsableFamilles")
+    ? supabase.from("familles").select("id").eq("responsable_id", user.id)
+    : Promise.resolve({ data: [] }),
+]);
+
+// Cellules enfants via profile_id
+let cellulesResult = cellulesDirectResult;
+if (profile.roles?.includes("ResponsableCellule") && cellulesDirectResult.data?.length >= 0) {
+  const { data: fillesData } = await supabase
+    .from("cellules")
+    .select("id")
+    .eq("cellule_mere_id", user.id)
+    .eq("eglise_id", profile.eglise_id);
+
+  cellulesResult = {
+    data: [
+      ...(cellulesDirectResult.data || []),
+      ...(fillesData || []),
+    ]
+  };
+}
 
     assignmentsResult.data?.forEach(a => ids.add(a.membre_id));
 
@@ -663,8 +681,18 @@ function Presence() {
           const membresCouvertsParGroupe = new Set();
 
           if (isResponsableCellule) {
-            const { data: cellulesData } = await supabase.from("cellules")
-              .select("id, cellule_full, ville, cellule").eq("responsable_id", profile.uid);
+
+              const { data: cellulesDirectes } = await supabase.from("cellules")
+  .select("id, cellule_full, ville, cellule")
+  .eq("responsable_id", profile.uid);
+
+const { data: cellulesFillesData } = await supabase.from("cellules")
+  .select("id, cellule_full, ville, cellule")
+  .eq("cellule_mere_id", profile.uid)
+  .eq("eglise_id", profile.eglise_id);
+
+const cellulesData = [...(cellulesDirectes || []), ...(cellulesFillesData || [])];
+            
             (cellulesData || []).forEach(c => {
               const cm = membres.filter(m => m.cellule_id === c.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
               cm.forEach(m => membresCouvertsParGroupe.add(m.id));

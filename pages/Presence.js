@@ -641,24 +641,28 @@ function Presence() {
     let idsAll = new Set([...idsDirects]);
 
     if (respCellule && fillesVal && cellulesDirectesIds.length > 0) {
-      for (const celluleId of cellulesDirectesIds) {
-        const { data: fillesData } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("cellule_mere_id", celluleId)
-          .eq("eglise_id", profile.eglise_id);
+  for (const celluleId of cellulesDirectesIds) {
+    try {
+      const res = await supabase
+        .from("cellules")
+        .select("id")
+        .eq("cellule_mere_id", celluleId)
+        .eq("eglise_id", profile.eglise_id);
 
-        const fillesIds = (fillesData || []).map(f => f.id);
-        if (fillesIds.length > 0) {
-          const { data: membresFillesData } = await supabase
-            .from("membres_complets")
-            .select("id")
-            .in("cellule_id", fillesIds)
-            .in("etat_contact", ["existant", "nouveau"]);
-          membresFillesData?.forEach(m => idsAll.add(m.id));
-        }
+      const fillesIds = (res.data || []).map(f => f.id);
+      if (fillesIds.length > 0) {
+        const resMembres = await supabase
+          .from("membres_complets")
+          .select("id")
+          .in("cellule_id", fillesIds)
+          .in("etat_contact", ["existant", "nouveau"]);
+        resMembres.data?.forEach(m => idsAll.add(m.id));
       }
+    } catch (e) {
+      console.error("Erreur init filles:", e);
     }
+  }
+}
 
     if (checkInRole) {
       myIdsRef.current    = null;
@@ -922,29 +926,29 @@ function Presence() {
       if (isResponsableCelluleLocal) {
         const { data: cellulesDirectes } = await supabase.from("cellules")
           .select("id, cellule_full, ville, cellule")
-          .eq("responsable_id", profile.uid);
-
-          console.log("=== CELLULES FILLES DEBUG ===");
-  console.log("profile.uid:", profile.uid);
-  console.log("voirCellulesFillesRef.current:", voirCellulesFillesRef.current);
-  console.log("cellulesDirectes:", cellulesDirectes);
+          .eq("responsable_id", profile.uid);   
 
         // ── Cellules directes ──
         let toutesLesCellulesResponsable = [...(cellulesDirectes || [])];
 
         // ── Cellules filles si toggle activé ──
         if (voirCellulesFillesRef.current && cellulesDirectes?.length > 0) {
-          for (const cellule of cellulesDirectes) {
-            const { data: cellulesFillesData } = await supabase.from("cellules")
-              .select("id, cellule_full, ville, cellule")
-              .eq("cellule_mere_id", cellule.id)
-              .eq("eglise_id", profile.eglise_id);
-            // Ajouter récursivement les filles
-            console.log("Filles trouvées:", cellulesFillesData, "Erreur:", fillesError);
-            toutesLesCellulesResponsable = [...toutesLesCellulesResponsable, ...(cellulesFillesData || [])];
-          }
-        }
-         console.log("toutesLesCellulesResponsable final:", toutesLesCellulesResponsable);
+  for (const cellule of cellulesDirectes) {
+    try {
+      const res = await supabase
+        .from("cellules")
+        .select("id, cellule_full, ville, cellule")
+        .eq("cellule_mere_id", cellule.id)
+        .eq("eglise_id", profile.eglise_id);
+
+      if (res.data && res.data.length > 0) {
+        toutesLesCellulesResponsable = [...toutesLesCellulesResponsable, ...res.data];
+      }
+    } catch (e) {
+      console.error("Erreur cellules filles:", e);
+    }
+  }
+}
 
         toutesLesCellulesResponsable.forEach(c => {
           const cm = membres.filter(m => m.cellule_id === c.id)

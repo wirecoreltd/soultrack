@@ -40,6 +40,8 @@ export default async function handler(req, res) {
       cellule_mere_id,
       ministeresSelected,
       member_id,
+      famille_nom,      // ← NOUVEAU
+      famille_secteur,  // ← NOUVEAU
     } = req.body;
 
     if (!prenom || !nom || !email || !password || !roles?.length) {
@@ -92,10 +94,8 @@ export default async function handler(req, res) {
     // ── 3️⃣ Création cellule si ResponsableCellule ──
     if (roles.includes("ResponsableCellule") && cellule_nom && cellule_zone) {
 
-      // Construire cellule_full manuellement : "Zone - Nom"
       const cellule_full = `${cellule_zone} - ${cellule_nom}`;
 
-      // Récupérer superviseur_id depuis la cellule mère si elle existe
       let superviseur_id = null;
       if (cellule_mere_id) {
         const { data: celluleMere } = await supabaseAdmin
@@ -104,7 +104,6 @@ export default async function handler(req, res) {
           .eq("id", cellule_mere_id)
           .single();
 
-        // Le superviseur de la cellule fille = responsable de la cellule mère
         if (celluleMere?.responsable_id) {
           superviseur_id = celluleMere.responsable_id;
         }
@@ -114,25 +113,54 @@ export default async function handler(req, res) {
         .from("cellules")
         .insert({
           cellule: cellule_nom,
-          ville: cellule_zone,         
+          ville: cellule_zone,
           responsable: `${prenom} ${nom}`,
           responsable_id: newUserId,
           telephone: telephone || "",
           eglise_id,
           cellule_mere_id: cellule_mere_id || null,
-          superviseur_id,             // ✅ lié au responsable de la cellule mère
+          superviseur_id,
         });
 
       if (celluleError)
         return res.status(400).json({ error: celluleError.message });
     }
 
-    // ── 4️⃣ Ministères valides ──
+    // ── 4️⃣ SuperviseurCellule → assigner toutes les cellules de l'église ── ← NOUVEAU
+    if (roles.includes("SuperviseurCellule")) {
+      const { error: superviseurError } = await supabaseAdmin
+        .from("cellules")
+        .update({ superviseur_id: newUserId })
+        .eq("eglise_id", eglise_id);
+
+      if (superviseurError)
+        console.error("Erreur assignation superviseur cellules:", superviseurError);
+    }
+
+    // ── 5️⃣ Création famille si ResponsableFamilles ── ← NOUVEAU
+    if (roles.includes("ResponsableFamilles") && famille_nom && famille_secteur) {
+      const { error: familleError } = await supabaseAdmin
+        .from("familles")
+        .insert({
+          famille: famille_nom,
+          ville: famille_secteur,
+          responsable: `${prenom} ${nom}`,
+          responsable_id: newUserId,
+          telephone: telephone || "",
+          eglise_id,
+          created_at: new Date(),
+        });
+
+      if (familleError)
+        return res.status(400).json({ error: familleError.message });
+    }
+
+    // ── 6️⃣ Ministères valides ──
     const ministeresValides = Array.isArray(ministeresSelected)
       ? ministeresSelected.filter((m) => ministereOptions.includes(m))
       : [];
 
-    // ── 5️⃣ Création OU mise à jour membre ──
+    // ── 7️⃣ Création OU mise à jour membre ──
     let createdMember;
     const isExistingMember = member_id && member_id !== "add-serviteur";
 
@@ -181,7 +209,7 @@ export default async function handler(req, res) {
       createdMember = newMember;
     }
 
-    // ── 6️⃣ Stats ministère ──
+    // ── 8️⃣ Stats ministère ──
     if (createdMember && ministeresValides.length > 0) {
       const statsRows = ministeresValides.map((ministere) => ({
         membre_id: createdMember.id,

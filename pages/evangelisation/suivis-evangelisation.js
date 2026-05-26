@@ -381,10 +381,22 @@ function SuivisEvangelisationContent() {
         const myIds = (myAssignments || []).map((a) => a.suivi_evangelise_id);
         filtered = filtered.filter((m) => myIds.includes(m.id));
       } else if (userData.role === "ResponsableCellule") {
-        const mesCellulesIds = (cellulesData || [])
-          .filter((c) => c.responsable_id === userData.id)
-          .map((c) => c.id);
-        filtered = filtered.filter((m) => mesCellulesIds.includes(m.cellule_id));
+  // Cellules directes
+  const directIds = (cellulesData || [])
+    .filter((c) => c.responsable_id === userData.id)
+    .map((c) => c.id);
+
+  // Cellules enfants via profile_id
+  const { data: fillesData } = await supabase
+    .from("cellules")
+    .select("id")
+    .eq("cellule_mere_id", userData.id)
+    .eq("eglise_id", userData.eglise_id);
+  const fillesIds = (fillesData || []).map((c) => c.id);
+
+  const tousLesIds = [...new Set([...directIds, ...fillesIds])];
+  filtered = filtered.filter((m) => tousLesIds.includes(m.cellule_id));
+}
       } else if (userData.role === "ResponsableFamilles") {
         const mesFamillesIds = (famillesData || familles || [])
           .filter((f) => f.responsable_id === userData.id)

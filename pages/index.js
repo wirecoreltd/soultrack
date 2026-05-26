@@ -99,6 +99,9 @@ const roleCards = {
     { path: "/famille/familles-hub", key: "familles",      emoji: "👑", color: "#F59E0B" },
     { path: "/admin/notifications",  key: "notifications", emoji: "🔔", color: "#ef4444" },
   ],
+  CheckInPresence: [
+    { path: "/Presence", key: "presence",      emoji: "✍🏻", color: "#0EA5E9" },    
+  ],
   Membre: [],
 };
 

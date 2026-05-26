@@ -203,17 +203,9 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
   // ✅ Téléphone avec préfixe protégé
   const handlePhoneChange = (e) => {
-  let val = e.target.value;
-
-  // Si le champ est vidé ou modifié avant le préfixe
-  // on réinjecte automatiquement le préfixe
-  if (phonePrefix && !val.startsWith(phonePrefix)) {
-    val = phonePrefix + val.replace(phonePrefix, "");
-  }
-
   setFormData(prev => ({
     ...prev,
-    telephone: val,
+    telephone: e.target.value,
   }));
 };
 

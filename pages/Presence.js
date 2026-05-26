@@ -50,10 +50,6 @@ const translations = {
     hommes: "👨 Hommes",
     femmes: "👩 Femmes",
     nonRenseigne: "❓ Non renseigné",
-    voirFillesOn: "🏠 Cellules filles incluses",
-    voirFillesSub: "Vous voyez aussi les membres des cellules rattachées à la vôtre",
-    voirFillesOff: "🏠 Cellules filles masquées",
-    voirFillesOffSub: "Afficher uniquement vos membres directs",
     form: {
       date: "📅 Date",
       heure: "🕐 Heure",
@@ -126,10 +122,6 @@ const translations = {
     hommes: "👨 Men",
     femmes: "👩 Women",
     nonRenseigne: "❓ Not specified",
-    voirFillesOn: "🏠 Child cells included",
-    voirFillesSub: "You also see members from cells linked to yours",
-    voirFillesOff: "🏠 Child cells hidden",
-    voirFillesOffSub: "Show only your direct members",
     form: {
       date: "📅 Date",
       heure: "🕐 Time",
@@ -323,47 +315,14 @@ function ToggleVisibilite({ visible, onToggle, saving, t }) {
   );
 }
 
-// ─── TOGGLE CELLULES FILLES ─────────────────────────────────────
-function ToggleCellulesFilles({ active, onToggle, saving, t }) {
+// ─── BADGE SEXE ────────────────────────────────────────────────
+function BadgeSexe({ sexe }) {
+  if (!sexe) return null;
+  const isH = sexe.toLowerCase() === "homme";
   return (
-    <div className={`w-full max-w-lg mx-auto mb-4 rounded-xl px-4 py-3 flex items-center justify-between gap-3 border-2 transition ${active ? "bg-blue-50 border-blue-400" : "bg-white/10 border-white/20"}`}>
-      <div className="flex flex-col">
-        <span className={`text-sm font-semibold ${active ? "text-blue-800" : "text-white"}`}>
-          {active ? t.voirFillesOn : t.voirFillesOff}
-        </span>
-        <span className={`text-xs mt-0.5 ${active ? "text-blue-600" : "text-white/60"}`}>
-          {active ? t.voirFillesSub : t.voirFillesOffSub}
-        </span>
-      </div>
-      <button onClick={onToggle} disabled={saving}
-        className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${active ? "bg-blue-500" : "bg-gray-400"} ${saving ? "opacity-50" : ""}`}>
-        <span className={`absolute top-[3px] left-[3px] w-[18px] h-[18px] bg-white rounded-full shadow transition-transform ${active ? "translate-x-[22px]" : "translate-x-0"}`} />
-      </button>
-    </div>
-  );
-}
-
-// ─── BADGES MEMBRE (cellule + famille + sexe) ──────────────────
-function BadgesMembre({ sexe, cellule_id, famille_id }) {
-  const isH = sexe?.toLowerCase() === "homme";
-  return (
-    <div className="flex items-center gap-1 flex-shrink-0">
-      {cellule_id && (
-        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700">
-          🏠
-        </span>
-      )}
-      {famille_id && (
-        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-100 text-purple-700">
-          👑
-        </span>
-      )}
-      {sexe && (
-        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${isH ? "bg-blue-100 text-blue-700" : "bg-pink-100 text-pink-700"}`}>
-          {isH ? "H" : "F"}
-        </span>
-      )}
-    </div>
+    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0 ${isH ? "bg-blue-100 text-blue-700" : "bg-pink-100 text-pink-700"}`}>
+      {isH ? "H" : "F"}
+    </span>
   );
 }
 
@@ -373,8 +332,8 @@ function CarteAbsent({ m, onMark, readOnly }) {
     <div onClick={() => !readOnly && onMark(m)}
       className={`bg-white rounded-xl shadow px-4 py-3 flex items-center gap-3 ${readOnly ? "opacity-70" : "cursor-pointer hover:bg-green-50 active:bg-green-100 transition"}`}>
       <span className="w-5 h-5 flex-shrink-0 rounded border-2 border-gray-300 inline-block" />
-      <span className="font-semibold text-black text-base flex-1">{m.prenom} {m.nom}</span>
-      <BadgesMembre sexe={m.sexe} cellule_id={m.cellule_id} famille_id={m.famille_id} />
+      <span className="font-semibold text-black text-base flex-1">{m.nom} {m.prenom}</span>
+      <BadgeSexe sexe={m.sexe} />
     </div>
   );
 }
@@ -383,12 +342,8 @@ function CartePresent({ p, onUnmark, readOnly, t }) {
   return (
     <div className="bg-white rounded-xl shadow px-4 py-3 flex items-center gap-3">
       <span className="w-5 h-5 flex-shrink-0 rounded border-2 border-green-500 bg-green-500 inline-flex items-center justify-center text-white text-xs font-bold">✓</span>
-      <span className="font-semibold text-black text-base flex-1">{p.membres_complets?.prenom} {p.membres_complets?.nom}</span>
-      <BadgesMembre
-        sexe={p.membres_complets?.sexe}
-        cellule_id={p.membres_complets?.cellule_id}
-        famille_id={p.membres_complets?.famille_id}
-      />
+      <span className="font-semibold text-black text-base flex-1">{p.membres_complets?.nom} {p.membres_complets?.prenom}</span>
+      <BadgeSexe sexe={p.membres_complets?.sexe} />
       {!readOnly && (
         <button onClick={() => onUnmark(p.membre_id)} className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs flex-shrink-0">
           {t.absent}
@@ -455,7 +410,7 @@ function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, vie
           {shown.map(m =>
             view === "absents"
               ? <CarteAbsent key={m.id} m={m} onMark={onMark} readOnly={readOnly} />
-              : <CartePresent key={m.id} p={{ membre_id: m.id, membres_complets: { nom: m.nom, prenom: m.prenom, sexe: m.sexe, cellule_id: m.cellule_id, famille_id: m.famille_id } }} onUnmark={onUnmark} readOnly={readOnly} t={t} />
+              : <CartePresent key={m.id} p={{ membre_id: m.id, membres_complets: { nom: m.nom, prenom: m.prenom, sexe: m.sexe } }} onUnmark={onUnmark} readOnly={readOnly} t={t} />
           )}
         </div>
       )}
@@ -549,35 +504,24 @@ function Presence() {
   const [savingVisible, setSavingVisible] = useState(false);
   const [sessionCourante, setSessionCourante] = useState(null);
 
-  const [voirCellulesFilles, setVoirCellulesFilles] = useState(false);
-  const [savingFilles, setSavingFilles] = useState(false);
-  const [isResponsableCellule, setIsResponsableCellule] = useState(false);
-  const [isCheckIn, setIsCheckIn] = useState(false);
-
-  const profileRef            = useRef(null);
-  const myIdsRef              = useRef(null);
-  const myIdsAllRef           = useRef(null);
-  const isAdminRef            = useRef(false);
-  const useGroupedViewRef     = useRef(false);
-  const fetchAllRef           = useRef(null);
-  const checkSessionsRef      = useRef(null);
-  const selectedDateRef       = useRef(selectedDate);
-  const attendanceIdRef       = useRef(attendanceId);
-  const pendingSessionIdRef   = useRef(null);
-  const voirCellulesFillesRef = useRef(voirCellulesFilles);
+  const profileRef          = useRef(null);
+  const myIdsRef            = useRef(null);
+  const isAdminRef          = useRef(false);
+  const useGroupedViewRef   = useRef(false);
+  const fetchAllRef         = useRef(null);
+  const checkSessionsRef    = useRef(null);
+  const selectedDateRef     = useRef(selectedDate);
+  const attendanceIdRef     = useRef(attendanceId);
+  const pendingSessionIdRef = useRef(null);
 
   useEffect(() => { selectedDateRef.current = selectedDate; }, [selectedDate]);
   useEffect(() => { attendanceIdRef.current = attendanceId; }, [attendanceId]);
-  useEffect(() => { voirCellulesFillesRef.current = voirCellulesFilles; }, [voirCellulesFilles]);
 
   const initProfile = useCallback(async () => {
     if (profileRef.current) return;
     const { data: { user } } = await supabase.auth.getUser();
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("eglise_id, role, roles, voir_cellules_filles")
-      .eq("id", user.id)
-      .single();
+      .from("profiles").select("eglise_id, role, roles").eq("id", user.id).single();
 
     profileRef.current = { ...profile, uid: user.id };
 
@@ -587,108 +531,37 @@ function Presence() {
     const isRespGroupe = profile.roles?.includes("ResponsableCellule") || profile.roles?.includes("ResponsableFamilles");
     useGroupedViewRef.current = isAdmin || isRespGroupe;
 
-    const respCellule = profile.roles?.includes("ResponsableCellule");
-    setIsResponsableCellule(!!respCellule);
-    const fillesVal = !!profile.voir_cellules_filles;
-    setVoirCellulesFilles(fillesVal);
-    voirCellulesFillesRef.current = fillesVal;
+    if (isAdmin) { myIdsRef.current = null; return; }
 
-    const checkInRole = profile.roles?.includes("CheckInPresence");
-    setIsCheckIn(!!checkInRole);
-
-    if (isAdmin) {
-      myIdsRef.current    = null;
-      myIdsAllRef.current = null;
-      return;
-    }
-
-    const [assignmentsResult, cellulesDirectResult, famillesResult] = await Promise.all([
+    let ids = new Set();
+    const [assignmentsResult, cellulesResult, famillesResult] = await Promise.all([
       profile.roles?.includes("Conseiller")
         ? supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", user.id).eq("statut", "actif")
         : Promise.resolve({ data: [] }),
       profile.roles?.includes("ResponsableCellule")
-        ? supabase.from("cellules").select("id").eq("responsable_id", user.id).eq("eglise_id", profile.eglise_id)
+        ? supabase.from("cellules").select("id").eq("responsable_id", user.id)
         : Promise.resolve({ data: [] }),
       profile.roles?.includes("ResponsableFamilles")
         ? supabase.from("familles").select("id").eq("responsable_id", user.id)
         : Promise.resolve({ data: [] }),
     ]);
 
-    let idsDirects = new Set();
-    assignmentsResult.data?.forEach(a => idsDirects.add(a.membre_id));
+    assignmentsResult.data?.forEach(a => ids.add(a.membre_id));
 
-    const cellulesDirectesIds = (cellulesDirectResult.data || []).map(c => c.id);
-
-    if (cellulesDirectesIds.length > 0) {
-      const { data: cm } = await supabase
-        .from("membres_complets")
-        .select("id")
-        .in("cellule_id", cellulesDirectesIds)
-        .in("etat_contact", ["existant", "nouveau"]);
-      cm?.forEach(m => idsDirects.add(m.id));
+    if (cellulesResult.data?.length > 0) {
+      const celluleIds = cellulesResult.data.map(c => c.id);
+      const { data: cm } = await supabase.from("membres_complets").select("id").in("cellule_id", celluleIds).in("etat_contact", ["existant", "nouveau"]);
+      cm?.forEach(m => ids.add(m.id));
     }
 
     if (famillesResult.data?.length > 0) {
       const familleIds = famillesResult.data.map(f => f.id);
-      const { data: fm } = await supabase
-        .from("membres_complets")
-        .select("id")
-        .in("famille_id", familleIds)
-        .in("etat_contact", ["existant", "nouveau"]);
-      fm?.forEach(m => idsDirects.add(m.id));
+      const { data: fm } = await supabase.from("membres_complets").select("id").in("famille_id", familleIds).in("etat_contact", ["existant", "nouveau"]);
+      fm?.forEach(m => ids.add(m.id));
     }
 
-    let idsAll = new Set([...idsDirects]);
-
-    if (respCellule && fillesVal && cellulesDirectesIds.length > 0) {
-      for (const celluleId of cellulesDirectesIds) {
-        const { data: fillesData } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("cellule_mere_id", celluleId)
-          .eq("eglise_id", profile.eglise_id);
-
-        const fillesIds = (fillesData || []).map(f => f.id);
-        if (fillesIds.length > 0) {
-          const { data: membresFillesData } = await supabase
-            .from("membres_complets")
-            .select("id")
-            .in("cellule_id", fillesIds)
-            .in("etat_contact", ["existant", "nouveau"]);
-          membresFillesData?.forEach(m => idsAll.add(m.id));
-        }
-      }
-    }
-
-    if (checkInRole) {
-      myIdsRef.current    = null;
-      myIdsAllRef.current = null;
-    } else {
-      myIdsRef.current    = [...idsDirects];
-      myIdsAllRef.current = [...idsAll];
-    }
+    myIdsRef.current = [...ids];
   }, []);
-
-  const toggleCellulesFilles = async () => {
-    const newVal = !voirCellulesFilles;
-    setSavingFilles(true);
-
-    await supabase
-      .from("profiles")
-      .update({ voir_cellules_filles: newVal })
-      .eq("id", profileRef.current.uid);
-
-    setVoirCellulesFilles(newVal);
-    voirCellulesFillesRef.current = newVal;
-
-    profileRef.current  = null;
-    myIdsRef.current    = null;
-    myIdsAllRef.current = null;
-
-    await initProfile();
-    await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
-    setSavingFilles(false);
-  };
 
   const initAll = useCallback(async () => {
     await initProfile();
@@ -759,136 +632,40 @@ function Presence() {
   const fetchAll = useCallback(async (date, overrideAttendanceId) => {
     try {
       await initProfile();
-      const profile  = profileRef.current;
-      const myIds    = myIdsRef.current;
-      const myIdsAll = myIdsAllRef.current;
-      const isAdmin  = isAdminRef.current;
-      const d        = date || selectedDateRef.current;
-      const aId      = overrideAttendanceId ?? attendanceIdRef.current;
+      const profile = profileRef.current;
+      const myIds   = myIdsRef.current;
+      const isAdmin = isAdminRef.current;
+      const d       = date || selectedDateRef.current;
+      const aId     = overrideAttendanceId ?? attendanceIdRef.current;
       if (!aId) return;
 
-      // ── Inclure cellule_id et famille_id dans les presences ──
       const { data: presencesData } = await supabase.from("presences")
-        .select("membre_id, statut, checked_by, membres_complets(prenom, nom, sexe, cellule_id, famille_id)")
+        .select("membre_id, statut, checked_by, membres_complets(prenom, nom, sexe)")
         .eq("attendance_id", aId).eq("statut", "present");
 
       const allPresences = presencesData || [];
       const presentIds   = new Set(allPresences.map(p => p.membre_id));
 
       if (!isAdmin) {
-        const isCheckInUser = profile?.roles?.includes("CheckInPresence");
-
-        // ── Cas CheckIn ──
-        if (isCheckInUser) {
-          const { data: sessionData } = await supabase
-            .from("attendance")
-            .select("liste_presence_visible")
-            .eq("id", aId)
-            .single();
-
-          if (sessionData?.liste_presence_visible) {
-            const { data: tousMembres } = await supabase
-              .from("membres_complets")
-              .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
-              .eq("eglise_id", profile.eglise_id)
-              .in("etat_contact", ["existant", "nouveau"]);
-
-            const membres = tousMembres || [];
-
-            // ── Vue groupée pour CheckIn : sans rattachement → familles → cellules ──
-            const { data: cellulesData } = await supabase.from("cellules")
-              .select("id, cellule_full, ville, cellule, responsable_id")
-              .eq("eglise_id", profile.eglise_id);
-            const { data: famillesData } = await supabase.from("familles")
-              .select("id, famille_full, famille, ville, responsable_id")
-              .eq("eglise_id", profile.eglise_id);
-
-            const groupesResult = [];
-            const membresCouvertsParGroupe = new Set();
-
-            // 1. Sans rattachement
-            const sansCellule = membres
-              .filter(m => !m.cellule_id && !m.famille_id)
-              .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-            if (sansCellule.length > 0) {
-              sansCellule.forEach(m => membresCouvertsParGroupe.add(m.id));
-              groupesResult.push({ id: "sans", label: t.sansRattachement, icon: "👤", color: "gray", membres: sansCellule });
-            }
-
-            // 2. Familles
-            (famillesData || []).forEach(f => {
-              const fm = membres.filter(m => m.famille_id === f.id)
-                .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-              fm.forEach(m => membresCouvertsParGroupe.add(m.id));
-              if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.famille_full || `${f.ville} - ${f.famille}`, icon: "👑", color: "purple", membres: fm });
-            });
-
-            // 3. Cellules
-            (cellulesData || []).forEach(c => {
-              const cm = membres.filter(m => m.cellule_id === c.id)
-                .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-              cm.forEach(m => membresCouvertsParGroupe.add(m.id));
-              if (cm.length > 0) groupesResult.push({ id: `c-${c.id}`, label: c.cellule_full || `${c.ville} - ${c.cellule}`, icon: "🏠", color: "green", membres: cm });
-            });
-
-            setGroupes(groupesResult);
-            setPresentList(
-              allPresences.sort((a, b) =>
-                (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr")
-              )
-            );
-            setAllMembers([]);
-          } else {
-            setAllMembers([]);
-            setPresentList([]);
-            setGroupes([]);
-          }
-          return;
-        }
-
-        // ── Cas sans ids ──
-        if (!myIds || myIds.length === 0) {
-          setAllMembers([]);
-          setPresentList([]);
-          setGroupes([]);
-          return;
-        }
+        if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); setGroupes([]); return; }
 
         const roles = profile?.roles || [];
-        const isResponsableCelluleLocal = roles.includes("ResponsableCellule");
-        const isResponsableFamilles     = roles.includes("ResponsableFamilles");
+        const isResponsableCellule  = roles.includes("ResponsableCellule");
+        const isResponsableFamilles = roles.includes("ResponsableFamilles");
 
-        const idsAPourVueResponsable = myIdsAll ?? myIds;
-
-        if (isResponsableCelluleLocal || isResponsableFamilles) {
+        if (isResponsableCellule || isResponsableFamilles) {
           const { data: membresData } = await supabase.from("membres_complets")
             .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
-            .eq("eglise_id", profile.eglise_id)
-            .in("etat_contact", ["existant", "nouveau"])
-            .in("id", idsAPourVueResponsable);
+            .eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]).in("id", myIds);
 
           const membres = membresData || [];
           const groupesResult = [];
           const membresCouvertsParGroupe = new Set();
 
-          if (isResponsableCelluleLocal) {
-            const { data: cellulesDirectes } = await supabase.from("cellules")
-              .select("id, cellule_full, ville, cellule")
-              .eq("responsable_id", profile.uid);
-
-            let toutesLesCellules = [...(cellulesDirectes || [])];
-
-            if (voirCellulesFillesRef.current && cellulesDirectes?.length > 0) {
-              for (const cellule of cellulesDirectes) {
-                const { data: cellulesFillesData } = await supabase.from("cellules")
-                  .select("id, cellule_full, ville, cellule")
-                  .eq("cellule_mere_id", cellule.id)
-                  .eq("eglise_id", profile.eglise_id);
-                toutesLesCellules = [...toutesLesCellules, ...(cellulesFillesData || [])];
-              }
-            }
-
-            toutesLesCellules.forEach(c => {
+          if (isResponsableCellule) {
+            const { data: cellulesData } = await supabase.from("cellules")
+              .select("id, cellule_full, ville, cellule").eq("responsable_id", profile.uid);
+            (cellulesData || []).forEach(c => {
               const cm = membres.filter(m => m.cellule_id === c.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
               cm.forEach(m => membresCouvertsParGroupe.add(m.id));
               if (cm.length > 0) groupesResult.push({ id: `c-${c.id}`, label: c.cellule_full || `${c.ville} - ${c.cellule}`, icon: "🏠", color: "green", membres: cm });
@@ -901,7 +678,7 @@ function Presence() {
             (famillesData || []).forEach(f => {
               const fm = membres.filter(m => m.famille_id === f.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
               fm.forEach(m => membresCouvertsParGroupe.add(m.id));
-              if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.famille_full || `${f.ville} - ${f.famille}`, icon: "👑", color: "purple", membres: fm });
+              if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.famille_full || `${f.ville} - ${f.famille}`, icon: "👨‍👩‍👦", color: "purple", membres: fm });
             });
           }
 
@@ -909,33 +686,22 @@ function Presence() {
           if (sansCellule.length > 0) groupesResult.unshift({ id: "sans", label: t.sansRattachement, icon: "👤", color: "gray", membres: sansCellule });
 
           setGroupes(groupesResult);
-          setPresentList(
-            allPresences
-              .filter(p => idsAPourVueResponsable.includes(p.membre_id))
-              .sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"))
-          );
+          setPresentList(allPresences.filter(p => myIds.includes(p.membre_id)).sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr")));
           setAllMembers([]);
           return;
         }
 
-        // ── Cas Conseiller ──
         const { data: membresData } = await supabase.from("membres_complets")
-          .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
-          .eq("eglise_id", profile.eglise_id)
+          .select("id, prenom, nom, telephone, sexe").eq("eglise_id", profile.eglise_id)
           .in("etat_contact", ["existant", "nouveau"]).in("id", myIds);
 
         const sorted = (membresData || []).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
         setAllMembers(sorted.filter(m => !presentIds.has(m.id)));
-        setPresentList(
-          allPresences
-            .filter(p => myIds.includes(p.membre_id))
-            .sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"))
-        );
+        setPresentList(allPresences.filter(p => myIds.includes(p.membre_id)).sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr")));
         setGroupes([]);
         return;
       }
 
-      // ── Cas Admin ──
       const { data: tousMembres } = await supabase.from("membres_complets")
         .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
         .eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]);
@@ -943,7 +709,7 @@ function Presence() {
       const membres = tousMembres || [];
 
       const { data: responsablesVisibles } = await supabase.from("profiles")
-        .select("id, prenom, nom, roles, voir_cellules_filles")
+        .select("id, prenom, nom, roles")
         .eq("eglise_id", profile.eglise_id);
 
       const sessionVisible = await supabase.from("attendance")
@@ -953,14 +719,13 @@ function Presence() {
 
       const sessionEstVisible = sessionVisible?.data?.liste_presence_visible === true;
 
-      const { data: cellulesData }    = await supabase.from("cellules").select("id, cellule_full, ville, cellule, responsable_id, cellule_mere_id").eq("eglise_id", profile.eglise_id);
-      const { data: famillesData }    = await supabase.from("familles").select("id, famille_full, famille, ville, responsable_id").eq("eglise_id", profile.eglise_id);
+      const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full, ville, cellule, responsable_id").eq("eglise_id", profile.eglise_id);
+      const { data: famillesData } = await supabase.from("familles").select("id, famille_full, famille, ville, responsable_id").eq("eglise_id", profile.eglise_id);
       const { data: assignmentsData } = await supabase.from("suivi_assignments").select("membre_id, conseiller_id, profiles(prenom, nom)").eq("statut", "actif");
 
       const visiblesIds = sessionEstVisible
         ? new Set((responsablesVisibles || []).map(r => r.id))
         : new Set();
-
       const assignmentsByConseiller = {};
       (assignmentsData || []).forEach(a => {
         if (!assignmentsByConseiller[a.conseiller_id]) assignmentsByConseiller[a.conseiller_id] = { ids: [], profile: a.profiles };
@@ -971,41 +736,20 @@ function Presence() {
       const groupesResult = [];
       const membresCouvertsParGroupe = new Set();
 
-      // ── 1. Sans rattachement EN PREMIER ──
-      const sansCellule = membres
-        .filter(m => !m.cellule_id && !m.famille_id && !membresDansConseiller.has(m.id))
-        .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-      if (sansCellule.length > 0) {
-        sansCellule.forEach(m => membresCouvertsParGroupe.add(m.id));
-        groupesResult.push({ id: "sans", label: t.sansRattachement, icon: "👤", color: "gray", membres: sansCellule });
-      }
-
-      // ── 2. Familles ──
-      const famillesVisibles = (famillesData || []).filter(f => f.responsable_id && visiblesIds.has(f.responsable_id));
-      famillesVisibles.forEach(f => {
-        const fm = membres.filter(m => m.famille_id === f.id)
-          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-        fm.forEach(m => membresCouvertsParGroupe.add(m.id));
-        if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.famille_full || `${f.ville} - ${f.famille}`, icon: "👑", color: "purple", membres: fm });
-      });
-
-      // ── 3. Cellules (directes seulement, pas les filles du même responsable) ──
-      const cellulesVisibles = (cellulesData || []).filter(c => {
-        if (!c.responsable_id || !visiblesIds.has(c.responsable_id)) return false;
-        if (!c.cellule_mere_id) return true;
-        const celluleMere = (cellulesData || []).find(cm => cm.id === c.cellule_mere_id);
-        if (celluleMere && celluleMere.responsable_id === c.responsable_id) return false;
-        return true;
-      });
-
+      const cellulesVisibles = (cellulesData || []).filter(c => c.responsable_id && visiblesIds.has(c.responsable_id));
       cellulesVisibles.forEach(c => {
-        const cm = membres.filter(m => m.cellule_id === c.id)
-          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        const cm = membres.filter(m => m.cellule_id === c.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
         cm.forEach(m => membresCouvertsParGroupe.add(m.id));
         if (cm.length > 0) groupesResult.push({ id: `c-${c.id}`, label: c.cellule_full || `${c.ville} - ${c.cellule}`, icon: "🏠", color: "green", membres: cm });
       });
 
-      // ── 4. Conseillers ──
+      const famillesVisibles = (famillesData || []).filter(f => f.responsable_id && visiblesIds.has(f.responsable_id));
+      famillesVisibles.forEach(f => {
+        const fm = membres.filter(m => m.famille_id === f.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        fm.forEach(m => membresCouvertsParGroupe.add(m.id));
+        if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.famille_full || `${f.ville} - ${f.famille}`, icon: "👨‍👩‍👦", color: "purple", membres: fm });
+      });
+
       Object.entries(assignmentsByConseiller).forEach(([consId, { ids, profile: consProfile }]) => {
         if (!visiblesIds.has(consId)) return;
         const cm = ids.map(id => membres.find(m => m.id === id)).filter(Boolean)
@@ -1018,7 +762,10 @@ function Presence() {
         }
       });
 
-      const membresVisiblesIds = new Set([...membresCouvertsParGroupe]);
+      const sansCellule = membres.filter(m => !m.cellule_id && !m.famille_id && !membresDansConseiller.has(m.id)).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+      if (sansCellule.length > 0) groupesResult.unshift({ id: "sans", label: t.sansRattachement, icon: "👤", color: "gray", membres: sansCellule });
+
+      const membresVisiblesIds = new Set([...membresCouvertsParGroupe, ...sansCellule.map(m => m.id)]);
       setGroupes(groupesResult);
       setPresentList(allPresences.filter(p => membresVisiblesIds.has(p.membre_id)));
       setAllMembers(membres.filter(m => membresVisiblesIds.has(m.id) && !presentIds.has(m.id)));
@@ -1107,7 +854,7 @@ function Presence() {
 
   const insererAbsentsEnMasse = async (newAttendanceId, date, profile) => {
     try {
-      const myIds   = myIdsRef.current;
+      const myIds = myIdsRef.current;
       const isAdmin = isAdminRef.current;
       let membresAInserer = [];
 
@@ -1163,22 +910,13 @@ function Presence() {
     if (readOnly) return;
     setPresentList(prev => {
       if (prev.find(p => p.membre_id === membre.id)) return prev;
-      return [...prev, {
-        membre_id: membre.id,
-        statut: "present",
-        membres_complets: {
-          nom: membre.nom,
-          prenom: membre.prenom,
-          sexe: membre.sexe,
-          cellule_id: membre.cellule_id,
-          famille_id: membre.famille_id,
-        }
-      }].sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"));
+      return [...prev, { membre_id: membre.id, statut: "present", membres_complets: { nom: membre.nom, prenom: membre.prenom, sexe: membre.sexe } }]
+        .sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"));
     });
     setAllMembers(prev => prev.filter(m => m.id !== membre.id));
     try {
       const { uid } = profileRef.current;
-      const d   = selectedDateRef.current;
+      const d  = selectedDateRef.current;
       const aId = attendanceIdRef.current;
       const { data: updated, error: updateError } = await supabase.from("presences")
         .update({ statut: "present", checked_by: uid }).eq("membre_id", membre.id).eq("attendance_id", aId).select("id");
@@ -1195,14 +933,7 @@ function Presence() {
     if (readOnly) return;
     const absent = presentList.find(p => p.membre_id === memberId);
     if (absent) {
-      const membreInfo = {
-        id: memberId,
-        nom: absent.membres_complets?.nom,
-        prenom: absent.membres_complets?.prenom,
-        sexe: absent.membres_complets?.sexe,
-        cellule_id: absent.membres_complets?.cellule_id,
-        famille_id: absent.membres_complets?.famille_id,
-      };
+      const membreInfo = { id: memberId, nom: absent.membres_complets?.nom, prenom: absent.membres_complets?.prenom, sexe: absent.membres_complets?.sexe };
       setPresentList(prev => prev.filter(p => p.membre_id !== memberId));
       setAllMembers(prev => [...prev, membreInfo].sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr")));
     }
@@ -1253,9 +984,9 @@ function Presence() {
 
   // ━━━ ÉCRAN CHOIX / FORMULAIRE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   if (etape === "choix") {
-    const todayStr      = today();
+    const todayStr = today();
     const todaySessions = sessionsRecentes.filter(s => s.date === todayStr);
-    const oldSessions   = sessionsRecentes.filter(s => s.date !== todayStr);
+    const oldSessions = sessionsRecentes.filter(s => s.date !== todayStr);
 
     return (
       <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
@@ -1266,8 +997,11 @@ function Presence() {
         </p>
 
         <div className="w-full max-w-lg mt-2 flex flex-col gap-4">
+
+          {/* ── Sessions du jour en cours ── */}
           {todaySessions.length > 0 && (
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              {/* En-tête avec badge "EN COURS" animé */}
               <div className="flex items-center justify-between px-5 pt-5 pb-3">
                 <h2 className="text-base font-bold text-gray-800">{t.todaySessions}</h2>
                 <span className="flex items-center gap-1.5 bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full">
@@ -1276,6 +1010,7 @@ function Presence() {
                 </span>
               </div>
               <p className="text-sm text-gray-400 px-5 pb-3">{t.todaySessionsSub}</p>
+
               <div className="flex flex-col gap-2 px-5 pb-4">
                 {todaySessions.map(s => (
                   <button key={s.id} onClick={() => rejoindreSession(s)}
@@ -1290,28 +1025,30 @@ function Presence() {
             </div>
           )}
 
-          {!isCheckIn && (
-            todaySessions.length > 0 ? (
-              <button onClick={() => setEtape("form")}
-                className="w-full py-3 rounded-2xl border-2 border-dashed border-white/40 text-white/80 text-sm font-semibold hover:border-white hover:text-white hover:bg-white/10 transition">
-                {t.newSession}
-              </button>
-            ) : (
-              <FormulaireSession
-                isEdit={false}
-                selectedDate={selectedDate} setSelectedDate={setSelectedDate}
-                selectedTime={selectedTime} setSelectedTime={setSelectedTime}
-                typeTemps={typeTemps} setTypeTemps={setTypeTemps}
-                nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
-                enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
-                numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
-                numeroSession={numeroSession} setNumeroSession={setNumeroSession}
-                tempsOptions={tempsOptions} savingSession={savingSession}
-                onSubmit={demarrerSession} onCancel={null} t={t}
-              />
-            )
+          {/* ── Créer une nouvelle session — toujours affiché ── */}
+          {todaySessions.length > 0 ? (
+            <button
+              onClick={() => setEtape("form")}
+              className="w-full py-3 rounded-2xl border-2 border-dashed border-white/40 text-white/80 text-sm font-semibold hover:border-white hover:text-white hover:bg-white/10 transition"
+            >
+              {t.newSession}
+            </button>
+          ) : (
+            <FormulaireSession
+              isEdit={false}
+              selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+              selectedTime={selectedTime} setSelectedTime={setSelectedTime}
+              typeTemps={typeTemps} setTypeTemps={setTypeTemps}
+              nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
+              enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
+              numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
+              numeroSession={numeroSession} setNumeroSession={setNumeroSession}
+              tempsOptions={tempsOptions} savingSession={savingSession}
+              onSubmit={demarrerSession} onCancel={null} t={t}
+            />
           )}
 
+          {/* ── Sessions récentes (autres jours) ── */}
           {oldSessions.length > 0 && (
             <OldSessionsBlock sessions={oldSessions} onConsulter={consulterAncienne} t={t} lang={lang} />
           )}
@@ -1364,20 +1101,20 @@ function Presence() {
 
         <div
           className={`inline-flex flex-col items-center mt-3 px-4 py-2 rounded-xl ${readOnly ? "bg-amber-500/20 cursor-default" : "bg-white/10 cursor-pointer hover:bg-white/20"} transition group`}
-          onClick={() => !readOnly && !isCheckIn && setEditingSession(v => !v)}
+          onClick={() => !readOnly && setEditingSession(v => !v)}
         >
           <div className="flex items-center gap-2">
             <span className="text-white font-semibold text-sm">
               {sessionCourante?.typeTemps}
               {sessionCourante?.numero_culte ? ` — ${sessionCourante.numero_culte}${sessionCourante.numero_culte === 1 ? t.form.er : t.form.eme} ${t.form.culte}` : ""}
             </span>
-            {!readOnly && !isCheckIn && <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>}
+            {!readOnly && <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>}
           </div>
           <span className="text-white/60 text-xs mt-0.5">
             📅 {new Date(selectedDateRef.current + "T00:00:00").toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric" })}
             {sessionCourante?.heure ? ` · 🕐 ${sessionCourante.heure}` : ""}
           </span>
-          {!readOnly && !isCheckIn && <span className="text-white/40 text-xs mt-0.5">{t.clickToEdit}</span>}
+          {!readOnly && <span className="text-white/40 text-xs mt-0.5">{t.clickToEdit}</span>}
         </div>
 
         {totalPresents > 0 && <CompteurSexe presences={presentList} t={t} />}
@@ -1385,20 +1122,11 @@ function Presence() {
 
       {readOnly && <BanniereConsultation session={sessionCourante} onRetour={handleReset} t={t} lang={lang} />}
 
-      {!isAdminRef.current && !readOnly && !isCheckIn && (
-        <ToggleVisibilite
-          visible={listeVisible}
-          onToggle={toggleVisibilite}
-          saving={savingVisible}
-          t={t}
-        />
+      {!isAdminRef.current && !readOnly && (
+        <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} t={t} />
       )}
 
-      {isResponsableCellule && !readOnly && (
-        <ToggleCellulesFilles active={voirCellulesFilles} onToggle={toggleCellulesFilles} saving={savingFilles} t={t} />
-      )}
-
-      {editingSession && !readOnly && !isCheckIn && (
+      {editingSession && !readOnly && (
         <div className="w-full max-w-lg mb-6">
           <h2 className="text-white font-semibold text-center mb-3">{t.editSession}</h2>
           <FormulaireSession
@@ -1478,8 +1206,7 @@ function Presence() {
 
 export default function PresencePage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "Conseiller", "ResponsableCellule", "ResponsableFamilles",
-    "SuperviseurCellule", "SuperviseurFamilles", "CheckInPresence"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "Conseiller", "ResponsableCellule", "ResponsableFamilles"]}>
       <Presence />
     </ProtectedRoute>
   );

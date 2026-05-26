@@ -343,14 +343,27 @@ function ToggleCellulesFilles({ active, onToggle, saving, t }) {
   );
 }
 
-// ─── BADGE SEXE ────────────────────────────────────────────────
-function BadgeSexe({ sexe }) {
-  if (!sexe) return null;
-  const isH = sexe.toLowerCase() === "homme";
+// ─── BADGES MEMBRE (cellule + famille + sexe) ──────────────────
+function BadgesMembre({ sexe, cellule_id, famille_id }) {
+  const isH = sexe?.toLowerCase() === "homme";
   return (
-    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0 ${isH ? "bg-blue-100 text-blue-700" : "bg-pink-100 text-pink-700"}`}>
-      {isH ? "H" : "F"}
-    </span>
+    <div className="flex items-center gap-1 flex-shrink-0">
+      {cellule_id && (
+        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700">
+          🏠
+        </span>
+      )}
+      {famille_id && (
+        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-100 text-purple-700">
+          👑
+        </span>
+      )}
+      {sexe && (
+        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${isH ? "bg-blue-100 text-blue-700" : "bg-pink-100 text-pink-700"}`}>
+          {isH ? "H" : "F"}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -360,8 +373,8 @@ function CarteAbsent({ m, onMark, readOnly }) {
     <div onClick={() => !readOnly && onMark(m)}
       className={`bg-white rounded-xl shadow px-4 py-3 flex items-center gap-3 ${readOnly ? "opacity-70" : "cursor-pointer hover:bg-green-50 active:bg-green-100 transition"}`}>
       <span className="w-5 h-5 flex-shrink-0 rounded border-2 border-gray-300 inline-block" />
-      <span className="font-semibold text-black text-base flex-1">{m.nom} {m.prenom}</span>
-      <BadgeSexe sexe={m.sexe} />
+      <span className="font-semibold text-black text-base flex-1">{m.prenom} {m.nom}</span>
+      <BadgesMembre sexe={m.sexe} cellule_id={m.cellule_id} famille_id={m.famille_id} />
     </div>
   );
 }
@@ -370,8 +383,12 @@ function CartePresent({ p, onUnmark, readOnly, t }) {
   return (
     <div className="bg-white rounded-xl shadow px-4 py-3 flex items-center gap-3">
       <span className="w-5 h-5 flex-shrink-0 rounded border-2 border-green-500 bg-green-500 inline-flex items-center justify-center text-white text-xs font-bold">✓</span>
-      <span className="font-semibold text-black text-base flex-1">{p.membres_complets?.nom} {p.membres_complets?.prenom}</span>
-      <BadgeSexe sexe={p.membres_complets?.sexe} />
+      <span className="font-semibold text-black text-base flex-1">{p.membres_complets?.prenom} {p.membres_complets?.nom}</span>
+      <BadgesMembre
+        sexe={p.membres_complets?.sexe}
+        cellule_id={p.membres_complets?.cellule_id}
+        famille_id={p.membres_complets?.famille_id}
+      />
       {!readOnly && (
         <button onClick={() => onUnmark(p.membre_id)} className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs flex-shrink-0">
           {t.absent}
@@ -438,7 +455,7 @@ function SectionGroupe({ label, icon, members, presentIds, onMark, onUnmark, vie
           {shown.map(m =>
             view === "absents"
               ? <CarteAbsent key={m.id} m={m} onMark={onMark} readOnly={readOnly} />
-              : <CartePresent key={m.id} p={{ membre_id: m.id, membres_complets: { nom: m.nom, prenom: m.prenom, sexe: m.sexe } }} onUnmark={onUnmark} readOnly={readOnly} t={t} />
+              : <CartePresent key={m.id} p={{ membre_id: m.id, membres_complets: { nom: m.nom, prenom: m.prenom, sexe: m.sexe, cellule_id: m.cellule_id, famille_id: m.famille_id } }} onUnmark={onUnmark} readOnly={readOnly} t={t} />
           )}
         </div>
       )}
@@ -538,8 +555,8 @@ function Presence() {
   const [isCheckIn, setIsCheckIn] = useState(false);
 
   const profileRef            = useRef(null);
-  const myIdsRef              = useRef(null); // IDs directs seulement → pour liste globale admin
-  const myIdsAllRef           = useRef(null); // IDs directs + filles → pour vue responsable
+  const myIdsRef              = useRef(null);
+  const myIdsAllRef           = useRef(null);
   const isAdminRef            = useRef(false);
   const useGroupedViewRef     = useRef(false);
   const fetchAllRef           = useRef(null);
@@ -585,7 +602,6 @@ function Presence() {
       return;
     }
 
-    // ── Récupérer les données de base (assignments, cellules directes, familles) ──
     const [assignmentsResult, cellulesDirectResult, famillesResult] = await Promise.all([
       profile.roles?.includes("Conseiller")
         ? supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", user.id).eq("statut", "actif")
@@ -598,7 +614,6 @@ function Presence() {
         : Promise.resolve({ data: [] }),
     ]);
 
-    // ── IDs directs seulement (sans filles) → pour liste globale admin ──
     let idsDirects = new Set();
     assignmentsResult.data?.forEach(a => idsDirects.add(a.membre_id));
 
@@ -623,7 +638,6 @@ function Presence() {
       fm?.forEach(m => idsDirects.add(m.id));
     }
 
-    // ── IDs directs + filles → pour vue responsable ──
     let idsAll = new Set([...idsDirects]);
 
     if (respCellule && fillesVal && cellulesDirectesIds.length > 0) {
@@ -650,21 +664,27 @@ function Presence() {
       myIdsRef.current    = null;
       myIdsAllRef.current = null;
     } else {
-      myIdsRef.current    = [...idsDirects]; // directs seulement → admin voit ça
-      myIdsAllRef.current = [...idsAll];     // directs + filles → responsable voit ça
+      myIdsRef.current    = [...idsDirects];
+      myIdsAllRef.current = [...idsAll];
     }
   }, []);
 
   const toggleCellulesFilles = async () => {
     const newVal = !voirCellulesFilles;
     setSavingFilles(true);
+
     await supabase
       .from("profiles")
       .update({ voir_cellules_filles: newVal })
       .eq("id", profileRef.current.uid);
+
     setVoirCellulesFilles(newVal);
     voirCellulesFillesRef.current = newVal;
-    profileRef.current = null;
+
+    profileRef.current  = null;
+    myIdsRef.current    = null;
+    myIdsAllRef.current = null;
+
     await initProfile();
     await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
     setSavingFilles(false);
@@ -740,15 +760,16 @@ function Presence() {
     try {
       await initProfile();
       const profile  = profileRef.current;
-      const myIds    = myIdsRef.current;     // directs seulement
-      const myIdsAll = myIdsAllRef.current;  // directs + filles
+      const myIds    = myIdsRef.current;
+      const myIdsAll = myIdsAllRef.current;
       const isAdmin  = isAdminRef.current;
       const d        = date || selectedDateRef.current;
       const aId      = overrideAttendanceId ?? attendanceIdRef.current;
       if (!aId) return;
 
+      // ── Inclure cellule_id et famille_id dans les presences ──
       const { data: presencesData } = await supabase.from("presences")
-        .select("membre_id, statut, checked_by, membres_complets(prenom, nom, sexe)")
+        .select("membre_id, statut, checked_by, membres_complets(prenom, nom, sexe, cellule_id, famille_id)")
         .eq("attendance_id", aId).eq("statut", "present");
 
       const allPresences = presencesData || [];
@@ -768,20 +789,55 @@ function Presence() {
           if (sessionData?.liste_presence_visible) {
             const { data: tousMembres } = await supabase
               .from("membres_complets")
-              .select("id, prenom, nom, telephone, sexe")
+              .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
               .eq("eglise_id", profile.eglise_id)
               .in("etat_contact", ["existant", "nouveau"]);
 
-            const sorted = (tousMembres || []).sort((a, b) =>
-              (a.nom || "").localeCompare(b.nom || "", "fr")
-            );
-            setAllMembers(sorted.filter(m => !presentIds.has(m.id)));
+            const membres = tousMembres || [];
+
+            // ── Vue groupée pour CheckIn : sans rattachement → familles → cellules ──
+            const { data: cellulesData } = await supabase.from("cellules")
+              .select("id, cellule_full, ville, cellule, responsable_id")
+              .eq("eglise_id", profile.eglise_id);
+            const { data: famillesData } = await supabase.from("familles")
+              .select("id, famille_full, famille, ville, responsable_id")
+              .eq("eglise_id", profile.eglise_id);
+
+            const groupesResult = [];
+            const membresCouvertsParGroupe = new Set();
+
+            // 1. Sans rattachement
+            const sansCellule = membres
+              .filter(m => !m.cellule_id && !m.famille_id)
+              .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+            if (sansCellule.length > 0) {
+              sansCellule.forEach(m => membresCouvertsParGroupe.add(m.id));
+              groupesResult.push({ id: "sans", label: t.sansRattachement, icon: "👤", color: "gray", membres: sansCellule });
+            }
+
+            // 2. Familles
+            (famillesData || []).forEach(f => {
+              const fm = membres.filter(m => m.famille_id === f.id)
+                .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+              fm.forEach(m => membresCouvertsParGroupe.add(m.id));
+              if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.famille_full || `${f.ville} - ${f.famille}`, icon: "👑", color: "purple", membres: fm });
+            });
+
+            // 3. Cellules
+            (cellulesData || []).forEach(c => {
+              const cm = membres.filter(m => m.cellule_id === c.id)
+                .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+              cm.forEach(m => membresCouvertsParGroupe.add(m.id));
+              if (cm.length > 0) groupesResult.push({ id: `c-${c.id}`, label: c.cellule_full || `${c.ville} - ${c.cellule}`, icon: "🏠", color: "green", membres: cm });
+            });
+
+            setGroupes(groupesResult);
             setPresentList(
               allPresences.sort((a, b) =>
                 (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr")
               )
             );
-            setGroupes([]);
+            setAllMembers([]);
           } else {
             setAllMembers([]);
             setPresentList([]);
@@ -802,8 +858,6 @@ function Presence() {
         const isResponsableCelluleLocal = roles.includes("ResponsableCellule");
         const isResponsableFamilles     = roles.includes("ResponsableFamilles");
 
-        // ── Vue groupée (ResponsableCellule / ResponsableFamilles) ──
-        // On utilise myIdsAll pour récupérer tous les membres visibles par le responsable
         const idsAPourVueResponsable = myIdsAll ?? myIds;
 
         if (isResponsableCelluleLocal || isResponsableFamilles) {
@@ -811,7 +865,7 @@ function Presence() {
             .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
             .eq("eglise_id", profile.eglise_id)
             .in("etat_contact", ["existant", "nouveau"])
-            .in("id", idsAPourVueResponsable); // directs + filles pour la vue responsable
+            .in("id", idsAPourVueResponsable);
 
           const membres = membresData || [];
           const groupesResult = [];
@@ -824,7 +878,6 @@ function Presence() {
 
             let toutesLesCellules = [...(cellulesDirectes || [])];
 
-            // Ajouter les cellules filles si activé
             if (voirCellulesFillesRef.current && cellulesDirectes?.length > 0) {
               for (const cellule of cellulesDirectes) {
                 const { data: cellulesFillesData } = await supabase.from("cellules")
@@ -848,7 +901,7 @@ function Presence() {
             (famillesData || []).forEach(f => {
               const fm = membres.filter(m => m.famille_id === f.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
               fm.forEach(m => membresCouvertsParGroupe.add(m.id));
-              if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.famille_full || `${f.ville} - ${f.famille}`, icon: "👨‍👩‍👦", color: "purple", membres: fm });
+              if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.famille_full || `${f.ville} - ${f.famille}`, icon: "👑", color: "purple", membres: fm });
             });
           }
 
@@ -856,7 +909,6 @@ function Presence() {
           if (sansCellule.length > 0) groupesResult.unshift({ id: "sans", label: t.sansRattachement, icon: "👤", color: "gray", membres: sansCellule });
 
           setGroupes(groupesResult);
-          // presentList filtrée sur idsAPourVueResponsable (directs + filles)
           setPresentList(
             allPresences
               .filter(p => idsAPourVueResponsable.includes(p.membre_id))
@@ -866,9 +918,10 @@ function Presence() {
           return;
         }
 
-        // ── Cas Conseiller ou autre rôle avec myIds ──
+        // ── Cas Conseiller ──
         const { data: membresData } = await supabase.from("membres_complets")
-          .select("id, prenom, nom, telephone, sexe").eq("eglise_id", profile.eglise_id)
+          .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
+          .eq("eglise_id", profile.eglise_id)
           .in("etat_contact", ["existant", "nouveau"]).in("id", myIds);
 
         const sorted = (membresData || []).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
@@ -883,7 +936,6 @@ function Presence() {
       }
 
       // ── Cas Admin ──
-      // L'admin utilise myIds (directs seulement) pour filtrer les membres visibles par responsable
       const { data: tousMembres } = await supabase.from("membres_complets")
         .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
         .eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]);
@@ -919,32 +971,41 @@ function Presence() {
       const groupesResult = [];
       const membresCouvertsParGroupe = new Set();
 
-      // ── Cellules directes seulement (pas les filles) pour la liste globale ──
-      // On exclut les cellules qui sont des filles d'une autre cellule du même responsable
+      // ── 1. Sans rattachement EN PREMIER ──
+      const sansCellule = membres
+        .filter(m => !m.cellule_id && !m.famille_id && !membresDansConseiller.has(m.id))
+        .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+      if (sansCellule.length > 0) {
+        sansCellule.forEach(m => membresCouvertsParGroupe.add(m.id));
+        groupesResult.push({ id: "sans", label: t.sansRattachement, icon: "👤", color: "gray", membres: sansCellule });
+      }
+
+      // ── 2. Familles ──
+      const famillesVisibles = (famillesData || []).filter(f => f.responsable_id && visiblesIds.has(f.responsable_id));
+      famillesVisibles.forEach(f => {
+        const fm = membres.filter(m => m.famille_id === f.id)
+          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        fm.forEach(m => membresCouvertsParGroupe.add(m.id));
+        if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.famille_full || `${f.ville} - ${f.famille}`, icon: "👑", color: "purple", membres: fm });
+      });
+
+      // ── 3. Cellules (directes seulement, pas les filles du même responsable) ──
       const cellulesVisibles = (cellulesData || []).filter(c => {
         if (!c.responsable_id || !visiblesIds.has(c.responsable_id)) return false;
-        // Exclure les cellules filles : ne garder que les cellules sans cellule_mere_id
-        // ou dont la cellule mère n'appartient pas au même responsable
         if (!c.cellule_mere_id) return true;
         const celluleMere = (cellulesData || []).find(cm => cm.id === c.cellule_mere_id);
-        // Si la cellule mère appartient au même responsable, c'est une fille → exclure
         if (celluleMere && celluleMere.responsable_id === c.responsable_id) return false;
         return true;
       });
 
       cellulesVisibles.forEach(c => {
-        const cm = membres.filter(m => m.cellule_id === c.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        const cm = membres.filter(m => m.cellule_id === c.id)
+          .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
         cm.forEach(m => membresCouvertsParGroupe.add(m.id));
         if (cm.length > 0) groupesResult.push({ id: `c-${c.id}`, label: c.cellule_full || `${c.ville} - ${c.cellule}`, icon: "🏠", color: "green", membres: cm });
       });
 
-      const famillesVisibles = (famillesData || []).filter(f => f.responsable_id && visiblesIds.has(f.responsable_id));
-      famillesVisibles.forEach(f => {
-        const fm = membres.filter(m => m.famille_id === f.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-        fm.forEach(m => membresCouvertsParGroupe.add(m.id));
-        if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.famille_full || `${f.ville} - ${f.famille}`, icon: "👨‍👩‍👦", color: "purple", membres: fm });
-      });
-
+      // ── 4. Conseillers ──
       Object.entries(assignmentsByConseiller).forEach(([consId, { ids, profile: consProfile }]) => {
         if (!visiblesIds.has(consId)) return;
         const cm = ids.map(id => membres.find(m => m.id === id)).filter(Boolean)
@@ -957,10 +1018,7 @@ function Presence() {
         }
       });
 
-      const sansCellule = membres.filter(m => !m.cellule_id && !m.famille_id && !membresDansConseiller.has(m.id)).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-      if (sansCellule.length > 0) groupesResult.unshift({ id: "sans", label: t.sansRattachement, icon: "👤", color: "gray", membres: sansCellule });
-
-      const membresVisiblesIds = new Set([...membresCouvertsParGroupe, ...sansCellule.map(m => m.id)]);
+      const membresVisiblesIds = new Set([...membresCouvertsParGroupe]);
       setGroupes(groupesResult);
       setPresentList(allPresences.filter(p => membresVisiblesIds.has(p.membre_id)));
       setAllMembers(membres.filter(m => membresVisiblesIds.has(m.id) && !presentIds.has(m.id)));
@@ -1057,7 +1115,6 @@ function Presence() {
         const { data } = await supabase.from("membres_complets").select("id").eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]);
         membresAInserer = data || [];
       } else if (myIds && myIds.length > 0) {
-        // On insère les absents pour les directs seulement (myIds)
         const { data } = await supabase.from("membres_complets").select("id").eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]).in("id", myIds);
         membresAInserer = data || [];
       }
@@ -1106,8 +1163,17 @@ function Presence() {
     if (readOnly) return;
     setPresentList(prev => {
       if (prev.find(p => p.membre_id === membre.id)) return prev;
-      return [...prev, { membre_id: membre.id, statut: "present", membres_complets: { nom: membre.nom, prenom: membre.prenom, sexe: membre.sexe } }]
-        .sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"));
+      return [...prev, {
+        membre_id: membre.id,
+        statut: "present",
+        membres_complets: {
+          nom: membre.nom,
+          prenom: membre.prenom,
+          sexe: membre.sexe,
+          cellule_id: membre.cellule_id,
+          famille_id: membre.famille_id,
+        }
+      }].sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"));
     });
     setAllMembers(prev => prev.filter(m => m.id !== membre.id));
     try {
@@ -1129,7 +1195,14 @@ function Presence() {
     if (readOnly) return;
     const absent = presentList.find(p => p.membre_id === memberId);
     if (absent) {
-      const membreInfo = { id: memberId, nom: absent.membres_complets?.nom, prenom: absent.membres_complets?.prenom, sexe: absent.membres_complets?.sexe };
+      const membreInfo = {
+        id: memberId,
+        nom: absent.membres_complets?.nom,
+        prenom: absent.membres_complets?.prenom,
+        sexe: absent.membres_complets?.sexe,
+        cellule_id: absent.membres_complets?.cellule_id,
+        famille_id: absent.membres_complets?.famille_id,
+      };
       setPresentList(prev => prev.filter(p => p.membre_id !== memberId));
       setAllMembers(prev => [...prev, membreInfo].sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr")));
     }

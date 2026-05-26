@@ -1204,8 +1204,15 @@ function Presence() {
 
       {readOnly && <BanniereConsultation session={sessionCourante} onRetour={handleReset} t={t} lang={lang} />}
 
-      {!isAdminRef.current && !readOnly && (
-        <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} t={t} />
+      {!isAdminRef.current && 
+       !readOnly && 
+       !isCheckIn && (
+        <ToggleVisibilite 
+          visible={listeVisible} 
+          onToggle={toggleVisibilite} 
+          saving={savingVisible} 
+          t={t} 
+        />
       )}
 
       {/* ── NOUVEAU : toggle cellules filles (ResponsableCellule seulement) ── */}

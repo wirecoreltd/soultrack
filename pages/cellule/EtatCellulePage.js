@@ -575,7 +575,6 @@ function EtatCellule() {
         .eq("eglise_id", userProfile.eglise_id);
 
         console.log("mesCellules:", mesCellules);
-  console.log("celluleErr:", celluleErr);
 
       const mesIds = (mesCellules || []).map(c => c.id);
 

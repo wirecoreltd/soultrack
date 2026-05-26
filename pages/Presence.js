@@ -535,18 +535,18 @@ function Presence() {
   const [voirCellulesFilles, setVoirCellulesFilles] = useState(false);
   const [savingFilles, setSavingFilles] = useState(false);
   const [isResponsableCellule, setIsResponsableCellule] = useState(false);
-  // ── NOUVEAU : état isCheckIn ──
   const [isCheckIn, setIsCheckIn] = useState(false);
 
-  const profileRef          = useRef(null);
-  const myIdsRef            = useRef(null);
-  const isAdminRef          = useRef(false);
-  const useGroupedViewRef   = useRef(false);
-  const fetchAllRef         = useRef(null);
-  const checkSessionsRef    = useRef(null);
-  const selectedDateRef     = useRef(selectedDate);
-  const attendanceIdRef     = useRef(attendanceId);
-  const pendingSessionIdRef = useRef(null);
+  const profileRef            = useRef(null);
+  const myIdsRef              = useRef(null); // IDs directs seulement → pour liste globale admin
+  const myIdsAllRef           = useRef(null); // IDs directs + filles → pour vue responsable
+  const isAdminRef            = useRef(false);
+  const useGroupedViewRef     = useRef(false);
+  const fetchAllRef           = useRef(null);
+  const checkSessionsRef      = useRef(null);
+  const selectedDateRef       = useRef(selectedDate);
+  const attendanceIdRef       = useRef(attendanceId);
+  const pendingSessionIdRef   = useRef(null);
   const voirCellulesFillesRef = useRef(voirCellulesFilles);
 
   useEffect(() => { selectedDateRef.current = selectedDate; }, [selectedDate]);
@@ -576,14 +576,16 @@ function Presence() {
     setVoirCellulesFilles(fillesVal);
     voirCellulesFillesRef.current = fillesVal;
 
-    // ── Détecter le rôle CheckIn et mettre à jour l'état ──
     const checkInRole = profile.roles?.includes("CheckInPresence");
     setIsCheckIn(!!checkInRole);
 
-    if (isAdmin) { myIdsRef.current = null; return; }
+    if (isAdmin) {
+      myIdsRef.current    = null;
+      myIdsAllRef.current = null;
+      return;
+    }
 
-    let ids = new Set();
-
+    // ── Récupérer les données de base (assignments, cellules directes, familles) ──
     const [assignmentsResult, cellulesDirectResult, famillesResult] = await Promise.all([
       profile.roles?.includes("Conseiller")
         ? supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", user.id).eq("statut", "actif")
@@ -596,38 +598,60 @@ function Presence() {
         : Promise.resolve({ data: [] }),
     ]);
 
-    assignmentsResult.data?.forEach(a => ids.add(a.membre_id));
+    // ── IDs directs seulement (sans filles) → pour liste globale admin ──
+    let idsDirects = new Set();
+    assignmentsResult.data?.forEach(a => idsDirects.add(a.membre_id));
 
-    let cellulesIds = (cellulesDirectResult.data || []).map(c => c.id);
+    const cellulesDirectesIds = (cellulesDirectResult.data || []).map(c => c.id);
 
-    if (respCellule && fillesVal && cellulesDirectResult.data?.length > 0) {
-      for (const cellule of cellulesDirectResult.data) {
-        const { data: fillesData } = await supabase
-          .from("cellules")
-          .select("id")
-          .eq("cellule_mere_id", cellule.id)
-          .eq("eglise_id", profile.eglise_id);
-        (fillesData || []).forEach(f => cellulesIds.push(f.id));
-      }
-    }
-
-    if (cellulesIds.length > 0) {
-      const { data: cm } = await supabase.from("membres_complets").select("id").in("cellule_id", cellulesIds).in("etat_contact", ["existant", "nouveau"]);
-      cm?.forEach(m => ids.add(m.id));
+    if (cellulesDirectesIds.length > 0) {
+      const { data: cm } = await supabase
+        .from("membres_complets")
+        .select("id")
+        .in("cellule_id", cellulesDirectesIds)
+        .in("etat_contact", ["existant", "nouveau"]);
+      cm?.forEach(m => idsDirects.add(m.id));
     }
 
     if (famillesResult.data?.length > 0) {
       const familleIds = famillesResult.data.map(f => f.id);
-      const { data: fm } = await supabase.from("membres_complets").select("id").in("famille_id", familleIds).in("etat_contact", ["existant", "nouveau"]);
-      fm?.forEach(m => ids.add(m.id));
+      const { data: fm } = await supabase
+        .from("membres_complets")
+        .select("id")
+        .in("famille_id", familleIds)
+        .in("etat_contact", ["existant", "nouveau"]);
+      fm?.forEach(m => idsDirects.add(m.id));
     }
 
-    // ── Pour les CheckIn : myIdsRef reste null (sera géré dans fetchAll) ──
-    // ── Pour les autres sans ids : tableau vide ──
+    // ── IDs directs + filles → pour vue responsable ──
+    let idsAll = new Set([...idsDirects]);
+
+    if (respCellule && fillesVal && cellulesDirectesIds.length > 0) {
+      for (const celluleId of cellulesDirectesIds) {
+        const { data: fillesData } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("cellule_mere_id", celluleId)
+          .eq("eglise_id", profile.eglise_id);
+
+        const fillesIds = (fillesData || []).map(f => f.id);
+        if (fillesIds.length > 0) {
+          const { data: membresFillesData } = await supabase
+            .from("membres_complets")
+            .select("id")
+            .in("cellule_id", fillesIds)
+            .in("etat_contact", ["existant", "nouveau"]);
+          membresFillesData?.forEach(m => idsAll.add(m.id));
+        }
+      }
+    }
+
     if (checkInRole) {
-      myIdsRef.current = null;
+      myIdsRef.current    = null;
+      myIdsAllRef.current = null;
     } else {
-      myIdsRef.current = [...ids];
+      myIdsRef.current    = [...idsDirects]; // directs seulement → admin voit ça
+      myIdsAllRef.current = [...idsAll];     // directs + filles → responsable voit ça
     }
   }, []);
 
@@ -715,11 +739,12 @@ function Presence() {
   const fetchAll = useCallback(async (date, overrideAttendanceId) => {
     try {
       await initProfile();
-      const profile = profileRef.current;
-      const myIds   = myIdsRef.current;
-      const isAdmin = isAdminRef.current;
-      const d       = date || selectedDateRef.current;
-      const aId     = overrideAttendanceId ?? attendanceIdRef.current;
+      const profile  = profileRef.current;
+      const myIds    = myIdsRef.current;     // directs seulement
+      const myIdsAll = myIdsAllRef.current;  // directs + filles
+      const isAdmin  = isAdminRef.current;
+      const d        = date || selectedDateRef.current;
+      const aId      = overrideAttendanceId ?? attendanceIdRef.current;
       if (!aId) return;
 
       const { data: presencesData } = await supabase.from("presences")
@@ -732,7 +757,7 @@ function Presence() {
       if (!isAdmin) {
         const isCheckInUser = profile?.roles?.includes("CheckInPresence");
 
-        // ── Cas CheckIn : accès conditionnel selon liste_presence_visible ──
+        // ── Cas CheckIn ──
         if (isCheckInUser) {
           const { data: sessionData } = await supabase
             .from("attendance")
@@ -741,7 +766,6 @@ function Presence() {
             .single();
 
           if (sessionData?.liste_presence_visible) {
-            // Liste visible : le CheckIn voit tous les membres de l'église
             const { data: tousMembres } = await supabase
               .from("membres_complets")
               .select("id, prenom, nom, telephone, sexe")
@@ -759,7 +783,6 @@ function Presence() {
             );
             setGroupes([]);
           } else {
-            // Liste non visible : le CheckIn ne voit rien
             setAllMembers([]);
             setPresentList([]);
             setGroupes([]);
@@ -767,7 +790,7 @@ function Presence() {
           return;
         }
 
-        // ── Cas sans ids (autres rôles sans membres assignés) ──
+        // ── Cas sans ids ──
         if (!myIds || myIds.length === 0) {
           setAllMembers([]);
           setPresentList([]);
@@ -776,13 +799,19 @@ function Presence() {
         }
 
         const roles = profile?.roles || [];
-        const isResponsableCelluleLocal  = roles.includes("ResponsableCellule");
-        const isResponsableFamilles = roles.includes("ResponsableFamilles");
+        const isResponsableCelluleLocal = roles.includes("ResponsableCellule");
+        const isResponsableFamilles     = roles.includes("ResponsableFamilles");
+
+        // ── Vue groupée (ResponsableCellule / ResponsableFamilles) ──
+        // On utilise myIdsAll pour récupérer tous les membres visibles par le responsable
+        const idsAPourVueResponsable = myIdsAll ?? myIds;
 
         if (isResponsableCelluleLocal || isResponsableFamilles) {
           const { data: membresData } = await supabase.from("membres_complets")
             .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
-            .eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]).in("id", myIds);
+            .eq("eglise_id", profile.eglise_id)
+            .in("etat_contact", ["existant", "nouveau"])
+            .in("id", idsAPourVueResponsable); // directs + filles pour la vue responsable
 
           const membres = membresData || [];
           const groupesResult = [];
@@ -795,6 +824,7 @@ function Presence() {
 
             let toutesLesCellules = [...(cellulesDirectes || [])];
 
+            // Ajouter les cellules filles si activé
             if (voirCellulesFillesRef.current && cellulesDirectes?.length > 0) {
               for (const cellule of cellulesDirectes) {
                 const { data: cellulesFillesData } = await supabase.from("cellules")
@@ -826,23 +856,34 @@ function Presence() {
           if (sansCellule.length > 0) groupesResult.unshift({ id: "sans", label: t.sansRattachement, icon: "👤", color: "gray", membres: sansCellule });
 
           setGroupes(groupesResult);
-          setPresentList(allPresences.filter(p => myIds.includes(p.membre_id)).sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr")));
+          // presentList filtrée sur idsAPourVueResponsable (directs + filles)
+          setPresentList(
+            allPresences
+              .filter(p => idsAPourVueResponsable.includes(p.membre_id))
+              .sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"))
+          );
           setAllMembers([]);
           return;
         }
 
+        // ── Cas Conseiller ou autre rôle avec myIds ──
         const { data: membresData } = await supabase.from("membres_complets")
           .select("id, prenom, nom, telephone, sexe").eq("eglise_id", profile.eglise_id)
           .in("etat_contact", ["existant", "nouveau"]).in("id", myIds);
 
         const sorted = (membresData || []).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
         setAllMembers(sorted.filter(m => !presentIds.has(m.id)));
-        setPresentList(allPresences.filter(p => myIds.includes(p.membre_id)).sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr")));
+        setPresentList(
+          allPresences
+            .filter(p => myIds.includes(p.membre_id))
+            .sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"))
+        );
         setGroupes([]);
         return;
       }
 
       // ── Cas Admin ──
+      // L'admin utilise myIds (directs seulement) pour filtrer les membres visibles par responsable
       const { data: tousMembres } = await supabase.from("membres_complets")
         .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
         .eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]);
@@ -850,7 +891,7 @@ function Presence() {
       const membres = tousMembres || [];
 
       const { data: responsablesVisibles } = await supabase.from("profiles")
-        .select("id, prenom, nom, roles")
+        .select("id, prenom, nom, roles, voir_cellules_filles")
         .eq("eglise_id", profile.eglise_id);
 
       const sessionVisible = await supabase.from("attendance")
@@ -860,13 +901,14 @@ function Presence() {
 
       const sessionEstVisible = sessionVisible?.data?.liste_presence_visible === true;
 
-      const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full, ville, cellule, responsable_id").eq("eglise_id", profile.eglise_id);
-      const { data: famillesData } = await supabase.from("familles").select("id, famille_full, famille, ville, responsable_id").eq("eglise_id", profile.eglise_id);
+      const { data: cellulesData }    = await supabase.from("cellules").select("id, cellule_full, ville, cellule, responsable_id, cellule_mere_id").eq("eglise_id", profile.eglise_id);
+      const { data: famillesData }    = await supabase.from("familles").select("id, famille_full, famille, ville, responsable_id").eq("eglise_id", profile.eglise_id);
       const { data: assignmentsData } = await supabase.from("suivi_assignments").select("membre_id, conseiller_id, profiles(prenom, nom)").eq("statut", "actif");
 
       const visiblesIds = sessionEstVisible
         ? new Set((responsablesVisibles || []).map(r => r.id))
         : new Set();
+
       const assignmentsByConseiller = {};
       (assignmentsData || []).forEach(a => {
         if (!assignmentsByConseiller[a.conseiller_id]) assignmentsByConseiller[a.conseiller_id] = { ids: [], profile: a.profiles };
@@ -877,7 +919,19 @@ function Presence() {
       const groupesResult = [];
       const membresCouvertsParGroupe = new Set();
 
-      const cellulesVisibles = (cellulesData || []).filter(c => c.responsable_id && visiblesIds.has(c.responsable_id));
+      // ── Cellules directes seulement (pas les filles) pour la liste globale ──
+      // On exclut les cellules qui sont des filles d'une autre cellule du même responsable
+      const cellulesVisibles = (cellulesData || []).filter(c => {
+        if (!c.responsable_id || !visiblesIds.has(c.responsable_id)) return false;
+        // Exclure les cellules filles : ne garder que les cellules sans cellule_mere_id
+        // ou dont la cellule mère n'appartient pas au même responsable
+        if (!c.cellule_mere_id) return true;
+        const celluleMere = (cellulesData || []).find(cm => cm.id === c.cellule_mere_id);
+        // Si la cellule mère appartient au même responsable, c'est une fille → exclure
+        if (celluleMere && celluleMere.responsable_id === c.responsable_id) return false;
+        return true;
+      });
+
       cellulesVisibles.forEach(c => {
         const cm = membres.filter(m => m.cellule_id === c.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
         cm.forEach(m => membresCouvertsParGroupe.add(m.id));
@@ -995,7 +1049,7 @@ function Presence() {
 
   const insererAbsentsEnMasse = async (newAttendanceId, date, profile) => {
     try {
-      const myIds = myIdsRef.current;
+      const myIds   = myIdsRef.current;
       const isAdmin = isAdminRef.current;
       let membresAInserer = [];
 
@@ -1003,6 +1057,7 @@ function Presence() {
         const { data } = await supabase.from("membres_complets").select("id").eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]);
         membresAInserer = data || [];
       } else if (myIds && myIds.length > 0) {
+        // On insère les absents pour les directs seulement (myIds)
         const { data } = await supabase.from("membres_complets").select("id").eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]).in("id", myIds);
         membresAInserer = data || [];
       }
@@ -1057,7 +1112,7 @@ function Presence() {
     setAllMembers(prev => prev.filter(m => m.id !== membre.id));
     try {
       const { uid } = profileRef.current;
-      const d  = selectedDateRef.current;
+      const d   = selectedDateRef.current;
       const aId = attendanceIdRef.current;
       const { data: updated, error: updateError } = await supabase.from("presences")
         .update({ statut: "present", checked_by: uid }).eq("membre_id", membre.id).eq("attendance_id", aId).select("id");
@@ -1125,9 +1180,9 @@ function Presence() {
 
   // ━━━ ÉCRAN CHOIX / FORMULAIRE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   if (etape === "choix") {
-    const todayStr = today();
+    const todayStr      = today();
     const todaySessions = sessionsRecentes.filter(s => s.date === todayStr);
-    const oldSessions = sessionsRecentes.filter(s => s.date !== todayStr);
+    const oldSessions   = sessionsRecentes.filter(s => s.date !== todayStr);
 
     return (
       <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
@@ -1162,7 +1217,6 @@ function Presence() {
             </div>
           )}
 
-          {/* Les CheckIn ne peuvent pas créer de sessions */}
           {!isCheckIn && (
             todaySessions.length > 0 ? (
               <button onClick={() => setEtape("form")}
@@ -1258,7 +1312,6 @@ function Presence() {
 
       {readOnly && <BanniereConsultation session={sessionCourante} onRetour={handleReset} t={t} lang={lang} />}
 
-      {/* Toggle visibilité : visible uniquement pour les non-admins et non-CheckIn */}
       {!isAdminRef.current && !readOnly && !isCheckIn && (
         <ToggleVisibilite
           visible={listeVisible}
@@ -1268,7 +1321,6 @@ function Presence() {
         />
       )}
 
-      {/* Toggle cellules filles : ResponsableCellule seulement */}
       {isResponsableCellule && !readOnly && (
         <ToggleCellulesFilles active={voirCellulesFilles} onToggle={toggleCellulesFilles} saving={savingFilles} t={t} />
       )}

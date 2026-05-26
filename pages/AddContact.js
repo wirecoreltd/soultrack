@@ -213,31 +213,8 @@ export default function AddContact() {
   const handleCancel = () => router.back();
 
   // ✅ Téléphone avec préfixe modifiable
-// ✅ Téléphone avec préfixe modifiable SANS doublon
-const handlePhoneChange = (e) => {
-  let val = e.target.value;
-
-  // Si le champ est vide
-  if (val === "") {
-    setFormData(prev => ({
-      ...prev,
-      telephone: phonePrefix || "",
-    }));
-    return;
-  }
-
-  // Empêche suppression complète du préfixe
-  if (phonePrefix && !val.startsWith(phonePrefix)) {
-
-    // Retire TOUS les préfixes existants
-    let cleaned = val;
-
-    while (cleaned.startsWith(phonePrefix)) {
-      cleaned = cleaned.slice(phonePrefix.length);
-    }
-
-    val = phonePrefix + cleaned;
-  }
+  const handlePhoneChange = (e) => {
+  const val = e.target.value;
 
   setFormData(prev => ({
     ...prev,
@@ -388,11 +365,11 @@ const handlePhoneChange = (e) => {
           <div className="flex flex-col">
             <label className="text-sm sm:text-base font-bold mb-1">{t.telephone}</label>
             <input
-              type="text"
+              type="tel"
               value={formData.telephone}
               onChange={handlePhoneChange}
-              placeholder={phonePrefix ? `${phonePrefix} ...` : t.telephone}
               className="input"
+              placeholder={phonePrefix ? `${phonePrefix} ...` : t.telephone}
             />
           </div>
 

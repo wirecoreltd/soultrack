@@ -257,16 +257,16 @@ function ListCellulesContent() {
     if (!profile) return;
 
     setUserRole(profile.role);
+  
+    // Map profile_id → nom complet du responsable
+const { data: tousLesProfiles } = await supabase
+  .from("profiles")
+  .select("id, prenom, nom")
+  .eq("eglise_id", profile.eglise_id);
 
-    // Récupérer toutes les cellules de l'église pour construire la map des noms parents
-    const { data: toutesLesCellules } = await supabase
-      .from("cellules")
-      .select("id, cellule_full")
-      .eq("eglise_id", profile.eglise_id);
-
-    const celluleMap = Object.fromEntries(
-      (toutesLesCellules || []).map((c) => [c.id, c.cellule_full])
-    );
+const profileMap = Object.fromEntries(
+  (tousLesProfiles || []).map((p) => [p.id, `${p.prenom} ${p.nom}`])
+);
 
     let query = supabase
       .from("cellules")
@@ -314,8 +314,8 @@ const allIds = [...new Set([...directIds, ...fillesIds])];
           membre_count: count || 0,
           // Résolution du nom de la cellule mère via la map locale
           cellule_mere_nom: c.cellule_mere_id
-            ? celluleMap[c.cellule_mere_id] || "—"
-            : "—",
+  ? profileMap[c.cellule_mere_id] || "—"
+  : "—",
         };
       })
     );

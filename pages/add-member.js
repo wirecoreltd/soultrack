@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 import { checkLimiteAtteinte } from "../lib/checkLimite";
 import { useLang } from "../hooks/useLang";
+import { getPrefixForPays } from "../lib/phonePrefix";
 
 const translations = {
   fr: {
@@ -30,16 +31,16 @@ const translations = {
     statut: "Statut",
     statutOptions: [
       { value: "veut rejoindre l'église", label: "Veut rejoindre l'église" },
-      { value: "a déjà son église", label: "A déjà son église" },
-      { value: "nouveau", label: "Nouveau" },
-      { value: "visiteur", label: "Visiteur" },
+      { value: "a déjà son église",       label: "A déjà son église" },
+      { value: "nouveau",                 label: "Nouveau" },
+      { value: "visiteur",               label: "Visiteur" },
     ],
     howCame: "Comment est-il venu ?",
     howCameOptions: [
-      { value: "invité", label: "Invité" },
-      { value: "réseaux", label: "Réseaux" },
+      { value: "invité",         label: "Invité" },
+      { value: "réseaux",        label: "Réseaux" },
       { value: "evangélisation", label: "Évangélisation" },
-      { value: "autre", label: "Autre" },
+      { value: "autre",          label: "Autre" },
     ],
     prayerSalvation: "Prière du salut",
     oui: "Oui",
@@ -47,7 +48,7 @@ const translations = {
     typeConversion: "Type de conversion",
     conversionOptions: [
       { value: "Nouveau converti", label: "Nouveau converti" },
-      { value: "Réconciliation", label: "Réconciliation" },
+      { value: "Réconciliation",   label: "Réconciliation" },
     ],
     needs: "Difficultés / Besoins",
     needsOptions: [
@@ -90,16 +91,16 @@ const translations = {
     statut: "Status",
     statutOptions: [
       { value: "veut rejoindre l'église", label: "Wants to join the church" },
-      { value: "a déjà son église", label: "Already has a church" },
-      { value: "nouveau", label: "New" },
-      { value: "visiteur", label: "Visitor" },
+      { value: "a déjà son église",       label: "Already has a church" },
+      { value: "nouveau",                 label: "New" },
+      { value: "visiteur",               label: "Visitor" },
     ],
     howCame: "How did they come?",
     howCameOptions: [
-      { value: "invité", label: "Invited" },
-      { value: "réseaux", label: "Social media" },
+      { value: "invité",         label: "Invited" },
+      { value: "réseaux",        label: "Social media" },
       { value: "evangélisation", label: "Outreach" },
-      { value: "autre", label: "Other" },
+      { value: "autre",          label: "Other" },
     ],
     prayerSalvation: "Salvation prayer",
     oui: "Yes",
@@ -107,7 +108,7 @@ const translations = {
     typeConversion: "Type of conversion",
     conversionOptions: [
       { value: "Nouveau converti", label: "New convert" },
-      { value: "Réconciliation", label: "Reconciliation" },
+      { value: "Réconciliation",   label: "Reconciliation" },
     ],
     needs: "Difficulties / Needs",
     needsOptions: [
@@ -133,7 +134,6 @@ export default function AddMember() {
   const router = useRouter();
   const { token } = router.query;
 
-  // ✅ Récupération de tous les query params utiles
   const urlEgliseId = router.query.eglise_id || null;
   const urlFamilleId = router.query.famille_id || null;
 
@@ -141,6 +141,9 @@ export default function AddMember() {
   const urlLang = router.query.lang;
   const lang = (urlLang === "en" || urlLang === "fr") ? urlLang : hookLang;
   const t = translations[lang] || translations.fr;
+
+  // ✅ Préfixe téléphonique détecté depuis le pays de l'église
+  const [phonePrefix, setPhonePrefix] = useState("");
 
   const [formData, setFormData] = useState({
     sexe: "",
@@ -169,98 +172,90 @@ export default function AddMember() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // ✅ CAS 1 — Lien public avec eglise_id directement dans l'URL
-  // (même logique que ajouter-membre-cellule / ajouter-membre-famille)
+  // CAS 1 — lien public avec eglise_id dans l'URL
   useEffect(() => {
     if (!urlEgliseId) return;
     setFormData(prev => ({ ...prev, eglise_id: urlEgliseId }));
     setLoading(false);
   }, [urlEgliseId]);
 
-  // ✅ CAS 2 — Lien avec token (table access_tokens)
+  // CAS 2 — lien avec token
   useEffect(() => {
     if (!token) return;
-
     const verifyToken = async () => {
       setLoading(true);
-
       const { data, error } = await supabase
         .from("access_tokens")
         .select("church_id")
         .eq("token", token)
         .gte("expires_at", new Date().toISOString())
         .single();
-
       if (error || !data) {
         setErrorMsg(t.invalidLink);
       } else {
         setFormData(prev => ({ ...prev, eglise_id: data.church_id }));
       }
-
       setLoading(false);
     };
-
     verifyToken();
   }, [token]);
 
-  // ✅ CAS 3 — Utilisateur connecté (pas de token, pas d'eglise_id dans l'URL)
+  // CAS 3 — utilisateur connecté
   useEffect(() => {
     if (token) return;
-    if (urlEgliseId) return; // ← déjà géré par CAS 1
-
+    if (urlEgliseId) return;
     const fetchUserEglise = async () => {
       const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) {
-        setLoading(false);
-        return;
-      }
-
+      if (!session?.session?.user) { setLoading(false); return; }
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("eglise_id")
         .eq("id", session.session.user.id)
         .single();
-
       if (!error && profile) {
         setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id }));
       }
       setLoading(false);
     };
-
     fetchUserEglise();
   }, [token, urlEgliseId]);
 
-  // ✅ Sync famille_id depuis l'URL
+  // Sync famille_id
   useEffect(() => {
     if (!urlFamilleId) return;
     setFormData(prev => ({ ...prev, famille_id: urlFamilleId }));
   }, [urlFamilleId]);
 
-  // ✅ Fetch logo + infos église dès que eglise_id est connu
+  // ✅ Fetch infos église + détecter le préfixe téléphonique
   useEffect(() => {
     if (!formData.eglise_id) return;
-
     const fetchEglise = async () => {
       const { data, error } = await supabase
         .from("eglises")
         .select("nom, branche, ville, pays, logo_url")
         .eq("id", formData.eglise_id)
         .single();
-
-      if (!error && data) setEgliseInfo(data);
+      if (!error && data) {
+        setEgliseInfo(data);
+        const prefix = getPrefixForPays(data.pays);
+        if (prefix) {
+          setPhonePrefix(prefix);
+          setFormData(prev => ({
+            ...prev,
+            telephone: prev.telephone || prefix,
+          }));
+        }
+      }
     };
-
     fetchEglise();
   }, [formData.eglise_id]);
 
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
-
     if (value === t.other) {
       setShowBesoinLibre(checked);
       if (!checked) setFormData(prev => ({ ...prev, besoinLibre: "" }));
     }
-
     setFormData(prev => {
       const updatedBesoin = checked
         ? [...prev.besoin, value]
@@ -269,13 +264,24 @@ export default function AddMember() {
     });
   };
 
+  // ✅ Gestion du champ téléphone avec préfixe protégé
+  const handlePhoneChange = (e) => {
+    const val = e.target.value;
+    // Ne pas permettre d'effacer le préfixe
+    if (phonePrefix && !val.startsWith(phonePrefix)) {
+      setFormData(prev => ({ ...prev, telephone: phonePrefix }));
+      return;
+    }
+    setFormData(prev => ({ ...prev, telephone: val }));
+  };
+
   const resetForm = () => {
     setFormData(prev => ({
       ...prev,
       sexe: "",
       nom: "",
       prenom: "",
-      telephone: "",
+      telephone: phonePrefix || "",
       ville: "",
       age: "",
       statut: "",
@@ -296,25 +302,16 @@ export default function AddMember() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
-
     try {
-      if (!noPhone && !formData.telephone) {
-        throw new Error(t.errNoPhone);
-      }
-
-      if (!formData.eglise_id) {
-        throw new Error(t.errNoEglise);
-      }
+      if (!noPhone && !formData.telephone) throw new Error(t.errNoPhone);
+      if (!formData.eglise_id) throw new Error(t.errNoEglise);
 
       const finalBesoin = showBesoinLibre && formData.besoinLibre
         ? [...formData.besoin.filter(b => b !== t.other), formData.besoinLibre]
         : formData.besoin;
 
       const { atteinte, count, limite } = await checkLimiteAtteinte(formData.eglise_id);
-      if (atteinte) {
-        setErrorMsg(t.errLimite(count, limite));
-        return;
-      }
+      if (atteinte) { setErrorMsg(t.errLimite(count, limite)); return; }
 
       const { besoinLibre, ...rest } = formData;
       const dataToSend = {
@@ -330,7 +327,6 @@ export default function AddMember() {
           .select("id")
           .eq("telephone", formData.telephone)
           .maybeSingle();
-
         if (existing) throw new Error(t.errPhoneExists);
       }
 
@@ -340,7 +336,6 @@ export default function AddMember() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
       resetForm();
-
     } catch (err) {
       setErrorMsg(err.message || t.errGeneric);
     }
@@ -361,85 +356,61 @@ export default function AddMember() {
           ✕
         </button>
 
-        {/* ✅ Logo + infos église dynamiques */}
+        {/* Logo + infos église */}
         <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
           {egliseInfo?.logo_url && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={egliseInfo.logo_url}
-              alt={egliseInfo.nom || "Logo église"}
-              style={{ width: 50, height: 50, objectFit: "contain" }}
-            />
+            <img src={egliseInfo.logo_url} alt={egliseInfo.nom || "Logo"} style={{ width: 50, height: 50, objectFit: "contain" }} />
           )}
           {egliseInfo && (
             <div className="text-center leading-snug mt-1">
               <p className="font-bold text-lg text-[#c31850]">{egliseInfo.nom}</p>
-              {egliseInfo.branche && (
-                <p className="text-sm text-[#c31850]">{egliseInfo.branche}</p>
-              )}
-              <p className="text-sm text-[#c31850]">
-                {[egliseInfo.ville, egliseInfo.pays].filter(Boolean).join(", ")}
-              </p>
+              {egliseInfo.branche && <p className="text-sm text-[#c31850]">{egliseInfo.branche}</p>}
+              <p className="text-sm text-[#c31850]">{[egliseInfo.ville, egliseInfo.pays].filter(Boolean).join(", ")}</p>
             </div>
           )}
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2 mt-4">{t.title}</h1>
-        <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">
-          {t.subtitle}
-        </p>
+        <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">{t.subtitle}</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
 
           <label className="text-sm sm:text-base font-semibold">{t.dateVenue}</label>
-          <input
-            type="date"
-            value={formData.date_venu}
+          <input type="date" value={formData.date_venu}
             onChange={e => setFormData({ ...formData, date_venu: e.target.value })}
-            className="input"
-            required
-          />
+            className="input" required />
 
           <label className="text-sm sm:text-base font-semibold">{t.civility}</label>
-          <select
-            value={formData.sexe}
+          <select value={formData.sexe}
             onChange={e => setFormData({ ...formData, sexe: e.target.value })}
-            className="input"
-            required
-          >
+            className="input" required>
             <option value="">{t.choose}</option>
             <option value="Homme">{t.homme}</option>
             <option value="Femme">{t.femme}</option>
           </select>
 
           <label className="text-sm sm:text-base font-semibold">{t.prenom}</label>
-          <input
-            type="text"
-            value={formData.prenom}
+          <input type="text" value={formData.prenom}
             onChange={e => setFormData({ ...formData, prenom: e.target.value })}
-            className="input"
-            required
-          />
+            className="input" required />
 
           <label className="text-sm sm:text-base font-semibold">{t.nom}</label>
-          <input
-            type="text"
-            value={formData.nom}
+          <input type="text" value={formData.nom}
             onChange={e => setFormData({ ...formData, nom: e.target.value })}
-            className="input"
-            required
-          />
+            className="input" required />
 
+          {/* ✅ Téléphone avec préfixe automatique */}
           <div className="mb-2">
             <label className="block font-medium mb-1">{t.telephone}</label>
             <input
               type="tel"
               value={noPhone ? t.noPhone : formData.telephone}
-              onChange={e => setFormData({ ...formData, telephone: e.target.value })}
+              onChange={handlePhoneChange}
               disabled={noPhone}
               required={!noPhone}
               className="w-full border rounded-lg px-3 py-2"
-              placeholder={t.telPlaceholder}
+              placeholder={phonePrefix ? `${phonePrefix} ...` : t.telPlaceholder}
             />
             <label className="flex items-center mt-2 space-x-2 text-sm">
               <input
@@ -449,7 +420,7 @@ export default function AddMember() {
                   setNoPhone(e.target.checked);
                   setFormData(prev => ({
                     ...prev,
-                    telephone: e.target.checked ? "Pas de téléphone" : "",
+                    telephone: e.target.checked ? "Pas de téléphone" : (phonePrefix || ""),
                   }));
                 }}
               />
@@ -458,72 +429,47 @@ export default function AddMember() {
           </div>
 
           <label className="flex items-center gap-2 text-sm sm:text-base">
-            <input
-              type="checkbox"
-              checked={formData.is_whatsapp}
-              onChange={e => setFormData({ ...formData, is_whatsapp: e.target.checked })}
-            />
+            <input type="checkbox" checked={formData.is_whatsapp}
+              onChange={e => setFormData({ ...formData, is_whatsapp: e.target.checked })} />
             {t.whatsapp}
           </label>
 
           <label className="text-sm sm:text-base font-semibold">{t.ville}</label>
-          <input
-            type="text"
-            value={formData.ville}
+          <input type="text" value={formData.ville}
             onChange={e => setFormData({ ...formData, ville: e.target.value })}
-            className="input"
-          />
+            className="input" />
 
           <label className="text-sm sm:text-base font-semibold">{t.age}</label>
-          <select
-            value={formData.age}
+          <select value={formData.age}
             onChange={e => setFormData({ ...formData, age: e.target.value })}
-            className="input"
-            required
-          >
+            className="input" required>
             <option value="">{t.choose}</option>
-            {t.ageOptions.map(v => (
-              <option key={v} value={v}>{v}</option>
-            ))}
+            {t.ageOptions.map(v => <option key={v} value={v}>{v}</option>)}
           </select>
 
           <label className="text-sm sm:text-base font-semibold">{t.statut}</label>
-          <select
-            value={formData.statut}
+          <select value={formData.statut}
             onChange={e => setFormData({ ...formData, statut: e.target.value })}
-            className="input"
-            required
-          >
+            className="input" required>
             <option value="">{t.choose}</option>
-            {t.statutOptions.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
+            {t.statutOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
 
           <label className="text-sm sm:text-base font-semibold">{t.howCame}</label>
-          <select
-            value={formData.venu}
+          <select value={formData.venu}
             onChange={e => setFormData({ ...formData, venu: e.target.value })}
-            className="input"
-            required
-          >
+            className="input" required>
             <option value="">{t.choose}</option>
-            {t.howCameOptions.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
+            {t.howCameOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
 
           <label className="text-sm sm:text-base font-semibold">{t.prayerSalvation}</label>
-          <select
-            className="input"
-            value={formData.priere_salut}
-            required
+          <select className="input" value={formData.priere_salut} required
             onChange={e => setFormData({
               ...formData,
               priere_salut: e.target.value,
               type_conversion: e.target.value === "Oui" ? formData.type_conversion : "",
-            })}
-          >
+            })}>
             <option value="">{t.choose}</option>
             <option value="Oui">{t.oui}</option>
             <option value="Non">{t.non}</option>
@@ -532,16 +478,10 @@ export default function AddMember() {
           {formData.priere_salut === "Oui" && (
             <>
               <label className="text-sm sm:text-base font-semibold">{t.typeConversion}</label>
-              <select
-                className="input"
-                value={formData.type_conversion}
-                onChange={e => setFormData({ ...formData, type_conversion: e.target.value })}
-                required
-              >
+              <select className="input" value={formData.type_conversion}
+                onChange={e => setFormData({ ...formData, type_conversion: e.target.value })} required>
                 <option value="">{t.choose}</option>
-                {t.conversionOptions.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
+                {t.conversionOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </>
           )}
@@ -550,84 +490,56 @@ export default function AddMember() {
           <div className="flex flex-wrap gap-2 mb-2">
             {t.needsOptions.map(item => (
               <label key={item} className="flex items-center gap-1 text-sm">
-                <input
-                  type="checkbox"
-                  value={item}
+                <input type="checkbox" value={item}
                   checked={formData.besoin.includes(item)}
                   onChange={handleBesoinChange}
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                />
+                  className="w-4 h-4 sm:w-5 sm:h-5" />
                 {item}
               </label>
             ))}
             <label className="flex items-center gap-1 text-sm">
-              <input
-                type="checkbox"
-                value={t.other}
-                checked={showBesoinLibre}
-                onChange={handleBesoinChange}
-                className="w-4 h-4 sm:w-5 sm:h-5"
-              />
+              <input type="checkbox" value={t.other} checked={showBesoinLibre}
+                onChange={handleBesoinChange} className="w-4 h-4 sm:w-5 sm:h-5" />
               {t.other}
             </label>
           </div>
 
           {showBesoinLibre && (
-            <input
-              type="text"
-              placeholder={t.specify}
+            <input type="text" placeholder={t.specify}
               value={formData.besoinLibre}
               onChange={e => setFormData({ ...formData, besoinLibre: e.target.value })}
-              className="input mb-2"
-            />
+              className="input mb-2" />
           )}
 
           <label className="text-sm sm:text-base font-semibold">{t.additionalInfo}</label>
-          <textarea
-            placeholder="..."
-            rows={2}
+          <textarea placeholder="..." rows={2}
             value={formData.infos_supplementaires}
             onChange={e => setFormData({ ...formData, infos_supplementaires: e.target.value })}
-            className="input"
-          />
+            className="input" />
 
-          {errorMsg && (
-            <p className="text-red-600 text-sm font-semibold text-center">{errorMsg}</p>
-          )}
+          {errorMsg && <p className="text-red-600 text-sm font-semibold text-center">{errorMsg}</p>}
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
-            <button
-              type="button"
-              onClick={resetForm}
-              className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-            >
+            <button type="button" onClick={resetForm}
+              className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               {t.cancel}
             </button>
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-            >
+            <button type="submit"
+              className="w-full bg-gradient-to-r from-blue-400 to-indigo-500 hover:from-blue-500 hover:to-indigo-600 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               {t.add}
             </button>
           </div>
         </form>
 
         {success && (
-          <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">
-            {t.success}
-          </p>
+          <p className="text-green-600 font-semibold text-center mt-4 animate-pulse">{t.success}</p>
         )}
 
         <style jsx>{`
           .input {
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 12px;
-            text-align: left;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            color: black;
-            font-size: 0.95rem;
+            width: 100%; border: 1px solid #ccc; border-radius: 12px;
+            padding: 12px; text-align: left; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            color: black; font-size: 0.95rem;
           }
         `}</style>
       </div>

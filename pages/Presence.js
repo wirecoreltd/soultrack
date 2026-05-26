@@ -721,175 +721,75 @@ function Presence() {
       const allPresences = presencesData || [];
       const presentIds   = new Set(allPresences.map(p => p.membre_id));
 
-      if (!isAdmin && !fullSessionAccess) {
-        if (!myIds || myIds.length === 0) {
+      if (!isAdmin) {
+        if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); setGroupes([]); return; }
+
+        const roles = profile?.roles || [];
+        const isResponsableCelluleLocal  = roles.includes("ResponsableCellule");
+        const isResponsableFamilles = roles.includes("ResponsableFamilles");
+
+        if (isResponsableCelluleLocal || isResponsableFamilles) {
+          const { data: membresData } = await supabase.from("membres_complets")
+            .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
+            .eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]).in("id", myIds);
+
+          const membres = membresData || [];
+          const groupesResult = [];
+          const membresCouvertsParGroupe = new Set();
+
+          if (isResponsableCelluleLocal) {
+            // ── NOUVEAU : fetch cellules directes seulement, filles si activé ──
+            const { data: cellulesDirectes } = await supabase.from("cellules")
+              .select("id, cellule_full, ville, cellule")
+              .eq("responsable_id", profile.uid);
+
+            let toutesLesCellules = [...(cellulesDirectes || [])];
+
+            if (voirCellulesFillesRef.current && cellulesDirectes?.length > 0) {
+              for (const cellule of cellulesDirectes) {
+                const { data: cellulesFillesData } = await supabase.from("cellules")
+                  .select("id, cellule_full, ville, cellule")
+                  .eq("cellule_mere_id", cellule.id) // ← correction : cellule.id
+                  .eq("eglise_id", profile.eglise_id);
+                toutesLesCellules = [...toutesLesCellules, ...(cellulesFillesData || [])];
+              }
+            }
+
+            toutesLesCellules.forEach(c => {
+              const cm = membres.filter(m => m.cellule_id === c.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+              cm.forEach(m => membresCouvertsParGroupe.add(m.id));
+              if (cm.length > 0) groupesResult.push({ id: `c-${c.id}`, label: c.cellule_full || `${c.ville} - ${c.cellule}`, icon: "🏠", color: "green", membres: cm });
+            });
+          }
+
+          if (isResponsableFamilles) {
+            const { data: famillesData } = await supabase.from("familles")
+              .select("id, famille_full, famille, ville").eq("responsable_id", profile.uid);
+            (famillesData || []).forEach(f => {
+              const fm = membres.filter(m => m.famille_id === f.id).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+              fm.forEach(m => membresCouvertsParGroupe.add(m.id));
+              if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.famille_full || `${f.ville} - ${f.famille}`, icon: "👨‍👩‍👦", color: "purple", membres: fm });
+            });
+          }
+
+          const sansCellule = membres.filter(m => !membresCouvertsParGroupe.has(m.id)).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+          if (sansCellule.length > 0) groupesResult.unshift({ id: "sans", label: t.sansRattachement, icon: "👤", color: "gray", membres: sansCellule });
+
+          setGroupes(groupesResult);
+          setPresentList(allPresences.filter(p => myIds.includes(p.membre_id)).sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr")));
           setAllMembers([]);
-          setPresentList([]);
-          setGroupes([]);
           return;
         }
 
-        const roles = profile?.roles || [];
-const isResponsableCelluleLocal  = roles.includes("ResponsableCellule");
-const isResponsableFamilles = roles.includes("ResponsableFamilles");
+        const { data: membresData } = await supabase.from("membres_complets")
+          .select("id, prenom, nom, telephone, sexe").eq("eglise_id", profile.eglise_id)
+          .in("etat_contact", ["existant", "nouveau"]).in("id", myIds);
 
-// 🔥 NOUVEAU (IMPORTANT)
-const isCheckIn = roles.includes("CheckInPresence");
-const sessionEstVisible = sessionVisible?.data?.liste_presence_visible === true;
-
-// 👉 accès total session (checkin + session globale + admin si tu veux)
-const fullSessionAccess = isAdmin || (isCheckIn && sessionEstVisible);
-
-// ─────────────────────────────────────────────
-// CAS RESPONSABLE CELLULE / FAMILLES
-// ─────────────────────────────────────────────
-if (isResponsableCelluleLocal || isResponsableFamilles) {
-
-  let query = supabase.from("membres_complets")
-    .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
-    .eq("eglise_id", profile.eglise_id)
-    .in("etat_contact", ["existant", "nouveau"]);
-
-  // 🔥 SI PAS ACCÈS GLOBAL → on limite à myIds
-  if (!fullSessionAccess) {
-    query = query.in("id", myIds);
-  }
-
-  const { data: membresData } = await query;
-
-  const membres = membresData || [];
-  const groupesResult = [];
-  const membresCouvertsParGroupe = new Set();
-
-  if (isResponsableCelluleLocal) {
-
-    const { data: cellulesDirectes } = await supabase.from("cellules")
-      .select("id, cellule_full, ville, cellule")
-      .eq("responsable_id", profile.uid);
-
-    let toutesLesCellules = [...(cellulesDirectes || [])];
-
-    if (voirCellulesFillesRef.current && cellulesDirectes?.length > 0) {
-      for (const cellule of cellulesDirectes) {
-        const { data: cellulesFillesData } = await supabase.from("cellules")
-          .select("id, cellule_full, ville, cellule")
-          .eq("cellule_mere_id", cellule.id)
-          .eq("eglise_id", profile.eglise_id);
-
-        toutesLesCellules = [...toutesLesCellules, ...(cellulesFillesData || [])];
-      }
-    }
-
-    toutesLesCellules.forEach(c => {
-      const cm = membres
-        .filter(m => m.cellule_id === c.id)
-        .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-
-      cm.forEach(m => membresCouvertsParGroupe.add(m.id));
-
-      if (cm.length > 0) {
-        groupesResult.push({
-          id: `c-${c.id}`,
-          label: c.cellule_full || `${c.ville} - ${c.cellule}`,
-          icon: "🏠",
-          color: "green",
-          membres: cm
-        });
-      }
-    });
-  }
-
-  if (isResponsableFamilles) {
-
-    const { data: famillesData } = await supabase.from("familles")
-      .select("id, famille_full, famille, ville")
-      .eq("responsable_id", profile.uid);
-
-    (famillesData || []).forEach(f => {
-      const fm = membres
-        .filter(m => m.famille_id === f.id)
-        .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-
-      fm.forEach(m => membresCouvertsParGroupe.add(m.id));
-
-      if (fm.length > 0) {
-        groupesResult.push({
-          id: `f-${f.id}`,
-          label: f.famille_full || `${f.ville} - ${f.famille}`,
-          icon: "👨‍👩‍👦",
-          color: "purple",
-          membres: fm
-        });
-      }
-    });
-  }
-
-  const sansCellule = membres
-    .filter(m => !membresCouvertsParGroupe.has(m.id))
-    .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-
-  if (sansCellule.length > 0) {
-    groupesResult.unshift({
-      id: "sans",
-      label: t.sansRattachement,
-      icon: "👤",
-      color: "gray",
-      membres: sansCellule
-    });
-  }
-
-  setGroupes(groupesResult);
-
-  setPresentList(
-    allPresences
-      .filter(p => fullSessionAccess ? true : myIds.includes(p.membre_id))
-      .sort((a, b) =>
-        (a.membres_complets?.nom || "").localeCompare(
-          b.membres_complets?.nom || "",
-          "fr"
-        )
-      )
-  );
-
-  setAllMembers([]);
-  return;
-}
-
-// ─────────────────────────────────────────────
-// CAS SIMPLE (NON GROUPE)
-// ─────────────────────────────────────────────
-
-let query = supabase.from("membres_complets")
-  .select("id, prenom, nom, telephone, sexe")
-  .eq("eglise_id", profile.eglise_id)
-  .in("etat_contact", ["existant", "nouveau"]);
-
-// 🔥 même logique ici
-if (!fullSessionAccess) {
-  query = query.in("id", myIds);
-}
-
-const { data: membresData } = await query;
-
-const sorted = (membresData || []).sort((a, b) =>
-  (a.nom || "").localeCompare(b.nom || "", "fr")
-);
-
-setAllMembers(sorted.filter(m => !presentIds.has(m.id)));
-
-setPresentList(
-  allPresences
-    .filter(p => fullSessionAccess ? true : myIds.includes(p.membre_id))
-    .sort((a, b) =>
-      (a.membres_complets?.nom || "").localeCompare(
-        b.membres_complets?.nom || "",
-        "fr"
-      )
-    )
-);
-
-setGroupes([]);
-return;
+        const sorted = (membresData || []).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+        setAllMembers(sorted.filter(m => !presentIds.has(m.id)));
+        setPresentList(allPresences.filter(p => myIds.includes(p.membre_id)).sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr")));
+        setGroupes([]);
+        return;
       }
 
       const { data: tousMembres } = await supabase.from("membres_complets")
@@ -908,8 +808,6 @@ return;
         .single();
 
       const sessionEstVisible = sessionVisible?.data?.liste_presence_visible === true;
-      const isCheckIn = profile?.roles?.includes("CheckInPresence");
-      const fullSessionAccess = isAdmin || (isCheckIn && sessionEstVisible);
 
       const { data: cellulesData } = await supabase.from("cellules").select("id, cellule_full, ville, cellule, responsable_id").eq("eglise_id", profile.eglise_id);
       const { data: famillesData } = await supabase.from("familles").select("id, famille_full, famille, ville, responsable_id").eq("eglise_id", profile.eglise_id);

@@ -924,6 +924,11 @@ function Presence() {
           .select("id, cellule_full, ville, cellule")
           .eq("responsable_id", profile.uid);
 
+          console.log("=== CELLULES FILLES DEBUG ===");
+  console.log("profile.uid:", profile.uid);
+  console.log("voirCellulesFillesRef.current:", voirCellulesFillesRef.current);
+  console.log("cellulesDirectes:", cellulesDirectes);
+
         // ── Cellules directes ──
         let toutesLesCellulesResponsable = [...(cellulesDirectes || [])];
 
@@ -935,9 +940,11 @@ function Presence() {
               .eq("cellule_mere_id", cellule.id)
               .eq("eglise_id", profile.eglise_id);
             // Ajouter récursivement les filles
+            console.log("Filles trouvées:", cellulesFillesData, "Erreur:", fillesError);
             toutesLesCellulesResponsable = [...toutesLesCellulesResponsable, ...(cellulesFillesData || [])];
           }
         }
+         console.log("toutesLesCellulesResponsable final:", toutesLesCellulesResponsable);
 
         toutesLesCellulesResponsable.forEach(c => {
           const cm = membres.filter(m => m.cellule_id === c.id)

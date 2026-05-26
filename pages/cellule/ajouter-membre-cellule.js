@@ -253,13 +253,11 @@ function AjouterMembreCelluleContent() {
 
   // ✅ Téléphone avec préfixe protégé
   const handlePhoneChange = (e) => {
-    const val = e.target.value;
-    if (phonePrefix && !val.startsWith(phonePrefix)) {
-      setFormData(prev => ({ ...prev, telephone: phonePrefix }));
-      return;
-    }
-    setFormData(prev => ({ ...prev, telephone: val }));
-  };
+  setFormData(prev => ({
+    ...prev,
+    telephone: e.target.value,
+  }));
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();

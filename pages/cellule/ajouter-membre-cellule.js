@@ -1,5 +1,4 @@
-// pages/ajouter-membre-cellule.js
-
+// pages/cellule/ajouter-membre-cellule.js
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,14 +6,14 @@ import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
 import { useMembers } from "../../context/MembersContext";
-import Footer from "../../components/Footer";
 import { checkLimiteAtteinte } from "../../lib/checkLimite";
 import { useLang } from "../../hooks/useLang";
+import { getPrefixForPays } from "../../lib/phonePrefix";
 
 const translations = {
   fr: {
-    pageTitle: "Ajouter un membre à",
-    pageTitleHighlight: "ma Cellule",
+    pageTitlePrefix: "Ajouter un membre à ma",
+    pageTitleHighlight: "Cellule",
     pageSubtitle1: "Ajoutez",
     pageSubtitle2: "facilement un membre à",
     pageSubtitle3: "votre cellule",
@@ -67,7 +66,7 @@ const translations = {
     errCellule: "⚠️ Aucune cellule trouvée pour votre église.",
   },
   en: {
-    pageTitle: "Add a member to my",
+    pageTitlePrefix: "Add a member to my",
     pageTitleHighlight: "Cell",
     pageSubtitle1: "Easily add",
     pageSubtitle2: "a member to",
@@ -132,18 +131,22 @@ function AjouterMembreCelluleContent() {
   const { setAllMembers } = useMembers();
   const { lang: hookLang } = useLang();
 
-  // ✅ FIX : lire le paramètre ?lang= depuis l'URL, comme dans add-evangelise.js
+  // ✅ Lire ?lang= depuis l'URL
   const urlLang = searchParams.get("lang");
   const lang = (urlLang === "en" || urlLang === "fr") ? urlLang : hookLang;
   const t = translations[lang] || translations.fr;
 
   const urlEgliseId = searchParams.get("eglise_id");
-  const [egliseInfo, setEgliseInfo] = useState(null);
   const urlCelluleId = searchParams.get("cellule_id");
   const isFromLink = !!urlEgliseId && !!urlCelluleId;
 
+  const [egliseInfo, setEgliseInfo] = useState(null);
+  const [phonePrefix, setPhonePrefix] = useState("");
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [cellules, setCellules] = useState([]);
+  const [success, setSuccess] = useState(false);
+  const [userScope, setUserScope] = useState({ eglise_id: null });
+
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
@@ -175,78 +178,57 @@ function AjouterMembreCelluleContent() {
     { key: "besoinDepression", value: "Dépression / Santé mentale" },
   ];
 
-  const [success, setSuccess] = useState(false);
-
-  const [userScope, setUserScope] = useState({ eglise_id: null });  
-
   useEffect(() => {
     if (urlEgliseId) {
       setUserScope({ eglise_id: urlEgliseId });
       return;
     }
-
     const fetchUserScope = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData?.session?.user;
       if (!user) return;
-
       const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("eglise_id")
-        .eq("id", user.id)
-        .single();
-
-      if (!error && profile) {
-        setUserScope({ eglise_id: profile.eglise_id });
-      }
+        .from("profiles").select("eglise_id").eq("id", user.id).single();
+      if (!error && profile) setUserScope({ eglise_id: profile.eglise_id });
     };
-
     fetchUserScope();
   }, [urlEgliseId]);
 
+  // ✅ Fetch infos église + préfixe téléphonique automatique
   useEffect(() => {
     if (!userScope.eglise_id) return;
-
     const fetchEglise = async () => {
       const { data, error } = await supabase
         .from("eglises")
         .select("nom, branche, ville, pays, logo_url")
         .eq("id", userScope.eglise_id)
         .single();
-
       if (!error && data) {
         setEgliseInfo(data);
+        const prefix = getPrefixForPays(data.pays);
+        if (prefix) {
+          setPhonePrefix(prefix);
+          setFormData(prev => ({
+            ...prev,
+            telephone: prev.telephone || prefix,
+          }));
+        }
       }
     };
-
     fetchEglise();
   }, [userScope.eglise_id]);
 
   useEffect(() => {
-    if (!userScope.eglise_id) return;
-    if (isFromLink) return;
-
+    if (!userScope.eglise_id || isFromLink) return;
     const fetchCellules = async () => {
       const userId = localStorage.getItem("userId");
-
       const { data, error } = await supabase
-        .from("cellules")
-        .select("id, ville, cellule")
-        .eq("responsable_id", userId)
-        .eq("eglise_id", userScope.eglise_id);
-
-      if (error || !data || data.length === 0) {
-        alert(t.errCellule);
-        return;
-      }
-
+        .from("cellules").select("id, ville, cellule")
+        .eq("responsable_id", userId).eq("eglise_id", userScope.eglise_id);
+      if (error || !data || data.length === 0) { alert(t.errCellule); return; }
       setCellules(data);
-
-      if (data.length === 1) {
-        setFormData((prev) => ({ ...prev, cellule_id: data[0].id }));
-      }
+      if (data.length === 1) setFormData(prev => ({ ...prev, cellule_id: data[0].id }));
     };
-
     fetchCellules();
   }, [userScope, isFromLink]);
 
@@ -254,41 +236,41 @@ function AjouterMembreCelluleContent() {
     const { value, checked } = e.target;
     if (value === "Autre") {
       setShowBesoinLibre(checked);
-      if (!checked) setFormData((prev) => ({ ...prev, besoinLibre: "" }));
+      if (!checked) setFormData(prev => ({ ...prev, besoinLibre: "" }));
     }
-    setFormData((prev) => {
+    setFormData(prev => {
       const updatedBesoin = checked
         ? [...prev.besoin, value]
-        : prev.besoin.filter((b) => b !== value);
+        : prev.besoin.filter(b => b !== value);
       return { ...prev, besoin: updatedBesoin };
     });
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
+    setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
+  };
+
+  // ✅ Téléphone avec préfixe protégé
+  const handlePhoneChange = (e) => {
+    const val = e.target.value;
+    if (phonePrefix && !val.startsWith(phonePrefix)) {
+      setFormData(prev => ({ ...prev, telephone: phonePrefix }));
+      return;
+    }
+    setFormData(prev => ({ ...prev, telephone: val }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     const celluleIdFinal = urlCelluleId || formData.cellule_id;
-
-    if (!userScope.eglise_id) {
-      alert(t.errEglise);
-      return;
-    }
-
+    if (!userScope.eglise_id) { alert(t.errEglise); return; }
     try {
       const { atteinte, count, limite } = await checkLimiteAtteinte(userScope.eglise_id);
       if (atteinte) {
         alert(t.errLimite.replace("{count}", count).replace("{limite}", limite));
         return;
       }
-
       const newMemberData = {
         nom: formData.nom,
         prenom: formData.prenom,
@@ -313,30 +295,22 @@ function AjouterMembreCelluleContent() {
         priere_salut: formData.priere_salut || null,
         type_conversion: formData.type_conversion || null,
       };
-
       const { data: newMember, error } = await supabase
-        .from("membres_complets")
-        .insert([newMemberData])
-        .select()
-        .single();
-
+        .from("membres_complets").insert([newMemberData]).select().single();
       if (error) throw error;
-
-      setAllMembers((prev) => [...prev, newMember]);
+      setAllMembers(prev => [...prev, newMember]);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-
       setFormData({
         nom: "", prenom: "", sexe: "", age: "",
-        telephone: "", ville: "", venu: "",
-        priere_salut: "", type_conversion: "",        
+        telephone: phonePrefix || "", ville: "", venu: "",
+        priere_salut: "", type_conversion: "",
         date_venu: new Date().toISOString().slice(0, 10),
         besoin: [], autreBesoin: "",
-        cellule_id: urlCelluleId || (cellules.length === 1 ? cellules[0].id : ""),        
+        cellule_id: urlCelluleId || (cellules.length === 1 ? cellules[0].id : ""),
         infos_supplementaires: "",
         is_whatsapp: false,
       });
-
     } catch (err) {
       alert(t.errAjout + err.message);
     }
@@ -344,18 +318,10 @@ function AjouterMembreCelluleContent() {
 
   const handleCancel = () => {
     setFormData({
-      nom: "",
-      prenom: "",
-      sexe: "",
-      telephone: "",
-      ville: "",
-      age: "",
-      venu: "",
-      priere_salut: "",
-      type_conversion: "",
+      nom: "", prenom: "", sexe: "", telephone: phonePrefix || "",
+      ville: "", age: "", venu: "", priere_salut: "", type_conversion: "",
       date_venu: new Date().toISOString().slice(0, 10),
-      besoin: [],
-      autreBesoin: "",
+      besoin: [], autreBesoin: "",
       cellule_id: urlCelluleId || (cellules.length === 1 ? cellules[0].id : ""),
       infos_supplementaires: "",
       is_whatsapp: false,
@@ -366,39 +332,29 @@ function AjouterMembreCelluleContent() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-lg relative">
 
-        <button
-          onClick={() => router.back()}
-          className="absolute top-4 left-4 font-semibold"
-        >
+        <button onClick={() => router.back()} className="absolute top-4 left-4 font-semibold">
           {t.back}
         </button>
 
-        {/* ─── Logo + infos de l'église ─── */}
+        {/* Logo + infos église */}
         <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
           {egliseInfo?.logo_url && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={egliseInfo.logo_url}
-              alt={egliseInfo.nom || "Logo église"}
-              style={{ width: 50, height: 50, objectFit: "contain" }}
-            />
+            <img src={egliseInfo.logo_url} alt={egliseInfo.nom || "Logo"}
+              style={{ width: 50, height: 50, objectFit: "contain" }} />
           )}
-
           {egliseInfo && (
             <div className="text-center leading-snug mt-1">
               <p className="font-bold text-lg text-[#c31850]">{egliseInfo.nom}</p>
-              {egliseInfo.branche && (
-                <p className="text-sm text-[#c31850]">{egliseInfo.branche}</p>
-              )}
-              <p className="text-sm text-[#c31850]">
-                {[egliseInfo.ville, egliseInfo.pays].filter(Boolean).join(", ")}
-              </p>
+              {egliseInfo.branche && <p className="text-sm text-[#c31850]">{egliseInfo.branche}</p>}
+              <p className="text-sm text-[#c31850]">{[egliseInfo.ville, egliseInfo.pays].filter(Boolean).join(", ")}</p>
             </div>
           )}
         </div>
 
+        {/* ✅ Titre corrigé */}
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">
-          {t.pageTitle}<br /><span className="text-[#333699]">{t.pageTitleHighlight}</span>
+          {t.pageTitlePrefix} <span className="text-[#333699]">{t.pageTitleHighlight}</span>
         </h1>
 
         <div className="max-w-3xl w-full mb-6 text-center">
@@ -413,58 +369,54 @@ function AjouterMembreCelluleContent() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
           {!isFromLink && cellules.length > 1 && (
-            <select
-              name="cellule_id"
-              value={formData.cellule_id}
-              onChange={handleChange}
-              className="input"
-              required
-            >
+            <select name="cellule_id" value={formData.cellule_id}
+              onChange={handleChange} className="input" required>
               <option value="">{t.chooseCellule}</option>
-              {cellules.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.ville} - {c.cellule}
-                </option>
+              {cellules.map(c => (
+                <option key={c.id} value={c.id}>{c.ville} - {c.cellule}</option>
               ))}
             </select>
           )}
 
-          <input
-            type="date"
-            value={formData.date_venu}
+          <input type="date" value={formData.date_venu}
             onChange={e => setFormData({ ...formData, date_venu: e.target.value })}
-            className="input"
-            required
-          />
+            className="input" required />
 
-          <input name="prenom" placeholder={t.prenom} value={formData.prenom} onChange={handleChange} className="input" required />
-          <input name="nom" placeholder={t.nom} value={formData.nom} onChange={handleChange} className="input" required />
+          <input name="prenom" placeholder={t.prenom} value={formData.prenom}
+            onChange={handleChange} className="input" required />
+          <input name="nom" placeholder={t.nom} value={formData.nom}
+            onChange={handleChange} className="input" required />
 
-          <select className="input" value={formData.sexe} onChange={(e) => setFormData({ ...formData, sexe: e.target.value })} required>
+          <select className="input" value={formData.sexe}
+            onChange={e => setFormData({ ...formData, sexe: e.target.value })} required>
             <option value="">{t.civilite}</option>
             <option value="Homme">{t.homme}</option>
             <option value="Femme">{t.femme}</option>
           </select>
 
-          <select
-            value={formData.age}
+          <select value={formData.age}
             onChange={e => setFormData({ ...formData, age: e.target.value })}
-            className="input"
-            required
-          >
+            className="input" required>
             <option value="">{t.trancheAge}</option>
             {["12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans", "41-55 ans", "56-69 ans", "70 ans et plus"].map(v => (
               <option key={v} value={v}>{v}</option>
             ))}
           </select>
 
-          <input name="telephone" placeholder={t.telephone} value={formData.telephone} onChange={handleChange} className="input" />
+          {/* ✅ Téléphone avec préfixe automatique */}
+          <input
+            placeholder={phonePrefix ? `${phonePrefix} ...` : t.telephone}
+            value={formData.telephone}
+            onChange={handlePhoneChange}
+            className="input"
+          />
           <label className="flex items-center gap-2">
             <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} />
             {t.whatsapp}
           </label>
 
-          <input name="ville" placeholder={t.ville} value={formData.ville} onChange={handleChange} className="input" />
+          <input name="ville" placeholder={t.ville} value={formData.ville}
+            onChange={handleChange} className="input" />
 
           <select name="venu" value={formData.venu} onChange={handleChange} className="input">
             <option value="">{t.commentVenu}</option>
@@ -474,31 +426,20 @@ function AjouterMembreCelluleContent() {
             <option value="autre">{t.autre}</option>
           </select>
 
-          <select
-            className="input"
-            value={formData.priere_salut || ""}
-            required
-            onChange={(e) => {
+          <select className="input" value={formData.priere_salut || ""} required
+            onChange={e => {
               const value = e.target.value;
-              setFormData({
-                ...formData,
-                priere_salut: value,
-                type_conversion: value === "Oui" ? formData.type_conversion : "",
-              });
-            }}
-          >
+              setFormData({ ...formData, priere_salut: value,
+                type_conversion: value === "Oui" ? formData.type_conversion : "" });
+            }}>
             <option value="">{t.priereSalut}</option>
             <option value="Oui">{t.oui}</option>
             <option value="Non">{t.non}</option>
           </select>
 
           {formData.priere_salut === "Oui" && (
-            <select
-              className="input"
-              value={formData.type_conversion || ""}
-              onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })}
-              required
-            >
+            <select className="input" value={formData.type_conversion || ""}
+              onChange={e => setFormData({ ...formData, type_conversion: e.target.value })} required>
               <option value="">{t.typeConversion}</option>
               <option value="Nouveau converti">{t.nouveauConverti}</option>
               <option value="Réconciliation">{t.reconciliation}</option>
@@ -507,71 +448,45 @@ function AjouterMembreCelluleContent() {
 
           <label className="text-sm sm:text-base font-bold mb-1">{t.besoinsLabel}</label>
           <div className="flex flex-wrap gap-2 mb-2">
-            {besoinsOptions.map((item) => (
+            {besoinsOptions.map(item => (
               <label key={item.value} className="flex items-center gap-1 text-sm">
-                <input
-                  type="checkbox"
-                  value={item.value}
+                <input type="checkbox" value={item.value}
                   checked={formData.besoin.includes(item.value)}
-                  onChange={handleBesoinChange}
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                />
+                  onChange={handleBesoinChange} className="w-4 h-4 sm:w-5 sm:h-5" />
                 {t[item.key]}
               </label>
             ))}
             <label className="flex items-center gap-1 text-sm">
-              <input
-                type="checkbox"
-                value="Autre"
-                checked={showBesoinLibre}
-                onChange={handleBesoinChange}
-                className="w-4 h-4 sm:w-5 sm:h-5"
-              />
+              <input type="checkbox" value="Autre" checked={showBesoinLibre}
+                onChange={handleBesoinChange} className="w-4 h-4 sm:w-5 sm:h-5" />
               {t.besoinAutre}
             </label>
           </div>
 
           {showBesoinLibre && (
-            <input
-              type="text"
-              placeholder={t.besoinPrecisez}
+            <input type="text" placeholder={t.besoinPrecisez}
               value={formData.besoinLibre}
-              onChange={(e) => setFormData({ ...formData, besoinLibre: e.target.value })}
-              className="input mb-2"
-            />
+              onChange={e => setFormData({ ...formData, besoinLibre: e.target.value })}
+              className="input mb-2" />
           )}
 
-          <textarea
-            name="infos_supplementaires"
-            placeholder={t.infosSupp}
-            value={formData.infos_supplementaires}
-            onChange={handleChange}
-            className="input"
-          />
+          <textarea name="infos_supplementaires" placeholder={t.infosSupp}
+            value={formData.infos_supplementaires} onChange={handleChange} className="input" />
 
           <div className="flex gap-4 mt-4">
-            <button type="button" onClick={handleCancel} className="flex-1 bg-gray-400 text-white py-3 rounded-xl">
-              {t.annuler}
-            </button>
-            <button type="submit" className="flex-1 bg-blue-500 text-white py-3 rounded-xl">
-              {t.ajouter}
-            </button>
+            <button type="button" onClick={handleCancel}
+              className="flex-1 bg-gray-400 text-white py-3 rounded-xl">{t.annuler}</button>
+            <button type="submit"
+              className="flex-1 bg-blue-500 text-white py-3 rounded-xl">{t.ajouter}</button>
           </div>
         </form>
 
         {success && (
-          <p className="mt-4 text-center text-green-600 font-semibold">
-            {t.successMsg}
-          </p>
+          <p className="mt-4 text-center text-green-600 font-semibold">{t.successMsg}</p>
         )}
 
         <style jsx>{`
-          .input {
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 12px;
-          }
+          .input { width: 100%; border: 1px solid #ccc; border-radius: 12px; padding: 12px; }
         `}</style>
       </div>
     </div>

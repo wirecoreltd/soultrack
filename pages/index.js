@@ -129,7 +129,11 @@ export default function IndexPage() {
             parsedRoles = Array.isArray(parsed) ? parsed : [parsed];
           } catch { parsedRoles = [storedRoles]; }
         }
-        setRoles(parsedRoles);
+       setRoles(parsedRoles);
+
+      if (parsedRoles.length === 1 && parsedRoles[0] === "CheckInPresence") {
+        router.replace("/Presence");
+        return;}
 
         if (parsedRoles.includes("Administrateur") && !parsedRoles.includes("Superadmin")) {
           const { data: profile } = await supabase

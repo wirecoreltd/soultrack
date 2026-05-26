@@ -5,6 +5,7 @@ import Image from "next/image";
 import supabase from "../lib/supabaseClient";
 import { checkLimiteAtteinte } from "../lib/checkLimite";
 import { useLang } from "../hooks/useLang";
+import { getPrefixForPays } from "../lib/phonePrefix";
 
 const translations = {
   fr: {
@@ -115,13 +116,13 @@ export default function AddContact() {
   const router = useRouter();
   const { lang } = useLang();
   const t = translations[lang];
-
+  const [phonePrefix, setPhonePrefix] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [etatContact, setEtatContact] = useState("nouveau");
   const [formData, setFormData] = useState({
     prenom: "",
     nom: "",
-    telephone: "",
+    telephone: phonePrefix || "",
     is_whatsapp: false,
     ville: "",
     sexe: "",
@@ -166,7 +167,7 @@ export default function AddContact() {
     fetchUserEglise();
   }, []);
 
-  useEffect(() => {
+      useEffect(() => {
   if (!formData.eglise_id) return;
 
   const fetchEglise = async () => {
@@ -178,6 +179,17 @@ export default function AddContact() {
 
     if (!error && data) {
       setEgliseInfo(data);
+
+      const prefix = getPrefixForPays(data.pays);
+
+      if (prefix) {
+        setPhonePrefix(prefix);
+
+        setFormData(prev => ({
+          ...prev,
+          telephone: prev.telephone || prefix,
+        }));
+      }
     }
   };
 
@@ -199,6 +211,20 @@ export default function AddContact() {
   };
 
   const handleCancel = () => router.back();
+
+  // ✅ Téléphone avec préfixe modifiable
+const handlePhoneChange = (e) => {
+  let val = e.target.value;
+
+  if (phonePrefix && !val.startsWith(phonePrefix)) {
+    val = phonePrefix + val.replace(phonePrefix, "");
+  }
+
+  setFormData(prev => ({
+    ...prev,
+    telephone: val,
+  }));
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -236,7 +262,7 @@ export default function AddContact() {
       setTimeout(() => setSuccess(false), 3000);
 
       setFormData({
-        prenom: "", nom: "", telephone: "", is_whatsapp: false,
+        prenom: "", nom: "", telephone: phonePrefix || "", is_whatsapp: false,
         ville: "", sexe: "", age: "", statut: "",
         date_venu: new Date().toISOString().slice(0, 10),
         venu: "", priere_salut: "", type_conversion: "",
@@ -345,7 +371,8 @@ export default function AddContact() {
             <input
               type="text"
               value={formData.telephone}
-              onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+              onChange={handlePhoneChange}
+              placeholder={phonePrefix ? `${phonePrefix} ...` : t.telephone}
               className="input"
             />
           </div>

@@ -387,11 +387,27 @@ function SuivisMembresContent() {
           const assignedIds = (assignments || []).map(a => a.membre_id).filter(Boolean);
           if (assignedIds.length > 0) query = query.in("id", assignedIds);
           else query = query.eq("id", -1);
-        } else if (profileData.role === "ResponsableCellule") {
-          const celluleIds = cellulesData?.filter(c => c.responsable_id === profileData.id).map(c => c.id) || [];
-          if (celluleIds.length > 0) query = query.in("cellule_id", celluleIds);
-          else query = query.eq("id", -1);
-        } else if (profileData.role === "ResponsableFamilles") {
+
+          } else if (profileData.role === "ResponsableCellule") {
+  // Cellules directes
+  const directIds = cellulesData
+    ?.filter(c => c.responsable_id === profileData.id)
+    .map(c => c.id) || [];
+
+  // Cellules enfants via profile_id
+  const { data: fillesData } = await supabase
+    .from("cellules")
+    .select("id")
+    .eq("cellule_mere_id", profileData.id)
+    .eq("eglise_id", profileData.eglise_id);
+  const fillesIds = (fillesData || []).map(c => c.id);
+
+  const tousLesIds = [...new Set([...directIds, ...fillesIds])];
+  if (tousLesIds.length > 0) query = query.in("cellule_id", tousLesIds);
+  else query = query.eq("id", -1);
+}
+        
+        else if (profileData.role === "ResponsableFamilles") {
           const familleIds = famillesData?.filter(f => f.responsable_id === profileData.id).map(f => f.id) || [];
           if (familleIds.length > 0) query = query.in("famille_id", familleIds);
           else query = query.eq("id", -1);

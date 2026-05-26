@@ -213,11 +213,30 @@ export default function AddContact() {
   const handleCancel = () => router.back();
 
   // ✅ Téléphone avec préfixe modifiable
+// ✅ Téléphone avec préfixe modifiable SANS doublon
 const handlePhoneChange = (e) => {
   let val = e.target.value;
 
+  // Si le champ est vide
+  if (val === "") {
+    setFormData(prev => ({
+      ...prev,
+      telephone: phonePrefix || "",
+    }));
+    return;
+  }
+
+  // Empêche suppression complète du préfixe
   if (phonePrefix && !val.startsWith(phonePrefix)) {
-    val = phonePrefix + val.replace(phonePrefix, "");
+
+    // Retire TOUS les préfixes existants
+    let cleaned = val;
+
+    while (cleaned.startsWith(phonePrefix)) {
+      cleaned = cleaned.slice(phonePrefix.length);
+    }
+
+    val = phonePrefix + cleaned;
   }
 
   setFormData(prev => ({

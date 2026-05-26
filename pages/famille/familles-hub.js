@@ -75,16 +75,33 @@ function FamillesHubContent() {
   const { lang } = useLang();
   const t = translations[lang];
 
-  const [role, setRole] = useState(null);
+  const [role, setRole]               = useState(null);
   const [loadingRole, setLoadingRole] = useState(true);
+  const [familleName, setFamilleName] = useState(null); // ← NOUVEAU
 
   useEffect(() => {
     const fetchRole = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
       const { data } = await supabase
         .from("profiles").select("role").eq("id", user.id).single();
+
       setRole(data?.role || null);
+
+      // ← NOUVEAU : fetch le nom de la famille du responsable
+      if (data?.role === "ResponsableFamilles") {
+        const { data: familleData } = await supabase
+          .from("familles")
+          .select("famille")
+          .eq("responsable_id", user.id)
+          .single();
+
+        if (familleData?.famille) {
+          setFamilleName(familleData.famille);
+        }
+      }
+
       setLoadingRole(false);
     };
     fetchRole();
@@ -105,7 +122,14 @@ function FamillesHubContent() {
       <HeaderPages />
 
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-extrabold mt-4 mb-6 text-white drop-shadow-lg">{t.title}</h1>
+        {/* ← NOUVEAU : titre avec nom de famille */}
+        <h1 className="text-3xl font-extrabold mt-4 mb-2 text-white drop-shadow-lg">
+          {t.title}
+          {familleName && (
+            <span className="text-yellow-300 font-extrabold"> - {familleName}</span>
+          )}
+        </h1>
+
         <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-white/90 leading-relaxed">
             {t.subtitle1}{" "}
@@ -181,7 +205,6 @@ function FamillesHubContent() {
 
       </div>
 
-      {/* ✅ SendLinkPopup au lieu de SendLinkFamillePopup — même logique que cellules */}
       {isResponsableFamilles && (
         <>
           <div className="w-full max-w-md mb-3">

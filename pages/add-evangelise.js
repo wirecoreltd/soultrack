@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 import { useLang } from "../hooks/useLang";
+import { getPrefixForPays } from "../lib/phonePrefix";
 
 const translations = {
   fr: {
@@ -12,12 +13,12 @@ const translations = {
     title: "Ajouter une personne évangélisée",
     typeEvang: "Type d'Évangélisation",
     typeEvangOptions: [
-      { value: "Individuel", label: "Individuel" },
-      { value: "Sortie de groupe", label: "Sortie de groupe" },
-      { value: "Campagne d'évangélisation", label: "Campagne d'évangélisation" },
-      { value: "Évangélisation de rue", label: "Évangélisation de rue" },
-      { value: "Évangélisation maison", label: "Évangélisation maison" },
-      { value: "Évangélisation stade", label: "Évangélisation stade" },
+      { value: "Individuel",                    label: "Individuel" },
+      { value: "Sortie de groupe",              label: "Sortie de groupe" },
+      { value: "Campagne d'évangélisation",     label: "Campagne d'évangélisation" },
+      { value: "Évangélisation de rue",         label: "Évangélisation de rue" },
+      { value: "Évangélisation maison",         label: "Évangélisation maison" },
+      { value: "Évangélisation stade",          label: "Évangélisation stade" },
     ],
     civility: "Civilité",
     homme: "Homme",
@@ -25,10 +26,7 @@ const translations = {
     prenom: "Prénom",
     nom: "Nom",
     age: "-- Tranche d'âge --",
-    ageOptions: [
-      "12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans",
-      "41-55 ans", "56-69 ans", "70 ans et plus",
-    ],
+    ageOptions: ["12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans", "41-55 ans", "56-69 ans", "70 ans et plus"],
     telephone: "Téléphone",
     ville: "Ville",
     whatsapp: "WhatsApp",
@@ -38,7 +36,7 @@ const translations = {
     typeConversion: "Type",
     conversionOptions: [
       { value: "Nouveau converti", label: "Nouveau converti" },
-      { value: "Réconciliation", label: "Réconciliation" },
+      { value: "Réconciliation",   label: "Réconciliation" },
     ],
     needs: "Difficultés / Besoins :",
     needsOptions: [
@@ -61,12 +59,12 @@ const translations = {
     title: "Add an evangelized person",
     typeEvang: "Type of Outreach",
     typeEvangOptions: [
-      { value: "Individuel", label: "Individual" },
-      { value: "Sortie de groupe", label: "Group outing" },
-      { value: "Campagne d'évangélisation", label: "Evangelism campaign" },
-      { value: "Évangélisation de rue", label: "Street evangelism" },
-      { value: "Évangélisation maison", label: "House evangelism" },
-      { value: "Évangélisation stade", label: "Stadium evangelism" },
+      { value: "Individuel",                    label: "Individual" },
+      { value: "Sortie de groupe",              label: "Group outing" },
+      { value: "Campagne d'évangélisation",     label: "Evangelism campaign" },
+      { value: "Évangélisation de rue",         label: "Street evangelism" },
+      { value: "Évangélisation maison",         label: "House evangelism" },
+      { value: "Évangélisation stade",          label: "Stadium evangelism" },
     ],
     civility: "Title",
     homme: "Male",
@@ -74,10 +72,7 @@ const translations = {
     prenom: "First name",
     nom: "Last name",
     age: "-- Age range --",
-    ageOptions: [
-      "12-17 yrs", "18-25 yrs", "26-30 yrs", "31-40 yrs",
-      "41-55 yrs", "56-69 yrs", "70 yrs and over",
-    ],
+    ageOptions: ["12-17 yrs", "18-25 yrs", "26-30 yrs", "31-40 yrs", "41-55 yrs", "56-69 yrs", "70 yrs and over"],
     telephone: "Phone",
     ville: "City",
     whatsapp: "WhatsApp",
@@ -87,7 +82,7 @@ const translations = {
     typeConversion: "Type",
     conversionOptions: [
       { value: "Nouveau converti", label: "New convert" },
-      { value: "Réconciliation", label: "Reconciliation" },
+      { value: "Réconciliation",   label: "Reconciliation" },
     ],
     needs: "Difficulties / Needs:",
     needsOptions: [
@@ -119,6 +114,9 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const lang = (urlLang === "en" || urlLang === "fr") ? urlLang : hookLang;
   const t = translations[lang] || translations.fr;
 
+  // ✅ Préfixe téléphonique
+  const [phonePrefix, setPhonePrefix] = useState("");
+
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
@@ -143,38 +141,47 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const [loading, setLoading] = useState(false);
   const [eglise, setEglise] = useState(null);
 
+  // ✅ Fetch église depuis l'URL + détection préfixe
   useEffect(() => {
     const fetchEglise = async () => {
       if (!urlEgliseId) return;
       setFormData(prev => ({ ...prev, eglise_id: urlEgliseId }));
       const { data, error } = await supabase
         .from("eglises")
-        .select(`id, nom, denomination, ville, pays, branche, logo_url`)
+        .select("id, nom, denomination, ville, pays, branche, logo_url")
         .eq("id", urlEgliseId)
         .single();
       if (!error && data) {
         setEglise(data);
+        const prefix = getPrefixForPays(data.pays);
+        if (prefix) {
+          setPhonePrefix(prefix);
+          setFormData(prev => ({ ...prev, telephone: prev.telephone || prefix }));
+        }
       }
     };
     fetchEglise();
   }, [urlEgliseId]);
 
+  // ✅ Fetch église depuis le profil connecté + détection préfixe
   useEffect(() => {
     if (isFromLink) return;
-
     const fetchUserEglise = async () => {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user) return;
-
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select(`eglise_id, eglises ( id, nom, denomination, ville, pays, branche, logo_url )`)
+        .select("eglise_id, eglises ( id, nom, denomination, ville, pays, branche, logo_url )")
         .eq("id", session.session.user.id)
         .single();
-
       if (!error && profile) {
         setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id }));
         setEglise(profile.eglises);
+        const prefix = getPrefixForPays(profile.eglises?.pays);
+        if (prefix) {
+          setPhonePrefix(prefix);
+          setFormData(prev => ({ ...prev, telephone: prev.telephone || prefix }));
+        }
       }
     };
     fetchUserEglise();
@@ -194,11 +201,21 @@ export default function AddEvangelise({ onNewEvangelise }) {
     setFormData({ ...formData, besoin: updated });
   };
 
+  // ✅ Téléphone avec préfixe protégé
+  const handlePhoneChange = (e) => {
+    const val = e.target.value;
+    if (phonePrefix && !val.startsWith(phonePrefix)) {
+      setFormData(prev => ({ ...prev, telephone: phonePrefix }));
+      return;
+    }
+    setFormData(prev => ({ ...prev, telephone: val }));
+  };
+
   const resetForm = () => {
     setFormData(prev => ({
       nom: "",
       prenom: "",
-      telephone: "",
+      telephone: phonePrefix || "",
       ville: "",
       statut: "evangelisé",
       sexe: "",
@@ -218,11 +235,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formData.eglise_id) {
-      alert(t.noEglise);
-      return;
-    }
+    if (!formData.eglise_id) { alert(t.noEglise); return; }
 
     const finalBesoins = [...formData.besoin];
     if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
@@ -252,84 +265,58 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
     try {
       setLoading(true);
-
       const { data: evangelise, error } = await supabase
-        .from("evangelises")
-        .insert([finalData])
-        .select()
-        .single();
-
+        .from("evangelises").insert([finalData]).select().single();
       if (error) throw error;
 
       if (urlCelluleId) {
         const suiviData = {
-          prenom: evangelise.prenom,
-          nom: evangelise.nom,
-          telephone: evangelise.telephone,
-          is_whatsapp: evangelise.is_whatsapp,
-          ville: evangelise.ville,
-          besoin: evangelise.besoin,
+          prenom: evangelise.prenom, nom: evangelise.nom,
+          telephone: evangelise.telephone, is_whatsapp: evangelise.is_whatsapp,
+          ville: evangelise.ville, besoin: evangelise.besoin,
           infos_supplementaires: evangelise.infos_supplementaires,
-          sexe: evangelise.sexe,
-          age: evangelise.age,
+          sexe: evangelise.sexe, age: evangelise.age,
           type_conversion: evangelise.type_conversion,
           priere_salut: evangelise.priere_salut,
           status_suivis_evangelises: "Envoyé",
           evangelise_id: evangelise.id,
-          cellule_id: urlCelluleId,
-          famille_id: null,
-          conseiller_id: null,
+          cellule_id: urlCelluleId, famille_id: null, conseiller_id: null,
           date_evangelise: evangelise.date_evangelise,
           date_suivi: new Date().toISOString(),
           eglise_id: evangelise.eglise_id,
           type_evangelisation: evangelise.type_evangelisation,
         };
-
-        const { error: suiviError } = await supabase
-          .from("suivis_des_evangelises")
-          .insert([suiviData]);
-
-        if (suiviError) console.error("Erreur insertion suivis_des_evangelises (cellule) :", suiviError);
+        const { error: suiviError } = await supabase.from("suivis_des_evangelises").insert([suiviData]);
+        if (suiviError) console.error("Erreur insertion suivis (cellule):", suiviError);
       }
 
       if (urlFamilleId) {
         const suiviData = {
-          prenom: evangelise.prenom,
-          nom: evangelise.nom,
-          telephone: evangelise.telephone,
-          is_whatsapp: evangelise.is_whatsapp,
-          ville: evangelise.ville,
-          besoin: evangelise.besoin,
+          prenom: evangelise.prenom, nom: evangelise.nom,
+          telephone: evangelise.telephone, is_whatsapp: evangelise.is_whatsapp,
+          ville: evangelise.ville, besoin: evangelise.besoin,
           infos_supplementaires: evangelise.infos_supplementaires,
-          sexe: evangelise.sexe,
-          age: evangelise.age,
+          sexe: evangelise.sexe, age: evangelise.age,
           type_conversion: evangelise.type_conversion,
           priere_salut: evangelise.priere_salut,
           status_suivis_evangelises: "Envoyé",
           evangelise_id: evangelise.id,
-          cellule_id: null,
-          famille_id: urlFamilleId,
-          conseiller_id: null,
+          cellule_id: null, famille_id: urlFamilleId, conseiller_id: null,
           date_evangelise: evangelise.date_evangelise,
           date_suivi: new Date().toISOString(),
           eglise_id: evangelise.eglise_id,
           type_evangelisation: evangelise.type_evangelisation,
         };
-
-        const { error: suiviError } = await supabase
-          .from("suivis_des_evangelises")
-          .insert([suiviData]);
-
-        if (suiviError) console.error("Erreur insertion suivis_des_evangelises (famille) :", suiviError);
+        const { error: suiviError } = await supabase.from("suivis_des_evangelises").insert([suiviData]);
+        if (suiviError) console.error("Erreur insertion suivis (famille):", suiviError);
       }
 
       setSuccess(true);
       resetForm();
       if (onNewEvangelise) onNewEvangelise(evangelise);
       setTimeout(() => setSuccess(false), 3000);
-
     } catch (err) {
-      console.error("Erreur globale :", err);
+      console.error("Erreur globale:", err);
       alert(err.message);
     } finally {
       setLoading(false);
@@ -340,30 +327,18 @@ export default function AddEvangelise({ onNewEvangelise }) {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-4 sm:p-6">
       <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-3xl shadow-lg relative">
 
-        {/* ─── Logo + infos de l'église ─── */}
+        {/* Logo + infos église */}
         <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
           {eglise?.logo_url && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={eglise.logo_url}
-              alt={eglise.nom || "Logo église"}
-              style={{
-                width: 50,
-                height: 50,
-                objectFit: "contain",
-              }}
-            />
+            <img src={eglise.logo_url} alt={eglise.nom || "Logo"}
+              style={{ width: 50, height: 50, objectFit: "contain" }} />
           )}
-
           {eglise && (
             <div className="text-center leading-snug mt-1">
               <p className="font-bold text-lg text-[#c31850]">{eglise.nom}</p>
-              {eglise.branche && (
-                <p className="text-sm text-[#c31850]">{eglise.branche}</p>
-              )}
-              <p className="text-sm text-[#c31850]">
-                {[eglise.ville, eglise.pays].filter(Boolean).join(", ")}
-              </p>
+              {eglise.branche && <p className="text-sm text-[#c31850]">{eglise.branche}</p>}
+              <p className="text-sm text-[#c31850]">{[eglise.ville, eglise.pays].filter(Boolean).join(", ")}</p>
             </div>
           )}
         </div>
@@ -372,193 +347,113 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 justify-center">
 
-          {/* Date */}
           <div className="flex justify-center w-full">
-            <input
-              type="date"
-              className="input w-auto text-center"
+            <input type="date" className="input w-auto text-center"
               value={formData.date_evangelise}
-              onChange={e => setFormData({ ...formData, date_evangelise: e.target.value })}
-            />
+              onChange={e => setFormData({ ...formData, date_evangelise: e.target.value })} />
           </div>
 
-          {/* Type Évangélisation */}
-          <select
-            className="input text-center"
-            value={formData.type_evangelisation}
-            onChange={e => setFormData({ ...formData, type_evangelisation: e.target.value })}
-            required
-          >
+          <select className="input text-center" value={formData.type_evangelisation}
+            onChange={e => setFormData({ ...formData, type_evangelisation: e.target.value })} required>
             <option value="">{t.typeEvang}</option>
-            {t.typeEvangOptions.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
+            {t.typeEvangOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
 
-          {/* Civilité */}
-          <select
-            className="input"
-            value={formData.sexe}
-            onChange={e => setFormData({ ...formData, sexe: e.target.value })}
-            required
-          >
+          <select className="input" value={formData.sexe}
+            onChange={e => setFormData({ ...formData, sexe: e.target.value })} required>
             <option value="">{t.civility}</option>
             <option value="Homme">{t.homme}</option>
             <option value="Femme">{t.femme}</option>
           </select>
 
-          {/* Prénom / Nom */}
-          <input
-            className="input"
-            type="text"
-            placeholder={t.prenom}
-            value={formData.prenom}
-            onChange={e => setFormData({ ...formData, prenom: e.target.value })}
-            required
-          />
-          <input
-            className="input"
-            type="text"
-            placeholder={t.nom}
-            value={formData.nom}
-            onChange={e => setFormData({ ...formData, nom: e.target.value })}
-            required
-          />
+          <input className="input" type="text" placeholder={t.prenom} value={formData.prenom}
+            onChange={e => setFormData({ ...formData, prenom: e.target.value })} required />
+          <input className="input" type="text" placeholder={t.nom} value={formData.nom}
+            onChange={e => setFormData({ ...formData, nom: e.target.value })} required />
 
-          {/* Âge */}
-          <select
-            value={formData.age}
-            onChange={e => setFormData({ ...formData, age: e.target.value })}
-            className="input"
-          >
+          <select value={formData.age}
+            onChange={e => setFormData({ ...formData, age: e.target.value })} className="input">
             <option value="">{t.age}</option>
-            {t.ageOptions.map(v => (
-              <option key={v} value={v}>{v}</option>
-            ))}
+            {t.ageOptions.map(v => <option key={v} value={v}>{v}</option>)}
           </select>
 
-          {/* Téléphone / Ville */}
+          {/* ✅ Téléphone avec préfixe automatique */}
           <input
             className="input"
             type="text"
-            placeholder={t.telephone}
+            placeholder={phonePrefix ? `${phonePrefix} ...` : t.telephone}
             value={formData.telephone}
-            onChange={e => setFormData({ ...formData, telephone: e.target.value })}
+            onChange={handlePhoneChange}
           />
-          <input
-            className="input"
-            type="text"
-            placeholder={t.ville}
-            value={formData.ville}
-            onChange={e => setFormData({ ...formData, ville: e.target.value })}
-          />
+          <input className="input" type="text" placeholder={t.ville} value={formData.ville}
+            onChange={e => setFormData({ ...formData, ville: e.target.value })} />
 
-          {/* WhatsApp */}
           <label className="flex items-center gap-2 text-gray-700">
-            <input
-              type="checkbox"
-              checked={formData.is_whatsapp}
+            <input type="checkbox" checked={formData.is_whatsapp}
               onChange={e => setFormData({ ...formData, is_whatsapp: e.target.checked })}
-              className="w-5 h-5 accent-indigo-600 cursor-pointer"
-            />
+              className="w-5 h-5 accent-indigo-600 cursor-pointer" />
             {t.whatsapp}
           </label>
 
-          {/* Prière du salut */}
-          <select
-            className="input"
-            value={formData.priere_salut}
-            required
+          <select className="input" value={formData.priere_salut} required
             onChange={e => setFormData({
-              ...formData,
-              priere_salut: e.target.value,
+              ...formData, priere_salut: e.target.value,
               type_conversion: e.target.value === "Oui" ? formData.type_conversion : "",
-            })}
-          >
+            })}>
             <option value="">{t.prayerSalvation}</option>
             <option value="Oui">{t.oui}</option>
             <option value="Non">{t.non}</option>
           </select>
 
           {formData.priere_salut === "Oui" && (
-            <select
-              className="input"
-              value={formData.type_conversion}
-              onChange={e => setFormData({ ...formData, type_conversion: e.target.value })}
-              required
-            >
+            <select className="input" value={formData.type_conversion}
+              onChange={e => setFormData({ ...formData, type_conversion: e.target.value })} required>
               <option value="">{t.typeConversion}</option>
-              {t.conversionOptions.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
+              {t.conversionOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           )}
 
-          {/* Besoins */}
           <div className="mt-4">
             <p className="font-semibold mb-2">{t.needs}</p>
             {t.needsOptions.map(b => (
               <label key={b} className="flex items-center gap-3 mb-2">
-                <input
-                  type="checkbox"
-                  value={b}
-                  checked={formData.besoin.includes(b)}
+                <input type="checkbox" value={b} checked={formData.besoin.includes(b)}
                   onChange={() => handleBesoinChange(b)}
-                  className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600"
-                />
+                  className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600" />
                 <span>{b}</span>
               </label>
             ))}
             <label className="flex items-center gap-3 mb-2">
-              <input
-                type="checkbox"
-                checked={showOtherField}
+              <input type="checkbox" checked={showOtherField}
                 onChange={() => setShowOtherField(!showOtherField)}
-                className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600"
-              />
+                className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600" />
               {t.other}
             </label>
             {showOtherField && (
-              <input
-                type="text"
-                placeholder={t.specifyNeed}
-                value={otherBesoin}
-                onChange={e => setOtherBesoin(e.target.value)}
-                className="input mt-1"
-              />
+              <input type="text" placeholder={t.specifyNeed} value={otherBesoin}
+                onChange={e => setOtherBesoin(e.target.value)} className="input mt-1" />
             )}
           </div>
 
-          <textarea
-            placeholder={t.additionalInfo}
-            rows={3}
+          <textarea placeholder={t.additionalInfo} rows={3}
             value={formData.infos_supplementaires}
             onChange={e => setFormData({ ...formData, infos_supplementaires: e.target.value })}
-            className="input"
-          />
+            className="input" />
 
           <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={resetForm}
-              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-            >
+            <button type="button" onClick={resetForm}
+              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               {t.cancel}
             </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 text-white font-bold py-3 rounded-2xl shadow-md transition-all"
-            >
+            <button type="submit" disabled={loading}
+              className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:scale-105 text-white font-bold py-3 rounded-2xl shadow-md transition-all">
               {loading ? t.saving : t.add}
             </button>
           </div>
         </form>
 
         {success && (
-          <p ref={successRef} className="text-green-600 font-semibold text-center mt-3">
-            {t.success}
-          </p>
+          <p ref={successRef} className="text-green-600 font-semibold text-center mt-3">{t.success}</p>
         )}
 
         <style jsx>{`.input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ccc; }`}</style>

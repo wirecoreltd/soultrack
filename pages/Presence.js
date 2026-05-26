@@ -7,7 +7,7 @@ import Footer from "../components/Footer";
 
 export default function PresencePage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "Conseiller", "ResponsableCellule", "ResponsableFamilles"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "CheckInPresence", "ResponsableIntegration", "Conseiller", "ResponsableCellule", "ResponsableFamilles"]}>
       <Presence />
     </ProtectedRoute>
   );

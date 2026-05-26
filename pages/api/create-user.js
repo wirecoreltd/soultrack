@@ -128,6 +128,12 @@ export default async function handler(req, res) {
 
     // ── 4️⃣ SuperviseurCellule → assigner toutes les cellules de l'église ── ← NOUVEAU
     if (roles.includes("SuperviseurCellule")) {
+
+      console.log("famille_nom:", famille_nom);
+console.log("famille_secteur:", famille_secteur);
+console.log("roles:", roles);
+
+      
       const { error: superviseurError } = await supabaseAdmin
         .from("cellules")
         .update({ superviseur_id: newUserId })

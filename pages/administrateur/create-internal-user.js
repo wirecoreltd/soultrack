@@ -296,12 +296,12 @@ function CreateInternalUserContent() {
 
         setCellules(cellulesData || []);
 
-        const { data: membersData } = await supabase
-          .from("membres_complets")
-          .select("id, prenom, nom, sexe, telephone, is_whatsapp, ville, etat_contact")
-          .eq("star", true)
-          .eq("eglise_id", profile.eglise_id)
-          .in("etat_contact", ["existant"]);
+       const { data: membersData } = await supabase
+        .from("membres_complets")
+        .select("id, prenom, nom, sexe, telephone, is_whatsapp, ville, etat_contact, email")
+        .eq("star", true)
+        .eq("eglise_id", profile.eglise_id)
+        .in("etat_contact", ["existant"]);
 
         setMembers(membersData || []);
       } catch (err) {
@@ -334,7 +334,7 @@ function CreateInternalUserContent() {
         telephone:   member.telephone   || "",
         is_whatsapp: member.is_whatsapp ?? false,
         ville:       member.ville       || "",
-        email:           "",
+        email: member.email || "",
         password:        "",
         confirmPassword: "",
         roles: [],

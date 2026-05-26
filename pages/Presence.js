@@ -323,7 +323,7 @@ function ToggleVisibilite({ visible, onToggle, saving, t }) {
   );
 }
 
-// ─── TOGGLE CELLULES FILLES ── NOUVEAU ─────────────────────────
+// ─── TOGGLE CELLULES FILLES ─────────────────────────────────────
 function ToggleCellulesFilles({ active, onToggle, saving, t }) {
   return (
     <div className={`w-full max-w-lg mx-auto mb-4 rounded-xl px-4 py-3 flex items-center justify-between gap-3 border-2 transition ${active ? "bg-blue-50 border-blue-400" : "bg-white/10 border-white/20"}`}>
@@ -532,10 +532,11 @@ function Presence() {
   const [savingVisible, setSavingVisible] = useState(false);
   const [sessionCourante, setSessionCourante] = useState(null);
 
-  // ── NOUVEAU : état cellules filles ──
   const [voirCellulesFilles, setVoirCellulesFilles] = useState(false);
   const [savingFilles, setSavingFilles] = useState(false);
   const [isResponsableCellule, setIsResponsableCellule] = useState(false);
+  // ── NOUVEAU : état isCheckIn ──
+  const [isCheckIn, setIsCheckIn] = useState(false);
 
   const profileRef          = useRef(null);
   const myIdsRef            = useRef(null);
@@ -546,7 +547,7 @@ function Presence() {
   const selectedDateRef     = useRef(selectedDate);
   const attendanceIdRef     = useRef(attendanceId);
   const pendingSessionIdRef = useRef(null);
-  const voirCellulesFillesRef = useRef(voirCellulesFilles); // ← NOUVEAU ref
+  const voirCellulesFillesRef = useRef(voirCellulesFilles);
 
   useEffect(() => { selectedDateRef.current = selectedDate; }, [selectedDate]);
   useEffect(() => { attendanceIdRef.current = attendanceId; }, [attendanceId]);
@@ -557,7 +558,7 @@ function Presence() {
     const { data: { user } } = await supabase.auth.getUser();
     const { data: profile } = await supabase
       .from("profiles")
-      .select("eglise_id, role, roles, voir_cellules_filles") // ← NOUVEAU champ
+      .select("eglise_id, role, roles, voir_cellules_filles")
       .eq("id", user.id)
       .single();
 
@@ -569,12 +570,15 @@ function Presence() {
     const isRespGroupe = profile.roles?.includes("ResponsableCellule") || profile.roles?.includes("ResponsableFamilles");
     useGroupedViewRef.current = isAdmin || isRespGroupe;
 
-    // ── NOUVEAU : init état cellules filles depuis profiles ──
     const respCellule = profile.roles?.includes("ResponsableCellule");
     setIsResponsableCellule(!!respCellule);
     const fillesVal = !!profile.voir_cellules_filles;
     setVoirCellulesFilles(fillesVal);
     voirCellulesFillesRef.current = fillesVal;
+
+    // ── Détecter le rôle CheckIn et mettre à jour l'état ──
+    const checkInRole = profile.roles?.includes("CheckInPresence");
+    setIsCheckIn(!!checkInRole);
 
     if (isAdmin) { myIdsRef.current = null; return; }
 
@@ -594,7 +598,6 @@ function Presence() {
 
     assignmentsResult.data?.forEach(a => ids.add(a.membre_id));
 
-    // ── NOUVEAU : cellules filles seulement si voir_cellules_filles = true ──
     let cellulesIds = (cellulesDirectResult.data || []).map(c => c.id);
 
     if (respCellule && fillesVal && cellulesDirectResult.data?.length > 0) {
@@ -602,7 +605,7 @@ function Presence() {
         const { data: fillesData } = await supabase
           .from("cellules")
           .select("id")
-          .eq("cellule_mere_id", cellule.id) // ← correction : cellule.id pas user.id
+          .eq("cellule_mere_id", cellule.id)
           .eq("eglise_id", profile.eglise_id);
         (fillesData || []).forEach(f => cellulesIds.push(f.id));
       }
@@ -619,10 +622,15 @@ function Presence() {
       fm?.forEach(m => ids.add(m.id));
     }
 
-    myIdsRef.current = [...ids];
+    // ── Pour les CheckIn : myIdsRef reste null (sera géré dans fetchAll) ──
+    // ── Pour les autres sans ids : tableau vide ──
+    if (checkInRole) {
+      myIdsRef.current = null;
+    } else {
+      myIdsRef.current = [...ids];
+    }
   }, []);
 
-  // ── NOUVEAU : toggle cellules filles ──
   const toggleCellulesFilles = async () => {
     const newVal = !voirCellulesFilles;
     setSavingFilles(true);
@@ -632,7 +640,7 @@ function Presence() {
       .eq("id", profileRef.current.uid);
     setVoirCellulesFilles(newVal);
     voirCellulesFillesRef.current = newVal;
-    profileRef.current = null; // force re-init pour recalculer myIds
+    profileRef.current = null;
     await initProfile();
     await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
     setSavingFilles(false);
@@ -722,7 +730,50 @@ function Presence() {
       const presentIds   = new Set(allPresences.map(p => p.membre_id));
 
       if (!isAdmin) {
-        if (!myIds || myIds.length === 0) { setAllMembers([]); setPresentList([]); setGroupes([]); return; }
+        const isCheckInUser = profile?.roles?.includes("CheckInPresence");
+
+        // ── Cas CheckIn : accès conditionnel selon liste_presence_visible ──
+        if (isCheckInUser) {
+          const { data: sessionData } = await supabase
+            .from("attendance")
+            .select("liste_presence_visible")
+            .eq("id", aId)
+            .single();
+
+          if (sessionData?.liste_presence_visible) {
+            // Liste visible : le CheckIn voit tous les membres de l'église
+            const { data: tousMembres } = await supabase
+              .from("membres_complets")
+              .select("id, prenom, nom, telephone, sexe")
+              .eq("eglise_id", profile.eglise_id)
+              .in("etat_contact", ["existant", "nouveau"]);
+
+            const sorted = (tousMembres || []).sort((a, b) =>
+              (a.nom || "").localeCompare(b.nom || "", "fr")
+            );
+            setAllMembers(sorted.filter(m => !presentIds.has(m.id)));
+            setPresentList(
+              allPresences.sort((a, b) =>
+                (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr")
+              )
+            );
+            setGroupes([]);
+          } else {
+            // Liste non visible : le CheckIn ne voit rien
+            setAllMembers([]);
+            setPresentList([]);
+            setGroupes([]);
+          }
+          return;
+        }
+
+        // ── Cas sans ids (autres rôles sans membres assignés) ──
+        if (!myIds || myIds.length === 0) {
+          setAllMembers([]);
+          setPresentList([]);
+          setGroupes([]);
+          return;
+        }
 
         const roles = profile?.roles || [];
         const isResponsableCelluleLocal  = roles.includes("ResponsableCellule");
@@ -738,7 +789,6 @@ function Presence() {
           const membresCouvertsParGroupe = new Set();
 
           if (isResponsableCelluleLocal) {
-            // ── NOUVEAU : fetch cellules directes seulement, filles si activé ──
             const { data: cellulesDirectes } = await supabase.from("cellules")
               .select("id, cellule_full, ville, cellule")
               .eq("responsable_id", profile.uid);
@@ -749,7 +799,7 @@ function Presence() {
               for (const cellule of cellulesDirectes) {
                 const { data: cellulesFillesData } = await supabase.from("cellules")
                   .select("id, cellule_full, ville, cellule")
-                  .eq("cellule_mere_id", cellule.id) // ← correction : cellule.id
+                  .eq("cellule_mere_id", cellule.id)
                   .eq("eglise_id", profile.eglise_id);
                 toutesLesCellules = [...toutesLesCellules, ...(cellulesFillesData || [])];
               }
@@ -792,6 +842,7 @@ function Presence() {
         return;
       }
 
+      // ── Cas Admin ──
       const { data: tousMembres } = await supabase.from("membres_complets")
         .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
         .eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]);
@@ -1111,24 +1162,27 @@ function Presence() {
             </div>
           )}
 
-          {todaySessions.length > 0 ? (
-            <button onClick={() => setEtape("form")}
-              className="w-full py-3 rounded-2xl border-2 border-dashed border-white/40 text-white/80 text-sm font-semibold hover:border-white hover:text-white hover:bg-white/10 transition">
-              {t.newSession}
-            </button>
-          ) : (
-            <FormulaireSession
-              isEdit={false}
-              selectedDate={selectedDate} setSelectedDate={setSelectedDate}
-              selectedTime={selectedTime} setSelectedTime={setSelectedTime}
-              typeTemps={typeTemps} setTypeTemps={setTypeTemps}
-              nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
-              enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
-              numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
-              numeroSession={numeroSession} setNumeroSession={setNumeroSession}
-              tempsOptions={tempsOptions} savingSession={savingSession}
-              onSubmit={demarrerSession} onCancel={null} t={t}
-            />
+          {/* Les CheckIn ne peuvent pas créer de sessions */}
+          {!isCheckIn && (
+            todaySessions.length > 0 ? (
+              <button onClick={() => setEtape("form")}
+                className="w-full py-3 rounded-2xl border-2 border-dashed border-white/40 text-white/80 text-sm font-semibold hover:border-white hover:text-white hover:bg-white/10 transition">
+                {t.newSession}
+              </button>
+            ) : (
+              <FormulaireSession
+                isEdit={false}
+                selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+                selectedTime={selectedTime} setSelectedTime={setSelectedTime}
+                typeTemps={typeTemps} setTypeTemps={setTypeTemps}
+                nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
+                enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
+                numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
+                numeroSession={numeroSession} setNumeroSession={setNumeroSession}
+                tempsOptions={tempsOptions} savingSession={savingSession}
+                onSubmit={demarrerSession} onCancel={null} t={t}
+              />
+            )
           )}
 
           {oldSessions.length > 0 && (
@@ -1183,20 +1237,20 @@ function Presence() {
 
         <div
           className={`inline-flex flex-col items-center mt-3 px-4 py-2 rounded-xl ${readOnly ? "bg-amber-500/20 cursor-default" : "bg-white/10 cursor-pointer hover:bg-white/20"} transition group`}
-          onClick={() => !readOnly && setEditingSession(v => !v)}
+          onClick={() => !readOnly && !isCheckIn && setEditingSession(v => !v)}
         >
           <div className="flex items-center gap-2">
             <span className="text-white font-semibold text-sm">
               {sessionCourante?.typeTemps}
               {sessionCourante?.numero_culte ? ` — ${sessionCourante.numero_culte}${sessionCourante.numero_culte === 1 ? t.form.er : t.form.eme} ${t.form.culte}` : ""}
             </span>
-            {!readOnly && <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>}
+            {!readOnly && !isCheckIn && <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>}
           </div>
           <span className="text-white/60 text-xs mt-0.5">
             📅 {new Date(selectedDateRef.current + "T00:00:00").toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric" })}
             {sessionCourante?.heure ? ` · 🕐 ${sessionCourante.heure}` : ""}
           </span>
-          {!readOnly && <span className="text-white/40 text-xs mt-0.5">{t.clickToEdit}</span>}
+          {!readOnly && !isCheckIn && <span className="text-white/40 text-xs mt-0.5">{t.clickToEdit}</span>}
         </div>
 
         {totalPresents > 0 && <CompteurSexe presences={presentList} t={t} />}
@@ -1204,23 +1258,22 @@ function Presence() {
 
       {readOnly && <BanniereConsultation session={sessionCourante} onRetour={handleReset} t={t} lang={lang} />}
 
-      {!isAdminRef.current && 
-       !readOnly && 
-       !isCheckIn && (
-        <ToggleVisibilite 
-          visible={listeVisible} 
-          onToggle={toggleVisibilite} 
-          saving={savingVisible} 
-          t={t} 
+      {/* Toggle visibilité : visible uniquement pour les non-admins et non-CheckIn */}
+      {!isAdminRef.current && !readOnly && !isCheckIn && (
+        <ToggleVisibilite
+          visible={listeVisible}
+          onToggle={toggleVisibilite}
+          saving={savingVisible}
+          t={t}
         />
       )}
 
-      {/* ── NOUVEAU : toggle cellules filles (ResponsableCellule seulement) ── */}
+      {/* Toggle cellules filles : ResponsableCellule seulement */}
       {isResponsableCellule && !readOnly && (
         <ToggleCellulesFilles active={voirCellulesFilles} onToggle={toggleCellulesFilles} saving={savingFilles} t={t} />
       )}
 
-      {editingSession && !readOnly && (
+      {editingSession && !readOnly && !isCheckIn && (
         <div className="w-full max-w-lg mb-6">
           <h2 className="text-white font-semibold text-center mb-3">{t.editSession}</h2>
           <FormulaireSession

@@ -284,24 +284,15 @@ function ListCellulesContent() {
       const directIds = (directes || []).map((c) => c.id);
 
       // 2. Cellules enfants (cellule_mere_id pointe vers une de ses cellules)
-      const { data: filles } = await supabase
-        .from("cellules")
-        .select("id")
-        .in(
-          "cellule_mere_id",
-          directIds.length ? directIds : ["00000000-0000-0000-0000-000000000000"]
-        );
-      const fillesIds = (filles || []).map((c) => c.id);
+      // 2. Cellules enfants — cellule_mere_id = mon profile_id
+const { data: filles } = await supabase
+  .from("cellules")
+  .select("id")
+  .eq("cellule_mere_id", profile.id)
+  .eq("eglise_id", profile.eglise_id);
+const fillesIds = (filles || []).map((c) => c.id);
 
-      // 3. Cellules dont il est superviseur (superviseur_id = profile.id)
-      const { data: supervisees } = await supabase
-        .from("cellules")
-        .select("id")
-        .eq("superviseur_id", profile.id)
-        .eq("eglise_id", profile.eglise_id);
-      const superviseesIds = (supervisees || []).map((c) => c.id);
-
-      const allIds = [...new Set([...directIds, ...fillesIds, ...superviseesIds])];
+const allIds = [...new Set([...directIds, ...fillesIds])];
       query = query.in(
         "id",
         allIds.length ? allIds : ["00000000-0000-0000-0000-000000000000"]

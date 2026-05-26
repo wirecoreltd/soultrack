@@ -864,19 +864,18 @@ function RapportPresence() {
           const toutesLesCellules = allCellulesEglise.data;
 
           // Mes cellules directes (dont je suis responsable_id)
-          const mesCellulesIds = new Set(
-            toutesLesCellules
-              .filter(c => c.responsable_id === profile.uid)
-              .map(c => c.id)
-          );
-
-          // Cellules enfants : celles dont cellule_mere_id est dans mes cellules
-          const cellulesVisibles = new Set(mesCellulesIds);
-          toutesLesCellules.forEach(c => {
-            if (c.cellule_mere_id && mesCellulesIds.has(c.cellule_mere_id)) {
-              cellulesVisibles.add(c.id);
-            }
-          });
+         
+            const mesCellulesIds = new Set(
+              all.filter(c => c.responsable_id === profile.uid).map(c => c.id)
+            );
+            
+            // Cellules enfants via profile_id du responsable
+            const cellulesVisiblesIds = new Set(mesCellulesIds);
+            all.forEach(c => {
+              if (c.cellule_mere_id === profile.uid) {
+                cellulesVisiblesIds.add(c.id);
+              }
+            });
 
           if (cellulesVisibles.size > 0) {
             const { data: cm } = await supabase.from("membres_complets")

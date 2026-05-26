@@ -861,50 +861,29 @@ function RapportPresence() {
           if (allCellulesEglise.data?.length) {
             const toutesLesCellules = allCellulesEglise.data;
           
-            const mesCellulesIds = new Set(
-              toutesLesCellules.filter(c => c.responsable_id === profile.uid).map(c => c.id)
-            );
-          
-            const cellulesVisibles = new Set(mesCellulesIds);
-            toutesLesCellules.forEach(c => {
-              if (c.cellule_mere_id === profile.uid) {
-                cellulesVisibles.add(c.id);
-              }
-            });
-          
-            if (cellulesVisibles.size > 0) {
-              const { data: cm } = await supabase.from("membres_complets")
-                .select("id")
-                .in("cellule_id", [...cellulesVisibles])
-                .in("etat_contact", ["existant", "nouveau"]);
-              cm?.forEach(m => ids.add(m.id));
-            }
-          }
+            if (allCellulesEglise.data?.length) {
+  const toutesLesCellules = allCellulesEglise.data;
 
-          if (cellulesVisibles.size > 0) {
-            const { data: cm } = await supabase.from("membres_complets")
-              .select("id")
-              .in("cellule_id", [...cellulesVisibles])
-              .in("etat_contact", ["existant", "nouveau"]);
-            cm?.forEach(m => ids.add(m.id));
-          }
-        }
+  const mesCellulesIds = new Set(
+    toutesLesCellules.filter(c => c.responsable_id === profile.uid).map(c => c.id)
+  );
 
-        // Membres familles
-        if (fam.data?.length) {
-          const { data: fm } = await supabase.from("membres_complets")
-            .select("id")
-            .in("famille_id", fam.data.map(f => f.id))
-            .in("etat_contact", ["existant", "nouveau"]);
-          fm?.forEach(m => ids.add(m.id));
-        }
+  const cellulesVisibles = new Set(mesCellulesIds);
+  toutesLesCellules.forEach(c => {
+    if (c.cellule_mere_id === profile.uid) {
+      cellulesVisibles.add(c.id);
+    }
+  });
 
-        myIds = [...ids];
-        if (!myIds.length) {
-          setAllMembres([]); setPresencesParSession({}); setCellules([]); setFamilles([]);
-          setLoading(false); return;
-        }
-      }
+  if (cellulesVisibles.size > 0) {
+    const { data: cm } = await supabase.from("membres_complets")
+      .select("id")
+      .in("cellule_id", [...cellulesVisibles])
+      .in("etat_contact", ["existant", "nouveau"]);
+    cm?.forEach(m => ids.add(m.id));
+  }
+}
+// PAS de second bloc if (cellulesVisibles.size > 0) — c'est le bug
 
       // ── Membres ───────────────────────────────────────────────
       let membresQuery = supabase.from("membres_complets")

@@ -564,12 +564,18 @@ function EtatCellule() {
 
     // ── ResponsableCellule → sa cellule + ses enfants ──
     else if (isResponsable) {
+
+    console.log("userProfile.id:", userProfile.id);
+  console.log("userProfile.eglise_id:", userProfile.eglise_id);
       // 1. Récupérer sa cellule directe
       const { data: mesCellules } = await supabase
         .from("cellules")
         .select("id")
         .eq("responsable_id", userProfile.id)
         .eq("eglise_id", userProfile.eglise_id);
+
+        console.log("mesCellules:", mesCellules);
+  console.log("celluleErr:", celluleErr);
 
       const mesIds = (mesCellules || []).map(c => c.id);
 

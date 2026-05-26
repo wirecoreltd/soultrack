@@ -656,19 +656,26 @@ function Presence() {
   }, []);
 
   const toggleCellulesFilles = async () => {
-    const newVal = !voirCellulesFilles;
-    setSavingFilles(true);
-    await supabase
-      .from("profiles")
-      .update({ voir_cellules_filles: newVal })
-      .eq("id", profileRef.current.uid);
-    setVoirCellulesFilles(newVal);
-    voirCellulesFillesRef.current = newVal;
-    profileRef.current = null;
-    await initProfile();
-    await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
-    setSavingFilles(false);
-  };
+  const newVal = !voirCellulesFilles;
+  setSavingFilles(true);
+  
+  await supabase
+    .from("profiles")
+    .update({ voir_cellules_filles: newVal })
+    .eq("id", profileRef.current.uid);
+
+  setVoirCellulesFilles(newVal);
+  voirCellulesFillesRef.current = newVal;
+
+  // ← CORRECTION : reset les 3 refs
+  profileRef.current    = null;
+  myIdsRef.current      = null; // ← MANQUAIT
+  myIdsAllRef.current   = null; // ← MANQUAIT
+
+  await initProfile();
+  await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
+  setSavingFilles(false);
+};
 
   const initAll = useCallback(async () => {
     await initProfile();

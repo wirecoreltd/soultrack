@@ -244,58 +244,48 @@ function MembresCelluleContent() {
   }, [highlight, loading]);
 
   // ── Fetch user + cellules ──
-  useEffect(() => {
-    const fetchCellules = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+useEffect(() => {
+  const fetchCellules = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-  const { data: profile } = await supabase
-    .from("profiles").select("id, role, eglise_id").eq("id", user.id).single();
-  if (!profile) return;
+    const { data: profile } = await supabase
+      .from("profiles").select("id, role, eglise_id").eq("id", user.id).single();
+    if (!profile) return;
 
-  setUserRole(profile.role);
+    setUserRole(profile.role);
 
-  if (profile.role === "ResponsableCellule") {
-    const { data: directesData } = await supabase
+    if (profile.role === "ResponsableCellule") {
+      const { data: directesData } = await supabase
+        .from("cellules")
+        .select("*")
+        .eq("responsable_id", profile.id)
+        .eq("eglise_id", profile.eglise_id);
+
+      const { data: fillesData } = await supabase
+        .from("cellules")
+        .select("*")
+        .eq("cellule_mere_id", profile.id)
+        .eq("eglise_id", profile.eglise_id);
+
+      const toutes = [...(directesData || []), ...(fillesData || [])];
+      const unique = Array.from(new Map(toutes.map((c) => [c.id, c])).values());
+      setCellules(unique);
+      return;
+    }
+
+    // Administrateur + SuperviseurCellule → toutes les cellules de l'église
+    const { data } = await supabase
       .from("cellules")
       .select("*")
-      .eq("responsable_id", profile.id)
-      .eq("eglise_id", profile.eglise_id);
+      .eq("eglise_id", profile.eglise_id)
+      .order("cellule_full");
 
-    const { data: fillesData } = await supabase
-      .from("cellules")
-      .select("*")
-      .eq("cellule_mere_id", profile.id)
-      .eq("eglise_id", profile.eglise_id);
+    setCellules(data || []);
+  };
 
-    const toutes = [...(directesData || []), ...(fillesData || [])];
-    const unique = Array.from(new Map(toutes.map((c) => [c.id, c])).values());
-    setCellules(unique);
-    return;
-  }
-
-  // Administrateur + SuperviseurCellule → toutes les cellules de l'église
-  const { data } = await supabase
-    .from("cellules")
-    .select("*")
-    .eq("eglise_id", profile.eglise_id)
-    .order("cellule_full");
-
-  setCellules(data || []);
-};
-
-      if (profile.role === "SuperviseurCellule") {
-        query = query.eq("superviseur_id", profile.id);
-      } else if (profile.role !== "Administrateur") {
-        query = query.eq("id", "00000000-0000-0000-0000-000000000000");
-      }
-
-      const { data } = await query;
-      setCellules(data || []);
-    };
-
-    fetchCellules();
-  }, []);
+  fetchCellules();
+}, []);
 
   // ── Charger infos église ──
   useEffect(() => {

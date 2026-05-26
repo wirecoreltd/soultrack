@@ -796,7 +796,8 @@ function Presence() {
 
     // ━━━ CAS ADMIN / RI / CHECKIN ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     const isCheckInUser = profile?.roles?.includes("CheckInPresence");
-    if (isAdmin || isCheckInUser) {
+const isResponsableCelluleOuFamille = profile?.roles?.includes("ResponsableCellule") || profile?.roles?.includes("ResponsableFamilles");
+if ((isAdmin || isCheckInUser) && !isResponsableCelluleOuFamille) {
 
       // 1. Récupérer TOUS les membres de l'église
       const { data: tousMembres } = await supabase

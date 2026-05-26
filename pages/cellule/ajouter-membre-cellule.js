@@ -13,8 +13,8 @@ import { useLang } from "../../hooks/useLang";
 
 const translations = {
   fr: {
-    pageTitle: "Ajouter un membre",
-    pageTitleHighlight: "Cellule",
+    pageTitle: "Ajouter un membre à",
+    pageTitleHighlight: "ma Cellule",
     pageSubtitle1: "Ajoutez",
     pageSubtitle2: "facilement un membre à",
     pageSubtitle3: "votre cellule",

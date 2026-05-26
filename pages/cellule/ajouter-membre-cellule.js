@@ -130,8 +130,12 @@ function AjouterMembreCelluleContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setAllMembers } = useMembers();
-  const { lang } = useLang();
-  const t = translations[lang];
+  const { lang: hookLang } = useLang();
+
+  // ✅ FIX : lire le paramètre ?lang= depuis l'URL, comme dans add-evangelise.js
+  const urlLang = searchParams.get("lang");
+  const lang = (urlLang === "en" || urlLang === "fr") ? urlLang : hookLang;
+  const t = translations[lang] || translations.fr;
 
   const urlEgliseId = searchParams.get("eglise_id");
   const [egliseInfo, setEgliseInfo] = useState(null);
@@ -176,10 +180,10 @@ function AjouterMembreCelluleContent() {
   const [userScope, setUserScope] = useState({ eglise_id: null });  
 
   useEffect(() => {
-  if (urlEgliseId) {
-    setUserScope({ eglise_id: urlEgliseId });
-    return;
-  }
+    if (urlEgliseId) {
+      setUserScope({ eglise_id: urlEgliseId });
+      return;
+    }
 
     const fetchUserScope = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -271,7 +275,7 @@ function AjouterMembreCelluleContent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-     const celluleIdFinal = urlCelluleId || formData.cellule_id;
+    const celluleIdFinal = urlCelluleId || formData.cellule_id;
 
     if (!userScope.eglise_id) {
       alert(t.errEglise);
@@ -291,7 +295,6 @@ function AjouterMembreCelluleContent() {
         telephone: formData.telephone,
         ville: formData.ville,
         venu: formData.venu,
-        cellule_id: formData.cellule_id,
         cellule_id: celluleIdFinal,
         eglise_id: userScope.eglise_id,
         statut_suivis: 3,

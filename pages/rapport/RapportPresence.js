@@ -856,26 +856,30 @@ function RapportPresence() {
 
         const [asgn, allCellulesEglise, fam] = await Promise.all([asgnProm, cellProm, famProm]);
 
-        // Membres Conseiller
-        asgn.data?.forEach(a => ids.add(a.membre_id));
-
-        // Membres cellules : directes + enfants (cellule_mere_id → mes cellules)
-        if (allCellulesEglise.data?.length) {
-          const toutesLesCellules = allCellulesEglise.data;
-
-          // Mes cellules directes (dont je suis responsable_id)
-         
+          asgn.data?.forEach(a => ids.add(a.membre_id));
+          
+          if (allCellulesEglise.data?.length) {
+            const toutesLesCellules = allCellulesEglise.data;
+          
             const mesCellulesIds = new Set(
-              all.filter(c => c.responsable_id === profile.uid).map(c => c.id)
+              toutesLesCellules.filter(c => c.responsable_id === profile.uid).map(c => c.id)
             );
-            
-            // Cellules enfants via profile_id du responsable
-            const cellulesVisiblesIds = new Set(mesCellulesIds);
-            all.forEach(c => {
+          
+            const cellulesVisibles = new Set(mesCellulesIds);
+            toutesLesCellules.forEach(c => {
               if (c.cellule_mere_id === profile.uid) {
-                cellulesVisiblesIds.add(c.id);
+                cellulesVisibles.add(c.id);
               }
             });
+          
+            if (cellulesVisibles.size > 0) {
+              const { data: cm } = await supabase.from("membres_complets")
+                .select("id")
+                .in("cellule_id", [...cellulesVisibles])
+                .in("etat_contact", ["existant", "nouveau"]);
+              cm?.forEach(m => ids.add(m.id));
+            }
+          }
 
           if (cellulesVisibles.size > 0) {
             const { data: cm } = await supabase.from("membres_complets")
@@ -923,22 +927,24 @@ function RapportPresence() {
       } else {
         // Cellules : on réutilise la même logique parent→enfant
         if (profile.roles?.includes("ResponsableCellule")) {
-          const { data: toutesLesCellules } = await supabase.from("cellules")
-            .select("id, cellule_full, cellule, ville, responsable_id, cellule_mere_id")
-            .eq("eglise_id", profile.eglise_id);
+  const { data: toutesLesCellules } = await supabase.from("cellules")
+    .select("id, cellule_full, cellule, ville, responsable_id, cellule_mere_id")
+    .eq("eglise_id", profile.eglise_id);
 
-          const all = toutesLesCellules || [];
-          const mesCellulesIds = new Set(
-            all.filter(c => c.responsable_id === profile.uid).map(c => c.id)
-          );
-          const cellulesVisiblesIds = new Set(mesCellulesIds);
-          all.forEach(c => {
-            if (c.cellule_mere_id && mesCellulesIds.has(c.cellule_mere_id)) {
-              cellulesVisiblesIds.add(c.id);
-            }
-          });
-          cellulesRes = { data: all.filter(c => cellulesVisiblesIds.has(c.id)) };
-        } else {
+  const all = toutesLesCellules || [];
+  const mesCellulesIds = new Set(
+    all.filter(c => c.responsable_id === profile.uid).map(c => c.id)
+  );
+  const cellulesVisiblesIds = new Set(mesCellulesIds);
+  all.forEach(c => {
+    if (c.cellule_mere_id === profile.uid) {
+      cellulesVisiblesIds.add(c.id);
+    }
+  });
+  cellulesRes = { data: all.filter(c => cellulesVisiblesIds.has(c.id)) };
+}
+        
+        else {
           cellulesRes = { data: [] };
         }
 

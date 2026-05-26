@@ -197,7 +197,7 @@ const translations = {
 export default function EtatFamillePage() {
   return (
     <ProtectedRoute
-      allowedRoles={["Administrateur", "SuperviseurCellule", "ResponsableCellule"]}
+      allowedRoles={["Administrateur", "SuperviseurFamilles", "ResponsableFamilles","Superadmin"]}
     >
       <EtatFamille />
     </ProtectedRoute>

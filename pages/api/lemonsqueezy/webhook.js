@@ -1,32 +1,29 @@
-import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 
-// Désactive le bodyParser pour lire le raw body (nécessaire pour la vérification HMAC)
 export const config = { api: { bodyParser: false } };
 
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-async function getRawBody(req: NextApiRequest): Promise<Buffer> {
+async function getRawBody(req) {
   return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
+    const chunks = [];
     req.on("data",  (chunk) => chunks.push(Buffer.from(chunk)));
     req.on("end",   () => resolve(Buffer.concat(chunks)));
     req.on("error", reject);
   });
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
   const rawBody   = await getRawBody(req);
-  const signature = req.headers["x-signature"] as string;
+  const signature = req.headers["x-signature"];
 
-  // Vérification de la signature HMAC
-  const hmac   = crypto.createHmac("sha256", process.env.LEMONSQUEEZY_WEBHOOK_SECRET!);
+  const hmac   = crypto.createHmac("sha256", process.env.LEMONSQUEEZY_WEBHOOK_SECRET);
   const digest = hmac.update(rawBody).digest("hex");
 
   if (!signature || signature !== digest) {
@@ -39,7 +36,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   console.log("Webhook LS reçu :", event);
 
-  // On traite uniquement order_created pour les paiements uniques
   if (event !== "order_created") {
     return res.status(200).json({ received: true, skipped: event });
   }
@@ -49,9 +45,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const egliseId = custom?.eglise_id;
   const planId   = custom?.plan_id;
 
-  // Vérification que le paiement est bien confirmé
   if (!egliseId || !planId || attrs?.status !== "paid") {
-    console.warn("Webhook: données manquantes ou statut non payé", { egliseId, planId, status: attrs?.status });
+    console.warn("Webhook: données manquantes ou statut non payé");
     return res.status(200).json({ skipped: true });
   }
 

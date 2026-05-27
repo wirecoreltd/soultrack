@@ -384,14 +384,16 @@ function RapportMinistere() {
 
     try {
       const { data: membresData } = await supabase
-        .from("membres_complets")
-        .select("id, etat_contact, star")
-        .eq("eglise_id", egliseId);
+  .from("membres_complets")
+  .select("id, etat_contact, star")
+  .eq("eglise_id", egliseId);
 
-      const totalMembresLocal = (membresData || []).filter(m =>
-        ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
-      ).length;
-      setTotalMembres(totalMembresLocal);
+const totalMembresLocal = (membresData || []).filter(m =>
+  ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
+).length;
+setTotalMembres(totalMembresLocal);
+
+const serviteursStarCount = (membresData || []).filter(m => m.star === true).length;
 
       let query = supabase
         .from("stats_ministere_besoin")
@@ -439,7 +441,7 @@ function RapportMinistere() {
         .map(([ministere, total]) => ({ ministere, total }))
         .sort((a, b) => b.total - a.total);
 
-      setRapports({ lignes, serviteursCount: serviteursSet.size });
+      setRapports({ lignes, serviteursCount: serviteursStarCount });
       setHasData(true);
       setMessage("");
     } catch (err) {

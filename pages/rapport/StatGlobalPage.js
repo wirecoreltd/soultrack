@@ -217,24 +217,40 @@ export default function StatGlobalPageWrapper() {
 }
 
 // ─── HELPERS ──────────────────────────────────────────────────
-// Calcule le delta % entre valeur actuelle et précédente
 function calcDelta(current, previous) {
   if (!previous || previous === 0) return null;
   return Math.round(((current - previous) / previous) * 100);
 }
 
-// ─── UI ATOMS ─────────────────────────────────────────────────
-function SectionTitle({ children }) {
-  return <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-3">{children}</p>;
+// Tronque une date YYYY-MM-DD en YYYY-MM pour la table attendance_stats
+function toYearMonth(dateStr) {
+  if (!dateStr) return dateStr;
+  return dateStr.substring(0, 7);
 }
 
-// KpiCard avec delta optionnel (▲▼)
+// ─── UI ATOMS ─────────────────────────────────────────────────
+function SectionTitle({ children }) {
+  return (
+    <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-3">
+      {children}
+    </p>
+  );
+}
+
 function KpiCard({ label, value, sub, accent, delta }) {
   const c = {
-    green: "text-emerald-400", red: "text-red-400", amber: "text-amber-400",
-    white: "text-white", blue: "text-blue-300", pink: "text-pink-300",
-    purple: "text-purple-300", teal: "text-teal-300", orange: "text-orange-300",
-    gray: "text-white/40", indigo: "text-indigo-300", yellow: "text-yellow-300",
+    green: "text-emerald-400",
+    red: "text-red-400",
+    amber: "text-amber-400",
+    white: "text-white",
+    blue: "text-blue-300",
+    pink: "text-pink-300",
+    purple: "text-purple-300",
+    teal: "text-teal-300",
+    orange: "text-orange-300",
+    gray: "text-white/40",
+    indigo: "text-indigo-300",
+    yellow: "text-yellow-300",
   };
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
@@ -242,7 +258,11 @@ function KpiCard({ label, value, sub, accent, delta }) {
       <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
       {sub && <p className="text-[11px] text-white/40 mt-0.5">{sub}</p>}
       {delta !== null && delta !== undefined && (
-        <p className={`text-[11px] font-semibold mt-0.5 ${delta > 0 ? "text-emerald-400" : delta < 0 ? "text-red-400" : "text-white/30"}`}>
+        <p
+          className={`text-[11px] font-semibold mt-0.5 ${
+            delta > 0 ? "text-emerald-400" : delta < 0 ? "text-red-400" : "text-white/30"
+          }`}
+        >
           {delta > 0 ? "▲" : delta < 0 ? "▼" : "→"} {Math.abs(delta)}%
         </p>
       )}
@@ -252,20 +272,34 @@ function KpiCard({ label, value, sub, accent, delta }) {
 
 function Badge({ children, color }) {
   const m = {
-    green: "bg-emerald-900/60 text-emerald-300", red: "bg-red-900/60 text-red-300",
-    amber: "bg-amber-900/60 text-amber-300", blue: "bg-blue-900/60 text-blue-300",
-    purple: "bg-purple-900/60 text-purple-300", gray: "bg-white/10 text-white/50",
-    orange: "bg-orange-900/60 text-orange-300", yellow: "bg-yellow-900/60 text-yellow-300",
-    indigo: "bg-indigo-900/60 text-indigo-300", pink: "bg-pink-900/60 text-pink-300",
+    green: "bg-emerald-900/60 text-emerald-300",
+    red: "bg-red-900/60 text-red-300",
+    amber: "bg-amber-900/60 text-amber-300",
+    blue: "bg-blue-900/60 text-blue-300",
+    purple: "bg-purple-900/60 text-purple-300",
+    gray: "bg-white/10 text-white/50",
+    orange: "bg-orange-900/60 text-orange-300",
+    yellow: "bg-yellow-900/60 text-yellow-300",
+    indigo: "bg-indigo-900/60 text-indigo-300",
+    pink: "bg-pink-900/60 text-pink-300",
   };
-  return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${m[color] || m.gray}`}>{children}</span>;
+  return (
+    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${m[color] || m.gray}`}>
+      {children}
+    </span>
+  );
 }
 
 function BarreProgression({ pct, color }) {
-  const col = color || (pct >= 70 ? "bg-emerald-400" : pct >= 40 ? "bg-amber-400" : "bg-red-400");
+  const col =
+    color ||
+    (pct >= 70 ? "bg-emerald-400" : pct >= 40 ? "bg-amber-400" : "bg-red-400");
   return (
     <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-      <div className={`h-full rounded-full transition-all ${col}`} style={{ width: `${Math.min(pct || 0, 100)}%` }} />
+      <div
+        className={`h-full rounded-full transition-all ${col}`}
+        style={{ width: `${Math.min(pct || 0, 100)}%` }}
+      />
     </div>
   );
 }
@@ -273,7 +307,9 @@ function BarreProgression({ pct, color }) {
 function StatRow({ label, color, children }) {
   return (
     <div className={`bg-white/10 rounded-xl px-4 py-3 border-l-2 ${color}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-2">{label}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-2">
+        {label}
+      </p>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );
@@ -281,9 +317,15 @@ function StatRow({ label, color, children }) {
 
 function StatChip({ label, value, accent }) {
   const c = {
-    green: "text-emerald-400", blue: "text-blue-300", purple: "text-purple-300",
-    pink: "text-pink-300", yellow: "text-yellow-300", orange: "text-orange-300",
-    amber: "text-amber-300", indigo: "text-indigo-300", white: "text-white",
+    green: "text-emerald-400",
+    blue: "text-blue-300",
+    purple: "text-purple-300",
+    pink: "text-pink-300",
+    yellow: "text-yellow-300",
+    orange: "text-orange-300",
+    amber: "text-amber-300",
+    indigo: "text-indigo-300",
+    white: "text-white",
   };
   return (
     <div className="bg-white/5 rounded-xl px-3 py-2 flex flex-col items-center min-w-[70px]">
@@ -295,26 +337,30 @@ function StatChip({ label, value, accent }) {
 
 // ─── BESOIN CONFIG ────────────────────────────────────────────
 const BESOIN_CONFIG = {
-  "Finances":                  { bar: "bg-green-400",   dot: "bg-green-400",   badge: "green" },
-  "Santé":                     { bar: "bg-red-400",     dot: "bg-red-400",     badge: "red" },
-  "Travail / Études":          { bar: "bg-blue-400",    dot: "bg-blue-400",    badge: "blue" },
-  "Famille / Enfants":         { bar: "bg-pink-400",    dot: "bg-pink-400",    badge: "pink" },
-  "Relations / Conflits":      { bar: "bg-orange-400",  dot: "bg-orange-400",  badge: "orange" },
-  "Addictions / Dépendances":  { bar: "bg-purple-400",  dot: "bg-purple-400",  badge: "gray" },
-  "Guidance spirituelle":      { bar: "bg-indigo-400",  dot: "bg-indigo-400",  badge: "blue" },
-  "Logement / Sécurité":       { bar: "bg-yellow-400",  dot: "bg-yellow-400",  badge: "yellow" },
-  "Communauté / Isolement":    { bar: "bg-cyan-400",    dot: "bg-cyan-400",    badge: "blue" },
-  "Dépression / Santé mentale":{ bar: "bg-rose-500",    dot: "bg-rose-500",    badge: "red" },
-  "Miracle":                   { bar: "bg-violet-400",  dot: "bg-violet-400",  badge: "blue" },
-  "Délivrance":                { bar: "bg-fuchsia-400", dot: "bg-fuchsia-400", badge: "pink" },
-  "Autres":                    { bar: "bg-white/60",    dot: "bg-white/40",    badge: "gray" },
+  Finances: { bar: "bg-green-400", dot: "bg-green-400", badge: "green" },
+  "Santé": { bar: "bg-red-400", dot: "bg-red-400", badge: "red" },
+  "Travail / Études": { bar: "bg-blue-400", dot: "bg-blue-400", badge: "blue" },
+  "Famille / Enfants": { bar: "bg-pink-400", dot: "bg-pink-400", badge: "pink" },
+  "Relations / Conflits": { bar: "bg-orange-400", dot: "bg-orange-400", badge: "orange" },
+  "Addictions / Dépendances": { bar: "bg-purple-400", dot: "bg-purple-400", badge: "gray" },
+  "Guidance spirituelle": { bar: "bg-indigo-400", dot: "bg-indigo-400", badge: "blue" },
+  "Logement / Sécurité": { bar: "bg-yellow-400", dot: "bg-yellow-400", badge: "yellow" },
+  "Communauté / Isolement": { bar: "bg-cyan-400", dot: "bg-cyan-400", badge: "blue" },
+  "Dépression / Santé mentale": { bar: "bg-rose-500", dot: "bg-rose-500", badge: "red" },
+  Miracle: { bar: "bg-violet-400", dot: "bg-violet-400", badge: "blue" },
+  "Délivrance": { bar: "bg-fuchsia-400", dot: "bg-fuchsia-400", badge: "pink" },
+  Autres: { bar: "bg-white/60", dot: "bg-white/40", badge: "gray" },
 };
-function getCfg(b) { return BESOIN_CONFIG[b] || BESOIN_CONFIG["Autres"]; }
+function getCfg(b) {
+  return BESOIN_CONFIG[b] || BESOIN_CONFIG["Autres"];
+}
 
 // ─── CARTE TOP 5 BESOINS ──────────────────────────────────────
 function CarteTop5Besoins({ besoinsGlobaux, t }) {
   if (!besoinsGlobaux || Object.keys(besoinsGlobaux).length === 0) return null;
-  const top5 = Object.entries(besoinsGlobaux).sort((a, b) => b[1].total - a[1].total).slice(0, 5);
+  const top5 = Object.entries(besoinsGlobaux)
+    .sort((a, b) => b[1].total - a[1].total)
+    .slice(0, 5);
   const maxTotal = Math.max(...top5.map(([, v]) => v.total), 1);
   const totalTous = top5.reduce((a, [, v]) => a + v.total, 0);
   const totalResolus = top5.reduce((a, [, v]) => a + v.resolu, 0);
@@ -332,11 +378,14 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
         {top5.map(([besoin, data], index) => {
           const cfg = getCfg(besoin);
           const pct = Math.round((data.total / maxTotal) * 100);
-          const pctResolu = data.total > 0 ? Math.round((data.resolu / data.total) * 100) : 0;
+          const pctResolu =
+            data.total > 0 ? Math.round((data.resolu / data.total) * 100) : 0;
           return (
             <div key={besoin} className="flex flex-col gap-1">
               <div className="flex items-center gap-3">
-                <span className="text-[11px] font-bold text-white/30 w-4 flex-shrink-0">#{index + 1}</span>
+                <span className="text-[11px] font-bold text-white/30 w-4 flex-shrink-0">
+                  #{index + 1}
+                </span>
                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />
                 <p className="text-xs text-white flex-1 truncate">{besoin}</p>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -357,49 +406,75 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
 }
 
 // ─── BLOC VUE D'ENSEMBLE ─────────────────────────────────────
-// Reçoit maintenant totalMembresActifs et prevTotaux pour les deltas
 function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevTotaux, t }) {
-  const totaux = allEglises.reduce((acc, e) => {
-    const s = e.stats;
-    acc.culteHommes += s.culte.hommes;
-    acc.culteFemmes += s.culte.femmes;
-    acc.culteJeunes += s.culte.jeunes;
-    acc.culteEnfants += s.culte.enfants;
-    acc.culteConnectes += s.culte.connectes;
-    acc.culteNV += s.culte.nouveaux_venus;
-    acc.culteNC += s.culte.nouveau_converti;
-    acc.baptemeH += s.bapteme.hommes;
-    acc.baptemeF += s.bapteme.femmes;
-    acc.evangH += s.evangelisation.hommes;
-    acc.evangF += s.evangelisation.femmes;
-    acc.evangNC += s.evangelisation.nouveau_converti;
-    acc.servH += s.serviteurs.hommes;
-    acc.servF += s.serviteurs.femmes;
-    acc.cellules += s.cellules.total;
-    return acc;
-  }, {
-    culteHommes: 0, culteFemmes: 0, culteJeunes: 0, culteEnfants: 0, culteConnectes: 0,
-    culteNV: 0, culteNC: 0, baptemeH: 0, baptemeF: 0, evangH: 0, evangF: 0,
-    evangNC: 0, servH: 0, servF: 0, cellules: 0,
-  });
+  const totaux = allEglises.reduce(
+    (acc, e) => {
+      const s = e.stats;
+      acc.culteHommes += s.culte.hommes;
+      acc.culteFemmes += s.culte.femmes;
+      acc.culteJeunes += s.culte.jeunes;
+      acc.culteEnfants += s.culte.enfants;
+      acc.culteConnectes += s.culte.connectes;
+      acc.culteNV += s.culte.nouveaux_venus;
+      acc.culteNC += s.culte.nouveau_converti;
+      acc.baptemeH += s.bapteme.hommes;
+      acc.baptemeF += s.bapteme.femmes;
+      acc.evangH += s.evangelisation.hommes;
+      acc.evangF += s.evangelisation.femmes;
+      acc.evangNC += s.evangelisation.nouveau_converti;
+      acc.servH += s.serviteurs.hommes;
+      acc.servF += s.serviteurs.femmes;
+      acc.cellules += s.cellules.total;
+      return acc;
+    },
+    {
+      culteHommes: 0,
+      culteFemmes: 0,
+      culteJeunes: 0,
+      culteEnfants: 0,
+      culteConnectes: 0,
+      culteNV: 0,
+      culteNC: 0,
+      baptemeH: 0,
+      baptemeF: 0,
+      evangH: 0,
+      evangF: 0,
+      evangNC: 0,
+      servH: 0,
+      servF: 0,
+      cellules: 0,
+    }
+  );
 
   const totalCulte = totaux.culteHommes + totaux.culteFemmes + totaux.culteJeunes;
-  const totalCulteGlobal = totalCulte + totaux.culteEnfants + totaux.culteConnectes;
+  const totalCulteGlobal =
+    totalCulte + totaux.culteEnfants + totaux.culteConnectes;
   const totalBapteme = totaux.baptemeH + totaux.baptemeF;
   const totalEvangelisation = totaux.evangH + totaux.evangF;
   const totalServiteurs = totaux.servH + totaux.servF;
   const nbEglises = allEglises.length;
-  const moyenneCulteParEglise = nbEglises > 0 ? Math.round(totalCulteGlobal / nbEglises) : 0;
-  const tauxConversion = totalCulteGlobal > 0 ? Math.round((totaux.culteNC / totalCulteGlobal) * 100) : 0;
-  const tauxEngagement = totalCulteGlobal > 0 ? Math.round((totalServiteurs / totalCulteGlobal) * 100) : 0;
-  const tauxPresence = totalMembresActifs > 0 ? Math.round((totalCulteGlobal / totalMembresActifs) * 100) : 0;
+  const moyenneCulteParEglise =
+    nbEglises > 0 ? Math.round(totalCulteGlobal / nbEglises) : 0;
+  const tauxConversion =
+    totalCulteGlobal > 0
+      ? Math.round((totaux.culteNC / totalCulteGlobal) * 100)
+      : 0;
+  const tauxEngagement =
+    totalCulteGlobal > 0
+      ? Math.round((totalServiteurs / totalCulteGlobal) * 100)
+      : 0;
+  const tauxPresence =
+    totalMembresActifs > 0
+      ? Math.round((totalCulteGlobal / totalMembresActifs) * 100)
+      : 0;
 
-  // Deltas vs période précédente
   const d = prevTotaux;
-  const prevCulteGlobal = d ? (d.culteHommes + d.culteFemmes + d.culteJeunes + d.culteEnfants + d.culteConnectes) : null;
-  const prevEvangelisation = d ? (d.evangH + d.evangF) : null;
-  const prevBapteme = d ? (d.baptemeH + d.baptemeF) : null;
-  const prevServiteurs = d ? (d.servH + d.servF) : null;
+  const prevCulteGlobal = d
+    ? d.culteHommes + d.culteFemmes + d.culteJeunes + d.culteEnfants + d.culteConnectes
+    : null;
+  const prevEvangelisation = d ? d.evangH + d.evangF : null;
+  const prevBapteme = d ? d.baptemeH + d.baptemeF : null;
+  const prevServiteurs = d ? d.servH + d.servF : null;
   const prevMoy = d && nbEglises > 0 ? Math.round(prevCulteGlobal / nbEglises) : null;
 
   return (
@@ -482,7 +557,7 @@ function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevT
         />
       </div>
 
-      {/* Répartition H/F/J */}
+      {/* Répartition H/F/J — affiché même si totalCulte = 0 */}
       <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
         <p className="text-xs text-white/50 font-semibold">{t.repartitionTitle}</p>
         <div className="grid grid-cols-3 gap-2">
@@ -503,9 +578,18 @@ function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevT
         </div>
         {totalCulte > 0 && (
           <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
-            <div className="bg-blue-400 rounded-l-full transition-all" style={{ width: `${Math.round((totaux.culteHommes / totalCulte) * 100)}%` }} />
-            <div className="bg-pink-400 transition-all" style={{ width: `${Math.round((totaux.culteFemmes / totalCulte) * 100)}%` }} />
-            <div className="bg-amber-400 rounded-r-full transition-all" style={{ width: `${Math.round((totaux.culteJeunes / totalCulte) * 100)}%` }} />
+            <div
+              className="bg-blue-400 rounded-l-full transition-all"
+              style={{ width: `${Math.round((totaux.culteHommes / totalCulte) * 100)}%` }}
+            />
+            <div
+              className="bg-pink-400 transition-all"
+              style={{ width: `${Math.round((totaux.culteFemmes / totalCulte) * 100)}%` }}
+            />
+            <div
+              className="bg-amber-400 rounded-r-full transition-all"
+              style={{ width: `${Math.round((totaux.culteJeunes / totalCulte) * 100)}%` }}
+            />
           </div>
         )}
       </div>
@@ -522,9 +606,14 @@ function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevT
           ].map(({ label, val, color }) => (
             <div key={label} className="flex items-center gap-3">
               <p className="text-xs text-white/50 w-28 flex-shrink-0">{label}</p>
-              <BarreProgression pct={Math.round((val / totalCulteGlobal) * 100)} color={color} />
+              <BarreProgression
+                pct={Math.round((val / totalCulteGlobal) * 100)}
+                color={color}
+              />
               <span className="text-xs text-white font-semibold w-8 text-right">{val}</span>
-              <span className="text-[10px] text-white/30 w-8 text-right">{Math.round((val / totalCulteGlobal) * 100)}%</span>
+              <span className="text-[10px] text-white/30 w-8 text-right">
+                {Math.round((val / totalCulteGlobal) * 100)}%
+              </span>
             </div>
           ))}
         </div>
@@ -538,16 +627,36 @@ function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevT
           <p className="text-xs text-white/50 font-semibold mb-1">{t.classementTitle}</p>
           {[...allEglises]
             .sort((a, b) => {
-              const totA = a.stats.culte.hommes + a.stats.culte.femmes + a.stats.culte.jeunes + a.stats.culte.enfants + a.stats.culte.connectes;
-              const totB = b.stats.culte.hommes + b.stats.culte.femmes + b.stats.culte.jeunes + b.stats.culte.enfants + b.stats.culte.connectes;
+              const totA =
+                a.stats.culte.hommes +
+                a.stats.culte.femmes +
+                a.stats.culte.jeunes +
+                a.stats.culte.enfants +
+                a.stats.culte.connectes;
+              const totB =
+                b.stats.culte.hommes +
+                b.stats.culte.femmes +
+                b.stats.culte.jeunes +
+                b.stats.culte.enfants +
+                b.stats.culte.connectes;
               return totB - totA;
             })
             .map((e, index) => {
-              const tot = e.stats.culte.hommes + e.stats.culte.femmes + e.stats.culte.jeunes + e.stats.culte.enfants + e.stats.culte.connectes;
-              const pct = totalCulteGlobal > 0 ? Math.round((tot / totalCulteGlobal) * 100) : 0;
+              const tot =
+                e.stats.culte.hommes +
+                e.stats.culte.femmes +
+                e.stats.culte.jeunes +
+                e.stats.culte.enfants +
+                e.stats.culte.connectes;
+              const pct =
+                totalCulteGlobal > 0
+                  ? Math.round((tot / totalCulteGlobal) * 100)
+                  : 0;
               return (
                 <div key={e.id} className="flex items-center gap-3">
-                  <span className="text-[11px] font-bold text-white/30 w-4 flex-shrink-0">#{index + 1}</span>
+                  <span className="text-[11px] font-bold text-white/30 w-4 flex-shrink-0">
+                    #{index + 1}
+                  </span>
                   <p className="text-xs text-white w-32 flex-shrink-0 truncate">{e.nom}</p>
                   <BarreProgression pct={pct} color="bg-blue-400" />
                   <span className="text-xs text-white font-semibold w-8 text-right">{tot}</span>
@@ -567,10 +676,30 @@ function BlocStatsEglise({ stats, t }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-1">
-        <KpiCard label={t.culte} value={totalCulteGlobal} sub={t.totalPresences} accent="green" />
-        <KpiCard label={t.evangelisation} value={stats.evangelisation.hommes + stats.evangelisation.femmes} sub={t.amesTouchees} accent="pink" />
-        <KpiCard label={t.bapteme} value={stats.bapteme.hommes + stats.bapteme.femmes} sub={t.cettePeriode} accent="purple" />
-        <KpiCard label={t.kpiCellules} value={stats.cellules.total} sub={t.cellulesActives} accent="orange" />
+        <KpiCard
+          label={t.culte}
+          value={totalCulteGlobal}
+          sub={t.totalPresences}
+          accent="green"
+        />
+        <KpiCard
+          label={t.evangelisation}
+          value={stats.evangelisation.hommes + stats.evangelisation.femmes}
+          sub={t.amesTouchees}
+          accent="pink"
+        />
+        <KpiCard
+          label={t.bapteme}
+          value={stats.bapteme.hommes + stats.bapteme.femmes}
+          sub={t.cettePeriode}
+          accent="purple"
+        />
+        <KpiCard
+          label={t.kpiCellules}
+          value={stats.cellules.total}
+          sub={t.cellulesActives}
+          accent="orange"
+        />
       </div>
       <StatRow label={t.culte} color="border-emerald-500">
         <StatChip label={t.chipHommes} value={stats.culte.hommes} accent="blue" />
@@ -587,39 +716,82 @@ function BlocStatsEglise({ stats, t }) {
       <StatRow label={t.formation} color="border-blue-500">
         <StatChip label={t.chipHommes} value={stats.formation.hommes} accent="blue" />
         <StatChip label={t.chipFemmes} value={stats.formation.femmes} accent="pink" />
-        <StatChip label={t.chipTotal} value={stats.formation.hommes + stats.formation.femmes} accent="orange" />
+        <StatChip
+          label={t.chipTotal}
+          value={stats.formation.hommes + stats.formation.femmes}
+          accent="orange"
+        />
       </StatRow>
       <StatRow label={t.bapteme} color="border-purple-500">
         <StatChip label={t.chipHommes} value={stats.bapteme.hommes} accent="blue" />
         <StatChip label={t.chipFemmes} value={stats.bapteme.femmes} accent="pink" />
-        <StatChip label={t.chipTotal} value={stats.bapteme.hommes + stats.bapteme.femmes} accent="orange" />
+        <StatChip
+          label={t.chipTotal}
+          value={stats.bapteme.hommes + stats.bapteme.femmes}
+          accent="orange"
+        />
       </StatRow>
       <StatRow label={t.evangelisation} color="border-pink-500">
         <StatChip label={t.chipHommes} value={stats.evangelisation.hommes} accent="blue" />
         <StatChip label={t.chipFemmes} value={stats.evangelisation.femmes} accent="pink" />
-        <StatChip label={t.chipTotal} value={stats.evangelisation.hommes + stats.evangelisation.femmes} accent="orange" />
+        <StatChip
+          label={t.chipTotal}
+          value={stats.evangelisation.hommes + stats.evangelisation.femmes}
+          accent="orange"
+        />
         <StatChip label={t.chipPriere} value={stats.evangelisation.priere} accent="indigo" />
-        <StatChip label={t.chipNvConvertis} value={stats.evangelisation.nouveau_converti} accent="yellow" />
-        <StatChip label={t.chipReconciliation} value={stats.evangelisation.reconciliation} accent="green" />
-        <StatChip label={t.chipMoissonneurs} value={stats.evangelisation.moissonneurs} accent="white" />
+        <StatChip
+          label={t.chipNvConvertis}
+          value={stats.evangelisation.nouveau_converti}
+          accent="yellow"
+        />
+        <StatChip
+          label={t.chipReconciliation}
+          value={stats.evangelisation.reconciliation}
+          accent="green"
+        />
+        <StatChip
+          label={t.chipMoissonneurs}
+          value={stats.evangelisation.moissonneurs}
+          accent="white"
+        />
       </StatRow>
       <StatRow label={t.serviteursRow} color="border-yellow-500">
         <StatChip label={t.chipHommes} value={stats.serviteurs.hommes} accent="blue" />
         <StatChip label={t.chipFemmes} value={stats.serviteurs.femmes} accent="pink" />
-        <StatChip label={t.chipTotal} value={stats.serviteurs.hommes + stats.serviteurs.femmes} accent="orange" />
+        <StatChip
+          label={t.chipTotal}
+          value={stats.serviteurs.hommes + stats.serviteurs.femmes}
+          accent="orange"
+        />
       </StatRow>
       {totalCulteGlobal > 0 && (
         <div className="bg-white/10 rounded-xl p-3 flex flex-col gap-2 mt-1">
           <SectionTitle>{t.entonnoir}</SectionTitle>
           {[
             { label: t.presencesCulte, val: totalCulteGlobal, color: "bg-emerald-400" },
-            { label: t.evangelises, val: stats.evangelisation.hommes + stats.evangelisation.femmes, color: "bg-pink-400" },
-            { label: t.baptises, val: stats.bapteme.hommes + stats.bapteme.femmes, color: "bg-purple-400" },
-            { label: t.serviteurs, val: stats.serviteurs.hommes + stats.serviteurs.femmes, color: "bg-yellow-400" },
+            {
+              label: t.evangelises,
+              val: stats.evangelisation.hommes + stats.evangelisation.femmes,
+              color: "bg-pink-400",
+            },
+            {
+              label: t.baptises,
+              val: stats.bapteme.hommes + stats.bapteme.femmes,
+              color: "bg-purple-400",
+            },
+            {
+              label: t.serviteurs,
+              val: stats.serviteurs.hommes + stats.serviteurs.femmes,
+              color: "bg-yellow-400",
+            },
           ].map(({ label, val, color }) => (
             <div key={label} className="flex items-center gap-3">
               <p className="text-xs text-white/50 w-28 flex-shrink-0">{label}</p>
-              <BarreProgression pct={Math.round((val / totalCulteGlobal) * 100)} color={color} />
+              <BarreProgression
+                pct={Math.round((val / totalCulteGlobal) * 100)}
+                color={color}
+              />
               <span className="text-xs text-white font-semibold w-8 text-right">{val}</span>
             </div>
           ))}
@@ -633,44 +805,53 @@ function BlocStatsEglise({ stats, t }) {
 function CarteEglise({ eglise, level, expandedEglises, toggleExpand, t }) {
   const isExpanded = expandedEglises.includes(eglise.id);
   const hasChildren = eglise.enfants?.length > 0;
-  const totalStats = hasChildren && !isExpanded
-    ? eglise.enfants.reduce((acc, child) => {
-        acc.culte.hommes += child.stats.culte.hommes;
-        acc.culte.femmes += child.stats.culte.femmes;
-        acc.culte.jeunes += child.stats.culte.jeunes;
-        acc.culte.enfants += child.stats.culte.enfants;
-        acc.culte.connectes += child.stats.culte.connectes;
-        acc.culte.nouveaux_venus += child.stats.culte.nouveaux_venus;
-        acc.culte.nouveau_converti += child.stats.culte.nouveau_converti;
-        acc.culte.moissonneurs += child.stats.culte.moissonneurs;
-        acc.formation.hommes += child.stats.formation.hommes;
-        acc.formation.femmes += child.stats.formation.femmes;
-        acc.bapteme.hommes += child.stats.bapteme.hommes;
-        acc.bapteme.femmes += child.stats.bapteme.femmes;
-        acc.evangelisation.hommes += child.stats.evangelisation.hommes;
-        acc.evangelisation.femmes += child.stats.evangelisation.femmes;
-        acc.evangelisation.priere += child.stats.evangelisation.priere;
-        acc.evangelisation.nouveau_converti += child.stats.evangelisation.nouveau_converti;
-        acc.evangelisation.reconciliation += child.stats.evangelisation.reconciliation;
-        acc.evangelisation.moissonneurs += child.stats.evangelisation.moissonneurs;
-        acc.serviteurs.hommes += child.stats.serviteurs.hommes;
-        acc.serviteurs.femmes += child.stats.serviteurs.femmes;
-        acc.cellules.total += child.stats.cellules.total;
-        return acc;
-      }, {
-        culte: { ...eglise.stats.culte },
-        formation: { ...eglise.stats.formation },
-        bapteme: { ...eglise.stats.bapteme },
-        evangelisation: { ...eglise.stats.evangelisation },
-        serviteurs: { ...eglise.stats.serviteurs },
-        cellules: { ...eglise.stats.cellules },
-      })
-    : eglise.stats;
-  const totalCulte = totalStats.culte.hommes + totalStats.culte.femmes + totalStats.culte.jeunes;
+  const totalStats =
+    hasChildren && !isExpanded
+      ? eglise.enfants.reduce(
+          (acc, child) => {
+            acc.culte.hommes += child.stats.culte.hommes;
+            acc.culte.femmes += child.stats.culte.femmes;
+            acc.culte.jeunes += child.stats.culte.jeunes;
+            acc.culte.enfants += child.stats.culte.enfants;
+            acc.culte.connectes += child.stats.culte.connectes;
+            acc.culte.nouveaux_venus += child.stats.culte.nouveaux_venus;
+            acc.culte.nouveau_converti += child.stats.culte.nouveau_converti;
+            acc.culte.moissonneurs += child.stats.culte.moissonneurs;
+            acc.formation.hommes += child.stats.formation.hommes;
+            acc.formation.femmes += child.stats.formation.femmes;
+            acc.bapteme.hommes += child.stats.bapteme.hommes;
+            acc.bapteme.femmes += child.stats.bapteme.femmes;
+            acc.evangelisation.hommes += child.stats.evangelisation.hommes;
+            acc.evangelisation.femmes += child.stats.evangelisation.femmes;
+            acc.evangelisation.priere += child.stats.evangelisation.priere;
+            acc.evangelisation.nouveau_converti +=
+              child.stats.evangelisation.nouveau_converti;
+            acc.evangelisation.reconciliation +=
+              child.stats.evangelisation.reconciliation;
+            acc.evangelisation.moissonneurs += child.stats.evangelisation.moissonneurs;
+            acc.serviteurs.hommes += child.stats.serviteurs.hommes;
+            acc.serviteurs.femmes += child.stats.serviteurs.femmes;
+            acc.cellules.total += child.stats.cellules.total;
+            return acc;
+          },
+          {
+            culte: { ...eglise.stats.culte },
+            formation: { ...eglise.stats.formation },
+            bapteme: { ...eglise.stats.bapteme },
+            evangelisation: { ...eglise.stats.evangelisation },
+            serviteurs: { ...eglise.stats.serviteurs },
+            cellules: { ...eglise.stats.cellules },
+          }
+        )
+      : eglise.stats;
+  const totalCulte =
+    totalStats.culte.hommes + totalStats.culte.femmes + totalStats.culte.jeunes;
   return (
     <div className="flex flex-col gap-2">
       <div
-        className={`bg-white/10 rounded-2xl overflow-hidden border-l-2 ${hasChildren ? "border-amber-400" : "border-blue-400"}`}
+        className={`bg-white/10 rounded-2xl overflow-hidden border-l-2 ${
+          hasChildren ? "border-amber-400" : "border-blue-400"
+        }`}
         style={{ marginLeft: level * 12 }}
       >
         <button
@@ -679,12 +860,18 @@ function CarteEglise({ eglise, level, expandedEglises, toggleExpand, t }) {
         >
           <div className="flex flex-col gap-0.5 flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className={`font-semibold ${hasChildren ? "text-amber-300" : "text-white"}`}>{eglise.nom}</span>
-              {hasChildren && <Badge color="amber">{t.egliseBadgeFn(eglise.enfants.length)}</Badge>}
+              <span className={`font-semibold ${hasChildren ? "text-amber-300" : "text-white"}`}>
+                {eglise.nom}
+              </span>
+              {hasChildren && (
+                <Badge color="amber">{t.egliseBadgeFn(eglise.enfants.length)}</Badge>
+              )}
               {hasChildren && !isExpanded && <Badge color="gray">{t.totalGeneral}</Badge>}
             </div>
             <span className="text-[11px] text-white/40">
-              {t.culte} : {totalCulte} · {t.bapteme} : {totalStats.bapteme.hommes + totalStats.bapteme.femmes} · {t.kpiCellules} : {totalStats.cellules.total}
+              {t.culte} : {totalCulte} · {t.bapteme} :{" "}
+              {totalStats.bapteme.hommes + totalStats.bapteme.femmes} · {t.kpiCellules} :{" "}
+              {totalStats.cellules.total}
             </span>
           </div>
           <span className="text-white/30 text-xs flex-shrink-0">{isExpanded ? "▲" : "▼"}</span>
@@ -695,9 +882,17 @@ function CarteEglise({ eglise, level, expandedEglises, toggleExpand, t }) {
           </div>
         )}
       </div>
-      {isExpanded && eglise.enfants?.map((child) => (
-        <CarteEglise key={child.id} eglise={child} level={level + 1} expandedEglises={expandedEglises} toggleExpand={toggleExpand} t={t} />
-      ))}
+      {isExpanded &&
+        eglise.enfants?.map((child) => (
+          <CarteEglise
+            key={child.id}
+            eglise={child}
+            level={level + 1}
+            expandedEglises={expandedEglises}
+            toggleExpand={toggleExpand}
+            t={t}
+          />
+        ))}
     </div>
   );
 }
@@ -720,13 +915,12 @@ function StatGlobalPage() {
   const [filtrePeriode, setFiltrePeriode] = useState("30");
   const [hasData, setHasData] = useState(false);
   const [besoinsGlobaux, setBesoinsGlobaux] = useState({});
-  // ── NOUVEAUX ÉTATS ──
   const [totalMembresActifs, setTotalMembresActifs] = useState(0);
   const [prevTotaux, setPrevTotaux] = useState(null);
 
-  // ── AUTO-CHARGEMENT 30j au montage ──
   useEffect(() => {
     fetchStats(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleExpand = (egliseId) => {
@@ -735,40 +929,82 @@ function StatGlobalPage() {
     );
   };
 
-  // ── Fonction utilitaire : agréger les stats de plusieurs lignes ──
-  const buildStatsFromData = (egliseIds, attendanceData, formationData, baptemeData, evangeData, cellulesData, serviteurData) => {
+  // ── Agréger les stats de plusieurs lignes ──
+  const buildStatsFromData = (
+    egliseIds,
+    attendanceData,
+    formationData,
+    baptemeData,
+    evangeData,
+    cellulesData,
+    serviteurData
+  ) => {
     const statsMap = {};
     egliseIds.forEach((id) => {
       statsMap[id] = {
-        culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0 },
+        culte: {
+          hommes: 0,
+          femmes: 0,
+          jeunes: 0,
+          enfants: 0,
+          connectes: 0,
+          nouveaux_venus: 0,
+          nouveau_converti: 0,
+          moissonneurs: 0,
+        },
         formation: { hommes: 0, femmes: 0 },
         bapteme: { hommes: 0, femmes: 0 },
-        evangelisation: { hommes: 0, femmes: 0, priere: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 },
+        evangelisation: {
+          hommes: 0,
+          femmes: 0,
+          priere: 0,
+          nouveau_converti: 0,
+          reconciliation: 0,
+          moissonneurs: 0,
+        },
         serviteurs: { hommes: 0, femmes: 0 },
         cellules: { total: 0 },
       };
     });
+
     attendanceData.forEach((s) => {
-      const a = statsMap[s.eglise_id]?.culte; if (!a) return;
-      a.hommes += Number(s.hommes) || 0; a.femmes += Number(s.femmes) || 0;
-      a.jeunes += Number(s.jeunes) || 0; a.enfants += Number(s.enfants) || 0;
-      a.connectes += Number(s.connectes) || 0; a.nouveaux_venus += Number(s.nouveaux_venus) || 0;
-      a.nouveau_converti += Number(s.nouveau_converti) || 0; a.moissonneurs += Number(s.moissonneurs) || 0;
+      const a = statsMap[s.eglise_id]?.culte;
+      if (!a) return;
+      a.hommes += Number(s.hommes) || 0;
+      a.femmes += Number(s.femmes) || 0;
+      a.jeunes += Number(s.jeunes) || 0;
+      a.enfants += Number(s.enfants) || 0;
+      a.connectes += Number(s.connectes) || 0;
+      a.nouveaux_venus += Number(s.nouveaux_venus) || 0;
+      a.nouveau_converti += Number(s.nouveau_converti) || 0;
+      a.moissonneurs += Number(s.moissonneurs) || 0;
     });
+
     formationData.forEach((f) => {
-      const form = statsMap[f.eglise_id]?.formation; if (!form) return;
-      form.hommes += Number(f.hommes) || 0; form.femmes += Number(f.femmes) || 0;
+      const form = statsMap[f.eglise_id]?.formation;
+      if (!form) return;
+      form.hommes += Number(f.hommes) || 0;
+      form.femmes += Number(f.femmes) || 0;
     });
+
     baptemeData.forEach((b) => {
-      const bap = statsMap[b.eglise_id]?.bapteme; if (!bap) return;
-      bap.hommes += Number(b.hommes) || 0; bap.femmes += Number(b.femmes) || 0;
+      const bap = statsMap[b.eglise_id]?.bapteme;
+      if (!bap) return;
+      bap.hommes += Number(b.hommes) || 0;
+      bap.femmes += Number(b.femmes) || 0;
     });
+
     evangeData.forEach((e) => {
-      const ev = statsMap[e.eglise_id]?.evangelisation; if (!ev) return;
-      ev.hommes += Number(e.hommes) || 0; ev.femmes += Number(e.femmes) || 0;
-      ev.priere += Number(e.priere) || 0; ev.nouveau_converti += Number(e.nouveau_converti) || 0;
-      ev.reconciliation += Number(e.reconciliation) || 0; ev.moissonneurs += Number(e.moissonneurs) || 0;
+      const ev = statsMap[e.eglise_id]?.evangelisation;
+      if (!ev) return;
+      ev.hommes += Number(e.hommes) || 0;
+      ev.femmes += Number(e.femmes) || 0;
+      ev.priere += Number(e.priere) || 0;
+      ev.nouveau_converti += Number(e.nouveau_converti) || 0;
+      ev.reconciliation += Number(e.reconciliation) || 0;
+      ev.moissonneurs += Number(e.moissonneurs) || 0;
     });
+
     const unique = new Map();
     serviteurData?.forEach((row) => {
       if (row.type !== "ministere") return;
@@ -777,14 +1013,17 @@ function StatGlobalPage() {
     });
     unique.forEach((row) => {
       if (!row.sexe) return;
-      const serv = statsMap[row.eglise_id]?.serviteurs; if (!serv) return;
+      const serv = statsMap[row.eglise_id]?.serviteurs;
+      if (!serv) return;
       const sexe = row.sexe.trim().toLowerCase();
       if (sexe === "homme") serv.hommes += 1;
       else if (sexe === "femme") serv.femmes += 1;
     });
+
     cellulesData.forEach((c) => {
       if (c.eglise_id && statsMap[c.eglise_id]) statsMap[c.eglise_id].cellules.total++;
     });
+
     return statsMap;
   };
 
@@ -801,7 +1040,7 @@ function StatGlobalPage() {
       fin = "";
     }
 
-    // Calcul de la période précédente (même durée, juste avant)
+    // Période précédente (même durée, juste avant)
     let prevDebut = null;
     let prevFin = null;
     if (!isPerso) {
@@ -825,24 +1064,37 @@ function StatGlobalPage() {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       const { data: profileData } = await supabase
-        .from("profiles").select("eglise_id").eq("id", user.id).single();
+        .from("profiles")
+        .select("eglise_id")
+        .eq("id", user.id)
+        .single();
 
       const rootIdValue = profileData.eglise_id;
       setRootId(rootIdValue);
 
-      const { data: filteredEglisesData } = await supabase.rpc("get_descendant_eglises", { root_id: rootIdValue });
+      const { data: filteredEglisesData } = await supabase.rpc(
+        "get_descendant_eglises",
+        { root_id: rootIdValue }
+      );
 
       if (!filteredEglisesData?.length) {
-        setEglisesTree([]); setAllEglises([]); setBesoinsGlobaux({});
-        setTotalMembresActifs(0); setPrevTotaux(null);
-        setHasData(false); setLoading(false); return;
+        setEglisesTree([]);
+        setAllEglises([]);
+        setBesoinsGlobaux({});
+        setTotalMembresActifs(0);
+        setPrevTotaux(null);
+        setHasData(false);
+        setLoading(false);
+        return;
       }
 
       const egliseIds = filteredEglisesData.map((e) => e.id);
 
-      // ── MEMBRES ACTIFS (etat_contact = existant ou nouveau) ──
+      // ── Membres actifs ──
       const { data: membresActifsData } = await supabase
         .from("membres_complets")
         .select("id, eglise_id, sexe")
@@ -850,30 +1102,46 @@ function StatGlobalPage() {
         .in("etat_contact", ["existant", "nouveau"]);
       setTotalMembresActifs(membresActifsData?.length || 0);
 
-      // ── FETCH PÉRIODE COURANTE ──
+      // ── Helper fetch avec gestion du format YYYY-MM pour attendance_stats ──
       const tableFetch = async (table, dateField, deb, fi) => {
         let query = supabase.from(table).select("*").in("eglise_id", egliseIds);
-        if (deb) query = query.gte(dateField, deb);
-        if (fi) query = query.lte(dateField, fi);
+
+        // attendance_stats stocke le mois au format YYYY-MM : on tronque les dates
+        const fmt = (d) =>
+          table === "attendance_stats" && d ? toYearMonth(d) : d;
+
+        if (deb) query = query.gte(dateField, fmt(deb));
+        if (fi) query = query.lte(dateField, fmt(fi));
         const { data } = await query;
         return data || [];
       };
 
-      const [attendanceData, formationData, baptemeData, evangeData, cellulesData] = await Promise.all([
-        tableFetch("attendance_stats", "mois", debut, fin),
-        tableFetch("formations", "date_debut", debut, fin),
-        tableFetch("baptemes", "date", debut, fin),
-        tableFetch("rapport_evangelisation", "date", debut, fin),
-        tableFetch("cellules", "created_at", debut, fin),
-      ]);
+      // ── Fetch période courante ──
+      const [attendanceData, formationData, baptemeData, evangeData, cellulesData] =
+        await Promise.all([
+          tableFetch("attendance_stats", "mois", debut, fin),
+          tableFetch("formations", "date_debut", debut, fin),
+          tableFetch("baptemes", "date", debut, fin),
+          tableFetch("rapport_evangelisation", "date", debut, fin),
+          tableFetch("cellules", "created_at", debut, fin),
+        ]);
 
       const { data: serviteurData } = await supabase
-        .from("stats_ministere_besoin").select("membre_id, eglise_id, sexe, type")
+        .from("stats_ministere_besoin")
+        .select("membre_id, eglise_id, sexe, type")
         .in("eglise_id", egliseIds);
 
-      const statsMap = buildStatsFromData(egliseIds, attendanceData, formationData, baptemeData, evangeData, cellulesData, serviteurData);
+      const statsMap = buildStatsFromData(
+        egliseIds,
+        attendanceData,
+        formationData,
+        baptemeData,
+        evangeData,
+        cellulesData,
+        serviteurData
+      );
 
-      // ── FETCH PÉRIODE PRÉCÉDENTE ──
+      // ── Fetch période précédente ──
       if (prevDebut && prevFin) {
         const [pAtt, pForm, pBap, pEvang, pCell] = await Promise.all([
           tableFetch("attendance_stats", "mois", prevDebut, prevFin),
@@ -882,15 +1150,39 @@ function StatGlobalPage() {
           tableFetch("rapport_evangelisation", "date", prevDebut, prevFin),
           tableFetch("cellules", "created_at", prevDebut, prevFin),
         ]);
-        const prevMap = buildStatsFromData(egliseIds, pAtt, pForm, pBap, pEvang, pCell, serviteurData);
-        // Agrégation des totaux précédents
-        const pt = { culteHommes: 0, culteFemmes: 0, culteJeunes: 0, culteEnfants: 0, culteConnectes: 0, baptemeH: 0, baptemeF: 0, evangH: 0, evangF: 0, servH: 0, servF: 0 };
+        const prevMap = buildStatsFromData(
+          egliseIds,
+          pAtt,
+          pForm,
+          pBap,
+          pEvang,
+          pCell,
+          serviteurData
+        );
+        const pt = {
+          culteHommes: 0,
+          culteFemmes: 0,
+          culteJeunes: 0,
+          culteEnfants: 0,
+          culteConnectes: 0,
+          baptemeH: 0,
+          baptemeF: 0,
+          evangH: 0,
+          evangF: 0,
+          servH: 0,
+          servF: 0,
+        };
         Object.values(prevMap).forEach((s) => {
-          pt.culteHommes += s.culte.hommes; pt.culteFemmes += s.culte.femmes;
-          pt.culteJeunes += s.culte.jeunes; pt.culteEnfants += s.culte.enfants;
-          pt.culteConnectes += s.culte.connectes; pt.baptemeH += s.bapteme.hommes;
-          pt.baptemeF += s.bapteme.femmes; pt.evangH += s.evangelisation.hommes;
-          pt.evangF += s.evangelisation.femmes; pt.servH += s.serviteurs.hommes;
+          pt.culteHommes += s.culte.hommes;
+          pt.culteFemmes += s.culte.femmes;
+          pt.culteJeunes += s.culte.jeunes;
+          pt.culteEnfants += s.culte.enfants;
+          pt.culteConnectes += s.culte.connectes;
+          pt.baptemeH += s.bapteme.hommes;
+          pt.baptemeF += s.bapteme.femmes;
+          pt.evangH += s.evangelisation.hommes;
+          pt.evangF += s.evangelisation.femmes;
+          pt.servH += s.serviteurs.hommes;
           pt.servF += s.serviteurs.femmes;
         });
         setPrevTotaux(pt);
@@ -898,42 +1190,57 @@ function StatGlobalPage() {
         setPrevTotaux(null);
       }
 
-      // ── BESOINS ──
+      // ── Besoins ──
       if (membresActifsData?.length) {
-        const membreIds = membresActifsData.map(m => m.id);
+        const membreIds = membresActifsData.map((m) => m.id);
         const sexeMap = {};
-        membresActifsData.forEach(m => { sexeMap[m.id] = m.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes"; });
-        let suivisQuery = supabase.from("suivis").select("membre_id, besoin, date_action").in("membre_id", membreIds);
+        membresActifsData.forEach((m) => {
+          sexeMap[m.id] =
+            m.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";
+        });
+        let suivisQuery = supabase
+          .from("suivis")
+          .select("membre_id, besoin, date_action")
+          .in("membre_id", membreIds);
         if (debut) suivisQuery = suivisQuery.gte("date_action", debut);
         if (fin) suivisQuery = suivisQuery.lte("date_action", fin);
         const { data: suivisData } = await suivisQuery;
         const count = {};
-        (suivisData || []).forEach(s => {
+        (suivisData || []).forEach((s) => {
           if (!s.besoin) return;
           const sexe = sexeMap[s.membre_id] || "femmes";
           let items = [];
-          try { items = Array.isArray(s.besoin) ? s.besoin : JSON.parse(s.besoin); } catch { return; }
-          items.forEach(item => {
-            const label = typeof item === "string" ? item.trim() : item?.label?.trim();
+          try {
+            items = Array.isArray(s.besoin) ? s.besoin : JSON.parse(s.besoin);
+          } catch {
+            return;
+          }
+          items.forEach((item) => {
+            const label =
+              typeof item === "string" ? item.trim() : item?.label?.trim();
             const statut = typeof item === "string" ? null : item?.statut;
             if (!label) return;
-            if (!count[label]) count[label] = { total: 0, hommes: 0, femmes: 0, enSuivi: 0, resolu: 0 };
+            if (!count[label])
+              count[label] = { total: 0, hommes: 0, femmes: 0, enSuivi: 0, resolu: 0 };
             count[label].total++;
-            if (sexe === "hommes") count[label].hommes++; else count[label].femmes++;
-            if (statut === "Résolu") count[label].resolu++; else count[label].enSuivi++;
+            if (sexe === "hommes") count[label].hommes++;
+            else count[label].femmes++;
+            if (statut === "Résolu") count[label].resolu++;
+            else count[label].enSuivi++;
           });
         });
         setBesoinsGlobaux(count);
       }
 
-      // ── ARBRE DES ÉGLISES ──
+      // ── Arbre des églises ──
       const map = {};
       filteredEglisesData.forEach((e) => {
         map[e.id] = { ...e, stats: statsMap[e.id], enfants: [] };
       });
       const tree = [];
       Object.values(map).forEach((e) => {
-        if (e.parent_eglise_id && map[e.parent_eglise_id]) map[e.parent_eglise_id].enfants.push(e);
+        if (e.parent_eglise_id && map[e.parent_eglise_id])
+          map[e.parent_eglise_id].enfants.push(e);
         else tree.push(e);
       });
 
@@ -942,8 +1249,11 @@ function StatGlobalPage() {
       setHasData(true);
     } catch (err) {
       console.error("Erreur fetch stats:", err);
-      setEglisesTree([]); setAllEglises([]); setBesoinsGlobaux({});
-      setTotalMembresActifs(0); setPrevTotaux(null);
+      setEglisesTree([]);
+      setAllEglises([]);
+      setBesoinsGlobaux({});
+      setTotalMembresActifs(0);
+      setPrevTotaux(null);
       setHasData(false);
     }
     setLoading(false);
@@ -976,7 +1286,10 @@ function StatGlobalPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+    <div
+      className="min-h-screen flex flex-col items-center p-4 sm:p-6"
+      style={{ background: "#333699" }}
+    >
       <HeaderPages />
 
       <div className="w-full max-w-2xl mt-6 flex flex-col gap-5 mb-10">
@@ -984,7 +1297,8 @@ function StatGlobalPage() {
         {/* En-tête */}
         <div className="text-center">
           <h1 className="text-2xl font-bold mt-4 mb-2 text-white">
-            {t.titreRapport} <span className="text-emerald-300">{t.titreAccent}</span>
+            {t.titreRapport}{" "}
+            <span className="text-emerald-300">{t.titreAccent}</span>
           </h1>
           <p className="italic text-base text-white/90">
             {t.intro}{" "}
@@ -1005,13 +1319,17 @@ function StatGlobalPage() {
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button
               onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                !modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"
+              }`}
             >
               {t.periodeRapide}
             </button>
             <button
               onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"
+              }`}
             >
               {t.trancheDates}
             </button>
@@ -1021,11 +1339,15 @@ function StatGlobalPage() {
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-white/50 flex-shrink-0">{t.periode}</span>
-                {t.periodes.map(p => (
+                {t.periodes.map((p) => (
                   <button
                     key={p.val}
                     onClick={() => handlePeriodeChange(p.val)}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                      filtrePeriode === p.val
+                        ? "bg-white text-[#333699]"
+                        : "bg-white/15 text-white/70 hover:bg-white/20"
+                    }`}
                   >
                     {p.label}
                   </button>
@@ -1040,7 +1362,9 @@ function StatGlobalPage() {
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     {t.generation}
                   </span>
-                ) : t.generer}
+                ) : (
+                  t.generer
+                )}
               </button>
             </div>
           )}
@@ -1050,13 +1374,21 @@ function StatGlobalPage() {
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-white/50">{t.dateDebut}</label>
-                  <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
+                  <input
+                    type="date"
+                    value={dateDebut}
+                    onChange={(e) => setDateDebut(e.target.value)}
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40"
+                  />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-white/50">{t.dateFin}</label>
-                  <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
+                  <input
+                    type="date"
+                    value={dateFin}
+                    onChange={(e) => setDateFin(e.target.value)}
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40"
+                  />
                 </div>
               </div>
               <button
@@ -1068,7 +1400,9 @@ function StatGlobalPage() {
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     {t.generation}
                   </span>
-                ) : t.generer}
+                ) : (
+                  t.generer
+                )}
               </button>
             </div>
           )}
@@ -1077,11 +1411,15 @@ function StatGlobalPage() {
         {/* Onglets */}
         {hasData && (
           <div className="flex gap-1 bg-white/10 rounded-xl p-1">
-            {onglets.map(o => (
+            {onglets.map((o) => (
               <button
                 key={o.key}
                 onClick={() => setOnglet(o.key)}
-                className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition ${
+                  onglet === o.key
+                    ? "bg-white text-[#333699]"
+                    : "text-white/50 hover:text-white/80"
+                }`}
               >
                 {o.label}
               </button>
@@ -1101,7 +1439,8 @@ function StatGlobalPage() {
         ) : onglet === "ensemble" ? (
           <div className="flex flex-col gap-4">
             <SectionTitle>
-              {t.synthese} — {allEglises.length} {allEglises.length > 1 ? t.eglises : t.eglise}
+              {t.synthese} — {allEglises.length}{" "}
+              {allEglises.length > 1 ? t.eglises : t.eglise}
             </SectionTitle>
             <BlocVueEnsemble
               allEglises={allEglises}
@@ -1116,17 +1455,25 @@ function StatGlobalPage() {
             {parentOptions.length > 0 && (
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-white/50">{t.filtrerEglise}</label>
-                <select value={parentFilter} onChange={e => setParentFilter(e.target.value)}
-                  className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
-                  <option value="" className="bg-[#2a2d80]">{t.toutesEglises}</option>
+                <select
+                  value={parentFilter}
+                  onChange={(e) => setParentFilter(e.target.value)}
+                  className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer"
+                >
+                  <option value="" className="bg-[#2a2d80]">
+                    {t.toutesEglises}
+                  </option>
                   {parentOptions.map((e) => (
-                    <option key={e.id} value={e.id} className="bg-[#2a2d80]">{e.nom}</option>
+                    <option key={e.id} value={e.id} className="bg-[#2a2d80]">
+                      {e.nom}
+                    </option>
                   ))}
                 </select>
               </div>
             )}
             <SectionTitle>
-              {filteredEglises.length} {filteredEglises.length > 1 ? t.eglises : t.eglise}{" "}
+              {filteredEglises.length}{" "}
+              {filteredEglises.length > 1 ? t.eglises : t.eglise}{" "}
               {filteredEglises.length > 1 ? t.affichees : t.affichee}
             </SectionTitle>
             {filteredEglises.map((eglise) => (
@@ -1141,7 +1488,6 @@ function StatGlobalPage() {
             ))}
           </div>
         )}
-
       </div>
       <Footer />
     </div>

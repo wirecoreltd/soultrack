@@ -545,15 +545,14 @@ function Presence() {
   const [savingVisible, setSavingVisible] = useState(false);
   const [sessionCourante, setSessionCourante] = useState(null);
 
-  // FIX 1 : voirCellulesFilles est l'état React — c'est lui qui pilote fetchAll
   const [voirCellulesFilles, setVoirCellulesFilles] = useState(false);
   const [savingFilles, setSavingFilles] = useState(false);
   const [isResponsableCellule, setIsResponsableCellule] = useState(false);
   const [isCheckIn, setIsCheckIn] = useState(false);
 
   const profileRef            = useRef(null);
-  const myIdsRef              = useRef(null);
-  const myIdsAllRef           = useRef(null);
+  const myIdsRef              = useRef(null); // directs seulement → liste globale
+  const myIdsAllRef           = useRef(null); // directs + filles → vue responsable
   const isAdminRef            = useRef(false);
   const useGroupedViewRef     = useRef(false);
   const fetchAllRef           = useRef(null);
@@ -568,7 +567,6 @@ function Presence() {
   useEffect(() => { voirCellulesFillesRef.current = voirCellulesFilles; }, [voirCellulesFilles]);
 
   const initProfile = useCallback(async (forceReload = false) => {
-    // FIX 1 : forceReload permet de recharger le profil après toggle
     if (profileRef.current && !forceReload) return;
     const { data: { user } } = await supabase.auth.getUser();
     const { data: profile } = await supabase
@@ -613,6 +611,7 @@ function Presence() {
         : Promise.resolve({ data: [] }),
     ]);
 
+    // ── IDs directs seulement ──
     let idsDirects = new Set();
     assignmentsResult.data?.forEach(a => idsDirects.add(a.membre_id));
 
@@ -620,46 +619,39 @@ function Presence() {
 
     if (cellulesDirectesIds.length > 0) {
       const { data: cm } = await supabase
-        .from("membres_complets")
-        .select("id")
+        .from("membres_complets").select("id")
         .in("cellule_id", cellulesDirectesIds)
         .in("etat_contact", ["existant", "nouveau"]);
       cm?.forEach(m => idsDirects.add(m.id));
     }
 
     if (famillesResult.data?.length > 0) {
-      const familleIds = famillesResult.data.map(f => f.id);
       const { data: fm } = await supabase
-        .from("membres_complets")
-        .select("id")
-        .in("famille_id", familleIds)
+        .from("membres_complets").select("id")
+        .in("famille_id", famillesResult.data.map(f => f.id))
         .in("etat_contact", ["existant", "nouveau"]);
       fm?.forEach(m => idsDirects.add(m.id));
     }
 
+    // ── IDs directs + filles ──
     let idsAll = new Set([...idsDirects]);
 
-    // Cellules filles — utilise fillesVal (lu depuis DB, pas le state React)
     if (respCellule && fillesVal && cellulesDirectesIds.length > 0) {
       for (const celluleId of cellulesDirectesIds) {
         try {
-          const res = await supabase
-            .from("cellules")
-            .select("id")
+          const { data: fillesData } = await supabase
+            .from("cellules").select("id")
             .eq("cellule_mere_id", celluleId)
             .eq("eglise_id", profile.eglise_id);
-          const fillesIds = (res.data || []).map(f => f.id);
+          const fillesIds = (fillesData || []).map(f => f.id);
           if (fillesIds.length > 0) {
-            const resMembres = await supabase
-              .from("membres_complets")
-              .select("id")
+            const { data: membresFillesData } = await supabase
+              .from("membres_complets").select("id")
               .in("cellule_id", fillesIds)
               .in("etat_contact", ["existant", "nouveau"]);
-            resMembres.data?.forEach(m => idsAll.add(m.id));
+            membresFillesData?.forEach(m => idsAll.add(m.id));
           }
-        } catch (e) {
-          console.error("Erreur init filles:", e);
-        }
+        } catch (e) { console.error("Erreur init filles:", e); }
       }
     }
 
@@ -667,38 +659,27 @@ function Presence() {
       myIdsRef.current    = null;
       myIdsAllRef.current = null;
     } else {
-      myIdsRef.current    = [...idsDirects];
-      myIdsAllRef.current = [...idsAll];
+      myIdsRef.current    = [...idsDirects]; // directs → liste globale admin
+      myIdsAllRef.current = [...idsAll];     // directs + filles → vue responsable
     }
   }, []);
 
-  // FIX 1 : toggleCellulesFilles — met à jour le state, recalcule myIdsAll, puis refetch
   const toggleCellulesFilles = async () => {
     const newVal = !voirCellulesFilles;
     setSavingFilles(true);
     try {
-      await supabase
-        .from("profiles")
+      await supabase.from("profiles")
         .update({ voir_cellules_filles: newVal })
         .eq("id", profileRef.current.uid);
-
-      // Met à jour état React ET ref immédiatement
       setVoirCellulesFilles(newVal);
       voirCellulesFillesRef.current = newVal;
-
-      // Reset le cache profil pour forcer la relecture avec la nouvelle valeur
-      profileRef.current = null;
-      myIdsRef.current    = null;
-      myIdsAllRef.current = null;
-
-      // Recharge le profil (forceReload = true) puis refetch la liste
+      profileRef.current    = null;
+      myIdsRef.current      = null;
+      myIdsAllRef.current   = null;
       await initProfile(true);
       await fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
-    } catch (e) {
-      console.error("Erreur toggleCellulesFilles:", e);
-    } finally {
-      setSavingFilles(false);
-    }
+    } catch (e) { console.error("Erreur toggleCellulesFilles:", e); }
+    finally { setSavingFilles(false); }
   };
 
   const initAll = useCallback(async () => {
@@ -706,14 +687,16 @@ function Presence() {
     const profile = profileRef.current;
 
     const { data: tempsData } = await supabase
-      .from("attendance").select("typeTemps").eq("eglise_id", profile.eglise_id).not("typeTemps", "is", null);
+      .from("attendance").select("typeTemps")
+      .eq("eglise_id", profile.eglise_id).not("typeTemps", "is", null);
 
     const fromDb = [...new Set((tempsData || []).map(t => t.typeTemps?.trim()).filter(t => t && t !== ""))];
     if (!fromDb.includes("Culte")) fromDb.push("Culte");
     setTempsOptions(sortTempsOptions(fromDb));
 
     const last5 = getLast5Days();
-    const { data } = await supabase.from("attendance").select("id, typeTemps, date, heure, numero_culte, liste_presence_visible")
+    const { data } = await supabase.from("attendance")
+      .select("id, typeTemps, date, heure, numero_culte, liste_presence_visible")
       .eq("eglise_id", profile.eglise_id).in("date", last5)
       .order("date", { ascending: false }).order("created_at", { ascending: false });
 
@@ -725,12 +708,11 @@ function Presence() {
     await initProfile();
     const profile = profileRef.current;
     if (!profile) return;
-
     const last5 = getLast5Days();
-    const { data } = await supabase.from("attendance").select("id, typeTemps, date, heure, numero_culte, liste_presence_visible")
+    const { data } = await supabase.from("attendance")
+      .select("id, typeTemps, date, heure, numero_culte, liste_presence_visible")
       .eq("eglise_id", profile.eglise_id).in("date", last5)
       .order("date", { ascending: false }).order("created_at", { ascending: false });
-
     setSessionsRecentes(data || []);
     setEtape(prev => prev === "ready" ? prev : "choix");
   }, [initProfile]);
@@ -784,135 +766,40 @@ function Presence() {
       const allPresences = presencesData || [];
       const presentIds   = new Set(allPresences.map(p => p.membre_id));
 
-      // Récupération session
-      const { data: sessionData } = await supabase
-        .from("attendance")
-        .select("liste_presence_visible")
-        .eq("id", aId)
-        .single();
-      const sessionEstVisible = sessionData?.liste_presence_visible === true;
+      const roles = profile?.roles || [];
+      const isCheckInUser             = roles.includes("CheckInPresence");
+      const isResponsableCelluleLocal = roles.includes("ResponsableCellule");
+      const isResponsableFamillesLocal = roles.includes("ResponsableFamilles");
 
-      // Données communes cellules/familles
-      const [cellulesRes, famillesRes] = await Promise.all([
-        supabase.from("cellules").select("id, cellule_full, ville, cellule, responsable_id, cellule_mere_id").eq("eglise_id", profile.eglise_id),
-        supabase.from("familles").select("id, famille_full, famille, ville, responsable_id").eq("eglise_id", profile.eglise_id),
-      ]);
-      const toutesLesCellules = cellulesRes.data || [];
-      const toutesLesFamilles = famillesRes.data || [];
-
-      // ━━━ CAS ADMIN / RI / CHECKIN (sans rôle responsable) ━━━━━━━━━
-      // FIX 2 : on exclut les responsables cellule/famille du bloc CheckIn
-      const isCheckInUser = profile?.roles?.includes("CheckInPresence");
-      const isResponsableCelluleOuFamille = profile?.roles?.includes("ResponsableCellule") || profile?.roles?.includes("ResponsableFamilles");
-
-      if ((isAdmin || isCheckInUser) && !isResponsableCelluleOuFamille) {
+      // ━━━ CAS ADMIN / RI / CHECKIN ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // Ces rôles voient UNIQUEMENT les membres sans cellule ET sans famille
+      if (isAdmin || isCheckInUser) {
         const { data: tousMembres } = await supabase
           .from("membres_complets")
           .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
           .eq("eglise_id", profile.eglise_id)
           .in("etat_contact", ["existant", "nouveau"]);
+
         const membres = tousMembres || [];
 
-        const groupesResult = [];
-        const membresCouvertsParGroupe = new Set();
-
-        // Section "Sans rattachement" — TOUJOURS visible
+        // Uniquement les sans rattachement
         const sansCellule = membres
           .filter(m => !m.cellule_id && !m.famille_id)
           .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-        if (sansCellule.length > 0) {
-          sansCellule.forEach(m => membresCouvertsParGroupe.add(m.id));
-          groupesResult.push({ id: "sans", label: t.sansRattachement, icon: "👤", color: "gray", membres: sansCellule });
-        }
 
-        if (sessionEstVisible) {
-          // FIX 2 : filtre uniquement les profils avec liste_presence_visible = true
-          const { data: tousProfiles } = await supabase
-            .from("profiles")
-            .select("id, prenom, nom, roles, voir_cellules_filles, liste_presence_visible")
-            .eq("eglise_id", profile.eglise_id);
+        const sansCelluleIds = new Set(sansCellule.map(m => m.id));
 
-          const visiblesIds = new Set(
-            (tousProfiles || [])
-              .filter(r => r.liste_presence_visible === true)
-              .map(r => r.id)
-          );
-          const profilesMap = Object.fromEntries((tousProfiles || []).map(r => [r.id, r]));
-
-          // Familles des responsables visibles
-          const famillesVisibles = toutesLesFamilles.filter(f => f.responsable_id && visiblesIds.has(f.responsable_id));
-          famillesVisibles.forEach(f => {
-            const fm = membres.filter(m => m.famille_id === f.id)
-              .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-            fm.forEach(m => membresCouvertsParGroupe.add(m.id));
-            if (fm.length > 0) groupesResult.push({ id: `f-${f.id}`, label: f.famille_full || `${f.ville} - ${f.famille}`, icon: "👑", color: "purple", membres: fm });
-          });
-
-          // Cellules des responsables visibles (directes uniquement, pas filles du même responsable)
-          const cellulesVisibles = toutesLesCellules.filter(c => {
-            if (!c.responsable_id || !visiblesIds.has(c.responsable_id)) return false;
-            if (c.cellule_mere_id) {
-              const mere = toutesLesCellules.find(cm => cm.id === c.cellule_mere_id);
-              if (mere && mere.responsable_id === c.responsable_id) return false;
-            }
-            return true;
-          });
-
-          // Inclure cellules filles si le responsable a voir_cellules_filles = true
-          const cellulesAAfficher = [...cellulesVisibles];
-          cellulesVisibles.forEach(c => {
-            const profResp = profilesMap[c.responsable_id];
-            if (profResp?.voir_cellules_filles) {
-              const filles = toutesLesCellules.filter(cf => cf.cellule_mere_id === c.id);
-              filles.forEach(cf => {
-                if (!cellulesAAfficher.find(x => x.id === cf.id)) {
-                  cellulesAAfficher.push(cf);
-                }
-              });
-            }
-          });
-
-          cellulesAAfficher.forEach(c => {
-            const cm = membres.filter(m => m.cellule_id === c.id)
-              .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-            cm.forEach(m => membresCouvertsParGroupe.add(m.id));
-            if (cm.length > 0) groupesResult.push({ id: `c-${c.id}`, label: c.cellule_full || `${c.ville} - ${c.cellule}`, icon: "🏠", color: "green", membres: cm });
-          });
-
-          // Conseillers visibles
-          const { data: assignmentsData } = await supabase
-            .from("suivi_assignments")
-            .select("membre_id, conseiller_id, profiles(prenom, nom)")
-            .eq("statut", "actif");
-
-          const assignmentsByConseiller = {};
-          (assignmentsData || []).forEach(a => {
-            if (!assignmentsByConseiller[a.conseiller_id]) assignmentsByConseiller[a.conseiller_id] = { ids: [], profile: a.profiles };
-            assignmentsByConseiller[a.conseiller_id].ids.push(a.membre_id);
-          });
-
-          Object.entries(assignmentsByConseiller).forEach(([consId, { ids, profile: consProfile }]) => {
-            if (!visiblesIds.has(consId)) return;
-            const cm = ids.map(id => membres.find(m => m.id === id)).filter(Boolean)
-              .filter(m => !membresCouvertsParGroupe.has(m.id))
-              .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
-            cm.forEach(m => membresCouvertsParGroupe.add(m.id));
-            if (cm.length > 0) {
-              const consNom = consProfile ? `${consProfile.prenom} ${consProfile.nom}` : "Conseiller";
-              groupesResult.push({ id: `cons-${consId}`, label: `${t.suiviPar} ${consNom}`, icon: "🫂", color: "amber", membres: cm });
-            }
-          });
-        }
-
-        const membresVisiblesIds = new Set([...membresCouvertsParGroupe]);
-        setGroupes(groupesResult);
-        setPresentList(allPresences.filter(p => membresVisiblesIds.has(p.membre_id))
-          .sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr")));
-        setAllMembers(membres.filter(m => membresVisiblesIds.has(m.id) && !presentIds.has(m.id)));
+        setGroupes([]);
+        setAllMembers(sansCellule.filter(m => !presentIds.has(m.id)));
+        setPresentList(
+          allPresences
+            .filter(p => sansCelluleIds.has(p.membre_id))
+            .sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"))
+        );
         return;
       }
 
-      // ━━━ CAS RESPONSABLE CELLULE / FAMILLE ━━━━━━━━━━━━━━━━━━━━━
+      // ━━━ CAS RESPONSABLE CELLULE / FAMILLE ━━━━━━━━━━━━━━━━━━━━━━━━
       if (!myIds || myIds.length === 0) {
         setAllMembers([]);
         setPresentList([]);
@@ -920,12 +807,9 @@ function Presence() {
         return;
       }
 
-      const roles = profile?.roles || [];
-      const isResponsableCelluleLocal = roles.includes("ResponsableCellule");
-      const isResponsableFamilles     = roles.includes("ResponsableFamilles");
-      const idsAPourVueResponsable    = myIdsAll ?? myIds;
+      const idsAPourVueResponsable = myIdsAll ?? myIds;
 
-      if (isResponsableCelluleLocal || isResponsableFamilles) {
+      if (isResponsableCelluleLocal || isResponsableFamillesLocal) {
         const { data: membresData } = await supabase.from("membres_complets")
           .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
           .eq("eglise_id", profile.eglise_id)
@@ -943,21 +827,17 @@ function Presence() {
 
           let toutesLesCellulesResponsable = [...(cellulesDirectes || [])];
 
-          // FIX 1 : utilise voirCellulesFillesRef.current (mis à jour avant l'appel)
           if (voirCellulesFillesRef.current && cellulesDirectes?.length > 0) {
             for (const cellule of cellulesDirectes) {
               try {
-                const res = await supabase
-                  .from("cellules")
+                const { data: fillesData } = await supabase.from("cellules")
                   .select("id, cellule_full, ville, cellule")
                   .eq("cellule_mere_id", cellule.id)
                   .eq("eglise_id", profile.eglise_id);
-                if (res.data && res.data.length > 0) {
-                  toutesLesCellulesResponsable = [...toutesLesCellulesResponsable, ...res.data];
+                if (fillesData?.length > 0) {
+                  toutesLesCellulesResponsable = [...toutesLesCellulesResponsable, ...fillesData];
                 }
-              } catch (e) {
-                console.error("Erreur cellules filles:", e);
-              }
+              } catch (e) { console.error("Erreur cellules filles:", e); }
             }
           }
 
@@ -968,12 +848,12 @@ function Presence() {
             if (cm.length > 0) groupesResult.push({
               id: `c-${c.id}`,
               label: c.cellule_full || `${c.ville} - ${c.cellule}`,
-              icon: "🏠", color: "green", membres: cm
+              icon: "🏠", color: "green", membres: cm,
             });
           });
         }
 
-        if (isResponsableFamilles) {
+        if (isResponsableFamillesLocal) {
           const { data: famillesData } = await supabase.from("familles")
             .select("id, famille_full, famille, ville").eq("responsable_id", profile.uid);
           (famillesData || []).forEach(f => {
@@ -983,7 +863,7 @@ function Presence() {
             if (fm.length > 0) groupesResult.push({
               id: `f-${f.id}`,
               label: f.famille_full || `${f.ville} - ${f.famille}`,
-              icon: "👑", color: "purple", membres: fm
+              icon: "👑", color: "purple", membres: fm,
             });
           });
         }
@@ -1005,7 +885,7 @@ function Presence() {
         return;
       }
 
-      // ━━━ CAS CONSEILLER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // ━━━ CAS CONSEILLER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       const { data: membresData } = await supabase.from("membres_complets")
         .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
         .eq("eglise_id", profile.eglise_id)
@@ -1044,7 +924,6 @@ function Presence() {
     fetchAll(selectedDateRef.current, sessionId).finally(() => setLoading(false));
 
     if (readOnly) return;
-
     const channel = supabase.channel("presence-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "presences" }, () => {
         fetchAllRef.current?.(selectedDateRef.current, attendanceIdRef.current);
@@ -1074,7 +953,6 @@ function Presence() {
       if (typeTemps === "AUTRE" && enregistrerTemps && !tempsOptions.includes(typeFinal)) {
         setTempsOptions(prev => sortTempsOptions([...prev, typeFinal]));
       }
-
       const payload = {
         date: selectedDate, heure: selectedTime, typeTemps: typeFinal, temps_nom: typeFinal,
         eglise_id: profile.eglise_id,
@@ -1110,16 +988,19 @@ function Presence() {
       let membresAInserer = [];
 
       if (isAdmin) {
-        const { data } = await supabase.from("membres_complets").select("id").eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]);
+        const { data } = await supabase.from("membres_complets").select("id")
+          .eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]);
         membresAInserer = data || [];
       } else if (myIds && myIds.length > 0) {
-        const { data } = await supabase.from("membres_complets").select("id").eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]).in("id", myIds);
+        const { data } = await supabase.from("membres_complets").select("id")
+          .eq("eglise_id", profile.eglise_id).in("etat_contact", ["existant", "nouveau"]).in("id", myIds);
         membresAInserer = data || [];
       }
 
       if (membresAInserer.length === 0) return;
 
-      const { data: existantes } = await supabase.from("presences").select("membre_id").eq("attendance_id", newAttendanceId).eq("date", date);
+      const { data: existantes } = await supabase.from("presences").select("membre_id")
+        .eq("attendance_id", newAttendanceId).eq("date", date);
       const existantIds = new Set((existantes || []).map(e => e.membre_id));
       const nouveaux = membresAInserer.filter(m => !existantIds.has(m.id));
       if (nouveaux.length === 0) return;
@@ -1162,15 +1043,8 @@ function Presence() {
     setPresentList(prev => {
       if (prev.find(p => p.membre_id === membre.id)) return prev;
       return [...prev, {
-        membre_id: membre.id,
-        statut: "present",
-        membres_complets: {
-          nom: membre.nom,
-          prenom: membre.prenom,
-          sexe: membre.sexe,
-          cellule_id: membre.cellule_id,
-          famille_id: membre.famille_id,
-        }
+        membre_id: membre.id, statut: "present",
+        membres_complets: { nom: membre.nom, prenom: membre.prenom, sexe: membre.sexe, cellule_id: membre.cellule_id, famille_id: membre.famille_id },
       }].sort((a, b) => (a.membres_complets?.nom || "").localeCompare(b.membres_complets?.nom || "", "fr"));
     });
     setAllMembers(prev => prev.filter(m => m.id !== membre.id));
@@ -1195,10 +1069,8 @@ function Presence() {
     if (absent) {
       const membreInfo = {
         id: memberId,
-        nom: absent.membres_complets?.nom,
-        prenom: absent.membres_complets?.prenom,
-        sexe: absent.membres_complets?.sexe,
-        cellule_id: absent.membres_complets?.cellule_id,
+        nom: absent.membres_complets?.nom, prenom: absent.membres_complets?.prenom,
+        sexe: absent.membres_complets?.sexe, cellule_id: absent.membres_complets?.cellule_id,
         famille_id: absent.membres_complets?.famille_id,
       };
       setPresentList(prev => prev.filter(p => p.membre_id !== memberId));
@@ -1215,7 +1087,7 @@ function Presence() {
   const filterM = (m) => `${m.prenom} ${m.nom} ${m.telephone || ""}`.toLowerCase().includes(search.toLowerCase());
   const filterP = (p) => `${p.membres_complets?.prenom} ${p.membres_complets?.nom}`.toLowerCase().includes(search.toLowerCase());
 
-  const useGroupedView = isAdminRef.current || groupes.length > 0;
+  const useGroupedView = groupes.length > 0;
   const totalPresents  = presentList.length;
   const presentIdsSet  = new Set(presentList.map(p => p.membre_id));
   const totalAbsentsGroupes = groupes.reduce((n, g) => n + g.membres.filter(m => !presentIdsSet.has(m.id)).length, 0);
@@ -1384,12 +1256,7 @@ function Presence() {
       {readOnly && <BanniereConsultation session={sessionCourante} onRetour={handleReset} t={t} lang={lang} />}
 
       {!isAdminRef.current && !readOnly && !isCheckIn && (
-        <ToggleVisibilite
-          visible={listeVisible}
-          onToggle={toggleVisibilite}
-          saving={savingVisible}
-          t={t}
-        />
+        <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} t={t} />
       )}
 
       {isResponsableCellule && !readOnly && (

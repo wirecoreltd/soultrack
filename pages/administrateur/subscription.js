@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Script from "next/script";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
@@ -41,16 +40,15 @@ const translations = {
     cancel: "Annuler",
     paymentMethod: "Choisissez votre moyen de paiement",
     creditCard: "Carte bancaire",
-    creditCardSub: "Via Paddle · Visa, Mastercard, Apple Pay",
+    creditCardSub: "Via Lemon Squeezy · Visa, Mastercard, Apple Pay",
     paypalSub: "Compte PayPal ou carte via PayPal",
     securePayment: "🔒 Paiement sécurisé · Annulable à tout moment",
     confirmingDowngrade: "Confirmer le downgrade",
     confirmingDowngradeInProgress: "En cours…",
     freeDowngradeNote: "Vous allez revenir au plan gratuit (50 membres max).",
     errorPrefix: "Erreur : ",
-    errorPaddle: "Erreur Paddle : ",
+    errorLemonSqueezy: "Erreur paiement : ",
     errorPaypal: "Erreur PayPal : ",
-    paddleNotLoaded: "Paddle.js non chargé",
     freeDowngradeSuccess: "Retour au plan Départ effectué.",
     freePlanActivated: "Plan {name} activé via PayPal !",
   },
@@ -85,16 +83,15 @@ const translations = {
     cancel: "Cancel",
     paymentMethod: "Choose your payment method",
     creditCard: "Credit card",
-    creditCardSub: "Via Paddle · Visa, Mastercard, Apple Pay",
+    creditCardSub: "Via Lemon Squeezy · Visa, Mastercard, Apple Pay",
     paypalSub: "PayPal account or card via PayPal",
     securePayment: "🔒 Secure payment · Cancel anytime",
     confirmingDowngrade: "Confirm downgrade",
     confirmingDowngradeInProgress: "Processing…",
     freeDowngradeNote: "You will return to the free plan (50 members max).",
     errorPrefix: "Error: ",
-    errorPaddle: "Paddle error: ",
+    errorLemonSqueezy: "Payment error: ",
     errorPaypal: "PayPal error: ",
-    paddleNotLoaded: "Paddle.js not loaded",
     freeDowngradeSuccess: "Switched back to Starter plan.",
     freePlanActivated: "{name} plan activated via PayPal!",
   },
@@ -166,34 +163,25 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
     }
   }
 
-  async function handlePaddle() {
-    setLoading("paddle");
+  async function handleLemonSqueezy() {
+    setLoading("lemonsqueezy");
     setError(null);
     try {
-      const res  = await fetch("/api/paddle/create-checkout", {
+      const { data: { user } } = await supabase.auth.getUser();
+      const email = user?.email;
+      if (!email) throw new Error("Utilisateur non connecté");
+
+      const res  = await fetch("/api/lemonsqueezy/checkout", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ egliseId, planId: plan.id }),
+        body:    JSON.stringify({ egliseId, planId: plan.id, email }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      if (!window.Paddle) throw new Error(t.paddleNotLoaded);
-      window.Paddle.Checkout.open({
-        items: [{ priceId: data.priceId, quantity: 1 }],
-        customer: {
-          email: data.email,
-          ...(data.customerId ? { id: data.customerId } : {}),
-        },
-        customData: { egliseId, planId: plan.id },
-        settings: {
-          successUrl:  `${window.location.origin}/administrateur/subscription?success=true`,
-          displayMode: "redirect",
-          theme:       "dark",
-        },
-      });
-      onClose();
+
+      window.location.href = data.checkoutUrl;
     } catch (e) {
-      setError(t.errorPaddle + e.message);
+      setError(t.errorLemonSqueezy + e.message);
     } finally {
       setLoading(null);
     }
@@ -214,11 +202,10 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
       if (data.type === "subscription") {
         window.location.href = data.approvalUrl;
       } else {
-        // Redirige vers PayPal pour approbation
         const paypalBase = process.env.NEXT_PUBLIC_PAYPAL_MODE === "live"
-  ? "https://www.paypal.com"
-  : "https://www.sandbox.paypal.com";
-window.location.href = `${paypalBase}/checkoutnow?token=${data.orderId}`;
+          ? "https://www.paypal.com"
+          : "https://www.sandbox.paypal.com";
+        window.location.href = `${paypalBase}/checkoutnow?token=${data.orderId}`;
       }
     } catch (e) {
       setError(t.errorPaypal + e.message);
@@ -265,14 +252,15 @@ window.location.href = `${paypalBase}/checkoutnow?token=${data.orderId}`;
           <div className="space-y-3">
             <p className="text-white/50 text-xs uppercase tracking-widest font-semibold">{t.paymentMethod}</p>
 
+            {/* ── Bouton Lemon Squeezy ── */}
             <button
-              onClick={handlePaddle}
+              onClick={handleLemonSqueezy}
               disabled={!!loading}
               className="w-full rounded-xl p-4 flex items-center gap-4 text-left transition-all"
               style={{
-                background: loading === "paddle" ? "rgba(99,102,241,0.25)" : "rgba(99,102,241,0.12)",
+                background: loading === "lemonsqueezy" ? "rgba(99,102,241,0.25)" : "rgba(99,102,241,0.12)",
                 border:     "1.5px solid rgba(99,102,241,0.5)",
-                opacity:    loading && loading !== "paddle" ? 0.5 : 1,
+                opacity:    loading && loading !== "lemonsqueezy" ? 0.5 : 1,
               }}
             >
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(99,102,241,0.2)" }}>
@@ -289,9 +277,10 @@ window.location.href = `${paypalBase}/checkoutnow?token=${data.orderId}`;
                 </p>
                 <p className="text-white/40 text-xs mt-0.5">{t.creditCardSub}</p>
               </div>
-              {loading === "paddle" ? <Spinner /> : <span className="text-white/30 text-lg">→</span>}
+              {loading === "lemonsqueezy" ? <Spinner /> : <span className="text-white/30 text-lg">→</span>}
             </button>
 
+            {/* ── Bouton PayPal ── */}
             <button
               onClick={handlePayPal}
               disabled={!!loading}
@@ -337,43 +326,42 @@ function SubscriptionContent() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
-  const params    = new URLSearchParams(window.location.search);
-  const token     = params.get("token");
-  const success   = params.get("success");
-  const cancelled = params.get("cancelled");
+    const params    = new URLSearchParams(window.location.search);
+    const token     = params.get("token");
+    const success   = params.get("success");
+    const cancelled = params.get("cancelled");
 
-  if (token) {
-    // Capture PayPal d'abord, puis loadData
-    fetch("/api/paypal/capture-order", {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ orderId: token }),
-    })
-      .then(r => r.json())
-      .then(d => {
-        window.history.replaceState({}, "", window.location.pathname);
-        if (d.success) {
-          setMessage({ type: "success", text: t.paymentConfirmed });
-        } else {
-          setMessage({ type: "error", text: d.error || "Erreur capture" });
-        }
-        loadData();
+    if (token) {
+      fetch("/api/paypal/capture-order", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ orderId: token }),
       })
-      .catch(() => {
+        .then(r => r.json())
+        .then(d => {
+          window.history.replaceState({}, "", window.location.pathname);
+          if (d.success) {
+            setMessage({ type: "success", text: t.paymentConfirmed });
+          } else {
+            setMessage({ type: "error", text: d.error || "Erreur capture" });
+          }
+          loadData();
+        })
+        .catch(() => {
+          setMessage({ type: "error", text: t.paymentCancelled });
+          loadData();
+        });
+    } else {
+      if (success === "true") {
+        setMessage({ type: "success", text: t.paymentConfirmed });
+        window.history.replaceState({}, "", window.location.pathname);
+      } else if (cancelled === "true") {
         setMessage({ type: "error", text: t.paymentCancelled });
-        loadData();
-      });
-  } else {
-    if (success === "true") {
-      setMessage({ type: "success", text: t.paymentConfirmed });
-      window.history.replaceState({}, "", window.location.pathname);
-    } else if (cancelled === "true") {
-      setMessage({ type: "error", text: t.paymentCancelled });
-      window.history.replaceState({}, "", window.location.pathname);
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+      loadData();
     }
-    loadData();
-  }
-}, []);
+  }, []);
 
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -432,16 +420,6 @@ function SubscriptionContent() {
 
   return (
     <>
-      <Script
-        src="https://cdn.paddle.com/paddle/v2/paddle.js"
-        strategy="afterInteractive"
-        onLoad={() => {
-          if (window.Paddle) {
-            window.Paddle.Initialize({ token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN });
-          }
-        }}
-      />
-
       {showPaymentModal && confirmTarget && egliseId && (
         <PaymentModal
           plan={confirmTarget}

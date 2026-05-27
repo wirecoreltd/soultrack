@@ -385,12 +385,11 @@ function RapportMinistere() {
     try {
       const { data: membresData } = await supabase
         .from("membres_complets")
-        .select("id, etat_contact")
+        .select("id, star")
         .eq("eglise_id", egliseId);
 
-      const totalMembresLocal = (membresData || []).filter(m =>
-        ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
-      ).length;
+   
+const totalMembresLocal = (membresData || []).filter(m => m.star === true).length;
       setTotalMembres(totalMembresLocal);
 
       let query = supabase

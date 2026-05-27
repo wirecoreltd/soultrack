@@ -389,28 +389,14 @@ function CreateInternalUserContent() {
 
   // ─── Soumission ───
   const submitForm = async (forceCreate = false) => {
-  if (formData.password !== formData.confirmPassword) {
-    setMessage(t.erreurMotDePasse);
-    return;
-  }
-
-  if (!formData.roles || formData.roles.length === 0) {
-    setMessage(t.erreurRole);
-    return;
-  }
-
-  // ✅ NOUVEAU : validation ministères si serviteur
-  if (
-    selectedMemberId === "add-serviteur" &&
-    (!formData.ministere || formData.ministere.length === 0)
-  ) {
-    setMessage(lang === "fr"
-  ? "❌ Sélectionnez au moins un ministère pour un serviteur !"
-  : "❌ Please select at least one ministry for a servant!"
-    );
-    return;
-  }
-    
+    if (formData.password !== formData.confirmPassword) {
+      setMessage(t.erreurMotDePasse);
+      return;
+    }
+    if (!formData.roles || formData.roles.length === 0) {
+      setMessage(t.erreurRole);
+      return;
+    }
     if (formData.roles.includes("ResponsableCellule")) {
       if (!formData.cellule_nom?.trim()) { setMessage(t.erreurNomCellule); return; }
       if (!formData.cellule_zone?.trim()) { setMessage(t.erreurZoneCellule); return; }

@@ -385,7 +385,7 @@ function RapportMinistere() {
     try {
       const { data: membresData } = await supabase
         .from("membres_complets")
-        .select("id, etat_contact")
+        .select("id, etat_contact, star")
         .eq("eglise_id", egliseId);
 
       const totalMembresLocal = (membresData || []).filter(m =>
@@ -415,10 +415,14 @@ function RapportMinistere() {
       const seen = new Set();
       const counts = {};
 
-      (statsData || []).forEach(s => {
+      const membresStarIds = new Set(
+  (membresData || []).filter(m => m.star === true).map(m => m.id)
+);
+
+(statsData || []).forEach(s => {
   if (!s.membre_id || !s.valeur) return;
-  
-  // Déduplique le membre_id pour le total serviteurs
+  if (!membresStarIds.has(s.membre_id)) return;
+
   serviteursSet.add(s.membre_id);
 
   // Déduplique par (membre_id + ministere) pour le classement

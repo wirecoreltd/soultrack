@@ -61,6 +61,9 @@ const translations = {
     selectionnezPeriode: "Sélectionnez une période pour générer le rapport.",
     aucunServiteur: "Aucun serviteur enregistré sur cette période.",
     chargement: "⏳ Chargement...",
+    hommes: "Hommes",
+    femmes: "Femmes",
+    top10: "Top 10 ministères",
   },
   en: {
     title: "Report",
@@ -114,6 +117,9 @@ const translations = {
     selectionnezPeriode: "Select a period to generate the report.",
     aucunServiteur: "No servants recorded for this period.",
     chargement: "⏳ Loading...",
+    hommes: "Men",
+    femmes: "Women",
+    top10: "Top 10 ministries",
   },
 };
 
@@ -261,6 +267,26 @@ function BlocEngagement({ rapports, totalMembres, t }) {
 }
 
 // ─── BLOC CLASSEMENT MINISTÈRES ────────────────────────────────
+function BlocSexe({ rapports, t }) {
+  const total = rapports.serviteursCount;
+  const pctH = total > 0 ? Math.round((rapports.hommes / total) * 100) : 0;
+  const pctF = total > 0 ? Math.round((rapports.femmes / total) * 100) : 0;
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <div className="bg-blue-900/40 rounded-xl px-3 py-3 text-center">
+        <p className="text-xl font-bold text-blue-300">{rapports.hommes}</p>
+        <p className="text-[11px] text-blue-400/70">{t.hommes}</p>
+        <p className="text-[10px] text-blue-500/50">{pctH}%</p>
+      </div>
+      <div className="bg-pink-900/40 rounded-xl px-3 py-3 text-center">
+        <p className="text-xl font-bold text-pink-300">{rapports.femmes}</p>
+        <p className="text-[11px] text-pink-400/70">{t.femmes}</p>
+        <p className="text-[10px] text-pink-500/50">{pctF}%</p>
+      </div>
+    </div>
+  );
+}
+
 function BlocClassement({ rapports }) {
   const { lignes } = rapports;
   const maxTotal = Math.max(...lignes.map(l => l.total), 1);
@@ -385,7 +411,7 @@ function RapportMinistere() {
     try {
       const { data: membresData } = await supabase
   .from("membres_complets")
-  .select("id, etat_contact, star")
+  .select("id, etat_contact, star, sexe")
   .eq("eglise_id", egliseId);
 
 const totalMembresLocal = (membresData || []).filter(m =>
@@ -394,6 +420,8 @@ const totalMembresLocal = (membresData || []).filter(m =>
 setTotalMembres(totalMembresLocal);
 
 const serviteursStarCount = (membresData || []).filter(m => m.star === true).length;
+const serviteursHommes = (membresData || []).filter(m => m.star === true && m.sexe === "Homme").length;
+const serviteursFemmes = (membresData || []).filter(m => m.star === true && m.sexe === "Femme").length;
 
       let query = supabase
         .from("stats_ministere_besoin")
@@ -441,7 +469,7 @@ const serviteursStarCount = (membresData || []).filter(m => m.star === true).len
         .map(([ministere, total]) => ({ ministere, total }))
         .sort((a, b) => b.total - a.total);
 
-      setRapports({ lignes, serviteursCount: serviteursStarCount });
+      setRapports({ lignes, serviteursCount: serviteursStarCount, hommes: serviteursHommes, femmes: serviteursFemmes });
       setHasData(true);
       setMessage("");
     } catch (err) {
@@ -618,7 +646,9 @@ const serviteursStarCount = (membresData || []).filter(m => m.star === true).len
               />
             </div>
 
-            {rapports.lignes.map(({ ministere, total }, idx) => {
+           <BlocSexe rapports={rapports} t={t} />
+<SectionTitle>{t.top10}</SectionTitle>
+{rapports.lignes.slice(0, 10).map(({ ministere, total }, idx) => {
               const cfg = getConfig(ministere);
               const pct = rapports.serviteursCount > 0
                 ? Math.round((total / rapports.serviteursCount) * 100)

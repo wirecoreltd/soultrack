@@ -183,19 +183,32 @@ function BarreProgression({ pct, color }) {
 
 // ─── CONFIG BESOINS ────────────────────────────────────────────
 const BESOIN_CONFIG = {
-  "Finances":                  { bar: "bg-green-400",   dot: "bg-green-400",   badge: "green" },
-  "Santé":                     { bar: "bg-red-400",     dot: "bg-red-400",     badge: "red" },
-  "Travail / Études":          { bar: "bg-blue-400",    dot: "bg-blue-400",    badge: "blue" },
-  "Famille / Enfants":         { bar: "bg-pink-400",    dot: "bg-pink-400",    badge: "pink" },
-  "Relations / Conflits":      { bar: "bg-orange-400",  dot: "bg-orange-400",  badge: "orange" },
-  "Addictions / Dépendances":  { bar: "bg-purple-400",  dot: "bg-purple-400",  badge: "gray" },
-  "Guidance spirituelle":      { bar: "bg-indigo-400",  dot: "bg-indigo-400",  badge: "blue" },
-  "Logement / Sécurité":       { bar: "bg-yellow-400",  dot: "bg-yellow-400",  badge: "yellow" },
-  "Communauté / Isolement":    { bar: "bg-cyan-400",    dot: "bg-cyan-400",    badge: "blue" },
-  "Dépression / Santé mentale":{ bar: "bg-rose-500",    dot: "bg-rose-500",    badge: "red" },
-  "Miracle":                   { bar: "bg-violet-400",  dot: "bg-violet-400",  badge: "blue" },
-  "Délivrance":                { bar: "bg-fuchsia-400", dot: "bg-fuchsia-400", badge: "pink" },
-  "Autres":                    { bar: "bg-white/60",    dot: "bg-white/40",    badge: "gray" },
+  // Français
+  "Finances":                   { bar: "bg-green-400",   dot: "bg-green-400",   badge: "green" },
+  "Santé":                      { bar: "bg-red-400",     dot: "bg-red-400",     badge: "red" },
+  "Travail / Études":           { bar: "bg-blue-400",    dot: "bg-blue-400",    badge: "blue" },
+  "Famille / Enfants":          { bar: "bg-pink-400",    dot: "bg-pink-400",    badge: "pink" },
+  "Relations / Conflits":       { bar: "bg-orange-400",  dot: "bg-orange-400",  badge: "orange" },
+  "Addictions / Dépendances":   { bar: "bg-purple-400",  dot: "bg-purple-400",  badge: "gray" },
+  "Guidance spirituelle":       { bar: "bg-indigo-400",  dot: "bg-indigo-400",  badge: "blue" },
+  "Logement / Sécurité":        { bar: "bg-yellow-400",  dot: "bg-yellow-400",  badge: "yellow" },
+  "Communauté / Isolement":     { bar: "bg-cyan-400",    dot: "bg-cyan-400",    badge: "blue" },
+  "Dépression / Santé mentale": { bar: "bg-rose-500",    dot: "bg-rose-500",    badge: "red" },
+  "Miracle":                    { bar: "bg-violet-400",  dot: "bg-violet-400",  badge: "blue" },
+  "Délivrance":                 { bar: "bg-fuchsia-400", dot: "bg-fuchsia-400", badge: "pink" },
+  // Anglais (données en base)
+  "Health":                     { bar: "bg-red-400",     dot: "bg-red-400",     badge: "red" },
+  "Work / Studies":             { bar: "bg-blue-400",    dot: "bg-blue-400",    badge: "blue" },
+  "Family / Children":          { bar: "bg-pink-400",    dot: "bg-pink-400",    badge: "pink" },
+  "Relationships / Conflicts":  { bar: "bg-orange-400",  dot: "bg-orange-400",  badge: "orange" },
+  "Addictions / Dependencies":  { bar: "bg-purple-400",  dot: "bg-purple-400",  badge: "gray" },
+  "Spiritual Guidance":         { bar: "bg-indigo-400",  dot: "bg-indigo-400",  badge: "blue" },
+  "Housing / Safety":           { bar: "bg-yellow-400",  dot: "bg-yellow-400",  badge: "yellow" },
+  "Community / Isolation":      { bar: "bg-cyan-400",    dot: "bg-cyan-400",    badge: "blue" },
+  "Depression / Mental Health": { bar: "bg-rose-500",    dot: "bg-rose-500",    badge: "red" },
+  "Deliverance":                { bar: "bg-fuchsia-400", dot: "bg-fuchsia-400", badge: "pink" },
+  "Others":                     { bar: "bg-white/60",    dot: "bg-white/40",    badge: "gray" },
+  "Autres":                     { bar: "bg-white/60",    dot: "bg-white/40",    badge: "gray" },
 };
 function getCfg(b) { return BESOIN_CONFIG[b] || BESOIN_CONFIG["Autres"]; }
 
@@ -480,8 +493,9 @@ function RapportBesoin() {
           count[label].total++;
           if (sexe === "hommes") count[label].hommes++;
           else count[label].femmes++;
-          if (statut === "Résolu") count[label].resolu++;
-          else count[label].enSuivi++;
+          const isResolu = statut === "Résolu" || statut === "Resolved";
+if (isResolu) count[label].resolu++;
+else count[label].enSuivi++;
         });
       });
 

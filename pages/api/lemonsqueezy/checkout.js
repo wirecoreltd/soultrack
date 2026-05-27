@@ -1,4 +1,4 @@
-[import { lemonSqueezySetup, createCheckout } from "@lemonsqueezy/lemonsqueezy.js";
+const { lemonSqueezySetup, createCheckout } = require("@lemonsqueezy/lemonsqueezy.js");
 
 const VARIANT_MAP = {
   starter:   process.env.LEMONSQUEEZY_VARIANT_CROISSANCE,

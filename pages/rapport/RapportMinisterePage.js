@@ -416,16 +416,20 @@ function RapportMinistere() {
       const counts = {};
 
       (statsData || []).forEach(s => {
-        if (!s.membre_id || !s.valeur) return;
-        serviteursSet.add(s.membre_id);
-        s.valeur.split(",").forEach(ministere => {
-          const m = ministere.trim();
-          const key = `${s.membre_id}__${m}`;
-          if (seen.has(key)) return;
-          seen.add(key);
-          counts[m] = (counts[m] || 0) + 1;
-        });
-      });
+  if (!s.membre_id || !s.valeur) return;
+  
+  // Déduplique le membre_id pour le total serviteurs
+  serviteursSet.add(s.membre_id);
+
+  // Déduplique par (membre_id + ministere) pour le classement
+  const ministeres = s.valeur.split(",").map(m => m.trim()).filter(Boolean);
+  ministeres.forEach(ministere => {
+    const key = `${s.membre_id}__${ministere}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    counts[ministere] = (counts[ministere] || 0) + 1;
+  });
+});
 
       const lignes = Object.entries(counts)
         .map(([ministere, total]) => ({ ministere, total }))

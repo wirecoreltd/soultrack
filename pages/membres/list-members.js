@@ -252,6 +252,9 @@ function ListMembersContent() {
   const dateDebut = searchParams.get("dateDebut");
   const dateFin = searchParams.get("dateFin");
 
+  // ─── FIX : IDs filtrés depuis suivis.besoin ───────────────────
+  const [besoinMembreIds, setBesoinMembreIds] = useState(null);
+
   const [commentChanges, setCommentChanges] = useState({});
   const [statusChanges, setStatusChanges] = useState({});
   const [updating, setUpdating] = useState({});
@@ -392,7 +395,46 @@ function ListMembersContent() {
     return ministereList.join(", ");
   };
 
-  // ─── fetchAssignments ───────────────────────────────────────────────────────
+  // ─── FIX : charge les membre_ids depuis suivis.besoin ─────────
+  useEffect(() => {
+    if (!besoinFromUrl || !userProfile) return;
+
+    const fetchBesoinIds = async () => {
+      let query = supabase
+        .from("suivis")
+        .select("membre_id, besoin, date_action");
+
+      if (dateDebut) query = query.gte("date_action", dateDebut);
+      if (dateFin)   query = query.lte("date_action", dateFin);
+
+      const { data, error } = await query;
+      if (error || !data) {
+        console.error("fetchBesoinIds error:", error);
+        setBesoinMembreIds([]);
+        return;
+      }
+
+      const ids = new Set();
+      data.forEach((s) => {
+        if (!s.besoin) return;
+        let items = [];
+        try {
+          items = Array.isArray(s.besoin) ? s.besoin : JSON.parse(s.besoin);
+        } catch { return; }
+
+        items.forEach((item) => {
+          const label = typeof item === "string" ? item.trim() : item?.label?.trim();
+          if (label === besoinFromUrl) ids.add(s.membre_id);
+        });
+      });
+
+      setBesoinMembreIds([...ids]);
+    };
+
+    fetchBesoinIds();
+  }, [besoinFromUrl, userProfile, dateDebut, dateFin]);
+
+  // ─── fetchAssignments ──────────────────────────────────────────
   const fetchAssignments = useCallback(async (currentUserProfile) => {
     const { data: assignments, error } = await supabase
       .from("suivi_assignments")
@@ -679,7 +721,6 @@ function ListMembersContent() {
       userProfileRef.current = profile;
       setUserProfile(profile);
 
-      // ─── Charger infos église ─────────────────────────
       const { data: egliseInfo } = await supabase
         .from("eglises")
         .select("*")
@@ -808,19 +849,11 @@ function ListMembersContent() {
     useMemo(() => {
       const actifs = members.filter((m) => m.etat_contact !== "supprime");
 
+      // ─── FIX : filtre sur suivis.besoin via besoinMembreIds ───
       const besoinFiltered = besoinFromUrl
-        ? actifs.filter((m) => {
-            if (!m.besoin) return false;
-            let besoinsArray = [];
-            try {
-              besoinsArray = Array.isArray(m.besoin)
-                ? m.besoin
-                : JSON.parse(m.besoin);
-            } catch {
-              besoinsArray = m.besoin.split(",");
-            }
-            return besoinsArray.map((b) => b.trim()).includes(besoinFromUrl);
-          })
+        ? besoinMembreIds === null
+          ? [] // chargement en cours
+          : actifs.filter((m) => besoinMembreIds.includes(m.id))
         : actifs;
 
       const searchFiltered = filter
@@ -847,7 +880,7 @@ function ListMembersContent() {
           (m) => m.etat_contact?.trim().toLowerCase() === "inactif"
         ),
       };
-    }, [members, filter, search, besoinFromUrl]);
+    }, [members, filter, search, besoinFromUrl, besoinMembreIds]);
 
   const toggleDetails = (id) =>
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));

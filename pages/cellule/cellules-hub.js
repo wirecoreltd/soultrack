@@ -26,6 +26,7 @@ const translations = {
       membresCellule:   "Membres de la Cellule",
       suivisEvang:      "Suivis évangélisation",
       suivisMembres:    "Suivis des membres",
+      baptemes:         "Baptêmes",
       presencesStats:   "Présences & stats",
       etatCellule:      "État Cellule",
       registrePresences:"Registre des présences",
@@ -51,6 +52,7 @@ const translations = {
       membresCellule:   "Cell group members",
       suivisEvang:      "Evangelism follow-up",
       suivisMembres:    "Member follow-up",
+      baptemes:         "Baptisms",
       presencesStats:   "Attendance & stats",
       etatCellule:      "Cell group status",
       registrePresences:"Attendance register",
@@ -150,10 +152,10 @@ function CellulesHubContent() {
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.suivisMembres}</div>
         </Link>
 
-        <Link href="/rapport/RapportBaptemePage" className={cardClass} style={{ borderTopColor: "#10B981" }}>
-            <div className="text-4xl mb-2">💧</div>
-            <div className="text-lg font-bold text-gray-800 text-center">{t.cards.baptemes}</div>
-          </Link>
+        <Link href="/rapport/RapportBaptemePage" className={CARD_CLASS} style={{ borderTop: "4px solid #10B981" }}>
+          <div className="text-5xl mb-2">💧</div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.baptemes}</div>
+        </Link>
 
         <Link href="/cellule/attendance_cellule" className={CARD_CLASS} style={{ borderTop: "4px solid #6366f1" }}>
           <div className="text-5xl mb-2">👨‍👩‍👦‍👦</div>
@@ -202,10 +204,10 @@ function CellulesHubContent() {
       )}
 
       <div className="max-w-3xl w-full mt-12 mb-4 text-center px-4">
-  <p className="italic text-base text-white/90 leading-relaxed">
-    {t.footer}
-  </p>
-</div>
+        <p className="italic text-base text-white/90 leading-relaxed">
+          {t.footer}
+        </p>
+      </div>
 
       <FooterHub />
     </div>

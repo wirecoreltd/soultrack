@@ -84,12 +84,23 @@ function SectionTitle({ children }) {
   );
 }
 
-function KpiCard({ label, value, sub }) {
+function KpiCard({ label, value, sub, colorClass }) {
+  const colors = {
+    blue:   { bg: "bg-blue-100",   label: "text-blue-700",   value: "text-blue-900",   sub: "text-blue-500"   },
+    teal:   { bg: "bg-emerald-100",label: "text-emerald-700",value: "text-emerald-900",sub: "text-emerald-500" },
+    purple: { bg: "bg-purple-100", label: "text-purple-700", value: "text-purple-900", sub: "text-purple-500"  },
+    pink:   { bg: "bg-pink-100",   label: "text-pink-700",   value: "text-pink-900",   sub: "text-pink-500"    },
+    amber:  { bg: "bg-amber-100",  label: "text-amber-700",  value: "text-amber-900",  sub: "text-amber-500"   },
+    green:  { bg: "bg-green-100",  label: "text-green-700",  value: "text-green-900",  sub: "text-green-500"   },
+    coral:  { bg: "bg-orange-100", label: "text-orange-700", value: "text-orange-900", sub: "text-orange-500"  },
+    gray:   { bg: "bg-white/10",   label: "text-white/60",   value: "text-white",      sub: "text-white/40"    },
+  };
+  const c = colors[colorClass] || colors.gray;
   return (
-    <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
-      <p className="text-xs text-white/50">{label}</p>
-      <p className="text-2xl font-bold leading-none text-white">{value}</p>
-      {sub && <p className="text-[11px] text-white/40 mt-0.5">{sub}</p>}
+    <div className={`${c.bg} rounded-2xl px-4 py-4 flex flex-col gap-1`}>
+      <p className={`text-xs ${c.label}`}>{label}</p>
+      <p className={`text-2xl font-bold leading-none ${c.value}`}>{value}</p>
+      {sub && <p className={`text-[11px] mt-0.5 ${c.sub}`}>{sub}</p>}
     </div>
   );
 }
@@ -173,12 +184,15 @@ function RapportMinistere() {
       const actifs = (membresData || []).filter(m =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
       );
-      setTotalMembres(actifs.length);
+      const totalActifs = actifs.length;
+      setTotalMembres(totalActifs);
+
+      // Hommes et femmes sur le total des membres actifs
+      const totalHommes = actifs.filter(m => m.sexe === "Homme").length;
+      const totalFemmes = actifs.filter(m => m.sexe === "Femme").length;
 
       const serviteurs = (membresData || []).filter(m => m.star === true);
       const serviteursCount = serviteurs.length;
-      const hommes = serviteurs.filter(m => m.sexe === "Homme").length;
-      const femmes = serviteurs.filter(m => m.sexe === "Femme").length;
 
       const membresStarIds = new Set(serviteurs.map(m => m.id));
       const membreMap = {};
@@ -236,7 +250,7 @@ function RapportMinistere() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 10);
 
-      setRapports({ lignes, serviteursCount, hommes, femmes, polyvalents });
+      setRapports({ lignes, serviteursCount, hommes: totalHommes, femmes: totalFemmes, polyvalents });
       setHasData(true);
       setMessage("");
     } catch (err) {
@@ -255,8 +269,8 @@ function RapportMinistere() {
   ];
 
   const pctEngages = totalMembres > 0 ? Math.round((rapports.serviteursCount / totalMembres) * 100) : 0;
-  const pctH = rapports.serviteursCount > 0 ? Math.round((rapports.hommes / rapports.serviteursCount) * 100) : 0;
-  const pctF = rapports.serviteursCount > 0 ? Math.round((rapports.femmes / rapports.serviteursCount) * 100) : 0;
+  const pctH = totalMembres > 0 ? Math.round((rapports.hommes / totalMembres) * 100) : 0;
+  const pctF = totalMembres > 0 ? Math.round((rapports.femmes / totalMembres) * 100) : 0;
   const nonEngages = Math.max(0, totalMembres - rapports.serviteursCount);
   const topMinistere = rapports.lignes[0] || null;
   const top5 = rapports.lignes.slice(0, 5);
@@ -298,10 +312,10 @@ function RapportMinistere() {
           </div>
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">{t.periode}</span>
+              <span className="text-xs text-white flex-shrink-0">{t.periode}</span>
               {periodes.map(p => (
                 <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white hover:bg-white/20"}`}>
                   {p.label}
                 </button>
               ))}
@@ -311,12 +325,12 @@ function RapportMinistere() {
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.dateDebut}</label>
+                  <label className="text-xs text-white">{t.dateDebut}</label>
                   <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.dateFin}</label>
+                  <label className="text-xs text-white">{t.dateFin}</label>
                   <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
@@ -333,7 +347,7 @@ function RapportMinistere() {
         <div className="flex gap-1 bg-white/10 rounded-xl p-1">
           {[{ key: "kpi", label: t.vueEnsemble }, { key: "classement", label: t.parMinistere }].map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white hover:text-white/80"}`}>
               {o.label}
             </button>
           ))}
@@ -346,11 +360,11 @@ function RapportMinistere() {
           </div>
         ) : !hasData ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center">
-            <p className="text-white/40 text-sm">{!egliseId ? t.chargementUser : t.selectionnezPeriode}</p>
+            <p className="text-white text-sm">{!egliseId ? t.chargementUser : t.selectionnezPeriode}</p>
           </div>
         ) : rapports.lignes.length === 0 ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center">
-            <p className="text-white/40 text-sm">{t.aucunServiteur}</p>
+            <p className="text-white text-sm">{t.aucunServiteur}</p>
           </div>
         ) : onglet === "kpi" ? (
           <div className="flex flex-col gap-7">
@@ -359,10 +373,10 @@ function RapportMinistere() {
             <div>
               <SectionTitle>{t.sectionMinisteresActifs}</SectionTitle>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <KpiCard label={t.serviteursActifs} value={rapports.serviteursCount} sub={`${pctEngages}% ${t.pctMembres}`} />
-                <KpiCard label={t.totalMembres} value={totalMembres} sub="existants + nouveaux" />
-                <KpiCard label={t.hommes} value={rapports.hommes} sub={`${pctH}%`} />
-                <KpiCard label={t.femmes} value={rapports.femmes} sub={`${pctF}%`} />
+                <KpiCard colorClass="blue"   label={t.serviteursActifs} value={rapports.serviteursCount} sub={`${pctEngages}% ${t.pctMembres}`} />
+                <KpiCard colorClass="teal"   label={t.totalMembres}     value={totalMembres}             sub="existants + nouveaux" />
+                <KpiCard colorClass="purple" label={t.hommes}           value={rapports.hommes}          sub={`${pctH}% ${t.pctMembres}`} />
+                <KpiCard colorClass="pink"   label={t.femmes}           value={rapports.femmes}          sub={`${pctF}% ${t.pctMembres}`} />
               </div>
             </div>
 
@@ -371,26 +385,26 @@ function RapportMinistere() {
               <SectionTitle>{t.sectionEngagement}</SectionTitle>
               <div className="bg-white/10 rounded-2xl px-4 py-4">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                  <div className="bg-orange-900/40 rounded-xl px-3 py-3 text-center">
-                    <p className="text-xl font-bold text-orange-300">{rapports.serviteursCount}</p>
-                    <p className="text-[11px] text-orange-400/70 mt-1">{t.engages}</p>
-                    <p className="text-[10px] text-orange-500/50">{pctEngages}%</p>
-                  </div>
-                  <div className="bg-white/5 rounded-xl px-3 py-3 text-center">
-                    <p className="text-xl font-bold text-white/50">{nonEngages}</p>
-                    <p className="text-[11px] text-white/30 mt-1">{t.nonEngages}</p>
-                    <p className="text-[10px] text-white/20">{100 - pctEngages}%</p>
+                  <div className="bg-amber-100 rounded-xl px-3 py-3 text-center">
+                    <p className="text-xl font-bold text-amber-900">{rapports.serviteursCount}</p>
+                    <p className="text-[11px] text-amber-700 mt-1">{t.engages}</p>
+                    <p className="text-[10px] text-amber-500">{pctEngages}%</p>
                   </div>
                   <div className="bg-white/10 rounded-xl px-3 py-3 text-center">
-                    <p className="text-xl font-bold text-white">{rapports.lignes.length}</p>
-                    <p className="text-[11px] text-white/50 mt-1">{t.ministeresActifs}</p>
-                    <p className="text-[10px] text-white/30">{t.representes}</p>
+                    <p className="text-xl font-bold text-white">{nonEngages}</p>
+                    <p className="text-[11px] text-white mt-1">{t.nonEngages}</p>
+                    <p className="text-[10px] text-white/70">{100 - pctEngages}%</p>
+                  </div>
+                  <div className="bg-green-100 rounded-xl px-3 py-3 text-center">
+                    <p className="text-xl font-bold text-green-900">{rapports.lignes.length}</p>
+                    <p className="text-[11px] text-green-700 mt-1">{t.ministeresActifs}</p>
+                    <p className="text-[10px] text-green-500">{t.representes}</p>
                   </div>
                   {topMinistere && (
-                    <div className="bg-white/10 rounded-xl px-3 py-3 text-center">
-                      <p className="text-sm font-bold text-emerald-300 truncate">{topMinistere.ministere}</p>
-                      <p className="text-[11px] text-white/50 mt-1">{t.premierMinistere}</p>
-                      <p className="text-[10px] text-white/30">{topMinistere.total} {t.serviteurs_count}</p>
+                    <div className="bg-orange-100 rounded-xl px-3 py-3 text-center">
+                      <p className="text-sm font-bold text-orange-900 truncate">{topMinistere.ministere}</p>
+                      <p className="text-[11px] text-orange-700 mt-1">{t.premierMinistere}</p>
+                      <p className="text-[10px] text-orange-500">{topMinistere.total} {t.serviteurs_count}</p>
                     </div>
                   )}
                 </div>
@@ -428,16 +442,16 @@ function RapportMinistere() {
                     return (
                       <div key={ministere} className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
-                        <span className="text-[11px] text-white/60">{ministere}</span>
-                        <span className="text-[11px] text-white/30">{pct}%</span>
+                        <span className="text-[11px] text-white">{ministere}</span>
+                        <span className="text-[11px] text-white/60">{pct}%</span>
                       </div>
                     );
                   })}
                   {resteTotal > 0 && (
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-white/20" />
-                      <span className="text-[11px] text-white/60">{t.autres}</span>
-                      <span className="text-[11px] text-white/30">{totalAll > 0 ? Math.round((resteTotal / totalAll) * 100) : 0}%</span>
+                      <span className="text-[11px] text-white">{t.autres}</span>
+                      <span className="text-[11px] text-white/60">{totalAll > 0 ? Math.round((resteTotal / totalAll) * 100) : 0}%</span>
                     </div>
                   )}
                 </div>
@@ -458,7 +472,7 @@ function RapportMinistere() {
                       </div>
                       <BarreProgression pct={(total / maxTotal) * 100} color={cfg.bar} />
                       <p className="text-sm font-bold text-white w-8 text-right">{total}</p>
-                      <p className="text-[11px] text-white/30 w-8 text-right flex-shrink-0">#{idx + 1}</p>
+                      <p className="text-[11px] text-white/60 w-8 text-right flex-shrink-0">#{idx + 1}</p>
                     </div>
                   );
                 })}
@@ -478,13 +492,13 @@ function RapportMinistere() {
                   const ac = AVATAR_COLORS[idx % AVATAR_COLORS.length];
                   return (
                     <div key={membre.id} className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
-                      <span className="text-[11px] text-white/30 w-5 flex-shrink-0">#{idx + 1}</span>
+                      <span className="text-[11px] text-white/60 w-5 flex-shrink-0">#{idx + 1}</span>
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0"
                         style={{ background: ac.bg, color: ac.color }}>
                         {getInitials(membre)}
                       </div>
                       <span className="text-sm text-white flex-1 truncate">{membre.prenom} {membre.nom}</span>
-                      <span className="text-xs text-white/50 flex-shrink-0">
+                      <span className="text-xs text-white flex-shrink-0">
                         {count} {count > 1 ? t.serviteursLabel : t.serviteurLabel}
                       </span>
                     </div>
@@ -508,8 +522,8 @@ function RapportMinistere() {
                         <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
                         <span className="text-sm font-semibold text-white flex-1">{ministere}</span>
                         <span className="text-xl font-bold text-white">{total}</span>
-                        <span className="text-[11px] text-white/40 w-8 text-right">{pct}%</span>
-                        <svg className={`w-4 h-4 text-white/40 transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`}
+                        <span className="text-[11px] text-white/60 w-8 text-right">{pct}%</span>
+                        <svg className={`w-4 h-4 text-white transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`}
                           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                         </svg>
@@ -519,7 +533,7 @@ function RapportMinistere() {
                           <div className="flex flex-wrap gap-2 pt-1">
                             {membres.map(m => (
                               <span key={m.id}
-                                className="text-[12px] px-3 py-1 rounded-full bg-white/10 text-white/80 border border-white/10">
+                                className="text-[12px] px-3 py-1 rounded-full bg-white/10 text-white border border-white/20">
                                 {m.prenom} {m.nom}
                               </span>
                             ))}
@@ -531,8 +545,8 @@ function RapportMinistere() {
                 })}
               </div>
 
-              <div className="mt-4 bg-white/5 rounded-2xl px-4 py-3 flex items-center justify-between border border-white/10">
-                <span className="text-sm text-white/50 font-semibold uppercase tracking-wide">{t.totalServiteurs}</span>
+              <div className="mt-4 bg-white/10 rounded-2xl px-4 py-3 flex items-center justify-between border border-white/20">
+                <span className="text-sm text-white font-semibold uppercase tracking-wide">{t.totalServiteurs}</span>
                 <span className="text-xl font-bold text-orange-300">{rapports.serviteursCount}</span>
               </div>
             </div>
@@ -541,7 +555,7 @@ function RapportMinistere() {
         )}
 
         {message && !loading && (
-          <p className="text-center text-sm text-white/60">{message}</p>
+          <p className="text-center text-sm text-white">{message}</p>
         )}
       </div>
 

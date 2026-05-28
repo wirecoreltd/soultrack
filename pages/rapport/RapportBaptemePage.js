@@ -524,14 +524,13 @@ function RapportBaptemes() {
   const [selectedCandidats, setSelectedCandidats] = useState([]);
   const [onglet, setOnglet] = useState("kpi");
   const [rapportSuccess, setRapportSuccess] = useState(false);
+  const [userProfile, setUserProfile] = useState(null); // ← profil complet stocké
   const formRef = useRef(null);
 
-  // ✅ Lire ?onglet=saisie depuis l'URL (App Router via useSearchParams)
+  // ✅ Lire ?onglet=saisie depuis l'URL
   useEffect(() => {
     const ongletParam = searchParams.get("onglet");
-    if (ongletParam === "saisie") {
-      setOnglet("saisie");
-    }
+    if (ongletParam === "saisie") setOnglet("saisie");
   }, [searchParams]);
 
   // Calcul hommes/femmes depuis sélection
@@ -544,31 +543,131 @@ function RapportBaptemes() {
     }));
   }, [selectedCandidats, candidats]);
 
-  // Chargement utilisateur
+  // ─── Chargement utilisateur + fetchCandidats avec filtres par rôle ───
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user) return;
-      const { data: profile } = await supabase.from("profiles").select("eglise_id").eq("id", session.session.user.id).single();
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id, id, role, roles, superviseur_id")
+        .eq("id", session.session.user.id)
+        .single();
+
       if (profile) {
         setFormData(prev => ({ ...prev, eglise_id: profile.eglise_id }));
-        fetchCandidats(profile.eglise_id);
+        setUserProfile(profile);
+        fetchCandidats(profile);
       }
     };
     fetchUser();
   }, []);
 
-  const fetchCandidats = async (eglise_id) => {
-    const { data } = await supabase.from("membres_complets").select("id,prenom,nom,sexe,evangelise_member_id")
-      .eq("eglise_id", eglise_id).eq("veut_se_faire_baptiser", "Oui").eq("bapteme_eau", "Non");
+  // ─── fetchCandidats : filtre selon le rôle ───────────────────
+  const fetchCandidats = async (profile) => {
+    const { eglise_id, id: profileId, role, superviseur_id } = profile;
+    const roles = profile.roles || [role];
+
+    let query = supabase
+      .from("membres_complets")
+      .select("id,prenom,nom,sexe,evangelise_member_id")
+      .eq("eglise_id", eglise_id)
+      .eq("veut_se_faire_baptiser", "Oui")
+      .eq("bapteme_eau", "Non");
+
+    if (
+      roles.includes("Administrateur") ||
+      roles.includes("ResponsableIntegration")
+    ) {
+      // Voit tout — pas de filtre supplémentaire
+
+    } else if (
+      roles.includes("SuperviseurCellule") ||
+      roles.includes("SuperviseurFamilles")
+    ) {
+      // Voit les membres des cellules qu'il supervise
+      const { data: cellulesSupervisees } = await supabase
+        .from("cellules")
+        .select("id")
+        .eq("superviseur_id", profileId);
+
+      const ids = (cellulesSupervisees || []).map(c => c.id);
+      if (ids.length > 0) {
+        query = query.in("cellule_id", ids);
+      } else {
+        setCandidats([]);
+        return;
+      }
+
+    } else if (roles.includes("ResponsableCellule")) {
+      // Cellule(s) dont il est responsable direct
+      const { data: celluleDirecte } = await supabase
+        .from("cellules")
+        .select("id")
+        .eq("responsable_id", profileId);
+
+      const idsMere = (celluleDirecte || []).map(c => c.id);
+
+      // Cellules filles (enfants directs)
+      let idsFilles = [];
+      if (idsMere.length > 0) {
+        const { data: filles } = await supabase
+          .from("cellules")
+          .select("id")
+          .in("cellule_mere_id", idsMere);
+        idsFilles = (filles || []).map(c => c.id);
+      }
+
+      const allIds = [...new Set([...idsMere, ...idsFilles])];
+
+      if (allIds.length > 0) {
+        query = query.in("cellule_id", allIds);
+      } else {
+        setCandidats([]);
+        return;
+      }
+
+    } else if (roles.includes("ResponsableFamilles")) {
+      // Membres de ses familles
+      const { data: familles } = await supabase
+        .from("familles")
+        .select("id")
+        .eq("responsable_id", profileId);
+
+      const ids = (familles || []).map(f => f.id);
+      if (ids.length > 0) {
+        query = query.in("famille_id", ids);
+      } else {
+        setCandidats([]);
+        return;
+      }
+
+    } else if (roles.includes("Conseiller")) {
+      // Membres qui lui sont attribués directement
+      query = query.eq("conseiller_id", profileId);
+
+    } else {
+      // Rôle inconnu ou restreint — ne montre rien
+      setCandidats([]);
+      return;
+    }
+
+    const { data } = await query;
     setCandidats(data || []);
   };
 
+  // ─── fetchRapports (inchangé, filtre sur eglise_id) ──────────
   const fetchRapports = async (overrideModePerso = null) => {
     if (!formData.eglise_id) return;
     setLoading(true);
     const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
-    let query = supabase.from("baptemes").select("*").eq("eglise_id", formData.eglise_id).order("date", { ascending: false });
+    let query = supabase
+      .from("baptemes")
+      .select("*")
+      .eq("eglise_id", formData.eglise_id)
+      .order("date", { ascending: false });
+
     if (isPerso) {
       if (filterDebut) query = query.gte("date", filterDebut);
       if (filterFin)   query = query.lte("date", filterFin);
@@ -577,29 +676,40 @@ function RapportBaptemes() {
       depuis.setDate(depuis.getDate() - Number(filtrePeriode));
       query = query.gte("date", depuis.toISOString().split("T")[0]);
     }
+
     const { data } = await query;
     setRapports(data || []);
     setLoading(false);
   };
 
-  useEffect(() => { if (!modePerso && formData.eglise_id) fetchRapports(false); }, [formData.eglise_id, filtrePeriode, modePerso]);
+  useEffect(() => {
+    if (!modePerso && formData.eglise_id) fetchRapports(false);
+  }, [formData.eglise_id, filtrePeriode, modePerso]);
 
+  // ─── handleSubmit ─────────────────────────────────────────────
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!formData.baptise_par.trim()) { alert(t.alertOfficiant); return; }
+
     if (editRapport) {
       await supabase.from("baptemes").update({
-        date: formData.date, hommes: formData.hommes, femmes: formData.femmes, baptise_par: formData.baptise_par,
+        date: formData.date,
+        hommes: formData.hommes,
+        femmes: formData.femmes,
+        baptise_par: formData.baptise_par,
       }).eq("id", editRapport.id);
       setEditRapport(null);
     } else {
       if (selectedCandidats.length === 0) { alert(t.alertCandidat); return; }
+
       for (const id of selectedCandidats) {
         const membre = candidats.find(c => c.id === id);
         if (!membre) continue;
+
         const evangelise_id = membre.evangelise_member_id
           ? String(membre.evangelise_member_id)
           : String(membre.id);
+
         const payload = {
           date: formData.date,
           hommes: Number(formData.hommes) || 0,
@@ -608,19 +718,27 @@ function RapportBaptemes() {
           eglise_id: formData.eglise_id,
           evangelise_member_id: evangelise_id,
         };
+
         const { error: insertError } = await supabase.from("baptemes").insert([payload]);
         if (insertError) {
           console.error("Erreur insert bapteme:", JSON.stringify(insertError));
           alert(t.erreurEnregistrement + (insertError.message || insertError.details || JSON.stringify(insertError)));
           return;
         }
-        await supabase.from("membres_complets").update({ bapteme_eau: "Oui", veut_se_faire_baptiser: "Non" }).eq("id", id);
+
+        await supabase
+          .from("membres_complets")
+          .update({ bapteme_eau: "Oui", veut_se_faire_baptiser: "Non" })
+          .eq("id", id);
       }
+
       setSelectedCandidats([]);
-      fetchCandidats(formData.eglise_id);
+      // ✅ Utiliser userProfile pour recharger les candidats filtrés
+      if (userProfile) fetchCandidats(userProfile);
       setRapportSuccess(true);
       setTimeout(() => setRapportSuccess(false), 3000);
     }
+
     setFormData(prev => ({ ...prev, date: "", hommes: 0, femmes: 0, baptise_par: "" }));
     fetchRapports();
   };
@@ -735,7 +853,10 @@ function RapportBaptemes() {
               setSelectedCandidats={setSelectedCandidats}
               editRapport={editRapport}
               onSubmit={handleSubmit}
-              onCancelEdit={() => { setEditRapport(null); setFormData(p => ({ ...p, date: "", hommes: 0, femmes: 0, baptise_par: "" })); }}
+              onCancelEdit={() => {
+                setEditRapport(null);
+                setFormData(p => ({ ...p, date: "", hommes: 0, femmes: 0, baptise_par: "" }));
+              }}
               rapportSuccess={rapportSuccess}
               router={router}
               t={t}

@@ -179,7 +179,7 @@ const TEMPLATE_CONFIG = {
     example: [
       "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15",
       "invité", "Oui",
-      "59700000", "Curepipe", "Oui",
+      "+336 12 34 56 78", "Paris", "Oui",
       "Oui", "Non",
       "Oui", "nouveau", "",
       "Finances;Santé",
@@ -190,6 +190,7 @@ const TEMPLATE_CONFIG = {
       "Les colonnes avec * sont obligatoires.",
       "civilite: Homme | Femme",
       "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
+      "Le préfixe téléphonique du pays doit être placé avant le numéro de téléphone"
       "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
       "venu: invité | réseaux | evangélisation | autre",
       "priere_salut: Oui | Non",
@@ -217,7 +218,7 @@ const TEMPLATE_CONFIG = {
     example: [
       "Smith", "Mary", "Female", "18-25 yrs", "2026-01-15",
       "invited", "Yes",
-      "59700000", "New York", "Yes",
+      "+1 212 555 0147", "New York", "Yes",
       "Yes", "No",
       "Yes", "new", "",
       "Finances;Health",
@@ -228,6 +229,7 @@ const TEMPLATE_CONFIG = {
       "Columns with * are required.",
       "gender: Male | Female",
       "age: 12-17 yrs | 18-25 yrs | 26-30 yrs | 31-40 yrs | 41-55 yrs | 56-69 yrs | 70 yrs and over",
+      "The country phone prefix must be placed before the phone number"
       "date_joined: format YYYY-MM-DD or DD-MM-YY or DD-MM-YYYY",
       "how_came: invited | social media | evangelization | other",
       "salvation_prayer: Yes | No",

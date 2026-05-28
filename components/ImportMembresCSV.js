@@ -57,7 +57,7 @@ const translations = {
     templateExample: [
       "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15", "Oui",
       "nouveau", "invité", "Oui", "Nouveau converti",
-      "59700000", "Curepipe", "Oui",
+      "+336 12 34 56 78", "Paris", "Oui",
       "Oui", "Non",
       "Finances;Santé",
       "Info supplementaire ici",
@@ -67,6 +67,7 @@ const translations = {
       "Les colonnes avec * sont obligatoires.",
       "sexe: Homme | Femme",
       "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
+      "Le préfixe téléphonique du pays doit être placé avant le numéro de téléphone"
       "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
       "serviteur: Oui | Non",
       "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur",
@@ -131,7 +132,7 @@ const translations = {
     templateExample: [
       "Dupont", "Mary", "Femme", "18-25 ans", "2026-01-15", "Oui",
       "nouveau", "invité", "Oui", "Nouveau converti",
-      "59700000", "Curepipe", "Oui",
+      "+1 212 555 0147", "Curepipe", "Oui",
       "Oui", "Non",
       "Finances;Health",
       "Additional info here",
@@ -141,6 +142,7 @@ const translations = {
       "Columns with * are required.",
       "sexe: Homme | Femme",
       "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
+      "The country phone prefix must be placed before the phone number"
       "date_venu: format YYYY-MM-DD or DD-MM-YY or DD-MM-YYYY",
       "serviteur: Oui | Non",
       "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur",

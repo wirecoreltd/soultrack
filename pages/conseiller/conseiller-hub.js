@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import Footer from "../../components/Footer";
+import FooterHub from "../../components/FooterHub";
 import { useLang } from "../../hooks/useLang";
 
 // ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ function ConseillerHubContent() {
         <p className="italic text-base text-white/90">{t.footer}</p>
       </div>
 
-      <Footer />
+      <FooterHub />
     </div>
   );
 }

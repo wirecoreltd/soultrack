@@ -316,38 +316,7 @@ function ListMembersContent() {
   };
 
   const statutSuiviLabels = t.statutSuivi;
-
-  const logStats = async (member, updatedMember, userProfile) => {
-    if (!userProfile) return;
-    const logs = [];
-    if (updatedMember.Ministere) {
-      const ministeres =
-        typeof updatedMember.Ministere === "string"
-          ? JSON.parse(updatedMember.Ministere)
-          : updatedMember.Ministere;
-      ministeres.forEach((m) =>
-        logs.push({
-          membre_id: member.id,
-          eglise_id: userProfile.eglise_id,
-          type: "ministere",
-          valeur: m,
-        })
-      );
-    }
-    if (updatedMember.besoin) {
-      const besoins =
-        typeof updatedMember.besoin === "string"
-          ? JSON.parse(updatedMember.besoin)
-          : updatedMember.besoin;
-      besoins.forEach((b) =>
-        logs.push({
-          membre_id: member.id,
-          eglise_id: userProfile.eglise_id,
-          type: "besoin",
-          valeur: b,
-        })
-      );
-    }
+  
     if (
       updatedMember.star === true &&
       updatedMember.etat_contact === "existant"
@@ -358,10 +327,7 @@ function ListMembersContent() {
         type: "serviteur",
         valeur: "true",
       });
-    }
-    if (logs.length > 0)
-      await supabase.from("stats_ministere_besoin").insert(logs);
-  };
+    }   
 
   const formatDateFr = (dateString) => {
     if (!dateString) return "—";
@@ -1550,8 +1516,7 @@ function ListMembersContent() {
         conseillers={conseillerActive ? conseillers : []}
         currentUserRoles={getRoles(userProfile)}
         onClose={() => setEditMember(null)}
-        onUpdateMember={async (updatedMember) => {
-          await logStats(editMember, updatedMember, userProfile);
+        onUpdateMember={async (updatedMember) => {          
           setAllMembers((prev) =>
             prev.map((m) =>
               m.id === updatedMember.id ? updatedMember : m

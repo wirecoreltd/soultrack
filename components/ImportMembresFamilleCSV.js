@@ -139,7 +139,7 @@ export default function ImportMembresFamilleCSV({ user }) {
     ];
     const example = [
       "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15",
-      "59700000", "Curepipe", "Oui", "Non", "Oui",
+      "+336 12 34 56 78", "Paris", "Oui", "Non", "Oui",
       "Info supplementaire ici",
     ];
     const notes = [
@@ -147,6 +147,7 @@ export default function ImportMembresFamilleCSV({ user }) {
       "Les colonnes avec * sont obligatoires.",
       "civilite: Homme | Femme",
       "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
+      "Le préfixe téléphonique du pays doit être placé avant le numéro de téléphone"
       "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
       "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
       "serviteur: Oui | Non",

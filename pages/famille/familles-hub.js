@@ -178,6 +178,11 @@ function FamillesHubContent() {
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.suivisMembres}</div>
         </Link>
 
+            <Link href="/rapport/RapportBaptemePage" className={cardClass} style={{ borderTopColor: "#10B981" }}>
+            <div className="text-4xl mb-2">💧</div>
+            <div className="text-lg font-bold text-gray-800 text-center">{t.cards.baptemes}</div>
+          </Link>
+
         <Link href="/famille/attendance_famille" className={cardClass} style={{ borderTopColor: "#8B5CF6" }}>
           <div className="text-5xl mb-2">👨‍👩‍👦‍👦</div>
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.presences}</div>

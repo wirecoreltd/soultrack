@@ -315,20 +315,8 @@ function ListMembersContent() {
     );
   };
 
-  const statutSuiviLabels = t.statutSuivi;
-  
-    if (
-      updatedMember.star === true &&
-      updatedMember.etat_contact === "existant"
-    ) {
-      logs.push({
-        membre_id: member.id,
-        eglise_id: userProfile.eglise_id,
-        type: "serviteur",
-        valeur: "true",
-      });
-    }   
-
+  const statutSuiviLabels = t.statutSuivi;  
+      
   const formatDateFr = (dateString) => {
     if (!dateString) return "—";
     const d = new Date(dateString);

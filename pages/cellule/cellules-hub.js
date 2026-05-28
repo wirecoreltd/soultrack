@@ -150,6 +150,11 @@ function CellulesHubContent() {
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.suivisMembres}</div>
         </Link>
 
+        <Link href="/rapport/RapportBaptemePage" className={cardClass} style={{ borderTopColor: "#10B981" }}>
+            <div className="text-4xl mb-2">💧</div>
+            <div className="text-lg font-bold text-gray-800 text-center">{t.cards.baptemes}</div>
+          </Link>
+
         <Link href="/cellule/attendance_cellule" className={CARD_CLASS} style={{ borderTop: "4px solid #6366f1" }}>
           <div className="text-5xl mb-2">👨‍👩‍👦‍👦</div>
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.presencesStats}</div>

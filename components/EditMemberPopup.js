@@ -91,6 +91,7 @@ const translations = {
     errPrenom: "❌ Le prénom est obligatoire.",
     errNom: "❌ Le nom est obligatoire.",
     errSave: "❌ Une erreur est survenue lors de l'enregistrement.",
+    errMinistere: "❌ Veuillez sélectionner au moins un ministère.",
   },
   en: {
     editProfile: "Edit profile",
@@ -160,6 +161,7 @@ const translations = {
     errPrenom: "❌ First name is required.",
     errNom: "❌ Last name is required.",
     errSave: "❌ An error occurred while saving.",
+    errMinistere: "❌ Please select at least one ministry.",
   },
 };
 
@@ -359,6 +361,10 @@ export default function EditMemberPopup({
     setMessage("");
     if (!formData.prenom.trim()) return setMessage(t.errPrenom);
     if (!formData.nom.trim()) return setMessage(t.errNom);
+
+     if (formData.star && formData.Ministere.length === 0) {
+    return setMessage(t.errMinistere);
+  }
 
     setLoading(true);
 

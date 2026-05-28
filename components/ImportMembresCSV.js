@@ -132,7 +132,7 @@ const translations = {
     templateExample: [
       "Dupont", "Mary", "Femme", "18-25 ans", "2026-01-15", "Oui",
       "nouveau", "invité", "Oui", "Nouveau converti",
-      "+1 212 555 0147", "Curepipe", "Oui",
+      "+1 212 555 0147", "New York", "Oui",
       "Oui", "Non",
       "Finances;Health",
       "Additional info here",

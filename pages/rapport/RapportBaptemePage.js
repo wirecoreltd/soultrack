@@ -5,12 +5,12 @@ import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useLang } from "../../hooks/useLang";
 
 // ─── TRADUCTIONS ───────────────────────────────────────────────
 const translations = {
   fr: {
-    // Page
     pageTitle: "Rapport",
     pageTitleAccent: "Baptêmes",
     pageSubtitleCreez: "Créez et suivez",
@@ -20,8 +20,6 @@ const translations = {
     pageSubtitleAnalysez: "analysez",
     pageSubtitleText3: "les volumes et la répartition hommes/femmes pour mesurer",
     pageSubtitleImpact: "l'impact et structurer la croissance de l'église",
-
-    // Filtres
     perioderapide: "Période rapide",
     tranchedates: "Tranche de dates",
     periode: "Période :",
@@ -33,22 +31,14 @@ const translations = {
     dateDebut: "Date de début",
     dateFin: "Date de fin",
     genererRapport: "Générer le rapport",
-
-    // Onglets
     vueEnsemble: "Vue d'ensemble",
     parSession: "Par session",
     saisie: "Saisie",
-
-    // Vide
     aucunRapport: "Aucun rapport sur cette période",
     ajouterRapport: "➕ Ajouter un rapport",
-
-    // Sections KPI
     sectionVueEnsemble: "Vue d'ensemble",
     sectionTendance: "Tendance mensuelle",
     sectionOfficiant: "Baptêmes par officiant",
-
-    // KPI labels
     kpiTotalBaptises: "Total baptisés",
     kpiSub: "sur la période",
     kpiSessions: "Sessions",
@@ -58,24 +48,16 @@ const translations = {
     kpiRepartition: "Répartition H / F",
     kpiHommeLabel: "Hommes",
     kpiFemmeLabel: "Femmes",
-
-    // Tendance
     tendanceVs: "vs mois préc.",
     tendanceInsuffisant: "Données insuffisantes (≥ 2 mois)",
     legendH: "Hommes",
     legendF: "Femmes",
-
-    // Par officiant
     aucuneDonnee: "Aucune donnée",
     sess: "sess.",
-
-    // Carte session
     modifier: "✏️ Modifier",
     hommes: "Hommes",
     femmes: "Femmes",
     total: "Total",
-
-    // Formulaire saisie
     infoMsg: "Cette liste contient les personnes qui",
     infoMsgBold1: "n'ont pas encore été baptisées",
     infoMsgEt: "et qui",
@@ -83,14 +65,12 @@ const translations = {
     infoMsgSuite: ". Ces informations sont mises à jour dans la",
     infoMsgBold3: "Liste des membres",
     voirListe: "Voir la liste des membres",
-
     selectionnerBaptises: "Sélectionner les baptisés",
     toutSelectionner: "Tout sélectionner",
     toutDeselectionner: "Tout désélectionner",
     aucunCandidat: "Aucun candidat au baptême",
     ajouterBaptise: "➕ Ajouter un baptisé (s'il n'apparaît pas dans la liste)",
     selectionnes: "Sélectionnés :",
-
     modifierRapport: "✏️ Modifier le rapport",
     nouveauRapport: "➕ Nouveau rapport",
     annuler: "Annuler",
@@ -100,22 +80,15 @@ const translations = {
     mettrAJour: "Mettre à jour",
     ajouterLeRapport: "Ajouter le rapport",
     rapportSucces: "✅ Rapport ajouté avec succès !",
-
-    // Alerts
     alertOfficiant: "Le champ 'Baptisé par' est obligatoire.",
     alertCandidat: "Veuillez sélectionner au moins un candidat.",
     erreurEnregistrement: "Erreur enregistrement baptême : ",
-
-    // Bouton bas de page
     ajouterModifier: "➕ Ajouter / modifier un rapport",
     nouveauRapportBtn: "➕ Nouveau rapport",
-
-    // Numéro culte
     er: "er",
     eme: "ème",
   },
   en: {
-    // Page
     pageTitle: "Report",
     pageTitleAccent: "Baptisms",
     pageSubtitleCreez: "Create and track",
@@ -125,8 +98,6 @@ const translations = {
     pageSubtitleAnalysez: "analyze",
     pageSubtitleText3: "volumes and male/female breakdown to measure",
     pageSubtitleImpact: "impact and structure church growth",
-
-    // Filtres
     perioderapide: "Quick period",
     tranchedates: "Date range",
     periode: "Period:",
@@ -138,22 +109,14 @@ const translations = {
     dateDebut: "Start date",
     dateFin: "End date",
     genererRapport: "Generate report",
-
-    // Onglets
     vueEnsemble: "Overview",
     parSession: "By session",
     saisie: "Add data",
-
-    // Vide
     aucunRapport: "No reports for this period",
     ajouterRapport: "➕ Add a report",
-
-    // Sections KPI
     sectionVueEnsemble: "Overview",
     sectionTendance: "Monthly trend",
     sectionOfficiant: "Baptisms by officiant",
-
-    // KPI labels
     kpiTotalBaptises: "Total baptized",
     kpiSub: "for the period",
     kpiSessions: "Sessions",
@@ -163,24 +126,16 @@ const translations = {
     kpiRepartition: "M / F breakdown",
     kpiHommeLabel: "Men",
     kpiFemmeLabel: "Women",
-
-    // Tendance
     tendanceVs: "vs prev. month",
     tendanceInsuffisant: "Insufficient data (≥ 2 months)",
     legendH: "Men",
     legendF: "Women",
-
-    // Par officiant
     aucuneDonnee: "No data",
     sess: "sess.",
-
-    // Carte session
     modifier: "✏️ Edit",
     hommes: "Men",
     femmes: "Women",
     total: "Total",
-
-    // Formulaire saisie
     infoMsg: "This list contains people who",
     infoMsgBold1: "have not yet been baptized",
     infoMsgEt: "and who",
@@ -188,14 +143,12 @@ const translations = {
     infoMsgSuite: ". This information is updated in the",
     infoMsgBold3: "Member list",
     voirListe: "View member list",
-
     selectionnerBaptises: "Select the baptized",
     toutSelectionner: "Select all",
     toutDeselectionner: "Deselect all",
     aucunCandidat: "No baptism candidates",
     ajouterBaptise: "➕ Add a baptized person (if not in the list)",
     selectionnes: "Selected:",
-
     modifierRapport: "✏️ Edit report",
     nouveauRapport: "➕ New report",
     annuler: "Cancel",
@@ -205,17 +158,11 @@ const translations = {
     mettrAJour: "Update",
     ajouterLeRapport: "Add report",
     rapportSucces: "✅ Report added successfully!",
-
-    // Alerts
     alertOfficiant: "The 'Baptized by' field is required.",
     alertCandidat: "Please select at least one candidate.",
     erreurEnregistrement: "Baptism save error: ",
-
-    // Bouton bas de page
     ajouterModifier: "➕ Add / edit a report",
     nouveauRapportBtn: "➕ New report",
-
-    // Numéro culte
     er: "st",
     eme: "th",
   },
@@ -223,7 +170,7 @@ const translations = {
 
 export default function RapportBaptemesPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableFormation"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "ResponsableCellule", "SuperviseurCellule", "ResponsableFamilles", "SuperviseurFamilles", "Conseiller"]}>
       <RapportBaptemes />
     </ProtectedRoute>
   );
@@ -234,12 +181,6 @@ function formatDateFr(dateStr) {
   if (!dateStr) return "";
   return new Date(dateStr + "T00:00:00").toLocaleDateString("fr-FR", {
     day: "2-digit", month: "short", year: "numeric",
-  });
-}
-function formatDateCourt(dateStr) {
-  if (!dateStr) return "";
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("fr-FR", {
-    day: "2-digit", month: "short",
   });
 }
 function getMonthNameFR(monthIndex) {
@@ -305,7 +246,6 @@ function BlocKpiGlobaux({ rapports, t }) {
   const nbSessions = sessions.length;
   const pctH = total > 0 ? Math.round((totalH / total) * 100) : 0;
   const pctF = total > 0 ? 100 - pctH : 0;
-
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -358,7 +298,6 @@ function BlocTendance({ rapports, t, lang }) {
   const derniere = mois[mois.length - 1];
   const avantDerniere = mois[mois.length - 2];
   const delta = (derniere[1].h + derniere[1].f) - (avantDerniere[1].h + avantDerniere[1].f);
-
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-3">
@@ -399,7 +338,6 @@ function BlocParOfficiant({ rapports, t }) {
   const lignes = Object.entries(parOfficiant).sort((a, b) => (b[1].h + b[1].f) - (a[1].h + a[1].f));
   const maxTot = Math.max(...lignes.map(([, v]) => v.h + v.f), 1);
   if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">{t.aucuneDonnee}</p>;
-
   return (
     <div className="flex flex-col gap-2">
       {lignes.map(([nom, { h, f, nb }]) => {
@@ -470,7 +408,6 @@ function CarteSession({ r, onEdit, t }) {
 function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats, setSelectedCandidats, editRapport, onSubmit, onCancelEdit, rapportSuccess, router, t }) {
   return (
     <div className="flex flex-col gap-4">
-      {/* Info candidats */}
       <div className="bg-blue-900/40 border border-blue-300/20 rounded-2xl px-4 py-4 text-sm text-white/80 text-center">
         ℹ️ {t.infoMsg} <strong className="text-white">{t.infoMsgBold1}</strong> {t.infoMsgEt} <strong className="text-white">{t.infoMsgBold2}</strong>{t.infoMsgSuite} <strong className="text-white">{t.infoMsgBold3}</strong>.{" "}
         <button onClick={() => router.push("/list-members")} className="underline text-amber-300 hover:text-amber-200 mt-1 inline-block">
@@ -478,7 +415,6 @@ function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats,
         </button>
       </div>
 
-      {/* Sélection candidats */}
       <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <p className="text-white font-semibold text-sm">{t.selectionnerBaptises}</p>
@@ -525,7 +461,6 @@ function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats,
         )}
       </div>
 
-      {/* Formulaire */}
       <div className="bg-white/10 rounded-2xl p-5 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <p className="text-white font-semibold">{editRapport ? t.modifierRapport : t.nouveauRapport}</p>
@@ -533,14 +468,12 @@ function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats,
             <button onClick={onCancelEdit} className="text-xs text-white/40 hover:text-white/70 transition">{t.annuler}</button>
           )}
         </div>
-
         <div className="flex flex-col gap-1">
           <label className="text-xs text-white/50">{t.dateLabel}</label>
           <input type="date" required value={formData.date}
             onChange={e => setFormData(p => ({ ...p, date: e.target.value }))}
             className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40" />
         </div>
-
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-xs text-blue-300/70">{t.hommes}</label>
@@ -553,7 +486,6 @@ function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats,
               className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-pink-300 text-sm text-center opacity-70 cursor-not-allowed" />
           </div>
         </div>
-
         <div className="flex flex-col gap-1">
           <label className="text-xs text-white/50">{t.baptisePar}</label>
           <input type="text" required value={formData.baptise_par}
@@ -561,12 +493,10 @@ function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats,
             placeholder={t.officiантPlaceholder}
             className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40 placeholder:text-white/20" />
         </div>
-
         <button onClick={onSubmit}
           className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm hover:from-blue-600 hover:to-indigo-700 transition-all active:scale-95">
           {editRapport ? t.mettrAJour : t.ajouterLeRapport}
         </button>
-
         {rapportSuccess && (
           <p className="text-center text-sm font-semibold text-emerald-400 animate-pulse">{t.rapportSucces}</p>
         )}
@@ -579,6 +509,8 @@ function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats,
 function RapportBaptemes() {
   const { lang } = useLang();
   const t = translations[lang];
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [formData, setFormData] = useState({ date: "", hommes: 0, femmes: 0, baptise_par: "", eglise_id: null });
   const [filterDebut, setFilterDebut] = useState("");
@@ -592,8 +524,15 @@ function RapportBaptemes() {
   const [selectedCandidats, setSelectedCandidats] = useState([]);
   const [onglet, setOnglet] = useState("kpi");
   const [rapportSuccess, setRapportSuccess] = useState(false);
-  const router = useRouter();
   const formRef = useRef(null);
+
+  // ✅ Lire ?onglet=saisie depuis l'URL (App Router via useSearchParams)
+  useEffect(() => {
+    const ongletParam = searchParams.get("onglet");
+    if (ongletParam === "saisie") {
+      setOnglet("saisie");
+    }
+  }, [searchParams]);
 
   // Calcul hommes/femmes depuis sélection
   useEffect(() => {
@@ -661,7 +600,6 @@ function RapportBaptemes() {
         const evangelise_id = membre.evangelise_member_id
           ? String(membre.evangelise_member_id)
           : String(membre.id);
-
         const payload = {
           date: formData.date,
           hommes: Number(formData.hommes) || 0,
@@ -670,7 +608,6 @@ function RapportBaptemes() {
           eglise_id: formData.eglise_id,
           evangelise_member_id: evangelise_id,
         };
-
         const { error: insertError } = await supabase.from("baptemes").insert([payload]);
         if (insertError) {
           console.error("Erreur insert bapteme:", JSON.stringify(insertError));
@@ -715,7 +652,6 @@ function RapportBaptemes() {
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
 
-      {/* En-tête */}
       <h1 className="text-2xl font-bold mt-4 mb-3 text-center text-white">
         {t.pageTitle} <span className="text-emerald-300">{t.pageTitleAccent}</span>
       </h1>
@@ -741,7 +677,6 @@ function RapportBaptemes() {
               {t.tranchedates}
             </button>
           </div>
-
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-white/50 flex-shrink-0">{t.periode}</span>
@@ -753,7 +688,6 @@ function RapportBaptemes() {
               ))}
             </div>
           )}
-
           {modePerso && (
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">

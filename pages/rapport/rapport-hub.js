@@ -5,6 +5,7 @@ import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import FooterHub from "../../components/FooterHub";
 import { useLang } from "../../hooks/useLang";
 
 // ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
@@ -168,6 +169,8 @@ function RapportHubContent() {
           {t.verseRef}
         </p>
       </div>
+
+          <FooterHub />
     </div>
   );
 }

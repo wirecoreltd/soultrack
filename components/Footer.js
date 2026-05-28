@@ -16,7 +16,7 @@ export default function Footer() {
             style={{ width: 28, height: 28, objectFit: "contain" }}
           />
         </a>
-        <p className="text-xs" style={{ color: "#6b7fc4" }}>
+        <p className="text-xs" style={{ color: "#4a5ab0" }}>
           © {new Date().getFullYear()} SoulTrack. Tous droits réservés.
         </p>
       </div>

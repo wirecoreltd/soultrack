@@ -134,7 +134,7 @@ export default function AddContactbaptise() {
     setErrorMsg("");
   };
 
-  const goBackToRapport = () => router.push("/rapport/RapportBaptemesPage?onglet=saisie");
+  const goBackToRapport = () => router.push("/rapport/RapportBaptemePage?onglet=saisie");
   const handleCancel = () => goBackToRapport();
 
   const handleSubmit = async (e) => {

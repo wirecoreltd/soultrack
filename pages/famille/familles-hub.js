@@ -26,6 +26,7 @@ const translations = {
       membresFamille:   "Membres de ma Famille",
       suivisEvang:      "Suivis des évangélisés",
       suivisMembres:    "Suivis des membres",
+      baptemes:         "Baptêmes",
       presences:        "Présences & statistiques",
       etatFamille:      "Etat Famille",
       registre:         "Registre des présences",
@@ -51,6 +52,7 @@ const translations = {
       membresFamille:   "My Family members",
       suivisEvang:      "Evangelism follow-up",
       suivisMembres:    "Member follow-up",
+      baptemes:         "Baptisms",
       presences:        "Attendance & statistics",
       etatFamille:      "Family status",
       registre:         "Attendance register",
@@ -77,7 +79,7 @@ function FamillesHubContent() {
 
   const [role, setRole]               = useState(null);
   const [loadingRole, setLoadingRole] = useState(true);
-  const [familleName, setFamilleName] = useState(null); // ← NOUVEAU
+  const [familleName, setFamilleName] = useState(null);
 
   useEffect(() => {
     const fetchRole = async () => {
@@ -89,7 +91,6 @@ function FamillesHubContent() {
 
       setRole(data?.role || null);
 
-      // ← NOUVEAU : fetch le nom de la famille du responsable
       if (data?.role === "ResponsableFamilles") {
         const { data: familleData } = await supabase
           .from("familles")
@@ -122,7 +123,6 @@ function FamillesHubContent() {
       <HeaderPages />
 
       <div className="text-center mb-6">
-        {/* ← NOUVEAU : titre avec nom de famille */}
         <h1 className="text-3xl font-extrabold mt-4 mb-2 text-white drop-shadow-lg">
           {t.title}
           {familleName && (
@@ -178,10 +178,10 @@ function FamillesHubContent() {
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.suivisMembres}</div>
         </Link>
 
-            <Link href="/rapport/RapportBaptemePage" className={cardClass} style={{ borderTopColor: "#10B981" }}>
-            <div className="text-4xl mb-2">💧</div>
-            <div className="text-lg font-bold text-gray-800 text-center">{t.cards.baptemes}</div>
-          </Link>
+        <Link href="/rapport/RapportBaptemePage" className={cardClass} style={{ borderTopColor: "#10B981" }}>
+          <div className="text-5xl mb-2">💧</div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.baptemes}</div>
+        </Link>
 
         <Link href="/famille/attendance_famille" className={cardClass} style={{ borderTopColor: "#8B5CF6" }}>
           <div className="text-5xl mb-2">👨‍👩‍👦‍👦</div>

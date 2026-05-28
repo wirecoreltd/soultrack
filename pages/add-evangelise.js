@@ -456,9 +456,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
         )}
 
         <style jsx>{`.input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ccc; }`}</style>
-      </div>
-          
-          <Footer />
-    </div>
+           <Footer />
+      </div>        
+             </div>
   );
 }

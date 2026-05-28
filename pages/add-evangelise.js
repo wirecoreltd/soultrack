@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 import { useLang } from "../hooks/useLang";
 import { getPrefixForPays } from "../lib/phonePrefix";
-import Footer from "../components/Footer";
+import FooterHub from "../components/FooterHub";
 
 const translations = {
   fr: {
@@ -456,7 +456,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
         )}
 
         <style jsx>{`.input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ccc; }`}</style>
-           <Footer />
+           <FooterHub />
       </div>        
              </div>
   );

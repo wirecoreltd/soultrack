@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
-import Footer from "../components/Footer";
+import FooterHub from "../components/FooterHub";
 import { FEATURE_ROUTES, buildFeaturesState, canAccessFeature } from "../lib/features";
 import { useLang } from "../hooks/useLang";
 
@@ -226,7 +226,7 @@ export default function IndexPage() {
         <p className="italic text-base text-white/90">{t.footer}</p>
       </div>
 
-      <Footer />
+      <FooterHub />
     </div>
   );
 }

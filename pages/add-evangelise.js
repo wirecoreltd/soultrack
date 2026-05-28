@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import supabase from "../lib/supabaseClient";
 import { useLang } from "../hooks/useLang";
 import { getPrefixForPays } from "../lib/phonePrefix";
+import Footer from "../components/Footer";
 
 const translations = {
   fr: {

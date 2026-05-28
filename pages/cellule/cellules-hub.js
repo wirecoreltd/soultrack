@@ -196,7 +196,7 @@ function CellulesHubContent() {
         </>
       )}
 
-      <div className="max-w-3xl w-full mt-12 mb-14 text-center px-4">
+      <div className="max-w-3xl w-full mt-12 mb-7 text-center px-4">
   <p className="italic text-base text-white/90 leading-relaxed">
     {t.footer}
   </p>

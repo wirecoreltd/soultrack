@@ -164,7 +164,7 @@ const getTemplateConfig = (lang, rolesValides) => ({
       "prenom *", "nom *", "sexe *", "age *", "date_venu *",
       "telephone", "is_whatsapp", "ville",
       "statut", "venu", "priere_salut", "type_conversion",
-      "email *", "password *", "roles *", "ministeres",
+      "email *", "password *", "roles *", "ministeres *",
       "cellule_nom", "cellule_zone",
     ],
     example: [
@@ -189,7 +189,7 @@ const getTemplateConfig = (lang, rolesValides) => ({
       "priere_salut: Oui | Non",
       "type_conversion: Nouveau converti | Réconciliation (requis si priere_salut = Oui)",
       `roles: ${rolesValides.join(" | ")} — séparer plusieurs rôles par |`,
-      `ministeres: ${MINISTERES_VALIDES.join(" | ")} — séparer par |`,
+      `ministeres: ${MINISTERES_VALIDES.join(" | ")} — séparer par | — OBLIGATOIRE`,
       ...(rolesValides.includes("ResponsableCellule") ? ["cellule_nom / cellule_zone: obligatoires si role = ResponsableCellule"] : []),
       "cellule_mere_id: UUID de la cellule mère (optionnel)",
     ],
@@ -200,7 +200,7 @@ const getTemplateConfig = (lang, rolesValides) => ({
       "first_name *", "last_name *", "gender *", "age *", "date_joined *",
       "phone", "is_whatsapp", "city",
       "status", "how_came", "salvation_prayer", "conversion_type",
-      "email *", "password *", "roles *", "ministries",
+      "email *", "password *", "roles *", "ministries *",
       "cell_name", "cell_area",
     ],
     example: [
@@ -225,7 +225,7 @@ const getTemplateConfig = (lang, rolesValides) => ({
       "salvation_prayer: Yes | No",
       "conversion_type: New convert | Reconciliation (required if salvation_prayer = Yes)",
       `roles: ${rolesValides.join(" | ")} — separate multiple roles with |`,
-      `ministries: Intercession | Praise | Technical | Communication | Children | Teens | Youth | Finance | Cleaning | Counselor | Compassion | Visitation | Shepherd | Moderation — separate with |`,
+    `ministries: ${Object.values(MINISTERES_EN_TO_FR).map(fr => Object.keys(MINISTERES_EN_TO_FR).find(en => MINISTERES_EN_TO_FR[en] === fr)).join(" | ")} — separate with | — REQUIRED`,
       ...(rolesValides.includes("ResponsableCellule") ? ["cell_name / cell_area: required if role = ResponsableCellule"] : []),
       "cellule_mere_id: UUID of the parent cell group (optional)",
     ],
@@ -406,6 +406,9 @@ export default function ImportUsersCSV() {
           const invalidMin = ministeres.filter((m) => !MINISTERES_VALIDES.includes(m));
           if (invalidMin.length > 0)
             errs.push(`invalid ministr(ies): ${invalidMin.join(", ")}`);
+
+          if (ministeres.length === 0)
+          errs.push(lang === "en" ? "at least one ministry is required" : "au moins un ministère est requis");
 
           if (r.priere_salut && !["Oui", "Non"].includes(priereSalutNorm))
             errs.push(`salvation_prayer invalid (${lang === "en" ? "Yes or No" : "Oui ou Non"})`);

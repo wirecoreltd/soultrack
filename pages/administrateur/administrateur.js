@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
-import Footer from "../../components/Footer";
+import FooterHub from "../../components/FooterHub";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { useLang } from "../../hooks/useLang";
 
@@ -145,7 +145,7 @@ export default function Administrateur() {
 
         </div>
 
-        <Footer />
+        <FooterHub />
       </div>
     </ProtectedRoute>
   );

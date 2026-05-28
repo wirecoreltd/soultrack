@@ -9,7 +9,6 @@ import { useLang } from "../../hooks/useLang";
 
 const translations = {
   fr: {
-    // Page
     pageTitle: "Suivi des Âmes & Présences",
     pageTitleAccent: "des Familles",
     pageIntro1: "Ce module a pour but",
@@ -22,8 +21,6 @@ const translations = {
     pageIntroAccent4: "présences",
     pageIntro5: "dans les familles, il ne s'agit pas simplement de compter des personnes, mais de reconnaître",
     pageIntroAccent5: "chaque âme comme précieuse et importante devant Dieu",
-
-    // Formulaire
     labelFamille: "👨‍👩‍👦 Famille",
     familleDefault: "-- Sélectionner une famille --",
     labelDate: "Date de la rencontre",
@@ -35,22 +32,12 @@ const translations = {
     enregistrerTemps: "Enregistrer ce temps pour le futur",
     btnAjouter: "Ajouter le rapport",
     btnMettre: "Mettre à jour",
-
-    // Champs numériques
-    hommes: "Hommes",
-    femmes: "Femmes",
-    jeunes: "Jeunes",
-    enfants: "Enfants",
-    nouveauxVenus: "NouveauxVenus",
-    nouveauxConvertis: "NouveauxConvertis",
     labelHommes: "Hommes",
     labelFemmes: "Femmes",
     labelJeunes: "Jeunes",
     labelEnfants: "Enfants",
     labelNouveauxVenus: "Nouveaux Venus",
     labelNouveauxConvertis: "Nouveaux Convertis",
-
-    // Filtres
     filtresTitre: "Choisissez les paramètres pour générer le rapport",
     filtreFamille: "Famille",
     filtreTous: "Toutes",
@@ -60,8 +47,6 @@ const translations = {
     filtreTypeTous: "Tous",
     btnGenerer: "Générer le rapport",
     btnChargement: "Chargement...",
-
-    // Tableau desktop
     colTypeDate: "Type / Date",
     colFamille: "Famille",
     colHommes: "Hommes",
@@ -72,12 +57,8 @@ const translations = {
     colNouveauxVenus: "Nouveaux venus",
     colNouveauxConvertis: "Nouveaux convertis",
     colActions: "Actions",
-
-    // Mobile
     totalHFJ: "Total (H+F+J):",
     totalGlobal: "Total Global:",
-
-    // Messages
     msgEnregistrement: "⏳ Enregistrement en cours...",
     msgEgliseNonChargee: "❌ Les informations de l'église ne sont pas encore chargées.",
     msgFamilleRequise: "❌ Veuillez sélectionner une famille.",
@@ -85,20 +66,15 @@ const translations = {
     msgErreurTemps: "❌ Impossible d'ajouter le nouveau temps.",
     msgMisAJour: "✅ Rapport mis à jour !",
     msgAjoute: "✅ Rapport ajouté !",
-
-    // Confirms / alerts
     confirmSupprimerTemps: "Voulez-vous vraiment supprimer ce temps ? Les rapports existants resteront mais sans nom de temps.",
     confirmSupprimerRapport: "Voulez-vous vraiment supprimer ce rapport ?",
     alertErreurRenommage: "Erreur lors du renommage du temps.",
     alertErreurSuppressionTemps: "Erreur lors de la suppression du temps.",
     alertErreurSuppressionRapport: "Erreur lors de la suppression.",
     promptNouveauNom: "Nouveau nom ?",
-
-    // Mois
     mois: ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"],
   },
   en: {
-    // Page
     pageTitle: "Soul & Attendance Tracking",
     pageTitleAccent: "for Families",
     pageIntro1: "This module aims",
@@ -111,8 +87,6 @@ const translations = {
     pageIntroAccent4: "attendance",
     pageIntro5: "in families, it is not simply about counting people, but recognizing",
     pageIntroAccent5: "every soul as precious and important before God",
-
-    // Formulaire
     labelFamille: "👨‍👩‍👦 Family",
     familleDefault: "-- Select a family --",
     labelDate: "Meeting date",
@@ -124,22 +98,12 @@ const translations = {
     enregistrerTemps: "Save this session type for the future",
     btnAjouter: "Add report",
     btnMettre: "Update",
-
-    // Champs numériques
-    hommes: "hommes",
-    femmes: "femmes",
-    jeunes: "jeunes",
-    enfants: "enfants",
-    nouveauxVenus: "nouveauxVenus",
-    nouveauxConvertis: "nouveauxConvertis",
     labelHommes: "Men",
     labelFemmes: "Women",
     labelJeunes: "Youth",
     labelEnfants: "Children",
     labelNouveauxVenus: "First-time visitors",
     labelNouveauxConvertis: "New converts",
-
-    // Filtres
     filtresTitre: "Choose parameters to generate the report",
     filtreFamille: "Family",
     filtreTous: "All",
@@ -149,8 +113,6 @@ const translations = {
     filtreTypeTous: "All",
     btnGenerer: "Generate report",
     btnChargement: "Loading...",
-
-    // Tableau desktop
     colTypeDate: "Type / Date",
     colFamille: "Family",
     colHommes: "Men",
@@ -161,12 +123,8 @@ const translations = {
     colNouveauxVenus: "First-time visitors",
     colNouveauxConvertis: "New converts",
     colActions: "Actions",
-
-    // Mobile
     totalHFJ: "Total (M+W+Y):",
     totalGlobal: "Global total:",
-
-    // Messages
     msgEnregistrement: "⏳ Saving...",
     msgEgliseNonChargee: "❌ Church information not yet loaded.",
     msgFamilleRequise: "❌ Please select a family.",
@@ -174,21 +132,16 @@ const translations = {
     msgErreurTemps: "❌ Unable to add the new session type.",
     msgMisAJour: "✅ Report updated!",
     msgAjoute: "✅ Report added!",
-
-    // Confirms / alerts
     confirmSupprimerTemps: "Are you sure you want to delete this session type? Existing reports will remain but without a session name.",
     confirmSupprimerRapport: "Are you sure you want to delete this report?",
     alertErreurRenommage: "Error renaming session type.",
     alertErreurSuppressionTemps: "Error deleting session type.",
     alertErreurSuppressionRapport: "Error deleting report.",
     promptNouveauNom: "New name?",
-
-    // Mois
     mois: ["January","February","March","April","May","June","July","August","September","October","November","December"],
   },
 };
 
-// Numeric field config — keys are DB field names, labels come from t
 const NUMERIC_FIELDS = ["hommes", "femmes", "jeunes", "enfants", "nouveauxVenus", "nouveauxConvertis"];
 
 export default function AttendanceFamillePage() {
@@ -225,6 +178,11 @@ function AttendanceFamille() {
   const [availableTypes, setAvailableTypes] = useState([]);
   const [filterType, setFilterType] = useState("");
   const [filterFamille, setFilterFamille] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [message, setMessage] = useState("");
+  const [dateDebut, setDateDebut] = useState("");
+  const [dateFin, setDateFin] = useState("");
 
   const [formData, setFormData] = useState({
     date: "",
@@ -232,19 +190,9 @@ function AttendanceFamille() {
     nouveauTemps: "",
     enregistrerTemps: false,
     famille_id: "",
-    hommes: 0,
-    femmes: 0,
-    jeunes: 0,
-    enfants: 0,
-    nouveauxVenus: 0,
-    nouveauxConvertis: 0,
+    hommes: 0, femmes: 0, jeunes: 0, enfants: 0,
+    nouveauxVenus: 0, nouveauxConvertis: 0,
   });
-
-  const [editId, setEditId] = useState(null);
-  const [message, setMessage] = useState("");
-  const [dateDebut, setDateDebut] = useState("");
-  const [dateFin, setDateFin] = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   /* ── User ── */
   useEffect(() => {
@@ -267,29 +215,82 @@ function AttendanceFamille() {
         .from("familles").select("id, famille_full, responsable_id")
         .eq("eglise_id", superviseur.eglise_id).order("famille_full");
       if (error) { console.error(error); return; }
+
       let filtered = data || [];
       if (superviseur.role === "ResponsableFamilles") {
         filtered = filtered.filter(f => f.responsable_id === superviseur.id);
+        // Auto-assigner la famille
+        if (filtered.length >= 1) {
+          setFormData(prev => ({ ...prev, famille_id: filtered[0].id }));
+        }
       }
       setFamilles(filtered);
-      if (superviseur.role === "ResponsableFamilles" && filtered.length === 1) {
-        setFormData(prev => ({ ...prev, famille_id: filtered[0].id }));
-      }
     };
     loadFamilles();
   }, [superviseur]);
 
-  /* ── Split type name ── */
+  /* ── Temps ── */
+  useEffect(() => {
+    if (!superviseur.eglise_id) return;
+    const loadTemps = async () => {
+      const { data, error } = await supabase
+        .from("attendance_famille").select("typeTemps")
+        .eq("eglise_id", superviseur.eglise_id).not("typeTemps", "is", null);
+      if (error) console.error(error);
+      else {
+        const uniqueTemps = [
+          "Famille",
+          ...new Set(data.map(item => item.typeTemps?.trim()).filter(item => item && item !== "" && item !== "Famille"))
+        ];
+        setTempsOptions(uniqueTemps);
+      }
+    };
+    loadTemps();
+  }, [superviseur]);
+
+  /* ── Dropdown click outside ── */
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (selectRef.current && !selectRef.current.contains(event.target)) setDropdownOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  /* ── Available types from reports ── */
+  useEffect(() => {
+    if (reports.length > 0) {
+      const types = [...new Set(reports.map(r => r.typeTemps?.trim()).filter(tp => tp && tp !== ""))];
+      setAvailableTypes(types);
+    }
+  }, [reports]);
+
+  /* ── Helpers ── */
   const splitTypeName = (name, lineLength = 15) => {
     if (!name) return "";
-    const regex = new RegExp(`.{1,${lineLength}}`, "g");
-    return name.match(regex).join("\n");
+    return name.match(new RegExp(`.{1,${lineLength}}`, "g")).join("\n");
   };
 
+  const getMonthName = (monthIndex) => t.mois[monthIndex] || "";
+
+  const formatDateFR = (d) => {
+    const dateObj = new Date(d);
+    return `${String(dateObj.getDate()).padStart(2, "0")}/${String(dateObj.getMonth() + 1).padStart(2, "0")}/${dateObj.getFullYear()}`;
+  };
+
+  const getFamilleLabel = (id) => familles.find(f => f.id === id)?.famille_full || "—";
+
+  const toggleMonth = (key) => setExpandedMonths(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const borderColors = [
+    "border-red-500", "border-green-500", "border-blue-500",
+    "border-yellow-500", "border-purple-500", "border-pink-500", "border-indigo-500",
+  ];
+
   /* ── Group / totals ── */
-  const groupByMonthAndType = (reports) => {
+  const groupByMonthAndType = (list) => {
     const map = {};
-    reports.forEach(r => {
+    list.forEach(r => {
       const d = new Date(r.date);
       const monthKey = `${d.getFullYear()}-${d.getMonth()}`;
       if (!map[monthKey]) map[monthKey] = {};
@@ -316,34 +317,6 @@ function AttendanceFamille() {
   const calculateMonthTotals = (typesObj) => sumRows(Object.values(typesObj).flat());
   const calculateTypeTotals = (rows) => sumRows(rows);
 
-  /* ── Temps ── */
-  useEffect(() => {
-    if (!superviseur.eglise_id) return;
-    const loadTemps = async () => {
-      const { data, error } = await supabase
-        .from("attendance_famille").select("typeTemps")
-        .eq("eglise_id", superviseur.eglise_id).not("typeTemps", "is", null);
-      if (error) console.error(error);
-      else {
-        const uniqueTemps = [
-          "Famille",
-          ...new Set(data.map(t => t.typeTemps?.trim()).filter(t => t && t !== "" && t !== "Famille"))
-        ];
-        setTempsOptions(uniqueTemps);
-      }
-    };
-    loadTemps();
-  }, [superviseur]);
-
-  /* ── Dropdown click outside ── */
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (selectRef.current && !selectRef.current.contains(event.target)) setDropdownOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   /* ── Rename / delete temps ── */
   const handleRenameTemps = async (ancienNom, nouveauNom) => {
     if (!nouveauNom) return;
@@ -353,7 +326,7 @@ function AttendanceFamille() {
       if (error) throw error;
       fetchRapports();
     } catch (err) {
-      console.error("Erreur renommer temps:", err.message);
+      console.error(err.message);
       alert(t.alertErreurRenommage);
     }
   };
@@ -366,7 +339,7 @@ function AttendanceFamille() {
       if (error) throw error;
       fetchRapports();
     } catch (err) {
-      console.error("Erreur suppression temps:", err.message);
+      console.error(err.message);
       alert(t.alertErreurSuppressionTemps);
     }
   };
@@ -378,7 +351,7 @@ function AttendanceFamille() {
       if (error) throw error;
       fetchRapports();
     } catch (err) {
-      console.error("Erreur suppression rapport:", err.message);
+      console.error(err.message);
       alert(t.alertErreurSuppressionRapport);
     }
   };
@@ -404,20 +377,10 @@ function AttendanceFamille() {
 
     if (formData.enregistrerTemps && formData.typeTemps === "AUTRE" && !tempsOptions.includes(typeTempsFinal)) {
       setTempsOptions(prev => [...prev, typeTempsFinal]);
-      try {
-        const { error } = await supabase.from("attendance_famille").insert([{
-          typeTemps: typeTempsFinal, eglise_id: superviseur.eglise_id,
-        }]);
-        if (error) throw error;
-      } catch (err) {
-        console.error("Erreur ajout nouveau temps :", err.message);
-        setMessage(t.msgErreurTemps);
-        return;
-      }
     }
 
-    const rapportAvecEglise = {
-      ...formData,
+    const payload = {
+      date: formData.date,
       typeTemps: typeTempsFinal,
       eglise_id: superviseur.eglise_id,
       famille_id: formData.famille_id,
@@ -429,24 +392,21 @@ function AttendanceFamille() {
       nouveauxConvertis: Number(formData.nouveauxConvertis) || 0,
     };
 
-    const rapportClean = Object.fromEntries(
-      Object.entries(rapportAvecEglise).filter(([_, v]) => v !== "" && v !== null)
-    );
-
     try {
       if (editId) {
-        const { error } = await supabase.from("attendance_famille").update(rapportClean).eq("id", editId);
+        const { error } = await supabase.from("attendance_famille").update(payload).eq("id", editId);
         if (error) throw error;
         setMessage(t.msgMisAJour);
       } else {
-        const { error } = await supabase.from("attendance_famille").insert([rapportClean]);
+        const { error } = await supabase.from("attendance_famille").insert([payload]);
         if (error) throw error;
         setMessage(t.msgAjoute);
       }
       setTimeout(() => setMessage(""), 3000);
       setFormData({
         date: "", typeTemps: "", nouveauTemps: "", enregistrerTemps: false,
-        famille_id: superviseur.role === "ResponsableFamilles" && familles.length === 1 ? familles[0].id : "",
+        famille_id: superviseur.role === "ResponsableFamilles" && familles.length >= 1
+          ? familles[0].id : "",
         hommes: 0, femmes: 0, jeunes: 0, enfants: 0, nouveauxVenus: 0, nouveauxConvertis: 0,
       });
       setEditId(null);
@@ -461,8 +421,8 @@ function AttendanceFamille() {
     setEditId(r.id);
     setFormData({
       date: r.date,
-      typeTemps: r.typeTemps === "Famille" ? "Famille" : "AUTRE",
-      nouveauTemps: r.typeTemps !== "Famille" ? r.typeTemps : "",
+      typeTemps: tempsOptions.includes(r.typeTemps) ? r.typeTemps : "AUTRE",
+      nouveauTemps: !tempsOptions.includes(r.typeTemps) ? r.typeTemps : "",
       famille_id: r.famille_id || "",
       hommes: r.hommes, femmes: r.femmes, jeunes: r.jeunes,
       enfants: r.enfants, nouveauxVenus: r.nouveauxVenus, nouveauxConvertis: r.nouveauxConvertis,
@@ -479,8 +439,8 @@ function AttendanceFamille() {
     let query = supabase.from("attendance_famille").select("*").eq("eglise_id", superviseur.eglise_id);
 
     if (superviseur.role === "ResponsableFamilles") {
-      const mesFamillesIds = familles.map(f => f.id);
-      if (mesFamillesIds.length > 0) query = query.in("famille_id", mesFamillesIds);
+      const ids = familles.map(f => f.id);
+      if (ids.length > 0) query = query.in("famille_id", ids);
     }
 
     if (filterFamille) query = query.eq("famille_id", filterFamille);
@@ -495,35 +455,14 @@ function AttendanceFamille() {
     setShowTable(true);
   };
 
-  /* ── Utils ── */
-  const getMonthName = (monthIndex) => t.mois[monthIndex] || "";
-
-  const formatDateFR = (d) => {
-    const dateObj = new Date(d);
-    return `${String(dateObj.getDate()).padStart(2, "0")}/${String(dateObj.getMonth() + 1).padStart(2, "0")}/${dateObj.getFullYear()}`;
-  };
-
-  const toggleMonth = (key) => setExpandedMonths(prev => ({ ...prev, [key]: !prev[key] }));
-
-  const borderColors = ["border-red-500", "border-green-500", "border-blue-500",
-    "border-yellow-500", "border-purple-500", "border-pink-500", "border-indigo-500"];
-
   const filteredReports = filterType ? reports.filter(r => r.typeTemps === filterType) : reports;
-
-  useEffect(() => {
-    if (reports.length > 0) {
-      const types = [...new Set(reports.map(r => r.typeTemps?.trim()).filter(t => t && t !== ""))];
-      setAvailableTypes(types);
-    }
-  }, [reports]);
-
-  const getFamilleLabel = (id) => familles.find(f => f.id === id)?.famille_full || "—";
 
   /* ── Render ── */
   return (
     <div className="min-h-screen flex flex-col items-center p-6 bg-[#333699]">
       <HeaderPages />
-      <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
+
+      <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-white">
         {t.pageTitle} <span className="text-emerald-300">{t.pageTitleAccent}</span>
       </h1>
 
@@ -537,18 +476,27 @@ function AttendanceFamille() {
         </p>
       </div>
 
-      {/* FORMULAIRE */}
+      {/* ── FORMULAIRE ── */}
       <div ref={formRef} className="max-w-3xl w-full bg-white/10 rounded-3xl p-6 shadow-lg mb-6">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-          {/* Famille */}
-          <div className="flex flex-col col-span-1 md:col-span-2">
-            <label className="text-white mb-1">{t.labelFamille}</label>
-            <select name="famille_id" value={formData.famille_id} onChange={handleChange} className="input w-full" required>
-              <option value="">{t.familleDefault}</option>
-              {familles.map(f => <option key={f.id} value={f.id}>{f.famille_full}</option>)}
-            </select>
-          </div>
+          {/* Famille : dropdown pour Admin/Superadmin, affichage fixe pour ResponsableFamilles */}
+          {superviseur.role !== "ResponsableFamilles" ? (
+            <div className="flex flex-col col-span-1 md:col-span-2">
+              <label className="text-white mb-1">{t.labelFamille}</label>
+              <select name="famille_id" value={formData.famille_id} onChange={handleChange} className="input w-full" required>
+                <option value="">{t.familleDefault}</option>
+                {familles.map(f => <option key={f.id} value={f.id}>{f.famille_full}</option>)}
+              </select>
+            </div>
+          ) : (
+            <div className="flex flex-col col-span-1 md:col-span-2">
+              <label className="text-white mb-1">{t.labelFamille}</label>
+              <div className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm">
+                {getFamilleLabel(formData.famille_id)}
+              </div>
+            </div>
+          )}
 
           {/* Date */}
           <div className="flex flex-col">
@@ -556,16 +504,16 @@ function AttendanceFamille() {
             <input type="date" name="date" value={formData.date} onChange={handleChange} className="input w-full" required />
           </div>
 
-          {/* Type de temps */}
+          {/* Type de temps — dropdown custom */}
           <div className="flex flex-col relative w-full md:w-64" ref={selectRef}>
             <label className="text-white mb-1">{t.labelTypeTemps}</label>
             <div
               className="input h-12 flex items-center justify-between px-3 cursor-pointer text-black bg-white"
               onClick={() => setDropdownOpen(!dropdownOpen)}
             >
-              {formData.typeTemps || t.typeTempsDefault} <span>▼</span>
+              <span>{formData.typeTemps || t.typeTempsDefault}</span>
+              <span>▼</span>
             </div>
-
             {dropdownOpen && (
               <div className="absolute top-full left-0 z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white border rounded shadow-lg">
                 {tempsOptions.map((option) => (
@@ -577,21 +525,15 @@ function AttendanceFamille() {
                     <span>{option}</span>
                     {option !== "Famille" && (
                       <div className="flex gap-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleRenameTemps(option, prompt(t.promptNouveauNom, option)); }}
-                          className="text-blue-500"
-                        >✏️</button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDeleteTemps(option); }}
-                          className="text-red-500"
-                        >🗑️</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleRenameTemps(option, prompt(t.promptNouveauNom, option)); }} className="text-blue-500">✏️</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteTemps(option); }} className="text-red-500">🗑️</button>
                       </div>
                     )}
                   </div>
                 ))}
                 <div
                   className="px-3 py-2 text-[#333699] font-semibold hover:bg-gray-200 cursor-pointer"
-                  onClick={() => setFormData(prev => ({ ...prev, typeTemps: "AUTRE", nouveauTemps: "" }))}
+                  onClick={() => { setFormData(prev => ({ ...prev, typeTemps: "AUTRE", nouveauTemps: "" })); setDropdownOpen(false); }}
                 >
                   {t.ajouterTemps}
                 </div>
@@ -605,25 +547,14 @@ function AttendanceFamille() {
               <div className="flex flex-col col-span-1 md:col-span-2">
                 <label className="text-white mb-1">{t.labelNomTemps}</label>
                 <input
-                  type="text"
-                  name="nouveauTemps"
-                  value={formData.nouveauTemps}
-                  onChange={(e) => {
-                    const value = e.target.value.slice(0, 30);
-                    setFormData(prev => ({ ...prev, nouveauTemps: value }));
-                  }}
-                  className="input w-full"
-                  placeholder={t.nomTempsPlaceholder}
-                  maxLength={30}
+                  type="text" name="nouveauTemps" value={formData.nouveauTemps}
+                  onChange={(e) => setFormData(prev => ({ ...prev, nouveauTemps: e.target.value.slice(0, 30) }))}
+                  className="input w-full" placeholder={t.nomTempsPlaceholder} maxLength={30}
                 />
               </div>
               <div className="flex items-center gap-2 col-span-1 md:col-span-2">
-                <input
-                  type="checkbox"
-                  name="enregistrerTemps"
-                  checked={formData.enregistrerTemps}
-                  onChange={e => setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))}
-                />
+                <input type="checkbox" checked={formData.enregistrerTemps}
+                  onChange={e => setFormData(prev => ({ ...prev, enregistrerTemps: e.target.checked }))} />
                 <label className="text-amber-300 text-sm">{t.enregistrerTemps}</label>
               </div>
             </>
@@ -633,14 +564,10 @@ function AttendanceFamille() {
           {NUMERIC_FIELDS.map(field => (
             <div className="flex flex-col w-full" key={field}>
               <label className="text-white mb-1">{fieldLabels[field]}</label>
-              <input
-                type="number" name={field} value={formData[field] || 0}
-                onChange={handleChange} className="input w-full"
-              />
+              <input type="number" name={field} value={formData[field] || 0} onChange={handleChange} className="input w-full" min={0} />
             </div>
           ))}
 
-          {/* Bouton submit */}
           <button type="submit" className="col-span-1 md:col-span-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl shadow-md hover:from-blue-500 hover:to-indigo-600 transition-all">
             {editId ? t.btnMettre : t.btnAjouter}
           </button>
@@ -648,20 +575,22 @@ function AttendanceFamille() {
         {message && <p className="mt-4 text-center text-white font-medium">{message}</p>}
       </div>
 
-      {/* FILTRES */}
+      {/* ── FILTRES ── */}
       <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-lg rounded-xl p-4 md:p-6 mt-2 w-full md:w-fit md:mx-auto flex flex-col text-white">
         <p className="text-base text-red-400 font-semibold text-center mb-4">{t.filtresTitre}</p>
-
         <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 w-full flex-wrap">
 
-          <div className="flex flex-col w-full md:w-auto">
-            <label className="text-base text-center mb-1">{t.filtreFamille}</label>
-            <select value={filterFamille} onChange={e => setFilterFamille(e.target.value)}
-              className="w-full h-10 bg-white/10 border border-white/30 rounded-lg px-3 text-white">
-              <option value="" className="text-black">{t.filtreTous}</option>
-              {familles.map(f => <option key={f.id} value={f.id} className="text-black">{f.famille_full}</option>)}
-            </select>
-          </div>
+          {/* Filtre famille : seulement pour Admin/Superadmin */}
+          {superviseur.role !== "ResponsableFamilles" && (
+            <div className="flex flex-col w-full md:w-auto">
+              <label className="text-base text-center mb-1">{t.filtreFamille}</label>
+              <select value={filterFamille} onChange={e => setFilterFamille(e.target.value)}
+                className="w-full h-10 bg-white/10 border border-white/30 rounded-lg px-3 text-white">
+                <option value="" className="text-black">{t.filtreTous}</option>
+                {familles.map(f => <option key={f.id} value={f.id} className="text-black">{f.famille_full}</option>)}
+              </select>
+            </div>
+          )}
 
           <div className="flex flex-col w-full md:w-auto">
             <label className="text-base text-center mb-1">{t.filtreDateDebut}</label>
@@ -697,15 +626,13 @@ function AttendanceFamille() {
         </div>
       </div>
 
-      {/* TABLEAU */}
+      {/* ── TABLEAU ── */}
       {showTable && (
         <div className="w-full px-4 mt-6 mb-6">
 
           {/* DESKTOP */}
           <div className="hidden md:block overflow-x-auto">
             <div className="w-max space-y-2">
-
-              {/* Header */}
               <div className="flex text-sm font-semibold uppercase text-white px-4 py-3 border-b border-white/30 bg-white/5 rounded-t-xl whitespace-nowrap">
                 <div className="min-w-[220px]">{t.colTypeDate}</div>
                 <div className="min-w-[160px] text-center">{t.colFamille}</div>
@@ -727,12 +654,8 @@ function AttendanceFamille() {
 
                 return (
                   <div key={monthKey} className="space-y-1">
-
-                    {/* Mois */}
-                    <div
-                      className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-orange-500 cursor-pointer"
-                      onClick={() => toggleMonth(monthKey)}
-                    >
+                    <div className="flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 border-orange-500 cursor-pointer"
+                      onClick={() => toggleMonth(monthKey)}>
                       <div className="min-w-[220px] text-white font-semibold flex items-center gap-2">
                         {monthExpanded ? "➖" : "➕"} {monthLabel}
                       </div>
@@ -747,7 +670,6 @@ function AttendanceFamille() {
                       <div className="min-w-[140px]"></div>
                     </div>
 
-                    {/* Types */}
                     {monthExpanded && Object.entries(typesObj).map(([typeTemps, rows], typeIdx) => {
                       const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
                       const borderColorClass = borderColors[typeIdx % borderColors.length];
@@ -755,10 +677,8 @@ function AttendanceFamille() {
 
                       return (
                         <div key={typeTemps} className="space-y-1">
-                          <div
-                            className={`flex items-center px-4 py-2 rounded-lg bg-white/5 cursor-pointer border-l-4 ${borderColorClass}`}
-                            onClick={() => setTypeCollapsedDesktop(prev => ({ ...prev, [typeTemps]: !prev[typeTemps] }))}
-                          >
+                          <div className={`flex items-center px-4 py-2 rounded-lg bg-white/5 cursor-pointer border-l-4 ${borderColorClass}`}
+                            onClick={() => setTypeCollapsedDesktop(prev => ({ ...prev, [typeTemps]: !prev[typeTemps] }))}>
                             <div className="min-w-[220px] max-w-[220px] text-white">
                               <div className="ml-6 flex items-center gap-2 whitespace-pre-line break-words">
                                 {typeExpanded ? "➖" : "➕"} {splitTypeName(typeTemps, 15)}
@@ -775,13 +695,11 @@ function AttendanceFamille() {
                             <div className="min-w-[140px]"></div>
                           </div>
 
-                          {/* Lignes date */}
                           {typeExpanded && rows.map(r => {
                             const total = Number(r.hommes) + Number(r.femmes) + Number(r.jeunes);
                             return (
                               <div key={r.id}
-                                className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColorClass} cursor-pointer ml-12`}
-                              >
+                                className={`flex items-center px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition border-l-4 ${borderColorClass} ml-12`}>
                                 <div className="min-w-[220px] text-white">{formatDateFR(r.date)}</div>
                                 <div className="min-w-[160px] text-center text-white -ml-12 text-sm">{getFamilleLabel(r.famille_id)}</div>
                                 <div className="min-w-[120px] text-center text-white">{r.hommes}</div>
@@ -801,7 +719,6 @@ function AttendanceFamille() {
                         </div>
                       );
                     })}
-
                   </div>
                 );
               })}
@@ -817,11 +734,8 @@ function AttendanceFamille() {
 
               return (
                 <div key={monthKey} className="space-y-2">
-
-                  <div
-                    className="bg-white/10 rounded-xl p-3 text-white font-bold flex justify-between items-center cursor-pointer border-l-4 border-red-500"
-                    onClick={() => toggleMonth(monthKey)}
-                  >
+                  <div className="bg-white/10 rounded-xl p-3 text-white font-bold flex justify-between items-center cursor-pointer border-l-4 border-red-500"
+                    onClick={() => toggleMonth(monthKey)}>
                     <span>{monthExpanded ? "➖" : "➕"} {monthLabel}</span>
                   </div>
 
@@ -829,20 +743,15 @@ function AttendanceFamille() {
                     const typeExpanded = typeCollapsedDesktop[typeTemps] || false;
                     const borderColorClass = borderColors[typeIdx % borderColors.length];
                     const typeTotals = calculateTypeTotals(rows);
-                    const totalHFJ = typeTotals.total;
-                    const totalGlobal = typeTotals.total + typeTotals.enfants;
 
                     return (
                       <div key={typeTemps} className="ml-3 space-y-2">
-
-                        <div
-                          className={`bg-white/5 rounded-lg p-3 text-orange-400 font-semibold flex justify-between items-center cursor-pointer border-l-4 ${borderColorClass}`}
-                          onClick={() => setTypeCollapsedDesktop(prev => ({ ...prev, [typeTemps]: !prev[typeTemps] }))}
-                        >
+                        <div className={`bg-white/5 rounded-lg p-3 text-orange-400 font-semibold flex justify-between items-center cursor-pointer border-l-4 ${borderColorClass}`}
+                          onClick={() => setTypeCollapsedDesktop(prev => ({ ...prev, [typeTemps]: !prev[typeTemps] }))}>
                           <span>{typeExpanded ? "➖" : "➕"} {typeTemps}</span>
                           <div className="text-right leading-tight">
-                            <p className="text-sm font-bold text-amber-300">{t.totalHFJ} {totalHFJ}</p>
-                            <p className="text-sm font-bold text-orange-400">{t.totalGlobal} {totalGlobal}</p>
+                            <p className="text-sm font-bold text-amber-300">{t.totalHFJ} {typeTotals.total}</p>
+                            <p className="text-sm font-bold text-orange-400">{t.totalGlobal} {typeTotals.total + typeTotals.enfants}</p>
                           </div>
                         </div>
 
@@ -860,11 +769,9 @@ function AttendanceFamille() {
                             </div>
                           </div>
                         ))}
-
                       </div>
                     );
                   })}
-
                 </div>
               );
             })}
@@ -889,9 +796,6 @@ function AttendanceFamille() {
           appearance: none;
           cursor: pointer;
         }
-        select.input option[value='AUTRE'] { color: #333699; }
-        select.input option:hover { background: #e0e0e0; color: black; }
-        select.input option[value='AUTRE']:hover { background: #333699; color: white; }
       `}</style>
     </div>
   );

@@ -89,6 +89,44 @@ const translations = {
   },
 };
 
+// Template examples per language
+const templateExamples = {
+  fr: [
+    "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15",
+    "+336 12 34 56 78", "Paris", "Oui", "Non", "Oui",
+    "Info supplementaire ici",
+  ],
+  en: [
+    "Smith", "John", "Homme", "18-25 ans", "2026-01-15",
+    "+1 212 555 0147", "New York", "Oui", "Non", "Oui",
+    "Additional info here",
+  ],
+};
+
+// Template notes per language
+const templateNotes = {
+  fr: [
+    "IMPORTANT: Effacez toutes les lignes commencant par # avant d'importer le fichier.",
+    "Les colonnes avec * sont obligatoires.",
+    "civilite: Homme | Femme",
+    "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
+    "Le préfixe téléphonique du pays doit être placé avant le numéro de téléphone",
+    "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
+    "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
+    "serviteur: Oui | Non",
+  ],
+  en: [
+    "IMPORTANT: Delete all lines starting with # before importing the file.",
+    "Columns marked with * are required.",
+    "civilite: Homme | Femme",
+    "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
+    "The country phone prefix must be placed before the phone number",
+    "date_venu: format YYYY-MM-DD or DD-MM-YY or DD-MM-YYYY",
+    "bapteme_eau / bapteme_esprit: Oui | Non (or leave empty)",
+    "serviteur: Oui | Non",
+  ],
+};
+
 export default function ImportMembresFamilleCSV({ user }) {
   const { lang } = useLang();
   const t = translations[lang];
@@ -137,21 +175,8 @@ export default function ImportMembresFamilleCSV({ user }) {
       "serviteur",
       "infos_supplementaires",
     ];
-    const example = [
-      "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15",
-      "+336 12 34 56 78", "Paris", "Oui", "Non", "Oui",
-      "Info supplementaire ici",
-    ];
-    const notes = [
-      "IMPORTANT: Effacez toutes les lignes commencant par # avant d'importer le fichier.",
-      "Les colonnes avec * sont obligatoires.",
-      "civilite: Homme | Femme",
-      "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
-      "Le préfixe téléphonique du pays doit être placé avant le numéro de téléphone"
-      "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
-      "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
-      "serviteur: Oui | Non",
-    ];
+    const example = templateExamples[lang] ?? templateExamples.fr;
+    const notes = templateNotes[lang] ?? templateNotes.fr;
     const csvContent = [
       headers.join(","),
       example.join(","),

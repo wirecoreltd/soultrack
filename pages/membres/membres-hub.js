@@ -8,7 +8,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import Footer from "../../components/Footer";
+import FooterHub from "../../components/FooterHub";
 import supabase from "../../lib/supabaseClient";
 import { useLang } from "../../hooks/useLang";
 
@@ -161,7 +161,7 @@ function MembresHubContent() {
         {t.verseRef}
       </div>
 
-      <Footer />
+      <FooterHub />
     </div>
   );
 }

@@ -115,6 +115,11 @@ function ConseillerHubContent() {
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.suivisEvang}</div>
         </Link>
 
+              <Link href="/rapport/RapportBaptemePage" className={cardClass} style={{ borderTopColor: "#10B981" }}>
+            <div className="text-4xl mb-2">💧</div>
+            <div className="text-lg font-bold text-gray-800 text-center">{t.cards.baptemes}</div>
+          </Link>
+            
         <Link href="/conseiller/EtatConseillerPage"
           className="bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-2xl hover:scale-[1.02] transition-all duration-200 cursor-pointer h-36">
           <div className="text-5xl mb-3">🌱</div>

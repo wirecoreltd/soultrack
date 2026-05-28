@@ -3,17 +3,17 @@
 export default function Footer() {
   return (
     <footer className="w-full py-4 mt-auto">
-      <div className="max-w-5xl mx-auto flex flex-col items-center gap-1">
+      <div className="max-w-5xl mx-auto flex items-center justify-center gap-2">
         <a
           href="https://www.soultrack.org"
           target="_blank"
           rel="noopener noreferrer"
-          className="opacity-50 hover:opacity-80 transition-opacity"
+          className="opacity-60 hover:opacity-90 transition-opacity"
         >
           <img
             src="/logo.png"
             alt="SoulTrack"
-            style={{ width: 22, height: 22, objectFit: "contain" }}
+            style={{ width: 28, height: 28, objectFit: "contain" }}
           />
         </a>
         <p className="text-xs" style={{ color: "#6b7fc4" }}>

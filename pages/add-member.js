@@ -539,6 +539,7 @@ export default function AddMember() {
             color: black; font-size: 0.95rem;
           }
         `}</style>
+              <Footer />
       </div>
     </div>
   );

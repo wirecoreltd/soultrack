@@ -8,8 +8,10 @@ import { useSearchParams } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
 import { useMembers } from "../../context/MembersContext";
 import Footer from "../../components/Footer";
+import FooterHub from "../../components/FooterHub";
 import { checkLimiteAtteinte } from "../../lib/checkLimite";
 import { useLang } from "../../hooks/useLang";
+import { getPrefixForPays } from "../../lib/phonePrefix";
 
 const translations = {
   fr: {
@@ -26,22 +28,25 @@ const translations = {
     chooseFamille: "-- Choisir une Famille --",
     prenom: "Prénom",
     nom: "Nom",
-    civilite: "-- Civilité --",
+    civilite: "Civilité",
+    choose: "-- Choisir --",
     homme: "Homme",
     femme: "Femme",
-    trancheAge: "-- Tranche d'âge --",
+    trancheAge: "Tranche d'âge",
     telephone: "Téléphone",
-    whatsapp: "WhatsApp",
+    telPlaceholder: "Ex: 5 1234 5678",
+    noPhone: "La personne n'a pas de téléphone",
+    whatsapp: "Numéro WhatsApp",
     ville: "Ville",
-    commentVenu: "-- Comment est-il venu ? --",
+    commentVenu: "Comment est-il venu ?",
     invite: "Invité",
     reseaux: "Réseaux",
     evangelisation: "Evangélisation",
     autre: "Autre",
-    priereSalut: "-- Prière du salut ? --",
+    priereSalut: "Prière du salut ?",
     oui: "Oui",
     non: "Non",
-    typeConversion: "Type",
+    typeConversion: "Type de conversion",
     nouveauConverti: "Nouveau converti",
     reconciliation: "Réconciliation",
     besoinsLabel: "Difficultés / Besoins",
@@ -49,6 +54,8 @@ const translations = {
     besoinSante: "Santé",
     besoinTravail: "Travail / Études",
     besoinFamille: "Famille / Enfants",
+    besoinMiracle: "Miracle",
+    besoinDelivrance: "Délivrance",
     besoinRelations: "Relations / Conflits",
     besoinAddictions: "Addictions / Dépendances",
     besoinGuidance: "Guidance spirituelle",
@@ -57,9 +64,10 @@ const translations = {
     besoinDepression: "Dépression / Santé mentale",
     besoinAutre: "Autre",
     besoinPrecisez: "Précisez...",
-    infosSupp: "Informations supplémentaires...",
+    infosSupp: "Informations supplémentaires",
     annuler: "Annuler",
     ajouter: "Ajouter",
+    dateVenue: "Date de venue",
     successMsg: "✅ Membre ajouté avec succès",
     errEglise: "❌ Église non identifiée.",
     errLimite: "❌ Limite atteinte : {count}/{limite} membres. Upgradez votre plan.",
@@ -67,6 +75,7 @@ const translations = {
     errFamille: "⚠️ Aucune Famille trouvée pour votre église.",
     errFamilleSelect: "❌ Aucune famille sélectionnée.",
     errUser: "⚠️ Utilisateur non connecté.",
+    errNoPhone: "Le téléphone est requis ou cochez 'Pas de téléphone'",
   },
   en: {
     pageTitle: "Add a member to my",
@@ -82,22 +91,25 @@ const translations = {
     chooseFamille: "-- Choose a Family --",
     prenom: "First name",
     nom: "Last name",
-    civilite: "-- Title --",
+    civilite: "Title",
+    choose: "-- Choose --",
     homme: "Male",
     femme: "Female",
-    trancheAge: "-- Age range --",
+    trancheAge: "Age range",
     telephone: "Phone",
-    whatsapp: "WhatsApp",
+    telPlaceholder: "e.g. 5 1234 5678",
+    noPhone: "This person has no phone",
+    whatsapp: "WhatsApp number",
     ville: "City",
-    commentVenu: "-- How did they come? --",
+    commentVenu: "How did they come?",
     invite: "Invited",
     reseaux: "Social media",
     evangelisation: "Evangelism",
     autre: "Other",
-    priereSalut: "-- Salvation prayer? --",
+    priereSalut: "Salvation prayer?",
     oui: "Yes",
     non: "No",
-    typeConversion: "Type",
+    typeConversion: "Type of conversion",
     nouveauConverti: "New convert",
     reconciliation: "Reconciliation",
     besoinsLabel: "Difficulties / Needs",
@@ -105,6 +117,8 @@ const translations = {
     besoinSante: "Health",
     besoinTravail: "Work / Studies",
     besoinFamille: "Family / Children",
+    besoinMiracle: "Miracle",
+    besoinDelivrance: "Deliverance",
     besoinRelations: "Relationships / Conflicts",
     besoinAddictions: "Addictions / Dependencies",
     besoinGuidance: "Spiritual guidance",
@@ -113,9 +127,10 @@ const translations = {
     besoinDepression: "Depression / Mental health",
     besoinAutre: "Other",
     besoinPrecisez: "Specify...",
-    infosSupp: "Additional information...",
+    infosSupp: "Additional information",
     annuler: "Cancel",
     ajouter: "Add",
+    dateVenue: "Date of arrival",
     successMsg: "✅ Member added successfully",
     errEglise: "❌ Church not identified.",
     errLimite: "❌ Limit reached: {count}/{limite} members. Please upgrade your plan.",
@@ -123,10 +138,10 @@ const translations = {
     errFamille: "⚠️ No Family found for your church.",
     errFamilleSelect: "❌ No family selected.",
     errUser: "⚠️ User not logged in.",
+    errNoPhone: "Phone is required or check 'No phone'",
   },
 };
 
-// ✅ Plus de ProtectedRoute — la page est accessible via lien public
 export default function AjouterMembreFamille() {
   return <AjouterMembreFamilleContent />;
 }
@@ -146,6 +161,8 @@ function AjouterMembreFamilleContent() {
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [Familles, setFamilles] = useState([]);
   const [success, setSuccess] = useState(false);
+  const [noPhone, setNoPhone] = useState(false);
+  const [phonePrefix, setPhonePrefix] = useState("");
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -159,6 +176,7 @@ function AjouterMembreFamilleContent() {
     type_conversion: "",
     besoin: [],
     autreBesoin: "",
+    besoinLibre: "",
     famille_id: "",
     infos_supplementaires: "",
     date_venu: new Date().toISOString().slice(0, 10),
@@ -170,6 +188,8 @@ function AjouterMembreFamilleContent() {
     { key: "besoinSante",      value: "Santé" },
     { key: "besoinTravail",    value: "Travail / Études" },
     { key: "besoinFamille",    value: "Famille / Enfants" },
+    { key: "besoinMiracle",    value: "Miracle" },
+    { key: "besoinDelivrance", value: "Délivrance" },
     { key: "besoinRelations",  value: "Relations / Conflits" },
     { key: "besoinAddictions", value: "Addictions / Dépendances" },
     { key: "besoinGuidance",   value: "Guidance spirituelle" },
@@ -178,13 +198,8 @@ function AjouterMembreFamilleContent() {
     { key: "besoinDepression", value: "Dépression / Santé mentale" },
   ];
 
-  // ✅ FIX 1 — userScope initialisé à null, mis à jour par useEffect
   const [userScope, setUserScope] = useState({ eglise_id: null });
 
-  // ✅ FIX 2 — Un seul useEffect qui gère les deux cas :
-  //   - Lien public  → eglise_id vient de l'URL directement
-  //   - Connecté     → eglise_id vient du profil Supabase
-  //   Se re-déclenche quand useSearchParams finit de s'hydrater
   useEffect(() => {
     if (urlEgliseId) {
       setUserScope({ eglise_id: urlEgliseId });
@@ -210,7 +225,7 @@ function AjouterMembreFamilleContent() {
     fetchUserScope();
   }, [urlEgliseId]);
 
-  // ✅ FIX 3 — Fetch logo + infos église dès que eglise_id est connu
+  // Fetch logo + infos église + préfixe téléphonique
   useEffect(() => {
     if (!userScope.eglise_id) return;
 
@@ -221,7 +236,17 @@ function AjouterMembreFamilleContent() {
         .eq("id", userScope.eglise_id)
         .single();
 
-      if (!error && data) setEgliseInfo(data);
+      if (!error && data) {
+        setEgliseInfo(data);
+        const prefix = getPrefixForPays(data.pays);
+        if (prefix) {
+          setPhonePrefix(prefix);
+          setFormData((prev) => ({
+            ...prev,
+            telephone: prev.telephone || prefix,
+          }));
+        }
+      }
     };
 
     fetchEglise();
@@ -283,14 +308,22 @@ function AjouterMembreFamilleContent() {
     });
   };
 
+  const handlePhoneChange = (e) => {
+    setFormData((prev) => ({ ...prev, telephone: e.target.value }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✅ FIX 4 — Priorité à urlFamilleId (lien public) pour éviter UUID vide
     const familleIdFinal = urlFamilleId || formData.famille_id;
 
     if (!userScope.eglise_id) {
       alert(t.errEglise);
+      return;
+    }
+
+    if (!noPhone && !formData.telephone) {
+      alert(t.errNoPhone);
       return;
     }
 
@@ -306,20 +339,24 @@ function AjouterMembreFamilleContent() {
         return;
       }
 
+      const finalBesoin = showBesoinLibre && formData.besoinLibre
+        ? [...formData.besoin.filter((b) => b !== "Autre"), formData.besoinLibre]
+        : formData.besoin;
+
       const newMemberData = {
         nom: formData.nom,
         prenom: formData.prenom,
-        telephone: formData.telephone,
+        telephone: noPhone ? "Pas de téléphone" : formData.telephone,
         ville: formData.ville,
         venu: formData.venu,
-        famille_id: familleIdFinal, // ✅ UUID garanti non vide
+        famille_id: familleIdFinal,
         eglise_id: userScope.eglise_id,
         statut_suivis: 3,
         etat_contact: "existant",
         is_new_in_cellule: "true",
         is_whatsapp: formData.is_whatsapp,
         infos_supplementaires: formData.infos_supplementaires,
-        besoin: formData.besoin.join(", "),
+        besoin: finalBesoin.join(", "),
         autrebesoin: formData.autreBesoin || null,
         sexe: formData.sexe || null,
         age: formData.age || null,
@@ -348,7 +385,7 @@ function AjouterMembreFamilleContent() {
         prenom: "",
         sexe: "",
         age: "",
-        telephone: "",
+        telephone: phonePrefix || "",
         ville: "",
         venu: "",
         priere_salut: "",
@@ -356,10 +393,13 @@ function AjouterMembreFamilleContent() {
         date_venu: new Date().toISOString().slice(0, 10),
         besoin: [],
         autreBesoin: "",
+        besoinLibre: "",
         famille_id: urlFamilleId || (Familles.length === 1 ? Familles[0].id : ""),
         infos_supplementaires: "",
         is_whatsapp: false,
       });
+      setNoPhone(false);
+      setShowBesoinLibre(false);
 
     } catch (err) {
       alert(t.errAjout + err.message);
@@ -371,7 +411,7 @@ function AjouterMembreFamilleContent() {
       nom: "",
       prenom: "",
       sexe: "",
-      telephone: "",
+      telephone: phonePrefix || "",
       ville: "",
       age: "",
       venu: "",
@@ -380,10 +420,13 @@ function AjouterMembreFamilleContent() {
       date_venu: new Date().toISOString().slice(0, 10),
       besoin: [],
       autreBesoin: "",
+      besoinLibre: "",
       famille_id: urlFamilleId || (Familles.length === 1 ? Familles[0].id : ""),
       infos_supplementaires: "",
       is_whatsapp: false,
     });
+    setNoPhone(false);
+    setShowBesoinLibre(false);
   };
 
   return (
@@ -397,7 +440,7 @@ function AjouterMembreFamilleContent() {
           {t.back}
         </button>
 
-        {/* ✅ Logo + infos église dynamiques (comme ajouter-membre-cellule) */}
+        {/* Logo + infos église */}
         <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
           {egliseInfo?.logo_url && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -421,7 +464,7 @@ function AjouterMembreFamilleContent() {
         </div>
 
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">
-          {t.pageTitle}<br />à ma <span className="text-[#333699]">{t.pageTitleHighlight}</span>
+          {t.pageTitle}<br /><span className="text-[#333699]">{t.pageTitleHighlight}</span>
         </h1>
 
         <div className="max-w-3xl w-full mb-6 text-center">
@@ -452,6 +495,7 @@ function AjouterMembreFamilleContent() {
             </select>
           )}
 
+          <label className="text-sm sm:text-base font-semibold">{t.dateVenue}</label>
           <input
             type="date"
             value={formData.date_venu}
@@ -460,43 +504,78 @@ function AjouterMembreFamilleContent() {
             required
           />
 
-          <input name="prenom" placeholder={t.prenom} value={formData.prenom} onChange={handleChange} className="input" required />
-          <input name="nom" placeholder={t.nom} value={formData.nom} onChange={handleChange} className="input" required />
-
+          <label className="text-sm sm:text-base font-semibold">{t.civilite}</label>
           <select className="input" value={formData.sexe} onChange={(e) => setFormData({ ...formData, sexe: e.target.value })} required>
-            <option value="">{t.civilite}</option>
+            <option value="">{t.choose}</option>
             <option value="Homme">{t.homme}</option>
             <option value="Femme">{t.femme}</option>
           </select>
 
+          <label className="text-sm sm:text-base font-semibold">{t.prenom}</label>
+          <input name="prenom" placeholder={t.prenom} value={formData.prenom} onChange={handleChange} className="input" required />
+
+          <label className="text-sm sm:text-base font-semibold">{t.nom}</label>
+          <input name="nom" placeholder={t.nom} value={formData.nom} onChange={handleChange} className="input" required />
+
+          {/* Téléphone avec préfixe automatique */}
+          <div className="mb-2">
+            <label className="block font-medium mb-1">{t.telephone}</label>
+            <input
+              type="tel"
+              value={noPhone ? t.noPhone : formData.telephone}
+              onChange={handlePhoneChange}
+              disabled={noPhone}
+              required={!noPhone}
+              className="input"
+              placeholder={phonePrefix ? `${phonePrefix} ...` : t.telPlaceholder}
+            />
+            <label className="flex items-center mt-2 space-x-2 text-sm">
+              <input
+                type="checkbox"
+                checked={noPhone}
+                onChange={(e) => {
+                  setNoPhone(e.target.checked);
+                  setFormData((prev) => ({
+                    ...prev,
+                    telephone: e.target.checked ? "Pas de téléphone" : (phonePrefix || ""),
+                  }));
+                }}
+              />
+              <span>{t.noPhone}</span>
+            </label>
+          </div>
+
+          <label className="flex items-center gap-2 text-sm sm:text-base">
+            <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} />
+            {t.whatsapp}
+          </label>
+
+          <label className="text-sm sm:text-base font-semibold">{t.ville}</label>
+          <input name="ville" placeholder={t.ville} value={formData.ville} onChange={handleChange} className="input" />
+
+          <label className="text-sm sm:text-base font-semibold">{t.trancheAge}</label>
           <select
             value={formData.age}
             onChange={e => setFormData({ ...formData, age: e.target.value })}
             className="input"
             required
           >
-            <option value="">{t.trancheAge}</option>
+            <option value="">{t.choose}</option>
             {["12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans", "41-55 ans", "56-69 ans", "70 ans et plus"].map(v => (
               <option key={v} value={v}>{v}</option>
             ))}
           </select>
 
-          <input name="telephone" placeholder={t.telephone} value={formData.telephone} onChange={handleChange} className="input" />
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} />
-            {t.whatsapp}
-          </label>
-
-          <input name="ville" placeholder={t.ville} value={formData.ville} onChange={handleChange} className="input" />
-
+          <label className="text-sm sm:text-base font-semibold">{t.commentVenu}</label>
           <select name="venu" value={formData.venu} onChange={handleChange} className="input">
-            <option value="">{t.commentVenu}</option>
+            <option value="">{t.choose}</option>
             <option value="invité">{t.invite}</option>
             <option value="réseaux">{t.reseaux}</option>
             <option value="evangélisation">{t.evangelisation}</option>
             <option value="autre">{t.autre}</option>
           </select>
 
+          <label className="text-sm sm:text-base font-semibold">{t.priereSalut}</label>
           <select
             className="input"
             value={formData.priere_salut || ""}
@@ -510,22 +589,25 @@ function AjouterMembreFamilleContent() {
               });
             }}
           >
-            <option value="">{t.priereSalut}</option>
+            <option value="">{t.choose}</option>
             <option value="Oui">{t.oui}</option>
             <option value="Non">{t.non}</option>
           </select>
 
           {formData.priere_salut === "Oui" && (
-            <select
-              className="input"
-              value={formData.type_conversion || ""}
-              onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })}
-              required
-            >
-              <option value="">{t.typeConversion}</option>
-              <option value="Nouveau converti">{t.nouveauConverti}</option>
-              <option value="Réconciliation">{t.reconciliation}</option>
-            </select>
+            <>
+              <label className="text-sm sm:text-base font-semibold">{t.typeConversion}</label>
+              <select
+                className="input"
+                value={formData.type_conversion || ""}
+                onChange={(e) => setFormData({ ...formData, type_conversion: e.target.value })}
+                required
+              >
+                <option value="">{t.choose}</option>
+                <option value="Nouveau converti">{t.nouveauConverti}</option>
+                <option value="Réconciliation">{t.reconciliation}</option>
+              </select>
+            </>
           )}
 
           <label className="text-sm sm:text-base font-bold mb-1">{t.besoinsLabel}</label>
@@ -564,9 +646,10 @@ function AjouterMembreFamilleContent() {
             />
           )}
 
+          <label className="text-sm sm:text-base font-semibold">{t.infosSupp}</label>
           <textarea
             name="infos_supplementaires"
-            placeholder={t.infosSupp}
+            placeholder="..."
             value={formData.infos_supplementaires}
             onChange={handleChange}
             className="input"
@@ -587,6 +670,8 @@ function AjouterMembreFamilleContent() {
             {t.successMsg}
           </p>
         )}
+
+        <FooterHub />
 
         <style jsx>{`
           .input {

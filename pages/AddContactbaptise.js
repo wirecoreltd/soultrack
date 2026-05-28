@@ -134,7 +134,8 @@ export default function AddContactbaptise() {
     setErrorMsg("");
   };
 
-  const handleCancel = () => router.back();
+  const goBackToRapport = () => router.push("/rapport/RapportBaptemesPage?onglet=saisie");
+  const handleCancel = () => goBackToRapport();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -170,8 +171,8 @@ export default function AddContactbaptise() {
       if (error) throw error;
 
       setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
       resetForm();
+      setTimeout(() => goBackToRapport(), 1500);
 
     } catch (err) {
       setErrorMsg(err.message || "Erreur lors de l'ajout.");
@@ -183,7 +184,7 @@ export default function AddContactbaptise() {
       <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-3xl shadow-lg relative">
 
         <button
-          onClick={() => router.back()}
+          onClick={goBackToRapport}
           className="absolute top-3 left-3 sm:top-4 sm:left-4 flex items-center text-black font-semibold hover:text-gray-800 transition-colors"
         >
           ← Retour

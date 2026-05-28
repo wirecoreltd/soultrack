@@ -22,13 +22,14 @@ const translations = {
     subtitleMid: "de votre équipe : gestion des membres, suivi des familles, création et suivi des conseillers, ainsi que les rapports et présences.",
     subtitleHighlight2: "Tout votre suivi au même endroit",
     cards: {
-      gererMembres:    "Gérer les membres",
-      suiviMembres:    "Suivi des membres",
-      creerConseiller: "Créer un Conseiller",
-      listConseillers: "Liste des Conseillers",
+      gererMembres:      "Gérer les membres",
+      suiviMembres:      "Suivi des membres",
+      creerConseiller:   "Créer un Conseiller",
+      listConseillers:   "Liste des Conseillers",
+      baptemes:          "Baptêmes",
       presencesRapports: "Présences & Rapports",
       registrePresences: "Registre des présences",
-      notifications:   "Notifications",
+      notifications:     "Notifications",
     },
     sendLink: "Envoyer formulaire Église – Nouveau membre",
     verse: "Car le corps ne se compose pas d'un seul membre, mais de plusieurs.",
@@ -42,13 +43,14 @@ const translations = {
     subtitleMid: "of your team: member management, family follow-up, counselor creation and tracking, as well as reports and attendance.",
     subtitleHighlight2: "All your tracking in one place",
     cards: {
-      gererMembres:    "Manage members",
-      suiviMembres:    "Member follow-up",
-      creerConseiller: "Create a Counselor",
-      listConseillers: "Counselors list",
+      gererMembres:      "Manage members",
+      suiviMembres:      "Member follow-up",
+      creerConseiller:   "Create a Counselor",
+      listConseillers:   "Counselors list",
+      baptemes:          "Baptisms",
       presencesRapports: "Attendance & Reports",
       registrePresences: "Attendance register",
-      notifications:   "Notifications",
+      notifications:     "Notifications",
     },
     sendLink: "Send Church form – New member",
     verse: "For the body is not one member, but many.",
@@ -131,6 +133,11 @@ function MembresHubContent() {
       </div>
 
       <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <Link href="/rapport/RapportBaptemePage" className="bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#10B981] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
+          <div className="text-4xl mb-2">💧</div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.baptemes}</div>
+        </Link>
+
         <Link href="/rapport/attendance" className="bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0EA5E9] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
           <div className="text-4xl mb-2">🗒️</div>
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.presencesRapports}</div>

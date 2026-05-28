@@ -8,7 +8,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import Footer from "../../components/Footer";
+import FooterHub from "../../components/FooterHub";
 import { useLang } from "../../hooks/useLang";
 
 // ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
@@ -114,7 +114,7 @@ function EvangelisationHubContent() {
         {t.verse}
       </div>
 
-      <Footer />
+      <FooterHub />
     </div>
   );
 }

@@ -94,6 +94,7 @@ const translations = {
     erreurNomCellule: "❌ Le nom de la cellule est obligatoire.",
     erreurZoneCellule: "❌ La zone de la cellule est obligatoire.",
     erreurSession: "❌ Session expirée. Veuillez vous reconnecter.",
+    erreurMinistere: "❌ Veuillez sélectionner au moins un ministère.",
     succes: "✅ Utilisateur créé !",
     dupPhoneMsg:    (tel, p, n) => `⚠️ Le numéro ${tel} existe déjà pour ${p} ${n}`,
     dupPhoneDetail: (tel, p, n) => `⚠️ Le numéro ${tel} existe déjà pour ${p} ${n}.`,
@@ -188,6 +189,7 @@ const translations = {
     erreurNomCellule: "❌ Cell group name is required.",
     erreurZoneCellule: "❌ Cell group area is required.",
     erreurSession: "❌ Session expired. Please log in again.",
+    erreurMinistere: "❌ Please select at least one ministry.",
     succes: "✅ User created!",
     dupPhoneMsg:    (tel, p, n) => `⚠️ The number ${tel} already exists for ${p} ${n}`,
     dupPhoneDetail: (tel, p, n) => `⚠️ The number ${tel} already exists for ${p} ${n}.`,
@@ -389,23 +391,25 @@ function CreateInternalUserContent() {
 
   // ─── Soumission ───
   const submitForm = async (forceCreate = false) => {
-    if (formData.password !== formData.confirmPassword) {
-      setMessage(t.erreurMotDePasse);
-      return;
-    }
-    if (!formData.roles || formData.roles.length === 0) {
-      setMessage(t.erreurRole);
-      return;
-    }
-    if (formData.roles.includes("ResponsableCellule")) {
-      if (!formData.cellule_nom?.trim()) { setMessage(t.erreurNomCellule); return; }
-      if (!formData.cellule_zone?.trim()) { setMessage(t.erreurZoneCellule); return; }
-    }
-    // ← NOUVEAU : validation champs famille
-    if (formData.roles.includes("ResponsableFamilles")) {
-      if (!formData.famille_nom?.trim()) { setMessage(t.erreurNomFamille); return; }
-      if (!formData.famille_secteur?.trim()) { setMessage(t.erreurSecteurFamille); return; }
-    }
+  if (formData.password !== formData.confirmPassword) {
+    setMessage(t.erreurMotDePasse);
+    return;
+  }
+  if (!formData.roles || formData.roles.length === 0) {
+    setMessage(t.erreurRole);
+    return;
+  }
+
+  // ✅ AJOUTER ICI
+  if (isNewServant && formData.ministere.length === 0) {
+    setMessage(t.erreurMinistere);
+    return;
+  }
+
+  if (formData.roles.includes("ResponsableCellule")) {
+    if (!formData.cellule_nom?.trim()) { setMessage(t.erreurNomCellule); return; }
+    if (!formData.cellule_zone?.trim()) { setMessage(t.erreurZoneCellule); return; }
+  }
 
     setLoading(true);
     setMessage("");

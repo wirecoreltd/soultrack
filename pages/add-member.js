@@ -6,7 +6,7 @@ import supabase from "../lib/supabaseClient";
 import { checkLimiteAtteinte } from "../lib/checkLimite";
 import { useLang } from "../hooks/useLang";
 import { getPrefixForPays } from "../lib/phonePrefix";
-import Footer from "../components/Footer";
+import FooterHub from "../components/FooterHub";
 
 const translations = {
   fr: {
@@ -540,7 +540,7 @@ export default function AddMember() {
             color: black; font-size: 0.95rem;
           }
         `}</style>
-              <Footer />
+              <FooterHub />
       </div>
     </div>
   );

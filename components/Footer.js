@@ -13,7 +13,7 @@ export default function Footer() {
           <img
             src="/logo.png"
             alt="SoulTrack"
-            style={{ width: 28, height: 28, objectFit: "contain" }}
+            style={{ width: 26, height: 26, objectFit: "contain" }}
           />
         </a>
         <p className="text-xs" style={{ color: "#4a5ab0" }}>

@@ -54,9 +54,9 @@ const translations = {
     footer: "All rights reserved.",
     plans: [
       { id: "free",       name: "Starter",   emoji: "🌱", range: "0 – 50 members",      price: "Free",   accent: "rgba(29,158,117,0.45)" },
-      { id: "starter",    name: "Growth",    emoji: "📈", range: "51 – 200 members",     price: "$19/mo", accent: "rgba(55,138,221,0.5)"  },
-      { id: "vision",     name: "Vision",    emoji: "🔥", range: "201 – 500 members",    price: "$39/mo", accent: "rgba(251,191,36,0.4)"  },
-      { id: "expansion",  name: "Expansion", emoji: "🌍", range: "501 – 1500 members",   price: "$79/mo", accent: "rgba(212,83,126,0.4)"  },
+      { id: "starter",    name: "Growth",    emoji: "📈", range: "51 – 200 members",     price: "$19/month", accent: "rgba(55,138,221,0.5)"  },
+      { id: "vision",     name: "Vision",    emoji: "🔥", range: "201 – 500 members",    price: "$39/month", accent: "rgba(251,191,36,0.4)"  },
+      { id: "expansion",  name: "Expansion", emoji: "🌍", range: "501 – 1500 members",   price: "$79/month", accent: "rgba(212,83,126,0.4)"  },
       { id: "enterprise", name: "Networks",  emoji: "🔗", range: "1500+ • Multi-church", price: "Custom", accent: "rgba(139,92,246,0.45)" },
     ],
   },

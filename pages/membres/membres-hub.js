@@ -1,10 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import LogoutLink from "../../components/LogoutLink";
 import SendLinkPopup from "../../components/SendLinkPopup";
-import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
@@ -30,7 +27,7 @@ const translations = {
       presencesRapports: "Présences & Rapports",
       registrePresences: "Registre des présences",
       notifications:     "Notifications",
-      registres: "Rapport Présence",
+      registres:         "Rapport Présence",
     },
     sendLink: "Envoyer formulaire Église – Nouveau membre",
     verse: "Car le corps ne se compose pas d'un seul membre, mais de plusieurs.",
@@ -52,13 +49,15 @@ const translations = {
       presencesRapports: "Attendance & Reports",
       registrePresences: "Attendance register",
       notifications:     "Notifications",
-      registres: "Attendance Report",
+      registres:         "Attendance Report",
     },
     sendLink: "Send Church form – New member",
     verse: "For the body is not one member, but many.",
     verseRef: "1 Corinthians 12:14 ❤️",
   },
 };
+
+const HUB_BACKGROUND = "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)";
 
 export default function MembresHub() {
   return (
@@ -69,12 +68,10 @@ export default function MembresHub() {
 }
 
 function MembresHubContent() {
-  const router = useRouter();
   const { lang } = useLang();
   const t = translations[lang];
 
-  const [userName, setUserName] = useState("");
-  const [userId, setUserId] = useState(null);
+  const [userId, setUserId] = useState("");
   const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
@@ -86,8 +83,6 @@ function MembresHubContent() {
         return;
       }
       setUserId(session.user.id);
-      const name = session.user.user_metadata?.full_name || "Utilisateur";
-      setUserName(name.split(" ")[0]);
       setLoadingUser(false);
     };
     fetchUser();
@@ -98,7 +93,7 @@ function MembresHubContent() {
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+      style={{ background: HUB_BACKGROUND }}
     >
       <HeaderPages />
 
@@ -106,7 +101,10 @@ function MembresHubContent() {
         <h1 className="text-3xl font-extrabold mt-4 mb-6 text-white drop-shadow-lg">{t.title}</h1>
         <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-white/90">
-            {t.subtitle} <span className="text-blue-300 font-semibold">{t.subtitleHighlight1}</span> {t.subtitleMid} <span className="text-blue-300 font-semibold">{t.subtitleHighlight2}</span>.
+            {t.subtitle}{" "}
+            <span className="text-blue-300 font-semibold">{t.subtitleHighlight1}</span>{" "}
+            {t.subtitleMid}{" "}
+            <span className="text-blue-300 font-semibold">{t.subtitleHighlight2}</span>.
           </p>
         </div>
       </div>
@@ -150,7 +148,7 @@ function MembresHubContent() {
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.registrePresences}</div>
         </Link>
 
-        <Link href="/rapport/RapportPresence" className="bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#F59E0B] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32" >
+        <Link href="/rapport/RapportPresence" className="bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#F59E0B] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
           <div className="text-4xl mb-2">✅</div>
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.registres}</div>
         </Link>

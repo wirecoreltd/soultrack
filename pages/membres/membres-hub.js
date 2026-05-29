@@ -30,6 +30,7 @@ const translations = {
       presencesRapports: "Présences & Rapports",
       registrePresences: "Registre des présences",
       notifications:     "Notifications",
+      registres: "Rapport Présence",
     },
     sendLink: "Envoyer formulaire Église – Nouveau membre",
     verse: "Car le corps ne se compose pas d'un seul membre, mais de plusieurs.",
@@ -51,6 +52,7 @@ const translations = {
       presencesRapports: "Attendance & Reports",
       registrePresences: "Attendance register",
       notifications:     "Notifications",
+      registres: "Attendance Report",
     },
     sendLink: "Send Church form – New member",
     verse: "For the body is not one member, but many.",
@@ -146,6 +148,11 @@ function MembresHubContent() {
         <Link href="/Presence" className="bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#84CC16] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
           <div className="text-4xl mb-2">✍🏻</div>
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.registrePresences}</div>
+        </Link>
+
+        <Link href="/rapport/RapportPresence" className="bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#F59E0B] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32" >
+          <div className="text-4xl mb-2">✅</div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.registres}</div>
         </Link>
 
         <Link href="/admin/notifications" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#FBBF24] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">

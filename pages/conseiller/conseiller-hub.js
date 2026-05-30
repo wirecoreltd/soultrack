@@ -23,7 +23,7 @@ const translations = {
       suivisEvang:   "Suivis des évangélisés",
       baptemes:      "Baptêmes",
       evolution:     "L'évolution des Âmes",
-      presence:      "Saisie des présences individuelles"",
+      presence:      "Saisie des présences individuelles",
       notifications: "Notifications",
     },
     footer: "Chaque vie que nous touchons est précieuse. Continuons à servir avec amour, sagesse et fidélité.",

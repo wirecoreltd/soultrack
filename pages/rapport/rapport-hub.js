@@ -26,15 +26,16 @@ const translations = {
     highlight6: "formations",
     intro7: "qui font mûrir. Avec patience, écoute et foi, nous construisons ensemble et célébrons chaque progrès. 🌱",
     cards: {
-      presences:    "Présences & Statistiques",
+      presences:    "Saisie et suivi des présences par réunion",
       evangelisation: "Évangélisation",
       baptemes:     "Baptêmes",
       formation:    "Formation",
       ministere:    "Ministère",
+      etatFamille:  "Etat Famille",
       besoins:      "Difficultés / Besoins",
       evolution:    "Évolution des Âmes par Conseiller",
       etatCellule:  "État Cellule",
-      registres:    "Registres",
+      registres:    "Statistiques des présences individuelles",
       statsGlobale: "Stats Globale",
     },
     verse: "Et le Seigneur ajoutait chaque jour à l'Église ceux qui étaient sauvés.",
@@ -56,15 +57,16 @@ const translations = {
     highlight6: "training",
     intro7: "that brings maturity. With patience, listening and faith, we build together and celebrate every step. 🌱",
     cards: {
-      presences:    "Attendance & Statistics",
+      presences:    "Meeting Attendance Entry & Tracking",
       evangelisation: "Evangelism",
       baptemes:     "Baptisms",
       formation:    "Training",
       ministere:    "Ministry",
+      etatFamille:  "Family status",
       besoins:      "Difficulties / Needs",
       evolution:    "Soul progress by Counselor",
       etatCellule:  "Cell group status",
-      registres:    "Registers",
+      registres:    "Individual Attendance Statistics",
       statsGlobale: "Global stats",
     },
     verse: "And the Lord added to the church daily those who were being saved.",
@@ -146,9 +148,14 @@ function RapportHubContent() {
           </Link>
 
           <Link href="/cellule/EtatCellulePage" className={cardClass} style={{ borderTopColor: "#A78BFA" }}>
-            <div className="text-4xl mb-2">🪴</div>
+            <div className="text-4xl mb-2">🏠</div>
             <div className="text-lg font-bold text-gray-800 text-center">{t.cards.etatCellule}</div>
           </Link>
+
+      <Link href="/famille/EtatFamillePage" className={cardClass} style={{ borderTopColor: "#14B8A6" }}>
+          <div className="text-5xl mb-2">👑</div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.etatFamille}</div>
+        </Link>
 
           <Link href="/rapport/RapportPresence" className={cardClass} style={{ borderTopColor: "#F59E0B" }}>
             <div className="text-4xl mb-2">✅</div>

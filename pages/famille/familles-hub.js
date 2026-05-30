@@ -27,10 +27,10 @@ const translations = {
       suivisEvang:      "Suivis des évangélisés",
       suivisMembres:    "Suivis des membres",
       baptemes:         "Baptêmes",
-      presences:        "Présences & statistiques",
+      presences:        "Saisie et suivi des présences par réunion",
       etatFamille:      "Etat Famille",
-      registre:         "Registre des présences",
-      rapportRegistres: "Rapport des Registres",
+      registre:         "Saisie des présences individuelles",
+      rapportRegistres: "Statistiques des présences individuelles",
       notifications:    "Notifications",
     },
     sendLinkMembre: "Envoyer formulaire Famille – Nouveau membre",
@@ -184,7 +184,7 @@ function FamillesHubContent() {
         </Link>
 
         <Link href="/famille/attendance_famille" className={cardClass} style={{ borderTopColor: "#8B5CF6" }}>
-          <div className="text-5xl mb-2">👨‍👩‍👦‍👦</div>
+          <div className="text-5xl mb-2">🗒️</div>
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.presences}</div>
         </Link>
 

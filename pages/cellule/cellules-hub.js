@@ -27,10 +27,10 @@ const translations = {
       suivisEvang:      "Suivis évangélisation",
       suivisMembres:    "Suivis des membres",
       baptemes:         "Baptêmes",
-      presencesStats:   "Présences & stats",
+      presencesStats:   "Saisie et suivi des présences par réunion",
       etatCellule:      "État Cellule",
-      registrePresences:"Registre des présences",
-      rapportRegistres: "Rapport des Registres",
+      registrePresences:"Saisie des présences individuelles",
+      rapportRegistres: "Statistiques des présences individuelles",
       notifications:    "Notifications",
     },
     sendLinkMembre:   "Envoyer formulaire Cellule – Nouveau membre",
@@ -53,10 +53,10 @@ const translations = {
       suivisEvang:      "Evangelism follow-up",
       suivisMembres:    "Member follow-up",
       baptemes:         "Baptisms",
-      presencesStats:   "Attendance & stats",
+      presencesStats:   "Meeting Attendance Entry & Tracking",
       etatCellule:      "Cell group status",
-      registrePresences:"Attendance register",
-      rapportRegistres: "Register report",
+      registrePresences:"Individual Attendance Entry",
+      rapportRegistres: "Individual Attendance Statistics",
       notifications:    "Notifications",
     },
     sendLinkMembre:   "Send Cell form – New member",
@@ -158,7 +158,7 @@ function CellulesHubContent() {
         </Link>
 
         <Link href="/cellule/attendance_cellule" className={CARD_CLASS} style={{ borderTop: "4px solid #6366f1" }}>
-          <div className="text-5xl mb-2">👨‍👩‍👦‍👦</div>
+          <div className="text-5xl mb-2">🗒️</div>
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.presencesStats}</div>
         </Link>
 

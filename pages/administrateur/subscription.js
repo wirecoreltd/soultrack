@@ -679,7 +679,13 @@ function SubscriptionContent() {
 
                   <div className="flex gap-3 pt-1">
                     <button
-                      onClick={() => setShowPaymentModal(true)}
+                      onClick={() => {
+                        if (confirmTarget.id === "enterprise") {
+                          router.push("/site/contact?type=reseaux");
+                        } else {
+                          setShowPaymentModal(true);
+                        }
+                      }}
                       className="flex-1 py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-opacity"
                       style={{ background: confirmTarget.color, color: "#fff" }}
                     >

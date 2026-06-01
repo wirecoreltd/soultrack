@@ -172,7 +172,7 @@ export default function PricingPage() {
   }
 
   return (
-    <div style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
+    <div style={{ background: "#333699", minHeight: "100vh" }}>
 
       {/* GLOW */}
       <div style={{ position: "absolute", width: "800px", height: "800px", borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 40%, transparent 65%)", top: "80px", left: "50%", transform: "translateX(-50%)", pointerEvents: "none", zIndex: 0 }} />
@@ -326,7 +326,8 @@ export default function PricingPage() {
       </footer>
 
       <style>{`
-        html, body { width: 100%; overflow-x: hidden; }
+        html { overflow-x: hidden; }
+        body { width: 100%; }
         * { box-sizing: border-box; }
         img { max-width: 100%; height: auto; }
         @media (max-width: 768px) {

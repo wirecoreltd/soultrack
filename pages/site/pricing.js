@@ -79,7 +79,7 @@ export default function PricingPage() {
 
   async function handleChoosePlan(planId) {
   if (planId === "enterprise") {
-    router.push("/site/contact");
+    router.push("/site/contact?type=reseaux");
     return;
   }
 

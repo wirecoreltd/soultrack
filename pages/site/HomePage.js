@@ -763,7 +763,7 @@ export default function HomePage() {
           style={{
             color: "#fff",
             fontSize: "16px",
-            padding: "50px 24px 20px",
+            padding: "20px 24px 20px",
             letterSpacing: "0.08em",
             maxWidth: "560px",
             margin: "0 auto 14px",

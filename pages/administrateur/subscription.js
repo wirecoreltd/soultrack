@@ -39,6 +39,7 @@ const translations = {
     proceedPayment: "💳 Procéder au paiement",
     cancel: "Annuler",
     paymentMethod: "Choisissez votre moyen de paiement",
+    chooseDuration: "Choisissez la durée",
     creditCard: "Carte bancaire",
     creditCardSub: "Via Lemon Squeezy · Visa, Mastercard, Apple Pay",
     paypalSub: "Compte PayPal ou carte via PayPal",
@@ -51,6 +52,8 @@ const translations = {
     errorPaypal: "Erreur PayPal : ",
     freeDowngradeSuccess: "Retour au plan Départ effectué.",
     freePlanActivated: "Plan {name} activé via PayPal !",
+    save: "Économie",
+    perMonth: "/mois",
   },
   en: {
     pageTitle: "My",
@@ -82,6 +85,7 @@ const translations = {
     proceedPayment: "💳 Proceed to payment",
     cancel: "Cancel",
     paymentMethod: "Choose your payment method",
+    chooseDuration: "Choose duration",
     creditCard: "Credit card",
     creditCardSub: "Via Lemon Squeezy · Visa, Mastercard, Apple Pay",
     paypalSub: "PayPal account or card via PayPal",
@@ -94,6 +98,8 @@ const translations = {
     errorPaypal: "PayPal error: ",
     freeDowngradeSuccess: "Switched back to Starter plan.",
     freePlanActivated: "{name} plan activated via PayPal!",
+    save: "Save",
+    perMonth: "/mo",
   },
 };
 
@@ -104,6 +110,25 @@ const PLANS = [
   { id: "expansion",  nom: { fr: "Expansion",  en: "Expansion" }, prix: { fr: "$79/mois",   en: "$79/mo"  }, prixNum: 79, limite: 1500, emoji: "🌍", color: "#8b5cf6" },
   { id: "enterprise", nom: { fr: "Réseaux",    en: "Networks"  }, prix: { fr: "Sur mesure", en: "Custom"  }, prixNum: 99, limite: null, emoji: "🔗", color: "#ec4899" },
 ];
+
+// Durées disponibles par plan
+const DUREES = {
+  starter: [
+    { id: "1m", label: { fr: "1 mois",  en: "1 month"  }, prix: 19,  economie: null },
+    { id: "6m", label: { fr: "6 mois",  en: "6 months" }, prix: 99,  economie: 15   },
+    { id: "1a", label: { fr: "1 an",    en: "1 year"   }, prix: 179, economie: 49   },
+  ],
+  vision: [
+    { id: "1m", label: { fr: "1 mois",  en: "1 month"  }, prix: 39,  economie: null },
+    { id: "6m", label: { fr: "6 mois",  en: "6 months" }, prix: 199, economie: 35   },
+    { id: "1a", label: { fr: "1 an",    en: "1 year"   }, prix: 359, economie: 109  },
+  ],
+  expansion: [
+    { id: "1m", label: { fr: "1 mois",  en: "1 month"  }, prix: 79,  economie: null },
+    { id: "6m", label: { fr: "6 mois",  en: "6 months" }, prix: 399, economie: 75   },
+    { id: "1a", label: { fr: "1 an",    en: "1 year"   }, prix: 719, economie: 229  },
+  ],
+};
 
 const FREE_PLANS = ["free", "enterprise"];
 
@@ -133,10 +158,13 @@ function Spinner() {
 
 function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
   const t = translations[lang];
-  const [loading, setLoading] = useState(null);
-  const [error, setError]     = useState(null);
+  const [loading, setLoading]   = useState(null);
+  const [error, setError]       = useState(null);
+  const [duree, setDuree]       = useState("1m");
 
-  const isFree = FREE_PLANS.includes(plan.id);
+  const isFree   = FREE_PLANS.includes(plan.id);
+  const durees   = DUREES[plan.id] || [];
+  const dureeObj = durees.find(d => d.id === duree) || durees[0];
 
   async function handleFreeDowngrade() {
     setLoading("free");
@@ -174,7 +202,7 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
       const res  = await fetch("/api/lemonsqueezy/checkout", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ egliseId, planId: plan.id, email }),
+        body:    JSON.stringify({ egliseId, planId: plan.id, duree, email }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -194,7 +222,7 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
       const res  = await fetch("/api/paypal/create-order", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ egliseId, planId: plan.id }),
+        body:    JSON.stringify({ egliseId, planId: plan.id, duree }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -222,6 +250,7 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
         className="w-full max-w-sm rounded-2xl p-6 space-y-5"
         style={{ background: "#1a1a3e", border: "1.5px solid rgba(255,255,255,0.15)" }}
       >
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <p className="text-white font-bold text-lg">{plan.emoji} {plan.nom[lang]}</p>
@@ -249,60 +278,92 @@ function PaymentModal({ plan, egliseId, onClose, onSuccess, lang }) {
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
-            <p className="text-white/50 text-xs uppercase tracking-widest font-semibold">{t.paymentMethod}</p>
+          <div className="space-y-4">
 
-            {/* ── Bouton Lemon Squeezy ── */}
-            <button
-              onClick={handleLemonSqueezy}
-              disabled={!!loading}
-              className="w-full rounded-xl p-4 flex items-center gap-4 text-left transition-all"
-              style={{
-                background: loading === "lemonsqueezy" ? "rgba(99,102,241,0.25)" : "rgba(99,102,241,0.12)",
-                border:     "1.5px solid rgba(99,102,241,0.5)",
-                opacity:    loading && loading !== "lemonsqueezy" ? 0.5 : 1,
-              }}
-            >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(99,102,241,0.2)" }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <rect x="2" y="6" width="20" height="14" rx="3" stroke="#818cf8" strokeWidth="1.8"/>
-                  <path d="M2 10h20" stroke="#818cf8" strokeWidth="1.8"/>
-                  <rect x="5" y="14" width="4" height="2" rx="1" fill="#818cf8"/>
-                </svg>
+            {/* ── Sélecteur de durée ── */}
+            <div className="space-y-2">
+              <p className="text-white/50 text-xs uppercase tracking-widest font-semibold">{t.chooseDuration}</p>
+              <div className="grid grid-cols-3 gap-2">
+                {durees.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => setDuree(d.id)}
+                    className="rounded-xl p-3 flex flex-col items-center gap-1 transition-all"
+                    style={{
+                      background: duree === d.id ? `${plan.color}22` : "rgba(255,255,255,0.05)",
+                      border: duree === d.id ? `1.5px solid ${plan.color}` : "1.5px solid rgba(255,255,255,0.1)",
+                    }}
+                  >
+                    <span className="text-white font-semibold text-xs">{d.label[lang]}</span>
+                    <span className="font-bold text-sm" style={{ color: duree === d.id ? plan.color : "rgba(255,255,255,0.6)" }}>
+                      ${d.prix}
+                    </span>
+                    {d.economie && (
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full font-semibold">
+                        -{d.economie}$
+                      </span>
+                    )}
+                  </button>
+                ))}
               </div>
-              <div className="flex-1">
-                <p className="text-white font-semibold text-sm flex items-center gap-2">
-                  {t.creditCard}
-                  <span className="text-[10px] bg-indigo-400/20 text-indigo-300 px-1.5 py-0.5 rounded-full font-bold">{t.recommended}</span>
-                </p>
-                <p className="text-white/40 text-xs mt-0.5">{t.creditCardSub}</p>
-              </div>
-              {loading === "lemonsqueezy" ? <Spinner /> : <span className="text-white/30 text-lg">→</span>}
-            </button>
+            </div>
 
-            {/* ── Bouton PayPal ── */}
-            <button
-              onClick={handlePayPal}
-              disabled={!!loading}
-              className="w-full rounded-xl p-4 flex items-center gap-4 text-left transition-all"
-              style={{
-                background: loading === "paypal" ? "rgba(0,112,240,0.2)" : "rgba(0,112,240,0.08)",
-                border:     "1.5px solid rgba(0,112,240,0.35)",
-                opacity:    loading && loading !== "paypal" ? 0.5 : 1,
-              }}
-            >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(0,112,240,0.15)" }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <path d="M7 20V4h6a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5H9" stroke="#60a5fa" strokeWidth="1.8" strokeLinecap="round"/>
-                  <path d="M9 14l-2 6" stroke="#60a5fa" strokeWidth="1.8" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-white font-semibold text-sm">PayPal</p>
-                <p className="text-white/40 text-xs mt-0.5">{t.paypalSub}</p>
-              </div>
-              {loading === "paypal" ? <Spinner /> : <span className="text-white/30 text-lg">→</span>}
-            </button>
+            {/* ── Moyen de paiement ── */}
+            <div className="space-y-2">
+              <p className="text-white/50 text-xs uppercase tracking-widest font-semibold">{t.paymentMethod}</p>
+
+              {/* Lemon Squeezy */}
+              <button
+                onClick={handleLemonSqueezy}
+                disabled={!!loading}
+                className="w-full rounded-xl p-4 flex items-center gap-4 text-left transition-all"
+                style={{
+                  background: loading === "lemonsqueezy" ? "rgba(99,102,241,0.25)" : "rgba(99,102,241,0.12)",
+                  border:     "1.5px solid rgba(99,102,241,0.5)",
+                  opacity:    loading && loading !== "lemonsqueezy" ? 0.5 : 1,
+                }}
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(99,102,241,0.2)" }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <rect x="2" y="6" width="20" height="14" rx="3" stroke="#818cf8" strokeWidth="1.8"/>
+                    <path d="M2 10h20" stroke="#818cf8" strokeWidth="1.8"/>
+                    <rect x="5" y="14" width="4" height="2" rx="1" fill="#818cf8"/>
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-white font-semibold text-sm flex items-center gap-2">
+                    {t.creditCard}
+                    <span className="text-[10px] bg-indigo-400/20 text-indigo-300 px-1.5 py-0.5 rounded-full font-bold">{t.recommended}</span>
+                  </p>
+                  <p className="text-white/40 text-xs mt-0.5">{t.creditCardSub}</p>
+                </div>
+                {loading === "lemonsqueezy" ? <Spinner /> : <span className="text-white/30 text-lg">→</span>}
+              </button>
+
+              {/* PayPal */}
+              <button
+                onClick={handlePayPal}
+                disabled={!!loading}
+                className="w-full rounded-xl p-4 flex items-center gap-4 text-left transition-all"
+                style={{
+                  background: loading === "paypal" ? "rgba(0,112,240,0.2)" : "rgba(0,112,240,0.08)",
+                  border:     "1.5px solid rgba(0,112,240,0.35)",
+                  opacity:    loading && loading !== "paypal" ? 0.5 : 1,
+                }}
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(0,112,240,0.15)" }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M7 20V4h6a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5H9" stroke="#60a5fa" strokeWidth="1.8" strokeLinecap="round"/>
+                    <path d="M9 14l-2 6" stroke="#60a5fa" strokeWidth="1.8" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-white font-semibold text-sm">PayPal</p>
+                  <p className="text-white/40 text-xs mt-0.5">{t.paypalSub}</p>
+                </div>
+                {loading === "paypal" ? <Spinner /> : <span className="text-white/30 text-lg">→</span>}
+              </button>
+            </div>
           </div>
         )}
 

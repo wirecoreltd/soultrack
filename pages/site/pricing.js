@@ -246,7 +246,7 @@ export default function PricingPage() {
       <section style={{ padding: "40px 24px 100px", position: "relative", zIndex: 1 }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", gap: "20px", width: "100%", alignItems: "start" }}>
           {t.plans.map((plan, i) => (
-            <div key={i} style={{ background: "rgba(255,255,255,0.08)", border: plan.popular ? `2px solid ${plan.color}` : "0.5px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "32px 24px 28px", position: "relative", backdropFilter: "blur(8px)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <div key={i} style={{ background: "rgba(255,255,255,0.08)", border: plan.popular ? `2px solid ${plan.color}` : "0.5px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: plan.popular ? "42px 24px 28px" : "32px 24px 28px", position: "relative", backdropFilter: "blur(8px)", display: "flex", flexDirection: "column" }}>
 
               {/* GLOW accent */}
               <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "160px", height: "160px", borderRadius: "50%", background: `radial-gradient(circle, ${plan.accent} 0%, transparent 70%)`, pointerEvents: "none" }} />
